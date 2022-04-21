@@ -44,7 +44,6 @@ import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public abstract class BaseCustomerControllerTest extends AbstractControllerTest {
-    static final int TIMEOUT = 30;
     static final TypeReference<PageData<Customer>> PAGE_DATA_CUSTOMER_TYPE_REFERENCE = new TypeReference<>() {};
 
     ListeningExecutorService executor;
