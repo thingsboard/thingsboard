@@ -38,9 +38,7 @@ import static org.mockito.Mockito.when;
 public class TenantCustomersTitleUpdaterComponentTest {
 
     public static final int CUSTOMER_COUNT = 10;
-
     TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
-
     TenantCustomersTitleUpdaterComponent tenantCustomersTitleUpdaterComponent = mock(TenantCustomersTitleUpdaterComponent.class);
 
     @Before
