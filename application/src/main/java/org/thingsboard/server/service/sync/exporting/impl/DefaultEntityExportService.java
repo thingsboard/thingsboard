@@ -33,6 +33,7 @@ import org.thingsboard.server.service.sync.exporting.ExportableEntitiesService;
 import org.thingsboard.server.service.sync.exporting.data.EntityExportData;
 import org.thingsboard.server.service.sync.exporting.data.request.EntityExportSettings;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -63,24 +64,25 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
     }
 
     protected void setAdditionalExportData(SecurityUser user, E entity, D exportData, EntityExportSettings exportSettings) throws ThingsboardException {
+        List<EntityRelation> relations = null;
         if (exportSettings.isExportInboundRelations()) {
             List<EntityRelation> inboundRelations = relationService.findByTo(user.getTenantId(), entity.getId(), RelationTypeGroup.COMMON);
-            if (inboundRelations != null) {
-                for (EntityRelation relation : inboundRelations) {
-                    exportableEntitiesService.checkPermission(user, relation.getFrom(), Operation.READ);
-                }
+            for (EntityRelation relation : inboundRelations) {
+                exportableEntitiesService.checkPermission(user, relation.getFrom(), Operation.READ);
             }
-            exportData.setInboundRelations(inboundRelations);
+            relations = new ArrayList<>(inboundRelations);
         }
         if (exportSettings.isExportOutboundRelations()) {
             List<EntityRelation> outboundRelations = relationService.findByFrom(user.getTenantId(), entity.getId(), RelationTypeGroup.COMMON);
-            if (outboundRelations != null) {
-                for (EntityRelation relation : outboundRelations) {
-                    exportableEntitiesService.checkPermission(user, relation.getTo(), Operation.READ);
-                }
+            for (EntityRelation relation : outboundRelations) {
+                exportableEntitiesService.checkPermission(user, relation.getTo(), Operation.READ);
             }
-            exportData.setOutboundRelations(outboundRelations);
+            if (relations == null) {
+                relations = new ArrayList<>();
+            }
+            relations.addAll(outboundRelations);
         }
+        exportData.setRelations(relations);
     }
 
     protected D newExportData() {

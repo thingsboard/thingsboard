@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.sync.importing.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,10 +39,9 @@ import org.thingsboard.server.service.sync.importing.EntityImportService;
 import org.thingsboard.server.service.sync.importing.data.EntityImportResult;
 import org.thingsboard.server.service.sync.importing.data.EntityImportSettings;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 public abstract class BaseEntityImportService<I extends EntityId, E extends ExportableEntity<I>, D extends EntityExportData<E>> implements EntityImportService<I, E, D> {
 
@@ -102,47 +100,53 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
         });
 
         importResult.addSaveReferencesCallback(() -> {
-            List<EntityRelation> newRelations = new LinkedList<>();
-
-            if (importSettings.isImportInboundRelations() && CollectionUtils.isNotEmpty(exportData.getInboundRelations())) {
-                newRelations.addAll(exportData.getInboundRelations().stream()
-                        .peek(relation -> relation.setTo(savedEntity.getId()))
-                        .collect(Collectors.toList()));
-
-                if (importSettings.isRemoveExistingRelations() && oldEntity != null) {
-                    for (EntityRelation existingRelation : relationService.findByTo(user.getTenantId(), savedEntity.getId(), RelationTypeGroup.COMMON)) {
-                        exportableEntitiesService.checkPermission(user, existingRelation.getFrom(), Operation.WRITE);
-                        deleteRelation(user, existingRelation, importResult);
-                    }
-                }
+            List<EntityRelation> relations = exportData.getRelations();
+            if (relations == null || !importSettings.isUpdateRelations()) {
+                return;
             }
-            if (importSettings.isImportOutboundRelations() && CollectionUtils.isNotEmpty(exportData.getOutboundRelations())) {
-                newRelations.addAll(exportData.getOutboundRelations().stream()
-                        .peek(relation -> relation.setFrom(savedEntity.getId()))
-                        .collect(Collectors.toList()));
+            relations = new ArrayList<>(relations);
 
-                if (importSettings.isRemoveExistingRelations() && oldEntity != null) {
-                    for (EntityRelation existingRelation : relationService.findByFrom(user.getTenantId(), savedEntity.getId(), RelationTypeGroup.COMMON)) {
-                        exportableEntitiesService.checkPermission(user, existingRelation.getTo(), Operation.WRITE);
-                        deleteRelation(user, existingRelation, importResult);
-                    }
-                }
-            }
-
-            for (EntityRelation relation : newRelations) {
-                HasId<EntityId> otherEntity = null;
+            for (EntityRelation relation : relations) {
                 if (!relation.getTo().equals(savedEntity.getId())) {
-                    otherEntity = findInternalEntity(user.getTenantId(), relation.getTo());
-                    relation.setTo(otherEntity.getId());
+                    HasId<EntityId> to = findInternalEntity(user.getTenantId(), relation.getTo());
+                    exportableEntitiesService.checkPermission(user, to, to.getId().getEntityType(), Operation.WRITE);
+                    relation.setTo(to.getId());
                 }
-                if (!relation.getFrom().equals(savedEntity.getId())) {
-                    otherEntity = findInternalEntity(user.getTenantId(), relation.getFrom());
-                    relation.setFrom(otherEntity.getId());
+                if (!relation.getFrom().equals(savedEntity.getId())){
+                    HasId<EntityId> from = findInternalEntity(user.getTenantId(), relation.getFrom());
+                    exportableEntitiesService.checkPermission(user, from, from.getId().getEntityType(), Operation.WRITE);
+                    relation.setFrom(from.getId());
                 }
-                if (otherEntity != null) {
-                    exportableEntitiesService.checkPermission(user, otherEntity, otherEntity.getId().getEntityType(), Operation.WRITE);
-                }
+            }
 
+            if (oldEntity != null) {
+                List<EntityRelation> existingRelations = new ArrayList<>();
+                existingRelations.addAll(relationService.findByTo(user.getTenantId(), savedEntity.getId(), RelationTypeGroup.COMMON));
+                existingRelations.addAll(relationService.findByFrom(user.getTenantId(), savedEntity.getId(), RelationTypeGroup.COMMON));
+
+                for (EntityRelation existingRelation : existingRelations) {
+                    if (!relations.contains(existingRelation)) {
+                        EntityId otherEntity = null;
+                        if (!existingRelation.getTo().equals(savedEntity.getId())) {
+                            otherEntity = existingRelation.getTo();
+                        } else if (!existingRelation.getFrom().equals(savedEntity.getId())){
+                            otherEntity = existingRelation.getFrom();
+                        }
+                        if (otherEntity != null) {
+                            exportableEntitiesService.checkPermission(user, otherEntity, Operation.WRITE);
+                        }
+                        relationService.deleteRelation(user.getTenantId(), existingRelation);
+                        importResult.addSendEventsCallback(() -> {
+                            entityActionService.logEntityAction(user, existingRelation.getFrom(), null, null,
+                                    ActionType.RELATION_DELETED, null, existingRelation);
+                            entityActionService.logEntityAction(user, existingRelation.getTo(), null, null,
+                                    ActionType.RELATION_DELETED, null, existingRelation);
+                        });
+                    }
+                }
+            }
+
+            for (EntityRelation relation : relations) {
                 relationService.saveRelation(user.getTenantId(), relation);
                 importResult.addSendEventsCallback(() -> {
                     entityActionService.logEntityAction(user, relation.getFrom(), null, null,
@@ -153,17 +157,6 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
             }
         });
     }
-
-    private void deleteRelation(SecurityUser user, EntityRelation relation, EntityImportResult<E> importResult) {
-        relationService.deleteRelation(user.getTenantId(), relation);
-        importResult.addSendEventsCallback(() -> {
-            entityActionService.logEntityAction(user, relation.getFrom(), null, null,
-                    ActionType.RELATION_DELETED, null, relation);
-            entityActionService.logEntityAction(user, relation.getTo(), null, null,
-                    ActionType.RELATION_DELETED, null, relation);
-        });
-    }
-
 
     protected void onEntitySaved(SecurityUser user, E savedEntity, E oldEntity) throws ThingsboardException {
         entityActionService.logEntityAction(user, savedEntity.getId(), savedEntity,

@@ -43,7 +43,6 @@ public class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
     private E entity;
     private EntityType entityType;
 
-    private List<EntityRelation> inboundRelations;
-    private List<EntityRelation> outboundRelations;
+    private List<EntityRelation> relations;
 
 }
