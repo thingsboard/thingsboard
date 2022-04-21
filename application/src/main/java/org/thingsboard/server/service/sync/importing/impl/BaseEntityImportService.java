@@ -91,10 +91,15 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
 
     protected abstract E prepareAndSave(TenantId tenantId, E entity, D exportData, IdProvider idProvider);
 
+
     protected void processAfterSaved(SecurityUser user, EntityImportResult<E> importResult, D exportData,
                                      IdProvider idProvider, EntityImportSettings importSettings) throws ThingsboardException {
         E savedEntity = importResult.getSavedEntity();
         E oldEntity = importResult.getOldEntity();
+
+        importResult.addSendEventsCallback(() -> {
+            onEntitySaved(user, savedEntity, oldEntity);
+        });
 
         importResult.addSaveReferencesCallback(() -> {
             List<EntityRelation> newRelations = new LinkedList<>();
@@ -107,7 +112,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                 if (importSettings.isRemoveExistingRelations() && oldEntity != null) {
                     for (EntityRelation existingRelation : relationService.findByTo(user.getTenantId(), savedEntity.getId(), RelationTypeGroup.COMMON)) {
                         exportableEntitiesService.checkPermission(user, existingRelation.getFrom(), Operation.WRITE);
-                        relationService.deleteRelation(user.getTenantId(), existingRelation);
+                        deleteRelation(user, existingRelation, importResult);
                     }
                 }
             }
@@ -119,7 +124,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                 if (importSettings.isRemoveExistingRelations() && oldEntity != null) {
                     for (EntityRelation existingRelation : relationService.findByFrom(user.getTenantId(), savedEntity.getId(), RelationTypeGroup.COMMON)) {
                         exportableEntitiesService.checkPermission(user, existingRelation.getTo(), Operation.WRITE);
-                        relationService.deleteRelation(user.getTenantId(), existingRelation);
+                        deleteRelation(user, existingRelation, importResult);
                     }
                 }
             }
@@ -139,13 +144,26 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                 }
 
                 relationService.saveRelation(user.getTenantId(), relation);
+                importResult.addSendEventsCallback(() -> {
+                    entityActionService.logEntityAction(user, relation.getFrom(), null, null,
+                            ActionType.RELATION_ADD_OR_UPDATE, null, relation);
+                    entityActionService.logEntityAction(user, relation.getTo(), null, null,
+                            ActionType.RELATION_ADD_OR_UPDATE, null, relation);
+                });
             }
         });
+    }
 
+    private void deleteRelation(SecurityUser user, EntityRelation relation, EntityImportResult<E> importResult) {
+        relationService.deleteRelation(user.getTenantId(), relation);
         importResult.addSendEventsCallback(() -> {
-            onEntitySaved(user, savedEntity, oldEntity);
+            entityActionService.logEntityAction(user, relation.getFrom(), null, null,
+                    ActionType.RELATION_DELETED, null, relation);
+            entityActionService.logEntityAction(user, relation.getTo(), null, null,
+                    ActionType.RELATION_DELETED, null, relation);
         });
     }
+
 
     protected void onEntitySaved(SecurityUser user, E savedEntity, E oldEntity) throws ThingsboardException {
         entityActionService.logEntityAction(user, savedEntity.getId(), savedEntity,
