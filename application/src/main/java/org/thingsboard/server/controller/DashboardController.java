@@ -66,6 +66,7 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.DASHBOARD_ID;
 import static org.thingsboard.server.controller.ControllerConstants.DASHBOARD_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.DASHBOARD_SORT_PROPERTY_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.DASHBOARD_TEXT_SEARCH_DESCRIPTION;
@@ -91,9 +92,7 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
-public class DashboardController extends BaseController {
-
-    public static final String DASHBOARD_ID = "dashboardId";
+public class DashboardController extends DefaultEntityBaseController {
 
     private static final String HOME_DASHBOARD_ID = "homeDashboardId";
     private static final String HOME_DASHBOARD_HIDE_TOOLBAR = "homeDashboardHideToolbar";
@@ -213,28 +212,7 @@ public class DashboardController extends BaseController {
             @ApiParam(value = DASHBOARD_ID_PARAM_DESCRIPTION)
             @PathVariable(DASHBOARD_ID) String strDashboardId) throws ThingsboardException {
         checkParameter(DASHBOARD_ID, strDashboardId);
-        try {
-            DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
-            Dashboard dashboard = checkDashboardId(dashboardId, Operation.DELETE);
-
-            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(getTenantId(), dashboardId);
-
-            dashboardService.deleteDashboard(getCurrentUser().getTenantId(), dashboardId);
-
-            logEntityAction(dashboardId, dashboard,
-                    null,
-                    ActionType.DELETED, null, strDashboardId);
-
-            sendDeleteNotificationMsg(getTenantId(), dashboardId, relatedEdgeIds);
-        } catch (Exception e) {
-
-            logEntityAction(emptyId(EntityType.DASHBOARD),
-                    null,
-                    null,
-                    ActionType.DELETED, e, strDashboardId);
-
-            throw handleException(e);
-        }
+        entityDeleteService.deleteEntity(getTenantId(), new DashboardId(toUUID(strDashboardId)));
     }
 
     @ApiOperation(value = "Assign the Dashboard (assignDashboardToCustomer)",
@@ -289,31 +267,9 @@ public class DashboardController extends BaseController {
             @PathVariable(CUSTOMER_ID) String strCustomerId,
             @ApiParam(value = DASHBOARD_ID_PARAM_DESCRIPTION)
             @PathVariable(DASHBOARD_ID) String strDashboardId) throws ThingsboardException {
-        checkParameter("customerId", strCustomerId);
+        checkParameter(CUSTOMER_ID, strCustomerId);
         checkParameter(DASHBOARD_ID, strDashboardId);
-        try {
-            CustomerId customerId = new CustomerId(toUUID(strCustomerId));
-            Customer customer = checkCustomerId(customerId, Operation.READ);
-            DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
-            Dashboard dashboard = checkDashboardId(dashboardId, Operation.UNASSIGN_FROM_CUSTOMER);
-
-            Dashboard savedDashboard = checkNotNull(dashboardService.unassignDashboardFromCustomer(getCurrentUser().getTenantId(), dashboardId, customerId));
-
-            logEntityAction(dashboardId, dashboard,
-                    customerId,
-                    ActionType.UNASSIGNED_FROM_CUSTOMER, null, strDashboardId, customer.getId().toString(), customer.getName());
-
-            sendEntityAssignToCustomerNotificationMsg(savedDashboard.getTenantId(), savedDashboard.getId(), customerId, EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER);
-
-            return savedDashboard;
-        } catch (Exception e) {
-
-            logEntityAction(emptyId(EntityType.DASHBOARD), null,
-                    null,
-                    ActionType.UNASSIGNED_FROM_CUSTOMER, e, strDashboardId);
-
-            throw handleException(e);
-        }
+        return entityDeleteService.deleteUnassignDashboard(new DashboardId(toUUID(strDashboardId)), new CustomerId(toUUID(strCustomerId)));
     }
 
     @ApiOperation(value = "Update the Dashboard Customers (updateDashboardCustomers)",
@@ -542,26 +498,7 @@ public class DashboardController extends BaseController {
             @ApiParam(value = DASHBOARD_ID_PARAM_DESCRIPTION)
             @PathVariable(DASHBOARD_ID) String strDashboardId) throws ThingsboardException {
         checkParameter(DASHBOARD_ID, strDashboardId);
-        try {
-            DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
-            Dashboard dashboard = checkDashboardId(dashboardId, Operation.UNASSIGN_FROM_CUSTOMER);
-            Customer publicCustomer = customerService.findOrCreatePublicCustomer(dashboard.getTenantId());
-
-            Dashboard savedDashboard = checkNotNull(dashboardService.unassignDashboardFromCustomer(getCurrentUser().getTenantId(), dashboardId, publicCustomer.getId()));
-
-            logEntityAction(dashboardId, dashboard,
-                    publicCustomer.getId(),
-                    ActionType.UNASSIGNED_FROM_CUSTOMER, null, strDashboardId, publicCustomer.getId().toString(), publicCustomer.getName());
-
-            return savedDashboard;
-        } catch (Exception e) {
-
-            logEntityAction(emptyId(EntityType.DASHBOARD), null,
-                    null,
-                    ActionType.UNASSIGNED_FROM_CUSTOMER, e, strDashboardId);
-
-            throw handleException(e);
-        }
+        return entityDeleteService.deleteUnassignDashboard(new DashboardId(toUUID(strDashboardId)));
     }
 
     @ApiOperation(value = "Get Tenant Dashboards by System Administrator (getTenantDashboards)",
@@ -886,31 +823,9 @@ public class DashboardController extends BaseController {
     @ResponseBody
     public Dashboard unassignDashboardFromEdge(@PathVariable("edgeId") String strEdgeId,
                                                @PathVariable(DASHBOARD_ID) String strDashboardId) throws ThingsboardException {
-        checkParameter("edgeId", strEdgeId);
+        checkParameter(EDGE_ID, strEdgeId);
         checkParameter(DASHBOARD_ID, strDashboardId);
-        try {
-            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-            Edge edge = checkEdgeId(edgeId, Operation.READ);
-            DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
-            Dashboard dashboard = checkDashboardId(dashboardId, Operation.READ);
-
-            Dashboard savedDashboard = checkNotNull(dashboardService.unassignDashboardFromEdge(getCurrentUser().getTenantId(), dashboardId, edgeId));
-
-            logEntityAction(dashboardId, dashboard,
-                    null,
-                    ActionType.UNASSIGNED_FROM_EDGE, null, strDashboardId, strEdgeId, edge.getName());
-
-            sendEntityAssignToEdgeNotificationMsg(getTenantId(), edgeId, savedDashboard.getId(), EdgeEventActionType.UNASSIGNED_FROM_EDGE);
-
-            return savedDashboard;
-        } catch (Exception e) {
-
-            logEntityAction(emptyId(EntityType.DASHBOARD), null,
-                    null,
-                    ActionType.UNASSIGNED_FROM_EDGE, e, strDashboardId, strEdgeId);
-
-            throw handleException(e);
-        }
+        return entityDeleteService.deleteUnassignDashboard(new DashboardId(toUUID(strDashboardId)), new EdgeId(toUUID(strEdgeId)));
     }
 
     @ApiOperation(value = "Get Edge Dashboards (getEdgeDashboards)",

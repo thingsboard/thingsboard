@@ -51,8 +51,6 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.exception.IncorrectParameterException;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeBulkImportService;
 import org.thingsboard.server.service.importing.BulkImportRequest;
@@ -88,7 +86,7 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 @Slf4j
 @RequestMapping("/api")
 @RequiredArgsConstructor
-public class EdgeController extends BaseController {
+public class EdgeController extends DefaultEntityBaseController {
     private final EdgeBulkImportService edgeBulkImportService;
 
     public static final String EDGE_ID = "edgeId";
@@ -201,28 +199,8 @@ public class EdgeController extends BaseController {
     public void deleteEdge(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
                            @PathVariable(EDGE_ID) String strEdgeId) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
-        try {
-            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-            Edge edge = checkEdgeId(edgeId, Operation.DELETE);
-            edgeService.deleteEdge(getTenantId(), edgeId);
-
-            tbClusterService.broadcastEntityStateChangeEvent(getTenantId(), edgeId,
-                    ComponentLifecycleEvent.DELETED);
-
-            logEntityAction(edgeId, edge,
-                    null,
-                    ActionType.DELETED, null, strEdgeId);
-
-        } catch (Exception e) {
-
-            logEntityAction(emptyId(EntityType.EDGE),
-                    null,
-                    null,
-                    ActionType.DELETED, e, strEdgeId);
-
-            throw handleException(e);
-        }
-    }
+        entityDeleteService.deleteEntity(getTenantId(),  new EdgeId(toUUID(strEdgeId)));
+     }
 
     @ApiOperation(value = "Get Tenant Edges (getEdges)",
             notes = "Returns a page of edges owned by tenant. " +
@@ -298,33 +276,7 @@ public class EdgeController extends BaseController {
     public Edge unassignEdgeFromCustomer(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
                                          @PathVariable(EDGE_ID) String strEdgeId) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
-        try {
-            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-            Edge edge = checkEdgeId(edgeId, Operation.UNASSIGN_FROM_CUSTOMER);
-            if (edge.getCustomerId() == null || edge.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
-                throw new IncorrectParameterException("Edge isn't assigned to any customer!");
-            }
-            Customer customer = checkCustomerId(edge.getCustomerId(), Operation.READ);
-
-            Edge savedEdge = checkNotNull(edgeService.unassignEdgeFromCustomer(getCurrentUser().getTenantId(), edgeId));
-
-            tbClusterService.broadcastEntityStateChangeEvent(getTenantId(), edgeId,
-                    ComponentLifecycleEvent.UPDATED);
-
-            logEntityAction(edgeId, edge,
-                    edge.getCustomerId(),
-                    ActionType.UNASSIGNED_FROM_CUSTOMER, null, strEdgeId, customer.getId().toString(), customer.getName());
-
-            sendEntityAssignToCustomerNotificationMsg(savedEdge.getTenantId(), savedEdge.getId(),
-                    customer.getId(), EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER);
-
-            return savedEdge;
-        } catch (Exception e) {
-            logEntityAction(emptyId(EntityType.EDGE), null,
-                    null,
-                    ActionType.UNASSIGNED_FROM_CUSTOMER, e, strEdgeId);
-            throw handleException(e);
-        }
+        return entityDeleteService.deleteUnassignEdge(new EdgeId(toUUID(strEdgeId)));
     }
 
     @ApiOperation(value = "Make edge publicly available (assignEdgeToPublicCustomer)",

@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
@@ -55,6 +56,7 @@ import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFILE_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.OTA_PACKAGE_CHECKSUM_ALGORITHM_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.OTA_PACKAGE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.OTA_PACKAGE_ID;
 import static org.thingsboard.server.controller.ControllerConstants.OTA_PACKAGE_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.OTA_PACKAGE_INFO_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.OTA_PACKAGE_SORT_PROPERTY_ALLOWABLE_VALUES;
@@ -73,9 +75,8 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
-public class OtaPackageController extends BaseController {
+public class OtaPackageController extends DefaultEntityBaseController {
 
-    public static final String OTA_PACKAGE_ID = "otaPackageId";
     public static final String CHECKSUM_ALGORITHM = "checksumAlgorithm";
 
     @ApiOperation(value = "Download OTA Package (downloadOtaPackage)", notes = "Download OTA Package based on the provided OTA Package Id." + TENANT_AUTHORITY_PARAGRAPH)
@@ -291,15 +292,6 @@ public class OtaPackageController extends BaseController {
     public void deleteOtaPackage(@ApiParam(value = OTA_PACKAGE_ID_PARAM_DESCRIPTION)
                                  @PathVariable("otaPackageId") String strOtaPackageId) throws ThingsboardException {
         checkParameter(OTA_PACKAGE_ID, strOtaPackageId);
-        try {
-            OtaPackageId otaPackageId = new OtaPackageId(toUUID(strOtaPackageId));
-            OtaPackageInfo info = checkOtaPackageInfoId(otaPackageId, Operation.DELETE);
-            otaPackageService.deleteOtaPackage(getTenantId(), otaPackageId);
-            logEntityAction(otaPackageId, info, null, ActionType.DELETED, null, strOtaPackageId);
-        } catch (Exception e) {
-            logEntityAction(emptyId(EntityType.OTA_PACKAGE), null, null, ActionType.DELETED, e, strOtaPackageId);
-            throw handleException(e);
-        }
+        entityDeleteService.deleteEntity(getTenantId(), new OtaPackageId(toUUID(strOtaPackageId)));
     }
-
 }

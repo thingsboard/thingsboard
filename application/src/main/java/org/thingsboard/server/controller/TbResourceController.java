@@ -53,6 +53,7 @@ import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PA
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_ID;
 import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_INFO_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_SORT_PROPERTY_ALLOWABLE_VALUES;
@@ -68,9 +69,7 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
-public class TbResourceController extends BaseController {
-
-    public static final String RESOURCE_ID = "resourceId";
+public class TbResourceController extends DefaultEntityBaseController {
 
     @ApiOperation(value = "Download Resource (downloadResource)", notes = "Download Resource based on the provided Resource Id." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
@@ -242,16 +241,6 @@ public class TbResourceController extends BaseController {
     public void deleteResource(@ApiParam(value = RESOURCE_ID_PARAM_DESCRIPTION)
                                @PathVariable("resourceId") String strResourceId) throws ThingsboardException {
         checkParameter(RESOURCE_ID, strResourceId);
-        try {
-            TbResourceId resourceId = new TbResourceId(toUUID(strResourceId));
-            TbResource tbResource = checkResourceId(resourceId, Operation.DELETE);
-            resourceService.deleteResource(getTenantId(), resourceId);
-            tbClusterService.onResourceDeleted(tbResource, null);
-            logEntityAction(resourceId, tbResource, null, ActionType.DELETED, null, strResourceId);
-        } catch (Exception e) {
-            logEntityAction(emptyId(EntityType.TB_RESOURCE), null, null, ActionType.DELETED, e, strResourceId);
-            throw handleException(e);
-        }
+        entityDeleteService.deleteEntity(getTenantId(), new TbResourceId(toUUID(strResourceId)));
     }
-
 }

@@ -68,7 +68,7 @@ import static org.thingsboard.server.controller.ControllerConstants.TENANT_ID_PA
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
-public class EventController extends BaseController {
+public class EventController extends DefaultEntityBaseController {
 
     private static final String EVENT_FILTER_DEFINITION = "# Event Filter Definition" + NEW_LINE +
             "5 different eventFilter objects could be set for different event types. " +

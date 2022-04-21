@@ -36,16 +36,12 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
-
-import java.util.List;
 
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID_PARAM_DESCRIPTION;
@@ -65,7 +61,7 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
-public class CustomerController extends BaseController {
+public class CustomerController extends DefaultEntityBaseController {
 
     public static final String IS_PUBLIC = "isPublic";
     public static final String CUSTOMER_SECURITY_CHECK = "If the user has the authority of 'Tenant Administrator', the server checks that the customer is owned by the same tenant. " +
@@ -92,7 +88,6 @@ public class CustomerController extends BaseController {
             throw handleException(e);
         }
     }
-
 
     @ApiOperation(value = "Get short Customer info (getShortCustomerInfoById)",
             notes = "Get the short customer object that contains only the title and 'isPublic' flag. "
@@ -180,30 +175,8 @@ public class CustomerController extends BaseController {
     public void deleteCustomer(@ApiParam(value = CUSTOMER_ID_PARAM_DESCRIPTION)
                                @PathVariable(CUSTOMER_ID) String strCustomerId) throws ThingsboardException {
         checkParameter(CUSTOMER_ID, strCustomerId);
-        try {
-            CustomerId customerId = new CustomerId(toUUID(strCustomerId));
-            Customer customer = checkCustomerId(customerId, Operation.DELETE);
-
-            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(getTenantId(), customerId);
-
-            customerService.deleteCustomer(getTenantId(), customerId);
-
-            logEntityAction(customerId, customer,
-                    customer.getId(),
-                    ActionType.DELETED, null, strCustomerId);
-
-            sendDeleteNotificationMsg(getTenantId(), customerId, relatedEdgeIds);
-            tbClusterService.broadcastEntityStateChangeEvent(getTenantId(), customerId, ComponentLifecycleEvent.DELETED);
-        } catch (Exception e) {
-
-            logEntityAction(emptyId(EntityType.CUSTOMER),
-                    null,
-                    null,
-                    ActionType.DELETED, e, strCustomerId);
-
-            throw handleException(e);
-        }
-    }
+        entityDeleteService.deleteEntity(getTenantId(), new CustomerId(toUUID(strCustomerId)));
+     }
 
     @ApiOperation(value = "Get Tenant Customers (getCustomers)",
             notes = "Returns a page of customers owned by tenant. " +

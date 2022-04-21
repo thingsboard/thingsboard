@@ -63,7 +63,6 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainOutputLabelsUsage;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleChainUpdateResult;
-import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -78,14 +77,11 @@ import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_ASSIGN_ASYNC_FIRST_STEP_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_ASSIGN_RECEIVE_STEP_DESCRIPTION;
@@ -98,11 +94,13 @@ import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_COD
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.RULE_CHAIN_ID;
 import static org.thingsboard.server.controller.ControllerConstants.RULE_CHAIN_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.RULE_CHAIN_SORT_PROPERTY_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.RULE_CHAIN_TEXT_SEARCH_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.RULE_CHAIN_TYPES_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.RULE_CHAIN_TYPE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.RULE_NODE_ID;
 import static org.thingsboard.server.controller.ControllerConstants.RULE_NODE_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
@@ -114,10 +112,7 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
-public class RuleChainController extends BaseController {
-
-    public static final String RULE_CHAIN_ID = "ruleChainId";
-    public static final String RULE_NODE_ID = "ruleNodeId";
+public class RuleChainController extends DefaultEntityBaseController {
 
     private static final int DEFAULT_PAGE_SIZE = 1000;
 
@@ -456,46 +451,8 @@ public class RuleChainController extends BaseController {
             @ApiParam(value = RULE_CHAIN_ID_PARAM_DESCRIPTION)
             @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
-        try {
-            RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
-            RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.DELETE);
-
-            List<RuleNode> referencingRuleNodes = ruleChainService.getReferencingRuleChainNodes(getTenantId(), ruleChainId);
-
-            Set<RuleChainId> referencingRuleChainIds = referencingRuleNodes.stream().map(RuleNode::getRuleChainId).collect(Collectors.toSet());
-
-            List<EdgeId> relatedEdgeIds = null;
-            if (RuleChainType.EDGE.equals(ruleChain.getType())) {
-                relatedEdgeIds = findRelatedEdgeIds(getTenantId(), ruleChainId);
-            }
-
-            ruleChainService.deleteRuleChainById(getTenantId(), ruleChainId);
-
-            referencingRuleChainIds.remove(ruleChain.getId());
-
-            if (RuleChainType.CORE.equals(ruleChain.getType())) {
-                referencingRuleChainIds.forEach(referencingRuleChainId ->
-                        tbClusterService.broadcastEntityStateChangeEvent(ruleChain.getTenantId(), referencingRuleChainId, ComponentLifecycleEvent.UPDATED));
-
-                tbClusterService.broadcastEntityStateChangeEvent(ruleChain.getTenantId(), ruleChain.getId(), ComponentLifecycleEvent.DELETED);
-            }
-
-            logEntityAction(ruleChainId, ruleChain,
-                    null,
-                    ActionType.DELETED, null, strRuleChainId);
-
-            if (RuleChainType.EDGE.equals(ruleChain.getType())) {
-                sendDeleteNotificationMsg(ruleChain.getTenantId(), ruleChain.getId(), relatedEdgeIds);
-            }
-
-        } catch (Exception e) {
-            logEntityAction(emptyId(EntityType.RULE_CHAIN),
-                    null,
-                    null,
-                    ActionType.DELETED, e, strRuleChainId);
-            throw handleException(e);
-        }
-    }
+        entityDeleteService.deleteEntity(getTenantId(), new RuleChainId(toUUID(strRuleChainId)));
+     }
 
     @ApiOperation(value = "Get latest input message (getLatestRuleNodeDebugInput)",
             notes = "Gets the input message from the debug events for specified Rule Chain Id. " +
@@ -545,7 +502,7 @@ public class RuleChainController extends BaseController {
 
             String data = inputParams.get("msg").asText();
             JsonNode metadataJson = inputParams.get("metadata");
-            Map<String, String> metadata = objectMapper.convertValue(metadataJson, new TypeReference<Map<String, String>>() {
+            Map<String, String> metadata = objectMapper.convertValue(metadataJson, new TypeReference<>() {
             });
             String msgType = inputParams.get("msgType").asText();
             String output = "";
@@ -721,30 +678,8 @@ public class RuleChainController extends BaseController {
                                                @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter("edgeId", strEdgeId);
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
-        try {
-            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-            Edge edge = checkEdgeId(edgeId, Operation.WRITE);
-            RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
-            RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.READ);
-
-            RuleChain savedRuleChain = checkNotNull(ruleChainService.unassignRuleChainFromEdge(getCurrentUser().getTenantId(), ruleChainId, edgeId, false));
-
-            logEntityAction(ruleChainId, ruleChain,
-                    null,
-                    ActionType.UNASSIGNED_FROM_EDGE, null, strRuleChainId, strEdgeId, edge.getName());
-
-            sendEntityAssignToEdgeNotificationMsg(getTenantId(), edgeId, savedRuleChain.getId(), EdgeEventActionType.UNASSIGNED_FROM_EDGE);
-
-            return savedRuleChain;
-        } catch (Exception e) {
-
-            logEntityAction(emptyId(EntityType.RULE_CHAIN), null,
-                    null,
-                    ActionType.UNASSIGNED_FROM_EDGE, e, strRuleChainId, strEdgeId);
-
-            throw handleException(e);
-        }
-    }
+        return entityDeleteService.deleteUnassignRuleChain(new RuleChainId(toUUID(strRuleChainId)), new EdgeId(toUUID(strEdgeId)));
+     }
 
     @ApiOperation(value = "Get Edge Rule Chains (getEdgeRuleChains)",
             notes = "Returns a page of Rule Chains assigned to the specified edge. " + RULE_CHAIN_DESCRIPTION + PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
@@ -831,18 +766,7 @@ public class RuleChainController extends BaseController {
     public RuleChain unsetAutoAssignToEdgeRuleChain(@ApiParam(value = RULE_CHAIN_ID_PARAM_DESCRIPTION)
                                                     @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
-        try {
-            RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
-            RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.WRITE);
-            ruleChainService.unsetAutoAssignToEdgeRuleChain(getTenantId(), ruleChainId);
-            return ruleChain;
-        } catch (Exception e) {
-            logEntityAction(emptyId(EntityType.RULE_CHAIN),
-                    null,
-                    null,
-                    ActionType.UPDATED, e, strRuleChainId);
-            throw handleException(e);
-        }
+        return entityDeleteService.deleteUnsetAutoAssignToEdgeRuleChain(new RuleChainId(toUUID(strRuleChainId)));
     }
 
     // TODO: @voba refactor this - add new config to edge rule chain to set it as auto-assign

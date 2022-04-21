@@ -21,6 +21,7 @@ import java.util.Optional;
 
 public enum Resource {
     ADMIN_SETTINGS(),
+    PROFILE(),
     ALARM(EntityType.ALARM),
     DEVICE(EntityType.DEVICE),
     ASSET(EntityType.ASSET),

@@ -29,7 +29,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -52,7 +51,7 @@ import static org.thingsboard.server.controller.ControllerConstants.RELATION_TYP
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
-public class EntityRelationController extends BaseController {
+public class EntityRelationController extends DefaultEntityBaseController {
 
     public static final String TO_TYPE = "toType";
     public static final String FROM_ID = "fromId";
@@ -121,26 +120,7 @@ public class EntityRelationController extends BaseController {
         EntityId toId = EntityIdFactory.getByTypeAndId(strToType, strToId);
         checkEntityId(fromId, Operation.WRITE);
         checkEntityId(toId, Operation.WRITE);
-        RelationTypeGroup relationTypeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
-        EntityRelation relation = new EntityRelation(fromId, toId, strRelationType, relationTypeGroup);
-        try {
-            Boolean found = relationService.deleteRelation(getTenantId(), fromId, toId, strRelationType, relationTypeGroup);
-            if (!found) {
-                throw new ThingsboardException("Requested item wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND);
-            }
-            logEntityAction(relation.getFrom(), null, getCurrentUser().getCustomerId(),
-                    ActionType.RELATION_DELETED, null, relation);
-            logEntityAction(relation.getTo(), null, getCurrentUser().getCustomerId(),
-                    ActionType.RELATION_DELETED, null, relation);
-
-            sendRelationNotificationMsg(getTenantId(), relation, EdgeEventActionType.RELATION_DELETED);
-        } catch (Exception e) {
-            logEntityAction(relation.getFrom(), null, getCurrentUser().getCustomerId(),
-                    ActionType.RELATION_DELETED, e, relation);
-            logEntityAction(relation.getTo(), null, getCurrentUser().getCustomerId(),
-                    ActionType.RELATION_DELETED, e, relation);
-            throw handleException(e);
-        }
+        entityDeleteService.deleteRelation(fromId, toId, strRelationType, strRelationTypeGroup);
     }
 
     @ApiOperation(value = "Delete Relations (deleteRelations)",
@@ -153,15 +133,7 @@ public class EntityRelationController extends BaseController {
                                 @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true) @RequestParam("entityType") String strType) throws ThingsboardException {
         checkParameter("entityId", strId);
         checkParameter("entityType", strType);
-        EntityId entityId = EntityIdFactory.getByTypeAndId(strType, strId);
-        checkEntityId(entityId, Operation.WRITE);
-        try {
-            relationService.deleteEntityRelations(getTenantId(), entityId);
-            logEntityAction(entityId, null, getCurrentUser().getCustomerId(), ActionType.RELATIONS_DELETED, null);
-        } catch (Exception e) {
-            logEntityAction(entityId, null, getCurrentUser().getCustomerId(), ActionType.RELATIONS_DELETED, e);
-            throw handleException(e);
-        }
+        entityDeleteService.deleteRelations(EntityIdFactory.getByTypeAndId(strType, strId));
     }
 
     @ApiOperation(value = "Get Relation (getRelation)",
@@ -390,16 +362,4 @@ public class EntityRelationController extends BaseController {
             return true;
         }).collect(Collectors.toList());
     }
-
-    private RelationTypeGroup parseRelationTypeGroup(String strRelationTypeGroup, RelationTypeGroup defaultValue) {
-        RelationTypeGroup result = defaultValue;
-        if (strRelationTypeGroup != null && strRelationTypeGroup.trim().length() > 0) {
-            try {
-                result = RelationTypeGroup.valueOf(strRelationTypeGroup);
-            } catch (IllegalArgumentException e) {
-            }
-        }
-        return result;
-    }
-
 }

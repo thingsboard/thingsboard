@@ -85,6 +85,7 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
@@ -284,7 +285,7 @@ public abstract class BaseController {
         errorResponseHandler.handle(ex, response);
     }
 
-    ThingsboardException handleException(Exception exception) {
+    protected ThingsboardException handleException(Exception exception) {
         return handleException(exception, true);
     }
 
@@ -310,7 +311,7 @@ public abstract class BaseController {
         }
     }
 
-    <T> T checkNotNull(T reference) throws ThingsboardException {
+    protected <T> T checkNotNull(T reference) throws ThingsboardException {
         return checkNotNull(reference, "Requested item wasn't found!");
     }
 
@@ -394,7 +395,7 @@ public abstract class BaseController {
         }
     }
 
-    Tenant checkTenantId(TenantId tenantId, Operation operation) throws ThingsboardException {
+    protected Tenant checkTenantId(TenantId tenantId, Operation operation) throws ThingsboardException {
         try {
             validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
             Tenant tenant = tenantService.findTenantById(tenantId);
@@ -418,7 +419,7 @@ public abstract class BaseController {
         }
     }
 
-    TenantProfile checkTenantProfileId(TenantProfileId tenantProfileId, Operation operation) throws ThingsboardException {
+    protected TenantProfile checkTenantProfileId(TenantProfileId tenantProfileId, Operation operation) throws ThingsboardException {
         try {
             validateId(tenantProfileId, "Incorrect tenantProfileId " + tenantProfileId);
             TenantProfile tenantProfile = tenantProfileService.findTenantProfileById(getTenantId(), tenantProfileId);
@@ -434,7 +435,7 @@ public abstract class BaseController {
         return getCurrentUser().getTenantId();
     }
 
-    Customer checkCustomerId(CustomerId customerId, Operation operation) throws ThingsboardException {
+    protected Customer checkCustomerId(CustomerId customerId, Operation operation) throws ThingsboardException {
         try {
             validateId(customerId, "Incorrect customerId " + customerId);
             Customer customer = customerService.findCustomerById(getTenantId(), customerId);
@@ -446,7 +447,7 @@ public abstract class BaseController {
         }
     }
 
-    User checkUserId(UserId userId, Operation operation) throws ThingsboardException {
+    protected User checkUserId(UserId userId, Operation operation) throws ThingsboardException {
         try {
             validateId(userId, "Incorrect userId " + userId);
             User user = userService.findUserById(getCurrentUser().getTenantId(), userId);
@@ -533,7 +534,7 @@ public abstract class BaseController {
         }
     }
 
-    Device checkDeviceId(DeviceId deviceId, Operation operation) throws ThingsboardException {
+    protected Device checkDeviceId(DeviceId deviceId, Operation operation) throws ThingsboardException {
         try {
             validateId(deviceId, "Incorrect deviceId " + deviceId);
             Device device = deviceService.findDeviceById(getCurrentUser().getTenantId(), deviceId);
@@ -557,7 +558,7 @@ public abstract class BaseController {
         }
     }
 
-    DeviceProfile checkDeviceProfileId(DeviceProfileId deviceProfileId, Operation operation) throws ThingsboardException {
+    protected DeviceProfile checkDeviceProfileId(DeviceProfileId deviceProfileId, Operation operation) throws ThingsboardException {
         try {
             validateId(deviceProfileId, "Incorrect deviceProfileId " + deviceProfileId);
             DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileById(getCurrentUser().getTenantId(), deviceProfileId);
@@ -593,7 +594,7 @@ public abstract class BaseController {
         }
     }
 
-    Asset checkAssetId(AssetId assetId, Operation operation) throws ThingsboardException {
+    protected Asset checkAssetId(AssetId assetId, Operation operation) throws ThingsboardException {
         try {
             validateId(assetId, "Incorrect assetId " + assetId);
             Asset asset = assetService.findAssetById(getCurrentUser().getTenantId(), assetId);
@@ -617,7 +618,7 @@ public abstract class BaseController {
         }
     }
 
-    Alarm checkAlarmId(AlarmId alarmId, Operation operation) throws ThingsboardException {
+    protected Alarm checkAlarmId(AlarmId alarmId, Operation operation) throws ThingsboardException {
         try {
             validateId(alarmId, "Incorrect alarmId " + alarmId);
             Alarm alarm = alarmService.findAlarmByIdAsync(getCurrentUser().getTenantId(), alarmId).get();
@@ -641,7 +642,7 @@ public abstract class BaseController {
         }
     }
 
-    WidgetsBundle checkWidgetsBundleId(WidgetsBundleId widgetsBundleId, Operation operation) throws ThingsboardException {
+    protected WidgetsBundle checkWidgetsBundleId(WidgetsBundleId widgetsBundleId, Operation operation) throws ThingsboardException {
         try {
             validateId(widgetsBundleId, "Incorrect widgetsBundleId " + widgetsBundleId);
             WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleById(getCurrentUser().getTenantId(), widgetsBundleId);
@@ -665,7 +666,7 @@ public abstract class BaseController {
         }
     }
 
-    Dashboard checkDashboardId(DashboardId dashboardId, Operation operation) throws ThingsboardException {
+    protected Dashboard checkDashboardId(DashboardId dashboardId, Operation operation) throws ThingsboardException {
         try {
             validateId(dashboardId, "Incorrect dashboardId " + dashboardId);
             Dashboard dashboard = dashboardService.findDashboardById(getCurrentUser().getTenantId(), dashboardId);
@@ -677,7 +678,7 @@ public abstract class BaseController {
         }
     }
 
-    Edge checkEdgeId(EdgeId edgeId, Operation operation) throws ThingsboardException {
+    protected Edge checkEdgeId(EdgeId edgeId, Operation operation) throws ThingsboardException {
         try {
             validateId(edgeId, "Incorrect edgeId " + edgeId);
             Edge edge = edgeService.findEdgeById(getTenantId(), edgeId);
@@ -756,7 +757,7 @@ public abstract class BaseController {
         return ruleNode;
     }
 
-    TbResource checkResourceId(TbResourceId resourceId, Operation operation) throws ThingsboardException {
+    protected TbResource checkResourceId(TbResourceId resourceId, Operation operation) throws ThingsboardException {
         try {
             validateId(resourceId, "Incorrect resourceId " + resourceId);
             TbResource resource = resourceService.findResourceById(getCurrentUser().getTenantId(), resourceId);
@@ -792,7 +793,7 @@ public abstract class BaseController {
         }
     }
 
-    OtaPackageInfo checkOtaPackageInfoId(OtaPackageId otaPackageId, Operation operation) throws ThingsboardException {
+    protected OtaPackageInfo checkOtaPackageInfoId(OtaPackageId otaPackageId, Operation operation) throws ThingsboardException {
         try {
             validateId(otaPackageId, "Incorrect otaPackageId " + otaPackageId);
             OtaPackageInfo otaPackageIn = otaPackageService.findOtaPackageInfoById(getCurrentUser().getTenantId(), otaPackageId);
@@ -927,5 +928,16 @@ public abstract class BaseController {
         } catch (Exception e) {
             return MediaType.APPLICATION_OCTET_STREAM;
         }
+    }
+
+    protected RelationTypeGroup parseRelationTypeGroup(String strRelationTypeGroup, RelationTypeGroup defaultValue) {
+        RelationTypeGroup result = defaultValue;
+        if (strRelationTypeGroup != null && strRelationTypeGroup.trim().length() > 0) {
+            try {
+                result = RelationTypeGroup.valueOf(strRelationTypeGroup);
+            } catch (IllegalArgumentException e) {
+            }
+        }
+        return result;
     }
 }
