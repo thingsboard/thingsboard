@@ -23,6 +23,9 @@ import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.sync.exporting.data.request.ExportRequest;
+
+import java.util.List;
 
 public interface ExportableEntitiesService {
 
@@ -31,6 +34,8 @@ public interface ExportableEntitiesService {
     <E extends HasId<I>, I extends EntityId> E findEntityByTenantIdAndId(TenantId tenantId, I id);
 
     <E extends ExportableEntity<I>, I extends EntityId> E findEntityByTenantIdAndName(TenantId tenantId, EntityType entityType, String name);
+
+    List<EntityId> findEntitiesForRequest(TenantId tenantId, ExportRequest request);
 
 
     void checkPermission(SecurityUser user, HasId<? extends EntityId> entity, EntityType entityType, Operation operation) throws ThingsboardException;

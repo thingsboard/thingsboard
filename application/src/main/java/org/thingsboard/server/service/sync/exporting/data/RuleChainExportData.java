@@ -17,10 +17,12 @@ package org.thingsboard.server.service.sync.exporting.data;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 
 @EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 @Data
 public class RuleChainExportData extends EntityExportData<RuleChain> {
 
