@@ -29,7 +29,6 @@ import org.thingsboard.rule.engine.flow.TbRuleChainInputNode;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNode;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNodeConfiguration;
-import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.alarm.Alarm;
@@ -83,8 +82,6 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 @Slf4j
 public class DefaultDataUpdateService implements DataUpdateService {
 
-    private static final int DEFAULT_LIMIT = 100;
-
     @Autowired
     private TenantService tenantService;
 
@@ -120,6 +117,9 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
     @Autowired
     private OAuth2Service oAuth2Service;
+
+    @Autowired
+    private TenantCustomersTitleUpdaterComponent tenantCustomersTitleUpdaterComponent;
 
     @Override
     public void updateData(String fromVersion) throws Exception {
@@ -572,54 +572,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
                 @Override
                 protected void updateEntity(Tenant entity) {
-                    updateDuplicateCustomersTitle(entity);
+                    tenantCustomersTitleUpdaterComponent.updateDuplicateCustomersTitle(entity);
                 }
             };
-
-    private List<Customer> updateDuplicateCustomersTitle(Tenant entity) {
-        PageLink pageLink = new PageLink(DEFAULT_LIMIT);
-        boolean hasNext = true;
-        List<Customer> customers = new ArrayList<>();
-        while (hasNext) {
-            PageData<Customer> entities = customerDao.findCustomersByTenantId(entity.getUuidId(), pageLink);
-            customers.addAll(entities.getData());
-
-            hasNext = entities.hasNext();
-            if (hasNext) {
-                pageLink = pageLink.nextPageLink();
-            }
-        }
-        return updateDuplicateCustomersTitle(customers);
-    }
-
-    protected List<Customer> updateDuplicateCustomersTitle(List<Customer> customers) {
-        if (customers == null || customers.isEmpty()) return customers;
-        sortCustomersByTitleAndCreatedTime(customers);
-        int countEqualsTitleAndTenantIdBefore = 0;
-        String lastCustomerName = customers.get(0).getName();
-        for (int i = 1; i < customers.size(); i++) {
-            Customer customer = customers.get(i);
-            if (customer.getName().equals(lastCustomerName)) {
-                countEqualsTitleAndTenantIdBefore++;
-                customer.setTitle(customer.getName() + "-" + countEqualsTitleAndTenantIdBefore);
-                customers.set(i, updateCustomerTitle(customer.getTenantId(), customer));
-            } else {
-                lastCustomerName = customer.getName();
-                countEqualsTitleAndTenantIdBefore = 0;
-            }
-        }
-        return customers;
-    }
-
-    protected Customer updateCustomerTitle(TenantId id, Customer customer) {
-        return customerDao.save(id, customer);
-    }
-
-    protected void sortCustomersByTitleAndCreatedTime(List<Customer> customers) {
-        customers.sort((o1, o2) -> {
-            if (!o1.getName().equals(o2.getName())) return o1.getName().compareTo(o2.getName());
-            else return Long.compare(o2.getCreatedTime(), o1.getCreatedTime());
-        });
-    }
-
 }
