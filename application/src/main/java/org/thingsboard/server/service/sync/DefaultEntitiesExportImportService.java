@@ -153,7 +153,7 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
     public void checkPermission(SecurityUser user, HasId<? extends EntityId> entity, EntityType entityType, Operation operation) throws ThingsboardException {
         if (entity instanceof HasTenantId) {
             accessControlService.checkPermission(user, Resource.of(entityType), operation, entity.getId(), (HasTenantId) entity);
-        } else if (entity != null) {
+        } else {
             accessControlService.checkPermission(user, Resource.of(entityType), operation);
         }
     }

@@ -36,7 +36,7 @@ public class DeviceExportService extends BaseEntityExportService<DeviceId, Devic
 
     @Override
     protected void setRelatedEntities(TenantId tenantId, Device device, DeviceExportData exportData) {
-        exportData.setCredentials(deviceCredentialsService.findDeviceCredentialsByDeviceId(TenantId.SYS_TENANT_ID, device.getId()));
+        exportData.setCredentials(deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, device.getId()));
     }
 
     @Override

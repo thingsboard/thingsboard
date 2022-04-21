@@ -100,11 +100,11 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
         });
 
         importResult.addSaveReferencesCallback(() -> {
-            List<EntityRelation> relations = exportData.getRelations();
-            if (relations == null || !importSettings.isUpdateRelations()) {
+            if (!importSettings.isUpdateRelations() || exportData.getRelations() == null) {
                 return;
             }
-            relations = new ArrayList<>(relations);
+
+            List<EntityRelation> relations = new ArrayList<>(exportData.getRelations());
 
             for (EntityRelation relation : relations) {
                 if (!relation.getTo().equals(savedEntity.getId())) {
@@ -112,7 +112,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                     exportableEntitiesService.checkPermission(user, to, to.getId().getEntityType(), Operation.WRITE);
                     relation.setTo(to.getId());
                 }
-                if (!relation.getFrom().equals(savedEntity.getId())){
+                if (!relation.getFrom().equals(savedEntity.getId())) {
                     HasId<EntityId> from = findInternalEntity(user.getTenantId(), relation.getFrom());
                     exportableEntitiesService.checkPermission(user, from, from.getId().getEntityType(), Operation.WRITE);
                     relation.setFrom(from.getId());
@@ -129,7 +129,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                         EntityId otherEntity = null;
                         if (!existingRelation.getTo().equals(savedEntity.getId())) {
                             otherEntity = existingRelation.getTo();
-                        } else if (!existingRelation.getFrom().equals(savedEntity.getId())){
+                        } else if (!existingRelation.getFrom().equals(savedEntity.getId())) {
                             otherEntity = existingRelation.getFrom();
                         }
                         if (otherEntity != null) {
