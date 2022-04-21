@@ -59,12 +59,6 @@ public final class TenantProfileEntity extends BaseSqlEntity<TenantProfile> impl
     @Column(name = ModelConstants.TENANT_PROFILE_ISOLATED_TB_RULE_ENGINE)
     private boolean isolatedTbRuleEngine;
 
-    @Column(name = ModelConstants.TENANT_PROFILE_MAX_NUMBER_OF_QUEUES)
-    private Integer maxNumberOfQueues;
-
-    @Column(name = ModelConstants.TENANT_PROFILE_MAX_NUMBER_OF_PARTITIONS_PER_QUEUE)
-    private Integer maxNumberOfPartitionsPerQueue;
-
     @Type(type = "jsonb")
     @Column(name = ModelConstants.TENANT_PROFILE_PROFILE_DATA_PROPERTY, columnDefinition = "jsonb")
     private JsonNode profileData;
@@ -83,8 +77,6 @@ public final class TenantProfileEntity extends BaseSqlEntity<TenantProfile> impl
         this.isDefault = tenantProfile.isDefault();
         this.isolatedTbCore = tenantProfile.isIsolatedTbCore();
         this.isolatedTbRuleEngine = tenantProfile.isIsolatedTbRuleEngine();
-        this.maxNumberOfPartitionsPerQueue = tenantProfile.getMaxNumberOfPartitionsPerQueue();
-        this.maxNumberOfQueues = tenantProfile.getMaxNumberOfQueues();
         this.profileData = JacksonUtil.convertValue(tenantProfile.getProfileData(), ObjectNode.class);
     }
 
@@ -111,8 +103,6 @@ public final class TenantProfileEntity extends BaseSqlEntity<TenantProfile> impl
         tenantProfile.setDefault(isDefault);
         tenantProfile.setIsolatedTbCore(isolatedTbCore);
         tenantProfile.setIsolatedTbRuleEngine(isolatedTbRuleEngine);
-        tenantProfile.setMaxNumberOfPartitionsPerQueue(maxNumberOfPartitionsPerQueue);
-        tenantProfile.setMaxNumberOfQueues(maxNumberOfQueues);
         tenantProfile.setProfileData(JacksonUtil.convertValue(profileData, TenantProfileData.class));
         return tenantProfile;
     }

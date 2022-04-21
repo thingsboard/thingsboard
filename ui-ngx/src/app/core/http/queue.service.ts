@@ -32,26 +32,26 @@ export class QueueService {
   ) { }
 
   public getTenantQueuesNamesByServiceType(serviceType: ServiceType, config?: RequestConfig): Observable<Array<string>> {
-    return this.http.get<Array<string>>(`/api/tenant/queues?serviceType=${serviceType}`,
+    return this.http.get<Array<string>>(`/api/queues?serviceType=${serviceType}`,
       defaultHttpOptionsFromConfig(config));
   }
 
   public getQueueById(queueId: string, config?: RequestConfig): Observable<QueueInfo> {
-    return this.http.get<QueueInfo>(`/api/tenant/queues/${queueId}`, defaultHttpOptionsFromConfig(config));
+    return this.http.get<QueueInfo>(`/api/queues/${queueId}`, defaultHttpOptionsFromConfig(config));
   }
 
   public getTenantQueuesByServiceType(pageLink: PageLink,
                                       serviceType: ServiceType,
                                       config?: RequestConfig): Observable<PageData<QueueInfo>> {
-    return this.http.get<PageData<QueueInfo>>(`/api/tenant/queues${pageLink.toQuery()}&serviceType=${serviceType}`,
+    return this.http.get<PageData<QueueInfo>>(`/api/queues${pageLink.toQuery()}&serviceType=${serviceType}`,
       defaultHttpOptionsFromConfig(config));
   }
 
   public saveQueue(queue: QueueInfo, serviceType: ServiceType, config?: RequestConfig): Observable<QueueInfo> {
-    return this.http.post<QueueInfo>(`/api/tenant/queues?serviceType=${serviceType}`, queue, defaultHttpOptionsFromConfig(config));
+    return this.http.post<QueueInfo>(`/api/queues?serviceType=${serviceType}`, queue, defaultHttpOptionsFromConfig(config));
   }
 
   public deleteQueue(queueId: string) {
-    return this.http.delete(`/api/tenant/queues/${queueId}`);
+    return this.http.delete(`/api/queues/${queueId}`);
   }
 }

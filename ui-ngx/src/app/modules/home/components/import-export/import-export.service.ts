@@ -567,9 +567,7 @@ export class ImportExportService {
     return isDefined(tenantProfile.name)
       && isDefined(tenantProfile.profileData)
       && isDefined(tenantProfile.isolatedTbCore)
-      && isDefined(tenantProfile.isolatedTbRuleEngine)
-      && isDefined(tenantProfile.maxNumberOfQueues)
-      && isDefined(tenantProfile.maxNumberOfPartitionsPerQueue);
+      && isDefined(tenantProfile.isolatedTbRuleEngine);
   }
 
   private sumObject(obj1: any, obj2: any): any {

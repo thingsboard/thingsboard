@@ -352,8 +352,6 @@ CREATE TABLE IF NOT EXISTS tenant_profile (
     is_default boolean,
     isolated_tb_core boolean,
     isolated_tb_rule_engine boolean,
-    max_number_of_queues int ,
-    max_number_of_partitions_per_queue int,
     CONSTRAINT tenant_profile_name_unq_key UNIQUE (name)
 );
 

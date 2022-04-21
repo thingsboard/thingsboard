@@ -30,10 +30,10 @@ import org.thingsboard.server.common.data.queue.ProcessingStrategyType;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.queue.SubmitStrategy;
 import org.thingsboard.server.common.data.queue.SubmitStrategyType;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.tenant.TenantServiceImpl;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -47,18 +47,34 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
 
     @Before
     public void before() throws NoSuchFieldException, IllegalAccessException {
-        Field zkEnabled = TenantServiceImpl.class.getDeclaredField("zkEnabled");
-        zkEnabled.setAccessible(true);
-        zkEnabled.set(tenantService, Boolean.TRUE);
-
         TenantProfile tenantProfile = new TenantProfile();
         tenantProfile.setDefault(false);
         tenantProfile.setName("Isolated TB Rule Engine");
         tenantProfile.setDescription("Isolated TB Rule Engine tenant profile");
         tenantProfile.setIsolatedTbCore(false);
         tenantProfile.setIsolatedTbRuleEngine(true);
-        tenantProfile.setMaxNumberOfQueues(10);
-        tenantProfile.setMaxNumberOfPartitionsPerQueue(10);
+
+        TenantProfileQueueConfiguration mainQueueConfiguration = new TenantProfileQueueConfiguration();
+        mainQueueConfiguration.setName("Main");
+        mainQueueConfiguration.setTopic("tb_rule_engine.main");
+        mainQueueConfiguration.setPollInterval(25);
+        mainQueueConfiguration.setPartitions(10);
+        mainQueueConfiguration.setConsumerPerPartition(true);
+        mainQueueConfiguration.setPackProcessingTimeout(2000);
+        SubmitStrategy mainQueueSubmitStrategy = new SubmitStrategy();
+        mainQueueSubmitStrategy.setType(SubmitStrategyType.BURST);
+        mainQueueSubmitStrategy.setBatchSize(1000);
+        mainQueueConfiguration.setSubmitStrategy(mainQueueSubmitStrategy);
+        ProcessingStrategy mainQueueProcessingStrategy = new ProcessingStrategy();
+        mainQueueProcessingStrategy.setType(ProcessingStrategyType.SKIP_ALL_FAILURES);
+        mainQueueProcessingStrategy.setRetries(3);
+        mainQueueProcessingStrategy.setFailurePercentage(0);
+        mainQueueProcessingStrategy.setPauseBetweenRetries(3);
+        mainQueueProcessingStrategy.setMaxPauseBetweenRetries(3);
+        mainQueueConfiguration.setProcessingStrategy(mainQueueProcessingStrategy);
+        TenantProfileData profileData = tenantProfile.getProfileData();
+        profileData.setQueueConfiguration(Collections.singletonList(mainQueueConfiguration));
+        tenantProfile.setProfileData(profileData);
 
         TenantProfile savedTenantProfile = tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
         Assert.assertNotNull(savedTenantProfile);
@@ -340,23 +356,6 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
             queueService.saveQueue(queue);
         } finally {
             tenantService.deleteTenant(savedTenant.getId());
-        }
-    }
-
-    @Test(expected = DataValidationException.class)
-    public void testSaveQueueWithExceededLimitPerTenant() {
-        for (int i = 1; i <= 10; i++) {
-            //main queue created automatically
-            Queue queue = new Queue();
-            queue.setTenantId(tenantId);
-            queue.setName("Test" + i);
-            queue.setTopic("tb_rule_engine.test" + i);
-            queue.setPollInterval(25);
-            queue.setPartitions(1);
-            queue.setPackProcessingTimeout(2000);
-            queue.setSubmitStrategy(createTestSubmitStrategy());
-            queue.setProcessingStrategy(createTestProcessingStrategy());
-            queueService.saveQueue(queue);
         }
     }
 

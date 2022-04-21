@@ -55,7 +55,7 @@ public class QueueController extends BaseController {
     @ApiOperation(value = "Get queue names (getTenantQueuesByServiceType)",
             notes = "Returns a set of unique queue names based on service type. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/queues", params = {"serviceType"}, produces = MediaType.APPLICATION_JSON_VALUE, method = RequestMethod.GET)
+    @RequestMapping(value = "/queues", params = {"serviceType"}, produces = MediaType.APPLICATION_JSON_VALUE, method = RequestMethod.GET)
     @ResponseBody()
     public Set<String> getTenantQueuesByServiceType(@ApiParam(value = QUEUE_SERVICE_TYPE_DESCRIPTION, allowableValues = QUEUE_SERVICE_TYPE_ALLOWABLE_VALUES)
                                                     @RequestParam String serviceType) throws ThingsboardException {
@@ -74,7 +74,7 @@ public class QueueController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/queues", params = {"serviceType", "pageSize", "page"}, method = RequestMethod.GET)
+    @RequestMapping(value = "/queues", params = {"serviceType", "pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<Queue> getTenantQueuesByServiceType(@RequestParam String serviceType,
                                                         @RequestParam int pageSize,
@@ -98,7 +98,7 @@ public class QueueController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/queues/{queueId}", method = RequestMethod.GET)
+    @RequestMapping(value = "/queues/{queueId}", method = RequestMethod.GET)
     @ResponseBody
     public Queue getQueueById(@PathVariable("queueId") String queueIdStr) throws ThingsboardException {
         checkParameter("queueId", queueIdStr);
@@ -111,8 +111,8 @@ public class QueueController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/queues", params = {"serviceType"}, method = RequestMethod.POST)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
+    @RequestMapping(value = "/queues", params = {"serviceType"}, method = RequestMethod.POST)
     @ResponseBody
     public Queue saveQueue(@RequestBody Queue queue,
                            @RequestParam String serviceType) throws ThingsboardException {
@@ -137,8 +137,8 @@ public class QueueController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/queues/{queueId}", method = RequestMethod.DELETE)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
+    @RequestMapping(value = "/queues/{queueId}", method = RequestMethod.DELETE)
     @ResponseBody
     public void deleteQueue(@PathVariable("queueId") String queueIdStr) throws ThingsboardException {
         checkParameter("queueId", queueIdStr);

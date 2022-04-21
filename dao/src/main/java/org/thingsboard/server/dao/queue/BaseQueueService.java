@@ -21,14 +21,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.queue.ProcessingStrategy;
-import org.thingsboard.server.common.data.queue.ProcessingStrategyType;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.queue.SubmitStrategy;
 import org.thingsboard.server.common.data.queue.SubmitStrategyType;
@@ -202,30 +200,6 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
         tenantQueuesRemover.removeEntities(tenantId, tenantId);
     }
 
-    @Override
-    @Transactional
-    public Queue createDefaultMainQueue(TenantProfile tenantProfile, TenantId tenantId) {
-        Queue mainQueue = new Queue();
-        mainQueue.setTenantId(tenantId);
-        mainQueue.setName("Main");
-        mainQueue.setTopic("tb_rule_engine.main");
-        mainQueue.setPollInterval(25);
-        mainQueue.setPartitions(Math.max(tenantProfile.getMaxNumberOfPartitionsPerQueue(), 1));
-        mainQueue.setPackProcessingTimeout(60000);
-        SubmitStrategy mainQueueSubmitStrategy = new SubmitStrategy();
-        mainQueueSubmitStrategy.setType(SubmitStrategyType.BURST);
-        mainQueueSubmitStrategy.setBatchSize(1000);
-        mainQueue.setSubmitStrategy(mainQueueSubmitStrategy);
-        ProcessingStrategy mainQueueProcessingStrategy = new ProcessingStrategy();
-        mainQueueProcessingStrategy.setType(ProcessingStrategyType.SKIP_ALL_FAILURES);
-        mainQueueProcessingStrategy.setRetries(3);
-        mainQueueProcessingStrategy.setFailurePercentage(0);
-        mainQueueProcessingStrategy.setPauseBetweenRetries(3);
-        mainQueueProcessingStrategy.setMaxPauseBetweenRetries(3);
-        mainQueue.setProcessingStrategy(mainQueueProcessingStrategy);
-        return saveQueue(mainQueue);
-    }
-
     private DataValidator<Queue> queueValidator =
             new DataValidator<>() {
 
@@ -260,17 +234,6 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
 
                         if (!tenantProfile.isIsolatedTbRuleEngine()) {
                             throw new DataValidationException("Tenant should be isolated!");
-                        }
-
-                        if (queue.getId() == null) {
-                            List<Queue> existingQueues = findQueuesByTenantId(tenantId);
-                            if (existingQueues.size() >= tenantProfile.getMaxNumberOfQueues()) {
-                                throw new DataValidationException("The limit for creating new queue has been exceeded!");
-                            }
-                        }
-
-                        if (queue.getPartitions() > tenantProfile.getMaxNumberOfPartitionsPerQueue()) {
-                            throw new DataValidationException(String.format("Queue partitions can't be more then %d", tenantProfile.getMaxNumberOfPartitionsPerQueue()));
                         }
                     }
 

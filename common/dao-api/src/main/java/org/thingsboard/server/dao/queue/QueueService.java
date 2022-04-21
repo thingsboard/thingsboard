@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.queue;
 
-import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -41,8 +40,6 @@ public interface QueueService {
     Queue findQueueById(TenantId tenantId, QueueId queueId);
 
     Queue findQueueByTenantIdAndName(TenantId tenantId, String name);
-
-    Queue createDefaultMainQueue(TenantProfile tenantProfile, TenantId tenantId);
 
     void deleteQueuesByTenantId(TenantId tenantId);
 }

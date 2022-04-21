@@ -67,8 +67,6 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
         name: [entity ? entity.name : '', [Validators.required, Validators.maxLength(255)]],
         isolatedTbCore: [entity ? entity.isolatedTbCore : false, []],
         isolatedTbRuleEngine: [entity ? entity.isolatedTbRuleEngine : false, []],
-        maxNumberOfQueues: [entity ? entity.maxNumberOfQueues : 1, [Validators.required, Validators.min(1)]],
-        maxNumberOfPartitionsPerQueue: [entity ? entity.maxNumberOfPartitionsPerQueue : 1, [Validators.required, Validators.min(1)]],
         profileData: [entity && !this.isAdd ? entity.profileData : {
           configuration: createTenantProfileConfiguration(TenantProfileType.DEFAULT)
         } as TenantProfileData, []],
@@ -81,8 +79,6 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
     this.entityForm.patchValue({name: entity.name});
     this.entityForm.patchValue({isolatedTbCore: entity.isolatedTbCore});
     this.entityForm.patchValue({isolatedTbRuleEngine: entity.isolatedTbRuleEngine});
-    this.entityForm.patchValue({maxNumberOfQueues: entity.maxNumberOfQueues});
-    this.entityForm.patchValue({maxNumberOfPartitionsPerQueue: entity.maxNumberOfPartitionsPerQueue});
     this.entityForm.patchValue({profileData: !this.isAdd ? entity.profileData : {
         configuration: createTenantProfileConfiguration(TenantProfileType.DEFAULT)
       } as TenantProfileData});
@@ -92,11 +88,9 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
   showQueueParams(): boolean {
     let isolatedTbRuleEngine: boolean = this.entityForm.get('isolatedTbRuleEngine').value;
     if (isolatedTbRuleEngine) {
-      this.entityForm.get('maxNumberOfQueues').enable();
-      this.entityForm.get('maxNumberOfPartitionsPerQueue').enable();
+//enable
     } else {
-      this.entityForm.get('maxNumberOfQueues').disable();
-      this.entityForm.get('maxNumberOfPartitionsPerQueue').disable();
+//disable
     }
     return isolatedTbRuleEngine;
   }
@@ -108,8 +102,6 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
         if (!this.isAdd) {
           this.entityForm.get('isolatedTbCore').disable({emitEvent: false});
           this.entityForm.get('isolatedTbRuleEngine').disable({emitEvent: false});
-          this.entityForm.get('maxNumberOfQueues').disable({emitEvent: false});
-          this.entityForm.get('maxNumberOfPartitionsPerQueue').disable({emitEvent: false});
         }
       } else {
         this.entityForm.disable({emitEvent: false});

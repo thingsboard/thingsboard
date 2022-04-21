@@ -128,8 +128,6 @@ public class ModelConstants {
     public static final String TENANT_PROFILE_IS_DEFAULT_PROPERTY = "is_default";
     public static final String TENANT_PROFILE_ISOLATED_TB_CORE = "isolated_tb_core";
     public static final String TENANT_PROFILE_ISOLATED_TB_RULE_ENGINE = "isolated_tb_rule_engine";
-    public static final String TENANT_PROFILE_MAX_NUMBER_OF_QUEUES = "max_number_of_queues";
-    public static final String TENANT_PROFILE_MAX_NUMBER_OF_PARTITIONS_PER_QUEUE = "max_number_of_partitions_per_queue";
 
     /**
      * Cassandra customer constants.
