@@ -107,6 +107,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -200,8 +201,13 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         boolean sent = false;
         if (systemContext.isEdgesEnabled() && edgeId != null) {
             log.debug("[{}][{}] device is related to edge [{}]. Saving RPC request to edge queue", tenantId, deviceId, edgeId.getId());
-            saveRpcRequestToEdgeQueue(request, rpcRequest.getRequestId());
-            sent = true;
+            try {
+                saveRpcRequestToEdgeQueue(request, rpcRequest.getRequestId()).get();
+                sent = true;
+            } catch (InterruptedException | ExecutionException e) {
+                String errMsg = String.format("[%s][%s][%s] Failed to save rpc request to edge queue %s", tenantId, deviceId, edgeId.getId(), request);
+                log.error(errMsg, e);
+            }
         } else if (isSendNewRpcAvailable()) {
             sent = rpcSubscriptions.size() > 0;
             Set<UUID> syncSessionSet = new HashSet<>();
@@ -810,7 +816,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         systemContext.getTbCoreToTransportService().process(nodeId, msg);
     }
 
-    private void saveRpcRequestToEdgeQueue(ToDeviceRpcRequest msg, Integer requestId) {
+    private ListenableFuture<Void> saveRpcRequestToEdgeQueue(ToDeviceRpcRequest msg, Integer requestId) {
         ObjectNode body = mapper.createObjectNode();
         body.put("requestId", requestId);
         body.put("requestUUID", msg.getId().toString());
@@ -821,17 +827,9 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
 
         EdgeEvent edgeEvent = EdgeUtils.constructEdgeEvent(tenantId, edgeId, EdgeEventType.DEVICE, EdgeEventActionType.RPC_CALL, deviceId, body);
 
-        Futures.addCallback(systemContext.getEdgeEventService().saveAsync(edgeEvent), new FutureCallback<>() {
-            @Override
-            public void onSuccess(Void unused) {
-                systemContext.getClusterService().onEdgeEventUpdate(tenantId, edgeId);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                String errMsg = String.format("Failed to save edge event. msg [%s], edge event [%s]", msg, edgeEvent);
-                log.warn(errMsg, t);
-            }
+        return Futures.transform(systemContext.getEdgeEventService().saveAsync(edgeEvent), unused -> {
+            systemContext.getClusterService().onEdgeEventUpdate(tenantId, edgeId);
+            return null;
         }, systemContext.getDbCallbackExecutor());
     }
 
