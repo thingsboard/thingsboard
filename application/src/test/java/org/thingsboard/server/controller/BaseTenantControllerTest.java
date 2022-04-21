@@ -26,6 +26,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Tenant;
@@ -36,19 +37,23 @@ import org.thingsboard.server.common.data.page.PageLink;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@TestPropertySource(properties = {
+        "js.evaluator=mock",
+})
 @Slf4j
 public abstract class BaseTenantControllerTest extends AbstractControllerTest {
 
-    static final TypeReference<PageData<Tenant>> PAGE_DATA_TENANT_TYPE_REF = new TypeReference<>(){};
-    static final TypeReference<PageData<TenantInfo>> PAGE_DATA_TENANT_INFO_TYPE_REF = new TypeReference<>(){};
-    static final int TIMEOUT = 30;
+    static final TypeReference<PageData<Tenant>> PAGE_DATA_TENANT_TYPE_REF = new TypeReference<>() {
+    };
+    static final TypeReference<PageData<TenantInfo>> PAGE_DATA_TENANT_INFO_TYPE_REF = new TypeReference<>() {
+    };
 
-    List<ListenableFuture<ResultActions>> deleteFutures = new ArrayList<>();
     ListeningExecutorService executor;
 
     @Before
@@ -176,14 +181,9 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
 
         assertThat(tenants).containsExactlyInAnyOrderElementsOf(loadedTenants);
 
-        for (Tenant tenant : loadedTenants) {
-            if (!tenant.getTitle().equals(TEST_TENANT_NAME)) {
-                deleteFutures.add(executor.submit(() ->
-                        doDelete("/api/tenant/" + tenant.getId().getId().toString())
-                                .andExpect(status().isOk())));
-            }
-        }
-        Futures.allAsList(deleteFutures).get(TIMEOUT, TimeUnit.SECONDS);
+        deleteEntitiesAsync("/api/tenant/", loadedTenants.stream()
+                .filter((t) -> !TEST_TENANT_NAME.equals(t.getTitle()))
+                .collect(Collectors.toList()), executor).get(TIMEOUT, TimeUnit.SECONDS);
 
         pageLink = new PageLink(17);
         pageData = doGetTypedWithPageLink("/api/tenants?", PAGE_DATA_TENANT_TYPE_REF, pageLink);
@@ -256,14 +256,8 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         assertThat(tenantsTitle2).as(title2).containsExactlyInAnyOrderElementsOf(loadedTenantsTitle2);
         log.debug("asserted");
 
-        deleteFutures.clear();
-        for (Tenant tenant : loadedTenantsTitle1) {
-            deleteFutures.add(executor.submit(() ->
-                    doDelete("/api/tenant/" + tenant.getId().getId().toString())
-                            .andExpect(status().isOk())));
-        }
 
-        Futures.allAsList(deleteFutures).get(TIMEOUT, TimeUnit.SECONDS);
+        deleteEntitiesAsync("/api/tenant/", loadedTenantsTitle1, executor).get(TIMEOUT, TimeUnit.SECONDS);
         log.debug("deleted '{}', size {}", title1, loadedTenantsTitle1.size());
 
         pageLink = new PageLink(4, 0, title1);
@@ -273,14 +267,7 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
 
         log.debug("tried to search another '{}', step 4", title1);
 
-        deleteFutures.clear();
-        for (Tenant tenant : loadedTenantsTitle2) {
-            deleteFutures.add(executor.submit(() ->
-                    doDelete("/api/tenant/" + tenant.getId().getId().toString())
-                            .andExpect(status().isOk())));
-        }
-
-        Futures.allAsList(deleteFutures).get(TIMEOUT, TimeUnit.SECONDS);
+        deleteEntitiesAsync("/api/tenant/", loadedTenantsTitle2, executor).get(TIMEOUT, TimeUnit.SECONDS);
         log.debug("deleted '{}', size {}", title2, loadedTenantsTitle2.size());
 
         pageLink = new PageLink(4, 0, title2);
@@ -321,18 +308,24 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
 
         assertThat(tenants).containsExactlyInAnyOrderElementsOf(loadedTenants);
 
-        for (TenantInfo tenant : loadedTenants) {
-            if (!tenant.getTitle().equals(TEST_TENANT_NAME)) {
-                deleteFutures.add(executor.submit(() ->
-                        doDelete("/api/tenant/" + tenant.getId().getId().toString())
-                                .andExpect(status().isOk())));
-            }
-        }
-        Futures.allAsList(deleteFutures).get(TIMEOUT, TimeUnit.SECONDS);
+        deleteEntitiesAsync("/api/tenant/", loadedTenants.stream()
+                .filter((t) -> !TEST_TENANT_NAME.equals(t.getTitle()))
+                .collect(Collectors.toList()), executor).get(TIMEOUT, TimeUnit.SECONDS);
 
         pageLink = new PageLink(17);
         pageData = doGetTypedWithPageLink("/api/tenantInfos?", PAGE_DATA_TENANT_INFO_TYPE_REF, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(1, pageData.getData().size());
     }
+
+    ListenableFuture<List<ResultActions>> deleteTenantsAsync(String urlTemplate, List<Tenant> tenants) {
+        List<ListenableFuture<ResultActions>> futures = new ArrayList<>(tenants.size());
+        for (Tenant device : tenants) {
+            futures.add(executor.submit(() ->
+                    doDelete(urlTemplate + device.getId().getId())
+                            .andExpect(status().isOk())));
+        }
+        return Futures.allAsList(futures);
+    }
+
 }

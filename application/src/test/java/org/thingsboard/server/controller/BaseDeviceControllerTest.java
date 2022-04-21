@@ -27,7 +27,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
@@ -58,7 +57,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 @Slf4j
 public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
-    static final int TIMEOUT = 30;
     static final TypeReference<PageData<Device>> PAGE_DATA_DEVICE_TYPE_REF = new TypeReference<>() {
     };
 
@@ -203,7 +201,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         Assert.assertEquals("typeB", deviceTypes.get(1).getType());
         Assert.assertEquals("typeC", deviceTypes.get(2).getType());
 
-        deleteDevicesAsync("/api/device/", devices);
+        deleteEntitiesAsync("/api/device/", devices, executor).get(TIMEOUT, TimeUnit.SECONDS);
     }
 
     @Test
@@ -440,7 +438,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         log.debug("asserting");
         assertThat(devices).containsExactlyInAnyOrderElementsOf(loadedDevices);
         log.debug("delete devices async");
-        deleteDevicesAsync("/api/device/", loadedDevices).get(TIMEOUT, TimeUnit.SECONDS);
+        deleteEntitiesAsync("/api/device/", loadedDevices, executor).get(TIMEOUT, TimeUnit.SECONDS);
         log.debug("done");
     }
 
@@ -501,7 +499,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
 
         assertThat(devicesTitle2).as(title2).containsExactlyInAnyOrderElementsOf(loadedDevicesTitle2);
 
-        deleteDevicesAsync("/api/device/", loadedDevicesTitle1).get(TIMEOUT, TimeUnit.SECONDS);
+        deleteEntitiesAsync("/api/device/", loadedDevicesTitle1, executor).get(TIMEOUT, TimeUnit.SECONDS);
 
         pageLink = new PageLink(4, 0, title1);
         pageData = doGetTypedWithPageLink("/api/tenant/devices?",
@@ -509,23 +507,13 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
-        deleteDevicesAsync("/api/device/", loadedDevicesTitle2).get(TIMEOUT, TimeUnit.SECONDS);
+        deleteEntitiesAsync("/api/device/", loadedDevicesTitle2, executor).get(TIMEOUT, TimeUnit.SECONDS);
 
         pageLink = new PageLink(4, 0, title2);
         pageData = doGetTypedWithPageLink("/api/tenant/devices?",
                 PAGE_DATA_DEVICE_TYPE_REF, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
-    }
-
-    ListenableFuture<List<ResultActions>> deleteDevicesAsync(String urlTemplate, List<Device> loadedDevicesTitle1) {
-        List<ListenableFuture<ResultActions>> futures = new ArrayList<>(loadedDevicesTitle1.size());
-        for (Device device : loadedDevicesTitle1) {
-            futures.add(executor.submit(() ->
-                    doDelete(urlTemplate + device.getId().getId())
-                            .andExpect(status().isOk())));
-        }
-        return Futures.allAsList(futures);
     }
 
     @Test
@@ -593,7 +581,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
 
         assertThat(devicesType2).as(title2).containsExactlyInAnyOrderElementsOf(loadedDevicesType2);
 
-        deleteDevicesAsync("/api/device/", loadedDevicesType1).get(TIMEOUT, TimeUnit.SECONDS);
+        deleteEntitiesAsync("/api/device/", loadedDevicesType1, executor).get(TIMEOUT, TimeUnit.SECONDS);
 
         pageLink = new PageLink(4);
         pageData = doGetTypedWithPageLink("/api/tenant/devices?type={type}&",
@@ -601,7 +589,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
-        deleteDevicesAsync("/api/device/", loadedDevicesType2).get(TIMEOUT, TimeUnit.SECONDS);
+        deleteEntitiesAsync("/api/device/", loadedDevicesType2, executor).get(TIMEOUT, TimeUnit.SECONDS);
 
         pageLink = new PageLink(4);
         pageData = doGetTypedWithPageLink("/api/tenant/devices?type={type}&",
@@ -644,7 +632,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         assertThat(devices).containsExactlyInAnyOrderElementsOf(loadedDevices);
 
         log.debug("delete devices async");
-        deleteDevicesAsync("/api/customer/device/", loadedDevices).get(TIMEOUT, TimeUnit.SECONDS);
+        deleteEntitiesAsync("/api/customer/device/", loadedDevices, executor).get(TIMEOUT, TimeUnit.SECONDS);
         log.debug("done");
     }
 
@@ -713,7 +701,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
 
         assertThat(devicesTitle2).as(title2).containsExactlyInAnyOrderElementsOf(loadedDevicesTitle2);
 
-        deleteDevicesAsync("/api/customer/device/", loadedDevicesTitle1).get(TIMEOUT, TimeUnit.SECONDS);
+        deleteEntitiesAsync("/api/customer/device/", loadedDevicesTitle1, executor).get(TIMEOUT, TimeUnit.SECONDS);
 
         pageLink = new PageLink(4, 0, title1);
         pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId() + "/devices?",
@@ -721,7 +709,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
-        deleteDevicesAsync("/api/customer/device/", loadedDevicesTitle2).get(TIMEOUT, TimeUnit.SECONDS);
+        deleteEntitiesAsync("/api/customer/device/", loadedDevicesTitle2, executor).get(TIMEOUT, TimeUnit.SECONDS);
 
         pageLink = new PageLink(4, 0, title2);
         pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId() + "/devices?",
@@ -803,7 +791,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
 
         assertThat(devicesType2).as(title2).containsExactlyInAnyOrderElementsOf(loadedDevicesType2);
 
-        deleteDevicesAsync("/api/customer/device/", loadedDevicesType1).get(TIMEOUT, TimeUnit.SECONDS);
+        deleteEntitiesAsync("/api/customer/device/", loadedDevicesType1, executor).get(TIMEOUT, TimeUnit.SECONDS);
 
         pageLink = new PageLink(4);
         pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId() + "/devices?type={type}&",
@@ -811,7 +799,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
-        deleteDevicesAsync("/api/customer/device/", loadedDevicesType2).get(TIMEOUT, TimeUnit.SECONDS);
+        deleteEntitiesAsync("/api/customer/device/", loadedDevicesType2, executor).get(TIMEOUT, TimeUnit.SECONDS);
 
         pageLink = new PageLink(4);
         pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId() + "/devices?type={type}&",

@@ -25,7 +25,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Tenant;
@@ -44,7 +43,8 @@ import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public abstract class BaseCustomerControllerTest extends AbstractControllerTest {
-    static final TypeReference<PageData<Customer>> PAGE_DATA_CUSTOMER_TYPE_REFERENCE = new TypeReference<>() {};
+    static final TypeReference<PageData<Customer>> PAGE_DATA_CUSTOMER_TYPE_REFERENCE = new TypeReference<>() {
+    };
 
     ListeningExecutorService executor;
 
@@ -215,6 +215,8 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         } while (pageData.hasNext());
 
         assertThat(customers).containsExactlyInAnyOrderElementsOf(loadedCustomers);
+
+        deleteEntitiesAsync("/api/customer/", loadedCustomers, executor).get(TIMEOUT, TimeUnit.SECONDS);
     }
 
     @Test
@@ -275,26 +277,14 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
 
         assertThat(customersTitle2).as(title2).containsExactlyInAnyOrderElementsOf(loadedCustomersTitle2);
 
-        List<ListenableFuture<ResultActions>> deleteFutures = new ArrayList<>(143);
-        for (Customer customer : loadedCustomersTitle1) {
-            deleteFutures.add(executor.submit(() ->
-                    doDelete("/api/customer/" + customer.getId().getId().toString())
-                            .andExpect(status().isOk())));
-        }
-        Futures.allAsList(deleteFutures).get(TIMEOUT, TimeUnit.SECONDS);
+        deleteEntitiesAsync("/api/customer/", loadedCustomersTitle1, executor).get(TIMEOUT, TimeUnit.SECONDS);
 
         pageLink = new PageLink(4, 0, title1);
         pageData = doGetTypedWithPageLink("/api/customers?", PAGE_DATA_CUSTOMER_TYPE_REFERENCE, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
-        deleteFutures = new ArrayList<>(175);
-        for (Customer customer : loadedCustomersTitle2) {
-            deleteFutures.add(executor.submit(() ->
-                    doDelete("/api/customer/" + customer.getId().getId().toString())
-                            .andExpect(status().isOk())));
-        }
-        Futures.allAsList(deleteFutures).get(TIMEOUT, TimeUnit.SECONDS);
+        deleteEntitiesAsync("/api/customer/", loadedCustomersTitle2, executor).get(TIMEOUT, TimeUnit.SECONDS);
 
         pageLink = new PageLink(4, 0, title2);
         pageData = doGetTypedWithPageLink("/api/customers?", PAGE_DATA_CUSTOMER_TYPE_REFERENCE, pageLink);
