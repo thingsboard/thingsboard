@@ -150,7 +150,13 @@ public class TbTestWebSocketClient extends WebSocketClient {
     }
 
     public EntityDataUpdate subscribeTsUpdate(List<String> keys, long startTs, long timeWindow) {
-        return subscribeTsUpdate(keys, startTs, timeWindow, null);
+        return subscribeTsUpdate(keys, startTs, timeWindow, (EntityDataQuery) null);
+    }
+
+    public EntityDataUpdate subscribeTsUpdate(List<String> keys, long startTs, long timeWindow, EntityFilter entityFilter) {
+        EntityDataQuery edq = new EntityDataQuery(entityFilter, new EntityDataPageLink(1, 0, null, null),
+                Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+        return subscribeTsUpdate(keys, startTs, timeWindow, edq);
     }
 
     public EntityDataUpdate subscribeTsUpdate(List<String> keys, long startTs, long timeWindow, EntityDataQuery edq) {
