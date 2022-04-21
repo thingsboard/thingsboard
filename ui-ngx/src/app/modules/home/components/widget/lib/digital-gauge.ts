@@ -189,7 +189,6 @@ export class TbCanvasDigitalGauge {
       roundedLineCap: this.localSettings.roundedLineCap,
 
       symbol: this.localSettings.units,
-      // label: this.localSettings.unitTitle,
       unitTitle: this.localSettings.unitTitle,
       showUnitTitle: this.localSettings.showUnitTitle,
       showTimestamp: this.localSettings.showTimestamp,
