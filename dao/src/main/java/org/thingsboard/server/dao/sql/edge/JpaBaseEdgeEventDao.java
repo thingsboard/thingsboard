@@ -63,7 +63,7 @@ public class JpaBaseEdgeEventDao extends JpaAbstractSearchTextDao<EdgeEventEntit
     @Autowired
     private StatsFactory statsFactory;
 
-    @Value("${sql.edge_events.batch_size:10000}")
+    @Value("${sql.edge_events.batch_size:1000}")
     private int batchSize;
 
     @Value("${sql.edge_events.batch_max_delay:100}")
