@@ -64,25 +64,23 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
     }
 
     protected void setAdditionalExportData(SecurityUser user, E entity, D exportData, EntityExportSettings exportSettings) throws ThingsboardException {
-        List<EntityRelation> relations = null;
-        if (exportSettings.isExportInboundRelations()) {
+        if (exportSettings.isExportRelations()) {
+            List<EntityRelation> relations = new ArrayList<>();
+
             List<EntityRelation> inboundRelations = relationService.findByTo(user.getTenantId(), entity.getId(), RelationTypeGroup.COMMON);
             for (EntityRelation relation : inboundRelations) {
                 exportableEntitiesService.checkPermission(user, relation.getFrom(), Operation.READ);
             }
-            relations = new ArrayList<>(inboundRelations);
-        }
-        if (exportSettings.isExportOutboundRelations()) {
+            relations.addAll(inboundRelations);
+
             List<EntityRelation> outboundRelations = relationService.findByFrom(user.getTenantId(), entity.getId(), RelationTypeGroup.COMMON);
             for (EntityRelation relation : outboundRelations) {
                 exportableEntitiesService.checkPermission(user, relation.getTo(), Operation.READ);
             }
-            if (relations == null) {
-                relations = new ArrayList<>();
-            }
             relations.addAll(outboundRelations);
+
+            exportData.setRelations(relations);
         }
-        exportData.setRelations(relations);
     }
 
     protected D newExportData() {
