@@ -50,7 +50,7 @@ import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERT
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
-public class EdgeEventController extends BaseController {
+public class EdgeEventController extends DefaultEntityBaseController {
 
     @Autowired
     private EdgeEventService edgeEventService;

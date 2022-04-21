@@ -59,7 +59,7 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 @TbCoreComponent
 @RequestMapping("/api")
 @Slf4j
-public class TenantProfileController extends BaseController {
+public class TenantProfileController extends DefaultEntityBaseController {
 
     private static final String TENANT_PROFILE_INFO_DESCRIPTION = "Tenant Profile Info is a lightweight object that contains only id and name of the profile. ";
 
@@ -198,15 +198,8 @@ public class TenantProfileController extends BaseController {
             @ApiParam(value = TENANT_PROFILE_ID_PARAM_DESCRIPTION)
             @PathVariable("tenantProfileId") String strTenantProfileId) throws ThingsboardException {
         checkParameter("tenantProfileId", strTenantProfileId);
-        try {
-            TenantProfileId tenantProfileId = new TenantProfileId(toUUID(strTenantProfileId));
-            TenantProfile profile = checkTenantProfileId(tenantProfileId, Operation.DELETE);
-            tenantProfileService.deleteTenantProfile(getTenantId(), tenantProfileId);
-            tbClusterService.onTenantProfileDelete(profile, null);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
-    }
+        entityDeleteService.deleteEntity(getTenantId(), new TenantProfileId(toUUID(strTenantProfileId)));
+     }
 
     @ApiOperation(value = "Make tenant profile default (setDefaultTenantProfile)",
             notes = "Makes specified tenant profile to be default. Referencing non-existing tenant profile Id will cause an error. " + SYSTEM_AUTHORITY_PARAGRAPH)
