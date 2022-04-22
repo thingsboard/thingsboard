@@ -109,7 +109,7 @@ public abstract class BaseTenantProfileControllerTest extends AbstractController
         loginSysAdmin();
         TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile 1");
         TenantProfile savedTenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
-        TenantProfile defaultTenantProfile = doPost("/api/tenantProfile/"+savedTenantProfile.getId().getId().toString()+"/default", null, TenantProfile.class);
+        TenantProfile defaultTenantProfile = doPost("/api/tenantProfile/"+savedTenantProfile.getId().getId().toString()+"/default", TenantProfile.class);
         Assert.assertNotNull(defaultTenantProfile);
         EntityInfo foundDefaultTenantProfile = doGet("/api/tenantProfileInfo/default", EntityInfo.class);
         Assert.assertNotNull(foundDefaultTenantProfile);
