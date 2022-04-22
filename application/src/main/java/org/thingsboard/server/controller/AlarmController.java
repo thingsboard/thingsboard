@@ -41,7 +41,6 @@ import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AlarmId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.page.PageData;
@@ -52,6 +51,7 @@ import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.List;
 
+import static org.thingsboard.server.controller.ControllerConstants.ALARM_ID;
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_INFO_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_SORT_PROPERTY_ALLOWABLE_VALUES;
@@ -71,9 +71,8 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
-public class AlarmController extends BaseController {
+public class AlarmController extends DefaultEntityBaseController {
 
-    public static final String ALARM_ID = "alarmId";
     private static final String ALARM_SECURITY_CHECK = "If the user has the authority of 'Tenant Administrator', the server checks that the originator of alarm is owned by the same tenant. " +
             "If the user has the authority of 'Customer User', the server checks that the originator of alarm belongs to the customer. ";
     private static final String ALARM_QUERY_SEARCH_STATUS_DESCRIPTION = "A string value representing one of the AlarmSearchStatus enumeration value";
@@ -161,19 +160,8 @@ public class AlarmController extends BaseController {
     public Boolean deleteAlarm(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION) @PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
         checkParameter(ALARM_ID, strAlarmId);
         try {
-            AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
-            Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
-
-            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(getTenantId(), alarm.getOriginator());
-
-            logEntityAction(alarm.getOriginator(), alarm,
-                    getCurrentUser().getCustomerId(),
-                    ActionType.ALARM_DELETE, null);
-
-            sendAlarmDeleteNotificationMsg(getTenantId(), alarmId, relatedEdgeIds, alarm);
-
-            return alarmService.deleteAlarm(getTenantId(), alarmId);
-        } catch (Exception e) {
+            return entityDeleteService.deleteAlarm(new AlarmId(toUUID(strAlarmId)));
+         } catch (Exception e) {
             throw handleException(e);
         }
     }
