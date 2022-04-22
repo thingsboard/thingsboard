@@ -80,7 +80,11 @@ public class DashboardInfoEntity extends BaseSqlEntity<DashboardInfo> implements
         this.title = dashboardInfo.getTitle();
         this.image = dashboardInfo.getImage();
         if (dashboardInfo.getAssignedCustomers() != null) {
-            this.assignedCustomers = JacksonUtil.toString(dashboardInfo.getAssignedCustomers());
+            try {
+                this.assignedCustomers = JacksonUtil.toString(dashboardInfo.getAssignedCustomers());
+            } catch (IllegalArgumentException e) {
+                log.error("Unable to serialize assigned customers to string!", e);
+            }
         }
         this.mobileHide = dashboardInfo.isMobileHide();
         this.mobileOrder = dashboardInfo.getMobileOrder();
@@ -109,7 +113,11 @@ public class DashboardInfoEntity extends BaseSqlEntity<DashboardInfo> implements
         }
         dashboardInfo.setTitle(title);
         dashboardInfo.setImage(image);
-        dashboardInfo.setAssignedCustomers(JacksonUtil.fromString(assignedCustomers, assignedCustomersType));
+        try {
+            dashboardInfo.setAssignedCustomers(JacksonUtil.fromString(assignedCustomers, assignedCustomersType));
+        } catch (IllegalArgumentException e) {
+            log.warn("Unable to parse assigned customers!", e);
+        }
         dashboardInfo.setMobileHide(mobileHide);
         dashboardInfo.setMobileOrder(mobileOrder);
         return dashboardInfo;

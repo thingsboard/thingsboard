@@ -171,7 +171,12 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
             return deviceData;
         } else {
             if (deviceDataBytes != null) {
-                deviceData = JacksonUtil.fromBytes(new ByteArrayInputStream(deviceDataBytes).readAllBytes(), DeviceData.class);
+                try {
+                    deviceData = JacksonUtil.fromBytes(new ByteArrayInputStream(deviceDataBytes).readAllBytes(), DeviceData.class);
+                } catch (IllegalArgumentException e) {
+                    log.warn("Can't deserialize device data: ", e);
+                    return null;
+                }
                 return deviceData;
             } else {
                 return null;
@@ -181,7 +186,11 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
 
     public void setDeviceData(DeviceData data) {
         this.deviceData = data;
-        this.deviceDataBytes = data != null ? JacksonUtil.writeValueAsBytes(data) : null;
+        try {
+            this.deviceDataBytes = data != null ? JacksonUtil.writeValueAsBytes(data) : null;
+        } catch (IllegalArgumentException e) {
+            log.warn("Can't serialize device data: ", e);
+        }
     }
 
     @Override

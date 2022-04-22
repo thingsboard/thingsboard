@@ -134,7 +134,11 @@ public class TenantProfile extends SearchTextBased<TenantProfileId> implements H
 
     public void setProfileData(TenantProfileData data) {
         this.profileData = data;
-        this.profileDataBytes = data != null ? JacksonUtil.writeValueAsBytes(data) : null;
+        try {
+            this.profileDataBytes = data != null ? JacksonUtil.writeValueAsBytes(data) : null;
+        } catch (IllegalArgumentException e) {
+            log.warn("Can't serialize tenant profile data: ", e);
+        }
     }
 
 }

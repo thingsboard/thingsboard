@@ -133,7 +133,11 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
             Customer publicCustomer = new Customer();
             publicCustomer.setTenantId(tenantId);
             publicCustomer.setTitle(PUBLIC_CUSTOMER_TITLE);
-            publicCustomer.setAdditionalInfo(JacksonUtil.toJsonNode("{ \"isPublic\": true }"));
+            try {
+                publicCustomer.setAdditionalInfo(JacksonUtil.toJsonNode("{ \"isPublic\": true }"));
+            } catch (IllegalArgumentException e) {
+                throw new IncorrectParameterException("Unable to create public customer.", e);
+            }
             return customerDao.save(tenantId, publicCustomer);
         }
     }

@@ -913,15 +913,19 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private void checkGatewaySession(SessionMetaData sessionMetaData) {
         TransportDeviceInfo device = deviceSessionCtx.getDeviceInfo();
-        JsonNode infoNode = JacksonUtil.toJsonNode(device.getAdditionalInfo());
-        if (infoNode != null) {
-            JsonNode gatewayNode = infoNode.get("gateway");
-            if (gatewayNode != null && gatewayNode.asBoolean()) {
-                gatewaySessionHandler = new GatewaySessionHandler(deviceSessionCtx, sessionId);
-                if (infoNode.has(DefaultTransportService.OVERWRITE_ACTIVITY_TIME) && infoNode.get(DefaultTransportService.OVERWRITE_ACTIVITY_TIME).isBoolean()) {
-                    sessionMetaData.setOverwriteActivityTime(infoNode.get(DefaultTransportService.OVERWRITE_ACTIVITY_TIME).asBoolean());
+        try {
+            JsonNode infoNode = JacksonUtil.toJsonNode(device.getAdditionalInfo());
+            if (infoNode != null) {
+                JsonNode gatewayNode = infoNode.get("gateway");
+                if (gatewayNode != null && gatewayNode.asBoolean()) {
+                    gatewaySessionHandler = new GatewaySessionHandler(deviceSessionCtx, sessionId);
+                    if (infoNode.has(DefaultTransportService.OVERWRITE_ACTIVITY_TIME) && infoNode.get(DefaultTransportService.OVERWRITE_ACTIVITY_TIME).isBoolean()) {
+                        sessionMetaData.setOverwriteActivityTime(infoNode.get(DefaultTransportService.OVERWRITE_ACTIVITY_TIME).asBoolean());
+                    }
                 }
             }
+        } catch (IllegalArgumentException e) {
+            log.trace("[{}][{}] Failed to fetch device additional info", sessionId, device.getDeviceName(), e);
         }
     }
 

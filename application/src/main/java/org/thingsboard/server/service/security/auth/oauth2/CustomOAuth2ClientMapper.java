@@ -54,7 +54,12 @@ public class CustomOAuth2ClientMapper extends AbstractOAuth2ClientMapper impleme
 
         RestTemplate restTemplate = restTemplateBuilder.build();
         String request;
-        request = JacksonUtil.toString(token.getPrincipal());
+        try {
+            request = JacksonUtil.toString(token.getPrincipal());
+        } catch (IllegalArgumentException e) {
+            log.error("Can't convert principal to JSON string", e);
+            throw new RuntimeException("Can't convert principal to JSON string", e);
+        }
         try {
             return restTemplate.postForEntity(custom.getUrl(), request, OAuth2User.class).getBody();
         } catch (Exception e) {

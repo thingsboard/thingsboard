@@ -165,7 +165,11 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
                 value.put(VALUE, r.getDoubleValue().get());
                 break;
             case JSON:
-                value.set(VALUE, JacksonUtil.toJsonNodeUnquotedFieldNames(r.getJsonValue().get()));
+                try {
+                    value.set(VALUE, JacksonUtil.toJsonNodeUnquotedFieldNames(r.getJsonValue().get()));
+                } catch (IllegalArgumentException e) {
+                    throw new IllegalArgumentException("Can't parse jsonValue: " + r.getJsonValue().get(), e);
+                }
                 break;
         }
         msg.getMetaData().putValue(r.getKey(), value.toString());

@@ -190,7 +190,11 @@ public class TbGetTelemetryNode implements TbNode {
                 obj.put("value", entry.getDoubleValue().get());
                 break;
             case JSON:
-                obj.set("value", JacksonUtil.toJsonNodeUnquotedFieldNames(entry.getJsonValue().get()));
+                try {
+                    obj.set("value", JacksonUtil.toJsonNodeUnquotedFieldNames(entry.getJsonValue().get()));
+                } catch (IllegalArgumentException e) {
+                    throw new IllegalArgumentException("Can't parse jsonValue: " + entry.getJsonValue().get(), e);
+                }
                 break;
         }
         return obj;

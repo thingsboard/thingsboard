@@ -16,18 +16,15 @@
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.UUIDBased;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.function.Supplier;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * Created by ashvayka on 19.02.18.
@@ -82,7 +79,12 @@ public abstract class SearchTextBasedWithAdditionalInfo<I extends UUIDBased> ext
         } else {
             byte[] data = binaryData.get();
             if (data != null) {
-                return JacksonUtil.fromBytes(data);
+                try {
+                    return JacksonUtil.fromBytes(data);
+                } catch (IllegalArgumentException e) {
+                    log.warn("Can't deserialize json data: ", e);
+                    return null;
+                }
             } else {
                 return null;
             }
@@ -91,6 +93,10 @@ public abstract class SearchTextBasedWithAdditionalInfo<I extends UUIDBased> ext
 
     public static void setJson(JsonNode json, Consumer<JsonNode> jsonConsumer, Consumer<byte[]> bytesConsumer) {
         jsonConsumer.accept(json);
-        bytesConsumer.accept(JacksonUtil.writeValueAsBytes(json));
+        try {
+            bytesConsumer.accept(JacksonUtil.writeValueAsBytes(json));
+        } catch (IllegalArgumentException e) {
+            log.warn("Can't serialize json data: ", e);
+        }
     }
 }

@@ -53,12 +53,17 @@ public class RuleNodeException extends RuleEngineException {
     }
 
     public String toJsonString() {
-        return JacksonUtil.toString(JacksonUtil.newObjectNode()
-                .put("ruleNodeId", ruleNodeId.toString())
-                .put("ruleChainId", ruleChainId.toString())
-                .put("ruleNodeName", ruleNodeName)
-                .put("ruleChainName", ruleChainName)
-                .put("message", getMessage()));
+        try {
+            return JacksonUtil.toString(JacksonUtil.newObjectNode()
+                    .put("ruleNodeId", ruleNodeId.toString())
+                    .put("ruleChainId", ruleChainId.toString())
+                    .put("ruleNodeName", ruleNodeName)
+                    .put("ruleChainName", ruleChainName)
+                    .put("message", getMessage()));
+        } catch (IllegalArgumentException e) {
+            log.warn("Failed to serialize exception ", e);
+            throw new RuntimeException(e);
+        }
     }
 
 }

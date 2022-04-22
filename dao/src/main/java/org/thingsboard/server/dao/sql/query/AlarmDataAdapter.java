@@ -69,7 +69,11 @@ public class AlarmDataAdapter {
         alarm.setEndTs((long) row.get(ModelConstants.ALARM_END_TS_PROPERTY));
         Object additionalInfo = row.get(ModelConstants.ADDITIONAL_INFO_PROPERTY);
         if (additionalInfo != null) {
-            alarm.setDetails(JacksonUtil.toJsonNode(additionalInfo.toString()));
+            try {
+                alarm.setDetails(JacksonUtil.toJsonNode(additionalInfo.toString()));
+            } catch (IllegalArgumentException e) {
+                log.warn("Failed to parse json: {}", row.get(ModelConstants.ADDITIONAL_INFO_PROPERTY), e);
+            }
         }
         EntityType originatorType = EntityType.values()[(int) row.get(ModelConstants.ALARM_ORIGINATOR_TYPE_PROPERTY)];
         UUID originatorId = (UUID) row.get(ModelConstants.ALARM_ORIGINATOR_ID_PROPERTY);

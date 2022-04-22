@@ -38,7 +38,6 @@ import javax.persistence.Column;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.MappedSuperclass;
-import java.io.IOException;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_PROPERTY;
@@ -110,7 +109,11 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
         }
         this.type = entityView.getType();
         this.name = entityView.getName();
-        this.keys = JacksonUtil.toString(entityView.getKeys());
+        try {
+            this.keys = JacksonUtil.toString(entityView.getKeys());
+        } catch (IllegalArgumentException e) {
+            log.error("Unable to serialize entity view keys!", e);
+        }
         this.startTs = entityView.getStartTimeMs();
         this.endTs = entityView.getEndTimeMs();
         this.searchText = entityView.getSearchText();
@@ -158,7 +161,11 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
         }
         entityView.setType(type);
         entityView.setName(name);
-        entityView.setKeys(JacksonUtil.fromString(keys, TelemetryEntityView.class));
+        try {
+            entityView.setKeys(JacksonUtil.fromString(keys, TelemetryEntityView.class));
+        } catch (IllegalArgumentException e) {
+            log.error("Unable to read entity view keys!", e);
+        }
         entityView.setStartTimeMs(startTs);
         entityView.setEndTimeMs(endTs);
         entityView.setAdditionalInfo(additionalInfo);

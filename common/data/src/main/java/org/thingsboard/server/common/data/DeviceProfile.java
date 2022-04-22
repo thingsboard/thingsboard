@@ -156,7 +156,11 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
 
     public void setProfileData(DeviceProfileData data) {
         this.profileData = data;
-        this.profileDataBytes = data != null ? JacksonUtil.writeValueAsBytes(data) : null;
+        try {
+            this.profileDataBytes = data != null ? JacksonUtil.writeValueAsBytes(data) : null;
+        } catch (IllegalArgumentException e) {
+            log.warn("Can't serialize device profile data: ", e);
+        }
     }
 
 }

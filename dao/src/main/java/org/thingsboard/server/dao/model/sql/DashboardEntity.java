@@ -89,7 +89,11 @@ public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements S
         this.title = dashboard.getTitle();
         this.image = dashboard.getImage();
         if (dashboard.getAssignedCustomers() != null) {
-            this.assignedCustomers = JacksonUtil.toString(dashboard.getAssignedCustomers());
+            try {
+                this.assignedCustomers = JacksonUtil.toString(dashboard.getAssignedCustomers());
+            } catch (IllegalArgumentException e) {
+                log.error("Unable to serialize assigned customers to string!", e);
+            }
         }
         this.mobileHide = dashboard.isMobileHide();
         this.mobileOrder = dashboard.getMobileOrder();
@@ -115,7 +119,11 @@ public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements S
         }
         dashboard.setTitle(title);
         dashboard.setImage(image);
-        dashboard.setAssignedCustomers(JacksonUtil.fromString(assignedCustomers, assignedCustomersType));
+        try {
+            dashboard.setAssignedCustomers(JacksonUtil.fromString(assignedCustomers, assignedCustomersType));
+        } catch (IllegalArgumentException e) {
+            log.error("Unable to serialize assigned customers to string!", e);
+        }
         dashboard.setMobileHide(mobileHide);
         dashboard.setMobileOrder(mobileOrder);
         dashboard.setConfiguration(configuration);

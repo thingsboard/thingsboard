@@ -48,10 +48,14 @@ public class WsClient extends WebSocketClient {
             firstReplyReceived = true;
             firstReply.countDown();
         } else {
-            WsTelemetryResponse response = JacksonUtil.fromString(message, WsTelemetryResponse.class);
-            if (!response.getData().isEmpty()) {
-                this.message = response;
-                latch.countDown();
+            try {
+                WsTelemetryResponse response = JacksonUtil.fromString(message, WsTelemetryResponse.class);
+                if (!response.getData().isEmpty()) {
+                    this.message = response;
+                    latch.countDown();
+                }
+            } catch (IllegalArgumentException e) {
+                log.error("ws message can't be read");
             }
         }
     }

@@ -786,14 +786,18 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
     }
 
     private void sendWsMsg(TelemetryWebSocketSessionRef sessionRef, int cmdId, Object update) {
-        String msg = JacksonUtil.toString(update);
-        executor.submit(() -> {
-            try {
-                msgEndpoint.send(sessionRef, cmdId, msg);
-            } catch (IOException e) {
-                log.warn("[{}] Failed to send reply: {}", sessionRef.getSessionId(), update, e);
-            }
-        });
+        try {
+            String msg = JacksonUtil.toString(update);
+            executor.submit(() -> {
+                try {
+                    msgEndpoint.send(sessionRef, cmdId, msg);
+                } catch (IOException e) {
+                    log.warn("[{}] Failed to send reply: {}", sessionRef.getSessionId(), update, e);
+                }
+            });
+        } catch (IllegalArgumentException e) {
+            log.warn("[{}] Failed to encode reply: {}", sessionRef.getSessionId(), update, e);
+        }
     }
 
     private void sendPing() {

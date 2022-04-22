@@ -30,6 +30,11 @@ public class RuleEngineException extends Exception {
     }
 
     public String toJsonString() {
-        return JacksonUtil.toString(JacksonUtil.newObjectNode().put("message", getMessage()));
+        try {
+            return JacksonUtil.toString(JacksonUtil.newObjectNode().put("message", getMessage()));
+        } catch (IllegalArgumentException e) {
+            log.warn("Failed to serialize exception ", e);
+            throw new RuntimeException(e);
+        }
     }
 }

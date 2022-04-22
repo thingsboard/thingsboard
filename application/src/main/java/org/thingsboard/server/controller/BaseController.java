@@ -825,7 +825,12 @@ public abstract class BaseController {
     }
 
     protected <E extends HasName> String entityToStr(E entity) {
-        return JacksonUtil.toString(JacksonUtil.valueToTree(entity));
+        try {
+            return JacksonUtil.toString(JacksonUtil.valueToTree(entity));
+        } catch (IllegalStateException e) {
+            log.warn("[{}] Failed to convert entity to string!", entity, e);
+        }
+        return null;
     }
 
     protected void sendRelationNotificationMsg(TenantId tenantId, EntityRelation relation, EdgeEventActionType action) {

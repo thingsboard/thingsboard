@@ -168,8 +168,12 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
         event.setEntityId(deviceId);
         event.setUid(event.getId().getId().toString());
         event.setType(STATS);
-        JsonNode jsonNode = JacksonUtil.toJsonNode("{\"key\":\"value\"}");
-        event.setBody(jsonNode);
+        try {
+            JsonNode jsonNode = JacksonUtil.toJsonNode("{\"key\":\"value\"}");
+            event.setBody(jsonNode);
+        } catch (IllegalArgumentException e) {
+            log.error(e.getMessage(), e);
+        }
         return event;
     }
 }
