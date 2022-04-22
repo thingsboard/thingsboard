@@ -628,7 +628,7 @@ function barDimensions(context: DigitalGaugeCanvasRenderingContext2D,
     bd.labelY = bd.baseY + bd.height;
     bd.timeseriesLabelY = determineTimeseriesLabelY(options, bd.labelY, bd.fontSizeFactor)
     if (options.showUnitTitle || options.showTimestamp) {
-      bd.barBottom = bd.labelY * 1.1 - (8 + options.fontLabelSize) * bd.fontSizeFactor;
+      bd.barBottom = bd.labelY - options.fontLabelSize * bd.fontSizeFactor;
     } else {
       bd.barBottom = bd.labelY
     }
