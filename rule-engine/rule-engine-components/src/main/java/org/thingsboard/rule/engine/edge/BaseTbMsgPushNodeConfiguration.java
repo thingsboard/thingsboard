@@ -13,18 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service;
+package org.thingsboard.rule.engine.edge;
 
-import org.junit.BeforeClass;
-import org.junit.extensions.cpsuite.ClasspathSuite;
-import org.junit.runner.RunWith;
-import org.thingsboard.server.queue.memory.InMemoryStorage;
+import lombok.Data;
+import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.server.common.data.DataConstants;
 
-@RunWith(ClasspathSuite.class)
-@ClasspathSuite.ClassnameFilters({
-        "org.thingsboard.server.service.resource.sql.*Test",
-        "org.thingsboard.server.service.sql.*Test"
-})
-public class ServiceSqlTestSuite {
+@Data
+public class BaseTbMsgPushNodeConfiguration implements NodeConfiguration<BaseTbMsgPushNodeConfiguration> {
 
+    private String scope;
+
+    @Override
+    public BaseTbMsgPushNodeConfiguration defaultConfiguration() {
+        BaseTbMsgPushNodeConfiguration configuration = new BaseTbMsgPushNodeConfiguration();
+        configuration.setScope(DataConstants.SERVER_SCOPE);
+        return configuration;
+    }
 }

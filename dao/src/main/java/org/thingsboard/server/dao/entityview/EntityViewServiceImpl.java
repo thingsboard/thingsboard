@@ -24,9 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
@@ -86,29 +84,31 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
     @Autowired
     private DataValidator<EntityView> entityViewValidator;
 
-    @Caching(evict = {
-            @CacheEvict(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityView.tenantId, #entityView.entityId}"),
-            @CacheEvict(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityView.tenantId, #entityView.name}"),
-            @CacheEvict(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityView.id}")})
     @Override
     public EntityView saveEntityView(EntityView entityView) {
         log.trace("Executing save entity view [{}]", entityView);
         entityViewValidator.validate(entityView, EntityView::getTenantId);
+
+        if (entityView.getId() != null) {
+            EntityView oldEntityView = entityViewDao.findById(entityView.getTenantId(), entityView.getUuidId());
+            evictCache(oldEntityView);
+        }
+
         return entityViewDao.save(entityView.getTenantId(), entityView);
     }
 
-    @CacheEvict(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityViewId}")
     @Override
     public EntityView assignEntityViewToCustomer(TenantId tenantId, EntityViewId entityViewId, CustomerId customerId) {
         EntityView entityView = findEntityViewById(tenantId, entityViewId);
+        evictCache(entityView);
         entityView.setCustomerId(customerId);
         return saveEntityView(entityView);
     }
 
-    @CacheEvict(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityViewId}")
     @Override
     public EntityView unassignEntityViewFromCustomer(TenantId tenantId, EntityViewId entityViewId) {
         EntityView entityView = findEntityViewById(tenantId, entityViewId);
+        evictCache(entityView);
         entityView.setCustomerId(null);
         return saveEntityView(entityView);
     }
@@ -292,15 +292,13 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         }
     }
 
-    @CacheEvict(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityViewId}")
     @Override
     public void deleteEntityView(TenantId tenantId, EntityViewId entityViewId) {
         log.trace("Executing deleteEntityView [{}]", entityViewId);
         validateId(entityViewId, INCORRECT_ENTITY_VIEW_ID + entityViewId);
         deleteEntityRelations(tenantId, entityViewId);
         EntityView entityView = entityViewDao.findById(tenantId, entityViewId.getId());
-        cacheManager.getCache(ENTITY_VIEW_CACHE).evict(Arrays.asList(entityView.getTenantId(), entityView.getEntityId()));
-        cacheManager.getCache(ENTITY_VIEW_CACHE).evict(Arrays.asList(entityView.getTenantId(), entityView.getName()));
+        evictCache(entityView);
         entityViewDao.removeById(tenantId, entityViewId.getId());
     }
 
@@ -323,7 +321,6 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
                 }, MoreExecutors.directExecutor());
     }
 
-    @CacheEvict(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityViewId}")
     @Override
     public EntityView assignEntityViewToEdge(TenantId tenantId, EntityViewId entityViewId, EdgeId edgeId) {
         EntityView entityView = findEntityViewById(tenantId, entityViewId);
@@ -413,4 +410,11 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
             unassignEntityViewFromCustomer(tenantId, new EntityViewId(entity.getUuidId()));
         }
     };
+
+    private void evictCache(EntityView entityView) {
+        Cache cache = cacheManager.getCache(ENTITY_VIEW_CACHE);
+        cache.evict(Arrays.asList(entityView.getTenantId(), entityView.getEntityId()));
+        cache.evict(Arrays.asList(entityView.getTenantId(), entityView.getName()));
+        cache.evict(Arrays.asList(entityView.getId()));
+    }
 }
