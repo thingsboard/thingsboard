@@ -119,6 +119,28 @@ import {
 import {
   PersistentTableWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/control/persistent-table-widget-settings.component';
+import { RpcButtonStyleComponent } from '@home/components/widget/lib/settings/control/rpc-button-style.component';
+import {
+  UpdateDeviceAttributeWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/control/update-device-attribute-widget-settings.component';
+import {
+  SendRpcWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/control/send-rpc-widget-settings.component';
+import {
+  DeviceKeyAutocompleteComponent
+} from '@home/components/widget/lib/settings/control/device-key-autocomplete.component';
+import {
+  LedIndicatorWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/control/led-indicator-widget-settings.component';
+import {
+  KnobControlWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/control/knob-control-widget-settings.component';
+import {
+  RpcTerminalWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/control/rpc-terminal-widget-settings.component';
+import {
+  RpcShellWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/control/rpc-shell-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -159,11 +181,19 @@ import {
     FlotPieKeySettingsComponent,
     ChartWidgetSettingsComponent,
     DoughnutChartWidgetSettingsComponent,
+    DeviceKeyAutocompleteComponent,
     SwitchRpcSettingsComponent,
     RoundSwitchWidgetSettingsComponent,
     SwitchControlWidgetSettingsComponent,
     SlideToggleWidgetSettingsComponent,
-    PersistentTableWidgetSettingsComponent
+    PersistentTableWidgetSettingsComponent,
+    RpcButtonStyleComponent,
+    UpdateDeviceAttributeWidgetSettingsComponent,
+    SendRpcWidgetSettingsComponent,
+    LedIndicatorWidgetSettingsComponent,
+    KnobControlWidgetSettingsComponent,
+    RpcTerminalWidgetSettingsComponent,
+    RpcShellWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -208,11 +238,19 @@ import {
     FlotPieKeySettingsComponent,
     ChartWidgetSettingsComponent,
     DoughnutChartWidgetSettingsComponent,
+    DeviceKeyAutocompleteComponent,
     SwitchRpcSettingsComponent,
     RoundSwitchWidgetSettingsComponent,
     SwitchControlWidgetSettingsComponent,
     SlideToggleWidgetSettingsComponent,
-    PersistentTableWidgetSettingsComponent
+    PersistentTableWidgetSettingsComponent,
+    RpcButtonStyleComponent,
+    UpdateDeviceAttributeWidgetSettingsComponent,
+    SendRpcWidgetSettingsComponent,
+    LedIndicatorWidgetSettingsComponent,
+    KnobControlWidgetSettingsComponent,
+    RpcTerminalWidgetSettingsComponent,
+    RpcShellWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -249,5 +287,11 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-round-switch-widget-settings': RoundSwitchWidgetSettingsComponent,
   'tb-switch-control-widget-settings': SwitchControlWidgetSettingsComponent,
   'tb-slide-toggle-widget-settings': SlideToggleWidgetSettingsComponent,
-  'tb-persistent-table-widget-settings': PersistentTableWidgetSettingsComponent
+  'tb-persistent-table-widget-settings': PersistentTableWidgetSettingsComponent,
+  'tb-update-device-attribute-widget-settings': UpdateDeviceAttributeWidgetSettingsComponent,
+  'tb-send-rpc-widget-settings': SendRpcWidgetSettingsComponent,
+  'tb-led-indicator-widget-settings': LedIndicatorWidgetSettingsComponent,
+  'tb-knob-control-widget-settings': KnobControlWidgetSettingsComponent,
+  'tb-rpc-terminal-widget-settings': RpcTerminalWidgetSettingsComponent,
+  'tb-rpc-shell-widget-settings': RpcShellWidgetSettingsComponent
 };

@@ -15,6 +15,7 @@
 ///
 
 import {
+  ChangeDetectorRef,
   Component,
   ElementRef,
   forwardRef,
@@ -23,7 +24,7 @@ import {
   OnDestroy,
   OnInit,
   SimpleChanges,
-  ViewChild
+  ViewChild, ViewEncapsulation
 } from '@angular/core';
 import { ControlValueAccessor, FormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validator } from '@angular/forms';
 import { Ace } from 'ace-builds';
@@ -53,7 +54,8 @@ import { beautifyJs } from '@shared/models/beautify.models';
       useExisting: forwardRef(() => JsonContentComponent),
       multi: true,
     }
-  ]
+  ],
+  encapsulation: ViewEncapsulation.None
 })
 export class JsonContentComponent implements OnInit, ControlValueAccessor, Validator, OnChanges, OnDestroy {
 
@@ -116,7 +118,8 @@ export class JsonContentComponent implements OnInit, ControlValueAccessor, Valid
 
   constructor(public elementRef: ElementRef,
               protected store: Store<AppState>,
-              private raf: RafService) {
+              private raf: RafService,
+              private cd: ChangeDetectorRef) {
   }
 
   ngOnInit(): void {
@@ -151,9 +154,12 @@ export class JsonContentComponent implements OnInit, ControlValueAccessor, Valid
             this.updateView();
           }
         });
-        this.jsonEditor.on('blur', () => {
-          this.contentValid = !this.validateContent || this.doValidate(true);
-        });
+        if (this.validateContent) {
+          this.jsonEditor.on('blur', () => {
+            this.contentValid = this.doValidate(true);
+            this.cd.markForCheck();
+          });
+        }
         this.editorResize$ = new ResizeObserver(() => {
           this.onAceEditorResize();
         });
@@ -225,12 +231,13 @@ export class JsonContentComponent implements OnInit, ControlValueAccessor, Valid
       this.propagateChange(this.contentBody);
       this.contentValid = this.doValidate(true);
       this.propagateChange(this.contentBody);
+      this.cd.markForCheck();
     }
   }
 
   private doValidate(showErrorToast = false): boolean {
     try {
-      if (this.validateContent && this.contentType === ContentType.JSON) {
+      if (this.contentType === ContentType.JSON) {
         JSON.parse(this.contentBody);
       }
       return true;
@@ -283,6 +290,7 @@ export class JsonContentComponent implements OnInit, ControlValueAccessor, Valid
       this.contentBody = editorValue;
       this.contentValid = !this.validateOnChange || this.doValidate();
       this.propagateChange(this.contentBody);
+      this.cd.markForCheck();
     }
   }
 

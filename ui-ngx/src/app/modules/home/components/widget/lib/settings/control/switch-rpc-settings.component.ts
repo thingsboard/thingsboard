@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, forwardRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -31,10 +31,7 @@ import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetService } from '@core/http/widget.service';
-import { Observable, of } from 'rxjs';
 import { IAliasController } from '@core/api/widget-api.models';
-import { catchError, map, mergeMap, publishReplay, refCount, tap } from 'rxjs/operators';
-import { DataKey } from '@shared/models/widget.models';
 import { EntityService } from '@core/http/entity.service';
 
 export declare type RpcRetrieveValueMethod = 'none' | 'rpc' | 'attribute' | 'timeseries';
@@ -84,7 +81,7 @@ export function switchRpcDefaultSettings(): SwitchRpcSettings {
     }
   ]
 })
-export class SwitchRpcSettingsComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator, OnChanges {
+export class SwitchRpcSettingsComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
 
   @ViewChild('keyInput') keyInput: ElementRef;
 
@@ -97,6 +94,8 @@ export class SwitchRpcSettingsComponent extends PageComponent implements OnInit,
   @Input()
   targetDeviceAliasId: string;
 
+  dataKeyType = DataKeyType;
+
   functionScopeVariables = this.widgetService.getWidgetScopeVariables();
 
   private modelValue: SwitchRpcSettings;
@@ -104,12 +103,6 @@ export class SwitchRpcSettingsComponent extends PageComponent implements OnInit,
   private propagateChange = null;
 
   public switchRpcSettingsFormGroup: FormGroup;
-
-  filteredKeys: Observable<Array<string>>;
-  keySearchText = '';
-
-  private latestKeySearchResult: Array<string> = null;
-  private keysFetchObservable$: Observable<Array<string>> = null;
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
@@ -148,7 +141,6 @@ export class SwitchRpcSettingsComponent extends PageComponent implements OnInit,
       persistentPollingInterval: [5000, [Validators.min(1000)]],
     });
     this.switchRpcSettingsFormGroup.get('retrieveValueMethod').valueChanges.subscribe(() => {
-      this.clearKeysCache();
       this.updateValidators(true);
     });
     this.switchRpcSettingsFormGroup.get('requestPersistent').valueChanges.subscribe(() => {
@@ -158,23 +150,6 @@ export class SwitchRpcSettingsComponent extends PageComponent implements OnInit,
       this.updateModel();
     });
     this.updateValidators(false);
-
-    this.filteredKeys = this.switchRpcSettingsFormGroup.get('valueKey').valueChanges
-      .pipe(
-        map(value => value ? value : ''),
-        mergeMap(name => this.fetchKeys(name) )
-      );
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    for (const propName of Object.keys(changes)) {
-      const change = changes[propName];
-      if (!change.firstChange && change.currentValue !== change.previousValue) {
-        if (propName === 'targetDeviceAliasId') {
-          this.clearKeysCache();
-        }
-      }
-    }
   }
 
   registerOnChange(fn: any): void {
@@ -199,14 +174,6 @@ export class SwitchRpcSettingsComponent extends PageComponent implements OnInit,
       value, {emitEvent: false}
     );
     this.updateValidators(false);
-  }
-
-  clearKey() {
-    this.switchRpcSettingsFormGroup.get('valueKey').patchValue(null, {emitEvent: true});
-    setTimeout(() => {
-      this.keyInput.nativeElement.blur();
-      this.keyInput.nativeElement.focus();
-    }, 0);
   }
 
   public validate(c: FormControl) {
@@ -248,61 +215,5 @@ export class SwitchRpcSettingsComponent extends PageComponent implements OnInit,
     this.switchRpcSettingsFormGroup.get('getValueMethod').updateValueAndValidity({emitEvent: false});
     this.switchRpcSettingsFormGroup.get('parseValueFunction').updateValueAndValidity({emitEvent: false});
     this.switchRpcSettingsFormGroup.get('persistentPollingInterval').updateValueAndValidity({emitEvent: false});
-  }
-
-  private clearKeysCache(): void {
-    this.latestKeySearchResult = null;
-    this.keysFetchObservable$ = null;
-  }
-
-  private fetchKeys(searchText?: string): Observable<Array<string>> {
-    if (this.keySearchText !== searchText || this.latestKeySearchResult === null) {
-      this.keySearchText = searchText;
-      const dataKeyFilter = this.createKeyFilter(this.keySearchText);
-      return this.getKeys().pipe(
-        map(name => name.filter(dataKeyFilter)),
-        tap(res => this.latestKeySearchResult = res)
-      );
-    }
-    return of(this.latestKeySearchResult);
-  }
-
-  private getKeys() {
-    if (this.keysFetchObservable$ === null) {
-      let fetchObservable: Observable<Array<DataKey>>;
-      if (this.targetDeviceAliasId) {
-        const retrieveValueMethod: RpcRetrieveValueMethod = this.switchRpcSettingsFormGroup.get('retrieveValueMethod').value;
-        const dataKeyTypes = retrieveValueMethod === 'attribute' ? [DataKeyType.attribute] : [DataKeyType.timeseries];
-        fetchObservable = this.fetchEntityKeys(this.targetDeviceAliasId, dataKeyTypes);
-      } else {
-        fetchObservable = of([]);
-      }
-      this.keysFetchObservable$ = fetchObservable.pipe(
-        map((dataKeys) => dataKeys.map((dataKey) => dataKey.name)),
-        publishReplay(1),
-        refCount()
-      );
-    }
-    return this.keysFetchObservable$;
-  }
-
-  private fetchEntityKeys(entityAliasId: string, dataKeyTypes: Array<DataKeyType>): Observable<Array<DataKey>> {
-    return this.aliasController.getAliasInfo(entityAliasId).pipe(
-      mergeMap((aliasInfo) => {
-        return this.entityService.getEntityKeysByEntityFilter(
-          aliasInfo.entityFilter,
-          dataKeyTypes,
-          {ignoreLoading: true, ignoreErrors: true}
-        ).pipe(
-          catchError(() => of([]))
-        );
-      }),
-      catchError(() => of([] as Array<DataKey>))
-    );
-  }
-
-  private createKeyFilter(query: string): (key: string) => boolean {
-    const lowercaseQuery = query.toLowerCase();
-    return key => key.toLowerCase().startsWith(lowercaseQuery);
   }
 }
