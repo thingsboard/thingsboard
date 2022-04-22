@@ -66,6 +66,7 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.DASHBOARD_ID;
 import static org.thingsboard.server.controller.ControllerConstants.DASHBOARD_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.DASHBOARD_SORT_PROPERTY_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.DASHBOARD_TEXT_SEARCH_DESCRIPTION;
@@ -91,9 +92,7 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
-public class DashboardController extends BaseController {
-
-    public static final String DASHBOARD_ID = "dashboardId";
+public class DashboardController extends DefaultEntityBaseController {
 
     private static final String HOME_DASHBOARD_ID = "homeDashboardId";
     private static final String HOME_DASHBOARD_HIDE_TOOLBAR = "homeDashboardHideToolbar";
@@ -214,18 +213,7 @@ public class DashboardController extends BaseController {
             @PathVariable(DASHBOARD_ID) String strDashboardId) throws ThingsboardException {
         checkParameter(DASHBOARD_ID, strDashboardId);
         try {
-            DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
-            Dashboard dashboard = checkDashboardId(dashboardId, Operation.DELETE);
-
-            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(getTenantId(), dashboardId);
-
-            dashboardService.deleteDashboard(getCurrentUser().getTenantId(), dashboardId);
-
-            logEntityAction(dashboardId, dashboard,
-                    null,
-                    ActionType.DELETED, null, strDashboardId);
-
-            sendDeleteNotificationMsg(getTenantId(), dashboardId, relatedEdgeIds);
+            entityDeleteService.deleteEntity(getTenantId(), new DashboardId(toUUID(strDashboardId)));
         } catch (Exception e) {
 
             logEntityAction(emptyId(EntityType.DASHBOARD),

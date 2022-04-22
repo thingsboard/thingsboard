@@ -79,9 +79,11 @@ import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_ASSIGN_ASYNC_FIRST_STEP_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_ASSIGN_RECEIVE_STEP_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.EDGE_ID;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_UNASSIGN_ASYNC_FIRST_STEP_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_VIEW_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.ENTITY_VIEW_ID;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_VIEW_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_VIEW_INFO_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_VIEW_INFO_SORT_PROPERTY_ALLOWABLE_VALUES;
@@ -97,7 +99,6 @@ import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_D
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
-import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
 
 /**
  * Created by Victor Basanets on 8/28/2017.
@@ -106,9 +107,7 @@ import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
 @TbCoreComponent
 @RequestMapping("/api")
 @Slf4j
-public class EntityViewController extends BaseController {
-
-    public static final String ENTITY_VIEW_ID = "entityViewId";
+public class EntityViewController extends DefaultEntityBaseController {
 
     @Autowired
     private TimeseriesService tsService;
@@ -403,17 +402,8 @@ public class EntityViewController extends BaseController {
             @PathVariable(ENTITY_VIEW_ID) String strEntityViewId) throws ThingsboardException {
         checkParameter(ENTITY_VIEW_ID, strEntityViewId);
         try {
-            EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
-            EntityView entityView = checkEntityViewId(entityViewId, Operation.DELETE);
-
-            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(getTenantId(), entityViewId);
-
-            entityViewService.deleteEntityView(getTenantId(), entityViewId);
-            logEntityAction(entityViewId, entityView, entityView.getCustomerId(),
-                    ActionType.DELETED, null, strEntityViewId);
-
-            sendDeleteNotificationMsg(getTenantId(), entityViewId, relatedEdgeIds);
-        } catch (Exception e) {
+            entityDeleteService.deleteEntity(getTenantId(), new EntityViewId(toUUID(strEntityViewId)));
+         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.ENTITY_VIEW),
                     null,
                     null,

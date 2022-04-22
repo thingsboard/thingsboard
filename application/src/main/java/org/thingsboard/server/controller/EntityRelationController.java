@@ -29,7 +29,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -43,7 +42,9 @@ import org.thingsboard.server.service.security.permission.Operation;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.controller.ControllerConstants.ENTITY_ID;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_ID_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.ENTITY_TYPE;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_TYPE_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.RELATION_INFO_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.RELATION_TYPE_GROUP_PARAM_DESCRIPTION;
@@ -52,7 +53,7 @@ import static org.thingsboard.server.controller.ControllerConstants.RELATION_TYP
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
-public class EntityRelationController extends BaseController {
+public class EntityRelationController extends DefaultEntityBaseController {
 
     public static final String TO_TYPE = "toType";
     public static final String FROM_ID = "fromId";
@@ -124,17 +125,8 @@ public class EntityRelationController extends BaseController {
         RelationTypeGroup relationTypeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
         EntityRelation relation = new EntityRelation(fromId, toId, strRelationType, relationTypeGroup);
         try {
-            Boolean found = relationService.deleteRelation(getTenantId(), fromId, toId, strRelationType, relationTypeGroup);
-            if (!found) {
-                throw new ThingsboardException("Requested item wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND);
-            }
-            logEntityAction(relation.getFrom(), null, getCurrentUser().getCustomerId(),
-                    ActionType.RELATION_DELETED, null, relation);
-            logEntityAction(relation.getTo(), null, getCurrentUser().getCustomerId(),
-                    ActionType.RELATION_DELETED, null, relation);
-
-            sendRelationNotificationMsg(getTenantId(), relation, EdgeEventActionType.RELATION_DELETED);
-        } catch (Exception e) {
+            entityDeleteService.deleteRelation(fromId, toId, strRelationType, strRelationTypeGroup, relation, relationTypeGroup);
+         } catch (Exception e) {
             logEntityAction(relation.getFrom(), null, getCurrentUser().getCustomerId(),
                     ActionType.RELATION_DELETED, e, relation);
             logEntityAction(relation.getTo(), null, getCurrentUser().getCustomerId(),
@@ -147,17 +139,16 @@ public class EntityRelationController extends BaseController {
             notes = "Deletes all the relation (both 'from' and 'to' direction) for the specified entity. " +
                     SECURITY_CHECKS_ENTITY_DESCRIPTION)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN','TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/relations", method = RequestMethod.DELETE, params = {"entityId", "entityType"})
+    @RequestMapping(value = "/relations", method = RequestMethod.DELETE, params = {ENTITY_ID, ENTITY_TYPE})
     @ResponseStatus(value = HttpStatus.OK)
-    public void deleteRelations(@ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true) @RequestParam("entityId") String strId,
-                                @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true) @RequestParam("entityType") String strType) throws ThingsboardException {
-        checkParameter("entityId", strId);
-        checkParameter("entityType", strType);
+    public void deleteRelations(@ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true) @RequestParam(ENTITY_ID) String strId,
+                                @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true) @RequestParam(ENTITY_TYPE) String strType) throws ThingsboardException {
+        checkParameter(ENTITY_ID, strId);
+        checkParameter(ENTITY_TYPE, strType);
         EntityId entityId = EntityIdFactory.getByTypeAndId(strType, strId);
         checkEntityId(entityId, Operation.WRITE);
         try {
-            relationService.deleteEntityRelations(getTenantId(), entityId);
-            logEntityAction(entityId, null, getCurrentUser().getCustomerId(), ActionType.RELATIONS_DELETED, null);
+            entityDeleteService.deleteRelations(entityId);
         } catch (Exception e) {
             logEntityAction(entityId, null, getCurrentUser().getCustomerId(), ActionType.RELATIONS_DELETED, e);
             throw handleException(e);

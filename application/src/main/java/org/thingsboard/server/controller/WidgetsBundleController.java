@@ -50,6 +50,7 @@ import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_D
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
+import static org.thingsboard.server.controller.ControllerConstants.WIDGETS_BUNDLE_ID;
 import static org.thingsboard.server.controller.ControllerConstants.WIDGET_BUNDLE_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.WIDGET_BUNDLE_SORT_PROPERTY_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.WIDGET_BUNDLE_TEXT_SEARCH_DESCRIPTION;
@@ -57,7 +58,7 @@ import static org.thingsboard.server.controller.ControllerConstants.WIDGET_BUNDL
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
-public class WidgetsBundleController extends BaseController {
+public class WidgetsBundleController extends DefaultEntityBaseController {
 
     private static final String WIDGET_BUNDLE_DESCRIPTION = "Widget Bundle represents a group(bundle) of widgets. Widgets are grouped into bundle by type or use case. ";
 
@@ -68,8 +69,8 @@ public class WidgetsBundleController extends BaseController {
     @ResponseBody
     public WidgetsBundle getWidgetsBundleById(
             @ApiParam(value = WIDGET_BUNDLE_ID_PARAM_DESCRIPTION, required = true)
-            @PathVariable("widgetsBundleId") String strWidgetsBundleId) throws ThingsboardException {
-        checkParameter("widgetsBundleId", strWidgetsBundleId);
+            @PathVariable(WIDGETS_BUNDLE_ID) String strWidgetsBundleId) throws ThingsboardException {
+        checkParameter(WIDGETS_BUNDLE_ID, strWidgetsBundleId);
         try {
             WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
             return checkWidgetsBundleId(widgetsBundleId, Operation.READ);
@@ -119,15 +120,10 @@ public class WidgetsBundleController extends BaseController {
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteWidgetsBundle(
             @ApiParam(value = WIDGET_BUNDLE_ID_PARAM_DESCRIPTION, required = true)
-            @PathVariable("widgetsBundleId") String strWidgetsBundleId) throws ThingsboardException {
-        checkParameter("widgetsBundleId", strWidgetsBundleId);
+            @PathVariable(WIDGETS_BUNDLE_ID) String strWidgetsBundleId) throws ThingsboardException {
+        checkParameter(WIDGETS_BUNDLE_ID, strWidgetsBundleId);
         try {
-            WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
-            checkWidgetsBundleId(widgetsBundleId, Operation.DELETE);
-            widgetsBundleService.deleteWidgetsBundle(getTenantId(), widgetsBundleId);
-
-            sendEntityNotificationMsg(getTenantId(), widgetsBundleId, EdgeEventActionType.DELETED);
-
+            entityDeleteService.deleteEntity(getTenantId(), new WidgetsBundleId(toUUID(strWidgetsBundleId)));
         } catch (Exception e) {
             throw handleException(e);
         }

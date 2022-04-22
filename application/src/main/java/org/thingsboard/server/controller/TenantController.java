@@ -63,7 +63,7 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 @TbCoreComponent
 @RequestMapping("/api")
 @Slf4j
-public class TenantController extends BaseController {
+public class TenantController extends DefaultEntityBaseController {
 
     private static final String TENANT_INFO_DESCRIPTION = "The Tenant Info object extends regular Tenant object and includes Tenant Profile name. ";
     @Autowired
@@ -154,12 +154,7 @@ public class TenantController extends BaseController {
             @PathVariable(TENANT_ID) String strTenantId) throws ThingsboardException {
         checkParameter(TENANT_ID, strTenantId);
         try {
-            TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
-            Tenant tenant = checkTenantId(tenantId, Operation.DELETE);
-            tenantService.deleteTenant(tenantId);
-            tenantProfileCache.evict(tenantId);
-            tbClusterService.onTenantDelete(tenant, null);
-            tbClusterService.broadcastEntityStateChangeEvent(tenantId, tenantId, ComponentLifecycleEvent.DELETED);
+            entityDeleteService.deleteEntity(getTenantId(), TenantId.fromUUID(toUUID(strTenantId)));
         } catch (Exception e) {
             throw handleException(e);
         }

@@ -68,7 +68,6 @@ import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.device.claim.ClaimResponse;
 import org.thingsboard.server.dao.device.claim.ClaimResult;
-import org.thingsboard.server.dao.device.claim.ReclaimResult;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -90,6 +89,7 @@ import java.util.stream.Collectors;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_INFO_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_NAME_DESCRIPTION;
@@ -100,6 +100,7 @@ import static org.thingsboard.server.controller.ControllerConstants.DEVICE_TYPE_
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_DESCRIPTION_MARKDOWN;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_ASSIGN_ASYNC_FIRST_STEP_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_ASSIGN_RECEIVE_STEP_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.EDGE_ID;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_UNASSIGN_ASYNC_FIRST_STEP_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION;
@@ -110,21 +111,19 @@ import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_A
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_ID;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
-import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
 
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
 @RequiredArgsConstructor
 @Slf4j
-public class DeviceController extends BaseController {
+public class DeviceController extends DefaultEntityBaseController {
 
-    protected static final String DEVICE_ID = "deviceId";
     protected static final String DEVICE_NAME = "deviceName";
-    protected static final String TENANT_ID = "tenantId";
 
     private final DeviceBulkImportService deviceBulkImportService;
 
@@ -258,21 +257,7 @@ public class DeviceController extends BaseController {
                              @PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
         checkParameter(DEVICE_ID, strDeviceId);
         try {
-            DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
-            Device device = checkDeviceId(deviceId, Operation.DELETE);
-
-            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(getTenantId(), deviceId);
-
-            deviceService.deleteDevice(getCurrentUser().getTenantId(), deviceId);
-
-            gatewayNotificationsService.onDeviceDeleted(device);
-            tbClusterService.onDeviceDeleted(device, null);
-
-            logEntityAction(deviceId, device,
-                    device.getCustomerId(),
-                    ActionType.DELETED, null, strDeviceId);
-
-            sendDeleteNotificationMsg(getTenantId(), deviceId, relatedEdgeIds);
+            entityDeleteService.deleteEntity(getTenantId(), new DeviceId(toUUID(strDeviceId)));
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.DEVICE),
                     null,
@@ -750,38 +735,7 @@ public class DeviceController extends BaseController {
                                                         @PathVariable(DEVICE_NAME) String deviceName) throws ThingsboardException {
         checkParameter(DEVICE_NAME, deviceName);
         try {
-            final DeferredResult<ResponseEntity> deferredResult = new DeferredResult<>();
-
-            SecurityUser user = getCurrentUser();
-            TenantId tenantId = user.getTenantId();
-
-            Device device = checkNotNull(deviceService.findDeviceByTenantIdAndName(tenantId, deviceName));
-            accessControlService.checkPermission(user, Resource.DEVICE, Operation.CLAIM_DEVICES,
-                    device.getId(), device);
-
-            ListenableFuture<ReclaimResult> result = claimDevicesService.reClaimDevice(tenantId, device);
-            Futures.addCallback(result, new FutureCallback<>() {
-                @Override
-                public void onSuccess(ReclaimResult reclaimResult) {
-                    deferredResult.setResult(new ResponseEntity(HttpStatus.OK));
-
-                    Customer unassignedCustomer = reclaimResult.getUnassignedCustomer();
-                    if (unassignedCustomer != null) {
-                        try {
-                            logEntityAction(user, device.getId(), device, device.getCustomerId(), ActionType.UNASSIGNED_FROM_CUSTOMER, null,
-                                    device.getId().toString(), unassignedCustomer.getId().toString(), unassignedCustomer.getName());
-                        } catch (ThingsboardException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
-                    deferredResult.setErrorResult(t);
-                }
-            }, MoreExecutors.directExecutor());
-            return deferredResult;
+            return entityDeleteService.deleteReClaimDevice(deviceName);
         } catch (Exception e) {
             throw handleException(e);
         }

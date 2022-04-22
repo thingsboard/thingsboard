@@ -40,7 +40,6 @@ import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -60,7 +59,6 @@ import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.List;
 
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID_PARAM_DESCRIPTION;
@@ -78,6 +76,7 @@ import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHO
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_ID;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.USER_ID;
 import static org.thingsboard.server.controller.ControllerConstants.USER_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.USER_SORT_PROPERTY_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.USER_TEXT_SEARCH_DESCRIPTION;
@@ -87,9 +86,8 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
-public class UserController extends BaseController {
+public class UserController extends DefaultEntityBaseController {
 
-    public static final String USER_ID = "userId";
     public static final String YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION = "You don't have permission to perform this operation!";
     public static final String ACTIVATE_URL_PATTERN = "%s/api/noauth/activate?activateToken=%s";
 
@@ -299,24 +297,8 @@ public class UserController extends BaseController {
             @PathVariable(USER_ID) String strUserId) throws ThingsboardException {
         checkParameter(USER_ID, strUserId);
         try {
-            UserId userId = new UserId(toUUID(strUserId));
-            User user = checkUserId(userId, Operation.DELETE);
-
-            if (user.getAuthority() == Authority.SYS_ADMIN && getCurrentUser().getId().equals(userId)) {
-                throw new ThingsboardException("Sysadmin is not allowed to delete himself", ThingsboardErrorCode.PERMISSION_DENIED);
-            }
-
-            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(getTenantId(), userId);
-
-            userService.deleteUser(getCurrentUser().getTenantId(), userId);
-
-            logEntityAction(userId, user,
-                    user.getCustomerId(),
-                    ActionType.DELETED, null, strUserId);
-
-            sendDeleteNotificationMsg(getTenantId(), userId, relatedEdgeIds);
-
-        } catch (Exception e) {
+            entityDeleteService.deleteEntity(getTenantId(), new UserId(toUUID(strUserId)));
+         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.USER),
                     null,
                     null,
