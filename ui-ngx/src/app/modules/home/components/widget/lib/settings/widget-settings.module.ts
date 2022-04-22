@@ -116,6 +116,9 @@ import {
 import {
   SlideToggleWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/control/slide-toggle-widget-settings.component';
+import {
+  PersistentTableWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/control/persistent-table-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -159,7 +162,8 @@ import {
     SwitchRpcSettingsComponent,
     RoundSwitchWidgetSettingsComponent,
     SwitchControlWidgetSettingsComponent,
-    SlideToggleWidgetSettingsComponent
+    SlideToggleWidgetSettingsComponent,
+    PersistentTableWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -207,7 +211,8 @@ import {
     SwitchRpcSettingsComponent,
     RoundSwitchWidgetSettingsComponent,
     SwitchControlWidgetSettingsComponent,
-    SlideToggleWidgetSettingsComponent
+    SlideToggleWidgetSettingsComponent,
+    PersistentTableWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -243,5 +248,6 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-doughnut-chart-widget-settings': DoughnutChartWidgetSettingsComponent,
   'tb-round-switch-widget-settings': RoundSwitchWidgetSettingsComponent,
   'tb-switch-control-widget-settings': SwitchControlWidgetSettingsComponent,
-  'tb-slide-toggle-widget-settings': SlideToggleWidgetSettingsComponent
+  'tb-slide-toggle-widget-settings': SlideToggleWidgetSettingsComponent,
+  'tb-persistent-table-widget-settings': PersistentTableWidgetSettingsComponent
 };

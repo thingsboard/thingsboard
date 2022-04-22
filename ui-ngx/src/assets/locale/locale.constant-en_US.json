@@ -3597,7 +3597,19 @@
             "message-types": {
                 "false": "Two-way",
                 "true": "One-way"
-            }
+            },
+            "general-settings": "General settings",
+            "enable-filter": "Enable filter",
+            "enable-sticky-header": "Display header while scrolling",
+            "enable-sticky-action": "Display actions column while scrolling",
+            "display-request-details": "Display request details",
+            "allow-send-request": "Allow send RPC request",
+            "allow-delete-request": "Allow delete request",
+            "columns-settings": "Columns settings",
+            "display-columns": "Columns to display",
+            "column": "Column",
+            "no-columns-found": "No columns found",
+            "no-columns-matching": "'{{column}}' not found."
         },
         "rpc": {
             "value-settings": "Value settings",
