@@ -664,7 +664,6 @@ function barDimensions(context: DigitalGaugeCanvasRenderingContext2D,
   return bd;
 }
 
-
 function determineTimeseriesLabelY(options: CanvasDigitalGaugeOptions, labelY: number, fontSizeFactor: number){
   if (options.showUnitTitle) {
     return  labelY + options.fontLabelSize * fontSizeFactor * 1.2;
@@ -672,6 +671,7 @@ function determineTimeseriesLabelY(options: CanvasDigitalGaugeOptions, labelY: n
     return labelY;
   }
 }
+
 function determineFontHeight(options: CanvasDigitalGaugeOptions, target: string, baseSize: number): FontHeightInfo {
   const fontStyleStr = 'font-style:' + options['font' + target + 'Style'] + ';font-weight:' +
     options['font' + target + 'Weight'] + ';font-size:' +
