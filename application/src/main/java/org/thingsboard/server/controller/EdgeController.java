@@ -67,6 +67,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.EDGE_ID;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_INFO_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_SORT_PROPERTY_ALLOWABLE_VALUES;
@@ -88,10 +89,9 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 @Slf4j
 @RequestMapping("/api")
 @RequiredArgsConstructor
-public class EdgeController extends BaseController {
+public class EdgeController extends DefaultEntityBaseController {
     private final EdgeBulkImportService edgeBulkImportService;
 
-    public static final String EDGE_ID = "edgeId";
     public static final String EDGE_SECURITY_CHECK = "If the user has the authority of 'Tenant Administrator', the server checks that the edge is owned by the same tenant. " +
             "If the user has the authority of 'Customer User', the server checks that the edge is assigned to the same customer.";
 
@@ -202,17 +202,7 @@ public class EdgeController extends BaseController {
                            @PathVariable(EDGE_ID) String strEdgeId) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
         try {
-            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-            Edge edge = checkEdgeId(edgeId, Operation.DELETE);
-            edgeService.deleteEdge(getTenantId(), edgeId);
-
-            tbClusterService.broadcastEntityStateChangeEvent(getTenantId(), edgeId,
-                    ComponentLifecycleEvent.DELETED);
-
-            logEntityAction(edgeId, edge,
-                    null,
-                    ActionType.DELETED, null, strEdgeId);
-
+            entityDeleteService.deleteEntity(getTenantId(), new EdgeId(toUUID(strEdgeId)));
         } catch (Exception e) {
 
             logEntityAction(emptyId(EntityType.EDGE),

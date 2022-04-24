@@ -46,13 +46,14 @@ import java.util.List;
 import static org.thingsboard.server.controller.ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER;
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
+import static org.thingsboard.server.controller.ControllerConstants.WIDGET_TYPE_ID;
 import static org.thingsboard.server.controller.ControllerConstants.WIDGET_TYPE_ID_PARAM_DESCRIPTION;
 
 @Slf4j
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
-public class WidgetTypeController extends BaseController {
+public class WidgetTypeController extends DefaultEntityBaseController {
 
     private static final String WIDGET_TYPE_DESCRIPTION = "Widget Type represents the template for widget creation. Widget Type and Widget are similar to class and object in OOP theory.";
     private static final String WIDGET_TYPE_DETAILS_DESCRIPTION = "Widget Type Details extend Widget Type and add image and description properties. " +
@@ -67,8 +68,8 @@ public class WidgetTypeController extends BaseController {
     @ResponseBody
     public WidgetTypeDetails getWidgetTypeById(
             @ApiParam(value = WIDGET_TYPE_ID_PARAM_DESCRIPTION, required = true)
-            @PathVariable("widgetTypeId") String strWidgetTypeId) throws ThingsboardException {
-        checkParameter("widgetTypeId", strWidgetTypeId);
+            @PathVariable(WIDGET_TYPE_ID) String strWidgetTypeId) throws ThingsboardException {
+        checkParameter(WIDGET_TYPE_ID, strWidgetTypeId);
         try {
             WidgetTypeId widgetTypeId = new WidgetTypeId(toUUID(strWidgetTypeId));
             return checkWidgetTypeId(widgetTypeId, Operation.READ);
@@ -118,15 +119,10 @@ public class WidgetTypeController extends BaseController {
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteWidgetType(
             @ApiParam(value = WIDGET_TYPE_ID_PARAM_DESCRIPTION, required = true)
-            @PathVariable("widgetTypeId") String strWidgetTypeId) throws ThingsboardException {
-        checkParameter("widgetTypeId", strWidgetTypeId);
+            @PathVariable(WIDGET_TYPE_ID) String strWidgetTypeId) throws ThingsboardException {
+        checkParameter(WIDGET_TYPE_ID, strWidgetTypeId);
         try {
-            WidgetTypeId widgetTypeId = new WidgetTypeId(toUUID(strWidgetTypeId));
-            checkWidgetTypeId(widgetTypeId, Operation.DELETE);
-            widgetTypeService.deleteWidgetType(getCurrentUser().getTenantId(), widgetTypeId);
-
-            sendEntityNotificationMsg(getTenantId(), widgetTypeId, EdgeEventActionType.DELETED);
-
+            entityDeleteService.deleteEntity(getTenantId(), new WidgetTypeId(toUUID(strWidgetTypeId)));
         } catch (Exception e) {
             throw handleException(e);
         }

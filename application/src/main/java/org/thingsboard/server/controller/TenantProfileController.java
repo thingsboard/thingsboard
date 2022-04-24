@@ -49,6 +49,7 @@ import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_A
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_PROFILE_ID;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_PROFILE_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_PROFILE_INFO_SORT_PROPERTY_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_PROFILE_SORT_PROPERTY_ALLOWABLE_VALUES;
@@ -59,7 +60,7 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 @TbCoreComponent
 @RequestMapping("/api")
 @Slf4j
-public class TenantProfileController extends BaseController {
+public class TenantProfileController extends DefaultEntityBaseController {
 
     private static final String TENANT_PROFILE_INFO_DESCRIPTION = "Tenant Profile Info is a lightweight object that contains only id and name of the profile. ";
 
@@ -70,8 +71,8 @@ public class TenantProfileController extends BaseController {
     @ResponseBody
     public TenantProfile getTenantProfileById(
             @ApiParam(value = TENANT_PROFILE_ID_PARAM_DESCRIPTION)
-            @PathVariable("tenantProfileId") String strTenantProfileId) throws ThingsboardException {
-        checkParameter("tenantProfileId", strTenantProfileId);
+            @PathVariable(TENANT_PROFILE_ID) String strTenantProfileId) throws ThingsboardException {
+        checkParameter(TENANT_PROFILE_ID, strTenantProfileId);
         try {
             TenantProfileId tenantProfileId = new TenantProfileId(toUUID(strTenantProfileId));
             return checkTenantProfileId(tenantProfileId, Operation.READ);
@@ -87,8 +88,8 @@ public class TenantProfileController extends BaseController {
     @ResponseBody
     public EntityInfo getTenantProfileInfoById(
             @ApiParam(value = TENANT_PROFILE_ID_PARAM_DESCRIPTION)
-            @PathVariable("tenantProfileId") String strTenantProfileId) throws ThingsboardException {
-        checkParameter("tenantProfileId", strTenantProfileId);
+            @PathVariable(TENANT_PROFILE_ID) String strTenantProfileId) throws ThingsboardException {
+        checkParameter(TENANT_PROFILE_ID, strTenantProfileId);
         try {
             TenantProfileId tenantProfileId = new TenantProfileId(toUUID(strTenantProfileId));
             return checkNotNull(tenantProfileService.findTenantProfileInfoById(getTenantId(), tenantProfileId));
@@ -196,13 +197,10 @@ public class TenantProfileController extends BaseController {
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteTenantProfile(
             @ApiParam(value = TENANT_PROFILE_ID_PARAM_DESCRIPTION)
-            @PathVariable("tenantProfileId") String strTenantProfileId) throws ThingsboardException {
-        checkParameter("tenantProfileId", strTenantProfileId);
+            @PathVariable(TENANT_PROFILE_ID) String strTenantProfileId) throws ThingsboardException {
+        checkParameter(TENANT_PROFILE_ID, strTenantProfileId);
         try {
-            TenantProfileId tenantProfileId = new TenantProfileId(toUUID(strTenantProfileId));
-            TenantProfile profile = checkTenantProfileId(tenantProfileId, Operation.DELETE);
-            tenantProfileService.deleteTenantProfile(getTenantId(), tenantProfileId);
-            tbClusterService.onTenantProfileDelete(profile, null);
+            entityDeleteService.deleteEntity(getTenantId(), new TenantProfileId(toUUID(strTenantProfileId)));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -215,8 +213,8 @@ public class TenantProfileController extends BaseController {
     @ResponseBody
     public TenantProfile setDefaultTenantProfile(
             @ApiParam(value = TENANT_PROFILE_ID_PARAM_DESCRIPTION)
-            @PathVariable("tenantProfileId") String strTenantProfileId) throws ThingsboardException {
-        checkParameter("tenantProfileId", strTenantProfileId);
+            @PathVariable(TENANT_PROFILE_ID) String strTenantProfileId) throws ThingsboardException {
+        checkParameter(TENANT_PROFILE_ID, strTenantProfileId);
         try {
             TenantProfileId tenantProfileId = new TenantProfileId(toUUID(strTenantProfileId));
             TenantProfile tenantProfile = checkTenantProfileId(tenantProfileId, Operation.WRITE);
