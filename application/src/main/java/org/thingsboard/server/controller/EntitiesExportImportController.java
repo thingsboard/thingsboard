@@ -81,6 +81,7 @@ public class EntitiesExportImportController extends BaseController {
 
     private List<EntityExportData<?>> exportEntitiesByRequest(SecurityUser user, ExportRequest exportRequest) throws ThingsboardException {
         List<EntityId> entities = exportableEntitiesService.findEntitiesForRequest(user.getTenantId(), exportRequest);
+
         EntityExportSettings exportSettings = exportRequest.getExportSettings();
         if (exportSettings == null) {
             exportSettings = EntityExportSettings.builder()

@@ -659,7 +659,7 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
             exportRequest.setExportSettings(new EntityExportSettings());
             exportRequest.setPageSize(10);
             exportRequest.setEntityType(entityType);
-            exportRequest.setCustomerId(customer.getId());
+            exportRequest.setCustomerId(customer.getUuidId());
             exportRequests.add(exportRequest);
         }
 
