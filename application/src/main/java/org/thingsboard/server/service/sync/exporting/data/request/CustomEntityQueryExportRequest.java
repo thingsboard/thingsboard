@@ -17,15 +17,16 @@ package org.thingsboard.server.service.sync.exporting.data.request;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
+
+import java.util.UUID;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class CustomEntityQueryExportRequest extends ExportRequest {
 
     private EntityDataQuery query;
-    private CustomerId customerId;
+    private UUID customerId;
 
     @Override
     public ExportRequestType getType() {

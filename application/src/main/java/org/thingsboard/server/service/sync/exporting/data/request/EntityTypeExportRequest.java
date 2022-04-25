@@ -18,7 +18,8 @@ package org.thingsboard.server.service.sync.exporting.data.request;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.CustomerId;
+
+import java.util.UUID;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -27,7 +28,7 @@ public class EntityTypeExportRequest extends ExportRequest {
     private EntityType entityType;
     private int page;
     private int pageSize;
-    private CustomerId customerId;
+    private UUID customerId;
 
     @Override
     public ExportRequestType getType() {

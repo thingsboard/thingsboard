@@ -29,8 +29,10 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.EntitiesExportImportService;
 import org.thingsboard.server.service.sync.exporting.ExportableEntitiesService;
 import org.thingsboard.server.service.sync.exporting.data.EntityExportData;
+import org.thingsboard.server.service.sync.exporting.data.request.EntityExportSettings;
 import org.thingsboard.server.service.sync.exporting.data.request.ExportRequest;
 import org.thingsboard.server.service.sync.importing.data.EntityImportResult;
+import org.thingsboard.server.service.sync.importing.data.EntityImportSettings;
 import org.thingsboard.server.service.sync.importing.data.request.ImportRequest;
 
 import java.util.ArrayList;
@@ -79,10 +81,16 @@ public class EntitiesExportImportController extends BaseController {
 
     private List<EntityExportData<?>> exportEntitiesByRequest(SecurityUser user, ExportRequest exportRequest) throws ThingsboardException {
         List<EntityId> entities = exportableEntitiesService.findEntitiesForRequest(user.getTenantId(), exportRequest);
+        EntityExportSettings exportSettings = exportRequest.getExportSettings();
+        if (exportSettings == null) {
+            exportSettings = EntityExportSettings.builder()
+                    .exportRelations(false)
+                    .build();
+        }
 
         List<EntityExportData<?>> exportDataList = new ArrayList<>();
         for (EntityId entityId : entities) {
-            EntityExportData<?> exportData = exportImportService.exportEntity(user, entityId, exportRequest.getExportSettings());
+            EntityExportData<?> exportData = exportImportService.exportEntity(user, entityId, exportSettings);
             exportDataList.add(exportData);
         }
         return exportDataList;
@@ -93,7 +101,15 @@ public class EntitiesExportImportController extends BaseController {
     public List<EntityImportResult<?>> importEntities(@RequestBody ImportRequest importRequest) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         try {
-            List<EntityImportResult<?>> importResults = exportImportService.importEntities(user, importRequest.getExportDataList(), importRequest.getImportSettings());
+            EntityImportSettings importSettings = importRequest.getImportSettings();
+            if (importSettings == null) {
+                importSettings = EntityImportSettings.builder()
+                        .findExistingByName(false)
+                        .updateRelations(false)
+                        .build();
+            }
+
+            List<EntityImportResult<?>> importResults = exportImportService.importEntities(user, importRequest.getExportDataList(), importSettings);
 
             importResults.stream()
                     .map(EntityImportResult::getSendEventsCallback)

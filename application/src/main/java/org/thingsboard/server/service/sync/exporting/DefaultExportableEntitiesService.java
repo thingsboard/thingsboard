@@ -17,6 +17,7 @@ package org.thingsboard.server.service.sync.exporting;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
@@ -56,7 +57,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.sql.query.EntityKeyMapping.CREATED_TIME;
@@ -78,12 +78,17 @@ public class DefaultExportableEntitiesService implements ExportableEntitiesServi
         EntityType entityType = externalId.getEntityType();
         Dao<E> dao = getDao(entityType);
 
+        E entity = null;
+
         if (dao instanceof ExportableEntityDao) {
             ExportableEntityDao<E> exportableEntityDao = (ExportableEntityDao<E>) dao;
-            return exportableEntityDao.findByTenantIdAndExternalId(tenantId.getId(), externalId.getId());
-        } else {
+            entity = exportableEntityDao.findByTenantIdAndExternalId(tenantId.getId(), externalId.getId());
+        }
+        if (entity == null || !belongsToTenant(entity, tenantId)) {
             return null;
         }
+
+        return entity;
     }
 
     @Override
@@ -92,24 +97,36 @@ public class DefaultExportableEntitiesService implements ExportableEntitiesServi
         Dao<E> dao = getDao(entityType);
 
         E entity = dao.findById(tenantId, id.getId());
-        if (((HasTenantId) entity).getTenantId().equals(tenantId)) {
-            return entity;
+
+        if (entity == null || !belongsToTenant(entity, tenantId)) {
+            return null;
         }
-        return null;
+
+        return entity;
     }
 
     @Override
     public <E extends ExportableEntity<I>, I extends EntityId> E findEntityByTenantIdAndName(TenantId tenantId, EntityType entityType, String name) {
         Dao<E> dao = getDao(entityType);
 
+        E entity = null;
+
         if (dao instanceof ExportableEntityDao) {
             ExportableEntityDao<E> exportableEntityDao = (ExportableEntityDao<E>) dao;
             try {
-                return exportableEntityDao.findByTenantIdAndName(tenantId.getId(), name);
+                entity = exportableEntityDao.findByTenantIdAndName(tenantId.getId(), name);
             } catch (UnsupportedOperationException ignored) {
             }
         }
-        return null;
+        if (entity == null || !belongsToTenant(entity, tenantId)) {
+            return null;
+        }
+
+        return entity;
+    }
+
+    private boolean belongsToTenant(HasId<? extends EntityId> entity, TenantId tenantId) {
+        return tenantId.equals(((HasTenantId) entity).getTenantId());
     }
 
 
@@ -127,21 +144,21 @@ public class DefaultExportableEntitiesService implements ExportableEntitiesServi
                 EntityTypeFilter entityTypeFilter = new EntityTypeFilter();
                 entityTypeFilter.setEntityType(exportRequest.getEntityType());
 
-                CustomerId customerId = Optional.ofNullable(exportRequest.getCustomerId()).orElse(new CustomerId(EntityId.NULL_UUID));
+                CustomerId customerId = new CustomerId(ObjectUtils.defaultIfNull(exportRequest.getCustomerId(), EntityId.NULL_UUID));
                 return findEntitiesByFilter(tenantId, customerId, entityTypeFilter, exportRequest.getPage(), exportRequest.getPageSize());
             }
             case CUSTOM_ENTITY_FILTER: {
                 CustomEntityFilterExportRequest exportRequest = (CustomEntityFilterExportRequest) request;
                 EntityFilter filter = exportRequest.getFilter();
 
-                CustomerId customerId = Optional.ofNullable(exportRequest.getCustomerId()).orElse(new CustomerId(EntityId.NULL_UUID));
+                CustomerId customerId = new CustomerId(ObjectUtils.defaultIfNull(exportRequest.getCustomerId(), EntityId.NULL_UUID));
                 return findEntitiesByFilter(tenantId, customerId, filter, exportRequest.getPage(), exportRequest.getPageSize());
             }
             case CUSTOM_ENTITY_QUERY: {
                 CustomEntityQueryExportRequest exportRequest = (CustomEntityQueryExportRequest) request;
                 EntityDataQuery query = exportRequest.getQuery();
 
-                CustomerId customerId = Optional.ofNullable(exportRequest.getCustomerId()).orElse(new CustomerId(EntityId.NULL_UUID));
+                CustomerId customerId = new CustomerId(ObjectUtils.defaultIfNull(exportRequest.getCustomerId(), EntityId.NULL_UUID));
                 return findEntitiesByQuery(tenantId, customerId, query);
             }
             default: {
