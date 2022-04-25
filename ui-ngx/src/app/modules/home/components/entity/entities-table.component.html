@@ -262,7 +262,7 @@
                 class="no-data-found">{{ 'common.loading' | translate }}</span>
         </div>
         <mat-divider *ngIf="displayPagination"></mat-divider>
-        <mat-paginator *ngIf="displayPagination"
+        <mat-paginator [fxShow]="displayPagination"
                        [length]="dataSource.total() | async"
                        [pageIndex]="pageLink.page"
                        [pageSize]="pageLink.pageSize"
