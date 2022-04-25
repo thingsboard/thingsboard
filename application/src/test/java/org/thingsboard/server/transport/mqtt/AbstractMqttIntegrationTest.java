@@ -66,11 +66,19 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
     protected DeviceProfile deviceProfile;
 
     protected void processBeforeTest(String deviceName, String gatewayName, TransportPayloadType payloadType, String telemetryTopic, String attributesTopic) throws Exception {
-        this.processBeforeTest(deviceName, gatewayName, payloadType, telemetryTopic, attributesTopic, null, null, null, null, null, null, DeviceProfileProvisionType.DISABLED, false, false);
+        this.processBeforeTest(deviceName, gatewayName, payloadType, telemetryTopic, attributesTopic, null, null, null, null, null, null, DeviceProfileProvisionType.DISABLED, false, false, false);
     }
 
     protected void processBeforeTest(String deviceName, String gatewayName, TransportPayloadType payloadType, String telemetryTopic, String attributesTopic, boolean enableCompatibilityWithJsonPayloadFormat, boolean useJsonPayloadFormatForDefaultDownlinkTopics) throws Exception {
-        this.processBeforeTest(deviceName, gatewayName, payloadType, telemetryTopic, attributesTopic, null, null, null, null, null, null, DeviceProfileProvisionType.DISABLED, enableCompatibilityWithJsonPayloadFormat, useJsonPayloadFormatForDefaultDownlinkTopics);
+        this.processBeforeTest(deviceName, gatewayName, payloadType, telemetryTopic, attributesTopic, null, null, null, null, null, null, DeviceProfileProvisionType.DISABLED, enableCompatibilityWithJsonPayloadFormat, useJsonPayloadFormatForDefaultDownlinkTopics, false);
+    }
+
+    protected void processBeforeTest(String deviceName, String gatewayName, TransportPayloadType payloadType, String telemetryTopic, String attributesTopic, boolean enableCompatibilityWithJsonPayloadFormat, boolean useJsonPayloadFormatForDefaultDownlinkTopics, boolean sendAckOnValidationException) throws Exception {
+        this.processBeforeTest(deviceName, gatewayName, payloadType, telemetryTopic, attributesTopic, null, null, null, null, null, null, DeviceProfileProvisionType.DISABLED, enableCompatibilityWithJsonPayloadFormat, useJsonPayloadFormatForDefaultDownlinkTopics, sendAckOnValidationException);
+    }
+
+    protected void processBeforeTest(String deviceName, String gatewayName, TransportPayloadType payloadType, String telemetryTopic, String attributesTopic, boolean sendAckOnValidationException) throws Exception {
+        this.processBeforeTest(deviceName, gatewayName, payloadType, telemetryTopic, attributesTopic, null, null, null, null, null, null, DeviceProfileProvisionType.DISABLED, false, false, sendAckOnValidationException);
     }
 
     protected void processBeforeTest(String deviceName,
@@ -86,7 +94,8 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
                                      String provisionSecret,
                                      DeviceProfileProvisionType provisionType,
                                      boolean enableCompatibilityWithJsonPayloadFormat,
-                                     boolean useJsonPayloadFormatForDefaultDownlinkTopics) throws Exception {
+                                     boolean useJsonPayloadFormatForDefaultDownlinkTopics,
+                                     boolean sendAckOnValidationException) throws Exception {
         loginSysAdmin();
 
         Tenant tenant = new Tenant();
@@ -115,7 +124,10 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
         gateway.setAdditionalInfo(additionalInfo);
 
         if (payloadType != null) {
-            DeviceProfile mqttDeviceProfile = createMqttDeviceProfile(payloadType, telemetryTopic, attributesTopic, telemetryProtoSchema, attributesProtoSchema, rpcResponseProtoSchema, rpcRequestProtoSchema, provisionKey, provisionSecret, provisionType, enableCompatibilityWithJsonPayloadFormat, useJsonPayloadFormatForDefaultDownlinkTopics);
+            DeviceProfile mqttDeviceProfile = createMqttDeviceProfile(payloadType, telemetryTopic, attributesTopic,
+                    telemetryProtoSchema, attributesProtoSchema, rpcResponseProtoSchema, rpcRequestProtoSchema,
+                    provisionKey, provisionSecret, provisionType, enableCompatibilityWithJsonPayloadFormat,
+                    useJsonPayloadFormatForDefaultDownlinkTopics, sendAckOnValidationException);
             deviceProfile = doPost("/api/deviceProfile", mqttDeviceProfile, DeviceProfile.class);
             device.setType(deviceProfile.getName());
             device.setDeviceProfileId(deviceProfile.getId());
@@ -173,7 +185,8 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
                                                     String provisionKey, String provisionSecret,
                                                     DeviceProfileProvisionType provisionType,
                                                     boolean enableCompatibilityWithJsonPayloadFormat,
-                                                    boolean useJsonPayloadFormatForDefaultDownlinkTopics) {
+                                                    boolean useJsonPayloadFormatForDefaultDownlinkTopics,
+                                                    boolean sendAckOnValidationException) {
         DeviceProfile deviceProfile = new DeviceProfile();
         deviceProfile.setName(transportPayloadType.name());
         deviceProfile.setType(DeviceProfileType.DEFAULT);
@@ -190,6 +203,7 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
         if (!StringUtils.isEmpty(attributesTopic)) {
             mqttDeviceProfileTransportConfiguration.setDeviceAttributesTopic(attributesTopic);
         }
+        mqttDeviceProfileTransportConfiguration.setSendAckOnValidationException(sendAckOnValidationException);
         TransportPayloadTypeConfiguration transportPayloadTypeConfiguration;
         if (TransportPayloadType.JSON.equals(transportPayloadType)) {
             transportPayloadTypeConfiguration = new JsonTransportPayloadConfiguration();

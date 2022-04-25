@@ -377,18 +377,23 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         }
     }
 
+    protected DeviceProfile createDeviceProfile(String name) {
+        return createDeviceProfile(name, null);
+    }
+
     protected DeviceProfile createDeviceProfile(String name, DeviceProfileTransportConfiguration deviceProfileTransportConfiguration) {
         DeviceProfile deviceProfile = new DeviceProfile();
         deviceProfile.setName(name);
         deviceProfile.setType(DeviceProfileType.DEFAULT);
-        deviceProfile.setTransportType(DeviceTransportType.DEFAULT);
         deviceProfile.setDescription(name + " Test");
         DeviceProfileData deviceProfileData = new DeviceProfileData();
         DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
         deviceProfileData.setConfiguration(configuration);
         if (deviceProfileTransportConfiguration != null) {
+            deviceProfile.setTransportType(deviceProfileTransportConfiguration.getType());
             deviceProfileData.setTransportConfiguration(deviceProfileTransportConfiguration);
         } else {
+            deviceProfile.setTransportType(DeviceTransportType.DEFAULT);
             deviceProfileData.setTransportConfiguration(new DefaultDeviceProfileTransportConfiguration());
         }
         deviceProfile.setProfileData(deviceProfileData);
@@ -397,10 +402,11 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return deviceProfile;
     }
 
-    protected MqttDeviceProfileTransportConfiguration createMqttDeviceProfileTransportConfiguration(TransportPayloadTypeConfiguration transportPayloadTypeConfiguration) {
+    protected MqttDeviceProfileTransportConfiguration createMqttDeviceProfileTransportConfiguration(TransportPayloadTypeConfiguration transportPayloadTypeConfiguration, boolean sendAckOnValidationException) {
         MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration = new MqttDeviceProfileTransportConfiguration();
         mqttDeviceProfileTransportConfiguration.setDeviceTelemetryTopic(MqttTopics.DEVICE_TELEMETRY_TOPIC);
         mqttDeviceProfileTransportConfiguration.setDeviceTelemetryTopic(MqttTopics.DEVICE_ATTRIBUTES_TOPIC);
+        mqttDeviceProfileTransportConfiguration.setSendAckOnValidationException(sendAckOnValidationException);
         mqttDeviceProfileTransportConfiguration.setTransportPayloadTypeConfiguration(transportPayloadTypeConfiguration);
         return mqttDeviceProfileTransportConfiguration;
     }
