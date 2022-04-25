@@ -16,7 +16,11 @@
 package org.thingsboard.rule.engine.edge;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.DataConstants;
@@ -33,9 +37,9 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
-
-import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
 @Slf4j
 @RuleNode(
@@ -107,54 +111,70 @@ public class TbMsgPushToEdgeNode extends AbstractTbMsgPushNode<TbMsgPushToEdgeNo
 
     @Override
     protected void processMsg(TbContext ctx, TbMsg msg) {
-        if (EntityType.EDGE.equals(msg.getOriginator().getEntityType())) {
-            EdgeEvent edgeEvent = buildEvent(msg, ctx);
-            if (edgeEvent != null) {
+        try {
+            if (EntityType.EDGE.equals(msg.getOriginator().getEntityType())) {
+                EdgeEvent edgeEvent = buildEvent(msg, ctx);
                 EdgeId edgeId = new EdgeId(msg.getOriginator().getId());
-                notifyEdge(ctx, msg, edgeEvent, edgeId);
+                ListenableFuture<Void> future = notifyEdge(ctx, edgeEvent, edgeId);
+                FutureCallback<Void> futureCallback = new FutureCallback<>() {
+                    @Override
+                    public void onSuccess(@Nullable Void result) {
+                        ctx.tellSuccess(msg);
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+                        ctx.tellFailure(msg, t);
+                    }
+                };
+                Futures.addCallback(future, futureCallback, ctx.getDbCallbackExecutor());
             } else {
-                tellFailure(ctx, msg);
-            }
-        } else {
-            PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
-            PageData<EdgeId> pageData;
-            boolean edgeNotified = false;
-            do {
-                pageData = ctx.getEdgeService().findRelatedEdgeIdsByEntityId(ctx.getTenantId(), msg.getOriginator(), pageLink);
-                if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
-                    for (EdgeId edgeId : pageData.getData()) {
-                        EdgeEvent edgeEvent = buildEvent(msg, ctx);
-                        if (edgeEvent != null) {
-                            notifyEdge(ctx, msg, edgeEvent, edgeId);
-                            edgeNotified = true;
-                        } else {
-                            tellFailure(ctx, msg);
+                PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
+                PageData<EdgeId> pageData;
+                List<ListenableFuture<Void>> futures = new ArrayList<>();
+                do {
+                    pageData = ctx.getEdgeService().findRelatedEdgeIdsByEntityId(ctx.getTenantId(), msg.getOriginator(), pageLink);
+                    if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
+                        for (EdgeId edgeId : pageData.getData()) {
+                            EdgeEvent edgeEvent = buildEvent(msg, ctx);
+                            futures.add(notifyEdge(ctx, edgeEvent, edgeId));
+                        }
+                        if (pageData.hasNext()) {
+                            pageLink = pageLink.nextPageLink();
                         }
                     }
-                    if (pageData.hasNext()) {
-                        pageLink = pageLink.nextPageLink();
-                    }
-                }
-            } while (pageData != null && pageData.hasNext());
+                } while (pageData != null && pageData.hasNext());
 
-            if (!edgeNotified) {
-                // ack in case no edges are related to provided entity
-                ctx.ack(msg);
+                if (futures.isEmpty()) {
+                    // ack in case no edges are related to provided entity
+                    ctx.ack(msg);
+                } else {
+                    Futures.addCallback(Futures.allAsList(futures), new FutureCallback<>() {
+                        @Override
+                        public void onSuccess(@Nullable List<Void> voids) {
+                            ctx.tellSuccess(msg);
+                        }
+
+                        @Override
+                        public void onFailure(Throwable t) {
+                            ctx.tellFailure(msg, t);
+                        }
+                    }, ctx.getDbCallbackExecutor());
+                }
             }
+        } catch (Exception e) {
+            log.error("Failed to build edge event", e);
+            ctx.tellFailure(msg, e);
         }
     }
 
-    private void tellFailure(TbContext ctx, TbMsg msg) {
-        String errMsg = String.format("Edge event type is null. Entity Type %s", msg.getOriginator().getEntityType());
-        log.warn(errMsg);
-        ctx.tellFailure(msg, new RuntimeException(errMsg));
-    }
-
-    private void notifyEdge(TbContext ctx, TbMsg msg, EdgeEvent edgeEvent, EdgeId edgeId) {
+    private ListenableFuture<Void> notifyEdge(TbContext ctx, EdgeEvent edgeEvent, EdgeId edgeId) {
         edgeEvent.setEdgeId(edgeId);
-        ctx.getEdgeEventService().save(edgeEvent);
-        ctx.tellNext(msg, SUCCESS);
-        ctx.onEdgeEventUpdate(ctx.getTenantId(), edgeId);
+        ListenableFuture<Void> future = ctx.getEdgeEventService().saveAsync(edgeEvent);
+        return Futures.transform(future, result -> {
+            ctx.onEdgeEventUpdate(ctx.getTenantId(), edgeId);
+            return null;
+        }, ctx.getDbCallbackExecutor());
     }
 
 }
