@@ -14,14 +14,20 @@
 /// limitations under the License.
 ///
 
-import { EntityId } from './entity-id';
-import { EntityType } from '@shared/models/entity-type.models';
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { SharedModule } from '@shared/shared.module';
+import { GlobalSearchRoutingModule } from '@home/pages/global-search/global-search-routing.module';
+import { GlobalSearchTableHeaderComponent } from '@home/pages/global-search/global-search-table-header.component';
 
-export class TenantId implements EntityId {
-  entityType = EntityType.TENANT;
-  id: string;
-  constructor(id: string) {
-    this.id = id;
-  }
-  name?: string;
-}
+@NgModule({
+  declarations: [
+    GlobalSearchTableHeaderComponent
+  ],
+  imports: [
+    CommonModule,
+    SharedModule,
+    GlobalSearchRoutingModule
+  ]
+})
+export class GlobalSearchModule { }

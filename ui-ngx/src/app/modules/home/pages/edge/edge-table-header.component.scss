@@ -19,10 +19,16 @@
   flex: 1;
   display: flex;
   justify-content: flex-start;
-  min-width: 150px;
+  max-width: 200px;
+
+  @media #{$mat-xs} {
+    width: 100%;
+  }
 }
 
 :host ::ng-deep {
+  width: 100%;
+
   tb-entity-subtype-select {
     width: 100%;
 
@@ -38,8 +44,6 @@
       }
 
       @media #{$mat-xs} {
-        width: 100%;
-
         .mat-form-field-infix {
           width: auto !important;
         }

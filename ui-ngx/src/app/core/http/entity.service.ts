@@ -53,6 +53,7 @@ import {
 import {
   EdgeImportEntityData,
   EntitiesKeysByQuery,
+  EntitiesSearchQuery,
   entityFields,
   EntityInfo,
   ImportEntitiesResultInfo,
@@ -83,15 +84,11 @@ import {
 import { alarmFields } from '@shared/models/alarm.models';
 import { OtaPackageService } from '@core/http/ota-package.service';
 import { EdgeService } from '@core/http/edge.service';
-import {
-  Edge,
-  EdgeEvent,
-  EdgeEventType,
-  bodyContentEdgeEventActionTypes
-} from '@shared/models/edge.models';
+import { bodyContentEdgeEventActionTypes, Edge, EdgeEvent, EdgeEventType } from '@shared/models/edge.models';
 import { RuleChainMetaData, RuleChainType } from '@shared/models/rule-chain.models';
 import { WidgetService } from '@core/http/widget.service';
 import { DeviceProfileService } from '@core/http/device-profile.service';
+import { GlobalSearchInfo } from '@shared/models/global-search.models';
 
 @Injectable({
   providedIn: 'root'
@@ -428,6 +425,13 @@ export class EntityService {
 
   public findEntityDataByQuery(query: EntityDataQuery, config?: RequestConfig): Observable<PageData<EntityData>> {
     return this.http.post<PageData<EntityData>>('/api/entitiesQuery/find', query, defaultHttpOptionsFromConfig(config));
+  }
+
+  public searchEntitiesByQuery(query: EntitiesSearchQuery, pageLink: PageLink,
+                               config?: RequestConfig): Observable<PageData<GlobalSearchInfo>> {
+    return this.http.post<PageData<GlobalSearchInfo>>(
+      `/api/entities/search${pageLink.toQuery()}`,
+      query, defaultHttpOptionsFromConfig(config));
   }
 
   public findEntityKeysByQuery(query: EntityDataQuery, attributes = true, timeseries = true,

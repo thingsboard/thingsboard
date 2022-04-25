@@ -13,41 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../../../../../scss/constants';
+package org.thingsboard.server.service.query;
 
-:host {
-  flex: 1;
-  display: flex;
-  justify-content: flex-start;
-  max-width: 200px;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.query.EntitiesSearchRequest;
+import org.thingsboard.server.common.data.query.EntitySearchResult;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
-  @media #{$mat-xs} {
-    width: 100%;
-  }
-}
-
-:host ::ng-deep {
-  width: 100%;
-
-  tb-device-profile-autocomplete {
-    width: 100%;
-
-    mat-form-field {
-      font-size: 16px;
-
-      .mat-form-field-wrapper {
-        padding-bottom: 0;
-      }
-
-      .mat-form-field-underline {
-        bottom: 0;
-      }
-
-      @media #{$mat-xs} {
-        .mat-form-field-infix {
-          width: auto !important;
-        }
-      }
-    }
-  }
+public interface EntitiesSearchService {
+    PageData<EntitySearchResult> searchEntities(SecurityUser user, EntitiesSearchRequest request, PageLink pageLink);
 }

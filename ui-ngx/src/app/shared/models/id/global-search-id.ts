@@ -17,11 +17,10 @@
 import { EntityId } from './entity-id';
 import { EntityType } from '@shared/models/entity-type.models';
 
-export class TenantId implements EntityId {
-  entityType = EntityType.TENANT;
+export class GlobalSearchId implements EntityId {
+  entityType = EntityType.GLOBAL_SEARCH;
   id: string;
   constructor(id: string) {
     this.id = id;
   }
-  name?: string;
 }

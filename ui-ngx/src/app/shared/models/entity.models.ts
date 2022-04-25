@@ -53,6 +53,11 @@ export interface ImportEntityData {
   timeseries: AttributeData[];
 }
 
+export interface EntitiesSearchQuery {
+  entityType: string;
+  searchQuery?: string;
+}
+
 export interface EdgeImportEntityData extends ImportEntityData {
   secret: string;
   routingKey: string;

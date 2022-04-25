@@ -19,7 +19,11 @@
   flex: 1;
   display: flex;
   justify-content: flex-start;
-  min-width: 150px;
+  max-width: 200px;
+
+  @media #{$mat-xs} {
+    width: 100%;
+  }
 }
 
 :host ::ng-deep {
@@ -38,8 +42,6 @@
       }
 
       @media #{$mat-xs} {
-        width: 100%;
-
         .mat-form-field-infix {
           width: auto !important;
         }
