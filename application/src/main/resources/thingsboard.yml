@@ -492,7 +492,7 @@ spring.mvc.cors:
     # Intercept path
     "[/api/**]":
       #Comma-separated list of origins to allow. '*' allows all origins. When not set,CORS support is disabled.
-      allowed-origins: "*"
+      allowed-origin-patterns: "*"
       #Comma-separated list of methods to allow. '*' allows all methods.
       allowed-methods: "*"
       #Comma-separated list of headers to allow in a request. '*' allows all headers.
