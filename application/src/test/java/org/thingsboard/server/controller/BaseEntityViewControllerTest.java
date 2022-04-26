@@ -32,7 +32,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.ThingsBoardExecutors;
@@ -51,11 +50,9 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.DeviceTypeFilter;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
-import org.thingsboard.server.common.data.query.EntityViewTypeFilter;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -86,8 +83,6 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
     static final TypeReference<PageData<EntityViewInfo>> PAGE_DATA_ENTITY_VIEW_INFO_TYPE_REF = new TypeReference<>() {
     };
 
-    private Tenant savedTenant;
-    private User tenantAdmin;
     private Device testDevice;
     private TelemetryEntityView telemetry;
 
@@ -99,18 +94,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         log.debug("beforeTest");
         executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(8, getClass()));
 
-        loginSysAdmin();
-
-        savedTenant = doPost("/api/tenant", getNewTenant("My tenant"), Tenant.class);
-        Assert.assertNotNull(savedTenant);
-
-        tenantAdmin = new User();
-        tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
-        tenantAdmin.setTenantId(savedTenant.getId());
-        tenantAdmin.setEmail("tenant2@thingsboard.org");
-        tenantAdmin.setFirstName("Joe");
-        tenantAdmin.setLastName("Downs");
-        tenantAdmin = createUserAndLogin(tenantAdmin, "testPassword1");
+        loginTenantAdmin();
 
         Device device = new Device();
         device.setName("Test device 4view");
@@ -128,12 +112,6 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
     @After
     public void afterTest() throws Exception {
         executor.shutdownNow();
-
-        loginSysAdmin();
-
-        doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
-                .andExpect(status().isOk());
-        log.debug("after test");
     }
 
     @Test
@@ -151,7 +129,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         Assert.assertNotNull(savedView);
         Assert.assertNotNull(savedView.getId());
         Assert.assertTrue(savedView.getCreatedTime() > 0);
-        assertEquals(savedTenant.getId(), savedView.getTenantId());
+        assertEquals(tenantId, savedView.getTenantId());
         Assert.assertNotNull(savedView.getCustomerId());
         assertEquals(NULL_UUID, savedView.getCustomerId().getId());
         assertEquals(savedView.getName(), savedView.getName());
@@ -252,7 +230,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         Customer customer = getNewCustomer("Different customer");
         Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
 
-        login(tenantAdmin.getEmail(), "testPassword1");
+        login(TENANT_ADMIN_EMAIL, TENANT_ADMIN_PASSWORD);
 
         EntityView savedView = getNewSavedEntityView("Test entity view");
 
@@ -344,12 +322,12 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
     @Test
     public void testGetTenantEntityViewsByName() throws Exception {
         String name1 = "Entity view name1";
-        List<EntityView> namesOfView1 = Futures.allAsList(fillListOf(143, name1)).get(TIMEOUT, SECONDS);
-        List<EntityView> loadedNamesOfView1 = loadListOf(new PageLink(15, 0, name1), "/api/tenant/entityViews?");
+        List<EntityView> namesOfView1 = Futures.allAsList(fillListOf(17, name1)).get(TIMEOUT, SECONDS);
+        List<EntityView> loadedNamesOfView1 = loadListOf(new PageLink(5, 0, name1), "/api/tenant/entityViews?");
         assertThat(namesOfView1).as(name1).containsExactlyInAnyOrderElementsOf(loadedNamesOfView1);
 
         String name2 = "Entity view name2";
-        List<EntityView> namesOfView2 = Futures.allAsList(fillListOf(75, name2)).get(TIMEOUT, SECONDS);
+        List<EntityView> namesOfView2 = Futures.allAsList(fillListOf(15, name2)).get(TIMEOUT, SECONDS);
         ;
         List<EntityView> loadedNamesOfView2 = loadListOf(new PageLink(4, 0, name2), "/api/tenant/entityViews?");
         assertThat(namesOfView2).as(name2).containsExactlyInAnyOrderElementsOf(loadedNamesOfView2);
@@ -414,7 +392,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
         EntityView view = new EntityView();
         view.setEntityId(testDevice.getId());
-        view.setTenantId(savedTenant.getId());
+        view.setTenantId(tenantId);
         view.setName("Test entity view");
         view.setType("default");
         view.setKeys(telemetry);
@@ -434,7 +412,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         DeviceTypeFilter dtf = new DeviceTypeFilter(testDevice.getType(), testDevice.getName());
         List<String> tsKeys = List.of("tsKey1", "tsKey2", "tsKey3");
 
-        DeviceCredentials deviceCredentials =doGet("/api/device/" + testDevice.getId().getId() + "/credentials", DeviceCredentials.class);
+        DeviceCredentials deviceCredentials = doGet("/api/device/" + testDevice.getId().getId() + "/credentials", DeviceCredentials.class);
         assertEquals(testDevice.getId(), deviceCredentials.getDeviceId());
         String accessToken = deviceCredentials.getCredentialsId();
         assertNotNull(accessToken);
@@ -575,7 +553,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
     private EntityView createEntityView(String name, long startTimeMs, long endTimeMs) {
         EntityView view = new EntityView();
         view.setEntityId(testDevice.getId());
-        view.setTenantId(savedTenant.getId());
+        view.setTenantId(tenantId);
         view.setName(name);
         view.setType("default");
         view.setKeys(telemetry);
