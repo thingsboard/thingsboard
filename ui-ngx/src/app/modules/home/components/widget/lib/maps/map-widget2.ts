@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,10 +14,12 @@
 /// limitations under the License.
 ///
 
-import { defaultSettings, FormattedData, hereProviders, MapProviders, UnitedMapSettings } from './map-models';
+import { defaultSettings, hereProviders, MapProviders, UnitedMapSettings } from './map-models';
 import LeafletMap from './leaflet-map';
 import {
   commonMapSettingsSchema,
+  editorSettingSchema,
+  mapCircleSchema,
   mapPolygonSchema,
   markerClusteringSettingsSchema,
   markerClusteringSettingsSchemaLeaflet,
@@ -26,13 +28,19 @@ import {
 import { MapWidgetInterface, MapWidgetStaticInterface } from './map-widget.interface';
 import { addCondition, addGroupInfo, addToSchema, initSchema, mergeSchemes } from '@core/schema-utils';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
-import { getDefCenterPosition, getProviderSchema, parseFunction, parseWithTranslation } from './common-maps-utils';
-import { Datasource, DatasourceData, JsonSettingsSchema, WidgetActionDescriptor } from '@shared/models/widget.models';
+import { getDefCenterPosition, getProviderSchema, parseWithTranslation } from './common-maps-utils';
+import {
+  Datasource,
+  DatasourceData,
+  FormattedData,
+  JsonSettingsSchema,
+  WidgetActionDescriptor
+} from '@shared/models/widget.models';
 import { TranslateService } from '@ngx-translate/core';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
 import { providerClass } from '@home/components/widget/lib/maps/providers';
-import { isDefined } from '@core/utils';
+import { isDefined, parseFunction } from '@core/utils';
 import L from 'leaflet';
 import { forkJoin, Observable, of } from 'rxjs';
 import { AttributeService } from '@core/http/attribute.service';
@@ -62,6 +70,7 @@ export class MapWidgetController implements MapWidgetInterface {
         this.settings.tooltipAction = this.getDescriptors('tooltipAction');
         this.settings.markerClick = this.getDescriptors('markerClick');
         this.settings.polygonClick = this.getDescriptors('polygonClick');
+        this.settings.circleClick = this.getDescriptors('circleClick');
 
         const MapClass = providerClass[this.provider];
         if (!MapClass) {
@@ -106,6 +115,8 @@ export class MapWidgetController implements MapWidgetInterface {
         addGroupInfo(schema, 'Common Map Settings');
         addToSchema(schema, addCondition(mapPolygonSchema, 'model.showPolygon === true', ['showPolygon']));
         addGroupInfo(schema, 'Polygon Settings');
+        addToSchema(schema, addCondition(mapCircleSchema, 'model.showCircle === true', ['showCircle']));
+        addGroupInfo(schema, 'Circle Settings');
         if (drawRoutes) {
             addToSchema(schema, routeMapSettingsSchema);
             addGroupInfo(schema, 'Route Map Settings');
@@ -115,6 +126,8 @@ export class MapWidgetController implements MapWidgetInterface {
                     `model.useClusterMarkers === true && model.provider !== "image-map"`)]);
             addToSchema(schema, clusteringSchema);
             addGroupInfo(schema, 'Markers Clustering Settings');
+            addToSchema(schema, addCondition(editorSettingSchema, '(model.editablePolygon === true || model.draggableMarker === true)'));
+            addGroupInfo(schema, 'Editor settings');
         }
         return schema;
     }
@@ -127,6 +140,10 @@ export class MapWidgetController implements MapWidgetInterface {
             },
             polygonClick: {
                 name: 'widget-action.polygon-click',
+                multiple: false
+            },
+            circleClick: {
+                name: 'widget-action.circle-click',
                 multiple: false
             },
             tooltipAction: {
@@ -209,8 +226,12 @@ export class MapWidgetController implements MapWidgetInterface {
         id: e.$datasource.entityId
       };
 
+      let dataKeys = e.$datasource.dataKeys;
+      if (e.$datasource.latestDataKeys) {
+        dataKeys = dataKeys.concat(e.$datasource.latestDataKeys);
+      }
       for (const dataKeyName of Object.keys(values)) {
-        for (const key of e.$datasource.dataKeys) {
+        for (const key of dataKeys) {
           if (dataKeyName === key.name) {
             const value = {
               key: key.name,
@@ -269,6 +290,10 @@ export class MapWidgetController implements MapWidgetInterface {
             polygonColorFunction: parseFunction(settings.polygonColorFunction, functionParams),
             polygonStrokeColorFunction: parseFunction(settings.polygonStrokeColorFunction, functionParams),
             polygonTooltipFunction: parseFunction(settings.polygonTooltipFunction, functionParams),
+            circleLabelFunction: parseFunction(settings.circleLabelFunction, functionParams),
+            circleStrokeColorFunction: parseFunction(settings.circleStrokeColorFunction, functionParams),
+            circleFillColorFunction: parseFunction(settings.circleFillColorFunction, functionParams),
+            circleTooltipFunction: parseFunction(settings.circleTooltipFunction, functionParams),
             markerImageFunction: parseFunction(settings.markerImageFunction, ['data', 'images', 'dsData', 'dsIndex']),
             labelColor: this.ctx.widgetConfig.color,
             polygonLabelColor: this.ctx.widgetConfig.color,
@@ -296,16 +321,20 @@ export class MapWidgetController implements MapWidgetInterface {
         this.map.setLoading(false);
     }
 
+    latestDataUpdate() {
+      this.map.updateData(this.drawRoutes, this.settings.showPolygon);
+    }
+
     resize() {
-        this.map?.invalidateSize();
-        this.map.onResize();
+      this.map.onResize();
+      this.map?.invalidateSize();
     }
 
     destroy() {
-      (this.ctx as any).mapInstance = null;
       if (this.map) {
         this.map.remove();
       }
+      (this.ctx as any).mapInstance = null;
     }
 }
 

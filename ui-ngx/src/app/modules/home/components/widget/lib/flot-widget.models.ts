@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -233,6 +233,12 @@ export interface TbFlotKeySettings {
   axisTicksFormatter: string;
   thresholds: TbFlotKeyThreshold[];
   comparisonSettings: TbFlotKeyComparisonSettings;
+}
+
+export interface TbFlotLatestKeySettings {
+  useAsThreshold: boolean;
+  thresholdLineWidth: number;
+  thresholdColor: string;
 }
 
 export function flotSettingsSchema(chartType: ChartType): JsonSettingsSchema {
@@ -1124,3 +1130,37 @@ export function flotDatakeySettingsSchema(defaultShowLines: boolean, chartType: 
 
   return schema;
 }
+
+export const flotLatestDatakeySettingsSchema: JsonSettingsSchema = {
+    schema: {
+      type: 'object',
+      title: 'LatestDataKeySettings',
+      properties: {
+        useAsThreshold: {
+          title: 'Use key value as threshold',
+          type: 'boolean',
+          default: false
+        },
+        thresholdLineWidth: {
+          title: 'Threshold line width',
+          type: 'number'
+        },
+        thresholdColor: {
+          title: 'Threshold color',
+          type: 'string'
+        }
+      }
+    },
+    form: [
+      'useAsThreshold',
+      {
+        key: 'thresholdLineWidth',
+        condition: 'model.useAsThreshold === true'
+      },
+      {
+        key: 'thresholdColor',
+        type: 'color',
+        condition: 'model.useAsThreshold === true'
+      },
+    ]
+};

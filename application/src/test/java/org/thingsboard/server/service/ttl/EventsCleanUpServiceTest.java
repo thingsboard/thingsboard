@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,6 @@ public class EventsCleanUpServiceTest {
     public void givenInterval_whenRandomDelay_ThenDelayInInterval() {
         log.info("randomDelay {}", randomDelayMs);
         log.info("executionIntervalMs {}", executionIntervalMs);
-        assertThat(executionIntervalMs, is(2220000L));
         assertThat(randomDelayMs, greaterThanOrEqualTo(0L));
         assertThat(randomDelayMs, lessThanOrEqualTo(executionIntervalMs));
     }

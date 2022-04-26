@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,12 +55,6 @@ public class EdgeBulkImportService extends AbstractBulkImportService<Edge> {
                 case DESCRIPTION:
                     additionalInfo.set("description", new TextNode(value));
                     break;
-                case EDGE_LICENSE_KEY:
-                    entity.setEdgeLicenseKey(value);
-                    break;
-                case CLOUD_ENDPOINT:
-                    entity.setCloudEndpoint(value);
-                    break;
                 case ROUTING_KEY:
                     entity.setRoutingKey(value);
                     break;
@@ -74,7 +68,7 @@ public class EdgeBulkImportService extends AbstractBulkImportService<Edge> {
 
     @Override
     protected Edge saveEntity(Edge entity, Map<BulkImportColumnType, String> fields) {
-        return edgeService.saveEdge(entity, true);
+        return edgeService.saveEdge(entity);
     }
 
     @Override

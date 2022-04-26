@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,9 @@ import com.github.fge.jsonschema.core.report.ProcessingReport;
 import com.github.fge.jsonschema.main.JsonSchemaFactory;
 import com.github.fge.jsonschema.main.JsonValidator;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.ComponentDescriptorId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -49,9 +47,12 @@ public class BaseComponentDescriptorService implements ComponentDescriptorServic
     @Autowired
     private ComponentDescriptorDao componentDescriptorDao;
 
+    @Autowired
+    private DataValidator<ComponentDescriptor> componentValidator;
+
     @Override
     public ComponentDescriptor saveComponent(TenantId tenantId, ComponentDescriptor component) {
-        componentValidator.validate(component, data -> new TenantId(EntityId.NULL_UUID));
+        componentValidator.validate(component, data -> TenantId.SYS_TENANT_ID);
         Optional<ComponentDescriptor> result = componentDescriptorDao.saveIfNotExist(tenantId, component);
         return result.orElseGet(() -> componentDescriptorDao.findByClazz(tenantId, component.getClazz()));
     }
@@ -100,23 +101,4 @@ public class BaseComponentDescriptorService implements ComponentDescriptorServic
             throw new IncorrectParameterException(e.getMessage(), e);
         }
     }
-
-    private DataValidator<ComponentDescriptor> componentValidator =
-            new DataValidator<ComponentDescriptor>() {
-                @Override
-                protected void validateDataImpl(TenantId tenantId, ComponentDescriptor plugin) {
-                    if (plugin.getType() == null) {
-                        throw new DataValidationException("Component type should be specified!");
-                    }
-                    if (plugin.getScope() == null) {
-                        throw new DataValidationException("Component scope should be specified!");
-                    }
-                    if (StringUtils.isEmpty(plugin.getName())) {
-                        throw new DataValidationException("Component name should be specified!");
-                    }
-                    if (StringUtils.isEmpty(plugin.getClazz())) {
-                        throw new DataValidationException("Component clazz should be specified!");
-                    }
-                }
-            };
 }

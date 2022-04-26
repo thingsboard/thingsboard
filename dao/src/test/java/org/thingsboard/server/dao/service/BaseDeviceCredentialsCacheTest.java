@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,9 @@ public abstract class BaseDeviceCredentialsCacheTest extends AbstractServiceTest
     @Autowired
     private DeviceCredentialsService deviceCredentialsService;
 
+    @Autowired
+    private DataValidator<DeviceCredentials> credentialsValidator;
+
     private DeviceCredentialsDao deviceCredentialsDao;
     private DeviceService deviceService;
 
@@ -59,10 +62,15 @@ public abstract class BaseDeviceCredentialsCacheTest extends AbstractServiceTest
 
     @Before
     public void setup() throws Exception {
-        deviceCredentialsDao = mock(DeviceCredentialsDao.class);
         deviceService = mock(DeviceService.class);
+        deviceCredentialsDao = mock(DeviceCredentialsDao.class);
+
+        ReflectionTestUtils.setField(credentialsValidator, "deviceService", deviceService);
+        ReflectionTestUtils.setField(credentialsValidator, "deviceCredentialsDao", deviceCredentialsDao);
+
         ReflectionTestUtils.setField(unwrapDeviceCredentialsService(), "deviceCredentialsDao", deviceCredentialsDao);
-        ReflectionTestUtils.setField(unwrapDeviceCredentialsService(), "deviceService", deviceService);
+        ReflectionTestUtils.setField(unwrapDeviceCredentialsService(), "credentialsValidator", credentialsValidator);
+
     }
 
     @After

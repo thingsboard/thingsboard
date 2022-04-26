@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,21 +25,19 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapClientCredential;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapClientCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredential;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapClientCredential;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKClientCredential;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKBootstrapClientCredential;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKClientCredential;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKClientCredential;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKBootstrapClientCredential;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.X509ClientCredential;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKClientCredential;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.X509BootstrapClientCredential;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.X509ClientCredential;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.msg.EncryptionUtil;
@@ -47,6 +45,7 @@ import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
+
 import static org.thingsboard.server.common.data.CacheConstants.DEVICE_CREDENTIALS_CACHE;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateString;
@@ -59,7 +58,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
     private DeviceCredentialsDao deviceCredentialsDao;
 
     @Autowired
-    private DeviceService deviceService;
+    private DataValidator<DeviceCredentials> credentialsValidator;
 
     @Override
     public DeviceCredentials findDeviceCredentialsByDeviceId(TenantId tenantId, DeviceId deviceId) {
@@ -73,7 +72,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
     public DeviceCredentials findDeviceCredentialsByCredentialsId(String credentialsId) {
         log.trace("Executing findDeviceCredentialsByCredentialsId [{}]", credentialsId);
         validateString(credentialsId, "Incorrect credentialsId " + credentialsId);
-        return deviceCredentialsDao.findByCredentialsId(new TenantId(EntityId.NULL_UUID), credentialsId);
+        return deviceCredentialsDao.findByCredentialsId(TenantId.SYS_TENANT_ID, credentialsId);
     }
 
     @Override
@@ -374,47 +373,5 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
         log.trace("Executing deleteDeviceCredentials [{}]", deviceCredentials);
         deviceCredentialsDao.removeById(tenantId, deviceCredentials.getUuidId());
     }
-
-    private DataValidator<DeviceCredentials> credentialsValidator =
-            new DataValidator<DeviceCredentials>() {
-
-                @Override
-                protected void validateCreate(TenantId tenantId, DeviceCredentials deviceCredentials) {
-                    if (deviceCredentialsDao.findByDeviceId(tenantId, deviceCredentials.getDeviceId().getId()) != null) {
-                        throw new DeviceCredentialsValidationException("Credentials for this device are already specified!");
-                    }
-                    if (deviceCredentialsDao.findByCredentialsId(tenantId, deviceCredentials.getCredentialsId()) != null) {
-                        throw new DeviceCredentialsValidationException("Device credentials are already assigned to another device!");
-                    }
-                }
-
-                @Override
-                protected void validateUpdate(TenantId tenantId, DeviceCredentials deviceCredentials) {
-                    if (deviceCredentialsDao.findById(tenantId, deviceCredentials.getUuidId()) == null) {
-                        throw new DeviceCredentialsValidationException("Unable to update non-existent device credentials!");
-                    }
-                    DeviceCredentials existingCredentials = deviceCredentialsDao.findByCredentialsId(tenantId, deviceCredentials.getCredentialsId());
-                    if (existingCredentials != null && !existingCredentials.getId().equals(deviceCredentials.getId())) {
-                        throw new DeviceCredentialsValidationException("Device credentials are already assigned to another device!");
-                    }
-                }
-
-                @Override
-                protected void validateDataImpl(TenantId tenantId, DeviceCredentials deviceCredentials) {
-                    if (deviceCredentials.getDeviceId() == null) {
-                        throw new DeviceCredentialsValidationException("Device credentials should be assigned to device!");
-                    }
-                    if (deviceCredentials.getCredentialsType() == null) {
-                        throw new DeviceCredentialsValidationException("Device credentials type should be specified!");
-                    }
-                    if (StringUtils.isEmpty(deviceCredentials.getCredentialsId())) {
-                        throw new DeviceCredentialsValidationException("Device credentials id should be specified!");
-                    }
-                    Device device = deviceService.findDeviceById(tenantId, deviceCredentials.getDeviceId());
-                    if (device == null) {
-                        throw new DeviceCredentialsValidationException("Can't assign device credentials to non-existent device!");
-                    }
-                }
-            };
 
 }

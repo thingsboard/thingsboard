@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,18 @@ package org.thingsboard.server.transport.lwm2m.server;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.scandium.config.DtlsConfig;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.californium.scandium.dtls.cipher.CipherSuite;
+import org.eclipse.leshan.core.node.LwM2mNode;
 import org.eclipse.leshan.core.node.codec.DefaultLwM2mDecoder;
 import org.eclipse.leshan.core.node.codec.DefaultLwM2mEncoder;
+import org.eclipse.leshan.core.request.SendRequest;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.californium.LeshanServerBuilder;
 import org.eclipse.leshan.server.californium.registration.CaliforniumRegistrationStore;
+import org.eclipse.leshan.server.registration.Registration;
+import org.eclipse.leshan.server.send.SendListener;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.common.data.DataConstants;
@@ -39,7 +44,10 @@ import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import javax.annotation.PreDestroy;
 import java.security.cert.X509Certificate;
+import java.util.Map;
 
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CURVES_ONLY;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CBC_SHA256;
@@ -68,7 +76,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
 
     private LeshanServer server;
 
-    @AfterStartUp
+    @AfterStartUp(order = Integer.MAX_VALUE - 1)
     public void init() {
         this.server = getLhServer();
         /*
@@ -80,8 +88,8 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
          */
         LwM2mTransportCoapResource otaCoapResource = new LwM2mTransportCoapResource(otaPackageDataCache, FIRMWARE_UPDATE_COAP_RESOURCE);
         this.server.coap().getServer().add(otaCoapResource);
-        this.startLhServer();
         this.context.setServer(server);
+        this.startLhServer();
     }
 
     private void startLhServer() {
@@ -91,14 +99,19 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
         this.server.getRegistrationService().addListener(lhServerCertListener.registrationListener);
         this.server.getPresenceService().addListener(lhServerCertListener.presenceListener);
         this.server.getObservationService().addListener(lhServerCertListener.observationListener);
+        this.server.getSendService().addListener(lhServerCertListener.sendListener);
         log.info("Started LwM2M transport server.");
     }
 
     @PreDestroy
     public void shutdown() {
-        log.info("Stopping LwM2M transport server!");
-        server.destroy();
-        log.info("LwM2M transport server stopped!");
+        try {
+            log.info("Stopping LwM2M transport server!");
+            server.destroy();
+            log.info("LwM2M transport server stopped!");
+        } catch (Exception e) {
+            log.error("Failed to gracefully stop the LwM2M transport server!", e);
+        }
     }
 
     private LeshanServer getLhServer() {
@@ -121,11 +134,12 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
 
 
         /* Create DTLS Config */
-        DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
+        DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder(getCoapConfig(config.getPort(), config.getSecurePort(), config));
 
-        dtlsConfig.setServerOnly(true);
-        dtlsConfig.setRecommendedSupportedGroupsOnly(config.isRecommendedSupportedGroups());
-        dtlsConfig.setRecommendedCipherSuitesOnly(config.isRecommendedCiphers());
+        dtlsConfig.set(DtlsConfig.DTLS_ROLE, DtlsConfig.DtlsRole.SERVER_ONLY);
+        dtlsConfig.set(DTLS_RECOMMENDED_CURVES_ONLY, config.isRecommendedSupportedGroups());
+        dtlsConfig.set(DTLS_RECOMMENDED_CIPHER_SUITES_ONLY, config.isRecommendedCiphers());
+
         /*  Create credentials */
         this.setServerWithCredentials(builder, dtlsConfig);
 
@@ -144,12 +158,12 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
             builder.setCertificateChain(sslCredentials.getCertificateChain());
             dtlsConfig.setAdvancedCertificateVerifier(certificateVerifier);
             builder.setAuthorizer(authorizer);
-            dtlsConfig.setSupportedCipherSuites(RPK_OR_X509_CIPHER_SUITES);
+            dtlsConfig.setAsList(DtlsConfig.DTLS_CIPHER_SUITES, RPK_OR_X509_CIPHER_SUITES);
         } else {
             /* by default trust all */
             builder.setTrustedCertificates(new X509Certificate[0]);
             log.info("Unable to load X509 files for LWM2MServer");
-            dtlsConfig.setSupportedCipherSuites(PSK_CIPHER_SUITES);
+            dtlsConfig.setAsList(DtlsConfig.DTLS_CIPHER_SUITES, PSK_CIPHER_SUITES);
         }
     }
 

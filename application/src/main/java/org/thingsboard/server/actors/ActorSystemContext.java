@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -467,7 +467,7 @@ public class ActorSystemContext {
     }
 
     private void persistEvent(Event event) {
-        eventService.save(event);
+        eventService.saveAsync(event);
     }
 
     private String toString(Throwable e) {
@@ -552,10 +552,10 @@ public class ActorSystemContext {
                 }
 
                 event.setBody(node);
-                ListenableFuture<Event> future = eventService.saveAsync(event);
-                Futures.addCallback(future, new FutureCallback<Event>() {
+                ListenableFuture<Void> future = eventService.saveAsync(event);
+                Futures.addCallback(future, new FutureCallback<Void>() {
                     @Override
-                    public void onSuccess(@Nullable Event event) {
+                    public void onSuccess(@Nullable Void event) {
 
                     }
 
@@ -605,10 +605,10 @@ public class ActorSystemContext {
         }
 
         event.setBody(node);
-        ListenableFuture<Event> future = eventService.saveAsync(event);
-        Futures.addCallback(future, new FutureCallback<Event>() {
+        ListenableFuture<Void> future = eventService.saveAsync(event);
+        Futures.addCallback(future, new FutureCallback<Void>() {
             @Override
-            public void onSuccess(@Nullable Event event) {
+            public void onSuccess(@Nullable Void event) {
 
             }
 

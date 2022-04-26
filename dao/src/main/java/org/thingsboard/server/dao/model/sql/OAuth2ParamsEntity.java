@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public class OAuth2ParamsEntity extends BaseSqlEntity<OAuth2Params> {
         OAuth2Params oauth2Params = new OAuth2Params();
         oauth2Params.setId(new OAuth2ParamsId(id));
         oauth2Params.setCreatedTime(createdTime);
-        oauth2Params.setTenantId(new TenantId(tenantId));
+        oauth2Params.setTenantId(TenantId.fromUUID(tenantId));
         oauth2Params.setEnabled(enabled);
         return oauth2Params;
     }

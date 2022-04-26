@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import {
 import { MatDialog } from '@angular/material/dialog';
 import { ImportDialogComponent, ImportDialogData } from '@home/components/import-export/import-dialog.component';
 import { forkJoin, Observable, of } from 'rxjs';
-import { catchError, map, mergeMap, tap } from 'rxjs/operators';
+import {catchError, map, mergeMap, switchMap, tap} from 'rxjs/operators';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityService } from '@core/http/entity.service';
 import { Widget, WidgetSize, WidgetType, WidgetTypeDetails } from '@shared/models/widget.models';
@@ -62,6 +62,7 @@ import { TenantProfileService } from '@core/http/tenant-profile.service';
 import { DeviceService } from '@core/http/device.service';
 import { AssetService } from '@core/http/asset.service';
 import { EdgeService } from '@core/http/edge.service';
+import { RuleNode } from '@shared/models/rule-node.models';
 
 // @dynamic
 @Injectable()
@@ -423,7 +424,7 @@ export class ImportExportService {
 
   public importRuleChain(expectedRuleChainType: RuleChainType): Observable<RuleChainImport> {
     return this.openImportDialog('rulechain.import', 'rulechain.rulechain-file').pipe(
-      map((ruleChainImport: RuleChainImport) => {
+      mergeMap((ruleChainImport: RuleChainImport) => {
         if (!this.validateImportedRuleChain(ruleChainImport)) {
           this.store.dispatch(new ActionNotificationShow(
             {message: this.translate.instant('rulechain.invalid-rulechain-file-error'),
@@ -435,13 +436,60 @@ export class ImportExportService {
               type: 'error'}));
           throw new Error('Invalid rule chain type');
         } else {
-          return ruleChainImport;
+          return this.processOldRuleChainConnections(ruleChainImport);
         }
       }),
       catchError((err) => {
         return of(null);
       })
     );
+  }
+
+  private processOldRuleChainConnections(ruleChainImport: RuleChainImport): Observable<RuleChainImport> {
+    const metadata = ruleChainImport.metadata;
+    if ((metadata as any).ruleChainConnections) {
+      const ruleChainNameResolveObservables: Observable<void>[] = [];
+      for (const ruleChainConnection of (metadata as any).ruleChainConnections) {
+        if (ruleChainConnection.targetRuleChainId && ruleChainConnection.targetRuleChainId.id) {
+          const ruleChainNode: RuleNode = {
+            name: '',
+            debugMode: false,
+            type: 'org.thingsboard.rule.engine.flow.TbRuleChainInputNode',
+            configuration: {
+              ruleChainId: ruleChainConnection.targetRuleChainId.id
+            },
+            additionalInfo: ruleChainConnection.additionalInfo
+          };
+          ruleChainNameResolveObservables.push(this.ruleChainService.getRuleChain(ruleChainNode.configuration.ruleChainId,
+            {ignoreErrors: true, ignoreLoading: true}).pipe(
+              catchError(err => {
+                return of({name: 'Rule Chain Input'} as RuleChain);
+              }),
+              map((ruleChain => {
+                ruleChainNode.name = ruleChain.name;
+                return null;
+              })
+            )
+          ));
+          const toIndex = metadata.nodes.length;
+          metadata.nodes.push(ruleChainNode);
+          metadata.connections.push({
+            toIndex,
+            fromIndex: ruleChainConnection.fromIndex,
+            type: ruleChainConnection.type
+          });
+        }
+      }
+      if (ruleChainNameResolveObservables.length) {
+        return forkJoin(ruleChainNameResolveObservables).pipe(
+           map(() => ruleChainImport)
+        );
+      } else {
+        return of(ruleChainImport);
+      }
+    } else {
+      return of(ruleChainImport);
+    }
   }
 
   public exportDeviceProfile(deviceProfileId: string) {

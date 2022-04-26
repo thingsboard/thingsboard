@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -242,6 +242,7 @@ export interface DefaultDeviceProfileTransportConfiguration {
 export interface MqttDeviceProfileTransportConfiguration {
   deviceTelemetryTopic?: string;
   deviceAttributesTopic?: string;
+  sendAckOnValidationException?: boolean;
   transportPayloadTypeConfiguration?: {
     transportPayloadType?: TransportPayloadType;
     enableCompatibilityWithJsonPayloadFormat?: boolean;
@@ -358,6 +359,7 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
         const mqttTransportConfiguration: MqttDeviceProfileTransportConfiguration = {
           deviceTelemetryTopic: 'v1/devices/me/telemetry',
           deviceAttributesTopic: 'v1/devices/me/attributes',
+          sendAckOnValidationException: false,
           transportPayloadTypeConfiguration: {
             transportPayloadType: TransportPayloadType.JSON,
             enableCompatibilityWithJsonPayloadFormat: false,
@@ -517,6 +519,8 @@ export interface DeviceProfileAlarm {
   createRules: {[severity: string]: AlarmRule};
   clearRule?: AlarmRule;
   propagate?: boolean;
+  propagateToOwner?: boolean;
+  propagateToTenant?: boolean;
   propagateRelationTypes?: Array<string>;
 }
 

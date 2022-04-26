@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,7 +132,7 @@ public class AuditLogEntity extends BaseSqlEntity<AuditLog> implements BaseEntit
         AuditLog auditLog = new AuditLog(new AuditLogId(this.getUuid()));
         auditLog.setCreatedTime(createdTime);
         if (tenantId != null) {
-            auditLog.setTenantId(new TenantId(tenantId));
+            auditLog.setTenantId(TenantId.fromUUID(tenantId));
         }
         if (customerId != null) {
             auditLog.setCustomerId(new CustomerId(customerId));

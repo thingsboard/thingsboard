@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,6 @@ import static org.eclipse.leshan.core.SecurityMode.PSK;
 import static org.eclipse.leshan.core.SecurityMode.RPK;
 import static org.eclipse.leshan.core.SecurityMode.X509;
 import static org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mTypeServer.BOOTSTRAP;
-import static org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mTypeServer.CLIENT;
 
 @Slf4j
 @Component
@@ -89,7 +88,7 @@ public class LwM2mCredentialsSecurityInfoValidator {
         }
 
         TbLwM2MSecurityInfo securityInfo = resultSecurityStore[0];
-        if ((CLIENT.equals(keyValue) && securityInfo.getSecurityMode() == null)) {
+        if (securityInfo.getSecurityMode() == null) {
             throw new LwM2MAuthException();
         }
         return securityInfo;
@@ -119,12 +118,11 @@ public class LwM2mCredentialsSecurityInfoValidator {
                     createClientSecurityInfoRPK(result, endpoint, credentials.getClient());
                     break;
                 case X509:
-                    createClientSecurityInfoX509(result, endpoint, credentials.getClient());
+                    createClientSecurityInfoX509(result, endpoint);
                     break;
                 default:
                     break;
             }
-//            } else
             if (keyValue.equals(BOOTSTRAP)) {
                 LwM2MBootstrapConfig bootstrapCredentialConfig = new LwM2MBootstrapConfig(((Lwm2mDeviceProfileTransportConfiguration) msg.getDeviceProfile().getProfileData().getTransportConfiguration()).getBootstrap(),
                         credentials.getBootstrap().getBootstrapServer(), credentials.getBootstrap().getLwm2mServer());
@@ -173,7 +171,7 @@ public class LwM2mCredentialsSecurityInfoValidator {
         }
     }
 
-    private void createClientSecurityInfoX509(TbLwM2MSecurityInfo result, String endpoint, LwM2MClientCredential clientCredentialsConfig) {
+    private void createClientSecurityInfoX509(TbLwM2MSecurityInfo result, String endpoint) {
         result.setSecurityInfo(SecurityInfo.newX509CertInfo(endpoint));
         result.setSecurityMode(X509);
     }

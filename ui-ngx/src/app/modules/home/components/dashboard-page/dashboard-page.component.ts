@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -134,6 +134,7 @@ import {
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import cssjs from '@core/css/css';
 import { DOCUMENT } from '@angular/common';
+import { IAliasController } from '@core/api/widget-api.models';
 
 // @dynamic
 @Component({
@@ -178,6 +179,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   @Input()
   parentDashboard?: IDashboardComponent = null;
+
+  @Input()
+  parentAliasController?: IAliasController = null;
 
   @ViewChild('dashboardContainer') dashboardContainer: ElementRef<HTMLElement>;
 
@@ -419,7 +423,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.readonly = this.embedded || (this.singlePageMode && !this.widgetEditMode && !this.route.snapshot.queryParamMap.get('edit'))
                     || this.forceFullscreen || this.isMobileApp || this.authUser.authority === Authority.CUSTOMER_USER;
 
-    this.dashboardCtx.aliasController = new AliasController(this.utils,
+    this.dashboardCtx.aliasController = this.parentAliasController ? this.parentAliasController : new AliasController(this.utils,
       this.entityService,
       this.translate,
       () => this.dashboardCtx.stateController,

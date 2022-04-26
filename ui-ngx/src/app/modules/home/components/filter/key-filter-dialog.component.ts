@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -134,6 +134,10 @@ export class KeyFilterDialogComponent extends
             }
           );
         }
+        if (valueType === EntityKeyValueType.BOOLEAN && this.isConstantKeyType) {
+          this.keyFilterFormGroup.get('value').clearValidators();
+          this.keyFilterFormGroup.get('value').updateValueAndValidity();
+        }
       });
 
       this.keyFilterFormGroup.get('key.type').valueChanges.pipe(
@@ -148,7 +152,7 @@ export class KeyFilterDialogComponent extends
           this.showAutocomplete = false;
         }
         if (this.data.telemetryKeysOnly) {
-          if (type === EntityKeyType.CONSTANT) {
+          if (type === EntityKeyType.CONSTANT && (this.keyFilterFormGroup.get('valueType').value !== EntityKeyValueType.BOOLEAN)) {
             this.keyFilterFormGroup.get('value').setValidators(Validators.required);
             this.keyFilterFormGroup.get('value').updateValueAndValidity();
           } else {

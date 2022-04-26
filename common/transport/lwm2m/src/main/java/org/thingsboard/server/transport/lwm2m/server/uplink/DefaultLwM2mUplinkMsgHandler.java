@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,11 +33,7 @@ import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mResourceInstance;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.observation.Observation;
-import org.eclipse.leshan.core.request.CreateRequest;
-import org.eclipse.leshan.core.request.ObserveRequest;
-import org.eclipse.leshan.core.request.ReadRequest;
-import org.eclipse.leshan.core.request.WriteCompositeRequest;
-import org.eclipse.leshan.core.request.WriteRequest;
+import org.eclipse.leshan.core.request.*;
 import org.eclipse.leshan.core.request.WriteRequest.Mode;
 import org.eclipse.leshan.core.response.ObserveResponse;
 import org.eclipse.leshan.core.response.ReadCompositeResponse;
@@ -98,16 +94,7 @@ import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -347,12 +334,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                     this.updateResourcesValue(lwM2MClient, lwM2mResource, path, Mode.UPDATE, responseCode);
                 }
             }
-            if (clientContext.awake(lwM2MClient)) {
-                // clientContext.awake calls clientContext.update
-                log.debug("[{}] Device is awake", lwM2MClient.getEndpoint());
-            } else {
-                clientContext.update(lwM2MClient);
-            }
+            tryAwake(lwM2MClient);
         }
     }
 
@@ -373,12 +355,37 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                 }
             });
             clientContext.update(lwM2MClient);
-            if (clientContext.awake(lwM2MClient)) {
-                // clientContext.awake calls clientContext.update
-                log.debug("[{}] Device is awake", lwM2MClient.getEndpoint());
-            } else {
-                clientContext.update(lwM2MClient);
+            tryAwake(lwM2MClient);
+        }
+    }
+
+    /**
+     * Sending updated value to thingsboard from SendListener.dataReceived: object, instance, SingleResource or MultipleResource
+     *
+     * @param registration - Registration LwM2M Client
+     * @param sendRequest  - sendRequest
+     */
+    @Override
+    public void onUpdateValueWithSendRequest(Registration registration, SendRequest sendRequest) {
+        for(var entry : sendRequest.getNodes().entrySet()) {
+            LwM2mPath path = entry.getKey();
+            LwM2mNode node = entry.getValue();
+            LwM2mClient lwM2MClient = clientContext.getClientByEndpoint(registration.getEndpoint());
+            String stringPath = convertObjectIdToVersionedId(path.toString(), registration);
+            ObjectModel objectModelVersion = lwM2MClient.getObjectModel(stringPath, modelProvider);
+            if (objectModelVersion != null) {
+                if (node instanceof LwM2mObject) {
+                    LwM2mObject lwM2mObject = (LwM2mObject) node;
+                    this.updateObjectResourceValue(lwM2MClient, lwM2mObject, stringPath, 0);
+                } else if (node instanceof LwM2mObjectInstance) {
+                    LwM2mObjectInstance lwM2mObjectInstance = (LwM2mObjectInstance) node;
+                    this.updateObjectInstanceResourceValue(lwM2MClient, lwM2mObjectInstance, stringPath, 0);
+                } else if (node instanceof LwM2mResource) {
+                    LwM2mResource lwM2mResource = (LwM2mResource) node;
+                    this.updateResourcesValue(lwM2MClient, lwM2mResource, stringPath, Mode.UPDATE, 0);
+                }
             }
+            tryAwake(lwM2MClient);
         }
     }
 
@@ -428,7 +435,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
     @Override
     public void onResourceUpdate(TransportProtos.ResourceUpdateMsg resourceUpdateMsgOpt) {
         String idVer = resourceUpdateMsgOpt.getResourceKey();
-        TenantId tenantId = new TenantId(new UUID(resourceUpdateMsgOpt.getTenantIdMSB(), resourceUpdateMsgOpt.getTenantIdLSB()));
+        TenantId tenantId = TenantId.fromUUID(new UUID(resourceUpdateMsgOpt.getTenantIdMSB(), resourceUpdateMsgOpt.getTenantIdLSB()));
         modelProvider.evict(tenantId, idVer);
         clientContext.getLwM2mClients().forEach(e -> e.updateResourceModel(idVer, modelProvider));
     }
@@ -436,7 +443,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
     @Override
     public void onResourceDelete(TransportProtos.ResourceDeleteMsg resourceDeleteMsgOpt) {
         String pathIdVer = resourceDeleteMsgOpt.getResourceKey();
-        TenantId tenantId = new TenantId(new UUID(resourceDeleteMsgOpt.getTenantIdMSB(), resourceDeleteMsgOpt.getTenantIdLSB()));
+        TenantId tenantId = TenantId.fromUUID(new UUID(resourceDeleteMsgOpt.getTenantIdMSB(), resourceDeleteMsgOpt.getTenantIdLSB()));
         modelProvider.evict(tenantId, pathIdVer);
         clientContext.getLwM2mClients().forEach(e -> e.deleteResources(pathIdVer, modelProvider));
     }
@@ -486,7 +493,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                     new TbLwM2MLatchCallback<>(latch, new TbLwM2MReadCallback(this, logService, lwM2MClient, versionedId))));
             latch.await();
         } catch (InterruptedException e) {
-            log.error("[{}] Failed to await Read requests!", lwM2MClient.getEndpoint());
+            log.error("[{}] Failed to await Read requests!", lwM2MClient.getEndpoint(), e);
         } catch (Exception e) {
             log.error("[{}] Failed to process read requests!", lwM2MClient.getEndpoint(), e);
             logService.log(lwM2MClient, "Failed to process read requests. Possible profile misconfiguration.");
@@ -504,7 +511,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
 
             latch.await();
         } catch (InterruptedException e) {
-            log.error("[{}] Failed to await Observe requests!", lwM2MClient.getEndpoint());
+            log.error("[{}] Failed to await Observe requests!", lwM2MClient.getEndpoint(), e);
         } catch (Exception e) {
             log.error("[{}] Failed to process observe requests!", lwM2MClient.getEndpoint(), e);
             logService.log(lwM2MClient, "Failed to process observe requests. Possible profile misconfiguration.");
@@ -989,4 +996,14 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
             client.unlock();
         }
     }
+
+    private void tryAwake(LwM2mClient lwM2MClient) {
+        if (clientContext.awake(lwM2MClient)) {
+            // clientContext.awake calls clientContext.update
+            log.debug("[{}] Device is awake", lwM2MClient.getEndpoint());
+        } else {
+            clientContext.update(lwM2MClient);
+        }
+    }
+
 }

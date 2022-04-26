@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.audit.ActionStatus;
@@ -47,9 +48,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.audit.sink.AuditLogSink;
 import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 import org.thingsboard.server.dao.entity.EntityService;
-import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
-import org.thingsboard.common.util.JacksonUtil;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -79,6 +78,9 @@ public class AuditLogServiceImpl implements AuditLogService {
 
     @Autowired
     private AuditLogSink auditLogSink;
+
+    @Autowired
+    private DataValidator<AuditLog> auditLogValidator;
 
     @Override
     public PageData<AuditLog> findAuditLogsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, List<ActionType> actionTypes, TimePageLink pageLink) {
@@ -389,19 +391,4 @@ public class AuditLogServiceImpl implements AuditLogService {
         return Futures.allAsList(futures);
     }
 
-    private DataValidator<AuditLog> auditLogValidator =
-            new DataValidator<AuditLog>() {
-                @Override
-                protected void validateDataImpl(TenantId tenantId, AuditLog auditLog) {
-                    if (auditLog.getEntityId() == null) {
-                        throw new DataValidationException("Entity Id should be specified!");
-                    }
-                    if (auditLog.getTenantId() == null) {
-                        throw new DataValidationException("Tenant Id should be specified!");
-                    }
-                    if (auditLog.getUserId() == null) {
-                        throw new DataValidationException("User Id should be specified!");
-                    }
-                }
-            };
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.lwm2m.client;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.client.resource.BaseInstanceEnabler;
 import org.eclipse.leshan.client.servers.ServerIdentity;
+import org.eclipse.leshan.core.Destroyable;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mResource;
@@ -25,22 +26,44 @@ import org.eclipse.leshan.core.response.ExecuteResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.core.response.WriteResponse;
 
-import javax.security.auth.Destroyable;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.PrimitiveIterator;
 import java.util.Random;
 import java.util.TimeZone;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
 
 
     private static final Random RANDOM = new Random();
+    private static final int min = 5;
+    private static final int max = 50;
+    private static final  PrimitiveIterator.OfInt randomIterator = new Random().ints(min,max + 1).iterator();
     private static final List<Integer> supportedResources = Arrays.asList(0, 1, 2, 3, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21);
+
+
+    public SimpleLwM2MDevice() {
+    }
+
+    public SimpleLwM2MDevice(ScheduledExecutorService executorService) {
+        try {
+            executorService.scheduleWithFixedDelay(() -> {
+                        fireResourceChange(9);
+                    }
+                    , 1800000, 1800000, TimeUnit.MILLISECONDS); // 30 MIN
+        } catch (Throwable e) {
+            log.error("[{}]Throwable", e.toString());
+            e.printStackTrace();
+        }
+    }
+
 
     @Override
     public ReadResponse read(ServerIdentity identity, int resourceId) {
@@ -103,11 +126,11 @@ public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyabl
                 return WriteResponse.notFound();
             case 14:
                 setUtcOffset((String) value.getValue());
-                fireResourcesChange(resourceId);
+                fireResourceChange(resourceId);
                 return WriteResponse.success();
             case 15:
                 setTimezone((String) value.getValue());
-                fireResourcesChange(resourceId);
+                fireResourceChange(resourceId);
                 return WriteResponse.success();
             default:
                 return super.write(identity, replace, resourceId, value);
@@ -135,7 +158,8 @@ public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyabl
     }
 
     private int getBatteryLevel() {
-        return 42;
+        return randomIterator.nextInt();
+//        return 42;
     }
 
     private long getMemoryFree() {

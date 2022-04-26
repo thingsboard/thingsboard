@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,9 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 @Service
 public class EdgeEventsCleanUpService extends AbstractCleanUpService {
 
+    public static final String RANDOM_DELAY_INTERVAL_MS_EXPRESSION =
+            "#{T(org.apache.commons.lang3.RandomUtils).nextLong(0, ${sql.ttl.edge_events.execution_interval_ms})}";
+
     @Value("${sql.ttl.edge_events.edge_events_ttl}")
     private long ttl;
 
@@ -41,7 +44,7 @@ public class EdgeEventsCleanUpService extends AbstractCleanUpService {
         this.edgeEventService = edgeEventService;
     }
 
-    @Scheduled(initialDelayString = "${sql.ttl.edge_events.execution_interval_ms}", fixedDelayString = "${sql.ttl.edge_events.execution_interval_ms}")
+    @Scheduled(initialDelayString = RANDOM_DELAY_INTERVAL_MS_EXPRESSION, fixedDelayString = "${sql.ttl.edge_events.execution_interval_ms}")
     public void cleanUp() {
         if (ttlTaskExecutionEnabled && isSystemTenantPartitionMine()) {
             edgeEventService.cleanupEvents(ttl);

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,51 +16,37 @@
 package org.thingsboard.server.dao.resource;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.hibernate.exception.ConstraintViolationException;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
-import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
-import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.List;
 import java.util.Optional;
 
-import static org.thingsboard.server.common.data.EntityType.TB_RESOURCE;
 import static org.thingsboard.server.dao.device.DeviceServiceImpl.INCORRECT_TENANT_ID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service
 @Slf4j
+@AllArgsConstructor
 public class BaseResourceService implements ResourceService {
 
     public static final String INCORRECT_RESOURCE_ID = "Incorrect resourceId ";
     private final TbResourceDao resourceDao;
     private final TbResourceInfoDao resourceInfoDao;
-    private final TenantDao tenantDao;
-    private final TbTenantProfileCache tenantProfileCache;
-
-    public BaseResourceService(TbResourceDao resourceDao, TbResourceInfoDao resourceInfoDao, TenantDao tenantDao, @Lazy TbTenantProfileCache tenantProfileCache) {
-        this.resourceDao = resourceDao;
-        this.resourceInfoDao = resourceInfoDao;
-        this.tenantDao = tenantDao;
-        this.tenantProfileCache = tenantProfileCache;
-    }
+    private final DataValidator<TbResource> resourceValidator;
 
     @Override
     public TbResource saveResource(TbResource resource) {
@@ -153,45 +139,7 @@ public class BaseResourceService implements ResourceService {
         return resourceDao.sumDataSizeByTenantId(tenantId);
     }
 
-    private DataValidator<TbResource> resourceValidator = new DataValidator<>() {
-
-        @Override
-        protected void validateCreate(TenantId tenantId, TbResource resource) {
-            if (tenantId != null && !TenantId.SYS_TENANT_ID.equals(tenantId) ) {
-                DefaultTenantProfileConfiguration profileConfiguration =
-                        (DefaultTenantProfileConfiguration) tenantProfileCache.get(tenantId).getProfileData().getConfiguration();
-                long maxSumResourcesDataInBytes = profileConfiguration.getMaxResourcesInBytes();
-                validateMaxSumDataSizePerTenant(tenantId, resourceDao, maxSumResourcesDataInBytes, resource.getData().length(), TB_RESOURCE);
-            }
-        }
-
-        @Override
-        protected void validateDataImpl(TenantId tenantId, TbResource resource) {
-            if (StringUtils.isEmpty(resource.getTitle())) {
-                throw new DataValidationException("Resource title should be specified!");
-            }
-            if (resource.getResourceType() == null) {
-                throw new DataValidationException("Resource type should be specified!");
-            }
-            if (StringUtils.isEmpty(resource.getFileName())) {
-                throw new DataValidationException("Resource file name should be specified!");
-            }
-            if (StringUtils.isEmpty(resource.getResourceKey())) {
-                throw new DataValidationException("Resource key should be specified!");
-            }
-            if (resource.getTenantId() == null) {
-                resource.setTenantId(new TenantId(ModelConstants.NULL_UUID));
-            }
-            if (!resource.getTenantId().getId().equals(ModelConstants.NULL_UUID)) {
-                Tenant tenant = tenantDao.findById(tenantId, resource.getTenantId().getId());
-                if (tenant == null) {
-                    throw new DataValidationException("Resource is referencing to non-existent tenant!");
-                }
-            }
-        }
-    };
-
-    private PaginatedRemover<TenantId, TbResource> tenantResourcesRemover =
+    private final PaginatedRemover<TenantId, TbResource> tenantResourcesRemover =
             new PaginatedRemover<>() {
 
                 @Override

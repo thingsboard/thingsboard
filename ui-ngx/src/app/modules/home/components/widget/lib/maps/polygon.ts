@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,29 +17,30 @@
 import L, { LatLngExpression, LeafletMouseEvent } from 'leaflet';
 import { createTooltip, isCutPolygon } from './maps-utils';
 import {
-  fillPattern,
   functionValueCalculator,
-  parseWithTranslation,
-  processPattern,
-  safeExecute
+  parseWithTranslation
 } from './common-maps-utils';
-import { FormattedData, MarkerSettings, PolygonSettings } from './map-models';
+import { PolygonSettings, UnitedMapSettings } from './map-models';
+import { FormattedData } from '@shared/models/widget.models';
+import { fillDataPattern, processDataPattern, safeExecute } from '@core/utils';
 
 export class Polygon {
+
+    private editing = false;
 
     leafletPoly: L.Polygon;
     tooltip: L.Popup;
     data: FormattedData;
     dataSources: FormattedData[];
 
-    constructor(public map, data: FormattedData, dataSources: FormattedData[], private settings: PolygonSettings,
+    constructor(public map, data: FormattedData, dataSources: FormattedData[], private settings: UnitedMapSettings,
                 private onDragendListener?) {
         this.dataSources = dataSources;
         this.data = data;
         const polygonColor = this.getPolygonColor(settings);
         const polygonStrokeColor = this.getPolygonStrokeColor(settings);
         const polyData = data[this.settings.polygonKeyName];
-        const polyConstructor = isCutPolygon(polyData) || polyData.length > 2 ? L.polygon : L.rectangle;
+        const polyConstructor = isCutPolygon(polyData) || polyData.length !== 2 ? L.polygon : L.rectangle;
         this.leafletPoly = polyConstructor(polyData, {
           fill: true,
           fillColor: polygonColor,
@@ -47,13 +48,17 @@ export class Polygon {
           weight: settings.polygonStrokeWeight,
           fillOpacity: settings.polygonOpacity,
           opacity: settings.polygonStrokeOpacity,
-          pmIgnore: !settings.editablePolygon
+          pmIgnore: !settings.editablePolygon,
+          snapIgnore: !settings.snappable
         }).addTo(this.map);
 
-        this.updateLabel(settings);
+        if (settings.showPolygonLabel) {
+          this.updateLabel(settings);
+        }
 
         if (settings.showPolygonTooltip) {
-            this.tooltip = createTooltip(this.leafletPoly, settings, data.$datasource);
+            this.tooltip = createTooltip(this.leafletPoly, settings, data.$datasource,
+              settings.autoClosePolygonTooltip, settings.showPolygonTooltipAction);
             this.updateTooltip(data);
         }
         this.createEventListeners();
@@ -61,6 +66,15 @@ export class Polygon {
 
     private createEventListeners() {
       if (this.settings.editablePolygon && this.onDragendListener) {
+        // Change position (call in drag drop mode)
+        this.leafletPoly.on('pm:dragstart', () => this.editing = true);
+        this.leafletPoly.on('pm:dragend', () => this.editing = false);
+        // Rotate (call in rotate mode)
+        this.leafletPoly.on('pm:rotatestart', () => this.editing = true);
+        this.leafletPoly.on('pm:rotateend', () => this.editing = false);
+        // Change size/point (call in edit mode)
+        this.leafletPoly.on('pm:markerdragstart', () => this.editing = true);
+        this.leafletPoly.on('pm:markerdragend', () => this.editing = false);
         this.leafletPoly.on('pm:edit', (e) => this.onDragendListener(e, this.data));
       }
 
@@ -89,20 +103,23 @@ export class Polygon {
                 const pattern = settings.usePolygonLabelFunction ?
                   safeExecute(settings.polygonLabelFunction, [this.data, this.dataSources, this.data.dsIndex]) : settings.polygonLabel;
                 this.map.polygonLabelText = parseWithTranslation.prepareProcessPattern(pattern, true);
-                this.map.replaceInfoLabelPolygon = processPattern(this.map.polygonLabelText, this.data);
+                this.map.replaceInfoLabelPolygon = processDataPattern(this.map.polygonLabelText, this.data);
             }
-            settings.polygonLabelText = fillPattern(this.map.polygonLabelText, this.map.replaceInfoLabelPolygon, this.data);
-            this.leafletPoly.bindTooltip(`<div style="color: ${settings.polygonLabelColor};"><b>${settings.polygonLabelText}</b></div>`,
+            const polygonLabelText = fillDataPattern(this.map.polygonLabelText, this.map.replaceInfoLabelPolygon, this.data);
+            this.leafletPoly.bindTooltip(`<div style="color: ${settings.polygonLabelColor};"><b>${polygonLabelText}</b></div>`,
               { className: 'tb-polygon-label', permanent: true, sticky: true, direction: 'center' })
               .openTooltip(this.leafletPoly.getBounds().getCenter());
         }
     }
 
     updatePolygon(data: FormattedData, dataSources: FormattedData[], settings: PolygonSettings) {
+      if (this.editing) {
+        return;
+      }
       this.data = data;
       this.dataSources = dataSources;
       const polyData = data[this.settings.polygonKeyName];
-      if (isCutPolygon(polyData) || polyData.length > 2) {
+      if (isCutPolygon(polyData) || polyData.length !== 2) {
         if (this.leafletPoly instanceof L.Rectangle) {
           this.map.removeLayer(this.leafletPoly);
           const polygonColor = this.getPolygonColor(settings);
@@ -116,6 +133,11 @@ export class Polygon {
             opacity: settings.polygonStrokeOpacity,
             pmIgnore: !settings.editablePolygon
           }).addTo(this.map);
+          if (settings.showPolygonTooltip) {
+            this.tooltip = createTooltip(this.leafletPoly, settings, data.$datasource,
+              settings.autoClosePolygonTooltip, settings.showPolygonTooltipAction);
+          }
+          this.createEventListeners();
         } else {
           this.leafletPoly.setLatLngs(polyData);
         }
@@ -141,12 +163,8 @@ export class Polygon {
         const polygonColor = this.getPolygonColor(settings);
         const polygonStrokeColor = this.getPolygonStrokeColor(settings);
         const style: L.PathOptions = {
-            fill: true,
             fillColor: polygonColor,
-            color: polygonStrokeColor,
-            weight: settings.polygonStrokeWeight,
-            fillOpacity: settings.polygonOpacity,
-            opacity: settings.polygonStrokeOpacity
+            color: polygonStrokeColor
         };
         this.leafletPoly.setStyle(style);
     }

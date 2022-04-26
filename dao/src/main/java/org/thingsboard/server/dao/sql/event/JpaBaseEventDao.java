@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.event.DebugEvent;
@@ -31,18 +32,24 @@ import org.thingsboard.server.common.data.event.LifeCycleEventFilter;
 import org.thingsboard.server.common.data.event.StatisticsEventFilter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EventId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.event.EventDao;
 import org.thingsboard.server.dao.model.sql.EventEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
+import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
+import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
+import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
@@ -70,12 +77,59 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
     }
 
     @Override
-    protected CrudRepository<EventEntity, UUID> getCrudRepository() {
+    protected JpaRepository<EventEntity, UUID> getRepository() {
         return eventRepository;
     }
 
+    @Autowired
+    ScheduledLogExecutorComponent logExecutor;
+
+    @Autowired
+    private StatsFactory statsFactory;
+
+    @Value("${sql.events.batch_size:10000}")
+    private int batchSize;
+
+    @Value("${sql.events.batch_max_delay:100}")
+    private long maxDelay;
+
+    @Value("${sql.events.stats_print_interval_ms:10000}")
+    private long statsPrintIntervalMs;
+
+    @Value("${sql.events.batch_threads:3}")
+    private int batchThreads;
+
+    @Value("${sql.batch_sort:false}")
+    private boolean batchSortEnabled;
+
+    private TbSqlBlockingQueueWrapper<EventEntity> queue;
+
+    @PostConstruct
+    private void init() {
+        TbSqlBlockingQueueParams params = TbSqlBlockingQueueParams.builder()
+                .logName("Events")
+                .batchSize(batchSize)
+                .maxDelay(maxDelay)
+                .statsPrintIntervalMs(statsPrintIntervalMs)
+                .statsNamePrefix("events")
+                .batchSortEnabled(batchSortEnabled)
+                .build();
+        Function<EventEntity, Integer> hashcodeFunction = entity -> entity.getEntityId().hashCode();
+        queue = new TbSqlBlockingQueueWrapper<>(params, hashcodeFunction, batchThreads, statsFactory);
+        queue.init(logExecutor, v -> eventInsertRepository.save(v),
+                Comparator.comparing((EventEntity eventEntity) -> eventEntity.getTs())
+        );
+    }
+
+    @PreDestroy
+    private void destroy() {
+        if (queue != null) {
+            queue.destroy();
+        }
+    }
+
     @Override
-    public Event save(TenantId tenantId, Event event) {
+    public ListenableFuture<Void> saveAsync(Event event) {
         log.debug("Save event [{}] ", event);
         if (event.getId() == null) {
             UUID timeBased = Uuids.timeBased();
@@ -92,33 +146,27 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
         if (StringUtils.isEmpty(event.getUid())) {
             event.setUid(event.getId().toString());
         }
-        return save(new EventEntity(event), false).orElse(null);
+
+        return save(new EventEntity(event));
     }
 
-    @Override
-    public ListenableFuture<Event> saveAsync(Event event) {
-        log.debug("Save event [{}] ", event);
-        if (event.getId() == null) {
-            UUID timeBased = Uuids.timeBased();
-            event.setId(new EventId(timeBased));
-            event.setCreatedTime(Uuids.unixTimestamp(timeBased));
-        } else if (event.getCreatedTime() == 0L) {
-            UUID eventId = event.getId().getId();
-            if (eventId.version() == 1) {
-                event.setCreatedTime(Uuids.unixTimestamp(eventId));
-            } else {
-                event.setCreatedTime(System.currentTimeMillis());
-            }
+    private ListenableFuture<Void> save(EventEntity entity) {
+        log.debug("Save event [{}] ", entity);
+        if (entity.getTenantId() == null) {
+            log.trace("Save system event with predefined id {}", systemTenantId);
+            entity.setTenantId(systemTenantId);
         }
-        if (StringUtils.isEmpty(event.getUid())) {
-            event.setUid(event.getId().toString());
+        if (entity.getUuid() == null) {
+            entity.setUuid(Uuids.timeBased());
         }
-        return service.submit(() -> save(new EventEntity(event), false).orElse(null));
+        if (StringUtils.isEmpty(entity.getEventUid())) {
+            entity.setEventUid(entity.getUuid().toString());
+        }
+        return addToQueue(entity);
     }
 
-    @Override
-    public Optional<Event> saveIfNotExists(Event event) {
-        return save(new EventEntity(event), true);
+    private ListenableFuture<Void> addToQueue(EventEntity entity) {
+        return queue.add(entity);
     }
 
     @Override
@@ -259,28 +307,9 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
     }
 
     @Override
-    public void cleanupEvents(long otherEventsTtl, long debugEventsTtl) {
-        log.info("Going to cleanup old events using debug events ttl: {}s and other events ttl: {}s", debugEventsTtl, otherEventsTtl);
-        eventCleanupRepository.cleanupEvents(otherEventsTtl, debugEventsTtl);
-    }
-
-    public Optional<Event> save(EventEntity entity, boolean ifNotExists) {
-        log.debug("Save event [{}] ", entity);
-        if (entity.getTenantId() == null) {
-            log.trace("Save system event with predefined id {}", systemTenantId);
-            entity.setTenantId(systemTenantId);
-        }
-        if (entity.getUuid() == null) {
-            entity.setUuid(Uuids.timeBased());
-        }
-        if (StringUtils.isEmpty(entity.getEventUid())) {
-            entity.setEventUid(entity.getUuid().toString());
-        }
-        if (ifNotExists &&
-                eventRepository.findByTenantIdAndEntityTypeAndEntityId(entity.getTenantId(), entity.getEntityType(), entity.getEntityId()) != null) {
-            return Optional.empty();
-        }
-        return Optional.of(DaoUtil.getData(eventInsertRepository.saveOrUpdate(entity)));
+    public void cleanupEvents(long regularEventStartTs, long regularEventEndTs, long debugEventStartTs, long debugEventEndTs) {
+        log.info("Going to cleanup old events. Interval for regular events: [{}:{}], for debug events: [{}:{}]", regularEventStartTs, regularEventEndTs, debugEventStartTs, debugEventEndTs);
+        eventCleanupRepository.cleanupEvents(regularEventStartTs, regularEventEndTs, debugEventStartTs, debugEventEndTs);
     }
 
     private long notNull(Long value) {

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -155,9 +155,9 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
             }),
             limit: this.fb.control({
               value: this.timewindow.aggregation && typeof this.timewindow.aggregation.limit !== 'undefined'
-                ? this.timewindow.aggregation.limit : null,
+                ? this.checkLimit(this.timewindow.aggregation.limit) : null,
               disabled: hideAggInterval
-            }, [Validators.min(this.minDatapointsLimit()), Validators.max(this.maxDatapointsLimit())])
+            }, [])
           }
         ),
         timezone: this.fb.control({
@@ -166,6 +166,30 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
           disabled: hideTimezone
         })
     });
+    this.updateValidators();
+    this.timewindowForm.get('aggregation.type').valueChanges.subscribe(() => {
+      this.updateValidators();
+    });
+  }
+
+  private checkLimit(limit?: number): number {
+    if (!limit || limit < this.minDatapointsLimit()) {
+      return this.minDatapointsLimit();
+    } else if (limit > this.maxDatapointsLimit()) {
+      return this.maxDatapointsLimit();
+    }
+    return limit;
+  }
+
+  private updateValidators() {
+    const aggType = this.timewindowForm.get('aggregation.type').value;
+    if (aggType !== AggregationType.NONE) {
+      this.timewindowForm.get('aggregation.limit').clearValidators();
+    } else {
+      this.timewindowForm.get('aggregation.limit').setValidators([Validators.min(this.minDatapointsLimit()),
+        Validators.max(this.maxDatapointsLimit())]);
+    }
+    this.timewindowForm.get('aggregation.limit').updateValueAndValidity({emitEvent: false});
   }
 
   update() {

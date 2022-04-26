@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import {
   GroupActionDescriptor,
   HeaderActionDescriptor
 } from '@home/models/entity/entities-table-config.models';
+import { ActivatedRoute } from '@angular/router';
 
 export interface IEntitiesTableComponent {
   entitiesTableConfig: EntityTableConfig<BaseData<HasId>>;
@@ -50,6 +51,7 @@ export interface IEntitiesTableComponent {
   displayPagination: boolean;
   pageSizeOptions: number[];
   pageLink: PageLink;
+  pageMode: boolean;
   textSearchMode: boolean;
   timewindow: Timewindow;
   dataSource: EntitiesDataSource<BaseData<HasId>>;
@@ -59,6 +61,7 @@ export interface IEntitiesTableComponent {
   searchInputField: ElementRef;
   paginator: MatPaginator;
   sort: MatSort;
+  route: ActivatedRoute;
 
   addEnabled(): boolean;
   clearSelection(): void;

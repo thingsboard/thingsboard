@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ public class TbDeviceProfileNode implements TbNode {
             log.info("[{}] Fetched alarm rule state for {} entities", ctx.getSelfId(), fetchCount);
         }
         if (!config.isPersistAlarmRulesState() && ctx.isLocalEntity(ctx.getSelfId())) {
-            log.info("[{}] Going to cleanup rule node states", ctx.getSelfId());
+            log.debug("[{}] Going to cleanup rule node states", ctx.getSelfId());
             ctx.clearRuleNodeStates();
         }
     }

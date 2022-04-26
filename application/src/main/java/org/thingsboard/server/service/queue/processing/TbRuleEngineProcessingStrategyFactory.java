@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,9 @@ public class TbRuleEngineProcessingStrategyFactory {
     public TbRuleEngineProcessingStrategy newInstance(String name, TbRuleEngineQueueAckStrategyConfiguration configuration) {
         switch (configuration.getType()) {
             case "SKIP_ALL_FAILURES":
-                return new SkipStrategy(name);
+                return new SkipStrategy(name, false);
+            case "SKIP_ALL_FAILURES_AND_TIMED_OUT":
+                return new SkipStrategy(name, true);
             case "RETRY_ALL":
                 return new RetryStrategy(name, true, true, true, configuration);
             case "RETRY_FAILED":
@@ -73,6 +75,11 @@ public class TbRuleEngineProcessingStrategyFactory {
             this.maxAllowedFailurePercentage = configuration.getFailurePercentage();
             this.pauseBetweenRetries = configuration.getPauseBetweenRetries();
             this.maxPauseBetweenRetries = configuration.getMaxPauseBetweenRetries();
+        }
+
+        @Override
+        public boolean isSkipTimeoutMsgs() {
+            return true;
         }
 
         @Override
@@ -139,9 +146,16 @@ public class TbRuleEngineProcessingStrategyFactory {
     private static class SkipStrategy implements TbRuleEngineProcessingStrategy {
 
         private final String queueName;
+        private final boolean skipTimeoutMsgs;
 
-        public SkipStrategy(String name) {
+        public SkipStrategy(String name, boolean skipTimeoutMsgs) {
             this.queueName = name;
+            this.skipTimeoutMsgs = skipTimeoutMsgs;
+        }
+
+        @Override
+        public boolean isSkipTimeoutMsgs() {
+            return skipTimeoutMsgs;
         }
 
         @Override

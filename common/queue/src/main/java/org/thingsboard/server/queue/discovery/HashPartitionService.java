@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,6 +158,8 @@ public class HashPartitionService implements PartitionService {
             }
         });
 
+        tpiCache.clear();
+
         oldPartitions.forEach((serviceQueueKey, partitions) -> {
             if (!myPartitions.containsKey(serviceQueueKey)) {
                 log.info("[{}] NO MORE PARTITIONS FOR CURRENT KEY", serviceQueueKey);
@@ -174,7 +176,6 @@ public class HashPartitionService implements PartitionService {
                 applicationEventPublisher.publishEvent(new PartitionChangeEvent(this, serviceQueueKey, tpiList));
             }
         });
-        tpiCache.clear();
 
         if (currentOtherServices == null) {
             currentOtherServices = new ArrayList<>(otherServices);
@@ -279,7 +280,7 @@ public class HashPartitionService implements PartitionService {
             tpi.tenantId(tenantId);
             myPartitionsSearchKey = new ServiceQueueKey(serviceQueue, tenantId);
         } else {
-            myPartitionsSearchKey = new ServiceQueueKey(serviceQueue, new TenantId(TenantId.NULL_UUID));
+            myPartitionsSearchKey = new ServiceQueueKey(serviceQueue, TenantId.SYS_TENANT_ID);
         }
         List<Integer> partitions = myPartitions.get(myPartitionsSearchKey);
         if (partitions != null) {
@@ -327,7 +328,7 @@ public class HashPartitionService implements PartitionService {
     }
 
     private TenantId getSystemOrIsolatedTenantId(TransportProtos.ServiceInfo serviceInfo) {
-        return new TenantId(new UUID(serviceInfo.getTenantIdMSB(), serviceInfo.getTenantIdLSB()));
+        return TenantId.fromUUID(new UUID(serviceInfo.getTenantIdMSB(), serviceInfo.getTenantIdLSB()));
     }
 
     private void addNode(Map<ServiceQueueKey, List<ServiceInfo>> queueServiceList, ServiceInfo instance) {

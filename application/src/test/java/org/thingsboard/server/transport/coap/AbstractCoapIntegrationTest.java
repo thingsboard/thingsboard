@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.coap;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapClient;
 import org.junit.Assert;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.CoapDeviceType;
 import org.thingsboard.server.common.data.Device;
@@ -49,8 +50,13 @@ import org.thingsboard.server.transport.AbstractTransportIntegrationTest;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+@TestPropertySource(properties = {
+        "transport.coap.enabled=true",
+})
 @Slf4j
 public abstract class AbstractCoapIntegrationTest extends AbstractTransportIntegrationTest {
+
+    protected final byte[] EMPTY_PAYLOAD = new byte[0];
 
     protected CoapClient client;
 

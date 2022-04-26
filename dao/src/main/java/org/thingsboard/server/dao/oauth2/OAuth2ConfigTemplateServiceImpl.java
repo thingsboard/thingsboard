@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,13 @@
  */
 package org.thingsboard.server.dao.oauth2;
 
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.oauth2.*;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -36,12 +34,14 @@ import static org.thingsboard.server.dao.service.Validator.validateString;
 
 @Slf4j
 @Service
+@AllArgsConstructor
 public class OAuth2ConfigTemplateServiceImpl extends AbstractEntityService implements OAuth2ConfigTemplateService {
-    public static final String INCORRECT_CLIENT_REGISTRATION_TEMPLATE_ID = "Incorrect clientRegistrationTemplateId ";
-    public static final String INCORRECT_CLIENT_REGISTRATION_PROVIDER_ID = "Incorrect clientRegistrationProviderId ";
 
-    @Autowired
-    private OAuth2ClientRegistrationTemplateDao clientRegistrationTemplateDao;
+    private static final String INCORRECT_CLIENT_REGISTRATION_TEMPLATE_ID = "Incorrect clientRegistrationTemplateId ";
+    private static final String INCORRECT_CLIENT_REGISTRATION_PROVIDER_ID = "Incorrect clientRegistrationProviderId ";
+
+    private final OAuth2ClientRegistrationTemplateDao clientRegistrationTemplateDao;
+    private final DataValidator<OAuth2ClientRegistrationTemplate> clientRegistrationTemplateValidator;
 
     @Override
     public OAuth2ClientRegistrationTemplate saveClientRegistrationTemplate(OAuth2ClientRegistrationTemplate clientRegistrationTemplate) {
@@ -87,32 +87,4 @@ public class OAuth2ConfigTemplateServiceImpl extends AbstractEntityService imple
         validateId(templateId, INCORRECT_CLIENT_REGISTRATION_TEMPLATE_ID + templateId);
         clientRegistrationTemplateDao.removeById(TenantId.SYS_TENANT_ID, templateId.getId());
     }
-
-    private final DataValidator<OAuth2ClientRegistrationTemplate> clientRegistrationTemplateValidator =
-            new DataValidator<OAuth2ClientRegistrationTemplate>() {
-
-                @Override
-                protected void validateCreate(TenantId tenantId, OAuth2ClientRegistrationTemplate clientRegistrationTemplate) {
-                }
-
-                @Override
-                protected void validateUpdate(TenantId tenantId, OAuth2ClientRegistrationTemplate clientRegistrationTemplate) {
-                }
-
-                @Override
-                protected void validateDataImpl(TenantId tenantId, OAuth2ClientRegistrationTemplate clientRegistrationTemplate) {
-                    if (StringUtils.isEmpty(clientRegistrationTemplate.getProviderId())) {
-                        throw new DataValidationException("Provider ID should be specified!");
-                    }
-                    if (clientRegistrationTemplate.getMapperConfig() == null) {
-                        throw new DataValidationException("Mapper config should be specified!");
-                    }
-                    if (clientRegistrationTemplate.getMapperConfig().getType() == null) {
-                        throw new DataValidationException("Mapper type should be specified!");
-                    }
-                    if (clientRegistrationTemplate.getMapperConfig().getBasic() == null) {
-                        throw new DataValidationException("Basic mapper config should be specified!");
-                    }
-                }
-            };
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,6 +88,9 @@ public class EdgeImitator {
     @Getter
     private List<AbstractMessage> downlinkMsgs;
 
+    @Getter
+    private UplinkResponseMsg latestResponseMsg;
+
     private boolean connected = false;
 
     public EdgeImitator(String host, int port, String routingKey, String routingSecret) throws NoSuchFieldException, IllegalAccessException {
@@ -132,6 +135,7 @@ public class EdgeImitator {
 
     private void onUplinkResponse(UplinkResponseMsg msg) {
         log.info("onUplinkResponse: {}", msg);
+        latestResponseMsg = msg;
         responsesLatch.countDown();
     }
 

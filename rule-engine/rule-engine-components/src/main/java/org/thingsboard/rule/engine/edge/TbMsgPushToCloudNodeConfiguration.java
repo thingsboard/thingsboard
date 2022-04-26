@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,12 @@
 package org.thingsboard.rule.engine.edge;
 
 import lombok.Data;
-import org.thingsboard.rule.engine.api.NodeConfiguration;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.DataConstants;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-public class TbMsgPushToCloudNodeConfiguration implements NodeConfiguration<TbMsgPushToCloudNodeConfiguration> {
-
-    private String scope;
+public class TbMsgPushToCloudNodeConfiguration extends BaseTbMsgPushNodeConfiguration {
 
     @Override
     public TbMsgPushToCloudNodeConfiguration defaultConfiguration() {

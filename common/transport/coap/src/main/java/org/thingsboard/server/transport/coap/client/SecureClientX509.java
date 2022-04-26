@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,13 @@ import org.eclipse.californium.core.Utils;
 import org.eclipse.californium.core.network.CoapEndpoint;
 import org.eclipse.californium.elements.DtlsEndpointContext;
 import org.eclipse.californium.elements.EndpointContext;
+import org.eclipse.californium.elements.config.Configuration;
 import org.eclipse.californium.elements.exception.ConnectorException;
 import org.eclipse.californium.elements.util.SslContextUtil;
 import org.eclipse.californium.scandium.DTLSConnector;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.californium.scandium.dtls.CertificateType;
+import org.eclipse.californium.scandium.dtls.x509.SingleCertificateProvider;
 import org.eclipse.californium.scandium.dtls.x509.StaticNewAdvancedCertificateVerifier;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 
@@ -117,7 +119,7 @@ public class SecureClientX509 {
         String keyStorePassword = args[5];
 
 
-        DtlsConnectorConfig.Builder builder = new DtlsConnectorConfig.Builder();
+        DtlsConnectorConfig.Builder builder = new DtlsConnectorConfig.Builder(new Configuration());
         setupCredentials(builder, keyStoreUriPath, keyStoreAlias, trustedAliasPattern, keyStorePassword);
         DTLSConnector dtlsConnector = new DTLSConnector(builder.build());
         SecureClientX509 client = new SecureClientX509(dtlsConnector, host, port, clientKeys, sharedKeys);
@@ -133,7 +135,7 @@ public class SecureClientX509 {
                     keyStoreUriPath, trustedAliasPattern, keyStorePassword.toCharArray());
             trustBuilder.setTrustedCertificates(trustedCertificates);
             config.setAdvancedCertificateVerifier(trustBuilder.build());
-            config.setIdentity(serverCredentials.getPrivateKey(), serverCredentials.getCertificateChain(), Collections.singletonList(CertificateType.X_509));
+            config.setCertificateIdentityProvider(new SingleCertificateProvider(serverCredentials.getPrivateKey(), serverCredentials.getCertificateChain(), Collections.singletonList(CertificateType.X_509)));
         } catch (GeneralSecurityException e) {
             System.err.println("certificates are invalid!");
             throw new IllegalArgumentException(e.getMessage());

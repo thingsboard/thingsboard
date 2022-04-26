@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -68,6 +68,7 @@ export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogCom
 
     const rawSettingsSchema = widgetInfo.typeSettingsSchema || widgetInfo.settingsSchema;
     const rawDataKeySettingsSchema = widgetInfo.typeDataKeySettingsSchema || widgetInfo.dataKeySettingsSchema;
+    const rawLatestDataKeySettingsSchema = widgetInfo.typeLatestDataKeySettingsSchema || widgetInfo.latestDataKeySettingsSchema;
     const typeParameters = widgetInfo.typeParameters;
     const actionSources = widgetInfo.actionSources;
     const isDataEnabled = isDefined(widgetInfo.typeParameters) ? !widgetInfo.typeParameters.useCustomDatasources : true;
@@ -83,6 +84,13 @@ export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogCom
     } else {
       dataKeySettingsSchema = isString(rawDataKeySettingsSchema) ? JSON.parse(rawDataKeySettingsSchema) : rawDataKeySettingsSchema;
     }
+    let latestDataKeySettingsSchema;
+    if (!rawLatestDataKeySettingsSchema || rawLatestDataKeySettingsSchema === '') {
+      latestDataKeySettingsSchema = {};
+    } else {
+      latestDataKeySettingsSchema = isString(rawLatestDataKeySettingsSchema) ?
+        JSON.parse(rawLatestDataKeySettingsSchema) : rawLatestDataKeySettingsSchema;
+    }
     const widgetConfig: WidgetConfigComponentData = {
       config: this.widget.config,
       layout: {},
@@ -91,7 +99,8 @@ export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogCom
       actionSources,
       isDataEnabled,
       settingsSchema,
-      dataKeySettingsSchema
+      dataKeySettingsSchema,
+      latestDataKeySettingsSchema
     };
 
     this.widgetFormGroup = this.fb.group({

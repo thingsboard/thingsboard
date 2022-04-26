@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -162,6 +162,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   widgetSizeDetected = false;
   widgetInstanceInited = false;
   dataUpdatePending = false;
+  latestDataUpdatePending = false;
   pendingMessage: SubscriptionMessage;
 
   cafs: {[cafId: string]: CancelAnimationFrame} = {};
@@ -485,6 +486,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     if (!this.widgetTypeInstance.onDataUpdated) {
       this.widgetTypeInstance.onDataUpdated = () => {};
     }
+    if (!this.widgetTypeInstance.onLatestDataUpdated) {
+      this.widgetTypeInstance.onLatestDataUpdated = () => {};
+    }
     if (!this.widgetTypeInstance.onResize) {
       this.widgetTypeInstance.onResize = () => {};
     }
@@ -550,6 +554,10 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
                 this.dashboardWidget.updateCustomHeaderActions(true);
               }, 0);
               this.dataUpdatePending = false;
+            }
+            if (this.latestDataUpdatePending) {
+              this.widgetTypeInstance.onLatestDataUpdated();
+              this.latestDataUpdatePending = false;
             }
             if (this.pendingMessage) {
               this.displayMessage(this.pendingMessage.severity, this.pendingMessage.message);
@@ -895,7 +903,21 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           }
         } catch (e){}
       },
+      onLatestDataUpdated: () => {
+        try {
+          if (this.displayWidgetInstance()) {
+            if (this.widgetInstanceInited) {
+              this.widgetTypeInstance.onLatestDataUpdated();
+            } else {
+              this.latestDataUpdatePending = true;
+            }
+          }
+        } catch (e){}
+      },
       onDataUpdateError: (subscription, e) => {
+        this.handleWidgetException(e);
+      },
+      onLatestDataUpdateError: (subscription, e) => {
         this.handleWidgetException(e);
       },
       onSubscriptionMessage: (subscription, message) => {
@@ -972,6 +994,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           // backward compatibility
           this.widgetContext.datasources = subscription.datasources;
           this.widgetContext.data = subscription.data;
+          this.widgetContext.latestData = subscription.latestData;
           this.widgetContext.hiddenData = subscription.hiddenData;
           this.widgetContext.timeWindow = subscription.timeWindow;
           this.widgetContext.defaultSubscription = subscription;
@@ -1068,7 +1091,6 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     switch (type) {
       case WidgetActionType.openDashboardState:
       case WidgetActionType.updateDashboardState:
-        let targetDashboardStateId = descriptor.targetDashboardStateId;
         const params = deepClone(this.widgetContext.stateController.getStateParams());
         updateEntityParams(params, targetEntityParamName, targetEntityId, entityName, entityLabel);
         if (type === WidgetActionType.openDashboardState) {
@@ -1080,20 +1102,19 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
             this.openDashboardStateInSeparateDialog(descriptor.targetDashboardStateId, params, descriptor.dialogTitle,
               descriptor.dialogHideDashboardToolbar, descriptor.dialogWidth, descriptor.dialogHeight);
           } else {
-            this.widgetContext.stateController.openState(targetDashboardStateId, params, descriptor.openRightLayout);
+            this.widgetContext.stateController.openState(descriptor.targetDashboardStateId, params, descriptor.openRightLayout);
           }
         } else {
-          this.widgetContext.stateController.updateState(targetDashboardStateId, params, descriptor.openRightLayout);
+          this.widgetContext.stateController.updateState(descriptor.targetDashboardStateId, params, descriptor.openRightLayout);
         }
         break;
       case WidgetActionType.openDashboard:
         const targetDashboardId = descriptor.targetDashboardId;
-        targetDashboardStateId = descriptor.targetDashboardStateId;
         const stateObject: StateObject = {};
         stateObject.params = {};
         updateEntityParams(stateObject.params, targetEntityParamName, targetEntityId, entityName, entityLabel);
-        if (targetDashboardStateId) {
-          stateObject.id = targetDashboardStateId;
+        if (descriptor.targetDashboardStateId) {
+          stateObject.id = descriptor.targetDashboardStateId;
         }
         const state = objToBase64URI([ stateObject ]);
         const isSinglePage = this.route.snapshot.data.singlePageMode;

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,18 +21,14 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
-import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -40,22 +36,16 @@ import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
-import org.thingsboard.server.dao.device.DeviceProfileDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
-import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
-import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import static org.thingsboard.server.common.data.CacheConstants.OTA_PACKAGE_CACHE;
-import static org.thingsboard.server.common.data.EntityType.OTA_PACKAGE;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 
@@ -66,16 +56,12 @@ public class BaseOtaPackageService implements OtaPackageService {
     public static final String INCORRECT_OTA_PACKAGE_ID = "Incorrect otaPackageId ";
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
 
-    private final TenantDao tenantDao;
-    private final DeviceProfileDao deviceProfileDao;
     private final OtaPackageDao otaPackageDao;
     private final OtaPackageInfoDao otaPackageInfoDao;
     private final CacheManager cacheManager;
     private final OtaPackageDataCache otaPackageDataCache;
-
-    @Autowired
-    @Lazy
-    private TbTenantProfileCache tenantProfileCache;
+    private final DataValidator<OtaPackageInfo> otaPackageInfoValidator;
+    private final DataValidator<OtaPackage> otaPackageValidator;
 
     @Override
     public OtaPackageInfo saveOtaPackageInfo(OtaPackageInfo otaPackageInfo, boolean isUrl) {
@@ -228,168 +214,6 @@ public class BaseOtaPackageService implements OtaPackageService {
         log.trace("Executing deleteOtaPackagesByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         tenantOtaPackageRemover.removeEntities(tenantId, tenantId);
-    }
-
-    private DataValidator<OtaPackageInfo> otaPackageInfoValidator = new DataValidator<>() {
-
-        @Override
-        protected void validateDataImpl(TenantId tenantId, OtaPackageInfo otaPackageInfo) {
-            validateImpl(otaPackageInfo);
-        }
-
-        @Override
-        protected void validateUpdate(TenantId tenantId, OtaPackageInfo otaPackage) {
-            OtaPackageInfo otaPackageOld = otaPackageInfoDao.findById(tenantId, otaPackage.getUuidId());
-            BaseOtaPackageService.validateUpdate(otaPackage, otaPackageOld);
-        }
-    };
-
-    private DataValidator<OtaPackage> otaPackageValidator = new DataValidator<>() {
-
-        @Override
-        protected void validateCreate(TenantId tenantId, OtaPackage otaPackage) {
-            DefaultTenantProfileConfiguration profileConfiguration =
-                    (DefaultTenantProfileConfiguration) tenantProfileCache.get(tenantId).getProfileData().getConfiguration();
-            long maxOtaPackagesInBytes = profileConfiguration.getMaxOtaPackagesInBytes();
-            validateMaxSumDataSizePerTenant(tenantId, otaPackageDao, maxOtaPackagesInBytes, otaPackage.getDataSize(), OTA_PACKAGE);
-        }
-
-        @Override
-        protected void validateDataImpl(TenantId tenantId, OtaPackage otaPackage) {
-            validateImpl(otaPackage);
-
-            if (!otaPackage.hasUrl()) {
-                if (StringUtils.isEmpty(otaPackage.getFileName())) {
-                    throw new DataValidationException("OtaPackage file name should be specified!");
-                }
-
-                if (StringUtils.isEmpty(otaPackage.getContentType())) {
-                    throw new DataValidationException("OtaPackage content type should be specified!");
-                }
-
-                if (otaPackage.getChecksumAlgorithm() == null) {
-                    throw new DataValidationException("OtaPackage checksum algorithm should be specified!");
-                }
-                if (StringUtils.isEmpty(otaPackage.getChecksum())) {
-                    throw new DataValidationException("OtaPackage checksum should be specified!");
-                }
-
-                String currentChecksum;
-
-                currentChecksum = generateChecksum(otaPackage.getChecksumAlgorithm(), otaPackage.getData());
-
-                if (!currentChecksum.equals(otaPackage.getChecksum())) {
-                    throw new DataValidationException("Wrong otaPackage file!");
-                }
-            } else {
-                if(otaPackage.getData() != null) {
-                    throw new DataValidationException("File can't be saved if URL present!");
-                }
-            }
-        }
-
-        @Override
-        protected void validateUpdate(TenantId tenantId, OtaPackage otaPackage) {
-            OtaPackage otaPackageOld = otaPackageDao.findById(tenantId, otaPackage.getUuidId());
-
-            BaseOtaPackageService.validateUpdate(otaPackage, otaPackageOld);
-
-            if (otaPackageOld.getData() != null && !otaPackageOld.getData().equals(otaPackage.getData())) {
-                throw new DataValidationException("Updating otaPackage data is prohibited!");
-            }
-
-            if (otaPackageOld.getData() == null && otaPackage.getData() != null) {
-                DefaultTenantProfileConfiguration profileConfiguration =
-                        (DefaultTenantProfileConfiguration) tenantProfileCache.get(tenantId).getProfileData().getConfiguration();
-                long maxOtaPackagesInBytes = profileConfiguration.getMaxOtaPackagesInBytes();
-                validateMaxSumDataSizePerTenant(tenantId, otaPackageDao, maxOtaPackagesInBytes, otaPackage.getDataSize(), OTA_PACKAGE);
-            }
-        }
-    };
-
-    private static void validateUpdate(OtaPackageInfo otaPackage, OtaPackageInfo otaPackageOld) {
-        if (!otaPackageOld.getType().equals(otaPackage.getType())) {
-            throw new DataValidationException("Updating type is prohibited!");
-        }
-
-        if (!otaPackageOld.getTitle().equals(otaPackage.getTitle())) {
-            throw new DataValidationException("Updating otaPackage title is prohibited!");
-        }
-
-        if (!otaPackageOld.getVersion().equals(otaPackage.getVersion())) {
-            throw new DataValidationException("Updating otaPackage version is prohibited!");
-        }
-
-        if (!Objects.equals(otaPackage.getTag(), otaPackageOld.getTag())) {
-            throw new DataValidationException("Updating otaPackage tag is prohibited!");
-        }
-
-        if (!otaPackageOld.getDeviceProfileId().equals(otaPackage.getDeviceProfileId())) {
-            throw new DataValidationException("Updating otaPackage deviceProfile is prohibited!");
-        }
-
-        if (otaPackageOld.getFileName() != null && !otaPackageOld.getFileName().equals(otaPackage.getFileName())) {
-            throw new DataValidationException("Updating otaPackage file name is prohibited!");
-        }
-
-        if (otaPackageOld.getContentType() != null && !otaPackageOld.getContentType().equals(otaPackage.getContentType())) {
-            throw new DataValidationException("Updating otaPackage content type is prohibited!");
-        }
-
-        if (otaPackageOld.getChecksumAlgorithm() != null && !otaPackageOld.getChecksumAlgorithm().equals(otaPackage.getChecksumAlgorithm())) {
-            throw new DataValidationException("Updating otaPackage content type is prohibited!");
-        }
-
-        if (otaPackageOld.getChecksum() != null && !otaPackageOld.getChecksum().equals(otaPackage.getChecksum())) {
-            throw new DataValidationException("Updating otaPackage content type is prohibited!");
-        }
-
-        if (otaPackageOld.getDataSize() != null && !otaPackageOld.getDataSize().equals(otaPackage.getDataSize())) {
-            throw new DataValidationException("Updating otaPackage data size is prohibited!");
-        }
-
-        if(otaPackageOld.getUrl() != null && !otaPackageOld.getUrl().equals(otaPackage.getUrl())) {
-            throw new DataValidationException("Updating otaPackage URL is prohibited!");
-        }
-    }
-
-    private void validateImpl(OtaPackageInfo otaPackageInfo) {
-        if (otaPackageInfo.getTenantId() == null) {
-            throw new DataValidationException("OtaPackage should be assigned to tenant!");
-        } else {
-            Tenant tenant = tenantDao.findById(otaPackageInfo.getTenantId(), otaPackageInfo.getTenantId().getId());
-            if (tenant == null) {
-                throw new DataValidationException("OtaPackage is referencing to non-existent tenant!");
-            }
-        }
-
-        if (otaPackageInfo.getDeviceProfileId() != null) {
-            DeviceProfile deviceProfile = deviceProfileDao.findById(otaPackageInfo.getTenantId(), otaPackageInfo.getDeviceProfileId().getId());
-            if (deviceProfile == null) {
-                throw new DataValidationException("OtaPackage is referencing to non-existent device profile!");
-            }
-        }
-
-        if (otaPackageInfo.getType() == null) {
-            throw new DataValidationException("Type should be specified!");
-        }
-
-        if (StringUtils.isEmpty(otaPackageInfo.getTitle())) {
-            throw new DataValidationException("OtaPackage title should be specified!");
-        }
-
-        if (StringUtils.isEmpty(otaPackageInfo.getVersion())) {
-            throw new DataValidationException("OtaPackage version should be specified!");
-        }
-
-        if(otaPackageInfo.getTitle().length() > 255) {
-            throw new DataValidationException("The length of title should be equal or shorter than 255");
-        }
-
-        if(otaPackageInfo.getVersion().length() > 255) {
-            throw new DataValidationException("The length of version should be equal or shorter than 255");
-        }
-
     }
 
     private PaginatedRemover<TenantId, OtaPackageInfo> tenantOtaPackageRemover =

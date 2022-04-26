@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@ import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationTes
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectInstanceId_0;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectInstanceId_1;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectInstanceId_12;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resourceId_0;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_0;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_1;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_12;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_0;
 
 
 public class RpcLwm2mIntegrationCreateTest extends AbstractRpcLwM2MIntegrationTest {
@@ -43,8 +43,8 @@ public class RpcLwm2mIntegrationCreateTest extends AbstractRpcLwM2MIntegrationTe
      */
     @Test
     public void testCreateObjectInstanceWithInstanceIdByIdKey_Result_CREATED() throws Exception {
-        String expectedPath = objectIdVer_19 + "/" + objectInstanceId_12;
-        String expectedValue = "{\"" + resourceId_0 + "\":{\"0\":\"00AC\"}, \"1\":1}";
+        String expectedPath = objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_12;
+        String expectedValue = "{\"" + RESOURCE_ID_0 + "\":{\"0\":\"00AC\"}, \"1\":1}";
         String actualResult = sendRPCreateById(expectedPath, expectedValue);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CREATED.getName(), rpcActualResult.get("result").asText());
@@ -60,12 +60,12 @@ public class RpcLwm2mIntegrationCreateTest extends AbstractRpcLwM2MIntegrationTe
      */
     @Test
     public void testCreateObjectInstanceWithInstanceIdAlreadyExistsById_Result_BAD_REQUEST() throws Exception {
-        String expectedPath = objectIdVer_19 + "/" + objectInstanceId_0;
-        String expectedValue = "{\"" + resourceId_0 + "\":{\"0\":\"00AC\"}, \"1\":1}";
+        String expectedPath = objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_0;
+        String expectedValue = "{\"" + RESOURCE_ID_0 + "\":{\"0\":\"00AC\"}, \"1\":1}";
         String actualResult = sendRPCreateById(expectedPath, expectedValue);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.BAD_REQUEST.getName(), rpcActualResult.get("result").asText());
-        String expected = "instance " + objectInstanceId_0 + " already exists";
+        String expected = "instance " + OBJECT_INSTANCE_ID_0 + " already exists";
         String actual = rpcActualResult.get("error").asText();
         assertTrue(actual.equals(expected));
     }
@@ -77,8 +77,8 @@ public class RpcLwm2mIntegrationCreateTest extends AbstractRpcLwM2MIntegrationTe
      */
     @Test
     public void testCreateObjectInstanceWithInstanceIdMandatorySingleObjectById_Result_BAD_REQUEST() throws Exception {
-        String expectedPath = objectIdVer_3 + "/" + objectInstanceId_1;
-        String expectedValue = "{\"" + resourceId_0 + "\":{\"0\":\"00AC\"}}";
+        String expectedPath = objectIdVer_3 + "/" + OBJECT_INSTANCE_ID_1;
+        String expectedValue = "{\"" + RESOURCE_ID_0 + "\":{\"0\":\"00AC\"}}";
         String actualResult = sendRPCreateById(expectedPath, expectedValue);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.BAD_REQUEST.getName(), rpcActualResult.get("result").asText());
@@ -94,8 +94,8 @@ public class RpcLwm2mIntegrationCreateTest extends AbstractRpcLwM2MIntegrationTe
      */
     @Test
     public void testCreateObjectInstanceWithInstanceIdSecurityObjectById_Result_BAD_REQUEST() throws Exception {
-        String expectedPath = objectIdVer_0 + "/" + objectInstanceId_1;
-        String expectedValue = "{\"" + resourceId_0 + "\":{\"2\":4}}";
+        String expectedPath = objectIdVer_0 + "/" + OBJECT_INSTANCE_ID_1;
+        String expectedValue = "{\"" + RESOURCE_ID_0 + "\":{\"2\":4}}";
         String actualResult = sendRPCreateById(expectedPath, expectedValue);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.BAD_REQUEST.getName(), rpcActualResult.get("result").asText());
@@ -113,8 +113,8 @@ public class RpcLwm2mIntegrationCreateTest extends AbstractRpcLwM2MIntegrationTe
      */
     @Test
     public void testCreateObjectInstanceWithInstanceIdAbsentObjectById_Result_BAD_REQUEST() throws Exception {
-        String expectedPath = objectIdVer_50+ "/" + objectInstanceId_1;
-        String expectedValue = "{\"" + resourceId_0 + "\":{\"0\":\"00AC\"}}";
+        String expectedPath = OBJECT_ID_VER_50 + "/" + OBJECT_INSTANCE_ID_1;
+        String expectedValue = "{\"" + RESOURCE_ID_0 + "\":{\"0\":\"00AC\"}}";
         String actualResult = sendRPCreateById(expectedPath, expectedValue);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.BAD_REQUEST.getName(), rpcActualResult.get("result").asText());

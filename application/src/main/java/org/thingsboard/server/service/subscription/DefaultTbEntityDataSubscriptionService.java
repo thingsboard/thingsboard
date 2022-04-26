@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.socket.CloseStatus;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -127,7 +128,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     private int maxEntitiesPerDataSubscription;
     @Value("${server.ws.max_entities_per_alarm_subscription:1000}")
     private int maxEntitiesPerAlarmSubscription;
-    @Value("${server.ws.max_alarm_queries_per_refresh_interval:3}")
+    @Value("${server.ws.dynamic_page_link.max_alarm_queries_per_refresh_interval:10}")
     private int maxAlarmQueriesPerRefreshInterval;
 
     private ExecutorService wsCallBackExecutor;
@@ -178,8 +179,6 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                 log.debug("[{}][{}] Updating data using query: {}", session.getSessionId(), cmd.getCmdId(), cmd.getQuery());
             }
             ctx.setAndResolveQuery(cmd.getQuery());
-            TenantId tenantId = ctx.getTenantId();
-            CustomerId customerId = ctx.getCustomerId();
             EntityDataQuery query = ctx.getQuery();
             //Step 1. Update existing query with the contents of LatestValueCmd
             if (cmd.getLatestCmd() != null) {
@@ -207,21 +206,33 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         ListenableFuture<TbEntityDataSubCtx> historyFuture;
         if (cmd.getHistoryCmd() != null) {
             log.trace("[{}][{}] Going to process history command: {}", session.getSessionId(), cmd.getCmdId(), cmd.getHistoryCmd());
-            historyFuture = handleHistoryCmd(ctx, cmd.getHistoryCmd());
+            try {
+                historyFuture = handleHistoryCmd(ctx, cmd.getHistoryCmd());
+            } catch (RuntimeException e) {
+                handleWsCmdRuntimeException(ctx.getSessionId(), e, cmd);
+                return;
+            }
         } else {
             historyFuture = Futures.immediateFuture(ctx);
         }
         Futures.addCallback(historyFuture, new FutureCallback<>() {
             @Override
             public void onSuccess(@Nullable TbEntityDataSubCtx theCtx) {
-                if (cmd.getLatestCmd() != null) {
-                    handleLatestCmd(theCtx, cmd.getLatestCmd());
-                } else if (cmd.getTsCmd() != null) {
-                    handleTimeSeriesCmd(theCtx, cmd.getTsCmd());
-                } else if (!theCtx.isInitialDataSent()) {
-                    EntityDataUpdate update = new EntityDataUpdate(theCtx.getCmdId(), theCtx.getData(), null, theCtx.getMaxEntitiesPerDataSubscription());
-                    wsService.sendWsMsg(theCtx.getSessionId(), update);
-                    theCtx.setInitialDataSent(true);
+                try {
+                    if (cmd.getLatestCmd() != null || cmd.getTsCmd() != null) {
+                        if (cmd.getLatestCmd() != null) {
+                            handleLatestCmd(theCtx, cmd.getLatestCmd());
+                        }
+                        if (cmd.getTsCmd() != null) {
+                            handleTimeSeriesCmd(theCtx, cmd.getTsCmd());
+                        }
+                    } else if (!theCtx.isInitialDataSent()) {
+                        EntityDataUpdate update = new EntityDataUpdate(theCtx.getCmdId(), theCtx.getData(), null, theCtx.getMaxEntitiesPerDataSubscription());
+                        wsService.sendWsMsg(theCtx.getSessionId(), update);
+                        theCtx.setInitialDataSent(true);
+                    }
+                } catch (RuntimeException e) {
+                    handleWsCmdRuntimeException(theCtx.getSessionId(), e, cmd);
                 }
             }
 
@@ -230,6 +241,11 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                 log.warn("[{}][{}] Failed to process command", session.getSessionId(), cmd.getCmdId());
             }
         }, wsCallBackExecutor);
+    }
+
+    private void handleWsCmdRuntimeException(String sessionId, RuntimeException e, EntityDataCmd cmd) {
+        log.debug("[{}] Failed to process ws cmd: {}", sessionId, cmd, e);
+        wsService.close(sessionId, CloseStatus.SERVICE_RESTARTED);
     }
 
     @Override

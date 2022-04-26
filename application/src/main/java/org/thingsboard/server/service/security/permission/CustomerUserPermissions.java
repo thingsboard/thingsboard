@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
 
     public CustomerUserPermissions() {
         super();
-        put(Resource.ALARM, TenantAdminPermissions.tenantEntityPermissionChecker);
+        put(Resource.ALARM, customerAlarmPermissionChecker);
         put(Resource.ASSET, customerEntityPermissionChecker);
         put(Resource.DEVICE, customerEntityPermissionChecker);
         put(Resource.CUSTOMER, customerPermissionChecker);
@@ -43,6 +43,19 @@ public class CustomerUserPermissions extends AbstractPermissions {
         put(Resource.EDGE, customerEntityPermissionChecker);
         put(Resource.RPC, rpcPermissionChecker);
     }
+
+    private static final PermissionChecker customerAlarmPermissionChecker = new PermissionChecker() {
+        @Override
+        public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, HasTenantId entity) {
+            if (!user.getTenantId().equals(entity.getTenantId())) {
+                return false;
+            }
+            if (!(entity instanceof HasCustomerId)) {
+                return false;
+            }
+            return user.getCustomerId().equals(((HasCustomerId) entity).getCustomerId());
+        }
+    };
 
     private static final PermissionChecker customerEntityPermissionChecker =
             new PermissionChecker.GenericPermissionChecker(Operation.READ, Operation.READ_CREDENTIALS,
@@ -62,10 +75,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
                     if (!(entity instanceof HasCustomerId)) {
                         return false;
                     }
-                    if (!operation.equals(Operation.CLAIM_DEVICES) && !user.getCustomerId().equals(((HasCustomerId) entity).getCustomerId())) {
-                        return false;
-                    }
-                    return true;
+                    return operation.equals(Operation.CLAIM_DEVICES) || user.getCustomerId().equals(((HasCustomerId) entity).getCustomerId());
                 }
             };
 
@@ -78,10 +88,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
                     if (!super.hasPermission(user, operation, entityId, entity)) {
                         return false;
                     }
-                    if (!user.getCustomerId().equals(entityId)) {
-                        return false;
-                    }
-                    return true;
+                    return user.getCustomerId().equals(entityId);
                 }
 
             };
@@ -98,10 +105,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
                     if (!user.getTenantId().equals(dashboard.getTenantId())) {
                         return false;
                     }
-                    if (!dashboard.isAssignedToCustomer(user.getCustomerId())) {
-                        return false;
-                    }
-                    return true;
+                    return dashboard.isAssignedToCustomer(user.getCustomerId());
                 }
 
             };
@@ -113,10 +117,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
             if (!Authority.CUSTOMER_USER.equals(userEntity.getAuthority())) {
                 return false;
             }
-            if (!user.getId().equals(userId)) {
-                return false;
-            }
-            return true;
+            return user.getId().equals(userId);
         }
 
     };
@@ -132,10 +133,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
             if (entity.getTenantId() == null || entity.getTenantId().isNullUid()) {
                 return true;
             }
-            if (!user.getTenantId().equals(entity.getTenantId())) {
-                return false;
-            }
-            return true;
+            return user.getTenantId().equals(entity.getTenantId());
         }
 
     };
@@ -151,10 +149,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
             if (entity.getTenantId() == null || entity.getTenantId().isNullUid()) {
                 return true;
             }
-            if (!user.getTenantId().equals(entity.getTenantId())) {
-                return false;
-            }
-            return true;
+            return user.getTenantId().equals(entity.getTenantId());
         }
     };
 }
