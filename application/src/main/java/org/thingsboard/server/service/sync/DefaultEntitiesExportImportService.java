@@ -70,7 +70,7 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
     }
 
 
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class, timeout = 120)
     @Override
     public List<EntityImportResult<?>> importEntities(SecurityUser user, List<EntityExportData<?>> exportDataList, EntityImportSettings importSettings) throws ThingsboardException {
         fixOrder(exportDataList);

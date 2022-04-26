@@ -21,6 +21,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasTenantId;
@@ -130,6 +131,7 @@ public class DefaultExportableEntitiesService implements ExportableEntitiesServi
     }
 
 
+    @Transactional(readOnly = true, timeout = 40)
     @Override
     public List<EntityId> findEntitiesForRequest(TenantId tenantId, ExportRequest request) {
         switch (request.getType()) {
