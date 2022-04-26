@@ -30,11 +30,13 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.coapserver.DefaultCoapServerService;
+import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.common.transport.service.DefaultTransportService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.transport.coap.CoapTestConfigProperties;
 import org.thingsboard.server.transport.coap.CoapTransportResource;
 import org.thingsboard.server.transport.coap.attributes.AbstractCoapAttributesIntegrationTest;
-import org.thingsboard.server.common.msg.session.FeatureType;
+
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -68,7 +70,10 @@ public class CoapAttributesUpdatesIntegrationTest extends AbstractCoapAttributes
         coapTransportResource = spy( (CoapTransportResource) api.getChild("v1") );
         api.delete(api.getChild("v1") );
         api.add(coapTransportResource);
-        processBeforeTest("Test Subscribe to attribute updates", null, null);
+        CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
+                .deviceName("Test Subscribe to attribute updates")
+                .build();
+        processBeforeTest(configProperties);
     }
 
     @After

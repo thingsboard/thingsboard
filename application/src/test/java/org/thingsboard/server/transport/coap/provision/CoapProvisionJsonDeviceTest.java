@@ -38,10 +38,9 @@ import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.device.provision.ProvisionResponseStatus;
+import org.thingsboard.server.transport.coap.CoapTestConfigProperties;
 
 import java.io.IOException;
-
-import static org.junit.Assert.assertEquals;
 
 @Slf4j
 @DaoSqlTest
@@ -55,7 +54,7 @@ public class CoapProvisionJsonDeviceTest extends AbstractCoapIntegrationTest {
 
     @After
     public void afterTest() throws Exception {
-        super.processAfterTest();
+        processAfterTest();
     }
 
     @Test
@@ -90,7 +89,12 @@ public class CoapProvisionJsonDeviceTest extends AbstractCoapIntegrationTest {
 
 
     private void processTestProvisioningDisabledDevice() throws Exception {
-        super.processBeforeTest("Test Provision device", CoapDeviceType.DEFAULT, TransportPayloadType.JSON, null, null, null, null, null, null, DeviceProfileProvisionType.DISABLED);
+        CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
+                .deviceName("Test Provision device")
+                .coapDeviceType(CoapDeviceType.DEFAULT)
+                .transportPayloadType(TransportPayloadType.JSON)
+                .build();
+        processBeforeTest(configProperties);
         byte[] result = createCoapClientAndPublish().getPayload();
         JsonObject response = JsonUtils.parse(new String(result)).getAsJsonObject();
         Assert.assertEquals("Provision data was not found!", response.get("errorMsg").getAsString());
@@ -99,15 +103,23 @@ public class CoapProvisionJsonDeviceTest extends AbstractCoapIntegrationTest {
 
 
     private void processTestProvisioningCreateNewDeviceWithoutCredentials() throws Exception {
-        super.processBeforeTest("Test Provision device3", CoapDeviceType.DEFAULT, TransportPayloadType.JSON, null, null, null, null, "testProvisionKey", "testProvisionSecret", DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES);
+        CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
+                .deviceName("Test Provision device3")
+                .coapDeviceType(CoapDeviceType.DEFAULT)
+                .transportPayloadType(TransportPayloadType.JSON)
+                .provisionType(DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES)
+                .provisionKey("testProvisionKey")
+                .provisionSecret("testProvisionSecret")
+                .build();
+        processBeforeTest(configProperties);
         byte[] result = createCoapClientAndPublish().getPayload();
         JsonObject response = JsonUtils.parse(new String(result)).getAsJsonObject();
 
-        Device createdDevice = deviceService.findDeviceByTenantIdAndName(savedTenant.getTenantId(), "Test Provision device");
+        Device createdDevice = deviceService.findDeviceByTenantIdAndName(tenantId, "Test Provision device");
 
         Assert.assertNotNull(createdDevice);
 
-        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(savedTenant.getTenantId(), createdDevice.getId());
+        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, createdDevice.getId());
 
         Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.get("credentialsType").getAsString());
         Assert.assertEquals(ProvisionResponseStatus.SUCCESS.name(), response.get("status").getAsString());
@@ -115,16 +127,24 @@ public class CoapProvisionJsonDeviceTest extends AbstractCoapIntegrationTest {
 
 
     private void processTestProvisioningCreateNewDeviceWithAccessToken() throws Exception {
-        super.processBeforeTest("Test Provision device3", CoapDeviceType.DEFAULT, TransportPayloadType.JSON, null, null, null, null, "testProvisionKey", "testProvisionSecret", DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES);
+        CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
+                .deviceName("Test Provision device3")
+                .coapDeviceType(CoapDeviceType.DEFAULT)
+                .transportPayloadType(TransportPayloadType.JSON)
+                .provisionType(DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES)
+                .provisionKey("testProvisionKey")
+                .provisionSecret("testProvisionSecret")
+                .build();
+        processBeforeTest(configProperties);
         String requestCredentials = ",\"credentialsType\": \"ACCESS_TOKEN\",\"token\": \"test_token\"";
         byte[] result = createCoapClientAndPublish(requestCredentials).getPayload();
         JsonObject response = JsonUtils.parse(new String(result)).getAsJsonObject();
 
-        Device createdDevice = deviceService.findDeviceByTenantIdAndName(savedTenant.getTenantId(), "Test Provision device");
+        Device createdDevice = deviceService.findDeviceByTenantIdAndName(tenantId, "Test Provision device");
 
         Assert.assertNotNull(createdDevice);
 
-        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(savedTenant.getTenantId(), createdDevice.getId());
+        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, createdDevice.getId());
 
         Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.get("credentialsType").getAsString());
         Assert.assertEquals(deviceCredentials.getCredentialsType().name(), "ACCESS_TOKEN");
@@ -134,16 +154,24 @@ public class CoapProvisionJsonDeviceTest extends AbstractCoapIntegrationTest {
 
 
     private void processTestProvisioningCreateNewDeviceWithCert() throws Exception {
-        super.processBeforeTest("Test Provision device3", CoapDeviceType.DEFAULT, TransportPayloadType.JSON, null, null, null, null, "testProvisionKey", "testProvisionSecret", DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES);
+        CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
+                .deviceName("Test Provision device3")
+                .coapDeviceType(CoapDeviceType.DEFAULT)
+                .transportPayloadType(TransportPayloadType.JSON)
+                .provisionType(DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES)
+                .provisionKey("testProvisionKey")
+                .provisionSecret("testProvisionSecret")
+                .build();
+        processBeforeTest(configProperties);
         String requestCredentials = ",\"credentialsType\": \"X509_CERTIFICATE\",\"hash\": \"testHash\"";
         byte[] result = createCoapClientAndPublish(requestCredentials).getPayload();
         JsonObject response = JsonUtils.parse(new String(result)).getAsJsonObject();
 
-        Device createdDevice = deviceService.findDeviceByTenantIdAndName(savedTenant.getTenantId(), "Test Provision device");
+        Device createdDevice = deviceService.findDeviceByTenantIdAndName(tenantId, "Test Provision device");
 
         Assert.assertNotNull(createdDevice);
 
-        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(savedTenant.getTenantId(), createdDevice.getId());
+        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, createdDevice.getId());
 
         Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.get("credentialsType").getAsString());
         Assert.assertEquals(deviceCredentials.getCredentialsType().name(), "X509_CERTIFICATE");
@@ -158,18 +186,34 @@ public class CoapProvisionJsonDeviceTest extends AbstractCoapIntegrationTest {
     }
 
     private void processTestProvisioningCheckPreProvisionedDevice() throws Exception {
-        super.processBeforeTest("Test Provision device", CoapDeviceType.DEFAULT, TransportPayloadType.JSON, null, null, null, null, "testProvisionKey", "testProvisionSecret", DeviceProfileProvisionType.CHECK_PRE_PROVISIONED_DEVICES);
+        CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
+                .deviceName("Test Provision device")
+                .coapDeviceType(CoapDeviceType.DEFAULT)
+                .transportPayloadType(TransportPayloadType.JSON)
+                .provisionType(DeviceProfileProvisionType.CHECK_PRE_PROVISIONED_DEVICES)
+                .provisionKey("testProvisionKey")
+                .provisionSecret("testProvisionSecret")
+                .build();
+        processBeforeTest(configProperties);
         byte[] result = createCoapClientAndPublish().getPayload();
         JsonObject response = JsonUtils.parse(new String(result)).getAsJsonObject();
 
-        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(savedTenant.getTenantId(), savedDevice.getId());
+        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, savedDevice.getId());
 
         Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.get("credentialsType").getAsString());
         Assert.assertEquals(ProvisionResponseStatus.SUCCESS.name(), response.get("status").getAsString());
     }
 
     private void processTestProvisioningWithBadKeyDevice() throws Exception {
-        super.processBeforeTest("Test Provision device", CoapDeviceType.DEFAULT, TransportPayloadType.JSON, null, null, null, null, "testProvisionKeyOrig", "testProvisionSecret", DeviceProfileProvisionType.CHECK_PRE_PROVISIONED_DEVICES);
+        CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
+                .deviceName("Test Provision device")
+                .coapDeviceType(CoapDeviceType.DEFAULT)
+                .transportPayloadType(TransportPayloadType.JSON)
+                .provisionType(DeviceProfileProvisionType.CHECK_PRE_PROVISIONED_DEVICES)
+                .provisionKey("testProvisionKeyOrig")
+                .provisionSecret("testProvisionSecret")
+                .build();
+        processBeforeTest(configProperties);
         byte[] result = createCoapClientAndPublish().getPayload();
         JsonObject response = JsonUtils.parse(new String(result)).getAsJsonObject();
         Assert.assertEquals("Provision data was not found!", response.get("errorMsg").getAsString());

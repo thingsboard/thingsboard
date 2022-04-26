@@ -22,18 +22,13 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttSecurityException;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
-import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
-import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -68,21 +63,7 @@ public class BasicMqttCredentialsTest extends AbstractMqttIntegrationTest {
 
     @Before
     public void before() throws Exception {
-        loginSysAdmin();
-
-        Tenant tenant = new Tenant();
-        tenant.setTitle("My tenant");
-        savedTenant = doPost("/api/tenant", tenant, Tenant.class);
-        Assert.assertNotNull(savedTenant);
-
-        tenantAdmin = new User();
-        tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
-        tenantAdmin.setTenantId(savedTenant.getId());
-        tenantAdmin.setEmail("tenant" + atomicInteger.getAndIncrement() + "@thingsboard.org");
-        tenantAdmin.setFirstName("Joe");
-        tenantAdmin.setLastName("Downs");
-
-        tenantAdmin = createUserAndLogin(tenantAdmin, "testPassword1");
+        loginTenantAdmin();
 
         BasicMqttCredentials credValue = new BasicMqttCredentials();
         credValue.setClientId(CLIENT_ID);
@@ -166,11 +147,6 @@ public class BasicMqttCredentialsTest extends AbstractMqttIntegrationTest {
             assertNull(actualKeys);
         }
         client.disconnect().waitForCompletion();
-    }
-
-    @After
-    public void after() throws Exception {
-        processAfterTest();
     }
 
     protected MqttAsyncClient getMqttAsyncClient(String clientId, String username, String password) throws MqttException {

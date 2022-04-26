@@ -19,7 +19,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
@@ -27,6 +26,7 @@ import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
+import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -48,12 +48,11 @@ public class MqttAttributesIntegrationTest extends AbstractMqttIntegrationTest {
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest("Test Post Attributes device", "Test Post Attributes gateway", null, null, null);
-    }
-
-    @After
-    public void afterTest() throws Exception {
-        processAfterTest();
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Attributes device")
+                .gatewayName("Test Post Attributes gateway")
+                .build();
+        processBeforeTest(configProperties);
     }
 
     @Test

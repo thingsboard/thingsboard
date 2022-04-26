@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportC
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.transport.coap.CoapTestConfigProperties;
 
 import java.util.Arrays;
 
@@ -44,7 +45,12 @@ public class CoapAttributesProtoIntegrationTest extends CoapAttributesIntegratio
     @Before
     @Override
     public void beforeTest() throws Exception {
-        processBeforeTest("Test Post Attributes device Proto", CoapDeviceType.DEFAULT, TransportPayloadType.PROTOBUF);
+        CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
+                .deviceName("Test Post Attributes device Proto")
+                .coapDeviceType(CoapDeviceType.DEFAULT)
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .build();
+        processBeforeTest(configProperties);
     }
 
     @Test

@@ -21,8 +21,12 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.thingsboard.server.common.data.CoapDeviceType;
+import org.thingsboard.server.common.data.DeviceProfileProvisionType;
+import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.security.AccessValidator;
+import org.thingsboard.server.transport.coap.CoapTestConfigProperties;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -32,12 +36,15 @@ public class CoapServerSideRpcDefaultIntegrationTest extends AbstractCoapServerS
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest("RPC test device", null, null);
+        CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
+                .deviceName("RPC test device")
+                .build();
+        processBeforeTest(configProperties);
     }
 
     @After
     public void afterTest() throws Exception {
-        super.processAfterTest();
+        processAfterTest();
     }
 
     @Test

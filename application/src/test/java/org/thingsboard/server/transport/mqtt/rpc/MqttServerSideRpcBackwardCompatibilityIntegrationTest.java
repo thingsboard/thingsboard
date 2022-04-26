@@ -18,77 +18,141 @@ package org.thingsboard.server.transport.mqtt.rpc;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Test;
-import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 
 @Slf4j
 @DaoSqlTest
 public class MqttServerSideRpcBackwardCompatibilityIntegrationTest extends AbstractMqttServerSideRpcIntegrationTest {
 
-    @After
-    public void afterTest() throws Exception {
-        super.processAfterTest();
-    }
-
     @Test
     public void testServerMqttOneWayRpcWithEnabledJsonCompatibilityAndJsonDownlinks() throws Exception {
-        super.processBeforeTest("RPC test device", "RPC test gateway", TransportPayloadType.PROTOBUF, null, null, null, null, null, RPC_REQUEST_PROTO_SCHEMA, null, null, DeviceProfileProvisionType.DISABLED, true, true, false);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("RPC test device")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .rpcRequestProtoSchema(RPC_REQUEST_PROTO_SCHEMA)
+                .enableCompatibilityWithJsonPayloadFormat(true)
+                .useJsonPayloadFormatForDefaultDownlinkTopics(true)
+                .build();
+        processBeforeTest(configProperties);
         processOneWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC);
     }
 
     @Test
     public void testServerMqttOneWayRpcOnShortTopicWithEnabledJsonCompatibilityAndJsonDownlinks() throws Exception {
-        super.processBeforeTest("RPC test device", "RPC test gateway", TransportPayloadType.PROTOBUF, null, null, null, null, null, RPC_REQUEST_PROTO_SCHEMA, null, null, DeviceProfileProvisionType.DISABLED, true, true, false);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("RPC test device")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .rpcRequestProtoSchema(RPC_REQUEST_PROTO_SCHEMA)
+                .enableCompatibilityWithJsonPayloadFormat(true)
+                .useJsonPayloadFormatForDefaultDownlinkTopics(true)
+                .build();
+        super.processBeforeTest(configProperties);
         processOneWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_TOPIC);
     }
 
     @Test
     public void testServerMqttOneWayRpcOnShortProtoTopicWithEnabledJsonCompatibilityAndJsonDownlinks() throws Exception {
-        super.processBeforeTest("RPC test device", "RPC test gateway", TransportPayloadType.PROTOBUF, null, null, null, null, null, RPC_REQUEST_PROTO_SCHEMA, null, null, DeviceProfileProvisionType.DISABLED, true, true, false);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("RPC test device")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .rpcRequestProtoSchema(RPC_REQUEST_PROTO_SCHEMA)
+                .enableCompatibilityWithJsonPayloadFormat(true)
+                .useJsonPayloadFormatForDefaultDownlinkTopics(true)
+                .build();
+        super.processBeforeTest(configProperties);
         processOneWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_PROTO_TOPIC);
     }
 
     @Test
     public void testServerMqttTwoWayRpcWithEnabledJsonCompatibility() throws Exception {
-        super.processBeforeTest("RPC test device", "RPC test gateway", TransportPayloadType.PROTOBUF, null, null, null, null, null, RPC_REQUEST_PROTO_SCHEMA, null, null, DeviceProfileProvisionType.DISABLED, true, false, false);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("RPC test device")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .rpcRequestProtoSchema(RPC_REQUEST_PROTO_SCHEMA)
+                .enableCompatibilityWithJsonPayloadFormat(true)
+                .build();
+        super.processBeforeTest(configProperties);
         processProtoTwoWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC);
     }
 
     @Test
     public void testServerMqttTwoWayRpcWithEnabledJsonCompatibilityAndJsonDownlinks() throws Exception {
-        super.processBeforeTest("RPC test device", "RPC test gateway", TransportPayloadType.PROTOBUF, null, null, null, null, null, RPC_REQUEST_PROTO_SCHEMA, null, null, DeviceProfileProvisionType.DISABLED, true, true, false);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("RPC test device")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .rpcRequestProtoSchema(RPC_REQUEST_PROTO_SCHEMA)
+                .enableCompatibilityWithJsonPayloadFormat(true)
+                .useJsonPayloadFormatForDefaultDownlinkTopics(true)
+                .build();
+        super.processBeforeTest(configProperties);
         processJsonTwoWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC);
     }
 
     @Test
     public void testServerMqttTwoWayRpcOnShortTopic() throws Exception {
-        super.processBeforeTest("RPC test device", "RPC test gateway", TransportPayloadType.PROTOBUF, null, null, null, null, null, RPC_REQUEST_PROTO_SCHEMA, null, null, DeviceProfileProvisionType.DISABLED, true, true, false);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("RPC test device")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .rpcRequestProtoSchema(RPC_REQUEST_PROTO_SCHEMA)
+                .build();
+        super.processBeforeTest(configProperties);
         processProtoTwoWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_TOPIC);
     }
 
     @Test
     public void testServerMqttTwoWayRpcOnShortProtoTopicWithEnabledJsonCompatibilityAndJsonDownlinks() throws Exception {
-        super.processBeforeTest("RPC test device", "RPC test gateway", TransportPayloadType.PROTOBUF, null, null, null, null, null, RPC_REQUEST_PROTO_SCHEMA, null, null, DeviceProfileProvisionType.DISABLED, true, true, false);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("RPC test device")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .rpcRequestProtoSchema(RPC_REQUEST_PROTO_SCHEMA)
+                .enableCompatibilityWithJsonPayloadFormat(true)
+                .useJsonPayloadFormatForDefaultDownlinkTopics(true)
+                .build();
+        super.processBeforeTest(configProperties);
         processProtoTwoWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_PROTO_TOPIC);
     }
 
     @Test
     public void testServerMqttTwoWayRpcOnShortJsonTopicWithEnabledJsonCompatibilityAndJsonDownlinks() throws Exception {
-        super.processBeforeTest("RPC test device", "RPC test gateway", TransportPayloadType.PROTOBUF, null, null, null, null, null, RPC_REQUEST_PROTO_SCHEMA, null, null, DeviceProfileProvisionType.DISABLED, true, true, false);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("RPC test device")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .rpcRequestProtoSchema(RPC_REQUEST_PROTO_SCHEMA)
+                .enableCompatibilityWithJsonPayloadFormat(true)
+                .useJsonPayloadFormatForDefaultDownlinkTopics(true)
+                .build();
+        super.processBeforeTest(configProperties);
         processJsonTwoWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_JSON_TOPIC);
     }
 
     @Test
     public void testGatewayServerMqttOneWayRpcWithEnabledJsonCompatibilityAndJsonDownlinks() throws Exception {
-        super.processBeforeTest("RPC test device", "RPC test gateway", TransportPayloadType.PROTOBUF, null, null, null, null, null, RPC_REQUEST_PROTO_SCHEMA, null, null, DeviceProfileProvisionType.DISABLED, true, true, false);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("RPC test device")
+                .gatewayName("RPC test gateway")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .rpcRequestProtoSchema(RPC_REQUEST_PROTO_SCHEMA)
+                .enableCompatibilityWithJsonPayloadFormat(true)
+                .useJsonPayloadFormatForDefaultDownlinkTopics(true)
+                .build();
+        super.processBeforeTest(configProperties);
         processProtoOneWayRpcTestGateway("Gateway Device OneWay RPC Proto");
     }
 
     @Test
     public void testGatewayServerMqttTwoWayRpcWithEnabledJsonCompatibilityAndJsonDownlinks() throws Exception {
-        super.processBeforeTest("RPC test device", "RPC test gateway", TransportPayloadType.PROTOBUF, null, null, null, null, null, RPC_REQUEST_PROTO_SCHEMA, null, null, DeviceProfileProvisionType.DISABLED, true, true, false);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("RPC test device")
+                .gatewayName("RPC test gateway")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .rpcRequestProtoSchema(RPC_REQUEST_PROTO_SCHEMA)
+                .enableCompatibilityWithJsonPayloadFormat(true)
+                .useJsonPayloadFormatForDefaultDownlinkTopics(true)
+                .build();
+        super.processBeforeTest(configProperties);
         processProtoTwoWayRpcTestGateway("Gateway Device TwoWay RPC Proto");
     }
 

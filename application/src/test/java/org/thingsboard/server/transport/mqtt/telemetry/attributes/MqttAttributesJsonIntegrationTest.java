@@ -16,11 +16,11 @@
 package org.thingsboard.server.transport.mqtt.telemetry.attributes;
 
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 
 import java.util.Arrays;
 import java.util.List;
@@ -33,12 +33,13 @@ public class MqttAttributesJsonIntegrationTest extends MqttAttributesIntegration
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest("Test Post Attributes device", "Test Post Attributes gateway", TransportPayloadType.JSON, null, POST_DATA_ATTRIBUTES_TOPIC);
-    }
-
-    @After
-    public void afterTest() throws Exception {
-        processAfterTest();
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Attributes device")
+                .gatewayName("Test Post Attributes gateway")
+                .transportPayloadType(TransportPayloadType.JSON)
+                .attributesTopicFilter(POST_DATA_ATTRIBUTES_TOPIC)
+                .build();
+        processBeforeTest(configProperties);
     }
 
     @Test

@@ -26,6 +26,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.transport.coap.CoapTestConfigProperties;
 import org.thingsboard.server.transport.coap.attributes.AbstractCoapAttributesIntegrationTest;
 import org.thingsboard.server.common.msg.session.FeatureType;
 
@@ -44,7 +45,10 @@ public class CoapAttributesRequestIntegrationTest extends AbstractCoapAttributes
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest("Test Request attribute values from the server", null, null);
+        CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
+                .deviceName("Test Request attribute values from the server")
+                .build();
+        processBeforeTest(configProperties);
     }
 
     @After

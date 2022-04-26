@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
+import org.thingsboard.server.transport.coap.CoapTestConfigProperties;
 
 @Slf4j
 @DaoSqlTest
@@ -31,7 +32,12 @@ public class CoapClaimProtoDeviceTest extends CoapClaimDeviceTest {
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest("Test Claim device Proto", CoapDeviceType.DEFAULT, TransportPayloadType.PROTOBUF);
+        CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
+                .deviceName("Test Claim device Proto")
+                .coapDeviceType(CoapDeviceType.DEFAULT)
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .build();
+        processBeforeTest(configProperties);
         createCustomerAndUser();
     }
 

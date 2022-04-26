@@ -16,11 +16,11 @@
 package org.thingsboard.server.transport.mqtt.claim;
 
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 
 @Slf4j
 @DaoSqlTest
@@ -28,13 +28,13 @@ public class MqttClaimJsonDeviceTest extends MqttClaimDeviceTest {
     
     @Before
     public void beforeTest() throws Exception {
-        super.processBeforeTest("Test Claim device", "Test Claim gateway", TransportPayloadType.JSON, null, null);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Claim device")
+                .gatewayName("Test Claim gateway")
+                .transportPayloadType(TransportPayloadType.JSON)
+                .build();
+        processBeforeTest(configProperties);
         createCustomerAndUser();
-    }
-
-    @After
-    public void afterTest() throws Exception {
-        super.afterTest();
     }
 
     @Test

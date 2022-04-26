@@ -29,7 +29,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.CoapDeviceType;
-import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceTypeConfiguration;
@@ -38,11 +37,10 @@ import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportC
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.transport.coap.CoapTestConfigProperties;
 
 import java.util.concurrent.CountDownLatch;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 @Slf4j
@@ -65,12 +63,18 @@ public class CoapServerSideRpcProtoIntegrationTest extends AbstractCoapServerSid
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest("RPC test device", CoapDeviceType.DEFAULT, TransportPayloadType.PROTOBUF, null, null, null, RPC_REQUEST_PROTO_SCHEMA, null, null, DeviceProfileProvisionType.DISABLED);
+        CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
+                .deviceName("RPC test device")
+                .coapDeviceType(CoapDeviceType.DEFAULT)
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .rpcRequestProtoSchema(RPC_REQUEST_PROTO_SCHEMA)
+                .build();
+        processBeforeTest(configProperties);
     }
 
     @After
     public void afterTest() throws Exception {
-        super.processAfterTest();
+        processAfterTest();
     }
 
     @Test

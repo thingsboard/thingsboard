@@ -21,50 +21,81 @@ import org.junit.Test;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 import org.thingsboard.server.transport.mqtt.attributes.AbstractMqttAttributesIntegrationTest;
 
 @Slf4j
 @DaoSqlTest
 public class MqttAttributesUpdatesBackwardCompatibilityIntegrationTest extends AbstractMqttAttributesIntegrationTest {
 
-    @After
-    public void afterTest() throws Exception {
-        processAfterTest();
-    }
-
     @Test
     public void testSubscribeToAttributesUpdatesFromServerWithEnabledJsonCompatibility() throws Exception {
-        super.processBeforeTest("Test Subscribe to attribute updates", "Gateway Test Subscribe to attribute updates", TransportPayloadType.PROTOBUF, null, null, true, false);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Subscribe to attribute updates")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .enableCompatibilityWithJsonPayloadFormat(true)
+                .build();
+        processBeforeTest(configProperties);
         processProtoTestSubscribeToAttributesUpdates(MqttTopics.DEVICE_ATTRIBUTES_TOPIC);
     }
 
     @Test
     public void testSubscribeToAttributesUpdatesFromServerWithEnabledJsonCompatibilityAndJsonDownlinks() throws Exception {
-        super.processBeforeTest("Test Subscribe to attribute updates", "Gateway Test Subscribe to attribute updates", TransportPayloadType.PROTOBUF, null, null, true, true);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Subscribe to attribute updates")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .enableCompatibilityWithJsonPayloadFormat(true)
+                .useJsonPayloadFormatForDefaultDownlinkTopics(true)
+                .build();
+        super.processBeforeTest(configProperties);
         processJsonTestSubscribeToAttributesUpdates(MqttTopics.DEVICE_ATTRIBUTES_TOPIC);
     }
 
     @Test
     public void testProtoSubscribeToAttributesUpdatesFromTheServerOnShortTopicWithEnabledJsonCompatibilityAndJsonDownlinks() throws Exception {
-        super.processBeforeTest("Test Subscribe to attribute updates", "Gateway Test Subscribe to attribute updates", TransportPayloadType.PROTOBUF, null, null, true, true);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Subscribe to attribute updates")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .enableCompatibilityWithJsonPayloadFormat(true)
+                .useJsonPayloadFormatForDefaultDownlinkTopics(true)
+                .build();
+        super.processBeforeTest(configProperties);
         processProtoTestSubscribeToAttributesUpdates(MqttTopics.DEVICE_ATTRIBUTES_SHORT_TOPIC);
     }
 
     @Test
     public void testProtoSubscribeToAttributesUpdatesFromTheServerOnShortJsonTopicWithEnabledJsonCompatibilityAndJsonDownlinks() throws Exception {
-        super.processBeforeTest("Test Subscribe to attribute updates", "Gateway Test Subscribe to attribute updates", TransportPayloadType.PROTOBUF, null, null, true, true);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Subscribe to attribute updates")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .enableCompatibilityWithJsonPayloadFormat(true)
+                .useJsonPayloadFormatForDefaultDownlinkTopics(true)
+                .build();
+        super.processBeforeTest(configProperties);
         processJsonTestSubscribeToAttributesUpdates(MqttTopics.DEVICE_ATTRIBUTES_SHORT_JSON_TOPIC);
     }
 
     @Test
     public void testProtoSubscribeToAttributesUpdatesFromTheServerOnShortProtoTopicWithEnabledJsonCompatibilityAndJsonDownlinks() throws Exception {
-        super.processBeforeTest("Test Subscribe to attribute updates", "Gateway Test Subscribe to attribute updates", TransportPayloadType.PROTOBUF, null, null, true, true);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Subscribe to attribute updates")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .enableCompatibilityWithJsonPayloadFormat(true)
+                .useJsonPayloadFormatForDefaultDownlinkTopics(true)
+                .build();
+        super.processBeforeTest(configProperties);
         processProtoTestSubscribeToAttributesUpdates(MqttTopics.DEVICE_ATTRIBUTES_SHORT_PROTO_TOPIC);
     }
 
     @Test
     public void testProtoSubscribeToAttributesUpdatesFromTheServerGatewayWithEnabledJsonCompatibilityAndJsonDownlinks() throws Exception {
-        super.processBeforeTest("Test Subscribe to attribute updates", "Gateway Test Subscribe to attribute updates", TransportPayloadType.PROTOBUF, null, null, true, false);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Subscribe to attribute updates")
+                .gatewayName("Gateway Test Subscribe to attribute updates")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .enableCompatibilityWithJsonPayloadFormat(true)
+                .build();
+        super.processBeforeTest(configProperties);
         processProtoGatewayTestSubscribeToAttributesUpdates();
     }
 

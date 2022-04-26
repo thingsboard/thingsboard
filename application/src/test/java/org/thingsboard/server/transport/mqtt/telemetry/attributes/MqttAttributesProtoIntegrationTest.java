@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeCon
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 
 import java.util.Arrays;
 import java.util.List;
@@ -52,20 +53,36 @@ public class MqttAttributesProtoIntegrationTest extends MqttAttributesIntegratio
 
     @Test
     public void testPushAttributes() throws Exception {
-        processBeforeTest("Test Post Attributes device", "Test Post Attributes gateway", TransportPayloadType.PROTOBUF, null, POST_DATA_ATTRIBUTES_TOPIC);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Attributes device")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .attributesTopicFilter(POST_DATA_ATTRIBUTES_TOPIC)
+                .build();
+        processBeforeTest(configProperties);
         DynamicMessage postAttributesMsg = getDefaultDynamicMessage();
         processAttributesTest(POST_DATA_ATTRIBUTES_TOPIC, Arrays.asList("key1", "key2", "key3", "key4", "key5"), postAttributesMsg.toByteArray(), false);
     }
 
     @Test
     public void testPushAttributesWithEnabledJsonBackwardCompatibility() throws Exception {
-        processBeforeTest("Test Post Attributes device", "Test Post Attributes gateway", TransportPayloadType.PROTOBUF, null, POST_DATA_ATTRIBUTES_TOPIC, true, false);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Attributes device")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .attributesTopicFilter(POST_DATA_ATTRIBUTES_TOPIC)
+                .enableCompatibilityWithJsonPayloadFormat(true)
+                .build();
+        processBeforeTest(configProperties);
         processJsonPayloadAttributesTest(POST_DATA_ATTRIBUTES_TOPIC, Arrays.asList("key1", "key2", "key3", "key4", "key5"), PAYLOAD_VALUES_STR.getBytes());
     }
 
     @Test
     public void testPushAttributesWithExplicitPresenceProtoKeys() throws Exception {
-        processBeforeTest("Test Post Attributes device", "Test Post Attributes gateway", TransportPayloadType.PROTOBUF, null, POST_DATA_ATTRIBUTES_TOPIC);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Attributes device")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .attributesTopicFilter(POST_DATA_ATTRIBUTES_TOPIC)
+                .build();
+        processBeforeTest(configProperties);
         DynamicSchema attributesSchema = getDynamicSchema();
 
         DynamicMessage.Builder nestedJsonObjectBuilder = attributesSchema.newMessageBuilder("PostAttributes.JsonObject.NestedJsonObject");
@@ -98,27 +115,47 @@ public class MqttAttributesProtoIntegrationTest extends MqttAttributesIntegratio
 
     @Test
     public void testPushAttributesOnShortTopic() throws Exception {
-        processBeforeTest("Test Post Attributes device", "Test Post Attributes gateway", TransportPayloadType.PROTOBUF, null, POST_DATA_ATTRIBUTES_TOPIC);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Attributes device")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .attributesTopicFilter(POST_DATA_ATTRIBUTES_TOPIC)
+                .build();
+        processBeforeTest(configProperties);
         DynamicMessage postAttributesMsg = getDefaultDynamicMessage();
         processAttributesTest(MqttTopics.DEVICE_ATTRIBUTES_SHORT_TOPIC, Arrays.asList("key1", "key2", "key3", "key4", "key5"), postAttributesMsg.toByteArray(), false);
     }
 
     @Test
     public void testPushAttributesOnShortJsonTopic() throws Exception {
-        processBeforeTest("Test Post Attributes device", "Test Post Attributes gateway", TransportPayloadType.PROTOBUF, null, POST_DATA_ATTRIBUTES_TOPIC);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Attributes device")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .attributesTopicFilter(POST_DATA_ATTRIBUTES_TOPIC)
+                .build();
+        processBeforeTest(configProperties);
         processJsonPayloadAttributesTest(MqttTopics.DEVICE_ATTRIBUTES_SHORT_JSON_TOPIC, Arrays.asList("key1", "key2", "key3", "key4", "key5"), PAYLOAD_VALUES_STR.getBytes());
     }
 
     @Test
     public void testPushAttributesOnShortProtoTopic() throws Exception {
-        processBeforeTest("Test Post Attributes device", "Test Post Attributes gateway", TransportPayloadType.PROTOBUF, null, POST_DATA_ATTRIBUTES_TOPIC);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Attributes device")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .attributesTopicFilter(POST_DATA_ATTRIBUTES_TOPIC)
+                .build();
+        processBeforeTest(configProperties);
         DynamicMessage postAttributesMsg = getDefaultDynamicMessage();
         processAttributesTest(MqttTopics.DEVICE_ATTRIBUTES_SHORT_PROTO_TOPIC, Arrays.asList("key1", "key2", "key3", "key4", "key5"), postAttributesMsg.toByteArray(), false);
     }
 
     @Test
     public void testPushAttributesGateway() throws Exception {
-        processBeforeTest("Test Post Attributes device", "Test Post Attributes gateway", TransportPayloadType.PROTOBUF, null, null);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Attributes device")
+                .gatewayName("Test Post Attributes gateway")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .build();
+        processBeforeTest(configProperties);
         TransportApiProtos.GatewayAttributesMsg.Builder gatewayAttributesMsgProtoBuilder = TransportApiProtos.GatewayAttributesMsg.newBuilder();
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
         String deviceName1 = "Device A";

@@ -44,6 +44,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceReque
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
+import org.thingsboard.server.transport.coap.CoapTestConfigProperties;
 
 import java.io.IOException;
 
@@ -59,7 +60,7 @@ public class CoapProvisionProtoDeviceTest extends AbstractCoapIntegrationTest {
 
     @After
     public void afterTest() throws Exception {
-        super.processAfterTest();
+        processAfterTest();
     }
 
     @Test
@@ -94,37 +95,58 @@ public class CoapProvisionProtoDeviceTest extends AbstractCoapIntegrationTest {
 
 
     private void processTestProvisioningDisabledDevice() throws Exception {
-        super.processBeforeTest("Test Provision device", CoapDeviceType.DEFAULT, TransportPayloadType.PROTOBUF, null, null, null, null, null, null, DeviceProfileProvisionType.DISABLED);
+        CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
+                .deviceName("Test Provision device")
+                .coapDeviceType(CoapDeviceType.DEFAULT)
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .build();
+        processBeforeTest(configProperties);
         ProvisionDeviceResponseMsg result = ProvisionDeviceResponseMsg.parseFrom(createCoapClientAndPublish().getPayload());
         Assert.assertNotNull(result);
         Assert.assertEquals(ProvisionResponseStatus.NOT_FOUND.name(), result.getStatus().toString());
     }
 
     private void processTestProvisioningCreateNewDeviceWithoutCredentials() throws Exception {
-        super.processBeforeTest("Test Provision device3", CoapDeviceType.DEFAULT, TransportPayloadType.PROTOBUF, null, null, null, null, "testProvisionKey", "testProvisionSecret", DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES);
+        CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
+                .deviceName("Test Provision device3")
+                .coapDeviceType(CoapDeviceType.DEFAULT)
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .provisionType(DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES)
+                .provisionKey("testProvisionKey")
+                .provisionSecret("testProvisionSecret")
+                .build();
+        processBeforeTest(configProperties);
         ProvisionDeviceResponseMsg response = ProvisionDeviceResponseMsg.parseFrom(createCoapClientAndPublish().getPayload());
 
-        Device createdDevice = deviceService.findDeviceByTenantIdAndName(savedTenant.getTenantId(), "Test Provision device");
+        Device createdDevice = deviceService.findDeviceByTenantIdAndName(tenantId, "Test Provision device");
 
         Assert.assertNotNull(createdDevice);
 
-        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(savedTenant.getTenantId(), createdDevice.getId());
+        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, createdDevice.getId());
 
         Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.getCredentialsType().toString());
         Assert.assertEquals(ProvisionResponseStatus.SUCCESS.name(), response.getStatus().toString());
     }
 
     private void processTestProvisioningCreateNewDeviceWithAccessToken() throws Exception {
-        super.processBeforeTest("Test Provision device3", CoapDeviceType.DEFAULT, TransportPayloadType.PROTOBUF, null, null, null, null, "testProvisionKey", "testProvisionSecret", DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES);
+        CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
+                .deviceName("Test Provision device3")
+                .coapDeviceType(CoapDeviceType.DEFAULT)
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .provisionType(DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES)
+                .provisionKey("testProvisionKey")
+                .provisionSecret("testProvisionSecret")
+                .build();
+        processBeforeTest(configProperties);
         CredentialsDataProto requestCredentials = CredentialsDataProto.newBuilder().setValidateDeviceTokenRequestMsg(ValidateDeviceTokenRequestMsg.newBuilder().setToken("test_token").build()).build();
 
         ProvisionDeviceResponseMsg response = ProvisionDeviceResponseMsg.parseFrom(createCoapClientAndPublish(createTestsProvisionMessage(CredentialsType.ACCESS_TOKEN, requestCredentials)).getPayload());
 
-        Device createdDevice = deviceService.findDeviceByTenantIdAndName(savedTenant.getTenantId(), "Test Provision device");
+        Device createdDevice = deviceService.findDeviceByTenantIdAndName(tenantId, "Test Provision device");
 
         Assert.assertNotNull(createdDevice);
 
-        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(savedTenant.getTenantId(), createdDevice.getId());
+        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, createdDevice.getId());
 
         Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.getCredentialsType().toString());
         Assert.assertEquals(deviceCredentials.getCredentialsType(), DeviceCredentialsType.ACCESS_TOKEN);
@@ -133,16 +155,24 @@ public class CoapProvisionProtoDeviceTest extends AbstractCoapIntegrationTest {
     }
 
     private void processTestProvisioningCreateNewDeviceWithCert() throws Exception {
-        super.processBeforeTest("Test Provision device3", CoapDeviceType.DEFAULT, TransportPayloadType.PROTOBUF, null, null, null, null, "testProvisionKey", "testProvisionSecret", DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES);
+        CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
+                .deviceName("Test Provision device3")
+                .coapDeviceType(CoapDeviceType.DEFAULT)
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .provisionType(DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES)
+                .provisionKey("testProvisionKey")
+                .provisionSecret("testProvisionSecret")
+                .build();
+        processBeforeTest(configProperties);
         CredentialsDataProto requestCredentials = CredentialsDataProto.newBuilder().setValidateDeviceX509CertRequestMsg(ValidateDeviceX509CertRequestMsg.newBuilder().setHash("testHash").build()).build();
 
         ProvisionDeviceResponseMsg response = ProvisionDeviceResponseMsg.parseFrom(createCoapClientAndPublish(createTestsProvisionMessage(CredentialsType.X509_CERTIFICATE, requestCredentials)).getPayload());
 
-        Device createdDevice = deviceService.findDeviceByTenantIdAndName(savedTenant.getTenantId(), "Test Provision device");
+        Device createdDevice = deviceService.findDeviceByTenantIdAndName(tenantId, "Test Provision device");
 
         Assert.assertNotNull(createdDevice);
 
-        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(savedTenant.getTenantId(), createdDevice.getId());
+        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, createdDevice.getId());
 
         Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.getCredentialsType().toString());
         Assert.assertEquals(deviceCredentials.getCredentialsType(), DeviceCredentialsType.X509_CERTIFICATE);
@@ -157,17 +187,33 @@ public class CoapProvisionProtoDeviceTest extends AbstractCoapIntegrationTest {
     }
 
     private void processTestProvisioningCheckPreProvisionedDevice() throws Exception {
-        super.processBeforeTest("Test Provision device", CoapDeviceType.DEFAULT, TransportPayloadType.PROTOBUF, null, null, null, null, "testProvisionKey", "testProvisionSecret", DeviceProfileProvisionType.CHECK_PRE_PROVISIONED_DEVICES);
+        CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
+                .deviceName("Test Provision device")
+                .coapDeviceType(CoapDeviceType.DEFAULT)
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .provisionType(DeviceProfileProvisionType.CHECK_PRE_PROVISIONED_DEVICES)
+                .provisionKey("testProvisionKey")
+                .provisionSecret("testProvisionSecret")
+                .build();
+        processBeforeTest(configProperties);
         ProvisionDeviceResponseMsg response = ProvisionDeviceResponseMsg.parseFrom(createCoapClientAndPublish().getPayload());
 
-        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(savedTenant.getTenantId(), savedDevice.getId());
+        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, savedDevice.getId());
 
         Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.getCredentialsType().toString());
         Assert.assertEquals(ProvisionResponseStatus.SUCCESS.name(), response.getStatus().toString());
     }
 
     private void processTestProvisioningWithBadKeyDevice() throws Exception {
-        super.processBeforeTest("Test Provision device", CoapDeviceType.DEFAULT, TransportPayloadType.PROTOBUF, null, null, null, null, "testProvisionKeyOrig", "testProvisionSecret", DeviceProfileProvisionType.CHECK_PRE_PROVISIONED_DEVICES);
+        CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
+                .deviceName("Test Provision device")
+                .coapDeviceType(CoapDeviceType.DEFAULT)
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .provisionType(DeviceProfileProvisionType.CHECK_PRE_PROVISIONED_DEVICES)
+                .provisionKey("testProvisionKeyOrig")
+                .provisionSecret("testProvisionSecret")
+                .build();
+        processBeforeTest(configProperties);
         ProvisionDeviceResponseMsg response = ProvisionDeviceResponseMsg.parseFrom(createCoapClientAndPublish().getPayload());
         Assert.assertEquals(ProvisionResponseStatus.NOT_FOUND.name(), response.getStatus().toString());
     }

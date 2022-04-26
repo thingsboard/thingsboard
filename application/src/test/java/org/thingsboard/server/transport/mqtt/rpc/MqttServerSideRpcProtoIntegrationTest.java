@@ -16,13 +16,12 @@
 package org.thingsboard.server.transport.mqtt.rpc;
 
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 
 @Slf4j
 @DaoSqlTest
@@ -30,12 +29,13 @@ public class MqttServerSideRpcProtoIntegrationTest extends AbstractMqttServerSid
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest("RPC test device", "RPC test gateway", TransportPayloadType.PROTOBUF, null, null, null, null, null, RPC_REQUEST_PROTO_SCHEMA, null, null, DeviceProfileProvisionType.DISABLED, false, false, false);
-    }
-
-    @After
-    public void afterTest() throws Exception {
-        super.processAfterTest();
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("RPC test device")
+                .gatewayName("RPC test gateway")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .rpcRequestProtoSchema(RPC_REQUEST_PROTO_SCHEMA)
+                .build();
+        processBeforeTest(configProperties);
     }
 
     @Test

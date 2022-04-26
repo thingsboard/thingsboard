@@ -16,13 +16,12 @@
 package org.thingsboard.server.transport.mqtt.attributes.request;
 
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
 import org.junit.Test;
-import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 import org.thingsboard.server.transport.mqtt.attributes.AbstractMqttAttributesIntegrationTest;
 
 import java.util.ArrayList;
@@ -32,48 +31,80 @@ import java.util.List;
 @DaoSqlTest
 public class MqttAttributesRequestBackwardCompatibilityIntegrationTest extends AbstractMqttAttributesIntegrationTest {
 
-    @After
-    public void afterTest() throws Exception {
-        processAfterTest();
-    }
-
     @Test
     public void testRequestAttributesValuesFromTheServerWithEnabledJsonCompatibility() throws Exception {
-        super.processBeforeTest("Test Request attribute values from the server proto", "Gateway Test Request attribute values from the server proto",
-                TransportPayloadType.PROTOBUF, null, null, null, ATTRIBUTES_SCHEMA_STR, null, null, null, null, DeviceProfileProvisionType.DISABLED, true, false, false);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Request attribute values from the server proto")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .attributesProtoSchema(ATTRIBUTES_SCHEMA_STR)
+                .enableCompatibilityWithJsonPayloadFormat(true)
+                .build();
+        processBeforeTest(configProperties);
         processProtoTestRequestAttributesValuesFromTheServer(MqttTopics.DEVICE_ATTRIBUTES_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX);
     }
 
     @Test
     public void testRequestAttributesValuesFromTheServerWithEnabledJsonCompatibilityAndJsonDownlinks() throws Exception {
-        super.processBeforeTest("Test Request attribute values from the server proto", "Gateway Test Request attribute values from the server proto",
-                TransportPayloadType.PROTOBUF, null, null, null, ATTRIBUTES_SCHEMA_STR, null, null, null, null, DeviceProfileProvisionType.DISABLED, true, true, false);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Request attribute values from the server proto")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .attributesProtoSchema(ATTRIBUTES_SCHEMA_STR)
+                .enableCompatibilityWithJsonPayloadFormat(true)
+                .useJsonPayloadFormatForDefaultDownlinkTopics(true)
+                .build();
+        processBeforeTest(configProperties);
         processJsonTestRequestAttributesValuesFromTheServer(MqttTopics.DEVICE_ATTRIBUTES_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX);
     }
 
     @Test
     public void testRequestAttributesValuesFromTheServerOnShortTopicWithEnabledJsonCompatibilityAndJsonDownlinks() throws Exception {
-        super.processBeforeTest("Test Request attribute values from the server proto", "Gateway Test Request attribute values from the server proto",
-                TransportPayloadType.PROTOBUF, null, null, null, ATTRIBUTES_SCHEMA_STR, null, null, null, null, DeviceProfileProvisionType.DISABLED, true, true, false);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Request attribute values from the server proto")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .attributesProtoSchema(ATTRIBUTES_SCHEMA_STR)
+                .enableCompatibilityWithJsonPayloadFormat(true)
+                .useJsonPayloadFormatForDefaultDownlinkTopics(true)
+                .build();
+        processBeforeTest(configProperties);
         processProtoTestRequestAttributesValuesFromTheServer(MqttTopics.DEVICE_ATTRIBUTES_SHORT_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_SHORT_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_SHORT_TOPIC_PREFIX);
     }
 
     @Test
     public void testRequestAttributesValuesFromTheServerOnShortProtoTopicWithEnabledJsonCompatibilityAndJsonDownlinks() throws Exception {
-        super.processBeforeTest("Test Request attribute values from the server proto", "Gateway Test Request attribute values from the server proto",
-                TransportPayloadType.PROTOBUF, null, null, null, ATTRIBUTES_SCHEMA_STR, null, null, null, null, DeviceProfileProvisionType.DISABLED, true, true, false);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Request attribute values from the server proto")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .attributesProtoSchema(ATTRIBUTES_SCHEMA_STR)
+                .enableCompatibilityWithJsonPayloadFormat(true)
+                .useJsonPayloadFormatForDefaultDownlinkTopics(true)
+                .build();
+        processBeforeTest(configProperties);
         processProtoTestRequestAttributesValuesFromTheServer(MqttTopics.DEVICE_ATTRIBUTES_SHORT_PROTO_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_SHORT_PROTO_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_SHORT_PROTO_TOPIC_PREFIX);
     }
 
     @Test
     public void testRequestAttributesValuesFromTheServerGatewayWithEnabledJsonCompatibilityAndJsonDownlinks() throws Exception {
-        super.processBeforeTest("Test Request attribute values from the server proto", "Gateway Test Request attribute values from the server proto", TransportPayloadType.PROTOBUF, null, null, true, true);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Request attribute values from the server proto")
+                .gatewayName("Gateway Test Request attribute values from the server proto")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .enableCompatibilityWithJsonPayloadFormat(true)
+                .useJsonPayloadFormatForDefaultDownlinkTopics(true)
+                .build();
+        processBeforeTest(configProperties);
         processProtoTestGatewayRequestAttributesValuesFromTheServer();
     }
 
     @Test
     public void testRequestAttributesValuesFromTheServerOnShortJsonTopicWithEnabledJsonCompatibilityAndJsonDownlinks() throws Exception {
-        super.processBeforeTest("Test Request attribute values from the server proto", "Gateway Test Request attribute values from the server proto", TransportPayloadType.PROTOBUF, null, null, true, true);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Request attribute values from the server proto")
+                .gatewayName("Gateway Test Request attribute values from the server proto")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .enableCompatibilityWithJsonPayloadFormat(true)
+                .useJsonPayloadFormatForDefaultDownlinkTopics(true)
+                .build();
+        processBeforeTest(configProperties);
         processJsonTestRequestAttributesValuesFromTheServer(MqttTopics.DEVICE_ATTRIBUTES_SHORT_JSON_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_SHORT_JSON_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_SHORT_JSON_TOPIC_PREFIX);
     }
 

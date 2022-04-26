@@ -22,6 +22,7 @@ import org.junit.Test;
 import org.thingsboard.server.common.data.CoapDeviceType;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.transport.coap.CoapTestConfigProperties;
 
 @Slf4j
 @DaoSqlTest
@@ -29,7 +30,12 @@ public class CoapAttributesRequestJsonIntegrationTest extends CoapAttributesRequ
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest("Test Request attribute values from the server json", CoapDeviceType.DEFAULT, TransportPayloadType.JSON);
+        CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
+                .deviceName("Test Request attribute values from the server json")
+                .coapDeviceType(CoapDeviceType.DEFAULT)
+                .transportPayloadType(TransportPayloadType.JSON)
+                .build();
+        processBeforeTest(configProperties);
     }
 
     @After

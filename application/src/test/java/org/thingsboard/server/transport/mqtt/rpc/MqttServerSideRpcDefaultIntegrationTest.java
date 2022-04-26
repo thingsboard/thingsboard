@@ -17,13 +17,13 @@ package org.thingsboard.server.transport.mqtt.rpc;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.security.AccessValidator;
+import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -33,12 +33,11 @@ public class MqttServerSideRpcDefaultIntegrationTest extends AbstractMqttServerS
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest("RPC test device", "RPC test gateway", null, null, null);
-    }
-
-    @After
-    public void afterTest() throws Exception {
-        super.processAfterTest();
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("RPC test device")
+                .gatewayName("RPC test gateway")
+                .build();
+        processBeforeTest(configProperties);
     }
 
     @Test

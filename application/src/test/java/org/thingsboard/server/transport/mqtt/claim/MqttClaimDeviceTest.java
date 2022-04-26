@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.thingsboard.server.common.data.ClaimRequest;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.security.Authority;
@@ -32,6 +33,7 @@ import org.thingsboard.server.dao.device.claim.ClaimResult;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
+import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -48,32 +50,31 @@ public class MqttClaimDeviceTest extends AbstractMqttIntegrationTest {
 
     @Before
     public void beforeTest() throws Exception {
-        super.processBeforeTest("Test Claim device", "Test Claim gateway", null, null, null);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Claim device")
+                .gatewayName("Test Claim gateway")
+                .build();
+        processBeforeTest(configProperties);
         createCustomerAndUser();
     }
 
     protected void createCustomerAndUser() throws Exception {
         Customer customer = new Customer();
-        customer.setTenantId(savedTenant.getId());
+        customer.setTenantId(tenantId);
         customer.setTitle("Test Claiming Customer");
         savedCustomer = doPost("/api/customer", customer, Customer.class);
         assertNotNull(savedCustomer);
-        assertEquals(savedTenant.getId(), savedCustomer.getTenantId());
+        assertEquals(tenantId, savedCustomer.getTenantId());
 
         User user = new User();
         user.setAuthority(Authority.CUSTOMER_USER);
-        user.setTenantId(savedTenant.getId());
+        user.setTenantId(tenantId);
         user.setCustomerId(savedCustomer.getId());
         user.setEmail("customer@thingsboard.org");
 
         customerAdmin = createUser(user, CUSTOMER_USER_PASSWORD);
         assertNotNull(customerAdmin);
         assertEquals(customerAdmin.getCustomerId(), savedCustomer.getId());
-    }
-
-    @After
-    public void afterTest() throws Exception {
-        super.processAfterTest();
     }
 
     @Test

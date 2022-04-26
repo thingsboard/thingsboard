@@ -17,12 +17,12 @@ package org.thingsboard.server.transport.mqtt.rpc;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 
 @Slf4j
 @DaoSqlTest
@@ -30,12 +30,12 @@ public class MqttServerSideRpcJsonIntegrationTest extends AbstractMqttServerSide
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest("RPC test device", "RPC test gateway", TransportPayloadType.JSON, null, null);
-    }
-
-    @After
-    public void afterTest() throws Exception {
-        super.processAfterTest();
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("RPC test device")
+                .gatewayName("RPC test gateway")
+                .transportPayloadType(TransportPayloadType.JSON)
+                .build();
+        processBeforeTest(configProperties);
     }
 
     @Test

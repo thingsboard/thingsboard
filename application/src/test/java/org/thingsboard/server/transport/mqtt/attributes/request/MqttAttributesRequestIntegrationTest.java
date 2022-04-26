@@ -16,16 +16,12 @@
 package org.thingsboard.server.transport.mqtt.attributes.request;
 
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 import org.thingsboard.server.transport.mqtt.attributes.AbstractMqttAttributesIntegrationTest;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 @Slf4j
 @DaoSqlTest
@@ -33,12 +29,11 @@ public class MqttAttributesRequestIntegrationTest extends AbstractMqttAttributes
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest("Test Request attribute values from the server", "Gateway Test Request attribute values from the server", null, null, null);
-    }
-
-    @After
-    public void afterTest() throws Exception {
-        processAfterTest();
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Request attribute values from the server")
+                .gatewayName("Gateway Test Request attribute values from the server")
+                .build();
+        processBeforeTest(configProperties);
     }
 
     @Test
