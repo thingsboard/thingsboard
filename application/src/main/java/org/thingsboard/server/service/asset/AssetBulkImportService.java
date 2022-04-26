@@ -61,7 +61,7 @@ public class AssetBulkImportService extends AbstractBulkImportService<Asset> {
     }
 
     @Override
-    protected Asset saveEntity(Asset entity, Map<BulkImportColumnType, String> fields) {
+    protected Asset saveEntity(SecurityUser user, Asset entity, Map<BulkImportColumnType, String> fields) {
         return assetService.saveAsset(entity);
     }
 
