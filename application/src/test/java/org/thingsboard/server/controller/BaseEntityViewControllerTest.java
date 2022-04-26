@@ -124,7 +124,8 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
     @Test
     public void testSaveEntityView() throws Exception {
-        EntityView savedView = getNewSavedEntityView("Test entity view");
+        String name = "Test entity view";
+        EntityView savedView = getNewSavedEntityView(name);
 
         Assert.assertNotNull(savedView);
         Assert.assertNotNull(savedView.getId());
@@ -132,14 +133,20 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         assertEquals(tenantId, savedView.getTenantId());
         Assert.assertNotNull(savedView.getCustomerId());
         assertEquals(NULL_UUID, savedView.getCustomerId().getId());
-        assertEquals(savedView.getName(), savedView.getName());
+        assertEquals(name, savedView.getName());
 
-        savedView.setName("New test entity view");
-        doPost("/api/entityView", savedView, EntityView.class);
         EntityView foundEntityView = doGet("/api/entityView/" + savedView.getId().getId().toString(), EntityView.class);
 
-        assertEquals(foundEntityView.getName(), savedView.getName());
-        assertEquals(foundEntityView.getKeys(), telemetry);
+        assertEquals(savedView, foundEntityView);
+
+        savedView.setName("New test entity view");
+
+        doPost("/api/entityView", savedView, EntityView.class);
+        foundEntityView = doGet("/api/entityView/" + savedView.getId().getId().toString(), EntityView.class);
+
+        assertEquals(savedView, foundEntityView);
+
+        doGet("/api/tenant/entityViews?entityViewName=" + name, EntityView.class, status().isNotFound());
     }
 
     @Test

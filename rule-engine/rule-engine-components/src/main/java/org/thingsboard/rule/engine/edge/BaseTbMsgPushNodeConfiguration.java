@@ -13,19 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao;
+package org.thingsboard.rule.engine.edge;
 
-import org.junit.extensions.cpsuite.ClasspathSuite;
-import org.junit.extensions.cpsuite.ClasspathSuite.ClassnameFilters;
-import org.junit.runner.RunWith;
+import lombok.Data;
+import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.server.common.data.DataConstants;
 
-@RunWith(ClasspathSuite.class)
-@ClassnameFilters({
-        "org.thingsboard.server.dao.service.attributes.sql.*SqlTest",
-        "org.thingsboard.server.dao.service.event.sql.*SqlTest",
-        "org.thingsboard.server.dao.service.sql.*SqlTest",
-        "org.thingsboard.server.dao.service.timeseries.sql.*SqlTest",
-        "org.thingsboard.server.dao.service.install.sql.*SqlTest"
-})
-public class SqlDaoServiceTestSuite {
+@Data
+public class BaseTbMsgPushNodeConfiguration implements NodeConfiguration<BaseTbMsgPushNodeConfiguration> {
+
+    private String scope;
+
+    @Override
+    public BaseTbMsgPushNodeConfiguration defaultConfiguration() {
+        BaseTbMsgPushNodeConfiguration configuration = new BaseTbMsgPushNodeConfiguration();
+        configuration.setScope(DataConstants.SERVER_SCOPE);
+        return configuration;
+    }
 }

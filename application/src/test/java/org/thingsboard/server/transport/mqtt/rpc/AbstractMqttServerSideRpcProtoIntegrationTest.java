@@ -28,7 +28,7 @@ public abstract class AbstractMqttServerSideRpcProtoIntegrationTest extends Abst
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest("RPC test device", "RPC test gateway", TransportPayloadType.PROTOBUF, null, null, null, null, null, RPC_REQUEST_PROTO_SCHEMA, null, null, DeviceProfileProvisionType.DISABLED, false, false);
+        processBeforeTest("RPC test device", "RPC test gateway", TransportPayloadType.PROTOBUF, null, null, null, null, null, RPC_REQUEST_PROTO_SCHEMA, null, null, DeviceProfileProvisionType.DISABLED, false, false, false);
     }
 
     @After
