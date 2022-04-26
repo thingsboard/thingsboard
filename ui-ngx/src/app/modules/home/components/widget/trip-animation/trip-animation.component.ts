@@ -48,7 +48,6 @@ import {
 import { FormattedData, JsonSettingsSchema, WidgetConfig } from '@shared/models/widget.models';
 import moment from 'moment';
 import {
-  deepClone,
   formattedDataArrayFromDatasourceData, formattedDataFormDatasourceData,
   isDefined,
   isUndefined, mergeFormattedData,
