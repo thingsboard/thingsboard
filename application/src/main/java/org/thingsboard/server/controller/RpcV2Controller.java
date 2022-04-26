@@ -45,6 +45,7 @@ import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.rpc.DefaultAbstractRpcService;
 import org.thingsboard.server.service.rpc.RemoveRpcActorMsg;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.telemetry.exception.ToErrorResponseEntity;
@@ -74,7 +75,7 @@ import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CU
 @TbCoreComponent
 @RequestMapping(TbUrlConstants.RPC_V2_URL_PREFIX)
 @Slf4j
-public class RpcV2Controller extends AbstractRpcController {
+public class RpcV2Controller extends DefaultAbstractRpcService {
 
     private static final String RPC_REQUEST_DESCRIPTION = "Sends the one-way remote-procedure call (RPC) request to device. " +
             "The RPC call is A JSON that contains the method name ('method'), parameters ('params') and multiple optional fields. " +

@@ -19,7 +19,7 @@ public class ControllerConstants {
 
     protected static final String NEW_LINE = "\n\n";
     protected static final String UUID_WIKI_LINK = "[time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address)). ";
-    protected static final int DEFAULT_PAGE_SIZE = 1000;
+    public static final int DEFAULT_PAGE_SIZE = 1000;
     protected static final String ENTITY_TYPE = "entityType";
     protected static final String CUSTOMER_ID = "customerId";
     protected static final String TENANT_ID = "tenantId";
@@ -27,6 +27,8 @@ public class ControllerConstants {
     protected static final String EDGE_ID = "edgeId";
     protected static final String RPC_ID = "rpcId";
     protected static final String ENTITY_ID = "entityId";
+    public static final String ASSET_ID = "assetId";
+
     protected static final String PAGE_DATA_PARAMETERS = "You can specify parameters to filter the results. " +
             "The result is wrapped with PageData object that allows you to iterate over result set using pagination. " +
             "See the 'Model' tab of the Response Class for more details. ";
@@ -182,7 +184,7 @@ public class ControllerConstants {
     protected static final String IS_BOOTSTRAP_SERVER_PARAM_DESCRIPTION = "A Boolean value representing the Server SecurityInfo for future Bootstrap client mode settings. Values: 'true' for Bootstrap Server; 'false' for Lwm2m Server. ";
 
     protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_DESCRIPTION =
-                    "{\n" +
+            "{\n" +
                     "  \"device\": {\n" +
                     "    \"name\": \"LwRpk00000000\",\n" +
                     "    \"type\": \"lwm2mProfileRpk\"\n" +
@@ -1443,7 +1445,7 @@ public class ControllerConstants {
     protected static final String ENTITY_ATTRIBUTE_SCOPES = " List of possible attribute scopes depends on the entity type: " +
             "\n\n * SERVER_SCOPE - supported for all entity types;" +
             "\n * CLIENT_SCOPE - supported for devices;" +
-            "\n * SHARED_SCOPE - supported for devices. "+ "\n\n";
+            "\n * SHARED_SCOPE - supported for devices. " + "\n\n";
 
     protected static final String ATTRIBUTE_DATA_EXAMPLE = "[\n" +
             "  {\"key\": \"stringAttributeKey\", \"value\": \"value\", \"lastUpdateTs\": 1609459200000},\n" +
@@ -1523,5 +1525,5 @@ public class ControllerConstants {
             "\n\n JSON array with timestamps: \n\n" +
             MARKDOWN_CODE_BLOCK_START +
             "[{\"ts\":1634712287000,\"values\":{\"temperature\":26, \"humidity\":87}}, {\"ts\":1634712588000,\"values\":{\"temperature\":25, \"humidity\":88}}]" +
-            MARKDOWN_CODE_BLOCK_END ;
+            MARKDOWN_CODE_BLOCK_END;
 }

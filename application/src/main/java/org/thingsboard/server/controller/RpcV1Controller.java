@@ -31,6 +31,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.rpc.DefaultAbstractRpcService;
 
 import java.util.UUID;
 
@@ -41,7 +42,7 @@ import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CU
 @TbCoreComponent
 @RequestMapping(TbUrlConstants.RPC_V1_URL_PREFIX)
 @Slf4j
-public class RpcV1Controller extends AbstractRpcController {
+public class RpcV1Controller extends DefaultAbstractRpcService {
 
     @ApiOperation(value = "Send one-way RPC request (handleOneWayDeviceRPCRequest)", notes = "Deprecated. See 'Rpc V 2 Controller' instead." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
