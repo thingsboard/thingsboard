@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy;
+package org.thingsboard.server.service.entitiy.device;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -22,6 +23,8 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.dao.device.claim.ClaimResult;
+import org.thingsboard.server.dao.device.claim.ReclaimResult;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface TbDeviceService {
@@ -30,7 +33,7 @@ public interface TbDeviceService {
 
     Device saveDeviceWithCredentials(SecurityUser user, TenantId tenantId, Device device, DeviceCredentials deviceCredentials) throws ThingsboardException;
 
-    void deleteDevice(SecurityUser user, TenantId tenantId, DeviceId deviceId) throws ThingsboardException;
+    ListenableFuture<Void> deleteDevice(SecurityUser user, TenantId tenantId, DeviceId deviceId) throws ThingsboardException;
 
     Device assignDeviceToCustomer(SecurityUser user, TenantId tenantId, DeviceId deviceId, CustomerId customerId) throws ThingsboardException;
 
@@ -41,6 +44,10 @@ public interface TbDeviceService {
     DeviceCredentials getDeviceCredentialsByDeviceId(SecurityUser user, TenantId tenantId, DeviceId deviceId) throws ThingsboardException;
 
     DeviceCredentials updateDeviceCredentials(SecurityUser user, TenantId tenantId, DeviceCredentials deviceCredentials) throws ThingsboardException;
+
+    ListenableFuture<ClaimResult> claimDevice(TenantId tenantId, Device device, CustomerId customerId, String secretKey, SecurityUser user) throws ThingsboardException;
+
+    ListenableFuture<ReclaimResult> reclaimDevice(TenantId tenantId, Device device, SecurityUser user) throws ThingsboardException;
 
     Device assignDeviceToTenant(SecurityUser user, TenantId tenantId, TenantId newTenantId, DeviceId deviceId) throws ThingsboardException;
 
