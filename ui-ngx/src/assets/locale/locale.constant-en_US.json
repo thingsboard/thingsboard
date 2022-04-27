@@ -3391,6 +3391,9 @@
             "sort-settings": "Sort settings",
             "nodes-sort-function": "Nodes sort function"
         },
+        "edge": {
+            "display-default-title": "Display default title"
+        },
         "gauge": {
             "default-color": "Default color",
             "radial-gauge-settings": "Radial gauge settings",

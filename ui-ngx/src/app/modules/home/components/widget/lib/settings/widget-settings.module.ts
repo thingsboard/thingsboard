@@ -144,6 +144,9 @@ import {
 import {
   DateRangeNavigatorWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/date/date-range-navigator-widget-settings.component';
+import {
+  EdgeQuickOverviewWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/cards/edge-quick-overview-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -197,7 +200,8 @@ import {
     KnobControlWidgetSettingsComponent,
     RpcTerminalWidgetSettingsComponent,
     RpcShellWidgetSettingsComponent,
-    DateRangeNavigatorWidgetSettingsComponent
+    DateRangeNavigatorWidgetSettingsComponent,
+    EdgeQuickOverviewWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -255,7 +259,8 @@ import {
     KnobControlWidgetSettingsComponent,
     RpcTerminalWidgetSettingsComponent,
     RpcShellWidgetSettingsComponent,
-    DateRangeNavigatorWidgetSettingsComponent
+    DateRangeNavigatorWidgetSettingsComponent,
+    EdgeQuickOverviewWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -299,5 +304,6 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-knob-control-widget-settings': KnobControlWidgetSettingsComponent,
   'tb-rpc-terminal-widget-settings': RpcTerminalWidgetSettingsComponent,
   'tb-rpc-shell-widget-settings': RpcShellWidgetSettingsComponent,
-  'tb-date-range-navigator-widget-settings': DateRangeNavigatorWidgetSettingsComponent
+  'tb-date-range-navigator-widget-settings': DateRangeNavigatorWidgetSettingsComponent,
+  'tb-edge-quick-overview-widget-settings': EdgeQuickOverviewWidgetSettingsComponent
 };
