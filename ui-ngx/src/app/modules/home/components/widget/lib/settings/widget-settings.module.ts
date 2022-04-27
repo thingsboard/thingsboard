@@ -147,6 +147,15 @@ import {
 import {
   EdgeQuickOverviewWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/cards/edge-quick-overview-widget-settings.component';
+import {
+  GatewayConfigWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/gateway/gateway-config-widget-settings.component';
+import {
+  GatewayConfigSingleDeviceWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/gateway/gateway-config-single-device-widget-settings.component';
+import {
+  GatewayEventsWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/gateway/gateway-events-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -201,7 +210,10 @@ import {
     RpcTerminalWidgetSettingsComponent,
     RpcShellWidgetSettingsComponent,
     DateRangeNavigatorWidgetSettingsComponent,
-    EdgeQuickOverviewWidgetSettingsComponent
+    EdgeQuickOverviewWidgetSettingsComponent,
+    GatewayConfigWidgetSettingsComponent,
+    GatewayConfigSingleDeviceWidgetSettingsComponent,
+    GatewayEventsWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -260,7 +272,10 @@ import {
     RpcTerminalWidgetSettingsComponent,
     RpcShellWidgetSettingsComponent,
     DateRangeNavigatorWidgetSettingsComponent,
-    EdgeQuickOverviewWidgetSettingsComponent
+    EdgeQuickOverviewWidgetSettingsComponent,
+    GatewayConfigWidgetSettingsComponent,
+    GatewayConfigSingleDeviceWidgetSettingsComponent,
+    GatewayEventsWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -305,5 +320,8 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-rpc-terminal-widget-settings': RpcTerminalWidgetSettingsComponent,
   'tb-rpc-shell-widget-settings': RpcShellWidgetSettingsComponent,
   'tb-date-range-navigator-widget-settings': DateRangeNavigatorWidgetSettingsComponent,
-  'tb-edge-quick-overview-widget-settings': EdgeQuickOverviewWidgetSettingsComponent
+  'tb-edge-quick-overview-widget-settings': EdgeQuickOverviewWidgetSettingsComponent,
+  'tb-gateway-config-widget-settings': GatewayConfigWidgetSettingsComponent,
+  'tb-gateway-config-single-device-widget-settings': GatewayConfigSingleDeviceWidgetSettingsComponent,
+  'tb-gateway-events-widget-settings': GatewayEventsWidgetSettingsComponent
 };

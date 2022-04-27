@@ -3394,6 +3394,20 @@
         "edge": {
             "display-default-title": "Display default title"
         },
+        "gateway": {
+            "general-settings": "General settings",
+            "widget-title": "Widget title",
+            "default-archive-file-name": "Default archive file name",
+            "device-type-for-new-gateway": "Device type for new gateway",
+            "messages-settings": "Messages settings",
+            "save-config-success-message": "Text message about successfully saved gateway configuration",
+            "device-name-exists-message": "Text message when device with entered name is already exists",
+            "gateway-title": "Gateway form",
+            "read-only": "Read only",
+            "events-title": "Gateway events form title",
+            "events-filter": "Events filter",
+            "event-key-contains": "Event key contains..."
+        },
         "gauge": {
             "default-color": "Default color",
             "radial-gauge-settings": "Radial gauge settings",
