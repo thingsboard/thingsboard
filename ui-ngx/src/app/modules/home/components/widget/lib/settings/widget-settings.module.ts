@@ -141,6 +141,9 @@ import {
 import {
   RpcShellWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/control/rpc-shell-widget-settings.component';
+import {
+  DateRangeNavigatorWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/date/date-range-navigator-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -193,7 +196,8 @@ import {
     LedIndicatorWidgetSettingsComponent,
     KnobControlWidgetSettingsComponent,
     RpcTerminalWidgetSettingsComponent,
-    RpcShellWidgetSettingsComponent
+    RpcShellWidgetSettingsComponent,
+    DateRangeNavigatorWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -250,7 +254,8 @@ import {
     LedIndicatorWidgetSettingsComponent,
     KnobControlWidgetSettingsComponent,
     RpcTerminalWidgetSettingsComponent,
-    RpcShellWidgetSettingsComponent
+    RpcShellWidgetSettingsComponent,
+    DateRangeNavigatorWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -293,5 +298,6 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-led-indicator-widget-settings': LedIndicatorWidgetSettingsComponent,
   'tb-knob-control-widget-settings': KnobControlWidgetSettingsComponent,
   'tb-rpc-terminal-widget-settings': RpcTerminalWidgetSettingsComponent,
-  'tb-rpc-shell-widget-settings': RpcShellWidgetSettingsComponent
+  'tb-rpc-shell-widget-settings': RpcShellWidgetSettingsComponent,
+  'tb-date-range-navigator-widget-settings': DateRangeNavigatorWidgetSettingsComponent
 };
