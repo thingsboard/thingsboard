@@ -67,6 +67,8 @@ import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHO
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
 import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
+import static org.thingsboard.server.utils.HolderControllerService.getCurrentUser;
+import static org.thingsboard.server.utils.HolderControllerService.getTenantId;
 
 @RestController
 @TbCoreComponent
@@ -111,7 +113,7 @@ public class AssetController {
     @RequestMapping(value = "/asset", method = RequestMethod.POST)
     @ResponseBody
     public Asset saveAsset(@ApiParam(value = "A JSON value representing the asset.") @RequestBody Asset asset) throws ThingsboardException {
-        return defaultAssetService.saveAsset(asset);
+        return defaultAssetService.saveAsset(asset, getCurrentUser());
     }
 
     @ApiOperation(value = "Delete asset (deleteAsset)",
@@ -120,7 +122,7 @@ public class AssetController {
     @RequestMapping(value = "/asset/{assetId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteAsset(@ApiParam(value = ASSET_ID_PARAM_DESCRIPTION) @PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
-        defaultAssetService.deleteAsset(strAssetId);
+        defaultAssetService.deleteAsset(strAssetId, getCurrentUser());
     }
 
     @ApiOperation(value = "Assign asset to customer (assignAssetToCustomer)",

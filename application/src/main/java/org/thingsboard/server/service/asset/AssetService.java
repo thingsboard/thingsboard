@@ -15,14 +15,19 @@
  */
 package org.thingsboard.server.service.asset;
 
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.asset.AssetSearchQuery;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.service.importing.BulkImportRequest;
 import org.thingsboard.server.service.importing.BulkImportResult;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.List;
 
@@ -32,11 +37,13 @@ public interface AssetService {
 
     AssetInfo getAssetInfoById(String strAssetId) throws ThingsboardException;
 
-    Asset saveAsset(Asset asset) throws ThingsboardException;
+    Asset saveAsset(Asset asset, SecurityUser currentUser) throws ThingsboardException;
 
-    BulkImportResult<Asset> processAssetsBulkImport(BulkImportRequest request) throws Exception;
+    Asset saveAsset(Asset asset, TenantId tenantId) throws ThingsboardException;
 
-    void deleteAsset(String strAssetId) throws ThingsboardException;
+    void deleteAsset(String strAssetId, SecurityUser user) throws ThingsboardException;
+
+    Asset deleteAsset(AssetId assetId, TenantId tenantId) throws ThingsboardException;
 
     Asset assignAssetToCustomer(String strCustomerId, String strAssetId) throws ThingsboardException;
 
@@ -70,4 +77,6 @@ public interface AssetService {
 
     PageData<Asset> getEdgeAssets(String strEdgeId, int pageSize, int page, String type, String textSearch,
                                   String sortProperty, String sortOrder, Long startTime, Long endTime) throws ThingsboardException;
+
+    BulkImportResult<Asset> processAssetsBulkImport(BulkImportRequest request) throws Exception;
 }

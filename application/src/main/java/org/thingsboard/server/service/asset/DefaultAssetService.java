@@ -67,8 +67,7 @@ public class DefaultAssetService extends BaseService implements AssetService {
     public Asset getAssetById(String strAssetId) throws ThingsboardException {
         checkParameter(ASSET_ID, strAssetId);
         try {
-            AssetId assetId = new AssetId(toUUID(strAssetId));
-            return checkAssetId(assetId, Operation.READ);
+            return checkAssetId(new AssetId(toUUID(strAssetId)), Operation.READ);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -78,28 +77,17 @@ public class DefaultAssetService extends BaseService implements AssetService {
     public AssetInfo getAssetInfoById(String strAssetId) throws ThingsboardException {
         checkParameter(ASSET_ID, strAssetId);
         try {
-            AssetId assetId = new AssetId(toUUID(strAssetId));
-            return checkAssetInfoId(assetId, Operation.READ);
+            return checkAssetInfoId(new AssetId(toUUID(strAssetId)), Operation.READ);
         } catch (Exception e) {
             throw handleException(e);
         }
     }
 
     @Override
-    public Asset saveAsset(Asset asset) throws ThingsboardException {
+    public Asset saveAsset(Asset asset, SecurityUser currentUser) throws ThingsboardException {
         try {
-            if (TB_SERVICE_QUEUE.equals(asset.getType())) {
-                throw new ThingsboardException("Unable to save asset with type " + TB_SERVICE_QUEUE, ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-            }
-
-            asset.setTenantId(getCurrentUser().getTenantId());
-
-            checkEntity(asset.getId(), asset, Resource.ASSET);
-
-            Asset savedAsset = checkNotNull(assetService.saveAsset(asset));
-
-            onAssetCreatedOrUpdated(savedAsset, asset.getId() != null, getCurrentUser());
-
+            Asset savedAsset = saveAsset(asset, currentUser.getTenantId());
+            onAssetCreatedOrUpdated(savedAsset, asset.getId() != null, currentUser);
             return savedAsset;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.ASSET), asset,
@@ -110,21 +98,35 @@ public class DefaultAssetService extends BaseService implements AssetService {
     }
 
     @Override
-    public void deleteAsset(String strAssetId) throws ThingsboardException {
+    public Asset saveAsset(Asset asset, TenantId tenantId) throws ThingsboardException {
+        try {
+            if (TB_SERVICE_QUEUE.equals(asset.getType())) {
+                throw new ThingsboardException("Unable to save asset with type " + TB_SERVICE_QUEUE, ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+            }
+
+            asset.setTenantId(tenantId);
+
+            checkEntity(asset.getId(), asset, Resource.ASSET);
+
+            return checkNotNull(assetService.saveAsset(asset));
+        } catch (Exception e) {
+            logEntityAction(emptyId(EntityType.ASSET), asset,
+                    null, asset.getId() == null ? ActionType.ADDED : ActionType.UPDATED, e);
+            throw handleException(e);
+        }
+
+    }
+
+    @Override
+    public void deleteAsset(String strAssetId, SecurityUser currentUser) throws ThingsboardException {
         checkParameter(ASSET_ID, strAssetId);
         try {
             AssetId assetId = new AssetId(toUUID(strAssetId));
-            Asset asset = checkAssetId(assetId, Operation.DELETE);
-
-            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(getTenantId(), assetId);
-
-            assetService.deleteAsset(getTenantId(), assetId);
-
+            Asset asset = deleteAsset(new AssetId(toUUID(strAssetId)), currentUser.getTenantId());
             logEntityAction(assetId, asset,
                     asset.getCustomerId(),
                     ActionType.DELETED, null, strAssetId);
 
-            sendDeleteNotificationMsg(getTenantId(), assetId, relatedEdgeIds);
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.ASSET),
                     null,
@@ -135,8 +137,24 @@ public class DefaultAssetService extends BaseService implements AssetService {
     }
 
     @Override
+    public Asset deleteAsset(AssetId assetId, TenantId tenantId) throws ThingsboardException {
+        try {
+            Asset asset = checkAssetId(assetId, Operation.DELETE);
+            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(getTenantId(), assetId);
+            assetService.deleteAsset(tenantId, assetId);
+            sendDeleteNotificationMsg(tenantId, assetId, relatedEdgeIds);
+            return asset;
+        } catch (Exception e) {
+            logEntityAction(emptyId(EntityType.ASSET),
+                    null,
+                    null,
+                    ActionType.DELETED, e, assetId.getId().toString());
+            throw handleException(e);
+        }
+    }
+
+    @Override
     public Asset assignAssetToCustomer(String strCustomerId, String strAssetId) throws ThingsboardException {
-        checkParameter("customerId", strCustomerId);
         checkParameter(ASSET_ID, strAssetId);
         try {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
