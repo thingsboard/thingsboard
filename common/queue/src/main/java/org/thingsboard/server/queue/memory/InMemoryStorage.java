@@ -15,59 +15,18 @@
  */
 package org.thingsboard.server.queue.memory;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 import org.thingsboard.server.queue.TbQueueMsg;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
 
-@Component
-@Slf4j
-public final class InMemoryStorage {
-    private final ConcurrentHashMap<String, BlockingQueue<TbQueueMsg>> storage = new ConcurrentHashMap<>();
+public interface InMemoryStorage {
 
-    public void printStats() {
-        storage.forEach((topic, queue) -> {
-            if (queue.size() > 0) {
-                log.debug("[{}] Queue Size [{}]", topic, queue.size());
-            }
-        });
-    }
+    void printStats();
 
-    public int getLagTotal() {
-        return storage.values().stream().map(BlockingQueue::size).reduce(0, Integer::sum);
-    }
+    int getLagTotal();
 
-    public boolean put(String topic, TbQueueMsg msg) {
-        return storage.computeIfAbsent(topic, (t) -> new LinkedBlockingQueue<>()).add(msg);
-    }
+    boolean put(String topic, TbQueueMsg msg);
 
-    public <T extends TbQueueMsg> List<T> get(String topic) throws InterruptedException {
-        if (storage.containsKey(topic)) {
-            List<T> entities;
-            @SuppressWarnings("unchecked")
-            T first = (T) storage.get(topic).poll();
-            if (first != null) {
-                entities = new ArrayList<>();
-                entities.add(first);
-                List<TbQueueMsg> otherList = new ArrayList<>();
-                storage.get(topic).drainTo(otherList, 999);
-                for (TbQueueMsg other : otherList) {
-                    @SuppressWarnings("unchecked")
-                    T entity = (T) other;
-                    entities.add(entity);
-                }
-            } else {
-                entities = Collections.emptyList();
-            }
-            return entities;
-        }
-        return Collections.emptyList();
-    }
+    <T extends TbQueueMsg> List<T> get(String topic) throws InterruptedException;
 
 }
