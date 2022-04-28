@@ -13,17 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.sync.vcs.data;
+package org.thingsboard.server.service.sync.vc.data;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class EntityVersion {
-    private String id;
-    private String name;
-    private String authorName;
+public class EntityVersionSaveSettings {
+    private boolean saveRelations;
 }

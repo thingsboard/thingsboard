@@ -13,13 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.utils.git.data;
+package org.thingsboard.server.service.sync.vc.data;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ExportableEntity;
 
 @Data
-public class Commit {
-    private final String id;
-    private final String message;
-    private final String authorName;
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class EntityVersionLoadResult {
+    private ExportableEntity<?> newEntityVersion;
+    private ExportableEntity<?> previousEntityVersion;
+    private EntityType entityType;
 }

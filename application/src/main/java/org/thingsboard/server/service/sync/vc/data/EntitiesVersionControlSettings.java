@@ -13,20 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.sync.vcs.data;
+package org.thingsboard.server.service.sync.vc.data;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
-public class GitSettings {
-    private String repositoryUri;
+public class EntitiesVersionControlSettings {
     private String repositoryDirectory;
+    private String repositoryUri;
     private String username;
     private String password;
+
+    private int fetchPeriod;
+
+    private Map<UUID, List<String>> tenantsAllowedBranches;
 }

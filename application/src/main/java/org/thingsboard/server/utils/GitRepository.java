@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.utils.git;
+package org.thingsboard.server.utils;
 
 import com.google.common.collect.Streams;
+import lombok.Data;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.Git;
@@ -32,19 +33,21 @@ import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
-import org.thingsboard.server.utils.git.data.Commit;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class Repository {
+public class GitRepository {
 
     private final Git git;
     private final CredentialsProvider credentialsProvider;
@@ -52,13 +55,13 @@ public class Repository {
     @Getter
     private final String directory;
 
-    private Repository(Git git, CredentialsProvider credentialsProvider, String directory) {
+    private GitRepository(Git git, CredentialsProvider credentialsProvider, String directory) {
         this.git = git;
         this.credentialsProvider = credentialsProvider;
         this.directory = directory;
     }
 
-    public static Repository clone(String uri, String directory,
+    public static GitRepository clone(String uri, String directory,
                                    String username, String password) throws GitAPIException {
         CredentialsProvider credentialsProvider = newCredentialsProvider(username, password);
         Git git = Git.cloneRepository()
@@ -67,18 +70,32 @@ public class Repository {
                 .setNoCheckout(true)
                 .setCredentialsProvider(credentialsProvider)
                 .call();
-        return new Repository(git, credentialsProvider, directory);
+        return new GitRepository(git, credentialsProvider, directory);
     }
 
-    public static Repository open(String directory, String username, String password) throws IOException {
+    public static GitRepository open(String directory, String username, String password) throws IOException {
         Git git = Git.open(new java.io.File(directory));
-        return new Repository(git, newCredentialsProvider(username, password), directory);
+        return new GitRepository(git, newCredentialsProvider(username, password), directory);
     }
 
 
     public void fetch() throws GitAPIException {
         execute(git.fetch()
                 .setRemoveDeletedRefs(true));
+    }
+
+    public void checkout(String branch) throws GitAPIException {
+        execute(git.checkout()
+                .setName(branch));
+    }
+
+    public void merge(String branch) throws IOException, GitAPIException {
+        ObjectId branchId = resolve("origin/" + branch);
+        if (branchId == null) {
+            throw new IllegalArgumentException("Branch not found");
+        }
+        execute(git.merge()
+                .include(branchId));
     }
 
 
@@ -92,12 +109,12 @@ public class Repository {
     }
 
 
-    public List<Commit> listCommits(String branchName, int limit) throws IOException, GitAPIException {
-        return listCommits(branchName, null, limit);
+    public List<Commit> listCommits(String branch, int limit) throws IOException, GitAPIException {
+        return listCommits(branch, null, limit);
     }
 
-    public List<Commit> listCommits(String branchName, String path, int limit) throws IOException, GitAPIException {
-        ObjectId branchId = resolve("origin/" + branchName);
+    public List<Commit> listCommits(String branch, String path, int limit) throws IOException, GitAPIException {
+        ObjectId branchId = resolve("origin/" + branch);
         if (branchId == null) {
             throw new IllegalArgumentException("Branch not found");
         }
@@ -150,20 +167,6 @@ public class Repository {
     }
 
 
-    public void checkout(String branchName) throws GitAPIException {
-        execute(git.checkout()
-                .setName(branchName));
-    }
-
-    public void merge(String branchName) throws IOException, GitAPIException {
-        ObjectId branchId = resolve("origin/" + branchName);
-        if (branchId == null) {
-            throw new IllegalArgumentException("Branch not found");
-        }
-        execute(git.merge()
-                .include(branchId));
-    }
-
     public void createAndCheckoutOrphanBranch(String name) throws GitAPIException {
         execute(git.checkout()
                 .setOrphan(true)
@@ -177,15 +180,11 @@ public class Repository {
         execute(git.clean());
     }
 
-    public void clean() throws GitAPIException {
-        execute(git.clean().setCleanDirectories(true));
-    }
 
-    public Commit commit(String message, String filePattern, String author) throws GitAPIException {
-        execute(git.add().addFilepattern(filePattern));
+    public Commit commit(String message, String filesPattern) throws GitAPIException {
+        execute(git.add().addFilepattern(filesPattern));
         RevCommit revCommit = execute(git.commit()
-                .setMessage(message)
-                .setAuthor(author, author));
+                .setMessage(message)); // TODO [viacheslav]: set configurable author for commit
         return toCommit(revCommit);
     }
 
@@ -239,18 +238,22 @@ public class Repository {
     }
 
     private <C extends GitCommand<T>, T> T execute(C command) throws GitAPIException {
-        if (command instanceof TransportCommand) {
+        if (command instanceof TransportCommand && credentialsProvider != null) {
             ((TransportCommand<?, ?>) command).setCredentialsProvider(credentialsProvider);
-//        SshSessionFactory sshSessionFactory = SshSessionFactory.getInstance();
-//        transportCommand.setTransportConfigCallback(transport -> {
-//            ((SshTransport) transport).setSshSessionFactory(sshSessionFactory);
-//        });
         }
         return command.call();
     }
 
     private static CredentialsProvider newCredentialsProvider(String username, String password) {
         return new UsernamePasswordCredentialsProvider(username, password);
+    }
+
+
+    @Data
+    public static class Commit {
+        private final String id;
+        private final String message;
+        private final String authorName;
     }
 
 }

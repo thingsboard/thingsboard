@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.utils.git.data;
+package org.thingsboard.server.service.sync.vc.data;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.id.EntityId;
 
 @Data
-public class Branch {
-    private final String shortName;
+public class VersionedEntityInfo {
+    private EntityId externalId;
+    private String entityName;
+    // etc..
 }

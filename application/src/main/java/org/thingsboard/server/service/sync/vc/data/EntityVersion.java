@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.sync.vcs.data;
+package org.thingsboard.server.service.sync.vc.data;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
-
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import lombok.NoArgsConstructor;
 
 @Data
-public class EntitiesVersionControlSettings {
-    private Map<UUID, Set<String>> allowedBranches;
-    private GitSettings gitSettings;
+@AllArgsConstructor
+@NoArgsConstructor
+public class EntityVersion {
+    private String id;
+    private String name;
 }

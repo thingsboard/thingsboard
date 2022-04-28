@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.utils.git.data;
+package org.thingsboard.server.service.sync.vc.data;
 
 import lombok.Data;
 
 @Data
-public class Diff {
-    private final String type;
-    private final String oldPath;
-    private final String newPath;
+public class EntityVersionLoadSettings {
+    private boolean loadRelations;
+    private boolean findExistingEntityByName;
 }
