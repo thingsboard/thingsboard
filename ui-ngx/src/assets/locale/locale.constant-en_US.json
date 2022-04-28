@@ -252,6 +252,22 @@
           "platform-ios": "iOS",
           "all-platforms": "All platforms",
           "allowed-platforms": "Allowed platforms"
+        },
+        "2fa":  {
+          "2fa": "Two-factor authentication",
+          "use-system-two-factor-auth-settings": "Use system two factor auth settings",
+          "total-allowed-time-for-verification": "Total allowed time for verification",
+          "total-allowed-time-for-verification-required": "Total allowed time is required.",
+          "total-allowed-time-for-verification-pattern": "Total allowed time must be a positive integer.",
+          "max-verification-failures-before-user-lockout": "Max verification failures before user lockout",
+          "max-verification-failures-before-user-lockout-required": "Max verification failures is required.",
+          "max-verification-failures-before-user-lockout-pattern": "Max verification failures must be a positive integer.",
+          "verification-code-check-rate-limit": "Verification code check rate limit",
+          "verification-code-check-rate-limit-hint": "If empty field, the limit not be apply",
+          "verification-code-check-rate-limit-pattern": "Verification code check limit has invalid format",
+          "verification-code-send-rate-limit": "Verification code send rate limit",
+          "verification-code-send-rate-limit-hint": "If empty field, the limit not be apply",
+          "verification-code-send-rate-limit-pattern": "Verification code send limit has invalid format"
         }
       },
     "alarm": {
