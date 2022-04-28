@@ -60,8 +60,7 @@ import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
-import org.thingsboard.server.controller.AbstractWebsocketTest;
-import org.thingsboard.server.controller.TbTestWebSocketClient;
+import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.telemetry.cmd.TelemetryPluginCmdsWrapper;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
@@ -104,7 +103,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfil
 })
 @Slf4j
 @DaoSqlTest
-public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
+public abstract class AbstractLwM2MIntegrationTest extends AbstractControllerTest {
 
     @SpyBean
     DefaultLwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandlerTest;
@@ -176,7 +175,6 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
     protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesRegistrationBsSuccess = new HashSet<>(Arrays.asList(ON_INIT, ON_BOOTSTRAP_STARTED, ON_BOOTSTRAP_SUCCESS, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS));
     protected DeviceProfile deviceProfile;
     protected ScheduledExecutorService executor;
-    protected TbTestWebSocketClient wsClient;
     protected LwM2MTestClient lwM2MTestClient;
     private String[] resources;
 
@@ -187,17 +185,16 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
 
     @After
     public void after() {
-        wsClient.close();
         clientDestroy();
         executor.shutdownNow();
     }
 
     @AfterClass
-    public static void afterClass () {
+    public static void afterClass() {
         awaitServersDestroy();
     }
 
-    private void init () throws Exception {
+    private void init() throws Exception {
         executor = Executors.newScheduledThreadPool(10, ThingsBoardThreadFactory.forName("test-lwm2m-scheduled"));
         loginTenantAdmin();
         for (String resourceName : this.resources) {
@@ -212,7 +209,6 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
             });
             Assert.assertNotNull(lwModel);
         }
-        wsClient = buildAndConnectWebSocketClient();
     }
 
     public void basicTestConnectionObserveTelemetry(Security security,
@@ -234,12 +230,12 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         TelemetryPluginCmdsWrapper wrapper = new TelemetryPluginCmdsWrapper();
         wrapper.setEntityDataCmds(Collections.singletonList(cmd));
 
-        wsClient.send(mapper.writeValueAsString(wrapper));
-        wsClient.waitForReply();
+        getWsClient().send(mapper.writeValueAsString(wrapper));
+        getWsClient().waitForReply();
 
-        wsClient.registerWaitForUpdate();
+        getWsClient().registerWaitForUpdate();
         createNewClient(security, coapConfig, false, endpoint, false, null);
-        String msg = wsClient.waitForUpdate();
+        String msg = getWsClient().waitForUpdate();
 
         EntityDataUpdate update = mapper.readValue(msg, EntityDataUpdate.class);
         Assert.assertEquals(1, update.getCmdId());
@@ -371,7 +367,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         return credentials;
     }
 
-    private static void awaitServersDestroy()  {
+    private static void awaitServersDestroy() {
         await("One of servers ports number is not free")
                 .atMost(3000, TimeUnit.MILLISECONDS)
                 .until(() -> isServerPortsAvailable() == null);
@@ -390,7 +386,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         return null;
     }
 
-    private static void awaitClientDestroy(LeshanClient leshanClient)  {
+    private static void awaitClientDestroy(LeshanClient leshanClient) {
         await("Destroy LeshanClient: delete All is registered Servers.")
                 .atMost(2000, TimeUnit.MILLISECONDS)
                 .until(() -> leshanClient.getRegisteredServers().size() == 0);
