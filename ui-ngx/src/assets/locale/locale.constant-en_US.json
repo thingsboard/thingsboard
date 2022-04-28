@@ -3615,6 +3615,16 @@
             "no-labels": "No labels configured",
             "add-label": "Add label"
         },
+        "navigation": {
+            "title": "Title",
+            "navigation-path": "Navigation path",
+            "filter-type": "Filter type",
+            "filter-type-all": "All items",
+            "filter-type-include": "Include items",
+            "filter-type-exclude": "Exclude items",
+            "items": "Items",
+            "enter-urls-to-filter": "Enter urls to filter..."
+        },
         "persistent-table": {
             "rpc-id": "RPC ID",
             "message-type": "Message type",

@@ -20,6 +20,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { DialogService } from '@core/services/dialog.service';
+import { coerceBooleanProperty } from '@angular/cdk/coercion';
 
 @Component({
   selector: 'tb-material-icon-select',
@@ -37,6 +38,27 @@ export class MaterialIconSelectComponent extends PageComponent implements OnInit
 
   @Input()
   disabled: boolean;
+
+  private iconClearButtonValue: boolean;
+  get iconClearButton(): boolean {
+    return this.iconClearButtonValue;
+  }
+  @Input()
+  set iconClearButton(value: boolean) {
+    const newVal = coerceBooleanProperty(value);
+    if (this.iconClearButtonValue !== newVal) {
+      this.iconClearButtonValue = newVal;
+    }
+  }
+
+  private requiredValue: boolean;
+  get required(): boolean {
+    return this.requiredValue;
+  }
+  @Input()
+  set required(value: boolean) {
+    this.requiredValue = coerceBooleanProperty(value);
+  }
 
   private modelValue: string;
 
@@ -103,5 +125,9 @@ export class MaterialIconSelectComponent extends PageComponent implements OnInit
         }
       );
     }
+  }
+
+  clear() {
+    this.materialIconFormGroup.get('icon').patchValue(null, {emitEvent: true});
   }
 }

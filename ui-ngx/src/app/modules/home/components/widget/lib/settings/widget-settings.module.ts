@@ -163,6 +163,12 @@ import {
 import {
   GpioPanelWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/gpio/gpio-panel-widget-settings.component';
+import {
+  NavigationCardWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/navigation/navigation-card-widget-settings.component';
+import {
+  NavigationCardsWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/navigation/navigation-cards-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -223,7 +229,9 @@ import {
     GatewayEventsWidgetSettingsComponent,
     GpioItemComponent,
     GpioControlWidgetSettingsComponent,
-    GpioPanelWidgetSettingsComponent
+    GpioPanelWidgetSettingsComponent,
+    NavigationCardWidgetSettingsComponent,
+    NavigationCardsWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -288,7 +296,9 @@ import {
     GatewayEventsWidgetSettingsComponent,
     GpioItemComponent,
     GpioControlWidgetSettingsComponent,
-    GpioPanelWidgetSettingsComponent
+    GpioPanelWidgetSettingsComponent,
+    NavigationCardWidgetSettingsComponent,
+    NavigationCardsWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -338,5 +348,7 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-gateway-config-single-device-widget-settings': GatewayConfigSingleDeviceWidgetSettingsComponent,
   'tb-gateway-events-widget-settings': GatewayEventsWidgetSettingsComponent,
   'tb-gpio-control-widget-settings': GpioControlWidgetSettingsComponent,
-  'tb-gpio-panel-widget-settings': GpioPanelWidgetSettingsComponent
+  'tb-gpio-panel-widget-settings': GpioPanelWidgetSettingsComponent,
+  'tb-navigation-card-widget-settings': NavigationCardWidgetSettingsComponent,
+  'tb-navigation-cards-widget-settings': NavigationCardsWidgetSettingsComponent
 };
