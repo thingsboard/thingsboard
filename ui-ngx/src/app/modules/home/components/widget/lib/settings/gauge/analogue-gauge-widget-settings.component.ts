@@ -19,7 +19,7 @@ import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { GaugeHighlight } from '@home/components/widget/lib/settings/gauge/gauge-highlight.component';
-import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 
 export class AnalogueGaugeWidgetSettingsComponent extends WidgetSettingsComponent {
 
@@ -102,12 +102,6 @@ export class AnalogueGaugeWidgetSettingsComponent extends WidgetSettingsComponen
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
-    const highlightsControls: Array<AbstractControl> = [];
-    if (settings.highlights) {
-      settings.highlights.forEach((highlight) => {
-        highlightsControls.push(this.fb.control(highlight, [Validators.required]));
-      });
-    }
     this.analogueGaugeWidgetSettingsForm = this.fb.group({
 
       // Radial gauge settings
@@ -155,7 +149,7 @@ export class AnalogueGaugeWidgetSettingsComponent extends WidgetSettingsComponen
 
       // Highlights settings
       highlightsWidth: [settings.highlightsWidth, [Validators.min(0)]],
-      highlights: this.fb.array(highlightsControls),
+      highlights: this.prepareHighlightsFormArray(settings.highlights),
 
       // Animation settings
       animation: [settings.animation, []],
@@ -214,13 +208,26 @@ export class AnalogueGaugeWidgetSettingsComponent extends WidgetSettingsComponen
     this.analogueGaugeWidgetSettingsForm.get('animationRule').updateValueAndValidity({emitEvent});
   }
 
+  protected doUpdateSettings(settingsForm: FormGroup, settings: WidgetSettings) {
+    settingsForm.setControl('highlights', this.prepareHighlightsFormArray(settings.highlights), {emitEvent: false});
+  }
+
+  private prepareHighlightsFormArray(highlights: GaugeHighlight[] | undefined): FormArray {
+    const highlightsControls: Array<AbstractControl> = [];
+    if (highlights) {
+      highlights.forEach((highlight) => {
+        highlightsControls.push(this.fb.control(highlight, [Validators.required]));
+      });
+    }
+    return this.fb.array(highlightsControls);
+  }
+
   highlightsFormArray(): FormArray {
     return this.analogueGaugeWidgetSettingsForm.get('highlights') as FormArray;
   }
 
-  public trackByHighlight(index: number, highlightControl: AbstractControl): any {
-    const highlight: GaugeHighlight = highlightControl.value;
-    return highlight;
+  public trackByHighlightControl(index: number, highlightControl: AbstractControl): any {
+    return highlightControl;
   }
 
   public removeHighlight(index: number) {

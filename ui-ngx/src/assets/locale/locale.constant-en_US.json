@@ -3524,6 +3524,26 @@
             "no-tick-values": "No tick values configured",
             "add-tick-value": "Add tick value"
         },
+        "gpio": {
+            "pin": "Pin",
+            "label": "Label",
+            "row": "Row",
+            "column": "Column",
+            "color": "Color",
+            "panel-settings": "Panel settings",
+            "background-color": "Background color",
+            "gpio-switches": "GPIO switches",
+            "no-gpio-switches": "No GPIO switches configured",
+            "add-gpio-switch": "Add GPIO switch",
+            "gpio-status-request": "GPIO status request",
+            "method-name": "Method name",
+            "method-body": "Method body",
+            "gpio-status-change-request": "GPIO status change request",
+            "parse-gpio-status-function": "Parse gpio status function",
+            "gpio-leds": "GPIO leds",
+            "no-gpio-leds": "No GPIO leds configured",
+            "add-gpio-led": "Add GPIO led"
+        },
         "html-card": {
             "html": "HTML",
             "css": "CSS"

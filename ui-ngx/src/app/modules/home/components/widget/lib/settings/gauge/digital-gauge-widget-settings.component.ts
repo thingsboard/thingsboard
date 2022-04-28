@@ -21,7 +21,6 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { GaugeType } from '@home/components/widget/lib/canvas-digital-gauge';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
-import { GaugeHighlight } from '@home/components/widget/lib/settings/gauge/gauge-highlight.component';
 import {
   FixedColorLevel,
   fixedColorLevelValidator
@@ -108,26 +107,6 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
-
-    const levelColorsControls: Array<AbstractControl> = [];
-    const fixedLevelColorsControls: Array<AbstractControl> = [];
-    const ticksValueControls: Array<AbstractControl> = [];
-    if (settings.levelColors) {
-      settings.levelColors.forEach((levelColor) => {
-        levelColorsControls.push(this.fb.control(levelColor, [Validators.required]));
-      });
-    }
-    if (settings.fixedLevelColors) {
-      settings.fixedLevelColors.forEach((fixedLevelColor) => {
-        fixedLevelColorsControls.push(this.fb.control(fixedLevelColor, [fixedColorLevelValidator]));
-      });
-    }
-    if (settings.ticksValue) {
-      settings.ticksValue.forEach((tickValue) => {
-        ticksValueControls.push(this.fb.control(tickValue, [Validators.required]));
-      });
-    }
-
     this.digitalGaugeWidgetSettingsForm = this.fb.group({
 
       // Common gauge settings
@@ -146,8 +125,8 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
       // Gauge bar colors settings
       gaugeColor: [settings.gaugeColor, []],
       useFixedLevelColor: [settings.useFixedLevelColor, []],
-      levelColors: this.fb.array(levelColorsControls),
-      fixedLevelColors: this.fb.array(fixedLevelColorsControls),
+      levelColors: this.prepareLevelColorFormArray(settings.levelColors),
+      fixedLevelColors: this.prepareFixedLevelColorFormArray(settings.fixedLevelColors),
 
       // Title settings
       showTitle: [settings.showTitle, []],
@@ -173,7 +152,7 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
       showTicks: [settings.showTicks, []],
       tickWidth: [settings.tickWidth, [Validators.min(0)]],
       colorTicks: [settings.colorTicks, []],
-      ticksValue: this.fb.array(ticksValueControls),
+      ticksValue: this.prepareTicksValueFormArray(settings.ticksValue),
 
       // Animation settings
       animation: [settings.animation, []],
@@ -275,12 +254,48 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
     this.digitalGaugeWidgetSettingsForm.get('animationRule').updateValueAndValidity({emitEvent});
   }
 
+  protected doUpdateSettings(settingsForm: FormGroup, settings: WidgetSettings) {
+    settingsForm.setControl('levelColors', this.prepareLevelColorFormArray(settings.levelColors), {emitEvent: false});
+    settingsForm.setControl('fixedLevelColors', this.prepareFixedLevelColorFormArray(settings.fixedLevelColors), {emitEvent: false});
+    settingsForm.setControl('ticksValue', this.prepareTicksValueFormArray(settings.ticksValue), {emitEvent: false});
+  }
+
+  private prepareLevelColorFormArray(levelColors: string[] | undefined): FormArray {
+    const levelColorsControls: Array<AbstractControl> = [];
+    if (levelColors) {
+      levelColors.forEach((levelColor) => {
+        levelColorsControls.push(this.fb.control(levelColor, [Validators.required]));
+      });
+    }
+    return this.fb.array(levelColorsControls);
+  }
+
+  private prepareFixedLevelColorFormArray(fixedLevelColors: FixedColorLevel[] | undefined): FormArray {
+    const fixedLevelColorsControls: Array<AbstractControl> = [];
+    if (fixedLevelColors) {
+      fixedLevelColors.forEach((fixedLevelColor) => {
+        fixedLevelColorsControls.push(this.fb.control(fixedLevelColor, [fixedColorLevelValidator]));
+      });
+    }
+    return this.fb.array(fixedLevelColorsControls);
+  }
+
+  private prepareTicksValueFormArray(ticksValue: ValueSourceProperty[] | undefined): FormArray {
+    const ticksValueControls: Array<AbstractControl> = [];
+    if (ticksValue) {
+      ticksValue.forEach((tickValue) => {
+        ticksValueControls.push(this.fb.control(tickValue, [Validators.required]));
+      });
+    }
+    return this.fb.array(ticksValueControls);
+  }
+
   levelColorsFormArray(): FormArray {
     return this.digitalGaugeWidgetSettingsForm.get('levelColors') as FormArray;
   }
 
   public trackByLevelColor(index: number, levelColorControl: AbstractControl): any {
-    return index;
+    return levelColorControl;
   }
 
   public removeLevelColor(index: number) {

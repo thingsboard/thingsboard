@@ -42,6 +42,7 @@ import { JsFuncComponent } from '@shared/components/js-func.component';
 import { JsonFormComponentData } from '@shared/components/json-form/json-form-component.models';
 import { WidgetService } from '@core/http/widget.service';
 import { Dashboard } from '@shared/models/dashboard.models';
+import { IAliasController } from '@core/api/widget-api.models';
 
 @Component({
   selector: 'tb-data-key-config',
@@ -72,6 +73,9 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
 
   @Input()
   dashboard: Dashboard;
+
+  @Input()
+  aliasController: IAliasController;
 
   @Input()
   widget: Widget;

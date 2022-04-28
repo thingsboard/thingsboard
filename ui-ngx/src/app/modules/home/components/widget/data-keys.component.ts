@@ -422,6 +422,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
           dataKeySettingsSchema: this.datakeySettingsSchema,
           dataKeySettingsDirective: this.dataKeySettingsDirective,
           dashboard: this.dashboard,
+          aliasController: this.aliasController,
           widget: this.widget,
           entityAliasId: this.entityAliasId,
           showPostProcessing: this.widgetType !== widgetType.alarm,

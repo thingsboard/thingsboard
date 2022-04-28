@@ -25,7 +25,7 @@
     <div fxLayout="column">
       <div class="tb-control-list tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
            (cdkDropListDropped)="labelDrop($event)">
-        <div cdkDrag class="tb-draggable" *ngFor="let labelControl of labelsFormArray().controls; trackBy: trackByLabel;
+        <div cdkDrag class="tb-draggable" *ngFor="let labelControl of labelsFormArray().controls; trackBy: trackByLabelControl;
                  let $index = index; last as isLast;"
              fxLayout="column" [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
           <tb-label-widget-label [formControl]="labelControl"

@@ -106,6 +106,15 @@ export class JsonContentComponent implements OnInit, ControlValueAccessor, Valid
     this.validateOnChangeValue = coerceBooleanProperty(value);
   }
 
+  private requiredValue: boolean;
+  get required(): boolean {
+    return this.requiredValue;
+  }
+  @Input()
+  set required(value: boolean) {
+    this.requiredValue = coerceBooleanProperty(value);
+  }
+
   fullscreen = false;
 
   contentBody: string;

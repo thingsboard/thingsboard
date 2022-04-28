@@ -204,7 +204,7 @@
       <div fxLayout="column">
         <div class="tb-control-list tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
              (cdkDropListDropped)="highlightDrop($event)">
-          <div cdkDrag class="tb-draggable" *ngFor="let highlightControl of highlightsFormArray().controls; trackBy: trackByHighlight;
+          <div cdkDrag class="tb-draggable" *ngFor="let highlightControl of highlightsFormArray().controls; trackBy: trackByHighlightControl;
                  let $index = index; last as isLast;"
                fxLayout="column" [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
             <tb-gauge-highlight [formControl]="highlightControl"

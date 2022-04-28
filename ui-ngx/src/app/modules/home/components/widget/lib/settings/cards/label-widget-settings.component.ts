@@ -48,25 +48,32 @@ export class LabelWidgetSettingsComponent extends WidgetSettingsComponent {
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
+    this.labelWidgetSettingsForm = this.fb.group({
+      backgroundImageUrl: [settings.backgroundImageUrl, [Validators.required]],
+      labels: this.prepareLabelsFormArray(settings.labels)
+    });
+  }
+
+  protected doUpdateSettings(settingsForm: FormGroup, settings: WidgetSettings) {
+    settingsForm.setControl('labels', this.prepareLabelsFormArray(settings.labels), {emitEvent: false});
+  }
+
+  private prepareLabelsFormArray(labels: LabelWidgetLabel[] | undefined): FormArray {
     const labelsControls: Array<AbstractControl> = [];
-    if (settings.labels) {
-      settings.labels.forEach((label) => {
+    if (labels) {
+      labels.forEach((label) => {
         labelsControls.push(this.fb.control(label, [Validators.required]));
       });
     }
-    this.labelWidgetSettingsForm = this.fb.group({
-      backgroundImageUrl: [settings.backgroundImageUrl, [Validators.required]],
-      labels: this.fb.array(labelsControls)
-    });
+    return this.fb.array(labelsControls);
   }
 
   labelsFormArray(): FormArray {
     return this.labelWidgetSettingsForm.get('labels') as FormArray;
   }
 
-  public trackByLabel(index: number, labelControl: AbstractControl): any {
-    const label: LabelWidgetLabel = labelControl.value;
-    return label;
+  public trackByLabelControl(index: number, labelControl: AbstractControl): any {
+    return labelControl;
   }
 
   public removeLabel(index: number) {

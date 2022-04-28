@@ -156,6 +156,13 @@ import {
 import {
   GatewayEventsWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/gateway/gateway-events-widget-settings.component';
+import { GpioItemComponent } from '@home/components/widget/lib/settings/gpio/gpio-item.component';
+import {
+  GpioControlWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/gpio/gpio-control-widget-settings.component';
+import {
+  GpioPanelWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/gpio/gpio-panel-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -213,7 +220,10 @@ import {
     EdgeQuickOverviewWidgetSettingsComponent,
     GatewayConfigWidgetSettingsComponent,
     GatewayConfigSingleDeviceWidgetSettingsComponent,
-    GatewayEventsWidgetSettingsComponent
+    GatewayEventsWidgetSettingsComponent,
+    GpioItemComponent,
+    GpioControlWidgetSettingsComponent,
+    GpioPanelWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -275,7 +285,10 @@ import {
     EdgeQuickOverviewWidgetSettingsComponent,
     GatewayConfigWidgetSettingsComponent,
     GatewayConfigSingleDeviceWidgetSettingsComponent,
-    GatewayEventsWidgetSettingsComponent
+    GatewayEventsWidgetSettingsComponent,
+    GpioItemComponent,
+    GpioControlWidgetSettingsComponent,
+    GpioPanelWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -323,5 +336,7 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-edge-quick-overview-widget-settings': EdgeQuickOverviewWidgetSettingsComponent,
   'tb-gateway-config-widget-settings': GatewayConfigWidgetSettingsComponent,
   'tb-gateway-config-single-device-widget-settings': GatewayConfigSingleDeviceWidgetSettingsComponent,
-  'tb-gateway-events-widget-settings': GatewayEventsWidgetSettingsComponent
+  'tb-gateway-events-widget-settings': GatewayEventsWidgetSettingsComponent,
+  'tb-gpio-control-widget-settings': GpioControlWidgetSettingsComponent,
+  'tb-gpio-panel-widget-settings': GpioPanelWidgetSettingsComponent
 };

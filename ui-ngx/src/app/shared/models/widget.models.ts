@@ -699,7 +699,9 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
   }
 
   protected updateSettings(settings: WidgetSettings) {
-    this.settingsForm().reset(this.prepareInputSettings(settings), {emitEvent: false});
+    settings = this.prepareInputSettings(settings);
+    this.settingsForm().reset(settings, {emitEvent: false});
+    this.doUpdateSettings(this.settingsForm(), settings);
     this.updateValidators(false);
   }
 
@@ -717,6 +719,9 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
     } else {
       this.settingsChangedEmitter.emit(null);
     }
+  }
+
+  protected doUpdateSettings(settingsForm: FormGroup, settings: WidgetSettings) {
   }
 
   protected prepareInputSettings(settings: WidgetSettings): WidgetSettings {
