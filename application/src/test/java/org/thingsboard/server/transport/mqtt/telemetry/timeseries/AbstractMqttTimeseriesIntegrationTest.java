@@ -25,13 +25,13 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.internal.wire.MqttWireMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
+import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -56,12 +56,11 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest("Test Post Telemetry device", "Test Post Telemetry gateway", null, null, null);
-    }
-
-    @After
-    public void afterTest() throws Exception {
-        processAfterTest();
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Telemetry device")
+                .gatewayName("Test Post Telemetry gateway")
+                .build();
+        processBeforeTest(configProperties);
     }
 
     @Test

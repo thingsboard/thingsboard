@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.coap.telemetry.timeseries;
+package org.thingsboard.server.transport.coap.telemetry.attributes;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
@@ -21,15 +21,17 @@ import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.CoapDeviceType;
 import org.thingsboard.server.common.data.TransportPayloadType;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.coap.CoapTestConfigProperties;
 
 @Slf4j
-public abstract class AbstractCoapTimeseriesJsonIntegrationTest extends AbstractCoapTimeseriesIntegrationTest {
+@DaoSqlTest
+public class CoapAttributesJsonIntegrationTest extends CoapAttributesIntegrationTest {
 
     @Before
     public void beforeTest() throws Exception {
         CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
-                .deviceName("Test Post Telemetry device json payload")
+                .deviceName("Test Post Attributes device Json")
                 .coapDeviceType(CoapDeviceType.DEFAULT)
                 .transportPayloadType(TransportPayloadType.JSON)
                 .build();
@@ -41,16 +43,8 @@ public abstract class AbstractCoapTimeseriesJsonIntegrationTest extends Abstract
         processAfterTest();
     }
 
-
     @Test
-    public void testPushTelemetry() throws Exception {
-        super.testPushTelemetry();
+    public void testPushAttributes() throws Exception {
+        super.testPushAttributes();
     }
-
-    @Test
-    public void testPushTelemetryWithTs() throws Exception {
-        super.testPushTelemetryWithTs();
-    }
-
-
 }

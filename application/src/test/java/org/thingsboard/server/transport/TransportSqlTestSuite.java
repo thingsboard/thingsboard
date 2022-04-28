@@ -15,21 +15,19 @@
  */
 package org.thingsboard.server.transport;
 
-import org.junit.BeforeClass;
 import org.junit.extensions.cpsuite.ClasspathSuite;
 import org.junit.runner.RunWith;
-import org.thingsboard.server.queue.memory.InMemoryStorage;
 
 @RunWith(ClasspathSuite.class)
 @ClasspathSuite.ClassnameFilters({
-        "org.thingsboard.server.transport.*.rpc.sql.*Test",
+        "org.thingsboard.server.transport.*.rpc.*Test",
         "org.thingsboard.server.transport.*.telemetry.timeseries.sql.*Test",
-        "org.thingsboard.server.transport.*.telemetry.attributes.sql.*Test",
-        "org.thingsboard.server.transport.*.attributes.updates.sql.*Test",
-        "org.thingsboard.server.transport.*.attributes.request.sql.*Test",
-        "org.thingsboard.server.transport.*.claim.sql.*Test",
-        "org.thingsboard.server.transport.*.provision.sql.*Test",
-        "org.thingsboard.server.transport.*.credentials.sql.*Test",
+        "org.thingsboard.server.transport.*.telemetry.attributes.*Test",
+        "org.thingsboard.server.transport.*.attributes.updates.*Test",
+        "org.thingsboard.server.transport.*.attributes.request.*Test",
+        "org.thingsboard.server.transport.*.claim.*Test",
+        "org.thingsboard.server.transport.*.provision.*Test",
+        "org.thingsboard.server.transport.*.credentials.*Test",
         "org.thingsboard.server.transport.lwm2m.*.sql.*Test"
 })
 public class TransportSqlTestSuite {
