@@ -50,9 +50,11 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.service.action.EntityActionService;
+import org.thingsboard.server.service.edge.EdgeNotificationService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 
 import javax.mail.MessagingException;
@@ -102,6 +104,10 @@ public abstract class AbstractTbEntityService {
     protected ClaimDevicesService claimDevicesService;
     @Autowired
     protected TbTenantProfileCache tenantProfileCache;
+    @Autowired
+    protected RuleChainService ruleChainService;
+    @Autowired
+    protected EdgeNotificationService edgeNotificationService;
 
     protected ListenableFuture<Void> removeAlarmsByEntityId(TenantId tenantId, EntityId entityId) {
         ListenableFuture<PageData<AlarmInfo>> alarmsFuture =

@@ -550,8 +550,7 @@ public class AssetController extends BaseController {
     @PostMapping("/asset/bulk_import")
     public BulkImportResult<Asset> processAssetsBulkImport(@RequestBody BulkImportRequest request) throws Exception {
         SecurityUser user = getCurrentUser();
-        return assetBulkImportService.processBulkImport(request, user, importedAssetInfo -> {
-        });
+        return assetBulkImportService.processBulkImport(request, user);
     }
 
 }

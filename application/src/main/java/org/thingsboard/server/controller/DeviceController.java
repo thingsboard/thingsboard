@@ -794,8 +794,7 @@ public class DeviceController extends BaseController {
     public BulkImportResult<Device> processDevicesBulkImport(@RequestBody BulkImportRequest request) throws
             Exception {
         SecurityUser user = getCurrentUser();
-        return deviceBulkImportService.processBulkImport(request, user, importedDeviceInfo -> {
-        });
+        return deviceBulkImportService.processBulkImport(request, user);
     }
 
 }
