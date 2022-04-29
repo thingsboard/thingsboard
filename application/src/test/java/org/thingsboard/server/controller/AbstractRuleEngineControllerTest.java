@@ -57,11 +57,17 @@ public abstract class AbstractRuleEngineControllerTest extends AbstractControlle
     }
 
     protected PageData<Event> getDebugEvents(TenantId tenantId, EntityId entityId, int limit) throws Exception {
+        return getEvents(tenantId, entityId, DataConstants.DEBUG_RULE_NODE, limit);
+    }
+
+    protected PageData<Event> getEvents(TenantId tenantId, EntityId entityId, String eventType, int limit) throws Exception {
         TimePageLink pageLink = new TimePageLink(limit);
         return doGetTypedWithTimePageLink("/api/events/{entityType}/{entityId}/{eventType}?tenantId={tenantId}&",
                 new TypeReference<PageData<Event>>() {
-                }, pageLink, entityId.getEntityType(), entityId.getId(), DataConstants.DEBUG_RULE_NODE, tenantId.getId());
+                }, pageLink, entityId.getEntityType(), entityId.getId(), eventType, tenantId.getId());
     }
+
+
 
     protected JsonNode getMetadata(Event outEvent) {
         String metaDataStr = outEvent.getBody().get("metadata").asText();

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,7 +30,6 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.stats.DefaultCounter;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.cache.CacheExecutorService;
@@ -88,9 +87,9 @@ public class CachedAttributesService implements AttributesService {
 
     /**
      * Will return:
-     *   - for the <b>local</b> cache type (cache.type="coffeine"): directExecutor (run callback immediately in the same thread)
-     *   - for the <b>remote</b> cache: dedicated thread pool for the cache IO calls to unblock any caller thread
-     * */
+     * - for the <b>local</b> cache type (cache.type="coffeine"): directExecutor (run callback immediately in the same thread)
+     * - for the <b>remote</b> cache: dedicated thread pool for the cache IO calls to unblock any caller thread
+     */
     Executor getExecutor(String cacheType, CacheExecutorService cacheExecutorService) {
         if (StringUtils.isEmpty(cacheType) || LOCAL_CACHE_TYPE.equals(cacheType)) {
             log.info("Going to use directExecutor for the local cache type {}", cacheType);
@@ -116,7 +115,7 @@ public class CachedAttributesService implements AttributesService {
             ListenableFuture<Optional<AttributeKvEntry>> result = attributesDao.find(tenantId, entityId, scope, attributeKey);
             return Futures.transform(result, foundAttrKvEntry -> {
                 // TODO: think if it's a good idea to store 'empty' attributes
-                cacheWrapper.put(attributeCacheKey, foundAttrKvEntry.orElse(null));
+                cacheWrapper.putIfAbsent(attributeCacheKey, foundAttrKvEntry.orElse(null));
                 return foundAttrKvEntry;
             }, cacheExecutor);
         }
@@ -162,12 +161,12 @@ public class CachedAttributesService implements AttributesService {
     private List<AttributeKvEntry> mergeDbAndCacheAttributes(EntityId entityId, String scope, List<AttributeKvEntry> cachedAttributes, Set<String> notFoundAttributeKeys, List<AttributeKvEntry> foundInDbAttributes) {
         for (AttributeKvEntry foundInDbAttribute : foundInDbAttributes) {
             AttributeCacheKey attributeCacheKey = new AttributeCacheKey(scope, entityId, foundInDbAttribute.getKey());
-            cacheWrapper.put(attributeCacheKey, foundInDbAttribute);
+            cacheWrapper.putIfAbsent(attributeCacheKey, foundInDbAttribute);
             notFoundAttributeKeys.remove(foundInDbAttribute.getKey());
         }
-        for (String key : notFoundAttributeKeys){
-            cacheWrapper.put(new AttributeCacheKey(scope, entityId, key), null);
-        }
+//        for (String key : notFoundAttributeKeys) {
+//            cacheWrapper.putIfAbsent(new AttributeCacheKey(scope, entityId, key), null);
+//        }
         List<AttributeKvEntry> mergedAttributes = new ArrayList<>(cachedAttributes);
         mergedAttributes.addAll(foundInDbAttributes);
         return mergedAttributes;
@@ -190,34 +189,30 @@ public class CachedAttributesService implements AttributesService {
     }
 
     @Override
-    public ListenableFuture<List<Void>> save(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
+    public ListenableFuture<List<String>> save(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
         validate(entityId, scope);
         attributes.forEach(AttributeUtils::validate);
 
-        List<ListenableFuture<Void>> saveFutures = attributes.stream().map(attribute -> attributesDao.save(tenantId, entityId, scope, attribute)).collect(Collectors.toList());
-        ListenableFuture<List<Void>> future = Futures.allAsList(saveFutures);
+        List<ListenableFuture<String>> futures = new ArrayList<>(attributes.size());
+        for (var attribute : attributes) {
+            ListenableFuture<String> future = attributesDao.save(tenantId, entityId, scope, attribute);
+            futures.add(Futures.transform(future, key -> {
+                cacheWrapper.evict(new AttributeCacheKey(scope, entityId, key));
+                return key;
+            }, cacheExecutor));
+        }
 
-        // TODO: can do if (attributesCache.get() != null) attributesCache.put() instead, but will be more twice more requests to cache
-        List<String> attributeKeys = attributes.stream().map(KvEntry::getKey).collect(Collectors.toList());
-        future.addListener(() -> evictAttributesFromCache(tenantId, entityId, scope, attributeKeys), cacheExecutor);
-        return future;
+        return Futures.allAsList(futures);
     }
 
     @Override
-    public ListenableFuture<List<Void>> removeAll(TenantId tenantId, EntityId entityId, String scope, List<String> attributeKeys) {
+    public ListenableFuture<List<String>> removeAll(TenantId tenantId, EntityId entityId, String scope, List<String> attributeKeys) {
         validate(entityId, scope);
-        ListenableFuture<List<Void>> future = attributesDao.removeAll(tenantId, entityId, scope, attributeKeys);
-        future.addListener(() -> evictAttributesFromCache(tenantId, entityId, scope, attributeKeys), cacheExecutor);
-        return future;
+        List<ListenableFuture<String>> futures = attributesDao.removeAll(tenantId, entityId, scope, attributeKeys);
+        return Futures.allAsList(futures.stream().map(future -> Futures.transform(future, key -> {
+            cacheWrapper.evict(new AttributeCacheKey(scope, entityId, key));
+            return key;
+        }, cacheExecutor)).collect(Collectors.toList()));
     }
 
-    private void evictAttributesFromCache(TenantId tenantId, EntityId entityId, String scope, List<String> attributeKeys) {
-        try {
-            for (String attributeKey : attributeKeys) {
-                cacheWrapper.evict(new AttributeCacheKey(scope, entityId, attributeKey));
-            }
-        } catch (Exception e) {
-            log.error("[{}][{}] Failed to remove values from cache.", tenantId, entityId, e);
-        }
-    }
 }

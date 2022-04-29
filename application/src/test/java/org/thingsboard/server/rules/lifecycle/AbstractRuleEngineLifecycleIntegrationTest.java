@@ -105,17 +105,20 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
         Assert.assertNotNull(ruleChainFinal.getFirstRuleNodeId());
 
         //TODO find out why RULE_NODE update event did not appear all the time
-//        List<Event> rcEvents = Awaitility.await("get debug by rule chain")
-//                .pollInterval(10, MILLISECONDS)
-//                .atMost(TIMEOUT, TimeUnit.SECONDS)
-//                .until(() -> {
-//                            List<Event> debugEvents = getDebugEvents(tenantId, ruleChainFinal.getFirstRuleNodeId(), 1000)
-//                                    .getData().stream().filter(x->true).collect(Collectors.toList());
-//                            log.warn("filtered debug events [{}]", debugEvents.size());
-//                            debugEvents.forEach((e) -> log.warn("event: {}", e));
-//                            return debugEvents;
-//                        },
-//                        x -> x.size() >= 2);
+        List<Event> rcEvents = Awaitility.await("Rule Node started successfully")
+                .pollInterval(10, MILLISECONDS)
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> {
+                            List<Event> debugEvents = getEvents(tenantId, ruleChainFinal.getFirstRuleNodeId(), DataConstants.LC_EVENT, 1000)
+                                    .getData().stream().filter(e-> {
+                                        var body = e.getBody();
+                                        return body.has("event") && body.get("event").asText().equals("STARTED")
+                                                && body.has("success") && body.get("success").asBoolean();
+                                    }).collect(Collectors.toList());
+                            debugEvents.forEach((e) -> log.trace("event: {}", e));
+                            return debugEvents;
+                        },
+                        x -> x.size() == 1);
 
         // Saving the device
         Device device = new Device();
@@ -133,6 +136,7 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
         TbMsg tbMsg = TbMsg.newMsg("CUSTOM", device.getId(), new TbMsgMetaData(), "{}", tbMsgCallback);
         QueueToRuleEngineMsg qMsg = new QueueToRuleEngineMsg(tenantId, tbMsg, null, null);
         // Pushing Message to the system
+        log.warn("before tell tbMsgCallback");
         actorSystem.tell(qMsg);
         log.warn("awaiting tbMsgCallback");
         Mockito.verify(tbMsgCallback, Mockito.timeout(TimeUnit.SECONDS.toMillis(TIMEOUT))).onSuccess();

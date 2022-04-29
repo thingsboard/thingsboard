@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,6 +29,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -48,6 +49,8 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.ConstraintValidator;
 
 import javax.annotation.Nullable;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -86,11 +89,7 @@ public class BaseRelationService implements RelationService {
     @Cacheable(cacheNames = RELATIONS_CACHE, key = "{#from, #to, #relationType, #typeGroup}")
     @Override
     public EntityRelation getRelation(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
-        try {
-            return getRelationAsync(tenantId, from, to, relationType, typeGroup).get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+        return getRelation(tenantId, from, to, relationType, typeGroup);
     }
 
     @Override
@@ -108,6 +107,7 @@ public class BaseRelationService implements RelationService {
             @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.to, #relation.type, #relation.typeGroup, 'TO'}")
     })
     @Override
+    @Transactional
     public boolean saveRelation(TenantId tenantId, EntityRelation relation) {
         log.trace("Executing saveRelation [{}]", relation);
         validate(relation);
@@ -181,6 +181,7 @@ public class BaseRelationService implements RelationService {
     public ListenableFuture<Boolean> deleteRelationAsync(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
         log.trace("Executing deleteRelationAsync [{}][{}][{}][{}]", from, to, relationType, typeGroup);
         validate(from, to, relationType, typeGroup);
+        //TODO: clear cache using transform
         return relationDao.deleteRelationAsync(tenantId, from, to, relationType, typeGroup);
     }
 
@@ -319,11 +320,8 @@ public class BaseRelationService implements RelationService {
     public List<EntityRelation> findByFrom(TenantId tenantId, EntityId from, RelationTypeGroup typeGroup) {
         validate(from);
         validateTypeGroup(typeGroup);
-        try {
-            return relationDao.findAllByFromAsync(tenantId, from, typeGroup).get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+        log.trace("[{}] Find by from: [{}][{}]: ", tenantId, from, typeGroup, new RuntimeException());
+        return relationDao.findAllByFrom(tenantId, from, typeGroup);
     }
 
     @Override
@@ -345,7 +343,7 @@ public class BaseRelationService implements RelationService {
         } else {
             ListenableFuture<List<EntityRelation>> relationsFuture = relationDao.findAllByFromAsync(tenantId, from, typeGroup);
             Futures.addCallback(relationsFuture,
-                    new FutureCallback<List<EntityRelation>>() {
+                    new FutureCallback<>() {
                         @Override
                         public void onSuccess(@Nullable List<EntityRelation> result) {
                             cache.putIfAbsent(fromAndTypeGroup, result);
@@ -401,11 +399,7 @@ public class BaseRelationService implements RelationService {
     public List<EntityRelation> findByTo(TenantId tenantId, EntityId to, RelationTypeGroup typeGroup) {
         validate(to);
         validateTypeGroup(typeGroup);
-        try {
-            return relationDao.findAllByToAsync(tenantId, to, typeGroup).get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+        return relationDao.findAllByTo(tenantId, to, typeGroup);
     }
 
     @Override
