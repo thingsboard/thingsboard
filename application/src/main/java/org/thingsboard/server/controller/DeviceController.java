@@ -38,6 +38,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.common.data.ClaimRequest;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
@@ -45,6 +46,7 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -171,7 +173,7 @@ public class DeviceController extends BaseController {
         } else {
             checkEntity(null, device, Resource.DEVICE);
         }
-        return tbDeviceService.save(getCurrentUser(), getTenantId(), device, oldDevice, accessToken);
+        return tbDeviceService.save(getTenantId(), device, oldDevice, accessToken, getCurrentUser());
     }
 
     @ApiOperation(value = "Create Device (saveDevice) with credentials ",
@@ -189,7 +191,7 @@ public class DeviceController extends BaseController {
         DeviceCredentials credentials = checkNotNull(deviceAndCredentials.getCredentials());
         device.setTenantId(getCurrentUser().getTenantId());
         checkEntity(device.getId(), device, Resource.DEVICE);
-        return tbDeviceService.saveDeviceWithCredentials(getCurrentUser(), getTenantId(), device, credentials);
+        return tbDeviceService.saveDeviceWithCredentials(getTenantId(), device, credentials, getCurrentUser());
     }
 
 
@@ -202,9 +204,9 @@ public class DeviceController extends BaseController {
                              @PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
         checkParameter(DEVICE_ID, strDeviceId);
         DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
-        checkDeviceId(deviceId, Operation.DELETE);
+        Device device = checkDeviceId(deviceId, Operation.DELETE);
         try {
-            tbDeviceService.deleteDevice(getCurrentUser(), getTenantId(), deviceId).get();
+            tbDeviceService.deleteDevice(device, getCurrentUser()).get();
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -222,10 +224,10 @@ public class DeviceController extends BaseController {
         checkParameter("customerId", strCustomerId);
         checkParameter(DEVICE_ID, strDeviceId);
         CustomerId customerId = new CustomerId(toUUID(strCustomerId));
-        checkCustomerId(customerId, Operation.READ);
+        Customer customer = checkCustomerId(customerId, Operation.READ);
         DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
         checkDeviceId(deviceId, Operation.ASSIGN_TO_CUSTOMER);
-        return tbDeviceService.assignDeviceToCustomer(getCurrentUser(), getTenantId(), deviceId, customerId);
+        return tbDeviceService.assignDeviceToCustomer(getTenantId(), deviceId, customer, getCurrentUser());
     }
 
     @ApiOperation(value = "Unassign device from customer (unassignDeviceFromCustomer)",
@@ -243,9 +245,9 @@ public class DeviceController extends BaseController {
                 throw new IncorrectParameterException("Device isn't assigned to any customer!");
             }
 
-            checkCustomerId(device.getCustomerId(), Operation.READ);
+            Customer customer = checkCustomerId(device.getCustomerId(), Operation.READ);
 
-            return tbDeviceService.unassignDeviceFromCustomer(getCurrentUser(), getTenantId(), deviceId);
+            return tbDeviceService.unassignDeviceFromCustomer(device, customer, getCurrentUser());
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -263,7 +265,7 @@ public class DeviceController extends BaseController {
         checkParameter(DEVICE_ID, strDeviceId);
         DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
         checkDeviceId(deviceId, Operation.ASSIGN_TO_CUSTOMER);
-        return tbDeviceService.assignDeviceToPublicCustomer(getCurrentUser(), getTenantId(), deviceId);
+        return tbDeviceService.assignDeviceToPublicCustomer(getTenantId(), deviceId, getCurrentUser());
     }
 
     @ApiOperation(value = "Get Device Credentials (getDeviceCredentialsByDeviceId)",
@@ -275,8 +277,8 @@ public class DeviceController extends BaseController {
                                                             @PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
         checkParameter(DEVICE_ID, strDeviceId);
         DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
-        checkDeviceId(deviceId, Operation.READ_CREDENTIALS);
-        return tbDeviceService.getDeviceCredentialsByDeviceId(getCurrentUser(), getTenantId(), deviceId);
+        Device device = checkDeviceId(deviceId, Operation.READ_CREDENTIALS);
+        return tbDeviceService.getDeviceCredentialsByDeviceId(device, getCurrentUser());
     }
 
     @ApiOperation(value = "Update device credentials (updateDeviceCredentials)", notes = "During device creation, platform generates random 'ACCESS_TOKEN' credentials. " +
@@ -290,8 +292,8 @@ public class DeviceController extends BaseController {
             @ApiParam(value = "A JSON value representing the device credentials.")
             @RequestBody DeviceCredentials deviceCredentials) throws ThingsboardException {
         checkNotNull(deviceCredentials);
-        checkDeviceId(deviceCredentials.getDeviceId(), Operation.WRITE_CREDENTIALS);
-        return tbDeviceService.updateDeviceCredentials(getCurrentUser(), getTenantId(), deviceCredentials);
+        Device device = checkDeviceId(deviceCredentials.getDeviceId(), Operation.WRITE_CREDENTIALS);
+        return tbDeviceService.updateDeviceCredentials(device, deviceCredentials, getCurrentUser());
     }
 
     @ApiOperation(value = "Get Tenant Devices (getTenantDevices)",
@@ -646,14 +648,14 @@ public class DeviceController extends BaseController {
         checkParameter(TENANT_ID, strTenantId);
         checkParameter(DEVICE_ID, strDeviceId);
         DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
-        checkDeviceId(deviceId, Operation.ASSIGN_TO_TENANT);
+        Device device = checkDeviceId(deviceId, Operation.ASSIGN_TO_TENANT);
 
         TenantId newTenantId = TenantId.fromUUID(toUUID(strTenantId));
         Tenant newTenant = tenantService.findTenantById(newTenantId);
         if (newTenant == null) {
             throw new ThingsboardException("Could not find the specified Tenant!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
-        return tbDeviceService.assignDeviceToTenant(getCurrentUser(), getTenantId(), newTenantId, deviceId);
+        return tbDeviceService.assignDeviceToTenant(device, newTenant, getCurrentUser());
     }
 
     @ApiOperation(value = "Assign device to edge (assignDeviceToEdge)",
@@ -673,12 +675,12 @@ public class DeviceController extends BaseController {
         checkParameter(EDGE_ID, strEdgeId);
         checkParameter(DEVICE_ID, strDeviceId);
         EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-        checkEdgeId(edgeId, Operation.READ);
+        Edge edge = checkEdgeId(edgeId, Operation.READ);
 
         DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
         checkDeviceId(deviceId, Operation.READ);
 
-        return tbDeviceService.assignDeviceToEdge(getCurrentUser(), getTenantId(), deviceId, edgeId);
+        return tbDeviceService.assignDeviceToEdge(getTenantId(), deviceId, edge, getCurrentUser());
     }
 
     @ApiOperation(value = "Unassign device from edge (unassignDeviceFromEdge)",
@@ -698,11 +700,11 @@ public class DeviceController extends BaseController {
         checkParameter(EDGE_ID, strEdgeId);
         checkParameter(DEVICE_ID, strDeviceId);
         EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-        checkEdgeId(edgeId, Operation.READ);
+        Edge edge = checkEdgeId(edgeId, Operation.READ);
 
         DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
-        checkDeviceId(deviceId, Operation.READ);
-        return tbDeviceService.unassignDeviceFromEdge(getCurrentUser(), getTenantId(), deviceId, edgeId);
+        Device device = checkDeviceId(deviceId, Operation.READ);
+        return tbDeviceService.unassignDeviceFromEdge(device, edge, getCurrentUser());
     }
 
     @ApiOperation(value = "Get devices assigned to edge (getEdgeDevices)",

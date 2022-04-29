@@ -16,11 +16,13 @@
 package org.thingsboard.server.service.entitiy.device;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.device.claim.ClaimResult;
@@ -29,29 +31,29 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface TbDeviceService {
 
-    Device save(SecurityUser user, TenantId tenantId, Device device, Device oldDevice, String accessToken) throws ThingsboardException;
+    Device save(TenantId tenantId, Device device, Device oldDevice, String accessToken, SecurityUser user) throws ThingsboardException;
 
-    Device saveDeviceWithCredentials(SecurityUser user, TenantId tenantId, Device device, DeviceCredentials deviceCredentials) throws ThingsboardException;
+    Device saveDeviceWithCredentials(TenantId tenantId, Device device, DeviceCredentials deviceCredentials, SecurityUser user) throws ThingsboardException;
 
-    ListenableFuture<Void> deleteDevice(SecurityUser user, TenantId tenantId, DeviceId deviceId) throws ThingsboardException;
+    ListenableFuture<Void> deleteDevice(Device device, SecurityUser user) throws ThingsboardException;
 
-    Device assignDeviceToCustomer(SecurityUser user, TenantId tenantId, DeviceId deviceId, CustomerId customerId) throws ThingsboardException;
+    Device assignDeviceToCustomer(TenantId tenantId, DeviceId deviceId, Customer customer, SecurityUser user) throws ThingsboardException;
 
-    Device unassignDeviceFromCustomer(SecurityUser user, TenantId tenantId, DeviceId deviceId) throws ThingsboardException;
+    Device unassignDeviceFromCustomer(Device device, Customer customer, SecurityUser user) throws ThingsboardException;
 
-    Device assignDeviceToPublicCustomer(SecurityUser user, TenantId tenantId, DeviceId deviceId) throws ThingsboardException;
+    Device assignDeviceToPublicCustomer(TenantId tenantId, DeviceId deviceId, SecurityUser user) throws ThingsboardException;
 
-    DeviceCredentials getDeviceCredentialsByDeviceId(SecurityUser user, TenantId tenantId, DeviceId deviceId) throws ThingsboardException;
+    DeviceCredentials getDeviceCredentialsByDeviceId(Device device, SecurityUser user) throws ThingsboardException;
 
-    DeviceCredentials updateDeviceCredentials(SecurityUser user, TenantId tenantId, DeviceCredentials deviceCredentials) throws ThingsboardException;
+    DeviceCredentials updateDeviceCredentials(Device device, DeviceCredentials deviceCredentials, SecurityUser user) throws ThingsboardException;
 
     ListenableFuture<ClaimResult> claimDevice(TenantId tenantId, Device device, CustomerId customerId, String secretKey, SecurityUser user) throws ThingsboardException;
 
     ListenableFuture<ReclaimResult> reclaimDevice(TenantId tenantId, Device device, SecurityUser user) throws ThingsboardException;
 
-    Device assignDeviceToTenant(SecurityUser user, TenantId tenantId, TenantId newTenantId, DeviceId deviceId) throws ThingsboardException;
+    Device assignDeviceToTenant(Device device, Tenant newTenant, SecurityUser user) throws ThingsboardException;
 
-    Device assignDeviceToEdge(SecurityUser user, TenantId tenantId, DeviceId deviceId, EdgeId edgeId) throws ThingsboardException;
+    Device assignDeviceToEdge(TenantId tenantId, DeviceId deviceId, Edge edge, SecurityUser user) throws ThingsboardException;
 
-    Device unassignDeviceFromEdge(SecurityUser user, TenantId tenantId, DeviceId deviceId, EdgeId edgeId) throws ThingsboardException;
+    Device unassignDeviceFromEdge(Device device, Edge edge, SecurityUser user) throws ThingsboardException;
 }

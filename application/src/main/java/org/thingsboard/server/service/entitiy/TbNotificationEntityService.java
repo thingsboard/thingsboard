@@ -18,8 +18,10 @@ package org.thingsboard.server.service.entitiy;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -28,21 +30,36 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
+import java.util.List;
+
 public interface TbNotificationEntityService {
 
-    <E extends HasName, I extends EntityId> void sendNotification(TenantId tenantId, I entityId, E entity, CustomerId customerId,
-                                                                  ActionType actionType, SecurityUser user, Exception e,
-                                                                  Object... additionalInfo);
+    <E extends HasName, I extends EntityId> void notifyEntity(TenantId tenantId, I entityId, E entity, CustomerId customerId,
+                                                              ActionType actionType, SecurityUser user, Exception e,
+                                                              Object... additionalInfo);
+
+    <E extends HasName, I extends EntityId> void notifyDeleteEntity(TenantId tenantId, I entityId, E entity, CustomerId customerId,
+                                                                    List<EdgeId> relatedEdgeIds, SecurityUser user,
+                                                                    Object... additionalInfo);
+
+    <E extends HasName, I extends EntityId> void notifyAssignOrUnassignEntityToCustomer(TenantId tenantId, I entityId,
+                                                                                        CustomerId customerId, E entity,
+                                                                                        ActionType actionType,
+                                                                                        EdgeEventActionType edgeActionType,
+                                                                                        SecurityUser user, boolean sendToEdge,
+                                                                                        Object... additionalInfo);
+
+    <E extends HasName, I extends EntityId> void notifyAssignOrUnassignEntityToEdge(TenantId tenantId, I entityId,
+                                                                                    CustomerId customerId, EdgeId edgeId,
+                                                                                    E entity, ActionType actionType,
+                                                                                    EdgeEventActionType edgeActionType,
+                                                                                    SecurityUser user, Object... additionalInfo);
 
     void notifyCreateOrUpdateDevice(TenantId tenantId, DeviceId deviceId, CustomerId customerId, Device device,
                                     Device oldDevice, ActionType actionType, SecurityUser user, Object... additionalInfo);
 
     void notifyDeleteDevice(TenantId tenantId, DeviceId deviceId, CustomerId customerId, Device device,
-                            SecurityUser user, Object... additionalInfo);
-
-    void notifyAssignOrUnassignDeviceToCustomer(TenantId tenantId, DeviceId deviceId, CustomerId customerId,
-                                                Device device, ActionType actionType, EdgeEventActionType edgeActionType,
-                                                SecurityUser user, boolean sendToEdge, Object... additionalInfo);
+                            List<EdgeId> relatedEdgeIds, SecurityUser user, Object... additionalInfo);
 
     void notifyUpdateDeviceCredentials(TenantId tenantId, DeviceId deviceId, CustomerId customerId, Device device,
                                        DeviceCredentials deviceCredentials, SecurityUser user);
@@ -50,7 +67,7 @@ public interface TbNotificationEntityService {
     void notifyAssignDeviceToTenant(TenantId tenantId, TenantId newTenantId, DeviceId deviceId, CustomerId customerId,
                                     Device device, Tenant tenant, SecurityUser user, Object... additionalInfo);
 
-    void notifyAssignOrUnassignDeviceToEdge(TenantId tenantId, DeviceId deviceId, CustomerId customerId, EdgeId edgeId,
-                                            Device device, ActionType actionType, EdgeEventActionType edgeActionType,
-                                            SecurityUser user, Object... additionalInfo);
+    void notifyCreateOrUpdateAsset(TenantId tenantId, AssetId assetId, CustomerId customerId, Asset asset,
+                                   ActionType actionType, SecurityUser user, Object... additionalInfo);
+
 }

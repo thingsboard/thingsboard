@@ -41,6 +41,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageDataIterableByTenantIdEntityId;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.alarm.AlarmService;
+import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.ClaimDevicesService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
@@ -49,6 +50,7 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
@@ -89,6 +91,8 @@ public abstract class AbstractTbEntityService {
     @Autowired
     protected DeviceService deviceService;
     @Autowired
+    protected AssetService assetService;
+    @Autowired
     protected DeviceCredentialsService deviceCredentialsService;
     @Autowired
     protected TenantService tenantService;
@@ -96,6 +100,8 @@ public abstract class AbstractTbEntityService {
     protected CustomerService customerService;
     @Autowired
     protected ClaimDevicesService claimDevicesService;
+    @Autowired
+    protected TbTenantProfileCache tenantProfileCache;
 
     protected ListenableFuture<Void> removeAlarmsByEntityId(TenantId tenantId, EntityId entityId) {
         ListenableFuture<PageData<AlarmInfo>> alarmsFuture =

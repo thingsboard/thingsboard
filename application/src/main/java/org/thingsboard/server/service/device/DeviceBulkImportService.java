@@ -121,7 +121,7 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
         }
         entity.setDeviceProfileId(deviceProfile.getId());
 
-        return tbDeviceService.saveDeviceWithCredentials(user, user.getTenantId(), entity, deviceCredentials);
+        return tbDeviceService.saveDeviceWithCredentials(user.getTenantId(), entity, deviceCredentials, user);
     }
 
     @Override
