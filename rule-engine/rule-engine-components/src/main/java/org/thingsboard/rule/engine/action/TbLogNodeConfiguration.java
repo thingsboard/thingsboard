@@ -26,7 +26,7 @@ public class TbLogNodeConfiguration implements NodeConfiguration {
     @Override
     public TbLogNodeConfiguration defaultConfiguration() {
         TbLogNodeConfiguration configuration = new TbLogNodeConfiguration();
-        configuration.setJsScript("return 'Incoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);");
+        configuration.setJsScript("return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);");
         return configuration;
     }
 }

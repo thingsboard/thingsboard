@@ -21,7 +21,7 @@ import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { FormattedData } from '@home/components/widget/lib/maps/map-models';
+import { FormattedData } from '@shared/models/widget.models';
 
 export interface SelectEntityDialogData {
   entities: FormattedData[];
