@@ -148,6 +148,8 @@ import {
 } from '@home/components/tokens';
 import { DashboardStateComponent } from '@home/components/dashboard-page/dashboard-state.component';
 import { EntityDetailsPageComponent } from '@home/components/entity/entity-details-page.component';
+import { TenantProfileQueuesComponent } from '@home/components/profile/queue/tenant-profile-queues.component';
+import { TenantProfileQueueComponent } from '@home/components/profile/queue/tenant-profile-queue.component';
 
 @NgModule({
   declarations:
@@ -267,7 +269,9 @@ import { EntityDetailsPageComponent } from '@home/components/entity/entity-detai
       DashboardStateDialogComponent,
       DashboardImageDialogComponent,
       EmbedDashboardDialogComponent,
-      DisplayWidgetTypesPanelComponent
+      DisplayWidgetTypesPanelComponent,
+      TenantProfileQueuesComponent,
+      TenantProfileQueueComponent
     ],
   imports: [
     CommonModule,
@@ -380,7 +384,9 @@ import { EntityDetailsPageComponent } from '@home/components/entity/entity-detai
     DashboardStateDialogComponent,
     DashboardImageDialogComponent,
     EmbedDashboardDialogComponent,
-    DisplayWidgetTypesPanelComponent
+    DisplayWidgetTypesPanelComponent,
+    TenantProfileQueuesComponent,
+    TenantProfileQueueComponent
   ],
   providers: [
     WidgetComponentService,

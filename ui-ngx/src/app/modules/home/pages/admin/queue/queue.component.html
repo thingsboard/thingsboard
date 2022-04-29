@@ -20,12 +20,12 @@
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
           [fxShow]="!hideDelete() && !isEdit">
-    {{'queue.delete' | translate }}
+    {{ 'queue.delete' | translate }}
   </button>
 </div>
 
 <div class="mat-padding" fxLayout="column">
-  <form [formGroup]="entityForm">
+  <form [formGroup]="entityForm" class="queue-form">
     <fieldset [disabled]="(isLoading$ | async) || !isEdit">
       <mat-form-field class="mat-block">
         <mat-label translate>admin.queue-name</mat-label>
@@ -57,10 +57,6 @@
         </mat-error>
       </mat-form-field>
 
-<!--        <tb-checkbox formControlName="consumerPerPartition" style="display: block; padding-bottom: 16px;">-->
-<!--          {{ 'queue.consumer-per-partition' | translate }}-->
-<!--        </tb-checkbox>-->
-
       <mat-checkbox class="hinted-checkbox" formControlName="consumerPerPartition">
         <div>{{ 'queue.consumer-per-partition' | translate }}</div>
         <div class="tb-hint">{{'queue.consumer-per-partition-hint' | translate}}</div>
@@ -77,115 +73,113 @@
           {{ 'queue.pack-processing-timeout-min-value' | translate }}
         </mat-error>
       </mat-form-field>
-
-      <div class="mat-accordion-container">
         <mat-accordion [multi]="true">
-          <mat-expansion-panel #panel1 hideToggle>
+          <mat-expansion-panel>
             <mat-expansion-panel-header>
-              <mat-panel-title>
-                <mat-label translate>queue.submit-strategy</mat-label>
-                <mat-icon>{{panel1.expanded  ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}</mat-icon>
+              <mat-panel-title translate>
+                queue.submit-strategy
               </mat-panel-title>
             </mat-expansion-panel-header>
-            <div formGroupName="submitStrategy">
-              <mat-form-field class="mat-block">
-                <mat-label translate>queue.submit-strategy</mat-label>
-                <mat-select formControlName="type" required>
-                  <mat-option *ngFor="let strategy of submitStrategies" [value]="strategy">
-                    {{ strategy }}
-                  </mat-option>
-                </mat-select>
-                <mat-error *ngIf="entityForm.get('submitStrategy.type').hasError('required')">
-                  {{ 'queue.submit-strategy-type-required' | translate }}
-                </mat-error>
-              </mat-form-field>
-              <mat-form-field class="mat-block" *ngIf="hideBatchSize">
-                <mat-label translate>queue.batch-size</mat-label>
-                <input type="number" matInput formControlName="batchSize" required>
-                <mat-error *ngIf="entityForm.get('submitStrategy.batchSize').hasError('required')">
-                  {{ 'queue.batch-size-required' | translate }}
-                </mat-error>
-                <mat-error *ngIf="entityForm.get('submitStrategy.batchSize').hasError('min') &&
-                   !entityForm.get('submitStrategy.batchSize').hasError('required')">
-                  {{ 'queue.batch-size-min-value' | translate }}
-                </mat-error>
-              </mat-form-field>
-            </div>
+            <ng-template matExpansionPanelContent>
+              <div formGroupName="submitStrategy">
+                <mat-form-field class="mat-block">
+                  <mat-label translate>queue.submit-strategy</mat-label>
+                  <mat-select formControlName="type" required>
+                    <mat-option *ngFor="let strategy of submitStrategies" [value]="strategy">
+                      {{ strategy }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-error *ngIf="entityForm.get('submitStrategy.type').hasError('required')">
+                    {{ 'queue.submit-strategy-type-required' | translate }}
+                  </mat-error>
+                </mat-form-field>
+                <mat-form-field class="mat-block" *ngIf="hideBatchSize">
+                  <mat-label translate>queue.batch-size</mat-label>
+                  <input type="number" matInput formControlName="batchSize" required>
+                  <mat-error *ngIf="entityForm.get('submitStrategy.batchSize').hasError('required')">
+                    {{ 'queue.batch-size-required' | translate }}
+                  </mat-error>
+                  <mat-error *ngIf="entityForm.get('submitStrategy.batchSize').hasError('min') &&
+                     !entityForm.get('submitStrategy.batchSize').hasError('required')">
+                    {{ 'queue.batch-size-min-value' | translate }}
+                  </mat-error>
+                </mat-form-field>
+              </div>
+            </ng-template>
           </mat-expansion-panel>
-          <mat-expansion-panel #panel2 hideToggle>
+          <mat-expansion-panel>
             <mat-expansion-panel-header>
-              <mat-panel-title>
-                <mat-label translate>queue.processing-strategy</mat-label>
-                <mat-icon>{{panel2.expanded  ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}</mat-icon>
+              <mat-panel-title translate>
+                queue.processing-strategy
               </mat-panel-title>
             </mat-expansion-panel-header>
-
-            <div formGroupName="processingStrategy">
-              <mat-form-field class="mat-block">
-                <mat-label translate>queue.processing-strategy</mat-label>
-                <mat-select formControlName="type" required>
-                  <mat-option *ngFor="let strategy of processingStrategies" [value]="strategy">
-                    {{ strategy }}
-                  </mat-option>
-                </mat-select>
-                <mat-error *ngIf="entityForm.get('processingStrategy.type').hasError('required')">
-                  {{ 'queue.processing-strategy-type-required' | translate }}
-                </mat-error>
-              </mat-form-field>
-              <mat-form-field class="mat-block">
-                <mat-label translate>queue.retries</mat-label>
-                <input type="number" matInput formControlName="retries" required>
-                <mat-error *ngIf="entityForm.get('processingStrategy.retries').hasError('required')">
-                  {{ 'queue.retries-required' | translate }}
-                </mat-error>
-                <mat-error *ngIf="entityForm.get('processingStrategy.retries').hasError('min') &&
-                   !entityForm.get('processingStrategy.retries').hasError('required')">
-                  {{ 'queue.retries-min-value' | translate }}
-                </mat-error>
-              </mat-form-field>
-              <mat-form-field class="mat-block">
-                <mat-label translate>queue.failure-percentage</mat-label>
-                <input type="number" matInput formControlName="failurePercentage" required>
-                <mat-error *ngIf="entityForm.get('processingStrategy.failurePercentage').hasError('required')">
-                  {{ 'queue.failure-percentage-required' | translate }}
-                </mat-error>
-                <mat-error *ngIf="entityForm.get('processingStrategy.failurePercentage').hasError('min') &&
-                   !entityForm.get('processingStrategy.failurePercentage').hasError('required') &&
-                   !entityForm.get('processingStrategy.failurePercentage').hasError('max')">
-                  {{ 'queue.failure-percentage-min-value' | translate }}
-                </mat-error>
-                <mat-error *ngIf="entityForm.get('processingStrategy.failurePercentage').hasError('max') &&
-                   !entityForm.get('processingStrategy.failurePercentage').hasError('required') &&
-                   !entityForm.get('processingStrategy.failurePercentage').hasError('min')">
-                  {{ 'queue.failure-percentage-max-value' | translate }}
-                </mat-error>
-              </mat-form-field>
-              <mat-form-field class="mat-block">
-                <mat-label translate>queue.pause-between-retries</mat-label>
-                <input type="number" matInput formControlName="pauseBetweenRetries" required>
-                <mat-error *ngIf="entityForm.get('processingStrategy.pauseBetweenRetries').hasError('required')">
-                  {{ 'queue.pause-between-retries-required' | translate }}
-                </mat-error>
-                <mat-error *ngIf="entityForm.get('processingStrategy.pauseBetweenRetries').hasError('min') &&
-                   !entityForm.get('processingStrategy.pauseBetweenRetries').hasError('required')">
-                  {{ 'queue.pause-between-retries-min-value' | translate }}
-                </mat-error>
-              </mat-form-field>
-              <mat-form-field class="mat-block">
-                <mat-label translate>queue.max-pause-between-retries</mat-label>
-                <input type="number" matInput formControlName="maxPauseBetweenRetries" required>
-                <mat-error *ngIf="entityForm.get('processingStrategy.maxPauseBetweenRetries').hasError('required')">
-                  {{ 'queue.max-pause-between-retries-required' | translate }}
-                </mat-error>
-                <mat-error *ngIf="entityForm.get('processingStrategy.maxPauseBetweenRetries').hasError('min') &&
-                   !entityForm.get('processingStrategy.maxPauseBetweenRetries').hasError('required')">
-                  {{ 'queue.max-pause-between-retries-min-value' | translate }}
-                </mat-error>
-              </mat-form-field>
-            </div>
+            <ng-template matExpansionPanelContent>
+              <div formGroupName="processingStrategy">
+                <mat-form-field class="mat-block">
+                  <mat-label translate>queue.processing-strategy</mat-label>
+                  <mat-select formControlName="type" required>
+                    <mat-option *ngFor="let strategy of processingStrategies" [value]="strategy">
+                      {{ strategy }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-error *ngIf="entityForm.get('processingStrategy.type').hasError('required')">
+                    {{ 'queue.processing-strategy-type-required' | translate }}
+                  </mat-error>
+                </mat-form-field>
+                <mat-form-field class="mat-block">
+                  <mat-label translate>queue.retries</mat-label>
+                  <input type="number" matInput formControlName="retries" required>
+                  <mat-error *ngIf="entityForm.get('processingStrategy.retries').hasError('required')">
+                    {{ 'queue.retries-required' | translate }}
+                  </mat-error>
+                  <mat-error *ngIf="entityForm.get('processingStrategy.retries').hasError('min') &&
+                     !entityForm.get('processingStrategy.retries').hasError('required')">
+                    {{ 'queue.retries-min-value' | translate }}
+                  </mat-error>
+                </mat-form-field>
+                <mat-form-field class="mat-block">
+                  <mat-label translate>queue.failure-percentage</mat-label>
+                  <input type="number" matInput formControlName="failurePercentage" required>
+                  <mat-error *ngIf="entityForm.get('processingStrategy.failurePercentage').hasError('required')">
+                    {{ 'queue.failure-percentage-required' | translate }}
+                  </mat-error>
+                  <mat-error *ngIf="entityForm.get('processingStrategy.failurePercentage').hasError('min') &&
+                     !entityForm.get('processingStrategy.failurePercentage').hasError('required') &&
+                     !entityForm.get('processingStrategy.failurePercentage').hasError('max')">
+                    {{ 'queue.failure-percentage-min-value' | translate }}
+                  </mat-error>
+                  <mat-error *ngIf="entityForm.get('processingStrategy.failurePercentage').hasError('max') &&
+                     !entityForm.get('processingStrategy.failurePercentage').hasError('required') &&
+                     !entityForm.get('processingStrategy.failurePercentage').hasError('min')">
+                    {{ 'queue.failure-percentage-max-value' | translate }}
+                  </mat-error>
+                </mat-form-field>
+                <mat-form-field class="mat-block">
+                  <mat-label translate>queue.pause-between-retries</mat-label>
+                  <input type="number" matInput formControlName="pauseBetweenRetries" required>
+                  <mat-error *ngIf="entityForm.get('processingStrategy.pauseBetweenRetries').hasError('required')">
+                    {{ 'queue.pause-between-retries-required' | translate }}
+                  </mat-error>
+                  <mat-error *ngIf="entityForm.get('processingStrategy.pauseBetweenRetries').hasError('min') &&
+                     !entityForm.get('processingStrategy.pauseBetweenRetries').hasError('required')">
+                    {{ 'queue.pause-between-retries-min-value' | translate }}
+                  </mat-error>
+                </mat-form-field>
+                <mat-form-field class="mat-block">
+                  <mat-label translate>queue.max-pause-between-retries</mat-label>
+                  <input type="number" matInput formControlName="maxPauseBetweenRetries" required>
+                  <mat-error *ngIf="entityForm.get('processingStrategy.maxPauseBetweenRetries').hasError('required')">
+                    {{ 'queue.max-pause-between-retries-required' | translate }}
+                  </mat-error>
+                  <mat-error *ngIf="entityForm.get('processingStrategy.maxPauseBetweenRetries').hasError('min') &&
+                     !entityForm.get('processingStrategy.maxPauseBetweenRetries').hasError('required')">
+                    {{ 'queue.max-pause-between-retries-min-value' | translate }}
+                  </mat-error>
+                </mat-form-field>
+              </div>
+            </ng-template>
           </mat-expansion-panel>
         </mat-accordion>
-      </div>
     </fieldset>
   </form>
 </div>

@@ -23,8 +23,6 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
-import set = Reflect.set;
-import { distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-queue',
@@ -39,7 +37,7 @@ export class QueueComponent extends EntityComponent<QueueInfo> {
   processingStrategies: string[] = [];
 
   QueueSubmitStrategyTypes = QueueSubmitStrategyTypes;
-  hideBatchSize: boolean = false;
+  hideBatchSize = false;
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
@@ -140,7 +138,7 @@ export class QueueComponent extends EntityComponent<QueueInfo> {
   }
 
   submitStrategyTypeChanged() {
-    const form = this.entityForm.get("submitStrategy") as FormGroup;
+    const form = this.entityForm.get('submitStrategy') as FormGroup;
     const type: QueueSubmitStrategyTypes = form.get('type').value;
     const batchSizeField = form.get('batchSize');
     if (type === QueueSubmitStrategyTypes.BATCH) {

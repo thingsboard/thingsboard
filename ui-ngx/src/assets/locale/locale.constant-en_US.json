@@ -2862,7 +2862,10 @@
         "max-sms-range": "Maximum number of SMS sent can't be negative",
         "max-created-alarms": "Maximum number of alarms created (0 - unlimited)",
         "max-created-alarms-required": "Maximum number of alarms created is required.",
-        "max-created-alarms-range": "Maximum number of alarms created can't be negative"
+        "max-created-alarms-range": "Maximum number of alarms created can't be negative",
+        "no-queue": "No Queue configured",
+        "add-queue": "Add Queue",
+        "queues-with-count": "Queues ({{count}})"
     },
     "timeinterval": {
         "seconds-interval": "{ seconds, plural, 1 {1 second} other {# seconds} }",

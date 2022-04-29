@@ -18,12 +18,7 @@ import { ChangeDetectorRef, Component, Inject, Input, Optional } from '@angular/
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import {
-  createTenantProfileConfiguration,
-  TenantProfile,
-  TenantProfileData,
-  TenantProfileType
-} from '@shared/models/tenant.model';
+import { createTenantProfileConfiguration, TenantProfile, TenantProfileType } from '@shared/models/tenant.model';
 import { ActionNotificationShow } from '@app/core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
@@ -48,11 +43,6 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
 
-  ngOnInit() {
-    this.showQueueParams();
-    this.entityForm.get('isolatedTbRuleEngine').valueChanges.subscribe(() => this.showQueueParams());
-  }
-
   hideDelete() {
     if (this.entitiesTableConfig) {
       return !this.entitiesTableConfig.deleteEnabled(this.entity);
@@ -62,37 +52,61 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
   }
 
   buildForm(entity: TenantProfile): FormGroup {
-    return this.fb.group(
+    const mainQueue = [
+      {
+        consumerPerPartition: true,
+        name: 'Main',
+        packProcessingTimeout: 2000,
+        partitions: 10,
+        pollInterval: 25,
+        processingStrategy: {
+          failurePercentage: 0,
+          maxPauseBetweenRetries: 3,
+          pauseBetweenRetries: 3,
+          retries: 3,
+          type: 'SKIP_ALL_FAILURES'
+        },
+        submitStrategy: {
+          batchSize: 1000,
+          type: 'BURST'
+        },
+        topic: 'tb_rule_engine.main'
+      }
+    ];
+    const formGroup = this.fb.group(
       {
         name: [entity ? entity.name : '', [Validators.required, Validators.maxLength(255)]],
         isolatedTbCore: [entity ? entity.isolatedTbCore : false, []],
         isolatedTbRuleEngine: [entity ? entity.isolatedTbRuleEngine : false, []],
-        profileData: [entity && !this.isAdd ? entity.profileData : {
-          configuration: createTenantProfileConfiguration(TenantProfileType.DEFAULT)
-        } as TenantProfileData, []],
+        profileData: this.fb.group({
+          configuration: [entity && !this.isAdd ? entity?.profileData.configuration
+            : createTenantProfileConfiguration(TenantProfileType.DEFAULT), []],
+          queueConfiguration: [null, []]
+        }),
         description: [entity ? entity.description : '', []],
       }
     );
+    formGroup.get('isolatedTbRuleEngine').valueChanges.subscribe((value) => {
+      if (value) {
+        formGroup.get('profileData').patchValue({
+            queueConfiguration: mainQueue
+          }, {emitEvent: false});
+      } else {
+        formGroup.get('profileData').patchValue({
+            queueConfiguration: null
+          }, {emitEvent: false});
+      }
+    });
+    return formGroup;
   }
 
   updateForm(entity: TenantProfile) {
-    this.entityForm.patchValue({name: entity.name});
-    this.entityForm.patchValue({isolatedTbCore: entity.isolatedTbCore});
-    this.entityForm.patchValue({isolatedTbRuleEngine: entity.isolatedTbRuleEngine});
-    this.entityForm.patchValue({profileData: !this.isAdd ? entity.profileData : {
-        configuration: createTenantProfileConfiguration(TenantProfileType.DEFAULT)
-      } as TenantProfileData});
-    this.entityForm.patchValue({description: entity.description});
-  }
-
-  showQueueParams(): boolean {
-    let isolatedTbRuleEngine: boolean = this.entityForm.get('isolatedTbRuleEngine').value;
-    if (isolatedTbRuleEngine) {
-//enable
-    } else {
-//disable
-    }
-    return isolatedTbRuleEngine;
+    this.entityForm.patchValue({name: entity.name}, {emitEvent: false});
+    this.entityForm.patchValue({isolatedTbCore: entity.isolatedTbCore}, {emitEvent: false});
+    this.entityForm.patchValue({isolatedTbRuleEngine: entity.isolatedTbRuleEngine}, {emitEvent: false});
+    this.entityForm.get('profileData').patchValue({configuration: entity.profileData?.configuration}, {emitEvent: false});
+    this.entityForm.get('profileData').patchValue({queueConfiguration: entity.profileData?.queueConfiguration}, {emitEvent: false});
+    this.entityForm.patchValue({description: entity.description}, {emitEvent: false});
   }
 
   updateFormState() {

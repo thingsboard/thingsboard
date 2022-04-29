@@ -16,7 +16,7 @@
 
 import { BaseData, HasId } from '@shared/models/base-data';
 import { TenantId } from '@shared/models/id/tenant-id';
-import {QueueId} from "@shared/models/id/queue-id";
+import {QueueId} from '@shared/models/id/queue-id';
 
 export enum ServiceType {
   TB_CORE = 'TB_CORE',
@@ -43,9 +43,10 @@ export enum QueueProcessingStrategyTypes {
 }
 
 export interface QueueInfo extends BaseData<QueueId> {
+  name: string;
   packProcessingTimeout: number;
   partitions: number;
-  consumerPerPartition: boolean,
+  consumerPerPartition: boolean;
   pollInterval: number;
   processingStrategy: {
     type: QueueProcessingStrategyTypes,
@@ -58,6 +59,6 @@ export interface QueueInfo extends BaseData<QueueId> {
     type: QueueSubmitStrategyTypes,
     batchSize: number,
   };
-  tenantId: TenantId;
+  tenantId?: TenantId;
   topic: string;
 }

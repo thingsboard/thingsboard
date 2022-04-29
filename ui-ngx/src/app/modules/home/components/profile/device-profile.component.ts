@@ -42,7 +42,7 @@ import { ServiceType } from '@shared/models/queue.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { OtaUpdateType } from '@shared/models/ota-package.models';
 import { DashboardId } from '@shared/models/id/dashboard-id';
-import { QueueId } from "@shared/models/id/queue-id";
+import { QueueId } from '@shared/models/id/queue-id';
 
 @Component({
   selector: 'tb-device-profile',
@@ -198,7 +198,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     }}, {emitEvent: false});
     this.entityForm.patchValue({defaultRuleChainId: entity.defaultRuleChainId ? entity.defaultRuleChainId.id : null}, {emitEvent: false});
     this.entityForm.patchValue({defaultDashboardId: entity.defaultDashboardId ? entity.defaultDashboardId.id : null}, {emitEvent: false});
-    this.entityForm.patchValue({defaultQueueId: entity.defaultQueueId ? entity.defaultQueueId.id: null}, {emitEvent: false});
+    this.entityForm.patchValue({defaultQueueId: entity.defaultQueueId ? entity.defaultQueueId.id : null}, {emitEvent: false});
     this.entityForm.patchValue({firmwareId: entity.firmwareId}, {emitEvent: false});
     this.entityForm.patchValue({softwareId: entity.softwareId}, {emitEvent: false});
     this.entityForm.patchValue({description: entity.description}, {emitEvent: false});
