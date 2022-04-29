@@ -1,3 +1,20 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
 <div>
   <mat-card class="settings-card">
     <mat-card-title>
@@ -11,131 +28,146 @@
     </mat-progress-bar>
     <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
     <mat-card-content style="padding-top: 16px;">
-      <form [formGroup]="twoFaFormGroup" (ngSubmit)="save()" fxLayout="column">
-        <mat-checkbox *ngIf="isTenantAdmin()" formControlName="useSystemTwoFactorAuthSettings" style="padding-bottom: 16px;">
-          {{ 'admin.2fa.use-system-two-factor-auth-settings' | translate }}
-        </mat-checkbox>
-        <ng-container *ngIf="!isTenantAdmin() || twoFaFormGroup.get('useSystemTwoFactorAuthSettings').value">
-          <mat-form-field>
-            <mat-label translate>admin.2fa.total-allowed-time-for-verification</mat-label>
-            <input matInput required formControlName="totalAllowedTimeForVerification" type="number" step="1" min="1">
-            <mat-error *ngIf="twoFaFormGroup.get('totalAllowedTimeForVerification').hasError('required')">
-              {{ 'admin.2fa.total-allowed-time-for-verification-required' | translate }}
-            </mat-error>
-            <mat-error *ngIf="twoFaFormGroup.get('totalAllowedTimeForVerification').hasError('pattern')
-                || twoFaFormGroup.get('totalAllowedTimeForVerification').hasError('min')">
-              {{ 'admin.2fa.total-allowed-time-for-verification-pattern' | translate }}
-            </mat-error>
-          </mat-form-field>
-          <mat-form-field>
-            <mat-label translate>admin.2fa.max-verification-failures-before-user-lockout</mat-label>
-            <input matInput required formControlName="maxVerificationFailuresBeforeUserLockout" type="number" step="1" min="0" max="65535">
-            <mat-error *ngIf="twoFaFormGroup.get('maxVerificationFailuresBeforeUserLockout').hasError('required')">
-              {{ 'admin.2fa.max-verification-failures-before-user-lockout-required' | translate }}
-            </mat-error>
-            <mat-error *ngIf="twoFaFormGroup.get('maxVerificationFailuresBeforeUserLockout').hasError('pattern')
-                || twoFaFormGroup.get('maxVerificationFailuresBeforeUserLockout').hasError('min')
-                || twoFaFormGroup.get('maxVerificationFailuresBeforeUserLockout').hasError('max')">
-              {{ 'admin.2fa.max-verification-failures-before-user-lockout-pattern' | translate }}
-            </mat-error>
-          </mat-form-field>
-          <mat-form-field>
-            <mat-label translate>admin.2fa.verification-code-send-rate-limit</mat-label>
-            <input matInput formControlName="verificationCodeSendRateLimit">
-            <mat-hint translate>admin.2fa.verification-code-send-rate-limit-hint</mat-hint>
-            <mat-error *ngIf="twoFaFormGroup.get('verificationCodeSendRateLimit').hasError('pattern')">
-              {{ 'admin.2fa.verification-code-send-rate-limit-pattern' | translate }}
-            </mat-error>
-          </mat-form-field>
-          <mat-form-field>
-            <mat-label translate>admin.2fa.verification-code-check-rate-limit</mat-label>
-            <input matInput formControlName="verificationCodeCheckRateLimit">
-            <mat-hint translate>admin.2fa.verification-code-check-rate-limit-hint</mat-hint>
-            <mat-error *ngIf="twoFaFormGroup.get('verificationCodeCheckRateLimit').hasError('pattern')">
-              {{ 'admin.2fa.verification-code-check-rate-limit-pattern' | translate }}
-            </mat-error>
-          </mat-form-field>
-          <div class="mat-h3">Providers</div>
-          <ng-container formArrayName="providers">
-            <div class="container">
-              <mat-expansion-panel *ngFor="let provider of providersForm.controls; let j = index; trackBy: trackByParams"
-                                   class="registration-card mat-elevation-z0">
-                <mat-expansion-panel-header>
-                  <mat-panel-title fxLayoutAlign="start center">
-                    {{ provider.value.providerType }}
-                  </mat-panel-title>
-                  <mat-panel-description fxLayoutAlign="end center">
-                    <button mat-icon-button
-                            type="button"
-                            [disabled]="providersForm.controls.length < 2"
-                            (click)="removeProviders($event, j)"
-                            matTooltip="{{ 'admin.oauth2.delete-provider' | translate }}"
-                            matTooltipPosition="above">
-                      <mat-icon>delete</mat-icon>
-                    </button>
-                  </mat-panel-description>
-                </mat-expansion-panel-header>
+      <form [formGroup]="twoFaFormGroup" (ngSubmit)="save()">
+        <fieldset [disabled]="isLoading$ | async">
+          <mat-checkbox *ngIf="isTenantAdmin()" formControlName="useSystemTwoFactorAuthSettings" style="padding-bottom: 16px;">
+            {{ 'admin.2fa.use-system-two-factor-auth-settings' | translate }}
+          </mat-checkbox>
+          <ng-container *ngIf="!isTenantAdmin() || !twoFaFormGroup.get('useSystemTwoFactorAuthSettings').value">
+            <mat-form-field fxFlex class="mat-block">
+              <mat-label translate>admin.2fa.total-allowed-time-for-verification</mat-label>
+              <input matInput required formControlName="totalAllowedTimeForVerification" type="number" step="1" min="1">
+              <mat-error *ngIf="twoFaFormGroup.get('totalAllowedTimeForVerification').hasError('required')">
+                {{ 'admin.2fa.total-allowed-time-for-verification-required' | translate }}
+              </mat-error>
+              <mat-error *ngIf="twoFaFormGroup.get('totalAllowedTimeForVerification').hasError('pattern')
+                  || twoFaFormGroup.get('totalAllowedTimeForVerification').hasError('min')">
+                {{ 'admin.2fa.total-allowed-time-for-verification-pattern' | translate }}
+              </mat-error>
+            </mat-form-field>
+            <mat-form-field fxFlex class="mat-block">
+              <mat-label translate>admin.2fa.max-verification-failures-before-user-lockout</mat-label>
+              <input matInput required formControlName="maxVerificationFailuresBeforeUserLockout" type="number" step="1" min="0" max="65535">
+              <mat-error *ngIf="twoFaFormGroup.get('maxVerificationFailuresBeforeUserLockout').hasError('required')">
+                {{ 'admin.2fa.max-verification-failures-before-user-lockout-required' | translate }}
+              </mat-error>
+              <mat-error *ngIf="twoFaFormGroup.get('maxVerificationFailuresBeforeUserLockout').hasError('pattern')
+                  || twoFaFormGroup.get('maxVerificationFailuresBeforeUserLockout').hasError('min')
+                  || twoFaFormGroup.get('maxVerificationFailuresBeforeUserLockout').hasError('max')">
+                {{ 'admin.2fa.max-verification-failures-before-user-lockout-pattern' | translate }}
+              </mat-error>
+            </mat-form-field>
+            <mat-form-field fxFlex class="mat-block">
+              <mat-label translate>admin.2fa.verification-code-send-rate-limit</mat-label>
+              <input matInput formControlName="verificationCodeSendRateLimit" required>
+              <mat-error *ngIf="twoFaFormGroup.get('verificationCodeSendRateLimit').hasError('required')">
+                {{ 'admin.2fa.verification-code-send-rate-limit-required' | translate }}
+              </mat-error>
+              <mat-error *ngIf="twoFaFormGroup.get('verificationCodeSendRateLimit').hasError('pattern')">
+                {{ 'admin.2fa.verification-code-send-rate-limit-pattern' | translate }}
+              </mat-error>
+            </mat-form-field>
+            <mat-form-field fxFlex class="mat-block">
+              <mat-label translate>admin.2fa.verification-code-check-rate-limit</mat-label>
+              <input matInput formControlName="verificationCodeCheckRateLimit" required>
+              <mat-error *ngIf="twoFaFormGroup.get('verificationCodeCheckRateLimit').hasError('required')">
+                {{ 'admin.2fa.verification-code-check-rate-limit-required' | translate }}
+              </mat-error>
+              <mat-error *ngIf="twoFaFormGroup.get('verificationCodeCheckRateLimit').hasError('pattern')">
+                {{ 'admin.2fa.verification-code-check-rate-limit-pattern' | translate }}
+              </mat-error>
+            </mat-form-field>
+            <div class="mat-h3" translate>admin.2fa.available-providers</div>
+            <ng-container formArrayName="providers">
+              <div class="container">
+                <mat-accordion multi>
+                  <mat-expansion-panel *ngFor="let provider of providersForm.controls; let i = index">
+                    <mat-expansion-panel-header>
+                      <mat-panel-title fxLayoutAlign="start center">
+                        {{ provider.value.providerType }}
+                      </mat-panel-title>
+                      <mat-panel-description fxLayoutAlign="end center">
+                        <button mat-icon-button
+                                type="button"
+                                (click)="removeProviders($event, i)"
+                                matTooltip="{{ 'admin.oauth2.delete-provider' | translate }}"
+                                matTooltipPosition="above">
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      </mat-panel-description>
+                    </mat-expansion-panel-header>
 
-                <ng-template matExpansionPanelContent>
-                  <section [formGroupName]="j">
-                    <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-                      <section fxFlex formGroupName="additionalInfo" fxLayout="row">
+                    <ng-template matExpansionPanelContent>
+                      <section [formGroupName]="i">
                         <mat-form-field fxFlex class="mat-block">
-                          <mat-label translate>admin.oauth2.login-provider</mat-label>
-                          <mat-select formControlName="providerName">
-                            <mat-option *ngFor="let provider of templateProvider" [value]="provider">
-                              {{ provider }}
+                          <mat-label translate>admin.2fa.provider</mat-label>
+                          <mat-select formControlName="providerType">
+                            <mat-option *ngFor="let twoFactorAuthProviderType of twoFactorAuthProviderTypes"
+                                        [value]="twoFactorAuthProviderType"
+                                        [disabled]="selectedTypes(twoFactorAuthProviderType[twoFactorAuthProviderType], i)">
+                              {{ twoFactorAuthProviderType }}
                             </mat-option>
                           </mat-select>
                         </mat-form-field>
+                        <ng-container [ngSwitch]="provider.get('providerType').value">
+                          <ng-container *ngSwitchCase="twoFactorAuthProviderType.TOTP">
+                            <mat-form-field fxFlex class="mat-block">
+                              <mat-label translate>admin.2fa.issuer-name</mat-label>
+                              <input matInput formControlName="issuerName" required>
+                              <mat-error *ngIf="provider.get('issuerName').hasError('required')">
+                                {{ "admin.2fa.issuer-name-required" | translate }}
+                              </mat-error>
+                            </mat-form-field>
+                          </ng-container>
+                          <div *ngSwitchCase="twoFactorAuthProviderType.SMS"
+                               fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
+                            <mat-form-field fxFlex class="mat-block">
+                              <mat-label translate>admin.2fa.verification-message-template</mat-label>
+                              <input matInput formControlName="smsVerificationMessageTemplate" required>
+                              <mat-error *ngIf="provider.get('smsVerificationMessageTemplate').hasError('required')">
+                                {{ "admin.2fa.verification-message-template-required" | translate }}
+                              </mat-error>
+                              <mat-error *ngIf="provider.get('smsVerificationMessageTemplate').hasError('pattern')">
+                                {{ "admin.2fa.verification-message-template-pattern" | translate }}
+                              </mat-error>
+                            </mat-form-field>
+
+                            <mat-form-field fxFlex class="mat-block">
+                              <mat-label translate>admin.2fa.verification-code-lifetime</mat-label>
+                              <input matInput formControlName="verificationCodeLifetime" type="number" step="1" min="1" required>
+                              <mat-error *ngIf="provider.get('verificationCodeLifetime').hasError('required')">
+                                {{ "admin.2fa.verification-code-lifetime-required" | translate }}
+                              </mat-error>
+                              <mat-error *ngIf="provider.get('verificationCodeLifetime').hasError('min') ||
+                                                provider.get('verificationCodeLifetime').hasError('pattern')">
+                                {{ "admin.2fa.verification-code-lifetime-pattern" | translate }}
+                              </mat-error>
+                            </mat-form-field>
+                          </div>
+                        </ng-container>
                       </section>
-                      <mat-form-field floatLabel="always" fxFlex class="mat-block">
-                        <mat-label translate>admin.oauth2.allowed-platforms</mat-label>
-                        <mat-select formControlName="platforms" multiple placeholder="{{ 'admin.oauth2.all-platforms' | translate }}">
-                          <mat-option *ngFor="let platform of platformTypes" [value]="platform">
-                            {{ platformTypeTranslations.get(platform) | translate }}
-                          </mat-option>
-                        </mat-select>
-                      </mat-form-field>
-                    </div>
-                    <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-                      <mat-form-field fxFlex class="mat-block">
-                        <mat-label translate>admin.oauth2.client-id</mat-label>
-                        <input matInput formControlName="clientId" required>
-                        <mat-error *ngIf="registration.get('clientId').hasError('required')">
-                          {{ 'admin.oauth2.client-id-required' | translate }}
-                        </mat-error>
-                        <mat-error *ngIf="registration.get('clientId').hasError('maxlength')">
-                          {{ 'admin.oauth2.client-id-max-length' | translate }}
-                        </mat-error>
-                      </mat-form-field>
+                    </ng-template>
+                  </mat-expansion-panel>
+                </mat-accordion>
+              </div>
+            </ng-container>
 
-                      <mat-form-field fxFlex class="mat-block">
-                        <mat-label translate>admin.oauth2.client-secret</mat-label>
-                        <input matInput formControlName="clientSecret" required>
-                        <mat-error *ngIf="registration.get('clientSecret').hasError('required')">
-                          {{ 'admin.oauth2.client-secret-required' | translate }}
-                        </mat-error>
-                        <mat-error *ngIf="registration.get('clientSecret').hasError('maxlength')">
-                          {{ 'admin.oauth2.client-secret-max-length' | translate }}
-                        </mat-error>
-                      </mat-form-field>
-                    </div>
-
-                  </section>
-                </ng-template>
-              </mat-expansion-panel>
-            </div>
           </ng-container>
-
-        </ng-container>
-        <div fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="8px">
-          <button mat-button mat-raised-button color="primary"
-                  [disabled]="(isLoading$ | async) || twoFaFormGroup.invalid || !twoFaFormGroup.dirty"
-                  type="submit">
-            {{'action.save' | translate}}
-          </button>
-        </div>
+          <div fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="8px">
+            <button type="button" mat-raised-button color="primary"
+                    [disabled]="twoFaFormGroup.get('useSystemTwoFactorAuthSettings').value
+                    || providersForm.length == twoFactorAuthProviderTypes.length || (isLoading$ | async)"
+                    (click)="addProvider()">
+              <mat-icon>add</mat-icon>
+              <span translate>action.add</span>
+            </button>
+            <button mat-button mat-raised-button color="primary"
+                    [disabled]="(isLoading$ | async) || twoFaFormGroup.invalid || !twoFaFormGroup.dirty"
+                    type="submit">
+              {{'action.save' | translate}}
+            </button>
+          </div>
+        </fieldset>
       </form>
     </mat-card-content>
   </mat-card>

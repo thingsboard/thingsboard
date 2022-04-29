@@ -1,10 +1,26 @@
+///
+/// Copyright © 2016-2022 The Thingsboard Authors
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///     http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
+
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ActivatedRoute } from '@angular/router';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { WINDOW } from '@core/services/window.service';
@@ -12,11 +28,7 @@ import { TwoFactorAuthenticationService } from '@core/http/two-factor-authentica
 import { AuthState } from '@core/auth/auth.models';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
-import {
-  TwoFactorAuthProviderType,
-  TwoFactorAuthSettings,
-  TwoFactorAuthSettingsForm
-} from '@shared/models/two-factor-auth.models';
+import { TwoFactorAuthProviderType, TwoFactorAuthSettings } from '@shared/models/two-factor-auth.models';
 
 @Component({
   selector: 'tb-2fa-settings',
@@ -29,6 +41,8 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
   private authUser = this.authState.authUser;
 
   twoFaFormGroup: FormGroup;
+  twoFactorAuthProviderTypes = Object.keys(TwoFactorAuthProviderType);
+  twoFactorAuthProviderType = TwoFactorAuthProviderType;
 
   constructor(protected store: Store<AppState>,
               private route: ActivatedRoute,
@@ -43,7 +57,7 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
   ngOnInit() {
     this.build2faSettingsForm();
     this.twoFaService.getTwoFaSettings().subscribe((setting) => {
-      console.log(this.formDataPreprocessing(setting));
+      this.initTwoFactorAuthForm(setting);
     });
   }
 
@@ -60,12 +74,19 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
   }
 
   save() {
-
+    const setting = this.twoFaFormGroup.value;
+    this.twoFaService.saveTwoFaSettings(setting).subscribe(
+      (twoFactorAuthSettings) => {
+        this.twoFaFormGroup.patchValue(twoFactorAuthSettings, {emitEvent: false});
+        this.twoFaFormGroup.markAsUntouched();
+        this.twoFaFormGroup.markAsPristine();
+      }
+    );
   }
 
   private build2faSettingsForm(): void {
     this.twoFaFormGroup = this.fb.group({
-      useSystemTwoFactorAuthSettings: [false],
+      useSystemTwoFactorAuthSettings: [this.isTenantAdmin()],
       maxVerificationFailuresBeforeUserLockout: [30, [
         Validators.required,
         Validators.pattern(/^\d*$/),
@@ -77,13 +98,20 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
         Validators.min(1),
         Validators.pattern(/^\d*$/)
       ]],
-      verificationCodeCheckRateLimit: ['', Validators.pattern(/^[1-9]\d*:[1-9]\d*$/)],
-      verificationCodeSendRateLimit: ['', Validators.pattern(/^[1-9]\d*:[1-9]\d*$/)],
+      verificationCodeCheckRateLimit: ['3:900', [Validators.required, Validators.pattern(/^[1-9]\d*:[1-9]\d*$/)]],
+      verificationCodeSendRateLimit: ['1:60', [Validators.required, Validators.pattern(/^[1-9]\d*:[1-9]\d*$/)]],
       providers: this.fb.array([])
     });
   }
 
-  addProviders() {
+  private initTwoFactorAuthForm(settings: TwoFactorAuthSettings) {
+    settings.providers.forEach(() => {
+      this.addProvider();
+    });
+    this.twoFaFormGroup.patchValue(settings, {emitEvent: false});
+  }
+
+  addProvider() {
     const newProviders = this.fb.group({
       providerType: [TwoFactorAuthProviderType.TOTP],
       issuerName: ['', Validators.required],
@@ -119,8 +147,9 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
     });
     if (this.providersForm.length) {
       const selectProvidersType = this.providersForm.value[0].providerType;
-      if (selectProvidersType !== TwoFactorAuthProviderType.TOTP) {
-        newProviders.get('providerType').patchValue(TwoFactorAuthProviderType.SMS, {emitEvents: true})
+      if (selectProvidersType === TwoFactorAuthProviderType.TOTP) {
+        newProviders.get('providerType').setValue(TwoFactorAuthProviderType.SMS);
+        newProviders.updateValueAndValidity();
       }
     }
     this.providersForm.push(newProviders);
@@ -140,16 +169,10 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
     return this.twoFaFormGroup.get('providers') as FormArray;
   }
 
-  private formDataPreprocessing(data: TwoFactorAuthSettings): TwoFactorAuthSettingsForm {
-    return data;
-  }
-
-  private formDataPostprocessing(data: TwoFactorAuthSettingsForm): TwoFactorAuthSettings{
-    return data;
-  }
-
-  trackByParams(index: number): number {
-    return index;
+  selectedTypes(type: TwoFactorAuthProviderType, index: number): boolean {
+    const selectedProviderTypes: TwoFactorAuthProviderType[] = this.providersForm.value.map(providers => providers.providerType);
+    selectedProviderTypes.splice(index, 1);
+    return selectedProviderTypes.includes(type);
   }
 
 }

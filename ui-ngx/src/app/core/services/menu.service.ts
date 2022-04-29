@@ -364,7 +364,7 @@ export class MenuService {
         name: 'admin.system-settings',
         type: 'toggle',
         path: '/settings',
-        height: '80px',
+        height: '120px',
         icon: 'settings',
         pages: [
           {
@@ -373,6 +373,14 @@ export class MenuService {
             type: 'link',
             path: '/settings/home',
             icon: 'settings_applications'
+          },
+          {
+            id: guid(),
+            name: 'admin.2fa.2fa',
+            type: 'link',
+            path: '/settings/2fa',
+            icon: 'mdi:two-factor-authentication',
+            isMdiIcon: true
           },
           {
             id: guid(),
@@ -509,6 +517,12 @@ export class MenuService {
             name: 'admin.home-settings',
             icon: 'settings_applications',
             path: '/settings/home'
+          },
+          {
+            name: 'admin.2fa.2fa',
+            icon: 'mdi:two-factor-authentication',
+            isMdiIcon: true,
+            path: '/settings/2fa'
           },
           {
             name: 'resource.resources-library',
