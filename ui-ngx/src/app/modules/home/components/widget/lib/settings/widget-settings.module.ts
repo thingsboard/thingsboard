@@ -169,6 +169,39 @@ import {
 import {
   NavigationCardsWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/navigation/navigation-cards-widget-settings.component';
+import {
+  DeviceClaimingWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/input/device-claiming-widget-settings.component';
+import {
+  UpdateAttributeGeneralSettingsComponent
+} from '@home/components/widget/lib/settings/input/update-attribute-general-settings.component';
+import {
+  UpdateIntegerAttributeWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/input/update-integer-attribute-widget-settings.component';
+import {
+  UpdateDoubleAttributeWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/input/update-double-attribute-widget-settings.component';
+import {
+  UpdateStringAttributeWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/input/update-string-attribute-widget-settings.component';
+import {
+  UpdateBooleanAttributeWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/input/update-boolean-attribute-widget-settings.component';
+import {
+  UpdateImageAttributeWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/input/update-image-attribute-widget-settings.component';
+import {
+  UpdateDateAttributeWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/input/update-date-attribute-widget-settings.component';
+import {
+  UpdateLocationAttributeWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/input/update-location-attribute-widget-settings.component';
+import {
+  UpdateJsonAttributeWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/input/update-json-attribute-widget-settings.component';
+import {
+  PhotoCameraInputWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/input/photo-camera-input-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -231,7 +264,18 @@ import {
     GpioControlWidgetSettingsComponent,
     GpioPanelWidgetSettingsComponent,
     NavigationCardWidgetSettingsComponent,
-    NavigationCardsWidgetSettingsComponent
+    NavigationCardsWidgetSettingsComponent,
+    DeviceClaimingWidgetSettingsComponent,
+    UpdateAttributeGeneralSettingsComponent,
+    UpdateIntegerAttributeWidgetSettingsComponent,
+    UpdateDoubleAttributeWidgetSettingsComponent,
+    UpdateStringAttributeWidgetSettingsComponent,
+    UpdateBooleanAttributeWidgetSettingsComponent,
+    UpdateImageAttributeWidgetSettingsComponent,
+    UpdateDateAttributeWidgetSettingsComponent,
+    UpdateLocationAttributeWidgetSettingsComponent,
+    UpdateJsonAttributeWidgetSettingsComponent,
+    PhotoCameraInputWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -298,7 +342,18 @@ import {
     GpioControlWidgetSettingsComponent,
     GpioPanelWidgetSettingsComponent,
     NavigationCardWidgetSettingsComponent,
-    NavigationCardsWidgetSettingsComponent
+    NavigationCardsWidgetSettingsComponent,
+    DeviceClaimingWidgetSettingsComponent,
+    UpdateAttributeGeneralSettingsComponent,
+    UpdateIntegerAttributeWidgetSettingsComponent,
+    UpdateDoubleAttributeWidgetSettingsComponent,
+    UpdateStringAttributeWidgetSettingsComponent,
+    UpdateBooleanAttributeWidgetSettingsComponent,
+    UpdateImageAttributeWidgetSettingsComponent,
+    UpdateDateAttributeWidgetSettingsComponent,
+    UpdateLocationAttributeWidgetSettingsComponent,
+    UpdateJsonAttributeWidgetSettingsComponent,
+    PhotoCameraInputWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -350,5 +405,15 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-gpio-control-widget-settings': GpioControlWidgetSettingsComponent,
   'tb-gpio-panel-widget-settings': GpioPanelWidgetSettingsComponent,
   'tb-navigation-card-widget-settings': NavigationCardWidgetSettingsComponent,
-  'tb-navigation-cards-widget-settings': NavigationCardsWidgetSettingsComponent
+  'tb-navigation-cards-widget-settings': NavigationCardsWidgetSettingsComponent,
+  'tb-device-claiming-widget-settings': DeviceClaimingWidgetSettingsComponent,
+  'tb-update-integer-attribute-widget-settings': UpdateIntegerAttributeWidgetSettingsComponent,
+  'tb-update-double-attribute-widget-settings': UpdateDoubleAttributeWidgetSettingsComponent,
+  'tb-update-string-attribute-widget-settings': UpdateStringAttributeWidgetSettingsComponent,
+  'tb-update-boolean-attribute-widget-settings': UpdateBooleanAttributeWidgetSettingsComponent,
+  'tb-update-image-attribute-widget-settings': UpdateImageAttributeWidgetSettingsComponent,
+  'tb-update-date-attribute-widget-settings': UpdateDateAttributeWidgetSettingsComponent,
+  'tb-update-location-attribute-widget-settings': UpdateLocationAttributeWidgetSettingsComponent,
+  'tb-update-json-attribute-widget-settings': UpdateJsonAttributeWidgetSettingsComponent,
+  'tb-photo-camera-input-widget-settings': PhotoCameraInputWidgetSettingsComponent
 };
