@@ -18,6 +18,7 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -35,6 +36,9 @@ import java.util.function.Predicate;
 /**
  * Created by ashvayka on 20.03.18.
  */
+@TestPropertySource(properties = {
+        "js.evaluator=mock",
+})
 public abstract class AbstractRuleEngineControllerTest extends AbstractControllerTest {
 
     @Autowired

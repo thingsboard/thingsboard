@@ -29,6 +29,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.EntityType;
@@ -87,6 +88,7 @@ public class BaseRelationService implements RelationService {
     }
 
     @Cacheable(cacheNames = RELATIONS_CACHE, key = "{#from, #to, #relationType, #typeGroup}")
+    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public EntityRelation getRelation(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
         return getRelation(tenantId, from, to, relationType, typeGroup);
@@ -107,7 +109,7 @@ public class BaseRelationService implements RelationService {
             @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.to, #relation.type, #relation.typeGroup, 'TO'}")
     })
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.SUPPORTS)
     public boolean saveRelation(TenantId tenantId, EntityRelation relation) {
         log.trace("Executing saveRelation [{}]", relation);
         validate(relation);
@@ -135,6 +137,7 @@ public class BaseRelationService implements RelationService {
             @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.to, #relation.typeGroup, 'TO'}"),
             @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.to, #relation.type, #relation.typeGroup, 'TO'}")
     })
+    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public boolean deleteRelation(TenantId tenantId, EntityRelation relation) {
         log.trace("Executing deleteRelation [{}]", relation);
@@ -163,6 +166,7 @@ public class BaseRelationService implements RelationService {
             @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#to, #typeGroup, 'TO'}"),
             @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#to, #relationType, #typeGroup, 'TO'}")
     })
+    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public boolean deleteRelation(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
         log.trace("Executing deleteRelation [{}][{}][{}][{}]", from, to, relationType, typeGroup);
@@ -185,6 +189,7 @@ public class BaseRelationService implements RelationService {
         return relationDao.deleteRelationAsync(tenantId, from, to, relationType, typeGroup);
     }
 
+    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public void deleteEntityRelations(TenantId tenantId, EntityId entityId) {
         log.trace("Executing deleteEntityRelations [{}]", entityId);
@@ -316,6 +321,7 @@ public class BaseRelationService implements RelationService {
     }
 
     @Cacheable(cacheNames = RELATIONS_CACHE, key = "{#from, #typeGroup, 'FROM'}")
+    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public List<EntityRelation> findByFrom(TenantId tenantId, EntityId from, RelationTypeGroup typeGroup) {
         validate(from);
@@ -379,6 +385,7 @@ public class BaseRelationService implements RelationService {
     @Override
     public List<EntityRelation> findByFromAndType(TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup) {
         try {
+            //TODO refactor
             return findByFromAndTypeAsync(tenantId, from, relationType, typeGroup).get();
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
@@ -395,6 +402,7 @@ public class BaseRelationService implements RelationService {
     }
 
     @Cacheable(cacheNames = RELATIONS_CACHE, key = "{#to, #typeGroup, 'TO'}")
+    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public List<EntityRelation> findByTo(TenantId tenantId, EntityId to, RelationTypeGroup typeGroup) {
         validate(to);
@@ -468,6 +476,7 @@ public class BaseRelationService implements RelationService {
     @Override
     public List<EntityRelation> findByToAndType(TenantId tenantId, EntityId to, String relationType, RelationTypeGroup typeGroup) {
         try {
+            //TODO refactor
             return findByToAndTypeAsync(tenantId, to, relationType, typeGroup).get();
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
@@ -539,8 +548,10 @@ public class BaseRelationService implements RelationService {
                 }, MoreExecutors.directExecutor());
     }
 
+    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public void removeRelations(TenantId tenantId, EntityId entityId) {
+        log.trace("removeRelations {}", entityId);
         Cache cache = cacheManager.getCache(RELATIONS_CACHE);
 
         List<EntityRelation> relations = new ArrayList<>();
@@ -550,8 +561,8 @@ public class BaseRelationService implements RelationService {
         }
 
         for (EntityRelation relation : relations) {
-            cacheEviction(relation, cache);
             deleteRelation(tenantId, relation);
+            cacheEviction(relation, cache);
         }
     }
 
