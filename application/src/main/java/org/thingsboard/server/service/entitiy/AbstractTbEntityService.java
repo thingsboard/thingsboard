@@ -88,6 +88,7 @@ public abstract class AbstractTbEntityService {
     protected AlarmService alarmService;
     @Autowired
     protected EntityActionService entityActionService;
+    @Autowired
     protected DeviceService deviceService;
     @Autowired
     protected AssetService assetService;
