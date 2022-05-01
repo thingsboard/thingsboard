@@ -42,6 +42,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -50,6 +51,7 @@ import java.util.List;
 
 @Slf4j
 @Service
+@TbCoreComponent
 @RequiredArgsConstructor
 public class DefaultTbNotificationEntityService implements TbNotificationEntityService {
     private static final ObjectMapper json = new ObjectMapper();
@@ -95,6 +97,18 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
                                                                                            SecurityUser user, Object... additionalInfo) {
         logEntityAction(tenantId, entityId, entity, customerId, actionType, user, additionalInfo);
         sendEntityAssignToEdgeNotificationMsg(tenantId, edgeId, entityId, edgeActionType);
+    }
+
+    @Override
+    public void notifyCreateOruUpdateTenant(Tenant tenant, ComponentLifecycleEvent event) {
+        tbClusterService.onTenantChange(tenant, null);
+        tbClusterService.broadcastEntityStateChangeEvent(tenant.getId(), tenant.getId(), event);
+    }
+
+    @Override
+    public void notifyDeleteTenant(Tenant tenant) {
+        tbClusterService.onTenantDelete(tenant, null);
+        tbClusterService.broadcastEntityStateChangeEvent(tenant.getId(), tenant.getId(), ComponentLifecycleEvent.DELETED);
     }
 
     @Override

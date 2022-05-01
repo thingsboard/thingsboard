@@ -44,9 +44,8 @@ public class DefaultTbTenantService extends AbstractTbEntityService implements T
                 installScripts.createDefaultEdgeRuleChains(savedTenant.getId());
             }
             tenantProfileCache.evict(savedTenant.getId());
-            tbClusterService.onTenantChange(savedTenant, null);
-            tbClusterService.broadcastEntityStateChangeEvent(savedTenant.getId(), savedTenant.getId(),
-                    newTenant ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+            notificationEntityService.notifyCreateOruUpdateTenant(tenant, newTenant ?
+                    ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
             return savedTenant;
         } catch (Exception e) {
             throw handleException(e);
@@ -59,8 +58,7 @@ public class DefaultTbTenantService extends AbstractTbEntityService implements T
             TenantId tenantId = tenant.getId();
             tenantService.deleteTenant(tenantId);
             tenantProfileCache.evict(tenantId);
-            tbClusterService.onTenantDelete(tenant, null);
-            tbClusterService.broadcastEntityStateChangeEvent(tenantId, tenantId, ComponentLifecycleEvent.DELETED);
+            notificationEntityService.notifyDeleteTenant(tenant);
         } catch (Exception e) {
             throw handleException(e);
         }
