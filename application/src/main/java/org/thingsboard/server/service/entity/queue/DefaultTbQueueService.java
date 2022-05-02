@@ -19,15 +19,19 @@ import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.queue.TbQueueAdmin;
-import org.thingsboard.server.queue.TbQueueClusterService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.ArrayList;
@@ -41,9 +45,12 @@ import java.util.stream.Collectors;
 @TbCoreComponent
 @AllArgsConstructor
 public class DefaultTbQueueService implements TbQueueService {
+    private static final String MAIN = "Main";
+
     private final QueueService queueService;
-    private final TbQueueClusterService queueClusterService;
+    private final TbClusterService tbClusterService;
     private final TbQueueAdmin tbQueueAdmin;
+    private final DeviceProfileService deviceProfileService;
 
     @Override
     public Queue saveQueue(Queue queue) {
@@ -90,8 +97,8 @@ public class DefaultTbQueueService implements TbQueueService {
             }
         }
 
-        if (queueClusterService != null) {
-            queueClusterService.onQueueChange(queue);
+        if (tbClusterService != null) {
+            tbClusterService.onQueueChange(queue);
         }
     }
 
@@ -106,13 +113,13 @@ public class DefaultTbQueueService implements TbQueueService {
                     tbQueueAdmin.createTopicIfNotExists(
                             new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName());
                 }
-                if (queueClusterService != null) {
-                    queueClusterService.onQueueChange(queue);
+                if (tbClusterService != null) {
+                    tbClusterService.onQueueChange(queue);
                 }
             } else {
                 log.info("Removed [{}] partitions from [{}] queue", oldPartitions - currentPartitions, queue.getName());
-                if (queueClusterService != null) {
-                    queueClusterService.onQueueChange(queue);
+                if (tbClusterService != null) {
+                    tbClusterService.onQueueChange(queue);
                 }
                 await();
                 for (int i = currentPartitions; i < oldPartitions; i++) {
@@ -120,14 +127,14 @@ public class DefaultTbQueueService implements TbQueueService {
                             new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName());
                 }
             }
-        } else if (!oldQueue.equals(queue) && queueClusterService != null) {
-            queueClusterService.onQueueChange(queue);
+        } else if (!oldQueue.equals(queue) && tbClusterService != null) {
+            tbClusterService.onQueueChange(queue);
         }
     }
 
     private void onQueueDeleted(TenantId tenantId, Queue queue) {
-        if (queueClusterService != null) {
-            queueClusterService.onQueueDelete(queue);
+        if (tbClusterService != null) {
+            tbClusterService.onQueueDelete(queue);
             await();
         }
 //        queueStatsService.deleteQueueStatsByQueueId(tenantId, queueId);
@@ -151,7 +158,6 @@ public class DefaultTbQueueService implements TbQueueService {
 
     @Override
     public void updateQueuesByTenants(List<TenantId> tenantIds, TenantProfile newTenantProfile, TenantProfile oldTenantProfile) {
-
         boolean oldIsolated = oldTenantProfile != null && oldTenantProfile.isIsolatedTbRuleEngine();
         boolean newIsolated = newTenantProfile.isIsolatedTbRuleEngine();
 
@@ -199,9 +205,35 @@ public class DefaultTbQueueService implements TbQueueService {
         }
 
         tenantIds.forEach(tenantId -> {
-            toRemove.forEach(q -> deleteQueueByQueueName(tenantId, q));
+            Map<QueueId, List<DeviceProfile>> deviceProfileQueues;
 
-            toCreate.forEach(key -> saveQueue(new Queue(tenantId, newQueues.get(key))));
+            if (oldTenantProfile != null && !newTenantProfile.getId().equals(oldTenantProfile.getId()) || !toRemove.isEmpty()) {
+                List<DeviceProfile> deviceProfiles = deviceProfileService.findDeviceProfiles(tenantId, new PageLink(Integer.MAX_VALUE)).getData();
+                deviceProfileQueues = deviceProfiles.stream()
+                        .filter(dp -> dp.getDefaultQueueId() != null)
+                        .collect(Collectors.groupingBy(DeviceProfile::getDefaultQueueId));
+            } else {
+                deviceProfileQueues = Collections.emptyMap();
+            }
+
+            Map<String, QueueId> createdQueues = toCreate.stream()
+                    .map(key -> saveQueue(new Queue(tenantId, newQueues.get(key))))
+                    .collect(Collectors.toMap(Queue::getName, Queue::getId));
+
+            // assigning created queues to device profiles instead of system queues
+            if (oldTenantProfile != null && !oldTenantProfile.isIsolatedTbRuleEngine()) {
+                deviceProfileQueues.forEach((queueId, list) -> {
+                    Queue queue = queueService.findQueueById(TenantId.SYS_TENANT_ID, queueId);
+                    QueueId queueIdToAssign = createdQueues.get(queue.getName());
+                    if (queueIdToAssign == null) {
+                        queueIdToAssign = createdQueues.get(MAIN);
+                    }
+                    for (DeviceProfile deviceProfile : list) {
+                        deviceProfile.setDefaultQueueId(queueIdToAssign);
+                        saveDeviceProfile(deviceProfile);
+                    }
+                });
+            }
 
             toUpdate.forEach(key -> {
                 Queue queueToUpdate = new Queue(tenantId, newQueues.get(key));
@@ -215,7 +247,30 @@ public class DefaultTbQueueService implements TbQueueService {
                     saveQueue(queueToUpdate);
                 }
             });
+
+            toRemove.forEach(q -> {
+                Queue queue = queueService.findQueueByTenantIdAndNameInternal(tenantId, q);
+                QueueId queueIdForRemove = queue.getId();
+                if (deviceProfileQueues.containsKey(queueIdForRemove)) {
+                    Queue foundQueue = queueService.findQueueByTenantIdAndName(tenantId, q);
+                    if (foundQueue == null) {
+                        foundQueue = queueService.findQueueByTenantIdAndName(tenantId, MAIN);
+                    }
+                    QueueId newQueueId = foundQueue.getId();
+                    deviceProfileQueues.get(queueIdForRemove).stream()
+                            .peek(dp -> dp.setDefaultQueueId(newQueueId))
+                            .forEach(this::saveDeviceProfile);
+                }
+                deleteQueue(tenantId, queueIdForRemove);
+            });
         });
+    }
+
+    //TODO: remove after implementing TbDeviceProfileService
+    private void saveDeviceProfile(DeviceProfile deviceProfile) {
+        DeviceProfile savedDeviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
+        tbClusterService.onDeviceProfileChange(savedDeviceProfile, null);
+        tbClusterService.broadcastEntityStateChangeEvent(deviceProfile.getTenantId(), savedDeviceProfile.getId(), ComponentLifecycleEvent.UPDATED);
     }
 
 }

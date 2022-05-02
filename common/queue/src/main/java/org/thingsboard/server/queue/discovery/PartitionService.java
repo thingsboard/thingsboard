@@ -56,6 +56,8 @@ public interface PartitionService {
 
     int resolvePartitionIndex(UUID entityId, int partitions);
 
+    void removeTenant(TenantId tenantId);
+
     int countTransportsByType(String type);
 
     void updateQueue(TransportProtos.QueueUpdateMsg queueUpdateMsg);

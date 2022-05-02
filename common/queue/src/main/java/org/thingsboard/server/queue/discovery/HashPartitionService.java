@@ -286,6 +286,11 @@ public class HashPartitionService implements PartitionService {
     }
 
     @Override
+    public void removeTenant(TenantId tenantId) {
+        tenantRoutingInfoMap.remove(tenantId);
+    }
+
+    @Override
     public int countTransportsByType(String type) {
         var list = tbTransportServicesByType.get(type);
         return list == null ? 0 : list.size();

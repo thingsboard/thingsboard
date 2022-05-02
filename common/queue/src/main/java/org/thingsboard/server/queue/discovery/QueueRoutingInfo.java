@@ -51,7 +51,7 @@ public class QueueRoutingInfo {
     }
 
     public QueueRoutingInfo(QueueUpdateMsg queueUpdateMsg) {
-        this.tenantId = new TenantId(new UUID(queueUpdateMsg.getTenantIdMSB(), queueUpdateMsg.getQueueIdLSB()));
+        this.tenantId = new TenantId(new UUID(queueUpdateMsg.getTenantIdMSB(), queueUpdateMsg.getTenantIdLSB()));
         this.queueId = new QueueId(new UUID(queueUpdateMsg.getQueueIdMSB(), queueUpdateMsg.getQueueIdLSB()));
         this.queueName = queueUpdateMsg.getQueueName();
         this.queueTopic = queueUpdateMsg.getQueueTopic();
