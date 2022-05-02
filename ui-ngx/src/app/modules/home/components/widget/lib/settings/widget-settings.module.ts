@@ -202,6 +202,15 @@ import {
 import {
   PhotoCameraInputWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/input/photo-camera-input-widget-settings.component';
+import {
+  UpdateMultipleAttributesWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/input/update-multiple-attributes-widget-settings.component';
+import {
+  DataKeySelectOptionComponent
+} from '@home/components/widget/lib/settings/input/datakey-select-option.component';
+import {
+  UpdateMultipleAttributesKeySettingsComponent
+} from '@home/components/widget/lib/settings/input/update-multiple-attributes-key-settings.component';
 
 @NgModule({
   declarations: [
@@ -275,7 +284,10 @@ import {
     UpdateDateAttributeWidgetSettingsComponent,
     UpdateLocationAttributeWidgetSettingsComponent,
     UpdateJsonAttributeWidgetSettingsComponent,
-    PhotoCameraInputWidgetSettingsComponent
+    PhotoCameraInputWidgetSettingsComponent,
+    UpdateMultipleAttributesWidgetSettingsComponent,
+    DataKeySelectOptionComponent,
+    UpdateMultipleAttributesKeySettingsComponent
   ],
   imports: [
     CommonModule,
@@ -353,7 +365,10 @@ import {
     UpdateDateAttributeWidgetSettingsComponent,
     UpdateLocationAttributeWidgetSettingsComponent,
     UpdateJsonAttributeWidgetSettingsComponent,
-    PhotoCameraInputWidgetSettingsComponent
+    PhotoCameraInputWidgetSettingsComponent,
+    UpdateMultipleAttributesWidgetSettingsComponent,
+    DataKeySelectOptionComponent,
+    UpdateMultipleAttributesKeySettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -415,5 +430,7 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-update-date-attribute-widget-settings': UpdateDateAttributeWidgetSettingsComponent,
   'tb-update-location-attribute-widget-settings': UpdateLocationAttributeWidgetSettingsComponent,
   'tb-update-json-attribute-widget-settings': UpdateJsonAttributeWidgetSettingsComponent,
-  'tb-photo-camera-input-widget-settings': PhotoCameraInputWidgetSettingsComponent
+  'tb-photo-camera-input-widget-settings': PhotoCameraInputWidgetSettingsComponent,
+  'tb-update-multiple-attributes-widget-settings': UpdateMultipleAttributesWidgetSettingsComponent,
+  'tb-update-multiple-attributes-key-settings': UpdateMultipleAttributesKeySettingsComponent
 };
