@@ -25,6 +25,7 @@ import org.junit.runner.RunWith;
         "org.thingsboard.server.dao.service.event.sql.*SqlTest",
         "org.thingsboard.server.dao.service.sql.*SqlTest",
         "org.thingsboard.server.dao.service.timeseries.sql.*SqlTest",
+        "org.thingsboard.server.dao.service.install.sql.*SqlTest"
 })
 public class SqlDaoServiceTestSuite {
 }

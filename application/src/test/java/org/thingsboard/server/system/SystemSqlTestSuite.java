@@ -29,9 +29,4 @@ import org.thingsboard.server.queue.memory.InMemoryStorage;
 })
 public class SystemSqlTestSuite {
 
-    @BeforeClass
-    public static void cleanupInMemStorage() {
-        InMemoryStorage.getInstance().cleanup();
-    }
-
 }

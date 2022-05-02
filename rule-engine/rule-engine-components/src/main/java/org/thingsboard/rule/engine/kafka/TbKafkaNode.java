@@ -158,7 +158,7 @@ public class TbKafkaNode implements TbNode {
     }
 
     private void processRecord(TbContext ctx, TbMsg msg, RecordMetadata metadata, Exception e) {
-        if (metadata != null) {
+        if (e == null) {
             TbMsg next = processResponse(ctx, msg, metadata);
             ctx.tellNext(next, TbRelationTypes.SUCCESS);
         } else {
