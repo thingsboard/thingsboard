@@ -29,8 +29,6 @@ public interface QueueService {
 
     void deleteQueue(TenantId tenantId, QueueId queueId);
 
-    void deleteQueueByQueueName(TenantId tenantId, String queueName);
-
     List<Queue> findQueuesByTenantId(TenantId tenantId);
 
     PageData<Queue> findQueuesByTenantId(TenantId tenantId, PageLink pageLink);
@@ -40,6 +38,8 @@ public interface QueueService {
     Queue findQueueById(TenantId tenantId, QueueId queueId);
 
     Queue findQueueByTenantIdAndName(TenantId tenantId, String name);
+
+    Queue findQueueByTenantIdAndNameInternal(TenantId tenantId, String queueName);
 
     void deleteQueuesByTenantId(TenantId tenantId);
 }

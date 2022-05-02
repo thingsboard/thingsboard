@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue;
+package org.thingsboard.server.service.entity.queue;
 
-import org.thingsboard.server.common.msg.queue.ServiceType;
-
-import java.util.Set;
+import org.thingsboard.server.common.data.id.QueueId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.queue.Queue;
 
 public interface TbQueueService {
 
-    Set<String> getQueuesByServiceType(ServiceType serviceType);
+    Queue saveQueue(Queue queue);
 
-    String resolve(ServiceType serviceType, String queueName);
+    void deleteQueue(TenantId tenantId, QueueId queueId);
 
+    void deleteQueueByQueueName(TenantId tenantId, String queueName);
 }

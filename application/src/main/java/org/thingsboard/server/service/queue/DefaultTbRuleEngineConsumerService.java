@@ -407,7 +407,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
         }
     }
 
-    private void updateQueue(TransportProtos.QueueUpdateMsg queueUpdateMsg) {
+    private synchronized void updateQueue(TransportProtos.QueueUpdateMsg queueUpdateMsg) {
         String queueName = queueUpdateMsg.getQueueName();
         TenantId tenantId = new TenantId(new UUID(queueUpdateMsg.getTenantIdMSB(), queueUpdateMsg.getTenantIdLSB()));
         QueueId queueId = new QueueId(new UUID(queueUpdateMsg.getQueueIdMSB(), queueUpdateMsg.getQueueIdLSB()));

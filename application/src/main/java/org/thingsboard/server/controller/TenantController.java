@@ -18,8 +18,8 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.entity.tenant.TbTenantService;
 import org.thingsboard.server.service.install.InstallScripts;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
@@ -63,14 +64,14 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 @TbCoreComponent
 @RequestMapping("/api")
 @Slf4j
+@RequiredArgsConstructor
 public class TenantController extends BaseController {
 
     private static final String TENANT_INFO_DESCRIPTION = "The Tenant Info object extends regular Tenant object and includes Tenant Profile name. ";
-    @Autowired
-    private InstallScripts installScripts;
 
-    @Autowired
-    private TenantService tenantService;
+    private final InstallScripts installScripts;
+    private final TenantService tenantService;
+    private final TbTenantService tbTenantService;
 
     @ApiOperation(value = "Get Tenant (getTenantById)",
             notes = "Fetch the Tenant object based on the provided Tenant Id. " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
@@ -129,7 +130,7 @@ public class TenantController extends BaseController {
 
             checkEntity(tenant.getId(), tenant, Resource.TENANT);
 
-            tenant = checkNotNull(tenantService.saveTenant(tenant));
+            tenant = checkNotNull(tbTenantService.saveTenant(tenant));
             if (newTenant) {
                 installScripts.createDefaultRuleChains(tenant.getId());
                 installScripts.createDefaultEdgeRuleChains(tenant.getId());

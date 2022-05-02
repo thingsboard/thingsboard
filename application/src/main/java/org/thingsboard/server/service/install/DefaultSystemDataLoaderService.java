@@ -79,6 +79,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerService;
@@ -208,13 +209,37 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
             log.warn(e.getMessage());
         }
 
+        TenantProfileData isolatedRuleEngineTenantProfileData = new TenantProfileData();
+        isolatedRuleEngineTenantProfileData.setConfiguration(new DefaultTenantProfileConfiguration());
+
+        TenantProfileQueueConfiguration mainQueueConfiguration = new TenantProfileQueueConfiguration();
+        mainQueueConfiguration.setName("Main");
+        mainQueueConfiguration.setTopic("tb_rule_engine.main");
+        mainQueueConfiguration.setPollInterval(25);
+        mainQueueConfiguration.setPartitions(10);
+        mainQueueConfiguration.setConsumerPerPartition(true);
+        mainQueueConfiguration.setPackProcessingTimeout(2000);
+        SubmitStrategy mainQueueSubmitStrategy = new SubmitStrategy();
+        mainQueueSubmitStrategy.setType(SubmitStrategyType.BURST);
+        mainQueueSubmitStrategy.setBatchSize(1000);
+        mainQueueConfiguration.setSubmitStrategy(mainQueueSubmitStrategy);
+        ProcessingStrategy mainQueueProcessingStrategy = new ProcessingStrategy();
+        mainQueueProcessingStrategy.setType(ProcessingStrategyType.SKIP_ALL_FAILURES);
+        mainQueueProcessingStrategy.setRetries(3);
+        mainQueueProcessingStrategy.setFailurePercentage(0);
+        mainQueueProcessingStrategy.setPauseBetweenRetries(3);
+        mainQueueProcessingStrategy.setMaxPauseBetweenRetries(3);
+        mainQueueConfiguration.setProcessingStrategy(mainQueueProcessingStrategy);
+
+        isolatedRuleEngineTenantProfileData.setQueueConfiguration(Collections.singletonList(mainQueueConfiguration));
+
         TenantProfile isolatedTbRuleEngineProfile = new TenantProfile();
         isolatedTbRuleEngineProfile.setDefault(false);
         isolatedTbRuleEngineProfile.setName("Isolated TB Rule Engine");
         isolatedTbRuleEngineProfile.setDescription("Isolated TB Rule Engine tenant profile");
         isolatedTbRuleEngineProfile.setIsolatedTbCore(false);
         isolatedTbRuleEngineProfile.setIsolatedTbRuleEngine(true);
-        isolatedTbRuleEngineProfile.setProfileData(tenantProfileData);
+        isolatedTbRuleEngineProfile.setProfileData(isolatedRuleEngineTenantProfileData);
 
         try {
             tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, isolatedTbRuleEngineProfile);
@@ -228,7 +253,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         isolatedTbCoreAndTbRuleEngineProfile.setDescription("Isolated TB Core and TB Rule Engine tenant profile");
         isolatedTbCoreAndTbRuleEngineProfile.setIsolatedTbCore(true);
         isolatedTbCoreAndTbRuleEngineProfile.setIsolatedTbRuleEngine(true);
-        isolatedTbCoreAndTbRuleEngineProfile.setProfileData(tenantProfileData);
+        isolatedTbCoreAndTbRuleEngineProfile.setProfileData(isolatedRuleEngineTenantProfileData);
 
         try {
             tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, isolatedTbCoreAndTbRuleEngineProfile);

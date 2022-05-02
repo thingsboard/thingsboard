@@ -29,14 +29,14 @@ public interface TenantService {
     TenantInfo findTenantInfoById(TenantId tenantId);
 
     ListenableFuture<Tenant> findTenantByIdAsync(TenantId callerId, TenantId tenantId);
-    
+
     Tenant saveTenant(Tenant tenant);
-    
+
     void deleteTenant(TenantId tenantId);
-    
+
     PageData<Tenant> findTenants(PageLink pageLink);
 
     PageData<TenantInfo> findTenantInfos(PageLink pageLink);
-    
+
     void deleteTenants();
 }

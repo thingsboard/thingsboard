@@ -16,7 +16,6 @@
 package org.thingsboard.server.queue;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.msg.queue.ServiceQueue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -31,7 +30,7 @@ import java.util.stream.Collectors;
 
 //@Service
 @RequiredArgsConstructor
-public class DefaultTbQueueService implements TbQueueService {
+public class DefaultTbQueueServiceDeprecated implements TbQueueServiceDeprecated {
 
     private final TbQueueRuleEngineSettings ruleEngineSettings;
     private Set<String> ruleEngineQueues;

@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.queue;
 
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,15 +29,12 @@ import org.thingsboard.server.common.data.queue.ProcessingStrategy;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.queue.SubmitStrategy;
 import org.thingsboard.server.common.data.queue.SubmitStrategyType;
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
-import org.thingsboard.server.queue.TbQueueAdmin;
-import org.thingsboard.server.queue.TbQueueClusterService;
 
 import java.util.List;
 
@@ -53,12 +49,6 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     @Autowired
     private TbTenantProfileCache tenantProfileCache;
 
-    @Autowired(required = false)
-    private TbQueueAdmin tbQueueAdmin;
-
-    @Autowired(required = false)
-    private TbQueueClusterService queueClusterService;
-
 //    @Autowired
 //    private QueueStatsService queueStatsService;
 
@@ -66,101 +56,13 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     public Queue saveQueue(Queue queue) {
         log.trace("Executing createOrUpdateQueue [{}]", queue);
         queueValidator.validate(queue, Queue::getTenantId);
-        Queue savedQueue;
-        if (queue.getId() == null) {
-            savedQueue = createQueue(queue);
-        } else {
-            savedQueue = updateQueue(queue);
-        }
-
-        return savedQueue;
-    }
-
-    private Queue createQueue(Queue queue) {
-        Queue createdQueue = queueDao.save(queue.getTenantId(), queue);
-        if (tbQueueAdmin != null) {
-            for (int i = 0; i < queue.getPartitions(); i++) {
-                tbQueueAdmin.createTopicIfNotExists(new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName());
-            }
-        }
-
-        if (queueClusterService != null) {
-            queueClusterService.onQueueChange(createdQueue);
-        }
-
-        return createdQueue;
-    }
-
-    private Queue updateQueue(Queue queue) {
-        Queue oldQueue = queueDao.findById(queue.getTenantId(), queue.getUuidId());
-        Queue updatedQueue = queueDao.save(queue.getTenantId(), queue);
-
-        int oldPartitions = oldQueue.getPartitions();
-        int currentPartitions = queue.getPartitions();
-
-        if (currentPartitions != oldPartitions && tbQueueAdmin != null) {
-            if (currentPartitions > oldPartitions) {
-                log.info("Added [{}] new partitions to [{}] queue", currentPartitions - oldPartitions, queue.getName());
-                for (int i = oldPartitions; i < currentPartitions; i++) {
-                    tbQueueAdmin.createTopicIfNotExists(new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName());
-                }
-                if (queueClusterService != null) {
-                    queueClusterService.onQueueChange(updatedQueue);
-                }
-            } else {
-                log.info("Removed [{}] partitions from [{}] queue", oldPartitions - currentPartitions, queue.getName());
-                if (queueClusterService != null) {
-                    queueClusterService.onQueueChange(updatedQueue);
-                }
-                await();
-                for (int i = currentPartitions; i < oldPartitions; i++) {
-                    tbQueueAdmin.deleteTopic(new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName());
-                }
-            }
-        } else if (!oldQueue.equals(queue) && queueClusterService != null) {
-            queueClusterService.onQueueChange(updatedQueue);
-        }
-
-        return updatedQueue;
+        return queueDao.save(queue.getTenantId(), queue);
     }
 
     @Override
     public void deleteQueue(TenantId tenantId, QueueId queueId) {
         log.trace("Executing deleteQueue, queueId: [{}]", queueId);
-        Queue queue = findQueueById(tenantId, queueId);
-        doDelete(tenantId, queue);
-    }
-
-    @Override
-    public void deleteQueueByQueueName(TenantId tenantId, String queueName) {
-        log.trace("Executing deleteQueueByQueueName, name: [{}]", queueName);
-        Queue queue = findQueueByTenantIdAndName(tenantId, queueName);
-        doDelete(tenantId, queue);
-    }
-
-    private void doDelete(TenantId tenantId, Queue queue) {
-        if (queueClusterService != null) {
-            queueClusterService.onQueueDelete(queue);
-            await();
-        }
-//        queueStatsService.deleteQueueStatsByQueueId(tenantId, queueId);
-        boolean result = queueDao.removeById(tenantId, queue.getUuidId());
-        if (result && tbQueueAdmin != null) {
-            for (int i = 0; i < queue.getPartitions(); i++) {
-                String fullTopicName = new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName();
-                log.debug("Deleting queue [{}]", fullTopicName);
-                try {
-                    tbQueueAdmin.deleteTopic(fullTopicName);
-                } catch (Exception e) {
-                    log.error("Failed to delete queue [{}]", fullTopicName);
-                }
-            }
-        }
-    }
-
-    @SneakyThrows
-    private void await() {
-        Thread.sleep(3000);
+        queueDao.removeById(tenantId, queueId.getId());
     }
 
     @Override
@@ -192,6 +94,12 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     public Queue findQueueByTenantIdAndName(TenantId tenantId, String queueName) {
         log.trace("Executing findQueueByTenantIdAndName, tenantId: [{}] queueName: [{}]", tenantId, queueName);
         return queueDao.findQueueByTenantIdAndName(getSystemOrIsolatedTenantId(tenantId), queueName);
+    }
+
+    @Override
+    public Queue findQueueByTenantIdAndNameInternal(TenantId tenantId, String queueName) {
+        log.trace("Executing findQueueByTenantIdAndNameInternal, tenantId: [{}] queueName: [{}]", tenantId, queueName);
+        return queueDao.findQueueByTenantIdAndName(tenantId, queueName);
     }
 
     @Override
