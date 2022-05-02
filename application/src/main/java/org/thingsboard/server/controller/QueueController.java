@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.entity.queue.TbQueueService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
@@ -51,6 +52,8 @@ import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHO
 @RequestMapping("/api")
 @RequiredArgsConstructor
 public class QueueController extends BaseController {
+
+    private final TbQueueService tbQueueService;
 
     @ApiOperation(value = "Get queue names (getTenantQueuesByServiceType)",
             notes = "Returns a set of unique queue names based on service type. " + TENANT_AUTHORITY_PARAGRAPH)
@@ -126,7 +129,7 @@ public class QueueController extends BaseController {
             switch (type) {
                 case TB_RULE_ENGINE:
                     queue.setTenantId(getTenantId());
-                    Queue savedQueue = queueService.saveQueue(queue);
+                    Queue savedQueue = tbQueueService.saveQueue(queue);
                     checkNotNull(savedQueue);
                     return savedQueue;
                 default:
@@ -145,7 +148,7 @@ public class QueueController extends BaseController {
         try {
             QueueId queueId = new QueueId(toUUID(queueIdStr));
             checkQueueId(queueId, Operation.DELETE);
-            queueService.deleteQueue(getTenantId(), queueId);
+            tbQueueService.deleteQueue(getTenantId(), queueId);
         } catch (Exception e) {
             throw handleException(e);
         }

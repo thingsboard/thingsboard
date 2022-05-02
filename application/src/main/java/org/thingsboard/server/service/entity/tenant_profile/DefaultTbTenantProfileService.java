@@ -13,45 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entity.tenant;
+package org.thingsboard.server.service.entity.tenant_profile;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entity.queue.TbQueueService;
 
-import java.util.Collections;
+import java.util.List;
 
 @Slf4j
 @Service
 @TbCoreComponent
 @AllArgsConstructor
-public class DefaultTbTenantService implements TbTenantService {
-
-    private final TenantService tenantService;
-    private final TbQueueService tbQueueService;
+public class DefaultTbTenantProfileService implements TbTenantProfileService {
+    private final TbQueueService queueService;
     private final TenantProfileService tenantProfileService;
-    private final TbTenantProfileCache tenantProfileCache;
+    private final TenantService tenantService;
 
     @Override
-    public Tenant saveTenant(Tenant tenant) {
-        boolean updated = tenant.getId() != null;
-        Tenant oldTenant = updated ? tenantService.findTenantById(tenant.getId()) : null;
+    public TenantProfile saveTenantProfile(TenantId tenantId, TenantProfile tenantProfile, TenantProfile oldTenantProfile) {
+        TenantProfile savedTenantProfile = tenantProfileService.saveTenantProfile(tenantId, tenantProfile);
 
-        Tenant savedTenant = tenantService.saveTenant(tenant);
-        tenantProfileCache.evict(tenant.getId());
+        if (oldTenantProfile != null && savedTenantProfile.isIsolatedTbRuleEngine()) {
+            List<TenantId> tenantIds = tenantService.findTenantIdsByTenantProfileId(savedTenantProfile.getId());
+            queueService.updateQueuesByTenants(tenantIds, savedTenantProfile, oldTenantProfile);
+        }
 
-        TenantProfile oldTenantProfile = oldTenant != null ? tenantProfileService.findTenantProfileById(TenantId.SYS_TENANT_ID, oldTenant.getTenantProfileId()) : null;
-        TenantProfile newTenantProfile = tenantProfileService.findTenantProfileById(TenantId.SYS_TENANT_ID, savedTenant.getTenantProfileId());
-        tbQueueService.updateQueuesByTenants(Collections.singletonList(savedTenant.getTenantId()), newTenantProfile, oldTenantProfile);
-        return savedTenant;
+        return savedTenantProfile;
     }
-
 }

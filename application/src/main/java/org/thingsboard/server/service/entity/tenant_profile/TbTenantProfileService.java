@@ -13,22 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entity.queue;
+package org.thingsboard.server.service.entity.tenant_profile;
 
 import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.queue.Queue;
 
-import java.util.List;
-
-public interface TbQueueService {
-
-    Queue saveQueue(Queue queue);
-
-    void deleteQueue(TenantId tenantId, QueueId queueId);
-
-    void deleteQueueByQueueName(TenantId tenantId, String queueName);
-
-    void updateQueuesByTenants(List<TenantId> tenantIds, TenantProfile newTenantProfile, TenantProfile oldTenantProfile);
+public interface TbTenantProfileService {
+    TenantProfile saveTenantProfile(TenantId tenantId, TenantProfile tenantProfile, TenantProfile oldTenantProfile);
 }

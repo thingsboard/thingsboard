@@ -20,12 +20,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -47,6 +47,8 @@ import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
+
+import java.util.List;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -181,6 +183,12 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
         log.trace("Executing findTenantInfos pageLink [{}]", pageLink);
         Validator.validatePageLink(pageLink);
         return tenantDao.findTenantInfosByRegion(TenantId.SYS_TENANT_ID, DEFAULT_TENANT_REGION, pageLink);
+    }
+
+    @Override
+    public List<TenantId> findTenantIdsByTenantProfileId(TenantProfileId tenantProfileId) {
+        log.trace("Executing findTenantsByTenantProfileId [{}]", tenantProfileId);
+        return tenantDao.findTenantIdsByTenantProfileId(tenantProfileId);
     }
 
     @Override

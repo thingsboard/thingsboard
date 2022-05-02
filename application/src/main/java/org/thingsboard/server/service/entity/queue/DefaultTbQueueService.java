@@ -19,14 +19,22 @@ import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.Queue;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueClusterService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -139,6 +147,75 @@ public class DefaultTbQueueService implements TbQueueService {
     @SneakyThrows
     private void await() {
         Thread.sleep(3000);
+    }
+
+    @Override
+    public void updateQueuesByTenants(List<TenantId> tenantIds, TenantProfile newTenantProfile, TenantProfile oldTenantProfile) {
+
+        boolean oldIsolated = oldTenantProfile != null && oldTenantProfile.isIsolatedTbRuleEngine();
+        boolean newIsolated = newTenantProfile.isIsolatedTbRuleEngine();
+
+        if (!oldIsolated && !newIsolated) {
+            return;
+        }
+
+        if (newTenantProfile.equals(oldTenantProfile)) {
+            return;
+        }
+
+        Map<String, TenantProfileQueueConfiguration> oldQueues;
+        Map<String, TenantProfileQueueConfiguration> newQueues;
+
+        if (oldIsolated) {
+            oldQueues = oldTenantProfile.getProfileData().getQueueConfiguration().stream()
+                    .collect(Collectors.toMap(TenantProfileQueueConfiguration::getName, q -> q));
+        } else {
+            oldQueues = Collections.emptyMap();
+        }
+
+        if (newIsolated) {
+            newQueues = newTenantProfile.getProfileData().getQueueConfiguration().stream()
+                    .collect(Collectors.toMap(TenantProfileQueueConfiguration::getName, q -> q));
+        } else {
+            newQueues = Collections.emptyMap();
+        }
+
+        List<String> toRemove = new ArrayList<>();
+        List<String> toCreate = new ArrayList<>();
+        List<String> toUpdate = new ArrayList<>();
+
+        for (String oldQueue : oldQueues.keySet()) {
+            if (!newQueues.containsKey(oldQueue)) {
+                toRemove.add(oldQueue);
+            }
+        }
+
+        for (String newQueue : newQueues.keySet()) {
+            if (oldQueues.containsKey(newQueue)) {
+                toUpdate.add(newQueue);
+            } else {
+                toCreate.add(newQueue);
+            }
+        }
+
+        tenantIds.forEach(tenantId -> {
+            toRemove.forEach(q -> deleteQueueByQueueName(tenantId, q));
+
+            toCreate.forEach(key -> saveQueue(new Queue(tenantId, newQueues.get(key))));
+
+            toUpdate.forEach(key -> {
+                Queue queueToUpdate = new Queue(tenantId, newQueues.get(key));
+                Queue foundQueue = queueService.findQueueByTenantIdAndName(tenantId, key);
+                queueToUpdate.setId(foundQueue.getId());
+                queueToUpdate.setCreatedTime(foundQueue.getCreatedTime());
+
+                if (queueToUpdate.equals(foundQueue)) {
+                    //Queue not changed
+                } else {
+                    saveQueue(queueToUpdate);
+                }
+            });
+        });
     }
 
 }
