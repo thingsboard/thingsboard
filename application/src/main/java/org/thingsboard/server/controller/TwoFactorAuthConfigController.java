@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFactorAuthProviderConfig;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFactorAuthConfigManager;
@@ -45,6 +46,10 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
 
@@ -63,21 +68,32 @@ public class TwoFactorAuthConfigController extends BaseController {
                     "or if a provider for previously set up account config is not now configured." + NEW_LINE +
                     ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER + NEW_LINE +
                     "Response example for TOTP 2FA: " + NEW_LINE +
-                    "{\n" +
+                    "```\n{\n" +
                     "  \"providerType\": \"TOTP\",\n" +
                     "  \"authUrl\": \"otpauth://totp/ThingsBoard:tenant@thingsboard.org?issuer=ThingsBoard&secret=FUNBIM3CXFNNGQR6ZIPVWHP65PPFWDII\"\n" +
-                    "}" + NEW_LINE +
+                        "}\n```" + NEW_LINE +
                     "Response example for SMS 2FA: " + NEW_LINE +
-                    "{\n" +
+                    "```\n{\n" +
                     "  \"providerType\": \"SMS\",\n" +
                     "  \"phoneNumber\": \"+380505005050\"\n" +
-                    "}")
+                    "}\n```")
     @GetMapping("/account/config")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public TwoFactorAuthAccountConfig getTwoFaAccountConfig() throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         return twoFactorAuthConfigManager.getTwoFaAccountConfig(user.getTenantId(), user.getId()).orElse(null);
     }
+
+
+    @GetMapping("/providers")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    public List<TwoFactorAuthProviderType> getAvailableTwoFaProviders() throws ThingsboardException {
+        return twoFactorAuthConfigManager.getTwoFaSettings(getTenantId(), true)
+                .map(TwoFactorAuthSettings::getProviders).orElse(Collections.emptyList()).stream()
+                .map(TwoFactorAuthProviderConfig::getProviderType)
+                .collect(Collectors.toList());
+    }
+
 
     @ApiOperation(value = "Generate 2FA account config (generateTwoFaAccountConfig)",
             notes = "Generate new 2FA account config for specified provider type. " +
@@ -89,15 +105,15 @@ public class TwoFactorAuthConfigController extends BaseController {
                     "Will throw an error (Bad Request) if the provider is not configured for usage. " +
                     ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER + NEW_LINE +
                     "Example of a generated account config for TOTP 2FA: " + NEW_LINE +
-                    "{\n" +
+                    "```\n{\n" +
                     "  \"providerType\": \"TOTP\",\n" +
                     "  \"authUrl\": \"otpauth://totp/ThingsBoard:tenant@thingsboard.org?issuer=ThingsBoard&secret=FUNBIM3CXFNNGQR6ZIPVWHP65PPFWDII\"\n" +
-                    "}" + NEW_LINE +
+                    "}\n```" + NEW_LINE +
                     "For SMS provider type it will return something like: " + NEW_LINE +
-                    "{\n" +
+                    "```\n{\n" +
                     "  \"providerType\": \"SMS\",\n" +
                     "  \"phoneNumber\": null\n" +
-                    "}")
+                    "}\n```")
     @PostMapping("/account/config/generate")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public TwoFactorAuthAccountConfig generateTwoFaAccountConfig(@ApiParam(value = "2FA provider type to generate new account config for", defaultValue = "TOTP", required = true)
