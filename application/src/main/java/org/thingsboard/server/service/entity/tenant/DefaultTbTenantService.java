@@ -46,7 +46,7 @@ public class DefaultTbTenantService implements TbTenantService {
         Tenant oldTenant = updated ? tenantService.findTenantById(tenant.getId()) : null;
 
         Tenant savedTenant = tenantService.saveTenant(tenant);
-        tenantProfileCache.evict(tenant.getId());
+        tenantProfileCache.evict(savedTenant.getId());
 
         TenantProfile oldTenantProfile = oldTenant != null ? tenantProfileService.findTenantProfileById(TenantId.SYS_TENANT_ID, oldTenant.getTenantProfileId()) : null;
         TenantProfile newTenantProfile = tenantProfileService.findTenantProfileById(TenantId.SYS_TENANT_ID, savedTenant.getTenantProfileId());
