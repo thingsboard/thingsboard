@@ -171,6 +171,7 @@ public abstract class BaseTenantProfileServiceTest extends AbstractServiceTest {
         TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile");
         TenantProfile savedTenantProfile = tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
         savedTenantProfile.setIsolatedTbRuleEngine(true);
+        addMainQueueConfig(savedTenantProfile);
         tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, savedTenantProfile);
     }
 
@@ -300,4 +301,27 @@ public abstract class BaseTenantProfileServiceTest extends AbstractServiceTest {
         return tenantProfile;
     }
 
+    private void addMainQueueConfig(TenantProfile tenantProfile) {
+        TenantProfileQueueConfiguration mainQueueConfiguration = new TenantProfileQueueConfiguration();
+        mainQueueConfiguration.setName("Main");
+        mainQueueConfiguration.setTopic("tb_rule_engine.main");
+        mainQueueConfiguration.setPollInterval(25);
+        mainQueueConfiguration.setPartitions(10);
+        mainQueueConfiguration.setConsumerPerPartition(true);
+        mainQueueConfiguration.setPackProcessingTimeout(2000);
+        SubmitStrategy mainQueueSubmitStrategy = new SubmitStrategy();
+        mainQueueSubmitStrategy.setType(SubmitStrategyType.BURST);
+        mainQueueSubmitStrategy.setBatchSize(1000);
+        mainQueueConfiguration.setSubmitStrategy(mainQueueSubmitStrategy);
+        ProcessingStrategy mainQueueProcessingStrategy = new ProcessingStrategy();
+        mainQueueProcessingStrategy.setType(ProcessingStrategyType.SKIP_ALL_FAILURES);
+        mainQueueProcessingStrategy.setRetries(3);
+        mainQueueProcessingStrategy.setFailurePercentage(0);
+        mainQueueProcessingStrategy.setPauseBetweenRetries(3);
+        mainQueueProcessingStrategy.setMaxPauseBetweenRetries(3);
+        mainQueueConfiguration.setProcessingStrategy(mainQueueProcessingStrategy);
+        TenantProfileData profileData = tenantProfile.getProfileData();
+        profileData.setQueueConfiguration(Collections.singletonList(mainQueueConfiguration));
+        tenantProfile.setProfileData(profileData);
+    }
 }
