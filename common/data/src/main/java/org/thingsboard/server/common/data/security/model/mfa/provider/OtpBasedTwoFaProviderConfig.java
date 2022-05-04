@@ -15,7 +15,15 @@
  */
 package org.thingsboard.server.common.data.security.model.mfa.provider;
 
-public enum TwoFactorAuthProviderType {
-    TOTP,
-    SMS
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+
+import javax.validation.constraints.Min;
+
+@Data
+public abstract class OtpBasedTwoFaProviderConfig implements TwoFaProviderConfig {
+    @ApiModelProperty(value = "Verification code lifetime in seconds. Verification codes with a lifetime bigger than this param " +
+            "will be considered incorrect", example = "60", required = true)
+    @Min(value = 1, message = "verification code lifetime is required")
+    private int verificationCodeLifetime;
 }

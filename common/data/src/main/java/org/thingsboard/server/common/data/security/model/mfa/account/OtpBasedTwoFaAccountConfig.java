@@ -13,17 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.security.model.mfa.provider;
+package org.thingsboard.server.common.data.security.model.mfa.account;
 
-import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-
-import javax.validation.constraints.Min;
+import lombok.EqualsAndHashCode;
 
 @Data
-public abstract class OtpBasedTwoFactorAuthProviderConfig implements TwoFactorAuthProviderConfig {
-    @ApiModelProperty(value = "Verification code lifetime in seconds. Verification codes with a lifetime bigger than this param " +
-            "will be considered incorrect", example = "60", required = true)
-    @Min(value = 1, message = "verification code lifetime is required")
-    private int verificationCodeLifetime;
+@EqualsAndHashCode(callSuper = true)
+public abstract class OtpBasedTwoFaAccountConfig extends TwoFaAccountConfig {
 }

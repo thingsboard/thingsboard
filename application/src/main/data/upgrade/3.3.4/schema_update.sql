@@ -18,5 +18,5 @@ CREATE TABLE IF NOT EXISTS user_auth_settings (
     id uuid NOT NULL CONSTRAINT user_auth_settings_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     user_id uuid UNIQUE NOT NULL CONSTRAINT fk_user_auth_settings_user_id REFERENCES tb_user(id),
-    mfa_account_config varchar
+    two_fa_settings varchar
 );

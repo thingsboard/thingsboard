@@ -15,24 +15,23 @@
  */
 package org.thingsboard.server.common.data.security.model.mfa.provider;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-import javax.validation.constraints.NotBlank;
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        property = "providerType")
+@JsonSubTypes({
+        @Type(name = "TOTP", value = TotpTwoFaProviderConfig.class),
+        @Type(name = "SMS", value = SmsTwoFaProviderConfig.class)
+})
+public interface TwoFaProviderConfig {
 
-@ApiModel
-@Data
-public class TotpTwoFactorAuthProviderConfig implements TwoFactorAuthProviderConfig {
-
-    @ApiModelProperty(value = "Issuer name that will be displayed in an authenticator app near a username. " +
-            "Must not be blank.", example = "ThingsBoard", required = true)
-    @NotBlank(message = "issuer name must not be blank")
-    private String issuerName;
-
-    @Override
-    public TwoFactorAuthProviderType getProviderType() {
-        return TwoFactorAuthProviderType.TOTP;
-    }
+    @JsonIgnore
+    TwoFaProviderType getProviderType();
 
 }

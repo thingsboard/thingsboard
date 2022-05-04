@@ -17,20 +17,27 @@ package org.thingsboard.server.service.security.auth.mfa;
 
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.security.model.mfa.account.TwoFactorAuthAccountConfig;
-import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFactorAuthProviderType;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.security.model.mfa.account.TwoFaAccountConfig;
+import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface TwoFactorAuthService {
 
-    void prepareVerificationCode(SecurityUser securityUser, boolean checkLimits) throws Exception;
+    boolean isTwoFaEnabled(TenantId tenantId, UserId userId);
 
-    void prepareVerificationCode(SecurityUser securityUser, TwoFactorAuthAccountConfig accountConfig, boolean checkLimits) throws ThingsboardException;
 
-    boolean checkVerificationCode(SecurityUser securityUser, String verificationCode, boolean checkLimits) throws ThingsboardException;
+    void prepareVerificationCode(SecurityUser user, TwoFaProviderType providerType, boolean checkLimits) throws Exception;
 
-    boolean checkVerificationCode(SecurityUser securityUser, String verificationCode, TwoFactorAuthAccountConfig accountConfig, boolean checkLimits) throws ThingsboardException;
+    void prepareVerificationCode(SecurityUser user, TwoFaAccountConfig accountConfig, boolean checkLimits) throws ThingsboardException;
 
-    TwoFactorAuthAccountConfig generateNewAccountConfig(User user, TwoFactorAuthProviderType providerType) throws ThingsboardException;
+
+    boolean checkVerificationCode(SecurityUser user, TwoFaProviderType providerType, String verificationCode, boolean checkLimits) throws ThingsboardException;
+
+    boolean checkVerificationCode(SecurityUser user, String verificationCode, TwoFaAccountConfig accountConfig, boolean checkLimits) throws ThingsboardException;
+
+
+    TwoFaAccountConfig generateNewAccountConfig(User user, TwoFaProviderType providerType) throws ThingsboardException;
 
 }

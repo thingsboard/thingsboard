@@ -23,10 +23,10 @@ import lombok.EqualsAndHashCode;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 
-@ApiModel(parent = OtpBasedTwoFactorAuthProviderConfig.class)
+@ApiModel(parent = OtpBasedTwoFaProviderConfig.class)
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class SmsTwoFactorAuthProviderConfig extends OtpBasedTwoFactorAuthProviderConfig {
+public class SmsTwoFaProviderConfig extends OtpBasedTwoFaProviderConfig {
 
     @ApiModelProperty(value = "SMS verification message template. Available template variables are ${verificationCode} and ${userEmail}. " +
             "It must not be blank and must contain verification code variable.",
@@ -36,8 +36,8 @@ public class SmsTwoFactorAuthProviderConfig extends OtpBasedTwoFactorAuthProvide
     private String smsVerificationMessageTemplate;
 
     @Override
-    public TwoFactorAuthProviderType getProviderType() {
-        return TwoFactorAuthProviderType.SMS;
+    public TwoFaProviderType getProviderType() {
+        return TwoFaProviderType.SMS;
     }
 
 }

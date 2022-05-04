@@ -54,7 +54,7 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.user.UserServiceImpl;
-import org.thingsboard.server.common.data.security.model.mfa.TwoFactorAuthSettings;
+import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettings;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
 import org.thingsboard.server.service.security.exception.UserPasswordExpiredException;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -160,7 +160,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
     }
 
     @Override
-    public void validateTwoFaVerification(SecurityUser securityUser, boolean verificationSuccess, TwoFactorAuthSettings twoFaSettings) {
+    public void validateTwoFaVerification(SecurityUser securityUser, boolean verificationSuccess, PlatformTwoFaSettings twoFaSettings) {
         TenantId tenantId = securityUser.getTenantId();
         UserId userId = securityUser.getId();
 

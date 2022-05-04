@@ -13,22 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.security;
+package org.thingsboard.server.common.data.security.model.mfa.account;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.BaseData;
-import org.thingsboard.server.common.data.id.UserAuthSettingsId;
-import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.security.model.mfa.account.AccountTwoFaSettings;
+import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
+
+import java.util.LinkedHashMap;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class UserAuthSettings extends BaseData<UserAuthSettingsId> {
-
-    private static final long serialVersionUID = 2628320657987010348L;
-
-    private UserId userId;
-    private AccountTwoFaSettings twoFaSettings;
-
+public class AccountTwoFaSettings {
+    private LinkedHashMap<TwoFaProviderType, TwoFaAccountConfig> configs;
 }

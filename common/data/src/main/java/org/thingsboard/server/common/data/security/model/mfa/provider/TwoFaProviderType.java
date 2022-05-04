@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.security.model.mfa.account;
+package org.thingsboard.server.common.data.security.model.mfa.provider;
 
-import lombok.Data;
-
-@Data
-public abstract class OtpBasedTwoFactorAuthAccountConfig implements TwoFactorAuthAccountConfig {
+public enum TwoFaProviderType {
+    TOTP,
+    SMS
 }

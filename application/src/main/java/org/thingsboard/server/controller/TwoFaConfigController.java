@@ -21,11 +21,13 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -33,20 +35,20 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFactorAuthProviderConfig;
+import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettings;
+import org.thingsboard.server.common.data.security.model.mfa.account.AccountTwoFaSettings;
+import org.thingsboard.server.common.data.security.model.mfa.account.TotpTwoFaAccountConfig;
+import org.thingsboard.server.common.data.security.model.mfa.account.TwoFaAccountConfig;
+import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderConfig;
+import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
-import org.thingsboard.server.service.security.auth.mfa.config.TwoFactorAuthConfigManager;
-import org.thingsboard.server.common.data.security.model.mfa.TwoFactorAuthSettings;
-import org.thingsboard.server.common.data.security.model.mfa.account.TotpTwoFactorAuthAccountConfig;
-import org.thingsboard.server.common.data.security.model.mfa.account.TwoFactorAuthAccountConfig;
-import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFactorAuthProviderType;
+import org.thingsboard.server.service.security.auth.mfa.config.TwoFaConfigManager;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -57,9 +59,9 @@ import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
 @RequestMapping("/api/2fa")
 @TbCoreComponent
 @RequiredArgsConstructor
-public class TwoFactorAuthConfigController extends BaseController {
+public class TwoFaConfigController extends BaseController {
 
-    private final TwoFactorAuthConfigManager twoFactorAuthConfigManager;
+    private final TwoFaConfigManager twoFaConfigManager;
     private final TwoFactorAuthService twoFactorAuthService;
 
 
@@ -71,27 +73,17 @@ public class TwoFactorAuthConfigController extends BaseController {
                     "```\n{\n" +
                     "  \"providerType\": \"TOTP\",\n" +
                     "  \"authUrl\": \"otpauth://totp/ThingsBoard:tenant@thingsboard.org?issuer=ThingsBoard&secret=FUNBIM3CXFNNGQR6ZIPVWHP65PPFWDII\"\n" +
-                        "}\n```" + NEW_LINE +
+                    "}\n```" + NEW_LINE +
                     "Response example for SMS 2FA: " + NEW_LINE +
                     "```\n{\n" +
                     "  \"providerType\": \"SMS\",\n" +
                     "  \"phoneNumber\": \"+380505005050\"\n" +
                     "}\n```")
-    @GetMapping("/account/config")
+    @GetMapping("/account/settings")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    public TwoFactorAuthAccountConfig getTwoFaAccountConfig() throws ThingsboardException {
+    public AccountTwoFaSettings getAccountTwoFaSettings() throws ThingsboardException {
         SecurityUser user = getCurrentUser();
-        return twoFactorAuthConfigManager.getTwoFaAccountConfig(user.getTenantId(), user.getId()).orElse(null);
-    }
-
-
-    @GetMapping("/providers")
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    public List<TwoFactorAuthProviderType> getAvailableTwoFaProviders() throws ThingsboardException {
-        return twoFactorAuthConfigManager.getTwoFaSettings(getTenantId(), true)
-                .map(TwoFactorAuthSettings::getProviders).orElse(Collections.emptyList()).stream()
-                .map(TwoFactorAuthProviderConfig::getProviderType)
-                .collect(Collectors.toList());
+        return twoFaConfigManager.getAccountTwoFaSettings(user.getTenantId(), user.getId()).orElse(null);
     }
 
 
@@ -116,19 +108,19 @@ public class TwoFactorAuthConfigController extends BaseController {
                     "}\n```")
     @PostMapping("/account/config/generate")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    public TwoFactorAuthAccountConfig generateTwoFaAccountConfig(@ApiParam(value = "2FA provider type to generate new account config for", defaultValue = "TOTP", required = true)
-                                                                 @RequestParam TwoFactorAuthProviderType providerType) throws Exception {
+    public TwoFaAccountConfig generateTwoFaAccountConfig(@ApiParam(value = "2FA provider type to generate new account config for", defaultValue = "TOTP", required = true)
+                                                         @RequestParam TwoFaProviderType providerType) throws Exception {
         SecurityUser user = getCurrentUser();
         return twoFactorAuthService.generateNewAccountConfig(user, providerType);
     }
 
     /* TMP */
-    @PostMapping("/account/config/generate/qr")
+    @PostMapping("/account/config/tmp/generate/qr")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    public void generateTwoFaAccountConfigWithQr(@RequestParam TwoFactorAuthProviderType providerType, HttpServletResponse response) throws Exception {
-        TwoFactorAuthAccountConfig config = generateTwoFaAccountConfig(providerType);
-        if (providerType == TwoFactorAuthProviderType.TOTP) {
-            BitMatrix qr = new QRCodeWriter().encode(((TotpTwoFactorAuthAccountConfig) config).getAuthUrl(), BarcodeFormat.QR_CODE, 200, 200);
+    public void generateTwoFaAccountConfigWithQr(@RequestParam TwoFaProviderType providerType, HttpServletResponse response) throws Exception {
+        TwoFaAccountConfig config = generateTwoFaAccountConfig(providerType);
+        if (providerType == TwoFaProviderType.TOTP) {
+            BitMatrix qr = new QRCodeWriter().encode(((TotpTwoFaAccountConfig) config).getAuthUrl(), BarcodeFormat.QR_CODE, 200, 200);
             try (ServletOutputStream outputStream = response.getOutputStream()) {
                 MatrixToImageWriter.writeToStream(qr, "PNG", outputStream);
             }
@@ -148,7 +140,7 @@ public class TwoFactorAuthConfigController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public void submitTwoFaAccountConfig(@ApiParam(value = "2FA account config value. For TOTP 2FA config, authUrl value must not be blank and must match specific pattern. " +
             "For SMS 2FA, phoneNumber property must not be blank and must be of E.164 phone number format.", required = true)
-                                         @Valid @RequestBody TwoFactorAuthAccountConfig accountConfig) throws Exception {
+                                         @Valid @RequestBody TwoFaAccountConfig accountConfig) throws Exception {
         SecurityUser user = getCurrentUser();
         twoFactorAuthService.prepareVerificationCode(user, accountConfig, false);
     }
@@ -160,36 +152,57 @@ public class TwoFactorAuthConfigController extends BaseController {
                     ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PostMapping("/account/config")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    public void verifyAndSaveTwoFaAccountConfig(@ApiParam(value = "2FA account config to save. Validation rules are the same as in submitTwoFaAccountConfig API method", required = true)
-                                                @Valid @RequestBody TwoFactorAuthAccountConfig accountConfig,
-                                                @ApiParam(value = "6-digit code from an authenticator app in case of TOTP 2FA, or the one sent via an SMS message in case of SMS 2FA", required = true)
-                                                @RequestParam String verificationCode) throws Exception {
+    public AccountTwoFaSettings verifyAndSaveTwoFaAccountConfig(@ApiParam(value = "2FA account config to save. Validation rules are the same as in submitTwoFaAccountConfig API method", required = true)
+                                                                @Valid @RequestBody TwoFaAccountConfig accountConfig,
+                                                                @ApiParam(value = "6-digit code from an authenticator app in case of TOTP 2FA, or the one sent via an SMS message in case of SMS 2FA", required = true)
+                                                                @RequestParam String verificationCode) throws Exception {
         SecurityUser user = getCurrentUser();
         boolean verificationSuccess = twoFactorAuthService.checkVerificationCode(user, verificationCode, accountConfig, false);
         if (verificationSuccess) {
-            twoFactorAuthConfigManager.saveTwoFaAccountConfig(user.getTenantId(), user.getId(), accountConfig);
+            return twoFaConfigManager.saveTwoFaAccountConfig(user.getTenantId(), user.getId(), accountConfig);
         } else {
             throw new ThingsboardException("Verification code is incorrect", ThingsboardErrorCode.INVALID_ARGUMENTS);
         }
+    }
+
+    @PutMapping("/account/config")
+    public AccountTwoFaSettings updateTwoFaAccountConfig(@RequestParam TwoFaProviderType providerType,
+                                                         @RequestBody TwoFaAccountConfigUpdateRequest updateRequest) throws ThingsboardException {
+        SecurityUser user = getCurrentUser();
+        TwoFaAccountConfig accountConfig = twoFaConfigManager.getTwoFaAccountConfig(user.getTenantId(), user.getId(), providerType)
+                .orElseThrow(() -> new IllegalArgumentException("No 2FA config for provider " + providerType));
+
+        accountConfig.setUseByDefault(updateRequest.isUseByDefault());
+        return twoFaConfigManager.saveTwoFaAccountConfig(user.getTenantId(), user.getId(), accountConfig);
     }
 
     @ApiOperation(value = "Delete 2FA account config (deleteTwoFaAccountConfig)",
             notes = "Delete user's 2FA config. " + ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @DeleteMapping("/account/config")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    public void deleteTwoFaAccountConfig() throws ThingsboardException {
+    public AccountTwoFaSettings deleteTwoFaAccountConfig(@RequestParam TwoFaProviderType providerType) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
-        twoFactorAuthConfigManager.deleteTwoFaAccountConfig(user.getTenantId(), user.getId());
+        return twoFaConfigManager.deleteTwoFaAccountConfig(user.getTenantId(), user.getId(), providerType);
     }
 
 
-    @ApiOperation(value = "Get 2FA settings (getTwoFaSettings)",
+    @GetMapping("/providers")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    public List<TwoFaProviderType> getAvailableTwoFaProviders() throws ThingsboardException {
+        return twoFaConfigManager.getPlatformTwoFaSettings(getTenantId(), true)
+                .map(PlatformTwoFaSettings::getProviders).orElse(Collections.emptyList()).stream()
+                .map(TwoFaProviderConfig::getProviderType)
+                .collect(Collectors.toList());
+    }
+
+
+    @ApiOperation(value = "Get 2FA settings (getTwoFaSettings)", // FIXME [viacheslav]
             notes = "Get settings for 2FA. If 2FA is not configured, then an empty response will be returned." +
                     ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @GetMapping("/settings")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    public TwoFactorAuthSettings getTwoFaSettings() throws ThingsboardException {
-        return twoFactorAuthConfigManager.getTwoFaSettings(getTenantId(), false).orElse(null);
+    public PlatformTwoFaSettings getPlatformTwoFaSettings() throws ThingsboardException {
+        return twoFaConfigManager.getPlatformTwoFaSettings(getTenantId(), false).orElse(null);
     }
 
     @ApiOperation(value = "Save 2FA settings (saveTwoFaSettings)",
@@ -198,9 +211,15 @@ public class TwoFactorAuthConfigController extends BaseController {
                     ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PostMapping("/settings")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    public void saveTwoFaSettings(@ApiParam(value = "Settings value", required = true)
-                                  @RequestBody TwoFactorAuthSettings twoFaSettings) throws ThingsboardException {
-        twoFactorAuthConfigManager.saveTwoFaSettings(getTenantId(), twoFaSettings);
+    public void savePlatformTwoFaSettings(@ApiParam(value = "Settings value", required = true)
+                                          @RequestBody PlatformTwoFaSettings twoFaSettings) throws ThingsboardException {
+        twoFaConfigManager.savePlatformTwoFaSettings(getTenantId(), twoFaSettings);
+    }
+
+
+    @Data
+    public static class TwoFaAccountConfigUpdateRequest {
+        private boolean useByDefault;
     }
 
 }

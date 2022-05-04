@@ -19,7 +19,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFactorAuthProviderType;
+import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
@@ -27,7 +27,7 @@ import javax.validation.constraints.Pattern;
 @ApiModel
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class SmsTwoFactorAuthAccountConfig extends OtpBasedTwoFactorAuthAccountConfig {
+public class SmsTwoFaAccountConfig extends OtpBasedTwoFaAccountConfig {
 
     @ApiModelProperty(value = "Phone number to use for 2FA. Must no be blank and must be of E.164 number format.", required = true)
     @NotBlank(message = "phone number cannot be blank")
@@ -35,8 +35,8 @@ public class SmsTwoFactorAuthAccountConfig extends OtpBasedTwoFactorAuthAccountC
     private String phoneNumber;
 
     @Override
-    public TwoFactorAuthProviderType getProviderType() {
-        return TwoFactorAuthProviderType.SMS;
+    public TwoFaProviderType getProviderType() {
+        return TwoFaProviderType.SMS;
     }
 
 }

@@ -18,14 +18,16 @@ package org.thingsboard.server.common.data.security.model.mfa.account;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFactorAuthProviderType;
+import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 
-@ApiModel
+@ApiModel // FIXME [viacheslav]
 @Data
-public class TotpTwoFactorAuthAccountConfig implements TwoFactorAuthAccountConfig {
+@EqualsAndHashCode(callSuper = true)
+public class TotpTwoFaAccountConfig extends TwoFaAccountConfig {
 
     @ApiModelProperty(value = "OTP auth URL used to generate a QR code to scan with an authenticator app. Must not be blank and must follow specific pattern.",
             example = "otpauth://totp/ThingsBoard:tenant@thingsboard.org?issuer=ThingsBoard&secret=FUNBIM3CXFNNGQR6ZIPVWHP65PPFWDII", required = true)
@@ -34,8 +36,9 @@ public class TotpTwoFactorAuthAccountConfig implements TwoFactorAuthAccountConfi
     private String authUrl;
 
     @Override
-    public TwoFactorAuthProviderType getProviderType() {
-        return TwoFactorAuthProviderType.TOTP;
+    public TwoFaProviderType getProviderType() {
+        return TwoFaProviderType.TOTP;
     }
 
 }
+

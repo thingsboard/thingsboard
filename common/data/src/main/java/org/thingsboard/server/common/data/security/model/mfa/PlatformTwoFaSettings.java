@@ -18,8 +18,8 @@ package org.thingsboard.server.common.data.security.model.mfa;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFactorAuthProviderType;
-import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFactorAuthProviderConfig;
+import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
+import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderConfig;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
@@ -29,7 +29,7 @@ import java.util.Optional;
 
 @Data
 @ApiModel
-public class TwoFactorAuthSettings {
+public class PlatformTwoFaSettings {
 
     @ApiModelProperty(value = "Option for tenant admins to use 2FA settings configured by sysadmin. " +
             "If this param is set to true, then the settings will not be validated for constraints " +
@@ -37,7 +37,7 @@ public class TwoFactorAuthSettings {
     private boolean useSystemTwoFactorAuthSettings;
     @ApiModelProperty(value = "The list of 2FA providers' configs. Users will only be allowed to use 2FA providers from this list.")
     @Valid
-    private List<TwoFactorAuthProviderConfig> providers;
+    private List<TwoFaProviderConfig> providers;
 
     @ApiModelProperty(value = "Rate limit configuration for verification code sending. The format is standard: 'amountOfRequests:periodInSeconds'. " +
             "The value of '1:60' would limit verification code sending requests to one per minute.", example = "1:60", required = false)
@@ -55,7 +55,7 @@ public class TwoFactorAuthSettings {
     private Integer totalAllowedTimeForVerification;
 
 
-    public Optional<TwoFactorAuthProviderConfig> getProviderConfig(TwoFactorAuthProviderType providerType) {
+    public Optional<TwoFaProviderConfig> getProviderConfig(TwoFaProviderType providerType) {
         return Optional.ofNullable(providers)
                 .flatMap(providersConfigs -> providersConfigs.stream()
                         .filter(providerConfig -> providerConfig.getProviderType() == providerType)

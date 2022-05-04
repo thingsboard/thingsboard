@@ -24,34 +24,34 @@ import org.jboss.aerogear.security.otp.api.Base32;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFactorAuthProviderType;
+import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.common.data.security.model.mfa.account.TotpTwoFactorAuthAccountConfig;
-import org.thingsboard.server.common.data.security.model.mfa.provider.TotpTwoFactorAuthProviderConfig;
-import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthProvider;
+import org.thingsboard.server.common.data.security.model.mfa.account.TotpTwoFaAccountConfig;
+import org.thingsboard.server.common.data.security.model.mfa.provider.TotpTwoFaProviderConfig;
+import org.thingsboard.server.service.security.auth.mfa.provider.TwoFaProvider;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 @Service
 @RequiredArgsConstructor
 @TbCoreComponent
-public class TotpTwoFactorAuthProvider implements TwoFactorAuthProvider<TotpTwoFactorAuthProviderConfig, TotpTwoFactorAuthAccountConfig> {
+public class TotpTwoFaProvider implements TwoFaProvider<TotpTwoFaProviderConfig, TotpTwoFaAccountConfig> {
 
     @Override
-    public final TotpTwoFactorAuthAccountConfig generateNewAccountConfig(User user, TotpTwoFactorAuthProviderConfig providerConfig) {
-        TotpTwoFactorAuthAccountConfig config = new TotpTwoFactorAuthAccountConfig();
+    public final TotpTwoFaAccountConfig generateNewAccountConfig(User user, TotpTwoFaProviderConfig providerConfig) {
+        TotpTwoFaAccountConfig config = new TotpTwoFaAccountConfig();
         String secretKey = generateSecretKey();
         config.setAuthUrl(getTotpAuthUrl(user, secretKey, providerConfig));
         return config;
     }
 
     @Override
-    public final boolean checkVerificationCode(SecurityUser securityUser, String verificationCode, TotpTwoFactorAuthProviderConfig providerConfig, TotpTwoFactorAuthAccountConfig accountConfig) {
+    public final boolean checkVerificationCode(SecurityUser securityUser, String verificationCode, TotpTwoFaProviderConfig providerConfig, TotpTwoFaAccountConfig accountConfig) {
         String secretKey = UriComponentsBuilder.fromUriString(accountConfig.getAuthUrl()).build().getQueryParams().getFirst("secret");
         return new Totp(secretKey).verify(verificationCode);
     }
 
     @SneakyThrows
-    private String getTotpAuthUrl(User user, String secretKey, TotpTwoFactorAuthProviderConfig providerConfig) {
+    private String getTotpAuthUrl(User user, String secretKey, TotpTwoFaProviderConfig providerConfig) {
         URIBuilder uri = new URIBuilder()
                 .setScheme("otpauth")
                 .setHost("totp")
@@ -67,8 +67,8 @@ public class TotpTwoFactorAuthProvider implements TwoFactorAuthProvider<TotpTwoF
 
 
     @Override
-    public TwoFactorAuthProviderType getType() {
-        return TwoFactorAuthProviderType.TOTP;
+    public TwoFaProviderType getType() {
+        return TwoFaProviderType.TOTP;
     }
 
 }

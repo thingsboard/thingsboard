@@ -17,12 +17,12 @@ package org.thingsboard.server.service.security.auth.mfa.provider;
 
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.security.model.mfa.account.TwoFactorAuthAccountConfig;
-import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFactorAuthProviderConfig;
-import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFactorAuthProviderType;
+import org.thingsboard.server.common.data.security.model.mfa.account.TwoFaAccountConfig;
+import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderConfig;
+import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-public interface TwoFactorAuthProvider<C extends TwoFactorAuthProviderConfig, A extends TwoFactorAuthAccountConfig> {
+public interface TwoFaProvider<C extends TwoFaProviderConfig, A extends TwoFaAccountConfig> {
 
     A generateNewAccountConfig(User user, C providerConfig);
 
@@ -31,6 +31,6 @@ public interface TwoFactorAuthProvider<C extends TwoFactorAuthProviderConfig, A 
     boolean checkVerificationCode(SecurityUser securityUser, String verificationCode, C providerConfig, A accountConfig);
 
 
-    TwoFactorAuthProviderType getType();
+    TwoFaProviderType getType();
 
 }

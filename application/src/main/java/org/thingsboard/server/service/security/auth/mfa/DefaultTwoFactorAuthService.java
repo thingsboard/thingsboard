@@ -25,15 +25,15 @@ import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFactorAuthProviderType;
+import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.security.auth.mfa.config.TwoFactorAuthConfigManager;
-import org.thingsboard.server.common.data.security.model.mfa.TwoFactorAuthSettings;
-import org.thingsboard.server.common.data.security.model.mfa.account.TwoFactorAuthAccountConfig;
-import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFactorAuthProviderConfig;
-import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthProvider;
+import org.thingsboard.server.service.security.auth.mfa.config.TwoFaConfigManager;
+import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettings;
+import org.thingsboard.server.common.data.security.model.mfa.account.TwoFaAccountConfig;
+import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderConfig;
+import org.thingsboard.server.service.security.auth.mfa.provider.TwoFaProvider;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
@@ -49,117 +49,129 @@ import java.util.concurrent.ConcurrentMap;
 @TbCoreComponent
 public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
 
-    private final TwoFactorAuthConfigManager configManager;
+    private final TwoFaConfigManager configManager;
     private final SystemSecurityService systemSecurityService;
     private final UserService userService;
-    private final Map<TwoFactorAuthProviderType, TwoFactorAuthProvider<TwoFactorAuthProviderConfig, TwoFactorAuthAccountConfig>> providers = new EnumMap<>(TwoFactorAuthProviderType.class);
-
-    // TODO [viacheslav]: these rate limits are local, and will work bad in the cluster
-    private final ConcurrentMap<UserId, TbRateLimits> verificationCodeSendingRateLimits = new ConcurrentHashMap<>();
-    private final ConcurrentMap<UserId, TbRateLimits> verificationCodeCheckingRateLimits = new ConcurrentHashMap<>();
+    private final Map<TwoFaProviderType, TwoFaProvider<TwoFaProviderConfig, TwoFaAccountConfig>> providers = new EnumMap<>(TwoFaProviderType.class);
 
     private static final ThingsboardException ACCOUNT_NOT_CONFIGURED_ERROR = new ThingsboardException("2FA is not configured for account", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
     private static final ThingsboardException PROVIDER_NOT_CONFIGURED_ERROR = new ThingsboardException("2FA provider is not configured", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
     private static final ThingsboardException PROVIDER_NOT_AVAILABLE_ERROR = new ThingsboardException("2FA provider is not available", ThingsboardErrorCode.GENERAL);
 
+    private final ConcurrentMap<UserId, ConcurrentMap<TwoFaProviderType, TbRateLimits>> verificationCodeSendingRateLimits = new ConcurrentHashMap<>();
+    private final ConcurrentMap<UserId, ConcurrentMap<TwoFaProviderType, TbRateLimits>> verificationCodeCheckingRateLimits = new ConcurrentHashMap<>();
 
     @Override
-    public void prepareVerificationCode(SecurityUser securityUser, boolean checkLimits) throws Exception {
-        TwoFactorAuthAccountConfig accountConfig = configManager.getTwoFaAccountConfig(securityUser.getTenantId(), securityUser.getId())
+    public boolean isTwoFaEnabled(TenantId tenantId, UserId userId) {
+        return configManager.getAccountTwoFaSettings(tenantId, userId)
+                .map(settings -> !settings.getConfigs().isEmpty())
+                .orElse(false);
+    }
+
+
+    @Override
+    public void prepareVerificationCode(SecurityUser user, TwoFaProviderType providerType, boolean checkLimits) throws Exception {
+        TwoFaAccountConfig accountConfig = configManager.getTwoFaAccountConfig(user.getTenantId(), user.getId(), providerType)
                 .orElseThrow(() -> ACCOUNT_NOT_CONFIGURED_ERROR);
-        prepareVerificationCode(securityUser, accountConfig, checkLimits);
+        prepareVerificationCode(user, accountConfig, checkLimits);
     }
 
     @Override
-    public void prepareVerificationCode(SecurityUser securityUser, TwoFactorAuthAccountConfig accountConfig, boolean checkLimits) throws ThingsboardException {
-        TwoFactorAuthSettings twoFaSettings = configManager.getTwoFaSettings(securityUser.getTenantId(), true)
+    public void prepareVerificationCode(SecurityUser user, TwoFaAccountConfig accountConfig, boolean checkLimits) throws ThingsboardException {
+        PlatformTwoFaSettings twoFaSettings = configManager.getPlatformTwoFaSettings(user.getTenantId(), true)
                 .orElseThrow(() -> PROVIDER_NOT_CONFIGURED_ERROR);
         if (checkLimits) {
-            if (StringUtils.isNotEmpty(twoFaSettings.getVerificationCodeSendRateLimit())) {
-                TbRateLimits rateLimits = verificationCodeSendingRateLimits.computeIfAbsent(securityUser.getId(), sessionId -> {
-                    return new TbRateLimits(twoFaSettings.getVerificationCodeSendRateLimit(), true);
-                });
-                if (!rateLimits.tryConsume()) {
-                    throw new ThingsboardException("Too many verification code sending requests", ThingsboardErrorCode.TOO_MANY_REQUESTS);
-                }
-            }
+            checkRateLimits(user.getId(), accountConfig.getProviderType(), twoFaSettings.getVerificationCodeSendRateLimit(), verificationCodeSendingRateLimits);
         }
 
-        TwoFactorAuthProviderConfig providerConfig = twoFaSettings.getProviderConfig(accountConfig.getProviderType())
+        TwoFaProviderConfig providerConfig = twoFaSettings.getProviderConfig(accountConfig.getProviderType())
                 .orElseThrow(() -> PROVIDER_NOT_CONFIGURED_ERROR);
-        getTwoFaProvider(accountConfig.getProviderType()).prepareVerificationCode(securityUser, providerConfig, accountConfig);
+        getTwoFaProvider(accountConfig.getProviderType()).prepareVerificationCode(user, providerConfig, accountConfig);
     }
 
+
     @Override
-    public boolean checkVerificationCode(SecurityUser securityUser, String verificationCode, boolean checkLimits) throws ThingsboardException {
-        TwoFactorAuthAccountConfig accountConfig = configManager.getTwoFaAccountConfig(securityUser.getTenantId(), securityUser.getId())
+    public boolean checkVerificationCode(SecurityUser user, TwoFaProviderType providerType, String verificationCode, boolean checkLimits) throws ThingsboardException {
+        TwoFaAccountConfig accountConfig = configManager.getTwoFaAccountConfig(user.getTenantId(), user.getId(), providerType)
                 .orElseThrow(() -> ACCOUNT_NOT_CONFIGURED_ERROR);
-        return checkVerificationCode(securityUser, verificationCode, accountConfig, checkLimits);
+        return checkVerificationCode(user, verificationCode, accountConfig, checkLimits);
     }
 
     @Override
-    public boolean checkVerificationCode(SecurityUser securityUser, String verificationCode, TwoFactorAuthAccountConfig accountConfig, boolean checkLimits) throws ThingsboardException {
-        if (!userService.findUserCredentialsByUserId(securityUser.getTenantId(), securityUser.getId()).isEnabled()) {
+    public boolean checkVerificationCode(SecurityUser user, String verificationCode, TwoFaAccountConfig accountConfig, boolean checkLimits) throws ThingsboardException {
+        if (!userService.findUserCredentialsByUserId(user.getTenantId(), user.getId()).isEnabled()) {
             throw new ThingsboardException("User is disabled", ThingsboardErrorCode.AUTHENTICATION);
         }
 
-        TwoFactorAuthSettings twoFaSettings = configManager.getTwoFaSettings(securityUser.getTenantId(), true)
+        PlatformTwoFaSettings twoFaSettings = configManager.getPlatformTwoFaSettings(user.getTenantId(), true)
                 .orElseThrow(() -> PROVIDER_NOT_CONFIGURED_ERROR);
         if (checkLimits) {
-            if (StringUtils.isNotEmpty(twoFaSettings.getVerificationCodeCheckRateLimit())) {
-                TbRateLimits rateLimits = verificationCodeCheckingRateLimits.computeIfAbsent(securityUser.getId(), sessionId -> {
-                    return new TbRateLimits(twoFaSettings.getVerificationCodeCheckRateLimit(), true);
-                });
-                if (!rateLimits.tryConsume()) {
-                    throw new ThingsboardException("Too many verification code checking requests", ThingsboardErrorCode.TOO_MANY_REQUESTS);
-                }
-            }
+            checkRateLimits(user.getId(), accountConfig.getProviderType(), twoFaSettings.getVerificationCodeCheckRateLimit(), verificationCodeCheckingRateLimits);
         }
-        TwoFactorAuthProviderConfig providerConfig = twoFaSettings.getProviderConfig(accountConfig.getProviderType())
+        TwoFaProviderConfig providerConfig = twoFaSettings.getProviderConfig(accountConfig.getProviderType())
                 .orElseThrow(() -> PROVIDER_NOT_CONFIGURED_ERROR);
 
         boolean verificationSuccess;
         if (StringUtils.isNumeric(verificationCode) && verificationCode.length() == 6) {
-            verificationSuccess = getTwoFaProvider(accountConfig.getProviderType()).checkVerificationCode(securityUser, verificationCode, providerConfig, accountConfig);
+            verificationSuccess = getTwoFaProvider(accountConfig.getProviderType()).checkVerificationCode(user, verificationCode, providerConfig, accountConfig);
         } else {
             verificationSuccess = false;
         }
         if (checkLimits) {
             try {
-                systemSecurityService.validateTwoFaVerification(securityUser, verificationSuccess, twoFaSettings);
+                systemSecurityService.validateTwoFaVerification(user, verificationSuccess, twoFaSettings);
             } catch (LockedException e) {
-                verificationCodeCheckingRateLimits.remove(securityUser.getId());
-                verificationCodeSendingRateLimits.remove(securityUser.getId());
+                verificationCodeCheckingRateLimits.remove(user.getId());
+                verificationCodeSendingRateLimits.remove(user.getId());
                 throw new ThingsboardException(e.getMessage(), ThingsboardErrorCode.AUTHENTICATION);
             }
             if (verificationSuccess) {
-                verificationCodeCheckingRateLimits.remove(securityUser.getId());
-                verificationCodeSendingRateLimits.remove(securityUser.getId());
+                verificationCodeCheckingRateLimits.remove(user.getId());
+                verificationCodeSendingRateLimits.remove(user.getId());
             }
         }
         return verificationSuccess;
     }
 
+    private void checkRateLimits(UserId userId, TwoFaProviderType providerType, String rateLimitConfig,
+                                 ConcurrentMap<UserId, ConcurrentMap<TwoFaProviderType, TbRateLimits>> rateLimits) throws ThingsboardException {
+        if (StringUtils.isNotEmpty(rateLimitConfig)) {
+            ConcurrentMap<TwoFaProviderType, TbRateLimits> providersRateLimits = rateLimits.computeIfAbsent(userId, i -> new ConcurrentHashMap<>());
+
+            TbRateLimits rateLimit = providersRateLimits.get(providerType);
+            if (rateLimit == null || !rateLimit.getConfig().equals(rateLimitConfig)) {
+                rateLimit = new TbRateLimits(rateLimitConfig, true);
+                providersRateLimits.put(providerType, rateLimit);
+            }
+            if (!rateLimit.tryConsume()) {
+                throw new ThingsboardException("Too many requests", ThingsboardErrorCode.TOO_MANY_REQUESTS);
+            }
+        } else {
+            rateLimits.remove(userId);
+        }
+    }
+
+
     @Override
-    public TwoFactorAuthAccountConfig generateNewAccountConfig(User user, TwoFactorAuthProviderType providerType) throws ThingsboardException {
-        TwoFactorAuthProviderConfig providerConfig = getTwoFaProviderConfig(user.getTenantId(), providerType);
+    public TwoFaAccountConfig generateNewAccountConfig(User user, TwoFaProviderType providerType) throws ThingsboardException {
+        TwoFaProviderConfig providerConfig = getTwoFaProviderConfig(user.getTenantId(), providerType);
         return getTwoFaProvider(providerType).generateNewAccountConfig(user, providerConfig);
     }
 
 
-    private TwoFactorAuthProviderConfig getTwoFaProviderConfig(TenantId tenantId, TwoFactorAuthProviderType providerType) throws ThingsboardException {
-        return configManager.getTwoFaSettings(tenantId, true)
+    private TwoFaProviderConfig getTwoFaProviderConfig(TenantId tenantId, TwoFaProviderType providerType) throws ThingsboardException {
+        return configManager.getPlatformTwoFaSettings(tenantId, true)
                 .flatMap(twoFaSettings -> twoFaSettings.getProviderConfig(providerType))
                 .orElseThrow(() -> PROVIDER_NOT_CONFIGURED_ERROR);
     }
 
-    private TwoFactorAuthProvider<TwoFactorAuthProviderConfig, TwoFactorAuthAccountConfig> getTwoFaProvider(TwoFactorAuthProviderType providerType) throws ThingsboardException {
+    private TwoFaProvider<TwoFaProviderConfig, TwoFaAccountConfig> getTwoFaProvider(TwoFaProviderType providerType) throws ThingsboardException {
         return Optional.ofNullable(providers.get(providerType))
                 .orElseThrow(() -> PROVIDER_NOT_AVAILABLE_ERROR);
     }
 
     @Autowired
-    private void setProviders(Collection<TwoFactorAuthProvider> providers) {
+    private void setProviders(Collection<TwoFaProvider> providers) {
         providers.forEach(provider -> {
             this.providers.put(provider.getType(), provider);
         });

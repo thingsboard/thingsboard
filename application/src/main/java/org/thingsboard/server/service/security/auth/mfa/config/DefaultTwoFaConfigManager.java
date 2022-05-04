@@ -21,17 +21,16 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.security.UserAuthSettings;
-import org.thingsboard.server.common.data.security.model.mfa.TwoFactorAuthSettings;
-import org.thingsboard.server.common.data.security.model.mfa.account.TwoFactorAuthAccountConfig;
-import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFactorAuthProviderConfig;
-import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFactorAuthProviderType;
+import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettings;
+import org.thingsboard.server.common.data.security.model.mfa.account.AccountTwoFaSettings;
+import org.thingsboard.server.common.data.security.model.mfa.account.TwoFaAccountConfig;
+import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderConfig;
+import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.service.ConstraintValidator;
 import org.thingsboard.server.dao.settings.AdminSettingsDao;
@@ -39,12 +38,15 @@ import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.user.UserAuthSettingsDao;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
 
 @Service
 @RequiredArgsConstructor
-public class DefaultTwoFactorAuthConfigManager implements TwoFactorAuthConfigManager {
+public class DefaultTwoFaConfigManager implements TwoFaConfigManager {
 
     private final UserAuthSettingsDao userAuthSettingsDao;
     private final AdminSettingsService adminSettingsService;
@@ -55,60 +57,77 @@ public class DefaultTwoFactorAuthConfigManager implements TwoFactorAuthConfigMan
 
 
     @Override
-    public boolean isTwoFaEnabled(TenantId tenantId, UserId userId) {
-        return getTwoFaAccountConfig(tenantId, userId).isPresent();
-    }
-
-    @Override
-    public Optional<TwoFactorAuthAccountConfig> getTwoFaAccountConfig(TenantId tenantId, UserId userId) {
+    public Optional<AccountTwoFaSettings> getAccountTwoFaSettings(TenantId tenantId, UserId userId) {
         return Optional.ofNullable(userAuthSettingsDao.findByUserId(userId))
-                .flatMap(userAuthSettings -> Optional.ofNullable(userAuthSettings.getTwoFaAccountConfig()))
-                .filter(twoFaAccountConfig -> getTwoFaProviderConfig(tenantId, twoFaAccountConfig.getProviderType()).isPresent());
+                .flatMap(userAuthSettings -> Optional.ofNullable(userAuthSettings.getTwoFaSettings()))
+                .map(twoFaSettings -> {
+                    twoFaSettings.getConfigs().keySet().removeIf(providerType -> {
+                        return getTwoFaProviderConfig(tenantId, providerType).isEmpty();
+                    });
+                    return twoFaSettings;
+                });
     }
 
     @Override
-    public void saveTwoFaAccountConfig(TenantId tenantId, UserId userId, TwoFactorAuthAccountConfig accountConfig) throws ThingsboardException {
-        getTwoFaProviderConfig(tenantId, accountConfig.getProviderType())
-                .orElseThrow(() -> new ThingsboardException("2FA provider is not configured", ThingsboardErrorCode.BAD_REQUEST_PARAMS));
+    public Optional<TwoFaAccountConfig> getTwoFaAccountConfig(TenantId tenantId, UserId userId, TwoFaProviderType providerType) {
+        return getAccountTwoFaSettings(tenantId, userId)
+                .map(AccountTwoFaSettings::getConfigs)
+                .flatMap(configs -> Optional.ofNullable(configs.get(providerType)));
+    }
 
+    @Override
+    public AccountTwoFaSettings saveTwoFaAccountConfig(TenantId tenantId, UserId userId, TwoFaAccountConfig accountConfig) {
+        getTwoFaProviderConfig(tenantId, accountConfig.getProviderType())
+                .orElseThrow(() -> new IllegalArgumentException("2FA provider is not configured"));
+
+        return createOrUpdateAccountTwoFaSettings(tenantId, userId, accountTwoFaSettings -> {
+            Map<TwoFaProviderType, TwoFaAccountConfig> configs = accountTwoFaSettings.getConfigs();
+            configs.put(accountConfig.getProviderType(), accountConfig);
+        });
+    }
+
+    @Override
+    public AccountTwoFaSettings deleteTwoFaAccountConfig(TenantId tenantId, UserId userId, TwoFaProviderType providerType) {
+        return createOrUpdateAccountTwoFaSettings(tenantId, userId, accountTwoFaSettings -> {
+            accountTwoFaSettings.getConfigs().keySet().removeIf(providerType::equals);
+        });
+    }
+
+    private AccountTwoFaSettings createOrUpdateAccountTwoFaSettings(TenantId tenantId, UserId userId, Consumer<AccountTwoFaSettings> updater) {
         UserAuthSettings userAuthSettings = Optional.ofNullable(userAuthSettingsDao.findByUserId(userId))
                 .orElseGet(() -> {
                     UserAuthSettings newUserAuthSettings = new UserAuthSettings();
                     newUserAuthSettings.setUserId(userId);
+
+                    AccountTwoFaSettings newAccountTwoFaSettings = new AccountTwoFaSettings();
+                    newAccountTwoFaSettings.setConfigs(new LinkedHashMap<>());
+                    newUserAuthSettings.setTwoFaSettings(newAccountTwoFaSettings);
                     return newUserAuthSettings;
                 });
-        userAuthSettings.setTwoFaAccountConfig(accountConfig);
+        updater.accept(userAuthSettings.getTwoFaSettings());
         userAuthSettingsDao.save(tenantId, userAuthSettings);
-    }
-
-    @Override
-    public void deleteTwoFaAccountConfig(TenantId tenantId, UserId userId) {
-        Optional.ofNullable(userAuthSettingsDao.findByUserId(userId))
-                .ifPresent(userAuthSettings -> {
-                    userAuthSettings.setTwoFaAccountConfig(null);
-                    userAuthSettingsDao.save(tenantId, userAuthSettings);
-                });
+        return userAuthSettings.getTwoFaSettings();
     }
 
 
-    private Optional<TwoFactorAuthProviderConfig> getTwoFaProviderConfig(TenantId tenantId, TwoFactorAuthProviderType providerType) {
-        return getTwoFaSettings(tenantId, true)
+    private Optional<TwoFaProviderConfig> getTwoFaProviderConfig(TenantId tenantId, TwoFaProviderType providerType) {
+        return getPlatformTwoFaSettings(tenantId, true)
                 .flatMap(twoFaSettings -> twoFaSettings.getProviderConfig(providerType));
     }
 
     @SneakyThrows({InterruptedException.class, ExecutionException.class})
     @Override
-    public Optional<TwoFactorAuthSettings> getTwoFaSettings(TenantId tenantId, boolean sysadminSettingsAsDefault) {
+    public Optional<PlatformTwoFaSettings> getPlatformTwoFaSettings(TenantId tenantId, boolean sysadminSettingsAsDefault) {
         if (tenantId.equals(TenantId.SYS_TENANT_ID)) {
             return Optional.ofNullable(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, TWO_FACTOR_AUTH_SETTINGS_KEY))
-                    .map(adminSettings -> JacksonUtil.treeToValue(adminSettings.getJsonValue(), TwoFactorAuthSettings.class));
+                    .map(adminSettings -> JacksonUtil.treeToValue(adminSettings.getJsonValue(), PlatformTwoFaSettings.class));
         } else {
-            Optional<TwoFactorAuthSettings> tenantTwoFaSettings = attributesService.find(TenantId.SYS_TENANT_ID, tenantId,
-                    DataConstants.SERVER_SCOPE, TWO_FACTOR_AUTH_SETTINGS_KEY).get()
-                    .map(adminSettingsAttribute -> JacksonUtil.fromString(adminSettingsAttribute.getJsonValue().get(), TwoFactorAuthSettings.class));
+            Optional<PlatformTwoFaSettings> tenantTwoFaSettings = attributesService.find(TenantId.SYS_TENANT_ID, tenantId,
+                            DataConstants.SERVER_SCOPE, TWO_FACTOR_AUTH_SETTINGS_KEY).get()
+                    .map(adminSettingsAttribute -> JacksonUtil.fromString(adminSettingsAttribute.getJsonValue().get(), PlatformTwoFaSettings.class));
             if (sysadminSettingsAsDefault) {
                 if (tenantTwoFaSettings.isEmpty() || tenantTwoFaSettings.get().isUseSystemTwoFactorAuthSettings()) {
-                    return getTwoFaSettings(TenantId.SYS_TENANT_ID, false);
+                    return getPlatformTwoFaSettings(TenantId.SYS_TENANT_ID, false);
                 }
             }
             return tenantTwoFaSettings;
@@ -117,7 +136,7 @@ public class DefaultTwoFactorAuthConfigManager implements TwoFactorAuthConfigMan
 
     @SneakyThrows({InterruptedException.class, ExecutionException.class})
     @Override
-    public void saveTwoFaSettings(TenantId tenantId, TwoFactorAuthSettings twoFactorAuthSettings) {
+    public void savePlatformTwoFaSettings(TenantId tenantId, PlatformTwoFaSettings twoFactorAuthSettings) {
         if (tenantId.equals(TenantId.SYS_TENANT_ID) || !twoFactorAuthSettings.isUseSystemTwoFactorAuthSettings()) {
             ConstraintValidator.validateFields(twoFactorAuthSettings);
         }
@@ -139,7 +158,7 @@ public class DefaultTwoFactorAuthConfigManager implements TwoFactorAuthConfigMan
 
     @SneakyThrows({InterruptedException.class, ExecutionException.class})
     @Override
-    public void deleteTwoFaSettings(TenantId tenantId) {
+    public void deletePlatformTwoFaSettings(TenantId tenantId) {
         if (tenantId.equals(TenantId.SYS_TENANT_ID)) {
             Optional.ofNullable(adminSettingsService.findAdminSettingsByKey(tenantId, TWO_FACTOR_AUTH_SETTINGS_KEY))
                     .ifPresent(adminSettings -> adminSettingsDao.removeById(tenantId, adminSettings.getId().getId()));

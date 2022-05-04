@@ -21,18 +21,18 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.security.model.mfa.account.OtpBasedTwoFactorAuthAccountConfig;
-import org.thingsboard.server.common.data.security.model.mfa.provider.OtpBasedTwoFactorAuthProviderConfig;
-import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthProvider;
+import org.thingsboard.server.common.data.security.model.mfa.account.OtpBasedTwoFaAccountConfig;
+import org.thingsboard.server.common.data.security.model.mfa.provider.OtpBasedTwoFaProviderConfig;
+import org.thingsboard.server.service.security.auth.mfa.provider.TwoFaProvider;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.concurrent.TimeUnit;
 
-public abstract class OtpBasedTwoFactorAuthProvider<C extends OtpBasedTwoFactorAuthProviderConfig, A extends OtpBasedTwoFactorAuthAccountConfig> implements TwoFactorAuthProvider<C, A> {
+public abstract class OtpBasedTwoFaProvider<C extends OtpBasedTwoFaProviderConfig, A extends OtpBasedTwoFaAccountConfig> implements TwoFaProvider<C, A> {
 
     private final Cache verificationCodesCache;
 
-    protected OtpBasedTwoFactorAuthProvider(CacheManager cacheManager) {
+    protected OtpBasedTwoFaProvider(CacheManager cacheManager) {
         this.verificationCodesCache = cacheManager.getCache(CacheConstants.TWO_FA_VERIFICATION_CODES_CACHE);
     }
 
@@ -70,7 +70,7 @@ public abstract class OtpBasedTwoFactorAuthProvider<C extends OtpBasedTwoFactorA
     public static class Otp {
         private final long timestamp;
         private final String value;
-        private final OtpBasedTwoFactorAuthAccountConfig accountConfig;
+        private final OtpBasedTwoFaAccountConfig accountConfig;
     }
 
 }

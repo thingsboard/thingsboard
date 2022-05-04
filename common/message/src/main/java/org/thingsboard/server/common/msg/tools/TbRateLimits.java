@@ -28,6 +28,7 @@ import java.time.Duration;
  */
 public class TbRateLimits {
     private final LocalBucket bucket;
+    private final String config;
 
     public TbRateLimits(String limitsConfiguration) {
         this(limitsConfiguration, false);
@@ -48,6 +49,7 @@ public class TbRateLimits {
         } else {
             throw new IllegalArgumentException("Failed to parse rate limits configuration: " + limitsConfiguration);
         }
+        this.config = limitsConfiguration;
     }
 
     public boolean tryConsume() {
@@ -56,6 +58,10 @@ public class TbRateLimits {
 
     public boolean tryConsume(long number) {
         return bucket.tryConsume(number);
+    }
+
+    public String getConfig() {
+        return config;
     }
 
 }
