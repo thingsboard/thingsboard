@@ -253,7 +253,7 @@ public class DefaultTbQueueService implements TbQueueService {
                 QueueId queueIdForRemove = queue.getId();
                 if (deviceProfileQueues.containsKey(queueIdForRemove)) {
                     Queue foundQueue = queueService.findQueueByTenantIdAndName(tenantId, q);
-                    if (foundQueue == null) {
+                    if (foundQueue == null || queue.equals(foundQueue)) {
                         foundQueue = queueService.findQueueByTenantIdAndName(tenantId, MAIN);
                     }
                     QueueId newQueueId = foundQueue.getId();
