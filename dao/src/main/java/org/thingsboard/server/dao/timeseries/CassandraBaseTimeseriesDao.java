@@ -93,6 +93,10 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     @Value("${cassandra.query.ts_key_value_partitioning}")
     private String partitioning;
 
+    @Getter
+    @Value("${cassandra.query.ts_key_value_partitioning_always_exist_in_reading:false}")
+    private boolean partitioningAlwaysExistInReading;
+
     @Value("${cassandra.query.ts_key_value_partitions_max_cache_size:100000}")
     private long partitionsCacheSize;
 
@@ -417,8 +421,25 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         if (isFixedPartitioning()) { //no need to fetch partitions from DB
             return Futures.immediateFuture(FIXED_PARTITION);
         }
+        if (isPartitioningAlwaysExistInReading()) {
+            return Futures.immediateFuture(calculatePartitions(minPartition, maxPartition));
+        }
         TbResultSetFuture partitionsFuture = fetchPartitions(tenantId, entityId, query.getKey(), minPartition, maxPartition);
         return Futures.transformAsync(partitionsFuture, getPartitionsArrayFunction(), readResultsProcessingExecutor);
+    }
+
+    List<Long> calculatePartitions(long minPartition, long maxPartition) {
+        if (minPartition == maxPartition) {
+            return Collections.singletonList(minPartition);
+        }
+
+        List<Long> partitions = Arrays.asList(minPartition, maxPartition);
+        long currentPartition = minPartition;
+        while (maxPartition > (currentPartition = toPartitionTs(currentPartition + TimeUnit.DAYS.toMillis(32)))){
+            partitions.add(currentPartition);
+        }
+
+        return partitions;
     }
 
     private AsyncFunction<List<Long>, List<TbResultSet>> getFetchChunksAsyncFunction(TenantId tenantId, EntityId entityId, String key, Aggregation aggregation, long startTs, long endTs) {
