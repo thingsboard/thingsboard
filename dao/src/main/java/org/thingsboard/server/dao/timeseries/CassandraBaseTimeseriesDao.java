@@ -82,8 +82,9 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     protected static final int MIN_AGGREGATION_STEP_MS = 1000;
     public static final String ASC_ORDER = "ASC";
     public static final long SECONDS_IN_DAY = TimeUnit.DAYS.toSeconds(1);
+    static final long DAYS_32_MS = TimeUnit.DAYS.toMillis(32);
 
-    protected static List<Long> FIXED_PARTITION = Arrays.asList(new Long[]{0L});
+    protected static final List<Long> FIXED_PARTITION = List.of(0L);
 
     private CassandraTsPartitionsCache cassandraTsPartitionsCache;
 
@@ -341,7 +342,7 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         }, MoreExecutors.directExecutor());
     }
 
-    private long toPartitionTs(long ts) {
+    long toPartitionTs(long ts) {
         LocalDateTime time = LocalDateTime.ofInstant(Instant.ofEpochMilli(ts), ZoneOffset.UTC);
         return tsFormat.truncatedTo(time).toInstant(ZoneOffset.UTC).toEpochMilli();
     }
@@ -432,13 +433,15 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         if (minPartition == maxPartition) {
             return Collections.singletonList(minPartition);
         }
+        List<Long> partitions = new ArrayList<>();
+        partitions.add(minPartition);
 
-        List<Long> partitions = Arrays.asList(minPartition, maxPartition);
         long currentPartition = minPartition;
-        while (maxPartition > (currentPartition = toPartitionTs(currentPartition + TimeUnit.DAYS.toMillis(32)))){
+        while (maxPartition > (currentPartition = toPartitionTs(currentPartition + DAYS_32_MS))){
             partitions.add(currentPartition);
         }
 
+        partitions.add(maxPartition);
         return partitions;
     }
 
