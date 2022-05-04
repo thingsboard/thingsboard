@@ -169,7 +169,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
     }
 
     private void processProvision(CoapExchange exchange) {
-        exchange.accept();
+        deferAccept(exchange);
         try {
             UUID sessionId = UUID.randomUUID();
             log.trace("[{}] Processing provision publish msg [{}]!", sessionId, exchange.advanced().getRequest());
@@ -195,7 +195,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
 
     private void processRequest(CoapExchange exchange, SessionMsgType type) {
         log.trace("Processing {}", exchange.advanced().getRequest());
-        exchange.accept();
+        deferAccept(exchange);
         Exchange advanced = exchange.advanced();
         Request request = advanced.getRequest();
 
@@ -344,6 +344,16 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         transportService.process(sessionInfo,
                 clientState.getAdaptor().convertToServerRpcRequest(sessionId, request),
                 new CoapNoOpCallback(exchange));
+    }
+
+    /**
+     * Send an empty ACK if we are unable to send the full response within the timeout.
+     * If the full response is transmitted before the timeout this will not do anything.
+     * If this is triggered the full response will be sent in a separate CON/NON message.
+     * Essentially this allows the use of piggybacked responses.
+     */
+    private void deferAccept(CoapExchange exchange) {
+        transportContext.getScheduler().schedule(exchange::accept, 500, TimeUnit.MILLISECONDS);
     }
 
     private UUID toSessionId(TransportProtos.SessionInfoProto sessionInfoProto) {
