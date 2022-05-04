@@ -69,6 +69,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
 
     private final ConcurrentMap<InetSocketAddress, TbCoapDtlsSessionInfo> dtlsSessionsMap;
     private final long timeout;
+    private final long piggybackTimeout;
     private final CoapClientContext clients;
 
     public CoapTransportResource(CoapTransportContext ctx, CoapServerService coapServerService, String name) {
@@ -77,6 +78,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         this.addObserver(new CoapResourceObserver());
         this.dtlsSessionsMap = coapServerService.getDtlsSessionsMap();
         this.timeout = coapServerService.getTimeout();
+        this.piggybackTimeout = coapServerService.getPiggybackTimeout();
         this.clients = ctx.getClientContext();
         long sessionReportTimeout = ctx.getSessionReportTimeout();
         ctx.getScheduler().scheduleAtFixedRate(clients::reportActivity, new Random().nextInt((int) sessionReportTimeout), sessionReportTimeout, TimeUnit.MILLISECONDS);
@@ -353,7 +355,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
      * Essentially this allows the use of piggybacked responses.
      */
     private void deferAccept(CoapExchange exchange) {
-        transportContext.getScheduler().schedule(exchange::accept, 500, TimeUnit.MILLISECONDS);
+        transportContext.getScheduler().schedule(exchange::accept, piggybackTimeout, TimeUnit.MILLISECONDS);
     }
 
     private UUID toSessionId(TransportProtos.SessionInfoProto sessionInfoProto) {

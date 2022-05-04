@@ -89,6 +89,7 @@ transport:
     bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
     bind_port: "${COAP_BIND_PORT:5683}"
     timeout: "${COAP_TIMEOUT:10000}"
+    piggyback_timeout: "${COAP_PIGGYBACK_TIMEOUT:500}"
     psm_activity_timer: "${COAP_PSM_ACTIVITY_TIMER:10000}"
     paging_transmission_window: "${COAP_PAGING_TRANSMISSION_WINDOW:10000}"
     dtls:
