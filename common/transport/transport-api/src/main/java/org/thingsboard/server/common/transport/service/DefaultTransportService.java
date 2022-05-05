@@ -24,7 +24,6 @@ import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -93,6 +92,7 @@ import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbTransportComponent;
+import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -150,6 +150,8 @@ public class DefaultTransportService implements TransportService {
     private int notificationsPollDuration;
     @Value("${transport.stats.enabled:false}")
     private boolean statsEnabled;
+    @Value("${transport.stats.print-interval-ms:60000}")
+    private long statsPrintInterval;
 
     private final Map<String, Number> statsMap = new LinkedHashMap<>();
 
@@ -167,6 +169,7 @@ public class DefaultTransportService implements TransportService {
     private final SchedulerComponent scheduler;
     private final ApplicationEventPublisher eventPublisher;
     private final TransportResourceCache transportResourceCache;
+    private final TbPrintStatsExecutorService tbPrintStatsExecutorService;
 
     protected TbQueueRequestTemplate<TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> transportApiRequestTemplate;
     protected TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> ruleEngineMsgProducer;
@@ -195,7 +198,7 @@ public class DefaultTransportService implements TransportService {
                                    TransportTenantProfileCache tenantProfileCache,
                                    TbApiUsageClient apiUsageClient, TransportRateLimitService rateLimitService,
                                    DataDecodingEncodingService dataDecodingEncodingService, SchedulerComponent scheduler, TransportResourceCache transportResourceCache,
-                                   ApplicationEventPublisher eventPublisher) {
+                                   ApplicationEventPublisher eventPublisher, TbPrintStatsExecutorService tbPrintStatsExecutorService) {
         this.serviceInfoProvider = serviceInfoProvider;
         this.queueProvider = queueProvider;
         this.producerProvider = producerProvider;
@@ -209,6 +212,7 @@ public class DefaultTransportService implements TransportService {
         this.scheduler = scheduler;
         this.transportResourceCache = transportResourceCache;
         this.eventPublisher = eventPublisher;
+        this.tbPrintStatsExecutorService = tbPrintStatsExecutorService;
     }
 
     @PostConstruct
@@ -228,6 +232,7 @@ public class DefaultTransportService implements TransportService {
         transportNotificationsConsumer.subscribe(Collections.singleton(tpi));
         transportApiRequestTemplate.init();
         mainConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("transport-consumer"));
+        tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, 0, statsPrintInterval, TimeUnit.MILLISECONDS);
     }
 
     @AfterStartUp
@@ -1204,7 +1209,6 @@ public class DefaultTransportService implements TransportService {
         statsMap.put(statsName, number);
     }
 
-    @Scheduled(fixedDelayString = "${transport.stats.print-interval-ms:60000}")
     public void printStats() {
         if (statsEnabled && !statsMap.isEmpty()) {
             String values = statsMap.entrySet().stream()

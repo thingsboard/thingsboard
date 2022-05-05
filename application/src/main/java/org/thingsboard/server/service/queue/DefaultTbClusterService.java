@@ -19,7 +19,6 @@ import com.google.protobuf.ByteString;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.msg.DeviceEdgeUpdateMsg;
 import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
@@ -62,14 +61,17 @@ import org.thingsboard.server.queue.common.MultipleTbQueueCallbackWrapper;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
+import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 
+import javax.annotation.PostConstruct;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -81,6 +83,8 @@ public class DefaultTbClusterService implements TbClusterService {
     private boolean statsEnabled;
     @Value("${edges.enabled}")
     protected boolean edgesEnabled;
+    @Value("${cluster.stats.print_interval_ms}")
+    private long statsPrintInterval;
 
     private final AtomicInteger toCoreMsgs = new AtomicInteger(0);
     private final AtomicInteger toCoreNfs = new AtomicInteger(0);
@@ -94,6 +98,12 @@ public class DefaultTbClusterService implements TbClusterService {
     private final TbDeviceProfileCache deviceProfileCache;
     private final OtaPackageStateService otaPackageStateService;
     private final GatewayNotificationsService gatewayNotificationsService;
+    private final TbPrintStatsExecutorService tbPrintStatsExecutorService;
+
+    @PostConstruct
+    public void init() {
+        tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, 0, statsPrintInterval, TimeUnit.MILLISECONDS);
+    }
 
     @Override
     public void pushMsgToCore(TenantId tenantId, EntityId entityId, ToCoreMsg msg, TbQueueCallback callback) {
@@ -365,7 +375,6 @@ public class DefaultTbClusterService implements TbClusterService {
         }
     }
 
-    @Scheduled(fixedDelayString = "${cluster.stats.print_interval_ms}")
     public void printStats() {
         if (statsEnabled) {
             int toCoreMsgCnt = toCoreMsgs.getAndSet(0);

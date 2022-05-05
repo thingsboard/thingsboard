@@ -16,10 +16,11 @@
 package org.thingsboard.server.queue.provider;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueConsumer;
@@ -38,10 +39,16 @@ import org.thingsboard.server.queue.settings.TbQueueTransportApiSettings;
 import org.thingsboard.server.queue.settings.TbQueueTransportNotificationSettings;
 import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
 
+import javax.annotation.PostConstruct;
+import java.util.concurrent.TimeUnit;
+
 @Slf4j
 @Component
 @ConditionalOnExpression("'${queue.type:null}'=='in-memory' && '${service.type:null}'=='monolith'")
 public class InMemoryMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngineQueueFactory {
+
+    @Value("${queue.in_memory.stats.print-interval-ms:60000}")
+    private long statsPrintInterval;
 
     private final PartitionService partitionService;
     private final TbQueueCoreSettings coreSettings;
@@ -50,13 +57,15 @@ public class InMemoryMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
     private final TbQueueTransportApiSettings transportApiSettings;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
     private final InMemoryStorage storage;
+    private final TbPrintStatsExecutorService tbPrintStatsExecutorService;
 
     public InMemoryMonolithQueueFactory(PartitionService partitionService, TbQueueCoreSettings coreSettings,
                                         TbQueueRuleEngineSettings ruleEngineSettings,
                                         TbServiceInfoProvider serviceInfoProvider,
                                         TbQueueTransportApiSettings transportApiSettings,
                                         TbQueueTransportNotificationSettings transportNotificationSettings,
-                                        InMemoryStorage storage) {
+                                        InMemoryStorage storage,
+                                        TbPrintStatsExecutorService tbPrintStatsExecutorService) {
         this.partitionService = partitionService;
         this.coreSettings = coreSettings;
         this.serviceInfoProvider = serviceInfoProvider;
@@ -64,6 +73,12 @@ public class InMemoryMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
         this.transportApiSettings = transportApiSettings;
         this.transportNotificationSettings = transportNotificationSettings;
         this.storage = storage;
+        this.tbPrintStatsExecutorService = tbPrintStatsExecutorService;
+    }
+
+    @PostConstruct
+    public void init() {
+        tbPrintStatsExecutorService.scheduleAtFixedRate(this::printInMemoryStats, 0, statsPrintInterval, TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -146,7 +161,6 @@ public class InMemoryMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
         return new InMemoryTbQueueProducer<>(storage, coreSettings.getUsageStatsTopic());
     }
 
-    @Scheduled(fixedRateString = "${queue.in_memory.stats.print-interval-ms:60000}")
     private void printInMemoryStats() {
         storage.printStats();
     }

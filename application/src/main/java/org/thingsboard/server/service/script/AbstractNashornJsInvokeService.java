@@ -24,10 +24,10 @@ import delight.nashornsandbox.NashornSandboxes;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
+import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -38,7 +38,6 @@ import javax.script.ScriptException;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
@@ -63,18 +62,24 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
     @Getter
     private final JsExecutorService jsExecutor;
 
+    @Getter
+    private final TbPrintStatsExecutorService tbPrintStatsExecutorService;
+
     @Value("${js.local.max_requests_timeout:0}")
     private long maxRequestsTimeout;
 
     @Value("${js.local.stats.enabled:false}")
     private boolean statsEnabled;
 
-    public AbstractNashornJsInvokeService(TbApiUsageStateService apiUsageStateService, TbApiUsageClient apiUsageClient, JsExecutorService jsExecutor) {
+    @Value("${js.local.stats.print_interval_ms:10000}")
+    private long statsPrintInterval;
+
+    public AbstractNashornJsInvokeService(TbApiUsageStateService apiUsageStateService, TbApiUsageClient apiUsageClient, JsExecutorService jsExecutor, TbPrintStatsExecutorService tbPrintStatsExecutorService) {
         super(apiUsageStateService, apiUsageClient);
         this.jsExecutor = jsExecutor;
+        this.tbPrintStatsExecutorService = tbPrintStatsExecutorService;
     }
 
-    @Scheduled(fixedDelayString = "${js.local.stats.print_interval_ms:10000}")
     public void printStats() {
         if (statsEnabled) {
             int pushedMsgs = jsPushedMsgs.getAndSet(0);
@@ -91,6 +96,7 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
 
     @PostConstruct
     public void init() {
+        tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, 0, statsPrintInterval, TimeUnit.MILLISECONDS);
         super.init(maxRequestsTimeout);
         if (useJsSandbox()) {
             sandbox = NashornSandboxes.create();

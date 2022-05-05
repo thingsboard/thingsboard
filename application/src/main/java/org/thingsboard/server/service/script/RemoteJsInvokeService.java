@@ -23,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StopWatch;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -33,6 +32,7 @@ import org.thingsboard.server.queue.common.TbProtoJsQueueMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
+import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
@@ -67,6 +67,9 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     @Value("${js.remote.stats.enabled:false}")
     private boolean statsEnabled;
 
+    @Value("${js.remote.stats.print_interval_ms}")
+    private long statsPrintInterval;
+
     private final AtomicInteger queuePushedMsgs = new AtomicInteger(0);
     private final AtomicInteger queueInvokeMsgs = new AtomicInteger(0);
     private final AtomicInteger queueEvalMsgs = new AtomicInteger(0);
@@ -74,12 +77,13 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     private final AtomicInteger queueTimeoutMsgs = new AtomicInteger(0);
     private final ExecutorService callbackExecutor = Executors.newFixedThreadPool(
             Runtime.getRuntime().availableProcessors(), ThingsBoardThreadFactory.forName("js-executor-remote-callback"));
+    private final TbPrintStatsExecutorService tbPrintStatsExecutorService;
 
-    public RemoteJsInvokeService(TbApiUsageStateService apiUsageStateService, TbApiUsageClient apiUsageClient) {
+    public RemoteJsInvokeService(TbApiUsageStateService apiUsageStateService, TbApiUsageClient apiUsageClient, TbPrintStatsExecutorService tbPrintStatsExecutorService) {
         super(apiUsageStateService, apiUsageClient);
+        this.tbPrintStatsExecutorService = tbPrintStatsExecutorService;
     }
 
-    @Scheduled(fixedDelayString = "${js.remote.stats.print_interval_ms}")
     public void printStats() {
         if (statsEnabled) {
             int pushedMsgs = queuePushedMsgs.getAndSet(0);
@@ -103,6 +107,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     public void init() {
         super.init(maxRequestsTimeout);
         requestTemplate.init();
+        tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, 0, statsPrintInterval, TimeUnit.MILLISECONDS);
     }
 
     @PreDestroy

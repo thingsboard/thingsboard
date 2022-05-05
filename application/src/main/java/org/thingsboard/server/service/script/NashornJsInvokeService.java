@@ -21,6 +21,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
+import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 
 import java.util.concurrent.TimeUnit;
 
@@ -44,8 +45,8 @@ public class NashornJsInvokeService extends AbstractNashornJsInvokeService {
     @Value("${js.local.max_black_list_duration_sec:60}")
     private int maxBlackListDurationSec;
 
-    public NashornJsInvokeService(TbApiUsageStateService apiUsageStateService, TbApiUsageClient apiUsageClient, JsExecutorService jsExecutor) {
-        super(apiUsageStateService, apiUsageClient, jsExecutor);
+    public NashornJsInvokeService(TbApiUsageStateService apiUsageStateService, TbApiUsageClient apiUsageClient, JsExecutorService jsExecutor, TbPrintStatsExecutorService tbPrintStatsExecutorService) {
+        super(apiUsageStateService, apiUsageClient, jsExecutor, tbPrintStatsExecutorService);
     }
 
     @Override

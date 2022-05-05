@@ -18,7 +18,6 @@ package org.thingsboard.server.service.queue;
 import com.google.protobuf.ProtocolStringList;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.rpc.RpcError;
@@ -46,6 +45,7 @@ import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
+import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
@@ -91,6 +91,8 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     private boolean statsEnabled;
     @Value("${queue.rule-engine.prometheus-stats.enabled:false}")
     boolean prometheusStatsEnabled;
+    @Value("${queue.rule-engine.stats.print-interval-ms}")
+    private long statsPrintInterval;
 
     private final StatsFactory statsFactory;
     private final TbRuleEngineSubmitStrategyFactory submitStrategyFactory;
@@ -103,6 +105,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     private final ConcurrentMap<String, TbRuleEngineQueueConfiguration> consumerConfigurations = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, TbRuleEngineConsumerStats> consumerStats = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, TbTopicWithConsumerPerPartition> topicsConsumerPerPartition = new ConcurrentHashMap<>();
+    private final TbPrintStatsExecutorService tbPrintStatsExecutorService;
     final ExecutorService submitExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-rule-engine-consumer-submit"));
     final ScheduledExecutorService repartitionExecutor = Executors.newScheduledThreadPool(1, ThingsBoardThreadFactory.forName("tb-rule-engine-consumer-repartition"));
 
@@ -117,7 +120,8 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                                               StatsFactory statsFactory,
                                               TbDeviceProfileCache deviceProfileCache,
                                               TbTenantProfileCache tenantProfileCache,
-                                              TbApiUsageStateService apiUsageStateService) {
+                                              TbApiUsageStateService apiUsageStateService,
+                                              TbPrintStatsExecutorService tbPrintStatsExecutorService) {
         super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, apiUsageStateService, tbRuleEngineQueueFactory.createToRuleEngineNotificationsMsgConsumer());
         this.statisticsService = statisticsService;
         this.ruleEngineSettings = ruleEngineSettings;
@@ -126,6 +130,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
         this.processingStrategyFactory = processingStrategyFactory;
         this.tbDeviceRpcService = tbDeviceRpcService;
         this.statsFactory = statsFactory;
+        this.tbPrintStatsExecutorService = tbPrintStatsExecutorService;
     }
 
     @PostConstruct
@@ -140,6 +145,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                 topicsConsumerPerPartition.computeIfAbsent(configuration.getName(), TbTopicWithConsumerPerPartition::new);
             }
         }
+        tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, 0, statsPrintInterval, TimeUnit.MILLISECONDS);
     }
 
     @PreDestroy
@@ -402,7 +408,6 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
         actorContext.tell(msg);
     }
 
-    @Scheduled(fixedDelayString = "${queue.rule-engine.stats.print-interval-ms}")
     public void printStats() {
         if (statsEnabled) {
             long ts = System.currentTimeMillis();
