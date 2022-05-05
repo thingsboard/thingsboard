@@ -42,7 +42,7 @@
         <ng-template #searchNotEmpty>
           <span>
               {{ translate.get('queue.no-queues-matching',
-            {entity: truncate.transform(searchText, true, 6, &apos;...&apos;)}) | async }}
+            {queue: truncate.transform(searchText, true, 6, &apos;...&apos;)}) | async }}
           </span>
         </ng-template>
       </div>

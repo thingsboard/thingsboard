@@ -288,7 +288,7 @@ import * as AlarmDurationPredicateValueComponent from '@home/components/profile/
 import * as DashboardImageDialogComponent from '@home/components/dashboard-page/dashboard-image-dialog.component';
 import * as WidgetContainerComponent from '@home/components/widget/widget-container.component';
 import * as TenantProfileQueuesComponent from '@home/components/profile/queue/tenant-profile-queues.component';
-import { TenantProfileQueueComponent } from '@home/components/profile/queue/tenant-profile-queue.component';
+import * as QueueFormComponent from '@home/components/queue/queue-form.component';
 
 import { IModulesMap } from '@modules/common/modules-map.models';
 
@@ -573,7 +573,7 @@ class ModulesMap implements IModulesMap {
     '@home/components/dashboard-page/dashboard-image-dialog.component': DashboardImageDialogComponent,
     '@home/components/widget/widget-container.component': WidgetContainerComponent,
     '@home/components/profile/queue/tenant-profile-queues.component': TenantProfileQueuesComponent,
-    '@home/components/profile/queue/tenant-profile-queue.component': TenantProfileQueueComponent
+    '@home/components/queue/queue-form.component': QueueFormComponent
   };
 
   init() {

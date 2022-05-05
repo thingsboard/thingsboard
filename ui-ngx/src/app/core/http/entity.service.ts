@@ -87,8 +87,7 @@ import { bodyContentEdgeEventActionTypes, Edge, EdgeEvent, EdgeEventType } from 
 import { RuleChainMetaData, RuleChainType } from '@shared/models/rule-chain.models';
 import { WidgetService } from '@core/http/widget.service';
 import { DeviceProfileService } from '@core/http/device-profile.service';
-import { QueueService } from "@core/http/queue.service";
-import { ServiceType } from "@shared/models/queue.models";
+import { QueueService } from '@core/http/queue.service';
 
 @Injectable({
   providedIn: 'root'

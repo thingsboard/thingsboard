@@ -50,7 +50,7 @@ import { StepperSelectionEvent } from '@angular/cdk/stepper';
 import { deepTrim } from '@core/utils';
 import { ServiceType } from '@shared/models/queue.models';
 import { DashboardId } from '@shared/models/id/dashboard-id';
-import { QueueId } from "@shared/models/id/queue-id";
+import { QueueId } from '@shared/models/id/queue-id';
 
 export interface AddDeviceProfileDialogData {
   deviceProfileName: string;
@@ -188,7 +188,6 @@ export class AddDeviceProfileDialogComponent extends
         name: this.deviceProfileDetailsFormGroup.get('name').value,
         type: this.deviceProfileDetailsFormGroup.get('type').value,
         image: this.deviceProfileDetailsFormGroup.get('image').value,
-        // defaultQueueId: this.deviceProfileDetailsFormGroup.get('defaultQueueId').value,
         transportType: this.transportConfigFormGroup.get('transportType').value,
         provisionType: deviceProvisionConfiguration.type,
         provisionDeviceKey,

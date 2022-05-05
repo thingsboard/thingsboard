@@ -428,7 +428,8 @@ export const baseDetailsPageByEntityType = new Map<EntityType, string>([
   [EntityType.EDGE, '/edgeInstances'],
   [EntityType.ENTITY_VIEW, '/entityViews'],
   [EntityType.TB_RESOURCE, '/settings/resources-library'],
-  [EntityType.OTA_PACKAGE, '/otaUpdates']
+  [EntityType.OTA_PACKAGE, '/otaUpdates'],
+  [EntityType.QUEUE, '/settings/queues']
 ]);
 
 export interface EntitySubtype {

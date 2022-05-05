@@ -49,7 +49,7 @@ import { MediaBreakpoints } from '@shared/models/constants';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { ServiceType } from '@shared/models/queue.models';
 import { deepTrim } from '@core/utils';
-import { QueueId } from "@shared/models/id/queue-id";
+import { QueueId } from '@shared/models/id/queue-id';
 
 @Component({
   selector: 'tb-device-wizard',

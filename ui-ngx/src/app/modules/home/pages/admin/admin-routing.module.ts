@@ -187,19 +187,41 @@ const routes: Routes = [
       },
       {
         path: 'queues',
-        component: EntitiesTableComponent,
-        canDeactivate: [ConfirmOnExitGuard],
         data: {
-          auth: [Authority.SYS_ADMIN],
-          title: 'admin.queues',
           breadcrumb: {
             label: 'admin.queues',
             icon: 'swap_calls'
           }
         },
-        resolve: {
-          entitiesTableConfig: QueuesTableConfigResolver
-        }
+        children: [
+          {
+            path: '',
+            component: EntitiesTableComponent,
+            data: {
+              auth: [Authority.SYS_ADMIN],
+              title: 'admin.queues'
+            },
+            resolve: {
+              entitiesTableConfig: QueuesTableConfigResolver
+            }
+          },
+          {
+            path: ':entityId',
+            component: EntityDetailsPageComponent,
+            canDeactivate: [ConfirmOnExitGuard],
+            data: {
+              breadcrumb: {
+                labelFunction: entityDetailsPageBreadcrumbLabelFunction,
+                icon: 'swap_calls'
+              } as BreadCrumbConfig<EntityDetailsPageComponent>,
+              auth: [Authority.SYS_ADMIN],
+              title: 'admin.queues'
+            },
+            resolve: {
+              entitiesTableConfig: QueuesTableConfigResolver
+            }
+          }
+        ]
       }
     ]
   }

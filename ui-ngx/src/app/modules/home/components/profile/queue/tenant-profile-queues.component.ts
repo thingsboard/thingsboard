@@ -14,16 +14,16 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, forwardRef, Input, OnDestroy } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
   FormArray,
   FormBuilder,
-  FormControl,
   FormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
+  ValidationErrors,
   Validator,
   Validators
 } from '@angular/forms';
@@ -32,6 +32,7 @@ import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { Subscription } from 'rxjs';
 import { QueueInfo } from '@shared/models/queue.models';
+import { UtilsService } from '@core/services/utils.service';
 
 @Component({
   selector: 'tb-tenant-profile-queues',
@@ -50,7 +51,7 @@ import { QueueInfo } from '@shared/models/queue.models';
     }
   ]
 })
-export class TenantProfileQueuesComponent implements ControlValueAccessor, OnInit, Validator {
+export class TenantProfileQueuesComponent implements ControlValueAccessor, Validator, OnDestroy {
 
   tenantProfileQueuesFormGroup: FormGroup;
   newQueue = false;
@@ -67,16 +68,23 @@ export class TenantProfileQueuesComponent implements ControlValueAccessor, OnIni
   @Input()
   disabled: boolean;
 
-  private valueChangeSubscription: Subscription = null;
+  private valueChangeSubscription$: Subscription = null;
 
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
+              private utils: UtilsService,
               private fb: FormBuilder) {
   }
 
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
+  }
+
+  ngOnDestroy() {
+    if (this.valueChangeSubscription$) {
+      this.valueChangeSubscription$.unsubscribe();
+    }
   }
 
   registerOnTouched(fn: any): void {
@@ -88,7 +96,7 @@ export class TenantProfileQueuesComponent implements ControlValueAccessor, OnIni
     });
   }
 
-  queuesFormArray(): FormArray {
+  get queuesFormArray(): FormArray {
     return this.tenantProfileQueuesFormGroup.get('queues') as FormArray;
   }
 
@@ -102,8 +110,8 @@ export class TenantProfileQueuesComponent implements ControlValueAccessor, OnIni
   }
 
   writeValue(queues: Array<QueueInfo> | null): void {
-    if (this.valueChangeSubscription) {
-      this.valueChangeSubscription.unsubscribe();
+    if (this.valueChangeSubscription$) {
+      this.valueChangeSubscription$.unsubscribe();
     }
     const queuesControls: Array<AbstractControl> = [];
     if (queues) {
@@ -117,7 +125,7 @@ export class TenantProfileQueuesComponent implements ControlValueAccessor, OnIni
     } else {
       this.tenantProfileQueuesFormGroup.enable({emitEvent: false});
     }
-    this.valueChangeSubscription = this.tenantProfileQueuesFormGroup.valueChanges.subscribe(() => {
+    this.valueChangeSubscription$ = this.tenantProfileQueuesFormGroup.valueChanges.subscribe(value => {
       this.updateModel();
     });
   }
@@ -163,12 +171,16 @@ export class TenantProfileQueuesComponent implements ControlValueAccessor, OnIni
     }
   }
 
-  public validate(c: FormControl) {
-    return (this.tenantProfileQueuesFormGroup.valid) ? null : {
+  public validate(c: AbstractControl): ValidationErrors | null {
+    return this.tenantProfileQueuesFormGroup.valid ? null : {
       queues: {
         valid: false,
       },
     };
+  }
+
+  getName(value) {
+    return this.utils.customTranslation(value, value);
   }
 
   private updateModel() {

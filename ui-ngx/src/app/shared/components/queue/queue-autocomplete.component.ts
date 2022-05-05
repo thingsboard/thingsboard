@@ -27,11 +27,11 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { BaseData } from '@shared/models/base-data';
 import { EntityService } from '@core/http/entity.service';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
-import {QueueInfo, ServiceType} from "@shared/models/queue.models";
-import { QueueService } from "@core/http/queue.service";
-import { PageLink } from "@shared/models/page/page-link";
-import { Direction } from "@shared/models/page/sort-order";
-import { emptyPageData } from "@shared/models/page/page-data";
+import { QueueInfo, ServiceType } from '@shared/models/queue.models';
+import { QueueService } from '@core/http/queue.service';
+import { PageLink } from '@shared/models/page/page-link';
+import { Direction } from '@shared/models/page/sort-order';
+import { emptyPageData } from '@shared/models/page/page-data';
 
 @Component({
   selector: 'tb-queue-autocomplete',
