@@ -15,11 +15,9 @@
  */
 package org.thingsboard.server.common.data.security.model.mfa;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderConfig;
+import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
@@ -28,29 +26,18 @@ import java.util.List;
 import java.util.Optional;
 
 @Data
-@ApiModel
 public class PlatformTwoFaSettings {
 
-    @ApiModelProperty(value = "Option for tenant admins to use 2FA settings configured by sysadmin. " +
-            "If this param is set to true, then the settings will not be validated for constraints " +
-            "(if it is a tenant admin; for sysadmin this param is ignored)")
     private boolean useSystemTwoFactorAuthSettings;
-    @ApiModelProperty(value = "The list of 2FA providers' configs. Users will only be allowed to use 2FA providers from this list.")
     @Valid
     private List<TwoFaProviderConfig> providers;
 
-    @ApiModelProperty(value = "Rate limit configuration for verification code sending. The format is standard: 'amountOfRequests:periodInSeconds'. " +
-            "The value of '1:60' would limit verification code sending requests to one per minute.", example = "1:60", required = false)
     @Pattern(regexp = "[1-9]\\d*:[1-9]\\d*", message = "verification code send rate limit configuration is invalid")
     private String verificationCodeSendRateLimit;
-    @ApiModelProperty(value = "Rate limit configuration for verification code checking.", example = "3:900", required = false)
     @Pattern(regexp = "[1-9]\\d*:[1-9]\\d*", message = "verification code check rate limit configuration is invalid")
     private String verificationCodeCheckRateLimit;
-    @ApiModelProperty(value = "Maximum number of verification failures before a user gets disabled.", example = "10", required = false)
     @Min(value = 0, message = "maximum number of verification failure before user lockout must be positive")
     private int maxVerificationFailuresBeforeUserLockout;
-    @ApiModelProperty(value = "Total amount of time in seconds allotted for verification. " +
-            "Basically, this property sets a lifetime for pre-verification token. If not set, default value of 30 minutes is used.", example = "3600", required = false)
     @Min(value = 1, message = "total amount of time allotted for verification must be greater than 0")
     private Integer totalAllowedTimeForVerification;
 

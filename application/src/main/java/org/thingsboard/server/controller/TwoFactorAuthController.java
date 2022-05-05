@@ -84,8 +84,8 @@ public class TwoFactorAuthController extends BaseController {
                     "and Too Many Requests error if rate limits are exceeded.")
     @PostMapping("/verification/check")
     @PreAuthorize("hasAuthority('PRE_VERIFICATION_TOKEN')")
-    public JwtTokenPair checkTwoFaVerificationCode(@ApiParam(value = "6-digit verification code", required = true)
-                                                   @RequestParam TwoFaProviderType providerType,
+    public JwtTokenPair checkTwoFaVerificationCode(@RequestParam TwoFaProviderType providerType,
+                                                   @ApiParam(value = "6-digit verification code", required = true)
                                                    @RequestParam String verificationCode, HttpServletRequest servletRequest) throws Exception {
         SecurityUser user = getCurrentUser();
         boolean verificationSuccess = twoFactorAuthService.checkVerificationCode(user, providerType, verificationCode, true);
@@ -101,6 +101,13 @@ public class TwoFactorAuthController extends BaseController {
     }
 
 
+    @ApiOperation(value = "Get available 2FA providers (getAvailableTwoFaProviders)", notes =
+            "Get the list of 2FA provider infos available for user to use. Example:\n" +
+                    "```\n[\n" +
+                    "  {\n    \"type\": \"EMAIL\",\n    \"default\": true\n  },\n" +
+                    "  {\n    \"type\": \"TOTP\",\n    \"default\": false\n  },\n" +
+                    "  {\n    \"type\": \"SMS\",\n    \"default\": false\n  }\n" +
+                    "]\n```")
     @GetMapping("/providers")
     @PreAuthorize("hasAuthority('PRE_VERIFICATION_TOKEN')")
     public List<TwoFaProviderInfo> getAvailableTwoFaProviders() throws ThingsboardException {

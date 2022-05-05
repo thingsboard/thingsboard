@@ -38,27 +38,27 @@ public abstract class OtpBasedTwoFaProvider<C extends OtpBasedTwoFaProviderConfi
 
 
     @Override
-    public final void prepareVerificationCode(SecurityUser securityUser, C providerConfig, A accountConfig) throws ThingsboardException {
+    public final void prepareVerificationCode(SecurityUser user, C providerConfig, A accountConfig) throws ThingsboardException {
         String verificationCode = RandomStringUtils.randomNumeric(6);
-        verificationCodesCache.put(securityUser.getId(), new Otp(System.currentTimeMillis(), verificationCode, accountConfig));
-        sendVerificationCode(securityUser, verificationCode, providerConfig, accountConfig);
+        sendVerificationCode(user, verificationCode, providerConfig, accountConfig);
+        verificationCodesCache.put(user.getId(), new Otp(System.currentTimeMillis(), verificationCode, accountConfig));
     }
 
     protected abstract void sendVerificationCode(SecurityUser user, String verificationCode, C providerConfig, A accountConfig) throws ThingsboardException;
 
 
     @Override
-    public final boolean checkVerificationCode(SecurityUser securityUser, String verificationCode, C providerConfig, A accountConfig) {
-        Otp correctVerificationCode = verificationCodesCache.get(securityUser.getId(), Otp.class);
+    public final boolean checkVerificationCode(SecurityUser user, String verificationCode, C providerConfig, A accountConfig) {
+        Otp correctVerificationCode = verificationCodesCache.get(user.getId(), Otp.class);
         if (correctVerificationCode != null) {
             if (System.currentTimeMillis() - correctVerificationCode.getTimestamp()
                     > TimeUnit.SECONDS.toMillis(providerConfig.getVerificationCodeLifetime())) {
-                verificationCodesCache.evict(securityUser.getId());
+                verificationCodesCache.evict(user.getId());
                 return false;
             }
             if (verificationCode.equals(correctVerificationCode.getValue())
                     && accountConfig.equals(correctVerificationCode.getAccountConfig())) {
-                verificationCodesCache.evict(securityUser.getId());
+                verificationCodesCache.evict(user.getId());
                 return true;
             }
         }

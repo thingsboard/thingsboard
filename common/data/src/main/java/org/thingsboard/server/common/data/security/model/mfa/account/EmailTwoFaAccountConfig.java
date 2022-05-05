@@ -13,21 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.security.model.mfa.provider;
+package org.thingsboard.server.common.data.security.model.mfa.account;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
 
+import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 
 @Data
-public class TotpTwoFaProviderConfig implements TwoFaProviderConfig {
+@EqualsAndHashCode(callSuper = true)
+public class EmailTwoFaAccountConfig extends OtpBasedTwoFaAccountConfig {
 
-    @NotBlank(message = "issuer name must not be blank")
-    private String issuerName;
+    @NotBlank
+    @Email
+    private String email;
 
     @Override
     public TwoFaProviderType getProviderType() {
-        return TwoFaProviderType.TOTP;
+        return TwoFaProviderType.EMAIL;
     }
 
 }

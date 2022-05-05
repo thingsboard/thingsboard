@@ -29,7 +29,8 @@ import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProvi
         property = "providerType")
 @JsonSubTypes({
         @Type(name = "TOTP", value = TotpTwoFaAccountConfig.class),
-        @Type(name = "SMS", value = SmsTwoFaAccountConfig.class)
+        @Type(name = "SMS", value = SmsTwoFaAccountConfig.class),
+        @Type(name = "EMAIL", value = EmailTwoFaAccountConfig.class)
 })
 @Data
 public abstract class TwoFaAccountConfig {

@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.common.data.security.model.mfa.account;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
@@ -24,13 +22,10 @@ import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProvi
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 
-@ApiModel // FIXME [viacheslav]
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class TotpTwoFaAccountConfig extends TwoFaAccountConfig {
 
-    @ApiModelProperty(value = "OTP auth URL used to generate a QR code to scan with an authenticator app. Must not be blank and must follow specific pattern.",
-            example = "otpauth://totp/ThingsBoard:tenant@thingsboard.org?issuer=ThingsBoard&secret=FUNBIM3CXFNNGQR6ZIPVWHP65PPFWDII", required = true)
     @NotBlank(message = "OTP auth URL cannot be blank")
     @Pattern(regexp = "otpauth://totp/(\\S+?):(\\S+?)\\?issuer=(\\S+?)&secret=(\\w+?)", message = "OTP auth url is invalid")
     private String authUrl;

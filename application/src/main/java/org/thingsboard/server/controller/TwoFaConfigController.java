@@ -33,7 +33,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettings;
 import org.thingsboard.server.common.data.security.model.mfa.account.AccountTwoFaSettings;
@@ -51,6 +50,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
@@ -65,20 +65,15 @@ public class TwoFaConfigController extends BaseController {
     private final TwoFactorAuthService twoFactorAuthService;
 
 
-    @ApiOperation(value = "Get 2FA account config (getTwoFaAccountConfig)",
-            notes = "Get user's account 2FA configuration. Returns empty result if user did not configured 2FA, " +
-                    "or if a provider for previously set up account config is not now configured." + NEW_LINE +
-                    ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER + NEW_LINE +
-                    "Response example for TOTP 2FA: " + NEW_LINE +
-                    "```\n{\n" +
-                    "  \"providerType\": \"TOTP\",\n" +
-                    "  \"authUrl\": \"otpauth://totp/ThingsBoard:tenant@thingsboard.org?issuer=ThingsBoard&secret=FUNBIM3CXFNNGQR6ZIPVWHP65PPFWDII\"\n" +
-                    "}\n```" + NEW_LINE +
-                    "Response example for SMS 2FA: " + NEW_LINE +
-                    "```\n{\n" +
-                    "  \"providerType\": \"SMS\",\n" +
-                    "  \"phoneNumber\": \"+380505005050\"\n" +
-                    "}\n```")
+    @ApiOperation(value = "Get account 2FA settings (getAccountTwoFaSettings)",
+            notes = "Get user's account 2FA configuration. Configuration contains configs for different 2FA providers." + NEW_LINE +
+                    "Example:\n" +
+                    "```\n{\n  \"configs\": {\n" +
+                    "    \"EMAIL\": {\n      \"providerType\": \"EMAIL\",\n      \"useByDefault\": true,\n      \"email\": \"tenant@thingsboard.org\"\n    },\n" +
+                    "    \"TOTP\": {\n      \"providerType\": \"TOTP\",\n      \"useByDefault\": false,\n      \"authUrl\": \"otpauth://totp/TB%202FA:tenant@thingsboard.org?issuer=TB+2FA&secret=P6Z2TLYTASOGP6LCJZAD24ETT5DACNNX\"\n    },\n" +
+                    "    \"SMS\": {\n      \"providerType\": \"SMS\",\n      \"useByDefault\": false,\n      \"phoneNumber\": \"+380501253652\"\n    }\n" +
+                    "  }\n}\n```" +
+                    ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @GetMapping("/account/settings")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public AccountTwoFaSettings getAccountTwoFaSettings() throws ThingsboardException {
@@ -88,24 +83,29 @@ public class TwoFaConfigController extends BaseController {
 
 
     @ApiOperation(value = "Generate 2FA account config (generateTwoFaAccountConfig)",
-            notes = "Generate new 2FA account config for specified provider type. " +
-                    "This method is only useful for TOTP 2FA, as there is nothing to generate for other provider types. " +
+            notes = "Generate new 2FA account config template for specified provider type. " + NEW_LINE +
                     "For TOTP, this will return a corresponding account config template " +
                     "with a generated OTP auth URL (with new random secret key for each API call) that can be then " +
-                    "converted to a QR code to scan with an authenticator app. " +
-                    "For other provider types, this method will return an empty config. " + NEW_LINE +
-                    "Will throw an error (Bad Request) if the provider is not configured for usage. " +
-                    ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER + NEW_LINE +
-                    "Example of a generated account config for TOTP 2FA: " + NEW_LINE +
+                    "converted to a QR code to scan with an authenticator app. Example:\n" +
                     "```\n{\n" +
                     "  \"providerType\": \"TOTP\",\n" +
-                    "  \"authUrl\": \"otpauth://totp/ThingsBoard:tenant@thingsboard.org?issuer=ThingsBoard&secret=FUNBIM3CXFNNGQR6ZIPVWHP65PPFWDII\"\n" +
+                    "  \"useByDefault\": false,\n" +
+                    "  \"authUrl\": \"otpauth://totp/TB%202FA:tenant@thingsboard.org?issuer=TB+2FA&secret=PNJDNWJVAK4ZTUYT7RFGPQLXA7XGU7PX\"\n" +
                     "}\n```" + NEW_LINE +
-                    "For SMS provider type it will return something like: " + NEW_LINE +
+                    "For EMAIL, the generated config will contain email from user's account:\n" +
+                    "```\n{\n" +
+                    "  \"providerType\": \"EMAIL\",\n" +
+                    "  \"useByDefault\": false,\n" +
+                    "  \"email\": \"tenant@thingsboard.org\"\n" +
+                    "}\n```" + NEW_LINE +
+                    "For SMS 2FA this method will just return a config with empty/default values as there is nothing to generate/preset:\n" +
                     "```\n{\n" +
                     "  \"providerType\": \"SMS\",\n" +
+                    "  \"useByDefault\": false,\n" +
                     "  \"phoneNumber\": null\n" +
-                    "}\n```")
+                    "}\n```" + NEW_LINE +
+                    "Will throw an error (Bad Request) if the provider is not configured for usage. " +
+                    ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PostMapping("/account/config/generate")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public TwoFaAccountConfig generateTwoFaAccountConfig(@ApiParam(value = "2FA provider type to generate new account config for", defaultValue = "TOTP", required = true)
@@ -133,51 +133,84 @@ public class TwoFaConfigController extends BaseController {
             notes = "Submit 2FA account config to prepare for a future verification. " +
                     "Basically, this method will send a verification code for a given account config, if this has " +
                     "sense for a chosen 2FA provider. This code is needed to then verify and save the account config." + NEW_LINE +
+                    "Example of EMAIL 2FA account config:\n" +
+                    "```\n{\n" +
+                    "  \"providerType\": \"EMAIL\",\n" +
+                    "  \"useByDefault\": true,\n" +
+                    "  \"email\": \"separate-email-for-2fa@thingsboard.org\"\n" +
+                    "}\n```" + NEW_LINE +
+                    "Example of SMS 2FA account config:\n" +
+                    "```\n{\n" +
+                    "  \"providerType\": \"SMS\",\n" +
+                    "  \"useByDefault\": false,\n" +
+                    "  \"phoneNumber\": \"+38012312321\"\n" +
+                    "}\n```" + NEW_LINE +
+                    "For TOTP this method does nothing." + NEW_LINE +
                     "Will throw an error (Bad Request) if submitted account config is not valid, " +
                     "or if the provider is not configured for usage. " +
                     ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PostMapping("/account/config/submit")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    public void submitTwoFaAccountConfig(@ApiParam(value = "2FA account config value. For TOTP 2FA config, authUrl value must not be blank and must match specific pattern. " +
-            "For SMS 2FA, phoneNumber property must not be blank and must be of E.164 phone number format.", required = true)
-                                         @Valid @RequestBody TwoFaAccountConfig accountConfig) throws Exception {
+    public void submitTwoFaAccountConfig(@Valid @RequestBody TwoFaAccountConfig accountConfig) throws Exception {
         SecurityUser user = getCurrentUser();
         twoFactorAuthService.prepareVerificationCode(user, accountConfig, false);
     }
 
     @ApiOperation(value = "Verify and save 2FA account config (verifyAndSaveTwoFaAccountConfig)",
-            notes = "Checks the verification code for submitted config, and if it is correct, saves the provided account config. " +
-                    "The config is stored in the user's additionalInfo. " + NEW_LINE +
+            notes = "Checks the verification code for submitted config, and if it is correct, saves the provided account config. " + NEW_LINE +
+                    "Returns whole account's 2FA settings object.\n" +
                     "Will throw an error (Bad Request) if the provider is not configured for usage. " +
                     ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PostMapping("/account/config")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    public AccountTwoFaSettings verifyAndSaveTwoFaAccountConfig(@ApiParam(value = "2FA account config to save. Validation rules are the same as in submitTwoFaAccountConfig API method", required = true)
-                                                                @Valid @RequestBody TwoFaAccountConfig accountConfig,
-                                                                @ApiParam(value = "6-digit code from an authenticator app in case of TOTP 2FA, or the one sent via an SMS message in case of SMS 2FA", required = true)
+    public AccountTwoFaSettings verifyAndSaveTwoFaAccountConfig(@Valid @RequestBody TwoFaAccountConfig accountConfig,
+                                                                @ApiParam(value = "6-digit code from an authenticator app in case of TOTP 2FA, or the one sent via an SMS or email message in case of SMS or EMAIL 2FA", required = true)
                                                                 @RequestParam String verificationCode) throws Exception {
         SecurityUser user = getCurrentUser();
+        if (twoFaConfigManager.getTwoFaAccountConfig(user.getTenantId(), user.getId(), accountConfig.getProviderType()).isPresent()) {
+            throw new IllegalArgumentException("2FA provider is already configured");
+        }
+
         boolean verificationSuccess = twoFactorAuthService.checkVerificationCode(user, verificationCode, accountConfig, false);
         if (verificationSuccess) {
             return twoFaConfigManager.saveTwoFaAccountConfig(user.getTenantId(), user.getId(), accountConfig);
         } else {
-            throw new ThingsboardException("Verification code is incorrect", ThingsboardErrorCode.INVALID_ARGUMENTS);
+            throw new IllegalArgumentException("Verification code is incorrect");
         }
     }
 
+    @ApiOperation(value = "Update 2FA account config (updateTwoFaAccountConfig)", notes =
+            "Update config for a given provider type. \n" +
+                    "Update request example:\n" +
+                    "```\n{\n  \"useByDefault\": true\n}\n```\n" +
+                    "Returns whole account's 2FA settings object.\n" +
+                    ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PutMapping("/account/config")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public AccountTwoFaSettings updateTwoFaAccountConfig(@RequestParam TwoFaProviderType providerType,
                                                          @RequestBody TwoFaAccountConfigUpdateRequest updateRequest) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
-        TwoFaAccountConfig accountConfig = twoFaConfigManager.getTwoFaAccountConfig(user.getTenantId(), user.getId(), providerType)
-                .orElseThrow(() -> new IllegalArgumentException("No 2FA config for provider " + providerType));
 
+        AccountTwoFaSettings settings = twoFaConfigManager.getAccountTwoFaSettings(user.getTenantId(), user.getId())
+                .orElseThrow(() -> new IllegalArgumentException("No 2FA config found"));
+        Map<TwoFaProviderType, TwoFaAccountConfig> configs = settings.getConfigs();
+
+        TwoFaAccountConfig accountConfig;
+        if ((accountConfig = configs.get(providerType)) == null) {
+            throw new IllegalArgumentException("Config for " + providerType + " 2FA provider not found");
+        }
+        if (updateRequest.isUseByDefault()) {
+            configs.values().forEach(config -> config.setUseByDefault(false));
+        }
         accountConfig.setUseByDefault(updateRequest.isUseByDefault());
-        return twoFaConfigManager.saveTwoFaAccountConfig(user.getTenantId(), user.getId(), accountConfig);
+
+        return twoFaConfigManager.saveAccountTwoFaSettings(user.getTenantId(), user.getId(), settings);
     }
 
-    @ApiOperation(value = "Delete 2FA account config (deleteTwoFaAccountConfig)",
-            notes = "Delete user's 2FA config. " + ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
+    @ApiOperation(value = "Delete 2FA account config (deleteTwoFaAccountConfig)", notes =
+            "Delete 2FA config for a given 2FA provider type. \n" +
+                    "Returns whole account's 2FA settings object.\n" +
+                    ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @DeleteMapping("/account/config")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public AccountTwoFaSettings deleteTwoFaAccountConfig(@RequestParam TwoFaProviderType providerType) throws ThingsboardException {
@@ -186,6 +219,12 @@ public class TwoFaConfigController extends BaseController {
     }
 
 
+    @ApiOperation(value = "Get available 2FA providers (getAvailableTwoFaProviders)", notes =
+            "Get the list of provider types available for user to use (the ones configured by tenant or sysadmin).\n" +
+                    "Example of response:\n" +
+                    "```\n[\n  \"TOTP\",\n  \"EMAIL\",\n  \"SMS\"\n]\n```" +
+                    ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER
+    )
     @GetMapping("/providers")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public List<TwoFaProviderType> getAvailableTwoFaProviders() throws ThingsboardException {
@@ -196,8 +235,9 @@ public class TwoFaConfigController extends BaseController {
     }
 
 
-    @ApiOperation(value = "Get 2FA settings (getTwoFaSettings)", // FIXME [viacheslav]
-            notes = "Get settings for 2FA. If 2FA is not configured, then an empty response will be returned." +
+    @ApiOperation(value = "Get platform 2FA settings (getPlatformTwoFaSettings)",
+            notes = "Get platform settings for 2FA. The settings are described for savePlatformTwoFaSettings API method. " +
+                    "If 2FA is not configured, then an empty response will be returned." +
                     ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @GetMapping("/settings")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
@@ -205,9 +245,49 @@ public class TwoFaConfigController extends BaseController {
         return twoFaConfigManager.getPlatformTwoFaSettings(getTenantId(), false).orElse(null);
     }
 
-    @ApiOperation(value = "Save 2FA settings (saveTwoFaSettings)",
-            notes = "Save settings for 2FA. If a user is sysadmin - the settings are saved as AdminSettings; " +
-                    "if it is a tenant admin - as a tenant attribute." +
+    @ApiOperation(value = "Save platform 2FA settings (savePlatformTwoFaSettings)",
+            notes = "Save 2FA settings for platform. The settings have following properties:\n" +
+                    "- `useSystemTwoFactorAuthSettings` - option for tenant admins to use 2FA settings configured by sysadmin. " +
+                    "If this param is set to true, then the settings will not be validated for constraints (if it is a tenant admin; for sysadmin this param is ignored).\n" +
+                    "- `providers` - the list of 2FA providers' configs. Users will only be allowed to use 2FA providers from this list. \n\n" +
+                    "- `verificationCodeSendRateLimit` - rate limit configuration for verification code sending. " +
+                    "The format is standard: 'amountOfRequests:periodInSeconds'. The value of '1:60' would limit verification " +
+                    "code sending requests to one per minute.\n" +
+                    "- `verificationCodeCheckRateLimit` - rate limit configuration for verification code checking.\n" +
+                    "- `maxVerificationFailuresBeforeUserLockout` - maximum number of verification failures before a user gets disabled.\n" +
+                    "- `totalAllowedTimeForVerification` - total amount of time in seconds allotted for verification. " +
+                    "Basically, this property sets a lifetime for pre-verification token. If not set, default value of 30 minutes is used.\n" + NEW_LINE +
+                    "TOTP 2FA provider config has following settings:\n" +
+                    "- `issuerName` - issuer name that will be displayed in an authenticator app near a username. Must not be blank.\n\n" +
+                    "For SMS 2FA provider:\n" +
+                    "- `smsVerificationMessageTemplate` - verification message template.  Available template variables " +
+                    "are ${verificationCode} and ${userEmail}. It must not be blank and must contain verification code variable.\n" +
+                    "- `verificationCodeLifetime` - verification code lifetime in seconds. Required to be positive.\n\n" +
+                    "For EMAIL provider type:\n" +
+                    "- `verificationCodeLifetime` - the same as for SMS." + NEW_LINE +
+                    "Example of the settings:\n" +
+                    "```\n{\n" +
+                    "  \"useSystemTwoFactorAuthSettings\": false,\n" +
+                    "  \"providers\": [\n" +
+                    "    {\n" +
+                    "      \"providerType\": \"TOTP\",\n" +
+                    "      \"issuerName\": \"TB\"\n" +
+                    "    },\n" +
+                    "    {\n" +
+                    "      \"providerType\": \"EMAIL\",\n" +
+                    "      \"verificationCodeLifetime\": 60\n" +
+                    "    },\n" +
+                    "    {\n" +
+                    "      \"providerType\": \"SMS\",\n" +
+                    "      \"verificationCodeLifetime\": 60,\n" +
+                    "      \"smsVerificationMessageTemplate\": \"Here is your verification code: ${verificationCode}\"\n" +
+                    "    }\n" +
+                    "  ],\n" +
+                    "  \"verificationCodeSendRateLimit\": \"1:60\",\n" +
+                    "  \"verificationCodeCheckRateLimit\": \"3:900\",\n" +
+                    "  \"maxVerificationFailuresBeforeUserLockout\": 10,\n" +
+                    "  \"totalAllowedTimeForVerification\": 600\n" +
+                    "}\n```" +
                     ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PostMapping("/settings")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")

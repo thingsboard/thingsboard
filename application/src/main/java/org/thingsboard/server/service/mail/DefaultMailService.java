@@ -40,7 +40,6 @@ import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
@@ -307,6 +306,14 @@ public class DefaultMailService implements MailService {
         model.put(TARGET_EMAIL, email);
 
         String message = mergeTemplateIntoString("account.lockout.ftl", model);
+
+        sendMail(mailSender, mailFrom, email, subject, message);
+    }
+
+    @Override
+    public void sendTwoFaVerificationEmail(String email, String verificationCode) throws ThingsboardException { // TODO [viacheslav]: mail template
+        String subject = "ThingsBoard two-factor authentication";
+        String message = "Your 2FA verification code: " + verificationCode;
 
         sendMail(mailSender, mailFrom, email, subject, message);
     }

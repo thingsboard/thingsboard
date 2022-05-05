@@ -26,9 +26,9 @@ public interface TwoFaProvider<C extends TwoFaProviderConfig, A extends TwoFaAcc
 
     A generateNewAccountConfig(User user, C providerConfig);
 
-    default void prepareVerificationCode(SecurityUser securityUser, C providerConfig, A accountConfig) throws ThingsboardException {}
+    default void prepareVerificationCode(SecurityUser user, C providerConfig, A accountConfig) throws ThingsboardException {}
 
-    boolean checkVerificationCode(SecurityUser securityUser, String verificationCode, C providerConfig, A accountConfig);
+    boolean checkVerificationCode(SecurityUser user, String verificationCode, C providerConfig, A accountConfig);
 
 
     TwoFaProviderType getType();

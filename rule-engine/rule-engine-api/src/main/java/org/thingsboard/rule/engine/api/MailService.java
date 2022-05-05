@@ -24,8 +24,6 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-import java.util.Map;
-
 public interface MailService {
 
     void updateMailConfiguration();
@@ -45,6 +43,8 @@ public interface MailService {
     void sendPasswordWasResetEmail(String loginLink, String email) throws ThingsboardException;
 
     void sendAccountLockoutEmail(String lockoutEmail, String email, Integer maxFailedLoginAttempts) throws ThingsboardException;
+
+    void sendTwoFaVerificationEmail(String email, String verificationCode) throws ThingsboardException;
 
     void send(TenantId tenantId, CustomerId customerId, TbEmail tbEmail) throws ThingsboardException;
 

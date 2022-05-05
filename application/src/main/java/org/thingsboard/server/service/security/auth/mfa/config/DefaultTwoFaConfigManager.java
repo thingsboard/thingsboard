@@ -69,6 +69,20 @@ public class DefaultTwoFaConfigManager implements TwoFaConfigManager {
     }
 
     @Override
+    public AccountTwoFaSettings saveAccountTwoFaSettings(TenantId tenantId, UserId userId, AccountTwoFaSettings settings) {
+        UserAuthSettings userAuthSettings = Optional.ofNullable(userAuthSettingsDao.findByUserId(userId))
+                .orElseGet(() -> {
+                    UserAuthSettings newUserAuthSettings = new UserAuthSettings();
+                    newUserAuthSettings.setUserId(userId);
+                    return newUserAuthSettings;
+                });
+        userAuthSettings.setTwoFaSettings(settings);
+        userAuthSettingsDao.save(tenantId, userAuthSettings);
+        return settings;
+    }
+
+
+    @Override
     public Optional<TwoFaAccountConfig> getTwoFaAccountConfig(TenantId tenantId, UserId userId, TwoFaProviderType providerType) {
         return getAccountTwoFaSettings(tenantId, userId)
                 .map(AccountTwoFaSettings::getConfigs)
@@ -80,33 +94,21 @@ public class DefaultTwoFaConfigManager implements TwoFaConfigManager {
         getTwoFaProviderConfig(tenantId, accountConfig.getProviderType())
                 .orElseThrow(() -> new IllegalArgumentException("2FA provider is not configured"));
 
-        return createOrUpdateAccountTwoFaSettings(tenantId, userId, accountTwoFaSettings -> {
-            Map<TwoFaProviderType, TwoFaAccountConfig> configs = accountTwoFaSettings.getConfigs();
-            configs.put(accountConfig.getProviderType(), accountConfig);
+        AccountTwoFaSettings settings = getAccountTwoFaSettings(tenantId, userId).orElseGet(() -> {
+            AccountTwoFaSettings newSettings = new AccountTwoFaSettings();
+            newSettings.setConfigs(new LinkedHashMap<>());
+            return newSettings;
         });
+        settings.getConfigs().put(accountConfig.getProviderType(), accountConfig);
+        return saveAccountTwoFaSettings(tenantId, userId, settings);
     }
 
     @Override
     public AccountTwoFaSettings deleteTwoFaAccountConfig(TenantId tenantId, UserId userId, TwoFaProviderType providerType) {
-        return createOrUpdateAccountTwoFaSettings(tenantId, userId, accountTwoFaSettings -> {
-            accountTwoFaSettings.getConfigs().keySet().removeIf(providerType::equals);
-        });
-    }
-
-    private AccountTwoFaSettings createOrUpdateAccountTwoFaSettings(TenantId tenantId, UserId userId, Consumer<AccountTwoFaSettings> updater) {
-        UserAuthSettings userAuthSettings = Optional.ofNullable(userAuthSettingsDao.findByUserId(userId))
-                .orElseGet(() -> {
-                    UserAuthSettings newUserAuthSettings = new UserAuthSettings();
-                    newUserAuthSettings.setUserId(userId);
-
-                    AccountTwoFaSettings newAccountTwoFaSettings = new AccountTwoFaSettings();
-                    newAccountTwoFaSettings.setConfigs(new LinkedHashMap<>());
-                    newUserAuthSettings.setTwoFaSettings(newAccountTwoFaSettings);
-                    return newUserAuthSettings;
-                });
-        updater.accept(userAuthSettings.getTwoFaSettings());
-        userAuthSettingsDao.save(tenantId, userAuthSettings);
-        return userAuthSettings.getTwoFaSettings();
+        AccountTwoFaSettings settings = getAccountTwoFaSettings(tenantId, userId)
+                .orElseThrow(() -> new IllegalArgumentException("2FA not configured"));
+        settings.getConfigs().remove(providerType);
+        return saveAccountTwoFaSettings(tenantId, userId, settings);
     }
 
 

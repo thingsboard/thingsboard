@@ -45,7 +45,7 @@ public class TotpTwoFaProvider implements TwoFaProvider<TotpTwoFaProviderConfig,
     }
 
     @Override
-    public final boolean checkVerificationCode(SecurityUser securityUser, String verificationCode, TotpTwoFaProviderConfig providerConfig, TotpTwoFaAccountConfig accountConfig) {
+    public final boolean checkVerificationCode(SecurityUser user, String verificationCode, TotpTwoFaProviderConfig providerConfig, TotpTwoFaAccountConfig accountConfig) {
         String secretKey = UriComponentsBuilder.fromUriString(accountConfig.getAuthUrl()).build().getQueryParams().getFirst("secret");
         return new Totp(secretKey).verify(verificationCode);
     }
