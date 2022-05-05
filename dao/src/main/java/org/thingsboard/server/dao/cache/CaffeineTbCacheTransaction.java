@@ -1,4 +1,19 @@
-package org.thingsboard.server.cache;
+/**
+ * Copyright © 2016-2022 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.thingsboard.server.dao.cache;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -8,7 +23,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.thingsboard.server.cache.TbCacheTransaction;
 
+import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,19 +34,20 @@ import java.util.concurrent.Executor;
 
 @Slf4j
 @RequiredArgsConstructor
-public class CaffeineTbCacheTransaction implements TbCacheTransaction {
+public class CaffeineTbCacheTransaction<K extends Serializable, V extends Serializable> implements TbCacheTransaction<K, V> {
     @Getter
     private final UUID id = UUID.randomUUID();
-    private final CaffeineCacheTransactionStorage cache;
+    private final CaffeineTbTransactionalCache<K, V> cache;
     @Getter
-    private final List<?> keys;
-    @Getter @Setter
+    private final List<K> keys;
+    @Getter
+    @Setter
     private boolean failed;
 
     private final Map<Object, Object> pendingPuts = new LinkedHashMap<>();
 
     @Override
-    public <K, V> void putIfAbsent(K key, V value) {
+    public void putIfAbsent(K key, V value) {
         pendingPuts.put(key, value);
     }
 
@@ -45,7 +63,7 @@ public class CaffeineTbCacheTransaction implements TbCacheTransaction {
 
     @Override
     public <T> void rollBackOnFailure(ListenableFuture<T> future, Executor executor) {
-        Futures.addCallback(future, new FutureCallback<T>() {
+        Futures.addCallback(future, new FutureCallback<>() {
             @Override
             public void onSuccess(@Nullable T result) {
             }

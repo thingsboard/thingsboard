@@ -13,23 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.cache;
+package org.thingsboard.server.dao.cache;
+
+import lombok.RequiredArgsConstructor;
+import org.thingsboard.server.cache.TbCacheTransaction;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
-public interface TbTransactionalCache<K extends Serializable, V extends Serializable> {
+@RequiredArgsConstructor
+class CaffeineCacheTransactionStorage<K extends Serializable, V extends Serializable> {
 
-    String getCacheName();
 
-    TbCacheValueWrapper<V> get(K key);
 
-    void putIfAbsent(K key, V value);
 
-    void evict(K key);
 
-    TbCacheTransaction<K, V> newTransactionForKey(K key);
-
-    TbCacheTransaction<K, V> newTransactionForKeys(List<K> keys);
 
 }

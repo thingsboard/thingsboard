@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,6 +25,7 @@ import org.springframework.cache.Cache;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.thingsboard.server.cache.TbCacheValueWrapper;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -34,7 +35,6 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.stats.DefaultCounter;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.cache.CacheExecutorService;
-import org.thingsboard.server.cache.TbCacheTransaction;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.dao.service.Validator;
 
@@ -65,7 +65,7 @@ public class CachedAttributesService implements AttributesService {
     private final CacheExecutorService cacheExecutorService;
     private final DefaultCounter hitCounter;
     private final DefaultCounter missCounter;
-    private final TbTransactionalCache cache;
+    private final TbTransactionalCache<AttributeCacheKey, AttributeKvEntry> cache;
     private Executor cacheExecutor;
 
     @Value("${cache.type}")
@@ -74,7 +74,7 @@ public class CachedAttributesService implements AttributesService {
     public CachedAttributesService(AttributesDao attributesDao,
                                    StatsFactory statsFactory,
                                    CacheExecutorService cacheExecutorService,
-                                   TbTransactionalCache cache) {
+                                   TbTransactionalCache<AttributeCacheKey, AttributeKvEntry> cache) {
         this.attributesDao = attributesDao;
         this.cacheExecutorService = cacheExecutorService;
         this.cache = cache;
@@ -109,14 +109,14 @@ public class CachedAttributesService implements AttributesService {
         Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey);
 
         AttributeCacheKey attributeCacheKey = new AttributeCacheKey(scope, entityId, attributeKey);
-        Cache.ValueWrapper cachedAttributeValue = cache.get(CacheConstants.ATTRIBUTES_CACHE, attributeCacheKey);
+        TbCacheValueWrapper<AttributeKvEntry> cachedAttributeValue = cache.get(attributeCacheKey);
         if (cachedAttributeValue != null) {
             hitCounter.increment();
-            AttributeKvEntry cachedAttributeKvEntry = (AttributeKvEntry) cachedAttributeValue.get();
+            AttributeKvEntry cachedAttributeKvEntry = cachedAttributeValue.get();
             return Futures.immediateFuture(Optional.ofNullable(cachedAttributeKvEntry));
         } else {
             missCounter.increment();
-            TbCacheTransaction cacheTransaction = cache.newTransactionForKey(CacheConstants.ATTRIBUTES_CACHE, attributeCacheKey);
+            var cacheTransaction = cache.newTransactionForKey(attributeCacheKey);
             ListenableFuture<Optional<AttributeKvEntry>> result = attributesDao.find(tenantId, entityId, scope, attributeKey);
             cacheTransaction.rollBackOnFailure(result, cacheExecutor);
             return Futures.transform(result, foundAttrKvEntry -> {
@@ -132,10 +132,10 @@ public class CachedAttributesService implements AttributesService {
         validate(entityId, scope);
         attributeKeys.forEach(attributeKey -> Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey));
 
-        Map<String, Cache.ValueWrapper> wrappedCachedAttributes = findCachedAttributes(entityId, scope, attributeKeys);
+        Map<String, TbCacheValueWrapper<AttributeKvEntry>> wrappedCachedAttributes = findCachedAttributes(entityId, scope, attributeKeys);
 
         List<AttributeKvEntry> cachedAttributes = wrappedCachedAttributes.values().stream()
-                .map(wrappedCachedAttribute -> (AttributeKvEntry) wrappedCachedAttribute.get())
+                .map(TbCacheValueWrapper::get)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         if (wrappedCachedAttributes.size() == attributeKeys.size()) {
@@ -147,7 +147,7 @@ public class CachedAttributesService implements AttributesService {
 
         List<AttributeCacheKey> notFoundKeys = notFoundAttributeKeys.stream().map(k -> new AttributeCacheKey(scope, entityId, k)).collect(Collectors.toList());
 
-        TbCacheTransaction cacheTransaction = cache.newTransactionForKeys(CacheConstants.ATTRIBUTES_CACHE, notFoundKeys);
+        var cacheTransaction = cache.newTransactionForKeys(notFoundKeys);
         ListenableFuture<List<AttributeKvEntry>> result = attributesDao.find(tenantId, entityId, scope, notFoundAttributeKeys);
         return Futures.transform(result, foundInDbAttributes -> {
             for (AttributeKvEntry foundInDbAttribute : foundInDbAttributes) {
@@ -166,10 +166,10 @@ public class CachedAttributesService implements AttributesService {
 
     }
 
-    private Map<String, Cache.ValueWrapper> findCachedAttributes(EntityId entityId, String scope, Collection<String> attributeKeys) {
-        Map<String, Cache.ValueWrapper> cachedAttributes = new HashMap<>();
+    private Map<String, TbCacheValueWrapper<AttributeKvEntry>> findCachedAttributes(EntityId entityId, String scope, Collection<String> attributeKeys) {
+        Map<String, TbCacheValueWrapper<AttributeKvEntry>> cachedAttributes = new HashMap<>();
         for (String attributeKey : attributeKeys) {
-            Cache.ValueWrapper cachedAttributeValue = cache.get(CacheConstants.ATTRIBUTES_CACHE, new AttributeCacheKey(scope, entityId, attributeKey));
+            var cachedAttributeValue = cache.get(new AttributeCacheKey(scope, entityId, attributeKey));
             if (cachedAttributeValue != null) {
                 hitCounter.increment();
                 cachedAttributes.put(attributeKey, cachedAttributeValue);
@@ -205,7 +205,7 @@ public class CachedAttributesService implements AttributesService {
         for (var attribute : attributes) {
             ListenableFuture<String> future = attributesDao.save(tenantId, entityId, scope, attribute);
             futures.add(Futures.transform(future, key -> {
-                cache.evict(CacheConstants.ATTRIBUTES_CACHE, new AttributeCacheKey(scope, entityId, key));
+                cache.evict(new AttributeCacheKey(scope, entityId, key));
                 return key;
             }, cacheExecutor));
         }
@@ -218,7 +218,7 @@ public class CachedAttributesService implements AttributesService {
         validate(entityId, scope);
         List<ListenableFuture<String>> futures = attributesDao.removeAll(tenantId, entityId, scope, attributeKeys);
         return Futures.allAsList(futures.stream().map(future -> Futures.transform(future, key -> {
-            cache.evict(CacheConstants.ATTRIBUTES_CACHE, new AttributeCacheKey(scope, entityId, key));
+            cache.evict(new AttributeCacheKey(scope, entityId, key));
             return key;
         }, cacheExecutor)).collect(Collectors.toList()));
     }

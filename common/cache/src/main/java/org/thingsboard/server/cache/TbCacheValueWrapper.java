@@ -15,21 +15,8 @@
  */
 package org.thingsboard.server.cache;
 
-import java.io.Serializable;
-import java.util.List;
+public interface TbCacheValueWrapper<T> {
 
-public interface TbTransactionalCache<K extends Serializable, V extends Serializable> {
-
-    String getCacheName();
-
-    TbCacheValueWrapper<V> get(K key);
-
-    void putIfAbsent(K key, V value);
-
-    void evict(K key);
-
-    TbCacheTransaction<K, V> newTransactionForKey(K key);
-
-    TbCacheTransaction<K, V> newTransactionForKeys(List<K> keys);
+    T get();
 
 }
