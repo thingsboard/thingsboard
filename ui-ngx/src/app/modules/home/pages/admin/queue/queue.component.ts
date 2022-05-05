@@ -16,18 +16,19 @@
 
 import { ChangeDetectorRef, Component, Inject } from '@angular/core';
 import { EntityType } from '@shared/models/entity-type.models';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { EntityComponent } from '@home/components/entity/entity.component';
-import { QueueInfo, QueueProcessingStrategyTypes, QueueSubmitStrategyTypes } from '@shared/models/queue.models';
+import { QueueInfo } from '@shared/models/queue.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
+import { ActionNotificationShow } from '@core/notification/notification.actions';
 
 @Component({
   selector: 'tb-queue',
   templateUrl: './queue.component.html',
-  styleUrls: ['./queue.component.scss']
+  styleUrls: []
 })
 export class QueueComponent extends EntityComponent<QueueInfo> {
   entityForm: FormGroup;
@@ -36,9 +37,6 @@ export class QueueComponent extends EntityComponent<QueueInfo> {
   submitStrategies: string[] = [];
   processingStrategies: string[] = [];
 
-  QueueSubmitStrategyTypes = QueueSubmitStrategyTypes;
-  hideBatchSize = false;
-
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
               @Inject('entity') protected entityValue: QueueInfo,
@@ -46,62 +44,16 @@ export class QueueComponent extends EntityComponent<QueueInfo> {
               protected cd: ChangeDetectorRef,
               public fb: FormBuilder) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
-    this.submitStrategies = Object.values(QueueSubmitStrategyTypes);
-    this.processingStrategies = Object.values(QueueProcessingStrategyTypes);
   }
 
   ngOnInit() {
     super.ngOnInit();
-    this.entityForm.get('submitStrategy').get('type').valueChanges.subscribe(() => {
-      this.submitStrategyTypeChanged();
-    });
   }
 
   buildForm(entity: QueueInfo): FormGroup {
-    return this.fb.group(
-      {
-        name: [entity ? entity.name : '', [Validators.required]],
-        pollInterval: [
-          entity && entity.pollInterval ? entity.pollInterval : 25,
-          [Validators.min(1), Validators.required]
-        ],
-        partitions: [
-          entity && entity.partitions ? entity.partitions : 10,
-          [Validators.min(1), Validators.required]
-        ],
-        consumerPerPartition: [entity ? entity.consumerPerPartition : false, []],
-        packProcessingTimeout: [
-          entity && entity.packProcessingTimeout ? entity.packProcessingTimeout : 2000,
-          [Validators.min(1), Validators.required]
-        ],
-        submitStrategy: this.fb.group({
-          type: [entity ? entity.submitStrategy?.type : null, [Validators.required]],
-          batchSize: [
-            entity && entity.submitStrategy?.batchSize ? entity.submitStrategy?.batchSize : 1000,
-            [Validators.min(1), Validators.required]
-          ],
-        }),
-        processingStrategy: this.fb.group({
-          type: [entity ? entity.processingStrategy?.type : null, [Validators.required]],
-          retries: [
-            entity && entity.processingStrategy?.retries ? entity.processingStrategy?.retries : 3,
-            [Validators.min(0), Validators.required]
-          ],
-          failurePercentage: [
-            entity && entity.processingStrategy?.failurePercentage ? entity.processingStrategy?.failurePercentage : 0,
-            [Validators.min(0), Validators.required, Validators.max(100)]
-          ],
-          pauseBetweenRetries: [
-            entity && entity.processingStrategy?.pauseBetweenRetries ? entity.processingStrategy?.pauseBetweenRetries : 3,
-            [Validators.min(1), Validators.required]
-          ],
-          maxPauseBetweenRetries: [
-            entity && entity.processingStrategy?.maxPauseBetweenRetries ? entity.processingStrategy?.maxPauseBetweenRetries : 3,
-            [Validators.min(1), Validators.required]
-          ],
-        })
-      }
-    );
+    return this.fb.group({
+      queue: [entity]
+    });
   }
 
   hideDelete() {
@@ -114,41 +66,22 @@ export class QueueComponent extends EntityComponent<QueueInfo> {
 
   updateForm(entity: QueueInfo) {
     this.entityForm.patchValue({
-      name: entity.name,
-      pollInterval: entity.pollInterval,
-      partitions: entity.partitions,
-      consumerPerPartition: entity.consumerPerPartition,
-      packProcessingTimeout: entity.packProcessingTimeout,
-      submitStrategy: {
-        type: entity.submitStrategy?.type,
-        batchSize: entity.submitStrategy?.batchSize,
-      },
-      processingStrategy: {
-        type: entity.processingStrategy?.type,
-        retries: entity.processingStrategy?.retries,
-        failurePercentage: entity.processingStrategy?.failurePercentage,
-        pauseBetweenRetries: entity.processingStrategy?.pauseBetweenRetries,
-        maxPauseBetweenRetries: entity.processingStrategy?.maxPauseBetweenRetries,
-      }
-    }, {emitEvent: true});
-
-    if (!this.isAdd) {
-      this.entityForm.get('name').disable({emitEvent: false});
-    }
+      queue: entity
+    }, {emitEvent: false});
   }
 
-  submitStrategyTypeChanged() {
-    const form = this.entityForm.get('submitStrategy') as FormGroup;
-    const type: QueueSubmitStrategyTypes = form.get('type').value;
-    const batchSizeField = form.get('batchSize');
-    if (type === QueueSubmitStrategyTypes.BATCH) {
-      batchSizeField.enable();
-      batchSizeField.patchValue(1000);
-      this.hideBatchSize = true;
-    } else {
-      batchSizeField.patchValue(null);
-      batchSizeField.disable();
-      this.hideBatchSize = false;
-    }
+  prepareFormValue(formValue: any) {
+    return super.prepareFormValue(formValue.queue);
+  }
+
+  onQueueIdCopied($event) {
+    this.store.dispatch(new ActionNotificationShow(
+      {
+        message: this.translate.instant('queue.idCopiedMessage'),
+        type: 'success',
+        duration: 750,
+        verticalPosition: 'bottom',
+        horizontalPosition: 'right'
+      }));
   }
 }

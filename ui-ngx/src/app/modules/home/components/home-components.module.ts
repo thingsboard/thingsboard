@@ -149,7 +149,7 @@ import {
 import { DashboardStateComponent } from '@home/components/dashboard-page/dashboard-state.component';
 import { EntityDetailsPageComponent } from '@home/components/entity/entity-details-page.component';
 import { TenantProfileQueuesComponent } from '@home/components/profile/queue/tenant-profile-queues.component';
-import { TenantProfileQueueComponent } from '@home/components/profile/queue/tenant-profile-queue.component';
+import { QueueFormComponent } from '@home/components/queue/queue-form.component';
 
 @NgModule({
   declarations:
@@ -271,7 +271,7 @@ import { TenantProfileQueueComponent } from '@home/components/profile/queue/tena
       EmbedDashboardDialogComponent,
       DisplayWidgetTypesPanelComponent,
       TenantProfileQueuesComponent,
-      TenantProfileQueueComponent
+      QueueFormComponent
     ],
   imports: [
     CommonModule,
@@ -386,7 +386,7 @@ import { TenantProfileQueueComponent } from '@home/components/profile/queue/tena
     EmbedDashboardDialogComponent,
     DisplayWidgetTypesPanelComponent,
     TenantProfileQueuesComponent,
-    TenantProfileQueueComponent
+    QueueFormComponent
   ],
   providers: [
     WidgetComponentService,

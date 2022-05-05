@@ -13,15 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../../../../../../scss/constants';
 
 :host {
   .tb-tenant-profile-queues {
-    &.mat-padding {
-      padding: 8px;
-      @media #{$mat-gt-sm} {
-        padding: 16px;
-      }
+    .mat-expansion-panel-body {
+      padding-bottom: 0 !important;
     }
   }
 

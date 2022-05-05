@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
+import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -25,46 +25,40 @@ import {
   Validator,
   Validators
 } from '@angular/forms';
-import { DeviceProfileAlarm } from '@shared/models/device.models';
 import { MatDialog } from '@angular/material/dialog';
 import { UtilsService } from '@core/services/utils.service';
-import { QueueProcessingStrategyTypes, QueueSubmitStrategyTypes } from '@shared/models/queue.models';
+import { QueueInfo, QueueProcessingStrategyTypes, QueueSubmitStrategyTypes } from '@shared/models/queue.models';
+import { isDefinedAndNotNull } from '@core/utils';
 
 @Component({
-  selector: 'tb-tenant-profile-queue',
-  templateUrl: './tenant-profile-queue.component.html',
-  styleUrls: ['./tenant-profile-queue.component.scss'],
+  selector: 'tb-queue-form',
+  templateUrl: './queue-form.component.html',
+  styleUrls: ['./queue-form.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TenantProfileQueueComponent),
+      useExisting: forwardRef(() => QueueFormComponent),
       multi: true
     },
     {
       provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => TenantProfileQueueComponent),
+      useExisting: forwardRef(() => QueueFormComponent),
       multi: true,
     }
   ]
 })
-export class TenantProfileQueueComponent implements ControlValueAccessor, OnInit, Validator {
+export class QueueFormComponent implements ControlValueAccessor, OnInit, Validator {
 
   @Input()
   disabled: boolean;
 
-  @Output()
-  removeQueue = new EventEmitter();
-
-  @Input()
-  expanded = false;
-
-  @Input()
-  mainQueue = false;
-
   @Input()
   newQueue = false;
 
-  private modelValue: DeviceProfileAlarm;
+  @Input()
+  systemQueue = false;
+
+  private modelValue: QueueInfo;
 
   queueFormGroup: FormGroup;
 
@@ -106,7 +100,7 @@ export class TenantProfileQueueComponent implements ControlValueAccessor, OnInit
         packProcessingTimeout: [2000, [Validators.min(1), Validators.required]],
         submitStrategy: this.fb.group({
           type: [null, [Validators.required]],
-          batchSize: [0, [Validators.min(1), Validators.required]],
+          batchSize: [null],
         }),
         processingStrategy: this.fb.group({
           type: [null, [Validators.required]],
@@ -141,20 +135,20 @@ export class TenantProfileQueueComponent implements ControlValueAccessor, OnInit
     }
   }
 
-  writeValue(value: DeviceProfileAlarm): void {
+  writeValue(value: QueueInfo): void {
     this.propagateChangePending = false;
     this.modelValue = value;
-    if (!this.modelValue.alarmType) {
-      this.expanded = true;
+    if (isDefinedAndNotNull(this.modelValue)) {
+      this.queueFormGroup.patchValue(this.modelValue, {emitEvent: false});
     }
-    this.queueFormGroup.reset(this.modelValue || undefined, {emitEvent: false});
+    this.submitStrategyTypeChanged();
     if (!this.disabled && !this.queueFormGroup.valid) {
       this.updateModel();
     }
   }
 
   public validate(c: FormControl) {
-    if (c.parent) {
+    if (c.parent && !this.systemQueue) {
       const queueName = c.value.name;
       const profileQueues = [];
       c.parent.getRawValue().forEach((queue) => {
@@ -174,11 +168,6 @@ export class TenantProfileQueueComponent implements ControlValueAccessor, OnInit
     };
   }
 
-  get queueTitle(): string {
-    const queueName = this.queueFormGroup.get('name').value;
-    return this.utils.customTranslation(queueName, queueName);
-  }
-
   private updateModel() {
     const value = this.queueFormGroup.value;
     this.modelValue = {...this.modelValue, ...value};
@@ -194,12 +183,14 @@ export class TenantProfileQueueComponent implements ControlValueAccessor, OnInit
     const type: QueueSubmitStrategyTypes = form.get('type').value;
     const batchSizeField = form.get('batchSize');
     if (type === QueueSubmitStrategyTypes.BATCH) {
-      batchSizeField.enable();
-      batchSizeField.patchValue(1000);
+      batchSizeField.enable({emitEvent: false});
+      batchSizeField.patchValue(1000, {emitEvent: false});
+      batchSizeField.setValidators([Validators.min(1), Validators.required]);
       this.hideBatchSize = true;
     } else {
-      batchSizeField.patchValue(null);
-      batchSizeField.disable();
+      batchSizeField.patchValue(null, {emitEvent: false});
+      batchSizeField.disable({emitEvent: false});
+      batchSizeField.clearValidators();
       this.hideBatchSize = false;
     }
   }

@@ -17,18 +17,34 @@
 -->
 <div fxLayout="column">
   <div class="tb-tenant-profile-queues">
-    <mat-accordion [multi]="true">
-    <div *ngFor="let queuesControl of queuesFormArray().controls; trackBy: trackByQueue;
-                 let $index = index; last as isLast;" fxLayout="column">
-        <tb-tenant-profile-queue [formControl]="queuesControl"
-                                 [mainQueue]="$index === 0"
-                                 [newQueue]="newQueue"
-                                 (removeQueue)="removeQueue($index)">
-        </tb-tenant-profile-queue>
-    </div>
+    <mat-accordion multi>
+      <mat-expansion-panel fxFlex expanded
+                           *ngFor="let queuesControl of queuesFormArray.controls; trackBy: trackByQueue;
+                           let $index = index; last as isLast;">
+        <mat-expansion-panel-header>
+          <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+            <mat-panel-title>
+              {{ getName(queuesControl.value.name) }}
+            </mat-panel-title>
+            <span fxFlex></span>
+            <button *ngIf="!($index === 0) && !this.disabled" mat-icon-button style="min-width: 40px;"
+                    type="button"
+                    (click)="removeQueue($index)"
+                    matTooltip="{{ 'action.remove' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </mat-expansion-panel-header>
+        <ng-template matExpansionPanelContent>
+          <tb-queue-form [formControl]="queuesControl"
+                         [newQueue]="newQueue">
+          </tb-queue-form>
+        </ng-template>
+      </mat-expansion-panel>
     </mat-accordion>
   </div>
-  <div *ngIf="!queuesFormArray().controls.length">
+  <div *ngIf="!queuesFormArray.controls.length">
       <span translate fxLayoutAlign="center center"
             class="tb-prompt">tenant-profile.no-queue</span>
   </div>

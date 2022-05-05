@@ -2719,13 +2719,15 @@
         "partitions": "Partitions",
         "consumer-per-partition": "Consumer per partition",
         "consumer-per-partition-hint": "Enable separate consumer(s) per each partition",
-        "processing-timeout": "Processing timeout",
+        "processing-timeout": "Processing timeout, ms",
         "batch-size": "Batch size",
         "retries": "Retries (0 - unlimited)",
         "failure-percentage": "Failure Percentage",
         "pause-between-retries": "Pause between retries",
         "max-pause-between-retries": "Maximal pause between retries",
-        "delete": "Delete queue"
+        "delete": "Delete queue",
+        "copyId": "Copy queue Id",
+        "idCopiedMessage": "Queue Id has been copied to clipboard"
     },
     "tenant": {
         "tenant": "Tenant",

@@ -15,11 +15,8 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
-import {
-  EntityTableColumn,
-  EntityTableConfig
-} from '@home/models/entity/entities-table-config.models';
+import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
+import { EntityTableColumn, EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { QueueInfo, ServiceType } from '@shared/models/queue.models';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -34,6 +31,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { QueueComponent } from './queue.component';
 import { QueueService } from '@core/http/queue.service';
 import { selectAuthUser } from '@core/auth/auth.selectors';
+import { EntityAction } from '@home/models/entity/entity-component.models';
 
 @Injectable()
 export class QueuesTableConfigResolver implements Resolve<EntityTableConfig<QueueInfo>> {
@@ -48,6 +46,7 @@ export class QueuesTableConfigResolver implements Resolve<EntityTableConfig<Queu
               private customerService: CustomerService,
               private dialogService: DialogService,
               private homeDialogs: HomeDialogsService,
+              private router: Router,
               private translate: TranslateService) {
 
     this.config.entityType = EntityType.QUEUE;
@@ -59,6 +58,8 @@ export class QueuesTableConfigResolver implements Resolve<EntityTableConfig<Queu
     this.config.deleteEntityContent = () => this.translate.instant('queue.delete-queue-text');
     this.config.deleteEntitiesTitle = count => this.translate.instant('queue.delete-queues-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('queue.delete-queues-text');
+
+    this.config.onEntityAction = action => this.onQueueAction(action);
   }
 
   resolve(route: ActivatedRouteSnapshot): Observable<EntityTableConfig<QueueInfo>> {
@@ -100,16 +101,28 @@ export class QueuesTableConfigResolver implements Resolve<EntityTableConfig<Queu
   configureEntityFunctions(): void {
     this.config.entitiesFetchFunction = pageLink => this.queueService.getTenantQueuesByServiceType(pageLink, this.queueType);
     this.config.loadEntity = id => this.queueService.getQueueById(id.id);
-    this.config.saveEntity = queue => this.queueService.saveQueue(this.addTopicForQueue(queue), this.queueType).pipe(
+    this.config.saveEntity = queue => this.queueService.saveQueue(queue, this.queueType).pipe(
       mergeMap((savedQueue) => this.queueService.getQueueById(savedQueue.id.id)
       ));
     this.config.deleteEntity = id => this.queueService.deleteQueue(id.id);
     this.config.deleteEnabled = (queue) => queue && queue.name !== 'Main';
+    this.config.entitySelectionEnabled = (queue) => queue && queue.name !== 'Main';
   }
 
-  private addTopicForQueue(queue: QueueInfo): QueueInfo {
-    const modifiedQueue = Object.assign({}, queue);
-    modifiedQueue.topic = `tb_rule_engine.${queue.name}`;
-    return modifiedQueue;
+  onQueueAction(action: EntityAction<QueueInfo>): boolean {
+    switch (action.action) {
+      case 'open':
+        this.openQueue(action.event, action.entity);
+        return true;
+    }
+    return false;
+  }
+
+  private openQueue($event: Event, queue) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const url = this.router.createUrlTree(['settings', 'queues', queue.id.id]);
+    this.router.navigateByUrl(url);
   }
 }

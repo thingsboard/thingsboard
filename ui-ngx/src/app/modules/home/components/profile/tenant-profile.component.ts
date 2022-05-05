@@ -81,7 +81,7 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
         profileData: this.fb.group({
           configuration: [entity && !this.isAdd ? entity?.profileData.configuration
             : createTenantProfileConfiguration(TenantProfileType.DEFAULT), []],
-          queueConfiguration: [null, []]
+          queueConfiguration: [entity && !this.isAdd ? entity?.profileData.queueConfiguration : null, []]
         }),
         description: [entity ? entity.description : '', []],
       }
