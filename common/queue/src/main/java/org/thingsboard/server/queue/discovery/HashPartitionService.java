@@ -155,6 +155,8 @@ public class HashPartitionService implements PartitionService {
         myPartitions.remove(queueKey);
         partitionTopicsMap.remove(queueKey);
         partitionSizesMap.remove(queueKey);
+        //TODO: remove after merging tb entity services
+        removeTenant(tenantId);
     }
 
     @Override
@@ -172,10 +174,10 @@ public class HashPartitionService implements PartitionService {
 
             //TODO: replace if we can notify CheckPoint rule nodes about queue changes
             if (queueRoutingInfo == null) {
-                log.warn("Queue was removed but still used in CheckPoint rule node. [{}][{}]", tenantId, entityId);
+                log.debug("Queue was removed but still used in CheckPoint rule node. [{}][{}]", tenantId, entityId);
                 queueKey = getMainQueueKey(serviceType, tenantId);
             } else if (!queueRoutingInfo.getTenantId().equals(getIsolatedOrSystemTenantId(serviceType, tenantId))) {
-                log.warn("Tenant profile was changed but CheckPoint rule node still uses the queue from system level. [{}][{}]", tenantId, entityId);
+                log.debug("Tenant profile was changed but CheckPoint rule node still uses the queue from system level. [{}][{}]", tenantId, entityId);
                 queueKey = getMainQueueKey(serviceType, tenantId);
             } else {
                 queueKey = new QueueKey(serviceType, queueRoutingInfo);
