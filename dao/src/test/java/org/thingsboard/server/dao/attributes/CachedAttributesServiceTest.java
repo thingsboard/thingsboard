@@ -17,6 +17,9 @@ package org.thingsboard.server.dao.attributes;
 
 import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.server.dao.AbstractJpaDaoTest;
+import org.thingsboard.server.dao.alarm.AlarmDao;
 import org.thingsboard.server.dao.cache.CacheExecutorService;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -25,7 +28,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.willCallRealMethod;
 import static org.mockito.Mockito.mock;
 
-public class CachedAttributesServiceTest {
+public class CachedAttributesServiceTest extends AbstractJpaDaoTest {
 
     public static final String REDIS = "redis";
 
@@ -57,7 +60,6 @@ public class CachedAttributesServiceTest {
         assertThat(cachedAttributesService.getExecutor(REDIS, cacheExecutorService), is(cacheExecutorService));
 
         assertThat(cachedAttributesService.getExecutor("unknownCacheType", cacheExecutorService), is(cacheExecutorService));
-
     }
 
 }

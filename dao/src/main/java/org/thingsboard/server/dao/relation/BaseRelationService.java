@@ -320,7 +320,7 @@ public class BaseRelationService implements RelationService {
         cache.evict(toTypeAndTypeGroup);
     }
 
-    @Cacheable(cacheNames = RELATIONS_CACHE, key = "{#from, #typeGroup, 'FROM'}")
+//    @Cacheable(cacheNames = RELATIONS_CACHE, key = "{#from, #typeGroup, 'FROM'}")
     @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public List<EntityRelation> findByFrom(TenantId tenantId, EntityId from, RelationTypeGroup typeGroup) {
@@ -381,7 +381,7 @@ public class BaseRelationService implements RelationService {
                 }, MoreExecutors.directExecutor());
     }
 
-    @Cacheable(cacheNames = RELATIONS_CACHE, key = "{#from, #relationType, #typeGroup, 'FROM'}")
+//    @Cacheable(cacheNames = RELATIONS_CACHE, key = "{#from, #relationType, #typeGroup, 'FROM'}")
     @Override
     public List<EntityRelation> findByFromAndType(TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup) {
         try {

@@ -21,6 +21,8 @@ import com.github.benmanes.caffeine.cache.Ticker;
 import com.github.benmanes.caffeine.cache.Weigher;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cache.CacheManager;
@@ -45,6 +47,9 @@ import java.util.stream.Collectors;
 @Data
 @Slf4j
 public class CaffeineCacheConfiguration {
+
+    @Value("${cache.type}")
+    private String test;
 
     private Map<String, CacheSpecs> specs;
 
