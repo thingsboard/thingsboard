@@ -145,6 +145,7 @@ public class HashPartitionService implements PartitionService {
         queuesById.put(queue.getQueueId(), queue);
         partitionTopicsMap.put(queueKey, queueUpdateMsg.getQueueTopic());
         partitionSizesMap.put(queueKey, queueUpdateMsg.getPartitions());
+        myPartitions.remove(queueKey);
     }
 
     @Override
