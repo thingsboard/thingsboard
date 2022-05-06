@@ -130,12 +130,8 @@ export class TenantProfileQueuesComponent implements ControlValueAccessor, Valid
     });
   }
 
-  public trackByQueue(index: number, queueControl: AbstractControl): string {
-    if (queueControl) {
-      return queueControl.value.id;
-    } else {
-      return null;
-    }
+  public trackByQueue(index: number, queueControl: AbstractControl) {
+    return queueControl;
   }
 
   public removeQueue(index: number) {
