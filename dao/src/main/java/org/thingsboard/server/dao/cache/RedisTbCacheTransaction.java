@@ -15,46 +15,56 @@
  */
 package org.thingsboard.server.dao.cache;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.nullness.qual.Nullable;
+import org.springframework.data.redis.connection.RedisConnection;
 import org.thingsboard.server.cache.TbCacheTransaction;
 
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.Executor;
 
 @Slf4j
 @RequiredArgsConstructor
-public class CaffeineTbCacheTransaction<K extends Serializable, V extends Serializable> implements TbCacheTransaction<K, V> {
-    @Getter
-    private final UUID id = UUID.randomUUID();
-    private final CaffeineTbTransactionalCache<K, V> cache;
-    @Getter
-    private final List<K> keys;
-    @Getter
-    @Setter
-    private boolean failed;
+public class RedisTbCacheTransaction<K extends Serializable, V extends Serializable> implements TbCacheTransaction<K, V> {
 
-    private final Map<Object, Object> pendingPuts = new LinkedHashMap<>();
+    private final RedisTbTransactionalCache<K, V> cache;
+    private final RedisConnection connection;
 
     @Override
     public void putIfAbsent(K key, V value) {
-        pendingPuts.put(key, value);
+        cache.putIfAbsent(connection, key, value);
     }
 
     @Override
     public boolean commit() {
-        return cache.commit(id, pendingPuts);
+        try {
+            var execResult = connection.exec();
+            var result = execResult!= null && execResult.stream().anyMatch(Objects::nonNull);
+            log.warn("Transaction result: {}", result);
+            return result;
+        } finally {
+            connection.close();
+        }
     }
 
     @Override
     public void rollback() {
-        cache.rollback(id);
+        try {
+            connection.discard();
+        } finally {
+            connection.close();
+        }
     }
-
 
 }

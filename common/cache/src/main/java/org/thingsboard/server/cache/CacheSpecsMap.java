@@ -15,12 +15,19 @@
  */
 package org.thingsboard.server.cache;
 
-public interface TbCacheTransaction<K, V> {
+import lombok.Data;
+import lombok.Getter;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
-    void putIfAbsent(K key, V value);
+import java.util.Map;
 
-    boolean commit();
+@Configuration
+@ConfigurationProperties(prefix = "cache")
+@Data
+public class CacheSpecsMap {
 
-    void rollback();
+    @Getter
+    private Map<String, CacheSpecs> specs;
 
 }

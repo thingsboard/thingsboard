@@ -28,6 +28,8 @@ public interface TbTransactionalCache<K extends Serializable, V extends Serializ
 
     void evict(K key);
 
+    void evictOrPut(K key, V value);
+
     TbCacheTransaction<K, V> newTransactionForKey(K key);
 
     TbCacheTransaction<K, V> newTransactionForKeys(List<K> keys);

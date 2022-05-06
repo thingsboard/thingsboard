@@ -110,33 +110,30 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     }
 
     @Override
-    public ListenableFuture<Optional<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String attributeType, String attributeKey) {
+    public Optional<AttributeKvEntry> find(TenantId tenantId, EntityId entityId, String attributeType, String attributeKey) {
         AttributeKvCompositeKey compositeKey =
                 getAttributeKvCompositeKey(entityId, attributeType, attributeKey);
-        return Futures.immediateFuture(
-                Optional.ofNullable(DaoUtil.getData(attributeKvRepository.findById(compositeKey))));
+        return Optional.ofNullable(DaoUtil.getData(attributeKvRepository.findById(compositeKey)));
     }
 
     @Override
-    public ListenableFuture<List<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String attributeType, Collection<String> attributeKeys) {
+    public List<AttributeKvEntry> find(TenantId tenantId, EntityId entityId, String attributeType, Collection<String> attributeKeys) {
         List<AttributeKvCompositeKey> compositeKeys =
                 attributeKeys
                         .stream()
                         .map(attributeKey ->
                                 getAttributeKvCompositeKey(entityId, attributeType, attributeKey))
                         .collect(Collectors.toList());
-        return Futures.immediateFuture(
-                DaoUtil.convertDataList(Lists.newArrayList(attributeKvRepository.findAllById(compositeKeys))));
+        return DaoUtil.convertDataList(Lists.newArrayList(attributeKvRepository.findAllById(compositeKeys)));
     }
 
     @Override
-    public ListenableFuture<List<AttributeKvEntry>> findAll(TenantId tenantId, EntityId entityId, String attributeType) {
-        return Futures.immediateFuture(
-                DaoUtil.convertDataList(Lists.newArrayList(
+    public List<AttributeKvEntry> findAll(TenantId tenantId, EntityId entityId, String attributeType) {
+        return DaoUtil.convertDataList(Lists.newArrayList(
                         attributeKvRepository.findAllByEntityTypeAndEntityIdAndAttributeType(
                                 entityId.getEntityType(),
                                 entityId.getId(),
-                                attributeType))));
+                                attributeType)));
     }
 
     @Override

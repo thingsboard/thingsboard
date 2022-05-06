@@ -72,6 +72,12 @@ public abstract class CaffeineTbTransactionalCache<K extends Serializable, V ext
     }
 
     @Override
+    public void evictOrPut(K key, V value) {
+        //No need to put the value in case of Caffeine, because evict will cancel concurrent transaction used to "get" the missing value from cache.
+        evict(key);
+    }
+
+    @Override
     public TbCacheTransaction<K, V> newTransactionForKey(K key) {
         return newTransaction(Collections.singletonList(key));
     }

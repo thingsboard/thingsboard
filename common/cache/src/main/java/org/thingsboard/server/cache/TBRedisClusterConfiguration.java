@@ -29,7 +29,7 @@ import java.util.Collections;
 import java.util.List;
 
 @Configuration
-@ConditionalOnMissingBean(CaffeineCacheConfiguration.class)
+@ConditionalOnMissingBean(TbCaffeineCacheConfiguration.class)
 @ConditionalOnProperty(prefix = "redis.connection", value = "type", havingValue = "cluster")
 public class TBRedisClusterConfiguration extends TBRedisCacheConfiguration {
 

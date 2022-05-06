@@ -19,12 +19,9 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.Ticker;
 import com.github.benmanes.caffeine.cache.Weigher;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.caffeine.CaffeineCache;
@@ -36,23 +33,20 @@ import org.springframework.context.annotation.Configuration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Configuration
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "caffeine", matchIfMissing = true)
-@ConfigurationProperties(prefix = "caffeine")
 @EnableCaching
-@Data
 @Slf4j
-public class CaffeineCacheConfiguration {
+public class TbCaffeineCacheConfiguration {
 
-    @Value("${cache.type}")
-    private String test;
+    private final CacheSpecsMap configuration;
 
-    private Map<String, CacheSpecs> specs;
-
+    public TbCaffeineCacheConfiguration(CacheSpecsMap configuration) {
+        this.configuration = configuration;
+    }
 
     /**
      * Transaction aware CaffeineCache implementation with TransactionAwareCacheManagerProxy
@@ -60,11 +54,11 @@ public class CaffeineCacheConfiguration {
      */
     @Bean
     public CacheManager cacheManager() {
-        log.trace("Initializing cache: {} specs {}", Arrays.toString(RemovalCause.values()), specs);
+        log.trace("Initializing cache: {} specs {}", Arrays.toString(RemovalCause.values()), configuration.getSpecs());
         SimpleCacheManager manager = new SimpleCacheManager();
-        if (specs != null) {
+        if (configuration.getSpecs() != null) {
             List<CaffeineCache> caches =
-                    specs.entrySet().stream()
+                    configuration.getSpecs().entrySet().stream()
                             .map(entry -> buildCache(entry.getKey(),
                                     entry.getValue()))
                             .collect(Collectors.toList());
@@ -100,4 +94,5 @@ public class CaffeineCacheConfiguration {
             return 1;
         };
     }
+
 }

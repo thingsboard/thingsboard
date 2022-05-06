@@ -16,6 +16,8 @@
 package org.thingsboard.server.cache;
 
 import lombok.Data;
+import lombok.Getter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
@@ -40,6 +42,9 @@ import java.time.Duration;
 @EnableCaching
 @Data
 public abstract class TBRedisCacheConfiguration {
+
+    @Value("${redis.evictTtlInMs:60000}")
+    private int evictTtlInMs;
 
     @Value("${redis.pool_config.maxTotal:128}")
     private int maxTotal;

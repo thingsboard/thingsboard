@@ -19,9 +19,11 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -29,6 +31,7 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.dao.AbstractDaoServiceTest;
+import org.thingsboard.server.dao.attributes.AttributeCacheKey;
 import org.thingsboard.server.dao.attributes.CachedAttributesService;
 
 import java.util.ArrayList;
@@ -41,10 +44,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+@Slf4j
 public class AttributeServiceTest extends AbstractDaoServiceTest {
 
     private static final String OLD_VALUE = "OLD VALUE";
     private static final String NEW_VALUE = "NEW VALUE";
+
+    @Autowired
+    private TbTransactionalCache<AttributeCacheKey, AttributeKvEntry> cache;
 
     @Autowired
     private CachedAttributesService attributesService;
@@ -55,6 +62,24 @@ public class AttributeServiceTest extends AbstractDaoServiceTest {
         Assert.assertNotNull(future);
         var result = future.get(10, TimeUnit.SECONDS);
         Assert.assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void testConcurrentTransaction() throws Exception {
+        var tenantId = new TenantId(UUID.randomUUID());
+        var deviceId = new DeviceId(UUID.randomUUID());
+        var scope = DataConstants.SERVER_SCOPE;
+        var key = "TEST";
+
+        var attrKey = new AttributeCacheKey(scope, deviceId, "TEST");
+        var oldValue = new BaseAttributeKvEntry(System.currentTimeMillis(), new StringDataEntry(key, OLD_VALUE));
+        var newValue = new BaseAttributeKvEntry(System.currentTimeMillis(), new StringDataEntry(key, NEW_VALUE));
+
+        var trx = cache.newTransactionForKey(attrKey);
+        cache.putIfAbsent(attrKey, newValue);
+        trx.putIfAbsent(attrKey, oldValue);
+        Assert.assertFalse(trx.commit());
+        Assert.assertEquals(NEW_VALUE, getAttributeValue(tenantId, deviceId, scope, key));
     }
 
     @Test
@@ -173,6 +198,7 @@ public class AttributeServiceTest extends AbstractDaoServiceTest {
             Optional<AttributeKvEntry> entry = attributesService.find(tenantId, deviceId, scope, key).get(10, TimeUnit.SECONDS);
             return entry.orElseThrow(RuntimeException::new).getStrValue().orElse("Unknown");
         } catch (Exception e) {
+            log.warn("Failed to get attribute", e.getCause());
             throw new RuntimeException(e);
         }
     }
@@ -182,6 +208,7 @@ public class AttributeServiceTest extends AbstractDaoServiceTest {
             List<AttributeKvEntry> entry = attributesService.find(tenantId, deviceId, scope, keys).get(10, TimeUnit.SECONDS);
             return entry.stream().map(e -> e.getStrValue().orElse(null)).collect(Collectors.toList());
         } catch (Exception e) {
+            log.warn("Failed to get attributes", e.getCause());
             throw new RuntimeException(e);
         }
     }
@@ -191,6 +218,7 @@ public class AttributeServiceTest extends AbstractDaoServiceTest {
             AttributeKvEntry newEntry = new BaseAttributeKvEntry(System.currentTimeMillis(), new StringDataEntry(key, s));
             attributesService.save(tenantId, deviceId, scope, Collections.singletonList(newEntry)).get(10, TimeUnit.SECONDS);
         } catch (Exception e) {
+            log.warn("Failed to save attribute", e.getCause());
             Assert.assertNull(e);
         }
     }

@@ -15,10 +15,15 @@
  */
 package org.thingsboard.server.dao.attributes;
 
+import lombok.Getter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.serializer.RedisSerializer;
+import org.springframework.data.redis.serializer.SerializationException;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.cache.CacheSpecsMap;
+import org.thingsboard.server.cache.TBRedisCacheConfiguration;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.dao.cache.RedisTbTransactionalCache;
@@ -27,7 +32,20 @@ import org.thingsboard.server.dao.cache.RedisTbTransactionalCache;
 @Service("AttributeCache")
 public class AttributeRedisCache extends RedisTbTransactionalCache<AttributeCacheKey, AttributeKvEntry> {
 
-    public AttributeRedisCache(CacheManager cacheManager, RedisConnectionFactory connectionFactory) {
-        super(cacheManager, CacheConstants.ATTRIBUTES_CACHE, connectionFactory);
+    public AttributeRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
+        super(CacheConstants.ATTRIBUTES_CACHE, cacheSpecsMap, connectionFactory, configuration, new RedisSerializer<>() {
+
+            private final RedisSerializer<Object> java = RedisSerializer.java();
+
+            @Override
+            public byte[] serialize(AttributeKvEntry attributeKvEntry) throws SerializationException {
+                return java.serialize(attributeKvEntry);
+            }
+
+            @Override
+            public AttributeKvEntry deserialize(byte[] bytes) throws SerializationException {
+                return (AttributeKvEntry) java.deserialize(bytes);
+            }
+        });
     }
 }

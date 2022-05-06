@@ -17,12 +17,16 @@ package org.thingsboard.server.dao.sql.attributes;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.ClassRule;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.support.TestPropertySourceUtils;
 import org.testcontainers.containers.GenericContainer;
+import org.thingsboard.server.cache.TbTransactionalCache;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.dao.attributes.AttributeCacheKey;
 
 @TestPropertySource(properties = {
         "cache.type=redis", "redis.connection.type=standalone"
@@ -32,7 +36,7 @@ import org.testcontainers.containers.GenericContainer;
 public class RedisAttributeServiceTest extends AttributeServiceTest implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
     @ClassRule
-    public static GenericContainer redis = new GenericContainer("redis:4.0").withExposedPorts(6379);
+    public static GenericContainer redis = new GenericContainer("redis:latest").withExposedPorts(6379);
 
     @Override
     public void initialize(ConfigurableApplicationContext applicationContext) {
@@ -41,5 +45,6 @@ public class RedisAttributeServiceTest extends AttributeServiceTest implements A
         TestPropertySourceUtils.addInlinedPropertiesToEnvironment(
                 applicationContext, "redis.standalone.port=" + redis.getMappedPort(6379));
     }
+
 
 }

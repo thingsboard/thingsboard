@@ -26,7 +26,7 @@ import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import java.time.Duration;
 
 @Configuration
-@ConditionalOnMissingBean(CaffeineCacheConfiguration.class)
+@ConditionalOnMissingBean(TbCaffeineCacheConfiguration.class)
 @ConditionalOnProperty(prefix = "redis.connection", value = "type", havingValue = "standalone")
 public class TBRedisStandaloneConfiguration extends TBRedisCacheConfiguration {
 
