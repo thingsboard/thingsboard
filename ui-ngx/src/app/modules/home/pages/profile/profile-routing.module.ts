@@ -26,6 +26,8 @@ import { AppState } from '@core/core.state';
 import { UserService } from '@core/http/user.service';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Observable } from 'rxjs';
+import { TwoFactorAuthProviderType } from '@shared/models/two-factor-auth.models';
+import { TwoFactorAuthenticationService } from '@core/http/two-factor-authentication.service';
 
 @Injectable()
 export class UserProfileResolver implements Resolve<User> {
@@ -37,6 +39,17 @@ export class UserProfileResolver implements Resolve<User> {
   resolve(): Observable<User> {
     const userId = getCurrentAuthUser(this.store).userId;
     return this.userService.getUser(userId);
+  }
+}
+
+@Injectable()
+export class UserTwoFAProvidersResolver implements Resolve<Array<TwoFactorAuthProviderType>> {
+
+  constructor(private twoFactorAuthService: TwoFactorAuthenticationService) {
+  }
+
+  resolve(): Observable<Array<TwoFactorAuthProviderType>> {
+    return this.twoFactorAuthService.getAvailableTwoFaProviders();
   }
 }
 
@@ -54,7 +67,8 @@ const routes: Routes = [
       }
     },
     resolve: {
-      user: UserProfileResolver
+      user: UserProfileResolver,
+      providers: UserTwoFAProvidersResolver
     }
   }
 ];
@@ -63,7 +77,8 @@ const routes: Routes = [
   imports: [RouterModule.forChild(routes)],
   exports: [RouterModule],
   providers: [
-    UserProfileResolver
+    UserProfileResolver,
+    UserTwoFAProvidersResolver
   ]
 })
 export class ProfileRoutingModule { }

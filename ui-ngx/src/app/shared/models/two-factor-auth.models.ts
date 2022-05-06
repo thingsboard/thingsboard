@@ -23,7 +23,8 @@ export interface TwoFactorAuthSettings {
   verificationCodeSendRateLimit: string;
 }
 
-export type TwoFactorAuthProviderConfig = Partial<TotpTwoFactorAuthProviderConfig | SmsTwoFactorAuthProviderConfig>;
+export type TwoFactorAuthProviderConfig = Partial<TotpTwoFactorAuthProviderConfig | SmsTwoFactorAuthProviderConfig |
+                                                    EmailTwoFactorAuthProviderConfig>;
 
 export interface TotpTwoFactorAuthProviderConfig {
   providerType: TwoFactorAuthProviderType;
@@ -36,7 +37,37 @@ export interface SmsTwoFactorAuthProviderConfig {
   verificationCodeLifetime: number;
 }
 
+export interface EmailTwoFactorAuthProviderConfig {
+  providerType: TwoFactorAuthProviderType;
+  verificationCodeLifetime: number;
+}
+
 export enum TwoFactorAuthProviderType{
   TOTP = 'TOTP',
-  SMS = 'SMS'
+  SMS = 'SMS',
+  EMAIL = 'EMAIL'
+}
+
+interface GeneralTwoFactorAuthAccountConfig {
+  providerType: TwoFactorAuthProviderType;
+  useByDefault: boolean;
+}
+
+export interface TotpTwoFactorAuthAccountConfig extends GeneralTwoFactorAuthAccountConfig {
+  authUrl: string;
+}
+
+export interface SmsTwoFactorAuthAccountConfig extends GeneralTwoFactorAuthAccountConfig {
+  phoneNumber: string;
+}
+
+export interface EmailTwoFactorAuthAccountConfig extends GeneralTwoFactorAuthAccountConfig {
+  email: string;
+}
+
+export type TwoFactorAuthAccountConfig = TotpTwoFactorAuthAccountConfig | SmsTwoFactorAuthAccountConfig | EmailTwoFactorAuthAccountConfig;
+
+
+export interface AccountTwoFaSettings {
+  configs?: {TwoFactorAuthProviderType: TwoFactorAuthAccountConfig};
 }

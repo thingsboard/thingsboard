@@ -59,4 +59,21 @@
       }
     }
   }
+  .description {
+    padding-bottom: 8px;
+    color: #808080;
+    margin-right: 8px;
+  }
+
+  .provider {
+    padding: 14px 0;
+
+    .mat-h3 {
+      margin-bottom: 8px;
+    }
+
+    .checkbox-label {
+      font-size: 14px;
+    }
+  }
 }

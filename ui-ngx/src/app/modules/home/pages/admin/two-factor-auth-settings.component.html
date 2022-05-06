@@ -81,7 +81,7 @@
             <ng-container formArrayName="providers">
               <div class="container">
                 <mat-accordion multi>
-                  <mat-expansion-panel *ngFor="let provider of providersForm.controls; let i = index">
+                  <mat-expansion-panel *ngFor="let provider of providersForm.controls; let i = index; trackBy: trackByElement">
                     <mat-expansion-panel-header>
                       <mat-panel-title fxLayoutAlign="start center">
                         {{ provider.value.providerType }}
@@ -102,10 +102,10 @@
                         <mat-form-field fxFlex class="mat-block">
                           <mat-label translate>admin.2fa.provider</mat-label>
                           <mat-select formControlName="providerType">
-                            <mat-option *ngFor="let twoFactorAuthProviderType of twoFactorAuthProviderTypes"
-                                        [value]="twoFactorAuthProviderType"
-                                        [disabled]="selectedTypes(twoFactorAuthProviderType[twoFactorAuthProviderType], i)">
-                              {{ twoFactorAuthProviderType }}
+                            <mat-option *ngFor="let provider of twoFactorAuthProviderTypes; trackBy: trackByElement"
+                                        [value]="provider"
+                                        [disabled]="selectedTypes(twoFactorAuthProviderType[provider], i)">
+                              {{ provider }}
                             </mat-option>
                           </mat-select>
                         </mat-form-field>
@@ -144,6 +144,19 @@
                               </mat-error>
                             </mat-form-field>
                           </div>
+                          <div *ngSwitchCase="twoFactorAuthProviderType.EMAIL">
+                            <mat-form-field fxFlex class="mat-block">
+                              <mat-label translate>admin.2fa.verification-code-lifetime</mat-label>
+                              <input matInput formControlName="verificationCodeLifetime" type="number" step="1" min="1" required>
+                              <mat-error *ngIf="provider.get('verificationCodeLifetime').hasError('required')">
+                                {{ "admin.2fa.verification-code-lifetime-required" | translate }}
+                              </mat-error>
+                              <mat-error *ngIf="provider.get('verificationCodeLifetime').hasError('min') ||
+                                                provider.get('verificationCodeLifetime').hasError('pattern')">
+                                {{ "admin.2fa.verification-code-lifetime-pattern" | translate }}
+                              </mat-error>
+                            </mat-form-field>
+                          </div>
                         </ng-container>
                       </section>
                     </ng-template>
@@ -159,7 +172,7 @@
                     || providersForm.length == twoFactorAuthProviderTypes.length || (isLoading$ | async)"
                     (click)="addProvider()">
               <mat-icon>add</mat-icon>
-              <span translate>action.add</span>
+              <span translate>admin.2fa.add-provider</span>
             </button>
             <button mat-button mat-raised-button color="primary"
                     [disabled]="(isLoading$ | async) || twoFaFormGroup.invalid || !twoFaFormGroup.dirty"

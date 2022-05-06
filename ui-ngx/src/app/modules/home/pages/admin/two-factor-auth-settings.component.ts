@@ -20,7 +20,7 @@ import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ActivatedRoute } from '@angular/router';
-import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { WINDOW } from '@core/services/window.service';
@@ -108,13 +108,14 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
     settings.providers.forEach(() => {
       this.addProvider();
     });
-    this.twoFaFormGroup.patchValue(settings, {emitEvent: false});
+    this.twoFaFormGroup.patchValue(settings);
+    this.twoFaFormGroup.markAsPristine();
   }
 
   addProvider() {
     const newProviders = this.fb.group({
       providerType: [TwoFactorAuthProviderType.TOTP],
-      issuerName: ['', Validators.required],
+      issuerName: ['ThingsBoard', Validators.required],
       smsVerificationMessageTemplate: [{
         value: 'Verification code: ${verificationCode}',
         disabled: true
@@ -143,16 +144,21 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
           newProviders.get('smsVerificationMessageTemplate').disable({emitEvent: false});
           newProviders.get('verificationCodeLifetime').disable({emitEvent: false});
           break;
+        case TwoFactorAuthProviderType.EMAIL:
+          newProviders.get('issuerName').disable({emitEvent: false});
+          newProviders.get('smsVerificationMessageTemplate').disable({emitEvent: false});
+          newProviders.get('verificationCodeLifetime').enable({emitEvent: false});
+          break;
       }
     });
     if (this.providersForm.length) {
-      const selectProvidersType = this.providersForm.value[0].providerType;
-      if (selectProvidersType === TwoFactorAuthProviderType.TOTP) {
-        newProviders.get('providerType').setValue(TwoFactorAuthProviderType.SMS);
-        newProviders.updateValueAndValidity();
-      }
+      const selectedProviderTypes = this.providersForm.value.map(providers => providers.providerType);
+      const allowProviders = this.twoFactorAuthProviderTypes.filter(provider => !selectedProviderTypes.includes(provider));
+      newProviders.get('providerType').setValue(allowProviders[0]);
+      newProviders.updateValueAndValidity();
     }
     this.providersForm.push(newProviders);
+    this.providersForm.markAsDirty();
   }
 
   removeProviders($event: Event, index: number): void {
@@ -167,6 +173,10 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
 
   get providersForm(): FormArray {
     return this.twoFaFormGroup.get('providers') as FormArray;
+  }
+
+  trackByElement(i: number, item: any) {
+    return item;
   }
 
   selectedTypes(type: TwoFactorAuthProviderType, index: number): boolean {

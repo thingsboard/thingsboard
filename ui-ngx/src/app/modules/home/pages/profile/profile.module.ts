@@ -20,11 +20,17 @@ import { ProfileComponent } from './profile.component';
 import { SharedModule } from '@shared/shared.module';
 import { ProfileRoutingModule } from './profile-routing.module';
 import { ChangePasswordDialogComponent } from '@modules/home/pages/profile/change-password-dialog.component';
+import { TotpAuthDialogComponent } from './authentication-dialog/totp-auth-dialog.component';
+import { SMSAuthDialogComponent } from '@home/pages/profile/authentication-dialog/sms-auth-dialog.component';
+import { EmailAuthDialogComponent } from '@home/pages/profile/authentication-dialog/email-auth-dialog.component';
 
 @NgModule({
   declarations: [
     ProfileComponent,
-    ChangePasswordDialogComponent
+    ChangePasswordDialogComponent,
+    TotpAuthDialogComponent,
+    SMSAuthDialogComponent,
+    EmailAuthDialogComponent
   ],
   imports: [
     CommonModule,
