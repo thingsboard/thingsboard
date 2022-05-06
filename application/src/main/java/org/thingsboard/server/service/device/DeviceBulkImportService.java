@@ -49,6 +49,7 @@ import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.entitiy.device.TbDeviceService;
 import org.thingsboard.server.service.importing.AbstractBulkImportService;
 import org.thingsboard.server.service.importing.BulkImportColumnType;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -68,6 +69,7 @@ import java.util.concurrent.locks.ReentrantLock;
 @RequiredArgsConstructor
 public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
     protected final DeviceService deviceService;
+    protected final TbDeviceService tbDeviceService;
     protected final DeviceCredentialsService deviceCredentialsService;
     protected final DeviceProfileService deviceProfileService;
 
@@ -99,7 +101,8 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
     }
 
     @Override
-    protected Device saveEntity(Device entity, Map<BulkImportColumnType, String> fields) {
+    @SneakyThrows
+    protected Device saveEntity(SecurityUser user, Device entity, Map<BulkImportColumnType, String> fields) {
         DeviceCredentials deviceCredentials;
         try {
             deviceCredentials = createDeviceCredentials(fields);
@@ -118,7 +121,7 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
         }
         entity.setDeviceProfileId(deviceProfile.getId());
 
-        return deviceService.saveDeviceWithCredentials(entity, deviceCredentials);
+        return tbDeviceService.saveDeviceWithCredentials(user.getTenantId(), entity, deviceCredentials, user);
     }
 
     @Override

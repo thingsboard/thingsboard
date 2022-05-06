@@ -23,14 +23,15 @@ import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.internal.wire.MqttWireMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
+import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -50,14 +51,16 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
     protected static final String PAYLOAD_VALUES_STR = "{\"key1\":\"value1\", \"key2\":true, \"key3\": 3.0, \"key4\": 4," +
             " \"key5\": {\"someNumber\": 42, \"someArray\": [1,2,3], \"someNestedObject\": {\"key\": \"value\"}}}";
 
+    protected static final String MALFORMED_JSON_PAYLOAD = "{\"key1\":, \"key2\":true, \"key3\": 3.0, \"key4\": 4," +
+            " \"key5\": {\"someNumber\": 42, \"someArray\": [1,2,3], \"someNestedObject\": {\"key\": \"value\"}}}";
+
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest("Test Post Telemetry device", "Test Post Telemetry gateway", null, null, null);
-    }
-
-    @After
-    public void afterTest() throws Exception {
-        processAfterTest();
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Telemetry device")
+                .gatewayName("Test Post Telemetry gateway")
+                .build();
+        processBeforeTest(configProperties);
     }
 
     @Test
@@ -365,6 +368,35 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         @Override
         public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
 
+        }
+    }
+
+    public static class TestMqttPublishCallback implements MqttCallback {
+
+        private final CountDownLatch latch;
+        private boolean pubAckReceived;
+
+        public boolean isPubAckReceived() {
+            return pubAckReceived;
+        }
+
+        public TestMqttPublishCallback(CountDownLatch latch) {
+            this.latch = latch;
+        }
+
+        @Override
+        public void connectionLost(Throwable throwable) {
+            latch.countDown();
+        }
+
+        @Override
+        public void messageArrived(String s, MqttMessage mqttMessage) throws Exception {
+        }
+
+        @Override
+        public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
+            pubAckReceived = iMqttDeliveryToken.getResponse().getType() == MqttWireMessage.MESSAGE_TYPE_PUBACK;
+            latch.countDown();
         }
     }
 

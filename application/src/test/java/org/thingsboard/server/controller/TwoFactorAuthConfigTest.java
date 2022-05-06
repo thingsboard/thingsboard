@@ -30,6 +30,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.security.model.mfa.account.AccountTwoFaSettings;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFaConfigManager;
 import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettings;
@@ -82,15 +83,15 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
 
     @Test
-    public void testSaveTwoFaSettings() throws Exception {
+    public void testSavePlatformTwoFaSettingsForDifferentAuthorities() throws Exception {
         loginSysAdmin();
-        testSaveTestTwoFaSettings();
+        testSavePlatformTwoFaSettings();
 
         loginTenantAdmin();
-        testSaveTestTwoFaSettings();
+        testSavePlatformTwoFaSettings();
     }
 
-    private void testSaveTestTwoFaSettings() throws Exception {
+    private void testSavePlatformTwoFaSettings() throws Exception {
         TotpTwoFaProviderConfig totpTwoFaProviderConfig = new TotpTwoFaProviderConfig();
         totpTwoFaProviderConfig.setIssuerName("tb");
         SmsTwoFaProviderConfig smsTwoFaProviderConfig = new SmsTwoFaProviderConfig();
@@ -113,7 +114,7 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testSaveTwoFaSettings_validationError() throws Exception {
+    public void testSavePlatformTwoFaSettings_validationError() throws Exception {
         loginTenantAdmin();
 
         PlatformTwoFaSettings twoFaSettings = new PlatformTwoFaSettings();
@@ -147,7 +148,7 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testGetTwoFaSettings_useSysadminSettingsAsDefault() throws Exception {
+    public void testGetPlatformTwoFaSettings_useSysadminSettingsAsDefault() throws Exception {
         loginSysAdmin();
         PlatformTwoFaSettings sysadminTwoFaSettings = new PlatformTwoFaSettings();
         TotpTwoFaProviderConfig totpTwoFaProviderConfig = new TotpTwoFaProviderConfig();
@@ -204,7 +205,7 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
         TotpTwoFaProviderConfig invalidTotpTwoFaProviderConfig = new TotpTwoFaProviderConfig();
         invalidTotpTwoFaProviderConfig.setIssuerName("   ");
 
-        String errorResponse = saveTwoFaSettingsAndGetError(invalidTotpTwoFaProviderConfig);
+        String errorResponse = savePlatformTwoFaSettingsAndGetError(invalidTotpTwoFaProviderConfig);
         assertThat(errorResponse).containsIgnoringCase("issuer name must not be blank");
     }
 
@@ -214,23 +215,24 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
         invalidSmsTwoFaProviderConfig.setSmsVerificationMessageTemplate("does not contain verification code");
         invalidSmsTwoFaProviderConfig.setVerificationCodeLifetime(60);
 
-        String errorResponse = saveTwoFaSettingsAndGetError(invalidSmsTwoFaProviderConfig);
+        String errorResponse = savePlatformTwoFaSettingsAndGetError(invalidSmsTwoFaProviderConfig);
         assertThat(errorResponse).containsIgnoringCase("must contain verification code");
 
         invalidSmsTwoFaProviderConfig.setSmsVerificationMessageTemplate(null);
         invalidSmsTwoFaProviderConfig.setVerificationCodeLifetime(0);
-        errorResponse = saveTwoFaSettingsAndGetError(invalidSmsTwoFaProviderConfig);
+        errorResponse = savePlatformTwoFaSettingsAndGetError(invalidSmsTwoFaProviderConfig);
         assertThat(errorResponse).containsIgnoringCase("verification message template is required");
         assertThat(errorResponse).containsIgnoringCase("verification code lifetime is required");
     }
 
-    private String saveTwoFaSettingsAndGetError(TwoFaProviderConfig invalidTwoFaProviderConfig) throws Exception {
+    private String savePlatformTwoFaSettingsAndGetError(TwoFaProviderConfig invalidTwoFaProviderConfig) throws Exception {
         PlatformTwoFaSettings twoFaSettings = new PlatformTwoFaSettings();
         twoFaSettings.setProviders(Collections.singletonList(invalidTwoFaProviderConfig));
 
         return getErrorMessage(doPost("/api/2fa/settings", twoFaSettings)
                 .andExpect(status().isBadRequest()));
     }
+
 
     @Test
     public void testSaveTwoFaAccountConfig_providerNotConfigured() throws Exception {
@@ -255,7 +257,7 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
         loginTenantAdmin();
 
-        assertThat(readResponse(doGet("/api/2fa/account/config").andExpect(status().isOk()), String.class)).isNullOrEmpty();
+        assertThat(readResponse(doGet("/api/2fa/account/settings").andExpect(status().isOk()), String.class)).isNullOrEmpty();
         generateTotpTwoFaAccountConfig(totpTwoFaProviderConfig);
     }
 
@@ -309,7 +311,10 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
         doPost("/api/2fa/account/config?verificationCode=" + correctVerificationCode, generatedTotpTwoFaAccountConfig)
                 .andExpect(status().isOk());
 
-        TwoFaAccountConfig twoFaAccountConfig = readResponse(doGet("/api/2fa/account/config").andExpect(status().isOk()), TwoFaAccountConfig.class);
+        AccountTwoFaSettings accountTwoFaSettings = readResponse(doGet("/api/2fa/account/settings").andExpect(status().isOk()), AccountTwoFaSettings.class);
+        assertThat(accountTwoFaSettings.getConfigs()).size().isOne();
+
+        TwoFaAccountConfig twoFaAccountConfig = accountTwoFaSettings.getConfigs().get(TwoFaProviderType.TOTP);
         assertThat(twoFaAccountConfig).isEqualTo(generatedTotpTwoFaAccountConfig);
     }
 
@@ -349,15 +354,16 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
     @Test
     public void testGetTwoFaAccountConfig_whenProviderNotConfigured() throws Exception {
         testVerifyAndSaveTotpTwoFaAccountConfig();
-        assertThat(readResponse(doGet("/api/2fa/account/config").andExpect(status().isOk()),
-                TotpTwoFaAccountConfig.class)).isNotNull();
+        assertThat(readResponse(doGet("/api/2fa/account/settings").andExpect(status().isOk()),
+                AccountTwoFaSettings.class).getConfigs()).isNotEmpty();
 
         loginSysAdmin();
-
         saveProvidersConfigs();
 
-        assertThat(readResponse(doGet("/api/2fa/account/config").andExpect(status().isOk()), String.class))
-                .isNullOrEmpty();
+        loginTenantAdmin();
+
+        assertThat(readResponse(doGet("/api/2fa/account/settings").andExpect(status().isOk()), AccountTwoFaSettings.class).getConfigs())
+                .isEmpty();
     }
 
     @Test
@@ -427,7 +433,8 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
         doPost("/api/2fa/account/config?verificationCode=" + correctVerificationCode, smsTwoFaAccountConfig)
                 .andExpect(status().isOk());
 
-        TwoFaAccountConfig accountConfig = readResponse(doGet("/api/2fa/account/config").andExpect(status().isOk()), TwoFaAccountConfig.class);
+        AccountTwoFaSettings accountTwoFaSettings = readResponse(doGet("/api/2fa/account/settings").andExpect(status().isOk()), AccountTwoFaSettings.class);
+        TwoFaAccountConfig accountConfig = accountTwoFaSettings.getConfigs().get(TwoFaProviderType.SMS);
         assertThat(accountConfig).isEqualTo(smsTwoFaAccountConfig);
     }
 
@@ -470,7 +477,8 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
         doPost("/api/2fa/account/config?verificationCode=" + correctVerificationCode, initialSmsTwoFaAccountConfig)
                 .andExpect(status().isOk());
-        TwoFaAccountConfig accountConfig = readResponse(doGet("/api/2fa/account/config").andExpect(status().isOk()), TwoFaAccountConfig.class);
+        AccountTwoFaSettings accountTwoFaSettings = readResponse(doGet("/api/2fa/account/settings").andExpect(status().isOk()), AccountTwoFaSettings.class);
+        TwoFaAccountConfig accountConfig = accountTwoFaSettings.getConfigs().get(TwoFaProviderType.SMS);
         assertThat(accountConfig).isEqualTo(initialSmsTwoFaAccountConfig);
     }
 
@@ -518,13 +526,14 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
         twoFaConfigManager.saveTwoFaAccountConfig(tenantId, tenantAdminUserId, accountConfig);
 
-        TwoFaAccountConfig savedAccountConfig = readResponse(doGet("/api/2fa/account/config").andExpect(status().isOk()), TwoFaAccountConfig.class);
+        AccountTwoFaSettings accountTwoFaSettings = readResponse(doGet("/api/2fa/account/settings").andExpect(status().isOk()), AccountTwoFaSettings.class);
+        TwoFaAccountConfig savedAccountConfig = accountTwoFaSettings.getConfigs().get(TwoFaProviderType.SMS);
         assertThat(savedAccountConfig).isEqualTo(accountConfig);
 
-        doDelete("/api/2fa/account/config").andExpect(status().isOk());
+        doDelete("/api/2fa/account/config?providerType=SMS").andExpect(status().isOk());
 
-        assertThat(readResponse(doGet("/api/2fa/account/config").andExpect(status().isOk()), String.class))
-                .isNullOrEmpty();
+        assertThat(readResponse(doGet("/api/2fa/account/settings").andExpect(status().isOk()), AccountTwoFaSettings.class).getConfigs())
+                .doesNotContainKey(TwoFaProviderType.SMS);
     }
 
 }

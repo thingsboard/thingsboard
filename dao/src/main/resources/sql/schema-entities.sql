@@ -242,10 +242,17 @@ CREATE TABLE IF NOT EXISTS device_profile (
     CONSTRAINT fk_software_device_profile FOREIGN KEY (software_id) REFERENCES ota_package(id)
 );
 
-ALTER TABLE ota_package
-    ADD CONSTRAINT fk_device_profile_ota_package
-        FOREIGN KEY (device_profile_id) REFERENCES device_profile (id)
-            ON DELETE CASCADE;
+DO
+$$
+    BEGIN
+        IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname = 'fk_device_profile_ota_package') THEN
+            ALTER TABLE ota_package
+                ADD CONSTRAINT fk_device_profile_ota_package
+                    FOREIGN KEY (device_profile_id) REFERENCES device_profile (id)
+                        ON DELETE CASCADE;
+        END IF;
+    END;
+$$;
 
 -- We will use one-to-many relation in the first release and extend this feature in case of user requests
 -- CREATE TABLE IF NOT EXISTS device_profile_firmware (

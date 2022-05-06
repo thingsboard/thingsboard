@@ -33,6 +33,8 @@ import org.springframework.util.Assert;
 import org.thingsboard.server.common.data.id.EntityId;
 import redis.clients.jedis.JedisPoolConfig;
 
+import java.time.Duration;
+
 @Configuration
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis", matchIfMissing = false)
 @EnableCaching
@@ -114,8 +116,8 @@ public abstract class TBRedisCacheConfiguration {
         poolConfig.setTestOnBorrow(testOnBorrow);
         poolConfig.setTestOnReturn(testOnReturn);
         poolConfig.setTestWhileIdle(testWhileIdle);
-        poolConfig.setMinEvictableIdleTimeMillis(minEvictableMs);
-        poolConfig.setTimeBetweenEvictionRunsMillis(evictionRunsMs);
+        poolConfig.setSoftMinEvictableIdleTime(Duration.ofMillis(minEvictableMs));
+        poolConfig.setTimeBetweenEvictionRuns(Duration.ofMillis(evictionRunsMs));
         poolConfig.setMaxWaitMillis(maxWaitMills);
         poolConfig.setNumTestsPerEvictionRun(numberTestsPerEvictionRun);
         poolConfig.setBlockWhenExhausted(blockWhenExhausted);

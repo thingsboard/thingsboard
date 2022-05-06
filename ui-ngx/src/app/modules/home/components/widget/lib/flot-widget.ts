@@ -38,13 +38,13 @@ import {
 } from '@app/shared/models/widget.models';
 import {
   ChartType,
-  flotDatakeySettingsSchema,
+  flotDatakeySettingsSchema, flotLatestDatakeySettingsSchema,
   flotPieDatakeySettingsSchema,
   flotPieSettingsSchema,
   flotSettingsSchema,
   TbFlotAxisOptions,
   TbFlotHoverInfo,
-  TbFlotKeySettings,
+  TbFlotKeySettings, TbFlotLatestKeySettings,
   TbFlotPlotAxis,
   TbFlotPlotDataSeries,
   TbFlotPlotItem,
@@ -69,6 +69,7 @@ const moment = moment_;
 
 const flotPieSettingsSchemaValue = flotPieSettingsSchema;
 const flotPieDatakeySettingsSchemaValue = flotPieDatakeySettingsSchema;
+const latestDatakeySettingsSchemaValue = flotLatestDatakeySettingsSchema;
 
 export class TbFlot {
 
@@ -98,6 +99,8 @@ export class TbFlot {
 
   private thresholdsSourcesSubscription: IWidgetSubscription;
   private predefinedThresholds: TbFlotThresholdMarking[];
+  private latestDataThresholds: TbFlotThresholdMarking[];
+  private attributesThresholds: TbFlotThresholdMarking[];
 
   private labelPatternsSourcesSubscription: IWidgetSubscription;
   private labelPatternsSourcesData: DatasourceData[];
@@ -107,6 +110,7 @@ export class TbFlot {
 
   private createPlotTimeoutHandle: Timeout;
   private updateTimeoutHandle: Timeout;
+  private latestUpdateTimeoutHandle: Timeout;
   private resizeTimeoutHandle: Timeout;
 
   private mouseEventsEnabled: boolean;
@@ -143,6 +147,10 @@ export class TbFlot {
 
   static datakeySettingsSchema(defaultShowLines: boolean, chartType: ChartType): JsonSettingsSchema {
     return flotDatakeySettingsSchema(defaultShowLines, chartType);
+  }
+
+  static latestDatakeySettingsSchema(): JsonSettingsSchema {
+    return latestDatakeySettingsSchemaValue;
   }
 
   constructor(private ctx: WidgetContext, private readonly chartType: ChartType) {
@@ -541,7 +549,6 @@ export class TbFlot {
     }
 
     this.subscribeForThresholdsAttributes(thresholdsDatasources);
-    this.options.grid.markings = predefinedThresholds;
     this.predefinedThresholds = predefinedThresholds;
 
     this.options.colors = colors;
@@ -561,6 +568,12 @@ export class TbFlot {
         this.options.xaxes[1].min = this.subscription.comparisonTimeWindow.minTime;
         this.options.xaxes[1].max = this.subscription.comparisonTimeWindow.maxTime;
       }
+      let allThresholds = deepClone(this.predefinedThresholds);
+      if (this.attributesThresholds) {
+        allThresholds = allThresholds.concat(this.attributesThresholds);
+      }
+      this.latestDataThresholds = this.thresholdsSourcesDataUpdated(allThresholds, this.subscription.latestData, true);
+      this.options.grid.markings = allThresholds.concat(this.latestDataThresholds);
     }
 
     this.checkMouseEvents();
@@ -591,7 +604,6 @@ export class TbFlot {
     if (this.subscription) {
       if (!this.isMouseInteraction && this.plot) {
         if (this.chartType === 'line' || this.chartType === 'bar' || this.chartType === 'state') {
-
           let axisVisibilityChanged = false;
           if (this.yaxis) {
             for (let i = 0; i < this.subscription.data.length; i++) {
@@ -681,6 +693,31 @@ export class TbFlot {
     }
   }
 
+  public latestDataUpdate() {
+    if (this.latestUpdateTimeoutHandle) {
+      clearTimeout(this.latestUpdateTimeoutHandle);
+      this.latestUpdateTimeoutHandle = null;
+    }
+    if (this.subscription) {
+      if (!this.isMouseInteraction && this.plot) {
+        if (this.chartType === 'line' || this.chartType === 'bar' || this.chartType === 'state') {
+          let allThresholds = deepClone(this.predefinedThresholds);
+          if (this.attributesThresholds) {
+            allThresholds = allThresholds.concat(this.attributesThresholds);
+          }
+          this.latestDataThresholds = this.thresholdsSourcesDataUpdated(allThresholds, this.subscription.latestData, true);
+          this.options.grid.markings = allThresholds.concat(this.latestDataThresholds);
+          if (this.plot) {
+            this.plot.getOptions().grid.markings = this.options.grid.markings;
+            this.updateData();
+          }
+        }
+      } else if (this.isMouseInteraction && this.plot) {
+        this.latestUpdateTimeoutHandle = setTimeout(this.latestDataUpdate.bind(this), 30);
+      }
+    }
+  }
+
   public resize() {
     if (this.resizeTimeoutHandle) {
       clearTimeout(this.resizeTimeoutHandle);
@@ -733,6 +770,10 @@ export class TbFlot {
     if (this.updateTimeoutHandle) {
       clearTimeout(this.updateTimeoutHandle);
       this.updateTimeoutHandle = null;
+    }
+    if (this.latestUpdateTimeoutHandle) {
+      clearTimeout(this.latestUpdateTimeoutHandle);
+      this.latestUpdateTimeoutHandle = null;
     }
     if (this.createPlotTimeoutHandle) {
       clearTimeout(this.createPlotTimeoutHandle);
@@ -829,7 +870,18 @@ export class TbFlot {
       useDashboardTimewindow: false,
       type: widgetType.latest,
       callbacks: {
-        onDataUpdated: (subscription) => this.thresholdsSourcesDataUpdated(subscription.data)
+        onDataUpdated: (subscription) => {
+          let allThresholds = deepClone(this.predefinedThresholds);
+          if (this.latestDataThresholds) {
+            allThresholds = allThresholds.concat(this.latestDataThresholds);
+          }
+          this.attributesThresholds = this.thresholdsSourcesDataUpdated(allThresholds, subscription.data);
+          this.options.grid.markings = allThresholds.concat(this.attributesThresholds);
+          if (this.plot) {
+            this.plot.getOptions().grid.markings = this.options.grid.markings;
+            this.updateData();
+          }
+        }
       }
     };
     this.ctx.subscriptionApi.createSubscription(thresholdsSourcesSubscriptionOptions, true).subscribe(
@@ -839,28 +891,51 @@ export class TbFlot {
     );
   }
 
-  private thresholdsSourcesDataUpdated(data: DatasourceData[]) {
-    const allThresholds = deepClone(this.predefinedThresholds);
+  private thresholdsSourcesDataUpdated(existingThresholds: TbFlotThresholdMarking[], data: DatasourceData[],
+                                       isLatest = false): TbFlotThresholdMarking[] {
+    const thresholds: TbFlotThresholdMarking[] = [];
     data.forEach((keyData) => {
-      if (keyData && keyData.data && keyData.data[0]) {
+      let skip = false;
+      let latestSettings: TbFlotLatestKeySettings;
+      if (isLatest) {
+        latestSettings = keyData.dataKey.settings;
+        if (!latestSettings.useAsThreshold) {
+          skip = true;
+        }
+      }
+      if (!skip && keyData && keyData.data && keyData.data[0]) {
         const attrValue = keyData.data[0][1];
         if (isNumeric(attrValue) && isFinite(attrValue)) {
-          const settings: TbFlotThresholdKeySettings = keyData.dataKey.settings;
-          const colorIndex = this.subscription.data.length + allThresholds.length;
-          this.generateThreshold(allThresholds, settings.yaxis, settings.lineWidth, settings.color, colorIndex, attrValue);
+          let yaxis: number;
+          let lineWidth: number;
+          let color: string;
+          if (isLatest) {
+            yaxis = 1;
+            lineWidth = latestSettings.thresholdLineWidth;
+            color = latestSettings.thresholdColor || keyData.dataKey.color;
+          } else {
+            const settings: TbFlotThresholdKeySettings = keyData.dataKey.settings;
+            yaxis = settings.yaxis;
+            lineWidth = settings.lineWidth;
+            color = settings.color || keyData.dataKey.color;
+          }
+          const colorIndex = this.subscription.data.length + existingThresholds.length;
+          const threshold = this.generateThreshold(existingThresholds, yaxis, lineWidth, color, colorIndex, attrValue);
+          if (threshold != null) {
+            thresholds.push(threshold);
+          }
         }
       }
     });
-    this.options.grid.markings = allThresholds;
-    this.redrawPlot();
+    return thresholds;
   }
 
   private generateThreshold(existingThresholds: TbFlotThresholdMarking[], yaxis: number, lineWidth: number,
-                            color: string, defaultColorIndex: number, thresholdValue: number) {
+                            color: string, defaultColorIndex: number, thresholdValue: number): TbFlotThresholdMarking {
     const marking: TbFlotThresholdMarking = {};
     let markingYAxis;
 
-    if (yaxis !== 1) {
+    if (isDefined(yaxis) && yaxis !== 1) {
       markingYAxis = 'y' + yaxis + 'axis';
     } else {
       markingYAxis = 'yaxis';
@@ -885,8 +960,9 @@ export class TbFlot {
       return isEqual(existingMarking[markingYAxis], marking[markingYAxis]);
     });
     if (!similarMarkings.length) {
-      existingThresholds.push(marking);
+     return marking;
     }
+    return null;
   }
 
   private subscribeForLabelPatternsSources(datasources: Datasource[]) {

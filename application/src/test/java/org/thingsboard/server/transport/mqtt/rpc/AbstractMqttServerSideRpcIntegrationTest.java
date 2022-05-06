@@ -54,9 +54,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * @author Valerii Sosliuk
- */
 @Slf4j
 public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractMqttIntegrationTest {
 
@@ -76,12 +73,7 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
 
     private static final String DEVICE_RESPONSE = "{\"value1\":\"A\",\"value2\":\"B\"}";
 
-    protected Long asyncContextTimeoutToUseRpcPlugin;
-
-    protected void processBeforeTest(String deviceName, String gatewayName, TransportPayloadType payloadType, String telemetryTopic, String attributesTopic) throws Exception {
-        super.processBeforeTest(deviceName, gatewayName, payloadType, telemetryTopic, attributesTopic);
-        asyncContextTimeoutToUseRpcPlugin = 10000L;
-    }
+    protected static final Long asyncContextTimeoutToUseRpcPlugin = 10000L;
 
     protected void processOneWayRpcTest(String rpcSubTopic) throws Exception {
         MqttAsyncClient client = getMqttAsyncClient(accessToken);

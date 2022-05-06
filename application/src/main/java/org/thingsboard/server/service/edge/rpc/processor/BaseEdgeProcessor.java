@@ -17,10 +17,13 @@ package org.thingsboard.server.service.edge.rpc.processor;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
@@ -66,6 +69,9 @@ import org.thingsboard.server.service.edge.rpc.constructor.WidgetsBundleMsgConst
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.state.DeviceStateService;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 public abstract class BaseEdgeProcessor {
@@ -179,27 +185,22 @@ public abstract class BaseEdgeProcessor {
     @Autowired
     protected DbCallbackExecutorService dbCallbackExecutorService;
 
-    protected void saveEdgeEvent(TenantId tenantId,
-                                 EdgeId edgeId,
-                                 EdgeEventType type,
-                                 EdgeEventActionType action,
-                                 EntityId entityId,
-                                 JsonNode body) {
+    protected ListenableFuture<Void> saveEdgeEvent(TenantId tenantId,
+                                                     EdgeId edgeId,
+                                                     EdgeEventType type,
+                                                     EdgeEventActionType action,
+                                                     EntityId entityId,
+                                                     JsonNode body) {
         log.debug("Pushing event to edge queue. tenantId [{}], edgeId [{}], type[{}], " +
                         "action [{}], entityId [{}], body [{}]",
                 tenantId, edgeId, type, action, entityId, body);
 
-        EdgeEvent edgeEvent = new EdgeEvent();
-        edgeEvent.setTenantId(tenantId);
-        edgeEvent.setEdgeId(edgeId);
-        edgeEvent.setType(type);
-        edgeEvent.setAction(action);
-        if (entityId != null) {
-            edgeEvent.setEntityId(entityId.getId());
-        }
-        edgeEvent.setBody(body);
-        edgeEventService.save(edgeEvent);
-        tbClusterService.onEdgeEventUpdate(tenantId, edgeId);
+        EdgeEvent edgeEvent = EdgeUtils.constructEdgeEvent(tenantId, edgeId, type, action, entityId, body);
+
+        return Futures.transform(edgeEventService.saveAsync(edgeEvent), unused -> {
+            tbClusterService.onEdgeEventUpdate(tenantId, edgeId);
+            return null;
+        }, dbCallbackExecutorService);
     }
 
     protected CustomerId getCustomerIdIfEdgeAssignedToCustomer(HasCustomerId hasCustomerIdEntity, Edge edge) {
@@ -210,19 +211,21 @@ public abstract class BaseEdgeProcessor {
         }
     }
 
-    protected void processActionForAllEdges(TenantId tenantId, EdgeEventType type, EdgeEventActionType actionType, EntityId entityId) {
+    protected ListenableFuture<Void> processActionForAllEdges(TenantId tenantId, EdgeEventType type, EdgeEventActionType actionType, EntityId entityId) {
         PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
         PageData<Edge> pageData;
+        List<ListenableFuture<Void>> futures = new ArrayList<>();
         do {
             pageData = edgeService.findEdgesByTenantId(tenantId, pageLink);
             if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
                 for (Edge edge : pageData.getData()) {
-                    saveEdgeEvent(tenantId, edge.getId(), type, actionType, entityId, null);
+                    futures.add(saveEdgeEvent(tenantId, edge.getId(), type, actionType, entityId, null));
                 }
                 if (pageData.hasNext()) {
                     pageLink = pageLink.nextPageLink();
                 }
             }
         } while (pageData != null && pageData.hasNext());
+        return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
     }
 }

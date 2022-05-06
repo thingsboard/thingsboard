@@ -75,6 +75,9 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
     @Autowired
     protected EventService eventService;
 
+    @Autowired
+    protected InMemoryStorage storage;
+
     @Before
     public void beforeTest() throws Exception {
 
@@ -159,7 +162,7 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
                 Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry("serverAttributeKey", "serverAttributeValue"), System.currentTimeMillis())));
 
         await("total inMemory queue lag is empty").atMost(30, TimeUnit.SECONDS)
-                .until(() -> InMemoryStorage.getInstance().getLagTotal() == 0);
+                .until(() -> storage.getLagTotal() == 0);
         Thread.sleep(1000);
 
         TbMsgCallback tbMsgCallback = Mockito.mock(TbMsgCallback.class);

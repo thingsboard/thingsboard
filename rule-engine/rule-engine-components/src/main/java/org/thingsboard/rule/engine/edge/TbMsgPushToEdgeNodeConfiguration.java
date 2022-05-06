@@ -16,13 +16,12 @@
 package org.thingsboard.rule.engine.edge;
 
 import lombok.Data;
-import org.thingsboard.rule.engine.api.NodeConfiguration;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.DataConstants;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-public class TbMsgPushToEdgeNodeConfiguration implements NodeConfiguration<TbMsgPushToEdgeNodeConfiguration> {
-
-    private String scope;
+public class TbMsgPushToEdgeNodeConfiguration extends BaseTbMsgPushNodeConfiguration {
 
     @Override
     public TbMsgPushToEdgeNodeConfiguration defaultConfiguration() {
