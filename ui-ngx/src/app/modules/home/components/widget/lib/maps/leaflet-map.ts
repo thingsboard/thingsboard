@@ -23,14 +23,12 @@ import '@geoman-io/leaflet-geoman-free';
 import {
   CircleData,
   defaultSettings,
-  FormattedData,
   MapSettings,
   MarkerIconInfo,
   MarkerImageInfo,
   MarkerSettings,
   PolygonSettings,
   PolylineSettings,
-  ReplaceInfo,
   UnitedMapSettings
 } from './map-models';
 import { Marker } from './markers';
@@ -41,13 +39,17 @@ import { Circle } from './circle';
 import { createTooltip, isCutPolygon, isJSON } from '@home/components/widget/lib/maps/maps-utils';
 import {
   checkLngLat,
-  createLoadingDiv,
-  parseArray,
-  parseData,
-  safeExecute
+  createLoadingDiv
 } from '@home/components/widget/lib/maps/common-maps-utils';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { deepClone, isDefinedAndNotNull, isNotEmptyStr, isString } from '@core/utils';
+import {
+  deepClone,
+  formattedDataArrayFromDatasourceData,
+  formattedDataFormDatasourceData,
+  isDefinedAndNotNull,
+  isNotEmptyStr,
+  isString, mergeFormattedData, safeExecute
+} from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import {
   SelectEntityDialogComponent,
@@ -55,6 +57,7 @@ import {
 } from '@home/components/widget/lib/maps/dialogs/select-entity-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
+import { FormattedData, ReplaceInfo } from '@shared/models/widget.models';
 
 export default abstract class LeafletMap {
 
@@ -641,13 +644,25 @@ export default abstract class LeafletMap {
     }
 
     updateData(drawRoutes: boolean, showPolygon: boolean) {
+      const data = this.ctx.data;
+      let formattedData = formattedDataFormDatasourceData(data);
+      if (this.ctx.latestData && this.ctx.latestData.length) {
+        const formattedLatestData = formattedDataFormDatasourceData(this.ctx.latestData);
+        formattedData = mergeFormattedData(formattedData, formattedLatestData);
+      }
+      let polyData: FormattedData[][] = null;
+      if (drawRoutes) {
+        polyData = formattedDataArrayFromDatasourceData(data);
+      }
+      this.updateFromData(drawRoutes, showPolygon, formattedData, polyData);
+    }
+
+    updateFromData(drawRoutes: boolean, showPolygon: boolean, formattedData: FormattedData[],
+                   polyData: FormattedData[][], markerClickCallback?: any) {
       this.drawRoutes = drawRoutes;
       this.showPolygon = showPolygon;
       if (this.map) {
-        const data = this.ctx.data;
-        const formattedData = parseData(data);
         if (drawRoutes) {
-          const polyData = parseArray(data);
           this.updatePolylines(polyData, formattedData, false);
         }
         if (showPolygon) {
@@ -656,7 +671,7 @@ export default abstract class LeafletMap {
         if (this.options.showCircle) {
           this.updateCircle(formattedData, false);
         }
-        this.updateMarkers(formattedData, false);
+        this.updateMarkers(formattedData, false, markerClickCallback);
         this.updateBoundsInternal();
         if (this.options.draggableMarker || this.editPolygons || this.editCircle) {
           let foundEntityWithLocation = false;

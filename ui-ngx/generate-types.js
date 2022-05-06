@@ -17,9 +17,12 @@
 const child_process = require("child_process");
 const fs = require('fs');
 const path = require('path');
-const typeDir = './target/types';
-const srcDir = typeDir + '/src';
-const moduleMapPath = "src/app/modules/common/modules-map.ts";
+
+const typeDir = path.join('.', 'target', 'types');
+const srcDir = path.join('.', 'target', 'types', 'src');
+const moduleMapPath = path.join('src', 'app', 'modules', 'common', 'modules-map.ts');
+const ngcPath = path.join('.', 'node_modules', '.bin', 'ngc');
+const tsconfigPath = path.join('src', 'tsconfig.app.json');
 
 console.log(`Remove directory: ${typeDir}`);
 try {
@@ -28,7 +31,7 @@ try {
   console.error(`Remove directory error: ${err}`);
 }
 
-const cliCommand = `./node_modules/.bin/ngc --p src/tsconfig.app.json --declaration --outDir ${srcDir}`;
+const cliCommand = `${ngcPath} --p ${tsconfigPath} --declaration --outDir ${srcDir}`;
 console.log(cliCommand);
 try {
   child_process.execSync(cliCommand);

@@ -81,14 +81,6 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
 
     private static final String RESPONSE_ATTRIBUTES_PAYLOAD_DELETED = "{\"deleted\":[\"attribute5\"]}";
 
-    protected void processBeforeTest(String deviceName, String gatewayName, TransportPayloadType payloadType, String telemetryTopic, String attributesTopic) throws Exception {
-        super.processBeforeTest(deviceName, gatewayName, payloadType, telemetryTopic, attributesTopic);
-    }
-
-    protected void processAfterTest() throws Exception {
-        super.processAfterTest();
-    }
-
     protected List<TransportProtos.TsKvProto> getTsKvProtoList() {
         TransportProtos.TsKvProto tsKvProtoAttribute1 = getTsKvProto("attribute1", "value1", TransportProtos.KeyValueType.STRING_V);
         TransportProtos.TsKvProto tsKvProtoAttribute2 = getTsKvProto("attribute2", "true", TransportProtos.KeyValueType.BOOLEAN_V);

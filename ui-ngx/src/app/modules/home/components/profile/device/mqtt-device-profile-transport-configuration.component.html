@@ -134,4 +134,10 @@
       </div>
     </fieldset>
   </section>
+  <div style="padding-bottom: 20px">
+    <mat-checkbox formControlName="sendAckOnValidationException">
+      {{ 'device-profile.mqtt-send-ack-on-validation-exception' | translate }}
+    </mat-checkbox>
+    <div class="tb-hint" innerHTML="{{ 'device-profile.mqtt-send-ack-on-validation-exception-hint' | translate }}"></div>
+  </div>
 </form>

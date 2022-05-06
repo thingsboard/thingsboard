@@ -21,13 +21,19 @@ import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.CoapDeviceType;
 import org.thingsboard.server.common.data.TransportPayloadType;
+import org.thingsboard.server.transport.coap.CoapTestConfigProperties;
 
 @Slf4j
 public abstract class AbstractCoapTimeseriesJsonIntegrationTest extends AbstractCoapTimeseriesIntegrationTest {
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest("Test Post Telemetry device json payload", CoapDeviceType.DEFAULT, TransportPayloadType.JSON);
+        CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
+                .deviceName("Test Post Telemetry device json payload")
+                .coapDeviceType(CoapDeviceType.DEFAULT)
+                .transportPayloadType(TransportPayloadType.JSON)
+                .build();
+        processBeforeTest(configProperties);
     }
 
     @After

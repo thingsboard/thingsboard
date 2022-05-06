@@ -107,6 +107,7 @@ export class WidgetComponentService {
             controllerScript: this.utils.editWidgetInfo.controllerScript,
             settingsSchema: this.utils.editWidgetInfo.settingsSchema,
             dataKeySettingsSchema: this.utils.editWidgetInfo.dataKeySettingsSchema,
+            latestDataKeySettingsSchema: this.utils.editWidgetInfo.latestDataKeySettingsSchema,
             defaultConfig: this.utils.editWidgetInfo.defaultConfig
           }, new WidgetTypeId('1'), new TenantId( NULL_UUID ), 'customWidgetBundle', undefined
         );
@@ -285,6 +286,9 @@ export class WidgetComponentService {
           }
           if (widgetControllerDescriptor.dataKeySettingsSchema) {
             widgetInfo.typeDataKeySettingsSchema = widgetControllerDescriptor.dataKeySettingsSchema;
+          }
+          if (widgetControllerDescriptor.latestDataKeySettingsSchema) {
+            widgetInfo.typeLatestDataKeySettingsSchema = widgetControllerDescriptor.latestDataKeySettingsSchema;
           }
           widgetInfo.typeParameters = widgetControllerDescriptor.typeParameters;
           widgetInfo.actionSources = widgetControllerDescriptor.actionSources;
@@ -465,6 +469,9 @@ export class WidgetComponentService {
       if (isFunction(widgetTypeInstance.getDataKeySettingsSchema)) {
         result.dataKeySettingsSchema = widgetTypeInstance.getDataKeySettingsSchema();
       }
+      if (isFunction(widgetTypeInstance.getLatestDataKeySettingsSchema)) {
+        result.latestDataKeySettingsSchema = widgetTypeInstance.getLatestDataKeySettingsSchema();
+      }
       if (isFunction(widgetTypeInstance.typeParameters)) {
         result.typeParameters = widgetTypeInstance.typeParameters();
       } else {
@@ -486,6 +493,9 @@ export class WidgetComponentService {
       }
       if (isUndefined(result.typeParameters.singleEntity)) {
         result.typeParameters.singleEntity = false;
+      }
+      if (isUndefined(result.typeParameters.hasAdditionalLatestDataKeys)) {
+        result.typeParameters.hasAdditionalLatestDataKeys = false;
       }
       if (isUndefined(result.typeParameters.warnOnPageDataOverflow)) {
         result.typeParameters.warnOnPageDataOverflow = true;

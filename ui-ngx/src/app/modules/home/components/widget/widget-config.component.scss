@@ -61,6 +61,16 @@
         max-width: 200px;
       }
     }
+    .tb-datasource-params {
+      position: relative;
+      padding: 0 0 0 10px;
+      margin: 5px;
+      tb-error.tb-datasource-error {
+        position: absolute;
+        bottom: 4px;
+        left: 8px;
+      }
+    }
     .tb-data-keys {
       @media #{$mat-gt-sm} {
         padding-left: 8px;
