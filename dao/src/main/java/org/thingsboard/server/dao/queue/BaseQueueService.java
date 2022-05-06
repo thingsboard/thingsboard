@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.queue;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -62,7 +63,16 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     @Override
     public void deleteQueue(TenantId tenantId, QueueId queueId) {
         log.trace("Executing deleteQueue, queueId: [{}]", queueId);
-        queueDao.removeById(tenantId, queueId.getId());
+        try {
+            queueDao.removeById(tenantId, queueId.getId());
+        } catch (Exception t) {
+            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
+            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_default_queue_device_profile")) {
+                throw new DataValidationException("The queue referenced by the device profiles cannot be deleted!");
+            } else {
+                throw t;
+            }
+        }
     }
 
     @Override
