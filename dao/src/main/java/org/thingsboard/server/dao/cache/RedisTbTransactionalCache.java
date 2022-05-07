@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,6 +34,7 @@ import org.thingsboard.server.cache.TbTransactionalCache;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -97,6 +98,13 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
     }
 
     @Override
+    public void evict(Collection<K> keys) {
+        try (var connection = connectionFactory.getConnection()) {
+            connection.del(keys.stream().map(this::getRawKey).toArray(byte[][]::new));
+        }
+    }
+
+    @Override
     public void evictOrPut(K key, V value) {
         try (var connection = connectionFactory.getConnection()) {
             var rawKey = getRawKey(key);
@@ -117,8 +125,7 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
 
     @Override
     public TbCacheTransaction<K, V> newTransactionForKeys(List<K> keys) {
-        byte[][] rawKeysList = keys.stream().map(this::getRawKey).toArray(byte[][]::new);
-        RedisConnection connection = watch(rawKeysList);
+        RedisConnection connection = watch(keys.stream().map(this::getRawKey).toArray(byte[][]::new));
         return new RedisTbCacheTransaction<>(this, connection);
     }
 

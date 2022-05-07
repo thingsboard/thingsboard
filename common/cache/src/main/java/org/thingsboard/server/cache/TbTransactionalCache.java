@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,7 +16,10 @@
 package org.thingsboard.server.cache;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public interface TbTransactionalCache<K extends Serializable, V extends Serializable> {
 
@@ -28,10 +31,35 @@ public interface TbTransactionalCache<K extends Serializable, V extends Serializ
 
     void evict(K key);
 
+    void evict(Collection<K> keys);
+
     void evictOrPut(K key, V value);
 
     TbCacheTransaction<K, V> newTransactionForKey(K key);
 
     TbCacheTransaction<K, V> newTransactionForKeys(List<K> keys);
+
+    default <R> R getAndPutInTransaction(K key, Supplier<R> dbCall, Function<V, R> cacheValueToResult, Function<R, V> dbValueToCacheValue, boolean cacheNullValue) {
+        TbCacheValueWrapper<V> cacheValueWrapper = get(key);
+        if (cacheValueWrapper != null) {
+            var cacheValue = cacheValueWrapper.get();
+            return cacheValue == null ? null : cacheValueToResult.apply(cacheValue);
+        }
+        var cacheTransaction = newTransactionForKey(key);
+        try {
+            R dbValue = dbCall.get();
+            if (dbValue != null || cacheNullValue) {
+                cacheTransaction.putIfAbsent(key, dbValueToCacheValue.apply(dbValue));
+                cacheTransaction.commit();
+                return dbValue;
+            } else {
+                cacheTransaction.rollback();
+                return null;
+            }
+        } catch (Throwable e) {
+            cacheTransaction.rollback();
+            throw e;
+        }
+    }
 
 }
