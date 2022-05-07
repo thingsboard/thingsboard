@@ -15,24 +15,13 @@
  */
 package org.thingsboard.server.dao.cache;
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.thingsboard.server.cache.TbCacheTransaction;
 
 import java.io.Serializable;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
-import java.util.concurrent.Executor;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -50,8 +39,7 @@ public class RedisTbCacheTransaction<K extends Serializable, V extends Serializa
     public boolean commit() {
         try {
             var execResult = connection.exec();
-            var result = execResult!= null && execResult.stream().anyMatch(Objects::nonNull);
-            log.warn("Transaction result: {}", result);
+            var result = execResult != null && execResult.stream().anyMatch(Objects::nonNull);
             return result;
         } finally {
             connection.close();

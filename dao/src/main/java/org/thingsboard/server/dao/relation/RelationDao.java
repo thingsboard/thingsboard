@@ -29,17 +29,13 @@ import java.util.List;
  */
 public interface RelationDao {
 
-    ListenableFuture<List<EntityRelation>> findAllByFromAsync(TenantId tenantId, EntityId from, RelationTypeGroup typeGroup);
-
     List<EntityRelation> findAllByFrom(TenantId tenantId, EntityId from, RelationTypeGroup typeGroup);
 
-    ListenableFuture<List<EntityRelation>> findAllByFromAndType(TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup);
-
-    ListenableFuture<List<EntityRelation>> findAllByToAsync(TenantId tenantId, EntityId to, RelationTypeGroup typeGroup);
+    List<EntityRelation> findAllByFromAndType(TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup);
 
     List<EntityRelation> findAllByTo(TenantId tenantId, EntityId to, RelationTypeGroup typeGroup);
 
-    ListenableFuture<List<EntityRelation>> findAllByToAndType(TenantId tenantId, EntityId to, String relationType, RelationTypeGroup typeGroup);
+    List<EntityRelation> findAllByToAndType(TenantId tenantId, EntityId to, String relationType, RelationTypeGroup typeGroup);
 
     ListenableFuture<Boolean> checkRelation(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup);
 

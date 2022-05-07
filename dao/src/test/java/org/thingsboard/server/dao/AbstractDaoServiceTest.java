@@ -27,7 +27,7 @@ import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {JpaServiceDaoConfig.class, PsqlTsDaoConfig.class, PsqlTsLatestDaoConfig.class, SqlTimeseriesDaoConfig.class})
+@ContextConfiguration(classes = {JpaDaoConfig.class, PsqlTsDaoConfig.class, PsqlTsLatestDaoConfig.class, SqlTimeseriesDaoConfig.class})
 @DaoSqlTest
 @TestExecutionListeners({
         DependencyInjectionTestExecutionListener.class,
