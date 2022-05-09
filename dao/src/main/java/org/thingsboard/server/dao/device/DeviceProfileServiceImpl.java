@@ -71,9 +71,6 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
     @Autowired
     private CacheManager cacheManager;
 
-    @Autowired(required = false)
-    private QueueService queueService;
-
     @Autowired
     private DataValidator<DeviceProfile> deviceProfileValidator;
 
