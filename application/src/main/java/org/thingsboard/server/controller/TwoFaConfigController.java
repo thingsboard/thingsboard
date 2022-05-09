@@ -50,7 +50,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
@@ -191,20 +190,10 @@ public class TwoFaConfigController extends BaseController {
                                                          @RequestBody TwoFaAccountConfigUpdateRequest updateRequest) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
 
-        AccountTwoFaSettings settings = twoFaConfigManager.getAccountTwoFaSettings(user.getTenantId(), user.getId())
-                .orElseThrow(() -> new IllegalArgumentException("No 2FA config found"));
-        Map<TwoFaProviderType, TwoFaAccountConfig> configs = settings.getConfigs();
-
-        TwoFaAccountConfig accountConfig;
-        if ((accountConfig = configs.get(providerType)) == null) {
-            throw new IllegalArgumentException("Config for " + providerType + " 2FA provider not found");
-        }
-        if (updateRequest.isUseByDefault()) {
-            configs.values().forEach(config -> config.setUseByDefault(false));
-        }
+        TwoFaAccountConfig accountConfig = twoFaConfigManager.getTwoFaAccountConfig(user.getTenantId(), user.getId(), providerType)
+                .orElseThrow(() -> new IllegalArgumentException("Config for " + providerType + " 2FA provider not found"));
         accountConfig.setUseByDefault(updateRequest.isUseByDefault());
-
-        return twoFaConfigManager.saveAccountTwoFaSettings(user.getTenantId(), user.getId(), settings);
+        return twoFaConfigManager.saveTwoFaAccountConfig(user.getTenantId(), user.getId(), accountConfig);
     }
 
     @ApiOperation(value = "Delete 2FA account config (deleteTwoFaAccountConfig)", notes =

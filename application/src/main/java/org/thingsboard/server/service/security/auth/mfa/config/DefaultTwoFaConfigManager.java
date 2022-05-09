@@ -38,11 +38,10 @@ import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.user.UserAuthSettingsDao;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Consumer;
 
 @Service
 @RequiredArgsConstructor
@@ -68,8 +67,7 @@ public class DefaultTwoFaConfigManager implements TwoFaConfigManager {
                 });
     }
 
-    @Override
-    public AccountTwoFaSettings saveAccountTwoFaSettings(TenantId tenantId, UserId userId, AccountTwoFaSettings settings) {
+    protected AccountTwoFaSettings saveAccountTwoFaSettings(TenantId tenantId, UserId userId, AccountTwoFaSettings settings) {
         UserAuthSettings userAuthSettings = Optional.ofNullable(userAuthSettingsDao.findByUserId(userId))
                 .orElseGet(() -> {
                     UserAuthSettings newUserAuthSettings = new UserAuthSettings();
@@ -99,7 +97,13 @@ public class DefaultTwoFaConfigManager implements TwoFaConfigManager {
             newSettings.setConfigs(new LinkedHashMap<>());
             return newSettings;
         });
+        if (accountConfig.isUseByDefault()) {
+            settings.getConfigs().values().forEach(config -> config.setUseByDefault(false));
+        }
         settings.getConfigs().put(accountConfig.getProviderType(), accountConfig);
+        if (settings.getConfigs().values().stream().noneMatch(TwoFaAccountConfig::isUseByDefault)) {
+            settings.getConfigs().values().stream().findFirst().ifPresent(config -> config.setUseByDefault(true));
+        }
         return saveAccountTwoFaSettings(tenantId, userId, settings);
     }
 
@@ -108,6 +112,11 @@ public class DefaultTwoFaConfigManager implements TwoFaConfigManager {
         AccountTwoFaSettings settings = getAccountTwoFaSettings(tenantId, userId)
                 .orElseThrow(() -> new IllegalArgumentException("2FA not configured"));
         settings.getConfigs().remove(providerType);
+        if (!settings.getConfigs().isEmpty() && settings.getConfigs().values().stream().noneMatch(TwoFaAccountConfig::isUseByDefault)) {
+            settings.getConfigs().values().stream()
+                    .min(Comparator.comparing(TwoFaAccountConfig::getProviderType))
+                    .ifPresent(config -> config.setUseByDefault(true));
+        }
         return saveAccountTwoFaSettings(tenantId, userId, settings);
     }
 

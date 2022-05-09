@@ -28,7 +28,6 @@ public interface TwoFaConfigManager {
 
     Optional<AccountTwoFaSettings> getAccountTwoFaSettings(TenantId tenantId, UserId userId);
 
-    AccountTwoFaSettings saveAccountTwoFaSettings(TenantId tenantId, UserId userId, AccountTwoFaSettings settings);
 
     Optional<TwoFaAccountConfig> getTwoFaAccountConfig(TenantId tenantId, UserId userId, TwoFaProviderType providerType);
 

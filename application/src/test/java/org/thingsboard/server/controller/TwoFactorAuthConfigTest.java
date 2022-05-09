@@ -303,6 +303,7 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
         loginTenantAdmin();
 
         TotpTwoFaAccountConfig generatedTotpTwoFaAccountConfig = generateTotpTwoFaAccountConfig(totpTwoFaProviderConfig);
+        generatedTotpTwoFaAccountConfig.setUseByDefault(true);
 
         String secret = UriComponentsBuilder.fromUriString(generatedTotpTwoFaAccountConfig.getAuthUrl()).build()
                 .getQueryParams().getFirst("secret");
@@ -421,6 +422,7 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
         SmsTwoFaAccountConfig smsTwoFaAccountConfig = new SmsTwoFaAccountConfig();
         smsTwoFaAccountConfig.setPhoneNumber("+38051889445");
+        smsTwoFaAccountConfig.setUseByDefault(true);
 
         ArgumentCaptor<String> verificationCodeCaptor = ArgumentCaptor.forClass(String.class);
         doPost("/api/2fa/account/config/submit", smsTwoFaAccountConfig).andExpect(status().isOk());
@@ -459,6 +461,7 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
         SmsTwoFaAccountConfig initialSmsTwoFaAccountConfig = new SmsTwoFaAccountConfig();
         initialSmsTwoFaAccountConfig.setPhoneNumber("+38051889445");
+        initialSmsTwoFaAccountConfig.setUseByDefault(true);
 
         ArgumentCaptor<String> verificationCodeCaptor = ArgumentCaptor.forClass(String.class);
         doPost("/api/2fa/account/config/submit", initialSmsTwoFaAccountConfig).andExpect(status().isOk());
