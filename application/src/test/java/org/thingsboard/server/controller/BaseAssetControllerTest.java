@@ -24,6 +24,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -179,6 +180,39 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
                 .andExpect(status().isOk());
 
         doGet("/api/asset/" + savedAsset.getId().getId().toString())
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void testDeleteAssetAssignedToEntityView() throws Exception {
+        Asset asset1 = new Asset();
+        asset1.setName("My asset 1");
+        asset1.setType("default");
+        Asset savedAsset1 = doPost("/api/asset", asset1, Asset.class);
+
+        Asset asset2 = new Asset();
+        asset2.setName("My asset 2");
+        asset2.setType("default");
+        Asset savedAsset2 = doPost("/api/asset", asset2, Asset.class);
+
+        EntityView view = new EntityView();
+        view.setEntityId(savedAsset1.getId());
+        view.setTenantId(savedTenant.getId());
+        view.setName("My entity view");
+        view.setType("default");
+        EntityView savedView = doPost("/api/entityView", view, EntityView.class);
+
+        doDelete("/api/asset/" + savedAsset1.getId().getId().toString())
+                .andExpect(status().isBadRequest());
+
+        savedView.setEntityId(savedAsset2.getId());
+
+        doPost("/api/entityView", savedView, EntityView.class);
+
+        doDelete("/api/asset/" + savedAsset1.getId().getId().toString())
+                .andExpect(status().isOk());
+
+        doGet("/api/asset/" + savedAsset1.getId().getId().toString())
                 .andExpect(status().isNotFound());
     }
 

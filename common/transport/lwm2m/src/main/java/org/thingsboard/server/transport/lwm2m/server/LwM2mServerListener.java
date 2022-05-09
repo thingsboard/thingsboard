@@ -16,9 +16,11 @@
 package org.thingsboard.server.transport.lwm2m.server;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.node.LwM2mNode;
 import org.eclipse.leshan.core.observation.CompositeObservation;
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.observation.SingleObservation;
+import org.eclipse.leshan.core.request.SendRequest;
 import org.eclipse.leshan.core.response.ObserveCompositeResponse;
 import org.eclipse.leshan.core.response.ObserveResponse;
 import org.eclipse.leshan.server.observation.ObservationListener;
@@ -26,9 +28,11 @@ import org.eclipse.leshan.server.queue.PresenceListener;
 import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.registration.RegistrationListener;
 import org.eclipse.leshan.server.registration.RegistrationUpdate;
+import org.eclipse.leshan.server.send.SendListener;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
 import java.util.Collection;
+import java.util.Map;
 
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertObjectIdToVersionedId;
 
@@ -117,6 +121,16 @@ public class LwM2mServerListener {
         public void newObservation(Observation observation, Registration registration) {
             //TODO: should be able to use CompositeObservation
             log.trace("Successful start newObservation {}.", ((SingleObservation)observation).getPath());
+        }
+    };
+
+    public final SendListener sendListener = new SendListener() {
+
+        @Override
+        public void dataReceived(Registration registration, Map<String, LwM2mNode> map, SendRequest sendRequest) {
+            if (registration != null) {
+                service.onUpdateValueWithSendRequest(registration, sendRequest);
+            }
         }
     };
 }

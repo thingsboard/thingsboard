@@ -18,17 +18,16 @@ import L, { LatLngBounds, LatLngLiteral, LatLngTuple } from 'leaflet';
 import LeafletMap from '../leaflet-map';
 import { CircleData, MapImage, PosFuncton, UnitedMapSettings } from '../map-models';
 import { Observable, ReplaySubject } from 'rxjs';
-import { filter, map, mergeMap } from 'rxjs/operators';
+import { map, mergeMap } from 'rxjs/operators';
 import {
   aspectCache,
-  calculateNewPointCoordinate,
-  parseFunction
+  calculateNewPointCoordinate
 } from '@home/components/widget/lib/maps/common-maps-utils';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { DataSet, DatasourceType, widgetType } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetSubscriptionOptions } from '@core/api/widget-api.models';
-import { isDefinedAndNotNull, isEmptyStr } from '@core/utils';
+import { isDefinedAndNotNull, isEmptyStr, parseFunction } from '@core/utils';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
 
 const maxZoom = 4; // ?

@@ -16,7 +16,7 @@
 package org.thingsboard.server.dao.sql.dashboard;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -41,7 +41,7 @@ public class JpaDashboardDao extends JpaAbstractSearchTextDao<DashboardEntity, D
     }
 
     @Override
-    protected CrudRepository<DashboardEntity, UUID> getCrudRepository() {
+    protected JpaRepository<DashboardEntity, UUID> getRepository() {
         return dashboardRepository;
     }
 

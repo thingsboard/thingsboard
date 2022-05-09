@@ -34,7 +34,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.entity.queue.TbQueueService;
+import org.thingsboard.server.service.entitiy.queue.TbQueueService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 

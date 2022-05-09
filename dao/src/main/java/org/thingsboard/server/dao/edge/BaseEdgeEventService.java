@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.edge;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,7 +24,6 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
-import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 
 @Service
@@ -33,10 +33,13 @@ public class BaseEdgeEventService implements EdgeEventService {
     @Autowired
     private EdgeEventDao edgeEventDao;
 
+    @Autowired
+    private DataValidator<EdgeEvent> edgeEventValidator;
+
     @Override
-    public EdgeEvent save(EdgeEvent edgeEvent) {
+    public ListenableFuture<Void> saveAsync(EdgeEvent edgeEvent) {
         edgeEventValidator.validate(edgeEvent, EdgeEvent::getTenantId);
-        return edgeEventDao.save(edgeEvent);
+        return edgeEventDao.saveAsync(edgeEvent);
     }
 
     @Override
@@ -48,17 +51,4 @@ public class BaseEdgeEventService implements EdgeEventService {
     public void cleanupEvents(long ttl) {
         edgeEventDao.cleanupEvents(ttl);
     }
-
-    private DataValidator<EdgeEvent> edgeEventValidator =
-            new DataValidator<EdgeEvent>() {
-                @Override
-                protected void validateDataImpl(TenantId tenantId, EdgeEvent edgeEvent) {
-                    if (edgeEvent.getEdgeId() == null) {
-                        throw new DataValidationException("Edge id should be specified!");
-                    }
-                    if (edgeEvent.getAction() == null) {
-                        throw new DataValidationException("Edge Event action should be specified!");
-                    }
-                }
-            };
 }

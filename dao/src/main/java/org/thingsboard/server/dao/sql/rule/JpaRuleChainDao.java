@@ -17,13 +17,12 @@ package org.thingsboard.server.dao.sql.rule;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
-import org.thingsboard.server.common.data.rule.RuleChainOutputLabelsUsage;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.RuleChainEntity;
@@ -31,7 +30,6 @@ import org.thingsboard.server.dao.rule.RuleChainDao;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -48,7 +46,7 @@ public class JpaRuleChainDao extends JpaAbstractSearchTextDao<RuleChainEntity, R
     }
 
     @Override
-    protected CrudRepository<RuleChainEntity, UUID> getCrudRepository() {
+    protected JpaRepository<RuleChainEntity, UUID> getRepository() {
         return ruleChainRepository;
     }
 

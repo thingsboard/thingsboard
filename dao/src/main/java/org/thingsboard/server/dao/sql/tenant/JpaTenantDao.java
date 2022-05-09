@@ -16,7 +16,7 @@
 package org.thingsboard.server.dao.sql.tenant;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
@@ -51,7 +51,7 @@ public class JpaTenantDao extends JpaAbstractSearchTextDao<TenantEntity, Tenant>
     }
 
     @Override
-    protected CrudRepository<TenantEntity, UUID> getCrudRepository() {
+    protected JpaRepository<TenantEntity, UUID> getRepository() {
         return tenantRepository;
     }
 
@@ -61,19 +61,17 @@ public class JpaTenantDao extends JpaAbstractSearchTextDao<TenantEntity, Tenant>
     }
 
     @Override
-    public PageData<Tenant> findTenantsByRegion(TenantId tenantId, String region, PageLink pageLink) {
+    public PageData<Tenant> findTenants(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(tenantRepository
-                .findByRegionNextPage(
-                        region,
+                .findTenantsNextPage(
                         Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink)));
     }
 
     @Override
-    public PageData<TenantInfo> findTenantInfosByRegion(TenantId tenantId, String region, PageLink pageLink) {
+    public PageData<TenantInfo> findTenantInfos(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(tenantRepository
-                .findTenantInfoByRegionNextPage(
-                        region,
+                .findTenantInfosNextPage(
                         Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink, TenantInfoEntity.tenantInfoColumnMap)));
     }

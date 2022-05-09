@@ -32,6 +32,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
@@ -42,6 +43,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
@@ -80,6 +82,7 @@ import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
@@ -110,6 +113,7 @@ import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
+import org.thingsboard.server.gen.edge.v1.UplinkResponseMsg;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
@@ -128,6 +132,9 @@ import java.util.concurrent.TimeUnit;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@TestPropertySource(properties = {
+        "edges.enabled=true",
+})
 abstract public class BaseEdgeTest extends AbstractControllerTest {
 
     private static final String CUSTOM_DEVICE_PROFILE_NAME = "Thermostat";
@@ -192,7 +199,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
     private void installation() throws Exception {
         edge = doPost("/api/edge", constructEdge("Test Edge", "test"), Edge.class);
 
-        DeviceProfile deviceProfile = this.createDeviceProfile(CUSTOM_DEVICE_PROFILE_NAME, null);
+        DeviceProfile deviceProfile = this.createDeviceProfile(CUSTOM_DEVICE_PROFILE_NAME);
         extendDeviceProfileData(deviceProfile);
         doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
 
@@ -332,6 +339,34 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testDeviceProfiles() throws Exception {
+        // 1
+        DeviceProfile deviceProfile = this.createDeviceProfile("ONE_MORE_DEVICE_PROFILE", null);
+        extendDeviceProfileData(deviceProfile);
+        edgeImitator.expectMessageAmount(1);
+        deviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof DeviceProfileUpdateMsg);
+        DeviceProfileUpdateMsg deviceProfileUpdateMsg = (DeviceProfileUpdateMsg) latestMessage;
+        Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, deviceProfileUpdateMsg.getMsgType());
+        Assert.assertEquals(deviceProfileUpdateMsg.getIdMSB(), deviceProfile.getUuidId().getMostSignificantBits());
+        Assert.assertEquals(deviceProfileUpdateMsg.getIdLSB(), deviceProfile.getUuidId().getLeastSignificantBits());
+
+        // 2
+        edgeImitator.expectMessageAmount(1);
+        doDelete("/api/deviceProfile/" + deviceProfile.getUuidId())
+                .andExpect(status().isOk());
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof DeviceProfileUpdateMsg);
+        deviceProfileUpdateMsg = (DeviceProfileUpdateMsg) latestMessage;
+        Assert.assertEquals(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, deviceProfileUpdateMsg.getMsgType());
+        Assert.assertEquals(deviceProfileUpdateMsg.getIdMSB(), deviceProfile.getUuidId().getMostSignificantBits());
+        Assert.assertEquals(deviceProfileUpdateMsg.getIdLSB(), deviceProfile.getUuidId().getLeastSignificantBits());
+    }
+
+    @Test
     public void testDevices() throws Exception {
         // 1
         Device savedDevice = saveDeviceOnCloudAndVerifyDeliveryToEdge();
@@ -383,6 +418,40 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(deviceUpdateMsg.getIdMSB(), savedDevice.getUuidId().getMostSignificantBits());
         Assert.assertEquals(deviceUpdateMsg.getIdLSB(), savedDevice.getUuidId().getLeastSignificantBits());
 
+    }
+
+    @Test
+    public void testDeviceReachedMaximumAllowedOnCloud() throws Exception {
+        // update tenant profile configuration
+        loginSysAdmin();
+        TenantProfile tenantProfile = doGet("/api/tenantProfile/" + savedTenant.getTenantProfileId().getId(), TenantProfile.class);
+        DefaultTenantProfileConfiguration profileConfiguration =
+                (DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration();
+        profileConfiguration.setMaxDevices(1);
+        tenantProfile.getProfileData().setConfiguration(profileConfiguration);
+        doPost("/api/tenantProfile/", tenantProfile, TenantProfile.class);
+
+        loginTenantAdmin();
+
+        UUID uuid = Uuids.timeBased();
+
+        UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
+        DeviceUpdateMsg.Builder deviceUpdateMsgBuilder = DeviceUpdateMsg.newBuilder();
+        deviceUpdateMsgBuilder.setIdMSB(uuid.getMostSignificantBits());
+        deviceUpdateMsgBuilder.setIdLSB(uuid.getLeastSignificantBits());
+        deviceUpdateMsgBuilder.setName("Edge Device");
+        deviceUpdateMsgBuilder.setType("default");
+        deviceUpdateMsgBuilder.setMsgType(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE);
+        uplinkMsgBuilder.addDeviceUpdateMsg(deviceUpdateMsgBuilder.build());
+
+        edgeImitator.expectResponsesAmount(1);
+
+        edgeImitator.sendUplinkMsg(uplinkMsgBuilder.build());
+
+        Assert.assertTrue(edgeImitator.waitForResponses());
+
+        UplinkResponseMsg latestResponseMsg = edgeImitator.getLatestResponseMsg();
+        Assert.assertTrue(latestResponseMsg.getSuccess());
     }
 
     @Test
@@ -546,8 +615,6 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         ruleChainMetaData.addConnectionInfo(0, 1, "success");
         ruleChainMetaData.addConnectionInfo(0, 2, "fail");
         ruleChainMetaData.addConnectionInfo(1, 2, "success");
-
-        ruleChainMetaData.addRuleChainConnectionInfo(2, edge.getRootRuleChainId(), "success", mapper.createObjectNode());
 
         doPost("/api/ruleChain/metadata", ruleChainMetaData, RuleChainMetaData.class);
     }
@@ -909,7 +976,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         String timeseriesData = "{\"data\":{\"temperature\":25},\"ts\":" + System.currentTimeMillis() + "}";
         JsonNode timeseriesEntityData = mapper.readTree(timeseriesData);
         EdgeEvent edgeEvent = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.TIMESERIES_UPDATED, device.getId().getId(), EdgeEventType.DEVICE, timeseriesEntityData);
-        edgeEventService.save(edgeEvent);
+        edgeEventService.saveAsync(edgeEvent).get();
         clusterService.onEdgeEventUpdate(tenantId, edge.getId());
         Assert.assertTrue(edgeImitator.waitForMessages());
 
@@ -940,12 +1007,12 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         testAttributesDeleteMsg(device);
     }
 
-    private void testAttributesUpdatedMsg(Device device) throws JsonProcessingException, InterruptedException {
+    private void testAttributesUpdatedMsg(Device device) throws Exception {
         String attributesData = "{\"scope\":\"SERVER_SCOPE\",\"kv\":{\"key1\":\"value1\"}}";
         JsonNode attributesEntityData = mapper.readTree(attributesData);
         EdgeEvent edgeEvent1 = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.ATTRIBUTES_UPDATED, device.getId().getId(), EdgeEventType.DEVICE, attributesEntityData);
         edgeImitator.expectMessageAmount(1);
-        edgeEventService.save(edgeEvent1);
+        edgeEventService.saveAsync(edgeEvent1).get();
         clusterService.onEdgeEventUpdate(tenantId, edge.getId());
         Assert.assertTrue(edgeImitator.waitForMessages());
 
@@ -965,12 +1032,12 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertEquals("value1", keyValueProto.getStringV());
     }
 
-    private void testPostAttributesMsg(Device device) throws JsonProcessingException, InterruptedException {
+    private void testPostAttributesMsg(Device device) throws Exception {
         String postAttributesData = "{\"scope\":\"SERVER_SCOPE\",\"kv\":{\"key2\":\"value2\"}}";
         JsonNode postAttributesEntityData = mapper.readTree(postAttributesData);
         EdgeEvent edgeEvent = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.POST_ATTRIBUTES, device.getId().getId(), EdgeEventType.DEVICE, postAttributesEntityData);
         edgeImitator.expectMessageAmount(1);
-        edgeEventService.save(edgeEvent);
+        edgeEventService.saveAsync(edgeEvent).get();
         clusterService.onEdgeEventUpdate(tenantId, edge.getId());
         Assert.assertTrue(edgeImitator.waitForMessages());
 
@@ -990,12 +1057,12 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertEquals("value2", keyValueProto.getStringV());
     }
 
-    private void testAttributesDeleteMsg(Device device) throws JsonProcessingException, InterruptedException {
+    private void testAttributesDeleteMsg(Device device) throws Exception {
         String deleteAttributesData = "{\"scope\":\"SERVER_SCOPE\",\"keys\":[\"key1\",\"key2\"]}";
         JsonNode deleteAttributesEntityData = mapper.readTree(deleteAttributesData);
         EdgeEvent edgeEvent = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.ATTRIBUTES_DELETED, device.getId().getId(), EdgeEventType.DEVICE, deleteAttributesEntityData);
         edgeImitator.expectMessageAmount(1);
-        edgeEventService.save(edgeEvent);
+        edgeEventService.saveAsync(edgeEvent).get();
         clusterService.onEdgeEventUpdate(tenantId, edge.getId());
         Assert.assertTrue(edgeImitator.waitForMessages());
 
@@ -1030,7 +1097,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
 
         EdgeEvent edgeEvent = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.RPC_CALL, device.getId().getId(), EdgeEventType.DEVICE, body);
         edgeImitator.expectMessageAmount(1);
-        edgeEventService.save(edgeEvent);
+        edgeEventService.saveAsync(edgeEvent).get();
         clusterService.onEdgeEventUpdate(tenantId, edge.getId());
         Assert.assertTrue(edgeImitator.waitForMessages());
 
@@ -1055,7 +1122,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
             JsonNode timeseriesEntityData = mapper.readTree(timeseriesData);
             EdgeEvent edgeEvent = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.TIMESERIES_UPDATED,
                     device.getId().getId(), EdgeEventType.DEVICE, timeseriesEntityData);
-            edgeEventService.save(edgeEvent);
+            edgeEventService.saveAsync(edgeEvent).get();
             clusterService.onEdgeEventUpdate(tenantId, edge.getId());
         }
 

@@ -16,10 +16,10 @@
 package org.thingsboard.server.dao;
 
 import org.junit.runner.RunWith;
+import org.mockito.Answers;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;
-import org.springframework.test.context.junit4.AbstractTransactionalJUnit4SpringContextTests;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 import org.springframework.test.context.support.DirtiesContextTestExecutionListener;
@@ -35,9 +35,9 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 @TestExecutionListeners({
         DependencyInjectionTestExecutionListener.class,
         DirtiesContextTestExecutionListener.class})
-public abstract class AbstractJpaDaoTest extends AbstractTransactionalJUnit4SpringContextTests {
+public abstract class AbstractJpaDaoTest {
 
-    @MockBean
+    @MockBean(answer = Answers.RETURNS_MOCKS)
     StatsFactory statsFactory;
 
 }

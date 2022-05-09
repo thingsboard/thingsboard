@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.edge.rpc;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -96,7 +95,6 @@ public final class EdgeGrpcSession implements Closeable {
     private final UUID sessionId;
     private final BiConsumer<EdgeId, EdgeGrpcSession> sessionOpenListener;
     private final Consumer<EdgeId> sessionCloseListener;
-    private final ObjectMapper mapper;
 
     private final EdgeSessionState sessionState = new EdgeSessionState();
 
@@ -112,13 +110,12 @@ public final class EdgeGrpcSession implements Closeable {
     private ScheduledExecutorService sendDownlinkExecutorService;
 
     EdgeGrpcSession(EdgeContextComponent ctx, StreamObserver<ResponseMsg> outputStream, BiConsumer<EdgeId, EdgeGrpcSession> sessionOpenListener,
-                    Consumer<EdgeId> sessionCloseListener, ObjectMapper mapper, ScheduledExecutorService sendDownlinkExecutorService) {
+                    Consumer<EdgeId> sessionCloseListener, ScheduledExecutorService sendDownlinkExecutorService) {
         this.sessionId = UUID.randomUUID();
         this.ctx = ctx;
         this.outputStream = outputStream;
         this.sessionOpenListener = sessionOpenListener;
         this.sessionCloseListener = sessionCloseListener;
-        this.mapper = mapper;
         this.sendDownlinkExecutorService = sendDownlinkExecutorService;
         initInputStream();
     }
@@ -402,11 +399,11 @@ public final class EdgeGrpcSession implements Closeable {
         Runnable sendDownlinkMsgsTask = () -> {
             try {
                 if (isConnected() && sessionState.getPendingMsgsMap().values().size() > 0) {
-                    if (!firstRun) {
-                        log.warn("[{}] Failed to deliver the batch: {}", this.sessionId, sessionState.getPendingMsgsMap().values());
-                    }
-                    log.trace("[{}] [{}] downlink msg(s) are going to be send.", this.sessionId, sessionState.getPendingMsgsMap().values().size());
                     List<DownlinkMsg> copy = new ArrayList<>(sessionState.getPendingMsgsMap().values());
+                    if (!firstRun) {
+                        log.warn("[{}] Failed to deliver the batch: {}", this.sessionId, copy);
+                    }
+                    log.trace("[{}] [{}] downlink msg(s) are going to be send.", this.sessionId, copy.size());
                     for (DownlinkMsg downlinkMsg : copy) {
                         sendDownlinkMsg(ResponseMsg.newBuilder()
                                 .setDownlinkMsg(downlinkMsg)
@@ -643,7 +640,9 @@ public final class EdgeGrpcSession implements Closeable {
                 }
             }
         } catch (Exception e) {
-            log.error("[{}] Can't process uplink msg [{}]", this.sessionId, uplinkMsg, e);
+            String errMsg = String.format("[%s] Can't process uplink msg [%s]", this.sessionId, uplinkMsg);
+            log.error(errMsg, e);
+            return Futures.immediateFailedFuture(e);
         }
         return Futures.allAsList(result);
     }

@@ -15,19 +15,28 @@
  */
 package org.thingsboard.server.rules.flow;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
 import org.thingsboard.server.actors.ActorSystemContext;
-import org.thingsboard.server.common.data.*;
+import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
@@ -38,12 +47,14 @@ import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.controller.AbstractRuleEngineControllerTest;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.event.EventService;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.mockito.Mockito.spy;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -61,8 +72,26 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
     @Autowired
     protected AttributesService attributesService;
 
+    @Autowired
+    protected EventService eventService;
+
     @Before
     public void beforeTest() throws Exception {
+
+        EventService spyEventService = spy(eventService);
+
+        Mockito.doAnswer((Answer<ListenableFuture<Void>>) invocation -> {
+            Object[] args = invocation.getArguments();
+            Event event = (Event) args[0];
+            ListenableFuture<Void> future = eventService.saveAsync(event);
+            try {
+                future.get();
+            } catch (Exception e) {}
+            return future;
+        }).when(spyEventService).saveAsync(Mockito.any(Event.class));
+
+        ReflectionTestUtils.setField(actorSystem, "eventService", spyEventService);
+
         loginSysAdmin();
 
         Tenant tenant = new Tenant();
@@ -213,15 +242,26 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         configuration1.setServerAttributeNames(Collections.singletonList("serverAttributeKey1"));
         ruleNode1.setConfiguration(mapper.valueToTree(configuration1));
 
-        rootMetaData.setNodes(Collections.singletonList(ruleNode1));
+        RuleNode ruleNode12 = new RuleNode();
+        ruleNode12.setName("Simple Rule Node 1");
+        ruleNode12.setType(org.thingsboard.rule.engine.flow.TbRuleChainInputNode.class.getName());
+        ruleNode12.setDebugMode(true);
+        TbRuleChainInputNodeConfiguration configuration12 = new TbRuleChainInputNodeConfiguration();
+        configuration12.setRuleChainId(secondaryRuleChain.getId().getId().toString());
+        ruleNode12.setConfiguration(mapper.valueToTree(configuration12));
+
+        rootMetaData.setNodes(Arrays.asList(ruleNode1, ruleNode12));
         rootMetaData.setFirstNodeIndex(0);
-        rootMetaData.addRuleChainConnectionInfo(0, secondaryRuleChain.getId(), "Success", mapper.createObjectNode());
+        NodeConnectionInfo connection = new NodeConnectionInfo();
+        connection.setFromIndex(0);
+        connection.setToIndex(1);
+        connection.setType("Success");
+        rootMetaData.setConnections(Collections.singletonList(connection));
         rootMetaData = saveRuleChainMetaData(rootMetaData);
         Assert.assertNotNull(rootMetaData);
 
         rootRuleChain = getRuleChain(rootRuleChain.getId());
         Assert.assertNotNull(rootRuleChain.getFirstRuleNodeId());
-
 
         RuleChainMetaData secondaryMetaData = new RuleChainMetaData();
         secondaryMetaData.setRuleChainId(secondaryRuleChain.getId());

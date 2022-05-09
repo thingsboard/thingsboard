@@ -18,7 +18,7 @@ package org.thingsboard.server.dao.sql.queue;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -46,7 +46,7 @@ public class JpaQueueDao extends JpaAbstractDao<QueueEntity, Queue> implements Q
     }
 
     @Override
-    protected CrudRepository<QueueEntity, UUID> getCrudRepository() {
+    protected JpaRepository<QueueEntity, UUID> getRepository() {
         return queueRepository;
     }
 
