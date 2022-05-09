@@ -191,31 +191,15 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
     }
 
     @Override
-    public void notifyCreateOrUpdateAlarm(EntityId entityId, Alarm savedAlarm, ActionType actionType, SecurityUser user, Object... additionalInfo) {
-        logEntityAction(savedAlarm.getTenantId(), entityId, savedAlarm, savedAlarm.getCustomerId(), actionType, user, additionalInfo);
-        sendEntityNotificationMsg(savedAlarm.getTenantId(), savedAlarm.getId(), actionType == ActionType.UPDATED ? EdgeEventActionType.UPDATED : EdgeEventActionType.ADDED);
-    }
-
-    @Override
-    public void notifyAckAlarm(Alarm alarm, SecurityUser user) {
-        logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarm, alarm.getCustomerId(), ActionType.ALARM_ACK, user, null);
-        sendEntityNotificationMsg(alarm.getTenantId(), alarm.getId(), EdgeEventActionType.ALARM_ACK);
-    }
-
-    @Override
-    public void notifyClearAlarm(Alarm alarm, SecurityUser user) {
-        logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarm, alarm.getCustomerId(), ActionType.ALARM_CLEAR, user, null);
-        sendEntityNotificationMsg(alarm.getTenantId(), alarm.getId(), EdgeEventActionType.ALARM_CLEAR);
+    public void notifyCreateOrUpdateAlarm(Alarm savedAlarm, ActionType actionType, SecurityUser user, Object... additionalInfo) {
+        logEntityAction(savedAlarm.getTenantId(), savedAlarm.getOriginator(), savedAlarm, savedAlarm.getCustomerId(), actionType, user, additionalInfo);
+        sendEntityNotificationMsg(savedAlarm.getTenantId(), savedAlarm.getId(), edgeTypeByActionType (actionType));
     }
 
     @Override
     public void notifyDeleteAlarm(Alarm alarm, SecurityUser user, List<EdgeId> relatedEdgeIds) {
-        try {
             logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarm, alarm.getCustomerId(), ActionType.ALARM_DELETE, user, null);
             sendAlarmDeleteNotificationMsg(alarm, relatedEdgeIds);
-        } catch (Exception e) {
-            log.warn("Failed to push delete alarm msg to core: {}", alarm, e);
-        }
     }
 
     private <E extends HasName, I extends EntityId> void logEntityAction(TenantId tenantId, I entityId, E entity, CustomerId customerId,
@@ -294,6 +278,23 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
             log.warn("[{}] Failed to convert entity to string!", entity, e);
         }
         return null;
+    }
+
+    private EdgeEventActionType edgeTypeByActionType (ActionType actionType) {
+        switch (actionType) {
+            case ADDED:
+                return EdgeEventActionType.ADDED;
+            case UPDATED:
+                return EdgeEventActionType.UPDATED;
+            case ALARM_ACK:
+                return EdgeEventActionType.ALARM_ACK;
+            case ALARM_CLEAR:
+                return EdgeEventActionType.ALARM_CLEAR;
+            case DELETED:
+                return EdgeEventActionType.DELETED;
+            default:
+                return null;
+        }
     }
 
 }

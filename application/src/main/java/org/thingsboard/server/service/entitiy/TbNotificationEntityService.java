@@ -79,12 +79,8 @@ public interface TbNotificationEntityService {
 
     void notifyEdge(TenantId tenantId, EdgeId edgeId, CustomerId customerId, Edge edge, ActionType actionType, SecurityUser user, Object... additionalInfo);
 
-    void notifyCreateOrUpdateAlarm(EntityId entityId, Alarm savedAlarm,
+    void notifyCreateOrUpdateAlarm(Alarm alarm,
                                    ActionType actionType, SecurityUser user, Object... additionalInfo);
-
-    void notifyAckAlarm(Alarm alarm, SecurityUser user);
-
-    void notifyClearAlarm(Alarm alarm, SecurityUser user);
 
     void notifyDeleteAlarm(Alarm alarm, SecurityUser user, List<EdgeId> relatedEdgeIds);
 }
