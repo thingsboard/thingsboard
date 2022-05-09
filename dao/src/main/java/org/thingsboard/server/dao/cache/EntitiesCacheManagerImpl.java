@@ -19,13 +19,11 @@ import lombok.AllArgsConstructor;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.Arrays;
 
 import static org.thingsboard.server.common.data.CacheConstants.ASSET_CACHE;
-import static org.thingsboard.server.common.data.CacheConstants.DEVICE_CACHE;
 import static org.thingsboard.server.common.data.CacheConstants.EDGE_CACHE;
 
 @Component
@@ -33,21 +31,6 @@ import static org.thingsboard.server.common.data.CacheConstants.EDGE_CACHE;
 public class EntitiesCacheManagerImpl implements EntitiesCacheManager {
 
     private final CacheManager cacheManager;
-
-    @Override
-    public void removeDeviceFromCacheByName(TenantId tenantId, String name) {
-        Cache cache = cacheManager.getCache(DEVICE_CACHE);
-        cache.evict(Arrays.asList(tenantId, name));
-    }
-
-    @Override
-    public void removeDeviceFromCacheById(TenantId tenantId, DeviceId deviceId) {
-        if (deviceId == null) {
-            return;
-        }
-        Cache cache = cacheManager.getCache(DEVICE_CACHE);
-        cache.evict(Arrays.asList(tenantId, deviceId));
-    }
 
     @Override
     public void removeAssetFromCacheByName(TenantId tenantId, String name) {

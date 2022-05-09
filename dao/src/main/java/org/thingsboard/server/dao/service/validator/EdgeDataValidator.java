@@ -46,11 +46,12 @@ public class EdgeDataValidator extends DataValidator<Edge> {
     }
 
     @Override
-    protected void validateUpdate(TenantId tenantId, Edge edge) {
+    protected Edge validateUpdate(TenantId tenantId, Edge edge) {
         Edge old = edgeDao.findById(edge.getTenantId(), edge.getId().getId());
         if (!old.getName().equals(edge.getName())) {
             cacheManager.removeEdgeFromCacheByName(tenantId, old.getName());
         }
+        return old;
     }
 
     @Override

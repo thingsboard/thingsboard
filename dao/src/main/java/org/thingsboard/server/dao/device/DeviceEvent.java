@@ -13,14 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.rules.lifecycle.sql;
+package org.thingsboard.server.dao.device;
 
-import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.rules.lifecycle.AbstractRuleEngineLifecycleIntegrationTest;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.TenantId;
 
-/**
- * Created by Valerii Sosliuk on 8/22/2017.
- */
-@DaoSqlTest
-public class RuleEngineLifecycleSqlIntegrationTest extends AbstractRuleEngineLifecycleIntegrationTest {
+@Data
+public class DeviceEvent {
+
+    private final TenantId tenantId;
+    private final DeviceId deviceId;
+    private final String newDeviceName;
+    private final String oldDeviceName;
+
 }

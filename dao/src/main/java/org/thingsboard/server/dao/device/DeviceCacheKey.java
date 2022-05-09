@@ -13,40 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.relation;
+package org.thingsboard.server.dao.device;
 
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.thingsboard.server.cache.CacheKeyUtil;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.relation.EntitySearchDirection;
-import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.TenantId;
 
 import java.io.Serializable;
 
-@EqualsAndHashCode
 @Getter
+@EqualsAndHashCode
 @RequiredArgsConstructor
 @Builder
-public class RelationCacheKey implements Serializable {
+public class DeviceCacheKey implements Serializable {
 
-    private static final long serialVersionUID = 3911151843961657570L;
+    private final TenantId tenantId;
+    private final DeviceId deviceId;
+    private final String deviceName;
 
-    private final EntityId from;
-    private final EntityId to;
-    private final String type;
-    private final RelationTypeGroup typeGroup;
-    private final EntitySearchDirection direction;
+    public DeviceCacheKey(TenantId tenantId, DeviceId deviceId) {
+        this(tenantId, deviceId, null);
+    }
 
-    public RelationCacheKey(EntityId from, EntityId to, String type, RelationTypeGroup typeGroup) {
-        this(from, to, type, typeGroup, null);
+    public DeviceCacheKey(TenantId tenantId, String deviceName) {
+        this(tenantId, null, deviceName);
     }
 
     @Override
     public String toString() {
-        return CacheKeyUtil.toString(from, to, typeGroup, type, direction);
+        return CacheKeyUtil.toString(tenantId, deviceId, deviceName);
     }
 
 }

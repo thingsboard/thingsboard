@@ -20,9 +20,13 @@ import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.test.context.support.TestPropertySourceUtils;
+import org.testcontainers.containers.GenericContainer;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.DataConstants;
@@ -110,7 +114,7 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> {
                             List<Event> debugEvents = getEvents(tenantId, ruleChainFinal.getFirstRuleNodeId(), DataConstants.LC_EVENT, 1000)
-                                    .getData().stream().filter(e-> {
+                                    .getData().stream().filter(e -> {
                                         var body = e.getBody();
                                         return body.has("event") && body.get("event").asText().equals("STARTED")
                                                 && body.has("success") && body.get("success").asBoolean();
@@ -128,7 +132,7 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
 
         log.warn("before update attr");
         attributesService.save(device.getTenantId(), device.getId(), DataConstants.SERVER_SCOPE,
-                        Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry("serverAttributeKey", "serverAttributeValue"), System.currentTimeMillis())))
+                Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry("serverAttributeKey", "serverAttributeValue"), System.currentTimeMillis())))
                 .get(TIMEOUT, TimeUnit.SECONDS);
         log.warn("attr updated");
         TbMsgCallback tbMsgCallback = Mockito.mock(TbMsgCallback.class);

@@ -67,7 +67,7 @@ public class AssetDataValidator extends DataValidator<Asset> {
     }
 
     @Override
-    protected void validateUpdate(TenantId tenantId, Asset asset) {
+    protected Asset validateUpdate(TenantId tenantId, Asset asset) {
         Asset old = assetDao.findById(asset.getTenantId(), asset.getId().getId());
         if (old == null) {
             throw new DataValidationException("Can't update non existing asset!");
@@ -75,6 +75,7 @@ public class AssetDataValidator extends DataValidator<Asset> {
         if (!old.getName().equals(asset.getName())) {
             cacheManager.removeAssetFromCacheByName(tenantId, old.getName());
         }
+        return old;
     }
 
     @Override

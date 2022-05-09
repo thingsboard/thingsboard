@@ -15,14 +15,9 @@
  */
 package org.thingsboard.server.dao.cache;
 
-import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 public interface EntitiesCacheManager {
-
-    void removeDeviceFromCacheByName(TenantId tenantId, String name);
-
-    void removeDeviceFromCacheById(TenantId tenantId, DeviceId deviceId);
 
     void removeAssetFromCacheByName(TenantId tenantId, String name);
 

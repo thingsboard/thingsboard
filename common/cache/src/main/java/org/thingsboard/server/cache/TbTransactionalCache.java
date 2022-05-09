@@ -39,6 +39,28 @@ public interface TbTransactionalCache<K extends Serializable, V extends Serializ
 
     TbCacheTransaction<K, V> newTransactionForKeys(List<K> keys);
 
+    default V getAndPutInTransaction(K key, Supplier<V> dbCall, boolean cacheNullValue) {
+        TbCacheValueWrapper<V> cacheValueWrapper = get(key);
+        if (cacheValueWrapper != null) {
+            return cacheValueWrapper.get();
+        }
+        var cacheTransaction = newTransactionForKey(key);
+        try {
+            V dbValue = dbCall.get();
+            if (dbValue != null || cacheNullValue) {
+                cacheTransaction.putIfAbsent(key, dbValue);
+                cacheTransaction.commit();
+                return dbValue;
+            } else {
+                cacheTransaction.rollback();
+                return null;
+            }
+        } catch (Throwable e) {
+            cacheTransaction.rollback();
+            throw e;
+        }
+    }
+
     default <R> R getAndPutInTransaction(K key, Supplier<R> dbCall, Function<V, R> cacheValueToResult, Function<R, V> dbValueToCacheValue, boolean cacheNullValue) {
         TbCacheValueWrapper<V> cacheValueWrapper = get(key);
         if (cacheValueWrapper != null) {
