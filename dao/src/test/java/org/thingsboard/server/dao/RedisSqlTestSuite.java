@@ -25,12 +25,13 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.support.TestPropertySourceUtils;
 import org.testcontainers.containers.GenericContainer;
 
-@ContextConfiguration(initializers = RedisTestSuite.class)
+@ContextConfiguration(initializers = RedisSqlTestSuite.class)
 @RunWith(ClasspathSuite.class)
-@ClassnameFilters({
-        "org.thingsboard.server.dao.sql.attributes.*ServiceTest",
-})
-public class RedisTestSuite implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+@ClassnameFilters(
+        //All the same tests using redis instead of caffeine.
+        "org.thingsboard.server.dao.service.*ServiceSqlTest"
+)
+public class RedisSqlTestSuite implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
     @ClassRule
     public static GenericContainer redis = new GenericContainer("redis:4.0").withExposedPorts(6379);
