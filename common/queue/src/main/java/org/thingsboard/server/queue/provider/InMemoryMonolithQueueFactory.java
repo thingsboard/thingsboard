@@ -78,7 +78,7 @@ public class InMemoryMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
 
     @PostConstruct
     public void init() {
-        tbPrintStatsExecutorService.scheduleAtFixedRate(this::printInMemoryStats, 0, statsPrintInterval, TimeUnit.MILLISECONDS);
+        tbPrintStatsExecutorService.scheduleAtFixedRate(this::printInMemoryStats, statsPrintInterval, statsPrintInterval, TimeUnit.MILLISECONDS);
     }
 
     @Override

@@ -152,7 +152,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         } else {
             scheduler = Executors.newScheduledThreadPool(dynamicPageLinkRefreshPoolSize, tbThreadFactory);
         }
-        tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, 0, dynamicPageLinkStats, TimeUnit.MILLISECONDS);
+        tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, dynamicPageLinkStats, dynamicPageLinkStats, TimeUnit.MILLISECONDS);
     }
 
     @PreDestroy

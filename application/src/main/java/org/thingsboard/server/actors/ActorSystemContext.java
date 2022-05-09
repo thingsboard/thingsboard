@@ -375,7 +375,7 @@ public class ActorSystemContext {
     @PostConstruct
     public void init() {
         this.localCacheType = "caffeine".equals(cacheType);
-        tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, 0, statisticsPrintInterval, TimeUnit.MILLISECONDS);
+        tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, statisticsPrintInterval, statisticsPrintInterval, TimeUnit.MILLISECONDS);
     }
 
     public void printStats() {
