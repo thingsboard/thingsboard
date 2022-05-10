@@ -19,7 +19,6 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.thingsboard.server.cache.CacheKeyUtil;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
@@ -46,7 +45,24 @@ public class RelationCacheKey implements Serializable {
 
     @Override
     public String toString() {
-        return CacheKeyUtil.toString(from, to, typeGroup, type, direction);
+        StringBuilder sb = new StringBuilder();
+        boolean first = add(sb, true, from);
+        first = add(sb, first, to);
+        first = add(sb, first, type);
+        first = add(sb, first, typeGroup);
+        add(sb, first, direction);
+        return sb.toString();
+    }
+
+    private boolean add(StringBuilder sb, boolean first, Object param) {
+        if (param != null) {
+            if (!first) {
+                sb.append("_");
+            }
+            first = false;
+            sb.append(param);
+        }
+        return first;
     }
 
 }

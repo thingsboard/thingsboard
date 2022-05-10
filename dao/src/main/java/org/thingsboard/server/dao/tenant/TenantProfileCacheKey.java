@@ -47,7 +47,7 @@ public class TenantProfileCacheKey implements Serializable {
         if (defaultProfile) {
             return "default";
         } else {
-            return tenantProfileId.getId().toString();
+            return tenantProfileId.toString();
         }
     }
 }

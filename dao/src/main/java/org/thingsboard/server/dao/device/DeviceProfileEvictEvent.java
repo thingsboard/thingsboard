@@ -13,24 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.entityview;
+package org.thingsboard.server.dao.device;
 
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import org.thingsboard.server.common.data.EntityView;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.TenantId;
 
-import java.io.Serializable;
-import java.util.List;
+@Data
+public class DeviceProfileEvictEvent {
 
-@Getter
-@EqualsAndHashCode
-@Builder
-public class EntityViewCacheValue implements Serializable {
-
-    private static final long serialVersionUID = 1959004642076413174L;
-
-    private final EntityView entityView;
-    private final List<EntityView> entityViews;
+    private final TenantId tenantId;
+    private final String newName;
+    private final String oldName;
+    private final DeviceProfileId deviceProfileId;
+    private final boolean defaultProfile;
 
 }

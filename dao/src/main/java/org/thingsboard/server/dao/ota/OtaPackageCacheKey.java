@@ -19,9 +19,7 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.thingsboard.server.cache.CacheKeyUtil;
 import org.thingsboard.server.common.data.id.OtaPackageId;
-import org.thingsboard.server.common.data.id.TenantId;
 
 import java.io.Serializable;
 
@@ -35,7 +33,7 @@ public class OtaPackageCacheKey implements Serializable {
 
     @Override
     public String toString() {
-        return id.getId().toString();
+        return id.toString();
     }
 
 }

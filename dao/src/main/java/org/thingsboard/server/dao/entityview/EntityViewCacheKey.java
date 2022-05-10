@@ -18,8 +18,6 @@ package org.thingsboard.server.dao.entityview;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import org.thingsboard.server.cache.CacheKeyUtil;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -57,7 +55,13 @@ public class EntityViewCacheKey implements Serializable {
 
     @Override
     public String toString() {
-        return CacheKeyUtil.toString(tenantId, name, entityId, entityViewId);
+        if (entityViewId != null) {
+            return entityViewId.toString();
+        } else if (entityId != null) {
+            return tenantId + "_" + entityId;
+        } else {
+            return tenantId + "_n_" + name;
+        }
     }
 
 }

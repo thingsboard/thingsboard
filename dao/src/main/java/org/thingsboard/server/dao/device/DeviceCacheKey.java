@@ -19,7 +19,6 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.thingsboard.server.cache.CacheKeyUtil;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 
@@ -45,7 +44,11 @@ public class DeviceCacheKey implements Serializable {
 
     @Override
     public String toString() {
-        return CacheKeyUtil.toString(tenantId, deviceId, deviceName);
+        if (deviceId != null) {
+            return tenantId + "_" + deviceId;
+        } else {
+            return tenantId + "_n_" + deviceName;
+        }
     }
 
 }

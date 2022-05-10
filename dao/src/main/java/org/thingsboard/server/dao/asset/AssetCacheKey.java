@@ -19,8 +19,6 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.thingsboard.server.cache.CacheKeyUtil;
-import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.io.Serializable;
@@ -31,12 +29,14 @@ import java.io.Serializable;
 @Builder
 public class AssetCacheKey implements Serializable {
 
+    private static final long serialVersionUID = 4196610233744512673L;
+
     private final TenantId tenantId;
     private final String name;
 
     @Override
     public String toString() {
-        return CacheKeyUtil.toString(tenantId, name);
+        return tenantId + "_" + name;
     }
 
 }

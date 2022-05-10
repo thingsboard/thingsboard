@@ -19,7 +19,6 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.thingsboard.server.cache.CacheKeyUtil;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.io.Serializable;
@@ -35,7 +34,7 @@ public class EdgeCacheKey implements Serializable {
 
     @Override
     public String toString() {
-        return CacheKeyUtil.toString(tenantId, name);
+        return tenantId + "_" + name;
     }
 
 }
