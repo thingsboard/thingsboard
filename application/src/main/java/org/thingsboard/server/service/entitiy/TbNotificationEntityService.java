@@ -18,6 +18,7 @@ package org.thingsboard.server.service.entitiy;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -78,4 +79,8 @@ public interface TbNotificationEntityService {
 
     void notifyEdge(TenantId tenantId, EdgeId edgeId, CustomerId customerId, Edge edge, ActionType actionType, SecurityUser user, Object... additionalInfo);
 
+    void notifyCreateOrUpdateAlarm(Alarm alarm,
+                                   ActionType actionType, SecurityUser user, Object... additionalInfo);
+
+    void notifyDeleteAlarm(Alarm alarm, SecurityUser user, List<EdgeId> relatedEdgeIds);
 }
