@@ -13,18 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.device;
+package org.thingsboard.server.dao.asset;
 
-import lombok.Data;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.thingsboard.server.cache.CacheKeyUtil;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-@Data
-public class DeviceEvent {
+import java.io.Serializable;
+
+@Getter
+@EqualsAndHashCode
+@RequiredArgsConstructor
+@Builder
+public class AssetCacheKey implements Serializable {
 
     private final TenantId tenantId;
-    private final DeviceId deviceId;
-    private final String newDeviceName;
-    private final String oldDeviceName;
+    private final String name;
+
+    @Override
+    public String toString() {
+        return CacheKeyUtil.toString(tenantId, name);
+    }
 
 }
