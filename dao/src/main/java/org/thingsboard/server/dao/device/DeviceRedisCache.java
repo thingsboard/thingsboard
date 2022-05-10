@@ -25,25 +25,13 @@ import org.thingsboard.server.cache.TBRedisCacheConfiguration;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.dao.cache.RedisTbTransactionalCache;
+import org.thingsboard.server.dao.cache.TbRedisSerializer;
 
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
 @Service("DeviceCache")
 public class DeviceRedisCache extends RedisTbTransactionalCache<DeviceCacheKey, Device> {
 
     public DeviceRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
-        super(CacheConstants.DEVICE_CACHE, cacheSpecsMap, connectionFactory, configuration, new RedisSerializer<>() {
-
-            private final RedisSerializer<Object> java = RedisSerializer.java();
-
-            @Override
-            public byte[] serialize(Device attributeKvEntry) throws SerializationException {
-                return java.serialize(attributeKvEntry);
-            }
-
-            @Override
-            public Device deserialize(byte[] bytes) throws SerializationException {
-                return (Device) java.deserialize(bytes);
-            }
-        });
+        super(CacheConstants.DEVICE_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbRedisSerializer<>());
     }
 }

@@ -26,25 +26,13 @@ import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.dao.attributes.AttributeCacheKey;
 import org.thingsboard.server.dao.cache.RedisTbTransactionalCache;
+import org.thingsboard.server.dao.cache.TbRedisSerializer;
 
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
 @Service("RelationCache")
 public class RelationRedisCache extends RedisTbTransactionalCache<RelationCacheKey, RelationCacheValue> {
 
     public RelationRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
-        super(CacheConstants.RELATIONS_CACHE, cacheSpecsMap, connectionFactory, configuration, new RedisSerializer<>() {
-
-            private final RedisSerializer<Object> java = RedisSerializer.java();
-
-            @Override
-            public byte[] serialize(RelationCacheValue attributeKvEntry) throws SerializationException {
-                return java.serialize(attributeKvEntry);
-            }
-
-            @Override
-            public RelationCacheValue deserialize(byte[] bytes) throws SerializationException {
-                return (RelationCacheValue) java.deserialize(bytes);
-            }
-        });
+        super(CacheConstants.RELATIONS_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbRedisSerializer<>());
     }
 }

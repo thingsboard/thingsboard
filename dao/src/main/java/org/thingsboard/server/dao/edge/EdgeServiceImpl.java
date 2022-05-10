@@ -25,11 +25,14 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
@@ -47,8 +50,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
-import org.thingsboard.server.dao.cache.EntitiesCacheManager;
-import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -74,7 +76,7 @@ import static org.thingsboard.server.dao.service.Validator.validateString;
 
 @Service
 @Slf4j
-public class EdgeServiceImpl extends AbstractEntityService implements EdgeService {
+public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, Edge, EdgeCacheEvictEvent> implements EdgeService {
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String INCORRECT_CUSTOMER_ID = "Incorrect customerId ";
@@ -91,9 +93,6 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     private UserService userService;
 
     @Autowired
-    private EntitiesCacheManager cacheManager;
-
-    @Autowired
     private RuleChainService ruleChainService;
 
     @Autowired
@@ -101,6 +100,17 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
 
     @Autowired
     private DataValidator<Edge> edgeValidator;
+
+    @TransactionalEventListener(classes = EdgeCacheEvictEvent.class)
+    @Override
+    public void handleEvictEvent(EdgeCacheEvictEvent event) {
+        List<EdgeCacheKey> keys = new ArrayList<>(2);
+        keys.add(new EdgeCacheKey(event.getTenantId(), event.getNewName()));
+        if (StringUtils.isNotEmpty(event.getOldName()) && !event.getOldName().equals(event.getNewName())) {
+            keys.add(new EdgeCacheKey(event.getTenantId(), event.getOldName()));
+        }
+        cache.evict(keys);
+    }
 
     @Override
     public Edge findEdgeById(TenantId tenantId, EdgeId edgeId) {
@@ -128,8 +138,9 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     public Edge findEdgeByTenantIdAndName(TenantId tenantId, String name) {
         log.trace("Executing findEdgeByTenantIdAndName [{}][{}]", tenantId, name);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        Optional<Edge> edgeOpt = edgeDao.findEdgeByTenantIdAndName(tenantId.getId(), name);
-        return edgeOpt.orElse(null);
+        return cache.getAndPutInTransaction(new EdgeCacheKey(tenantId, name),
+                () -> edgeDao.findEdgeByTenantIdAndName(tenantId.getId(), name)
+                        .orElse(null), true);
     }
 
     @Override
@@ -139,13 +150,16 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
         return edgeDao.findByRoutingKey(tenantId.getId(), routingKey);
     }
 
-    @CacheEvict(cacheNames = EDGE_CACHE, key = "{#edge.tenantId, #edge.name}")
+    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public Edge saveEdge(Edge edge) {
         log.trace("Executing saveEdge [{}]", edge);
-        edgeValidator.validate(edge, Edge::getTenantId);
+        Edge oldEdge = edgeValidator.validate(edge, Edge::getTenantId);
+        EdgeCacheEvictEvent evictEvent = new EdgeCacheEvictEvent(edge.getTenantId(), edge.getName(), oldEdge != null ? oldEdge.getName() : null);
         try {
-            return edgeDao.save(edge.getTenantId(), edge);
+            var savedEdge = edgeDao.save(edge.getTenantId(), edge);
+            publishEvictEvent(evictEvent);
+            return savedEdge;
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null
@@ -157,6 +171,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
         }
     }
 
+    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public Edge assignEdgeToCustomer(TenantId tenantId, EdgeId edgeId, CustomerId customerId) {
         log.trace("[{}] Executing assignEdgeToCustomer [{}][{}]", tenantId, edgeId, customerId);
@@ -165,6 +180,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
         return saveEdge(edge);
     }
 
+    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public Edge unassignEdgeFromCustomer(TenantId tenantId, EdgeId edgeId) {
         log.trace("[{}] Executing unassignEdgeFromCustomer [{}]", tenantId, edgeId);
@@ -173,6 +189,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
         return saveEdge(edge);
     }
 
+    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public void deleteEdge(TenantId tenantId, EdgeId edgeId) {
         log.trace("Executing deleteEdge [{}]", edgeId);
@@ -182,9 +199,9 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
 
         deleteEntityRelations(tenantId, edgeId);
 
-        cacheManager.removeEdgeFromCacheByName(edge.getTenantId(), edge.getName());
-
         edgeDao.removeById(tenantId, edgeId.getId());
+
+        publishEvictEvent(new EdgeCacheEvictEvent(edge.getTenantId(), edge.getName(), null));
     }
 
     @Override
@@ -284,6 +301,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
                 customerId.getId(), toUUIDs(edgeIds));
     }
 
+    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public void unassignCustomerEdges(TenantId tenantId, CustomerId customerId) {
         log.trace("Executing unassignCustomerEdges, tenantId [{}], customerId [{}]", tenantId, customerId);

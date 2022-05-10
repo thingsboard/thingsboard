@@ -116,7 +116,6 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
         return cache.getAndPutInTransaction(new AssetCacheKey(tenantId, name),
                 () -> assetDao.findAssetsByTenantIdAndName(tenantId.getId(), name)
                         .orElse(null), true);
-
     }
 
     @Transactional(propagation = Propagation.SUPPORTS)

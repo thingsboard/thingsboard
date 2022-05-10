@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.dao.cache.RedisTbTransactionalCache;
+import org.thingsboard.server.dao.cache.TbRedisSerializer;
 import org.thingsboard.server.dao.device.DeviceCacheKey;
 
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
@@ -33,19 +34,6 @@ import org.thingsboard.server.dao.device.DeviceCacheKey;
 public class AssetRedisCache extends RedisTbTransactionalCache<AssetCacheKey, Asset> {
 
     public AssetRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
-        super(CacheConstants.ASSET_CACHE, cacheSpecsMap, connectionFactory, configuration, new RedisSerializer<>() {
-
-            private final RedisSerializer<Object> java = RedisSerializer.java();
-
-            @Override
-            public byte[] serialize(Asset attributeKvEntry) throws SerializationException {
-                return java.serialize(attributeKvEntry);
-            }
-
-            @Override
-            public Asset deserialize(byte[] bytes) throws SerializationException {
-                return (Asset) java.deserialize(bytes);
-            }
-        });
+        super(CacheConstants.ASSET_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbRedisSerializer<>());
     }
 }
