@@ -27,6 +27,8 @@ public interface TbTransactionalCache<K extends Serializable, V extends Serializ
 
     TbCacheValueWrapper<V> get(K key);
 
+    void put(K key, V value);
+
     void putIfAbsent(K key, V value);
 
     void evict(K key);

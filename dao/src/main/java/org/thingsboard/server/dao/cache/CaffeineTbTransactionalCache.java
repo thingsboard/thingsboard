@@ -51,6 +51,17 @@ public abstract class CaffeineTbTransactionalCache<K extends Serializable, V ext
     }
 
     @Override
+    public void put(K key, V value) {
+        lock.lock();
+        try {
+            failAllTransactionsByKey(key);
+            cacheManager.getCache(cacheName).put(key, value);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
     public void putIfAbsent(K key, V value) {
         lock.lock();
         try {

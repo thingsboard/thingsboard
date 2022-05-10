@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.cache;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.support.NullValue;
 import org.springframework.data.redis.connection.RedisConnection;
@@ -84,9 +83,16 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
     }
 
     @Override
+    public void put(K key, V value) {
+        try (var connection = connectionFactory.getConnection()) {
+            put(connection, key, value, RedisStringCommands.SetOption.UPSERT);
+        }
+    }
+
+    @Override
     public void putIfAbsent(K key, V value) {
         try (var connection = connectionFactory.getConnection()) {
-            putIfAbsent(connection, key, value);
+            put(connection, key, value, RedisStringCommands.SetOption.SET_IF_ABSENT);
         }
     }
 
@@ -170,10 +176,10 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
         }
     }
 
-    public void putIfAbsent(RedisConnection connection, K key, V value) {
+    public void put(RedisConnection connection, K key, V value, RedisStringCommands.SetOption setOption) {
         byte[] rawKey = getRawKey(key);
         byte[] rawValue = getRawValue(value);
-        connection.set(rawKey, rawValue, cacheTtl, RedisStringCommands.SetOption.SET_IF_ABSENT);
+        connection.set(rawKey, rawValue, cacheTtl, setOption);
     }
 
 }
