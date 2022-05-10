@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.device.DeviceCredentialsDao;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
+import org.thingsboard.server.dao.device.DeviceDao;
 import org.thingsboard.server.dao.device.DeviceService;
 
 import java.util.UUID;
@@ -120,7 +121,10 @@ public abstract class BaseDeviceCredentialsCacheTest extends AbstractServiceTest
         when(deviceCredentialsDao.findById(SYSTEM_TENANT_ID, deviceCredentialsId)).thenReturn(createDummyDeviceCredentialsEntity(CREDENTIALS_ID_1));
         when(deviceService.findDeviceById(SYSTEM_TENANT_ID, new DeviceId(deviceId))).thenReturn(new Device());
 
-        deviceCredentialsService.updateDeviceCredentials(SYSTEM_TENANT_ID, createDummyDeviceCredentials(deviceCredentialsId, CREDENTIALS_ID_2, deviceId));
+        var dummy = createDummyDeviceCredentials(deviceCredentialsId, CREDENTIALS_ID_2, deviceId);
+        when(deviceCredentialsDao.saveAndFlush(SYSTEM_TENANT_ID, dummy)).thenReturn(dummy);
+
+        deviceCredentialsService.updateDeviceCredentials(SYSTEM_TENANT_ID, dummy);
 
         when(deviceCredentialsDao.findByCredentialsId(SYSTEM_TENANT_ID, CREDENTIALS_ID_1)).thenReturn(null);
 

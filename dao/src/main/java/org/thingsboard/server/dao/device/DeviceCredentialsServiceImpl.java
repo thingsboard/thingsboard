@@ -21,8 +21,10 @@ import org.eclipse.leshan.core.util.SecurityUtil;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
@@ -40,7 +42,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.msg.EncryptionUtil;
-import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -51,13 +53,22 @@ import static org.thingsboard.server.dao.service.Validator.validateString;
 
 @Service
 @Slf4j
-public class DeviceCredentialsServiceImpl extends AbstractEntityService implements DeviceCredentialsService {
+public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<String, DeviceCredentials, DeviceCredentialsEvictEvent> implements DeviceCredentialsService {
 
     @Autowired
     private DeviceCredentialsDao deviceCredentialsDao;
 
     @Autowired
     private DataValidator<DeviceCredentials> credentialsValidator;
+
+    @TransactionalEventListener(classes = DeviceCredentialsEvictEvent.class)
+    @Override
+    public void handleEvictEvent(DeviceCredentialsEvictEvent event) {
+        cache.evict(event.getNewCedentialsId());
+        if (StringUtils.isNotEmpty(event.getOldCredentialsId()) && !event.getNewCedentialsId().equals(event.getOldCredentialsId())) {
+            cache.evict(event.getOldCredentialsId());
+        }
+    }
 
     @Override
     public DeviceCredentials findDeviceCredentialsByDeviceId(TenantId tenantId, DeviceId deviceId) {
@@ -67,19 +78,21 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
     }
 
     @Override
-    @Cacheable(cacheNames = DEVICE_CREDENTIALS_CACHE, key = "'deviceCredentials_' + #credentialsId", unless = "#result == null")
     public DeviceCredentials findDeviceCredentialsByCredentialsId(String credentialsId) {
         log.trace("Executing findDeviceCredentialsByCredentialsId [{}]", credentialsId);
         validateString(credentialsId, "Incorrect credentialsId " + credentialsId);
-        return deviceCredentialsDao.findByCredentialsId(TenantId.SYS_TENANT_ID, credentialsId);
+        return cache.getAndPutInTransaction(credentialsId,
+                () -> deviceCredentialsDao.findByCredentialsId(TenantId.SYS_TENANT_ID, credentialsId),
+                false);
     }
 
+    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
-    @CacheEvict(cacheNames = DEVICE_CREDENTIALS_CACHE, keyGenerator = "previousDeviceCredentialsId", beforeInvocation = true)
     public DeviceCredentials updateDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials) {
         return saveOrUpdate(tenantId, deviceCredentials);
     }
 
+    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public DeviceCredentials createDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials) {
         return saveOrUpdate(tenantId, deviceCredentials);
@@ -93,7 +106,13 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
         log.trace("Executing updateDeviceCredentials [{}]", deviceCredentials);
         credentialsValidator.validate(deviceCredentials, id -> tenantId);
         try {
-            return deviceCredentialsDao.saveAndFlush(tenantId, deviceCredentials);
+            DeviceCredentials oldDeviceCredentials = null;
+            if (deviceCredentials.getDeviceId() != null) {
+                oldDeviceCredentials = deviceCredentialsDao.findByDeviceId(tenantId, deviceCredentials.getDeviceId().getId());
+            }
+            var value = deviceCredentialsDao.saveAndFlush(tenantId, deviceCredentials);
+            publishEvictEvent(new DeviceCredentialsEvictEvent(value.getCredentialsId(), oldDeviceCredentials != null ? oldDeviceCredentials.getCredentialsId() : null));
+            return value;
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null
@@ -182,8 +201,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                 deviceCredentials.setCredentialsValue(JacksonUtil.toString(lwM2MCredentials));
                 X509ClientCredential x509ClientConfig = (X509ClientCredential) clientCredentials;
                 if ((StringUtils.isNotBlank(x509ClientConfig.getCert()))) {
-                    String sha3Hash = EncryptionUtil.getSha3Hash(x509ClientConfig.getCert());
-                    credentialsId = sha3Hash;
+                    credentialsId = EncryptionUtil.getSha3Hash(x509ClientConfig.getCert());
                 } else {
                     credentialsId = x509ClientConfig.getEndpoint();
                 }
@@ -251,7 +269,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                     throw new DeviceCredentialsValidationException("LwM2M client PSK key must be random sequence in hex encoding!");
                 }
 
-                if (pskKey.length()% 32 != 0 || pskKey.length() > 128) {
+                if (pskKey.length() % 32 != 0 || pskKey.length() > 128) {
                     throw new DeviceCredentialsValidationException("LwM2M client PSK key length = " + pskKey.length() + ". Key must be HexDec format: 32, 64, 128 characters!");
                 }
 
@@ -366,11 +384,12 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
         }
     }
 
+    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
-    @CacheEvict(cacheNames = DEVICE_CREDENTIALS_CACHE, key = "'deviceCredentials_' + #deviceCredentials.credentialsId")
     public void deleteDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials) {
         log.trace("Executing deleteDeviceCredentials [{}]", deviceCredentials);
         deviceCredentialsDao.removeById(tenantId, deviceCredentials.getUuidId());
+        publishEvictEvent(new DeviceCredentialsEvictEvent(deviceCredentials.getCredentialsId(), null));
     }
 
 }
