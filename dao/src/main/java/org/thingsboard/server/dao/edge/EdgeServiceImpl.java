@@ -133,7 +133,6 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
         return edgeDao.findByIdAsync(tenantId, edgeId.getId());
     }
 
-    @Cacheable(cacheNames = EDGE_CACHE, key = "{#tenantId, #name}")
     @Override
     public Edge findEdgeByTenantIdAndName(TenantId tenantId, String name) {
         log.trace("Executing findEdgeByTenantIdAndName [{}][{}]", tenantId, name);

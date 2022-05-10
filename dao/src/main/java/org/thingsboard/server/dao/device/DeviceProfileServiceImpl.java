@@ -292,7 +292,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
     }
 
     private PaginatedRemover<TenantId, DeviceProfile> tenantDeviceProfilesRemover =
-            new PaginatedRemover<TenantId, DeviceProfile>() {
+            new PaginatedRemover<>() {
 
                 @Override
                 protected PageData<DeviceProfile> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
