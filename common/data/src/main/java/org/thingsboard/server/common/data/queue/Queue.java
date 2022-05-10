@@ -16,15 +16,15 @@
 package org.thingsboard.server.common.data.queue;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
 
 @Data
-public class Queue extends BaseData<QueueId> implements HasName, HasTenantId {
+public class Queue extends SearchTextBasedWithAdditionalInfo<QueueId> implements HasName, HasTenantId {
     private TenantId tenantId;
     private String name;
     private String topic;
@@ -52,5 +52,10 @@ public class Queue extends BaseData<QueueId> implements HasName, HasTenantId {
         this.packProcessingTimeout = queueConfiguration.getPackProcessingTimeout();
         this.submitStrategy = queueConfiguration.getSubmitStrategy();
         this.processingStrategy = queueConfiguration.getProcessingStrategy();
+    }
+
+    @Override
+    public String getSearchText() {
+        return getName();
     }
 }

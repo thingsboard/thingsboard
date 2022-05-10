@@ -595,6 +595,8 @@ public class ModelConstants {
     public static final String QUEUE_SUBMIT_STRATEGY_PROPERTY = "submit_strategy";
     public static final String QUEUE_PROCESSING_STRATEGY_PROPERTY = "processing_strategy";
     public static final String QUEUE_COLUMN_FAMILY_NAME = "queue";
+    public static final String QUEUE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+
 
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 

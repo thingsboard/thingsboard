@@ -226,7 +226,8 @@ CREATE TABLE IF NOT EXISTS queue(
     consumer_per_partition boolean,
     pack_processing_timeout bigint,
     submit_strategy varchar(255),
-    processing_strategy varchar(255)
+    processing_strategy varchar(255),
+    additional_info varchar
 );
 
 CREATE TABLE IF NOT EXISTS device_profile (

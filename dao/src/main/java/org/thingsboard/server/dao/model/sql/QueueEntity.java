@@ -73,6 +73,10 @@ public class QueueEntity extends BaseSqlEntity<Queue> {
     @Column(name = ModelConstants.QUEUE_PROCESSING_STRATEGY_PROPERTY)
     private JsonNode processingStrategy;
 
+    @Type(type = "json")
+    @Column(name = ModelConstants.QUEUE_ADDITIONAL_INFO_PROPERTY)
+    private JsonNode additionalInfo;
+
     public QueueEntity() {
     }
 
@@ -90,6 +94,7 @@ public class QueueEntity extends BaseSqlEntity<Queue> {
         this.packProcessingTimeout = queue.getPackProcessingTimeout();
         this.submitStrategy = mapper.valueToTree(queue.getSubmitStrategy());
         this.processingStrategy = mapper.valueToTree(queue.getProcessingStrategy());
+        this.additionalInfo = queue.getAdditionalInfo();
     }
 
     @Override
@@ -103,8 +108,9 @@ public class QueueEntity extends BaseSqlEntity<Queue> {
         queue.setPartitions(partitions);
         queue.setConsumerPerPartition(consumerPerPartition);
         queue.setPackProcessingTimeout(packProcessingTimeout);
-        queue.setSubmitStrategy(mapper.convertValue(this.submitStrategy, SubmitStrategy.class));
-        queue.setProcessingStrategy(mapper.convertValue(this.processingStrategy, ProcessingStrategy.class));
+        queue.setSubmitStrategy(mapper.convertValue(submitStrategy, SubmitStrategy.class));
+        queue.setProcessingStrategy(mapper.convertValue(processingStrategy, ProcessingStrategy.class));
+        queue.setAdditionalInfo(additionalInfo);
         return queue;
     }
 }
