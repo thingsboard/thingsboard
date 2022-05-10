@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.tenant;
+package org.thingsboard.server.dao.entityview;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -23,28 +23,27 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.CacheSpecsMap;
 import org.thingsboard.server.cache.TBRedisCacheConfiguration;
 import org.thingsboard.server.common.data.CacheConstants;
-import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.dao.asset.AssetCacheKey;
 import org.thingsboard.server.dao.cache.RedisTbTransactionalCache;
 
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
-@Service("TenantProfileCache")
-public class TenantProfileRedisCache extends RedisTbTransactionalCache<TenantProfileCacheKey, TenantProfile> {
+@Service("EntityViewCache")
+public class EntityViewRedisCache extends RedisTbTransactionalCache<EntityViewCacheKey, EntityViewCacheValue> {
 
-    public TenantProfileRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
-        super(CacheConstants.TENANT_PROFILE_CACHE, cacheSpecsMap, connectionFactory, configuration, new RedisSerializer<>() {
+    public EntityViewRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
+        super(CacheConstants.ENTITY_VIEW_CACHE, cacheSpecsMap, connectionFactory, configuration, new RedisSerializer<>() {
 
             private final RedisSerializer<Object> java = RedisSerializer.java();
 
             @Override
-            public byte[] serialize(TenantProfile attributeKvEntry) throws SerializationException {
+            public byte[] serialize(EntityViewCacheValue attributeKvEntry) throws SerializationException {
                 return java.serialize(attributeKvEntry);
             }
 
             @Override
-            public TenantProfile deserialize(byte[] bytes) throws SerializationException {
-                return (TenantProfile) java.deserialize(bytes);
+            public EntityViewCacheValue deserialize(byte[] bytes) throws SerializationException {
+                return (EntityViewCacheValue) java.deserialize(bytes);
             }
         });
     }

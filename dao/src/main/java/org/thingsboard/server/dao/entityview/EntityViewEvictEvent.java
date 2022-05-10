@@ -13,13 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.tenant;
+package org.thingsboard.server.dao.entityview;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.id.TenantProfileId;
+import lombok.RequiredArgsConstructor;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.TenantId;
 
 @Data
-public class TenantProfileEvictEvent {
-    private final TenantProfileId tenantProfileId;
-    private final boolean defaultProfile;
+@RequiredArgsConstructor
+class EntityViewEvictEvent {
+
+    private final TenantId tenantId;
+    private final EntityViewId id;
+    private final EntityId newEntityId;
+    private final EntityId oldEntityId;
+    private final String newName;
+    private final String oldName;
+
 }
