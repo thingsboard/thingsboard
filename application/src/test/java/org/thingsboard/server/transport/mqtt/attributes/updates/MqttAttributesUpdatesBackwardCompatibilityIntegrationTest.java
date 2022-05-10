@@ -90,7 +90,6 @@ public class MqttAttributesUpdatesBackwardCompatibilityIntegrationTest extends A
     @Test
     public void testProtoSubscribeToAttributesUpdatesFromTheServerGatewayWithEnabledJsonCompatibilityAndJsonDownlinks() throws Exception {
         MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
-                .deviceName("Test Subscribe to attribute updates")
                 .gatewayName("Gateway Test Subscribe to attribute updates")
                 .transportPayloadType(TransportPayloadType.PROTOBUF)
                 .enableCompatibilityWithJsonPayloadFormat(true)

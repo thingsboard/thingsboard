@@ -67,7 +67,6 @@ public class MqttAttributesRequestProtoIntegrationTest extends AbstractMqttAttri
     @Test
     public void testRequestAttributesValuesFromTheServerGateway() throws Exception {
         MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
-                .deviceName("Test Request attribute values from the server proto")
                 .gatewayName("Gateway Test Request attribute values from the server proto")
                 .transportPayloadType(TransportPayloadType.PROTOBUF)
                 .build();

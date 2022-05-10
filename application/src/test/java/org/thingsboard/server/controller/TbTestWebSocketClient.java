@@ -79,8 +79,12 @@ public class TbTestWebSocketClient extends WebSocketClient {
     }
 
     public void registerWaitForUpdate() {
+        registerWaitForUpdate(1);
+    }
+
+    public void registerWaitForUpdate(int count) {
         lastMsg = null;
-        update = new CountDownLatch(1);
+        update = new CountDownLatch(count);
     }
 
     @Override
