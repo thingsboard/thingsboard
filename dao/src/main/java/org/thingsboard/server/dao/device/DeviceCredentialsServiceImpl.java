@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.device;
 
-
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.core.util.SecurityUtil;
