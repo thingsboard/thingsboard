@@ -135,7 +135,7 @@ import * as EntitySelectComponent from '@shared/components/entity/entity-select.
 import * as EntityKeysListComponent from '@shared/components/entity/entity-keys-list.component';
 import * as EntityListSelectComponent from '@shared/components/entity/entity-list-select.component';
 import * as EntityTypeListComponent from '@shared/components/entity/entity-type-list.component';
-import * as QueueTypeListComponent from '@shared/components/queue/queue-type-list.component';
+import * as QueueAutocompleteComponent from '@shared/components/queue/queue-autocomplete.component';
 import * as RelationTypeAutocompleteComponent from '@shared/components/relation/relation-type-autocomplete.component';
 import * as SocialSharePanelComponent from '@shared/components/socialshare-panel.component';
 import * as JsonObjectEditComponent from '@shared/components/json-object-edit.component';
@@ -419,7 +419,7 @@ class ModulesMap implements IModulesMap {
     '@shared/components/entity/entity-keys-list.component': EntityKeysListComponent,
     '@shared/components/entity/entity-list-select.component': EntityListSelectComponent,
     '@shared/components/entity/entity-type-list.component': EntityTypeListComponent,
-    '@shared/components/queue/queue-type-list.component': QueueTypeListComponent,
+    '@shared/components/queue/queue-autocomplete.component': QueueAutocompleteComponent,
     '@shared/components/relation/relation-type-autocomplete.component': RelationTypeAutocompleteComponent,
     '@shared/components/socialshare-panel.component': SocialSharePanelComponent,
     '@shared/components/json-object-edit.component': JsonObjectEditComponent,

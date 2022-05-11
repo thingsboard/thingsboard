@@ -205,6 +205,11 @@ export class QueueAutocompleteComponent implements ControlValueAccessor, OnInit 
     );
   }
 
+  getDescription(value) {
+    return value.additionalInfo?.description ? value.additionalInfo.description :
+      `Submit Strategy: ${value.submitStrategy.type}, Processing Strategy: ${value.processingStrategy.type}`;
+  }
+
   clear() {
     this.selectQueueFormGroup.get('queueId').patchValue('', {emitEvent: true});
     setTimeout(() => {

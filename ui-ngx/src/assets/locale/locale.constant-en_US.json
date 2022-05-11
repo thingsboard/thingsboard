@@ -2757,6 +2757,7 @@
         "select-name": "Select queue name",
         "name": "Name",
         "name-required": "Queue name is required!",
+        "queue-required": "Queue is required!",
         "topic-required": "Queue topic is required!",
         "poll-interval-required": "Poll interval is required!",
         "poll-interval-min-value": "Poll interval value can't be less then 1",
@@ -2801,7 +2802,8 @@
         "max-pause-between-retries": "Maximal pause between retries",
         "delete": "Delete queue",
         "copyId": "Copy queue Id",
-        "idCopiedMessage": "Queue Id has been copied to clipboard"
+        "idCopiedMessage": "Queue Id has been copied to clipboard",
+        "description": "Description"
     },
     "tenant": {
         "tenant": "Tenant",

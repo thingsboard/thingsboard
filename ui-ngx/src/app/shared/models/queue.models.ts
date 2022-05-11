@@ -61,5 +61,7 @@ export interface QueueInfo extends BaseData<QueueId> {
   };
   tenantId?: TenantId;
   topic: string;
-  additionalInfo?: any;
+  additionalInfo: {
+    description?: string;
+  };
 }

@@ -109,7 +109,10 @@ export class QueueFormComponent implements ControlValueAccessor, OnInit, Validat
           pauseBetweenRetries: [3, [Validators.min(1), Validators.required]],
           maxPauseBetweenRetries: [3, [Validators.min(1), Validators.required]],
         }),
-        topic: ['']
+        topic: [''],
+        additionalInfo: this.fb.group({
+          description: ['']
+        })
       });
     this.queueFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
