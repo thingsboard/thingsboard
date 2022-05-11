@@ -85,16 +85,14 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     }
 
     public void printStats() {
-        if (statsEnabled) {
-            int pushedMsgs = queuePushedMsgs.getAndSet(0);
-            int invokeMsgs = queueInvokeMsgs.getAndSet(0);
-            int evalMsgs = queueEvalMsgs.getAndSet(0);
-            int failed = queueFailedMsgs.getAndSet(0);
-            int timedOut = queueTimeoutMsgs.getAndSet(0);
-            if (pushedMsgs > 0 || invokeMsgs > 0 || evalMsgs > 0 || failed > 0 || timedOut > 0) {
-                log.info("Queue JS Invoke Stats: pushed [{}] received [{}] invoke [{}] eval [{}] failed [{}] timedOut [{}]",
-                        pushedMsgs, invokeMsgs + evalMsgs, invokeMsgs, evalMsgs, failed, timedOut);
-            }
+        int pushedMsgs = queuePushedMsgs.getAndSet(0);
+        int invokeMsgs = queueInvokeMsgs.getAndSet(0);
+        int evalMsgs = queueEvalMsgs.getAndSet(0);
+        int failed = queueFailedMsgs.getAndSet(0);
+        int timedOut = queueTimeoutMsgs.getAndSet(0);
+        if (pushedMsgs > 0 || invokeMsgs > 0 || evalMsgs > 0 || failed > 0 || timedOut > 0) {
+            log.info("Queue JS Invoke Stats: pushed [{}] received [{}] invoke [{}] eval [{}] failed [{}] timedOut [{}]",
+                    pushedMsgs, invokeMsgs + evalMsgs, invokeMsgs, evalMsgs, failed, timedOut);
         }
     }
 
@@ -107,7 +105,9 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     public void init() {
         super.init(maxRequestsTimeout);
         requestTemplate.init();
-        tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, statsPrintInterval, statsPrintInterval, TimeUnit.MILLISECONDS);
+        if (statsEnabled) {
+            tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, statsPrintInterval, statsPrintInterval, TimeUnit.MILLISECONDS);
+        }
     }
 
     @PreDestroy

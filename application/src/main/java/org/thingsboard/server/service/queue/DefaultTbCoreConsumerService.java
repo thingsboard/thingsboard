@@ -159,7 +159,9 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         super.init("tb-core-consumer", "tb-core-notifications-consumer");
         this.usageStatsExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-core-usage-stats-consumer"));
         this.firmwareStatesExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-core-firmware-notifications-consumer"));
-        this.tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, statsPrintInterval, statsPrintInterval, TimeUnit.MILLISECONDS);
+        if (statsEnabled) {
+            this.tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, statsPrintInterval, statsPrintInterval, TimeUnit.MILLISECONDS);
+        }
     }
 
     @PreDestroy
@@ -428,10 +430,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     }
 
     public void printStats() {
-        if (statsEnabled) {
-            stats.printStats();
-            stats.reset();
-        }
+        stats.printStats();
+        stats.reset();
     }
 
     private void forwardToLocalSubMgrService(LocalSubscriptionServiceMsgProto msg, TbCallback callback) {

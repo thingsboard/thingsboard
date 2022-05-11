@@ -145,7 +145,9 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                 topicsConsumerPerPartition.computeIfAbsent(configuration.getName(), TbTopicWithConsumerPerPartition::new);
             }
         }
-        tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, statsPrintInterval, statsPrintInterval, TimeUnit.MILLISECONDS);
+        if (statsEnabled) {
+            tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, statsPrintInterval, statsPrintInterval, TimeUnit.MILLISECONDS);
+        }
     }
 
     @PreDestroy
@@ -409,14 +411,12 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     }
 
     public void printStats() {
-        if (statsEnabled) {
-            long ts = System.currentTimeMillis();
-            consumerStats.forEach((queue, stats) -> {
-                stats.printStats();
-                statisticsService.reportQueueStats(ts, stats);
-                stats.reset();
-            });
-        }
+        long ts = System.currentTimeMillis();
+        consumerStats.forEach((queue, stats) -> {
+            stats.printStats();
+            statisticsService.reportQueueStats(ts, stats);
+            stats.reset();
+        });
     }
 
 }

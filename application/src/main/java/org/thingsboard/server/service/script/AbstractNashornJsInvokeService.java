@@ -81,22 +81,19 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
     }
 
     public void printStats() {
-        if (statsEnabled) {
-            int pushedMsgs = jsPushedMsgs.getAndSet(0);
-            int invokeMsgs = jsInvokeMsgs.getAndSet(0);
-            int evalMsgs = jsEvalMsgs.getAndSet(0);
-            int failed = jsFailedMsgs.getAndSet(0);
-            int timedOut = jsTimeoutMsgs.getAndSet(0);
-            if (pushedMsgs > 0 || invokeMsgs > 0 || evalMsgs > 0 || failed > 0 || timedOut > 0) {
-                log.info("Nashorn JS Invoke Stats: pushed [{}] received [{}] invoke [{}] eval [{}] failed [{}] timedOut [{}]",
-                        pushedMsgs, invokeMsgs + evalMsgs, invokeMsgs, evalMsgs, failed, timedOut);
-            }
+        int pushedMsgs = jsPushedMsgs.getAndSet(0);
+        int invokeMsgs = jsInvokeMsgs.getAndSet(0);
+        int evalMsgs = jsEvalMsgs.getAndSet(0);
+        int failed = jsFailedMsgs.getAndSet(0);
+        int timedOut = jsTimeoutMsgs.getAndSet(0);
+        if (pushedMsgs > 0 || invokeMsgs > 0 || evalMsgs > 0 || failed > 0 || timedOut > 0) {
+            log.info("Nashorn JS Invoke Stats: pushed [{}] received [{}] invoke [{}] eval [{}] failed [{}] timedOut [{}]",
+                    pushedMsgs, invokeMsgs + evalMsgs, invokeMsgs, evalMsgs, failed, timedOut);
         }
     }
 
     @PostConstruct
     public void init() {
-        tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, statsPrintInterval, statsPrintInterval, TimeUnit.MILLISECONDS);
         super.init(maxRequestsTimeout);
         if (useJsSandbox()) {
             sandbox = NashornSandboxes.create();
@@ -109,6 +106,9 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
         } else {
             ScriptEngineManager factory = new ScriptEngineManager();
             engine = factory.getEngineByName("nashorn");
+        }
+        if (statsEnabled) {
+            tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, statsPrintInterval, statsPrintInterval, TimeUnit.MILLISECONDS);
         }
     }
 

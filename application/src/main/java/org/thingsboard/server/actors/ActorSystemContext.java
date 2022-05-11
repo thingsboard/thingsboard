@@ -375,16 +375,16 @@ public class ActorSystemContext {
     @PostConstruct
     public void init() {
         this.localCacheType = "caffeine".equals(cacheType);
-        tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, statisticsPrintInterval, statisticsPrintInterval, TimeUnit.MILLISECONDS);
+        if (statisticsEnabled) {
+            tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, statisticsPrintInterval, statisticsPrintInterval, TimeUnit.MILLISECONDS);
+        }
     }
 
     public void printStats() {
-        if (statisticsEnabled) {
-            if (jsInvokeStats.getRequests() > 0 || jsInvokeStats.getResponses() > 0 || jsInvokeStats.getFailures() > 0) {
-                log.info("Rule Engine JS Invoke Stats: requests [{}] responses [{}] failures [{}]",
-                        jsInvokeStats.getRequests(), jsInvokeStats.getResponses(), jsInvokeStats.getFailures());
-                jsInvokeStats.reset();
-            }
+        if (jsInvokeStats.getRequests() > 0 || jsInvokeStats.getResponses() > 0 || jsInvokeStats.getFailures() > 0) {
+            log.info("Rule Engine JS Invoke Stats: requests [{}] responses [{}] failures [{}]",
+                    jsInvokeStats.getRequests(), jsInvokeStats.getResponses(), jsInvokeStats.getFailures());
+            jsInvokeStats.reset();
         }
     }
 

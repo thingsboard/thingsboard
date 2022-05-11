@@ -232,7 +232,9 @@ public class DefaultTransportService implements TransportService {
         transportNotificationsConsumer.subscribe(Collections.singleton(tpi));
         transportApiRequestTemplate.init();
         mainConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("transport-consumer"));
-        tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, statsPrintInterval, statsPrintInterval, TimeUnit.MILLISECONDS);
+        if (statsEnabled) {
+            tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, statsPrintInterval, statsPrintInterval, TimeUnit.MILLISECONDS);
+        }
     }
 
     @AfterStartUp
@@ -1210,7 +1212,7 @@ public class DefaultTransportService implements TransportService {
     }
 
     public void printStats() {
-        if (statsEnabled && !statsMap.isEmpty()) {
+        if (!statsMap.isEmpty()) {
             String values = statsMap.entrySet().stream()
                     .map(kv -> kv.getKey() + " [" + kv.getValue() + "]").collect(Collectors.joining(", "));
             log.info("Transport Stats: {}", values);

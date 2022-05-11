@@ -102,7 +102,9 @@ public class DefaultTbClusterService implements TbClusterService {
 
     @PostConstruct
     public void init() {
-        tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, statsPrintInterval, statsPrintInterval, TimeUnit.MILLISECONDS);
+        if (statsEnabled) {
+            tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, statsPrintInterval, statsPrintInterval, TimeUnit.MILLISECONDS);
+        }
     }
 
     @Override
@@ -376,16 +378,14 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     public void printStats() {
-        if (statsEnabled) {
-            int toCoreMsgCnt = toCoreMsgs.getAndSet(0);
-            int toCoreNfsCnt = toCoreNfs.getAndSet(0);
-            int toRuleEngineMsgsCnt = toRuleEngineMsgs.getAndSet(0);
-            int toRuleEngineNfsCnt = toRuleEngineNfs.getAndSet(0);
-            int toTransportNfsCnt = toTransportNfs.getAndSet(0);
-            if (toCoreMsgCnt > 0 || toCoreNfsCnt > 0 || toRuleEngineMsgsCnt > 0 || toRuleEngineNfsCnt > 0 || toTransportNfsCnt > 0) {
-                log.info("To TbCore: [{}] messages [{}] notifications; To TbRuleEngine: [{}] messages [{}] notifications; To Transport: [{}] notifications",
-                        toCoreMsgCnt, toCoreNfsCnt, toRuleEngineMsgsCnt, toRuleEngineNfsCnt, toTransportNfsCnt);
-            }
+        int toCoreMsgCnt = toCoreMsgs.getAndSet(0);
+        int toCoreNfsCnt = toCoreNfs.getAndSet(0);
+        int toRuleEngineMsgsCnt = toRuleEngineMsgs.getAndSet(0);
+        int toRuleEngineNfsCnt = toRuleEngineNfs.getAndSet(0);
+        int toTransportNfsCnt = toTransportNfs.getAndSet(0);
+        if (toCoreMsgCnt > 0 || toCoreNfsCnt > 0 || toRuleEngineMsgsCnt > 0 || toRuleEngineNfsCnt > 0 || toTransportNfsCnt > 0) {
+            log.info("To TbCore: [{}] messages [{}] notifications; To TbRuleEngine: [{}] messages [{}] notifications; To Transport: [{}] notifications",
+                    toCoreMsgCnt, toCoreNfsCnt, toRuleEngineMsgsCnt, toRuleEngineNfsCnt, toTransportNfsCnt);
         }
     }
 
