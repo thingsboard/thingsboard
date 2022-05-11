@@ -17,7 +17,6 @@ package org.thingsboard.server.dao.cache;
 
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.SerializationException;
-import org.thingsboard.server.common.data.edge.Edge;
 
 public class TbRedisSerializer<T> implements RedisSerializer<T> {
 

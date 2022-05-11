@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.CacheSpecsMap;
 import org.thingsboard.server.cache.TBRedisCacheConfiguration;
 import org.thingsboard.server.common.data.CacheConstants;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.dao.cache.RedisTbTransactionalCache;
 import org.thingsboard.server.dao.cache.TbRedisSerializer;

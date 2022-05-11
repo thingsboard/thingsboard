@@ -25,6 +25,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.TbCacheValueWrapper;
+import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -34,7 +35,6 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.stats.DefaultCounter;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.cache.CacheExecutorService;
-import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.dao.service.Validator;
 
 import javax.annotation.PostConstruct;

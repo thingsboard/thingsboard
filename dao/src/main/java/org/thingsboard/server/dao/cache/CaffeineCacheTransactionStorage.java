@@ -16,17 +16,8 @@
 package org.thingsboard.server.dao.cache;
 
 import lombok.RequiredArgsConstructor;
-import org.thingsboard.server.cache.TbCacheTransaction;
 
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 @RequiredArgsConstructor
 class CaffeineCacheTransactionStorage<K extends Serializable, V extends Serializable> {

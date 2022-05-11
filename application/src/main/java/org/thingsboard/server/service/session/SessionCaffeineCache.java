@@ -19,10 +19,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.CacheConstants;
-import org.thingsboard.server.common.data.DeviceInfo;
-import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.dao.asset.AssetCacheKey;
 import org.thingsboard.server.dao.cache.CaffeineTbTransactionalCache;
 import org.thingsboard.server.gen.transport.TransportProtos;
 

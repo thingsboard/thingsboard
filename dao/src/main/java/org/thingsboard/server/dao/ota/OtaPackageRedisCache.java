@@ -22,8 +22,6 @@ import org.thingsboard.server.cache.CacheSpecsMap;
 import org.thingsboard.server.cache.TBRedisCacheConfiguration;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.OtaPackageInfo;
-import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.dao.asset.AssetCacheKey;
 import org.thingsboard.server.dao.cache.RedisTbTransactionalCache;
 import org.thingsboard.server.dao.cache.TbRedisSerializer;
 
