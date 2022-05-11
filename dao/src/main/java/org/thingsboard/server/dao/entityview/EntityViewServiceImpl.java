@@ -98,7 +98,6 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
         cache.evict(keys);
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public EntityView saveEntityView(EntityView entityView) {
         log.trace("Executing save entity view [{}]", entityView);
@@ -108,7 +107,6 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
         return saved;
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public EntityView assignEntityViewToCustomer(TenantId tenantId, EntityViewId entityViewId, CustomerId customerId) {
         EntityView entityView = findEntityViewById(tenantId, entityViewId);
@@ -116,7 +114,6 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
         return saveEntityView(entityView);
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public EntityView unassignEntityViewFromCustomer(TenantId tenantId, EntityViewId entityViewId) {
         EntityView entityView = findEntityViewById(tenantId, entityViewId);
@@ -124,7 +121,6 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
         return saveEntityView(entityView);
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public void unassignCustomerEntityViews(TenantId tenantId, CustomerId customerId) {
         log.trace("Executing unassignCustomerEntityViews, tenantId [{}], customerId [{}]", tenantId, customerId);
@@ -284,7 +280,6 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
                 EntityViewCacheValue::getEntityViews, v -> new EntityViewCacheValue(null, v), true));
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public void deleteEntityView(TenantId tenantId, EntityViewId entityViewId) {
         log.trace("Executing deleteEntityView [{}]", entityViewId);

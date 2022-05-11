@@ -118,7 +118,6 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
                         .orElse(null), true);
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public Asset saveAsset(Asset asset) {
         log.trace("Executing saveAsset [{}]", asset);
@@ -140,7 +139,6 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
         return savedAsset;
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public Asset assignAssetToCustomer(TenantId tenantId, AssetId assetId, CustomerId customerId) {
         Asset asset = findAssetById(tenantId, assetId);
@@ -148,7 +146,6 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
         return saveAsset(asset);
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public Asset unassignAssetFromCustomer(TenantId tenantId, AssetId assetId) {
         Asset asset = findAssetById(tenantId, assetId);
@@ -156,7 +153,6 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
         return saveAsset(asset);
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public void deleteAsset(TenantId tenantId, AssetId assetId) {
         log.trace("Executing deleteAsset [{}]", assetId);

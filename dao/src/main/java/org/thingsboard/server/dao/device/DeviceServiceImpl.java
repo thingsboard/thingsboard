@@ -112,7 +112,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     @Autowired
     private DataValidator<Device> deviceValidator;
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public DeviceInfo findDeviceInfoById(TenantId tenantId, DeviceId deviceId) {
         log.trace("Executing findDeviceInfoById [{}]", deviceId);
@@ -120,7 +119,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         return deviceDao.findDeviceInfoById(tenantId, deviceId.getId());
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public Device findDeviceById(TenantId tenantId, DeviceId deviceId) {
         log.trace("Executing findDeviceById [{}]", deviceId);
@@ -147,7 +145,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         }
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public Device findDeviceByTenantIdAndName(TenantId tenantId, String name) {
         log.trace("Executing findDeviceByTenantIdAndName [{}][{}]", tenantId, name);
@@ -156,19 +153,16 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
                 () -> deviceDao.findDeviceByTenantIdAndName(tenantId.getId(), name).orElse(null), true);
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public Device saveDeviceWithAccessToken(Device device, String accessToken) {
         return doSaveDevice(device, accessToken, true);
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public Device saveDevice(Device device, boolean doValidate) {
         return doSaveDevice(device, null, doValidate);
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public Device saveDevice(Device device) {
         return doSaveDevice(device, null, true);
@@ -340,7 +334,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     }
 
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public PageData<Device> findDevicesByTenantId(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findDevicesByTenantId, tenantId [{}], pageLink [{}]", tenantId, pageLink);
@@ -349,7 +342,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         return deviceDao.findDevicesByTenantId(tenantId.getId(), pageLink);
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public PageData<DeviceInfo> findDeviceInfosByTenantId(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findDeviceInfosByTenantId, tenantId [{}], pageLink [{}]", tenantId, pageLink);
@@ -358,7 +350,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         return deviceDao.findDeviceInfosByTenantId(tenantId.getId(), pageLink);
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public PageData<Device> findDevicesByTenantIdAndType(TenantId tenantId, String type, PageLink pageLink) {
         log.trace("Executing findDevicesByTenantIdAndType, tenantId [{}], type [{}], pageLink [{}]", tenantId, type, pageLink);
@@ -368,7 +359,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         return deviceDao.findDevicesByTenantIdAndType(tenantId.getId(), type, pageLink);
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public PageData<Device> findDevicesByTenantIdAndTypeAndEmptyOtaPackage(TenantId tenantId,
                                                                            DeviceProfileId deviceProfileId,
@@ -382,7 +372,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         return deviceDao.findDevicesByTenantIdAndTypeAndEmptyOtaPackage(tenantId.getId(), deviceProfileId.getId(), type, pageLink);
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public Long countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage(TenantId tenantId, DeviceProfileId deviceProfileId, OtaPackageType type) {
         log.trace("Executing countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage, tenantId [{}], deviceProfileId [{}], type [{}]", tenantId, deviceProfileId, type);
@@ -391,7 +380,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         return deviceDao.countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage(tenantId.getId(), deviceProfileId.getId(), type);
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public PageData<DeviceInfo> findDeviceInfosByTenantIdAndType(TenantId tenantId, String type, PageLink pageLink) {
         log.trace("Executing findDeviceInfosByTenantIdAndType, tenantId [{}], type [{}], pageLink [{}]", tenantId, type, pageLink);
@@ -401,7 +389,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         return deviceDao.findDeviceInfosByTenantIdAndType(tenantId.getId(), type, pageLink);
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public PageData<DeviceInfo> findDeviceInfosByTenantIdAndDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId, PageLink pageLink) {
         log.trace("Executing findDeviceInfosByTenantIdAndDeviceProfileId, tenantId [{}], deviceProfileId [{}], pageLink [{}]", tenantId, deviceProfileId, pageLink);
@@ -411,7 +398,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         return deviceDao.findDeviceInfosByTenantIdAndDeviceProfileId(tenantId.getId(), deviceProfileId.getId(), pageLink);
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public ListenableFuture<List<Device>> findDevicesByTenantIdAndIdsAsync(TenantId tenantId, List<DeviceId> deviceIds) {
         log.trace("Executing findDevicesByTenantIdAndIdsAsync, tenantId [{}], deviceIds [{}]", tenantId, deviceIds);
@@ -428,7 +414,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         tenantDevicesRemover.removeEntities(tenantId, tenantId);
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public PageData<Device> findDevicesByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink) {
         log.trace("Executing findDevicesByTenantIdAndCustomerId, tenantId [{}], customerId [{}], pageLink [{}]", tenantId, customerId, pageLink);
@@ -438,7 +423,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         return deviceDao.findDevicesByTenantIdAndCustomerId(tenantId.getId(), customerId.getId(), pageLink);
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public PageData<DeviceInfo> findDeviceInfosByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink) {
         log.trace("Executing findDeviceInfosByTenantIdAndCustomerId, tenantId [{}], customerId [{}], pageLink [{}]", tenantId, customerId, pageLink);
@@ -448,7 +432,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         return deviceDao.findDeviceInfosByTenantIdAndCustomerId(tenantId.getId(), customerId.getId(), pageLink);
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public PageData<Device> findDevicesByTenantIdAndCustomerIdAndType(TenantId tenantId, CustomerId customerId, String type, PageLink pageLink) {
         log.trace("Executing findDevicesByTenantIdAndCustomerIdAndType, tenantId [{}], customerId [{}], type [{}], pageLink [{}]", tenantId, customerId, type, pageLink);
@@ -459,7 +442,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         return deviceDao.findDevicesByTenantIdAndCustomerIdAndType(tenantId.getId(), customerId.getId(), type, pageLink);
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public PageData<DeviceInfo> findDeviceInfosByTenantIdAndCustomerIdAndType(TenantId tenantId, CustomerId customerId, String type, PageLink pageLink) {
         log.trace("Executing findDeviceInfosByTenantIdAndCustomerIdAndType, tenantId [{}], customerId [{}], type [{}], pageLink [{}]", tenantId, customerId, type, pageLink);
@@ -470,7 +452,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         return deviceDao.findDeviceInfosByTenantIdAndCustomerIdAndType(tenantId.getId(), customerId.getId(), type, pageLink);
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public PageData<DeviceInfo> findDeviceInfosByTenantIdAndCustomerIdAndDeviceProfileId(TenantId tenantId, CustomerId customerId, DeviceProfileId deviceProfileId, PageLink pageLink) {
         log.trace("Executing findDeviceInfosByTenantIdAndCustomerIdAndDeviceProfileId, tenantId [{}], customerId [{}], deviceProfileId [{}], pageLink [{}]", tenantId, customerId, deviceProfileId, pageLink);
@@ -481,7 +462,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         return deviceDao.findDeviceInfosByTenantIdAndCustomerIdAndDeviceProfileId(tenantId.getId(), customerId.getId(), deviceProfileId.getId(), pageLink);
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public ListenableFuture<List<Device>> findDevicesByTenantIdCustomerIdAndIdsAsync(TenantId tenantId, CustomerId customerId, List<DeviceId> deviceIds) {
         log.trace("Executing findDevicesByTenantIdCustomerIdAndIdsAsync, tenantId [{}], customerId [{}], deviceIds [{}]", tenantId, customerId, deviceIds);
@@ -492,7 +472,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
                 customerId.getId(), toUUIDs(deviceIds));
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public void unassignCustomerDevices(TenantId tenantId, CustomerId customerId) {
         log.trace("Executing unassignCustomerDevices, tenantId [{}], customerId [{}]", tenantId, customerId);
@@ -501,7 +480,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         customerDeviceUnasigner.removeEntities(tenantId, customerId);
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public ListenableFuture<List<Device>> findDevicesByQuery(TenantId tenantId, DeviceSearchQuery query) {
         ListenableFuture<List<EntityRelation>> relations = relationService.findByQuery(tenantId, query.toEntitySearchQuery());
@@ -528,7 +506,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         return devices;
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public ListenableFuture<List<EntitySubtype>> findDeviceTypesByTenantId(TenantId tenantId) {
         log.trace("Executing findDeviceTypesByTenantId, tenantId [{}]", tenantId);
@@ -623,13 +600,11 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         return savedDevice;
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public PageData<UUID> findDevicesIdsByDeviceProfileTransportType(DeviceTransportType transportType, PageLink pageLink) {
         return deviceDao.findDevicesIdsByDeviceProfileTransportType(transportType, pageLink);
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public Device assignDeviceToEdge(TenantId tenantId, DeviceId deviceId, EdgeId edgeId) {
         Device device = findDeviceById(tenantId, deviceId);
@@ -649,7 +624,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         return device;
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public Device unassignDeviceFromEdge(TenantId tenantId, DeviceId deviceId, EdgeId edgeId) {
         Device device = findDeviceById(tenantId, deviceId);
@@ -669,7 +643,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         return device;
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public PageData<Device> findDevicesByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, PageLink pageLink) {
         log.trace("Executing findDevicesByTenantIdAndEdgeId, tenantId [{}], edgeId [{}], pageLink [{}]", tenantId, edgeId, pageLink);
@@ -679,7 +652,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         return deviceDao.findDevicesByTenantIdAndEdgeId(tenantId.getId(), edgeId.getId(), pageLink);
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public PageData<Device> findDevicesByTenantIdAndEdgeIdAndType(TenantId tenantId, EdgeId edgeId, String type, PageLink pageLink) {
         log.trace("Executing findDevicesByTenantIdAndEdgeIdAndType, tenantId [{}], edgeId [{}], type [{}] pageLink [{}]", tenantId, edgeId, type, pageLink);

@@ -81,7 +81,6 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
         return profile == null ? null : new EntityInfo(profile.getId(), profile.getName());
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public TenantProfile saveTenantProfile(TenantId tenantId, TenantProfile tenantProfile) {
         log.trace("Executing saveTenantProfile [{}]", tenantProfile);
@@ -102,7 +101,6 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
         return savedTenantProfile;
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public void deleteTenantProfile(TenantId tenantId, TenantProfileId tenantProfileId) {
         log.trace("Executing deleteTenantProfile [{}]", tenantProfileId);
@@ -177,7 +175,6 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
         return tenantProfile == null ? null : new EntityInfo(tenantProfile.getId(), tenantProfile.getName());
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public boolean setDefaultTenantProfile(TenantId tenantId, TenantProfileId tenantProfileId) {
         log.trace("Executing setDefaultTenantProfile [{}]", tenantProfileId);

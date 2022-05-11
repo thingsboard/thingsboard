@@ -147,7 +147,6 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
         return edgeDao.findByRoutingKey(tenantId.getId(), routingKey);
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public Edge saveEdge(Edge edge) {
         log.trace("Executing saveEdge [{}]", edge);
@@ -169,7 +168,6 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
         }
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public Edge assignEdgeToCustomer(TenantId tenantId, EdgeId edgeId, CustomerId customerId) {
         log.trace("[{}] Executing assignEdgeToCustomer [{}][{}]", tenantId, edgeId, customerId);
@@ -178,7 +176,6 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
         return saveEdge(edge);
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public Edge unassignEdgeFromCustomer(TenantId tenantId, EdgeId edgeId) {
         log.trace("[{}] Executing unassignEdgeFromCustomer [{}]", tenantId, edgeId);
@@ -187,7 +184,6 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
         return saveEdge(edge);
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public void deleteEdge(TenantId tenantId, EdgeId edgeId) {
         log.trace("Executing deleteEdge [{}]", edgeId);
@@ -299,7 +295,6 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
                 customerId.getId(), toUUIDs(edgeIds));
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public void unassignCustomerEdges(TenantId tenantId, CustomerId customerId) {
         log.trace("Executing unassignCustomerEdges, tenantId [{}], customerId [{}]", tenantId, customerId);

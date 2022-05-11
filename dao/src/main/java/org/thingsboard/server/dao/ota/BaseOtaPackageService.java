@@ -69,7 +69,6 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
         otaPackageDataCache.evict(event.getId().toString());
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public OtaPackageInfo saveOtaPackageInfo(OtaPackageInfo otaPackageInfo, boolean isUrl) {
         log.trace("Executing saveOtaPackageInfo [{}]", otaPackageInfo);
@@ -97,7 +96,6 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
         }
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public OtaPackage saveOtaPackage(OtaPackage otaPackage) {
         log.trace("Executing saveOtaPackage [{}]", otaPackage);
@@ -191,7 +189,6 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
         return otaPackageInfoDao.findOtaPackageInfoByTenantIdAndDeviceProfileIdAndTypeAndHasData(tenantId, deviceProfileId, otaPackageType, pageLink);
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public void deleteOtaPackage(TenantId tenantId, OtaPackageId otaPackageId) {
         log.trace("Executing deleteOtaPackage [{}]", otaPackageId);
