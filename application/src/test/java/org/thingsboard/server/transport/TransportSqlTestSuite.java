@@ -20,15 +20,15 @@ import org.junit.runner.RunWith;
 
 @RunWith(ClasspathSuite.class)
 @ClasspathSuite.ClassnameFilters({
-//        "org.thingsboard.server.transport.*.rpc.*Test",
-//        "org.thingsboard.server.transport.*.telemetry.timeseries.sql.*Test",
-//        "org.thingsboard.server.transport.*.telemetry.attributes.*Test",
-//        "org.thingsboard.server.transport.*.attributes.updates.*Test",
-//        "org.thingsboard.server.transport.*.attributes.request.*Test",
-        "org.thingsboard.server.transport.mqtt.claim.*Test",
-//        "org.thingsboard.server.transport.*.provision.*Test",
-//        "org.thingsboard.server.transport.*.credentials.*Test",
-//        "org.thingsboard.server.transport.lwm2m.*.sql.*Test"
+        "org.thingsboard.server.transport.*.rpc.*Test",
+        "org.thingsboard.server.transport.*.telemetry.timeseries.sql.*Test",
+        "org.thingsboard.server.transport.*.telemetry.attributes.*Test",
+        "org.thingsboard.server.transport.*.attributes.updates.*Test",
+        "org.thingsboard.server.transport.*.attributes.request.*Test",
+        "org.thingsboard.server.transport.*.claim.*Test",
+        "org.thingsboard.server.transport.*.provision.*Test",
+        "org.thingsboard.server.transport.*.credentials.*Test",
+        "org.thingsboard.server.transport.lwm2m.*.sql.*Test"
 })
 public class TransportSqlTestSuite {
 
