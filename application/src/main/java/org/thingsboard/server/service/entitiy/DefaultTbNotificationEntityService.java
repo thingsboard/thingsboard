@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.msg.DeviceCredentialsUpdateNotificationMsg;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.HasName;
@@ -200,6 +201,21 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
     public void notifyDeleteAlarm(Alarm alarm, SecurityUser user, List<EdgeId> relatedEdgeIds) {
         logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarm, alarm.getCustomerId(), ActionType.ALARM_DELETE, user, null);
         sendAlarmDeleteNotificationMsg(alarm, relatedEdgeIds);
+    }
+
+    @Override
+    public void notifySaveCustomer(Customer customer, ActionType actionType, SecurityUser user, Object... additionalInfo) {
+        logEntityAction(customer.getTenantId(), customer.getId(), customer, customer.getId(), actionType, user, additionalInfo);
+        if (customer.getId() != null) {
+            sendEntityNotificationMsg(customer.getTenantId(), customer.getId(), EdgeEventActionType.UPDATED);
+        }
+    }
+
+    @Override
+    public void notifyDeleteCustomer(Customer customer, SecurityUser user, List<EdgeId> edgeIds) {
+        logEntityAction(customer.getTenantId(), customer.getId(), customer, customer.getId(), ActionType.DELETED, user, null);
+        sendDeleteNotificationMsg(customer.getTenantId(), customer.getId(), edgeIds, null);
+        tbClusterService.broadcastEntityStateChangeEvent(customer.getTenantId(), customer.getId(), ComponentLifecycleEvent.DELETED);
     }
 
     private <E extends HasName, I extends EntityId> void logEntityAction(TenantId tenantId, I entityId, E entity, CustomerId customerId,
