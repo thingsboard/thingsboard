@@ -16,8 +16,6 @@
 package org.thingsboard.server.transport.mqtt.claim;
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.ClaimRequest;
@@ -37,6 +35,7 @@ import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.GATEWAY_CLAIM_TOPIC;
 
 @Slf4j
 @DaoSqlTest
@@ -148,8 +147,8 @@ public class MqttClaimDeviceTest extends AbstractMqttIntegrationTest {
         assertEquals(claimResponse, ClaimResponse.CLAIMED);
     }
 
-    protected void validateGatewayClaimResponse(String deviceName, boolean emptyPayload, MqttAsyncClient client, byte[] failurePayloadBytes, byte[] payloadBytes) throws Exception {
-        client.publish(MqttTopics.GATEWAY_CLAIM_TOPIC, new MqttMessage(failurePayloadBytes));
+    protected void validateGatewayClaimResponse(String deviceName, boolean emptyPayload, MqttTestClient client, byte[] failurePayloadBytes, byte[] payloadBytes) throws Exception {
+        client.publishAndWait(GATEWAY_CLAIM_TOPIC, failurePayloadBytes);
 
         Device savedDevice = doExecuteWithRetriesAndInterval(
                 () -> doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class),
@@ -170,7 +169,7 @@ public class MqttClaimDeviceTest extends AbstractMqttIntegrationTest {
         ClaimResponse claimResponse = doPostClaimAsync("/api/customer/device/" + deviceName + "/claim", claimRequest, ClaimResponse.class, status().isBadRequest());
         assertEquals(claimResponse, ClaimResponse.FAILURE);
 
-        client.publish(MqttTopics.GATEWAY_CLAIM_TOPIC, new MqttMessage(payloadBytes));
+        client.publishAndWait(GATEWAY_CLAIM_TOPIC, payloadBytes);
 
         ClaimResult claimResult = doExecuteWithRetriesAndInterval(
                 () -> doPostClaimAsync("/api/customer/device/" + deviceName + "/claim", claimRequest, ClaimResult.class, status().isOk()),
@@ -189,7 +188,8 @@ public class MqttClaimDeviceTest extends AbstractMqttIntegrationTest {
     }
 
     protected void processTestGatewayClaimingDevice(String deviceName, boolean emptyPayload) throws Exception {
-        MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
+        MqttTestClient client = new MqttTestClient();
+        client.connectAndWait(gatewayAccessToken);
         byte[] failurePayloadBytes;
         byte[] payloadBytes;
         String failurePayload;
@@ -207,7 +207,8 @@ public class MqttClaimDeviceTest extends AbstractMqttIntegrationTest {
     }
 
     protected void processProtoTestGatewayClaimDevice(String deviceName, boolean emptyPayload) throws Exception {
-        MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
+        MqttTestClient client = new MqttTestClient();
+        client.connectAndWait(gatewayAccessToken);
         byte[] failurePayloadBytes;
         byte[] payloadBytes;
         if (emptyPayload) {
