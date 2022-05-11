@@ -18,13 +18,11 @@ package org.thingsboard.server.transport.mqtt.claim;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.ClaimRequest;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.security.Authority;
@@ -33,6 +31,7 @@ import org.thingsboard.server.dao.device.claim.ClaimResult;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
+import org.thingsboard.server.transport.mqtt.MqttTestClient;
 import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 
 import static org.junit.Assert.assertEquals;
@@ -99,7 +98,8 @@ public class MqttClaimDeviceTest extends AbstractMqttIntegrationTest {
 
 
     protected void processTestClaimingDevice(boolean emptyPayload) throws Exception {
-        MqttAsyncClient client = getMqttAsyncClient(accessToken);
+        MqttTestClient client = new MqttTestClient();
+        client.connectAndWait(accessToken);
         byte[] payloadBytes;
         byte[] failurePayloadBytes;
         if (emptyPayload) {
@@ -112,8 +112,8 @@ public class MqttClaimDeviceTest extends AbstractMqttIntegrationTest {
         validateClaimResponse(emptyPayload, client, payloadBytes, failurePayloadBytes);
     }
 
-    protected void validateClaimResponse(boolean emptyPayload, MqttAsyncClient client, byte[] payloadBytes, byte[] failurePayloadBytes) throws Exception {
-        client.publish(MqttTopics.DEVICE_CLAIM_TOPIC, new MqttMessage(failurePayloadBytes));
+    protected void validateClaimResponse(boolean emptyPayload, MqttTestClient client, byte[] payloadBytes, byte[] failurePayloadBytes) throws Exception {
+        client.publishAndWait(MqttTopics.DEVICE_CLAIM_TOPIC, failurePayloadBytes);
 
         loginUser(customerAdmin.getName(), CUSTOMER_USER_PASSWORD);
         ClaimRequest claimRequest;
@@ -131,7 +131,7 @@ public class MqttClaimDeviceTest extends AbstractMqttIntegrationTest {
 
         assertEquals(claimResponse, ClaimResponse.FAILURE);
 
-        client.publish(MqttTopics.DEVICE_CLAIM_TOPIC, new MqttMessage(payloadBytes));
+        client.publishAndWait(MqttTopics.DEVICE_CLAIM_TOPIC, payloadBytes);
 
         ClaimResult claimResult = doExecuteWithRetriesAndInterval(
                 () -> doPostClaimAsync("/api/customer/device/" + savedDevice.getName() + "/claim", claimRequest, ClaimResult.class, status().isOk()),
