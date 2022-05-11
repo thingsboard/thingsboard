@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -239,10 +239,9 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
             publishEvictEvent(deviceCacheEvictEvent);
             return result;
         } catch (Exception t) {
+            handleEvictEvent(deviceCacheEvictEvent);
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("device_name_unq_key")) {
-                // remove device from cache in case null value cached in the distributed redis.
-                handleEvictEvent(deviceCacheEvictEvent);
                 throw new DataValidationException("Device with such name already exists!");
             } else {
                 throw t;

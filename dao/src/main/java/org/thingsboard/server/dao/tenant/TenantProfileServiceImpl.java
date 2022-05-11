@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -57,7 +57,9 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
     @Override
     public void handleEvictEvent(TenantProfileEvictEvent event) {
         List<TenantProfileCacheKey> keys = new ArrayList<>(2);
-        keys.add(TenantProfileCacheKey.fromId(event.getTenantProfileId()));
+        if (event.getTenantProfileId() != null) {
+            keys.add(TenantProfileCacheKey.fromId(event.getTenantProfileId()));
+        }
         if (event.isDefaultProfile()) {
             keys.add(TenantProfileCacheKey.defaultProfile());
         }
@@ -89,6 +91,7 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
             savedTenantProfile = tenantProfileDao.save(tenantId, tenantProfile);
             publishEvictEvent(new TenantProfileEvictEvent(savedTenantProfile.getId(), savedTenantProfile.isDefault()));
         } catch (Exception t) {
+            handleEvictEvent(new TenantProfileEvictEvent(null, tenantProfile.isDefault()));
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("tenant_profile_name_unq_key")) {
                 throw new DataValidationException("Tenant profile with such name already exists!");

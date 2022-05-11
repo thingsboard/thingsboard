@@ -158,6 +158,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
             publishEvictEvent(evictEvent);
             return savedEdge;
         } catch (Exception t) {
+            handleEvictEvent(evictEvent);
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null
                     && e.getConstraintName().equalsIgnoreCase("edge_name_unq_key")) {

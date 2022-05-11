@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -57,6 +57,7 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     private static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     private static final String INCORRECT_DEVICE_PROFILE_ID = "Incorrect deviceProfileId ";
     private static final String INCORRECT_DEVICE_PROFILE_NAME = "Incorrect deviceProfileName ";
+    private static final String DEVICE_PROFILE_WITH_SUCH_NAME_ALREADY_EXISTS = "Device profile with such name already exists!";
 
     @Autowired
     private DeviceProfileDao deviceProfileDao;
@@ -76,8 +77,10 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     @Override
     public void handleEvictEvent(DeviceProfileEvictEvent event) {
         List<DeviceProfileCacheKey> keys = new ArrayList<>(2);
-        keys.add(DeviceProfileCacheKey.fromId(event.getDeviceProfileId()));
         keys.add(DeviceProfileCacheKey.fromName(event.getTenantId(), event.getNewName()));
+        if (event.getDeviceProfileId() != null) {
+            keys.add(DeviceProfileCacheKey.fromId(event.getDeviceProfileId()));
+        }
         if (event.isDefaultProfile()) {
             keys.add(DeviceProfileCacheKey.defaultProfile(event.getTenantId()));
         }
@@ -117,19 +120,21 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
         DeviceProfile savedDeviceProfile;
         try {
             savedDeviceProfile = deviceProfileDao.saveAndFlush(deviceProfile.getTenantId(), deviceProfile);
+            publishEvictEvent(new DeviceProfileEvictEvent(savedDeviceProfile.getTenantId(), savedDeviceProfile.getName(),
+                    oldDeviceProfile != null ? oldDeviceProfile.getName() : null, savedDeviceProfile.getId(), savedDeviceProfile.isDefault()));
         } catch (Exception t) {
+            handleEvictEvent(new DeviceProfileEvictEvent(deviceProfile.getTenantId(), deviceProfile.getName(),
+                    oldDeviceProfile != null ? oldDeviceProfile.getName() : null, null, deviceProfile.isDefault()));
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("device_profile_name_unq_key")) {
                 //TODO: refactor this to return existing device profile. If they are equal - no need to throw exception. Then we can make this call @Transactional and tests will not fail.
-                throw new DataValidationException("Device profile with such name already exists!");
+                throw new DataValidationException(DEVICE_PROFILE_WITH_SUCH_NAME_ALREADY_EXISTS);
             } else if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("device_provision_key_unq_key")) {
                 throw new DataValidationException("Device profile with such provision device key already exists!");
             } else {
                 throw t;
             }
         }
-        publishEvictEvent(new DeviceProfileEvictEvent(savedDeviceProfile.getTenantId(), savedDeviceProfile.getName(),
-                oldDeviceProfile != null ? oldDeviceProfile.getName() : null, savedDeviceProfile.getId(), savedDeviceProfile.isDefault()));
         if (oldDeviceProfile != null && !oldDeviceProfile.getName().equals(deviceProfile.getName())) {
             PageLink pageLink = new PageLink(100);
             PageData<Device> pageData;
@@ -195,14 +200,14 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
         log.trace("Executing findOrCreateDefaultDeviceProfile");
         DeviceProfile deviceProfile = findDeviceProfileByName(tenantId, name);
         if (deviceProfile == null) {
-            findOrCreateLock.lock();
             try {
-                deviceProfile = findDeviceProfileByName(tenantId, name);
-                if (deviceProfile == null) {
-                    deviceProfile = this.doCreateDefaultDeviceProfile(tenantId, name, name.equals("default"));
+                deviceProfile = this.doCreateDefaultDeviceProfile(tenantId, name, name.equals("default"));
+            } catch (DataValidationException e) {
+                if (DEVICE_PROFILE_WITH_SUCH_NAME_ALREADY_EXISTS.equals(e.getMessage())) {
+                    deviceProfile = findDeviceProfileByName(tenantId, name);
+                } else {
+                    throw e;
                 }
-            } finally {
-                findOrCreateLock.unlock();
             }
         }
         return deviceProfile;

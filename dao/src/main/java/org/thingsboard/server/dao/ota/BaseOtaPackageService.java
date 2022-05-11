@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -77,14 +77,17 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
             throw new DataValidationException("Ota package URL should be specified!");
         }
         otaPackageInfoValidator.validate(otaPackageInfo, OtaPackageInfo::getTenantId);
+        OtaPackageId otaPackageId = otaPackageInfo.getId();
         try {
-            OtaPackageId otaPackageId = otaPackageInfo.getId();
             var result = otaPackageInfoDao.save(otaPackageInfo.getTenantId(), otaPackageInfo);
             if (otaPackageId != null) {
                 publishEvictEvent(new OtaPackageCacheEvictEvent(otaPackageId));
             }
             return result;
         } catch (Exception t) {
+            if (otaPackageId != null) {
+                handleEvictEvent(new OtaPackageCacheEvictEvent(otaPackageId));
+            }
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("ota_package_tenant_title_version_unq_key")) {
                 throw new DataValidationException("OtaPackage with such title and version already exists!");
@@ -99,14 +102,17 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
     public OtaPackage saveOtaPackage(OtaPackage otaPackage) {
         log.trace("Executing saveOtaPackage [{}]", otaPackage);
         otaPackageValidator.validate(otaPackage, OtaPackageInfo::getTenantId);
+        OtaPackageId otaPackageId = otaPackage.getId();
         try {
-            OtaPackageId otaPackageId = otaPackage.getId();
             var result = otaPackageDao.save(otaPackage.getTenantId(), otaPackage);
             if (otaPackageId != null) {
                 publishEvictEvent(new OtaPackageCacheEvictEvent(otaPackageId));
             }
             return result;
         } catch (Exception t) {
+            if (otaPackageId != null) {
+                handleEvictEvent(new OtaPackageCacheEvictEvent(otaPackageId));
+            }
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("ota_package_tenant_title_version_unq_key")) {
                 throw new DataValidationException("OtaPackage with such title and version already exists!");

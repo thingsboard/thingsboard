@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -129,6 +129,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
             savedAsset = assetDao.save(asset.getTenantId(), asset);
             publishEvictEvent(evictEvent);
         } catch (Exception t) {
+            handleEvictEvent(evictEvent);
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("asset_name_unq_key")) {
                 throw new DataValidationException("Asset with such name already exists!");
