@@ -32,7 +32,7 @@ export class LedIndicatorWidgetSettingsComponent extends WidgetSettingsComponent
   functionScopeVariables = this.widgetService.getWidgetScopeVariables();
 
   get targetDeviceAliasId(): string {
-    const aliasIds = this.widget.config.targetDeviceAliasIds;
+    const aliasIds = this.widget?.config?.targetDeviceAliasIds;
     if (aliasIds && aliasIds.length) {
       return aliasIds[0];
     }

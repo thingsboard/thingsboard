@@ -30,6 +30,11 @@ import { IModulesMap } from '@modules/common/modules-map.models';
 
 declare const System;
 
+export interface ModulesWithFactories {
+  modules: Type<any>[];
+  factories: ComponentFactory<any>[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -37,7 +42,7 @@ export class ResourcesService {
 
   private loadedResources: { [url: string]: ReplaySubject<any> } = {};
   private loadedModules: { [url: string]: ReplaySubject<Type<any>[]> } = {};
-  private loadedFactories: { [url: string]: ReplaySubject<ComponentFactory<any>[]> } = {};
+  private loadedModulesAndFactories: { [url: string]: ReplaySubject<ModulesWithFactories> } = {};
 
   private anchor = this.document.getElementsByTagName('head')[0] || this.document.getElementsByTagName('body')[0];
 
@@ -64,13 +69,13 @@ export class ResourcesService {
     return this.loadResourceByType(fileType, url);
   }
 
-  public loadFactories(url: string, modulesMap: IModulesMap): Observable<ComponentFactory<any>[]> {
-    if (this.loadedFactories[url]) {
-      return this.loadedFactories[url].asObservable();
+  public loadFactories(url: string, modulesMap: IModulesMap): Observable<ModulesWithFactories> {
+    if (this.loadedModulesAndFactories[url]) {
+      return this.loadedModulesAndFactories[url].asObservable();
     }
     modulesMap.init();
-    const subject = new ReplaySubject<ComponentFactory<any>[]>();
-    this.loadedFactories[url] = subject;
+    const subject = new ReplaySubject<ModulesWithFactories>();
+    this.loadedModulesAndFactories[url] = subject;
     import('@angular/compiler').then(
       () => {
         System.import(url).then(
@@ -88,25 +93,29 @@ export class ResourcesService {
                       c.ngModuleFactory.create(this.injector);
                       componentFactories.push(...c.componentFactories);
                     }
-                    this.loadedFactories[url].next(componentFactories);
-                    this.loadedFactories[url].complete();
+                    const modulesWithFactories: ModulesWithFactories = {
+                      modules,
+                      factories: componentFactories
+                    };
+                    this.loadedModulesAndFactories[url].next(modulesWithFactories);
+                    this.loadedModulesAndFactories[url].complete();
                   } catch (e) {
-                    this.loadedFactories[url].error(new Error(`Unable to init module from url: ${url}`));
-                    delete this.loadedFactories[url];
+                    this.loadedModulesAndFactories[url].error(new Error(`Unable to init module from url: ${url}`));
+                    delete this.loadedModulesAndFactories[url];
                   }
                 },
                 (e) => {
-                  this.loadedFactories[url].error(new Error(`Unable to compile module from url: ${url}`));
-                  delete this.loadedFactories[url];
+                  this.loadedModulesAndFactories[url].error(new Error(`Unable to compile module from url: ${url}`));
+                  delete this.loadedModulesAndFactories[url];
                 });
             } else {
-              this.loadedFactories[url].error(new Error(`Module '${url}' doesn't have default export!`));
-              delete this.loadedFactories[url];
+              this.loadedModulesAndFactories[url].error(new Error(`Module '${url}' doesn't have default export!`));
+              delete this.loadedModulesAndFactories[url];
             }
           },
           (e) => {
-            this.loadedFactories[url].error(new Error(`Unable to load module from url: ${url}`));
-            delete this.loadedFactories[url];
+            this.loadedModulesAndFactories[url].error(new Error(`Unable to load module from url: ${url}`));
+            delete this.loadedModulesAndFactories[url];
           }
         );
       }

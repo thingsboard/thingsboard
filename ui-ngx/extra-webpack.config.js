@@ -60,21 +60,23 @@ module.exports = (config, options) => {
   );
 
   const index = config.plugins.findIndex(p => p instanceof ngWebpack.ivy.AngularWebpackPlugin || p instanceof ngWebpack.AngularWebpackPlugin);
-  const angularWebpackPlugin = config.plugins[index];
-
-  addTransformerToAngularWebpackPlugin(angularWebpackPlugin, keysTransformer);
+  let angularWebpackPlugin = config.plugins[index];
 
   if (config.mode === 'production') {
     const angularCompilerOptions = angularWebpackPlugin.pluginOptions;
     angularCompilerOptions.emitClassMetadata = true;
     angularCompilerOptions.emitNgModuleScope = true;
     config.plugins.splice(index, 1);
-    config.plugins.push(new ngWebpack.ivy.AngularWebpackPlugin(angularCompilerOptions));
+    angularWebpackPlugin = new ngWebpack.ivy.AngularWebpackPlugin(angularCompilerOptions);
+    config.plugins.push(angularWebpackPlugin);
     const javascriptOptimizerOptions = config.optimization.minimizer[1].options;
     delete javascriptOptimizerOptions.define.ngJitMode;
     config.optimization.minimizer.splice(1, 1);
     config.optimization.minimizer.push(new JavaScriptOptimizerPlugin(javascriptOptimizerOptions));
   }
+
+  addTransformerToAngularWebpackPlugin(angularWebpackPlugin, keysTransformer);
+
   return config;
 };
 
