@@ -145,8 +145,8 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
     }
 
     @Override
-    public  <E extends HasName, I extends EntityId>  void notifyCreateOrUpdateEntity(TenantId tenantId, I entityId, E customer, CustomerId customerId, ActionType actionType, SecurityUser user, Object... additionalInfo) {
-        logEntityAction(tenantId, entityId, customer, customerId, actionType, user, additionalInfo);
+    public  <E extends HasName, I extends EntityId>  void notifyCreateOrUpdateEntity(TenantId tenantId, I entityId, E entity, CustomerId customerId, ActionType actionType, SecurityUser user, Object... additionalInfo) {
+        logEntityAction(tenantId, entityId, entity, customerId, actionType, user, additionalInfo);
         if (actionType == ActionType.UPDATED)  {
             sendEntityNotificationMsg(tenantId, entityId, EdgeEventActionType.UPDATED);
         }
