@@ -24,7 +24,7 @@
     <div class="tb-color-result" [ngStyle]="{background: colorFormGroup.get('color').value}"></div>
   </div>
   <input matInput formControlName="color" (keydown)="$event.preventDefault();" (click)="openOnInput && showColorPicker()" [required]="required">
-  <button *ngIf="colorClearButton"
+  <button *ngIf="colorClearButton && !disabled"
           type="button"
           matSuffix mat-button mat-icon-button aria-label="Clear"
           (click)="clear()">

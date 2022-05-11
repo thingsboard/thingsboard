@@ -99,7 +99,6 @@
   <mat-tab [formGroup]="dataKeySettingsFormGroup" label="{{ 'datakey.advanced' | translate }}" *ngIf="displayAdvanced">
     <div class="mat-padding" fxLayout="column">
       <tb-widget-settings
-        [settingsDirective]="dataKeySettingsDirective"
         [dashboard]="dashboard"
         [aliasController]="aliasController"
         [widget]="widget"

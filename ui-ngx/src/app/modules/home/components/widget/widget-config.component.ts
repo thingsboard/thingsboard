@@ -620,6 +620,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       widgetSettingsFormData.groupInfoes = deepClone(emptySettingsGroupInfoes);
       widgetSettingsFormData.model = settings || {};
     }
+    widgetSettingsFormData.settingsDirective = this.modelValue.settingsDirective;
     this.advancedSettings.patchValue({ settings: widgetSettingsFormData }, {emitEvent: false});
   }
 
@@ -677,7 +678,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   private updateAdvancedSettings() {
     if (this.modelValue) {
       if (this.modelValue.config) {
-        const settings = this.advancedSettings.get('settings').value.model;
+        const settings = this.advancedSettings.get('settings').value?.model;
         this.modelValue.config.settings = settings;
       }
       this.propagateChange(this.modelValue);

@@ -33,6 +33,7 @@ import { AbstractControl, FormGroup } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { IAliasController } from '@core/api/widget-api.models';
+import { isEmptyStr } from '@core/utils';
 
 export enum widgetType {
   timeseries = 'timeseries',
@@ -624,6 +625,19 @@ export interface IWidgetSettingsComponent {
   [key: string]: any;
 }
 
+function removeEmptyWidgetSettings(settings: WidgetSettings): WidgetSettings {
+  if (settings) {
+    const keys = Object.keys(settings);
+    for (const key of keys) {
+      const val = settings[key];
+      if (val === null || isEmptyStr(val)) {
+        delete settings[key];
+      }
+    }
+  }
+  return settings;
+}
+
 @Directive()
 // tslint:disable-next-line:directive-class-suffix
 export abstract class WidgetSettingsComponent extends PageComponent implements
@@ -713,9 +727,9 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
   }
 
   protected onSettingsChanged(updated: WidgetSettings) {
-    this.settingsValue = updated;
+    this.settingsValue = removeEmptyWidgetSettings(updated);
     if (this.validateSettings()) {
-      this.settingsChangedEmitter.emit(updated);
+      this.settingsChangedEmitter.emit(this.settingsValue);
     } else {
       this.settingsChangedEmitter.emit(null);
     }

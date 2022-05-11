@@ -32,11 +32,11 @@
       width: 100%;
       min-width: 200px;
       height: 100%;
-
-      &:not(.fill-height) {
-        min-height: 200px;
-      }
     }
+  }
+
+  &:not(.tb-fullscreen) {
+    padding-bottom: 15px;
   }
 
   .tb-html-toolbar {

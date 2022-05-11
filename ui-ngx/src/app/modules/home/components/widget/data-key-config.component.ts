@@ -143,7 +143,8 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
           type: 'object',
           properties: {}
         },
-        form: this.dataKeySettingsSchema?.form || ['*']
+        form: this.dataKeySettingsSchema?.form || ['*'],
+        settingsDirective: this.dataKeySettingsDirective
       };
       this.dataKeySettingsFormGroup = this.fb.group({
         settings: [null, []]

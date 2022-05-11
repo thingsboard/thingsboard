@@ -19,9 +19,9 @@ import {
   Component, ComponentFactoryResolver,
   ComponentRef,
   forwardRef,
-  Input,
+  Input, OnChanges,
   OnDestroy,
-  OnInit,
+  OnInit, SimpleChanges,
   ViewChild,
   ViewContainerRef
 } from '@angular/core';
@@ -56,7 +56,7 @@ import { IAliasController } from '@core/api/widget-api.models';
     multi: true
   }]
 })
-export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, OnDestroy, AfterViewInit {
+export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, OnDestroy, AfterViewInit, OnChanges {
 
   @ViewChild('definedSettingsContent', {read: ViewContainerRef, static: true}) definedSettingsContainer: ViewContainerRef;
 
@@ -74,21 +74,7 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
   @Input()
   widget: Widget;
 
-  settingsDirectiveValue: string;
-
-  @Input()
-  set settingsDirective(settingsDirective: string) {
-    if (this.settingsDirectiveValue !== settingsDirective) {
-      this.settingsDirectiveValue = settingsDirective;
-      if (this.settingsDirectiveValue) {
-        this.validateDefinedDirective();
-      }
-    }
-  }
-
-  get settingsDirective(): string {
-    return this.settingsDirectiveValue;
-  }
+  private settingsDirective: string;
 
   definedDirectiveError: string;
 
@@ -122,6 +108,29 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
   ngOnInit(): void {
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    for (const propName of Object.keys(changes)) {
+      const change = changes[propName];
+      if (!change.firstChange && change.currentValue !== change.previousValue) {
+        if (propName === 'widget') {
+          if (this.definedSettingsComponent) {
+            this.definedSettingsComponent.widget = this.widget;
+          }
+        }
+        if (propName === 'dashboard') {
+          if (this.definedSettingsComponent) {
+            this.definedSettingsComponent.dashboard = this.dashboard;
+          }
+        }
+        if (propName === 'aliasController') {
+          if (this.definedSettingsComponent) {
+            this.definedSettingsComponent.aliasController = this.aliasController;
+          }
+        }
+      }
+    }
+  }
+
   ngOnDestroy(): void {
     if (this.definedSettingsComponentRef) {
       this.definedSettingsComponentRef.destroy();
@@ -146,11 +155,11 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
       this.changeSubscription.unsubscribe();
       this.changeSubscription = null;
     }
+    if (this.settingsDirective !== this.widgetSettingsFormData.settingsDirective) {
+      this.settingsDirective = this.widgetSettingsFormData.settingsDirective;
+      this.validateDefinedDirective();
+    }
     if (this.definedSettingsComponent) {
-      this.definedSettingsComponent.aliasController = this.aliasController;
-      this.definedSettingsComponent.dashboard = this.dashboard;
-      this.definedSettingsComponent.widget = this.widget;
-      this.definedSettingsComponent.functionScopeVariables = this.widgetService.getWidgetScopeVariables();
       this.definedSettingsComponent.settings = this.widgetSettingsFormData.model;
       this.changeSubscription = this.definedSettingsComponent.settingsChanged.subscribe((settings) => {
         this.updateModel(settings);
@@ -187,6 +196,7 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
     if (this.definedSettingsComponentRef) {
       this.definedSettingsComponentRef.destroy();
       this.definedSettingsComponentRef = null;
+      this.definedSettingsComponent = null;
     }
     if (this.settingsDirective && this.settingsDirective.length) {
       const componentType = widgetSettingsComponentsMap[this.settingsDirective];

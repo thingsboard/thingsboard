@@ -1364,6 +1364,11 @@ mat-label {
         &::after {
           transition: none;
         }
+        &.dragging {
+          .mat-chip-ripple {
+            display: none !important;
+          }
+        }
         &.dropping {
           //border: dashed 2px;
           //opacity: .5;

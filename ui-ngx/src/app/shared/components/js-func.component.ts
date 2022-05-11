@@ -84,6 +84,8 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
 
   @Input() fillHeight: boolean;
 
+  @Input() minHeight = '200px';
+
   @Input() editorCompleter: TbEditorCompleter;
 
   @Input() globalVariables: Array<string>;

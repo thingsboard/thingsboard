@@ -18,6 +18,7 @@ const JavaScriptOptimizerPlugin = require("@angular-devkit/build-angular/src/web
 const webpack = require("webpack");
 const dirTree = require("directory-tree");
 const ngWebpack = require('@ngtools/webpack');
+const keysTransformer = require('ts-transformer-keys/transformer').default;
 
 var langs = [];
 
@@ -58,9 +59,13 @@ module.exports = (config, options) => {
     })
   );
 
+  const index = config.plugins.findIndex(p => p instanceof ngWebpack.ivy.AngularWebpackPlugin || p instanceof ngWebpack.AngularWebpackPlugin);
+  const angularWebpackPlugin = config.plugins[index];
+
+  addTransformerToAngularWebpackPlugin(angularWebpackPlugin, keysTransformer);
+
   if (config.mode === 'production') {
-    const index = config.plugins.findIndex(p => p instanceof ngWebpack.ivy.AngularWebpackPlugin);
-    const angularCompilerOptions = config.plugins[index].pluginOptions;
+    const angularCompilerOptions = angularWebpackPlugin.pluginOptions;
     angularCompilerOptions.emitClassMetadata = true;
     angularCompilerOptions.emitNgModuleScope = true;
     config.plugins.splice(index, 1);
@@ -72,3 +77,17 @@ module.exports = (config, options) => {
   }
   return config;
 };
+
+function addTransformerToAngularWebpackPlugin(plugin, transformer) {
+  const originalCreateFileEmitter = plugin.createFileEmitter; // private method
+  plugin.createFileEmitter = function (program, transformers, getExtraDependencies, onAfterEmit) {
+    if (!transformers) {
+      transformers = {};
+    }
+    if (!transformers.before) {
+      transformers = { before: [] };
+    }
+    transformers.before.push(transformer(program.getProgram()));
+    return originalCreateFileEmitter.apply(plugin, [program, transformers, getExtraDependencies, onAfterEmit]);
+  };
+}

@@ -71,6 +71,8 @@ export class HtmlComponent implements OnInit, OnDestroy, ControlValueAccessor, V
 
   @Input() fillHeight: boolean;
 
+  @Input() minHeight = '200px';
+
   private requiredValue: boolean;
   get required(): boolean {
     return this.requiredValue;

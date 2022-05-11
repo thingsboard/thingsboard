@@ -211,6 +211,54 @@ import {
 import {
   UpdateMultipleAttributesKeySettingsComponent
 } from '@home/components/widget/lib/settings/input/update-multiple-attributes-key-settings.component';
+import {
+  OpenStreetMapProviderSettingsComponent
+} from '@home/components/widget/lib/settings/map/openstreet-map-provider-settings.component';
+import { MapProviderSettingsComponent } from '@home/components/widget/lib/settings/map/map-provider-settings.component';
+import { MapSettingsComponent } from '@home/components/widget/lib/settings/map/map-settings.component';
+import { MapWidgetSettingsComponent } from '@home/components/widget/lib/settings/map/map-widget-settings.component';
+import {
+  GoogleMapProviderSettingsComponent
+} from '@home/components/widget/lib/settings/map/google-map-provider-settings.component';
+import {
+  HereMapProviderSettingsComponent
+} from '@home/components/widget/lib/settings/map/here-map-provider-settings.component';
+import {
+  TencentMapProviderSettingsComponent
+} from '@home/components/widget/lib/settings/map/tencent-map-provider-settings.component';
+import {
+  ImageMapProviderSettingsComponent
+} from '@home/components/widget/lib/settings/map/image-map-provider-settings.component';
+import {
+  DatasourcesKeyAutocompleteComponent
+} from '@home/components/widget/lib/settings/map/datasources-key-autocomplete.component';
+import { CommonMapSettingsComponent } from '@home/components/widget/lib/settings/map/common-map-settings.component';
+import { MarkersSettingsComponent } from '@home/components/widget/lib/settings/map/markers-settings.component';
+import { PolygonSettingsComponent } from '@home/components/widget/lib/settings/map/polygon-settings.component';
+import { CircleSettingsComponent } from '@home/components/widget/lib/settings/map/circle-settings.component';
+import {
+  MarkerClusteringSettingsComponent
+} from '@home/components/widget/lib/settings/map/marker-clustering-settings.component';
+import { MapEditorSettingsComponent } from '@home/components/widget/lib/settings/map/map-editor-settings.component';
+import { RouteMapSettingsComponent } from '@home/components/widget/lib/settings/map/route-map-settings.component';
+import {
+  RouteMapWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/map/route-map-widget-settings.component';
+import {
+  TripAnimationWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/map/trip-animation-widget-settings.component';
+import {
+  TripAnimationCommonSettingsComponent
+} from '@home/components/widget/lib/settings/map/trip-animation-common-settings.component';
+import {
+  TripAnimationMarkerSettingsComponent
+} from '@home/components/widget/lib/settings/map/trip-animation-marker-settings.component';
+import {
+  TripAnimationPathSettingsComponent
+} from '@home/components/widget/lib/settings/map/trip-animation-path-settings.component';
+import {
+  TripAnimationPointSettingsComponent
+} from '@home/components/widget/lib/settings/map/trip-animation-point-settings.component';
 
 @NgModule({
   declarations: [
@@ -287,7 +335,29 @@ import {
     PhotoCameraInputWidgetSettingsComponent,
     UpdateMultipleAttributesWidgetSettingsComponent,
     DataKeySelectOptionComponent,
-    UpdateMultipleAttributesKeySettingsComponent
+    UpdateMultipleAttributesKeySettingsComponent,
+    GoogleMapProviderSettingsComponent,
+    OpenStreetMapProviderSettingsComponent,
+    HereMapProviderSettingsComponent,
+    ImageMapProviderSettingsComponent,
+    TencentMapProviderSettingsComponent,
+    MapProviderSettingsComponent,
+    DatasourcesKeyAutocompleteComponent,
+    CommonMapSettingsComponent,
+    MarkersSettingsComponent,
+    PolygonSettingsComponent,
+    CircleSettingsComponent,
+    MarkerClusteringSettingsComponent,
+    MapEditorSettingsComponent,
+    RouteMapSettingsComponent,
+    MapSettingsComponent,
+    TripAnimationCommonSettingsComponent,
+    TripAnimationMarkerSettingsComponent,
+    TripAnimationPathSettingsComponent,
+    TripAnimationPointSettingsComponent,
+    MapWidgetSettingsComponent,
+    RouteMapWidgetSettingsComponent,
+    TripAnimationWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -368,7 +438,29 @@ import {
     PhotoCameraInputWidgetSettingsComponent,
     UpdateMultipleAttributesWidgetSettingsComponent,
     DataKeySelectOptionComponent,
-    UpdateMultipleAttributesKeySettingsComponent
+    UpdateMultipleAttributesKeySettingsComponent,
+    GoogleMapProviderSettingsComponent,
+    OpenStreetMapProviderSettingsComponent,
+    HereMapProviderSettingsComponent,
+    ImageMapProviderSettingsComponent,
+    TencentMapProviderSettingsComponent,
+    MapProviderSettingsComponent,
+    DatasourcesKeyAutocompleteComponent,
+    CommonMapSettingsComponent,
+    MarkersSettingsComponent,
+    PolygonSettingsComponent,
+    CircleSettingsComponent,
+    MarkerClusteringSettingsComponent,
+    MapEditorSettingsComponent,
+    RouteMapSettingsComponent,
+    MapSettingsComponent,
+    TripAnimationCommonSettingsComponent,
+    TripAnimationMarkerSettingsComponent,
+    TripAnimationPathSettingsComponent,
+    TripAnimationPointSettingsComponent,
+    MapWidgetSettingsComponent,
+    RouteMapWidgetSettingsComponent,
+    TripAnimationWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -432,5 +524,8 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-update-json-attribute-widget-settings': UpdateJsonAttributeWidgetSettingsComponent,
   'tb-photo-camera-input-widget-settings': PhotoCameraInputWidgetSettingsComponent,
   'tb-update-multiple-attributes-widget-settings': UpdateMultipleAttributesWidgetSettingsComponent,
-  'tb-update-multiple-attributes-key-settings': UpdateMultipleAttributesKeySettingsComponent
+  'tb-update-multiple-attributes-key-settings': UpdateMultipleAttributesKeySettingsComponent,
+  'tb-map-widget-settings': MapWidgetSettingsComponent,
+  'tb-route-map-widget-settings': RouteMapWidgetSettingsComponent,
+  'tb-trip-animation-widget-settings': TripAnimationWidgetSettingsComponent
 };

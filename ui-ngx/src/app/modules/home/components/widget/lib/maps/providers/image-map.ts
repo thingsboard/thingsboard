@@ -16,7 +16,7 @@
 
 import L, { LatLngBounds, LatLngLiteral, LatLngTuple } from 'leaflet';
 import LeafletMap from '../leaflet-map';
-import { CircleData, MapImage, PosFuncton, UnitedMapSettings } from '../map-models';
+import { CircleData, MapImage, PosFuncton, WidgetUnitedMapSettings } from '../map-models';
 import { Observable, ReplaySubject } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 import {
@@ -41,7 +41,7 @@ export class ImageMap extends LeafletMap {
     imageUrl: string;
     posFunction: PosFuncton;
 
-    constructor(ctx: WidgetContext, $container: HTMLElement, options: UnitedMapSettings) {
+    constructor(ctx: WidgetContext, $container: HTMLElement, options: WidgetUnitedMapSettings) {
         super(ctx, $container, options);
         this.posFunction = parseFunction(options.posFunction, ['origXPos', 'origYPos']) as PosFuncton;
         this.mapImage(options).subscribe((mapImage) => {
@@ -51,21 +51,20 @@ export class ImageMap extends LeafletMap {
             this.onResize(true);
           } else {
             this.onResize();
-            super.initSettings(options);
             super.setMap(this.map);
           }
         });
     }
 
-    private mapImage(options: UnitedMapSettings): Observable<MapImage> {
+    private mapImage(options: WidgetUnitedMapSettings): Observable<MapImage> {
       const imageEntityAlias = options.imageEntityAlias;
       const imageUrlAttribute = options.imageUrlAttribute;
       if (!imageEntityAlias || !imageUrlAttribute) {
-        return this.imageFromUrl(options.mapUrl);
+        return this.imageFromUrl(options.mapImageUrl);
       }
       const entityAliasId = this.ctx.aliasController.getEntityAliasId(imageEntityAlias);
       if (!entityAliasId) {
-        return this.imageFromUrl(options.mapUrl);
+        return this.imageFromUrl(options.mapImageUrl);
       }
       const datasources = [
         {
