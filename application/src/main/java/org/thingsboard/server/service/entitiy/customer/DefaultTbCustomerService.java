@@ -34,14 +34,13 @@ import java.util.List;
 @AllArgsConstructor
 public class DefaultTbCustomerService extends AbstractTbEntityService implements TbCustomerService {
 
-
     @Override
     public Customer save(Customer customer, SecurityUser user) throws ThingsboardException {
         ActionType actionType = customer.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = customer.getTenantId();
         try {
             Customer savedCustomer = checkNotNull(customerService.saveCustomer(customer));
-            notificationEntityService.notifySaveCustomer(savedCustomer, actionType, user);
+            notificationEntityService.notifyCreateOrUpdateEntity(tenantId, savedCustomer.getId(), savedCustomer, savedCustomer.getId(), actionType, user);
             return savedCustomer;
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.CUSTOMER), customer, null, actionType, user, e);
