@@ -22,7 +22,6 @@ import org.thingsboard.server.common.data.ClaimRequest;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.device.claim.ClaimResponse;
 import org.thingsboard.server.dao.device.claim.ClaimResult;
@@ -35,6 +34,7 @@ import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_CLAIM_TOPIC;
 import static org.thingsboard.server.common.data.device.profile.MqttTopics.GATEWAY_CLAIM_TOPIC;
 
 @Slf4j
@@ -112,7 +112,7 @@ public class MqttClaimDeviceTest extends AbstractMqttIntegrationTest {
     }
 
     protected void validateClaimResponse(boolean emptyPayload, MqttTestClient client, byte[] payloadBytes, byte[] failurePayloadBytes) throws Exception {
-        client.publishAndWait(MqttTopics.DEVICE_CLAIM_TOPIC, failurePayloadBytes);
+        client.publishAndWait(DEVICE_CLAIM_TOPIC, failurePayloadBytes);
 
         loginUser(customerAdmin.getName(), CUSTOMER_USER_PASSWORD);
         ClaimRequest claimRequest;
@@ -130,7 +130,8 @@ public class MqttClaimDeviceTest extends AbstractMqttIntegrationTest {
 
         assertEquals(claimResponse, ClaimResponse.FAILURE);
 
-        client.publishAndWait(MqttTopics.DEVICE_CLAIM_TOPIC, payloadBytes);
+        client.publishAndWait(DEVICE_CLAIM_TOPIC, payloadBytes);
+        client.disconnect();
 
         ClaimResult claimResult = doExecuteWithRetriesAndInterval(
                 () -> doPostClaimAsync("/api/customer/device/" + savedDevice.getName() + "/claim", claimRequest, ClaimResult.class, status().isOk()),
@@ -170,6 +171,7 @@ public class MqttClaimDeviceTest extends AbstractMqttIntegrationTest {
         assertEquals(claimResponse, ClaimResponse.FAILURE);
 
         client.publishAndWait(GATEWAY_CLAIM_TOPIC, payloadBytes);
+        client.disconnect();
 
         ClaimResult claimResult = doExecuteWithRetriesAndInterval(
                 () -> doPostClaimAsync("/api/customer/device/" + deviceName + "/claim", claimRequest, ClaimResult.class, status().isOk()),

@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.internal.wire.MqttWireMessage;
 
 import java.util.concurrent.CountDownLatch;
 
@@ -32,6 +33,7 @@ public class MqttTestCallback implements MqttCallback {
     private int qoS;
     private byte[] payloadBytes;
     private String awaitSubTopic;
+    private boolean pubAckReceived;
 
     public MqttTestCallback(String awaitSubTopic) {
         this.subscribeLatch = new CountDownLatch(1);
@@ -47,6 +49,7 @@ public class MqttTestCallback implements MqttCallback {
     @Override
     public void connectionLost(Throwable throwable) {
         log.warn("connectionLost: ", throwable);
+        deliveryLatch.countDown();
     }
 
     @Override
@@ -69,6 +72,7 @@ public class MqttTestCallback implements MqttCallback {
     @Override
     public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
         log.warn("delivery complete: {}", iMqttDeliveryToken.getResponse());
+        pubAckReceived = iMqttDeliveryToken.getResponse().getType() == MqttWireMessage.MESSAGE_TYPE_PUBACK;
         deliveryLatch.countDown();
 
     }

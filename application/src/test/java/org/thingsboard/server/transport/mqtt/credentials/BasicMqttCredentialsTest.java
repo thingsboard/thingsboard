@@ -17,18 +17,12 @@ package org.thingsboard.server.transport.mqtt.credentials;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttSecurityException;
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
-import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -44,6 +38,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_TELEMETRY_TOPIC;
 
 @DaoSqlTest
 public class BasicMqttCredentialsTest extends AbstractMqttIntegrationTest {
@@ -138,7 +133,7 @@ public class BasicMqttCredentialsTest extends AbstractMqttIntegrationTest {
     private void testTelemetryIsDelivered(Device device, MqttTestClient client, boolean ok) throws Exception {
         String randomKey = RandomStringUtils.randomAlphanumeric(10);
         List<String> expectedKeys = Arrays.asList(randomKey);
-        client.publishAndWait(MqttTopics.DEVICE_TELEMETRY_TOPIC, JacksonUtil.toString(JacksonUtil.newObjectNode().put(randomKey, true)).getBytes());
+        client.publishAndWait(DEVICE_TELEMETRY_TOPIC, JacksonUtil.toString(JacksonUtil.newObjectNode().put(randomKey, true)).getBytes());
 
         String deviceId = device.getId().getId().toString();
 
@@ -166,23 +161,6 @@ public class BasicMqttCredentialsTest extends AbstractMqttIntegrationTest {
             assertNull(actualKeys);
         }
         client.disconnect();
-    }
-
-    protected MqttAsyncClient getMqttAsyncClient(String clientId, String username, String password) throws MqttException {
-        if (StringUtils.isEmpty(clientId)) {
-            clientId = MqttAsyncClient.generateClientId();
-        }
-        MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, clientId, new MemoryPersistence());
-
-        MqttConnectOptions options = new MqttConnectOptions();
-        if (StringUtils.isNotEmpty(username)) {
-            options.setUserName(username);
-        }
-        if (StringUtils.isNotEmpty(password)) {
-            options.setPassword(password.toCharArray());
-        }
-        client.connect(options).waitForCompletion();
-        return client;
     }
 
     private Device createDevice(String deviceName, BasicMqttCredentials clientIdCredValue) throws Exception {
