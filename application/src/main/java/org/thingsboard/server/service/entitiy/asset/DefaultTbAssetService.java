@@ -45,7 +45,7 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
         TenantId tenantId = asset.getTenantId();
         try {
             Asset savedAsset = checkNotNull(assetService.saveAsset(asset));
-            notificationEntityService.notifyCreateOrUpdateAsset(tenantId, savedAsset.getId(), savedAsset.getCustomerId(), asset, actionType, user);
+            notificationEntityService.notifyCreateOrUpdateEntity(tenantId, savedAsset.getId(), asset, savedAsset.getCustomerId(), actionType, user);
             return savedAsset;
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.ASSET), asset, null, actionType, user, e);
@@ -60,7 +60,7 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
         try {
             List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, assetId);
             assetService.deleteAsset(tenantId, assetId);
-            notificationEntityService.notifyDeleteEntity(tenantId, assetId, asset, asset.getCustomerId(), relatedEdgeIds, user, asset.toString());
+            notificationEntityService.notifyDeleteEntity(tenantId, assetId, asset, asset.getCustomerId(), ActionType.DELETED, relatedEdgeIds, user, false, asset.toString());
 
             return removeAlarmsByEntityId(tenantId, assetId);
         } catch (Exception e) {

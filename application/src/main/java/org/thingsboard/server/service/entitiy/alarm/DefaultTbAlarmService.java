@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.entitiy.alarm;
 
-
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;

@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy.tenant;
+package org.thingsboard.server.service.entitiy.customer;
 
-import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.service.entitiy.SimpleTbEntityService;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
-public interface TbTenantService {
+public interface TbCustomerService extends SimpleTbEntityService<Customer> {
 
-    Tenant save(Tenant tenant) throws ThingsboardException;
-
-    void delete(Tenant tenant) throws ThingsboardException;
+    void delete(Customer customer, SecurityUser user) throws ThingsboardException;
 
 }

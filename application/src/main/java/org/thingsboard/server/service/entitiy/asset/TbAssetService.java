@@ -22,10 +22,10 @@ import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.service.entitiy.SimpleTbEntityService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-public interface TbAssetService {
-    Asset save(Asset asset, SecurityUser user) throws ThingsboardException;
+public interface TbAssetService extends SimpleTbEntityService<Asset> {
 
     ListenableFuture<Void> delete(Asset asset, SecurityUser user) throws ThingsboardException;
 
