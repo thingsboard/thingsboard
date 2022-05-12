@@ -46,7 +46,7 @@ public interface TbNotificationEntityService {
 
     <E extends HasName, I extends EntityId> void notifyDeleteEntity(TenantId tenantId, I entityId, E entity, CustomerId customerId,
                                                                     ActionType actionType, List<EdgeId> relatedEdgeIds, SecurityUser user,
-                                                                    boolean isBody, Object... additionalInfo);
+                                                                    Object... additionalInfo);
 
     <E extends HasName, I extends EntityId> void notifyAssignOrUnassignEntityToCustomer(TenantId tenantId, I entityId,
                                                                                         CustomerId customerId, E entity,
@@ -81,6 +81,7 @@ public interface TbNotificationEntityService {
 
     void notifyCreateOrUpdateAlarm(Alarm alarm, ActionType actionType, SecurityUser user, Object... additionalInfo);
 
+    void notifyDeleteAlarm(Alarm alarm, SecurityUser user, List<EdgeId> relatedEdgeIds);
 
     void notifyDeleteCustomer(Customer customer, SecurityUser user, List<EdgeId> relatedEdgeIds);
 }
