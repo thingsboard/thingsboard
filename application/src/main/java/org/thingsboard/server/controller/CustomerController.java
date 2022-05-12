@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,7 +34,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -42,6 +42,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.entitiy.customer.TbCustomerService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
@@ -64,8 +65,11 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 
 @RestController
 @TbCoreComponent
+@RequiredArgsConstructor
 @RequestMapping("/api")
 public class CustomerController extends BaseController {
+
+    private final TbCustomerService tbCustomerService;
 
     public static final String IS_PUBLIC = "isPublic";
     public static final String CUSTOMER_SECURITY_CHECK = "If the user has the authority of 'Tenant Administrator', the server checks that the customer is owned by the same tenant. " +
@@ -145,30 +149,10 @@ public class CustomerController extends BaseController {
     @RequestMapping(value = "/customer", method = RequestMethod.POST)
     @ResponseBody
     public Customer saveCustomer(@ApiParam(value = "A JSON value representing the customer.") @RequestBody Customer customer) throws ThingsboardException {
-        try {
             customer.setTenantId(getCurrentUser().getTenantId());
-
             checkEntity(customer.getId(), customer, Resource.CUSTOMER);
-
-            Customer savedCustomer = checkNotNull(customerService.saveCustomer(customer));
-
-            logEntityAction(savedCustomer.getId(), savedCustomer,
-                    savedCustomer.getId(),
-                    customer.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
-
-            if (customer.getId() != null) {
-                sendEntityNotificationMsg(savedCustomer.getTenantId(), savedCustomer.getId(), EdgeEventActionType.UPDATED);
-            }
-
-            return savedCustomer;
-        } catch (Exception e) {
-
-            logEntityAction(emptyId(EntityType.CUSTOMER), customer,
-                    null, customer.getId() == null ? ActionType.ADDED : ActionType.UPDATED, e);
-
-            throw handleException(e);
-        }
-    }
+            return tbCustomerService.save(customer, getCurrentUser());
+     }
 
     @ApiOperation(value = "Delete Customer (deleteCustomer)",
             notes = "Deletes the Customer and all customer Users. " +
