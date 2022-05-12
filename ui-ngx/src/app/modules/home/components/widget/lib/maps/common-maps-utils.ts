@@ -76,9 +76,12 @@ export function findAngle(startPoint: FormattedData, endPoint: FormattedData, la
 }
 
 
-export function getDefCenterPosition(position) {
+export function getDefCenterPosition(position): [number, number] {
   if (typeof (position) === 'string') {
-    return position.split(',');
+    const parts = position.split(',');
+    if (parts.length === 2) {
+      return [Number(parts[0]), Number(parts[1])];
+    }
   }
   if (typeof (position) === 'object') {
     return position;

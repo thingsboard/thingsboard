@@ -21,7 +21,6 @@ import {
   AttributeSourceProperty,
   ColorLevelSetting,
   DigitalGaugeSettings,
-  digitalGaugeSettingsSchema,
   FixedLevelColors
 } from '@home/components/widget/lib/digital-gauge.models';
 import * as tinycolor_ from 'tinycolor2';
@@ -44,14 +43,8 @@ import GenericOptions = CanvasGauges.GenericOptions;
 
 const tinycolor = tinycolor_;
 
-const digitalGaugeSettingsSchemaValue = digitalGaugeSettingsSchema;
-
 // @dynamic
 export class TbCanvasDigitalGauge {
-
-  static get settingsSchema(): JsonSettingsSchema {
-    return digitalGaugeSettingsSchemaValue;
-  }
 
   constructor(protected ctx: WidgetContext, canvasId: string) {
     const gaugeElement = $('#' + canvasId, ctx.$container)[0];
