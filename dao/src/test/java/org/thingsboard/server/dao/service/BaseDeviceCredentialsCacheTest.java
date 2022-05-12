@@ -138,7 +138,7 @@ public abstract class BaseDeviceCredentialsCacheTest extends AbstractServiceTest
             Object target = ((Advised) deviceCredentialsService).getTargetSource().getTarget();
             return (DeviceCredentialsService) target;
         }
-        return null;
+        return deviceCredentialsService;
     }
 
     private DeviceCredentials createDummyDeviceCredentialsEntity(String deviceCredentialsId) {
