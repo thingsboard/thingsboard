@@ -149,10 +149,10 @@ public class CustomerController extends BaseController {
     @RequestMapping(value = "/customer", method = RequestMethod.POST)
     @ResponseBody
     public Customer saveCustomer(@ApiParam(value = "A JSON value representing the customer.") @RequestBody Customer customer) throws ThingsboardException {
-            customer.setTenantId(getCurrentUser().getTenantId());
-            checkEntity(customer.getId(), customer, Resource.CUSTOMER);
-            return tbCustomerService.save(customer, getCurrentUser());
-     }
+        customer.setTenantId(getCurrentUser().getTenantId());
+        checkEntity(customer.getId(), customer, Resource.CUSTOMER);
+        return tbCustomerService.save(customer, getCurrentUser());
+    }
 
     @ApiOperation(value = "Delete Customer (deleteCustomer)",
             notes = "Deletes the Customer and all customer Users. " +
@@ -164,27 +164,11 @@ public class CustomerController extends BaseController {
     public void deleteCustomer(@ApiParam(value = CUSTOMER_ID_PARAM_DESCRIPTION)
                                @PathVariable(CUSTOMER_ID) String strCustomerId) throws ThingsboardException {
         checkParameter(CUSTOMER_ID, strCustomerId);
+        CustomerId customerId = new CustomerId(toUUID(strCustomerId));
+        Customer customer = checkCustomerId(customerId, Operation.DELETE);
         try {
-            CustomerId customerId = new CustomerId(toUUID(strCustomerId));
-            Customer customer = checkCustomerId(customerId, Operation.DELETE);
-
-            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(getTenantId(), customerId);
-
-            customerService.deleteCustomer(getTenantId(), customerId);
-
-            logEntityAction(customerId, customer,
-                    customer.getId(),
-                    ActionType.DELETED, null, strCustomerId);
-
-            sendDeleteNotificationMsg(getTenantId(), customerId, relatedEdgeIds);
-            tbClusterService.broadcastEntityStateChangeEvent(getTenantId(), customerId, ComponentLifecycleEvent.DELETED);
+            tbCustomerService.delete(customer, getCurrentUser());
         } catch (Exception e) {
-
-            logEntityAction(emptyId(EntityType.CUSTOMER),
-                    null,
-                    null,
-                    ActionType.DELETED, e, strCustomerId);
-
             throw handleException(e);
         }
     }
