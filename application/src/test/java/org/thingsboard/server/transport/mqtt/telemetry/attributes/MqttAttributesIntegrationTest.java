@@ -148,13 +148,12 @@ public class MqttAttributesIntegrationTest extends AbstractMqttIntegrationTest {
 
         assertNotNull(secondDevice);
 
-        // todo removed sleep
-        Thread.sleep(2000);
-
-        List<String> firstDeviceActualKeys = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + firstDevice.getId() + "/keys/attributes/CLIENT_SCOPE", new TypeReference<>() {});
+        List<String> firstDeviceActualKeys = getActualKeysList(firstDevice.getId(), expectedKeys);
+        assertNotNull(firstDeviceActualKeys);
         Set<String> firstDeviceActualKeySet = new HashSet<>(firstDeviceActualKeys);
 
-        List<String> secondDeviceActualKeys = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + secondDevice.getId() + "/keys/attributes/CLIENT_SCOPE", new TypeReference<>() {});
+        List<String> secondDeviceActualKeys = getActualKeysList(secondDevice.getId(), expectedKeys);
+        assertNotNull(secondDeviceActualKeys);
         Set<String> secondDeviceActualKeySet = new HashSet<>(secondDeviceActualKeys);
 
         Set<String> expectedKeySet = new HashSet<>(expectedKeys);
@@ -171,6 +170,21 @@ public class MqttAttributesIntegrationTest extends AbstractMqttIntegrationTest {
         assertAttributesValues(firstDeviceValues, expectedKeySet);
         assertAttributesValues(secondDeviceValues, expectedKeySet);
 
+    }
+
+    private List<String> getActualKeysList(DeviceId deviceId, List<String> expectedKeys) throws Exception {
+        long start = System.currentTimeMillis();
+        long end = System.currentTimeMillis() + 3000;
+        List<String> firstDeviceActualKeys = null;
+        while (start <= end) {
+            firstDeviceActualKeys = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + deviceId + "/keys/attributes/CLIENT_SCOPE", new TypeReference<>() {});
+            if (firstDeviceActualKeys.size() == expectedKeys.size()) {
+                break;
+            }
+            Thread.sleep(100);
+            start += 100;
+        }
+        return firstDeviceActualKeys;
     }
 
     @SuppressWarnings("unchecked")

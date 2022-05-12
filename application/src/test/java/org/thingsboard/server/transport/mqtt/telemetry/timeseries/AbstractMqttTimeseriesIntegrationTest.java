@@ -123,20 +123,11 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         client.publishAndWait(topic, payload);
         client.disconnect();
 
-        String deviceId = savedDevice.getId().getId().toString();
+        DeviceId deviceId = savedDevice.getId();
 
-        long start = System.currentTimeMillis();
-        long end = System.currentTimeMillis() + 5000;
-
-        List<String> actualKeys = null;
-        while (start <= end) {
-            actualKeys = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + deviceId + "/keys/timeseries", new TypeReference<>() {});
-            if (actualKeys.size() == expectedKeys.size()) {
-                break;
-            }
-            Thread.sleep(100);
-            start += 100;
-        }
+        List<String> actualKeys = getActualKeysList(deviceId, expectedKeys);
+        long end;
+        long start;
         assertNotNull(actualKeys);
 
         Set<String> actualKeySet = new HashSet<>(actualKeys);
@@ -207,13 +198,10 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
 
         assertNotNull(secondDevice);
 
-        // TODO remove sleep
-        Thread.sleep(2000);
-
-        List<String> firstDeviceActualKeys = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + firstDevice.getId() + "/keys/timeseries", new TypeReference<>() {});
+        List<String> firstDeviceActualKeys = getActualKeysList(firstDevice.getId(), expectedKeys);
         Set<String> firstDeviceActualKeySet = new HashSet<>(firstDeviceActualKeys);
 
-        List<String> secondDeviceActualKeys = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + secondDevice.getId() + "/keys/timeseries", new TypeReference<>() {});
+        List<String> secondDeviceActualKeys = getActualKeysList(secondDevice.getId(), expectedKeys);
         Set<String> secondDeviceActualKeySet = new HashSet<>(secondDeviceActualKeys);
 
         Set<String> expectedKeySet = new HashSet<>(expectedKeys);
@@ -229,6 +217,22 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
 
         assertGatewayDeviceData(firstDeviceValues, expectedKeys);
         assertGatewayDeviceData(secondDeviceValues, expectedKeys);
+    }
+
+    private List<String> getActualKeysList(DeviceId deviceId, List<String> expectedKeys) throws Exception {
+        long start = System.currentTimeMillis();
+        long end = System.currentTimeMillis() + 3000;
+
+        List<String> actualKeys = null;
+        while (start <= end) {
+            actualKeys = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + deviceId + "/keys/timeseries", new TypeReference<>() {});
+            if (actualKeys.size() == expectedKeys.size()) {
+                break;
+            }
+            Thread.sleep(100);
+            start += 100;
+        }
+        return actualKeys;
     }
 
     protected String getGatewayTelemetryJsonPayload(String deviceA, String deviceB, String firstTsValue, String secondTsValue) {
