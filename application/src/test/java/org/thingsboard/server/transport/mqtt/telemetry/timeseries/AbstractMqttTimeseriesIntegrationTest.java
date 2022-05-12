@@ -126,8 +126,6 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         DeviceId deviceId = savedDevice.getId();
 
         List<String> actualKeys = getActualKeysList(deviceId, expectedKeys);
-        long end;
-        long start;
         assertNotNull(actualKeys);
 
         Set<String> actualKeySet = new HashSet<>(actualKeys);
@@ -141,8 +139,8 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         } else {
             getTelemetryValuesUrl = "/api/plugins/telemetry/DEVICE/" + deviceId + "/values/timeseries?keys=" + String.join(",", actualKeySet);
         }
-        start = System.currentTimeMillis();
-        end = System.currentTimeMillis() + 5000;
+        long start = System.currentTimeMillis();
+        long end = System.currentTimeMillis() + 5000;
         Map<String, List<Map<String, Object>>> values = null;
         while (start <= end) {
             values = doGetAsyncTyped(getTelemetryValuesUrl, new TypeReference<>() {});
