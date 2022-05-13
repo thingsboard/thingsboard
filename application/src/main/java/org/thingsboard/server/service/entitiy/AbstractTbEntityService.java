@@ -22,7 +22,6 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.User;
@@ -43,6 +42,7 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.ClaimDevicesService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -106,6 +106,8 @@ public abstract class AbstractTbEntityService {
     protected RuleChainService ruleChainService;
     @Autowired
     protected EdgeNotificationService edgeNotificationService;
+    @Autowired
+    protected DashboardService dashboardService;
 
     protected ListenableFuture<Void> removeAlarmsByEntityId(TenantId tenantId, EntityId entityId) {
         ListenableFuture<PageData<AlarmInfo>> alarmsFuture =
