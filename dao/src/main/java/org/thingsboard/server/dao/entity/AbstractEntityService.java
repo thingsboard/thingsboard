@@ -40,6 +40,7 @@ public abstract class AbstractEntityService {
     public static final String INCORRECT_EDGE_ID = "Incorrect edgeId ";
     public static final String INCORRECT_PAGE_LINK = "Incorrect page link ";
 
+    @Lazy
     @Autowired
     protected RelationService relationService;
 
@@ -47,9 +48,11 @@ public abstract class AbstractEntityService {
     @Autowired
     protected AlarmService alarmService;
 
+    @Lazy
     @Autowired
     protected EntityViewService entityViewService;
 
+    @Lazy
     @Autowired(required = false)
     protected EdgeService edgeService;
 

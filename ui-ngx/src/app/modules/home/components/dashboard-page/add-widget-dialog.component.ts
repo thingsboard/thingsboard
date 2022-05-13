@@ -100,7 +100,10 @@ export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogCom
       isDataEnabled,
       settingsSchema,
       dataKeySettingsSchema,
-      latestDataKeySettingsSchema
+      latestDataKeySettingsSchema,
+      settingsDirective: widgetInfo.settingsDirective,
+      dataKeySettingsDirective: widgetInfo.dataKeySettingsDirective,
+      latestDataKeySettingsDirective: widgetInfo.latestDataKeySettingsDirective
     };
 
     this.widgetFormGroup = this.fb.group({

@@ -149,6 +149,8 @@ import {
 } from '@home/components/tokens';
 import { DashboardStateComponent } from '@home/components/dashboard-page/dashboard-state.component';
 import { EntityDetailsPageComponent } from '@home/components/entity/entity-details-page.component';
+import { WidgetSettingsModule } from '@home/components/widget/lib/settings/widget-settings.module';
+import { WidgetSettingsComponent } from '@home/components/widget/widget-settings.component';
 
 @NgModule({
   declarations:
@@ -183,6 +185,7 @@ import { EntityDetailsPageComponent } from '@home/components/entity/entity-detai
       WidgetContainerComponent,
       WidgetComponent,
       LegendComponent,
+      WidgetSettingsComponent,
       WidgetConfigComponent,
       EntityFilterViewComponent,
       EntityFilterComponent,
@@ -275,6 +278,7 @@ import { EntityDetailsPageComponent } from '@home/components/entity/entity-detai
     CommonModule,
     SharedModule,
     SharedHomeComponentsModule,
+    WidgetSettingsModule,
     Lwm2mProfileComponentsModule,
     SnmpDeviceProfileTransportModule,
     StatesControllerModule,
@@ -303,6 +307,7 @@ import { EntityDetailsPageComponent } from '@home/components/entity/entity-detai
     WidgetContainerComponent,
     WidgetComponent,
     LegendComponent,
+    WidgetSettingsComponent,
     WidgetConfigComponent,
     EntityFilterViewComponent,
     EntityFilterComponent,

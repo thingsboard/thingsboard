@@ -349,8 +349,12 @@ public abstract class BaseController {
         }
     }
 
-    UUID toUUID(String id) {
-        return UUID.fromString(id);
+    UUID toUUID(String id) throws ThingsboardException {
+        try {
+            return UUID.fromString(id);
+        } catch (IllegalArgumentException e) {
+            throw handleException(e, false);
+        }
     }
 
     PageLink createPageLink(int pageSize, int page, String textSearch, String sortProperty, String sortOrder) throws ThingsboardException {

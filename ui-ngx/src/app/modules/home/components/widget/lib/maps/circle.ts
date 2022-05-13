@@ -15,7 +15,7 @@
 ///
 
 import L, { LeafletMouseEvent } from 'leaflet';
-import { CircleData, UnitedMapSettings } from '@home/components/widget/lib/maps/map-models';
+import { CircleData, WidgetCircleSettings } from '@home/components/widget/lib/maps/map-models';
 import {
   functionValueCalculator,
   parseWithTranslation
@@ -34,10 +34,11 @@ export class Circle {
   tooltip: L.Popup;
 
   constructor(private map: LeafletMap,
-              public data: FormattedData,
-              public dataSources: FormattedData[],
-              private settings: UnitedMapSettings,
-              private onDragendListener?) {
+              private data: FormattedData,
+              private dataSources: FormattedData[],
+              private settings: Partial<WidgetCircleSettings>,
+              private onDragendListener?,
+              snappable = false) {
     this.circleData = this.map.convertToCircleFormat(JSON.parse(data[this.settings.circleKeyName]));
     const centerPosition = this.createCenterPosition();
     const circleFillColor = this.getFillColor();
@@ -50,7 +51,7 @@ export class Circle {
       fillOpacity: settings.circleFillColorOpacity,
       opacity: settings.circleStrokeOpacity,
       pmIgnore: !settings.editableCircle,
-      snapIgnore: !settings.snappable
+      snapIgnore: !snappable
     }).addTo(this.map.map);
 
     if (settings.showCircleLabel) {
@@ -93,12 +94,14 @@ export class Circle {
     if (this.settings.showCircleLabel) {
       if (!this.map.circleLabelText || this.settings.useCircleLabelFunction) {
         const pattern = this.settings.useCircleLabelFunction ?
-          safeExecute(this.settings.circleLabelFunction, [this.data, this.dataSources, this.data.dsIndex]) : this.settings.circleLabel;
+          safeExecute(this.settings.parsedCircleLabelFunction,
+            [this.data, this.dataSources, this.data.dsIndex]) : this.settings.circleLabel;
         this.map.circleLabelText = parseWithTranslation.prepareProcessPattern(pattern, true);
         this.map.replaceInfoTooltipCircle = processDataPattern(this.map.circleLabelText, this.data);
       }
       const circleLabelText = fillDataPattern(this.map.circleLabelText, this.map.replaceInfoTooltipCircle, this.data);
-      this.leafletCircle.bindTooltip(`<div style="color: ${this.settings.labelColor};"><b>${circleLabelText}</b></div>`,
+      const labelColor = this.map.ctx.widgetConfig.color;
+      this.leafletCircle.bindTooltip(`<div style="color: ${labelColor};"><b>${circleLabelText}</b></div>`,
         { className: 'tb-polygon-label', permanent: true, sticky: true, direction: 'center'})
         .openTooltip(this.leafletCircle.getLatLng());
     }
@@ -106,7 +109,7 @@ export class Circle {
 
   private updateTooltip() {
     const pattern = this.settings.useCircleTooltipFunction ?
-      safeExecute(this.settings.circleTooltipFunction, [this.data, this.dataSources, this.data.dsIndex]) :
+      safeExecute(this.settings.parsedCircleTooltipFunction, [this.data, this.dataSources, this.data.dsIndex]) :
       this.settings.circleTooltipPattern;
     this.tooltip.setContent(parseWithTranslation.parseTemplate(pattern, this.data, true));
   }
@@ -151,12 +154,12 @@ export class Circle {
   }
 
   private getFillColor(): string | null {
-    return functionValueCalculator(this.settings.useCircleFillColorFunction, this.settings.circleFillColorFunction,
+    return functionValueCalculator(this.settings.useCircleFillColorFunction, this.settings.parsedCircleFillColorFunction,
       [this.data, this.dataSources, this.data.dsIndex], this.settings.circleFillColor);
   }
 
   private getStrokeColor(): string | null {
-    return functionValueCalculator(this.settings.useCircleStrokeColorFunction, this.settings.circleStrokeColorFunction,
+    return functionValueCalculator(this.settings.useCircleStrokeColorFunction, this.settings.parsedCircleStrokeColorFunction,
       [this.data, this.dataSources, this.data.dsIndex], this.settings.circleStrokeColor);
   }
 

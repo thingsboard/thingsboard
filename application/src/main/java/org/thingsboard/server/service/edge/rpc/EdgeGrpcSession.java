@@ -309,10 +309,10 @@ public final class EdgeGrpcSession implements Closeable {
                 public void onSuccess(@Nullable UUID ifOffset) {
                     if (ifOffset != null) {
                         Long newStartTs = Uuids.unixTimestamp(ifOffset);
-                        ListenableFuture<List<Void>> updateFuture = updateQueueStartTs(newStartTs);
+                        ListenableFuture<List<String>> updateFuture = updateQueueStartTs(newStartTs);
                         Futures.addCallback(updateFuture, new FutureCallback<>() {
                             @Override
-                            public void onSuccess(@Nullable List<Void> list) {
+                            public void onSuccess(@Nullable List<String> list) {
                                 log.debug("[{}] queue offset was updated [{}][{}]", sessionId, ifOffset, newStartTs);
                                 result.set(null);
                             }
@@ -496,7 +496,7 @@ public final class EdgeGrpcSession implements Closeable {
         }, ctx.getGrpcCallbackExecutorService());
     }
 
-    private ListenableFuture<List<Void>> updateQueueStartTs(Long newStartTs) {
+    private ListenableFuture<List<String>> updateQueueStartTs(Long newStartTs) {
         log.trace("[{}] updating QueueStartTs [{}][{}]", this.sessionId, edge.getId(), newStartTs);
         List<AttributeKvEntry> attributes = Collections.singletonList(
                 new BaseAttributeKvEntry(

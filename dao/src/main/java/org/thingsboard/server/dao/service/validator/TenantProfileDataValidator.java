@@ -56,7 +56,7 @@ public class TenantProfileDataValidator extends DataValidator<TenantProfile> {
     }
 
     @Override
-    protected void validateUpdate(TenantId tenantId, TenantProfile tenantProfile) {
+    protected TenantProfile validateUpdate(TenantId tenantId, TenantProfile tenantProfile) {
         TenantProfile old = tenantProfileDao.findById(TenantId.SYS_TENANT_ID, tenantProfile.getId().getId());
         if (old == null) {
             throw new DataValidationException("Can't update non existing tenant profile!");
@@ -65,5 +65,6 @@ public class TenantProfileDataValidator extends DataValidator<TenantProfile> {
         } else if (old.isIsolatedTbCore() != tenantProfile.isIsolatedTbCore()) {
             throw new DataValidationException("Can't update isolatedTbCore property!");
         }
+        return old;
     }
 }
