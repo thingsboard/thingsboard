@@ -13,22 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.cache;
+package org.thingsboard.server.cache.device;
 
-import org.springframework.data.redis.serializer.RedisSerializer;
-import org.springframework.data.redis.serializer.SerializationException;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.TenantId;
 
-public class TbRedisSerializer<T> implements RedisSerializer<T> {
+@Data
+public class DeviceCacheEvictEvent {
 
-    private final RedisSerializer<Object> java = RedisSerializer.java();
+    private final TenantId tenantId;
+    private final DeviceId deviceId;
+    private final String newName;
+    private final String oldName;
 
-    @Override
-    public byte[] serialize(T t) throws SerializationException {
-        return java.serialize(t);
-    }
-
-    @Override
-    public T deserialize(byte[] bytes) throws SerializationException {
-        return (T) java.deserialize(bytes);
-    }
 }

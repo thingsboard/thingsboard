@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.cache;
+package org.thingsboard.server.cache;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.CacheManager;
-import org.thingsboard.server.cache.TbCacheTransaction;
-import org.thingsboard.server.cache.TbCacheValueWrapper;
-import org.thingsboard.server.cache.TbTransactionalCache;
 
 import java.io.Serializable;
 import java.util.Collection;

@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.cache;
+package org.thingsboard.server.cache;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.Cache;
-import org.thingsboard.server.cache.TbCacheValueWrapper;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class SimpleTbCacheValueWrapper<T> implements TbCacheValueWrapper<T> {

@@ -13,18 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.cache;
+package org.thingsboard.server.cache;
 
-import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.serializer.RedisSerializer;
+import org.springframework.data.redis.serializer.SerializationException;
 
-import java.io.Serializable;
+public class TbRedisSerializer<T> implements RedisSerializer<T> {
 
-@RequiredArgsConstructor
-class CaffeineCacheTransactionStorage<K extends Serializable, V extends Serializable> {
+    private final RedisSerializer<Object> java = RedisSerializer.java();
 
+    @Override
+    public byte[] serialize(T t) throws SerializationException {
+        return java.serialize(t);
+    }
 
-
-
-
-
+    @Override
+    public T deserialize(byte[] bytes) throws SerializationException {
+        return (T) java.deserialize(bytes);
+    }
 }

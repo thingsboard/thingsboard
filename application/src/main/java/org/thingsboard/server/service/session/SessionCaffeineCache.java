@@ -20,7 +20,7 @@ import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.dao.cache.CaffeineTbTransactionalCache;
+import org.thingsboard.server.cache.CaffeineTbTransactionalCache;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "caffeine", matchIfMissing = true)

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.cache;
+package org.thingsboard.server.cache;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -24,12 +24,6 @@ import org.springframework.data.redis.connection.RedisStringCommands;
 import org.springframework.data.redis.core.types.Expiration;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-import org.thingsboard.server.cache.CacheSpecs;
-import org.thingsboard.server.cache.CacheSpecsMap;
-import org.thingsboard.server.cache.TBRedisCacheConfiguration;
-import org.thingsboard.server.cache.TbCacheTransaction;
-import org.thingsboard.server.cache.TbCacheValueWrapper;
-import org.thingsboard.server.cache.TbTransactionalCache;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -59,11 +53,12 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
         this.connectionFactory = connectionFactory;
         this.valueSerializer = valueSerializer;
         this.evictExpiration = Expiration.from(configuration.getEvictTtlInMs(), TimeUnit.MILLISECONDS);
-        CacheSpecs cacheSpecs = cacheSpecsMap.getSpecs().get(cacheName);
-        if (cacheSpecs == null) {
-            throw new RuntimeException("Missing cache specs for " + cacheSpecs);
+        if (cacheSpecsMap.getSpecs() != null && cacheSpecsMap.getSpecs().get(cacheName) != null) {
+            CacheSpecs cacheSpecs = cacheSpecsMap.getSpecs().get(cacheName);
+            this.cacheTtl = Expiration.from(cacheSpecs.getTimeToLiveInMinutes(), TimeUnit.MINUTES);
+        } else {
+            this.cacheTtl = Expiration.persistent();
         }
-        this.cacheTtl = Expiration.from(cacheSpecs.getTimeToLiveInMinutes(), TimeUnit.MINUTES);
     }
 
     @Override
