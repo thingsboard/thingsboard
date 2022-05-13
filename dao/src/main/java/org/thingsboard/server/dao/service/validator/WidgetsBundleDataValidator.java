@@ -69,7 +69,7 @@ public class WidgetsBundleDataValidator extends DataValidator<WidgetsBundle> {
     }
 
     @Override
-    protected void validateUpdate(TenantId tenantId, WidgetsBundle widgetsBundle) {
+    protected WidgetsBundle validateUpdate(TenantId tenantId, WidgetsBundle widgetsBundle) {
         WidgetsBundle storedWidgetsBundle = widgetsBundleDao.findById(tenantId, widgetsBundle.getId().getId());
         if (!storedWidgetsBundle.getTenantId().getId().equals(widgetsBundle.getTenantId().getId())) {
             throw new DataValidationException("Can't move existing widgets bundle to different tenant!");
@@ -77,5 +77,6 @@ public class WidgetsBundleDataValidator extends DataValidator<WidgetsBundle> {
         if (!storedWidgetsBundle.getAlias().equals(widgetsBundle.getAlias())) {
             throw new DataValidationException("Update of widgets bundle alias is prohibited!");
         }
+        return storedWidgetsBundle;
     }
 }

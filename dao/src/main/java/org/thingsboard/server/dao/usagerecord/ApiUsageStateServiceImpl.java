@@ -15,8 +15,8 @@
  */
 package org.thingsboard.server.dao.usagerecord;
 
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.ApiFeature;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
@@ -47,7 +47,6 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service
 @Slf4j
-@AllArgsConstructor
 public class ApiUsageStateServiceImpl extends AbstractEntityService implements ApiUsageStateService {
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
 
@@ -56,6 +55,16 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
     private final TenantDao tenantDao;
     private final TimeseriesService tsService;
     private final DataValidator<ApiUsageState> apiUsageStateValidator;
+
+    public ApiUsageStateServiceImpl(ApiUsageStateDao apiUsageStateDao, TenantProfileDao tenantProfileDao,
+                                    TenantDao tenantDao, @Lazy TimeseriesService tsService,
+                                    DataValidator<ApiUsageState> apiUsageStateValidator) {
+        this.apiUsageStateDao = apiUsageStateDao;
+        this.tenantProfileDao = tenantProfileDao;
+        this.tenantDao = tenantDao;
+        this.tsService = tsService;
+        this.apiUsageStateValidator = apiUsageStateValidator;
+    }
 
     @Override
     public void deleteApiUsageStateByTenantId(TenantId tenantId) {
