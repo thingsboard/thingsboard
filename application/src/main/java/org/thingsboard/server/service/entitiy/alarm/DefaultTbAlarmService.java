@@ -15,14 +15,17 @@
  */
 package org.thingsboard.server.service.entitiy.alarm;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
@@ -34,6 +37,7 @@ import java.util.List;
 @TbCoreComponent
 @AllArgsConstructor
 public class DefaultTbAlarmService extends AbstractTbEntityService implements TbAlarmService {
+    private static final ObjectMapper json = new ObjectMapper();
 
     @Override
     public Alarm save(Alarm alarm, SecurityUser user) throws ThingsboardException {
@@ -76,9 +80,18 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public Boolean delete(Alarm alarm, SecurityUser user) throws ThingsboardException {
-        List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(alarm.getTenantId(), alarm.getOriginator());
-        notificationEntityService.notifyDeleteAlarm(alarm, user, relatedEdgeIds);
-        return alarmService.deleteAlarm(alarm.getTenantId(), alarm.getId()).isSuccessful();
+    public Boolean deleteAlarm(Alarm alarm, SecurityUser user) throws ThingsboardException {
+        try {
+        TenantId tenantId = user.getTenantId();
+        List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, alarm.getOriginator());
+        notificationEntityService.notifyDeleteEntity(tenantId, alarm.getOriginator(), alarm, user.getCustomerId(),
+                ActionType.DELETED, relatedEdgeIds, user, json.writeValueAsString(alarm));
+        return alarmService.deleteAlarm(tenantId, alarm.getId()).isSuccessful();
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
+
+    @Override
+    public <E extends HasName, I extends EntityId> void delete(E entity, I entityId, SecurityUser user) throws ThingsboardException {}
 }

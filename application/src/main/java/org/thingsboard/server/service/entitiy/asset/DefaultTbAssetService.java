@@ -20,6 +20,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -28,6 +29,7 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
@@ -60,7 +62,8 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
         try {
             List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, assetId);
             assetService.deleteAsset(tenantId, assetId);
-            notificationEntityService.notifyDeleteEntity(tenantId, assetId, asset, asset.getCustomerId(), ActionType.DELETED, relatedEdgeIds, user, false, asset.toString());
+            notificationEntityService.notifyDeleteEntity(tenantId, assetId, asset, asset.getCustomerId(), ActionType.DELETED,
+                    relatedEdgeIds, user, null, asset.toString());
 
             return removeAlarmsByEntityId(tenantId, assetId);
         } catch (Exception e) {
@@ -69,6 +72,9 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
             throw handleException(e);
         }
     }
+
+    @Override
+    public <E extends HasName, I extends EntityId> void delete(E entity, I entityId, SecurityUser user) throws ThingsboardException { }
 
     @Override
     public Asset assignAssetToCustomer(TenantId tenantId, AssetId assetId, Customer customer, SecurityUser user) throws ThingsboardException {

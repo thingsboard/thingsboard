@@ -19,9 +19,12 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
@@ -49,12 +52,13 @@ public class DefaultTbCustomerService extends AbstractTbEntityService implements
     }
 
     @Override
-    public void delete(Customer customer, SecurityUser user) throws ThingsboardException {
-        TenantId tenantId = customer.getTenantId();
+    public <E extends HasName, I extends EntityId> void delete(E customer, I customerId, SecurityUser user) throws ThingsboardException {
+        TenantId tenantId = user.getTenantId();
         try {
-            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, customer.getId());
-            customerService.deleteCustomer(tenantId, customer.getId());
-            notificationEntityService.notifyDeleteCustomer(customer, user, relatedEdgeIds);
+            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, customerId);
+            customerService.deleteCustomer(tenantId, (CustomerId) customerId);
+            notificationEntityService.notifyDeleteEntity(tenantId, customerId, customer, user.getCustomerId(),
+                    ActionType.DELETED, relatedEdgeIds, user, null);
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.CUSTOMER), null, null, ActionType.DELETED, user, e);
             throw handleException(e);

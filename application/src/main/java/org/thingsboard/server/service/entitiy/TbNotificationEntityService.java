@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.entitiy;
 
-import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.Tenant;
@@ -46,7 +45,7 @@ public interface TbNotificationEntityService {
 
     <E extends HasName, I extends EntityId> void notifyDeleteEntity(TenantId tenantId, I entityId, E entity, CustomerId customerId,
                                                                     ActionType actionType, List<EdgeId> relatedEdgeIds, SecurityUser user,
-                                                                    Object... additionalInfo);
+                                                                    String body, Object... additionalInfo);
 
     <E extends HasName, I extends EntityId> void notifyAssignOrUnassignEntityToCustomer(TenantId tenantId, I entityId,
                                                                                         CustomerId customerId, E entity,
@@ -80,8 +79,4 @@ public interface TbNotificationEntityService {
     void notifyEdge(TenantId tenantId, EdgeId edgeId, CustomerId customerId, Edge edge, ActionType actionType, SecurityUser user, Object... additionalInfo);
 
     void notifyCreateOrUpdateAlarm(Alarm alarm, ActionType actionType, SecurityUser user, Object... additionalInfo);
-
-    void notifyDeleteAlarm(Alarm alarm, SecurityUser user, List<EdgeId> relatedEdgeIds);
-
-    void notifyDeleteCustomer(Customer customer, SecurityUser user, List<EdgeId> relatedEdgeIds);
 }

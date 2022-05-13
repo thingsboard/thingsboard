@@ -15,11 +15,15 @@
  */
 package org.thingsboard.server.service.entitiy;
 
+import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-public interface SimpleTbEntityService<T> {
+public interface SimpleTbEntityService<E, I> {
 
-    T save(T entity, SecurityUser user) throws ThingsboardException;
+    E save(E entity, SecurityUser user) throws ThingsboardException;
+
+    <E extends HasName, I extends EntityId> void  delete (E entity, I entityId, SecurityUser user) throws ThingsboardException;
 
 }
