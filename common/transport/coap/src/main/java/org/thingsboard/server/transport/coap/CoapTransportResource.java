@@ -355,7 +355,11 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
      * Essentially this allows the use of piggybacked responses.
      */
     private void deferAccept(CoapExchange exchange) {
-        transportContext.getScheduler().schedule(exchange::accept, piggybackTimeout, TimeUnit.MILLISECONDS);
+        if (piggybackTimeout > 0) {
+            transportContext.getScheduler().schedule(exchange::accept, piggybackTimeout, TimeUnit.MILLISECONDS);
+        } else {
+            exchange.accept();
+        }
     }
 
     private UUID toSessionId(TransportProtos.SessionInfoProto sessionInfoProto) {
