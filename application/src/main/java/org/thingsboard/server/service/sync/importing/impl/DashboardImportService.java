@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.sync.importing.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
@@ -27,22 +26,19 @@ import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.query.EntityFilter;
 import org.thingsboard.server.dao.dashboard.DashboardService;
-import org.thingsboard.server.dao.sql.query.DefaultEntityQueryRepository;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.exporting.data.EntityExportData;
 import org.thingsboard.server.service.sync.importing.data.EntityImportSettings;
+import org.thingsboard.server.utils.RegexUtils;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Pattern;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -52,7 +48,6 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
 
     private final DashboardService dashboardService;
 
-    private static final Pattern UUID_PATTERN = Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
 
     @Override
     protected void setOwner(TenantId tenantId, Dashboard dashboard, IdProvider idProvider) {
@@ -70,25 +65,13 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
 
     @Override
     protected Dashboard prepareAndSave(TenantId tenantId, Dashboard dashboard, EntityExportData<Dashboard> exportData, IdProvider idProvider) {
-        Optional.ofNullable(dashboard.getConfiguration())
-                .flatMap(configuration -> Optional.ofNullable(configuration.get("entityAliases")))
-                .filter(JsonNode::isObject)
-                .ifPresent(entityAliases -> entityAliases.forEach(entityAlias -> {
-                    Optional.ofNullable(entityAlias.get("filter"))
-                            .filter(JsonNode::isObject)
-                            .ifPresent(filter -> {
-                                EntityFilter entityFilter = JacksonUtil.treeToValue(filter, EntityFilter.class);
-                                EntityType entityType = DefaultEntityQueryRepository.resolveEntityType(entityFilter);
-
-                                String filterJson = filter.toString();
-                                String newFilterJson = UUID_PATTERN.matcher(filterJson).replaceAll(matchResult -> {
-                                    String uuid = matchResult.group();
-                                    EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, uuid);
-                                    return idProvider.getInternalId(entityId).toString();
-                                });
-                                ((ObjectNode) entityAlias).set("filter", JacksonUtil.toJsonNode(newFilterJson));
-                            });
-                }));
+        JsonNode configuration = dashboard.getConfiguration();
+        String newConfigurationJson = RegexUtils.replace(configuration.toString(), RegexUtils.UUID_PATTERN, uuid -> {
+            return idProvider.getInternalIdByUuid(UUID.fromString(uuid))
+                    .map(entityId -> entityId.getId().toString()).orElse(uuid);
+        });
+        configuration = JacksonUtil.toJsonNode(newConfigurationJson);
+        dashboard.setConfiguration(configuration);
 
         Set<ShortCustomerInfo> assignedCustomers = Optional.ofNullable(dashboard.getAssignedCustomers()).orElse(Collections.emptySet()).stream()
                 .peek(customerInfo -> customerInfo.setCustomerId(idProvider.getInternalId(customerInfo.getCustomerId())))

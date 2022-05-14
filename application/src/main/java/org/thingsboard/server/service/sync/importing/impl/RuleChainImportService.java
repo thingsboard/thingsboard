@@ -16,10 +16,9 @@
 package org.thingsboard.server.service.sync.importing.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -29,11 +28,13 @@ import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
+import org.thingsboard.server.common.data.rule.RuleChainUpdateResult;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.exporting.data.RuleChainExportData;
 import org.thingsboard.server.service.sync.importing.data.EntityImportSettings;
+import org.thingsboard.server.utils.RegexUtils;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -67,16 +68,15 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
                 .forEach(ruleNode -> {
                     ruleNode.setId(null);
                     ruleNode.setRuleChainId(null);
+
                     JsonNode ruleNodeConfig = ruleNode.getConfiguration();
-                    Optional.ofNullable(ruleNodeConfig)
-                            .flatMap(config -> Optional.ofNullable(config.get("ruleChainId")).filter(JsonNode::isTextual))
-                            .map(JsonNode::asText).map(UUID::fromString)
-                            .ifPresent(otherRuleChainUuid -> {
-                                ((ObjectNode) ruleNodeConfig).set("ruleChainId", new TextNode(
-                                        idProvider.getInternalId(new RuleChainId(otherRuleChainUuid)).toString()
-                                ));
-                                ruleNode.setConfiguration(ruleNodeConfig);
-                            });
+                    String newRuleNodeConfigJson = RegexUtils.replace(ruleNodeConfig.toString(), RegexUtils.UUID_PATTERN, uuid -> {
+                        return idProvider.getInternalIdByUuid(UUID.fromString(uuid))
+                                .map(entityId -> entityId.getId().toString())
+                                .orElse(uuid);
+                    });
+                    ruleNodeConfig = JacksonUtil.toJsonNode(newRuleNodeConfigJson);
+                    ruleNode.setConfiguration(ruleNodeConfig);
                 });
         Optional.ofNullable(metaData.getRuleChainConnections()).orElse(Collections.emptyList())
                 .forEach(ruleChainConnectionInfo -> {
@@ -84,13 +84,10 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
                 });
         ruleChain.setFirstRuleNodeId(null);
 
-        if (ruleChain.getId() != null) {
-            // FIXME [viacheslav]: maybe no need to delete
-            ruleChainService.deleteRuleNodes(tenantId, ruleChain.getId());
-        }
         ruleChain = ruleChainService.saveRuleChain(ruleChain);
         exportData.getMetaData().setRuleChainId(ruleChain.getId());
-        ruleChainService.saveRuleChainMetaData(tenantId, exportData.getMetaData());
+        RuleChainUpdateResult updateResult = ruleChainService.saveRuleChainMetaData(tenantId, exportData.getMetaData());
+        // FIXME [viacheslav]: send events for nodes
         return ruleChainService.findRuleChainById(tenantId, ruleChain.getId());
     }
 

@@ -20,11 +20,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -42,6 +44,7 @@ import org.thingsboard.server.service.sync.importing.data.EntityImportSettings;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public abstract class BaseEntityImportService<I extends EntityId, E extends ExportableEntity<I>, D extends EntityExportData<E>> implements EntityImportService<I, E, D> {
 
@@ -199,6 +202,27 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                 throw new IllegalArgumentException(e.getMessage(), e);
             }
             return entity.getId();
+        }
+
+        public Optional<EntityId> getInternalIdByUuid(UUID externalUuid) {
+            for (EntityType entityType : EntityType.values()) {
+                EntityId externalId;
+                try {
+                    externalId = EntityIdFactory.getByTypeAndUuid(entityType, externalUuid);
+                } catch (Exception e) {
+                    continue;
+                }
+
+                EntityId internalId = null;
+                try {
+                    internalId = getInternalId(externalId);
+                } catch (Exception ignored) {}
+
+                if (internalId != null) {
+                    return Optional.of(internalId);
+                }
+            }
+            return Optional.empty();
         }
 
     }
