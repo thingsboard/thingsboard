@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -29,7 +28,6 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
@@ -61,8 +59,7 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
     }
 
     @Override
-    public <E extends HasName, I extends EntityId> void delete(E dashboard, I dashboardId, SecurityUser user) throws ThingsboardException {
-        TenantId tenantId = user.getTenantId();
+    public void delete(Dashboard dashboard, DashboardId dashboardId, SecurityUser user) throws ThingsboardException {        TenantId tenantId = user.getTenantId();
         try {
             List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, dashboardId);
             dashboardService.deleteDashboard(tenantId, (DashboardId) dashboardId);

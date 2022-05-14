@@ -20,10 +20,10 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-public interface SimpleTbEntityService<E, I> {
+public interface SimpleTbEntityService<E extends HasName, I extends EntityId> {
 
-    E save(E entity, SecurityUser user) throws ThingsboardException;
+   E save(E entity, SecurityUser user) throws ThingsboardException;
 
-    <E extends HasName, I extends EntityId> void  delete (E entity, I entityId, SecurityUser user) throws ThingsboardException;
+   void  delete (E entity, I entityId, SecurityUser user) throws ThingsboardException;
 
 }

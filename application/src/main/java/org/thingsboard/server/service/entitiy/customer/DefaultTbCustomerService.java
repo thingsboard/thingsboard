@@ -19,12 +19,10 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
@@ -51,8 +49,9 @@ public class DefaultTbCustomerService extends AbstractTbEntityService implements
         }
     }
 
+
     @Override
-    public <E extends HasName, I extends EntityId> void delete(E customer, I customerId, SecurityUser user) throws ThingsboardException {
+    public void delete(Customer customer, CustomerId customerId, SecurityUser user) throws ThingsboardException {
         TenantId tenantId = user.getTenantId();
         try {
             List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, customerId);

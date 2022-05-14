@@ -19,13 +19,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
@@ -82,16 +81,16 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     @Override
     public Boolean deleteAlarm(Alarm alarm, SecurityUser user) throws ThingsboardException {
         try {
-        TenantId tenantId = user.getTenantId();
-        List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, alarm.getOriginator());
-        notificationEntityService.notifyDeleteEntity(tenantId, alarm.getOriginator(), alarm, user.getCustomerId(),
+        List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(user.getTenantId(), alarm.getOriginator());
+        notificationEntityService.notifyDeleteEntity(user.getTenantId(), alarm.getId(), alarm, user.getCustomerId(),
                 ActionType.DELETED, relatedEdgeIds, user, json.writeValueAsString(alarm));
-        return alarmService.deleteAlarm(tenantId, alarm.getId()).isSuccessful();
+        return alarmService.deleteAlarm(user.getTenantId(), alarm.getId()).isSuccessful();
         } catch (Exception e) {
             throw handleException(e);
         }
     }
 
+
     @Override
-    public <E extends HasName, I extends EntityId> void delete(E entity, I entityId, SecurityUser user) throws ThingsboardException {}
+    public void delete(Alarm entity, AlarmId entityId, SecurityUser user) throws ThingsboardException {}
 }

@@ -73,7 +73,8 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
                                                                            List<EdgeId> relatedEdgeIds,
                                                                            SecurityUser user,
                                                                            String body, Object... additionalInfo) {
-        logEntityAction(tenantId, entityId, entity, customerId, actionType, user, additionalInfo);
+        EntityId entityIdForLogEntityAction = entity instanceof Alarm ? ((Alarm)entity).getOriginator() : entityId;
+        logEntityAction(tenantId, entityIdForLogEntityAction, entity, customerId, actionType, user, additionalInfo);
         sendDeleteNotificationMsg(tenantId, entityId, entity, relatedEdgeIds, body);
         if (entity instanceof Customer) {
             tbClusterService.broadcastEntityStateChangeEvent(tenantId, customerId, ComponentLifecycleEvent.DELETED);
