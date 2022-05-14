@@ -26,9 +26,11 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface  TbDashboardService extends SimpleTbEntityService<Dashboard, DashboardId> {
 
-    Dashboard assignDashboardToCustomer(TenantId tenantId, DashboardId dashboardId, Customer customer, SecurityUser user) throws ThingsboardException;
+    Dashboard assignDashboardToCustomer(DashboardId dashboardId, Customer customer, SecurityUser user) throws ThingsboardException;
 
-    Dashboard assignDashboardToPublicCustomer(TenantId tenantId, DashboardId dashboardId, SecurityUser user) throws ThingsboardException;
+    Dashboard assignDashboardToPublicCustomer(DashboardId dashboardId, SecurityUser user) throws ThingsboardException;
+
+    Dashboard unassignDashboardFromPublicCustomer(Dashboard dashboard, SecurityUser user) throws ThingsboardException;
 
     Dashboard updateDashboardCustomers(TenantId tenantId, Dashboard dashboard, String[] strCustomerIds, SecurityUser user) throws ThingsboardException;
 
@@ -38,6 +40,8 @@ public interface  TbDashboardService extends SimpleTbEntityService<Dashboard, Da
 
     Dashboard asignDashboardToEdge(TenantId tenantId, DashboardId dashboardId, Edge edge, SecurityUser user) throws ThingsboardException;
 
-    Dashboard unassignDeviceFromEdge(Dashboard dashboard, Edge edge, SecurityUser user) throws ThingsboardException;
+    Dashboard unassignDashboardFromEdge(Dashboard dashboard, Edge edge, SecurityUser user) throws ThingsboardException;
+
+    Dashboard unassignDashboardFromCustomer(Dashboard dashboard, Customer customer, SecurityUser user) throws ThingsboardException;
 
 }

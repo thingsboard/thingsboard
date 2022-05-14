@@ -59,7 +59,8 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
     }
 
     @Override
-    public void delete(Dashboard dashboard, DashboardId dashboardId, SecurityUser user) throws ThingsboardException {        TenantId tenantId = user.getTenantId();
+    public void delete(Dashboard dashboard, DashboardId dashboardId, SecurityUser user) throws ThingsboardException {
+        TenantId tenantId = user.getTenantId();
         try {
             List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, dashboardId);
             dashboardService.deleteDashboard(tenantId, (DashboardId) dashboardId);
@@ -73,38 +74,54 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
     }
 
     @Override
-    public Dashboard assignDashboardToCustomer(TenantId tenantId, DashboardId dashboardId, Customer customer, SecurityUser user) throws ThingsboardException {
+    public Dashboard assignDashboardToCustomer(DashboardId dashboardId, Customer customer, SecurityUser user) throws ThingsboardException {
         ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER;
         CustomerId customerId = customer.getId();
         try {
-            Dashboard savedDashboard = checkNotNull(dashboardService.assignDashboardToCustomer(tenantId, dashboardId, customerId));
-            notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, dashboardId, customerId, savedDashboard,
+            Dashboard savedDashboard = checkNotNull(dashboardService.assignDashboardToCustomer(user.getTenantId(), dashboardId, customerId));
+            notificationEntityService.notifyAssignOrUnassignEntityToCustomer(user.getTenantId(), dashboardId, customerId, savedDashboard,
                     actionType, EdgeEventActionType.ASSIGNED_TO_CUSTOMER, user, true, customerId.toString(), customer.getName());
             return savedDashboard;
         } catch (Exception e) {
-            notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.DASHBOARD), null, null,
+            notificationEntityService.notifyEntity(user.getTenantId(), emptyId(EntityType.DASHBOARD), null, null,
                     actionType, user, e, dashboardId.toString(), customerId.toString());
             throw handleException(e);
         }
     }
 
     @Override
-    public Dashboard assignDashboardToPublicCustomer(TenantId tenantId, DashboardId dashboardId, SecurityUser user) throws ThingsboardException {
+    public Dashboard assignDashboardToPublicCustomer(DashboardId dashboardId, SecurityUser user) throws ThingsboardException {
         ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER;
         try {
-
-            Customer publicCustomer = customerService.findOrCreatePublicCustomer(tenantId);
-            Dashboard savedDashboard = checkNotNull(dashboardService.assignDashboardToCustomer(tenantId, dashboardId, publicCustomer.getId()));
-            notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, dashboardId, user.getCustomerId(), savedDashboard,
+            Customer publicCustomer = customerService.findOrCreatePublicCustomer(user.getTenantId());
+            Dashboard savedDashboard = checkNotNull(dashboardService.assignDashboardToCustomer(user.getTenantId(), dashboardId, publicCustomer.getId()));
+            notificationEntityService.notifyAssignOrUnassignEntityToCustomer(user.getTenantId(), dashboardId, user.getCustomerId(), savedDashboard,
                     actionType, null, user, false, dashboardId.toString(),
                     publicCustomer.getId().toString(), publicCustomer.getName());
             return savedDashboard;
         } catch (Exception e) {
-            notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.DASHBOARD), null, null,
+            notificationEntityService.notifyEntity(user.getTenantId(), emptyId(EntityType.DASHBOARD), null, null,
                     actionType, user, e, dashboardId.toString());
             throw handleException(e);
         }
 
+    }
+
+    @Override
+    public Dashboard unassignDashboardFromPublicCustomer(Dashboard dashboard, SecurityUser user) throws ThingsboardException {
+        ActionType actionType = ActionType.UNASSIGNED_FROM_CUSTOMER;
+        try {
+            Customer publicCustomer = customerService.findOrCreatePublicCustomer(dashboard.getTenantId());
+            Dashboard savedDashboard = checkNotNull(dashboardService.unassignDashboardFromCustomer(user.getTenantId(), dashboard.getId(), publicCustomer.getId()));
+            notificationEntityService.notifyAssignOrUnassignEntityToCustomer(user.getTenantId(), dashboard.getId(), user.getCustomerId(), dashboard,
+                    actionType, null, user, false, dashboard.getId().toString(),
+                    publicCustomer.getId().toString(), publicCustomer.getName());
+            return savedDashboard;
+        } catch (Exception e) {
+            notificationEntityService.notifyEntity(user.getTenantId(), emptyId(EntityType.DASHBOARD), null, null,
+                    actionType, user, e, dashboard.getId().toString());
+            throw handleException(e);
+        }
     }
 
     @Override
@@ -248,7 +265,7 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
     }
 
     @Override
-    public Dashboard unassignDeviceFromEdge(Dashboard dashboard, Edge edge, SecurityUser user) throws ThingsboardException {
+    public Dashboard unassignDashboardFromEdge(Dashboard dashboard, Edge edge, SecurityUser user) throws ThingsboardException {
         ActionType actionType = ActionType.UNASSIGNED_FROM_EDGE;
         TenantId tenantId = dashboard.getTenantId();
         DashboardId dashboardId = dashboard.getId();
@@ -266,4 +283,21 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
             throw handleException(e);
         }
     }
+
+    @Override
+    public Dashboard unassignDashboardFromCustomer(Dashboard dashboard, Customer customer, SecurityUser user) throws ThingsboardException {
+        ActionType actionType = ActionType.UNASSIGNED_FROM_CUSTOMER;
+        TenantId tenantId = dashboard.getTenantId();
+        try {
+            Dashboard savedDashboard = checkNotNull(dashboardService.unassignDashboardFromCustomer(tenantId, dashboard.getId(), customer.getId()));
+            notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, dashboard.getId(), customer.getId(), savedDashboard,
+                    actionType, EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER, user, true, customer.getId().toString(), customer.getName());
+            return savedDashboard;
+        } catch (Exception e) {
+            notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.DASHBOARD), null, null,
+                    actionType, user, e, dashboard.getId().toString());
+            throw handleException(e);
+        }
+    }
+
 }

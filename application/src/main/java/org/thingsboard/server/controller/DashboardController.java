@@ -39,14 +39,11 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HomeDashboard;
 import org.thingsboard.server.common.data.HomeDashboardInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
@@ -198,7 +195,7 @@ public class DashboardController extends BaseController {
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
         Dashboard dashboard = checkDashboardId(dashboardId, Operation.DELETE);
         tbDashboardService.delete(dashboard, dashboardId, getCurrentUser());
-     }
+    }
 
     @ApiOperation(value = "Assign the Dashboard (assignDashboardToCustomer)",
             notes = "Assign the Dashboard to specified Customer or do nothing if the Dashboard is already assigned to that Customer. " +
@@ -220,7 +217,7 @@ public class DashboardController extends BaseController {
 
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
         checkDashboardId(dashboardId, Operation.ASSIGN_TO_CUSTOMER);
-        return tbDashboardService.assignDashboardToCustomer(getTenantId(), dashboardId, customer, getCurrentUser());
+        return tbDashboardService.assignDashboardToCustomer(dashboardId, customer, getCurrentUser());
     }
 
     @ApiOperation(value = "Unassign the Dashboard (unassignDashboardFromCustomer)",
@@ -237,29 +234,11 @@ public class DashboardController extends BaseController {
             @PathVariable(DASHBOARD_ID) String strDashboardId) throws ThingsboardException {
         checkParameter("customerId", strCustomerId);
         checkParameter(DASHBOARD_ID, strDashboardId);
-        try {
-            CustomerId customerId = new CustomerId(toUUID(strCustomerId));
-            Customer customer = checkCustomerId(customerId, Operation.READ);
-            DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
-            Dashboard dashboard = checkDashboardId(dashboardId, Operation.UNASSIGN_FROM_CUSTOMER);
-
-            Dashboard savedDashboard = checkNotNull(dashboardService.unassignDashboardFromCustomer(getCurrentUser().getTenantId(), dashboardId, customerId));
-
-            logEntityAction(dashboardId, dashboard,
-                    customerId,
-                    ActionType.UNASSIGNED_FROM_CUSTOMER, null, strDashboardId, customer.getId().toString(), customer.getName());
-
-            sendEntityAssignToCustomerNotificationMsg(savedDashboard.getTenantId(), savedDashboard.getId(), customerId, EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER);
-
-            return savedDashboard;
-        } catch (Exception e) {
-
-            logEntityAction(emptyId(EntityType.DASHBOARD), null,
-                    null,
-                    ActionType.UNASSIGNED_FROM_CUSTOMER, e, strDashboardId);
-
-            throw handleException(e);
-        }
+        CustomerId customerId = new CustomerId(toUUID(strCustomerId));
+        Customer customer = checkCustomerId(customerId, Operation.READ);
+        DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
+        Dashboard dashboard = checkDashboardId(dashboardId, Operation.UNASSIGN_FROM_CUSTOMER);
+        return tbDashboardService.unassignDashboardFromCustomer(dashboard, customer, getCurrentUser());
     }
 
     @ApiOperation(value = "Update the Dashboard Customers (updateDashboardCustomers)",
@@ -338,8 +317,8 @@ public class DashboardController extends BaseController {
         checkParameter(DASHBOARD_ID, strDashboardId);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
         checkDashboardId(dashboardId, Operation.ASSIGN_TO_CUSTOMER);
-        return tbDashboardService.assignDashboardToPublicCustomer(getTenantId(), dashboardId, getCurrentUser());
-     }
+        return tbDashboardService.assignDashboardToPublicCustomer(dashboardId, getCurrentUser());
+    }
 
     @ApiOperation(value = "Unassign the Dashboard from Public Customer (unassignDashboardFromPublicCustomer)",
             notes = "Unassigns the dashboard from a special, auto-generated 'Public' Customer. Once unassigned, unauthenticated users may no longer browse the dashboard. " +
@@ -352,26 +331,9 @@ public class DashboardController extends BaseController {
             @ApiParam(value = DASHBOARD_ID_PARAM_DESCRIPTION)
             @PathVariable(DASHBOARD_ID) String strDashboardId) throws ThingsboardException {
         checkParameter(DASHBOARD_ID, strDashboardId);
-        try {
-            DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
-            Dashboard dashboard = checkDashboardId(dashboardId, Operation.UNASSIGN_FROM_CUSTOMER);
-            Customer publicCustomer = customerService.findOrCreatePublicCustomer(dashboard.getTenantId());
-
-            Dashboard savedDashboard = checkNotNull(dashboardService.unassignDashboardFromCustomer(getCurrentUser().getTenantId(), dashboardId, publicCustomer.getId()));
-
-            logEntityAction(dashboardId, dashboard,
-                    publicCustomer.getId(),
-                    ActionType.UNASSIGNED_FROM_CUSTOMER, null, strDashboardId, publicCustomer.getId().toString(), publicCustomer.getName());
-
-            return savedDashboard;
-        } catch (Exception e) {
-
-            logEntityAction(emptyId(EntityType.DASHBOARD), null,
-                    null,
-                    ActionType.UNASSIGNED_FROM_CUSTOMER, e, strDashboardId);
-
-            throw handleException(e);
-        }
+        DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
+        Dashboard dashboard = checkDashboardId(dashboardId, Operation.UNASSIGN_FROM_CUSTOMER);
+        return tbDashboardService.unassignDashboardFromPublicCustomer(dashboard, getCurrentUser());
     }
 
     @ApiOperation(value = "Get Tenant Dashboards by System Administrator (getTenantDashboards)",
@@ -665,27 +627,6 @@ public class DashboardController extends BaseController {
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
         checkDashboardId(dashboardId, Operation.READ);
         return tbDashboardService.asignDashboardToEdge(getTenantId(), dashboardId, edge, getCurrentUser());
-//        try {
-//
-//
-//
-//            Dashboard savedDashboard = checkNotNull(dashboardService.assignDashboardToEdge(getCurrentUser().getTenantId(), dashboardId, edgeId));
-//
-//            logEntityAction(dashboardId, savedDashboard,
-//                    null,
-//                    ActionType.ASSIGNED_TO_EDGE, null, strDashboardId, strEdgeId, edge.getName());
-//
-//            sendEntityAssignToEdgeNotificationMsg(getTenantId(), edgeId, savedDashboard.getId(), EdgeEventActionType.ASSIGNED_TO_EDGE);
-//
-//            return savedDashboard;
-//        } catch (Exception e) {
-//
-//            logEntityAction(emptyId(EntityType.DASHBOARD), null,
-//                    null,
-//                    ActionType.ASSIGNED_TO_EDGE, e, strDashboardId, strEdgeId);
-//
-//            throw handleException(e);
-//        }
     }
 
     @ApiOperation(value = "Unassign dashboard from edge (unassignDashboardFromEdge)",
@@ -710,7 +651,7 @@ public class DashboardController extends BaseController {
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
         Dashboard dashboard = checkDashboardId(dashboardId, Operation.READ);
 
-        return tbDashboardService.unassignDeviceFromEdge(dashboard, edge, getCurrentUser());
+        return tbDashboardService.unassignDashboardFromEdge(dashboard, edge, getCurrentUser());
     }
 
     @ApiOperation(value = "Get Edge Dashboards (getEdgeDashboards)",
