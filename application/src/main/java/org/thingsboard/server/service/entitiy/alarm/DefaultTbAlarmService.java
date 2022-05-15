@@ -23,7 +23,6 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -81,16 +80,12 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     @Override
     public Boolean deleteAlarm(Alarm alarm, SecurityUser user) throws ThingsboardException {
         try {
-        List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(user.getTenantId(), alarm.getOriginator());
-        notificationEntityService.notifyDeleteEntity(user.getTenantId(), alarm.getId(), alarm, user.getCustomerId(),
-                ActionType.DELETED, relatedEdgeIds, user, json.writeValueAsString(alarm));
-        return alarmService.deleteAlarm(user.getTenantId(), alarm.getId()).isSuccessful();
+            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(user.getTenantId(), alarm.getOriginator());
+            notificationEntityService.notifyDeleteEntity(user.getTenantId(), alarm.getId(), alarm, user.getCustomerId(),
+                    ActionType.DELETED, relatedEdgeIds, user, json.writeValueAsString(alarm));
+            return alarmService.deleteAlarm(user.getTenantId(), alarm.getId()).isSuccessful();
         } catch (Exception e) {
             throw handleException(e);
         }
     }
-
-
-    @Override
-    public void delete(Alarm entity, AlarmId entityId, SecurityUser user) throws ThingsboardException {}
 }
