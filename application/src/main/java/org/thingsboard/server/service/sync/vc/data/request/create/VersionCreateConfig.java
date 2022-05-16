@@ -15,25 +15,9 @@
  */
 package org.thingsboard.server.service.sync.vc.data.request.create;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 import lombok.Data;
 
-@JsonTypeInfo(use = Id.NAME, property = "type")
-@JsonSubTypes({
-        @Type(name = "SINGLE_ENTITY", value = SingleEntityVersionCreateConfig.class),
-        @Type(name = "ENTITY_LIST", value = EntityListVersionCreateConfig.class),
-        @Type(name = "ENTITY_TYPE", value = EntityTypeVersionCreateConfig.class),
-        @Type(name = "CUSTOM_ENTITY_FILTER", value = EntitiesByCustomFilterVersionCreateConfig.class),
-        @Type(name = "CUSTOM_ENTITY_QUERY", value = EntitiesByCustomQueryVersionCreateConfig.class)
-})
 @Data
 public abstract class VersionCreateConfig {
-
     private boolean saveRelations;
-
-    public abstract VersionCreateConfigType getType();
-
 }

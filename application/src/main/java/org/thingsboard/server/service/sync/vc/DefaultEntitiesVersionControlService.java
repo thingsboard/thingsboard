@@ -65,6 +65,7 @@ import org.thingsboard.server.service.sync.vc.data.EntityVersion;
 import org.thingsboard.server.service.sync.vc.data.VersionCreationResult;
 import org.thingsboard.server.service.sync.vc.data.VersionLoadResult;
 import org.thingsboard.server.service.sync.vc.data.VersionedEntityInfo;
+import org.thingsboard.server.service.sync.vc.data.request.create.MultipleEntitiesVersionCreateConfig;
 import org.thingsboard.server.service.sync.vc.data.request.load.VersionLoadRequest;
 import org.thingsboard.server.service.sync.vc.data.request.load.VersionLoadSettings;
 import org.thingsboard.server.service.sync.vc.data.request.create.VersionCreateRequest;
@@ -152,23 +153,24 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
             if (repository.listBranches().contains(request.getBranch())) {
                 repository.checkout(request.getBranch());
                 repository.merge(request.getBranch());
-            } else { // FIXME [viacheslav]: rollback orphan branch on failure
+            } else { // TODO [viacheslav]: rollback orphan branch on failure
                 repository.createAndCheckoutOrphanBranch(request.getBranch());            // FIXME [viacheslav]: Checkout returned unexpected result NO_CHANGE for master branch
             }
 
-            for (VersionCreateRequest.Config config : request.getConfigs()) {
+            for (VersionCreateConfig config : request.getConfigs()) {
                 EntityExportSettings exportSettings = EntityExportSettings.builder()
                         .exportRelations(config.isSaveRelations())
                         .build();
 
                 List<EntityExportData<?>> entityDataList = new ArrayList<>();
-                for (EntityId entityId : findEntities()) {
+                for (EntityId entityId : findEntities(user, config, 0, Integer.MAX_VALUE)) { // TODO [viacheslav]: find with pagination
                     EntityExportData<ExportableEntity<EntityId>> entityData = exportImportService.exportEntity(user, entityId, exportSettings);
                     entityDataList.add(entityData);
                 }
 
-                if (config.isRemoveOtherRemoteEntitiesOfType()) {
-                    entityDataList.stream()
+                if (config instanceof MultipleEntitiesVersionCreateConfig &&
+                        ((MultipleEntitiesVersionCreateConfig) config).isRemoveOtherRemoteEntitiesOfType()) {
+                    entityDataList.stream() // FIXME [viacheslav]: in case of an emtpy entity type? none will be deleted on remote?
                             .map(EntityExportData::getEntityType)
                             .distinct()
                             .forEach(entityType -> {
@@ -186,7 +188,6 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                             entityData.getEntity().getId().toString())).toFile(), entityDataJson, StandardCharsets.UTF_8);
                 }
             }
-            // TODO [viacheslav]: find with pagination
 
             repository.add(".");
 
@@ -206,18 +207,18 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         }
     }
 
-    private List<EntityId> findEntities(SecurityUser user, VersionCreateConfig entityFilter, int page, int pageSize) {
-        switch (entityFilter.getType()) {
+    private List<EntityId> findEntities(SecurityUser user, VersionCreateConfig config, int page, int pageSize) {
+        switch (config.getType()) {
             case SINGLE_ENTITY: {
-                SingleEntityVersionCreateConfig filter = (SingleEntityVersionCreateConfig) entityFilter;
+                SingleEntityVersionCreateConfig filter = (SingleEntityVersionCreateConfig) config;
                 return List.of(filter.getEntityId());
             }
             case ENTITY_LIST: {
-                EntityListVersionCreateConfig filter = (EntityListVersionCreateConfig) entityFilter;
+                EntityListVersionCreateConfig filter = (EntityListVersionCreateConfig) config;
                 return filter.getEntitiesIds();
             }
             case ENTITY_TYPE: {
-                EntityTypeVersionCreateConfig filter = (EntityTypeVersionCreateConfig) entityFilter;
+                EntityTypeVersionCreateConfig filter = (EntityTypeVersionCreateConfig) config;
                 EntitiesByCustomFilterVersionCreateConfig newFilter = new EntitiesByCustomFilterVersionCreateConfig();
 
                 org.thingsboard.server.common.data.query.EntityTypeFilter entityTypeFilter = new org.thingsboard.server.common.data.query.EntityTypeFilter();
@@ -228,7 +229,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                 return findEntities(user, newFilter, page, pageSize);
             }
             case CUSTOM_ENTITY_FILTER: {
-                EntitiesByCustomFilterVersionCreateConfig filter = (EntitiesByCustomFilterVersionCreateConfig) entityFilter;
+                EntitiesByCustomFilterVersionCreateConfig filter = (EntitiesByCustomFilterVersionCreateConfig) config;
                 EntitiesByCustomQueryVersionCreateConfig newFilter = new EntitiesByCustomQueryVersionCreateConfig();
 
                 EntityDataPageLink pageLink = new EntityDataPageLink();
@@ -243,7 +244,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                 return findEntities(user, newFilter, page, pageSize);
             }
             case CUSTOM_ENTITY_QUERY: {
-                EntitiesByCustomQueryVersionCreateConfig filter = (EntitiesByCustomQueryVersionCreateConfig) entityFilter;
+                EntitiesByCustomQueryVersionCreateConfig filter = (EntitiesByCustomQueryVersionCreateConfig) config;
                 CustomerId customerId = new CustomerId(ObjectUtils.defaultIfNull(filter.getCustomerId(), EntityId.NULL_UUID));
                 return entityService.findEntityDataByQuery(user.getTenantId(), customerId, filter.getQuery()).getData()
                         .stream().map(EntityData::getEntityId)
@@ -341,35 +342,35 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
         boolean removeNonexistentLocalEntities = false;
         if ()
-        if (request.isRemoveOtherLocalEntitiesOfType()) {
-            importResults.stream()
-                    .collect(Collectors.groupingBy(EntityImportResult::getEntityType)) // FIXME [viacheslav]: if no entities of entity type - remove all ?
-                    .forEach((entityType, resultsForEntityType) -> {
-                        Set<EntityId> modifiedEntities = resultsForEntityType.stream().map(EntityImportResult::getSavedEntity).map(ExportableEntity::getExternalId).collect(Collectors.toSet());
-                        AtomicInteger deleted = new AtomicInteger();
+            if (request.isRemoveOtherLocalEntitiesOfType()) {
+                importResults.stream()
+                        .collect(Collectors.groupingBy(EntityImportResult::getEntityType)) // FIXME [viacheslav]: if no entities of entity type - remove all ?
+                        .forEach((entityType, resultsForEntityType) -> {
+                            Set<EntityId> modifiedEntities = resultsForEntityType.stream().map(EntityImportResult::getSavedEntity).map(ExportableEntity::getExternalId).collect(Collectors.toSet());
+                            AtomicInteger deleted = new AtomicInteger();
 
-                        DaoUtil.processInBatches(pageLink -> {
-                            return exportableEntitiesService.findEntitiesByTenantId(user.getTenantId(), entityType, pageLink);
-                        }, 100, entity -> {
-                            if (entity.getExternalId() == null || !modifiedEntities.contains(entity.getExternalId())) {
-                                try {
-                                    exportableEntitiesService.checkPermission(user, entity, entityType, Operation.DELETE);
-                                } catch (ThingsboardException e) {
-                                    throw new RuntimeException(e);
+                            DaoUtil.processInBatches(pageLink -> {
+                                return exportableEntitiesService.findEntitiesByTenantId(user.getTenantId(), entityType, pageLink);
+                            }, 100, entity -> {
+                                if (entity.getExternalId() == null || !modifiedEntities.contains(entity.getExternalId())) {
+                                    try {
+                                        exportableEntitiesService.checkPermission(user, entity, entityType, Operation.DELETE);
+                                    } catch (ThingsboardException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                    // need to delete in a specific order?
+                                    exportableEntitiesService.deleteByTenantIdAndId(user.getTenantId(), entity.getId());
+                                    deleted.getAndIncrement();
                                 }
-                                // need to delete in a specific order?
-                                exportableEntitiesService.deleteByTenantIdAndId(user.getTenantId(), entity.getId());
-                                deleted.getAndIncrement();
-                            }
+                            });
+                            results.put(entityType, VersionLoadResult.builder()
+                                    .entityType(entityType)
+                                    .created((int) resultsForEntityType.stream().filter(importResult -> importResult.getOldEntity() == null).count())
+                                    .updated((int) resultsForEntityType.stream().filter(importResult -> importResult.getOldEntity() != null).count())
+                                    .deleted(deleted.get())
+                                    .build());
                         });
-                        results.put(entityType, VersionLoadResult.builder()
-                                .entityType(entityType)
-                                .created((int) resultsForEntityType.stream().filter(importResult -> importResult.getOldEntity() == null).count())
-                                .updated((int) resultsForEntityType.stream().filter(importResult -> importResult.getOldEntity() != null).count())
-                                .deleted(deleted.get())
-                                .build());
-                    });
-        }
+            }
 
         return new ArrayList<>(results.values());
     }

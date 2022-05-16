@@ -7,6 +7,6 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 public class EntityTypeVersionLoadConfig extends EntityVersionLoadConfig {
 
-    private boolean removeNonexistentLocalEntities;
+    private boolean removeOtherEntities;
 
 }

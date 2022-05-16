@@ -17,14 +17,12 @@ package org.thingsboard.server.service.sync.vc.data.request.create;
 
 import lombok.Data;
 
-import java.util.List;
-
 @Data
-public class VersionCreateRequest {
+public abstract class VersionCreateRequest {
 
     private String versionName;
     private String branch;
 
-    private List<VersionCreateConfig> configs;
+    public abstract VersionCreateRequestType getType();
 
 }
