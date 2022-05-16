@@ -24,6 +24,7 @@ import org.eclipse.jgit.api.GitCommand;
 import org.eclipse.jgit.api.ListBranchCommand;
 import org.eclipse.jgit.api.LogCommand;
 import org.eclipse.jgit.api.RmCommand;
+import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.TransportCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Constants;
@@ -33,18 +34,18 @@ import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.transport.CredentialsProvider;
-import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 public class GitRepository {
@@ -54,6 +55,8 @@ public class GitRepository {
 
     @Getter
     private final String directory;
+    @Getter
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     private GitRepository(Git git, CredentialsProvider credentialsProvider, String directory) {
         this.git = git;
@@ -61,21 +64,20 @@ public class GitRepository {
         this.directory = directory;
     }
 
-    public static GitRepository clone(String uri, String directory,
-                                   String username, String password) throws GitAPIException {
+    public static GitRepository clone(String uri, String username, String password, File directory) throws GitAPIException {
         CredentialsProvider credentialsProvider = newCredentialsProvider(username, password);
         Git git = Git.cloneRepository()
                 .setURI(uri)
-                .setDirectory(new java.io.File(directory))
+                .setDirectory(directory)
                 .setNoCheckout(true)
                 .setCredentialsProvider(credentialsProvider)
                 .call();
-        return new GitRepository(git, credentialsProvider, directory);
+        return new GitRepository(git, credentialsProvider, directory.getAbsolutePath());
     }
 
-    public static GitRepository open(String directory, String username, String password) throws IOException {
-        Git git = Git.open(new java.io.File(directory));
-        return new GitRepository(git, newCredentialsProvider(username, password), directory);
+    public static GitRepository open(File directory, String username, String password) throws IOException {
+        Git git = Git.open(directory);
+        return new GitRepository(git, newCredentialsProvider(username, password), directory.getAbsolutePath());
     }
 
 
@@ -180,9 +182,17 @@ public class GitRepository {
         execute(git.clean());
     }
 
-
-    public Commit commit(String message, String filesPattern) throws GitAPIException {
+    public void add(String filesPattern) throws GitAPIException { // FIXME [viacheslav]
+        execute(git.add().setUpdate(true).addFilepattern(filesPattern));
         execute(git.add().addFilepattern(filesPattern));
+    }
+
+    public Status status() throws GitAPIException {
+        org.eclipse.jgit.api.Status status = execute(git.status());
+        return new Status(status.getAdded(), status.getModified(), status.getRemoved());
+    }
+
+    public Commit commit(String message) throws GitAPIException {
         RevCommit revCommit = execute(git.commit()
                 .setMessage(message)); // TODO [viacheslav]: set configurable author for commit
         return toCommit(revCommit);
@@ -254,6 +264,13 @@ public class GitRepository {
         private final String id;
         private final String message;
         private final String authorName;
+    }
+
+    @Data
+    public static class Status {
+        private final Set<String> added;
+        private final Set<String> modified;
+        private final Set<String> removed;
     }
 
 }

@@ -64,13 +64,13 @@ import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
-import org.thingsboard.server.service.sync.exporting.data.EntityExportData;
-import org.thingsboard.server.service.sync.exporting.data.request.EntityExportSettings;
-import org.thingsboard.server.service.sync.exporting.data.request.ExportRequest;
-import org.thingsboard.server.service.sync.exporting.data.request.SingleEntityExportRequest;
-import org.thingsboard.server.service.sync.importing.data.EntityImportResult;
-import org.thingsboard.server.service.sync.importing.data.EntityImportSettings;
-import org.thingsboard.server.service.sync.importing.data.request.ImportRequest;
+import org.thingsboard.server.service.sync.exportimport.exporting.data.EntityExportData;
+import org.thingsboard.server.service.sync.exportimport.exporting.data.EntityExportSettings;
+import org.thingsboard.server.service.sync.vc.data.request.create.VersionCreateConfig;
+import org.thingsboard.server.service.sync.vc.data.request.create.SingleEntityVersionCreateConfig;
+import org.thingsboard.server.service.sync.exportimport.importing.data.EntityImportResult;
+import org.thingsboard.server.service.sync.exportimport.importing.data.EntityImportSettings;
+import org.thingsboard.server.service.sync.exportimport.importing.data.ImportRequest;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -339,17 +339,17 @@ public abstract class BaseEntitiesExportImportControllerTest extends AbstractCon
 
 
     protected <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> exportSingleEntity(I entityId) throws Exception {
-        SingleEntityExportRequest exportRequest = new SingleEntityExportRequest();
+        SingleEntityVersionCreateConfig exportRequest = new SingleEntityVersionCreateConfig();
         exportRequest.setEntityId(entityId);
         exportRequest.setExportSettings(new EntityExportSettings());
         return (EntityExportData<E>) exportEntities(exportRequest).get(0);
     }
 
-    protected List<EntityExportData<?>> exportEntities(ExportRequest exportRequest) throws Exception {
+    protected List<EntityExportData<?>> exportEntities(VersionCreateConfig exportRequest) throws Exception {
         return getResponse(doPost("/api/entities/export", exportRequest), new TypeReference<List<EntityExportData<?>>>() {});
     }
 
-    protected List<EntityExportData<?>> exportEntities(List<ExportRequest> exportRequests) throws Exception {
+    protected List<EntityExportData<?>> exportEntities(List<VersionCreateConfig> exportRequests) throws Exception {
         return getResponse(doPost("/api/entities/export?multiple", exportRequests), new TypeReference<List<EntityExportData<?>>>() {});
     }
 

@@ -17,18 +17,10 @@ package org.thingsboard.server.service.sync.vc.data;
 
 import lombok.Data;
 
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
 @Data
 public class EntitiesVersionControlSettings {
-    private String repositoryDirectory;
     private String repositoryUri;
     private String username;
     private String password;
-
-    private int fetchPeriod;
-
-    private Map<UUID, List<String>> tenantsAllowedBranches;
+    private String defaultBranch;
 }

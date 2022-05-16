@@ -20,19 +20,18 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.vc.data.EntitiesVersionControlSettings;
-import org.thingsboard.server.service.sync.vc.data.VersionedEntityInfo;
 import org.thingsboard.server.service.sync.vc.data.EntityVersion;
-import org.thingsboard.server.service.sync.vc.data.EntityVersionLoadResult;
-import org.thingsboard.server.service.sync.vc.data.EntityVersionLoadSettings;
-import org.thingsboard.server.service.sync.vc.data.EntityVersionSaveSettings;
+import org.thingsboard.server.service.sync.vc.data.VersionCreationResult;
+import org.thingsboard.server.service.sync.vc.data.VersionLoadResult;
+import org.thingsboard.server.service.sync.vc.data.VersionedEntityInfo;
+import org.thingsboard.server.service.sync.vc.data.request.load.VersionLoadRequest;
+import org.thingsboard.server.service.sync.vc.data.request.create.VersionCreateRequest;
 
 import java.util.List;
 
 public interface EntitiesVersionControlService {
 
-    EntityVersion saveEntityVersion(SecurityUser user, EntityId entityId, String branch, String versionName, EntityVersionSaveSettings settings) throws Exception;
-
-    EntityVersion saveEntitiesVersion(SecurityUser user, List<EntityId> entitiesIds, String branch, String versionName, EntityVersionSaveSettings settings) throws Exception;
+    VersionCreationResult saveEntitiesVersion(SecurityUser user, VersionCreateRequest request) throws Exception;
 
 
     List<EntityVersion> listEntityVersions(TenantId tenantId, String branch, EntityId externalId) throws Exception;
@@ -42,23 +41,19 @@ public interface EntitiesVersionControlService {
     List<EntityVersion> listVersions(TenantId tenantId, String branch) throws Exception;
 
 
-    List<VersionedEntityInfo> listEntitiesAtVersion(TenantId tenantId, EntityType entityType, String branch, String versionId) throws Exception; // will be good to return entity name also
+    List<VersionedEntityInfo> listEntitiesAtVersion(TenantId tenantId, EntityType entityType, String branch, String versionId) throws Exception;
 
     List<VersionedEntityInfo> listAllEntitiesAtVersion(TenantId tenantId, String branch, String versionId) throws Exception;
 
 
-    EntityVersionLoadResult loadEntityVersion(SecurityUser user, EntityId externalId, String branch, String versionId, EntityVersionLoadSettings settings) throws Exception;
-
-    List<EntityVersionLoadResult> loadEntityTypeVersion(SecurityUser user, EntityType entityType, String branch, String versionId, EntityVersionLoadSettings settings) throws Exception;
-
-    List<EntityVersionLoadResult> loadAllAtVersion(SecurityUser user, String branch, String versionId, EntityVersionLoadSettings settings) throws Exception;
+    List<VersionLoadResult> loadEntitiesVersion(SecurityUser user, VersionLoadRequest request) throws Exception;
 
 
-    List<String> listAllowedBranches(TenantId tenantId);
+    List<String> listBranches(TenantId tenantId) throws Exception;
 
 
-    void saveSettings(EntitiesVersionControlSettings settings);
+    void saveSettings(TenantId tenantId, EntitiesVersionControlSettings settings);
 
-    EntitiesVersionControlSettings getSettings();
+    EntitiesVersionControlSettings getSettings(TenantId tenantId);
 
 }

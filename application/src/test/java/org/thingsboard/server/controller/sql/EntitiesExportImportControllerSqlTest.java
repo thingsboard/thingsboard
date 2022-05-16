@@ -39,7 +39,6 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
-import org.thingsboard.server.common.data.query.EntityListFilter;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -50,18 +49,18 @@ import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
-import org.thingsboard.server.service.sync.exporting.data.DeviceExportData;
-import org.thingsboard.server.service.sync.exporting.data.EntityExportData;
-import org.thingsboard.server.service.sync.exporting.data.RuleChainExportData;
-import org.thingsboard.server.service.sync.exporting.data.request.CustomEntityFilterExportRequest;
-import org.thingsboard.server.service.sync.exporting.data.request.EntityExportSettings;
-import org.thingsboard.server.service.sync.exporting.data.request.EntityListExportRequest;
-import org.thingsboard.server.service.sync.exporting.data.request.EntityTypeExportRequest;
-import org.thingsboard.server.service.sync.exporting.data.request.ExportRequest;
-import org.thingsboard.server.service.sync.exporting.data.request.SingleEntityExportRequest;
-import org.thingsboard.server.service.sync.importing.data.EntityImportResult;
-import org.thingsboard.server.service.sync.importing.data.EntityImportSettings;
-import org.thingsboard.server.service.sync.importing.data.request.ImportRequest;
+import org.thingsboard.server.service.sync.exportimport.exporting.data.DeviceExportData;
+import org.thingsboard.server.service.sync.exportimport.exporting.data.EntityExportData;
+import org.thingsboard.server.service.sync.exportimport.exporting.data.RuleChainExportData;
+import org.thingsboard.server.service.sync.vc.data.request.create.EntitiesByCustomFilterVersionCreateConfig;
+import org.thingsboard.server.service.sync.exportimport.exporting.data.EntityExportSettings;
+import org.thingsboard.server.service.sync.vc.data.request.create.EntityListVersionCreateConfig;
+import org.thingsboard.server.service.sync.vc.data.request.create.EntityTypeVersionCreateConfig;
+import org.thingsboard.server.service.sync.vc.data.request.create.VersionCreateConfig;
+import org.thingsboard.server.service.sync.vc.data.request.create.SingleEntityVersionCreateConfig;
+import org.thingsboard.server.service.sync.exportimport.importing.data.EntityImportResult;
+import org.thingsboard.server.service.sync.exportimport.importing.data.EntityImportSettings;
+import org.thingsboard.server.service.sync.exportimport.importing.data.ImportRequest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -294,11 +293,11 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
         dashboard.setConfiguration(dashboardConfiguration);
         dashboard = dashboardService.saveDashboard(dashboard);
 
-        EntityTypeExportRequest assetsExportRequest = new EntityTypeExportRequest();
+        EntityTypeVersionCreateConfig assetsExportRequest = new EntityTypeVersionCreateConfig();
         assetsExportRequest.setEntityType(EntityType.ASSET);
         assetsExportRequest.setPageSize(10);
         assetsExportRequest.setExportSettings(new EntityExportSettings());
-        EntityTypeExportRequest dashboardsExportRequest = new EntityTypeExportRequest();
+        EntityTypeVersionCreateConfig dashboardsExportRequest = new EntityTypeVersionCreateConfig();
         dashboardsExportRequest.setEntityType(EntityType.DASHBOARD);
         dashboardsExportRequest.setPageSize(10);
         dashboardsExportRequest.setExportSettings(new EntityExportSettings());
@@ -365,7 +364,7 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
         DeviceProfile deviceProfile = createDeviceProfile(tenantId1, ruleChain.getId(), dashboard.getId(), "Device profile 1");
         Device device = createDevice(tenantId1, customer.getId(), deviceProfile.getId(), "Customer 1 - Device 1");
 
-        EntityListExportRequest exportRequest = new EntityListExportRequest();
+        EntityListVersionCreateConfig exportRequest = new EntityListVersionCreateConfig();
         exportRequest.setExportSettings(new EntityExportSettings());
         exportRequest.setEntitiesIds(List.of(customer.getId(), asset.getId(), ruleChain.getId(), deviceProfile.getId(), dashboard.getId()));
         List<EntityExportData<?>> exportDataList = exportEntities(exportRequest);
@@ -418,7 +417,7 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
         Device device = createDevice(tenantId1, null, null, "Device 1");
         EntityRelation relation = createRelation(asset.getId(), device.getId());
 
-        EntityListExportRequest exportRequest = new EntityListExportRequest();
+        EntityListVersionCreateConfig exportRequest = new EntityListVersionCreateConfig();
         exportRequest.setEntitiesIds(List.of(asset.getId(), device.getId()));
         exportRequest.setExportSettings(EntityExportSettings.builder()
                 .exportRelations(true)
@@ -464,7 +463,7 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
         Device device = createDevice(tenantId1, null, null, "Device 1");
         EntityRelation relation = createRelation(asset.getId(), device.getId());
 
-        EntityListExportRequest exportRequest = new EntityListExportRequest();
+        EntityListVersionCreateConfig exportRequest = new EntityListVersionCreateConfig();
         exportRequest.setEntitiesIds(List.of(asset.getId(), device.getId()));
         exportRequest.setExportSettings(EntityExportSettings.builder()
                 .exportRelations(true)
@@ -506,7 +505,7 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
         Device device1 = createDevice(tenantId1, null, null, "Device 1");
         EntityRelation relation1 = createRelation(asset.getId(), device1.getId());
 
-        SingleEntityExportRequest exportRequest = new SingleEntityExportRequest();
+        SingleEntityVersionCreateConfig exportRequest = new SingleEntityVersionCreateConfig();
         exportRequest.setEntityId(asset.getId());
         exportRequest.setExportSettings(EntityExportSettings.builder()
                 .exportRelations(true)
@@ -538,7 +537,7 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
         Device device = createDevice(tenantId1, null, null, "Device 1");
         EntityRelation relation1 = createRelation(asset1.getId(), device.getId());
 
-        SingleEntityExportRequest exportRequest = new SingleEntityExportRequest();
+        SingleEntityVersionCreateConfig exportRequest = new SingleEntityVersionCreateConfig();
         exportRequest.setEntityId(device.getId());
         exportRequest.setExportSettings(EntityExportSettings.builder()
                 .exportRelations(true)
@@ -568,7 +567,7 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
         logInAsTenantAdmin1();
         DeviceProfile defaultDeviceProfile = deviceProfileService.findDefaultDeviceProfile(tenantId1);
 
-        EntityListExportRequest exportRequest = new EntityListExportRequest();
+        EntityListVersionCreateConfig exportRequest = new EntityListVersionCreateConfig();
         exportRequest.setEntitiesIds(List.of(defaultDeviceProfile.getId()));
         exportRequest.setExportSettings(new EntityExportSettings());
         List<EntityExportData<?>> exportDataList = exportEntities(exportRequest);
@@ -613,7 +612,7 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
     }
 
     private void testEntityTypeExportRequest(ExportableEntity<?> entity) throws Exception {
-        EntityTypeExportRequest exportRequest = new EntityTypeExportRequest();
+        EntityTypeVersionCreateConfig exportRequest = new EntityTypeVersionCreateConfig();
         exportRequest.setExportSettings(new EntityExportSettings());
         exportRequest.setPageSize(10);
         exportRequest.setEntityType(entity.getId().getEntityType());
@@ -626,11 +625,11 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
     }
 
     private void testCustomEntityFilterExportRequest(ExportableEntity<?> entity) throws Exception {
-        CustomEntityFilterExportRequest exportRequest = new CustomEntityFilterExportRequest();
+        EntitiesByCustomFilterVersionCreateConfig exportRequest = new EntitiesByCustomFilterVersionCreateConfig();
         exportRequest.setExportSettings(new EntityExportSettings());
         exportRequest.setPageSize(10);
 
-        EntityListFilter filter = new EntityListFilter();
+        org.thingsboard.server.common.data.query.EntityListFilter filter = new org.thingsboard.server.common.data.query.EntityListFilter();
         filter.setEntityType(entity.getId().getEntityType());
         filter.setEntityList(List.of(entity.getId().toString()));
         exportRequest.setFilter(filter);
@@ -652,10 +651,10 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
         Asset tenantAsset = createAsset(tenantId1, null, "A", "Tenant asset 1");
         Asset customerAsset = createAsset(tenantId1, customer.getId(), "A", "Customer asset 1");
 
-        List<ExportRequest> exportRequests = new ArrayList<>();
+        List<VersionCreateConfig> exportRequests = new ArrayList<>();
 
         for (EntityType entityType : Set.of(EntityType.DEVICE, EntityType.ASSET)) {
-            EntityTypeExportRequest exportRequest = new EntityTypeExportRequest();
+            EntityTypeVersionCreateConfig exportRequest = new EntityTypeVersionCreateConfig();
             exportRequest.setExportSettings(new EntityExportSettings());
             exportRequest.setPageSize(10);
             exportRequest.setEntityType(entityType);
@@ -685,7 +684,7 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
         DeviceProfile deviceProfile = createDeviceProfile(tenantId1, ruleChain.getId(), dashboard.getId(), "Device profile 1");
         Device device = createDevice(tenantId1, null, deviceProfile.getId(), "Device 1");
 
-        EntityListExportRequest exportRequest = new EntityListExportRequest();
+        EntityListVersionCreateConfig exportRequest = new EntityListVersionCreateConfig();
         exportRequest.setEntitiesIds(List.of(customer.getId(), asset.getId(), device.getId(), ruleChain.getId(), dashboard.getId(), deviceProfile.getId()));
         exportRequest.setExportSettings(new EntityExportSettings());
 
