@@ -683,7 +683,7 @@ public class RuleChainController extends BaseController {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         try {
             EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-            Edge edge = checkEdgeId(edgeId, Operation.READ);
+            Edge edge = checkEdgeId(edgeId, Operation.WRITE);
 
             RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
             checkRuleChain(ruleChainId, Operation.READ);
@@ -723,7 +723,7 @@ public class RuleChainController extends BaseController {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         try {
             EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-            Edge edge = checkEdgeId(edgeId, Operation.READ);
+            Edge edge = checkEdgeId(edgeId, Operation.WRITE);
             RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
             RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.READ);
 

@@ -249,8 +249,8 @@
     "created-time": "创建时间",
     "details": "详情",
     "display-status": {
-      "ACTIVE_ACK": "Active 已确认",
-      "ACTIVE_UNACK": "Active 未确认",
+      "ACTIVE_ACK": "激活已确认",
+      "ACTIVE_UNACK": "激活未确认",
       "CLEARED_ACK": "清除已确认",
       "CLEARED_UNACK": "清除未确认"
     },
@@ -265,15 +265,15 @@
     "no-alarms-matching": "没有找到匹配 '{{entity}}' 的警告",
     "no-alarms-prompt": "未发现警告",
     "no-data": "无数据显示",
-    "originator": "Originator",
-    "originator-type": "Originator 类型",
+    "originator": "发起者",
+    "originator-type": "发起者类型",
     "polling-interval": "警告轮询间隔(秒)",
     "polling-interval-required": "警告轮询间隔必填。",
     "search": "查找警告",
     "search-propagated-alarms": "检索已传递的警报",
     "search-status": {
       "ACK": "已确认",
-      "ACTIVE": "Active",
+      "ACTIVE": "激活",
       "ANY": "所有",
       "CLEARED": "已清除",
       "UNACK": "未确认"
@@ -540,9 +540,11 @@
     "enter-password": "输入密码",
     "enter-search": "输入检索条件",
     "enter-username": "输入用户名",
-    "loading": "Loading...",
+    "loading": "正在加载中...",
     "password": "密码",
-    "username": "用户名"
+    "username": "用户名",
+    "proceed": "继续",
+    "open-details-page": "打开详情页"
   },
   "confirm-on-exit": {
     "html-message": "您有未保存的更改。<br/> 确定要离开此页面吗？",
@@ -687,6 +689,7 @@
     "display-filters": "显示筛选器",
     "display-title": "显示仪表板标题",
     "drop-image": "拖拽图像或单击以选择要上传的文件。",
+    "maximum-upload-file-size": "最大上传文件大小: {{ size }}",
     "edit-state": "仪表板状态编辑",
     "export": "导出仪表板",
     "export-failed-error": "无法导出仪表板: {{error}}",
@@ -762,6 +765,10 @@
     "state-name-required": "仪表板状态名必填。",
     "states": "仪表板状态",
     "title": "标题",
+    "image": "仪表板图片",
+    "mobile-app-settings": "移动应用设置",
+    "mobile-order": "移动应用中的仪表板订单",
+    "mobile-hide": "在移动应用中隐藏仪表板",
     "title-color": "标题颜色",
     "title-required": "标题必填。",
     "toolbar-always-open": "工具栏常驻",
@@ -887,6 +894,8 @@
     "create-new-device-profile": "创建一个新的！",
     "default": "默认",
     "default-rule-chain": "默认规则链",
+    "mobile-dashboard": "移动仪表板",
+    "mobile-dashboard-hint": "被移动应用用作设备详情仪表板",
     "delete": "删除设备配置",
     "delete-device-profile-text": "请注意：确认后设备配置和所有相关数据将不可恢复。",
     "delete-device-profile-title": "是否确实要删除设备配置 '{{deviceProfileName}}'？",
@@ -995,7 +1004,8 @@
     "transport-type-snmp-hint": "指定 SNMP 传输配置",
     "type": "配置类型",
     "type-default": "默认",
-    "type-required": "配置类型必填。"
+    "type-required": "配置类型必填。",
+    "image": "设备配置图片"
   },
   "device": {
     "access-token": "访问令牌",
@@ -1997,7 +2007,11 @@
     "change-password": "更改密码",
     "current-password": "当前密码",
     "last-login-time": "最后登录",
-    "profile": "属性"
+    "profile": "属性",
+    "copy-jwt-token": "复制 JWT 令牌",
+    "valid-till": "有效期至 {{expirationData}}",
+    "tokenCopiedSuccessMessage": "JWT 令牌已复制到剪贴板",
+    "tokenCopiedWarnMessage": "JWT 令牌已过期！请刷新页面。"
   },
   "queue": {
     "name": "队列名称",

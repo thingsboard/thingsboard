@@ -38,8 +38,6 @@ public interface RelationService {
 
     EntityRelation getRelation(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup);
 
-    ListenableFuture<EntityRelation> getRelationAsync(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup);
-
     boolean saveRelation(TenantId tenantId, EntityRelation relation);
 
     ListenableFuture<Boolean> saveRelationAsync(TenantId tenantId, EntityRelation relation);

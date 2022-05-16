@@ -52,8 +52,8 @@ public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegration
         Set actualObjects = ConcurrentHashMap.newKeySet();
         Set actualInstances = ConcurrentHashMap.newKeySet();
         rpcActualValue.forEach(node -> {
-            if (!node.get("url").asText().equals("/")) {
-                LwM2mPath path = new LwM2mPath(node.get("url").asText());
+            if (!node.get("uriReference").asText().equals("/")) {
+                LwM2mPath path = new LwM2mPath(node.get("uriReference").asText());
                 actualObjects.add("/" + path.getObjectId());
                 if (path.isObjectInstance()) {
                     actualInstances.add("/" + path.getObjectId() + "/" + path.getObjectInstanceId());
@@ -124,7 +124,7 @@ public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegration
         String expectedInstance = (String) expectedInstances.stream().findFirst().get();
         String expectedObjectInstanceId = pathIdVerToObjectId(expectedInstance);
         LwM2mPath expectedPath = new LwM2mPath(expectedObjectInstanceId);
-        int expectedResource = client.getClient().getObjectTree().getObjectEnablers().get(expectedPath.getObjectId()).getObjectModel().resources.entrySet().stream().findAny().get().getKey();
+        int expectedResource = lwM2MTestClient.getLeshanClient().getObjectTree().getObjectEnablers().get(expectedPath.getObjectId()).getObjectModel().resources.entrySet().stream().findAny().get().getKey();
         String expected = expectedInstance + "/" + expectedResource;
         String actualResult = sendDiscover(expected);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);

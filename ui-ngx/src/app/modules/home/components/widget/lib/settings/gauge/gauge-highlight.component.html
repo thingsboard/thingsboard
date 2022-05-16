@@ -1,0 +1,61 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-expansion-panel class="gauge-highlight" fxFlex [formGroup]="gaugeHighlightFormGroup" [(expanded)]="expanded">
+  <mat-expansion-panel-header>
+    <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+      <mat-panel-title>
+        <div fxLayout="row" fxFlex fxLayoutAlign="start center">
+          <div>{{ highlightRangeText() }}</div>
+          <div class="tb-color-preview" style="margin-left: 6px;">
+            <div class="tb-color-result" [ngStyle]="{background: gaugeHighlightFormGroup.get('color').value}"></div>
+          </div>
+        </div>
+      </mat-panel-title>
+      <span fxFlex></span>
+      <button *ngIf="!disabled" mat-icon-button style="min-width: 40px;"
+              type="button"
+              (click)="removeHighlight.emit()"
+              matTooltip="{{ 'action.remove' | translate }}"
+              matTooltipPosition="above">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </div>
+  </mat-expansion-panel-header>
+  <ng-template matExpansionPanelContent>
+    <div fxLayout="column" fxLayoutGap="0.5em">
+      <mat-divider></mat-divider>
+      <section class="tb-widget-settings" fxLayout="column">
+        <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+          <mat-form-field fxFlex>
+            <mat-label translate>widgets.gauge.highlight-from</mat-label>
+            <input matInput type="number" formControlName="from">
+          </mat-form-field>
+          <mat-form-field fxFlex>
+            <mat-label translate>widgets.gauge.highlight-to</mat-label>
+            <input matInput type="number" formControlName="to">
+          </mat-form-field>
+        </section>
+        <tb-color-input
+          formControlName="color"
+          icon="format_color_fill"
+          label="{{ 'widgets.gauge.highlight-color' | translate }}" openOnInput colorClearButton>
+        </tb-color-input>
+      </section>
+    </div>
+  </ng-template>
+</mat-expansion-panel>

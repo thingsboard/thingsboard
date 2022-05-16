@@ -19,6 +19,7 @@
   <input matInput type="text" placeholder="{{ placeholder || ('dashboard.dashboard' | translate) }}"
          #dashboardInput
          formControlName="dashboard"
+         (focusin)="onFocus()"
          [required]="required"
          [matAutocomplete]="dashboardAutocomplete">
   <button *ngIf="selectDashboardFormGroup.get('dashboard').value && !disabled"

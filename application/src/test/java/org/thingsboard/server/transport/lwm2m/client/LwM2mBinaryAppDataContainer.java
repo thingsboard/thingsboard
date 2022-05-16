@@ -81,8 +81,11 @@ public class LwM2mBinaryAppDataContainer extends BaseInstanceEnabler implements 
     public LwM2mBinaryAppDataContainer(ScheduledExecutorService executorService, Integer id) {
         try {
             if (id != null) this.setId(id);
-            executorService.scheduleWithFixedDelay(() ->
-                    fireResourcesChange(0, 2), 1800000, 1800000, TimeUnit.MILLISECONDS); // 30 MIN
+            executorService.scheduleWithFixedDelay(() -> {
+                        fireResourceChange(0);
+                        fireResourceChange(2);
+                    }
+                    , 1800000, 1800000, TimeUnit.MILLISECONDS); // 30 MIN
         } catch (Throwable e) {
             log.error("[{}]Throwable", e.toString());
             e.printStackTrace();
@@ -126,23 +129,23 @@ public class LwM2mBinaryAppDataContainer extends BaseInstanceEnabler implements 
                 }
             case 1:
                 setPriority((Integer) (value.getValue() instanceof Long ? ((Long) value.getValue()).intValue() : value.getValue()));
-                fireResourcesChange(resourceId);
+                fireResourceChange(resourceId);
                 return WriteResponse.success();
             case 2:
                 setTimestamp(((Date) value.getValue()).getTime());
-                fireResourcesChange(resourceId);
+                fireResourceChange(resourceId);
                 return WriteResponse.success();
             case 3:
                 setDescription((String) value.getValue());
-                fireResourcesChange(resourceId);
+                fireResourceChange(resourceId);
                 return WriteResponse.success();
             case 4:
                 setDataFormat((String) value.getValue());
-                fireResourcesChange(resourceId);
+                fireResourceChange(resourceId);
                 return WriteResponse.success();
             case 5:
                 setAppID((Integer) value.getValue());
-                fireResourcesChange(resourceId);
+                fireResourceChange(resourceId);
                 return WriteResponse.success();
             default:
                 return super.write(identity, replace, resourceId, value);
@@ -170,7 +173,8 @@ public class LwM2mBinaryAppDataContainer extends BaseInstanceEnabler implements 
     }
 
     private String getDescription() {
-        return this.description == null ? "meter reading" : this.description;
+//        return this.description == null ? "meter reading" : this.description;
+        return this.description;
     }
 
     private void setTimestamp(long time) {
@@ -185,7 +189,7 @@ public class LwM2mBinaryAppDataContainer extends BaseInstanceEnabler implements 
         try {
             if (value instanceof LwM2mMultipleResource) {
                 if (replace || this.data == null) {
-                    this.data =  new HashMap<>();
+                    this.data = new HashMap<>();
                 }
                 value.getInstances().values().forEach(v -> {
                     this.data.put(v.getId(), (byte[]) v.getValue());
@@ -200,6 +204,10 @@ public class LwM2mBinaryAppDataContainer extends BaseInstanceEnabler implements 
     }
 
     private Map<Integer, byte[]> getData() {
+        if (data == null) {
+            this.data = new HashMap<>();
+            this.data.put(0, new byte[]{(byte) 0xAC});
+        }
         return data;
     }
 

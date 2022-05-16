@@ -141,7 +141,7 @@ export class CustomersTableConfigResolver implements Resolve<EntityTableConfig<C
     if ($event) {
       $event.stopPropagation();
     }
-    const url = this.router.createUrlTree([customer.id.id], {relativeTo: config.table.route});
+    const url = this.router.createUrlTree([customer.id.id], {relativeTo: config.getActivatedRoute()});
     this.router.navigateByUrl(url);
   }
 

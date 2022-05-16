@@ -141,32 +141,6 @@
         [required]="true"
         [entityType]="entityType.EDGE">
       </tb-entity-subtype-autocomplete>
-      <div [fxShow]="edgeScope !== 'customer_user'">
-        <div class="tb-hint" [innerHTML]="'edge.edge-license-key-hint' | translate"></div>
-        <mat-form-field class="mat-block">
-          <mat-label translate>edge.edge-license-key</mat-label>
-          <input matInput formControlName="edgeLicenseKey" required>
-          <mat-error *ngIf="entityForm.get('edgeLicenseKey').hasError('required')">
-            {{ 'edge.edge-license-key-required' | translate }}
-          </mat-error>
-          <mat-error *ngIf="entityForm.get('edgeLicenseKey').hasError('maxlength')">
-            {{ 'edge.edge-license-key-max-length' | translate }}
-          </mat-error>
-        </mat-form-field>
-      </div>
-      <div [fxShow]="edgeScope !== 'customer_user'">
-        <div translate class="tb-hint">edge.cloud-endpoint-hint</div>
-        <mat-form-field class="mat-block">
-          <mat-label translate>edge.cloud-endpoint</mat-label>
-          <input matInput formControlName="cloudEndpoint" required>
-          <mat-error *ngIf="entityForm.get('cloudEndpoint').hasError('required')">
-            {{ 'edge.cloud-endpoint-required' | translate }}
-          </mat-error>
-          <mat-error *ngIf="entityForm.get('cloudEndpoint').hasError('maxlength')">
-            {{ 'edge.cloud-endpoint-max-length' | translate }}
-          </mat-error>
-        </mat-form-field>
-      </div>
     </fieldset>
     <div fxLayout="row" [fxShow]="edgeScope !== 'customer_user'">
         <mat-form-field class="mat-block" fxFlex>

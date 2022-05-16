@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.alarm;
 
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sql.EntityAlarmCompositeKey;
 import org.thingsboard.server.dao.model.sql.EntityAlarmEntity;
@@ -23,7 +23,7 @@ import org.thingsboard.server.dao.model.sql.EntityAlarmEntity;
 import java.util.List;
 import java.util.UUID;
 
-public interface EntityAlarmRepository extends CrudRepository<EntityAlarmEntity, EntityAlarmCompositeKey> {
+public interface EntityAlarmRepository extends JpaRepository<EntityAlarmEntity, EntityAlarmCompositeKey> {
 
     List<EntityAlarmEntity> findAllByAlarmId(UUID alarmId);
 
