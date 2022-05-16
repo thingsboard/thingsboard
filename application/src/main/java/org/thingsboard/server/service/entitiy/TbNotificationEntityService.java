@@ -43,7 +43,7 @@ public interface TbNotificationEntityService {
                                                                             CustomerId customerId, ActionType actionType,
                                                                             SecurityUser user, Object... additionalInfo);
 
-    <E extends HasName, I extends EntityId> void notifyDeleteEntity(TenantId tenantId, I entityId, E entity, CustomerId customerId,
+    <E extends HasName, I extends EntityId> void notifyDeleteEntity(TenantId tenantId, I entityId, E entity, EntityId originatorId, CustomerId customerId,
                                                                     ActionType actionType, List<EdgeId> relatedEdgeIds, SecurityUser user,
                                                                     String body, Object... additionalInfo);
 

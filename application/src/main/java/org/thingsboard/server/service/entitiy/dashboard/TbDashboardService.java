@@ -24,7 +24,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.service.entitiy.SimpleTbEntityService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-public interface  TbDashboardService extends SimpleTbEntityService<Dashboard, DashboardId> {
+public interface  TbDashboardService extends SimpleTbEntityService<Dashboard> {
 
     Dashboard assignDashboardToCustomer(DashboardId dashboardId, Customer customer, SecurityUser user) throws ThingsboardException;
 

@@ -22,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.msg.DeviceCredentialsUpdateNotificationMsg;
 import org.thingsboard.server.cluster.TbClusterService;
-import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.HasName;
@@ -68,17 +67,14 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
     }
 
     @Override
-    public <E extends HasName, I extends EntityId> void notifyDeleteEntity(TenantId tenantId, I entityId, E entity,
+    public <E extends HasName, I extends EntityId> void notifyDeleteEntity(TenantId tenantId, I entityId, E entity, EntityId originatorId,
                                                                            CustomerId customerId, ActionType actionType,
                                                                            List<EdgeId> relatedEdgeIds,
                                                                            SecurityUser user,
                                                                            String body, Object... additionalInfo) {
-        EntityId entityIdForLogEntityAction = entity instanceof Alarm ? ((Alarm)entity).getOriginator() : entityId;
+        EntityId entityIdForLogEntityAction = originatorId != null ? originatorId : entityId;
         logEntityAction(tenantId, entityIdForLogEntityAction, entity, customerId, actionType, user, additionalInfo);
         sendDeleteNotificationMsg(tenantId, entityId, entity, relatedEdgeIds, body);
-        if (entity instanceof Customer) {
-            tbClusterService.broadcastEntityStateChangeEvent(tenantId, customerId, ComponentLifecycleEvent.DELETED);
-        }
     }
 
     @Override
@@ -131,7 +127,7 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
         gatewayNotificationsService.onDeviceDeleted(device);
         tbClusterService.onDeviceDeleted(device, null);
 
-        notifyDeleteEntity(tenantId, deviceId, device, customerId, ActionType.DELETED, relatedEdgeIds, user,null, additionalInfo);
+        notifyDeleteEntity(tenantId, deviceId, device, customerId, null, ActionType.DELETED, relatedEdgeIds, user,null, additionalInfo);
     }
 
     @Override

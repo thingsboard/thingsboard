@@ -22,12 +22,13 @@ import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.service.entitiy.SimpleTbEntityService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-public interface TbAssetService extends SimpleTbEntityService<Asset, AssetId> {
+public interface TbAssetService {
 
-    ListenableFuture<Void> delete(Asset asset, SecurityUser user) throws ThingsboardException;
+    Asset saveAsset(Asset asset, SecurityUser user) throws ThingsboardException;
+
+    ListenableFuture<Void> deleteAsset (Asset asset, SecurityUser user) throws ThingsboardException;
 
     Asset assignAssetToCustomer(TenantId tenantId, AssetId assetId, Customer customer, SecurityUser user) throws ThingsboardException;
 

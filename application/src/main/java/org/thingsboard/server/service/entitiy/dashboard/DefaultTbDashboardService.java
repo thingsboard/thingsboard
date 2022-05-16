@@ -59,12 +59,13 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
     }
 
     @Override
-    public void delete(Dashboard dashboard, DashboardId dashboardId, SecurityUser user) throws ThingsboardException {
-        TenantId tenantId = user.getTenantId();
+    public void delete(Dashboard dashboard, SecurityUser user) throws ThingsboardException {
+        TenantId tenantId = dashboard.getTenantId();
+        DashboardId dashboardId = dashboard.getId();
         try {
             List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, dashboardId);
-            dashboardService.deleteDashboard(tenantId, (DashboardId) dashboardId);
-            notificationEntityService.notifyDeleteEntity(tenantId, dashboardId, dashboard, user.getCustomerId(),
+            dashboardService.deleteDashboard(tenantId, dashboardId);
+            notificationEntityService.notifyDeleteEntity(tenantId, dashboardId, dashboard, null, user.getCustomerId(),
                     ActionType.DELETED, relatedEdgeIds, user, null);
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.DASHBOARD), null, null,
@@ -104,7 +105,6 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
                     actionType, user, e, dashboardId.toString());
             throw handleException(e);
         }
-
     }
 
     @Override
@@ -128,8 +128,6 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
     public Dashboard updateDashboardCustomers(TenantId tenantId, Dashboard dashboard, String[] strCustomerIds, SecurityUser user) throws ThingsboardException {
         ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER;
         try {
-
-
             Set<CustomerId> customerIds = new HashSet<>();
             if (strCustomerIds != null) {
                 for (String strCustomerId : strCustomerIds) {
@@ -216,8 +214,6 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
     public Dashboard removeDashboardCustomers(TenantId tenantId, Dashboard dashboard, String[] strCustomerIds, SecurityUser user) throws ThingsboardException {
         ActionType actionType = ActionType.UNASSIGNED_FROM_CUSTOMER;
         try {
-
-
             Set<CustomerId> customerIds = new HashSet<>();
             if (strCustomerIds != null) {
                 for (String strCustomerId : strCustomerIds) {

@@ -15,9 +15,9 @@
  */
 package org.thingsboard.server.service.entitiy.alarm;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
@@ -35,7 +35,6 @@ import java.util.List;
 @TbCoreComponent
 @AllArgsConstructor
 public class DefaultTbAlarmService extends AbstractTbEntityService implements TbAlarmService {
-    private static final ObjectMapper json = new ObjectMapper();
 
     @Override
     public Alarm save(Alarm alarm, SecurityUser user) throws ThingsboardException {
@@ -81,8 +80,8 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     public Boolean deleteAlarm(Alarm alarm, SecurityUser user) throws ThingsboardException {
         try {
             List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(user.getTenantId(), alarm.getOriginator());
-            notificationEntityService.notifyDeleteEntity(user.getTenantId(), alarm.getId(), alarm, user.getCustomerId(),
-                    ActionType.DELETED, relatedEdgeIds, user, json.writeValueAsString(alarm));
+            notificationEntityService.notifyDeleteEntity(user.getTenantId(), alarm.getId(), alarm, alarm.getOriginator(), user.getCustomerId(),
+                    ActionType.DELETED, relatedEdgeIds, user, JacksonUtil.OBJECT_MAPPER.writeValueAsString(alarm));
             return alarmService.deleteAlarm(user.getTenantId(), alarm.getId()).isSuccessful();
         } catch (Exception e) {
             throw handleException(e);

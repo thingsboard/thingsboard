@@ -194,7 +194,7 @@ public class DashboardController extends BaseController {
         checkParameter(DASHBOARD_ID, strDashboardId);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
         Dashboard dashboard = checkDashboardId(dashboardId, Operation.DELETE);
-        tbDashboardService.delete(dashboard, dashboardId, getCurrentUser());
+        tbDashboardService.delete(dashboard, getCurrentUser());
     }
 
     @ApiOperation(value = "Assign the Dashboard (assignDashboardToCustomer)",

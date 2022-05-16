@@ -161,7 +161,7 @@ public class CustomerController extends BaseController {
         CustomerId customerId = new CustomerId(toUUID(strCustomerId));
         Customer customer = checkCustomerId(customerId, Operation.DELETE);
         try {
-            tbCustomerService.delete(customer, customerId, getCurrentUser());
+            tbCustomerService.delete(customer, getCurrentUser());
         } catch (Exception e) {
             throw handleException(e);
         }
