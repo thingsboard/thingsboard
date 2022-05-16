@@ -44,8 +44,8 @@ import java.util.concurrent.TimeUnit;
 public class TbTestWebSocketClient extends WebSocketClient {
 
     private volatile String lastMsg;
-    private CountDownLatch reply;
-    private CountDownLatch update;
+    private volatile CountDownLatch reply;
+    private volatile CountDownLatch update;
 
     public TbTestWebSocketClient(URI serverUri) {
         super(serverUri);
