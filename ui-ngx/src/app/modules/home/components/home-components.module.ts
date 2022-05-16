@@ -151,6 +151,8 @@ import { DashboardStateComponent } from '@home/components/dashboard-page/dashboa
 import { EntityDetailsPageComponent } from '@home/components/entity/entity-details-page.component';
 import { TenantProfileQueuesComponent } from '@home/components/profile/queue/tenant-profile-queues.component';
 import { QueueFormComponent } from '@home/components/queue/queue-form.component';
+import { WidgetSettingsModule } from '@home/components/widget/lib/settings/widget-settings.module';
+import { WidgetSettingsComponent } from '@home/components/widget/widget-settings.component';
 
 @NgModule({
   declarations:
@@ -185,6 +187,7 @@ import { QueueFormComponent } from '@home/components/queue/queue-form.component'
       WidgetContainerComponent,
       WidgetComponent,
       LegendComponent,
+      WidgetSettingsComponent,
       WidgetConfigComponent,
       EntityFilterViewComponent,
       EntityFilterComponent,
@@ -279,6 +282,7 @@ import { QueueFormComponent } from '@home/components/queue/queue-form.component'
     CommonModule,
     SharedModule,
     SharedHomeComponentsModule,
+    WidgetSettingsModule,
     Lwm2mProfileComponentsModule,
     SnmpDeviceProfileTransportModule,
     StatesControllerModule,
@@ -307,6 +311,7 @@ import { QueueFormComponent } from '@home/components/queue/queue-form.component'
     WidgetContainerComponent,
     WidgetComponent,
     LegendComponent,
+    WidgetSettingsComponent,
     WidgetConfigComponent,
     EntityFilterViewComponent,
     EntityFilterComponent,

@@ -36,42 +36,45 @@ import redis.clients.jedis.JedisPoolConfig;
 import java.time.Duration;
 
 @Configuration
-@ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis", matchIfMissing = false)
+@ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
 @EnableCaching
 @Data
 public abstract class TBRedisCacheConfiguration {
 
-    @Value("${redis.pool_config.maxTotal}")
+    @Value("${redis.evictTtlInMs:60000}")
+    private int evictTtlInMs;
+
+    @Value("${redis.pool_config.maxTotal:128}")
     private int maxTotal;
 
-    @Value("${redis.pool_config.maxIdle}")
+    @Value("${redis.pool_config.maxIdle:128}")
     private int maxIdle;
 
-    @Value("${redis.pool_config.minIdle}")
+    @Value("${redis.pool_config.minIdle:16}")
     private int minIdle;
 
-    @Value("${redis.pool_config.testOnBorrow}")
+    @Value("${redis.pool_config.testOnBorrow:true}")
     private boolean testOnBorrow;
 
-    @Value("${redis.pool_config.testOnReturn}")
+    @Value("${redis.pool_config.testOnReturn:true}")
     private boolean testOnReturn;
 
-    @Value("${redis.pool_config.testWhileIdle}")
+    @Value("${redis.pool_config.testWhileIdle:true}")
     private boolean testWhileIdle;
 
-    @Value("${redis.pool_config.minEvictableMs}")
+    @Value("${redis.pool_config.minEvictableMs:60000}")
     private long minEvictableMs;
 
-    @Value("${redis.pool_config.evictionRunsMs}")
+    @Value("${redis.pool_config.evictionRunsMs:30000}")
     private long evictionRunsMs;
 
-    @Value("${redis.pool_config.maxWaitMills}")
+    @Value("${redis.pool_config.maxWaitMills:60000}")
     private long maxWaitMills;
 
-    @Value("${redis.pool_config.numberTestsPerEvictionRun}")
+    @Value("${redis.pool_config.numberTestsPerEvictionRun:3}")
     private int numberTestsPerEvictionRun;
 
-    @Value("${redis.pool_config.blockWhenExhausted}")
+    @Value("${redis.pool_config.blockWhenExhausted:true}")
     private boolean blockWhenExhausted;
 
     @Bean

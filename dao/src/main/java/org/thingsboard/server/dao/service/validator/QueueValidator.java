@@ -49,7 +49,7 @@ public class QueueValidator extends DataValidator<Queue> {
     }
 
     @Override
-    protected void validateUpdate(TenantId tenantId, Queue queue) {
+    protected Queue validateUpdate(TenantId tenantId, Queue queue) {
         Queue foundQueue = queueDao.findById(tenantId, queue.getUuidId());
         if (queueDao.findById(tenantId, queue.getUuidId()) == null) {
             throw new DataValidationException(String.format("Queue with id: %s does not exists!", queue.getId()));
@@ -57,9 +57,10 @@ public class QueueValidator extends DataValidator<Queue> {
         if (!foundQueue.getName().equals(queue.getName())) {
             throw new DataValidationException("Queue name can't be changed!");
         }
-        if (!foundQueue.getTopic().equals(queue.getTopic())) {
+        if (!foundQueue.getTopic().equals(queue.getTopic())) {QueueValidator
             throw new DataValidationException("Queue topic can't be changed!");
         }
+        return foundQueue;
     }
 
     @Override

@@ -20,9 +20,10 @@ import {
   functionValueCalculator,
   parseWithTranslation
 } from './common-maps-utils';
-import { PolygonSettings, UnitedMapSettings } from './map-models';
+import { WidgetPolygonSettings } from './map-models';
 import { FormattedData } from '@shared/models/widget.models';
 import { fillDataPattern, processDataPattern, safeExecute } from '@core/utils';
+import LeafletMap from '@home/components/widget/lib/maps/leaflet-map';
 
 export class Polygon {
 
@@ -30,13 +31,13 @@ export class Polygon {
 
     leafletPoly: L.Polygon;
     tooltip: L.Popup;
-    data: FormattedData;
-    dataSources: FormattedData[];
 
-    constructor(public map, data: FormattedData, dataSources: FormattedData[], private settings: UnitedMapSettings,
-                private onDragendListener?) {
-        this.dataSources = dataSources;
-        this.data = data;
+    constructor(private map: LeafletMap,
+                private data: FormattedData,
+                private dataSources: FormattedData[],
+                private settings: Partial<WidgetPolygonSettings>,
+                private onDragendListener?,
+                snappable = false) {
         const polygonColor = this.getPolygonColor(settings);
         const polygonStrokeColor = this.getPolygonStrokeColor(settings);
         const polyData = data[this.settings.polygonKeyName];
@@ -49,8 +50,8 @@ export class Polygon {
           fillOpacity: settings.polygonOpacity,
           opacity: settings.polygonStrokeOpacity,
           pmIgnore: !settings.editablePolygon,
-          snapIgnore: !settings.snappable
-        }).addTo(this.map);
+          snapIgnore: !snappable
+        }).addTo(this.map.map);
 
         if (settings.showPolygonLabel) {
           this.updateLabel(settings);
@@ -91,28 +92,30 @@ export class Polygon {
 
     updateTooltip(data: FormattedData) {
         const pattern = this.settings.usePolygonTooltipFunction ?
-            safeExecute(this.settings.polygonTooltipFunction, [this.data, this.dataSources, this.data.dsIndex]) :
+            safeExecute(this.settings.parsedPolygonTooltipFunction, [this.data, this.dataSources, this.data.dsIndex]) :
             this.settings.polygonTooltipPattern;
         this.tooltip.setContent(parseWithTranslation.parseTemplate(pattern, data, true));
     }
 
-    updateLabel(settings: PolygonSettings) {
+    updateLabel(settings: Partial<WidgetPolygonSettings>) {
         this.leafletPoly.unbindTooltip();
         if (settings.showPolygonLabel) {
             if (!this.map.polygonLabelText || settings.usePolygonLabelFunction) {
                 const pattern = settings.usePolygonLabelFunction ?
-                  safeExecute(settings.polygonLabelFunction, [this.data, this.dataSources, this.data.dsIndex]) : settings.polygonLabel;
+                  safeExecute(settings.parsedPolygonLabelFunction,
+                    [this.data, this.dataSources, this.data.dsIndex]) : settings.polygonLabel;
                 this.map.polygonLabelText = parseWithTranslation.prepareProcessPattern(pattern, true);
                 this.map.replaceInfoLabelPolygon = processDataPattern(this.map.polygonLabelText, this.data);
             }
             const polygonLabelText = fillDataPattern(this.map.polygonLabelText, this.map.replaceInfoLabelPolygon, this.data);
-            this.leafletPoly.bindTooltip(`<div style="color: ${settings.polygonLabelColor};"><b>${polygonLabelText}</b></div>`,
+            const labelColor = this.map.ctx.widgetConfig.color;
+            this.leafletPoly.bindTooltip(`<div style="color: ${labelColor};"><b>${polygonLabelText}</b></div>`,
               { className: 'tb-polygon-label', permanent: true, sticky: true, direction: 'center' })
               .openTooltip(this.leafletPoly.getBounds().getCenter());
         }
     }
 
-    updatePolygon(data: FormattedData, dataSources: FormattedData[], settings: PolygonSettings) {
+    updatePolygon(data: FormattedData, dataSources: FormattedData[], settings: Partial<WidgetPolygonSettings>) {
       if (this.editing) {
         return;
       }
@@ -121,7 +124,7 @@ export class Polygon {
       const polyData = data[this.settings.polygonKeyName];
       if (isCutPolygon(polyData) || polyData.length !== 2) {
         if (this.leafletPoly instanceof L.Rectangle) {
-          this.map.removeLayer(this.leafletPoly);
+          this.map.map.removeLayer(this.leafletPoly);
           const polygonColor = this.getPolygonColor(settings);
           const polygonStrokeColor = this.getPolygonStrokeColor(settings);
           this.leafletPoly = L.polygon(polyData, {
@@ -132,7 +135,7 @@ export class Polygon {
             fillOpacity: settings.polygonOpacity,
             opacity: settings.polygonStrokeOpacity,
             pmIgnore: !settings.editablePolygon
-          }).addTo(this.map);
+          }).addTo(this.map.map);
           if (settings.showPolygonTooltip) {
             this.tooltip = createTooltip(this.leafletPoly, settings, data.$datasource,
               settings.autoClosePolygonTooltip, settings.showPolygonTooltipAction);
@@ -156,10 +159,10 @@ export class Polygon {
     }
 
     removePolygon() {
-        this.map.removeLayer(this.leafletPoly);
+        this.map.map.removeLayer(this.leafletPoly);
     }
 
-    updatePolygonColor(settings: PolygonSettings) {
+    updatePolygonColor(settings: Partial<WidgetPolygonSettings>) {
         const polygonColor = this.getPolygonColor(settings);
         const polygonStrokeColor = this.getPolygonStrokeColor(settings);
         const style: L.PathOptions = {
@@ -178,13 +181,13 @@ export class Polygon {
         this.leafletPoly.redraw();
     }
 
-    private getPolygonColor(settings: PolygonSettings): string | null {
-      return functionValueCalculator(settings.usePolygonColorFunction, settings.polygonColorFunction,
+    private getPolygonColor(settings: Partial<WidgetPolygonSettings>): string | null {
+      return functionValueCalculator(settings.usePolygonColorFunction, settings.parsedPolygonColorFunction,
         [this.data, this.dataSources, this.data.dsIndex], settings.polygonColor);
     }
 
-  private getPolygonStrokeColor(settings: PolygonSettings): string | null {
-    return functionValueCalculator(settings.usePolygonStrokeColorFunction, settings.polygonStrokeColorFunction,
+  private getPolygonStrokeColor(settings: Partial<WidgetPolygonSettings>): string | null {
+    return functionValueCalculator(settings.usePolygonStrokeColorFunction, settings.parsedPolygonStrokeColorFunction,
       [this.data, this.dataSources, this.data.dsIndex], settings.polygonStrokeColor);
   }
 }

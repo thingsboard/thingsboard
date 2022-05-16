@@ -19,7 +19,9 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 
 public interface TbTenantService {
+
     Tenant save(Tenant tenant) throws ThingsboardException;
 
     void delete(Tenant tenant) throws ThingsboardException;
+
 }
