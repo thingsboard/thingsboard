@@ -14,21 +14,21 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { ActivatedRoute } from '@angular/router';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { DialogService } from '@core/services/dialog.service';
-import { TranslateService } from '@ngx-translate/core';
-import { WINDOW } from '@core/services/window.service';
+import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TwoFactorAuthenticationService } from '@core/http/two-factor-authentication.service';
-import { AuthState } from '@core/auth/auth.models';
-import { getCurrentAuthState } from '@core/auth/auth.selectors';
-import { Authority } from '@shared/models/authority.enum';
-import { TwoFactorAuthProviderType, TwoFactorAuthSettings } from '@shared/models/two-factor-auth.models';
+import {
+  TwoFactorAuthProviderType,
+  TwoFactorAuthSettings,
+  TwoFactorAuthSettingsForm
+} from '@shared/models/two-factor-auth.models';
+import { deepClone, isNotEmptyStr } from '@core/utils';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-2fa-settings',
@@ -37,56 +37,72 @@ import { TwoFactorAuthProviderType, TwoFactorAuthSettings } from '@shared/models
 })
 export class TwoFactorAuthSettingsComponent extends PageComponent implements OnInit, HasConfirmForm, OnDestroy {
 
-  private authState: AuthState = getCurrentAuthState(this.store);
-  private authUser = this.authState.authUser;
+  private readonly destroy$ = new Subject<void>();
 
   twoFaFormGroup: FormGroup;
-  twoFactorAuthProviderTypes = Object.keys(TwoFactorAuthProviderType);
   twoFactorAuthProviderType = TwoFactorAuthProviderType;
 
   constructor(protected store: Store<AppState>,
-              private route: ActivatedRoute,
               private twoFaService: TwoFactorAuthenticationService,
-              private fb: FormBuilder,
-              private dialogService: DialogService,
-              private translate: TranslateService,
-              @Inject(WINDOW) private window: Window) {
+              private fb: FormBuilder) {
     super(store);
   }
 
   ngOnInit() {
     this.build2faSettingsForm();
     this.twoFaService.getTwoFaSettings().subscribe((setting) => {
-      this.initTwoFactorAuthForm(setting);
+      this.setAuthConfigFormValue(setting);
     });
   }
 
   ngOnDestroy() {
     super.ngOnDestroy();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   confirmForm(): FormGroup {
     return this.twoFaFormGroup;
   }
 
-  isTenantAdmin(): boolean {
-    return this.authUser.authority === Authority.TENANT_ADMIN;
+  save() {
+    if (this.twoFaFormGroup.valid) {
+      const setting = this.twoFaFormGroup.value as TwoFactorAuthSettingsForm;
+      this.joinRateLimit(setting, 'verificationCodeCheckRateLimit');
+      this.joinRateLimit(setting, 'verificationCodeSendRateLimit');
+      const providers = setting.providers.filter(provider => provider.enable);
+      providers.forEach(provider => delete provider.enable);
+      const config = Object.assign(setting, {providers});
+      this.twoFaService.saveTwoFaSettings(config).subscribe(
+        () => {
+          this.twoFaFormGroup.markAsUntouched();
+          this.twoFaFormGroup.markAsPristine();
+        }
+      );
+    } else {
+      Object.keys(this.twoFaFormGroup.controls).forEach(field => {
+        const control = this.twoFaFormGroup.get(field);
+        control.markAsTouched({onlySelf: true});
+      });
+    }
   }
 
-  save() {
-    const setting = this.twoFaFormGroup.value;
-    this.twoFaService.saveTwoFaSettings(setting).subscribe(
-      (twoFactorAuthSettings) => {
-        this.twoFaFormGroup.patchValue(twoFactorAuthSettings, {emitEvent: false});
-        this.twoFaFormGroup.markAsUntouched();
-        this.twoFaFormGroup.markAsPristine();
-      }
-    );
+  toggleProviders($event: Event): void {
+    if ($event) {
+      $event.stopPropagation();
+    }
+  }
+
+  trackByElement(i: number, item: any) {
+    return item;
+  }
+
+  get providersForm(): FormArray {
+    return this.twoFaFormGroup.get('providers') as FormArray;
   }
 
   private build2faSettingsForm(): void {
     this.twoFaFormGroup = this.fb.group({
-      useSystemTwoFactorAuthSettings: [this.isTenantAdmin()],
       maxVerificationFailuresBeforeUserLockout: [30, [
         Validators.required,
         Validators.pattern(/^\d*$/),
@@ -98,91 +114,122 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
         Validators.min(1),
         Validators.pattern(/^\d*$/)
       ]],
-      verificationCodeCheckRateLimit: ['3:900', [Validators.required, Validators.pattern(/^[1-9]\d*:[1-9]\d*$/)]],
-      verificationCodeSendRateLimit: ['1:60', [Validators.required, Validators.pattern(/^[1-9]\d*:[1-9]\d*$/)]],
+      verificationCodeCheckRateLimitEnable: [false],
+      verificationCodeCheckRateLimitNumber: ['3', [Validators.required, Validators.min(1), Validators.pattern(/^\d*$/)]],
+      verificationCodeCheckRateLimitTime: ['900', [Validators.required, Validators.min(1), Validators.pattern(/^\d*$/)]],
+      verificationCodeSendRateLimitEnable: [false],
+      verificationCodeSendRateLimitNumber: ['1', [Validators.required, Validators.min(1), Validators.pattern(/^\d*$/)]],
+      verificationCodeSendRateLimitTime: ['60', [Validators.required, Validators.min(1), Validators.pattern(/^\d*$/)]],
       providers: this.fb.array([])
     });
-  }
-
-  private initTwoFactorAuthForm(settings: TwoFactorAuthSettings) {
-    settings.providers.forEach(() => {
-      this.addProvider();
+    Object.values(TwoFactorAuthProviderType).forEach(provider => {
+      this.buildProvidersSettingsForm(provider);
     });
-    this.twoFaFormGroup.patchValue(settings);
-    this.twoFaFormGroup.markAsPristine();
-  }
-
-  addProvider() {
-    const newProviders = this.fb.group({
-      providerType: [TwoFactorAuthProviderType.TOTP],
-      issuerName: ['ThingsBoard', Validators.required],
-      smsVerificationMessageTemplate: [{
-        value: 'Verification code: ${verificationCode}',
-        disabled: true
-      }, [
-        Validators.required,
-        Validators.pattern(/\${verificationCode}/)
-      ]],
-      verificationCodeLifetime: [{
-        value: 120,
-        disabled: true
-      }, [
-        Validators.required,
-        Validators.min(1),
-        Validators.pattern(/^\d*$/)
-      ]]
-    });
-    newProviders.get('providerType').valueChanges.subscribe(type => {
-      switch (type) {
-        case TwoFactorAuthProviderType.SMS:
-          newProviders.get('issuerName').disable({emitEvent: false});
-          newProviders.get('smsVerificationMessageTemplate').enable({emitEvent: false});
-          newProviders.get('verificationCodeLifetime').enable({emitEvent: false});
-          break;
-        case TwoFactorAuthProviderType.TOTP:
-          newProviders.get('issuerName').enable({emitEvent: false});
-          newProviders.get('smsVerificationMessageTemplate').disable({emitEvent: false});
-          newProviders.get('verificationCodeLifetime').disable({emitEvent: false});
-          break;
-        case TwoFactorAuthProviderType.EMAIL:
-          newProviders.get('issuerName').disable({emitEvent: false});
-          newProviders.get('smsVerificationMessageTemplate').disable({emitEvent: false});
-          newProviders.get('verificationCodeLifetime').enable({emitEvent: false});
-          break;
+    this.twoFaFormGroup.get('verificationCodeCheckRateLimitEnable').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(value => {
+      if (value) {
+        this.twoFaFormGroup.get('verificationCodeCheckRateLimitNumber').enable({emitEvent: false});
+        this.twoFaFormGroup.get('verificationCodeCheckRateLimitTime').enable({emitEvent: false});
+      } else {
+        this.twoFaFormGroup.get('verificationCodeCheckRateLimitNumber').disable({emitEvent: false});
+        this.twoFaFormGroup.get('verificationCodeCheckRateLimitTime').disable({emitEvent: false});
       }
     });
-    if (this.providersForm.length) {
-      const selectedProviderTypes = this.providersForm.value.map(providers => providers.providerType);
-      const allowProviders = this.twoFactorAuthProviderTypes.filter(provider => !selectedProviderTypes.includes(provider));
-      newProviders.get('providerType').setValue(allowProviders[0]);
-      newProviders.updateValueAndValidity();
+    this.twoFaFormGroup.get('verificationCodeSendRateLimitEnable').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(value => {
+      if (value) {
+        this.twoFaFormGroup.get('verificationCodeSendRateLimitNumber').enable({emitEvent: false});
+        this.twoFaFormGroup.get('verificationCodeSendRateLimitTime').enable({emitEvent: false});
+      } else {
+        this.twoFaFormGroup.get('verificationCodeSendRateLimitNumber').disable({emitEvent: false});
+        this.twoFaFormGroup.get('verificationCodeSendRateLimitTime').disable({emitEvent: false});
+      }
+    });
+  }
+
+  private setAuthConfigFormValue(settings: TwoFactorAuthSettings) {
+    const [checkRateLimitNumber, checkRateLimitTime] = this.splitRateLimit(settings.verificationCodeCheckRateLimit);
+    const [sendRateLimitNumber, sendRateLimitTime] = this.splitRateLimit(settings.verificationCodeSendRateLimit);
+    const allowProvidersConfig = settings.providers.map(provider => provider.providerType);
+    const processFormValue: TwoFactorAuthSettingsForm = Object.assign(deepClone(settings), {
+      verificationCodeCheckRateLimitEnable: checkRateLimitNumber > 0,
+      verificationCodeCheckRateLimitNumber: checkRateLimitNumber || 3,
+      verificationCodeCheckRateLimitTime: checkRateLimitTime || 900,
+      verificationCodeSendRateLimitEnable: sendRateLimitNumber > 0,
+      verificationCodeSendRateLimitNumber: sendRateLimitNumber || 1,
+      verificationCodeSendRateLimitTime: sendRateLimitTime || 60,
+      providers: []
+    });
+    Object.values(TwoFactorAuthProviderType).forEach(provider => {
+      const index = allowProvidersConfig.indexOf(provider);
+      if (index > -1) {
+        processFormValue.providers.push(Object.assign(settings.providers[index], {enable: true}));
+      } else {
+        processFormValue.providers.push({enable: false});
+      }
+    });
+    this.twoFaFormGroup.patchValue(processFormValue);
+  }
+
+  private buildProvidersSettingsForm(provider: TwoFactorAuthProviderType) {
+    const formControlConfig: {[key: string]: any} = {
+      providerType: [provider],
+      enable: [false]
+    };
+    switch (provider) {
+      case TwoFactorAuthProviderType.TOTP:
+        formControlConfig.issuerName = [{value: 'ThingsBoard', disabled: true}, Validators.required];
+        break;
+      case TwoFactorAuthProviderType.SMS:
+        formControlConfig.smsVerificationMessageTemplate = [{value: 'Verification code: ${verificationCode}', disabled: true}, [
+          Validators.required,
+          Validators.pattern(/\${verificationCode}/)
+        ]];
+        formControlConfig.verificationCodeLifetime = [{value: 120, disabled: true}, [
+          Validators.required,
+          Validators.min(1),
+          Validators.pattern(/^\d*$/)
+        ]];
+        break;
+      case TwoFactorAuthProviderType.EMAIL:
+        formControlConfig.verificationCodeLifetime = [{value: 120, disabled: true}, [
+          Validators.required,
+          Validators.min(1),
+          Validators.pattern(/^\d*$/)
+        ]];
+        break;
     }
+    const newProviders = this.fb.group(formControlConfig);
+    newProviders.get('enable').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(value => {
+      if (value) {
+        newProviders.enable({emitEvent: false});
+      } else {
+        newProviders.disable({emitEvent: false});
+        newProviders.get('enable').enable({emitEvent: false});
+        newProviders.get('providerType').enable({emitEvent: false});
+      }
+    });
     this.providersForm.push(newProviders);
-    this.providersForm.markAsDirty();
   }
 
-  removeProviders($event: Event, index: number): void {
-    if ($event) {
-      $event.stopPropagation();
-      $event.preventDefault();
+  private splitRateLimit(setting: string): [number, number] {
+    if (isNotEmptyStr(setting)) {
+      const [attemptNumber, time] = setting.split(':');
+      return [parseInt(attemptNumber, 10), parseInt(time, 10)];
     }
-    this.providersForm.removeAt(index);
-    this.providersForm.markAsTouched();
-    this.providersForm.markAsDirty();
+    return [0, 0];
   }
 
-  get providersForm(): FormArray {
-    return this.twoFaFormGroup.get('providers') as FormArray;
+  private joinRateLimit(processFormValue: TwoFactorAuthSettingsForm, property: string) {
+    if (processFormValue[`${property}Enable`]) {
+      processFormValue[property] = [processFormValue[`${property}Number`], processFormValue[`${property}Time`]].join(':');
+    }
+    delete processFormValue[`${property}Enable`];
+    delete processFormValue[`${property}Number`];
+    delete processFormValue[`${property}Time`];
   }
-
-  trackByElement(i: number, item: any) {
-    return item;
-  }
-
-  selectedTypes(type: TwoFactorAuthProviderType, index: number): boolean {
-    const selectedProviderTypes: TwoFactorAuthProviderType[] = this.providersForm.value.map(providers => providers.providerType);
-    selectedProviderTypes.splice(index, 1);
-    return selectedProviderTypes.includes(type);
-  }
-
 }

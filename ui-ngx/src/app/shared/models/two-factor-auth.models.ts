@@ -23,8 +23,21 @@ export interface TwoFactorAuthSettings {
   verificationCodeSendRateLimit: string;
 }
 
+export interface TwoFactorAuthSettingsForm extends TwoFactorAuthSettings{
+  providers: Array<TwoFactorAuthProviderConfigForm>;
+  verificationCodeCheckRateLimitEnable: boolean;
+  verificationCodeCheckRateLimitNumber: number;
+  verificationCodeCheckRateLimitTime: number;
+  verificationCodeSendRateLimitEnable: boolean;
+  verificationCodeSendRateLimitNumber: number;
+  verificationCodeSendRateLimitTime: number;
+}
+
 export type TwoFactorAuthProviderConfig = Partial<TotpTwoFactorAuthProviderConfig | SmsTwoFactorAuthProviderConfig |
                                                     EmailTwoFactorAuthProviderConfig>;
+
+export type TwoFactorAuthProviderConfigForm = Partial<TotpTwoFactorAuthProviderConfig | SmsTwoFactorAuthProviderConfig |
+  EmailTwoFactorAuthProviderConfig> & TwoFactorAuthProviderFormConfig;
 
 export interface TotpTwoFactorAuthProviderConfig {
   providerType: TwoFactorAuthProviderType;
@@ -40,6 +53,10 @@ export interface SmsTwoFactorAuthProviderConfig {
 export interface EmailTwoFactorAuthProviderConfig {
   providerType: TwoFactorAuthProviderType;
   verificationCodeLifetime: number;
+}
+
+export interface TwoFactorAuthProviderFormConfig {
+  enable: boolean;
 }
 
 export enum TwoFactorAuthProviderType{
@@ -69,5 +86,38 @@ export type TwoFactorAuthAccountConfig = TotpTwoFactorAuthAccountConfig | SmsTwo
 
 
 export interface AccountTwoFaSettings {
-  configs?: {TwoFactorAuthProviderType: TwoFactorAuthAccountConfig};
+  configs: {TwoFactorAuthProviderType: TwoFactorAuthAccountConfig};
 }
+
+export interface TwoFaProviderInfo {
+  type: TwoFactorAuthProviderType;
+  default: boolean;
+}
+
+export interface TwoFactorAuthProviderData {
+  name: string;
+  description: string;
+}
+
+export const twoFactorAuthProvidersData = new Map<TwoFactorAuthProviderType, TwoFactorAuthProviderData>(
+  [
+    [
+      TwoFactorAuthProviderType.TOTP, {
+        name: 'Authentication app',
+        description: 'Use apps like Google Authenticator, Authy, or Duo on your phone to authenticate. It will generate a security code for logging in.'
+      }
+    ],
+    [
+      TwoFactorAuthProviderType.SMS, {
+        name: 'SMS',
+        description: 'Use your phone to authenticate. We\'ll send you a security code via SMS message when you log in.'
+      }
+    ],
+    [
+      TwoFactorAuthProviderType.EMAIL, {
+        name: 'Email',
+        description: 'Use a security code sent to your email address to authenticate.'
+      }
+    ],
+  ]
+);

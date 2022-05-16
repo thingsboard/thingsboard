@@ -190,7 +190,7 @@ const routes: Routes = [
         component: TwoFactorAuthSettingsComponent,
         canDeactivate: [ConfirmOnExitGuard],
         data: {
-          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+          auth: [Authority.SYS_ADMIN],
           title: 'admin.2fa.2fa',
           breadcrumb: {
             label: 'admin.2fa.2fa',
