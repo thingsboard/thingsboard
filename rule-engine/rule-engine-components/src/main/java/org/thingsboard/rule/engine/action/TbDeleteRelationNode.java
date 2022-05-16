@@ -26,6 +26,7 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.util.EntityContainer;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -94,18 +95,16 @@ public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteR
 
     private ListenableFuture<Boolean> processSingle(TbContext ctx, TbMsg msg, EntityContainer entityContainer, String relationType) {
         SearchDirectionIds sdId = processSingleSearchDirection(msg, entityContainer);
-        return Futures.transformAsync(ctx.getRelationService().getRelationAsync(ctx.getTenantId(), sdId.getFromId(), sdId.getToId(), relationType, RelationTypeGroup.COMMON),
-                relation -> {
-                    if (relation != null) {
-                        return Futures.transform(processSingleDeleteRelation(ctx, sdId, relationType), res -> {
-                            if (res) {
-                                pushDeleteRelationEventMsg(ctx, relation);
-                            }
-                            return res;
-                        }, ctx.getDbCallbackExecutor());
-                    }
-                    return Futures.immediateFuture(true);
-                }, ctx.getDbCallbackExecutor());
+        EntityRelation relation = ctx.getRelationService().getRelation(ctx.getTenantId(), sdId.getFromId(), sdId.getToId(), relationType, RelationTypeGroup.COMMON);
+        if (relation != null) {
+            return Futures.transform(processSingleDeleteRelation(ctx, sdId, relationType), res -> {
+                if (res) {
+                    pushDeleteRelationEventMsg(ctx, relation);
+                }
+                return res;
+            }, ctx.getDbCallbackExecutor());
+        }
+        return Futures.immediateFuture(true);
     }
 
     private ListenableFuture<Boolean> processSingleDeleteRelation(TbContext ctx, SearchDirectionIds sdId, String relationType) {
