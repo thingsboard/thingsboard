@@ -60,9 +60,6 @@ import static org.thingsboard.server.common.data.device.profile.MqttTopics.GATEW
 import static org.thingsboard.server.common.data.query.EntityKeyType.CLIENT_ATTRIBUTE;
 import static org.thingsboard.server.common.data.query.EntityKeyType.SHARED_ATTRIBUTE;
 
-@TestPropertySource(properties = {
-        "js.evaluator=mock",
-})
 @Slf4j
 public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqttIntegrationTest {
 

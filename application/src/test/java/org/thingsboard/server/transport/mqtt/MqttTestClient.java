@@ -104,6 +104,14 @@ public class MqttTestClient {
         return client.subscribe(topic, qoS.value());
     }
 
+    public void enableManualAcks() {
+        client.setManualAcks(true);
+    }
+
+    public void messageArrivedComplete(MqttMessage mqttMessage) throws MqttException {
+        client.messageArrivedComplete(mqttMessage.getId(), mqttMessage.getQos());
+    }
+
     private MqttAsyncClient createClient(String clientId) throws MqttException {
         if (StringUtils.isEmpty(clientId)) {
             clientId = MqttAsyncClient.generateClientId();

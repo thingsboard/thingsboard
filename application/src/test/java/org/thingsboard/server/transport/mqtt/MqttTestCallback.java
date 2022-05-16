@@ -28,22 +28,27 @@ import java.util.concurrent.CountDownLatch;
 @Data
 public class MqttTestCallback implements MqttCallback {
 
-    private final CountDownLatch subscribeLatch;
-    private final CountDownLatch deliveryLatch;
-    private int qoS;
-    private byte[] payloadBytes;
-    private String awaitSubTopic;
-    private boolean pubAckReceived;
+    protected CountDownLatch subscribeLatch;
+    protected final CountDownLatch deliveryLatch;
+    protected int qoS;
+    protected byte[] payloadBytes;
+    protected String awaitSubTopic;
+    protected boolean pubAckReceived;
+
+    public MqttTestCallback() {
+        this.subscribeLatch = new CountDownLatch(1);
+        this.deliveryLatch = new CountDownLatch(1);
+    }
+
+    public MqttTestCallback(int subscribeCount) {
+        this.subscribeLatch = new CountDownLatch(subscribeCount);
+        this.deliveryLatch = new CountDownLatch(1);
+    }
 
     public MqttTestCallback(String awaitSubTopic) {
         this.subscribeLatch = new CountDownLatch(1);
         this.deliveryLatch = new CountDownLatch(1);
         this.awaitSubTopic = awaitSubTopic;
-    }
-
-    public MqttTestCallback() {
-        this.subscribeLatch = new CountDownLatch(1);
-        this.deliveryLatch = new CountDownLatch(1);
     }
 
     @Override
@@ -60,12 +65,16 @@ public class MqttTestCallback implements MqttCallback {
             payloadBytes = mqttMessage.getPayload();
             subscribeLatch.countDown();
         } else {
-            log.warn("messageArrived on topic: {}, awaitSubTopic: {}", requestTopic, awaitSubTopic);
-            if (awaitSubTopic.equals(requestTopic)) {
-                qoS = mqttMessage.getQos();
-                payloadBytes = mqttMessage.getPayload();
-                subscribeLatch.countDown();
-            }
+            messageArrivedOnAwaitSubTopic(requestTopic, mqttMessage);
+        }
+    }
+
+    protected void messageArrivedOnAwaitSubTopic(String requestTopic, MqttMessage mqttMessage) {
+        log.warn("messageArrived on topic: {}, awaitSubTopic: {}", requestTopic, awaitSubTopic);
+        if (awaitSubTopic.equals(requestTopic)) {
+            qoS = mqttMessage.getQos();
+            payloadBytes = mqttMessage.getPayload();
+            subscribeLatch.countDown();
         }
     }
 
