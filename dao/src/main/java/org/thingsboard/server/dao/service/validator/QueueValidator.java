@@ -57,7 +57,7 @@ public class QueueValidator extends DataValidator<Queue> {
         if (!foundQueue.getName().equals(queue.getName())) {
             throw new DataValidationException("Queue name can't be changed!");
         }
-        if (!foundQueue.getTopic().equals(queue.getTopic())) {QueueValidator
+        if (!foundQueue.getTopic().equals(queue.getTopic())) {
             throw new DataValidationException("Queue topic can't be changed!");
         }
         return foundQueue;
