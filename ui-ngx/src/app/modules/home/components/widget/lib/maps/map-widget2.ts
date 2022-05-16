@@ -45,7 +45,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
 import { providerClass } from '@home/components/widget/lib/maps/providers';
-import { isDefined, parseFunction } from '@core/utils';
+import { isDefined, isDefinedAndNotNull, parseFunction } from '@core/utils';
 import L from 'leaflet';
 import { forkJoin, Observable, of } from 'rxjs';
 import { AttributeService } from '@core/http/attribute.service';
@@ -87,9 +87,13 @@ export class MapWidgetController implements MapWidgetInterface {
         this.map.saveMarkerLocation = this.setMarkerLocation.bind(this);
         this.map.savePolygonLocation = this.savePolygonLocation.bind(this);
         this.map.saveLocation = this.saveLocation.bind(this);
+        let pageSize = this.settings.mapPageSize;
+        if (isDefinedAndNotNull(this.ctx.widgetConfig.pageSize)) {
+          pageSize = Math.max(pageSize, this.ctx.widgetConfig.pageSize);
+        }
         this.pageLink = {
           page: 0,
-          pageSize: this.settings.mapPageSize,
+          pageSize,
           textSearch: null,
           dynamic: true
         };
