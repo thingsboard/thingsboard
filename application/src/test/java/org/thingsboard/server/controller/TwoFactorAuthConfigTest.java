@@ -30,10 +30,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.security.model.mfa.account.AccountTwoFaSettings;
-import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
-import org.thingsboard.server.service.security.auth.mfa.config.TwoFaConfigManager;
 import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettings;
+import org.thingsboard.server.common.data.security.model.mfa.account.AccountTwoFaSettings;
 import org.thingsboard.server.common.data.security.model.mfa.account.SmsTwoFaAccountConfig;
 import org.thingsboard.server.common.data.security.model.mfa.account.TotpTwoFaAccountConfig;
 import org.thingsboard.server.common.data.security.model.mfa.account.TwoFaAccountConfig;
@@ -41,6 +39,8 @@ import org.thingsboard.server.common.data.security.model.mfa.provider.SmsTwoFaPr
 import org.thingsboard.server.common.data.security.model.mfa.provider.TotpTwoFaProviderConfig;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderConfig;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
+import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
+import org.thingsboard.server.service.security.auth.mfa.config.TwoFaConfigManager;
 import org.thingsboard.server.service.security.auth.mfa.provider.impl.OtpBasedTwoFaProvider;
 import org.thingsboard.server.service.security.auth.mfa.provider.impl.TotpTwoFaProvider;
 
@@ -85,15 +85,9 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
 
     @Test
-    public void testSavePlatformTwoFaSettingsForDifferentAuthorities() throws Exception {
+    public void testSavePlatformTwoFaSettings() throws Exception {
         loginSysAdmin();
-        testSavePlatformTwoFaSettings();
 
-        loginTenantAdmin();
-        testSavePlatformTwoFaSettings();
-    }
-
-    private void testSavePlatformTwoFaSettings() throws Exception {
         TotpTwoFaProviderConfig totpTwoFaProviderConfig = new TotpTwoFaProviderConfig();
         totpTwoFaProviderConfig.setIssuerName("tb");
         SmsTwoFaProviderConfig smsTwoFaProviderConfig = new SmsTwoFaProviderConfig();
@@ -117,7 +111,7 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
     @Test
     public void testSavePlatformTwoFaSettings_validationError() throws Exception {
-        loginTenantAdmin();
+        loginSysAdmin();
 
         PlatformTwoFaSettings twoFaSettings = new PlatformTwoFaSettings();
         twoFaSettings.setProviders(Collections.emptyList());
@@ -135,71 +129,6 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
                 "maximum number of verification failure before user lockout must be positive",
                 "total amount of time allotted for verification must be greater than 0"
         );
-
-        twoFaSettings.setUseSystemTwoFactorAuthSettings(true);
-        doPost("/api/2fa/settings", twoFaSettings)
-                .andExpect(status().isOk());
-
-        twoFaSettings.setVerificationCodeSendRateLimit(null);
-        twoFaSettings.setVerificationCodeCheckRateLimit(null);
-        twoFaSettings.setMaxVerificationFailuresBeforeUserLockout(0);
-        twoFaSettings.setTotalAllowedTimeForVerification(null);
-
-        doPost("/api/2fa/settings", twoFaSettings)
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    public void testGetPlatformTwoFaSettings_useSysadminSettingsAsDefault() throws Exception {
-        loginSysAdmin();
-        PlatformTwoFaSettings sysadminTwoFaSettings = new PlatformTwoFaSettings();
-        TotpTwoFaProviderConfig totpTwoFaProviderConfig = new TotpTwoFaProviderConfig();
-        totpTwoFaProviderConfig.setIssuerName("tb");
-        sysadminTwoFaSettings.setProviders(Collections.singletonList(totpTwoFaProviderConfig));
-        sysadminTwoFaSettings.setMaxVerificationFailuresBeforeUserLockout(25);
-        doPost("/api/2fa/settings", sysadminTwoFaSettings).andExpect(status().isOk());
-
-        loginTenantAdmin();
-        PlatformTwoFaSettings tenantTwoFaSettings = new PlatformTwoFaSettings();
-        tenantTwoFaSettings.setUseSystemTwoFactorAuthSettings(true);
-        tenantTwoFaSettings.setProviders(Collections.emptyList());
-        doPost("/api/2fa/settings", tenantTwoFaSettings).andExpect(status().isOk());
-        PlatformTwoFaSettings twoFaSettings = readResponse(doGet("/api/2fa/settings").andExpect(status().isOk()), PlatformTwoFaSettings.class);
-        assertThat(twoFaSettings).isEqualTo(tenantTwoFaSettings);
-
-        doPost("/api/2fa/account/config/generate?providerType=TOTP")
-                .andExpect(status().isOk());
-
-        tenantTwoFaSettings.setUseSystemTwoFactorAuthSettings(false);
-        tenantTwoFaSettings.setProviders(Collections.emptyList());
-        tenantTwoFaSettings.setMaxVerificationFailuresBeforeUserLockout(10);
-        doPost("/api/2fa/settings", tenantTwoFaSettings).andExpect(status().isOk());
-        twoFaSettings = readResponse(doGet("/api/2fa/settings").andExpect(status().isOk()), PlatformTwoFaSettings.class);
-        assertThat(twoFaSettings).isEqualTo(tenantTwoFaSettings);
-
-        assertThat(getErrorMessage(doPost("/api/2fa/account/config/generate?providerType=TOTP")
-                .andExpect(status().isBadRequest()))).containsIgnoringCase("provider is not configured");
-
-        loginSysAdmin();
-        sysadminTwoFaSettings.setProviders(Collections.emptyList());
-        doPost("/api/2fa/settings", sysadminTwoFaSettings).andExpect(status().isOk());
-        loginTenantAdmin();
-        tenantTwoFaSettings.setUseSystemTwoFactorAuthSettings(true);
-        tenantTwoFaSettings.setProviders(Collections.singletonList(totpTwoFaProviderConfig));
-        doPost("/api/2fa/settings", tenantTwoFaSettings).andExpect(status().isOk());
-
-        assertThat(getErrorMessage(doPost("/api/2fa/account/config/generate?providerType=TOTP")
-                .andExpect(status().isBadRequest()))).containsIgnoringCase("provider is not configured");
-
-        tenantTwoFaSettings.setUseSystemTwoFactorAuthSettings(false);
-        doPost("/api/2fa/settings", tenantTwoFaSettings).andExpect(status().isOk());
-
-        doPost("/api/2fa/account/config/generate?providerType=TOTP")
-                .andExpect(status().isOk());
-
-        loginSysAdmin();
-        twoFaSettings = readResponse(doGet("/api/2fa/settings").andExpect(status().isOk()), PlatformTwoFaSettings.class);
-        assertThat(twoFaSettings).isEqualTo(sysadminTwoFaSettings);
     }
 
     @Test

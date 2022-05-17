@@ -28,7 +28,6 @@ import java.util.Optional;
 @Data
 public class PlatformTwoFaSettings {
 
-    private boolean useSystemTwoFactorAuthSettings;
     @Valid
     private List<TwoFaProviderConfig> providers;
 

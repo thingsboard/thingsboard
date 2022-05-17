@@ -345,7 +345,6 @@ public abstract class TwoFactorAuthTest extends AbstractControllerTest {
     @Test
     public void testTwoFa_multipleProviders() throws Exception {
         PlatformTwoFaSettings platformTwoFaSettings = new PlatformTwoFaSettings();
-        platformTwoFaSettings.setUseSystemTwoFactorAuthSettings(true);
 
         TotpTwoFaProviderConfig totpTwoFaProviderConfig = new TotpTwoFaProviderConfig();
         totpTwoFaProviderConfig.setIssuerName("TB");
@@ -411,10 +410,9 @@ public abstract class TwoFactorAuthTest extends AbstractControllerTest {
         totpTwoFaProviderConfig.setIssuerName("tb");
 
         PlatformTwoFaSettings twoFaSettings = new PlatformTwoFaSettings();
-        twoFaSettings.setUseSystemTwoFactorAuthSettings(false);
         twoFaSettings.setProviders(Arrays.stream(new TwoFaProviderConfig[]{totpTwoFaProviderConfig}).collect(Collectors.toList()));
         Arrays.stream(customizer).forEach(c -> c.accept(twoFaSettings));
-        twoFaConfigManager.savePlatformTwoFaSettings(tenantId, twoFaSettings);
+        twoFaConfigManager.savePlatformTwoFaSettings(TenantId.SYS_TENANT_ID, twoFaSettings);
 
         TotpTwoFaAccountConfig totpTwoFaAccountConfig = (TotpTwoFaAccountConfig) twoFactorAuthService.generateNewAccountConfig(user, TwoFaProviderType.TOTP);
         twoFaConfigManager.saveTwoFaAccountConfig(tenantId, user.getId(), totpTwoFaAccountConfig);
@@ -428,9 +426,8 @@ public abstract class TwoFactorAuthTest extends AbstractControllerTest {
         Arrays.stream(customizer).forEach(c -> c.accept(smsTwoFaProviderConfig));
 
         PlatformTwoFaSettings twoFaSettings = new PlatformTwoFaSettings();
-        twoFaSettings.setUseSystemTwoFactorAuthSettings(false);
         twoFaSettings.setProviders(Arrays.stream(new TwoFaProviderConfig[]{smsTwoFaProviderConfig}).collect(Collectors.toList()));
-        twoFaConfigManager.savePlatformTwoFaSettings(tenantId, twoFaSettings);
+        twoFaConfigManager.savePlatformTwoFaSettings(TenantId.SYS_TENANT_ID, twoFaSettings);
 
         SmsTwoFaAccountConfig smsTwoFaAccountConfig = new SmsTwoFaAccountConfig();
         smsTwoFaAccountConfig.setPhoneNumber("+38050505050");

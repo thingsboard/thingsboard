@@ -16,18 +16,14 @@
 package org.thingsboard.server.service.security.auth.mfa.config;
 
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
-import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.security.UserAuthSettings;
 import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettings;
 import org.thingsboard.server.common.data.security.model.mfa.account.AccountTwoFaSettings;
@@ -41,11 +37,9 @@ import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.user.UserAuthSettingsDao;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 
 @Service
 @RequiredArgsConstructor
@@ -54,7 +48,6 @@ public class DefaultTwoFaConfigManager implements TwoFaConfigManager {
     private final UserAuthSettingsDao userAuthSettingsDao;
     private final AdminSettingsService adminSettingsService;
     private final AdminSettingsDao adminSettingsDao;
-    private final AttributesService attributesService;
     @Autowired @Lazy
     private TwoFactorAuthService twoFactorAuthService;
 
@@ -132,60 +125,33 @@ public class DefaultTwoFaConfigManager implements TwoFaConfigManager {
                 .flatMap(twoFaSettings -> twoFaSettings.getProviderConfig(providerType));
     }
 
-    @SneakyThrows({InterruptedException.class, ExecutionException.class})
     @Override
     public Optional<PlatformTwoFaSettings> getPlatformTwoFaSettings(TenantId tenantId, boolean sysadminSettingsAsDefault) {
-        if (tenantId.equals(TenantId.SYS_TENANT_ID)) {
-            return Optional.ofNullable(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, TWO_FACTOR_AUTH_SETTINGS_KEY))
-                    .map(adminSettings -> JacksonUtil.treeToValue(adminSettings.getJsonValue(), PlatformTwoFaSettings.class));
-        } else {
-            Optional<PlatformTwoFaSettings> tenantTwoFaSettings = attributesService.find(TenantId.SYS_TENANT_ID, tenantId,
-                            DataConstants.SERVER_SCOPE, TWO_FACTOR_AUTH_SETTINGS_KEY).get()
-                    .map(adminSettingsAttribute -> JacksonUtil.fromString(adminSettingsAttribute.getJsonValue().get(), PlatformTwoFaSettings.class));
-            if (sysadminSettingsAsDefault) {
-                if (tenantTwoFaSettings.isEmpty() || tenantTwoFaSettings.get().isUseSystemTwoFactorAuthSettings()) {
-                    return getPlatformTwoFaSettings(TenantId.SYS_TENANT_ID, false);
-                }
-            }
-            return tenantTwoFaSettings;
-        }
+        return Optional.ofNullable(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, TWO_FACTOR_AUTH_SETTINGS_KEY))
+                .map(adminSettings -> JacksonUtil.treeToValue(adminSettings.getJsonValue(), PlatformTwoFaSettings.class));
     }
 
-    @SneakyThrows({InterruptedException.class, ExecutionException.class})
     @Override
     public void savePlatformTwoFaSettings(TenantId tenantId, PlatformTwoFaSettings twoFactorAuthSettings) throws ThingsboardException {
-        if (tenantId.equals(TenantId.SYS_TENANT_ID) || !twoFactorAuthSettings.isUseSystemTwoFactorAuthSettings()) {
-            ConstraintValidator.validateFields(twoFactorAuthSettings);
-        }
+        ConstraintValidator.validateFields(twoFactorAuthSettings);
         for (TwoFaProviderConfig providerConfig : twoFactorAuthSettings.getProviders()) {
             twoFactorAuthService.checkProvider(tenantId, providerConfig.getProviderType());
         }
-        if (tenantId.equals(TenantId.SYS_TENANT_ID)) {
-            AdminSettings settings = Optional.ofNullable(adminSettingsService.findAdminSettingsByKey(tenantId, TWO_FACTOR_AUTH_SETTINGS_KEY))
-                    .orElseGet(() -> {
-                        AdminSettings newSettings = new AdminSettings();
-                        newSettings.setKey(TWO_FACTOR_AUTH_SETTINGS_KEY);
-                        return newSettings;
-                    });
-            settings.setJsonValue(JacksonUtil.valueToTree(twoFactorAuthSettings));
-            adminSettingsService.saveAdminSettings(tenantId, settings);
-        } else {
-            attributesService.save(TenantId.SYS_TENANT_ID, tenantId, DataConstants.SERVER_SCOPE, Collections.singletonList(
-                    new BaseAttributeKvEntry(new JsonDataEntry(TWO_FACTOR_AUTH_SETTINGS_KEY, JacksonUtil.toString(twoFactorAuthSettings)), System.currentTimeMillis())
-            )).get();
-        }
+
+        AdminSettings settings = Optional.ofNullable(adminSettingsService.findAdminSettingsByKey(tenantId, TWO_FACTOR_AUTH_SETTINGS_KEY))
+                .orElseGet(() -> {
+                    AdminSettings newSettings = new AdminSettings();
+                    newSettings.setKey(TWO_FACTOR_AUTH_SETTINGS_KEY);
+                    return newSettings;
+                });
+        settings.setJsonValue(JacksonUtil.valueToTree(twoFactorAuthSettings));
+        adminSettingsService.saveAdminSettings(tenantId, settings);
     }
 
-    @SneakyThrows({InterruptedException.class, ExecutionException.class})
     @Override
     public void deletePlatformTwoFaSettings(TenantId tenantId) {
-        if (tenantId.equals(TenantId.SYS_TENANT_ID)) {
-            Optional.ofNullable(adminSettingsService.findAdminSettingsByKey(tenantId, TWO_FACTOR_AUTH_SETTINGS_KEY))
-                    .ifPresent(adminSettings -> adminSettingsDao.removeById(tenantId, adminSettings.getId().getId()));
-        } else {
-            attributesService.removeAll(TenantId.SYS_TENANT_ID, tenantId, DataConstants.SERVER_SCOPE,
-                    Collections.singletonList(TWO_FACTOR_AUTH_SETTINGS_KEY)).get();
-        }
+        Optional.ofNullable(adminSettingsService.findAdminSettingsByKey(tenantId, TWO_FACTOR_AUTH_SETTINGS_KEY))
+                .ifPresent(adminSettings -> adminSettingsDao.removeById(tenantId, adminSettings.getId().getId()));
     }
 
 }

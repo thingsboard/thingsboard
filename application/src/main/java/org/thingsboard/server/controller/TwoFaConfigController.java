@@ -206,15 +206,13 @@ public class TwoFaConfigController extends BaseController {
                     "If 2FA is not configured, then an empty response will be returned." +
                     ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @GetMapping("/settings")
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     public PlatformTwoFaSettings getPlatformTwoFaSettings() throws ThingsboardException {
         return twoFaConfigManager.getPlatformTwoFaSettings(getTenantId(), false).orElse(null);
     }
 
     @ApiOperation(value = "Save platform 2FA settings (savePlatformTwoFaSettings)",
             notes = "Save 2FA settings for platform. The settings have following properties:\n" +
-                    "- `useSystemTwoFactorAuthSettings` - option for tenant admins to use 2FA settings configured by sysadmin. " +
-                    "If this param is set to true, then the settings will not be validated for constraints (if it is a tenant admin; for sysadmin this param is ignored).\n" +
                     "- `providers` - the list of 2FA providers' configs. Users will only be allowed to use 2FA providers from this list. \n\n" +
                     "- `verificationCodeSendRateLimit` - rate limit configuration for verification code sending. " +
                     "The format is standard: 'amountOfRequests:periodInSeconds'. The value of '1:60' would limit verification " +
@@ -233,7 +231,6 @@ public class TwoFaConfigController extends BaseController {
                     "- `verificationCodeLifetime` - the same as for SMS." + NEW_LINE +
                     "Example of the settings:\n" +
                     "```\n{\n" +
-                    "  \"useSystemTwoFactorAuthSettings\": false,\n" +
                     "  \"providers\": [\n" +
                     "    {\n" +
                     "      \"providerType\": \"TOTP\",\n" +
@@ -256,7 +253,7 @@ public class TwoFaConfigController extends BaseController {
                     "}\n```" +
                     ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PostMapping("/settings")
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     public void savePlatformTwoFaSettings(@ApiParam(value = "Settings value", required = true)
                                           @RequestBody PlatformTwoFaSettings twoFaSettings) throws ThingsboardException {
         twoFaConfigManager.savePlatformTwoFaSettings(getTenantId(), twoFaSettings);
