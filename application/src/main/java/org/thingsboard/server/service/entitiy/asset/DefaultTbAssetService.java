@@ -62,12 +62,12 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
             List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, assetId);
             assetService.deleteAsset(tenantId, assetId);
             notificationEntityService.notifyDeleteEntity(tenantId, assetId, asset, asset.getCustomerId(), ActionType.DELETED,
-                    relatedEdgeIds, user, null, asset.toString());
+                    relatedEdgeIds, user, assetId.toString());
 
             return removeAlarmsByEntityId(tenantId, assetId);
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.ASSET), null, null,
-                    ActionType.DELETED, user, e, asset.toString());
+                    ActionType.DELETED, user, e, assetId.toString());
             throw handleException(e);
         }
     }

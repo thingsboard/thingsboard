@@ -65,7 +65,7 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
             List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, dashboardId);
             dashboardService.deleteDashboard(tenantId, dashboardId);
             notificationEntityService.notifyDeleteEntity(tenantId, dashboardId, dashboard, user.getCustomerId(),
-                    ActionType.DELETED, relatedEdgeIds, user, null);
+                    ActionType.DELETED, relatedEdgeIds, user, dashboardId.toString());
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.DASHBOARD), null, null,
                     ActionType.DELETED, user, e, dashboardId.toString());

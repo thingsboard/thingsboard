@@ -48,10 +48,10 @@ public interface TbNotificationEntityService {
                                                                     List<EdgeId> relatedEdgeIds,
                                                                     SecurityUser user, Object... additionalInfo);
 
-    <E extends HasName, I extends EntityId> void notifyDeleteEntityAlarm(TenantId tenantId, I entityId, E entity, EntityId originatorId,
-                                                                         CustomerId customerId, ActionType actionType,
-                                                                         List<EdgeId> relatedEdgeIds,
-                                                                         SecurityUser user, String body, Object... additionalInfo);
+    <E extends HasName, I extends EntityId> void notifyDeleteAlarm(TenantId tenantId, I entityId, E entity, EntityId originatorId,
+                                                                   CustomerId customerId, ActionType actionType,
+                                                                   List<EdgeId> relatedEdgeIds,
+                                                                   SecurityUser user, String body, Object... additionalInfo);
 
     <E extends HasName, I extends EntityId> void notifyAssignOrUnassignEntityToCustomer(TenantId tenantId, I entityId,
                                                                                         CustomerId customerId, E entity,
