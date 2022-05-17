@@ -141,6 +141,7 @@ public class CachedAttributesService implements AttributesService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         if (wrappedCachedAttributes.size() == attributeKeys.size()) {
+            log.trace("[{}][{}] Found all attributes from cache: {}", entityId, scope, attributeKeys);
             return Futures.immediateFuture(cachedAttributes);
         }
 
@@ -152,6 +153,7 @@ public class CachedAttributesService implements AttributesService {
         return cacheExecutor.submit(() -> {
             var cacheTransaction = cache.newTransactionForKeys(notFoundKeys);
             try {
+                log.trace("[{}][{}] Lookup attributes from db: {}", entityId, scope, notFoundAttributeKeys);
                 List<AttributeKvEntry> result = attributesDao.find(tenantId, entityId, scope, notFoundAttributeKeys);
                 for (AttributeKvEntry foundInDbAttribute : result) {
                     AttributeCacheKey attributeCacheKey = new AttributeCacheKey(scope, entityId, foundInDbAttribute.getKey());
@@ -164,6 +166,7 @@ public class CachedAttributesService implements AttributesService {
                 List<AttributeKvEntry> mergedAttributes = new ArrayList<>(cachedAttributes);
                 mergedAttributes.addAll(result);
                 cacheTransaction.commit();
+                log.trace("[{}][{}] Commit cache transaction: {}", entityId, scope, notFoundAttributeKeys);
                 return mergedAttributes;
             } catch (Throwable e) {
                 cacheTransaction.rollback();
@@ -211,7 +214,9 @@ public class CachedAttributesService implements AttributesService {
         for (var attribute : attributes) {
             ListenableFuture<String> future = attributesDao.save(tenantId, entityId, scope, attribute);
             futures.add(Futures.transform(future, key -> {
+                log.trace("[{}][{}][{}] Before cache evict: {}", entityId, scope, key, attribute);
                 cache.evictOrPut(new AttributeCacheKey(scope, entityId, key), attribute);
+                log.trace("[{}][{}][{}] after cache evict.", entityId, scope, key);
                 return key;
             }, cacheExecutor));
         }
