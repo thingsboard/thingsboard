@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { Store } from '@ngrx/store';
@@ -29,6 +29,8 @@ import {
 import { deepClone, isNotEmptyStr } from '@core/utils';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { MatStepper } from '@angular/material/stepper';
+import { MatExpansionPanel } from '@angular/material/expansion';
 
 @Component({
   selector: 'tb-2fa-settings',
@@ -41,6 +43,8 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
 
   twoFaFormGroup: FormGroup;
   twoFactorAuthProviderType = TwoFactorAuthProviderType;
+
+  @ViewChildren(MatExpansionPanel) expansionPanel: QueryList<MatExpansionPanel>;
 
   constructor(protected store: Store<AppState>,
               private twoFaService: TwoFactorAuthenticationService,
@@ -87,9 +91,14 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
     }
   }
 
-  toggleProviders($event: Event): void {
+  toggleProviders($event: Event, i: number): void {
     if ($event) {
       $event.stopPropagation();
+    }
+    if (this.providersForm.at(i).get('enable').value) {
+      this.getByIndexPanel(i).close();
+    } else {
+      this.getByIndexPanel(i).open();
     }
   }
 
@@ -162,10 +171,11 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
       verificationCodeSendRateLimitTime: sendRateLimitTime || 60,
       providers: []
     });
-    Object.values(TwoFactorAuthProviderType).forEach(provider => {
-      const index = allowProvidersConfig.indexOf(provider);
-      if (index > -1) {
-        processFormValue.providers.push(Object.assign(settings.providers[index], {enable: true}));
+    Object.values(TwoFactorAuthProviderType).forEach((provider, index) => {
+      const findIndex = allowProvidersConfig.indexOf(provider);
+      if (findIndex > -1) {
+        processFormValue.providers.push(Object.assign(settings.providers[findIndex], {enable: true}));
+        this.getByIndexPanel(index).open();
       } else {
         processFormValue.providers.push({enable: false});
       }
@@ -214,6 +224,10 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
       }
     });
     this.providersForm.push(newProviders);
+  }
+
+  private getByIndexPanel(index: number) {
+    return this.expansionPanel.find((_, i) => i === index);
   }
 
   private splitRateLimit(setting: string): [number, number] {

@@ -64,14 +64,14 @@
               <div class="input-row" fxLayout="row" fxLayout.sm="column" fxLayoutGap="8px"
                    *ngIf="twoFaFormGroup.get('verificationCodeSendRateLimitEnable').value">
                 <mat-form-field fxFlex class="mat-block">
-                  <mat-label translate>admin.2fa.number-of-attempts</mat-label>
+                  <mat-label translate>admin.2fa.number-of-send-attempts</mat-label>
                   <input matInput formControlName="verificationCodeSendRateLimitNumber" type="number" step="1" min="1" required>
                   <mat-error *ngIf="twoFaFormGroup.get('verificationCodeSendRateLimitNumber').hasError('required')">
-                    {{ 'admin.2fa.number-of-attempts-required' | translate }}
+                    {{ 'admin.2fa.number-of-send-attempts-required' | translate }}
                   </mat-error>
                   <mat-error *ngIf="twoFaFormGroup.get('verificationCodeSendRateLimitNumber').hasError('pattern')
                     || twoFaFormGroup.get('verificationCodeSendRateLimitNumber').hasError('min')">
-                    {{ 'admin.2fa.number-of-attempts-pattern' | translate }}
+                    {{ 'admin.2fa.number-of-send-attempts-pattern' | translate }}
                   </mat-error>
                 </mat-form-field>
                 <mat-form-field fxFlex class="mat-block">
@@ -92,14 +92,14 @@
               <div class="input-row" fxLayout="row" fxLayout.sm="column" fxLayoutGap="8px"
                    *ngIf="twoFaFormGroup.get('verificationCodeCheckRateLimitEnable').value">
                 <mat-form-field fxFlex class="mat-block">
-                  <mat-label translate>admin.2fa.number-of-attempts</mat-label>
+                  <mat-label translate>admin.2fa.number-of-checking-attempts</mat-label>
                   <input matInput formControlName="verificationCodeCheckRateLimitNumber" required type="number" step="1" min="1">
                   <mat-error *ngIf="twoFaFormGroup.get('verificationCodeCheckRateLimitNumber').hasError('required')">
-                    {{ 'admin.2fa.number-of-attempts-required' | translate }}
+                    {{ 'admin.2fa.number-of-checking-attempts-required' | translate }}
                   </mat-error>
                   <mat-error *ngIf="twoFaFormGroup.get('verificationCodeCheckRateLimitNumber').hasError('pattern')
                     || twoFaFormGroup.get('verificationCodeCheckRateLimitNumber').hasError('min')">
-                    {{ 'admin.2fa.number-of-attempts-pattern' | translate }}
+                    {{ 'admin.2fa.number-of-checking-attempts-pattern' | translate }}
                   </mat-error>
                 </mat-form-field>
                 <mat-form-field fxFlex class="mat-block">
@@ -122,7 +122,7 @@
                   <mat-expansion-panel-header>
                     <mat-panel-title fxLayoutAlign="start center">
                       <mat-slide-toggle
-                        (click)="toggleProviders($event)"
+                        (click)="toggleProviders($event, i)"
                         formControlName="enable">
                       </mat-slide-toggle>
                       {{ provider.value.providerType }}
