@@ -258,7 +258,7 @@ public class DashboardController extends BaseController {
         checkParameter(DASHBOARD_ID, strDashboardId);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
         Dashboard dashboard = checkDashboardId(dashboardId, Operation.ASSIGN_TO_CUSTOMER);
-        return tbDashboardService.updateDashboardCustomers(getTenantId(), dashboard, strCustomerIds, getCurrentUser());
+        return tbDashboardService.updateDashboardCustomers(dashboard, strCustomerIds, getCurrentUser());
     }
 
     @ApiOperation(value = "Adds the Dashboard Customers (addDashboardCustomers)",
@@ -277,7 +277,7 @@ public class DashboardController extends BaseController {
         checkParameter(DASHBOARD_ID, strDashboardId);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
         Dashboard dashboard = checkDashboardId(dashboardId, Operation.ASSIGN_TO_CUSTOMER);
-        return tbDashboardService.addDashboardCustomers(getTenantId(), dashboard, strCustomerIds, getCurrentUser());
+        return tbDashboardService.addDashboardCustomers(dashboard, strCustomerIds, getCurrentUser());
     }
 
     @ApiOperation(value = "Remove the Dashboard Customers (removeDashboardCustomers)",
@@ -296,7 +296,7 @@ public class DashboardController extends BaseController {
         checkParameter(DASHBOARD_ID, strDashboardId);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
         Dashboard dashboard = checkDashboardId(dashboardId, Operation.UNASSIGN_FROM_CUSTOMER);
-        return tbDashboardService.removeDashboardCustomers(getTenantId(), dashboard, strCustomerIds, getCurrentUser());
+        return tbDashboardService.removeDashboardCustomers(dashboard, strCustomerIds, getCurrentUser());
 
     }
 
@@ -626,7 +626,7 @@ public class DashboardController extends BaseController {
 
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
         checkDashboardId(dashboardId, Operation.READ);
-        return tbDashboardService.asignDashboardToEdge(getTenantId(), dashboardId, edge, getCurrentUser());
+        return tbDashboardService.asignDashboardToEdge(dashboardId, edge, getCurrentUser());
     }
 
     @ApiOperation(value = "Unassign dashboard from edge (unassignDashboardFromEdge)",

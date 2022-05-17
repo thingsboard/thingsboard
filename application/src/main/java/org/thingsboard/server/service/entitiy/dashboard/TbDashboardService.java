@@ -32,13 +32,13 @@ public interface  TbDashboardService extends SimpleTbEntityService<Dashboard> {
 
     Dashboard unassignDashboardFromPublicCustomer(Dashboard dashboard, SecurityUser user) throws ThingsboardException;
 
-    Dashboard updateDashboardCustomers(TenantId tenantId, Dashboard dashboard, String[] strCustomerIds, SecurityUser user) throws ThingsboardException;
+    Dashboard updateDashboardCustomers(Dashboard dashboard, String[] strCustomerIds, SecurityUser user) throws ThingsboardException;
 
-    Dashboard addDashboardCustomers(TenantId tenantId, Dashboard dashboard,  String[] strCustomerIds, SecurityUser user) throws ThingsboardException;
+    Dashboard addDashboardCustomers(Dashboard dashboard,  String[] strCustomerIds, SecurityUser user) throws ThingsboardException;
 
-    Dashboard removeDashboardCustomers(TenantId tenantId, Dashboard dashboard,  String[] strCustomerIds, SecurityUser user) throws ThingsboardException;
+    Dashboard removeDashboardCustomers(Dashboard dashboard,  String[] strCustomerIds, SecurityUser user) throws ThingsboardException;
 
-    Dashboard asignDashboardToEdge(TenantId tenantId, DashboardId dashboardId, Edge edge, SecurityUser user) throws ThingsboardException;
+    Dashboard asignDashboardToEdge(DashboardId dashboardId, Edge edge, SecurityUser user) throws ThingsboardException;
 
     Dashboard unassignDashboardFromEdge(Dashboard dashboard, Edge edge, SecurityUser user) throws ThingsboardException;
 

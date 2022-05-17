@@ -125,8 +125,9 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
     }
 
     @Override
-    public Dashboard updateDashboardCustomers(TenantId tenantId, Dashboard dashboard, String[] strCustomerIds, SecurityUser user) throws ThingsboardException {
+    public Dashboard updateDashboardCustomers(Dashboard dashboard, String[] strCustomerIds, SecurityUser user) throws ThingsboardException {
         ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER;
+        TenantId tenantId = user.getTenantId();
         try {
             Set<CustomerId> customerIds = new HashSet<>();
             if (strCustomerIds != null) {
@@ -178,8 +179,9 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
     }
 
     @Override
-    public Dashboard addDashboardCustomers(TenantId tenantId, Dashboard dashboard, String[] strCustomerIds, SecurityUser user) throws ThingsboardException {
+    public Dashboard addDashboardCustomers(Dashboard dashboard, String[] strCustomerIds, SecurityUser user) throws ThingsboardException {
         ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER;
+        TenantId tenantId = user.getTenantId();
         try {
             Set<CustomerId> customerIds = new HashSet<>();
             if (strCustomerIds != null) {
@@ -211,8 +213,9 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
     }
 
     @Override
-    public Dashboard removeDashboardCustomers(TenantId tenantId, Dashboard dashboard, String[] strCustomerIds, SecurityUser user) throws ThingsboardException {
+    public Dashboard removeDashboardCustomers(Dashboard dashboard, String[] strCustomerIds, SecurityUser user) throws ThingsboardException {
         ActionType actionType = ActionType.UNASSIGNED_FROM_CUSTOMER;
+        TenantId tenantId = user.getTenantId();
         try {
             Set<CustomerId> customerIds = new HashSet<>();
             if (strCustomerIds != null) {
@@ -244,8 +247,9 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
     }
 
     @Override
-    public Dashboard asignDashboardToEdge(TenantId tenantId, DashboardId dashboardId, Edge edge, SecurityUser user) throws ThingsboardException {
+    public Dashboard asignDashboardToEdge(DashboardId dashboardId, Edge edge, SecurityUser user) throws ThingsboardException {
         ActionType actionType = ActionType.ASSIGNED_TO_EDGE;
+        TenantId tenantId = user.getTenantId();
         EdgeId edgeId = edge.getId();
         try {
             Dashboard savedDashboard = checkNotNull(dashboardService.assignDashboardToEdge(tenantId, dashboardId, edgeId));
