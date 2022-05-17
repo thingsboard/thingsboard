@@ -13,29 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.importing;
+package org.thingsboard.server.service.sync.vc.data;
 
 import lombok.Data;
-
-import java.util.List;
+import org.thingsboard.server.common.data.id.EntityId;
 
 @Data
-public class BulkImportRequest {
-    private String file;
-    private Mapping mapping;
-
-    @Data
-    public static class Mapping {
-        private List<ColumnMapping> columns;
-        private Character delimiter;
-        private Boolean update;
-        private Boolean header;
-    }
-
-    @Data
-    public static class ColumnMapping {
-        private BulkImportColumnType type;
-        private String key;
-    }
-
+public class VersionedEntityInfo {
+    private EntityId externalId;
+    // etc..
 }

@@ -13,13 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.importing;
+package org.thingsboard.server.service.sync.exportimport.importing.data;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
-public class ImportedEntityInfo<E> {
-    private E entity;
-    private boolean isUpdated;
-    private E oldEntity;
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class EntityImportSettings {
+    private boolean findExistingByName;
+    private boolean updateRelations;
 }

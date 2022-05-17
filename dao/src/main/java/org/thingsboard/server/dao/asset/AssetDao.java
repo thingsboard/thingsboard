@@ -22,8 +22,8 @@ import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.dao.ExportableEntityDao;
 import org.thingsboard.server.dao.TenantEntityDao;
 
 import java.util.List;
@@ -34,7 +34,7 @@ import java.util.UUID;
  * The Interface AssetDao.
  *
  */
-public interface AssetDao extends Dao<Asset>, TenantEntityDao {
+public interface AssetDao extends Dao<Asset>, TenantEntityDao, ExportableEntityDao<Asset> {
 
     /**
      * Find asset info by id.

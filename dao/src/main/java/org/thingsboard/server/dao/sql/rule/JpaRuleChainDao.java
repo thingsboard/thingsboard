@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -106,6 +107,21 @@ public class JpaRuleChainDao extends JpaAbstractSearchTextDao<RuleChainEntity, R
     @Override
     public Long countByTenantId(TenantId tenantId) {
         return ruleChainRepository.countByTenantId(tenantId.getId());
+    }
+
+    @Override
+    public RuleChain findByTenantIdAndExternalId(UUID tenantId, UUID externalId) {
+        return DaoUtil.getData(ruleChainRepository.findByTenantIdAndExternalId(tenantId, externalId));
+    }
+
+    @Override
+    public PageData<RuleChain> findByTenantId(UUID tenantId, PageLink pageLink) {
+        return findRuleChainsByTenantId(tenantId, pageLink);
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.RULE_CHAIN;
     }
 
 }

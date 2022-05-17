@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.importing;
+package org.thingsboard.server.service.sync.exportimport.importing.csv;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.gson.JsonObject;
@@ -44,7 +44,6 @@ import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.controller.BaseController;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.action.EntityActionService;
-import org.thingsboard.server.service.importing.BulkImportRequest.ColumnMapping;
 import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.AccessControlService;
@@ -166,7 +165,7 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
     protected abstract EntityType getEntityType();
 
 
-    private void saveKvs(SecurityUser user, E entity, Map<ColumnMapping, ParsedValue> data) {
+    private void saveKvs(SecurityUser user, E entity, Map<BulkImportRequest.ColumnMapping, ParsedValue> data) {
         Arrays.stream(BulkImportColumnType.values())
                 .filter(BulkImportColumnType::isKv)
                 .map(kvType -> {
@@ -250,7 +249,7 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
             linesCounter.incrementAndGet();
         }
 
-        List<ColumnMapping> columnsMappings = request.getMapping().getColumns();
+        List<BulkImportRequest.ColumnMapping> columnsMappings = request.getMapping().getColumns();
         return records.stream()
                 .map(record -> {
                     EntityData entityData = new EntityData();
@@ -281,7 +280,7 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
     @Data
     protected static class EntityData {
         private final Map<BulkImportColumnType, String> fields = new LinkedHashMap<>();
-        private final Map<ColumnMapping, ParsedValue> kvs = new LinkedHashMap<>();
+        private final Map<BulkImportRequest.ColumnMapping, ParsedValue> kvs = new LinkedHashMap<>();
         private int lineNumber;
     }
 

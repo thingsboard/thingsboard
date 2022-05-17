@@ -392,6 +392,11 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     @Override
+    public Collection<RuleChain> findTenantRuleChainsByTypeAndName(TenantId tenantId, RuleChainType type, String name) {
+        return ruleChainDao.findByTenantIdAndTypeAndName(tenantId, type, name);
+    }
+
+    @Override
     @Transactional
     public void deleteRuleChainById(TenantId tenantId, RuleChainId ruleChainId) {
         Validator.validateId(ruleChainId, "Incorrect rule chain id for delete request.");
@@ -457,7 +462,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             ruleChain.setRoot(false);
 
             if (overwrite) {
-                Collection<RuleChain> existingRuleChains = ruleChainDao.findByTenantIdAndTypeAndName(tenantId,
+                Collection<RuleChain> existingRuleChains = findTenantRuleChainsByTypeAndName(tenantId,
                         Optional.ofNullable(ruleChain.getType()).orElse(RuleChainType.CORE), ruleChain.getName());
                 Optional<RuleChain> existingRuleChain = existingRuleChains.stream().findFirst();
                 if (existingRuleChain.isPresent()) {
@@ -684,6 +689,11 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 throw t;
             }
         }
+        deleteRuleNodes(tenantId, ruleChainId);
+    }
+
+    @Override
+    public void deleteRuleNodes(TenantId tenantId, RuleChainId ruleChainId) {
         List<EntityRelation> nodeRelations = getRuleChainToNodeRelations(tenantId, ruleChainId);
         for (EntityRelation relation : nodeRelations) {
             deleteRuleNode(tenantId, relation.getTo());

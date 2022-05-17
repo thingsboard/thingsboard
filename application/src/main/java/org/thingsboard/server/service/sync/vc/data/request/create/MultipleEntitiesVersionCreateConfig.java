@@ -13,18 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.importing;
+package org.thingsboard.server.service.sync.vc.data.request.create;
 
 import lombok.Data;
-
-import java.util.Collection;
-import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.atomic.AtomicInteger;
+import lombok.EqualsAndHashCode;
 
 @Data
-public class BulkImportResult<E> {
-    private AtomicInteger created = new AtomicInteger();
-    private AtomicInteger updated = new AtomicInteger();
-    private AtomicInteger errors = new AtomicInteger();
-    private Collection<String> errorsList = new ConcurrentLinkedDeque<>();
+@EqualsAndHashCode(callSuper = true)
+public class MultipleEntitiesVersionCreateConfig extends VersionCreateConfig {
+    private SyncStrategy syncStrategy;
 }

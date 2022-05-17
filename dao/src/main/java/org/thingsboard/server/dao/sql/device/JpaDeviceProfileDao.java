@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -109,4 +110,25 @@ public class JpaDeviceProfileDao extends JpaAbstractSearchTextDao<DeviceProfileE
     public DeviceProfile findByName(TenantId tenantId, String profileName) {
         return DaoUtil.getData(deviceProfileRepository.findByTenantIdAndName(tenantId.getId(), profileName));
     }
+
+    @Override
+    public DeviceProfile findByTenantIdAndExternalId(UUID tenantId, UUID externalId) {
+        return DaoUtil.getData(deviceProfileRepository.findByTenantIdAndExternalId(tenantId, externalId));
+    }
+
+    @Override
+    public DeviceProfile findByTenantIdAndName(UUID tenantId, String name) {
+        return DaoUtil.getData(deviceProfileRepository.findByTenantIdAndName(tenantId, name));
+    }
+
+    @Override
+    public PageData<DeviceProfile> findByTenantId(UUID tenantId, PageLink pageLink) {
+        return findDeviceProfiles(TenantId.fromUUID(tenantId), pageLink);
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.DEVICE_PROFILE;
+    }
+
 }
