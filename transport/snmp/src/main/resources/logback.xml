@@ -25,7 +25,7 @@
         </encoder>
     </appender>
 
-    <logger name="org.thingsboard.server" level="TRACE" />
+    <logger name="org.thingsboard.server" level="INFO" />
 
     <logger name="com.microsoft.azure.servicebus.primitives.CoreMessageReceiver" level="OFF" />
 
