@@ -17,11 +17,9 @@ package org.thingsboard.server.service.sync.exportimport.exporting;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasTenantId;
@@ -47,12 +45,6 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.AccessControlService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
-import org.thingsboard.server.service.sync.vc.data.request.create.EntitiesByCustomFilterVersionCreateConfig;
-import org.thingsboard.server.service.sync.vc.data.request.create.EntitiesByCustomQueryVersionCreateConfig;
-import org.thingsboard.server.service.sync.vc.data.request.create.EntityListVersionCreateConfig;
-import org.thingsboard.server.service.sync.vc.data.request.create.EntityTypeVersionCreateConfig;
-import org.thingsboard.server.service.sync.vc.data.request.create.VersionCreateConfig;
-import org.thingsboard.server.service.sync.vc.data.request.create.SingleEntityVersionCreateConfig;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -144,44 +136,6 @@ public class DefaultExportableEntitiesService implements ExportableEntitiesServi
         return tenantId.equals(((HasTenantId) entity).getTenantId());
     }
 
-
-    @Transactional(readOnly = true, timeout = 40)
-    @Override
-    public List<EntityId> findEntitiesByFilter(TenantId tenantId, VersionCreateConfig request) {
-        switch (request.getType()) {
-            case SINGLE_ENTITY: {
-                return List.of(((SingleEntityVersionCreateConfig) request).getEntityId());
-            }
-            case ENTITY_LIST: {
-                return ((EntityListVersionCreateConfig) request).getEntitiesIds();
-            }
-            case ENTITY_TYPE: {
-                EntityTypeVersionCreateConfig exportRequest = (EntityTypeVersionCreateConfig) request;
-                org.thingsboard.server.common.data.query.EntityTypeFilter entityTypeFilter = new org.thingsboard.server.common.data.query.EntityTypeFilter();
-                entityTypeFilter.setEntityType(exportRequest.getEntityType());
-
-                CustomerId customerId = new CustomerId(ObjectUtils.defaultIfNull(exportRequest.getCustomerId(), EntityId.NULL_UUID));
-                return findEntitiesByFilter(tenantId, customerId, entityTypeFilter, 0, Integer.MAX_VALUE);
-            }
-            case CUSTOM_ENTITY_FILTER: {
-                EntitiesByCustomFilterVersionCreateConfig exportRequest = (EntitiesByCustomFilterVersionCreateConfig) request;
-                EntityFilter filter = exportRequest.getFilter();
-
-                CustomerId customerId = new CustomerId(ObjectUtils.defaultIfNull(exportRequest.getCustomerId(), EntityId.NULL_UUID));
-                return findEntitiesByFilter(tenantId, customerId, filter, 0, Integer.MAX_VALUE);
-            }
-            case CUSTOM_ENTITY_QUERY: {
-                EntitiesByCustomQueryVersionCreateConfig exportRequest = (EntitiesByCustomQueryVersionCreateConfig) request;
-                EntityDataQuery query = exportRequest.getQuery();
-
-                CustomerId customerId = new CustomerId(ObjectUtils.defaultIfNull(exportRequest.getCustomerId(), EntityId.NULL_UUID));
-                return findEntitiesByQuery(tenantId, customerId, query);
-            }
-            default: {
-                throw new IllegalArgumentException("Export request is not supported");
-            }
-        }
-    }
 
     private List<EntityId> findEntitiesByFilter(TenantId tenantId, CustomerId customerId, EntityFilter filter, int page, int pageSize) {
         EntityDataPageLink pageLink = new EntityDataPageLink();

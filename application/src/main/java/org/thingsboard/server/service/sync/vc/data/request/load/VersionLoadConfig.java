@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.sync.vc.data.request.create;
+package org.thingsboard.server.service.sync.vc.data.request.load;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class MultipleEntitiesVersionCreateConfig extends VersionCreateConfig {
-    private SyncStrategy syncStrategy;
+public class VersionLoadConfig {
+
+    private boolean loadRelations;
+    private boolean findExistingEntityByName;
+
 }

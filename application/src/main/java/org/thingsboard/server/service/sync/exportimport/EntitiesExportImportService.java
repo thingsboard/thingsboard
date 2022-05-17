@@ -30,6 +30,11 @@ public interface EntitiesExportImportService {
 
     <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> exportEntity(SecurityUser user, I entityId, EntityExportSettings exportSettings) throws ThingsboardException;
 
+    <E extends ExportableEntity<I>, I extends EntityId> EntityImportResult<E> importEntity(SecurityUser user, EntityExportData<E> exportData, EntityImportSettings importSettings,
+                                                                                           boolean saveReferences, boolean sendEvents) throws ThingsboardException;
+
     List<EntityImportResult<?>> importEntities(SecurityUser user, List<EntityExportData<?>> exportDataList, EntityImportSettings importSettings) throws ThingsboardException;
+
+    void fixDataOrderForImport(List<EntityExportData<?>> exportDataList);
 
 }

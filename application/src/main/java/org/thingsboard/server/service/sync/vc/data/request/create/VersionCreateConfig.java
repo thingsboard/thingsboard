@@ -18,6 +18,6 @@ package org.thingsboard.server.service.sync.vc.data.request.create;
 import lombok.Data;
 
 @Data
-public abstract class VersionCreateConfig {
+public class VersionCreateConfig {
     private boolean saveRelations;
 }

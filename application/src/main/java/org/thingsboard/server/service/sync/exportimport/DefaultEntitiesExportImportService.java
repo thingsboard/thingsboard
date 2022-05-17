@@ -70,15 +70,37 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
     }
 
 
+    @Override
+    public <E extends ExportableEntity<I>, I extends EntityId> EntityImportResult<E> importEntity(SecurityUser user, EntityExportData<E> exportData, EntityImportSettings importSettings,
+                                                                                                  boolean saveReferences, boolean sendEvents) throws ThingsboardException {
+        if (exportData.getEntity() == null || exportData.getEntity().getId() == null) {
+            throw new DataValidationException("Invalid entity data");
+        }
+
+        EntityType entityType = exportData.getEntityType();
+        EntityImportService<I, E, EntityExportData<E>> importService = getImportService(entityType);
+
+        EntityImportResult<E> importResult = importService.importEntity(user, exportData, importSettings);
+
+        if (saveReferences) {
+            importResult.getSaveReferencesCallback().run();
+        }
+        if (sendEvents) {
+            importResult.getSendEventsCallback().run();
+        }
+
+        return importResult;
+    }
+
     @Transactional(rollbackFor = Exception.class, timeout = 120)
     @Override
     public List<EntityImportResult<?>> importEntities(SecurityUser user, List<EntityExportData<?>> exportDataList, EntityImportSettings importSettings) throws ThingsboardException {
-        fixOrder(exportDataList);
+        fixDataOrderForImport(exportDataList);
 
         List<EntityImportResult<?>> importResults = new ArrayList<>();
 
         for (EntityExportData exportData : exportDataList) {
-            EntityImportResult<?> importResult = importEntity(user, exportData, importSettings);
+            EntityImportResult<?> importResult = importEntity(user, exportData, importSettings, false, false);
             importResults.add(importResult);
         }
 
@@ -103,19 +125,9 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
         return importResults;
     }
 
-    private void fixOrder(List<EntityExportData<?>> exportDataList) {
+    @Override
+    public void fixDataOrderForImport(List<EntityExportData<?>> exportDataList) {
         exportDataList.sort(Comparator.comparing(exportData -> SUPPORTED_ENTITY_TYPES.indexOf(exportData.getEntityType())));
-    }
-
-    private <E extends ExportableEntity<I>, I extends EntityId> EntityImportResult<E> importEntity(SecurityUser user, EntityExportData<E> exportData, EntityImportSettings importSettings) throws ThingsboardException {
-        if (exportData.getEntity() == null || exportData.getEntity().getId() == null) {
-            throw new DataValidationException("Invalid entity data");
-        }
-
-        EntityType entityType = exportData.getEntityType();
-        EntityImportService<I, E, EntityExportData<E>> importService = getImportService(entityType);
-
-        return importService.importEntity(user, exportData, importSettings);
     }
 
 

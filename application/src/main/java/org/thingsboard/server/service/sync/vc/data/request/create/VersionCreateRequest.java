@@ -15,8 +15,17 @@
  */
 package org.thingsboard.server.service.sync.vc.data.request.create;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Data;
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonSubTypes({
+        @Type(name = "SINGLE_ENTITY", value = SingleEntityVersionCreateRequest.class),
+        @Type(name = "ENTITY_LIST", value = EntityListVersionCreateRequest.class),
+        @Type(name = "ENTITY_TYPE", value = EntityTypeVersionCreateRequest.class)
+})
 @Data
 public abstract class VersionCreateRequest {
 

@@ -55,8 +55,6 @@ public class GitRepository {
 
     @Getter
     private final String directory;
-    @Getter
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     private GitRepository(Git git, CredentialsProvider credentialsProvider, String directory) {
         this.git = git;
@@ -88,7 +86,7 @@ public class GitRepository {
 
     public void checkout(String branch) throws GitAPIException {
         execute(git.checkout()
-                .setName(branch));
+                .setName("origin/" + branch));
     }
 
     public void merge(String branch) throws IOException, GitAPIException {

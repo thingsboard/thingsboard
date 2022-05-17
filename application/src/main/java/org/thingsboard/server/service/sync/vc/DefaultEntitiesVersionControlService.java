@@ -18,16 +18,14 @@ package org.thingsboard.server.service.sync.vc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
@@ -40,12 +38,12 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
-import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityDataSortOrder;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
+import org.thingsboard.server.common.data.query.EntityTypeFilter;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.entity.EntityService;
@@ -65,17 +63,18 @@ import org.thingsboard.server.service.sync.vc.data.EntityVersion;
 import org.thingsboard.server.service.sync.vc.data.VersionCreationResult;
 import org.thingsboard.server.service.sync.vc.data.VersionLoadResult;
 import org.thingsboard.server.service.sync.vc.data.VersionedEntityInfo;
-import org.thingsboard.server.service.sync.vc.data.request.create.MultipleEntitiesVersionCreateConfig;
-import org.thingsboard.server.service.sync.vc.data.request.load.VersionLoadRequest;
-import org.thingsboard.server.service.sync.vc.data.request.load.VersionLoadSettings;
-import org.thingsboard.server.service.sync.vc.data.request.create.VersionCreateRequest;
-import org.thingsboard.server.service.sync.vc.data.request.create.EntitiesByCustomFilterVersionCreateConfig;
-import org.thingsboard.server.service.sync.vc.data.request.create.EntitiesByCustomQueryVersionCreateConfig;
-import org.thingsboard.server.service.sync.vc.data.request.create.EntityListVersionCreateConfig;
-import org.thingsboard.server.service.sync.vc.data.request.create.EntityTypeVersionCreateConfig;
-import org.thingsboard.server.service.sync.vc.data.request.create.SingleEntityVersionCreateConfig;
+import org.thingsboard.server.service.sync.vc.data.request.create.EntityListVersionCreateRequest;
+import org.thingsboard.server.service.sync.vc.data.request.create.EntityTypeVersionCreateRequest;
+import org.thingsboard.server.service.sync.vc.data.request.create.SingleEntityVersionCreateRequest;
+import org.thingsboard.server.service.sync.vc.data.request.create.SyncStrategy;
 import org.thingsboard.server.service.sync.vc.data.request.create.VersionCreateConfig;
+import org.thingsboard.server.service.sync.vc.data.request.create.VersionCreateRequest;
+import org.thingsboard.server.service.sync.vc.data.request.load.EntityTypeVersionLoadRequest;
+import org.thingsboard.server.service.sync.vc.data.request.load.SingleEntityVersionLoadRequest;
+import org.thingsboard.server.service.sync.vc.data.request.load.VersionLoadConfig;
+import org.thingsboard.server.service.sync.vc.data.request.load.VersionLoadRequest;
 import org.thingsboard.server.utils.GitRepository;
+import org.thingsboard.server.utils.ThrowingRunnable;
 
 import java.io.File;
 import java.io.IOException;
@@ -108,10 +107,11 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     private final AttributesService attributesService;
     private final EntityService entityService;
     private final TenantDao tenantDao;
+    private final TransactionTemplate transactionTemplate;
 
     // TODO [viacheslav]: concurrency
     private final Map<TenantId, GitRepository> repositories = new ConcurrentHashMap<>();
-    @Value("${java.io.tmpdir}")
+    @Value("${java.io.tmpdir}/repositories")
     private String repositoriesFolder;
 
     private static final String SETTINGS_KEY = "vc";
@@ -146,33 +146,26 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     @Override
     public VersionCreationResult saveEntitiesVersion(SecurityUser user, VersionCreateRequest request) throws Exception {
         GitRepository repository = checkRepository(user.getTenantId());
-        repository.getLock().writeLock().lock();
 
-        try {
-            repository.fetch();
-            if (repository.listBranches().contains(request.getBranch())) {
-                repository.checkout(request.getBranch());
-                repository.merge(request.getBranch());
-            } else { // TODO [viacheslav]: rollback orphan branch on failure
-                repository.createAndCheckoutOrphanBranch(request.getBranch());            // FIXME [viacheslav]: Checkout returned unexpected result NO_CHANGE for master branch
+        repository.fetch();
+        if (repository.listBranches().contains(request.getBranch())) {
+            repository.checkout(request.getBranch());
+            repository.merge(request.getBranch());
+        } else { // TODO [viacheslav]: rollback orphan branch on failure
+            repository.createAndCheckoutOrphanBranch(request.getBranch()); // FIXME [viacheslav]: Checkout returned unexpected result NO_CHANGE for master branch
+        }
+
+        switch (request.getType()) {
+            case SINGLE_ENTITY: {
+                SingleEntityVersionCreateRequest versionCreateRequest = (SingleEntityVersionCreateRequest) request;
+                saveEntityData(user, repository, versionCreateRequest.getEntityId(), versionCreateRequest.getConfig());
+                break;
             }
-
-            for (VersionCreateConfig config : request.getConfigs()) {
-                EntityExportSettings exportSettings = EntityExportSettings.builder()
-                        .exportRelations(config.isSaveRelations())
-                        .build();
-
-                List<EntityExportData<?>> entityDataList = new ArrayList<>();
-                for (EntityId entityId : findEntities(user, config, 0, Integer.MAX_VALUE)) { // TODO [viacheslav]: find with pagination
-                    EntityExportData<ExportableEntity<EntityId>> entityData = exportImportService.exportEntity(user, entityId, exportSettings);
-                    entityDataList.add(entityData);
-                }
-
-                if (config instanceof MultipleEntitiesVersionCreateConfig &&
-                        ((MultipleEntitiesVersionCreateConfig) config).isRemoveOtherRemoteEntitiesOfType()) {
-                    entityDataList.stream() // FIXME [viacheslav]: in case of an emtpy entity type? none will be deleted on remote?
-                            .map(EntityExportData::getEntityType)
-                            .distinct()
+            case ENTITY_LIST: {
+                EntityListVersionCreateRequest versionCreateRequest = (EntityListVersionCreateRequest) request;
+                if (versionCreateRequest.getConfig().getSyncStrategy() == SyncStrategy.OVERWRITE) {
+                    versionCreateRequest.getEntitiesIds().stream()
+                            .map(EntityId::getEntityType).distinct()
                             .forEach(entityType -> {
                                 try {
                                     FileUtils.deleteDirectory(Path.of(repository.getDirectory(), getRelativePath(entityType, null)).toFile());
@@ -181,76 +174,70 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                                 }
                             });
                 }
-
-                for (EntityExportData<?> entityData : entityDataList) {
-                    String entityDataJson = jsonWriter.writeValueAsString(entityData);
-                    FileUtils.write(Path.of(repository.getDirectory(), getRelativePath(entityData.getEntityType(),
-                            entityData.getEntity().getId().toString())).toFile(), entityDataJson, StandardCharsets.UTF_8);
+                for (EntityId entityId : versionCreateRequest.getEntitiesIds()) {
+                    saveEntityData(user, repository, entityId, versionCreateRequest.getConfig());
                 }
-            }
-
-            repository.add(".");
-
-            VersionCreationResult result = new VersionCreationResult();
-            GitRepository.Status status = repository.status();
-            result.setAdded(status.getAdded().size());
-            result.setModified(status.getModified().size());
-            result.setRemoved(status.getRemoved().size());
-
-            GitRepository.Commit commit = repository.commit(request.getVersionName());
-            repository.push();
-
-            result.setVersion(toVersion(commit));
-            return result;
-        } finally {
-            repository.getLock().writeLock().unlock();
-        }
-    }
-
-    private List<EntityId> findEntities(SecurityUser user, VersionCreateConfig config, int page, int pageSize) {
-        switch (config.getType()) {
-            case SINGLE_ENTITY: {
-                SingleEntityVersionCreateConfig filter = (SingleEntityVersionCreateConfig) config;
-                return List.of(filter.getEntityId());
-            }
-            case ENTITY_LIST: {
-                EntityListVersionCreateConfig filter = (EntityListVersionCreateConfig) config;
-                return filter.getEntitiesIds();
+                break;
             }
             case ENTITY_TYPE: {
-                EntityTypeVersionCreateConfig filter = (EntityTypeVersionCreateConfig) config;
-                EntitiesByCustomFilterVersionCreateConfig newFilter = new EntitiesByCustomFilterVersionCreateConfig();
+                EntityTypeVersionCreateRequest versionCreateRequest = (EntityTypeVersionCreateRequest) request;
+                versionCreateRequest.getEntityTypes().forEach((entityType, config) -> {
+                    if (config.getSyncStrategy() == SyncStrategy.OVERWRITE) {
+                        try {
+                            FileUtils.deleteDirectory(Path.of(repository.getDirectory(), getRelativePath(entityType, null)).toFile());
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
 
-                org.thingsboard.server.common.data.query.EntityTypeFilter entityTypeFilter = new org.thingsboard.server.common.data.query.EntityTypeFilter();
-                entityTypeFilter.setEntityType(filter.getEntityType());
+                    EntityTypeFilter entityTypeFilter = new EntityTypeFilter();
+                    entityTypeFilter.setEntityType(entityType);
+                    EntityDataPageLink entityDataPageLink = new EntityDataPageLink();
+                    entityDataPageLink.setPage(-1);
+                    entityDataPageLink.setPageSize(-1);
+                    EntityKey sortProperty = new EntityKey(EntityKeyType.ENTITY_FIELD, CREATED_TIME);
+                    entityDataPageLink.setSortOrder(new EntityDataSortOrder(sortProperty, EntityDataSortOrder.Direction.DESC));
+                    EntityDataQuery query = new EntityDataQuery(entityTypeFilter, entityDataPageLink, List.of(sortProperty), Collections.emptyList(), Collections.emptyList());
 
-                newFilter.setFilter(entityTypeFilter);
-                newFilter.setCustomerId(filter.getCustomerId());
-                return findEntities(user, newFilter, page, pageSize);
-            }
-            case CUSTOM_ENTITY_FILTER: {
-                EntitiesByCustomFilterVersionCreateConfig filter = (EntitiesByCustomFilterVersionCreateConfig) config;
-                EntitiesByCustomQueryVersionCreateConfig newFilter = new EntitiesByCustomQueryVersionCreateConfig();
-
-                EntityDataPageLink pageLink = new EntityDataPageLink();
-                pageLink.setPage(page);
-                pageLink.setPageSize(pageSize);
-                EntityKey sortProperty = new EntityKey(EntityKeyType.ENTITY_FIELD, CREATED_TIME);
-                pageLink.setSortOrder(new EntityDataSortOrder(sortProperty, EntityDataSortOrder.Direction.DESC));
-                EntityDataQuery query = new EntityDataQuery(filter.getFilter(), pageLink, List.of(sortProperty), Collections.emptyList(), Collections.emptyList());
-
-                newFilter.setQuery(query);
-                newFilter.setCustomerId(filter.getCustomerId());
-                return findEntities(user, newFilter, page, pageSize);
-            }
-            case CUSTOM_ENTITY_QUERY: {
-                EntitiesByCustomQueryVersionCreateConfig filter = (EntitiesByCustomQueryVersionCreateConfig) config;
-                CustomerId customerId = new CustomerId(ObjectUtils.defaultIfNull(filter.getCustomerId(), EntityId.NULL_UUID));
-                return entityService.findEntityDataByQuery(user.getTenantId(), customerId, filter.getQuery()).getData()
-                        .stream().map(EntityData::getEntityId)
-                        .collect(Collectors.toList());
+                    DaoUtil.processInBatches(pageLink -> {
+                        entityDataPageLink.setPage(pageLink.getPage());
+                        entityDataPageLink.setPageSize(pageLink.getPageSize());
+                        return entityService.findEntityDataByQuery(user.getTenantId(), new CustomerId(EntityId.NULL_UUID), query);
+                    }, 100, data -> {
+                        EntityId entityId = data.getEntityId();
+                        try {
+                            saveEntityData(user, repository, entityId, config);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+                });
+                break;
             }
         }
+
+        repository.add(".");
+
+        VersionCreationResult result = new VersionCreationResult();
+        GitRepository.Status status = repository.status();
+        result.setAdded(status.getAdded().size());
+        result.setModified(status.getModified().size());
+        result.setRemoved(status.getRemoved().size());
+
+        GitRepository.Commit commit = repository.commit(request.getVersionName());
+        repository.push();
+
+        result.setVersion(toVersion(commit));
+        return result;
+    }
+
+    private void saveEntityData(SecurityUser user, GitRepository repository, EntityId entityId, VersionCreateConfig config) throws Exception {
+        EntityExportData<ExportableEntity<EntityId>> entityData = exportImportService.exportEntity(user, entityId, EntityExportSettings.builder()
+                .exportRelations(config.isSaveRelations())
+                .build());
+        String entityDataJson = jsonWriter.writeValueAsString(entityData);
+        FileUtils.write(Path.of(repository.getDirectory(), getRelativePath(entityData.getEntityType(),
+                entityData.getEntity().getId().toString())).toFile(), entityDataJson, StandardCharsets.UTF_8);
     }
 
 
@@ -271,14 +258,9 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
     private List<EntityVersion> listVersions(TenantId tenantId, String branch, String path) throws Exception {
         GitRepository repository = checkRepository(tenantId);
-        repository.getLock().readLock().lock();
-        try {
-            return repository.listCommits(branch, path, Integer.MAX_VALUE).stream()
-                    .map(this::toVersion)
-                    .collect(Collectors.toList());
-        } finally {
-            repository.getLock().readLock().unlock();
-        }
+        return repository.listCommits(branch, path, Integer.MAX_VALUE).stream()
+                .map(this::toVersion)
+                .collect(Collectors.toList());
     }
 
 
@@ -294,23 +276,15 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
     private List<VersionedEntityInfo> listEntitiesAtVersion(TenantId tenantId, String branch, String versionId, String path) throws Exception {
         GitRepository repository = checkRepository(tenantId);
-        repository.getLock().readLock().lock();
-        try {
-            checkVersion(tenantId, branch, versionId);
-            return repository.listFilesAtCommit(versionId, path).stream()
-                    .map(filePath -> {
-                        EntityId entityId = fromRelativePath(filePath);
-                        EntityExportData<?> entityData = getEntityDataAtVersion(tenantId, entityId, versionId);
-
-                        VersionedEntityInfo info = new VersionedEntityInfo();
-                        info.setExternalId(entityId);
-                        info.setEntityName(entityData.getEntity().getName());
-                        return info;
-                    })
-                    .collect(Collectors.toList());
-        } finally {
-            repository.getLock().readLock().unlock();
-        }
+        checkVersion(tenantId, branch, versionId);
+        return repository.listFilesAtCommit(versionId, path).stream()
+                .map(filePath -> {
+                    EntityId entityId = fromRelativePath(filePath);
+                    VersionedEntityInfo info = new VersionedEntityInfo();
+                    info.setExternalId(entityId);
+                    return info;
+                })
+                .collect(Collectors.toList());
     }
 
 
@@ -318,81 +292,117 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     public List<VersionLoadResult> loadEntitiesVersion(SecurityUser user, VersionLoadRequest request) throws Exception {
         GitRepository repository = checkRepository(user.getTenantId());
 
-        List<EntityExportData<?>> entityDataList = new ArrayList<>();
-        EntityVersion version;
-        repository.getLock().readLock().lock();
-        try {
-            version = checkVersion(user.getTenantId(), request.getBranch(), request.getVersionId());
-            for (VersionedEntityInfo info : listEntitiesAtVersion(user.getTenantId(), request.getBranch(), request.getVersionId(), path)) {
-                EntityExportData<?> entityData = getEntityDataAtVersion(user.getTenantId(), info.getExternalId(), versionId);
-                entityDataList.add(entityData);
+        EntityVersion version = checkVersion(user.getTenantId(), request.getBranch(), request.getVersionId());
+
+        switch (request.getType()) {
+            case SINGLE_ENTITY: {
+                SingleEntityVersionLoadRequest versionLoadRequest = (SingleEntityVersionLoadRequest) request;
+                EntityImportResult<?> importResult = transactionTemplate.execute(status -> {
+                    try {
+                        EntityImportResult<?> result = loadEntity(user, repository, versionLoadRequest.getExternalEntityId(), version.getId(), versionLoadRequest.getConfig());
+                        result.getSaveReferencesCallback().run();
+                        return result;
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+                try {
+                    importResult.getSendEventsCallback().run();
+                } catch (Exception e) {
+                    log.error("Failed to send events for entity", e);
+                }
+
+                return List.of(VersionLoadResult.builder()
+                        .created(importResult.getOldEntity() == null ? 1 : 0)
+                        .updated(importResult.getOldEntity() != null ? 1 : 0)
+                        .deleted(0)
+                        .build());
             }
-        } finally {
-            repository.getLock().readLock().unlock();
-        }
+            case ENTITY_TYPE: {
+                EntityTypeVersionLoadRequest versionLoadRequest = (EntityTypeVersionLoadRequest) request;
+                return transactionTemplate.execute(status -> {
+                    Map<EntityType, VersionLoadResult> results = new HashMap<>();
+                    List<ThrowingRunnable> saveReferencesCallbacks = new ArrayList<>();
+                    List<ThrowingRunnable> sendEventsCallbacks = new ArrayList<>();
+                    // order entity types..
+                    // or what
+                    versionLoadRequest.getEntityTypes().forEach((entityType, config) -> {
+                        AtomicInteger created = new AtomicInteger();
+                        AtomicInteger updated = new AtomicInteger();
+                        AtomicInteger deleted = new AtomicInteger();
 
-        EntityImportSettings importSettings = EntityImportSettings.builder()
-                .updateRelations(settings.isLoadRelations())
-                .findExistingByName(settings.isFindExistingEntityByName())
-                .build();
-        // FIXME [viacheslav]: do evrth in transaction
-        List<EntityImportResult<?>> importResults = exportImportService.importEntities(user, entityDataList, importSettings);
+                        Set<EntityId> remoteEntities;
+                        try {
+                            remoteEntities = listEntitiesAtVersion(user.getTenantId(), request.getBranch(), request.getVersionId(), getRelativePath(entityType, null)).stream()
+                                    .map(VersionedEntityInfo::getExternalId)
+                                    .collect(Collectors.toSet());
+                            for (EntityId externalEntityId : remoteEntities) {
+                                EntityImportResult<?> importResult = loadEntity(user, repository, externalEntityId, version.getId(), config);
 
-        Map<EntityType, VersionLoadResult> results = new HashMap<>();
+                                if (importResult.getOldEntity() == null) created.incrementAndGet();
+                                else updated.incrementAndGet();
 
-        boolean removeNonexistentLocalEntities = false;
-        if ()
-            if (request.isRemoveOtherLocalEntitiesOfType()) {
-                importResults.stream()
-                        .collect(Collectors.groupingBy(EntityImportResult::getEntityType)) // FIXME [viacheslav]: if no entities of entity type - remove all ?
-                        .forEach((entityType, resultsForEntityType) -> {
-                            Set<EntityId> modifiedEntities = resultsForEntityType.stream().map(EntityImportResult::getSavedEntity).map(ExportableEntity::getExternalId).collect(Collectors.toSet());
-                            AtomicInteger deleted = new AtomicInteger();
+                                saveReferencesCallbacks.add(importResult.getSaveReferencesCallback());
+                                sendEventsCallbacks.add(importResult.getSendEventsCallback());
+                            }
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
 
+                        if (config.isRemoveOtherEntities()) {
                             DaoUtil.processInBatches(pageLink -> {
                                 return exportableEntitiesService.findEntitiesByTenantId(user.getTenantId(), entityType, pageLink);
                             }, 100, entity -> {
-                                if (entity.getExternalId() == null || !modifiedEntities.contains(entity.getExternalId())) {
+                                if (entity.getExternalId() == null || !remoteEntities.contains(entity.getExternalId())) {
                                     try {
                                         exportableEntitiesService.checkPermission(user, entity, entityType, Operation.DELETE);
                                     } catch (ThingsboardException e) {
                                         throw new RuntimeException(e);
                                     }
-                                    // need to delete in a specific order?
+                                    // need to delete entity types in a specific order?
                                     exportableEntitiesService.deleteByTenantIdAndId(user.getTenantId(), entity.getId());
                                     deleted.getAndIncrement();
                                 }
                             });
-                            results.put(entityType, VersionLoadResult.builder()
-                                    .entityType(entityType)
-                                    .created((int) resultsForEntityType.stream().filter(importResult -> importResult.getOldEntity() == null).count())
-                                    .updated((int) resultsForEntityType.stream().filter(importResult -> importResult.getOldEntity() != null).count())
-                                    .deleted(deleted.get())
-                                    .build());
-                        });
+                        }
+
+                        results.put(entityType, VersionLoadResult.builder()
+                                .created(created.get())
+                                .updated(updated.get())
+                                .deleted(deleted.get())
+                                .build());
+                    });
+
+                    for (ThrowingRunnable saveReferencesCallback : saveReferencesCallbacks) {
+                        try {
+                            saveReferencesCallback.run();
+                        } catch (ThingsboardException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                    for (ThrowingRunnable sendEventsCallback : sendEventsCallbacks) {
+                        try {
+                            sendEventsCallback.run();
+                        } catch (Exception e) {
+                            log.error("Failed to send events for entity", e);
+                        }
+                    }
+                    return new ArrayList<>(results.values());
+                });
             }
-
-        return new ArrayList<>(results.values());
-    }
-
-    @SneakyThrows
-    private EntityExportData<?> getEntityDataAtVersion(TenantId tenantId, EntityId externalId, String versionId) {
-        GitRepository repository = checkRepository(tenantId);
-        repository.getLock().readLock().lock();
-        try {
-            String entityDataJson = repository.getFileContentAtCommit(getRelativePath(externalId.getEntityType(), externalId.getId().toString()), versionId);
-            return JacksonUtil.fromString(entityDataJson, EntityExportData.class);
-        } finally {
-            repository.getLock().readLock().unlock();
+            default:
+                throw new IllegalArgumentException("Unsupported version load request");
         }
     }
 
-    private void updateEntityVersionInfo(TenantId tenantId, EntityId entityId, EntityVersion version) {
-        ObjectNode versionInfo = JacksonUtil.newObjectNode();
-        versionInfo.set("versionName", new TextNode(version.getName()));
-        versionInfo.set("versionId", new TextNode(version.getId()));
-        attributesService.save(tenantId, entityId, DataConstants.SERVER_SCOPE,
-                List.of(new BaseAttributeKvEntry(System.currentTimeMillis(), new JsonDataEntry("entityVersionInfo", versionInfo.toString()))));
+    private EntityImportResult<?> loadEntity(SecurityUser user, GitRepository repository, EntityId externalId, String versionId, VersionLoadConfig config) throws Exception {
+        String entityDataJson = repository.getFileContentAtCommit(getRelativePath(externalId.getEntityType(), externalId.getId().toString()), versionId);
+        EntityExportData entityData = JacksonUtil.fromString(entityDataJson, EntityExportData.class);
+
+        return exportImportService.importEntity(user, entityData, EntityImportSettings.builder()
+                .updateRelations(config.isLoadRelations())
+                .findExistingByName(config.isFindExistingEntityByName())
+                .build(), false, false);
     }
 
 
@@ -417,12 +427,10 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     private void initRepository(TenantId tenantId, EntitiesVersionControlSettings settings) throws Exception {
         Path repositoryDirectory = Path.of(repositoriesFolder, tenantId.getId().toString());
         GitRepository repository;
-        if (Files.exists(repositoryDirectory)) {
-            repository = GitRepository.open(repositoryDirectory.toFile(), settings.getUsername(), settings.getPassword());
-        } else {
-            Files.createDirectories(repositoryDirectory);
-            repository = GitRepository.clone(settings.getRepositoryUri(), settings.getUsername(), settings.getPassword(), repositoryDirectory.toFile());
-        }
+        FileUtils.forceDelete(repositoryDirectory.toFile());
+
+        Files.createDirectories(repositoryDirectory);
+        repository = GitRepository.clone(settings.getRepositoryUri(), settings.getUsername(), settings.getPassword(), repositoryDirectory.toFile());
         repositories.put(tenantId, repository);
     }
 

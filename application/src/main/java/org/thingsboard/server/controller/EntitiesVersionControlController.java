@@ -16,6 +16,7 @@
 package org.thingsboard.server.controller;
 
 import io.swagger.annotations.ApiModelProperty;
+import io.swagger.annotations.ApiOperation;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -44,6 +45,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
+
 @RestController
 @RequestMapping("/api/entities/vc")
 @PreAuthorize("hasAuthority('TENANT_ADMIN')")
@@ -53,6 +56,62 @@ public class EntitiesVersionControlController extends BaseController {
     private final EntitiesVersionControlService versionControlService;
 
 
+    @ApiOperation(value = "", notes = "" +
+            "SINGLE_ENTITY:" + NEW_LINE +
+            "```\n{\n" +
+            "  \"type\": \"SINGLE_ENTITY\",\n" +
+            "\n" +
+            "  \"versionName\": \"Version 1.0\",\n" +
+            "  \"branch\": \"dev\",\n" +
+            "\n" +
+            "  \"entityId\": {\n" +
+            "    \"entityType\": \"DEVICE\",\n" +
+            "    \"id\": \"b79448e0-d4f4-11ec-847b-0f432358ab48\"\n" +
+            "  },\n" +
+            "  \"config\": {\n" +
+            "    \"saveRelations\": true\n" +
+            "  }\n" +
+            "}\n```" + NEW_LINE +
+            "ENTITY_LIST:" + NEW_LINE +
+            "```\n{\n" +
+            "  \"type\": \"ENTITY_LIST\",\n" +
+            "\n" +
+            "  \"versionName\": \"Version 1.0\",\n" +
+            "  \"branch\": \"dev\",\n" +
+            "\n" +
+            "  \"entitiesIds\": [\n" +
+            "    {\n" +
+            "      \"entityType\": \"DEVICE\",\n" +
+            "      \"id\": \"b79448e0-d4f4-11ec-847b-0f432358ab48\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"entityType\": \"DEVICE_PROFILE\",\n" +
+            "      \"id\": \"b7944123-d4f4-11ec-847b-0f432358ab48\"\n" +
+            "    }\n" +
+            "  ],\n" +
+            "  \"config\": {\n" +
+            "    \"saveRelations\": true,\n" +
+            "    \"syncStrategy\": \"MERGE\"\n" +
+            "  }\n" +
+            "}\n```" + NEW_LINE +
+            "ENTITY_TYPE:" + NEW_LINE +
+            "```\n{\n" +
+            "  \"type\": \"ENTITY_TYPE\",\n" +
+            "\n" +
+            "  \"versionName\": \"Version 1.0\",\n" +
+            "  \"branch\": \"dev\",\n" +
+            "\n" +
+            "  \"entityTypes\": {\n" +
+            "    \"DEVICE\": {\n" +
+            "      \"saveRelations\": true,\n" +
+            "      \"syncStrategy\": \"MERGE\"\n" +
+            "    },\n" +
+            "    \"DEVICE_PROFILE\": {\n" +
+            "      \"saveRelations\": true,\n" +
+            "      \"syncStrategy\": \"OVERWRITE\"\n" +
+            "    }\n" +
+            "  }\n" +
+            "}\n```")
     @PostMapping("/version")
     public VersionCreationResult saveEntitiesVersion(@RequestBody VersionCreateRequest request) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
@@ -64,6 +123,13 @@ public class EntitiesVersionControlController extends BaseController {
     }
 
 
+    @ApiOperation(value = "", notes = "" +
+            "```\n[\n" +
+            "  {\n" +
+            "    \"id\": \"c30c8bcaed3f0813649f0dee51a89d04d0a12b28\",\n" +
+            "    \"name\": \"Device profile 1 version 1.0\"\n" +
+            "  }\n" +
+            "]\n```")
     @GetMapping("/version/{branch}/{entityType}/{externalEntityUuid}")
     public List<EntityVersion> listEntityVersions(@PathVariable String branch,
                                                   @PathVariable EntityType entityType,
@@ -76,6 +142,13 @@ public class EntitiesVersionControlController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "", notes = "" +
+            "```\n[\n" +
+            "  {\n" +
+            "    \"id\": \"c30c8bcaed3f0813649f0dee51a89d04d0a12b28\",\n" +
+            "    \"name\": \"Device profiles from dev\"\n" +
+            "  }\n" +
+            "]\n```")
     @GetMapping("/version/{branch}/{entityType}")
     public List<EntityVersion> listEntityTypeVersions(@PathVariable String branch,
                                                       @PathVariable EntityType entityType) throws ThingsboardException {
@@ -86,6 +159,21 @@ public class EntitiesVersionControlController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "", notes = "" +
+            "```\n[\n" +
+            "  {\n" +
+            "    \"id\": \"ba9baaca1742b730e7331f31a6a51da5fc7da7f7\",\n" +
+            "    \"name\": \"Device 1 removed\"\n" +
+            "  },\n" +
+            "  {\n" +
+            "    \"id\": \"b3c28d722d328324c7c15b0b30047b0c40011cf7\",\n" +
+            "    \"name\": \"Device profiles added\"\n" +
+            "  },\n" +
+            "  {\n" +
+            "    \"id\": \"c30c8bcaed3f0813649f0dee51a89d04d0a12b28\",\n" +
+            "    \"name\": \"Devices added\"\n" +
+            "  }\n" +
+            "]\n```")
     @GetMapping("/version/{branch}")
     public List<EntityVersion> listVersions(@PathVariable String branch) throws ThingsboardException {
         try {
@@ -118,6 +206,38 @@ public class EntitiesVersionControlController extends BaseController {
     }
 
 
+    @ApiOperation(value = "", notes = "" +
+            "SINGLE_ENTITY:" + NEW_LINE +
+            "```\n{\n" +
+            "  \"type\": \"SINGLE_ENTITY\",\n" +
+            "  \n" +
+            "  \"branch\": \"dev\",\n" +
+            "  \"versionId\": \"b3c28d722d328324c7c15b0b30047b0c40011cf7\",\n" +
+            "  \n" +
+            "  \"externalEntityId\": {\n" +
+            "    \"entityType\": \"DEVICE\",\n" +
+            "    \"id\": \"b7944123-d4f4-11ec-847b-0f432358ab48\"\n" +
+            "  },\n" +
+            "  \"config\": {\n" +
+            "    \"loadRelations\": false,\n" +
+            "    \"findExistingEntityByName\": false\n" +
+            "  }\n" +
+            "}\n```" + NEW_LINE +
+            "ENTITY_TYPE:" + NEW_LINE +
+            "```\n{\n" +
+            "  \"type\": \"ENTITY_TYPE\",\n" +
+            "\n" +
+            "  \"branch\": \"dev\",\n" +
+            "  \"versionId\": \"b3c28d722d328324c7c15b0b30047b0c40011cf7\",\n" +
+            "\n" +
+            "  \"entityTypes\": {\n" +
+            "    \"DEVICE\": {\n" +
+            "      \"loadRelations\": false,\n" +
+            "      \"findExistingEntityByName\": false,\n" +
+            "      \"removeOtherEntities\": true\n" +
+            "    }\n" +
+            "  }\n" +
+            "}\n```")
     @PostMapping("/entity")
     public List<VersionLoadResult> loadEntitiesVersion(@RequestBody VersionLoadRequest request) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
@@ -139,8 +259,21 @@ public class EntitiesVersionControlController extends BaseController {
     }
 
 
-    @ApiModelProperty(notes = "" +
-            "")
+    @ApiOperation(value = "", notes = "" +
+            "```\n[\n" +
+            "  {\n" +
+            "    \"name\": \"master\",\n" +
+            "    \"default\": true\n" +
+            "  },\n" +
+            "  {\n" +
+            "    \"name\": \"dev\",\n" +
+            "    \"default\": false\n" +
+            "  },\n" +
+            "  {\n" +
+            "    \"name\": \"dev-2\",\n" +
+            "    \"default\": false\n" +
+            "  }\n" +
+            "]\n\n```")
     @GetMapping("/branches")
     public List<BranchInfo> listBranches() throws ThingsboardException {
         try {
@@ -161,7 +294,7 @@ public class EntitiesVersionControlController extends BaseController {
     }
 
 
-    @ApiModelProperty(notes = "" +
+    @ApiOperation(value = "", notes = "" +
             "```\n{\n" +
             "  \"repositoryUri\": \"https://github.com/User/repo.git\",\n" +
             "  \"username\": \"User\",\n" +
@@ -177,7 +310,7 @@ public class EntitiesVersionControlController extends BaseController {
         }
     }
 
-    @ApiModelProperty(notes = "" +
+    @ApiOperation(value = "", notes = "" +
             "```\n{\n" +
             "  \"repositoryUri\": \"https://github.com/User/repo.git\",\n" +
             "  \"username\": \"User\",\n" +

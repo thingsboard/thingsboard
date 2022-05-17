@@ -21,6 +21,5 @@ import org.thingsboard.server.common.data.id.EntityId;
 @Data
 public class VersionedEntityInfo {
     private EntityId externalId;
-    private String entityName;
     // etc..
 }

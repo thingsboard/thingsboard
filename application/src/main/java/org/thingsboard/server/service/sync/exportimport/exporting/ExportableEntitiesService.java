@@ -39,8 +39,6 @@ public interface ExportableEntitiesService {
 
     <E extends ExportableEntity<I>, I extends EntityId> PageData<E> findEntitiesByTenantId(TenantId tenantId, EntityType entityType, PageLink pageLink);
 
-    List<EntityId> findEntitiesByFilter(TenantId tenantId, VersionCreateConfig filter); // FIXME [viacheslav]:
-
     <I extends EntityId> void deleteByTenantIdAndId(TenantId tenantId, I id);
 
 
