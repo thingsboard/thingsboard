@@ -1,0 +1,134 @@
+/**
+ * Copyright © 2016-2022 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@import '../../../../../../../scss/constants';
+
+:host {
+  .tb-widget-settings {
+    .fields-group {
+      padding: 0 16px 8px;
+      margin-bottom: 10px;
+      border: 1px groove rgba(0, 0, 0, .25);
+      border-radius: 4px;
+
+      legend {
+        color: rgba(0, 0, 0, .7);
+        width: fit-content;
+      }
+
+      legend + * {
+        display: block;
+        margin-top: 16px;
+      }
+
+      &.fields-group-slider {
+        padding: 0;
+
+        legend {
+          margin-left: 16px;
+        }
+
+        > .tb-settings {
+          margin-top: 0;
+          padding: 0 16px 8px;
+        }
+      }
+    }
+
+    .tb-control-list {
+      overflow-y: auto;
+      &.mat-padding {
+        padding: 8px;
+        @media #{$mat-gt-sm} {
+          padding: 16px;
+        }
+      }
+    }
+
+    .tb-prompt{
+      margin: 30px 0;
+    }
+  }
+}
+
+:host ::ng-deep {
+  .tb-widget-settings {
+    .mat-checkbox-label {
+      white-space: normal;
+    }
+
+    .mat-expansion-panel {
+      &.tb-settings {
+        box-shadow: none;
+
+        .mat-content {
+          overflow: visible;
+        }
+
+        .mat-expansion-panel-header {
+          padding: 0;
+
+          &:hover {
+            background: none;
+          }
+
+          .mat-expansion-indicator {
+            padding: 2px;
+          }
+        }
+
+        .mat-expansion-panel-header-description {
+          align-items: center;
+        }
+
+        > .mat-expansion-panel-content {
+          > .mat-expansion-panel-body {
+            padding: 0;
+          }
+        }
+
+        .mat-checkbox-layout {
+          margin: 5px 0;
+        }
+
+        .mat-checkbox-inner-container {
+          margin-right: 12px;
+        }
+      }
+
+      .mat-expansion-panel-content {
+        font: inherit;
+      }
+    }
+
+    .mat-slide {
+      margin: 8px 0;
+    }
+
+    .slide-block {
+      display: block;
+
+      &:not(:last-child) {
+        margin-bottom: 8px;
+      }
+    }
+
+    .mat-slide-toggle-content {
+      white-space: normal;
+    }
+
+  }
+}

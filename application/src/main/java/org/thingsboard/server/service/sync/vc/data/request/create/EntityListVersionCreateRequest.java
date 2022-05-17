@@ -26,7 +26,7 @@ import java.util.List;
 public class EntityListVersionCreateRequest extends VersionCreateRequest {
 
     private List<EntityId> entitiesIds;
-    private MultipleEntitiesVersionCreateConfig config;
+    private EntityTypeVersionCreateConfig config;
 
     @Override
     public VersionCreateRequestType getType() {

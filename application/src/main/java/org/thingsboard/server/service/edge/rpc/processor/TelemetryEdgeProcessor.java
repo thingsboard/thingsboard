@@ -206,10 +206,10 @@ public class TelemetryEdgeProcessor extends BaseEdgeProcessor {
         SettableFuture<Void> futureToSet = SettableFuture.create();
         JsonObject json = JsonUtils.getJsonObject(msg.getKvList());
         Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(json);
-        ListenableFuture<List<Void>> future = attributesService.save(tenantId, entityId, metaData.getValue("scope"), new ArrayList<>(attributes));
-        Futures.addCallback(future, new FutureCallback<List<Void>>() {
+        ListenableFuture<List<String>> future = attributesService.save(tenantId, entityId, metaData.getValue("scope"), new ArrayList<>(attributes));
+        Futures.addCallback(future, new FutureCallback<>() {
             @Override
-            public void onSuccess(@Nullable List<Void> voids) {
+            public void onSuccess(@Nullable List<String> keys) {
                 Pair<String, RuleChainId> defaultQueueAndRuleChain = getDefaultQueueNameAndRuleChainId(tenantId, entityId);
                 String queueName = defaultQueueAndRuleChain.getKey();
                 RuleChainId ruleChainId = defaultQueueAndRuleChain.getValue();

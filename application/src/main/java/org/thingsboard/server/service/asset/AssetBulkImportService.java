@@ -18,6 +18,7 @@ package org.thingsboard.server.service.asset;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
@@ -27,6 +28,7 @@ import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.exportimport.importing.csv.AbstractBulkImportService;
 import org.thingsboard.server.service.sync.exportimport.importing.csv.BulkImportColumnType;
+import org.thingsboard.server.service.entitiy.asset.TbAssetService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.Map;
@@ -37,6 +39,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class AssetBulkImportService extends AbstractBulkImportService<Asset> {
     private final AssetService assetService;
+    private final TbAssetService tbAssetService;
 
     @Override
     protected void setEntityFields(Asset entity, Map<BulkImportColumnType, String> fields) {
@@ -61,8 +64,9 @@ public class AssetBulkImportService extends AbstractBulkImportService<Asset> {
     }
 
     @Override
-    protected Asset saveEntity(Asset entity, Map<BulkImportColumnType, String> fields) {
-        return assetService.saveAsset(entity);
+    @SneakyThrows
+    protected Asset saveEntity(SecurityUser user, Asset entity, Map<BulkImportColumnType, String> fields) {
+        return tbAssetService.save(entity, user);
     }
 
     @Override

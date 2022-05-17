@@ -64,7 +64,7 @@ import org.thingsboard.server.service.sync.vc.data.VersionCreationResult;
 import org.thingsboard.server.service.sync.vc.data.VersionLoadResult;
 import org.thingsboard.server.service.sync.vc.data.VersionedEntityInfo;
 import org.thingsboard.server.service.sync.vc.data.request.create.EntityListVersionCreateRequest;
-import org.thingsboard.server.service.sync.vc.data.request.create.EntityTypeVersionCreateRequest;
+import org.thingsboard.server.service.sync.vc.data.request.create.ComplexVersionCreateRequest;
 import org.thingsboard.server.service.sync.vc.data.request.create.SingleEntityVersionCreateRequest;
 import org.thingsboard.server.service.sync.vc.data.request.create.SyncStrategy;
 import org.thingsboard.server.service.sync.vc.data.request.create.VersionCreateConfig;
@@ -179,8 +179,8 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                 }
                 break;
             }
-            case ENTITY_TYPE: {
-                EntityTypeVersionCreateRequest versionCreateRequest = (EntityTypeVersionCreateRequest) request;
+            case COMPLEX: {
+                ComplexVersionCreateRequest versionCreateRequest = (ComplexVersionCreateRequest) request;
                 versionCreateRequest.getEntityTypes().forEach((entityType, config) -> {
                     if (config.getSyncStrategy() == SyncStrategy.OVERWRITE) {
                         try {

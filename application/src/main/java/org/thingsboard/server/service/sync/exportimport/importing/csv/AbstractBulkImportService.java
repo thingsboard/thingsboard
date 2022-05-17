@@ -94,7 +94,7 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
         }
     }
 
-    public final BulkImportResult<E> processBulkImport(BulkImportRequest request, SecurityUser user, Consumer<ImportedEntityInfo<E>> onEntityImported) throws Exception {
+    public final BulkImportResult<E> processBulkImport(BulkImportRequest request, SecurityUser user) throws Exception {
         List<EntityData> entitiesData = parseData(request);
 
         BulkImportResult<E> result = new BulkImportResult<>();
@@ -105,10 +105,9 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
         entitiesData.forEach(entityData -> DonAsynchron.submit(() -> {
                     SecurityContextHolder.setContext(securityContext);
 
-                    ImportedEntityInfo<E> importedEntityInfo =  saveEntity(entityData.getFields(), user);
+                    ImportedEntityInfo<E> importedEntityInfo = saveEntity(entityData.getFields(), user);
                     E entity = importedEntityInfo.getEntity();
 
-                    onEntityImported.accept(importedEntityInfo);
                     saveKvs(user, entity, entityData.getKvs());
 
                     return importedEntityInfo;
@@ -147,7 +146,7 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
         setEntityFields(entity, fields);
         accessControlService.checkPermission(user, Resource.of(getEntityType()), Operation.WRITE, entity.getId(), entity);
 
-        E savedEntity = saveEntity(entity, fields);
+        E savedEntity = saveEntity(user, entity, fields);
 
         importedEntityInfo.setEntity(savedEntity);
         return importedEntityInfo;
@@ -160,7 +159,7 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
 
     protected abstract void setEntityFields(E entity, Map<BulkImportColumnType, String> fields);
 
-    protected abstract E saveEntity(E entity, Map<BulkImportColumnType, String> fields);
+    protected abstract E saveEntity(SecurityUser user, E entity, Map<BulkImportColumnType, String> fields);
 
     protected abstract EntityType getEntityType();
 
