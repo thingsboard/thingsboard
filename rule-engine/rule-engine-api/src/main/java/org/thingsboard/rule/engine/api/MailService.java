@@ -28,6 +28,8 @@ public interface MailService {
 
     void updateMailConfiguration();
 
+    boolean isConfigured(TenantId tenantId);
+
     void sendEmail(TenantId tenantId, String email, String subject, String message) throws ThingsboardException;
 
     void sendTestMail(JsonNode config, String email) throws ThingsboardException;

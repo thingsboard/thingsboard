@@ -54,6 +54,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -67,11 +68,12 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
     private CacheManager cacheManager;
     @Autowired
     private TwoFaConfigManager twoFaConfigManager;
-    @Autowired
+    @SpyBean
     private TwoFactorAuthService twoFactorAuthService;
 
     @Before
     public void beforeEach() throws Exception {
+        doNothing().when(twoFactorAuthService).checkProvider(any(), any());
         loginSysAdmin();
     }
 

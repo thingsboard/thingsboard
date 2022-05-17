@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.security.auth.mfa.config;
 
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettings;
@@ -38,7 +39,7 @@ public interface TwoFaConfigManager {
 
     Optional<PlatformTwoFaSettings> getPlatformTwoFaSettings(TenantId tenantId, boolean sysadminSettingsAsDefault);
 
-    void savePlatformTwoFaSettings(TenantId tenantId, PlatformTwoFaSettings twoFactorAuthSettings);
+    void savePlatformTwoFaSettings(TenantId tenantId, PlatformTwoFaSettings twoFactorAuthSettings) throws ThingsboardException;
 
     void deletePlatformTwoFaSettings(TenantId tenantId);
 

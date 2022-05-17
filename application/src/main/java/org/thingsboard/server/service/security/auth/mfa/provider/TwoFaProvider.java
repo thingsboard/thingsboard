@@ -17,6 +17,7 @@ package org.thingsboard.server.service.security.auth.mfa.provider;
 
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.model.mfa.account.TwoFaAccountConfig;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderConfig;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
@@ -29,6 +30,8 @@ public interface TwoFaProvider<C extends TwoFaProviderConfig, A extends TwoFaAcc
     default void prepareVerificationCode(SecurityUser user, C providerConfig, A accountConfig) throws ThingsboardException {}
 
     boolean checkVerificationCode(SecurityUser user, String verificationCode, C providerConfig, A accountConfig);
+
+    default void check(TenantId tenantId) throws ThingsboardException {};
 
 
     TwoFaProviderType getType();

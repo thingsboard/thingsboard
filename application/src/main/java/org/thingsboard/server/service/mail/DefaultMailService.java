@@ -47,6 +47,7 @@ import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
 import javax.annotation.PostConstruct;
+import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import java.io.ByteArrayInputStream;
 import java.util.HashMap;
@@ -100,7 +101,17 @@ public class DefaultMailService implements MailService {
             mailSender = createMailSender(jsonConfig);
             mailFrom = jsonConfig.get("mailFrom").asText();
         } else {
-            throw new IncorrectParameterException("Failed to date mail configuration. Settings not found!");
+            throw new IncorrectParameterException("Failed to update mail configuration. Settings not found!");
+        }
+    }
+
+    @Override
+    public boolean isConfigured(TenantId tenantId) {
+        try {
+            mailSender.testConnection();
+            return true;
+        } catch (MessagingException e) {
+            return false;
         }
     }
 
@@ -311,9 +322,12 @@ public class DefaultMailService implements MailService {
     }
 
     @Override
-    public void sendTwoFaVerificationEmail(String email, String verificationCode) throws ThingsboardException { // TODO [viacheslav]: mail template
-        String subject = "ThingsBoard two-factor authentication";
-        String message = "Your 2FA verification code: " + verificationCode;
+    public void sendTwoFaVerificationEmail(String email, String verificationCode) throws ThingsboardException {
+        String subject = messages.getMessage("2fa.verification.code.subject", null, Locale.US);
+        String message = mergeTemplateIntoString("2fa.verification.code.ftl", Map.of(
+                TARGET_EMAIL, email,
+                "verificationCode", verificationCode
+        ));
 
         sendMail(mailSender, mailFrom, email, subject, message);
     }

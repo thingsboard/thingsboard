@@ -27,6 +27,8 @@ public interface TwoFactorAuthService {
 
     boolean isTwoFaEnabled(TenantId tenantId, UserId userId);
 
+    void checkProvider(TenantId tenantId, TwoFaProviderType providerType) throws ThingsboardException;
+
 
     void prepareVerificationCode(SecurityUser user, TwoFaProviderType providerType, boolean checkLimits) throws Exception;
 

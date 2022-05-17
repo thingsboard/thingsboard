@@ -20,7 +20,9 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.model.mfa.account.SmsTwoFaAccountConfig;
 import org.thingsboard.server.common.data.security.model.mfa.provider.SmsTwoFaProviderConfig;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
@@ -56,6 +58,13 @@ public class SmsTwoFaProvider extends OtpBasedTwoFaProvider<SmsTwoFaProviderConf
         String phoneNumber = accountConfig.getPhoneNumber();
 
         smsService.sendSms(user.getTenantId(), user.getCustomerId(), new String[]{phoneNumber}, message);
+    }
+
+    @Override
+    public void check(TenantId tenantId) throws ThingsboardException {
+        if (!smsService.isConfigured(tenantId)) {
+            throw new ThingsboardException("SMS service in not configured", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
     }
 
 

@@ -26,6 +26,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionStatus;
@@ -68,6 +69,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -75,7 +77,7 @@ public abstract class TwoFactorAuthTest extends AbstractControllerTest {
 
     @Autowired
     private TwoFaConfigManager twoFaConfigManager;
-    @Autowired
+    @SpyBean
     private TwoFactorAuthService twoFactorAuthService;
     @MockBean
     private SmsService smsService;
@@ -100,6 +102,7 @@ public abstract class TwoFactorAuthTest extends AbstractControllerTest {
 
         loginSysAdmin();
         user = createUser(user, password);
+        doNothing().when(twoFactorAuthService).checkProvider(any(), any());
     }
 
     @After

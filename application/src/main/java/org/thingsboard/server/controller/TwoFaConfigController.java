@@ -15,10 +15,6 @@
  */
 package org.thingsboard.server.controller;
 
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.client.j2se.MatrixToImageWriter;
-import com.google.zxing.common.BitMatrix;
-import com.google.zxing.qrcode.QRCodeWriter;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.Data;
@@ -32,11 +28,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettings;
 import org.thingsboard.server.common.data.security.model.mfa.account.AccountTwoFaSettings;
-import org.thingsboard.server.common.data.security.model.mfa.account.TotpTwoFaAccountConfig;
 import org.thingsboard.server.common.data.security.model.mfa.account.TwoFaAccountConfig;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderConfig;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
@@ -45,8 +39,6 @@ import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFaConfigManager;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.Collections;
 import java.util.List;
@@ -112,21 +104,6 @@ public class TwoFaConfigController extends BaseController {
         SecurityUser user = getCurrentUser();
         return twoFactorAuthService.generateNewAccountConfig(user, providerType);
     }
-
-    /* TMP */
-    @PostMapping("/account/config/tmp/generate/qr")
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    public void generateTwoFaAccountConfigWithQr(@RequestParam TwoFaProviderType providerType, HttpServletResponse response) throws Exception {
-        TwoFaAccountConfig config = generateTwoFaAccountConfig(providerType);
-        if (providerType == TwoFaProviderType.TOTP) {
-            BitMatrix qr = new QRCodeWriter().encode(((TotpTwoFaAccountConfig) config).getAuthUrl(), BarcodeFormat.QR_CODE, 200, 200);
-            try (ServletOutputStream outputStream = response.getOutputStream()) {
-                MatrixToImageWriter.writeToStream(qr, "PNG", outputStream);
-            }
-        }
-        response.setHeader("config", JacksonUtil.toString(config));
-    }
-    /* TMP */
 
     @ApiOperation(value = "Submit 2FA account config (submitTwoFaAccountConfig)",
             notes = "Submit 2FA account config to prepare for a future verification. " +

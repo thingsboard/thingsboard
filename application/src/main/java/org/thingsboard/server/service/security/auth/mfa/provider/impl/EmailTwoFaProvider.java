@@ -19,7 +19,9 @@ import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.model.mfa.account.EmailTwoFaAccountConfig;
 import org.thingsboard.server.common.data.security.model.mfa.provider.EmailTwoFaProviderConfig;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
@@ -42,6 +44,13 @@ public class EmailTwoFaProvider extends OtpBasedTwoFaProvider<EmailTwoFaProvider
         EmailTwoFaAccountConfig config = new EmailTwoFaAccountConfig();
         config.setEmail(user.getEmail());
         return config;
+    }
+
+    @Override
+    public void check(TenantId tenantId) throws ThingsboardException {
+        if (!mailService.isConfigured(tenantId)) {
+            throw new ThingsboardException("Mail service is not set up", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
     }
 
     @Override

@@ -17,10 +17,13 @@ package org.thingsboard.server.service.security.auth.mfa.config;
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
@@ -36,6 +39,7 @@ import org.thingsboard.server.dao.service.ConstraintValidator;
 import org.thingsboard.server.dao.settings.AdminSettingsDao;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.user.UserAuthSettingsDao;
+import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -51,6 +55,8 @@ public class DefaultTwoFaConfigManager implements TwoFaConfigManager {
     private final AdminSettingsService adminSettingsService;
     private final AdminSettingsDao adminSettingsDao;
     private final AttributesService attributesService;
+    @Autowired @Lazy
+    private TwoFactorAuthService twoFactorAuthService;
 
     protected static final String TWO_FACTOR_AUTH_SETTINGS_KEY = "twoFaSettings";
 
@@ -147,9 +153,12 @@ public class DefaultTwoFaConfigManager implements TwoFaConfigManager {
 
     @SneakyThrows({InterruptedException.class, ExecutionException.class})
     @Override
-    public void savePlatformTwoFaSettings(TenantId tenantId, PlatformTwoFaSettings twoFactorAuthSettings) {
+    public void savePlatformTwoFaSettings(TenantId tenantId, PlatformTwoFaSettings twoFactorAuthSettings) throws ThingsboardException {
         if (tenantId.equals(TenantId.SYS_TENANT_ID) || !twoFactorAuthSettings.isUseSystemTwoFactorAuthSettings()) {
             ConstraintValidator.validateFields(twoFactorAuthSettings);
+        }
+        for (TwoFaProviderConfig providerConfig : twoFactorAuthSettings.getProviders()) {
+            twoFactorAuthService.checkProvider(tenantId, providerConfig.getProviderType());
         }
         if (tenantId.equals(TenantId.SYS_TENANT_ID)) {
             AdminSettings settings = Optional.ofNullable(adminSettingsService.findAdminSettingsByKey(tenantId, TWO_FACTOR_AUTH_SETTINGS_KEY))

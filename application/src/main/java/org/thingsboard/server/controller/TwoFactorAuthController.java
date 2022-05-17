@@ -27,9 +27,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.security.model.mfa.account.EmailTwoFaAccountConfig;
+import org.thingsboard.server.common.data.security.model.mfa.account.SmsTwoFaAccountConfig;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
@@ -104,9 +107,9 @@ public class TwoFactorAuthController extends BaseController {
     @ApiOperation(value = "Get available 2FA providers (getAvailableTwoFaProviders)", notes =
             "Get the list of 2FA provider infos available for user to use. Example:\n" +
                     "```\n[\n" +
-                    "  {\n    \"type\": \"EMAIL\",\n    \"default\": true\n  },\n" +
-                    "  {\n    \"type\": \"TOTP\",\n    \"default\": false\n  },\n" +
-                    "  {\n    \"type\": \"SMS\",\n    \"default\": false\n  }\n" +
+                    "  {\n    \"type\": \"EMAIL\",\n    \"default\": true,\n    \"contact\": \"ab*****ko@gmail.com\"\n  },\n" +
+                    "  {\n    \"type\": \"TOTP\",\n    \"default\": false,\n    \"contact\": null\n  },\n" +
+                    "  {\n    \"type\": \"SMS\",\n    \"default\": false,\n    \"contact\": \"+38********12\"\n  }\n" +
                     "]\n```")
     @GetMapping("/providers")
     @PreAuthorize("hasAuthority('PRE_VERIFICATION_TOKEN')")
@@ -114,10 +117,24 @@ public class TwoFactorAuthController extends BaseController {
         SecurityUser user = getCurrentUser();
         return twoFaConfigManager.getAccountTwoFaSettings(user.getTenantId(), user.getId())
                 .map(settings -> settings.getConfigs().values()).orElse(Collections.emptyList())
-                .stream().map(config -> TwoFaProviderInfo.builder()
-                        .type(config.getProviderType())
-                        .isDefault(config.isUseByDefault())
-                        .build())
+                .stream().map(config -> {
+                    String contact = null;
+                    switch (config.getProviderType()) {
+                        case SMS:
+                            String phoneNumber = ((SmsTwoFaAccountConfig) config).getPhoneNumber();
+                            contact = StringUtils.obfuscate(phoneNumber, 2, '*', phoneNumber.indexOf('+') + 1, phoneNumber.length());
+                            break;
+                        case EMAIL:
+                            String email = ((EmailTwoFaAccountConfig) config).getEmail();
+                            contact = StringUtils.obfuscate(email, 2, '*', 0, email.indexOf('@'));
+                            break;
+                    }
+                    return TwoFaProviderInfo.builder()
+                            .type(config.getProviderType())
+                            .isDefault(config.isUseByDefault())
+                            .contact(contact)
+                            .build();
+                })
                 .collect(Collectors.toList());
     }
 
@@ -127,6 +144,7 @@ public class TwoFactorAuthController extends BaseController {
     public static class TwoFaProviderInfo {
         private TwoFaProviderType type;
         private boolean isDefault;
+        private String contact;
     }
 
 }

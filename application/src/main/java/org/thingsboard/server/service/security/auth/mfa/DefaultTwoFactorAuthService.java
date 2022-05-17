@@ -68,6 +68,11 @@ public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
                 .orElse(false);
     }
 
+    @Override
+    public void checkProvider(TenantId tenantId, TwoFaProviderType providerType) throws ThingsboardException {
+        getTwoFaProvider(providerType).check(tenantId);
+    }
+
 
     @Override
     public void prepareVerificationCode(SecurityUser user, TwoFaProviderType providerType, boolean checkLimits) throws Exception {

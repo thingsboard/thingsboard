@@ -29,7 +29,6 @@ import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.common.util.JacksonUtil;
@@ -85,6 +84,11 @@ public class DefaultSmsService implements SmsService {
                 log.error("Failed to create SMS sender", e);
             }
         }
+    }
+
+    @Override
+    public boolean isConfigured(TenantId tenantId) {
+        return smsSender != null;
     }
 
     private int sendSms(String numberTo, String message) throws ThingsboardException {
