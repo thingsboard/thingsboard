@@ -39,8 +39,8 @@ export class TwoFactorAuthenticationService {
     return this.http.get<TwoFactorAuthSettings>(`/api/2fa/settings`, defaultHttpOptionsFromConfig(config));
   }
 
-  saveTwoFaSettings(settings: TwoFactorAuthSettings, config?: RequestConfig): Observable<TwoFactorAuthSettings> {
-    return this.http.post<TwoFactorAuthSettings>(`/api/2fa/settings`, settings, defaultHttpOptionsFromConfig(config));
+  saveTwoFaSettings(settings: TwoFactorAuthSettings, config?: RequestConfig): Observable<any> {
+    return this.http.post(`/api/2fa/settings`, settings, defaultHttpOptionsFromConfig(config));
   }
 
   getAvailableTwoFaProviders(config?: RequestConfig): Observable<Array<TwoFactorAuthProviderType>> {
@@ -67,13 +67,18 @@ export class TwoFactorAuthenticationService {
   }
 
   verifyAndSaveTwoFaAccountConfig(authConfig: TwoFactorAuthAccountConfig, verificationCode: number,
-                                  config?: RequestConfig): Observable<any> {
-    return this.http.post(`/api/2fa/account/config?verificationCode=${verificationCode}`, authConfig, defaultHttpOptionsFromConfig(config));
+                                  config?: RequestConfig): Observable<AccountTwoFaSettings> {
+    return this.http.post<AccountTwoFaSettings>(`/api/2fa/account/config?verificationCode=${verificationCode}`,
+      authConfig, defaultHttpOptionsFromConfig(config));
   }
 
   deleteTwoFaAccountConfig(providerType: TwoFactorAuthProviderType, config?: RequestConfig): Observable<AccountTwoFaSettings> {
     return this.http.delete<AccountTwoFaSettings>(`/api/2fa/account/config?providerType=${providerType}`,
       defaultHttpOptionsFromConfig(config));
+  }
+
+  requestTwoFaVerificationCodeSend(providerType: TwoFactorAuthProviderType, config?: RequestConfig) {
+    return this.http.post(`/api/auth/2fa/verification/send?providerType=${providerType}`, defaultHttpOptionsFromConfig(config));
   }
 
 }

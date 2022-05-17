@@ -103,20 +103,20 @@ export const twoFactorAuthProvidersData = new Map<TwoFactorAuthProviderType, Two
   [
     [
       TwoFactorAuthProviderType.TOTP, {
-        name: 'Authentication app',
-        description: 'Use apps like Google Authenticator, Authy, or Duo on your phone to authenticate. It will generate a security code for logging in.'
+        name: 'security.2fa.provider.totp',
+        description: 'security.2fa.provider.totp-description'
       }
     ],
     [
       TwoFactorAuthProviderType.SMS, {
-        name: 'SMS',
-        description: 'Use your phone to authenticate. We\'ll send you a security code via SMS message when you log in.'
+        name: 'security.2fa.provider.sms',
+        description: 'security.2fa.provider.sms-description'
       }
     ],
     [
       TwoFactorAuthProviderType.EMAIL, {
-        name: 'Email',
-        description: 'Use a security code sent to your email address to authenticate.'
+        name: 'security.2fa.provider.email',
+        description: 'security.2fa.provider.email-description'
       }
     ],
   ]

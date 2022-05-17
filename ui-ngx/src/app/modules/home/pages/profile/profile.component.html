@@ -18,12 +18,13 @@
 <div>
   <mat-card class="profile-card">
     <mat-card-title>
-      <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.xs="8px">
+      <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.xs="8px"
+           fxLayoutAlign="space-between start" fxLayoutAlign.xs="start start">
         <div fxFlex fxLayout="column">
           <span class="mat-headline" translate>profile.profile</span>
           <span class="profile-email" style='opacity: 0.7;'>{{ profile ? profile.get('email').value : '' }}</span>
         </div>
-        <div fxFlex fxLayout="column">
+        <div fxLayout="column">
           <span class="mat-subheader" translate>profile.last-login-time</span>
           <span class="profile-last-login-ts" style='opacity: 0.7;'>{{ user?.additionalInfo?.lastLoginTs | date:'yyyy-MM-dd HH:mm:ss'  }}</span>
         </div>
@@ -77,21 +78,23 @@
               {{ 'dashboard.home-dashboard-hide-toolbar' | translate }}
             </mat-checkbox>
           </section>
-          <div fxLayout="row" style="padding-bottom: 16px;">
-            <button mat-button mat-raised-button color="primary"
-                    type="button"
-                    [disabled]="(isLoading$ | async)" (click)="changePassword()">
-              {{'profile.change-password' | translate}}
-            </button>
-          </div>
-          <div fxLayout="row" fxLayoutAlign=" center" style="padding-bottom: 16px;">
-            <button mat-raised-button
-                    type="button"
-                    (click)="copyToken()">
-              <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
-              <span>{{ 'profile.copy-jwt-token' | translate }}</span>
-            </button>
-            <span class="profile-btn-subtext">{{ expirationJwtData }}</span>
+          <div fxLayout="row" fxLayoutGap="16px" style="padding-bottom: 16px; margin-top: 20px;">
+            <div>
+              <button mat-button mat-raised-button color="primary"
+                      type="button"
+                      [disabled]="(isLoading$ | async)" (click)="changePassword()">
+                {{'profile.change-password' | translate}}
+              </button>
+            </div>
+            <div>
+              <button mat-raised-button
+                      type="button"
+                      (click)="copyToken()">
+                <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+                <span>{{ 'profile.copy-jwt-token' | translate }}</span>
+              </button>
+              <div class="profile-btn-subtext">{{ expirationJwtData }}</div>
+            </div>
           </div>
           <div fxLayout="row" fxLayoutAlign="end start">
             <button mat-button mat-raised-button color="primary"
@@ -100,68 +103,6 @@
               {{ 'action.save' | translate }}
             </button>
           </div>
-        </fieldset>
-      </form>
-    </mat-card-content>
-  </mat-card>
-  <mat-card class="profile-card" *ngIf="allowTwoFactorAuth">
-    <mat-card-title>
-      <span class="mat-title">Two-factor authentication</span>
-    </mat-card-title>
-    <mat-card-content>
-      <div class="mat-body-1 description">
-        Two-Factor Authentication (2FA) can be used to help protect your account from unauthorized access by requiring you to enter a security code when you sign in.
-      </div>
-      <div class="mat-body-2">Available authentication methods:</div>
-      <form [formGroup]="twoFactorAuth">
-        <fieldset [disabled]="isLoading$ | async">
-          <mat-radio-group formControlName="useByDefault">
-            <div *ngIf="allowTOTP2faProvider" class="provider">
-              <h3 class="mat-h3">Third-Party authentication app</h3>
-              <div fxLayout="row" fxLayoutAlign="space-between start">
-                <div class="mat-body-1 description">
-                  Use an Authenticator App as your Two-Factor Authentication. When you sign in you’ll be required to use the security code provided by your Authenticator App.
-                </div>
-                <mat-slide-toggle formControlName="TOTP"
-                                  (click)="confirm2FAChange($event, twoFactorAuthProviderType.TOTP)">
-                </mat-slide-toggle>
-              </div>
-              <mat-radio-button [value]="twoFactorAuthProviderType.TOTP"
-                                *ngIf="twoFactorAuth.get('TOTP').value">
-                <span class="checkbox-label">Make this my primary Two-Factor authentication method</span>
-              </mat-radio-button>
-            </div>
-            <div *ngIf="allowSMS2faProvider" class="provider">
-              <h3 class="mat-h3">SMS authentication</h3>
-              <div fxLayout="row" fxLayoutAlign="space-between start">
-                <div class="mat-body-1 description">
-                  Use your phone as your Two-Factor Authentication when you sign in you’ll be required to use the security code we send you via SMS message.
-                </div>
-                <mat-slide-toggle formControlName="SMS"
-                                  (click)="confirm2FAChange($event, twoFactorAuthProviderType.SMS)">
-                </mat-slide-toggle>
-              </div>
-              <mat-radio-button [value]="twoFactorAuthProviderType.SMS"
-                                *ngIf="twoFactorAuth.get('SMS').value">
-                <span class="checkbox-label">Make this my primary Two-Factor authentication method</span>
-              </mat-radio-button>
-            </div>
-            <div *ngIf="allowEmail2faProvider" class="provider">
-              <h3 class="mat-h3">Email authentication</h3>
-              <div fxLayout="row" fxLayoutAlign="space-between start">
-                <div class="mat-body-1 description">
-                  Use a security code sent to your email address as your Two-Factor Authentication (2FA). The security code will be sent to the address associated with your account. You’ll need to use it in when you sign in.
-                </div>
-                <mat-slide-toggle formControlName="EMAIL"
-                                  (click)="confirm2FAChange($event, twoFactorAuthProviderType.EMAIL)">
-                </mat-slide-toggle>
-              </div>
-              <mat-radio-button [value]="twoFactorAuthProviderType.EMAIL"
-                                *ngIf="twoFactorAuth.get('EMAIL').value">
-                <span class="checkbox-label">Make this my primary Two-Factor authentication method</span>
-              </mat-radio-button>
-            </div>
-          </mat-radio-group>
         </fieldset>
       </form>
     </mat-card-content>

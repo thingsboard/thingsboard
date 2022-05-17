@@ -16,12 +16,20 @@
 @import "../../../../../scss/constants";
 
 :host {
+  .profile-container {
+    padding: 8px;
+  }
   mat-card.profile-card {
-    margin: 8px;
     @media #{$mat-gt-sm} {
-      width: 60%;
+      width: 70%;
     }
-    .mat-headline {
+    @media #{$mat-gt-md} {
+      width: 50%;
+    }
+    @media #{$mat-gt-xl} {
+      width: 45%;
+    }
+    .title-container {
       margin: 0;
     }
     .profile-email {
@@ -59,6 +67,49 @@
           margin-top: 16px;
         }
       }
+    }
+  }
+
+  .description {
+    color: rgba(0, 0, 0, 0.54);
+    letter-spacing: 0.25px;
+    margin-right: 8px;
+  }
+
+  .auth-title {
+    font-weight: 500;
+    line-height: 20px;
+    letter-spacing: 0.25px;
+    margin: 0;
+  }
+
+  .mat-divider-horizontal {
+    left: 16px;
+    right: 16px;
+    width: auto;
+  }
+
+  .provider {
+    padding: 24px 0;
+
+    .provider-title {
+      font: 400 14px / 16px Roboto, "Helvetica Neue", sans-serif;
+      letter-spacing: 0.25px;
+      margin: 0 0 8px;
+    }
+
+    .description {
+      max-width: 85%;
+    }
+
+    .checkbox-label {
+      font-size: 14px;
+      letter-spacing: 0.25px;
+      opacity: 0.87;
+    }
+
+    .mat-radio-button {
+      margin-top: 8px;
     }
   }
 }

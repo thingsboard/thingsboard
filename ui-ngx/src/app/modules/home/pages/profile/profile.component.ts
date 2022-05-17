@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { UserService } from '@core/http/user.service';
 import { AuthUser, User } from '@shared/models/user.model';
 import { Authority } from '@shared/models/authority.enum';
@@ -37,12 +37,6 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { DatePipe } from '@angular/common';
 import { ClipboardService } from 'ngx-clipboard';
-import { TwoFactorAuthenticationService } from '@core/http/two-factor-authentication.service';
-import { AccountTwoFaSettings, TwoFactorAuthProviderType } from '@shared/models/two-factor-auth.models';
-import { MatSlideToggle } from '@angular/material/slide-toggle';
-import { TotpAuthDialogComponent } from '@home/pages/profile/authentication-dialog/totp-auth-dialog.component';
-import { SMSAuthDialogComponent } from '@home/pages/profile/authentication-dialog/sms-auth-dialog.component';
-import { EmailAuthDialogComponent, } from '@home/pages/profile/authentication-dialog/email-auth-dialog.component';
 
 @Component({
   selector: 'tb-profile',
@@ -53,25 +47,8 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
 
   authorities = Authority;
   profile: FormGroup;
-  twoFactorAuth: FormGroup;
   user: User;
   languageList = env.supportedLangs;
-  allowTwoFactorAuth = false;
-  allowSMS2faProvider = false;
-  allowTOTP2faProvider = false;
-  allowEmail2faProvider = false;
-  twoFactorAuthProviderType = TwoFactorAuthProviderType;
-
-  @ViewChild('totp') totp: MatSlideToggle;
-
-  private authDialogMap = new Map<TwoFactorAuthProviderType, any>(
-[
-          [TwoFactorAuthProviderType.TOTP, TotpAuthDialogComponent],
-          [TwoFactorAuthProviderType.SMS, SMSAuthDialogComponent],
-          [TwoFactorAuthProviderType.EMAIL, EmailAuthDialogComponent]
-      ]
-  );
-
   private readonly authUser: AuthUser;
 
   get jwtToken(): string {
@@ -92,7 +69,6 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
               private userService: UserService,
               private authService: AuthService,
               private translate: TranslateService,
-              private twoFaService: TwoFactorAuthenticationService,
               public dialog: MatDialog,
               public dialogService: DialogService,
               public fb: FormBuilder,
@@ -104,9 +80,7 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
 
   ngOnInit() {
     this.buildProfileForm();
-    this.buildTwoFactorForm();
     this.userLoaded(this.route.snapshot.data.user);
-    this.twoFactorLoad(this.route.snapshot.data.providers);
   }
 
   private buildProfileForm() {
@@ -117,19 +91,6 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
       language: [''],
       homeDashboardId: [null],
       homeDashboardHideToolbar: [true]
-    });
-  }
-
-  private buildTwoFactorForm() {
-    this.twoFactorAuth = this.fb.group({
-      TOTP: [false],
-      SMS: [false],
-      EMAIL: [false],
-      useByDefault: [null]
-    });
-    this.twoFactorAuth.get('useByDefault').valueChanges.subscribe(value => {
-      this.twoFaService.updateTwoFaAccountConfig(value, true, {ignoreLoading: true})
-        .subscribe(data => this.processTwoFactorAuthConfig(data));
     });
   }
 
@@ -190,37 +151,6 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
     this.profile.get('homeDashboardHideToolbar').setValue(homeDashboardHideToolbar);
   }
 
-  private twoFactorLoad(providers: TwoFactorAuthProviderType[]) {
-    if (providers.length) {
-      this.allowTwoFactorAuth = true;
-      this.twoFaService.getAccountTwoFaSettings().subscribe(data => this.processTwoFactorAuthConfig(data));
-      providers.forEach(provider => {
-        switch (provider) {
-          case TwoFactorAuthProviderType.SMS:
-            this.allowSMS2faProvider = true;
-            break;
-          case TwoFactorAuthProviderType.TOTP:
-            this.allowTOTP2faProvider = true;
-            break;
-          case TwoFactorAuthProviderType.EMAIL:
-            this.allowEmail2faProvider = true;
-            break;
-        }
-      });
-    }
-  }
-
-  private processTwoFactorAuthConfig(setting?: AccountTwoFaSettings) {
-    if (setting) {
-      Object.values(setting.configs).forEach(config => {
-        this.twoFactorAuth.get(config.providerType).setValue(true);
-        if (config.useByDefault) {
-          this.twoFactorAuth.get('useByDefault').setValue(config.providerType, {emitEvent: false});
-        }
-      });
-    }
-  }
-
   confirmForm(): FormGroup {
     return this.profile;
   }
@@ -247,33 +177,6 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
         verticalPosition: 'bottom',
         horizontalPosition: 'right'
       }));
-    }
-  }
-
-  confirm2FAChange(event: MouseEvent, provider: TwoFactorAuthProviderType) {
-    event.stopPropagation();
-    event.preventDefault();
-    const providerName = provider === TwoFactorAuthProviderType.TOTP ? 'authenticator app' : `${provider.toLowerCase()} authentication`;
-    if (this.twoFactorAuth.get(provider).value) {
-      this.dialogService.confirm(`Are you sure you want to disable ${providerName}?`,
-        `Disabling ${providerName} will make your account less secure`).subscribe(res => {
-        if (res) {
-          this.twoFaService.deleteTwoFaAccountConfig(provider).subscribe(data => this.processTwoFactorAuthConfig(data));
-        }
-      });
-    } else {
-      this.dialog.open(this.authDialogMap.get(provider), {
-        disableClose: true,
-        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-        data: {
-          email: this.user.email
-        }
-      }).afterClosed().subscribe(res => {
-        if (res) {
-          this.twoFactorAuth.get(provider).setValue(res);
-          this.twoFactorAuth.get('useByDefault').setValue(provider, {emitEvent: false});
-        }
-      });
     }
   }
 }

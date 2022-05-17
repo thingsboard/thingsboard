@@ -14,22 +14,16 @@
 /// limitations under the License.
 ///
 
-import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ProfileComponent } from './profile.component';
-import { SharedModule } from '@shared/shared.module';
-import { ProfileRoutingModule } from './profile-routing.module';
-import { ChangePasswordDialogComponent } from '@modules/home/pages/profile/change-password-dialog.component';
+import { Type } from '@angular/core';
+import { TwoFactorAuthProviderType } from '@shared/models/two-factor-auth.models';
+import { TotpAuthDialogComponent } from './totp-auth-dialog.component';
+import { SMSAuthDialogComponent } from './sms-auth-dialog.component';
+import { EmailAuthDialogComponent } from './email-auth-dialog.component';
 
-@NgModule({
-  declarations: [
-    ProfileComponent,
-    ChangePasswordDialogComponent
-  ],
-  imports: [
-    CommonModule,
-    SharedModule,
-    ProfileRoutingModule
+export const authenticationDialogMap = new Map<TwoFactorAuthProviderType, Type<any>>(
+  [
+    [TwoFactorAuthProviderType.TOTP, TotpAuthDialogComponent],
+    [TwoFactorAuthProviderType.SMS, SMSAuthDialogComponent],
+    [TwoFactorAuthProviderType.EMAIL, EmailAuthDialogComponent]
   ]
-})
-export class ProfileModule { }
+);

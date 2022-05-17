@@ -28,7 +28,7 @@ import { MatStepper } from '@angular/material/stepper';
 @Component({
   selector: 'tb-totp-auth-dialog',
   templateUrl: './totp-auth-dialog.component.html',
-  styleUrls: ['./totp-auth-dialog.component.scss']
+  styleUrls: ['./authentication-dialog.component.scss']
 })
 export class TotpAuthDialogComponent extends DialogComponent<TotpAuthDialogComponent> {
 
@@ -67,10 +67,17 @@ export class TotpAuthDialogComponent extends DialogComponent<TotpAuthDialogCompo
   }
 
   onSaveConfig() {
-    this.twoFaService.verifyAndSaveTwoFaAccountConfig(this.authAccountConfig,
-                                                      this.totpConfigForm.get('verificationCode').value).subscribe((res) => {
-      this.stepper.next();
-    });
+    if (this.totpConfigForm.valid) {
+      this.twoFaService.verifyAndSaveTwoFaAccountConfig(this.authAccountConfig,
+        this.totpConfigForm.get('verificationCode').value).subscribe(() => {
+          this.stepper.next();
+        });
+    } else {
+      Object.keys(this.totpConfigForm.controls).forEach(field => {
+        const control = this.totpConfigForm.get(field);
+        control.markAsTouched({onlySelf: true});
+      });
+    }
   }
 
   closeDialog() {
