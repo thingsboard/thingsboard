@@ -27,5 +27,5 @@ public interface TbAlarmService {
 
     void clear(Alarm alarm, SecurityUser user) throws ThingsboardException;
 
-    Boolean deleteAlarm(Alarm alarm, SecurityUser user) throws ThingsboardException;
+    Boolean delete(Alarm alarm, SecurityUser user) throws ThingsboardException;
 }

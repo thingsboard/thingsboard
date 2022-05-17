@@ -147,7 +147,7 @@ public class AlarmController extends BaseController {
         try {
             AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
             Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
-            return tbAlarmService.deleteAlarm(alarm, getCurrentUser());
+            return tbAlarmService.delete(alarm, getCurrentUser());
         } catch (Exception e) {
             throw handleException(e);
         }

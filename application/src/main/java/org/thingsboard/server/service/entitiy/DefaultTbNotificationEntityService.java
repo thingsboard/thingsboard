@@ -67,14 +67,21 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
     }
 
     @Override
-    public <E extends HasName, I extends EntityId> void notifyDeleteEntity(TenantId tenantId, I entityId, E entity, EntityId originatorId,
+    public <E extends HasName, I extends EntityId> void notifyDeleteEntity(TenantId tenantId, I entityId, E entity,
                                                                            CustomerId customerId, ActionType actionType,
                                                                            List<EdgeId> relatedEdgeIds,
-                                                                           SecurityUser user,
-                                                                           String body, Object... additionalInfo) {
-        EntityId entityIdForLogEntityAction = originatorId != null ? originatorId : entityId;
-        logEntityAction(tenantId, entityIdForLogEntityAction, entity, customerId, actionType, user, additionalInfo);
-        sendDeleteNotificationMsg(tenantId, entityId, entity, relatedEdgeIds, body);
+                                                                           SecurityUser user, Object... additionalInfo) {
+        logEntityAction(tenantId, entityId, entity, customerId, actionType, user, additionalInfo);
+        sendDeleteNotificationMsg(tenantId, entityId, entity, relatedEdgeIds);
+    }
+
+    public <E extends HasName, I extends EntityId> void notifyDeleteEntityAlarm(TenantId tenantId, I entityId, E entity, EntityId originatorId,
+                                                                                   CustomerId customerId, ActionType actionType,
+                                                                                   List<EdgeId> relatedEdgeIds,
+                                                                                   SecurityUser user,
+                                                                                   String body, Object... additionalInfo) {
+        logEntityAction(tenantId, originatorId, entity, customerId, actionType, user, additionalInfo);
+        sendAlarmDeleteNotificationMsg(tenantId, entityId, entity, relatedEdgeIds, body);
     }
 
     @Override
@@ -127,7 +134,7 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
         gatewayNotificationsService.onDeviceDeleted(device);
         tbClusterService.onDeviceDeleted(device, null);
 
-        notifyDeleteEntity(tenantId, deviceId, device, customerId, null, ActionType.DELETED, relatedEdgeIds, user,null, additionalInfo);
+        notifyDeleteEntity(tenantId, deviceId, device, customerId, ActionType.DELETED, relatedEdgeIds, user,null, additionalInfo);
     }
 
     @Override
@@ -221,10 +228,19 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
         }
     }
 
-    protected <E extends HasName, I extends EntityId> void sendDeleteNotificationMsg(TenantId tenantId, I entityId, E entity,
-                                                                                     List<EdgeId> edgeIds, String body) {
+    protected <E extends HasName, I extends EntityId> void sendAlarmDeleteNotificationMsg(TenantId tenantId, I entityId, E entity,
+                                                                                          List<EdgeId> edgeIds, String body) {
         try {
             sendDeleteNotificationMsg(tenantId, entityId, edgeIds, body);
+        } catch (Exception e) {
+            log.warn("Failed to push delete " + entity.getClass().getName() + " msg to core: {}", entity, e);
+        }
+    }
+
+    protected <E extends HasName, I extends EntityId> void sendDeleteNotificationMsg(TenantId tenantId, I entityId, E entity,
+                                                                                     List<EdgeId> edgeIds) {
+        try {
+            sendDeleteNotificationMsg(tenantId, entityId, edgeIds, null);
         } catch (Exception e) {
             log.warn("Failed to push delete " + entity.getClass().getName() + " msg to core: {}", entity, e);
         }

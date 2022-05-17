@@ -36,7 +36,6 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 @Service
 @TbCoreComponent
@@ -65,7 +64,7 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
         try {
             List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, dashboardId);
             dashboardService.deleteDashboard(tenantId, dashboardId);
-            notificationEntityService.notifyDeleteEntity(tenantId, dashboardId, dashboard, null, user.getCustomerId(),
+            notificationEntityService.notifyDeleteEntity(tenantId, dashboardId, dashboard, user.getCustomerId(),
                     ActionType.DELETED, relatedEdgeIds, user, null);
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.DASHBOARD), null, null,
@@ -125,17 +124,10 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
     }
 
     @Override
-    public Dashboard updateDashboardCustomers(Dashboard dashboard, String[] strCustomerIds, SecurityUser user) throws ThingsboardException {
+    public Dashboard updateDashboardCustomers(Dashboard dashboard, Set<CustomerId> customerIds, SecurityUser user) throws ThingsboardException {
         ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER;
         TenantId tenantId = user.getTenantId();
         try {
-            Set<CustomerId> customerIds = new HashSet<>();
-            if (strCustomerIds != null) {
-                for (String strCustomerId : strCustomerIds) {
-                    customerIds.add(new CustomerId(UUID.fromString(strCustomerId)));
-                }
-            }
-
             Set<CustomerId> addedCustomerIds = new HashSet<>();
             Set<CustomerId> removedCustomerIds = new HashSet<>();
             for (CustomerId customerId : customerIds) {
@@ -179,20 +171,10 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
     }
 
     @Override
-    public Dashboard addDashboardCustomers(Dashboard dashboard, String[] strCustomerIds, SecurityUser user) throws ThingsboardException {
+    public Dashboard addDashboardCustomers(Dashboard dashboard, Set<CustomerId> customerIds, SecurityUser user) throws ThingsboardException {
         ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER;
         TenantId tenantId = user.getTenantId();
         try {
-            Set<CustomerId> customerIds = new HashSet<>();
-            if (strCustomerIds != null) {
-                for (String strCustomerId : strCustomerIds) {
-                    CustomerId customerId = new CustomerId(UUID.fromString(strCustomerId));
-                    if (!dashboard.isAssignedToCustomer(customerId)) {
-                        customerIds.add(customerId);
-                    }
-                }
-            }
-
             if (customerIds.isEmpty()) {
                 return dashboard;
             } else {
@@ -213,21 +195,11 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
     }
 
     @Override
-    public Dashboard removeDashboardCustomers(Dashboard dashboard, String[] strCustomerIds, SecurityUser user) throws ThingsboardException {
+    public Dashboard removeDashboardCustomers(Dashboard dashboard, Set<CustomerId> customerIds, SecurityUser user) throws ThingsboardException {
         ActionType actionType = ActionType.UNASSIGNED_FROM_CUSTOMER;
         TenantId tenantId = user.getTenantId();
         try {
-            Set<CustomerId> customerIds = new HashSet<>();
-            if (strCustomerIds != null) {
-                for (String strCustomerId : strCustomerIds) {
-                    CustomerId customerId = new CustomerId(UUID.fromString(strCustomerId));
-                    if (dashboard.isAssignedToCustomer(customerId)) {
-                        customerIds.add(customerId);
-                    }
-                }
-            }
-
-            if (customerIds.isEmpty()) {
+             if (customerIds.isEmpty()) {
                 return dashboard;
             } else {
                 Dashboard savedDashboard = null;

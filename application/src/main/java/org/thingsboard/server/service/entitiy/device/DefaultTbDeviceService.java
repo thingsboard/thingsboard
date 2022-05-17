@@ -80,7 +80,7 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
     }
 
     @Override
-    public ListenableFuture<Void> deleteDevice(Device device, SecurityUser user) throws ThingsboardException {
+    public ListenableFuture<Void> delete(Device device, SecurityUser user) throws ThingsboardException {
         TenantId tenantId = device.getTenantId();
         DeviceId deviceId = device.getId();
         try {

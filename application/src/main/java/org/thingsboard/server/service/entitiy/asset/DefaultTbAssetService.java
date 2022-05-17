@@ -41,7 +41,7 @@ import java.util.List;
 public class DefaultTbAssetService extends AbstractTbEntityService implements TbAssetService {
 
     @Override
-    public Asset saveAsset(Asset asset, SecurityUser user) throws ThingsboardException {
+    public Asset save(Asset asset, SecurityUser user) throws ThingsboardException {
         ActionType actionType = asset.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = asset.getTenantId();
         try {
@@ -55,13 +55,13 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public ListenableFuture<Void> deleteAsset(Asset asset, SecurityUser user) throws ThingsboardException {
+    public ListenableFuture<Void> delete(Asset asset, SecurityUser user) throws ThingsboardException {
         TenantId tenantId = asset.getTenantId();
         AssetId assetId = asset.getId();
         try {
             List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, assetId);
             assetService.deleteAsset(tenantId, assetId);
-            notificationEntityService.notifyDeleteEntity(tenantId, assetId, asset, null, asset.getCustomerId(), ActionType.DELETED,
+            notificationEntityService.notifyDeleteEntity(tenantId, assetId, asset, asset.getCustomerId(), ActionType.DELETED,
                     relatedEdgeIds, user, null, asset.toString());
 
             return removeAlarmsByEntityId(tenantId, assetId);

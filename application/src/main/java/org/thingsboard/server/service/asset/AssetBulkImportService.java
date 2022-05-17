@@ -66,7 +66,7 @@ public class AssetBulkImportService extends AbstractBulkImportService<Asset> {
     @Override
     @SneakyThrows
     protected Asset saveEntity(SecurityUser user, Asset entity, Map<BulkImportColumnType, String> fields) {
-        return tbAssetService.saveAsset(entity, user);
+        return tbAssetService.save(entity, user);
     }
 
     @Override

@@ -61,7 +61,7 @@ public class DefaultTbCustomerService extends AbstractTbEntityService implements
         try {
             List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, customerId);
             customerService.deleteCustomer(tenantId, customerId);
-            notificationEntityService.notifyDeleteEntity(tenantId, customerId, customer, null, customerId,
+            notificationEntityService.notifyDeleteEntity(tenantId, customerId, customer, customerId,
                     ActionType.DELETED, relatedEdgeIds, user, null);
             tbClusterService.broadcastEntityStateChangeEvent(tenantId, customerId, ComponentLifecycleEvent.DELETED);
         } catch (Exception e) {

@@ -26,9 +26,9 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface TbAssetService {
 
-    Asset saveAsset(Asset asset, SecurityUser user) throws ThingsboardException;
+    Asset save(Asset asset, SecurityUser user) throws ThingsboardException;
 
-    ListenableFuture<Void> deleteAsset (Asset asset, SecurityUser user) throws ThingsboardException;
+    ListenableFuture<Void> delete(Asset asset, SecurityUser user) throws ThingsboardException;
 
     Asset assignAssetToCustomer(TenantId tenantId, AssetId assetId, Customer customer, SecurityUser user) throws ThingsboardException;
 

@@ -77,10 +77,10 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public Boolean deleteAlarm(Alarm alarm, SecurityUser user) throws ThingsboardException {
+    public Boolean delete(Alarm alarm, SecurityUser user) throws ThingsboardException {
         try {
             List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(user.getTenantId(), alarm.getOriginator());
-            notificationEntityService.notifyDeleteEntity(user.getTenantId(), alarm.getId(), alarm, alarm.getOriginator(), user.getCustomerId(),
+            notificationEntityService.notifyDeleteEntityAlarm(user.getTenantId(), alarm.getId(), alarm, alarm.getOriginator(), user.getCustomerId(),
                     ActionType.DELETED, relatedEdgeIds, user, JacksonUtil.OBJECT_MAPPER.writeValueAsString(alarm));
             return alarmService.deleteAlarm(user.getTenantId(), alarm.getId()).isSuccessful();
         } catch (Exception e) {

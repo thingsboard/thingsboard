@@ -149,7 +149,7 @@ public class AssetController extends BaseController {
         }
         asset.setTenantId(getCurrentUser().getTenantId());
         checkEntity(asset.getId(), asset, Resource.ASSET);
-        return tbAssetService.saveAsset(asset, getCurrentUser());
+        return tbAssetService.save(asset, getCurrentUser());
     }
 
     @ApiOperation(value = "Delete asset (deleteAsset)",
@@ -162,7 +162,7 @@ public class AssetController extends BaseController {
         try {
             AssetId assetId = new AssetId(toUUID(strAssetId));
             Asset asset = checkAssetId(assetId, Operation.DELETE);
-            tbAssetService.deleteAsset(asset, getCurrentUser()).get();
+            tbAssetService.delete(asset, getCurrentUser()).get();
         } catch (Exception e) {
             throw handleException(e);
         }

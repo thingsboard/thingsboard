@@ -39,6 +39,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
+import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HomeDashboard;
 import org.thingsboard.server.common.data.HomeDashboardInfo;
 import org.thingsboard.server.common.data.Tenant;
@@ -57,7 +58,10 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID;
@@ -258,7 +262,8 @@ public class DashboardController extends BaseController {
         checkParameter(DASHBOARD_ID, strDashboardId);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
         Dashboard dashboard = checkDashboardId(dashboardId, Operation.ASSIGN_TO_CUSTOMER);
-        return tbDashboardService.updateDashboardCustomers(dashboard, strCustomerIds, getCurrentUser());
+        Set<CustomerId> customerIds = customerIdFromStr(strCustomerIds, dashboard);
+        return tbDashboardService.updateDashboardCustomers(dashboard, customerIds, getCurrentUser());
     }
 
     @ApiOperation(value = "Adds the Dashboard Customers (addDashboardCustomers)",
@@ -277,7 +282,8 @@ public class DashboardController extends BaseController {
         checkParameter(DASHBOARD_ID, strDashboardId);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
         Dashboard dashboard = checkDashboardId(dashboardId, Operation.ASSIGN_TO_CUSTOMER);
-        return tbDashboardService.addDashboardCustomers(dashboard, strCustomerIds, getCurrentUser());
+        Set<CustomerId> customerIds = customerIdFromStr(strCustomerIds, dashboard);
+        return tbDashboardService.addDashboardCustomers(dashboard, customerIds, getCurrentUser());
     }
 
     @ApiOperation(value = "Remove the Dashboard Customers (removeDashboardCustomers)",
@@ -296,8 +302,8 @@ public class DashboardController extends BaseController {
         checkParameter(DASHBOARD_ID, strDashboardId);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
         Dashboard dashboard = checkDashboardId(dashboardId, Operation.UNASSIGN_FROM_CUSTOMER);
-        return tbDashboardService.removeDashboardCustomers(dashboard, strCustomerIds, getCurrentUser());
-
+        Set<CustomerId> customerIds = customerIdFromStr(strCustomerIds, dashboard);
+        return tbDashboardService.removeDashboardCustomers(dashboard, customerIds, getCurrentUser());
     }
 
     @ApiOperation(value = "Assign the Dashboard to Public Customer (assignDashboardToPublicCustomer)",
@@ -697,5 +703,18 @@ public class DashboardController extends BaseController {
         } catch (Exception e) {
             throw handleException(e);
         }
+    }
+
+    private  Set<CustomerId> customerIdFromStr(String [] strCustomerIds, Dashboard dashboard) {
+        Set<CustomerId> customerIds = new HashSet<>();
+        if (strCustomerIds != null) {
+            for (String strCustomerId : strCustomerIds) {
+                CustomerId customerId = new CustomerId(UUID.fromString(strCustomerId));
+                if (dashboard.isAssignedToCustomer(customerId)) {
+                    customerIds.add(customerId);
+                }
+            }
+        }
+        return customerIds;
     }
 }

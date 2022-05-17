@@ -19,10 +19,12 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.service.entitiy.SimpleTbEntityService;
 import org.thingsboard.server.service.security.model.SecurityUser;
+
+import java.util.Set;
 
 public interface  TbDashboardService extends SimpleTbEntityService<Dashboard> {
 
@@ -32,11 +34,11 @@ public interface  TbDashboardService extends SimpleTbEntityService<Dashboard> {
 
     Dashboard unassignDashboardFromPublicCustomer(Dashboard dashboard, SecurityUser user) throws ThingsboardException;
 
-    Dashboard updateDashboardCustomers(Dashboard dashboard, String[] strCustomerIds, SecurityUser user) throws ThingsboardException;
+    Dashboard updateDashboardCustomers(Dashboard dashboard, Set<CustomerId> customerIds, SecurityUser user) throws ThingsboardException;
 
-    Dashboard addDashboardCustomers(Dashboard dashboard,  String[] strCustomerIds, SecurityUser user) throws ThingsboardException;
+    Dashboard addDashboardCustomers(Dashboard dashboard, Set<CustomerId> customerIds, SecurityUser user) throws ThingsboardException;
 
-    Dashboard removeDashboardCustomers(Dashboard dashboard,  String[] strCustomerIds, SecurityUser user) throws ThingsboardException;
+    Dashboard removeDashboardCustomers(Dashboard dashboard, Set<CustomerId> customerIds, SecurityUser user) throws ThingsboardException;
 
     Dashboard asignDashboardToEdge(DashboardId dashboardId, Edge edge, SecurityUser user) throws ThingsboardException;
 
