@@ -17,9 +17,9 @@ package org.thingsboard.server.service.sync.vc.data.request.create;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -27,7 +27,7 @@ public class EntityTypeVersionCreateConfig extends VersionCreateConfig {
 
     //optional
     private SyncStrategy syncStrategy;
-    private List<EntityId> entityIds;
+    private List<UUID> entityIds;
     private boolean allEntities;
 
 }

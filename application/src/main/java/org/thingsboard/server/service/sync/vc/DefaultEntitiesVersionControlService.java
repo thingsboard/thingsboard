@@ -22,7 +22,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.api.errors.RefAlreadyExistsException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -63,7 +66,6 @@ import org.thingsboard.server.service.sync.vc.data.EntityVersion;
 import org.thingsboard.server.service.sync.vc.data.VersionCreationResult;
 import org.thingsboard.server.service.sync.vc.data.VersionLoadResult;
 import org.thingsboard.server.service.sync.vc.data.VersionedEntityInfo;
-import org.thingsboard.server.service.sync.vc.data.request.create.EntityListVersionCreateRequest;
 import org.thingsboard.server.service.sync.vc.data.request.create.ComplexVersionCreateRequest;
 import org.thingsboard.server.service.sync.vc.data.request.create.SingleEntityVersionCreateRequest;
 import org.thingsboard.server.service.sync.vc.data.request.create.SyncStrategy;
@@ -88,6 +90,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -149,10 +152,21 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
         repository.fetch();
         if (repository.listBranches().contains(request.getBranch())) {
-            repository.checkout(request.getBranch());
+            repository.checkout("origin/" + request.getBranch(), false);
+            try {
+                repository.checkout(request.getBranch(), true);
+            } catch (RefAlreadyExistsException e) {
+                repository.checkout(request.getBranch(), false);
+            }
             repository.merge(request.getBranch());
         } else { // TODO [viacheslav]: rollback orphan branch on failure
-            repository.createAndCheckoutOrphanBranch(request.getBranch()); // FIXME [viacheslav]: Checkout returned unexpected result NO_CHANGE for master branch
+            try {
+                repository.createAndCheckoutOrphanBranch(request.getBranch()); // FIXME [viacheslav]: Checkout returned unexpected result NO_CHANGE for master branch
+            } catch (JGitInternalException e) {
+                if (!e.getMessage().contains("NO_CHANGE")) {
+                    throw e;
+                }
+            }
         }
 
         switch (request.getType()) {
@@ -161,28 +175,10 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                 saveEntityData(user, repository, versionCreateRequest.getEntityId(), versionCreateRequest.getConfig());
                 break;
             }
-            case ENTITY_LIST: {
-                EntityListVersionCreateRequest versionCreateRequest = (EntityListVersionCreateRequest) request;
-                if (versionCreateRequest.getConfig().getSyncStrategy() == SyncStrategy.OVERWRITE) {
-                    versionCreateRequest.getEntitiesIds().stream()
-                            .map(EntityId::getEntityType).distinct()
-                            .forEach(entityType -> {
-                                try {
-                                    FileUtils.deleteDirectory(Path.of(repository.getDirectory(), getRelativePath(entityType, null)).toFile());
-                                } catch (IOException e) {
-                                    throw new RuntimeException(e);
-                                }
-                            });
-                }
-                for (EntityId entityId : versionCreateRequest.getEntitiesIds()) {
-                    saveEntityData(user, repository, entityId, versionCreateRequest.getConfig());
-                }
-                break;
-            }
             case COMPLEX: {
                 ComplexVersionCreateRequest versionCreateRequest = (ComplexVersionCreateRequest) request;
                 versionCreateRequest.getEntityTypes().forEach((entityType, config) -> {
-                    if (config.getSyncStrategy() == SyncStrategy.OVERWRITE) {
+                    if (ObjectUtils.defaultIfNull(config.getSyncStrategy(), versionCreateRequest.getSyncStrategy()) == SyncStrategy.OVERWRITE) {
                         try {
                             FileUtils.deleteDirectory(Path.of(repository.getDirectory(), getRelativePath(entityType, null)).toFile());
                         } catch (IOException e) {
@@ -190,27 +186,38 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                         }
                     }
 
-                    EntityTypeFilter entityTypeFilter = new EntityTypeFilter();
-                    entityTypeFilter.setEntityType(entityType);
-                    EntityDataPageLink entityDataPageLink = new EntityDataPageLink();
-                    entityDataPageLink.setPage(-1);
-                    entityDataPageLink.setPageSize(-1);
-                    EntityKey sortProperty = new EntityKey(EntityKeyType.ENTITY_FIELD, CREATED_TIME);
-                    entityDataPageLink.setSortOrder(new EntityDataSortOrder(sortProperty, EntityDataSortOrder.Direction.DESC));
-                    EntityDataQuery query = new EntityDataQuery(entityTypeFilter, entityDataPageLink, List.of(sortProperty), Collections.emptyList(), Collections.emptyList());
+                    if (config.isAllEntities()) {
+                        EntityTypeFilter entityTypeFilter = new EntityTypeFilter();
+                        entityTypeFilter.setEntityType(entityType);
+                        EntityDataPageLink entityDataPageLink = new EntityDataPageLink();
+                        entityDataPageLink.setPage(-1);
+                        entityDataPageLink.setPageSize(-1);
+                        EntityKey sortProperty = new EntityKey(EntityKeyType.ENTITY_FIELD, CREATED_TIME);
+                        entityDataPageLink.setSortOrder(new EntityDataSortOrder(sortProperty, EntityDataSortOrder.Direction.DESC));
+                        EntityDataQuery query = new EntityDataQuery(entityTypeFilter, entityDataPageLink, List.of(sortProperty), Collections.emptyList(), Collections.emptyList());
 
-                    DaoUtil.processInBatches(pageLink -> {
-                        entityDataPageLink.setPage(pageLink.getPage());
-                        entityDataPageLink.setPageSize(pageLink.getPageSize());
-                        return entityService.findEntityDataByQuery(user.getTenantId(), new CustomerId(EntityId.NULL_UUID), query);
-                    }, 100, data -> {
-                        EntityId entityId = data.getEntityId();
-                        try {
-                            saveEntityData(user, repository, entityId, config);
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
+                        DaoUtil.processInBatches(pageLink -> {
+                            entityDataPageLink.setPage(pageLink.getPage());
+                            entityDataPageLink.setPageSize(pageLink.getPageSize());
+                            return entityService.findEntityDataByQuery(user.getTenantId(), new CustomerId(EntityId.NULL_UUID), query);
+                        }, 100, data -> {
+                            EntityId entityId = data.getEntityId();
+                            try {
+                                saveEntityData(user, repository, entityId, config);
+                            } catch (Exception e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+                    } else {
+                        for (UUID entityId : config.getEntityIds()) {
+                            try {
+                                saveEntityData(user, repository, EntityIdFactory.getByTypeAndUuid(entityType, entityId), config);
+                            } catch (Exception e) {
+                                throw new RuntimeException(e);
+                            }
                         }
-                    });
+                    }
+
                 });
                 break;
             }
@@ -427,7 +434,9 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     private void initRepository(TenantId tenantId, EntitiesVersionControlSettings settings) throws Exception {
         Path repositoryDirectory = Path.of(repositoriesFolder, tenantId.getId().toString());
         GitRepository repository;
-        FileUtils.forceDelete(repositoryDirectory.toFile());
+        if (Files.exists(repositoryDirectory)) {
+            FileUtils.forceDelete(repositoryDirectory.toFile());
+        }
 
         Files.createDirectories(repositoryDirectory);
         repository = GitRepository.clone(settings.getRepositoryUri(), settings.getUsername(), settings.getPassword(), repositoryDirectory.toFile());
@@ -450,7 +459,6 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                 new BaseAttributeKvEntry(System.currentTimeMillis(), new JsonDataEntry(SETTINGS_KEY, JacksonUtil.toString(settings)))
         )).get();
 
-        clearRepository(tenantId);
         initRepository(tenantId, settings);
     }
 

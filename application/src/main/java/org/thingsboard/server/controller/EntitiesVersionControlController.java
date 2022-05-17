@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.controller;
 
-import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -72,43 +71,27 @@ public class EntitiesVersionControlController extends BaseController {
             "    \"saveRelations\": true\n" +
             "  }\n" +
             "}\n```" + NEW_LINE +
-            "ENTITY_LIST:" + NEW_LINE +
+            "COMPLEX:" + NEW_LINE +
             "```\n{\n" +
-            "  \"type\": \"ENTITY_LIST\",\n" +
+            "  \"type\": \"COMPLEX\",\n" +
             "\n" +
-            "  \"versionName\": \"Version 1.0\",\n" +
-            "  \"branch\": \"dev\",\n" +
+            "  \"versionName\": \"Devices and profiles: release 2\",\n" +
+            "  \"branch\": \"master\",\n" +
             "\n" +
-            "  \"entitiesIds\": [\n" +
-            "    {\n" +
-            "      \"entityType\": \"DEVICE\",\n" +
-            "      \"id\": \"b79448e0-d4f4-11ec-847b-0f432358ab48\"\n" +
-            "    },\n" +
-            "    {\n" +
-            "      \"entityType\": \"DEVICE_PROFILE\",\n" +
-            "      \"id\": \"b7944123-d4f4-11ec-847b-0f432358ab48\"\n" +
-            "    }\n" +
-            "  ],\n" +
-            "  \"config\": {\n" +
-            "    \"saveRelations\": true,\n" +
-            "    \"syncStrategy\": \"MERGE\"\n" +
-            "  }\n" +
-            "}\n```" + NEW_LINE +
-            "ENTITY_TYPE:" + NEW_LINE +
-            "```\n{\n" +
-            "  \"type\": \"ENTITY_TYPE\",\n" +
-            "\n" +
-            "  \"versionName\": \"Version 1.0\",\n" +
-            "  \"branch\": \"dev\",\n" +
-            "\n" +
+            "  \"syncStrategy\": \"OVERWRITE\",\n" +
             "  \"entityTypes\": {\n" +
             "    \"DEVICE\": {\n" +
-            "      \"saveRelations\": true,\n" +
-            "      \"syncStrategy\": \"MERGE\"\n" +
+            "      \"syncStrategy\": null,\n" +
+            "      \"allEntities\": true,\n" +
+            "      \"saveRelations\": true\n" +
             "    },\n" +
             "    \"DEVICE_PROFILE\": {\n" +
-            "      \"saveRelations\": true,\n" +
-            "      \"syncStrategy\": \"OVERWRITE\"\n" +
+            "      \"syncStrategy\": \"MERGE\",\n" +
+            "      \"allEntities\": false,\n" +
+            "      \"entityIds\": [\n" +
+            "        \"b79448e0-d4f4-11ec-847b-0f432358ab48\"\n" +
+            "      ],\n" +
+            "      \"saveRelations\": true\n" +
             "    }\n" +
             "  }\n" +
             "}\n```")
