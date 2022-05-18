@@ -44,7 +44,10 @@ import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityFilterType;
+import org.thingsboard.server.common.data.query.EntityKey;
+import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.RelationsQueryFilter;
+import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
@@ -57,6 +60,10 @@ import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -123,6 +130,27 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
         validateEntityDataQuery(query);
         return this.entityQueryDao.findEntityDataByQuery(tenantId, customerId, query);
+    }
+
+    @Override
+    public EntityData findEntityByTenantIdAndId(TenantId tenantId, EntityId entityId, List<String> entityFields) {
+        SingleEntityFilter entityFilter = new SingleEntityFilter();
+        entityFilter.setSingleEntity(entityId);
+
+        EntityDataPageLink pageLink = new EntityDataPageLink();
+        pageLink.setPage(0);
+        pageLink.setPageSize(1);
+        EntityDataQuery query = new EntityDataQuery(entityFilter, pageLink, entityFields.stream()
+                .map(field -> new EntityKey(EntityKeyType.ENTITY_FIELD, field))
+                .collect(Collectors.toList()), Collections.emptyList(), Collections.emptyList());
+
+        return entityQueryDao.findEntityDataByQuery(tenantId, new CustomerId(EntityId.NULL_UUID), query).getData().stream()
+                .findFirst().orElse(null);
+    }
+
+    @Override
+    public boolean existsByTenantIdAndId(TenantId tenantId, EntityId entityId) {
+        return findEntityByTenantIdAndId(tenantId, entityId, Collections.emptyList()) != null;
     }
 
     //TODO: 3.1 Remove this from project.
