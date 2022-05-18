@@ -32,13 +32,13 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
-import org.thingsboard.server.service.sync.vc.data.EntitiesVersionControlSettings;
-import org.thingsboard.server.service.sync.vc.data.EntityVersion;
-import org.thingsboard.server.service.sync.vc.data.VersionCreationResult;
-import org.thingsboard.server.service.sync.vc.data.VersionLoadResult;
-import org.thingsboard.server.service.sync.vc.data.VersionedEntityInfo;
-import org.thingsboard.server.service.sync.vc.data.request.create.VersionCreateRequest;
-import org.thingsboard.server.service.sync.vc.data.request.load.VersionLoadRequest;
+import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
+import org.thingsboard.server.common.data.sync.vc.EntityVersion;
+import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
+import org.thingsboard.server.common.data.sync.vc.VersionLoadResult;
+import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
+import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
+import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadRequest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -172,7 +172,7 @@ public class EntitiesVersionControlController extends BaseController {
                                                            @PathVariable EntityType entityType,
                                                            @PathVariable String versionId) throws ThingsboardException {
         try {
-            return versionControlService.listEntitiesAtVersion(getTenantId(), entityType, branch, versionId);
+            return versionControlService.listEntitiesAtVersion(getTenantId(), branch, versionId, entityType);
         } catch (Exception e) {
             throw handleException(e);
         }
