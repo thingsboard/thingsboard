@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
@@ -28,13 +29,11 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.dao.ConcurrencyFailureException;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationInfo;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
@@ -50,12 +49,16 @@ import org.thingsboard.server.dao.service.ConstraintValidator;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.CacheConstants.RELATIONS_CACHE;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -502,7 +505,7 @@ public class BaseRelationService implements RelationService {
         int maxLvl = params.getMaxLevel() > 0 ? params.getMaxLevel() : Integer.MAX_VALUE;
 
         try {
-            ListenableFuture<Set<EntityRelation>> relationSet = findRelationsRecursively(tenantId, params.getEntityId(), params.getDirection(), params.getRelationTypeGroup(), maxLvl, params.isFetchLastLevelOnly(), new ConcurrentHashMap<>());
+            ListenableFuture<Set<EntityRelation>> relationSet = findRelationsRecursively(tenantId, params.getEntityId(), null, params.getDirection(), params.getRelationTypeGroup(), maxLvl, params.isFetchLastLevelOnly(), new ConcurrentHashMap<>());
             return Futures.transform(relationSet, input -> {
                 List<EntityRelation> relations = new ArrayList<>();
                 if (filters == null || filters.isEmpty()) {
@@ -642,18 +645,115 @@ public class BaseRelationService implements RelationService {
         }
     }
 
-    private ListenableFuture<Set<EntityRelation>> findRelationsRecursively(final TenantId tenantId, final EntityId rootId, final EntitySearchDirection direction,
-                                                                           RelationTypeGroup relationTypeGroup, int lvl, boolean fetchLastLevelOnly,
-                                                                           final ConcurrentHashMap<EntityId, Boolean> uniqueMap) throws Exception {
+    @SneakyThrows
+    private ListenableFuture<Set<EntityRelation>> findRelationsRecursively(
+            final TenantId tenantId,
+            final EntityId rootId,
+            final EntityRelation rootRelation,
+            final EntitySearchDirection direction,
+            RelationTypeGroup relationTypeGroup,
+            int lvl,
+            boolean fetchLastLevelOnly,
+            final ConcurrentHashMap<EntityId, Boolean> uniqueMap
+    ) {
+
         if (lvl == 0) {
             return Futures.immediateFuture(Collections.emptySet());
         }
-        lvl--;
-        //TODO: try to remove this blocking operation
-        Set<EntityRelation> children = new HashSet<>(findRelations(tenantId, rootId, direction, relationTypeGroup).get());
-        Set<EntityId> childrenIds = new HashSet<>();
-        for (EntityRelation childRelation : children) {
-            log.trace("Found Relation: {}", childRelation);
+        if (lvl != Integer.MAX_VALUE) {
+            lvl--;
+        }
+
+
+        Set<EntityRelation> children = new HashSet<>(
+                findRelations(tenantId, rootId, direction, relationTypeGroup)
+                        .get() //TODO: try to remove this blocking operation
+        );
+
+        var childrenIdsAndRootRelations =
+                getChildrenIdsAndTheirRootRelations(children, direction, uniqueMap);
+
+        var relationsPairs = getRelationsOfChildren(
+                tenantId, direction, relationTypeGroup,
+                lvl, fetchLastLevelOnly,
+                uniqueMap, childrenIdsAndRootRelations
+        ).get(); //TODO: try to remove this blocking operation
+
+
+        var relations = relationsPairs.stream()
+                .collect(Collectors.toMap(
+                        Pair::getFirst,
+                        Pair::getSecond
+                ));
+
+        children = checkFetching(lvl, fetchLastLevelOnly, children, rootRelation, relations);
+
+        relations.values()
+                .forEach(children::addAll);
+
+        return Futures.immediateFuture(children);
+    }
+
+    private Set<EntityRelation> checkFetching(
+            int lvl, boolean fetchLastLevelOnly,
+            Set<EntityRelation> children, EntityRelation rootRelation,
+            Map<EntityRelation, Set<EntityRelation>> relations
+    ) {
+        if (fetchLastLevelOnly) {
+            if (lvl != Integer.MAX_VALUE) {
+                if (lvl > 0) {
+                    Set<EntityRelation> result = new HashSet<>();
+                    children.forEach(c -> {
+                        if (relations.get(c).isEmpty()) {
+                            result.add(c);
+                        }
+                    });
+
+                    children = result;
+                }
+            } else if (!children.isEmpty()) {
+                children.clear();
+            } else if (rootRelation != null) {
+                children = Set.of(rootRelation);
+            }
+        }
+
+        return children;
+    }
+
+    private ListenableFuture<List<Pair<EntityRelation, Set<EntityRelation>>>> getRelationsOfChildren(
+            TenantId tenantId, EntitySearchDirection direction,
+            RelationTypeGroup relationTypeGroup, int lvl, boolean fetchLastLevelOnly,
+            ConcurrentHashMap<EntityId, Boolean> uniqueMap, Map<EntityId, EntityRelation> children
+    ) {
+        List<ListenableFuture<Pair<EntityRelation, Set<EntityRelation>>>> result =
+                children.entrySet()
+                        .stream()
+                        .map(e -> {
+                            var relationsFuture = findRelationsRecursively(
+                                    tenantId, e.getKey(), e.getValue(),
+                                    direction, relationTypeGroup, lvl,
+                                    fetchLastLevelOnly, uniqueMap
+                            );
+
+                            return Futures.transformAsync(relationsFuture, relations ->
+                                    Futures.immediateFuture(
+                                            Pair.of(e.getValue(), Objects.requireNonNullElse(relations, new HashSet<EntityRelation>()))
+                                    ), MoreExecutors.directExecutor());
+                        })
+                        .collect(Collectors.toList());
+
+        return Futures.successfulAsList(result);
+    }
+
+    private Map<EntityId, EntityRelation> getChildrenIdsAndTheirRootRelations(
+            Set<EntityRelation> children,
+            EntitySearchDirection direction,
+            ConcurrentHashMap<EntityId, Boolean> uniqueMap
+    ) {
+        Map<EntityId, EntityRelation> childrenIds = new HashMap<>();
+
+        children.forEach(childRelation -> {
             EntityId childId;
             if (direction == EntitySearchDirection.FROM) {
                 childId = childRelation.getTo();
@@ -661,23 +761,11 @@ public class BaseRelationService implements RelationService {
                 childId = childRelation.getFrom();
             }
             if (uniqueMap.putIfAbsent(childId, Boolean.TRUE) == null) {
-                log.trace("Adding Relation: {}", childId);
-                if (childrenIds.add(childId)) {
-                    log.trace("Added Relation: {}", childId);
-                }
+                childrenIds.put(childId, childRelation);
             }
-        }
-        List<ListenableFuture<Set<EntityRelation>>> futures = new ArrayList<>();
-        for (EntityId entityId : childrenIds) {
-            futures.add(findRelationsRecursively(tenantId, entityId, direction, relationTypeGroup, lvl, fetchLastLevelOnly, uniqueMap));
-        }
-        //TODO: try to remove this blocking operation
-        List<Set<EntityRelation>> relations = Futures.successfulAsList(futures).get();
-        if (fetchLastLevelOnly && lvl > 0) {
-            children.clear();
-        }
-        relations.forEach(r -> r.forEach(children::add));
-        return Futures.immediateFuture(children);
+        });
+
+        return childrenIds;
     }
 
     private ListenableFuture<List<EntityRelation>> findRelations(final TenantId tenantId, final EntityId rootId, final EntitySearchDirection direction, RelationTypeGroup relationTypeGroup) {
