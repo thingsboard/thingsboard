@@ -173,7 +173,6 @@ public class HashPartitionService implements PartitionService {
         } else {
             QueueRoutingInfo queueRoutingInfo = queuesById.get(queueId);
 
-            //TODO: replace if we can notify CheckPoint rule nodes about queue changes
             if (queueRoutingInfo == null) {
                 log.debug("Queue was removed but still used in CheckPoint rule node. [{}][{}]", tenantId, entityId);
                 queueKey = getMainQueueKey(serviceType, tenantId);
@@ -205,6 +204,8 @@ public class HashPartitionService implements PartitionService {
 
     @Override
     public synchronized void recalculatePartitions(ServiceInfo currentService, List<ServiceInfo> otherServices) {
+        partitionsInit();
+
         tbTransportServicesByType.clear();
         logServiceInfo(currentService);
         otherServices.forEach(this::logServiceInfo);

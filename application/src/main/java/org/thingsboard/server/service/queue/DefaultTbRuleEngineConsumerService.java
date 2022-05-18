@@ -393,10 +393,10 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
             tbDeviceRpcService.processRpcResponseFromDevice(response);
             callback.onSuccess();
         } else if (nfMsg.hasQueueUpdateMsg()) {
-            updateQueue(nfMsg.getQueueUpdateMsg());
+            repartitionExecutor.execute(() -> updateQueue(nfMsg.getQueueUpdateMsg()));
             callback.onSuccess();
         } else if (nfMsg.hasQueueDeleteMsg()) {
-            deleteQueue(nfMsg.getQueueDeleteMsg());
+            repartitionExecutor.execute(() -> deleteQueue(nfMsg.getQueueDeleteMsg()));
             callback.onSuccess();
         } else {
             log.trace("Received notification with missing handler");
@@ -404,7 +404,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
         }
     }
 
-    private synchronized void updateQueue(TransportProtos.QueueUpdateMsg queueUpdateMsg) {
+    private void updateQueue(TransportProtos.QueueUpdateMsg queueUpdateMsg) {
         log.info("Received queue update msg: [{}]", queueUpdateMsg);
         String queueName = queueUpdateMsg.getQueueName();
         TenantId tenantId = new TenantId(new UUID(queueUpdateMsg.getTenantIdMSB(), queueUpdateMsg.getTenantIdLSB()));
