@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.entitiy.queue;
 
 import lombok.AllArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cluster.TbClusterService;
@@ -30,27 +29,30 @@ import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.device.DeviceProfileService;
-import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.queue.TbQueueAdmin;
+import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @TbCoreComponent
 @AllArgsConstructor
-public class DefaultTbQueueService implements TbQueueService {
+public class DefaultTbQueueService extends AbstractTbEntityService implements TbQueueService {
     private static final String MAIN = "Main";
+    private static final long DELETE_DELAY = 30;
 
-    private final QueueService queueService;
     private final TbClusterService tbClusterService;
     private final TbQueueAdmin tbQueueAdmin;
     private final DeviceProfileService deviceProfileService;
+    private final SchedulerComponent scheduler;
 
     @Override
     public Queue saveQueue(Queue queue) {
@@ -90,57 +92,50 @@ public class DefaultTbQueueService implements TbQueueService {
     }
 
     private void onQueueCreated(Queue queue) {
-        if (tbQueueAdmin != null) {
-            for (int i = 0; i < queue.getPartitions(); i++) {
-                tbQueueAdmin.createTopicIfNotExists(
-                        new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName());
-            }
+        for (int i = 0; i < queue.getPartitions(); i++) {
+            tbQueueAdmin.createTopicIfNotExists(
+                    new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName());
         }
 
-        if (tbClusterService != null) {
-            tbClusterService.onQueueChange(queue);
-        }
+        tbClusterService.onQueueChange(queue);
     }
 
     private void onQueueUpdated(Queue queue, Queue oldQueue) {
         int oldPartitions = oldQueue.getPartitions();
         int currentPartitions = queue.getPartitions();
 
-        if (currentPartitions != oldPartitions && tbQueueAdmin != null) {
+        if (currentPartitions != oldPartitions) {
             if (currentPartitions > oldPartitions) {
                 log.info("Added [{}] new partitions to [{}] queue", currentPartitions - oldPartitions, queue.getName());
                 for (int i = oldPartitions; i < currentPartitions; i++) {
                     tbQueueAdmin.createTopicIfNotExists(
                             new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName());
                 }
-                if (tbClusterService != null) {
-                    tbClusterService.onQueueChange(queue);
-                }
+                tbClusterService.onQueueChange(queue);
             } else {
                 log.info("Removed [{}] partitions from [{}] queue", oldPartitions - currentPartitions, queue.getName());
-                if (tbClusterService != null) {
-                    tbClusterService.onQueueChange(queue);
-                }
-                await();
-                for (int i = currentPartitions; i < oldPartitions; i++) {
-                    String fullTopicName = new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName();
-                    log.info("Removed partition [{}]", fullTopicName);
-                    tbQueueAdmin.deleteTopic(
-                            fullTopicName);
-                }
+                tbClusterService.onQueueChange(queue);
+
+                scheduler.schedule(() -> {
+                    for (int i = currentPartitions; i < oldPartitions; i++) {
+                        String fullTopicName = new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName();
+                        log.info("Removed partition [{}]", fullTopicName);
+                        tbQueueAdmin.deleteTopic(
+                                fullTopicName);
+                    }
+                }, DELETE_DELAY, TimeUnit.SECONDS);
             }
-        } else if (!oldQueue.equals(queue) && tbClusterService != null) {
+        } else if (!oldQueue.equals(queue)) {
             tbClusterService.onQueueChange(queue);
         }
     }
 
     private void onQueueDeleted(Queue queue) {
-        if (tbClusterService != null) {
-            tbClusterService.onQueueDelete(queue);
-            await();
-        }
+        tbClusterService.onQueueDelete(queue);
+
 //        queueStatsService.deleteQueueStatsByQueueId(tenantId, queueId);
-        if (tbQueueAdmin != null) {
+
+        scheduler.schedule(() -> {
             for (int i = 0; i < queue.getPartitions(); i++) {
                 String fullTopicName = new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName();
                 log.info("Deleting queue [{}]", fullTopicName);
@@ -150,16 +145,12 @@ public class DefaultTbQueueService implements TbQueueService {
                     log.error("Failed to delete queue [{}]", fullTopicName);
                 }
             }
-        }
-    }
-
-    @SneakyThrows
-    private void await() {
-        Thread.sleep(3000);
+        }, DELETE_DELAY, TimeUnit.SECONDS);
     }
 
     @Override
-    public void updateQueuesByTenants(List<TenantId> tenantIds, TenantProfile newTenantProfile, TenantProfile oldTenantProfile) {
+    public void updateQueuesByTenants(List<TenantId> tenantIds, TenantProfile newTenantProfile, TenantProfile
+            oldTenantProfile) {
         boolean oldIsolated = oldTenantProfile != null && oldTenantProfile.isIsolatedTbRuleEngine();
         boolean newIsolated = newTenantProfile.isIsolatedTbRuleEngine();
 

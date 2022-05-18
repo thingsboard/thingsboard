@@ -32,7 +32,7 @@ import java.util.List;
 @TbCoreComponent
 @AllArgsConstructor
 public class DefaultTbTenantProfileService implements TbTenantProfileService {
-    private final TbQueueService queueService;
+    private final TbQueueService tbQueueService;
     private final TenantProfileService tenantProfileService;
     private final TenantService tenantService;
 
@@ -42,7 +42,7 @@ public class DefaultTbTenantProfileService implements TbTenantProfileService {
 
         if (oldTenantProfile != null && savedTenantProfile.isIsolatedTbRuleEngine()) {
             List<TenantId> tenantIds = tenantService.findTenantIdsByTenantProfileId(savedTenantProfile.getId());
-            queueService.updateQueuesByTenants(tenantIds, savedTenantProfile, oldTenantProfile);
+            tbQueueService.updateQueuesByTenants(tenantIds, savedTenantProfile, oldTenantProfile);
         }
 
         return savedTenantProfile;
