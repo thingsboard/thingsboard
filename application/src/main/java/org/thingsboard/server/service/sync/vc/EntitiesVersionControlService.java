@@ -41,7 +41,7 @@ public interface EntitiesVersionControlService {
     List<EntityVersion> listVersions(TenantId tenantId, String branch) throws Exception;
 
 
-    List<VersionedEntityInfo> listEntitiesAtVersion(TenantId tenantId, EntityType entityType, String branch, String versionId) throws Exception;
+    List<VersionedEntityInfo> listEntitiesAtVersion(TenantId tenantId, String branch, String versionId, EntityType entityType) throws Exception;
 
     List<VersionedEntityInfo> listAllEntitiesAtVersion(TenantId tenantId, String branch, String versionId) throws Exception;
 

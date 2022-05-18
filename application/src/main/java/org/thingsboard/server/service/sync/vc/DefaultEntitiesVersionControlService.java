@@ -75,7 +75,6 @@ import org.thingsboard.server.common.data.sync.vc.request.load.EntityTypeVersion
 import org.thingsboard.server.common.data.sync.vc.request.load.SingleEntityVersionLoadRequest;
 import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadConfig;
 import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadRequest;
-import org.thingsboard.server.utils.GitRepository;
 import org.thingsboard.server.common.data.sync.ThrowingRunnable;
 
 import java.io.File;
@@ -105,85 +104,31 @@ import static org.thingsboard.server.dao.sql.query.EntityKeyMapping.CREATED_TIME
 @Slf4j
 public class DefaultEntitiesVersionControlService implements EntitiesVersionControlService {
 
+    private final GitVersionControlService gitService;
     private final EntitiesExportImportService exportImportService;
     private final ExportableEntitiesService exportableEntitiesService;
     private final AttributesService attributesService;
     private final EntityService entityService;
-    private final TenantDao tenantDao;
     private final TransactionTemplate transactionTemplate;
 
-    // TODO [viacheslav]: concurrency
-    private final Map<TenantId, GitRepository> repositories = new ConcurrentHashMap<>();
-    @Value("${java.io.tmpdir}/repositories")
-    private String repositoriesFolder;
-
-    private static final String SETTINGS_KEY = "vc";
-    private final ObjectWriter jsonWriter = new ObjectMapper().writer(SerializationFeature.INDENT_OUTPUT);
-
-
-    @AfterStartUp
-    public void init() {
-        DaoUtil.processInBatches(tenantDao::findTenantsIds, 100, tenantId -> {
-            EntitiesVersionControlSettings settings = getSettings(tenantId);
-            if (settings != null) {
-                try {
-                    initRepository(tenantId, settings);
-                } catch (Exception e) {
-                    log.warn("Failed to init repository for tenant {}", tenantId, e);
-                }
-            }
-        });
-        Executors.newSingleThreadScheduledExecutor().scheduleWithFixedDelay(() -> {
-            repositories.forEach((tenantId, repository) -> {
-                try {
-                    repository.fetch();
-                    log.info("Fetching remote repository for tenant {}", tenantId);
-                } catch (Exception e) {
-                    log.warn("Failed to fetch repository for tenant {}", tenantId, e);
-                }
-            });
-        }, 5, 5, TimeUnit.SECONDS);
-    }
-
+    public static final String SETTINGS_KEY = "vc";
 
     @Override
     public VersionCreationResult saveEntitiesVersion(SecurityUser user, VersionCreateRequest request) throws Exception {
-        GitRepository repository = checkRepository(user.getTenantId());
 
-        repository.fetch();
-        if (repository.listBranches().contains(request.getBranch())) {
-            repository.checkout("origin/" + request.getBranch(), false);
-            try {
-                repository.checkout(request.getBranch(), true);
-            } catch (RefAlreadyExistsException e) {
-                repository.checkout(request.getBranch(), false);
-            }
-            repository.merge(request.getBranch());
-        } else { // TODO [viacheslav]: rollback orphan branch on failure
-            try {
-                repository.createAndCheckoutOrphanBranch(request.getBranch()); // FIXME [viacheslav]: Checkout returned unexpected result NO_CHANGE for master branch
-            } catch (JGitInternalException e) {
-                if (!e.getMessage().contains("NO_CHANGE")) {
-                    throw e;
-                }
-            }
-        }
+        var commit = gitService.prepareCommit(user.getTenantId(), request);
 
         switch (request.getType()) {
             case SINGLE_ENTITY: {
                 SingleEntityVersionCreateRequest versionCreateRequest = (SingleEntityVersionCreateRequest) request;
-                saveEntityData(user, repository, versionCreateRequest.getEntityId(), versionCreateRequest.getConfig());
+                saveEntityData(user, commit, versionCreateRequest.getEntityId(), versionCreateRequest.getConfig());
                 break;
             }
             case COMPLEX: {
                 ComplexVersionCreateRequest versionCreateRequest = (ComplexVersionCreateRequest) request;
                 versionCreateRequest.getEntityTypes().forEach((entityType, config) -> {
                     if (ObjectUtils.defaultIfNull(config.getSyncStrategy(), versionCreateRequest.getSyncStrategy()) == SyncStrategy.OVERWRITE) {
-                        try {
-                            FileUtils.deleteDirectory(Path.of(repository.getDirectory(), getRelativePath(entityType, null)).toFile());
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
+                        gitService.deleteAll(commit, entityType);
                     }
 
                     if (config.isAllEntities()) {
@@ -203,7 +148,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                         }, 100, data -> {
                             EntityId entityId = data.getEntityId();
                             try {
-                                saveEntityData(user, repository, entityId, config);
+                                saveEntityData(user, commit, entityId, config);
                             } catch (Exception e) {
                                 throw new RuntimeException(e);
                             }
@@ -211,7 +156,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                     } else {
                         for (UUID entityId : config.getEntityIds()) {
                             try {
-                                saveEntityData(user, repository, EntityIdFactory.getByTypeAndUuid(entityType, entityId), config);
+                                saveEntityData(user, commit, EntityIdFactory.getByTypeAndUuid(entityType, entityId), config);
                             } catch (Exception e) {
                                 throw new RuntimeException(e);
                             }
@@ -223,90 +168,50 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
             }
         }
 
-        repository.add(".");
-
-        VersionCreationResult result = new VersionCreationResult();
-        GitRepository.Status status = repository.status();
-        result.setAdded(status.getAdded().size());
-        result.setModified(status.getModified().size());
-        result.setRemoved(status.getRemoved().size());
-
-        GitRepository.Commit commit = repository.commit(request.getVersionName());
-        repository.push();
-
-        result.setVersion(toVersion(commit));
-        return result;
+        return gitService.push(commit);
     }
 
-    private void saveEntityData(SecurityUser user, GitRepository repository, EntityId entityId, VersionCreateConfig config) throws Exception {
+    private void saveEntityData(SecurityUser user, PendingCommit commit, EntityId entityId, VersionCreateConfig config) throws Exception {
         EntityExportData<ExportableEntity<EntityId>> entityData = exportImportService.exportEntity(user, entityId, EntityExportSettings.builder()
                 .exportRelations(config.isSaveRelations())
                 .build());
-        String entityDataJson = jsonWriter.writeValueAsString(entityData);
-        FileUtils.write(Path.of(repository.getDirectory(), getRelativePath(entityData.getEntityType(),
-                entityData.getEntity().getId().toString())).toFile(), entityDataJson, StandardCharsets.UTF_8);
+        gitService.addToCommit(commit, entityData);
     }
 
 
     @Override
     public List<EntityVersion> listEntityVersions(TenantId tenantId, String branch, EntityId externalId) throws Exception {
-        return listVersions(tenantId, branch, getRelativePath(externalId.getEntityType(), externalId.getId().toString()));
+        return gitService.listVersions(tenantId, branch, externalId);
     }
 
     @Override
     public List<EntityVersion> listEntityTypeVersions(TenantId tenantId, String branch, EntityType entityType) throws Exception {
-        return listVersions(tenantId, branch, getRelativePath(entityType, null));
+        return gitService.listVersions(tenantId, branch, entityType);
     }
 
     @Override
     public List<EntityVersion> listVersions(TenantId tenantId, String branch) throws Exception {
-        return listVersions(tenantId, branch, null);
+        return gitService.listVersions(tenantId, branch);
     }
-
-    private List<EntityVersion> listVersions(TenantId tenantId, String branch, String path) throws Exception {
-        GitRepository repository = checkRepository(tenantId);
-        return repository.listCommits(branch, path, Integer.MAX_VALUE).stream()
-                .map(this::toVersion)
-                .collect(Collectors.toList());
-    }
-
 
     @Override
-    public List<VersionedEntityInfo> listEntitiesAtVersion(TenantId tenantId, EntityType entityType, String branch, String versionId) throws Exception {
-        return listEntitiesAtVersion(tenantId, branch, versionId, getRelativePath(entityType, null));
+    public List<VersionedEntityInfo> listEntitiesAtVersion(TenantId tenantId, String branch, String versionId, EntityType entityType) throws Exception {
+        return gitService.listEntitiesAtVersion(tenantId, branch, versionId, entityType);
     }
 
     @Override
     public List<VersionedEntityInfo> listAllEntitiesAtVersion(TenantId tenantId, String branch, String versionId) throws Exception {
-        return listEntitiesAtVersion(tenantId, branch, versionId, null);
+        return gitService.listEntitiesAtVersion(tenantId, branch, versionId);
     }
-
-    private List<VersionedEntityInfo> listEntitiesAtVersion(TenantId tenantId, String branch, String versionId, String path) throws Exception {
-        GitRepository repository = checkRepository(tenantId);
-        checkVersion(tenantId, branch, versionId);
-        return repository.listFilesAtCommit(versionId, path).stream()
-                .map(filePath -> {
-                    EntityId entityId = fromRelativePath(filePath);
-                    VersionedEntityInfo info = new VersionedEntityInfo();
-                    info.setExternalId(entityId);
-                    return info;
-                })
-                .collect(Collectors.toList());
-    }
-
 
     @Override
     public List<VersionLoadResult> loadEntitiesVersion(SecurityUser user, VersionLoadRequest request) throws Exception {
-        GitRepository repository = checkRepository(user.getTenantId());
-
-        EntityVersion version = checkVersion(user.getTenantId(), request.getBranch(), request.getVersionId());
-
         switch (request.getType()) {
             case SINGLE_ENTITY: {
                 SingleEntityVersionLoadRequest versionLoadRequest = (SingleEntityVersionLoadRequest) request;
                 EntityImportResult<?> importResult = transactionTemplate.execute(status -> {
                     try {
-                        EntityImportResult<?> result = loadEntity(user, repository, versionLoadRequest.getExternalEntityId(), version.getId(), versionLoadRequest.getConfig());
+                        EntityImportResult<?> result = loadEntity(user, request, versionLoadRequest.getConfig(), versionLoadRequest.getExternalEntityId());
                         result.getSaveReferencesCallback().run();
                         return result;
                     } catch (Exception e) {
@@ -340,11 +245,11 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
                         Set<EntityId> remoteEntities;
                         try {
-                            remoteEntities = listEntitiesAtVersion(user.getTenantId(), request.getBranch(), request.getVersionId(), getRelativePath(entityType, null)).stream()
+                            remoteEntities = listEntitiesAtVersion(user.getTenantId(), request.getBranch(), request.getVersionId(), entityType).stream()
                                     .map(VersionedEntityInfo::getExternalId)
                                     .collect(Collectors.toSet());
                             for (EntityId externalEntityId : remoteEntities) {
-                                EntityImportResult<?> importResult = loadEntity(user, repository, externalEntityId, version.getId(), config);
+                                EntityImportResult<?> importResult = loadEntity(user, request, config, externalEntityId);
 
                                 if (importResult.getOldEntity() == null) created.incrementAndGet();
                                 else updated.incrementAndGet();
@@ -402,10 +307,8 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         }
     }
 
-    private EntityImportResult<?> loadEntity(SecurityUser user, GitRepository repository, EntityId externalId, String versionId, VersionLoadConfig config) throws Exception {
-        String entityDataJson = repository.getFileContentAtCommit(getRelativePath(externalId.getEntityType(), externalId.getId().toString()), versionId);
-        EntityExportData entityData = JacksonUtil.fromString(entityDataJson, EntityExportData.class);
-
+    private EntityImportResult<?> loadEntity(SecurityUser user, VersionLoadRequest request, VersionLoadConfig config, EntityId entityId) throws Exception {
+        EntityExportData entityData = gitService.getEntity(user.getTenantId(), request.getVersionId(), entityId);
         return exportImportService.importEntity(user, entityData, EntityImportSettings.builder()
                 .updateRelations(config.isLoadRelations())
                 .findExistingByName(config.isFindExistingEntityByName())
@@ -415,42 +318,8 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
     @Override
     public List<String> listBranches(TenantId tenantId) throws Exception {
-        GitRepository repository = checkRepository(tenantId);
-        return repository.listBranches();
+        return gitService.listBranches(tenantId);
     }
-
-
-    private EntityVersion checkVersion(TenantId tenantId, String branch, String versionId) throws Exception {
-        return listVersions(tenantId, branch, null).stream()
-                .filter(version -> version.getId().equals(versionId))
-                .findFirst().orElseThrow(() -> new IllegalArgumentException("Version not found"));
-    }
-
-    private GitRepository checkRepository(TenantId tenantId) {
-        return Optional.ofNullable(repositories.get(tenantId))
-                .orElseThrow(() -> new IllegalStateException("Repository is not initialized"));
-    }
-
-    private void initRepository(TenantId tenantId, EntitiesVersionControlSettings settings) throws Exception {
-        Path repositoryDirectory = Path.of(repositoriesFolder, tenantId.getId().toString());
-        GitRepository repository;
-        if (Files.exists(repositoryDirectory)) {
-            FileUtils.forceDelete(repositoryDirectory.toFile());
-        }
-
-        Files.createDirectories(repositoryDirectory);
-        repository = GitRepository.clone(settings.getRepositoryUri(), settings.getUsername(), settings.getPassword(), repositoryDirectory.toFile());
-        repositories.put(tenantId, repository);
-    }
-
-    private void clearRepository(TenantId tenantId) throws IOException {
-        GitRepository repository = repositories.get(tenantId);
-        if (repository != null) {
-            FileUtils.deleteDirectory(new File(repository.getDirectory()));
-            repositories.remove(tenantId);
-        }
-    }
-
 
     @SneakyThrows
     @Override
@@ -459,41 +328,11 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                 new BaseAttributeKvEntry(System.currentTimeMillis(), new JsonDataEntry(SETTINGS_KEY, JacksonUtil.toString(settings)))
         )).get();
 
-        initRepository(tenantId, settings);
+        gitService.initRepository(tenantId, settings);
     }
 
-    @SneakyThrows
     @Override
     public EntitiesVersionControlSettings getSettings(TenantId tenantId) {
-        return attributesService.find(tenantId, tenantId, DataConstants.SERVER_SCOPE, SETTINGS_KEY).get()
-                .flatMap(KvEntry::getJsonValue)
-                .map(json -> {
-                    try {
-                        return JacksonUtil.fromString(json, EntitiesVersionControlSettings.class);
-                    } catch (IllegalArgumentException e) {
-                        return null;
-                    }
-                })
-                .orElse(null);
+        return gitService.getSettings(tenantId);
     }
-
-
-    private EntityVersion toVersion(GitRepository.Commit commit) {
-        return new EntityVersion(commit.getId(), commit.getMessage());
-    }
-
-    private String getRelativePath(EntityType entityType, String entityId) {
-        String path = entityType.name().toLowerCase();
-        if (entityId != null) {
-            path += "/" + entityId + ".json";
-        }
-        return path;
-    }
-
-    private EntityId fromRelativePath(String path) {
-        EntityType entityType = EntityType.valueOf(StringUtils.substringBefore(path, "/").toUpperCase());
-        String entityId = StringUtils.substringBetween(path, "/", ".json");
-        return EntityIdFactory.getByTypeAndUuid(entityType, entityId);
-    }
-
 }

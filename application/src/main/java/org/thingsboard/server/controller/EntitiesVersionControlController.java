@@ -172,7 +172,7 @@ public class EntitiesVersionControlController extends BaseController {
                                                            @PathVariable EntityType entityType,
                                                            @PathVariable String versionId) throws ThingsboardException {
         try {
-            return versionControlService.listEntitiesAtVersion(getTenantId(), entityType, branch, versionId);
+            return versionControlService.listEntitiesAtVersion(getTenantId(), branch, versionId, entityType);
         } catch (Exception e) {
             throw handleException(e);
         }
