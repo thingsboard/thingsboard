@@ -87,6 +87,21 @@
             <artifactId>org.eclipse.jgit</artifactId>
         </dependency>
         <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-netty-shaded</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-protobuf</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-stub</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
@@ -109,7 +124,19 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.xolstice.maven.plugins</groupId>
+                <artifactId>protobuf-maven-plugin</artifactId>
+            </plugin>
         </plugins>
     </build>
+
+    <distributionManagement>
+        <repository>
+            <id>thingsboard-repo-deploy</id>
+            <name>ThingsBoard Repo Deployment</name>
+            <url>https://repo.thingsboard.io/artifactory/libs-release-public</url>
+        </repository>
+    </distributionManagement>
 
 </project>

@@ -40,6 +40,7 @@
 
     <modules>
         <module>tb</module>
+        <module>vc-executor</module>
         <module>js-executor</module>
         <module>web-ui</module>
         <module>tb-node</module>
