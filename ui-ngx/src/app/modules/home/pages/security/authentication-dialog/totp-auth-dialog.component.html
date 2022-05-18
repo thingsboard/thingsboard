@@ -66,8 +66,9 @@
       </form>
       <div fxLayout="row" fxLayoutAlign="end center">
         <button mat-raised-button
-                type="submit"
+                type="button"
                 color="primary"
+                (click)="onSaveConfig()"
                 [disabled]="(isLoading$ | async) || totpConfigForm.invalid">
           {{ 'security.2fa.dialog.next' | translate }}
         </button>
