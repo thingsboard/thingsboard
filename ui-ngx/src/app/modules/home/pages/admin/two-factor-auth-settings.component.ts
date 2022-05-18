@@ -175,6 +175,12 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
       verificationCodeSendRateLimitTime: sendRateLimitTime || 60,
       providers: []
     });
+    if (sendRateLimitNumber > 0) {
+      this.getByIndexPanel(0).open();
+    }
+    if (checkRateLimitNumber > 0) {
+      this.getByIndexPanel(1).open();
+    }
     Object.values(TwoFactorAuthProviderType).forEach((provider, index) => {
       const findIndex = allowProvidersConfig.indexOf(provider);
       if (findIndex > -1) {
