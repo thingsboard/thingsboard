@@ -133,7 +133,6 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
         this.statsFactory = statsFactory;
         this.serviceInfoProvider = serviceInfoProvider;
         this.queueService = queueService;
-//        this.tenantId = actorContext.getServiceInfoProvider().getIsolatedTenant().orElse(TenantId.SYS_TENANT_ID);
     }
 
     @PostConstruct
@@ -406,6 +405,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     }
 
     private synchronized void updateQueue(TransportProtos.QueueUpdateMsg queueUpdateMsg) {
+        log.info("Received queue update msg: [{}]", queueUpdateMsg);
         String queueName = queueUpdateMsg.getQueueName();
         TenantId tenantId = new TenantId(new UUID(queueUpdateMsg.getTenantIdMSB(), queueUpdateMsg.getTenantIdLSB()));
         QueueId queueId = new QueueId(new UUID(queueUpdateMsg.getQueueIdMSB(), queueUpdateMsg.getQueueIdLSB()));
@@ -439,6 +439,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     }
 
     private void deleteQueue(TransportProtos.QueueDeleteMsg queueDeleteMsg) {
+        log.info("Received queue delete msg: [{}]", queueDeleteMsg);
         TenantId tenantId = new TenantId(new UUID(queueDeleteMsg.getTenantIdMSB(), queueDeleteMsg.getTenantIdLSB()));
         QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, queueDeleteMsg.getQueueName(), tenantId);
 

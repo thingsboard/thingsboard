@@ -79,14 +79,14 @@ public class DefaultTbQueueService implements TbQueueService {
     public void deleteQueue(TenantId tenantId, QueueId queueId) {
         Queue queue = queueService.findQueueById(tenantId, queueId);
         queueService.deleteQueue(tenantId, queueId);
-        onQueueDeleted(tenantId, queue);
+        onQueueDeleted(queue);
     }
 
     @Override
     public void deleteQueueByQueueName(TenantId tenantId, String queueName) {
         Queue queue = queueService.findQueueByTenantIdAndNameInternal(tenantId, queueName);
         queueService.deleteQueue(tenantId, queue.getId());
-        onQueueDeleted(tenantId, queue);
+        onQueueDeleted(queue);
     }
 
     private void onQueueCreated(Queue queue) {
@@ -123,8 +123,10 @@ public class DefaultTbQueueService implements TbQueueService {
                 }
                 await();
                 for (int i = currentPartitions; i < oldPartitions; i++) {
+                    String fullTopicName = new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName();
+                    log.info("Removed partition [{}]", fullTopicName);
                     tbQueueAdmin.deleteTopic(
-                            new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName());
+                            fullTopicName);
                 }
             }
         } else if (!oldQueue.equals(queue) && tbClusterService != null) {
@@ -132,7 +134,7 @@ public class DefaultTbQueueService implements TbQueueService {
         }
     }
 
-    private void onQueueDeleted(TenantId tenantId, Queue queue) {
+    private void onQueueDeleted(Queue queue) {
         if (tbClusterService != null) {
             tbClusterService.onQueueDelete(queue);
             await();
@@ -141,7 +143,7 @@ public class DefaultTbQueueService implements TbQueueService {
         if (tbQueueAdmin != null) {
             for (int i = 0; i < queue.getPartitions(); i++) {
                 String fullTopicName = new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName();
-                log.debug("Deleting queue [{}]", fullTopicName);
+                log.info("Deleting queue [{}]", fullTopicName);
                 try {
                     tbQueueAdmin.deleteTopic(fullTopicName);
                 } catch (Exception e) {

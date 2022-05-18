@@ -20,16 +20,6 @@ ALTER TABLE device_profile
 DO
 $$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname = 'fk_default_queue_device_profile') THEN
-            ALTER TABLE device_profile
-                ADD CONSTRAINT fk_default_queue_device_profile FOREIGN KEY (default_queue_id) REFERENCES queue (id);
-        END IF;
-    END;
-$$;
-
-DO
-$$
-    BEGIN
         IF EXISTS
             (SELECT column_name
              FROM information_schema.columns
@@ -43,6 +33,16 @@ $$
             WHERE default_queue_name = q.name;
         END IF;
     END
+$$;
+
+DO
+$$
+    BEGIN
+        IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname = 'fk_default_queue_device_profile') THEN
+            ALTER TABLE device_profile
+                ADD CONSTRAINT fk_default_queue_device_profile FOREIGN KEY (default_queue_id) REFERENCES queue (id);
+        END IF;
+    END;
 $$;
 
 ALTER TABLE device_profile
