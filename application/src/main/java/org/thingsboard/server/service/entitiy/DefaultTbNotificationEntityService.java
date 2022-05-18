@@ -75,13 +75,13 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
         sendDeleteNotificationMsg(tenantId, entityId, entity, relatedEdgeIds);
     }
 
-    public <E extends HasName, I extends EntityId> void notifyDeleteAlarm(TenantId tenantId, I entityId, E entity, EntityId originatorId,
-                                                                          CustomerId customerId, ActionType actionType,
-                                                                          List<EdgeId> relatedEdgeIds,
-                                                                          SecurityUser user,
-                                                                          String body, Object... additionalInfo) {
-        logEntityAction(tenantId, originatorId, entity, customerId, actionType, user, additionalInfo);
-        sendAlarmDeleteNotificationMsg(tenantId, entityId, entity, relatedEdgeIds, body);
+    public void notifyDeleteAlarm(TenantId tenantId, Alarm alarm, EntityId originatorId,
+                                  CustomerId customerId, ActionType actionType,
+                                  List<EdgeId> relatedEdgeIds,
+                                  SecurityUser user,
+                                  String body, Object... additionalInfo) {
+        logEntityAction(tenantId, originatorId, alarm, customerId, actionType, user, additionalInfo);
+        sendAlarmDeleteNotificationMsg(tenantId, alarm.getId(), alarm, relatedEdgeIds, body);
     }
 
     @Override
