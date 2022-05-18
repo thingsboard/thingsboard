@@ -107,6 +107,7 @@ public class QueueController extends BaseController {
         checkParameter("queueId", queueIdStr);
         try {
             QueueId queueId = new QueueId(UUID.fromString(queueIdStr));
+            checkQueueId(queueId, Operation.READ);
             return checkNotNull(queueService.findQueueById(getTenantId(), queueId));
         } catch (
                 Exception e) {

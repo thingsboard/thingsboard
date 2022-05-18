@@ -23,8 +23,11 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
+
+import java.util.UUID;
 
 @Slf4j
 @RuleNode(
@@ -38,16 +41,17 @@ import org.thingsboard.server.common.msg.TbMsg;
 )
 public class TbCheckpointNode implements TbNode {
 
-    private TbCheckpointNodeConfiguration config;
+    private QueueId queueId;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbCheckpointNodeConfiguration.class);
+        TbCheckpointNodeConfiguration config = TbNodeUtils.convert(configuration, TbCheckpointNodeConfiguration.class);
+        this.queueId = new QueueId(UUID.fromString(config.getQueueId()));
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        ctx.enqueueForTellNext(msg, config.getQueueId(), TbRelationTypes.SUCCESS, () -> ctx.ack(msg), error -> ctx.tellFailure(msg, error));
+        ctx.enqueueForTellNext(msg, queueId, TbRelationTypes.SUCCESS, () -> ctx.ack(msg), error -> ctx.tellFailure(msg, error));
     }
 
     @Override

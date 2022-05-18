@@ -22,7 +22,7 @@ import org.thingsboard.server.common.data.id.QueueId;
 @Data
 public class TbCheckpointNodeConfiguration implements NodeConfiguration<TbCheckpointNodeConfiguration> {
 
-    private QueueId queueId;
+    private String queueId;
 
     @Override
     public TbCheckpointNodeConfiguration defaultConfiguration() {
