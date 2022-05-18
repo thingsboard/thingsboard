@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.security.model.mfa;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderConfig;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
@@ -26,6 +27,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PlatformTwoFaSettings {
 
     @Valid

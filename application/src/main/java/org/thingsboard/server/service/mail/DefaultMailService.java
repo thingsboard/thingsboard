@@ -322,11 +322,12 @@ public class DefaultMailService implements MailService {
     }
 
     @Override
-    public void sendTwoFaVerificationEmail(String email, String verificationCode) throws ThingsboardException {
+    public void sendTwoFaVerificationEmail(String email, String verificationCode, int expirationTimeSeconds) throws ThingsboardException {
         String subject = messages.getMessage("2fa.verification.code.subject", null, Locale.US);
         String message = mergeTemplateIntoString("2fa.verification.code.ftl", Map.of(
                 TARGET_EMAIL, email,
-                "verificationCode", verificationCode
+                "verificationCode", verificationCode,
+                "expirationTimeSeconds", expirationTimeSeconds
         ));
 
         sendMail(mailSender, mailFrom, email, subject, message);
