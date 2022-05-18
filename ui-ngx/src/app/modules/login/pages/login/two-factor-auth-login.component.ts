@@ -36,6 +36,7 @@ import { TranslateService } from '@ngx-translate/core';
 export class TwoFactorAuthLoginComponent extends PageComponent implements OnInit {
 
   private providersInfo: TwoFaProviderInfo[];
+  private prevProvider: TwoFactorAuthProviderType;
 
   selectedProvider: TwoFactorAuthProviderType;
   twoFactorAuthProvider = TwoFactorAuthProviderType;
@@ -89,13 +90,16 @@ export class TwoFactorAuthLoginComponent extends PageComponent implements OnInit
   }
 
   selectProvider(type: TwoFactorAuthProviderType) {
+    this.prevProvider = type === null ? this.selectedProvider : null;
     this.selectedProvider = type;
-    const providerConfig = this.providersInfo.find(config => config.type === type);
-    this.providerDescription = this.translate.instant(this.providersData.get(providerConfig.type).description, {
-      contact: providerConfig.contact
-    });
-    if (type !== TwoFactorAuthProviderType.TOTP && type !== null) {
-      this.sendCode();
+    if (type !== null) {
+      const providerConfig = this.providersInfo.find(config => config.type === type);
+      this.providerDescription = this.translate.instant(this.providersData.get(providerConfig.type).description, {
+        contact: providerConfig.contact
+      });
+      if (type !== TwoFactorAuthProviderType.TOTP) {
+        this.sendCode();
+      }
     }
   }
 
@@ -104,6 +108,11 @@ export class TwoFactorAuthLoginComponent extends PageComponent implements OnInit
   }
 
   cancelLogin() {
-    this.authService.logout();
+    if (this.prevProvider) {
+      this.selectedProvider = this.prevProvider;
+      this.prevProvider = null;
+    } else {
+      this.authService.logout();
+    }
   }
 }

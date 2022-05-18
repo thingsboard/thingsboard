@@ -92,10 +92,14 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
   }
 
   toggleProviders($event: Event, i: number): void {
+    this.toggleExtensionPanel($event, i + 2, this.providersForm.at(i).get('enable').value);
+  }
+
+  toggleExtensionPanel($event: Event, i: number, currentState: boolean) {
     if ($event) {
       $event.stopPropagation();
     }
-    if (this.providersForm.at(i).get('enable').value) {
+    if (currentState) {
       this.getByIndexPanel(i).close();
     } else {
       this.getByIndexPanel(i).open();
@@ -175,7 +179,7 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
       const findIndex = allowProvidersConfig.indexOf(provider);
       if (findIndex > -1) {
         processFormValue.providers.push(Object.assign(settings.providers[findIndex], {enable: true}));
-        this.getByIndexPanel(index).open();
+        this.getByIndexPanel(index + 2).open();
       } else {
         processFormValue.providers.push({enable: false});
       }

@@ -26,17 +26,15 @@
     legend {
       color: rgba(0, 0, 0, .7);
       width: fit-content;
+      margin: 0 8px;
     }
 
-    &:not(:last-of-type) {
-      padding: 8px;
+    .input-row {
+      padding: 8px 8px 0;
     }
 
     &:last-of-type {
       margin-bottom: 24px;
-      legend {
-        margin: 0 8px;
-      }
     }
 
     .rate-limit-toggle {

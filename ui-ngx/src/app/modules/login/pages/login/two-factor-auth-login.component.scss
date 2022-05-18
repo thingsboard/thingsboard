@@ -28,7 +28,7 @@
       }
 
       .mat-card-title{
-        font: 500 28px / 36px Roboto, "Helvetica Neue", sans-serif;
+        font: 400 28px / 36px Roboto, "Helvetica Neue", sans-serif;
       }
 
       .mat-card-content {
@@ -58,8 +58,14 @@
   ::ng-deep{
     button.provider {
       text-align: start;
+      font-weight: 400;
       &:not(.mat-button-disabled) {
         border-color: rgba(255, 255, 255, .8);
+      }
+      .icon{
+        height: 18px;
+        width: 18px;
+        vertical-align: sub;
       }
     }
   }
