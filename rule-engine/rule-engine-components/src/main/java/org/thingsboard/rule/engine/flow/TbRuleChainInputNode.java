@@ -56,6 +56,9 @@ public class TbRuleChainInputNode implements TbNode {
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbRuleChainInputNodeConfiguration.class);
         this.ruleChainId = new RuleChainId(UUID.fromString(config.getRuleChainId()));
+        if (!ctx.getEntityService().existsByTenantIdAndId(ctx.getTenantId(), ruleChainId)) {
+            throw new TbNodeException("Unknown Rule Chain");
+        }
     }
 
     @Override
