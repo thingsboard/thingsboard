@@ -2480,7 +2480,14 @@
         "email": "Email",
         "login-with": "Login with {{name}}",
         "or": "or",
-        "error": "Login error"
+        "error": "Login error",
+        "verify-your-identity": "Verify your identity",
+        "select-way-to-verify": "Select a way to verify",
+        "resend-code": "Resend code",
+        "try-another-way": "Try another way",
+        "totp-auth-description": "Please enter the security code from your authenticator app.",
+        "sms-auth-description": "A security code has been sent to your phone at {{contact}}.",
+        "email-auth-description": "A security code has been sent to your email address at {{contact}}."
     },
     "markdown": {
         "copy-code": "Click to copy",

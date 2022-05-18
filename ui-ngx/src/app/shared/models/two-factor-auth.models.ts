@@ -92,11 +92,16 @@ export interface AccountTwoFaSettings {
 export interface TwoFaProviderInfo {
   type: TwoFactorAuthProviderType;
   default: boolean;
+  contact?: string;
 }
 
 export interface TwoFactorAuthProviderData {
   name: string;
   description: string;
+}
+
+export interface TwoFactorAuthProviderLoginData extends TwoFactorAuthProviderData {
+  icon: string;
 }
 
 export const twoFactorAuthProvidersData = new Map<TwoFactorAuthProviderType, TwoFactorAuthProviderData>(
@@ -118,6 +123,32 @@ export const twoFactorAuthProvidersData = new Map<TwoFactorAuthProviderType, Two
         name: 'security.2fa.provider.email',
         description: 'security.2fa.provider.email-description'
       }
+    ],
+  ]
+);
+
+export const twoFactorAuthProvidersLoginData = new Map<TwoFactorAuthProviderType, TwoFactorAuthProviderLoginData>(
+  [
+    [
+      TwoFactorAuthProviderType.TOTP, {
+      name: 'security.2fa.provider.totp',
+      description: 'login.totp-auth-description',
+      icon: 'mdi:cellphone-key'
+    }
+    ],
+    [
+      TwoFactorAuthProviderType.SMS, {
+      name: 'security.2fa.provider.sms',
+      description: 'login.sms-auth-description',
+      icon: 'mdi:message-reply-text-outline'
+    }
+    ],
+    [
+      TwoFactorAuthProviderType.EMAIL, {
+      name: 'security.2fa.provider.email',
+      description: 'login.email-auth-description',
+      icon: 'mdi:email-outline'
+    }
     ],
   ]
 );

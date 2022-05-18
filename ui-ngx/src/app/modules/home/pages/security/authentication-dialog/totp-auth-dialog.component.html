@@ -53,11 +53,11 @@
         <p class="mat-body qr-code-description" translate>security.2fa.dialog.scan-qr-code</p>
         <canvas fxFlex #canvas [ngStyle]="{display: totpAuthURL ? 'block' : 'none'}"></canvas>
         <p class="mat-body qr-code-description" style="margin-top: 30px;" translate>security.2fa.dialog.enter-verification-code</p>
-        <mat-form-field fxFlex class="mat-block code-container" floatLabel="always">
+        <mat-form-field fxFlex class="mat-block code-container" floatLabel="always" hideRequiredMarker>
           <mat-label></mat-label>
           <input matInput formControlName="verificationCode"
                  maxlength="6" type="text"
-                 pattern="\d*"
+                 pattern="\d*" required
                  placeholder="{{ 'security.2fa.dialog.verification-code' | translate }}">
           <mat-error *ngIf="totpConfigForm.get('verificationCode').invalid">
             {{ 'security.2fa.dialog.verification-code-invalid' | translate }}

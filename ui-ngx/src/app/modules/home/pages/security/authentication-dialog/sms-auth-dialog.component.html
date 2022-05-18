@@ -37,9 +37,9 @@
       <form [formGroup]="smsConfigForm" (ngSubmit)="nextStep()">
         <p class="mat-body step-description input" translate>security.2fa.dialog.sms-step-description</p>
         <div fxLayout="row" fxLayoutAlign="space-between center">
-          <mat-form-field  fxFlex class="mat-block input-container" floatLabel="always">
+          <mat-form-field  fxFlex class="mat-block input-container" floatLabel="always" hideRequiredMarker>
             <mat-label></mat-label>
-            <input type="tel"
+            <input type="tel" required
                    [pattern]="phoneNumberPattern"
                    matInput formControlName="phone"
                    placeholder="{{ 'security.2fa.dialog.sms-step-label' | translate }}">
@@ -67,11 +67,11 @@
           {{ 'security.2fa.dialog.verification-step-description' | translate : {address: smsConfigForm.get('phone').value} }}
         </p>
         <div fxLayout="row" fxLayoutAlign="space-between center">
-          <mat-form-field fxFlex class="mat-block code-container" floatLabel="always">
+          <mat-form-field fxFlex class="mat-block code-container" floatLabel="always" hideRequiredMarker>
             <mat-label></mat-label>
             <input matInput formControlName="verificationCode"
                    maxlength="6" type="text"
-                   pattern="\d*"
+                   pattern="\d*" required
                    placeholder="{{ 'security.2fa.dialog.verification-code' | translate }}">
             <mat-error *ngIf="smsVerificationForm.get('verificationCode').invalid">
               {{ 'security.2fa.dialog.verification-code-invalid' | translate }}
