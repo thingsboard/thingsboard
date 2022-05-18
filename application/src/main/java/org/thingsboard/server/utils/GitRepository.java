@@ -23,8 +23,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.GitCommand;
 import org.eclipse.jgit.api.ListBranchCommand;
 import org.eclipse.jgit.api.LogCommand;
-import org.eclipse.jgit.api.RmCommand;
-import org.eclipse.jgit.api.Status;
+import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.TransportCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Constants;
@@ -44,8 +43,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 public class GitRepository {
@@ -84,9 +81,15 @@ public class GitRepository {
                 .setRemoveDeletedRefs(true));
     }
 
-    public void checkout(String branch) throws GitAPIException {
+    public void checkout(String branch, boolean createBranch) throws GitAPIException {
         execute(git.checkout()
-                .setName("origin/" + branch));
+                .setCreateBranch(createBranch)
+                .setName(branch));
+    }
+
+    public void reset() throws GitAPIException {
+        execute(git.reset()
+                .setMode(ResetCommand.ResetType.HARD));
     }
 
     public void merge(String branch) throws IOException, GitAPIException {
@@ -170,14 +173,15 @@ public class GitRepository {
     public void createAndCheckoutOrphanBranch(String name) throws GitAPIException {
         execute(git.checkout()
                 .setOrphan(true)
+                .setForced(true)
                 .setName(name));
-        Set<String> uncommittedChanges = git.status().call().getUncommittedChanges();
-        if (!uncommittedChanges.isEmpty()) {
-            RmCommand rm = git.rm();
-            uncommittedChanges.forEach(rm::addFilepattern);
-            execute(rm);
-        }
-        execute(git.clean());
+//        Set<String> uncommittedChanges = git.status().call().getUncommittedChanges();
+//        if (!uncommittedChanges.isEmpty()) {
+//            RmCommand rm = git.rm();
+//            uncommittedChanges.forEach(rm::addFilepattern);
+//            execute(rm);
+//        }
+//        execute(git.clean());
     }
 
     public void add(String filesPattern) throws GitAPIException { // FIXME [viacheslav]

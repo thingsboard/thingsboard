@@ -23,8 +23,7 @@ import lombok.Data;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
         @Type(name = "SINGLE_ENTITY", value = SingleEntityVersionCreateRequest.class),
-        @Type(name = "ENTITY_LIST", value = EntityListVersionCreateRequest.class),
-        @Type(name = "ENTITY_TYPE", value = ComplexVersionCreateRequest.class)
+        @Type(name = "COMPLEX", value = ComplexVersionCreateRequest.class)
 })
 @Data
 public abstract class VersionCreateRequest {
