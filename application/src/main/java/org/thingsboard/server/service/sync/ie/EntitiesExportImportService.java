@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.sync.ie;
 
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -24,6 +25,7 @@ import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
 import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
 import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
 
+import java.util.Comparator;
 import java.util.List;
 
 public interface EntitiesExportImportService {
@@ -35,6 +37,9 @@ public interface EntitiesExportImportService {
 
     List<EntityImportResult<?>> importEntities(SecurityUser user, List<EntityExportData<?>> exportDataList, EntityImportSettings importSettings) throws ThingsboardException;
 
-    void fixDataOrderForImport(List<EntityExportData<?>> exportDataList);
+
+    Comparator<EntityExportData<?>> getDataComparatorForImport();
+
+    Comparator<EntityType> getEntityTypeComparatorForImport();
 
 }

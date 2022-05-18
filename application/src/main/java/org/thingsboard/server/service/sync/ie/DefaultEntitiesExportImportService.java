@@ -95,7 +95,7 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
     @Transactional(rollbackFor = Exception.class, timeout = 120)
     @Override
     public List<EntityImportResult<?>> importEntities(SecurityUser user, List<EntityExportData<?>> exportDataList, EntityImportSettings importSettings) throws ThingsboardException {
-        fixDataOrderForImport(exportDataList);
+        exportDataList.sort(getDataComparatorForImport());
 
         List<EntityImportResult<?>> importResults = new ArrayList<>();
 
@@ -125,9 +125,15 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
         return importResults;
     }
 
+
     @Override
-    public void fixDataOrderForImport(List<EntityExportData<?>> exportDataList) {
-        exportDataList.sort(Comparator.comparing(exportData -> SUPPORTED_ENTITY_TYPES.indexOf(exportData.getEntityType())));
+    public Comparator<EntityExportData<?>> getDataComparatorForImport() {
+        return Comparator.comparing(EntityExportData::getEntityType, getEntityTypeComparatorForImport());
+    }
+
+    @Override
+    public Comparator<EntityType> getEntityTypeComparatorForImport() {
+        return Comparator.comparing(SUPPORTED_ENTITY_TYPES::indexOf);
     }
 
 
