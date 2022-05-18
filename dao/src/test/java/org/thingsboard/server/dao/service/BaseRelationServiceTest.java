@@ -312,4 +312,238 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
         relation.setTo(new AssetId(Uuids.timeBased()));
         Assert.assertTrue(saveRelation(relation));
     }
+
+    @Test
+    public void testFindByQueryFetchLastOnlyTreeLike() throws Exception {
+        // A -> B
+        // A -> C
+        // C -> D
+        // C -> E
+
+        AssetId assetA = new AssetId(Uuids.timeBased());
+        AssetId assetB = new AssetId(Uuids.timeBased());
+        AssetId assetC = new AssetId(Uuids.timeBased());
+        AssetId assetD = new AssetId(Uuids.timeBased());
+        AssetId assetE = new AssetId(Uuids.timeBased());
+
+        EntityRelation relationA = new EntityRelation(assetA, assetB, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationB = new EntityRelation(assetA, assetC, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationC = new EntityRelation(assetC, assetD, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationD = new EntityRelation(assetC, assetE, EntityRelation.CONTAINS_TYPE);
+
+        saveRelation(relationA);
+        saveRelation(relationB);
+        saveRelation(relationC);
+        saveRelation(relationD);
+
+        EntityRelationsQuery query = new EntityRelationsQuery();
+        query.setParameters(new RelationsSearchParameters(assetA, EntitySearchDirection.FROM, -1, true));
+        query.setFilters(Collections.singletonList(new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.singletonList(EntityType.ASSET))));
+        List<EntityRelation> relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        Assert.assertEquals(3, relations.size());
+        Assert.assertTrue(relations.contains(relationA));
+        Assert.assertTrue(relations.contains(relationC));
+        Assert.assertTrue(relations.contains(relationD));
+        Assert.assertFalse(relations.contains(relationB));
+
+        //Test from cache
+        relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        Assert.assertTrue(relations.contains(relationA));
+        Assert.assertTrue(relations.contains(relationC));
+        Assert.assertTrue(relations.contains(relationD));
+        Assert.assertFalse(relations.contains(relationB));
+    }
+
+    @Test
+    public void testFindByQueryFetchLastOnlySingleLinked() throws Exception {
+        // A -> B -> C -> D
+
+        AssetId assetA = new AssetId(Uuids.timeBased());
+        AssetId assetB = new AssetId(Uuids.timeBased());
+        AssetId assetC = new AssetId(Uuids.timeBased());
+        AssetId assetD = new AssetId(Uuids.timeBased());
+
+        EntityRelation relationA = new EntityRelation(assetA, assetB, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationB = new EntityRelation(assetB, assetC, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationC = new EntityRelation(assetC, assetD, EntityRelation.CONTAINS_TYPE);
+
+        saveRelation(relationA);
+        saveRelation(relationB);
+        saveRelation(relationC);
+
+        EntityRelationsQuery query = new EntityRelationsQuery();
+        query.setParameters(new RelationsSearchParameters(assetA, EntitySearchDirection.FROM, -1, true));
+        query.setFilters(Collections.singletonList(new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.singletonList(EntityType.ASSET))));
+        List<EntityRelation> relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        Assert.assertEquals(1, relations.size());
+        Assert.assertTrue(relations.contains(relationC));
+        Assert.assertFalse(relations.contains(relationA));
+        Assert.assertFalse(relations.contains(relationB));
+
+        //Test from cache
+        relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        Assert.assertTrue(relations.contains(relationC));
+        Assert.assertFalse(relations.contains(relationA));
+        Assert.assertFalse(relations.contains(relationB));
+    }
+
+    @Test
+    public void testFindByQueryFetchLastOnlyTreeLikeWithMaxLvl() throws Exception {
+        // A -> B   A
+        // A -> C   B
+        // C -> D   C
+        // C -> E   D
+        // D -> F   E
+        // D -> G   F
+
+        AssetId assetA = new AssetId(Uuids.timeBased());
+        AssetId assetB = new AssetId(Uuids.timeBased());
+        AssetId assetC = new AssetId(Uuids.timeBased());
+        AssetId assetD = new AssetId(Uuids.timeBased());
+        AssetId assetE = new AssetId(Uuids.timeBased());
+        AssetId assetF = new AssetId(Uuids.timeBased());
+        AssetId assetG = new AssetId(Uuids.timeBased());
+
+        EntityRelation relationA = new EntityRelation(assetA, assetB, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationB = new EntityRelation(assetA, assetC, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationC = new EntityRelation(assetC, assetD, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationD = new EntityRelation(assetC, assetE, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationE = new EntityRelation(assetD, assetF, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationF = new EntityRelation(assetD, assetG, EntityRelation.CONTAINS_TYPE);
+
+        saveRelation(relationA);
+        saveRelation(relationB);
+        saveRelation(relationC);
+        saveRelation(relationD);
+        saveRelation(relationE);
+        saveRelation(relationF);
+
+        EntityRelationsQuery query = new EntityRelationsQuery();
+        query.setParameters(new RelationsSearchParameters(assetA, EntitySearchDirection.FROM, 2, true));
+        query.setFilters(Collections.singletonList(new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.singletonList(EntityType.ASSET))));
+        List<EntityRelation> relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        Assert.assertEquals(3, relations.size());
+        Assert.assertTrue(relations.contains(relationA));
+        Assert.assertTrue(relations.contains(relationC));
+        Assert.assertTrue(relations.contains(relationD));
+        Assert.assertFalse(relations.contains(relationB));
+        Assert.assertFalse(relations.contains(relationE));
+        Assert.assertFalse(relations.contains(relationF));
+
+        //Test from cache
+        relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        Assert.assertTrue(relations.contains(relationA));
+        Assert.assertTrue(relations.contains(relationC));
+        Assert.assertTrue(relations.contains(relationD));
+        Assert.assertFalse(relations.contains(relationB));
+        Assert.assertFalse(relations.contains(relationE));
+        Assert.assertFalse(relations.contains(relationF));
+    }
+
+    @Test
+    public void testFindByQueryTreeLikeWithMaxLvl() throws Exception {
+        // A -> B   A
+        // A -> C   B
+        // C -> D   C
+        // C -> E   D
+        // D -> F   E
+        // D -> G   F
+
+        AssetId assetA = new AssetId(Uuids.timeBased());
+        AssetId assetB = new AssetId(Uuids.timeBased());
+        AssetId assetC = new AssetId(Uuids.timeBased());
+        AssetId assetD = new AssetId(Uuids.timeBased());
+        AssetId assetE = new AssetId(Uuids.timeBased());
+        AssetId assetF = new AssetId(Uuids.timeBased());
+        AssetId assetG = new AssetId(Uuids.timeBased());
+
+        EntityRelation relationA = new EntityRelation(assetA, assetB, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationB = new EntityRelation(assetA, assetC, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationC = new EntityRelation(assetC, assetD, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationD = new EntityRelation(assetC, assetE, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationE = new EntityRelation(assetD, assetF, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationF = new EntityRelation(assetD, assetG, EntityRelation.CONTAINS_TYPE);
+
+        saveRelation(relationA);
+        saveRelation(relationB);
+        saveRelation(relationC);
+        saveRelation(relationD);
+        saveRelation(relationE);
+        saveRelation(relationF);
+
+        EntityRelationsQuery query = new EntityRelationsQuery();
+        query.setParameters(new RelationsSearchParameters(assetA, EntitySearchDirection.FROM, 2, false));
+        query.setFilters(Collections.singletonList(new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.singletonList(EntityType.ASSET))));
+        List<EntityRelation> relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        Assert.assertEquals(4, relations.size());
+        Assert.assertTrue(relations.contains(relationA));
+        Assert.assertTrue(relations.contains(relationB));
+        Assert.assertTrue(relations.contains(relationC));
+        Assert.assertTrue(relations.contains(relationD));
+        Assert.assertFalse(relations.contains(relationE));
+        Assert.assertFalse(relations.contains(relationF));
+
+        //Test from cache
+        relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        Assert.assertTrue(relations.contains(relationA));
+        Assert.assertTrue(relations.contains(relationB));
+        Assert.assertTrue(relations.contains(relationC));
+        Assert.assertTrue(relations.contains(relationD));
+        Assert.assertFalse(relations.contains(relationE));
+        Assert.assertFalse(relations.contains(relationF));
+    }
+
+    @Test
+    public void testFindByQueryTreeLikeWithUnlimLvl() throws Exception {
+        // A -> B   A
+        // A -> C   B
+        // C -> D   C
+        // C -> E   D
+        // D -> F   E
+        // D -> G   F
+
+        AssetId assetA = new AssetId(Uuids.timeBased());
+        AssetId assetB = new AssetId(Uuids.timeBased());
+        AssetId assetC = new AssetId(Uuids.timeBased());
+        AssetId assetD = new AssetId(Uuids.timeBased());
+        AssetId assetE = new AssetId(Uuids.timeBased());
+        AssetId assetF = new AssetId(Uuids.timeBased());
+        AssetId assetG = new AssetId(Uuids.timeBased());
+
+        EntityRelation relationA = new EntityRelation(assetA, assetB, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationB = new EntityRelation(assetA, assetC, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationC = new EntityRelation(assetC, assetD, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationD = new EntityRelation(assetC, assetE, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationE = new EntityRelation(assetD, assetF, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationF = new EntityRelation(assetD, assetG, EntityRelation.CONTAINS_TYPE);
+
+        saveRelation(relationA);
+        saveRelation(relationB);
+        saveRelation(relationC);
+        saveRelation(relationD);
+        saveRelation(relationE);
+        saveRelation(relationF);
+
+        EntityRelationsQuery query = new EntityRelationsQuery();
+        query.setParameters(new RelationsSearchParameters(assetA, EntitySearchDirection.FROM, -1, false));
+        query.setFilters(Collections.singletonList(new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.singletonList(EntityType.ASSET))));
+        List<EntityRelation> relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        Assert.assertEquals(6, relations.size());
+        Assert.assertTrue(relations.contains(relationA));
+        Assert.assertTrue(relations.contains(relationB));
+        Assert.assertTrue(relations.contains(relationC));
+        Assert.assertTrue(relations.contains(relationD));
+        Assert.assertTrue(relations.contains(relationE));
+        Assert.assertTrue(relations.contains(relationF));
+
+        //Test from cache
+        relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        Assert.assertTrue(relations.contains(relationA));
+        Assert.assertTrue(relations.contains(relationB));
+        Assert.assertTrue(relations.contains(relationC));
+        Assert.assertTrue(relations.contains(relationD));
+        Assert.assertTrue(relations.contains(relationE));
+        Assert.assertTrue(relations.contains(relationF));
+    }
+
 }
