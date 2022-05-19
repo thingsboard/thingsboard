@@ -22,20 +22,19 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
@@ -65,8 +64,7 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 @Slf4j
 public class DefaultTbEntityViewService extends AbstractTbEntityService implements TbEntityViewService {
 
-    @Autowired
-    private TimeseriesService tsService;
+    private  final TimeseriesService tsService;
 
     @Override
     public EntityView save(EntityView entityView, SecurityUser user) throws ThingsboardException {
@@ -205,7 +203,6 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         }
     }
 
-    //
     @Override
     public EntityView unassignEntityViewFromCustomer(EntityView entityView, Customer customer, SecurityUser user) throws ThingsboardException {
         ActionType actionType = ActionType.UNASSIGNED_FROM_CUSTOMER;
@@ -221,7 +218,6 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
             throw handleException(e);
         }
     }
-
 
     private ListenableFuture<List<Void>> copyAttributesFromEntityToEntityView(EntityView entityView, String scope, Collection<String> keys, SecurityUser user) throws ThingsboardException {
         EntityViewId entityId = entityView.getId();
@@ -304,7 +300,6 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
             return null;
         }, MoreExecutors.directExecutor());
     }
-
 
     private ListenableFuture<Void> deleteAttributesFromEntityView(EntityView entityView, String scope, List<String> keys, SecurityUser user) {
         EntityViewId entityId = entityView.getId();
@@ -389,15 +384,15 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
     }
 
     private void logAttributesUpdated(SecurityUser user, EntityId entityId, String scope, List<AttributeKvEntry> attributes, Throwable e) throws ThingsboardException {
-        logEntityAction(user, user.getTenantId(), entityId, null, null, ActionType.ATTRIBUTES_UPDATED, toException(e), scope, attributes);
+        notificationEntityService.notifyEntity(user.getTenantId(), entityId, null, null, ActionType.ATTRIBUTES_UPDATED, user, toException(e), scope, attributes);
     }
 
     private void logAttributesDeleted(SecurityUser user, EntityId entityId, String scope, List<String> keys, Throwable e) throws ThingsboardException {
-        logEntityAction(user, user.getTenantId(), entityId, null, null, ActionType.ATTRIBUTES_DELETED, toException(e), scope, keys);
+        notificationEntityService.notifyEntity(user.getTenantId(), entityId, null, null, ActionType.ATTRIBUTES_DELETED, user, toException(e), scope, keys);
     }
 
     private void logTimeseriesDeleted(SecurityUser user, EntityId entityId, List<String> keys, Throwable e) throws ThingsboardException {
-        logEntityAction(user, user.getTenantId(), entityId, null, null, ActionType.TIMESERIES_DELETED, toException(e), keys);
+        notificationEntityService.notifyEntity(user.getTenantId(), entityId, null, null, ActionType.TIMESERIES_DELETED, user, toException(e), keys);
     }
 
     private EntityView checkEntityViewId(EntityViewId entityViewId, Operation operation, SecurityUser user) throws ThingsboardException {
