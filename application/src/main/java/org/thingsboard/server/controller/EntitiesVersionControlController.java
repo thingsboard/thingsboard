@@ -27,12 +27,12 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
-import org.thingsboard.server.service.sync.vc.data.EntityVersion;
-import org.thingsboard.server.service.sync.vc.data.VersionCreationResult;
-import org.thingsboard.server.service.sync.vc.data.VersionLoadResult;
-import org.thingsboard.server.service.sync.vc.data.VersionedEntityInfo;
-import org.thingsboard.server.service.sync.vc.data.request.create.VersionCreateRequest;
-import org.thingsboard.server.service.sync.vc.data.request.load.VersionLoadRequest;
+import org.thingsboard.server.common.data.sync.vc.EntityVersion;
+import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
+import org.thingsboard.server.common.data.sync.vc.VersionLoadResult;
+import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
+import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
+import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadRequest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,43 +65,27 @@ public class EntitiesVersionControlController extends BaseController {
             "    \"saveRelations\": true\n" +
             "  }\n" +
             "}\n```" + NEW_LINE +
-            "ENTITY_LIST:" + NEW_LINE +
+            "COMPLEX:" + NEW_LINE +
             "```\n{\n" +
-            "  \"type\": \"ENTITY_LIST\",\n" +
+            "  \"type\": \"COMPLEX\",\n" +
             "\n" +
-            "  \"versionName\": \"Version 1.0\",\n" +
-            "  \"branch\": \"dev\",\n" +
+            "  \"versionName\": \"Devices and profiles: release 2\",\n" +
+            "  \"branch\": \"master\",\n" +
             "\n" +
-            "  \"entitiesIds\": [\n" +
-            "    {\n" +
-            "      \"entityType\": \"DEVICE\",\n" +
-            "      \"id\": \"b79448e0-d4f4-11ec-847b-0f432358ab48\"\n" +
-            "    },\n" +
-            "    {\n" +
-            "      \"entityType\": \"DEVICE_PROFILE\",\n" +
-            "      \"id\": \"b7944123-d4f4-11ec-847b-0f432358ab48\"\n" +
-            "    }\n" +
-            "  ],\n" +
-            "  \"config\": {\n" +
-            "    \"saveRelations\": true,\n" +
-            "    \"syncStrategy\": \"MERGE\"\n" +
-            "  }\n" +
-            "}\n```" + NEW_LINE +
-            "ENTITY_TYPE:" + NEW_LINE +
-            "```\n{\n" +
-            "  \"type\": \"ENTITY_TYPE\",\n" +
-            "\n" +
-            "  \"versionName\": \"Version 1.0\",\n" +
-            "  \"branch\": \"dev\",\n" +
-            "\n" +
+            "  \"syncStrategy\": \"OVERWRITE\",\n" +
             "  \"entityTypes\": {\n" +
             "    \"DEVICE\": {\n" +
-            "      \"saveRelations\": true,\n" +
-            "      \"syncStrategy\": \"MERGE\"\n" +
+            "      \"syncStrategy\": null,\n" +
+            "      \"allEntities\": true,\n" +
+            "      \"saveRelations\": true\n" +
             "    },\n" +
             "    \"DEVICE_PROFILE\": {\n" +
-            "      \"saveRelations\": true,\n" +
-            "      \"syncStrategy\": \"OVERWRITE\"\n" +
+            "      \"syncStrategy\": \"MERGE\",\n" +
+            "      \"allEntities\": false,\n" +
+            "      \"entityIds\": [\n" +
+            "        \"b79448e0-d4f4-11ec-847b-0f432358ab48\"\n" +
+            "      ],\n" +
+            "      \"saveRelations\": true\n" +
             "    }\n" +
             "  }\n" +
             "}\n```")
@@ -182,7 +166,7 @@ public class EntitiesVersionControlController extends BaseController {
                                                            @PathVariable EntityType entityType,
                                                            @PathVariable String versionId) throws ThingsboardException {
         try {
-            return versionControlService.listEntitiesAtVersion(getTenantId(), entityType, branch, versionId);
+            return versionControlService.listEntitiesAtVersion(getTenantId(), branch, versionId, entityType);
         } catch (Exception e) {
             throw handleException(e);
         }

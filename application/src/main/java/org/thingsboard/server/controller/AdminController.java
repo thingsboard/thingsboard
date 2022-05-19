@@ -29,7 +29,7 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.sms.config.TestSmsRequest;
-import org.thingsboard.server.common.data.vc.EntitiesVersionControlSettings;
+import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;

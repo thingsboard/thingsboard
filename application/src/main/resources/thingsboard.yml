@@ -1115,6 +1115,11 @@ metrics:
     # Metrics percentiles returned by actuator for timer metrics. List of double values (divided by ,).
     percentiles: "${METRICS_TIMER_PERCENTILES:0.5}"
 
+vc:
+  git:
+    service: "${JS_VC_GIT_SERVICE:local}" # local/remote
+    repos-poll-interval: "${TB_VC_GIT_REPOS_POLL_INTERVAL_SEC:60}"
+
 management:
   endpoints:
     web:

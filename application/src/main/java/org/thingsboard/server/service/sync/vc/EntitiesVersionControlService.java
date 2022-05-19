@@ -19,14 +19,14 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.vc.EntitiesVersionControlSettings;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.sync.vc.data.EntityVersion;
-import org.thingsboard.server.service.sync.vc.data.VersionCreationResult;
-import org.thingsboard.server.service.sync.vc.data.VersionLoadResult;
-import org.thingsboard.server.service.sync.vc.data.VersionedEntityInfo;
-import org.thingsboard.server.service.sync.vc.data.request.create.VersionCreateRequest;
-import org.thingsboard.server.service.sync.vc.data.request.load.VersionLoadRequest;
+import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
+import org.thingsboard.server.common.data.sync.vc.EntityVersion;
+import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
+import org.thingsboard.server.common.data.sync.vc.VersionLoadResult;
+import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
+import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadRequest;
+import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
 
 import java.util.List;
 
@@ -42,7 +42,7 @@ public interface EntitiesVersionControlService {
     List<EntityVersion> listVersions(TenantId tenantId, String branch) throws Exception;
 
 
-    List<VersionedEntityInfo> listEntitiesAtVersion(TenantId tenantId, EntityType entityType, String branch, String versionId) throws Exception;
+    List<VersionedEntityInfo> listEntitiesAtVersion(TenantId tenantId, String branch, String versionId, EntityType entityType) throws Exception;
 
     List<VersionedEntityInfo> listAllEntitiesAtVersion(TenantId tenantId, String branch, String versionId) throws Exception;
 
@@ -57,7 +57,5 @@ public interface EntitiesVersionControlService {
     EntitiesVersionControlSettings saveVersionControlSettings(TenantId tenantId, EntitiesVersionControlSettings versionControlSettings);
 
     void checkVersionControlAccess(TenantId tenantId, EntitiesVersionControlSettings settings) throws ThingsboardException;
-
-
 
 }
