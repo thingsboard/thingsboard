@@ -112,6 +112,20 @@ public class LocalGitVersionControlService implements GitVersionControlService {
     }
 
     @Override
+    public void clearRepository(TenantId tenantId) {
+        var lock = getRepoLock(tenantId);
+        lock.lock();
+        try {
+            gitRepositoryService.clearRepository(tenantId);
+        } catch (Exception e) {
+            //TODO: analyze and return meaningful exceptions that we can show to the client;
+            throw new RuntimeException(e);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
     public PendingCommit prepareCommit(TenantId tenantId, VersionCreateRequest request) {
         var lock = getRepoLock(tenantId);
         lock.lock();

@@ -58,6 +58,8 @@ public interface EntitiesVersionControlService {
 
     EntitiesVersionControlSettings saveVersionControlSettings(TenantId tenantId, EntitiesVersionControlSettings versionControlSettings);
 
+    void deleteVersionControlSettings(TenantId tenantId);
+
     void checkVersionControlAccess(TenantId tenantId, EntitiesVersionControlSettings settings) throws ThingsboardException;
 
 }

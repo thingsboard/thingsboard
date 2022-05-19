@@ -313,6 +313,13 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     }
 
     @Override
+    public void deleteVersionControlSettings(TenantId tenantId) {
+        if (adminSettingsService.deleteAdminSettings(tenantId, SETTINGS_KEY)) {
+            gitService.clearRepository(tenantId);
+        }
+    }
+
+    @Override
     public void checkVersionControlAccess(TenantId tenantId, EntitiesVersionControlSettings settings) throws ThingsboardException {
         EntitiesVersionControlSettings storedSettings = getVersionControlSettings(tenantId);
         settings = this.restoreCredentials(settings, storedSettings);

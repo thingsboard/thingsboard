@@ -34,6 +34,8 @@ public interface GitVersionControlService {
 
     void initRepository(TenantId tenantId, EntitiesVersionControlSettings settings);
 
+    void clearRepository(TenantId tenantId);
+
     PendingCommit prepareCommit(TenantId tenantId, VersionCreateRequest request);
 
     void addToCommit(PendingCommit commit, EntityExportData<ExportableEntity<EntityId>> entityData);

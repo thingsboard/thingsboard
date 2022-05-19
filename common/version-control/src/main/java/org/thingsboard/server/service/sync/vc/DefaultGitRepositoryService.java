@@ -224,7 +224,8 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
         repositories.put(tenantId, repository);
     }
 
-    private void clearRepository(TenantId tenantId) throws IOException {
+    @Override
+    public void clearRepository(TenantId tenantId) throws IOException {
         GitRepository repository = repositories.get(tenantId);
         if (repository != null) {
             FileUtils.deleteDirectory(new File(repository.getDirectory()));

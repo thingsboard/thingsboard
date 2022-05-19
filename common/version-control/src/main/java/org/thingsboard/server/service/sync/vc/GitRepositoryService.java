@@ -36,6 +36,8 @@ public interface GitRepositoryService {
 
     void initRepository(TenantId tenantId, EntitiesVersionControlSettings settings) throws Exception;
 
+    void clearRepository(TenantId tenantId) throws IOException;
+
     void add(PendingCommit commit, String relativePath, String entityDataJson) throws IOException;
 
     void deleteFolderContent(PendingCommit commit, String relativePath) throws IOException;
