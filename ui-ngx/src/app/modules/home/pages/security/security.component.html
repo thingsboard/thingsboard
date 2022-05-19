@@ -52,28 +52,27 @@
     <mat-card-content>
       <h3 class="mat-h3 auth-title" translate>security.2fa.authenticate-with</h3>
       <form [formGroup]="twoFactorAuth">
-        <fieldset [disabled]="isLoading$ | async">
-          <mat-radio-group formControlName="useByDefault">
-            <ng-container *ngFor="let provider of allowTwoFactorProviders; let $last = last; trackBy: trackByProvider">
-              <div class="provider">
-                <h4 class="provider-title">{{ providersData.get(provider).name | translate }}</h4>
-                <div fxLayout="row" fxLayoutAlign="space-between start">
-                  <div class="mat-body-1 description">
-                    {{ providersData.get(provider).description | translate }}
-                  </div>
-                  <mat-slide-toggle [formControlName]="provider"
-                                    (click)="confirm2FAChange($event, provider)">
-                  </mat-slide-toggle>
-                </div>
-                <mat-radio-button [value]="provider"
-                                  *ngIf="twoFactorAuth.get(provider).value">
-                  <span class="checkbox-label" translate>security.2fa.main-2fa-method</span>
-                </mat-radio-button>
+        <ng-container *ngFor="let provider of allowTwoFactorProviders; let $last = last; trackBy: trackByProvider">
+          <div class="provider">
+            <h4 class="provider-title">{{ providersData.get(provider).name | translate }}</h4>
+            <div fxLayout="row" fxLayoutAlign="space-between start">
+              <div class="mat-body-1 description">
+                {{ providersData.get(provider).description | translate }}
               </div>
-              <mat-divider *ngIf="!$last"></mat-divider>
-            </ng-container>
-          </mat-radio-group>
-        </fieldset>
+              <mat-slide-toggle [formControlName]="provider"
+                                (click)="confirm2FAChange($event, provider)">
+              </mat-slide-toggle>
+            </div>
+            <mat-checkbox [value]="provider"
+                          [checked]="useByDefault === provider"
+                          (click)="changeDefaultProvider($event, provider)"
+                          [disabled]="(isLoading$ | async) || activeSingleProvider"
+                           *ngIf="twoFactorAuth.get(provider).value">
+              <span class="checkbox-label" translate>security.2fa.main-2fa-method</span>
+            </mat-checkbox>
+          </div>
+          <mat-divider *ngIf="!$last"></mat-divider>
+        </ng-container>
       </form>
     </mat-card-content>
   </mat-card>

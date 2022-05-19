@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { User } from '@shared/models/user.model';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -34,18 +34,24 @@ import {
   TwoFactorAuthProviderType
 } from '@shared/models/two-factor-auth.models';
 import { authenticationDialogMap } from '@home/pages/security/authentication-dialog/authentication-dialog.map';
+import { takeUntil, tap } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'tb-security',
   templateUrl: './security.component.html',
   styleUrls: ['./security.component.scss']
 })
-export class SecurityComponent extends PageComponent implements OnInit {
+export class SecurityComponent extends PageComponent implements OnInit, OnDestroy {
+
+  private readonly destroy$ = new Subject<void>();
 
   twoFactorAuth: FormGroup;
   user: User;
   allowTwoFactorProviders: TwoFactorAuthProviderType[] = [];
   providersData = twoFactorAuthProvidersData;
+  useByDefault: TwoFactorAuthProviderType = null;
+  activeSingleProvider = true;
 
   get jwtToken(): string {
     return `Bearer ${localStorage.getItem('jwt_token')}`;
@@ -78,16 +84,23 @@ export class SecurityComponent extends PageComponent implements OnInit {
     this.twoFactorLoad(this.route.snapshot.data.providers);
   }
 
+  ngOnDestroy() {
+    super.ngOnDestroy();
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   private buildTwoFactorForm() {
     this.twoFactorAuth = this.fb.group({
       TOTP: [false],
       SMS: [false],
-      EMAIL: [false],
-      useByDefault: [null]
+      EMAIL: [false]
     });
-    this.twoFactorAuth.get('useByDefault').valueChanges.subscribe(value => {
-      this.twoFaService.updateTwoFaAccountConfig(value, true, {ignoreLoading: true})
-        .subscribe(data => this.processTwoFactorAuthConfig(data));
+    this.twoFactorAuth.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((value: {TwoFactorAuthProviderType: boolean}) => {
+      const formActiveValue = Object.values(value).filter(item => item);
+      this.activeSingleProvider = formActiveValue.length < 2;
     });
   }
 
@@ -108,7 +121,7 @@ export class SecurityComponent extends PageComponent implements OnInit {
       if (configs[provider]) {
         this.twoFactorAuth.get(provider).setValue(true);
         if (configs[provider].useByDefault) {
-          this.twoFactorAuth.get('useByDefault').setValue(provider, {emitEvent: false});
+          this.useByDefault = provider;
         }
       } else {
         this.twoFactorAuth.get(provider).setValue(false);
@@ -151,7 +164,10 @@ export class SecurityComponent extends PageComponent implements OnInit {
         this.translate.instant('security.2fa.disable-2fa-provider-text', {name: providerName}),
       ).subscribe(res => {
         if (res) {
-          this.twoFaService.deleteTwoFaAccountConfig(provider).subscribe(data => this.processTwoFactorAuthConfig(data));
+          this.twoFactorAuth.disable({emitEvent: false});
+          this.twoFaService.deleteTwoFaAccountConfig(provider)
+            .pipe(tap(() => this.twoFactorAuth.enable({emitEvent: false})))
+            .subscribe(data => this.processTwoFactorAuthConfig(data));
         }
       });
     } else {
@@ -163,9 +179,20 @@ export class SecurityComponent extends PageComponent implements OnInit {
       }).afterClosed().subscribe(res => {
         if (res) {
           this.twoFactorAuth.get(provider).setValue(res);
-          this.twoFactorAuth.get('useByDefault').setValue(provider, {emitEvent: false});
+          this.useByDefault = provider;
         }
       });
+    }
+  }
+
+  changeDefaultProvider(event: MouseEvent, provider: TwoFactorAuthProviderType) {
+    event.stopPropagation();
+    event.preventDefault();
+    if (this.useByDefault !== provider) {
+      this.twoFactorAuth.disable({emitEvent: false});
+      this.twoFaService.updateTwoFaAccountConfig(provider, true)
+        .pipe(tap(() => this.twoFactorAuth.enable({emitEvent: false})))
+        .subscribe(data => this.processTwoFactorAuthConfig(data));
     }
   }
 }
