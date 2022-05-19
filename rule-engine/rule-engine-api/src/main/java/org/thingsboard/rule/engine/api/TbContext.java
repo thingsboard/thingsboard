@@ -142,6 +142,9 @@ public interface TbContext {
      */
     void output(TbMsg msg, String relationType);
 
+    @Deprecated
+    void enqueue(TbMsg tbMsg, String queueName, Runnable onSuccess, Consumer<Throwable> onFailure);
+
     /**
      * Puts new message to custom queue for processing
      *

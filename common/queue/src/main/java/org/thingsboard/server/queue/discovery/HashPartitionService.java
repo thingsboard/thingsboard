@@ -161,6 +161,18 @@ public class HashPartitionService implements PartitionService {
     }
 
     @Override
+    @Deprecated
+    public TopicPartitionInfo resolve(ServiceType serviceType, TenantId tenantId, EntityId entityId, String queueName) {
+        log.warn("This method is deprecated and will be removed!!!");
+        TenantId isolatedOrSystemTenantId = getIsolatedOrSystemTenantId(serviceType, tenantId);
+        QueueKey queueKey = new QueueKey(serviceType, queueName, isolatedOrSystemTenantId);
+        if (!partitionSizesMap.containsKey(queueKey)) {
+            queueKey = new QueueKey(serviceType, isolatedOrSystemTenantId);
+        }
+        return resolve(queueKey, entityId);
+    }
+
+    @Override
     public TopicPartitionInfo resolve(ServiceType serviceType, TenantId tenantId, EntityId entityId) {
         return resolve(serviceType, null, tenantId, entityId);
     }

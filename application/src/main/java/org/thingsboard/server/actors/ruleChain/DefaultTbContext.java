@@ -162,6 +162,13 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    @Deprecated
+    public void enqueue(TbMsg tbMsg, String queueName, Runnable onSuccess, Consumer<Throwable> onFailure) {
+        TopicPartitionInfo tpi = resolvePartition(tbMsg, queueName);
+        enqueue(tpi, tbMsg, onFailure, onSuccess);
+    }
+
+    @Override
     public void enqueue(TbMsg tbMsg, QueueId queueId, Runnable onSuccess, Consumer<Throwable> onFailure) {
         TopicPartitionInfo tpi = resolvePartition(tbMsg, queueId);
         enqueue(tpi, tbMsg, onFailure, onSuccess);
@@ -227,6 +234,11 @@ class DefaultTbContext implements TbContext {
 
     private TopicPartitionInfo resolvePartition(TbMsg tbMsg, QueueId queueId) {
         return mainCtx.resolve(ServiceType.TB_RULE_ENGINE, queueId, getTenantId(), tbMsg.getOriginator());
+    }
+
+    @Deprecated
+    private TopicPartitionInfo resolvePartition(TbMsg tbMsg, String queueName) {
+        return mainCtx.resolve(ServiceType.TB_RULE_ENGINE, queueName, getTenantId(), tbMsg.getOriginator());
     }
 
     private TopicPartitionInfo resolvePartition(TbMsg tbMsg) {

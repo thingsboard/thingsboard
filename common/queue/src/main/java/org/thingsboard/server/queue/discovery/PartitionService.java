@@ -32,6 +32,9 @@ import java.util.UUID;
  */
 public interface PartitionService {
 
+    @Deprecated
+    TopicPartitionInfo resolve(ServiceType serviceType, TenantId tenantId, EntityId entityId, String queueName);
+
     TopicPartitionInfo resolve(ServiceType serviceType, TenantId tenantId, EntityId entityId);
 
     TopicPartitionInfo resolve(ServiceType serviceType, QueueId queueId, TenantId tenantId, EntityId entityId);
