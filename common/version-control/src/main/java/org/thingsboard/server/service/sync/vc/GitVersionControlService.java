@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.sync.vc;
 
-import lombok.SneakyThrows;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -31,7 +30,6 @@ import java.util.List;
 
 public interface GitVersionControlService {
 
-    @SneakyThrows
     EntitiesVersionControlSettings getSettings(TenantId tenantId);
 
     void initRepository(TenantId tenantId, EntitiesVersionControlSettings settings);
@@ -57,4 +55,7 @@ public interface GitVersionControlService {
     List<String> listBranches(TenantId tenantId);
 
     EntityExportData<?> getEntity(TenantId tenantId, String versionId, EntityId entityId);
+
+    List<EntityExportData<?>> getEntities(TenantId tenantId, String branch, String versionId, EntityType entityType, int offset, int limit);
+
 }

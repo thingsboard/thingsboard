@@ -52,6 +52,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -191,6 +192,14 @@ public class LocalGitVersionControlService implements GitVersionControlService {
     @Override
     public List<String> listBranches(TenantId tenantId) {
         return gitRepositoryService.listBranches(tenantId);
+    }
+
+    @Override
+    public List<EntityExportData<?>> getEntities(TenantId tenantId, String branch, String versionId, EntityType entityType, int offset, int limit) {
+        return listEntitiesAtVersion(tenantId, branch, versionId, entityType).stream()
+                .skip(offset).limit(limit)
+                .map(entityInfo -> getEntity(tenantId, versionId, entityInfo.getExternalId()))
+                .collect(Collectors.toList());
     }
 
     @Override
