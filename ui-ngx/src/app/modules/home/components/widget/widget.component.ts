@@ -977,7 +977,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         ignoreDataUpdateOnIntervalTick: this.typeParameters.ignoreDataUpdateOnIntervalTick,
         comparisonEnabled: comparisonSettings.comparisonEnabled,
         timeForComparison: comparisonSettings.timeForComparison,
-        comparisonCustomIntervalValue: comparisonSettings.comparisonCustomIntervalValue
+        comparisonCustomIntervalValue: comparisonSettings.comparisonCustomIntervalValue,
+        pageSize: this.widget.config.pageSize
       };
       if (this.widget.type === widgetType.alarm) {
         options.alarmSource = deepClone(this.widget.config.alarmSource);

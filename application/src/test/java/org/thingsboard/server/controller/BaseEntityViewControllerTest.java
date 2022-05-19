@@ -62,6 +62,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -368,7 +369,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
     public void testTheCopyOfAttrsIntoTSForTheView() throws Exception {
         Set<String> expectedActualAttributesSet = Set.of("caKey1", "caKey2", "caKey3", "caKey4");
         Set<String> actualAttributesSet =
-                getAttributesByKeys("{\"caKey1\":\"value1\", \"caKey2\":true, \"caKey3\":42.0, \"caKey4\":73}", expectedActualAttributesSet);
+                putAttributesAndWait("{\"caKey1\":\"value1\", \"caKey2\":true, \"caKey3\":42.0, \"caKey4\":73}", expectedActualAttributesSet);
         log.debug("got correct actualAttributesSet, saving new entity view...");
         EntityView savedView = getNewSavedEntityView("Test entity view");
 
@@ -389,13 +390,15 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
     @Test
     public void testTheCopyOfAttrsOutOfTSForTheView() throws Exception {
+        long now = System.currentTimeMillis();
         Set<String> expectedActualAttributesSet = Set.of("caKey1", "caKey2", "caKey3", "caKey4");
         Set<String> actualAttributesSet =
-                getAttributesByKeys("{\"caKey1\":\"value1\", \"caKey2\":true, \"caKey3\":42.0, \"caKey4\":73}", expectedActualAttributesSet);
+                putAttributesAndWait("{\"caKey1\":\"value1\", \"caKey2\":true, \"caKey3\":42.0, \"caKey4\":73}", expectedActualAttributesSet);
 
-        List<Map<String, Object>> valueTelemetryOfDevices = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + testDevice.getId().getId().toString() +
-                "/values/attributes?keys=" + String.join(",", actualAttributesSet), new TypeReference<>() {
+        List<Map<String, Object>> values = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + testDevice.getId() +
+                "/values/attributes?keys=" + String.join(",", expectedActualAttributesSet), new TypeReference<>() {
         });
+        assertEquals(expectedActualAttributesSet.size(), values.size());
 
         EntityView view = new EntityView();
         view.setEntityId(testDevice.getId());
@@ -403,12 +406,12 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         view.setName("Test entity view");
         view.setType("default");
         view.setKeys(telemetry);
-        view.setStartTimeMs((long) getValue(valueTelemetryOfDevices, "lastActivityTime") * 10);
-        view.setEndTimeMs((long) getValue(valueTelemetryOfDevices, "lastActivityTime") / 10);
+        view.setStartTimeMs(now - HOURS.toMillis(1));
+        view.setEndTimeMs(now - 1);
         EntityView savedView = doPost("/api/entityView", view, EntityView.class);
 
-        List<Map<String, Object>> values = doGetAsyncTyped("/api/plugins/telemetry/ENTITY_VIEW/" + savedView.getId().getId().toString() +
-                "/values/attributes?keys=" + String.join(",", actualAttributesSet), new TypeReference<>() {
+        values = doGetAsyncTyped("/api/plugins/telemetry/ENTITY_VIEW/" + savedView.getId().getId().toString() +
+                "/values/attributes?keys=" + String.join(",", expectedActualAttributesSet), new TypeReference<>() {
         });
         assertEquals(0, values.size());
     }
@@ -431,19 +434,19 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         uploadTelemetry("{\"tsKey1\":\"value1\", \"tsKey2\":true, \"tsKey3\":40.0}", accessToken);
         getWsClient().waitForUpdate();
 
-        long startTimeMs = System.currentTimeMillis();
+        long startTimeMs = getCurTsButNotPrevTs(now);
 
         getWsClient().registerWaitForUpdate();
         uploadTelemetry("{\"tsKey1\":\"value2\", \"tsKey2\":false, \"tsKey3\":80.0}", accessToken);
         getWsClient().waitForUpdate();
 
-        Thread.sleep(3);
+        long middleOfTestMs = getCurTsButNotPrevTs(startTimeMs);
 
         getWsClient().registerWaitForUpdate();
         uploadTelemetry("{\"tsKey1\":\"value3\", \"tsKey2\":false, \"tsKey3\":120.0}", accessToken);
         getWsClient().waitForUpdate();
 
-        long endTimeMs = System.currentTimeMillis();
+        long endTimeMs = getCurTsButNotPrevTs(middleOfTestMs);
         getWsClient().registerWaitForUpdate();
         uploadTelemetry("{\"tsKey1\":\"value4\", \"tsKey2\":true, \"tsKey3\":160.0}", accessToken);
         getWsClient().waitForUpdate();
@@ -455,15 +458,25 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         EntityView savedView = doPost("/api/entityView", view, EntityView.class);
         String entityViewId = savedView.getId().getId().toString();
 
-        Map<String, List<Map<String, String>>> expectedValues = getTelemetryValues("DEVICE", deviceId, keys, 0L, (startTimeMs + endTimeMs) / 2);
-        Assert.assertEquals(2, expectedValues.get("tsKey1").size());
-        Assert.assertEquals(2, expectedValues.get("tsKey2").size());
-        Assert.assertEquals(2, expectedValues.get("tsKey3").size());
+        Map<String, List<Map<String, String>>> actualDeviceValues = getTelemetryValues("DEVICE", deviceId, keys, 0L, middleOfTestMs);
+        Assert.assertEquals(2, actualDeviceValues.get("tsKey1").size());
+        Assert.assertEquals(2, actualDeviceValues.get("tsKey2").size());
+        Assert.assertEquals(2, actualDeviceValues.get("tsKey3").size());
 
-        Map<String, List<Map<String, String>>> actualValues = getTelemetryValues("ENTITY_VIEW", entityViewId, keys, 0L, (startTimeMs + endTimeMs) / 2);
-        Assert.assertEquals(1, actualValues.get("tsKey1").size());
-        Assert.assertEquals(1, actualValues.get("tsKey2").size());
-        Assert.assertEquals(1, actualValues.get("tsKey3").size());
+        Map<String, List<Map<String, String>>> actualEntityViewValues = getTelemetryValues("ENTITY_VIEW", entityViewId, keys, 0L, middleOfTestMs);
+        Assert.assertEquals(1, actualEntityViewValues.get("tsKey1").size());
+        Assert.assertEquals(1, actualEntityViewValues.get("tsKey2").size());
+        Assert.assertEquals(1, actualEntityViewValues.get("tsKey3").size());
+    }
+
+    private static long getCurTsButNotPrevTs(long prevTs) throws InterruptedException {
+        long result = System.currentTimeMillis();
+        if (prevTs == result) {
+            Thread.sleep(1);
+            return getCurTsButNotPrevTs(prevTs);
+        } else {
+            return result;
+        }
     }
 
     private void uploadTelemetry(String strKvs, String accessToken) throws Exception {
@@ -504,7 +517,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         });
     }
 
-    private Set<String> getAttributesByKeys(String stringKV, Set<String> expectedKeySet) throws Exception {
+    private Set<String> putAttributesAndWait(String stringKV, Set<String> expectedKeySet) throws Exception {
         DeviceTypeFilter dtf = new DeviceTypeFilter(testDevice.getType(), testDevice.getName());
         List<EntityKey> keysToSubscribe = expectedKeySet.stream()
                 .map(key -> new EntityKey(EntityKeyType.CLIENT_ATTRIBUTE, key))

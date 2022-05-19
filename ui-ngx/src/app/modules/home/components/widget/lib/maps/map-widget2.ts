@@ -14,26 +14,11 @@
 /// limitations under the License.
 ///
 
-import {
-  defaultMapSettings,
-  MapProviders,
-  UnitedMapSettings,
-  WidgetUnitedMapSettings
-} from './map-models';
+import { defaultMapSettings, MapProviders, UnitedMapSettings, WidgetUnitedMapSettings } from './map-models';
 import LeafletMap from './leaflet-map';
-import {
-  commonMapSettingsSchema,
-  editorSettingSchema,
-  mapCircleSchema,
-  mapPolygonSchema,
-  markerClusteringSettingsSchema,
-  markerClusteringSettingsSchemaLeaflet,
-  routeMapSettingsSchema
-} from './schemes';
 import { MapWidgetInterface, MapWidgetStaticInterface } from './map-widget.interface';
-import { addCondition, addGroupInfo, addToSchema, initSchema, mergeSchemes } from '@core/schema-utils';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
-import { getDefCenterPosition, getProviderSchema, parseWithTranslation } from './common-maps-utils';
+import { getDefCenterPosition, parseWithTranslation } from './common-maps-utils';
 import {
   Datasource,
   DatasourceData,
@@ -45,7 +30,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
 import { providerClass } from '@home/components/widget/lib/maps/providers';
-import { isDefined, parseFunction } from '@core/utils';
+import { isDefined, isDefinedAndNotNull, parseFunction } from '@core/utils';
 import L from 'leaflet';
 import { forkJoin, Observable, of } from 'rxjs';
 import { AttributeService } from '@core/http/attribute.service';
@@ -87,9 +72,13 @@ export class MapWidgetController implements MapWidgetInterface {
         this.map.saveMarkerLocation = this.setMarkerLocation.bind(this);
         this.map.savePolygonLocation = this.savePolygonLocation.bind(this);
         this.map.saveLocation = this.saveLocation.bind(this);
+        let pageSize = this.settings.mapPageSize;
+        if (isDefinedAndNotNull(this.ctx.widgetConfig.pageSize)) {
+          pageSize = Math.max(pageSize, this.ctx.widgetConfig.pageSize);
+        }
         this.pageLink = {
           page: 0,
-          pageSize: this.settings.mapPageSize,
+          pageSize,
           textSearch: null,
           dynamic: true
         };
@@ -103,39 +92,6 @@ export class MapWidgetController implements MapWidgetInterface {
     data: DatasourceData[];
     settings: WidgetUnitedMapSettings;
     pageLink: EntityDataPageLink;
-
-    public static dataKeySettingsSchema(): object {
-        return {};
-    }
-
-    public static getProvidersSchema(mapProvider: MapProviders, ignoreImageMap = false) {
-       return getProviderSchema(mapProvider, ignoreImageMap);
-    }
-
-    public static settingsSchema(mapProvider: MapProviders, drawRoutes: boolean): JsonSettingsSchema {
-        const schema = initSchema();
-        addToSchema(schema, this.getProvidersSchema(mapProvider));
-        addGroupInfo(schema, 'Map Provider Settings');
-        addToSchema(schema, commonMapSettingsSchema);
-        addGroupInfo(schema, 'Common Map Settings');
-        addToSchema(schema, addCondition(mapPolygonSchema, 'model.showPolygon === true', ['showPolygon']));
-        addGroupInfo(schema, 'Polygon Settings');
-        addToSchema(schema, addCondition(mapCircleSchema, 'model.showCircle === true', ['showCircle']));
-        addGroupInfo(schema, 'Circle Settings');
-        if (drawRoutes) {
-            addToSchema(schema, routeMapSettingsSchema);
-            addGroupInfo(schema, 'Route Map Settings');
-        } else {
-            const clusteringSchema = mergeSchemes([markerClusteringSettingsSchema,
-                addCondition(markerClusteringSettingsSchemaLeaflet,
-                    `model.useClusterMarkers === true && model.provider !== "image-map"`)]);
-            addToSchema(schema, clusteringSchema);
-            addGroupInfo(schema, 'Markers Clustering Settings');
-            addToSchema(schema, addCondition(editorSettingSchema, '(model.editablePolygon === true || model.draggableMarker === true)'));
-            addGroupInfo(schema, 'Editor settings');
-        }
-        return schema;
-    }
 
     public static actionSources(): object {
         return {

@@ -32,30 +32,22 @@ import {
   MapProviders,
   WidgetUnitedTripAnimationSettings
 } from '@home/components/widget/lib/maps/map-models';
-import { addCondition, addGroupInfo, addToSchema, initSchema } from '@app/core/schema-utils';
-import {
-  mapCircleSchema,
-  mapPolygonSchema,
-  pathSchema,
-  pointSchema,
-  tripAnimationSchema
-} from '@home/components/widget/lib/maps/schemes';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
 import {
   findAngle,
-  getProviderSchema,
   getRatio,
   interpolateOnLineSegment,
   parseWithTranslation
 } from '@home/components/widget/lib/maps/common-maps-utils';
-import { FormattedData, JsonSettingsSchema, WidgetConfig } from '@shared/models/widget.models';
+import { FormattedData, WidgetConfig } from '@shared/models/widget.models';
 import moment from 'moment';
 import {
-  deepClone,
-  formattedDataArrayFromDatasourceData, formattedDataFormDatasourceData,
+  formattedDataArrayFromDatasourceData,
+  formattedDataFormDatasourceData,
   isDefined,
-  isUndefined, mergeFormattedData,
+  isUndefined,
+  mergeFormattedData,
   parseFunction,
   safeExecute
 } from '@core/utils';
@@ -100,23 +92,6 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
   anchors: number[] = [];
   useAnchors: boolean;
   currentTime: number;
-
-  static getSettingsSchema(): JsonSettingsSchema {
-    const schema = initSchema();
-    addToSchema(schema, getProviderSchema(null, true));
-    addGroupInfo(schema, 'Map Provider Settings');
-    addToSchema(schema, tripAnimationSchema);
-    addGroupInfo(schema, 'Trip Animation Settings');
-    addToSchema(schema, pathSchema);
-    addGroupInfo(schema, 'Path Settings');
-    addToSchema(schema, addCondition(pointSchema, 'model.showPoints === true', ['showPoints']));
-    addGroupInfo(schema, 'Path Points Settings');
-    addToSchema(schema, addCondition(mapPolygonSchema, 'model.showPolygon === true', ['showPolygon']));
-    addGroupInfo(schema, 'Polygon Settings');
-    addToSchema(schema, addCondition(mapCircleSchema, 'model.showCircle === true', ['showCircle']));
-    addGroupInfo(schema, 'Circle Settings');
-    return schema;
-  }
 
   ngOnInit(): void {
     this.widgetConfig = this.ctx.widgetConfig;
@@ -286,10 +261,12 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   calcLabel(points: FormattedData[]) {
-    const data = points[this.activeTrip.dsIndex];
-    const labelText: string = this.settings.useLabelFunction ?
-      safeExecute(this.settings.parsedLabelFunction, [data, points, data.dsIndex]) : this.settings.label;
-    this.label = this.sanitizer.bypassSecurityTrustHtml(parseWithTranslation.parseTemplate(labelText, data, true));
+    if (this.activeTrip) {
+      const data = points[this.activeTrip.dsIndex];
+      const labelText: string = this.settings.useLabelFunction ?
+        safeExecute(this.settings.parsedLabelFunction, [data, points, data.dsIndex]) : this.settings.label;
+      this.label = this.sanitizer.bypassSecurityTrustHtml(parseWithTranslation.parseTemplate(labelText, data, true));
+    }
   }
 
   private interpolateArray(originData: FormattedData[]): {[time: number]: FormattedData} {

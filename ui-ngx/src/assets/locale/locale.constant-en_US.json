@@ -3305,6 +3305,7 @@
         "advanced-settings": "Advanced settings",
         "data-settings": "Data settings",
         "no-data-display-message": "\"No data to display\" alternative message",
+        "data-page-size": "Maximum entities per datasource",
         "settings-component-not-found": "Settings form component not found for selector '{{selector}}'"
     },
     "widget-type": {

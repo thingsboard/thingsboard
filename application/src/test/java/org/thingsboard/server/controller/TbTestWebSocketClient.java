@@ -44,8 +44,8 @@ import java.util.concurrent.TimeUnit;
 public class TbTestWebSocketClient extends WebSocketClient {
 
     private volatile String lastMsg;
-    private CountDownLatch reply;
-    private CountDownLatch update;
+    private volatile CountDownLatch reply;
+    private volatile CountDownLatch update;
 
     public TbTestWebSocketClient(URI serverUri) {
         super(serverUri);
@@ -60,11 +60,11 @@ public class TbTestWebSocketClient extends WebSocketClient {
     public void onMessage(String s) {
         log.info("RECEIVED: {}", s);
         lastMsg = s;
-        if (reply != null) {
-            reply.countDown();
-        }
         if (update != null) {
             update.countDown();
+        }
+        if (reply != null) {
+            reply.countDown();
         }
     }
 
@@ -79,8 +79,12 @@ public class TbTestWebSocketClient extends WebSocketClient {
     }
 
     public void registerWaitForUpdate() {
+        registerWaitForUpdate(1);
+    }
+
+    public void registerWaitForUpdate(int count) {
         lastMsg = null;
-        update = new CountDownLatch(1);
+        update = new CountDownLatch(count);
     }
 
     @Override

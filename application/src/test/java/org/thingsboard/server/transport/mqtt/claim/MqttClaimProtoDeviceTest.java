@@ -16,12 +16,12 @@
 package org.thingsboard.server.transport.mqtt.claim;
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
+import org.thingsboard.server.transport.mqtt.MqttTestClient;
 import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 
 @Slf4j
@@ -60,7 +60,8 @@ public class MqttClaimProtoDeviceTest extends MqttClaimDeviceTest {
     }
 
     protected void processTestClaimingDevice(boolean emptyPayload) throws Exception {
-        MqttAsyncClient client = getMqttAsyncClient(accessToken);
+        MqttTestClient client = new MqttTestClient();
+        client.connectAndWait(accessToken);
         byte[] payloadBytes;
         if (emptyPayload) {
             payloadBytes = getClaimDevice(0, emptyPayload).toByteArray();

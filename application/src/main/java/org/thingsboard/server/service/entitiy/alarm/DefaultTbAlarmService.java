@@ -17,6 +17,7 @@ package org.thingsboard.server.service.entitiy.alarm;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
@@ -77,8 +78,13 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
 
     @Override
     public Boolean delete(Alarm alarm, SecurityUser user) throws ThingsboardException {
-        List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(alarm.getTenantId(), alarm.getOriginator());
-        notificationEntityService.notifyDeleteAlarm(alarm, user, relatedEdgeIds);
-        return alarmService.deleteAlarm(alarm.getTenantId(), alarm.getId()).isSuccessful();
+        try {
+            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(user.getTenantId(), alarm.getOriginator());
+            notificationEntityService.notifyDeleteAlarm(user.getTenantId(), alarm, alarm.getOriginator(), user.getCustomerId(),
+                    ActionType.DELETED, relatedEdgeIds, user, JacksonUtil.OBJECT_MAPPER.writeValueAsString(alarm));
+            return alarmService.deleteAlarm(user.getTenantId(), alarm.getId()).isSuccessful();
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 }

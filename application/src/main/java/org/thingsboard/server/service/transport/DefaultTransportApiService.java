@@ -298,7 +298,7 @@ public class DefaultTransportApiService implements TransportApiService {
                     tbClusterService.onDeviceUpdated(savedDevice, null);
                     device = savedDevice;
 
-                    relationService.saveRelationAsync(TenantId.SYS_TENANT_ID, new EntityRelation(gateway.getId(), device.getId(), "Created"));
+                    relationService.saveRelation(TenantId.SYS_TENANT_ID, new EntityRelation(gateway.getId(), device.getId(), "Created"));
 
                     TbMsgMetaData metaData = new TbMsgMetaData();
                     CustomerId customerId = gateway.getCustomerId();
