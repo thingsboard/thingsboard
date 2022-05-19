@@ -79,8 +79,6 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     private final EntityService entityService;
     private final TransactionTemplate transactionTemplate;
 
-    public static final String SETTINGS_KEY = "entitiesVersionControl";
-
     @Override
     public VersionCreationResult saveEntitiesVersion(SecurityUser user, VersionCreateRequest request) throws Exception {
         var commit = gitService.prepareCommit(user.getTenantId(), request);

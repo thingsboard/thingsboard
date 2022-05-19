@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
@@ -38,6 +39,7 @@ import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.queue.util.AfterStartUp;
 
@@ -63,14 +65,14 @@ public class LocalGitVersionControlService implements GitVersionControlService {
     private final ObjectWriter jsonWriter = new ObjectMapper().writer(SerializationFeature.INDENT_OUTPUT);
     private final GitRepositoryService gitRepositoryService;
     private final TenantDao tenantDao;
-    private final EntitiesVersionControlService entitiesVersionControlService;
+    private final AdminSettingsService adminSettingsService;
     private final ConcurrentMap<TenantId, Lock> tenantRepoLocks = new ConcurrentHashMap<>();
     private final Map<TenantId, PendingCommit> pendingCommitMap = new HashMap<>();
 
     @AfterStartUp
     public void init() {
         DaoUtil.processInBatches(tenantDao::findTenantsIds, 100, tenantId -> {
-            EntitiesVersionControlSettings settings = entitiesVersionControlService.getVersionControlSettings(tenantId);
+            EntitiesVersionControlSettings settings = getVersionControlSettings(tenantId);
             if (settings != null) {
                 try {
                     gitRepositoryService.initRepository(tenantId, settings);
@@ -211,6 +213,18 @@ public class LocalGitVersionControlService implements GitVersionControlService {
             //TODO: analyze and return meaningful exceptions that we can show to the client;
             throw new RuntimeException(e);
         }
+    }
+
+    private EntitiesVersionControlSettings getVersionControlSettings(TenantId tenantId) {
+        AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey(tenantId, EntitiesVersionControlService.SETTINGS_KEY);
+        if (adminSettings != null) {
+            try {
+                return JacksonUtil.convertValue(adminSettings.getJsonValue(), EntitiesVersionControlSettings.class);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to load version control settings!", e);
+            }
+        }
+        return null;
     }
 
     private List<EntityVersion> listVersions(TenantId tenantId, String branch, String path) {

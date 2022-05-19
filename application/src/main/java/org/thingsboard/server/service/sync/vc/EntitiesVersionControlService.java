@@ -32,6 +32,8 @@ import java.util.List;
 
 public interface EntitiesVersionControlService {
 
+    String SETTINGS_KEY = "entitiesVersionControl";
+
     VersionCreationResult saveEntitiesVersion(SecurityUser user, VersionCreateRequest request) throws Exception;
 
 
