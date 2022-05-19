@@ -56,6 +56,6 @@ public class CoapAttributesRequestIntegrationTest extends AbstractCoapAttributes
 
     @Test
     public void testRequestAttributesValuesFromTheServer() throws Exception {
-        processTestRequestAttributesValuesFromTheServer();
+        processJsonTestRequestAttributesValuesFromTheServer();
     }
 }

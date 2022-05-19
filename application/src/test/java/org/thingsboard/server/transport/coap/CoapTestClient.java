@@ -27,12 +27,12 @@ public class CoapTestClient {
         this.client = createClient(featureTokenUrl);
     }
 
-    public void connectToCoap(String accessToken, FeatureType featureType) {
-        connect(accessToken, featureType);
+    public void connectToCoap(String accessToken) {
+        setURI(accessToken, null);
     }
 
-    public void connectToCoap(String accessToken) {
-        connect(accessToken, null);
+    public void connectToCoap(String accessToken, FeatureType featureType) {
+        setURI(accessToken, featureType);
     }
 
     public void disconnect() {
@@ -41,22 +41,30 @@ public class CoapTestClient {
         };
     }
 
-    public CoapResponse PostMethod(String requestBody) throws ConnectorException, IOException {
-        return client.setTimeout(CLIENT_REQUEST_TIMEOUT).post(requestBody.getBytes(), MediaTypeRegistry.APPLICATION_JSON);
+    public CoapResponse postMethod(String requestBody) throws ConnectorException, IOException {
+        return this.postMethod(requestBody.getBytes());
     }
 
-    public CoapResponse GetMethod() throws ConnectorException, IOException {
+    public CoapResponse postMethod(byte[] requestBodyBytes) throws ConnectorException, IOException {
+        return client.setTimeout(CLIENT_REQUEST_TIMEOUT).post(requestBodyBytes, MediaTypeRegistry.APPLICATION_JSON);
+    }
+
+    public CoapResponse getMethod() throws ConnectorException, IOException {
         return client.setTimeout(CLIENT_REQUEST_TIMEOUT).get();
     }
 
-    private void connect(String accessToken, FeatureType featureType) {
+    public void setURI(String featureTokenUrl) {
         if (client == null) {
             throw new RuntimeException("Failed to connect! CoapClient is not initialized!");
         }
+        client.setURI(featureTokenUrl);
+    }
+
+    public void setURI(String accessToken, FeatureType featureType) {
         if (featureType == null){
             featureType = FeatureType.ATTRIBUTES;
         }
-        client.setURI(getFeatureTokenUrl(accessToken, featureType));
+        setURI(getFeatureTokenUrl(accessToken, featureType));
     }
 
     private CoapClient createClient() {
