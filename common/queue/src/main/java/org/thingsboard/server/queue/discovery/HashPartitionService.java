@@ -24,8 +24,6 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.queue.ServiceQueue;
-import org.thingsboard.server.common.msg.queue.ServiceQueueKey;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -260,9 +258,9 @@ public class HashPartitionService implements PartitionService {
         if (currentOtherServices == null) {
             currentOtherServices = new ArrayList<>(otherServices);
         } else {
-            Set<ServiceQueueKey> changes = new HashSet<>();
-            Map<ServiceQueueKey, List<ServiceInfo>> currentMap = getServiceKeyListMap(currentOtherServices);
-            Map<ServiceQueueKey, List<ServiceInfo>> newMap = getServiceKeyListMap(otherServices);
+            Set<QueueKey> changes = new HashSet<>();
+            Map<QueueKey, List<ServiceInfo>> currentMap = getServiceKeyListMap(currentOtherServices);
+            Map<QueueKey, List<ServiceInfo>> newMap = getServiceKeyListMap(otherServices);
             currentOtherServices = otherServices;
             currentMap.forEach((key, list) -> {
                 if (!list.equals(newMap.get(key))) {
@@ -327,19 +325,17 @@ public class HashPartitionService implements PartitionService {
         return list == null ? 0 : list.size();
     }
 
-    private Map<ServiceQueueKey, List<ServiceInfo>> getServiceKeyListMap(List<ServiceInfo> services) {
-        final Map<ServiceQueueKey, List<ServiceInfo>> currentMap = new HashMap<>();
+    private Map<QueueKey, List<ServiceInfo>> getServiceKeyListMap(List<ServiceInfo> services) {
+        final Map<QueueKey, List<ServiceInfo>> currentMap = new HashMap<>();
         services.forEach(serviceInfo -> {
             for (String serviceTypeStr : serviceInfo.getServiceTypesList()) {
                 ServiceType serviceType = ServiceType.valueOf(serviceTypeStr.toUpperCase());
                 if (ServiceType.TB_RULE_ENGINE.equals(serviceType)) {
-//                    for (TransportProtos.QueueInfo queue : serviceInfo.getRuleEngineQueuesList()) {
-//                        ServiceQueueKey serviceQueueKey = new ServiceQueueKey(new ServiceQueue(serviceType, queue.getName()), getSystemOrIsolatedTenantId(serviceInfo));
-//                        currentMap.computeIfAbsent(serviceQueueKey, key -> new ArrayList<>()).add(serviceInfo);
-//                    }
+                    partitionTopicsMap.keySet().forEach(queueKey ->
+                            currentMap.computeIfAbsent(queueKey, key -> new ArrayList<>()).add(serviceInfo));
                 } else {
-                    ServiceQueueKey serviceQueueKey = new ServiceQueueKey(new ServiceQueue(serviceType));
-                    currentMap.computeIfAbsent(serviceQueueKey, key -> new ArrayList<>()).add(serviceInfo);
+                    QueueKey queueKey = new QueueKey(serviceType);
+                    currentMap.computeIfAbsent(queueKey, key -> new ArrayList<>()).add(serviceInfo);
                 }
             }
         });

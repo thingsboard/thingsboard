@@ -48,10 +48,6 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
     @Value("${service.type:monolith}")
     private String serviceType;
 
-    @Getter
-    @Value("${service.tenant_id:}")
-    private String tenantIdStr;
-
     @Autowired
     private ApplicationContext applicationContext;
 

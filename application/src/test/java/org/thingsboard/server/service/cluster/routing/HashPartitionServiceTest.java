@@ -74,8 +74,6 @@ public class HashPartitionServiceTest {
         ReflectionTestUtils.setField(clusterRoutingService, "hashFunctionName", hashFunctionName);
         TransportProtos.ServiceInfo currentServer = TransportProtos.ServiceInfo.newBuilder()
                 .setServiceId("tb-core-0")
-//                .setTenantIdMSB(TenantId.NULL_UUID.getMostSignificantBits())
-//                .setTenantIdLSB(TenantId.NULL_UUID.getLeastSignificantBits())
                 .addAllServiceTypes(Collections.singletonList(ServiceType.TB_CORE.name()))
                 .build();
 //        when(queueService.resolve(Mockito.any(), Mockito.anyString())).thenAnswer(i -> i.getArguments()[1]);
@@ -84,8 +82,6 @@ public class HashPartitionServiceTest {
         for (int i = 1; i < SERVER_COUNT; i++) {
             otherServers.add(TransportProtos.ServiceInfo.newBuilder()
                     .setServiceId("tb-rule-" + i)
-//                    .setTenantIdMSB(TenantId.NULL_UUID.getMostSignificantBits())
-//                    .setTenantIdLSB(TenantId.NULL_UUID.getLeastSignificantBits())
                     .addAllServiceTypes(Collections.singletonList(ServiceType.TB_CORE.name()))
                     .build());
         }

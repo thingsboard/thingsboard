@@ -20,21 +20,12 @@ package transport;
 option java_package = "org.thingsboard.server.gen.transport";
 option java_outer_classname = "TransportProtos";
 
-//message QueueInfo {
-//  string name = 1;
-//  string topic = 2;
-//  int32 partitions = 3;
-//}
-
 /**
  * Service Discovery Data Structures;
  */
 message ServiceInfo {
   string serviceId = 1;
   repeated string serviceTypes = 2;
-//  int64 tenantIdMSB = 3;
-//  int64 tenantIdLSB = 4;
-//  repeated QueueInfo ruleEngineQueues = 5;
   repeated string transports = 6;
 }
 
