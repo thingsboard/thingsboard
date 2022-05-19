@@ -83,7 +83,7 @@ public class AdminSettingsEdgeEventFetcher implements EdgeEventFetcher {
         result.add(EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.ADMIN_SETTINGS,
                 EdgeEventActionType.UPDATED, null, mapper.valueToTree(systemMailSettings)));
 
-        AdminSettings tenantMailSettings = convertToTenantAdminSettings(systemMailSettings.getKey(), (ObjectNode) systemMailSettings.getJsonValue());
+        AdminSettings tenantMailSettings = convertToTenantAdminSettings(tenantId, systemMailSettings.getKey(), (ObjectNode) systemMailSettings.getJsonValue());
         result.add(EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.ADMIN_SETTINGS,
                 EdgeEventActionType.UPDATED, null, mapper.valueToTree(tenantMailSettings)));
 
@@ -91,7 +91,7 @@ public class AdminSettingsEdgeEventFetcher implements EdgeEventFetcher {
         result.add(EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.ADMIN_SETTINGS,
                 EdgeEventActionType.UPDATED, null, mapper.valueToTree(systemMailTemplates)));
 
-        AdminSettings tenantMailTemplates = convertToTenantAdminSettings(systemMailTemplates.getKey(), (ObjectNode) systemMailTemplates.getJsonValue());
+        AdminSettings tenantMailTemplates = convertToTenantAdminSettings(tenantId, systemMailTemplates.getKey(), (ObjectNode) systemMailTemplates.getJsonValue());
         result.add(EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.ADMIN_SETTINGS,
                 EdgeEventActionType.UPDATED, null, mapper.valueToTree(tenantMailTemplates)));
 
@@ -151,8 +151,9 @@ public class AdminSettingsEdgeEventFetcher implements EdgeEventFetcher {
         }
     }
 
-    private AdminSettings convertToTenantAdminSettings(String key, ObjectNode jsonValue) {
+    private AdminSettings convertToTenantAdminSettings(TenantId tenantId, String key, ObjectNode jsonValue) {
         AdminSettings tenantMailSettings = new AdminSettings();
+        tenantMailSettings.setTenantId(tenantId);
         jsonValue.put("useSystemMailSettings", true);
         tenantMailSettings.setJsonValue(jsonValue);
         tenantMailSettings.setKey(key);

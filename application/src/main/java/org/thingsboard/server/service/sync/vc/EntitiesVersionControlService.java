@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.sync.vc;
 
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -30,6 +31,8 @@ import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRe
 import java.util.List;
 
 public interface EntitiesVersionControlService {
+
+    String SETTINGS_KEY = "entitiesVersionControl";
 
     VersionCreationResult saveEntitiesVersion(SecurityUser user, VersionCreateRequest request) throws Exception;
 
@@ -51,9 +54,12 @@ public interface EntitiesVersionControlService {
 
     List<String> listBranches(TenantId tenantId) throws Exception;
 
+    EntitiesVersionControlSettings getVersionControlSettings(TenantId tenantId);
 
-    void saveSettings(TenantId tenantId, EntitiesVersionControlSettings settings);
+    EntitiesVersionControlSettings saveVersionControlSettings(TenantId tenantId, EntitiesVersionControlSettings versionControlSettings);
 
-    EntitiesVersionControlSettings getSettings(TenantId tenantId);
+    void deleteVersionControlSettings(TenantId tenantId);
+
+    void checkVersionControlAccess(TenantId tenantId, EntitiesVersionControlSettings settings) throws ThingsboardException;
 
 }

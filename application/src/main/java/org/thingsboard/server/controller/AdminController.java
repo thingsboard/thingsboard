@@ -19,29 +19,30 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.sms.config.TestSmsRequest;
+import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
+import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 import org.thingsboard.server.service.update.UpdateService;
 
-import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.*;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID;
 
 @RestController
 @TbCoreComponent
@@ -59,6 +60,9 @@ public class AdminController extends BaseController {
 
     @Autowired
     private SystemSecurityService systemSecurityService;
+
+    @Autowired
+    private EntitiesVersionControlService versionControlService;
 
     @Autowired
     private UpdateService updateService;
@@ -96,6 +100,7 @@ public class AdminController extends BaseController {
             @RequestBody AdminSettings adminSettings) throws ThingsboardException {
         try {
             accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.WRITE);
+            adminSettings.setTenantId(getTenantId());
             adminSettings = checkNotNull(adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminSettings));
             if (adminSettings.getKey().equals("mail")) {
                 mailService.updateMailConfiguration();
@@ -175,6 +180,68 @@ public class AdminController extends BaseController {
         try {
             accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
             smsService.sendTestSms(testSmsRequest);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @ApiOperation(value = "Get version control settings (getVersionControlSettings)",
+            notes = "Get the version control settings object. " + TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping("/vcSettings")
+    @ResponseBody
+    public EntitiesVersionControlSettings getVersionControlSettings() throws ThingsboardException {
+        try {
+            accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
+            EntitiesVersionControlSettings versionControlSettings = checkNotNull(versionControlService.getVersionControlSettings(getTenantId()));
+            versionControlSettings.setPassword(null);
+            versionControlSettings.setPrivateKey(null);
+            versionControlSettings.setPrivateKeyPassword(null);
+            return versionControlSettings;
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @ApiOperation(value = "Creates or Updates the version control settings (saveVersionControlSettings)",
+            notes = "Creates or Updates the version control settings object. " + TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PostMapping("/vcSettings")
+    public void saveVersionControlSettings(@RequestBody EntitiesVersionControlSettings settings) throws ThingsboardException {
+        try {
+            accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.WRITE);
+            versionControlService.saveVersionControlSettings(getTenantId(), settings);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @ApiOperation(value = "Delete version control settings (deleteVersionControlSettings)",
+            notes = "Deletes the version control settings."
+                    + TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/vcSettings", method = RequestMethod.DELETE)
+    @ResponseStatus(value = HttpStatus.OK)
+    public void deleteVersionControlSettings() throws ThingsboardException {
+        try {
+            accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.DELETE);
+            versionControlService.deleteVersionControlSettings(getTenantId());
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @ApiOperation(value = "Check version control access (checkVersionControlAccess)",
+            notes = "Attempts to check version control access. " + TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/vcSettings/checkAccess", method = RequestMethod.POST)
+    public void checkVersionControlAccess(
+            @ApiParam(value = "A JSON value representing the Entities Version Control Settings.")
+            @RequestBody EntitiesVersionControlSettings settings) throws ThingsboardException {
+        try {
+            accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
+            settings = checkNotNull(settings);
+            versionControlService.checkVersionControlAccess(getTenantId(), settings);
         } catch (Exception e) {
             throw handleException(e);
         }

@@ -17,6 +17,10 @@ package org.thingsboard.server.common.data;
 
 public class StringUtils {
 
+    public static final String EMPTY = "";
+
+    public static final int INDEX_NOT_FOUND = -1;
+
     public static boolean isEmpty(String source) {
         return source == null || source.isEmpty();
     }
@@ -31,5 +35,43 @@ public class StringUtils {
 
     public static boolean isNotBlank(String source) {
         return source != null && !source.isEmpty() && !source.trim().isEmpty();
+    }
+
+    public static String removeStart(final String str, final String remove) {
+        if (isEmpty(str) || isEmpty(remove)) {
+            return str;
+        }
+        if (str.startsWith(remove)){
+            return str.substring(remove.length());
+        }
+        return str;
+    }
+
+    public static String substringBefore(final String str, final String separator) {
+        if (isEmpty(str) || separator == null) {
+            return str;
+        }
+        if (separator.isEmpty()) {
+            return EMPTY;
+        }
+        final int pos = str.indexOf(separator);
+        if (pos == INDEX_NOT_FOUND) {
+            return str;
+        }
+        return str.substring(0, pos);
+    }
+
+    public static String substringBetween(final String str, final String open, final String close) {
+        if (str == null || open == null || close == null) {
+            return null;
+        }
+        final int start = str.indexOf(open);
+        if (start != INDEX_NOT_FOUND) {
+            final int end = str.indexOf(close, start + open.length());
+            if (end != INDEX_NOT_FOUND) {
+                return str.substring(start + open.length(), end);
+            }
+        }
+        return null;
     }
 }

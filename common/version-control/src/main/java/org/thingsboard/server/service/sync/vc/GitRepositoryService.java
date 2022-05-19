@@ -32,7 +32,11 @@ public interface GitRepositoryService {
 
     List<VersionedEntityInfo> listEntitiesAtVersion(TenantId tenantId, String branch, String versionId, String path) throws Exception;
 
+    void testRepository(TenantId tenantId, EntitiesVersionControlSettings settings) throws Exception;
+
     void initRepository(TenantId tenantId, EntitiesVersionControlSettings settings) throws Exception;
+
+    void clearRepository(TenantId tenantId) throws IOException;
 
     void add(PendingCommit commit, String relativePath, String entityDataJson) throws IOException;
 

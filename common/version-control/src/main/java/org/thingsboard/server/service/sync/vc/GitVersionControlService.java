@@ -30,9 +30,11 @@ import java.util.List;
 
 public interface GitVersionControlService {
 
-    EntitiesVersionControlSettings getSettings(TenantId tenantId);
+    void testRepository(TenantId tenantId, EntitiesVersionControlSettings settings);
 
     void initRepository(TenantId tenantId, EntitiesVersionControlSettings settings);
+
+    void clearRepository(TenantId tenantId);
 
     PendingCommit prepareCommit(TenantId tenantId, VersionCreateRequest request);
 

@@ -16,39 +16,35 @@
 package org.thingsboard.server.service.sync.vc;
 
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
-import org.thingsboard.server.common.data.kv.JsonDataEntry;
+import org.thingsboard.server.common.data.sync.vc.*;
 import org.thingsboard.server.common.data.sync.vc.request.load.EntityTypeVersionLoadConfig;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.entity.EntityService;
+import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
+
 import org.thingsboard.server.service.sync.ie.EntitiesExportImportService;
 import org.thingsboard.server.service.sync.ie.exporting.ExportableEntitiesService;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
 import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
 import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
-import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
-import org.thingsboard.server.common.data.sync.vc.EntityVersion;
-import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
-import org.thingsboard.server.common.data.sync.vc.VersionLoadResult;
-import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.common.data.sync.vc.request.create.ComplexVersionCreateRequest;
 import org.thingsboard.server.common.data.sync.vc.request.create.SingleEntityVersionCreateRequest;
 import org.thingsboard.server.common.data.sync.vc.request.create.SyncStrategy;
@@ -79,11 +75,9 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     private final GitVersionControlService gitService;
     private final EntitiesExportImportService exportImportService;
     private final ExportableEntitiesService exportableEntitiesService;
-    private final AttributesService attributesService;
+    private final AdminSettingsService adminSettingsService;
     private final EntityService entityService;
     private final TransactionTemplate transactionTemplate;
-
-    public static final String SETTINGS_KEY = "vc";
 
     @Override
     public VersionCreationResult saveEntitiesVersion(SecurityUser user, VersionCreateRequest request) throws Exception {
@@ -208,7 +202,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                                     List<EntityExportData<?>> entityDataList;
                                     do {
                                         entityDataList = gitService.getEntities(user.getTenantId(), request.getBranch(), request.getVersionId(), entityType, offset, limit);
-                                        for (EntityExportData<?> entityData : entityDataList) {
+                                        for (EntityExportData entityData : entityDataList) {
                                             EntityImportResult<?> importResult = exportImportService.importEntity(user, entityData, EntityImportSettings.builder()
                                                     .updateRelations(config.isLoadRelations())
                                                     .findExistingByName(config.isFindExistingEntityByName())
@@ -282,18 +276,77 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         return gitService.listBranches(tenantId);
     }
 
-    @SneakyThrows
     @Override
-    public void saveSettings(TenantId tenantId, EntitiesVersionControlSettings settings) {
-        attributesService.save(tenantId, tenantId, DataConstants.SERVER_SCOPE, List.of(
-                new BaseAttributeKvEntry(System.currentTimeMillis(), new JsonDataEntry(SETTINGS_KEY, JacksonUtil.toString(settings)))
-        )).get();
-
-        gitService.initRepository(tenantId, settings);
+    public EntitiesVersionControlSettings getVersionControlSettings(TenantId tenantId) {
+        AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey(tenantId, SETTINGS_KEY);
+        if (adminSettings != null) {
+            try {
+                return JacksonUtil.convertValue(adminSettings.getJsonValue(), EntitiesVersionControlSettings.class);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to load version control settings!", e);
+            }
+        }
+        return null;
     }
 
     @Override
-    public EntitiesVersionControlSettings getSettings(TenantId tenantId) {
-        return gitService.getSettings(tenantId);
+    public EntitiesVersionControlSettings saveVersionControlSettings(TenantId tenantId, EntitiesVersionControlSettings versionControlSettings) {
+        EntitiesVersionControlSettings storedSettings = getVersionControlSettings(tenantId);
+        versionControlSettings = this.restoreCredentials(versionControlSettings, storedSettings);
+        AdminSettings adminSettings = new AdminSettings();
+        adminSettings.setTenantId(tenantId);
+        adminSettings.setKey(SETTINGS_KEY);
+        adminSettings.setJsonValue(JacksonUtil.valueToTree(versionControlSettings));
+        AdminSettings savedAdminSettings = adminSettingsService.saveAdminSettings(tenantId, adminSettings);
+        EntitiesVersionControlSettings savedVersionControlSettings;
+        try {
+            savedVersionControlSettings = JacksonUtil.convertValue(savedAdminSettings.getJsonValue(), EntitiesVersionControlSettings.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load version control settings!", e);
+        }
+        try {
+            gitService.clearRepository(tenantId);
+            gitService.initRepository(tenantId, savedVersionControlSettings);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to init repository!", e);
+        }
+        return savedVersionControlSettings;
+    }
+
+    @Override
+    public void deleteVersionControlSettings(TenantId tenantId) {
+        if (adminSettingsService.deleteAdminSettings(tenantId, SETTINGS_KEY)) {
+            gitService.clearRepository(tenantId);
+        }
+    }
+
+    @Override
+    public void checkVersionControlAccess(TenantId tenantId, EntitiesVersionControlSettings settings) throws ThingsboardException {
+        EntitiesVersionControlSettings storedSettings = getVersionControlSettings(tenantId);
+        settings = this.restoreCredentials(settings, storedSettings);
+        try {
+            gitService.testRepository(tenantId, settings);
+        } catch (Exception e) {
+            throw new ThingsboardException(String.format("Unable to access repository: %s", e.getMessage()),
+                    ThingsboardErrorCode.GENERAL);
+        }
+    }
+
+    private EntitiesVersionControlSettings restoreCredentials(EntitiesVersionControlSettings settings, EntitiesVersionControlSettings storedSettings) {
+        VersionControlAuthMethod authMethod = settings.getAuthMethod();
+        if (VersionControlAuthMethod.USERNAME_PASSWORD.equals(authMethod) && settings.getPassword() == null) {
+            if (storedSettings != null) {
+                settings.setPassword(storedSettings.getPassword());
+            }
+        } else if (VersionControlAuthMethod.PRIVATE_KEY.equals(authMethod) && settings.getPrivateKey() == null) {
+            if (storedSettings != null) {
+                settings.setPrivateKey(storedSettings.getPrivateKey());
+                if (StringUtils.isEmpty(settings.getPrivateKeyPassword()) &&
+                        StringUtils.isNotEmpty(storedSettings.getPrivateKeyPassword())) {
+                    settings.setPrivateKeyPassword(storedSettings.getPrivateKeyPassword());
+                }
+            }
+        }
+        return settings;
     }
 }

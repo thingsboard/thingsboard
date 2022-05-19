@@ -16,11 +16,14 @@
 package org.thingsboard.server.common.data.sync.vc;
 
 import lombok.Data;
-
 @Data
 public class EntitiesVersionControlSettings {
     private String repositoryUri;
+    private VersionControlAuthMethod authMethod;
     private String username;
     private String password;
+    private String privateKeyFileName;
+    private String privateKey;
+    private String privateKeyPassword;
     private String defaultBranch;
 }

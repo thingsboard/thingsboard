@@ -46,21 +46,26 @@ public class AdminSettingsServiceImpl implements AdminSettingsService {
     public AdminSettings findAdminSettingsByKey(TenantId tenantId, String key) {
         log.trace("Executing findAdminSettingsByKey [{}]", key);
         Validator.validateString(key, "Incorrect key " + key);
-        return adminSettingsDao.findByKey(tenantId, key);
+        return adminSettingsDao.findByTenantIdAndKey(tenantId.getId(), key);
     }
 
     @Override
     public AdminSettings saveAdminSettings(TenantId tenantId, AdminSettings adminSettings) {
         log.trace("Executing saveAdminSettings [{}]", adminSettings);
         adminSettingsValidator.validate(adminSettings, data -> tenantId);
-        if(adminSettings.getKey().equals("mail") && !adminSettings.getJsonValue().has("password")) {
+        if (adminSettings.getKey().equals("mail") && !adminSettings.getJsonValue().has("password")) {
             AdminSettings mailSettings = findAdminSettingsByKey(tenantId, "mail");
             if (mailSettings != null) {
                 ((ObjectNode) adminSettings.getJsonValue()).put("password", mailSettings.getJsonValue().get("password").asText());
             }
         }
-
         return adminSettingsDao.save(tenantId, adminSettings);
     }
 
+    @Override
+    public boolean deleteAdminSettings(TenantId tenantId, String key) {
+        log.trace("Executing deleteAdminSettings, tenantId [{}], key [{}]", tenantId, key);
+        Validator.validateString(key, "Incorrect key " + key);
+        return adminSettingsDao.removeByTenantIdAndKey(tenantId.getId(), key);
+    }
 }

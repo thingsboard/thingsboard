@@ -206,6 +206,12 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     }
 
     @Override
+    public void testRepository(TenantId tenantId, EntitiesVersionControlSettings settings) throws Exception {
+        Path repositoryDirectory = Path.of(repositoriesFolder, tenantId.getId().toString());
+        GitRepository.test(settings, repositoryDirectory.toFile());
+    }
+
+    @Override
     public void initRepository(TenantId tenantId, EntitiesVersionControlSettings settings) throws Exception {
         Path repositoryDirectory = Path.of(repositoriesFolder, tenantId.getId().toString());
         GitRepository repository;
@@ -214,11 +220,12 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
         }
 
         Files.createDirectories(repositoryDirectory);
-        repository = GitRepository.clone(settings.getRepositoryUri(), settings.getUsername(), settings.getPassword(), repositoryDirectory.toFile());
+        repository = GitRepository.clone(settings, repositoryDirectory.toFile());
         repositories.put(tenantId, repository);
     }
 
-    private void clearRepository(TenantId tenantId) throws IOException {
+    @Override
+    public void clearRepository(TenantId tenantId) throws IOException {
         GitRepository repository = repositories.get(tenantId);
         if (repository != null) {
             FileUtils.deleteDirectory(new File(repository.getDirectory()));
