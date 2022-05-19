@@ -25,7 +25,7 @@ import java.util.Arrays;
 @SpringBootConfiguration
 @EnableAsync
 @EnableScheduling
-@ComponentScan({"org.thingsboard.server.vc", "org.thingsboard.server.common", "org.thingsboard.server.sync.vc"})
+@ComponentScan({"org.thingsboard.server.vc", "org.thingsboard.server.common", "org.thingsboard.server.service.sync.vc"})
 public class ThingsboardVersionControlExecutorApplication {
 
     private static final String SPRING_CONFIG_NAME_KEY = "--spring.config.name";
