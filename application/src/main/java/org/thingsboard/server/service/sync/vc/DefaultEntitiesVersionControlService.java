@@ -305,6 +305,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
             throw new RuntimeException("Failed to load version control settings!", e);
         }
         try {
+            gitService.clearRepository(tenantId);
             gitService.initRepository(tenantId, savedVersionControlSettings);
         } catch (Exception e) {
             throw new RuntimeException("Failed to init repository!", e);
