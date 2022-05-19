@@ -56,8 +56,9 @@
         <mat-form-field fxFlex class="mat-block code-container" floatLabel="always" hideRequiredMarker>
           <mat-label></mat-label>
           <input matInput formControlName="verificationCode"
-                 maxlength="6" type="text"
-                 pattern="\d*" required
+                 maxlength="6" type="text" required
+                 inputmode="numeric" pattern="[0-9]*"
+                 autocomplete="off"
                  placeholder="{{ 'security.2fa.dialog.verification-code' | translate }}">
           <mat-error *ngIf="totpConfigForm.get('verificationCode').invalid">
             {{ 'security.2fa.dialog.verification-code-invalid' | translate }}

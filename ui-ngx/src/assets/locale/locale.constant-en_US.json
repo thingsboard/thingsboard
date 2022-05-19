@@ -338,7 +338,7 @@
             "verification-code-send-rate-limit": "Verification code send rate limit",
             "verification-message-template": "Verification message template",
             "verification-limitations": "Verification limitations",
-            "verification-message-template-pattern": "Verification message need to contains pattern: ${verificationCode}",
+            "verification-message-template-pattern": "Verification message need to contains pattern: ${code}",
             "verification-message-template-required": "Verification message template is required.",
             "within-time": "Within time (sec)",
             "within-time-pattern": "Time must be a positive integer.",
@@ -2613,7 +2613,7 @@
                 "email-description": "Use a security code sent to your email address to authenticate.",
                 "sms": "SMS",
                 "sms-description": "Use your phone to authenticate. We'll send you a security code via SMS message when you log in.",
-                "totp": "Authentication app",
+                "totp": "Authenticator app",
                 "totp-description": "Use apps like Google Authenticator, Authy, or Duo on your phone to authenticate. It will generate a security code for logging in."
             }
         }

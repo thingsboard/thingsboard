@@ -36,10 +36,11 @@
       <ng-template matStepLabel>{{ 'security.2fa.dialog.email-step-label' | translate }}</ng-template>
       <form [formGroup]="emailConfigForm" (ngSubmit)="nextStep()">
         <p class="mat-body step-description input" translate>security.2fa.dialog.email-step-description</p>
-        <div fxLayout="row" fxLayoutAlign="space-between center">
+        <div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="8px">
           <mat-form-field fxFlex class="mat-block input-container" hideRequiredMarker floatLabel="always">
             <mat-label></mat-label>
-            <input matInput formControlName="email" required
+            <input matInput formControlName="email"
+                   type="email" required
                    placeholder="{{ 'security.2fa.dialog.email-step-label' | translate }}" />
             <mat-error *ngIf="emailConfigForm.get('email').hasError('required')">
               {{ 'user.email-required' | translate }}
@@ -67,8 +68,9 @@
           <mat-form-field fxFlex class="mat-block code-container" hideRequiredMarker floatLabel="always">
             <mat-label></mat-label>
             <input matInput formControlName="verificationCode"
-                   maxlength="6" type="text"
-                   pattern="\d*" required
+                   maxlength="6" type="text" required
+                   inputmode="numeric" pattern="[0-9]*"
+                   autocomplete="off"
                    placeholder="{{ 'security.2fa.dialog.verification-code' | translate }}">
             <mat-error *ngIf="emailVerificationForm.get('verificationCode').invalid">
               {{ 'security.2fa.dialog.verification-code-invalid' | translate }}

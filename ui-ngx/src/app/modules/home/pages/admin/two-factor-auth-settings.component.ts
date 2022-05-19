@@ -203,9 +203,9 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
         formControlConfig.issuerName = [{value: 'ThingsBoard', disabled: true}, Validators.required];
         break;
       case TwoFactorAuthProviderType.SMS:
-        formControlConfig.smsVerificationMessageTemplate = [{value: 'Verification code: ${verificationCode}', disabled: true}, [
+        formControlConfig.smsVerificationMessageTemplate = [{value: 'Verification code: ${сode}', disabled: true}, [
           Validators.required,
-          Validators.pattern(/\${verificationCode}/)
+          Validators.pattern(/\${сode}/)
         ]];
         formControlConfig.verificationCodeLifetime = [{value: 120, disabled: true}, [
           Validators.required,
