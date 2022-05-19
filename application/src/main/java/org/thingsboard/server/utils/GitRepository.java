@@ -18,14 +18,8 @@ package org.thingsboard.server.utils;
 import com.google.common.collect.Streams;
 import lombok.Data;
 import lombok.Getter;
-import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.GitCommand;
-import org.eclipse.jgit.api.ListBranchCommand;
-import org.eclipse.jgit.api.LogCommand;
-import org.eclipse.jgit.api.RmCommand;
-import org.eclipse.jgit.api.Status;
-import org.eclipse.jgit.api.TransportCommand;
+import org.apache.sshd.common.util.security.SecurityUtils;
+import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
@@ -34,50 +28,88 @@ import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.SshTransport;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.eclipse.jgit.transport.sshd.JGitKeyCache;
+import org.eclipse.jgit.transport.sshd.ServerKeyDatabase;
+import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
+import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
+import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.vc.EntitiesVersionControlSettings;
+import org.thingsboard.server.common.data.vc.VersionControlAuthMethod;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyPair;
+import java.security.PublicKey;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 public class GitRepository {
 
     private final Git git;
     private final CredentialsProvider credentialsProvider;
+    private final SshdSessionFactory sshSessionFactory;
 
     @Getter
     private final String directory;
 
-    private GitRepository(Git git, CredentialsProvider credentialsProvider, String directory) {
+    private GitRepository(Git git, CredentialsProvider credentialsProvider, SshdSessionFactory sshSessionFactory, String directory) {
         this.git = git;
         this.credentialsProvider = credentialsProvider;
+        this.sshSessionFactory = sshSessionFactory;
         this.directory = directory;
     }
 
-    public static GitRepository clone(String uri, String username, String password, File directory) throws GitAPIException {
-        CredentialsProvider credentialsProvider = newCredentialsProvider(username, password);
-        Git git = Git.cloneRepository()
-                .setURI(uri)
+    public static GitRepository clone(EntitiesVersionControlSettings settings, File directory) throws GitAPIException {
+        CredentialsProvider credentialsProvider = null;
+        SshdSessionFactory sshSessionFactory = null;
+        if (VersionControlAuthMethod.USERNAME_PASSWORD.equals(settings.getAuthMethod())) {
+            credentialsProvider = newCredentialsProvider(settings.getUsername(), settings.getPassword());
+        } else if (VersionControlAuthMethod.PRIVATE_KEY.equals(settings.getAuthMethod())) {
+            sshSessionFactory = newSshdSessionFactory(settings.getPrivateKey(), settings.getPrivateKeyPassword(), directory);
+        }
+        CloneCommand cloneCommand = Git.cloneRepository()
+                .setURI(settings.getRepositoryUri())
                 .setDirectory(directory)
-                .setNoCheckout(true)
-                .setCredentialsProvider(credentialsProvider)
-                .call();
-        return new GitRepository(git, credentialsProvider, directory.getAbsolutePath());
+                .setNoCheckout(true);
+        configureTransportCommand(cloneCommand, credentialsProvider, sshSessionFactory);
+        Git git = cloneCommand.call();
+        return new GitRepository(git, credentialsProvider, sshSessionFactory, directory.getAbsolutePath());
     }
 
-    public static GitRepository open(File directory, String username, String password) throws IOException {
+    public static GitRepository open(File directory, EntitiesVersionControlSettings settings) throws IOException {
         Git git = Git.open(directory);
-        return new GitRepository(git, newCredentialsProvider(username, password), directory.getAbsolutePath());
+        CredentialsProvider credentialsProvider = null;
+        SshdSessionFactory sshSessionFactory = null;
+        if (VersionControlAuthMethod.USERNAME_PASSWORD.equals(settings.getAuthMethod())) {
+            credentialsProvider = newCredentialsProvider(settings.getUsername(), settings.getPassword());
+        } else if (VersionControlAuthMethod.PRIVATE_KEY.equals(settings.getAuthMethod())) {
+            sshSessionFactory = newSshdSessionFactory(settings.getPrivateKey(), settings.getPrivateKeyPassword(), directory);
+        }
+        return new GitRepository(git, credentialsProvider, sshSessionFactory, directory.getAbsolutePath());
     }
 
+    public static void test(EntitiesVersionControlSettings settings, File directory) throws GitAPIException {
+        CredentialsProvider credentialsProvider = null;
+        SshdSessionFactory sshSessionFactory = null;
+        if (VersionControlAuthMethod.USERNAME_PASSWORD.equals(settings.getAuthMethod())) {
+            credentialsProvider = newCredentialsProvider(settings.getUsername(), settings.getPassword());
+        } else if (VersionControlAuthMethod.PRIVATE_KEY.equals(settings.getAuthMethod())) {
+            sshSessionFactory = newSshdSessionFactory(settings.getPrivateKey(), settings.getPrivateKeyPassword(), directory);
+        }
+        LsRemoteCommand lsRemoteCommand = Git.lsRemoteRepository().setRemote(settings.getRepositoryUri());
+        configureTransportCommand(lsRemoteCommand, credentialsProvider, sshSessionFactory);
+        lsRemoteCommand.call();
+    }
 
     public void fetch() throws GitAPIException {
         execute(git.fetch()
@@ -107,7 +139,6 @@ public class GitRepository {
                 .map(name -> StringUtils.removeStart(name, "origin/"))
                 .distinct().collect(Collectors.toList());
     }
-
 
     public List<Commit> listCommits(String branch, int limit) throws IOException, GitAPIException {
         return listCommits(branch, null, limit);
@@ -246,16 +277,66 @@ public class GitRepository {
     }
 
     private <C extends GitCommand<T>, T> T execute(C command) throws GitAPIException {
-        if (command instanceof TransportCommand && credentialsProvider != null) {
-            ((TransportCommand<?, ?>) command).setCredentialsProvider(credentialsProvider);
+        if (command instanceof TransportCommand) {
+            configureTransportCommand((TransportCommand) command, credentialsProvider, sshSessionFactory);
         }
         return command.call();
     }
 
-    private static CredentialsProvider newCredentialsProvider(String username, String password) {
-        return new UsernamePasswordCredentialsProvider(username, password);
+    private static void configureTransportCommand(TransportCommand transportCommand, CredentialsProvider credentialsProvider, SshdSessionFactory sshSessionFactory) {
+        if (credentialsProvider != null) {
+            transportCommand.setCredentialsProvider(credentialsProvider);
+        }
+        if (sshSessionFactory != null) {
+            transportCommand.setTransportConfigCallback(transport -> {
+                if (transport instanceof SshTransport) {
+                    SshTransport sshTransport = (SshTransport) transport;
+                    sshTransport.setSshSessionFactory(sshSessionFactory);
+                }
+            });
+        }
     }
 
+    private static CredentialsProvider newCredentialsProvider(String username, String password) {
+        return new UsernamePasswordCredentialsProvider(username, password == null ? "" : password);
+    }
+
+    private static SshdSessionFactory newSshdSessionFactory(String privateKey, String password, File directory) {
+        SshdSessionFactory sshSessionFactory = null;
+        if (StringUtils.isNotBlank(privateKey)) {
+            Iterable<KeyPair> keyPairs = loadKeyPairs(privateKey, password);
+            sshSessionFactory = new SshdSessionFactoryBuilder()
+                    .setPreferredAuthentications("publickey")
+                    .setDefaultKeysProvider(file -> keyPairs)
+                    .setHomeDirectory(directory)
+                    .setSshDirectory(directory)
+                    .setServerKeyDatabase((file, file2) -> new ServerKeyDatabase() {
+                        @Override
+                        public List<PublicKey> lookup(String connectAddress, InetSocketAddress remoteAddress, Configuration config) {
+                            return Collections.emptyList();
+                        }
+
+                        @Override
+                        public boolean accept(String connectAddress, InetSocketAddress remoteAddress, PublicKey serverKey, Configuration config, CredentialsProvider provider) {
+                            return true;
+                        }
+                    })
+                    .build(new JGitKeyCache());
+        }
+        return sshSessionFactory;
+    }
+
+    private static Iterable<KeyPair> loadKeyPairs(String privateKeyContent, String password) {
+        Iterable<KeyPair> keyPairs = null;
+        try {
+            keyPairs = SecurityUtils.loadKeyPairIdentities(null,
+                    null, new ByteArrayInputStream(privateKeyContent.getBytes()), (session, resourceKey, retryIndex) -> password);
+        } catch (Exception e) {}
+        if (keyPairs == null) {
+            throw new IllegalArgumentException("Failed to load ssh private key");
+        }
+        return keyPairs;
+    }
 
     @Data
     public static class Commit {

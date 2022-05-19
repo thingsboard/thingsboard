@@ -15,25 +15,18 @@
  */
 package org.thingsboard.server.controller;
 
-import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
-import org.thingsboard.server.service.sync.vc.data.EntitiesVersionControlSettings;
 import org.thingsboard.server.service.sync.vc.data.EntityVersion;
 import org.thingsboard.server.service.sync.vc.data.VersionCreationResult;
 import org.thingsboard.server.service.sync.vc.data.VersionLoadResult;
@@ -280,7 +273,7 @@ public class EntitiesVersionControlController extends BaseController {
             List<String> remoteBranches = versionControlService.listBranches(getTenantId());
             List<BranchInfo> infos = new ArrayList<>();
 
-            String defaultBranch = getSettings().getDefaultBranch();
+            String defaultBranch = versionControlService.getVersionControlSettings(getTenantId()).getDefaultBranch();
             if (StringUtils.isNotEmpty(defaultBranch)) {
                 remoteBranches.remove(defaultBranch);
                 infos.add(new BranchInfo(defaultBranch, true));
@@ -292,40 +285,6 @@ public class EntitiesVersionControlController extends BaseController {
             throw handleException(e);
         }
     }
-
-
-    @ApiOperation(value = "", notes = "" +
-            "```\n{\n" +
-            "  \"repositoryUri\": \"https://github.com/User/repo.git\",\n" +
-            "  \"username\": \"User\",\n" +
-            "  \"password\": \"api_key\",\n" +
-            "  \"defaultBranch\": \"master\"\n" +
-            "}\n```")
-    @GetMapping("/settings")
-    public EntitiesVersionControlSettings getSettings() throws ThingsboardException {
-        try {
-            return versionControlService.getSettings(getTenantId());
-        } catch (Exception e) {
-            throw handleException(e);
-        }
-    }
-
-    @ApiOperation(value = "", notes = "" +
-            "```\n{\n" +
-            "  \"repositoryUri\": \"https://github.com/User/repo.git\",\n" +
-            "  \"username\": \"User\",\n" +
-            "  \"password\": \"api_key\",\n" +
-            "  \"defaultBranch\": \"master\"\n" +
-            "}\n```")
-    @PostMapping("/settings")
-    public void saveSettings(@RequestBody EntitiesVersionControlSettings settings) throws ThingsboardException {
-        try {
-            versionControlService.saveSettings(getTenantId(), settings);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
-    }
-
 
     @Data
     public static class BranchInfo {

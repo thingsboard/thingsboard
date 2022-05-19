@@ -46,7 +46,7 @@ public class JpaAdminSettingsDao extends JpaAbstractDao<AdminSettingsEntity, Adm
     }
 
     @Override
-    public AdminSettings findByKey(TenantId tenantId, String key) {
-        return DaoUtil.getData(adminSettingsRepository.findByKey(key));
+    public AdminSettings findByTenantIdAndKey(UUID tenantId, String key) {
+        return DaoUtil.getData(adminSettingsRepository.findByTenantIdAndKey(tenantId, key));
     }
 }

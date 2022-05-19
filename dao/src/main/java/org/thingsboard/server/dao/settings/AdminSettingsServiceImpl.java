@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.id.AdminSettingsId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.vc.VersionControlAuthMethod;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.Validator;
 
@@ -46,20 +47,35 @@ public class AdminSettingsServiceImpl implements AdminSettingsService {
     public AdminSettings findAdminSettingsByKey(TenantId tenantId, String key) {
         log.trace("Executing findAdminSettingsByKey [{}]", key);
         Validator.validateString(key, "Incorrect key " + key);
-        return adminSettingsDao.findByKey(tenantId, key);
+        return adminSettingsDao.findByTenantIdAndKey(tenantId.getId(), key);
     }
 
     @Override
     public AdminSettings saveAdminSettings(TenantId tenantId, AdminSettings adminSettings) {
         log.trace("Executing saveAdminSettings [{}]", adminSettings);
         adminSettingsValidator.validate(adminSettings, data -> tenantId);
-        if(adminSettings.getKey().equals("mail") && !adminSettings.getJsonValue().has("password")) {
+        if (adminSettings.getKey().equals("mail") && !adminSettings.getJsonValue().has("password")) {
             AdminSettings mailSettings = findAdminSettingsByKey(tenantId, "mail");
             if (mailSettings != null) {
                 ((ObjectNode) adminSettings.getJsonValue()).put("password", mailSettings.getJsonValue().get("password").asText());
             }
+        } else if (adminSettings.getKey().equals("entitiesVersionControl")) {
+            VersionControlAuthMethod authMethod = VersionControlAuthMethod.valueOf(adminSettings.getJsonValue().get("authMethod").asText());
+            if (VersionControlAuthMethod.USERNAME_PASSWORD.equals(authMethod) && !adminSettings.getJsonValue().has("password")) {
+                AdminSettings vcSettings = findAdminSettingsByKey(tenantId, "entitiesVersionControl");
+                if (vcSettings != null) {
+                    ((ObjectNode) adminSettings.getJsonValue()).put("password", vcSettings.getJsonValue().get("password").asText());
+                }
+            } else if (VersionControlAuthMethod.PRIVATE_KEY.equals(authMethod) && !adminSettings.getJsonValue().has("privateKey")) {
+                AdminSettings vcSettings = findAdminSettingsByKey(tenantId, "entitiesVersionControl");
+                if (vcSettings != null) {
+                    ((ObjectNode) adminSettings.getJsonValue()).put("privateKey", vcSettings.getJsonValue().get("privateKey").asText());
+                    if (!adminSettings.getJsonValue().has("privateKeyPassword") && vcSettings.getJsonValue().has("privateKeyPassword")) {
+                        ((ObjectNode) adminSettings.getJsonValue()).put("privateKeyPassword", vcSettings.getJsonValue().get("privateKeyPassword").asText());
+                    }
+                }
+            }
         }
-
         return adminSettingsDao.save(tenantId, adminSettings);
     }
 

@@ -13,14 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.sync.vc.data;
+package org.thingsboard.server.common.data.vc;
 
-import lombok.Data;
-
-@Data
-public class EntitiesVersionControlSettings {
-    private String repositoryUri;
-    private String username;
-    private String password;
-    private String defaultBranch;
+public enum VersionControlAuthMethod {
+    USERNAME_PASSWORD,
+    PRIVATE_KEY
 }

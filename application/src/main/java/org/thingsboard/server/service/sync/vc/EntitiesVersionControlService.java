@@ -16,16 +16,17 @@
 package org.thingsboard.server.service.sync.vc;
 
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.vc.EntitiesVersionControlSettings;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.sync.vc.data.EntitiesVersionControlSettings;
 import org.thingsboard.server.service.sync.vc.data.EntityVersion;
 import org.thingsboard.server.service.sync.vc.data.VersionCreationResult;
 import org.thingsboard.server.service.sync.vc.data.VersionLoadResult;
 import org.thingsboard.server.service.sync.vc.data.VersionedEntityInfo;
-import org.thingsboard.server.service.sync.vc.data.request.load.VersionLoadRequest;
 import org.thingsboard.server.service.sync.vc.data.request.create.VersionCreateRequest;
+import org.thingsboard.server.service.sync.vc.data.request.load.VersionLoadRequest;
 
 import java.util.List;
 
@@ -51,9 +52,12 @@ public interface EntitiesVersionControlService {
 
     List<String> listBranches(TenantId tenantId) throws Exception;
 
+    EntitiesVersionControlSettings getVersionControlSettings(TenantId tenantId);
 
-    void saveSettings(TenantId tenantId, EntitiesVersionControlSettings settings);
+    EntitiesVersionControlSettings saveVersionControlSettings(TenantId tenantId, EntitiesVersionControlSettings versionControlSettings);
 
-    EntitiesVersionControlSettings getSettings(TenantId tenantId);
+    void checkVersionControlAccess(TenantId tenantId, EntitiesVersionControlSettings settings) throws ThingsboardException;
+
+
 
 }
