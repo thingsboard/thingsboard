@@ -194,7 +194,7 @@ public class EntityViewController extends BaseController {
 
         EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
         checkEntityViewId(entityViewId, Operation.ASSIGN_TO_CUSTOMER);
-        return tbEntityViewService.assignEntityViewToCustomer(entityViewId, customer, getCurrentUser());
+        return tbEntityViewService.assignEntityViewToCustomer(getTenantId(), entityViewId, customer, getCurrentUser());
     }
 
     @ApiOperation(value = "Unassign Entity View from customer (unassignEntityViewFromCustomer)",
@@ -214,7 +214,7 @@ public class EntityViewController extends BaseController {
 
         Customer customer = checkCustomerId(entityView.getCustomerId(), Operation.READ);
 
-        return tbEntityViewService.unassignEntityViewFromCustomer(entityView, customer, getCurrentUser());
+        return tbEntityViewService.unassignEntityViewFromCustomer(getTenantId(), entityView, customer, getCurrentUser());
     }
 
     @ApiOperation(value = "Get Customer Entity Views (getCustomerEntityViews)",
@@ -416,7 +416,7 @@ public class EntityViewController extends BaseController {
         checkParameter(ENTITY_VIEW_ID, strEntityViewId);
         EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
         checkEntityViewId(entityViewId, Operation.ASSIGN_TO_CUSTOMER);
-        return tbEntityViewService.assignEntityViewToPublicCustomer(entityViewId, getCurrentUser());
+        return tbEntityViewService.assignEntityViewToPublicCustomer(getTenantId(), getCurrentUser().getCustomerId(), entityViewId, getCurrentUser());
     }
 
     @ApiOperation(value = "Assign entity view to edge (assignEntityViewToEdge)",
@@ -439,7 +439,7 @@ public class EntityViewController extends BaseController {
 
         EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
         checkEntityViewId(entityViewId, Operation.READ);
-        return tbEntityViewService.assignEntityViewToEdge(entityViewId, edge, getCurrentUser());
+        return tbEntityViewService.assignEntityViewToEdge(getTenantId(), getCurrentUser().getCustomerId(), entityViewId, edge, getCurrentUser());
     }
 
     @ApiOperation(value = "Unassign entity view from edge (unassignEntityViewFromEdge)",
@@ -463,7 +463,7 @@ public class EntityViewController extends BaseController {
         EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
         EntityView entityView = checkEntityViewId(entityViewId, Operation.READ);
 
-        return tbEntityViewService.unassignEntityViewFromEdge(entityView, edge, getCurrentUser());
+        return tbEntityViewService.unassignEntityViewFromEdge(getTenantId(), entityView.getCustomerId(), entityView, edge, getCurrentUser());
      }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
