@@ -20,6 +20,8 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface SimpleTbEntityService<T> {
 
-    T save(T entity, SecurityUser user) throws ThingsboardException;
+   T save(T entity, SecurityUser user) throws ThingsboardException;
+
+   void  delete (T entity, SecurityUser user) throws ThingsboardException;
 
 }
