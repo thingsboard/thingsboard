@@ -50,6 +50,7 @@ import { PageLink } from '@shared/models/page/page-link';
 import { Edge } from '@shared/models/edge.models';
 import { mergeMap } from 'rxjs/operators';
 import { PageData } from '@shared/models/page/page-data';
+import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
 
 @Injectable()
 export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<RuleChain>> {
@@ -63,6 +64,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
               private importExport: ImportExportService,
               private itembuffer: ItemBufferService,
               private edgeService: EdgeService,
+              private homeDialogs: HomeDialogsService,
               private translate: TranslateService,
               private datePipe: DatePipe,
               private router: Router) {
@@ -358,6 +360,13 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     );
   }
 
+  vcExport($event: Event, ruleChain: RuleChain) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.homeDialogs.exportVcEntity(ruleChain.id);
+  }
+
   onRuleChainAction(action: EntityAction<RuleChain>): boolean {
     switch (action.action) {
       case 'open':
@@ -380,6 +389,9 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
         return true;
       case 'unsetAutoAssignToEdge':
         this.unsetAutoAssignToEdgeRuleChain(action.event, action.entity);
+        return true;
+      case 'vcExport':
+        this.vcExport(action.event, action.entity);
         return true;
     }
     return false;

@@ -42,6 +42,7 @@ import {
   AddDeviceProfileDialogData
 } from '@home/components/profile/add-device-profile-dialog.component';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
 
 @Injectable()
 export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableConfig<DeviceProfile>> {
@@ -50,6 +51,7 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
 
   constructor(private deviceProfileService: DeviceProfileService,
               private importExport: ImportExportService,
+              private homeDialogs: HomeDialogsService,
               private translate: TranslateService,
               private datePipe: DatePipe,
               private dialogService: DialogService,
@@ -204,6 +206,13 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
     this.importExport.exportDeviceProfile(deviceProfile.id.id);
   }
 
+  vcExport($event: Event, deviceProfile: DeviceProfile) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.homeDialogs.exportVcEntity(deviceProfile.id);
+  }
+
   onDeviceProfileAction(action: EntityAction<DeviceProfile>): boolean {
     switch (action.action) {
       case 'open':
@@ -214,6 +223,9 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
         return true;
       case 'export':
         this.exportDeviceProfile(action.event, action.entity);
+        return true;
+      case 'vcExport':
+        this.vcExport(action.event, action.entity);
         return true;
     }
     return false;

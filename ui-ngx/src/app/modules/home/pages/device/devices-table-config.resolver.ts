@@ -547,6 +547,13 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     });
   }
 
+  vcExport($event: Event, device: Device) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.homeDialogs.exportVcEntity(device.id);
+  }
+
   onDeviceAction(action: EntityAction<DeviceInfo>, config: EntityTableConfig<DeviceInfo>): boolean {
     switch (action.action) {
       case 'open':
@@ -566,6 +573,9 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
         return true;
       case 'manageCredentials':
         this.manageCredentials(action.event, action.entity);
+        return true;
+      case 'vcExport':
+        this.vcExport(action.event, action.entity);
         return true;
     }
     return false;

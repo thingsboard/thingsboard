@@ -3049,6 +3049,18 @@
         "json-value-invalid": "JSON value has an invalid format",
         "json-value-required": "JSON value is required."
     },
+    "version-control": {
+        "branch": "Branch",
+        "select-branch": "Select branch",
+        "branch-required": "Branch is required",
+        "export-entity-version": "Export entity version",
+        "entity-version-exported": "Entity version successfully exported",
+        "version-name": "Version name",
+        "version-name-required": "Version name is required",
+        "export-entity-relations": "Export entity relations",
+        "export-entity-version-result-message": "Entity exported with version '{{name}}' and commit id '{{commitId}}'.",
+        "export-to-git": "Export to Git"
+    },
     "widget": {
         "widget-library": "Widgets Library",
         "widget-bundle": "Widgets Bundle",

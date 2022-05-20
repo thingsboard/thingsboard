@@ -151,6 +151,7 @@ import { DashboardStateComponent } from '@home/components/dashboard-page/dashboa
 import { EntityDetailsPageComponent } from '@home/components/entity/entity-details-page.component';
 import { WidgetSettingsModule } from '@home/components/widget/lib/settings/widget-settings.module';
 import { WidgetSettingsComponent } from '@home/components/widget/widget-settings.component';
+import { VcEntityExportDialogComponent } from '@home/components/vc/vc-entity-export-dialog.component';
 
 @NgModule({
   declarations:
@@ -272,7 +273,8 @@ import { WidgetSettingsComponent } from '@home/components/widget/widget-settings
       DashboardStateDialogComponent,
       DashboardImageDialogComponent,
       EmbedDashboardDialogComponent,
-      DisplayWidgetTypesPanelComponent
+      DisplayWidgetTypesPanelComponent,
+      VcEntityExportDialogComponent
     ],
   imports: [
     CommonModule,
@@ -388,7 +390,8 @@ import { WidgetSettingsComponent } from '@home/components/widget/widget-settings
     DashboardStateDialogComponent,
     DashboardImageDialogComponent,
     EmbedDashboardDialogComponent,
-    DisplayWidgetTypesPanelComponent
+    DisplayWidgetTypesPanelComponent,
+    VcEntityExportDialogComponent
   ],
   providers: [
     WidgetComponentService,
