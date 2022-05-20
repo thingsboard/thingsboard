@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettings;
 import org.thingsboard.server.common.data.security.model.mfa.account.EmailTwoFaAccountConfig;
 import org.thingsboard.server.common.data.security.model.mfa.account.SmsTwoFaAccountConfig;
 import org.thingsboard.server.dao.user.UserService;
@@ -48,6 +49,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
@@ -115,6 +117,7 @@ public class TwoFactorAuthController extends BaseController {
     @PreAuthorize("hasAuthority('PRE_VERIFICATION_TOKEN')")
     public List<TwoFaProviderInfo> getAvailableTwoFaProviders() throws ThingsboardException {
         SecurityUser user = getCurrentUser();
+        Optional<PlatformTwoFaSettings> platformTwoFaSettings = twoFaConfigManager.getPlatformTwoFaSettings(user.getTenantId(), true);
         return twoFaConfigManager.getAccountTwoFaSettings(user.getTenantId(), user.getId())
                 .map(settings -> settings.getConfigs().values()).orElse(Collections.emptyList())
                 .stream().map(config -> {
@@ -133,6 +136,7 @@ public class TwoFactorAuthController extends BaseController {
                             .type(config.getProviderType())
                             .isDefault(config.isUseByDefault())
                             .contact(contact)
+                            .minVerificationCodeSendPeriod(platformTwoFaSettings.get().getMinVerificationCodeSendPeriod())
                             .build();
                 })
                 .collect(Collectors.toList());
@@ -145,6 +149,7 @@ public class TwoFactorAuthController extends BaseController {
         private TwoFaProviderType type;
         private boolean isDefault;
         private String contact;
+        private Integer minVerificationCodeSendPeriod;
     }
 
 }
