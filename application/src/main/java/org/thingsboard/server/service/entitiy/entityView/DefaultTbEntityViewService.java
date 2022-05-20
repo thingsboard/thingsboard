@@ -61,26 +61,24 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 @Slf4j
 public class DefaultTbEntityViewService extends AbstractTbEntityService implements TbEntityViewService {
 
-    private  final TimeseriesService tsService;
+    private final TimeseriesService tsService;
 
     @Override
-    public EntityView save(EntityView entityView, EntityView existingEntityView, EntityView savedEntityView, SecurityUser user) throws ThingsboardException {
+    public EntityView save(EntityView entityView, EntityView existingEntityView, SecurityUser user) throws ThingsboardException {
         ActionType actionType = entityView.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         try {
             List<ListenableFuture<?>> futures = new ArrayList<>();
             if (existingEntityView != null) {
-                if (existingEntityView.getKeys() != null) {
-                    if (existingEntityView.getKeys().getAttributes() != null) {
-                        futures.add(deleteAttributesFromEntityView(existingEntityView, DataConstants.CLIENT_SCOPE, existingEntityView.getKeys().getAttributes().getCs(), user));
-                        futures.add(deleteAttributesFromEntityView(existingEntityView, DataConstants.SERVER_SCOPE, existingEntityView.getKeys().getAttributes().getCs(), user));
-                        futures.add(deleteAttributesFromEntityView(existingEntityView, DataConstants.SHARED_SCOPE, existingEntityView.getKeys().getAttributes().getCs(), user));
-                    }
+                if (existingEntityView.getKeys() != null && existingEntityView.getKeys().getAttributes() != null) {
+                    futures.add(deleteAttributesFromEntityView(existingEntityView, DataConstants.CLIENT_SCOPE, existingEntityView.getKeys().getAttributes().getCs(), user));
+                    futures.add(deleteAttributesFromEntityView(existingEntityView, DataConstants.SERVER_SCOPE, existingEntityView.getKeys().getAttributes().getCs(), user));
+                    futures.add(deleteAttributesFromEntityView(existingEntityView, DataConstants.SHARED_SCOPE, existingEntityView.getKeys().getAttributes().getCs(), user));
                 }
                 List<String> tsKeys = existingEntityView.getKeys() != null && existingEntityView.getKeys().getTimeseries() != null ?
                         existingEntityView.getKeys().getTimeseries() : Collections.emptyList();
                 futures.add(deleteLatestFromEntityView(existingEntityView, tsKeys, user));
             }
-
+            EntityView savedEntityView = checkNotNull(entityViewService.saveEntityView(entityView));
             if (savedEntityView.getKeys() != null) {
                 if (savedEntityView.getKeys().getAttributes() != null) {
                     futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.CLIENT_SCOPE, savedEntityView.getKeys().getAttributes().getCs(), user));
@@ -128,7 +126,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
     public EntityView assignEntityViewToCustomer(TenantId tenantId, EntityView savedEntityView, Customer customer, SecurityUser user) throws ThingsboardException {
         ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER;
         CustomerId customerId = customer.getId();
-            try {
+        try {
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, savedEntityView.getEntityId(), customerId, savedEntityView,
                     actionType, EdgeEventActionType.ASSIGNED_TO_CUSTOMER, user, true, customerId.toString(), customer.getName());
             return savedEntityView;
@@ -225,7 +223,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
                         @Override
                         public void onSuccess(@Nullable Void tmp) {
                             try {
-                                logAttributesUpdated(user, entityId, scope, attributes, null);
+                                logAttributesUpdated(entityView.getTenantId(), user, entityId, scope, attributes, null);
                             } catch (ThingsboardException e) {
                                 log.error("Failed to log attribute updates", e);
                             }
@@ -234,7 +232,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
                         @Override
                         public void onFailure(Throwable t) {
                             try {
-                                logAttributesUpdated(user, entityId, scope, attributes, t);
+                                logAttributesUpdated(entityView.getTenantId(), user, entityId, scope, attributes, t);
                             } catch (ThingsboardException e) {
                                 log.error("Failed to log attribute updates", e);
                             }
@@ -293,7 +291,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
                 @Override
                 public void onSuccess(@Nullable Void tmp) {
                     try {
-                        logAttributesDeleted(user, entityId, scope, keys, null);
+                        logAttributesDeleted(entityView.getTenantId(), user, entityId, scope, keys, null);
                     } catch (ThingsboardException e) {
                         log.error("Failed to log attribute delete", e);
                     }
@@ -303,7 +301,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
                 @Override
                 public void onFailure(Throwable t) {
                     try {
-                        logAttributesDeleted(user, entityId, scope, keys, t);
+                        logAttributesDeleted(entityView.getTenantId(), user, entityId, scope, keys, t);
                     } catch (ThingsboardException e) {
                         log.error("Failed to log attribute delete", e);
                     }
@@ -324,7 +322,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
                 @Override
                 public void onSuccess(@Nullable Void tmp) {
                     try {
-                        logTimeseriesDeleted(user, entityId, keys, null);
+                        logTimeseriesDeleted(entityView.getTenantId(), user, entityId, keys, null);
                     } catch (ThingsboardException e) {
                         log.error("Failed to log timeseries delete", e);
                     }
@@ -334,7 +332,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
                 @Override
                 public void onFailure(Throwable t) {
                     try {
-                        logTimeseriesDeleted(user, entityId, keys, t);
+                        logTimeseriesDeleted(entityView.getTenantId(),user, entityId, keys, t);
                     } catch (ThingsboardException e) {
                         log.error("Failed to log timeseries delete", e);
                     }
@@ -346,7 +344,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
                 @Override
                 public void onSuccess(@Nullable Collection<String> keys) {
                     try {
-                        logTimeseriesDeleted(user, entityId, new ArrayList<>(keys), null);
+                        logTimeseriesDeleted(entityView.getTenantId(), user, entityId, new ArrayList<>(keys), null);
                     } catch (ThingsboardException e) {
                         log.error("Failed to log timeseries delete", e);
                     }
@@ -356,7 +354,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
                 @Override
                 public void onFailure(Throwable t) {
                     try {
-                        logTimeseriesDeleted(user, entityId, Collections.emptyList(), t);
+                        logTimeseriesDeleted(entityView.getTenantId(), user, entityId, Collections.emptyList(), t);
                     } catch (ThingsboardException e) {
                         log.error("Failed to log timeseries delete", e);
                     }
@@ -367,16 +365,16 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         return resultFuture;
     }
 
-    private void logAttributesUpdated(SecurityUser user, EntityId entityId, String scope, List<AttributeKvEntry> attributes, Throwable e) throws ThingsboardException {
-        notificationEntityService.notifyEntity(user.getTenantId(), entityId, null, null, ActionType.ATTRIBUTES_UPDATED, user, toException(e), scope, attributes);
+    private void logAttributesUpdated(TenantId tenantId, SecurityUser user, EntityId entityId, String scope, List<AttributeKvEntry> attributes, Throwable e) throws ThingsboardException {
+        notificationEntityService.notifyEntity(tenantId, entityId, null, null, ActionType.ATTRIBUTES_UPDATED, user, toException(e), scope, attributes);
     }
 
-    private void logAttributesDeleted(SecurityUser user, EntityId entityId, String scope, List<String> keys, Throwable e) throws ThingsboardException {
-        notificationEntityService.notifyEntity(user.getTenantId(), entityId, null, null, ActionType.ATTRIBUTES_DELETED, user, toException(e), scope, keys);
+    private void logAttributesDeleted(TenantId tenantId, SecurityUser user, EntityId entityId, String scope, List<String> keys, Throwable e) throws ThingsboardException {
+        notificationEntityService.notifyEntity(tenantId, entityId, null, null, ActionType.ATTRIBUTES_DELETED, user, toException(e), scope, keys);
     }
 
-    private void logTimeseriesDeleted(SecurityUser user, EntityId entityId, List<String> keys, Throwable e) throws ThingsboardException {
-        notificationEntityService.notifyEntity(user.getTenantId(), entityId, null, null, ActionType.TIMESERIES_DELETED, user, toException(e), keys);
+    private void logTimeseriesDeleted(TenantId tenantId, SecurityUser user, EntityId entityId, List<String> keys, Throwable e) throws ThingsboardException {
+        notificationEntityService.notifyEntity(tenantId, entityId, null, null, ActionType.TIMESERIES_DELETED, user, toException(e), keys);
     }
 
     public static Exception toException(Throwable error) {
