@@ -96,7 +96,6 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
         PlatformTwoFaSettings twoFaSettings = new PlatformTwoFaSettings();
         twoFaSettings.setProviders(List.of(totpTwoFaProviderConfig, smsTwoFaProviderConfig));
-        twoFaSettings.setVerificationCodeSendRateLimit("1:60");
         twoFaSettings.setVerificationCodeCheckRateLimit("3:900");
         twoFaSettings.setMaxVerificationFailuresBeforeUserLockout(10);
         twoFaSettings.setTotalAllowedTimeForVerification(3600);
@@ -115,7 +114,6 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
         PlatformTwoFaSettings twoFaSettings = new PlatformTwoFaSettings();
         twoFaSettings.setProviders(Collections.emptyList());
-        twoFaSettings.setVerificationCodeSendRateLimit("ab:aba");
         twoFaSettings.setVerificationCodeCheckRateLimit("0:12");
         twoFaSettings.setMaxVerificationFailuresBeforeUserLockout(-1);
         twoFaSettings.setTotalAllowedTimeForVerification(0);
@@ -124,7 +122,6 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
                 .andExpect(status().isBadRequest()));
 
         assertThat(errorMessage).contains(
-                "verification code send rate limit configuration is invalid",
                 "verification code check rate limit configuration is invalid",
                 "maximum number of verification failure before user lockout must be positive",
                 "total amount of time allotted for verification must be greater than 0"

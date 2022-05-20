@@ -86,7 +86,12 @@ public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
         PlatformTwoFaSettings twoFaSettings = configManager.getPlatformTwoFaSettings(user.getTenantId(), true)
                 .orElseThrow(() -> PROVIDER_NOT_CONFIGURED_ERROR);
         if (checkLimits) {
-            checkRateLimits(user.getId(), accountConfig.getProviderType(), twoFaSettings.getVerificationCodeSendRateLimit(), verificationCodeSendingRateLimits);
+            Integer minVerificationCodeSendPeriod = twoFaSettings.getMinVerificationCodeSendPeriod();
+            String rateLimit = null;
+            if (minVerificationCodeSendPeriod != null && minVerificationCodeSendPeriod > 0) {
+                rateLimit = "1:" + minVerificationCodeSendPeriod;
+            }
+            checkRateLimits(user.getId(), accountConfig.getProviderType(), rateLimit, verificationCodeSendingRateLimits);
         }
 
         TwoFaProviderConfig providerConfig = twoFaSettings.getProviderConfig(accountConfig.getProviderType())

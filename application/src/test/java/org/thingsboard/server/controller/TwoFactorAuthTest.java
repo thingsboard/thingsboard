@@ -202,15 +202,13 @@ public abstract class TwoFactorAuthTest extends AbstractControllerTest {
     @Test
     public void testSendVerificationCode_rateLimit() throws Exception {
         configureTotpTwoFa(twoFaSettings -> {
-            twoFaSettings.setVerificationCodeSendRateLimit("3:10");
+            twoFaSettings.setMinVerificationCodeSendPeriod(10);
         });
 
         logInWithPreVerificationToken(username, password);
 
-        for (int i = 0; i < 3; i++) {
-            doPost("/api/auth/2fa/verification/send?providerType=TOTP")
-                    .andExpect(status().isOk());
-        }
+        doPost("/api/auth/2fa/verification/send?providerType=TOTP")
+                .andExpect(status().isOk());
 
         String rateLimitExceededError = getErrorMessage(doPost("/api/auth/2fa/verification/send?providerType=TOTP")
                 .andExpect(status().isTooManyRequests()));

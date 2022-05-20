@@ -214,7 +214,7 @@ public class TwoFaConfigController extends BaseController {
     @ApiOperation(value = "Save platform 2FA settings (savePlatformTwoFaSettings)",
             notes = "Save 2FA settings for platform. The settings have following properties:\n" +
                     "- `providers` - the list of 2FA providers' configs. Users will only be allowed to use 2FA providers from this list. \n\n" +
-                    "- `verificationCodeSendRateLimit` - rate limit configuration for verification code sending. " +
+                    "- `minVerificationCodeSendPeriod` - minimal period in seconds to wait after verification code send request to send next request. " +
                     "The format is standard: 'amountOfRequests:periodInSeconds'. The value of '1:60' would limit verification " +
                     "code sending requests to one per minute.\n" +
                     "- `verificationCodeCheckRateLimit` - rate limit configuration for verification code checking.\n" +
@@ -246,7 +246,7 @@ public class TwoFaConfigController extends BaseController {
                     "      \"smsVerificationMessageTemplate\": \"Here is your verification code: ${code}\"\n" +
                     "    }\n" +
                     "  ],\n" +
-                    "  \"verificationCodeSendRateLimit\": \"1:60\",\n" +
+                    "  \"minVerificationCodeSendPeriod\": 60,\n" +
                     "  \"verificationCodeCheckRateLimit\": \"3:900\",\n" +
                     "  \"maxVerificationFailuresBeforeUserLockout\": 10,\n" +
                     "  \"totalAllowedTimeForVerification\": 600\n" +
