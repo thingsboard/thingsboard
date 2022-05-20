@@ -164,7 +164,7 @@ public class EdgeController extends BaseController {
 
         accessControlService.checkPermission(getCurrentUser(), Resource.EDGE, operation, edge.getId(), edge);
 
-        return tbEdgeService.saveEdge(edge, edgeTemplateRootRuleChain, getCurrentUser());
+        return tbEdgeService.save(edge, edgeTemplateRootRuleChain, getCurrentUser());
     }
 
     @ApiOperation(value = "Delete edge (deleteEdge)",
@@ -177,7 +177,7 @@ public class EdgeController extends BaseController {
         checkParameter(EDGE_ID, strEdgeId);
         EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
         Edge edge = checkEdgeId(edgeId, Operation.DELETE);
-        tbEdgeService.deleteEdge(edge, getCurrentUser());
+        tbEdgeService.delete(edge, getCurrentUser());
     }
 
     @ApiOperation(value = "Get Tenant Edges (getEdges)",

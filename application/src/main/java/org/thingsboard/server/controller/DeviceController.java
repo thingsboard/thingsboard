@@ -206,7 +206,7 @@ public class DeviceController extends BaseController {
         DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
         Device device = checkDeviceId(deviceId, Operation.DELETE);
         try {
-            tbDeviceService.deleteDevice(device, getCurrentUser()).get();
+            tbDeviceService.delete(device, getCurrentUser()).get();
         } catch (Exception e) {
             throw handleException(e);
         }

@@ -15,37 +15,48 @@
  */
 package org.thingsboard.server.service.entitiy.tenant;
 
-import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
+import org.thingsboard.server.service.entitiy.queue.TbQueueService;
 import org.thingsboard.server.service.install.InstallScripts;
+
+import java.util.Collections;
 
 @Service
 @TbCoreComponent
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class DefaultTbTenantService extends AbstractTbEntityService implements TbTenantService {
 
-    @Autowired
-    private InstallScripts installScripts;
+    private final InstallScripts installScripts;
+    private final TbQueueService tbQueueService;
+    private final TenantProfileService tenantProfileService;
 
     @Override
     public Tenant save(Tenant tenant) throws ThingsboardException {
         try {
-            boolean newTenant = tenant.getId() == null;
+            boolean created = tenant.getId() == null;
+            Tenant oldTenant = !created ? tenantService.findTenantById(tenant.getId()) : null;
+
             Tenant savedTenant = checkNotNull(tenantService.saveTenant(tenant));
-            if (newTenant) {
+            if (created) {
                 installScripts.createDefaultRuleChains(savedTenant.getId());
                 installScripts.createDefaultEdgeRuleChains(savedTenant.getId());
             }
             tenantProfileCache.evict(savedTenant.getId());
-            notificationEntityService.notifyCreateOruUpdateTenant(savedTenant, newTenant ?
+            notificationEntityService.notifyCreateOruUpdateTenant(savedTenant, created ?
                     ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+
+            TenantProfile oldTenantProfile = oldTenant != null ? tenantProfileService.findTenantProfileById(TenantId.SYS_TENANT_ID, oldTenant.getTenantProfileId()) : null;
+            TenantProfile newTenantProfile = tenantProfileService.findTenantProfileById(TenantId.SYS_TENANT_ID, savedTenant.getTenantProfileId());
+            tbQueueService.updateQueuesByTenants(Collections.singletonList(savedTenant.getTenantId()), newTenantProfile, oldTenantProfile);
             return savedTenant;
         } catch (Exception e) {
             throw handleException(e);

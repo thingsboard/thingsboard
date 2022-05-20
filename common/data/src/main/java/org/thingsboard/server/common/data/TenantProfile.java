@@ -57,7 +57,7 @@ public class TenantProfile extends SearchTextBased<TenantProfileId> implements H
     @ApiModelProperty(position = 7, value = "If enabled, will push all messages related to this tenant and processed by the rule engine into separate queue. " +
             "Useful for complex microservices deployments, to isolate processing of the data for specific tenants", example = "true")
     private boolean isolatedTbRuleEngine;
-    @ApiModelProperty(position = 8, value = "Complex JSON object that contains profile settings: max devices, max assets, rate limits, etc.")
+    @ApiModelProperty(position = 8, value = "Complex JSON object that contains profile settings: queue configs, max devices, max assets, rate limits, etc.")
     private transient TenantProfileData profileData;
     @JsonIgnore
     private byte[] profileDataBytes;

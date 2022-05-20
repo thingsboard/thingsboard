@@ -37,7 +37,7 @@ import org.thingsboard.server.queue.TbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.DefaultTbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.TbProtoJsQueueMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.NotificationsTopicService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.kafka.TbKafkaAdmin;
 import org.thingsboard.server.queue.kafka.TbKafkaConsumerStatsService;
@@ -58,7 +58,7 @@ import java.nio.charset.StandardCharsets;
 @ConditionalOnExpression("'${queue.type:null}'=='kafka' && '${service.type:null}'=='tb-core'")
 public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
 
-    private final PartitionService partitionService;
+    private final NotificationsTopicService notificationsTopicService;
     private final TbKafkaSettings kafkaSettings;
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TbQueueCoreSettings coreSettings;
@@ -75,7 +75,8 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
     private final TbQueueAdmin notificationAdmin;
     private final TbQueueAdmin fwUpdatesAdmin;
 
-    public KafkaTbCoreQueueFactory(PartitionService partitionService, TbKafkaSettings kafkaSettings,
+    public KafkaTbCoreQueueFactory(NotificationsTopicService notificationsTopicService,
+                                   TbKafkaSettings kafkaSettings,
                                    TbServiceInfoProvider serviceInfoProvider,
                                    TbQueueCoreSettings coreSettings,
                                    TbQueueRuleEngineSettings ruleEngineSettings,
@@ -84,7 +85,7 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
                                    TbKafkaConsumerStatsService consumerStatsService,
                                    TbQueueTransportNotificationSettings transportNotificationSettings,
                                    TbKafkaTopicConfigs kafkaTopicConfigs) {
-        this.partitionService = partitionService;
+        this.notificationsTopicService = notificationsTopicService;
         this.kafkaSettings = kafkaSettings;
         this.serviceInfoProvider = serviceInfoProvider;
         this.coreSettings = coreSettings;
@@ -169,7 +170,7 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
     public TbQueueConsumer<TbProtoQueueMsg<ToCoreNotificationMsg>> createToCoreNotificationsMsgConsumer() {
         TbKafkaConsumerTemplate.TbKafkaConsumerTemplateBuilder<TbProtoQueueMsg<ToCoreNotificationMsg>> consumerBuilder = TbKafkaConsumerTemplate.builder();
         consumerBuilder.settings(kafkaSettings);
-        consumerBuilder.topic(partitionService.getNotificationsTopic(ServiceType.TB_CORE, serviceInfoProvider.getServiceId()).getFullTopicName());
+        consumerBuilder.topic(notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, serviceInfoProvider.getServiceId()).getFullTopicName());
         consumerBuilder.clientId("tb-core-notifications-consumer-" + serviceInfoProvider.getServiceId());
         consumerBuilder.groupId("tb-core-notifications-node-" + serviceInfoProvider.getServiceId());
         consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToCoreNotificationMsg.parseFrom(msg.getData()), msg.getHeaders()));
