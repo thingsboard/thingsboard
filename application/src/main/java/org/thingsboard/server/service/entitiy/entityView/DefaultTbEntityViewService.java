@@ -126,13 +126,14 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
     public EntityView assignEntityViewToCustomer(TenantId tenantId, EntityView savedEntityView, Customer customer, SecurityUser user) throws ThingsboardException {
         ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER;
         CustomerId customerId = customer.getId();
+        EntityViewId entityViewId = savedEntityView.getId();
         try {
-            notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, savedEntityView.getEntityId(), customerId, savedEntityView,
+            notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, entityViewId, customerId, savedEntityView,
                     actionType, EdgeEventActionType.ASSIGNED_TO_CUSTOMER, user, true, customerId.toString(), customer.getName());
             return savedEntityView;
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.ENTITY_VIEW), null, null,
-                    actionType, user, e, savedEntityView.getEntityId().toString(), customerId.toString());
+                    actionType, user, e, entityViewId.toString(), customerId.toString());
             throw handleException(e);
         }
     }
@@ -141,14 +142,15 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
     public EntityView assignEntityViewToPublicCustomer(TenantId tenantId, CustomerId customerId, Customer publicCustomer,
                                                        EntityView savedEntityView, SecurityUser user) throws ThingsboardException {
         ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER;
+        EntityViewId entityViewId = savedEntityView.getId();
         try {
-            notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, savedEntityView.getEntityId(), customerId, savedEntityView,
+            notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, entityViewId, customerId, savedEntityView,
                     actionType, null, user, false, savedEntityView.getEntityId().toString(),
                     publicCustomer.getId().toString(), publicCustomer.getName());
             return savedEntityView;
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.ENTITY_VIEW), null, null,
-                    actionType, user, e, savedEntityView.getEntityId().toString());
+                    actionType, user, e, entityViewId.toString());
             throw handleException(e);
         }
     }
@@ -157,14 +159,15 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
     public EntityView assignEntityViewToEdge(TenantId tenantId, CustomerId customerId, EntityView savedEntityView, Edge edge, SecurityUser user) throws ThingsboardException {
         ActionType actionType = ActionType.ASSIGNED_TO_EDGE;
         EdgeId edgeId = edge.getId();
+        EntityViewId entityViewId = savedEntityView.getId();
         try {
-            notificationEntityService.notifyAssignOrUnassignEntityToEdge(tenantId, savedEntityView.getEntityId(), customerId,
+            notificationEntityService.notifyAssignOrUnassignEntityToEdge(tenantId, entityViewId, customerId,
                     edgeId, savedEntityView, actionType, EdgeEventActionType.ASSIGNED_TO_EDGE, user, savedEntityView.getEntityId().toString(),
                     edgeId.toString(), edge.getName());
             return savedEntityView;
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.DEVICE), null, null,
-                    actionType, user, e, savedEntityView.getEntityId().toString(), edgeId.toString());
+                    actionType, user, e, entityViewId.toString(), edgeId.toString());
             throw handleException(e);
         }
     }
@@ -190,13 +193,14 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
     @Override
     public EntityView unassignEntityViewFromCustomer(TenantId tenantId, EntityView savedEntityView, Customer customer, SecurityUser user) throws ThingsboardException {
         ActionType actionType = ActionType.UNASSIGNED_FROM_CUSTOMER;
+        EntityViewId entityViewId = savedEntityView.getId();
         try {
-            notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, savedEntityView.getEntityId(), customer.getId(), savedEntityView,
+            notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, entityViewId, customer.getId(), savedEntityView,
                     actionType, EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER, user, true, customer.getId().toString(), customer.getName());
             return savedEntityView;
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.ENTITY_VIEW), null, null,
-                    actionType, user, e, savedEntityView.getEntityId().toString());
+                    actionType, user, e, entityViewId.toString());
             throw handleException(e);
         }
     }
