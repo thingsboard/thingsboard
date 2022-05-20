@@ -148,8 +148,7 @@ public class EntityViewController extends BaseController {
         } else {
             existingEntityView = checkEntityViewId(entityView.getId(), Operation.WRITE);
         }
-        EntityView savedEntityView = checkNotNull(entityViewService.saveEntityView(entityView));
-        return tbEntityViewService.save(entityView, existingEntityView, savedEntityView, getCurrentUser());
+        return tbEntityViewService.save(entityView, existingEntityView, getCurrentUser());
     }
 
     @ApiOperation(value = "Delete entity view (deleteEntityView)",
