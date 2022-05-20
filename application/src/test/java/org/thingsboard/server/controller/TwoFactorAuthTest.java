@@ -351,7 +351,7 @@ public abstract class TwoFactorAuthTest extends AbstractControllerTest {
 
         SmsTwoFaProviderConfig smsTwoFaProviderConfig = new SmsTwoFaProviderConfig();
         smsTwoFaProviderConfig.setVerificationCodeLifetime(60);
-        smsTwoFaProviderConfig.setSmsVerificationMessageTemplate("${verificationCode}");
+        smsTwoFaProviderConfig.setSmsVerificationMessageTemplate("${code}");
 
         EmailTwoFaProviderConfig emailTwoFaProviderConfig = new EmailTwoFaProviderConfig();
         emailTwoFaProviderConfig.setVerificationCodeLifetime(60);
@@ -422,7 +422,7 @@ public abstract class TwoFactorAuthTest extends AbstractControllerTest {
     private SmsTwoFaAccountConfig configureSmsTwoFa(Consumer<SmsTwoFaProviderConfig>... customizer) throws ThingsboardException {
         SmsTwoFaProviderConfig smsTwoFaProviderConfig = new SmsTwoFaProviderConfig();
         smsTwoFaProviderConfig.setVerificationCodeLifetime(60);
-        smsTwoFaProviderConfig.setSmsVerificationMessageTemplate("${verificationCode}");
+        smsTwoFaProviderConfig.setSmsVerificationMessageTemplate("${code}");
         Arrays.stream(customizer).forEach(c -> c.accept(smsTwoFaProviderConfig));
 
         PlatformTwoFaSettings twoFaSettings = new PlatformTwoFaSettings();

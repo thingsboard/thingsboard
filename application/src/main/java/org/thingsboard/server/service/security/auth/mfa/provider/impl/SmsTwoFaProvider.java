@@ -51,7 +51,7 @@ public class SmsTwoFaProvider extends OtpBasedTwoFaProvider<SmsTwoFaProviderConf
     @Override
     protected void sendVerificationCode(SecurityUser user, String verificationCode, SmsTwoFaProviderConfig providerConfig, SmsTwoFaAccountConfig accountConfig) throws ThingsboardException {
         Map<String, String> messageData = Map.of(
-                "verificationCode", verificationCode,
+                "code", verificationCode,
                 "userEmail", user.getEmail()
         );
         String message = TbNodeUtils.processTemplate(providerConfig.getSmsVerificationMessageTemplate(), messageData);

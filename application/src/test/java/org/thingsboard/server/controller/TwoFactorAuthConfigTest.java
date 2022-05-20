@@ -91,7 +91,7 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
         TotpTwoFaProviderConfig totpTwoFaProviderConfig = new TotpTwoFaProviderConfig();
         totpTwoFaProviderConfig.setIssuerName("tb");
         SmsTwoFaProviderConfig smsTwoFaProviderConfig = new SmsTwoFaProviderConfig();
-        smsTwoFaProviderConfig.setSmsVerificationMessageTemplate("${verificationCode}");
+        smsTwoFaProviderConfig.setSmsVerificationMessageTemplate("${code}");
         smsTwoFaProviderConfig.setVerificationCodeLifetime(60);
 
         PlatformTwoFaSettings twoFaSettings = new PlatformTwoFaSettings();
@@ -167,7 +167,7 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
     @Test
     public void testSaveTwoFaAccountConfig_providerNotConfigured() throws Exception {
-        configureSmsTwoFaProvider("${verificationCode}");
+        configureSmsTwoFaProvider("${code}");
 
         loginTenantAdmin();
 
@@ -300,14 +300,14 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
     @Test
     public void testGenerateSmsTwoFaAccountConfig() throws Exception {
-        configureSmsTwoFaProvider("${verificationCode}");
+        configureSmsTwoFaProvider("${code}");
         doPost("/api/2fa/account/config/generate?providerType=SMS")
                 .andExpect(status().isOk());
     }
 
     @Test
     public void testSubmitSmsTwoFaAccountConfig() throws Exception {
-        String verificationMessageTemplate = "Here is your verification code: ${verificationCode}";
+        String verificationMessageTemplate = "Here is your verification code: ${code}";
         configureSmsTwoFaProvider(verificationMessageTemplate);
 
         loginTenantAdmin();
@@ -327,7 +327,7 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
     @Test
     public void testSubmitSmsTwoFaAccountConfig_validationError() throws Exception {
-        configureSmsTwoFaProvider("${verificationCode}");
+        configureSmsTwoFaProvider("${code}");
 
         SmsTwoFaAccountConfig smsTwoFaAccountConfig = new SmsTwoFaAccountConfig();
         String blankPhoneNumber = "";
@@ -347,7 +347,7 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
     @Test
     public void testVerifyAndSaveSmsTwoFaAccountConfig() throws Exception {
-        configureSmsTwoFaProvider("${verificationCode}");
+        configureSmsTwoFaProvider("${code}");
 
         loginTenantAdmin();
 
@@ -373,7 +373,7 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
     @Test
     public void testVerifyAndSaveSmsTwoFaAccountConfig_incorrectVerificationCode() throws Exception {
-        configureSmsTwoFaProvider("${verificationCode}");
+        configureSmsTwoFaProvider("${code}");
 
         loginTenantAdmin();
 
@@ -387,7 +387,7 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
     @Test
     public void testVerifyAndSaveSmsTwoFaAccountConfig_differentAccountConfigs() throws Exception {
-        configureSmsTwoFaProvider("${verificationCode}");
+        configureSmsTwoFaProvider("${code}");
         loginTenantAdmin();
 
         SmsTwoFaAccountConfig initialSmsTwoFaAccountConfig = new SmsTwoFaAccountConfig();
@@ -442,7 +442,7 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
     @Test
     public void testIsTwoFaEnabled() throws Exception {
-        configureSmsTwoFaProvider("${verificationCode}");
+        configureSmsTwoFaProvider("${code}");
         SmsTwoFaAccountConfig accountConfig = new SmsTwoFaAccountConfig();
         accountConfig.setPhoneNumber("+38050505050");
         twoFaConfigManager.saveTwoFaAccountConfig(tenantId, tenantAdminUserId, accountConfig);
@@ -452,7 +452,7 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
     @Test
     public void testDeleteTwoFaAccountConfig() throws Exception {
-        configureSmsTwoFaProvider("${verificationCode}");
+        configureSmsTwoFaProvider("${code}");
         SmsTwoFaAccountConfig accountConfig = new SmsTwoFaAccountConfig();
         accountConfig.setPhoneNumber("+38050505050");
 
