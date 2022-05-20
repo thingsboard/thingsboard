@@ -618,8 +618,8 @@ message TbSubscriptionUpdateValueListProto {
 }
 
 message TbSubscriptionUpdateTsValue {
-   int64 ts = 1;
-   optional string value = 2;
+  int64 ts = 1;
+  optional string value = 2;
 }
 
 /**
@@ -677,6 +677,95 @@ message EdgeNotificationMsgProto {
 }
 
 /**
+   TB Core to Version Control Service
+ */
+message CommitRequestMsg {
+  PrepareMsg prepareMsg = 1;
+  AddMsg addMsg = 2;
+  DeleteMsg deleteMsg = 3;
+  PushMsg pushMsg = 4;
+  AbortMsg abortMsg = 5;
+}
+
+message CommitResponseMsg {
+  string commitId = 1;
+  string name = 2;
+  int32 added = 3;
+  int32 modified = 4;
+  int32 removed = 5;
+}
+
+message PrepareMsg {
+  string commitMsg = 1;
+  string branchName = 2;
+}
+
+message AddMsg {
+  string relativePath = 1;
+  string entityDataJson = 2;
+}
+
+message DeleteMsg {
+  string relativePath = 1;
+}
+
+message PushMsg {
+}
+
+message AbortMsg {
+}
+
+message ListVersionsRequestMsg {
+  string branchName = 1;
+  string entityType = 2;
+  int64 entityIdMSB = 3;
+  int64 entityIdLSB = 4;
+}
+
+message ListEntitiesRequestMsg {
+  string branchName = 1;
+  string versionId = 2;
+  string entityType = 3;
+}
+
+message ListBranchesRequestMsg {
+}
+
+message EntityContentRequestMsg {
+  string versionId = 1;
+  string entityType = 2;
+  int64 entityIdMSB = 3;
+  int64 entityIdLSB = 4;
+}
+
+message EntitiesContentRequestMsg {
+  string versionId = 1;
+  string entityType = 2;
+  int32 offset = 3;
+  int32 limit = 4;
+}
+
+message ToVersionControlServiceMsg {
+  string nodeId = 1;
+  int64 tenantIdMSB = 2;
+  int64 tenantIdLSB = 3;
+  int64 requestIdMSB = 4;
+  int64 requestIdLSB = 5;
+  CommitRequestMsg commitRequest = 6;
+  ListVersionsRequestMsg listVersionRequest = 7;
+  ListEntitiesRequestMsg listEntitiesRequest = 8;
+  ListBranchesRequestMsg listBranchesRequest = 9;
+  EntityContentRequestMsg entityContentRequest = 10;
+  EntitiesContentRequestMsg entitiesContentRequest = 11;
+}
+
+message VersionControlResponseMsg {
+  int64 requestIdMSB = 1;
+  int64 requestIdLSB = 2;
+  CommitResponseMsg commitResponse = 3;
+}
+
+/**
  * Main messages;
  */
 
@@ -730,6 +819,7 @@ message ToCoreNotificationMsg {
   bytes edgeEventUpdateMsg = 4;
   QueueUpdateMsg queueUpdateMsg = 5;
   QueueDeleteMsg queueDeleteMsg = 6;
+  VersionControlResponseMsg vcResponseMsg = 7;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */
@@ -793,3 +883,5 @@ message ToOtaPackageStateServiceMsg {
   int64 otaPackageIdLSB = 7;
   string type = 8;
 }
+
+

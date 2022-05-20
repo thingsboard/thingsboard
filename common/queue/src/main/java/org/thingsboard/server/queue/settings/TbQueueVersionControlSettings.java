@@ -13,13 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.queue;
+package org.thingsboard.server.queue.settings;
 
-public enum ServiceType {
+import lombok.Data;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
-    TB_CORE, TB_RULE_ENGINE, TB_TRANSPORT, JS_EXECUTOR, TB_VC_EXECUTOR;
+@Data
+@Component
+public class TbQueueVersionControlSettings {
 
-    public static ServiceType of(String serviceType) {
-        return ServiceType.valueOf(serviceType.replace("-", "_").toUpperCase());
-    }
+    @Value("${queue.vc.topic:tb_version_control}")
+    private String topic;
+
+    @Value("${queue.vc.usage-stats-topic:tb_usage_stats}")
+    private String usageStatsTopic;
+
+    @Value("${queue.vc.partitions:10}")
+    private int partitions;
 }

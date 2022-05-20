@@ -1021,6 +1021,9 @@ queue:
     stats:
       enabled: "${TB_QUEUE_CORE_STATS_ENABLED:true}"
       print-interval-ms: "${TB_QUEUE_CORE_STATS_PRINT_INTERVAL_MS:60000}"
+  vc:
+    topic: "${TB_QUEUE_VC_TOPIC:tb_version_control}"
+    partitions: "${TB_QUEUE_VC_PARTITIONS:10}"
   js:
     # JS Eval request topic
     request_topic: "${REMOTE_JS_EVAL_REQUEST_TOPIC:js_eval.requests}"
@@ -1115,8 +1118,8 @@ metrics:
     percentiles: "${METRICS_TIMER_PERCENTILES:0.5}"
 
 vc:
+  thread_pool_size: "${TB_VC_POOL_SIZE:4}"
   git:
-    service: "${JS_VC_GIT_SERVICE:local}" # local/remote
     repos-poll-interval: "${TB_VC_GIT_REPOS_POLL_INTERVAL_SEC:60}"
 
 management:

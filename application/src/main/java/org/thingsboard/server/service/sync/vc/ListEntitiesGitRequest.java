@@ -13,13 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.queue;
+package org.thingsboard.server.service.sync.vc;
 
-public enum ServiceType {
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.sync.vc.EntityVersion;
+import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 
-    TB_CORE, TB_RULE_ENGINE, TB_TRANSPORT, JS_EXECUTOR, TB_VC_EXECUTOR;
+import java.util.List;
 
-    public static ServiceType of(String serviceType) {
-        return ServiceType.valueOf(serviceType.replace("-", "_").toUpperCase());
+public class ListEntitiesGitRequest extends PendingGitRequest<List<VersionedEntityInfo>> {
+
+    public ListEntitiesGitRequest(TenantId tenantId) {
+        super(tenantId);
     }
+
 }

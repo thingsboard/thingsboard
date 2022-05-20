@@ -30,49 +30,41 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import javax.annotation.PostConstruct;
 
 @Service
-@ConditionalOnExpression("'${service.type:null}'=='tb-rule-engine'")
-public class TbRuleEngineProducerProvider implements TbQueueProducerProvider {
+@ConditionalOnExpression("'${service.type:null}'=='tb-vc-executor'")
+public class TbVersionControlProducerProvider implements TbQueueProducerProvider {
 
-    private final TbRuleEngineQueueFactory tbQueueProvider;
-    private TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> toTransport;
-    private TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> toRuleEngine;
-    private TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> toTbCore;
-    private TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> toRuleEngineNotifications;
+    private final TbVersionControlQueueFactory tbQueueProvider;
     private TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> toTbCoreNotifications;
     private TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> toUsageStats;
 
-    public TbRuleEngineProducerProvider(TbRuleEngineQueueFactory tbQueueProvider) {
+    public TbVersionControlProducerProvider(TbVersionControlQueueFactory tbQueueProvider) {
         this.tbQueueProvider = tbQueueProvider;
     }
 
     @PostConstruct
     public void init() {
-        this.toTbCore = tbQueueProvider.createTbCoreMsgProducer();
-        this.toTransport = tbQueueProvider.createTransportNotificationsMsgProducer();
-        this.toRuleEngine = tbQueueProvider.createRuleEngineMsgProducer();
-        this.toRuleEngineNotifications = tbQueueProvider.createRuleEngineNotificationsMsgProducer();
         this.toTbCoreNotifications = tbQueueProvider.createTbCoreNotificationsMsgProducer();
         this.toUsageStats = tbQueueProvider.createToUsageStatsServiceMsgProducer();
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> getTransportNotificationsMsgProducer() {
-        return toTransport;
+        throw new RuntimeException("Not Implemented! Should not be used by Version Control Service!");
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> getRuleEngineMsgProducer() {
-        return toRuleEngine;
-    }
-
-    @Override
-    public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> getRuleEngineNotificationsMsgProducer() {
-        return toRuleEngineNotifications;
+         throw new RuntimeException("Not Implemented! Should not be used by Version Control Service!");
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> getTbCoreMsgProducer() {
-        return toTbCore;
+        throw new RuntimeException("Not Implemented! Should not be used by Version Control Service!");
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> getRuleEngineNotificationsMsgProducer() {
+        throw new RuntimeException("Not Implemented! Should not be used by Version Control Service!");
     }
 
     @Override
@@ -81,12 +73,12 @@ public class TbRuleEngineProducerProvider implements TbQueueProducerProvider {
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> getTbUsageStatsMsgProducer() {
-        return toUsageStats;
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToVersionControlServiceMsg>> getTbVersionControlMsgProducer() {
+        throw new RuntimeException("Not Implemented! Should not be used by Version Control Service!");
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToVersionControlServiceMsg>> getTbVersionControlMsgProducer() {
-        throw new RuntimeException("Not Implemented! Should not be used by Rule Engine!");
+    public TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> getTbUsageStatsMsgProducer() {
+        return toUsageStats;
     }
 }

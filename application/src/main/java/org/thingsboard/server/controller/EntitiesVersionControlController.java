@@ -15,16 +15,26 @@
  */
 package org.thingsboard.server.controller;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import io.swagger.annotations.ApiOperation;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.device.claim.ClaimResponse;
+import org.thingsboard.server.dao.device.claim.ClaimResult;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
@@ -34,6 +44,7 @@ import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
 import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadRequest;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -90,15 +101,14 @@ public class EntitiesVersionControlController extends BaseController {
             "  }\n" +
             "}\n```")
     @PostMapping("/version")
-    public VersionCreationResult saveEntitiesVersion(@RequestBody VersionCreateRequest request) throws ThingsboardException {
+    public DeferredResult<VersionCreationResult> saveEntitiesVersion(@RequestBody VersionCreateRequest request) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         try {
-            return versionControlService.saveEntitiesVersion(user, request);
+            return wrapFuture(versionControlService.saveEntitiesVersion(user, request));
         } catch (Exception e) {
             throw handleException(e);
         }
     }
-
 
     @ApiOperation(value = "", notes = "" +
             "```\n[\n" +
@@ -108,12 +118,12 @@ public class EntitiesVersionControlController extends BaseController {
             "  }\n" +
             "]\n```")
     @GetMapping("/version/{branch}/{entityType}/{externalEntityUuid}")
-    public List<EntityVersion> listEntityVersions(@PathVariable String branch,
-                                                  @PathVariable EntityType entityType,
-                                                  @PathVariable UUID externalEntityUuid) throws ThingsboardException {
+    public DeferredResult<List<EntityVersion>> listEntityVersions(@PathVariable String branch,
+                                                                  @PathVariable EntityType entityType,
+                                                                  @PathVariable UUID externalEntityUuid) throws ThingsboardException {
         try {
             EntityId externalEntityId = EntityIdFactory.getByTypeAndUuid(entityType, externalEntityUuid);
-            return versionControlService.listEntityVersions(getTenantId(), branch, externalEntityId);
+            return wrapFuture(versionControlService.listEntityVersions(getTenantId(), branch, externalEntityId));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -127,10 +137,10 @@ public class EntitiesVersionControlController extends BaseController {
             "  }\n" +
             "]\n```")
     @GetMapping("/version/{branch}/{entityType}")
-    public List<EntityVersion> listEntityTypeVersions(@PathVariable String branch,
-                                                      @PathVariable EntityType entityType) throws ThingsboardException {
+    public DeferredResult<List<EntityVersion>> listEntityTypeVersions(@PathVariable String branch,
+                                                                      @PathVariable EntityType entityType) throws ThingsboardException {
         try {
-            return versionControlService.listEntityTypeVersions(getTenantId(), branch, entityType);
+            return wrapFuture(versionControlService.listEntityTypeVersions(getTenantId(), branch, entityType));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -152,9 +162,9 @@ public class EntitiesVersionControlController extends BaseController {
             "  }\n" +
             "]\n```")
     @GetMapping("/version/{branch}")
-    public List<EntityVersion> listVersions(@PathVariable String branch) throws ThingsboardException {
+    public DeferredResult<List<EntityVersion>> listVersions(@PathVariable String branch) throws ThingsboardException {
         try {
-            return versionControlService.listVersions(getTenantId(), branch);
+            return wrapFuture(versionControlService.listVersions(getTenantId(), branch));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -162,21 +172,21 @@ public class EntitiesVersionControlController extends BaseController {
 
 
     @GetMapping("/entity/{branch}/{entityType}/{versionId}")
-    public List<VersionedEntityInfo> listEntitiesAtVersion(@PathVariable String branch,
-                                                           @PathVariable EntityType entityType,
-                                                           @PathVariable String versionId) throws ThingsboardException {
+    public DeferredResult<List<VersionedEntityInfo>> listEntitiesAtVersion(@PathVariable String branch,
+                                                                           @PathVariable EntityType entityType,
+                                                                           @PathVariable String versionId) throws ThingsboardException {
         try {
-            return versionControlService.listEntitiesAtVersion(getTenantId(), branch, versionId, entityType);
+            return wrapFuture(versionControlService.listEntitiesAtVersion(getTenantId(), branch, versionId, entityType));
         } catch (Exception e) {
             throw handleException(e);
         }
     }
 
     @GetMapping("/entity/{branch}/{versionId}")
-    public List<VersionedEntityInfo> listAllEntitiesAtVersion(@PathVariable String branch,
-                                                              @PathVariable String versionId) throws ThingsboardException {
+    public DeferredResult<List<VersionedEntityInfo>> listAllEntitiesAtVersion(@PathVariable String branch,
+                                                                              @PathVariable String versionId) throws ThingsboardException {
         try {
-            return versionControlService.listAllEntitiesAtVersion(getTenantId(), branch, versionId);
+            return wrapFuture(versionControlService.listAllEntitiesAtVersion(getTenantId(), branch, versionId));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -216,20 +226,10 @@ public class EntitiesVersionControlController extends BaseController {
             "  }\n" +
             "}\n```")
     @PostMapping("/entity")
-    public List<VersionLoadResult> loadEntitiesVersion(@RequestBody VersionLoadRequest request) throws ThingsboardException {
+    public DeferredResult<List<VersionLoadResult>> loadEntitiesVersion(@RequestBody VersionLoadRequest request) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         try {
-            String versionId = request.getVersionId();
-            if (versionId == null) {
-                List<EntityVersion> versions = versionControlService.listVersions(user.getTenantId(), request.getBranch());
-                if (versions.size() > 0) {
-                    versionId = versions.get(0).getId();
-                } else {
-                    throw new IllegalArgumentException("No versions available in branch");
-                }
-            }
-
-            return versionControlService.loadEntitiesVersion(user, request);
+            return wrapFuture(versionControlService.loadEntitiesVersion(user, request));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -252,19 +252,22 @@ public class EntitiesVersionControlController extends BaseController {
             "  }\n" +
             "]\n\n```")
     @GetMapping("/branches")
-    public List<BranchInfo> listBranches() throws ThingsboardException {
+    public DeferredResult<List<BranchInfo>> listBranches() throws ThingsboardException {
         try {
-            List<String> remoteBranches = versionControlService.listBranches(getTenantId());
-            List<BranchInfo> infos = new ArrayList<>();
+            final TenantId tenantId = getTenantId();
+            ListenableFuture<List<String>> branches = versionControlService.listBranches(tenantId);
+            return wrapFuture(Futures.transform(branches, remoteBranches -> {
+                List<BranchInfo> infos = new ArrayList<>();
 
-            String defaultBranch = versionControlService.getVersionControlSettings(getTenantId()).getDefaultBranch();
-            if (StringUtils.isNotEmpty(defaultBranch)) {
-                remoteBranches.remove(defaultBranch);
-                infos.add(new BranchInfo(defaultBranch, true));
-            }
+                String defaultBranch = versionControlService.getVersionControlSettings(tenantId).getDefaultBranch();
+                if (StringUtils.isNotEmpty(defaultBranch)) {
+                    remoteBranches.remove(defaultBranch);
+                    infos.add(new BranchInfo(defaultBranch, true));
+                }
 
-            remoteBranches.forEach(branch -> infos.add(new BranchInfo(branch, false)));
-            return infos;
+                remoteBranches.forEach(branch -> infos.add(new BranchInfo(branch, false)));
+                return infos;
+            }, MoreExecutors.directExecutor()));
         } catch (Exception e) {
             throw handleException(e);
         }

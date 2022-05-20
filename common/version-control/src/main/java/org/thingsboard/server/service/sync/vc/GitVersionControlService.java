@@ -16,15 +16,12 @@
 package org.thingsboard.server.service.sync.vc;
 
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
-import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
-import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
 
 import java.util.List;
 
@@ -35,14 +32,6 @@ public interface GitVersionControlService {
     void initRepository(TenantId tenantId, EntitiesVersionControlSettings settings);
 
     void clearRepository(TenantId tenantId);
-
-    PendingCommit prepareCommit(TenantId tenantId, VersionCreateRequest request);
-
-    void addToCommit(PendingCommit commit, EntityExportData<ExportableEntity<EntityId>> entityData);
-
-    void deleteAll(PendingCommit pendingCommit, EntityType entityType);
-
-    VersionCreationResult push(PendingCommit commit);
 
     List<EntityVersion> listVersions(TenantId tenantId, String branch);
 

@@ -13,13 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.queue;
+package org.thingsboard.server.service.sync.vc;
 
-public enum ServiceType {
+import com.google.common.util.concurrent.SettableFuture;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.thingsboard.server.common.data.id.TenantId;
 
-    TB_CORE, TB_RULE_ENGINE, TB_TRANSPORT, JS_EXECUTOR, TB_VC_EXECUTOR;
+import java.util.UUID;
 
-    public static ServiceType of(String serviceType) {
-        return ServiceType.valueOf(serviceType.replace("-", "_").toUpperCase());
+@Getter
+public class PendingGitRequest<T> {
+
+    private final UUID requestId;
+    private final TenantId tenantId;
+    private final SettableFuture<T> future;
+
+    public PendingGitRequest(TenantId tenantId) {
+        this.requestId = UUID.randomUUID();
+        this.tenantId = tenantId;
+        this.future = SettableFuture.create();
     }
 }

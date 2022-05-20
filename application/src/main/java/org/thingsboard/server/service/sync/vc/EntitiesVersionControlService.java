@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.sync.vc;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -34,25 +35,23 @@ public interface EntitiesVersionControlService {
 
     String SETTINGS_KEY = "entitiesVersionControl";
 
-    VersionCreationResult saveEntitiesVersion(SecurityUser user, VersionCreateRequest request) throws Exception;
+    ListenableFuture<VersionCreationResult> saveEntitiesVersion(SecurityUser user, VersionCreateRequest request) throws Exception;
+
+    ListenableFuture<List<EntityVersion>> listEntityVersions(TenantId tenantId, String branch, EntityId externalId) throws Exception;
+
+    ListenableFuture<List<EntityVersion>> listEntityTypeVersions(TenantId tenantId, String branch, EntityType entityType) throws Exception;
+
+    ListenableFuture<List<EntityVersion>> listVersions(TenantId tenantId, String branch) throws Exception;
+
+    ListenableFuture<List<VersionedEntityInfo>> listEntitiesAtVersion(TenantId tenantId, String branch, String versionId, EntityType entityType) throws Exception;
+
+    ListenableFuture<List<VersionedEntityInfo>> listAllEntitiesAtVersion(TenantId tenantId, String branch, String versionId) throws Exception;
 
 
-    List<EntityVersion> listEntityVersions(TenantId tenantId, String branch, EntityId externalId) throws Exception;
-
-    List<EntityVersion> listEntityTypeVersions(TenantId tenantId, String branch, EntityType entityType) throws Exception;
-
-    List<EntityVersion> listVersions(TenantId tenantId, String branch) throws Exception;
+    ListenableFuture<List<VersionLoadResult>> loadEntitiesVersion(SecurityUser user, VersionLoadRequest request) throws Exception;
 
 
-    List<VersionedEntityInfo> listEntitiesAtVersion(TenantId tenantId, String branch, String versionId, EntityType entityType) throws Exception;
-
-    List<VersionedEntityInfo> listAllEntitiesAtVersion(TenantId tenantId, String branch, String versionId) throws Exception;
-
-
-    List<VersionLoadResult> loadEntitiesVersion(SecurityUser user, VersionLoadRequest request) throws Exception;
-
-
-    List<String> listBranches(TenantId tenantId) throws Exception;
+    ListenableFuture<List<String>> listBranches(TenantId tenantId) throws Exception;
 
     EntitiesVersionControlSettings getVersionControlSettings(TenantId tenantId);
 

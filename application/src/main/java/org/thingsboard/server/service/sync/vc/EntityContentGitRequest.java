@@ -13,13 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.queue;
+package org.thingsboard.server.service.sync.vc;
 
-public enum ServiceType {
+import lombok.Getter;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 
-    TB_CORE, TB_RULE_ENGINE, TB_TRANSPORT, JS_EXECUTOR, TB_VC_EXECUTOR;
+@Getter
+public class EntityContentGitRequest extends PendingGitRequest<EntityExportData> {
 
-    public static ServiceType of(String serviceType) {
-        return ServiceType.valueOf(serviceType.replace("-", "_").toUpperCase());
+    private final String versionId;
+    private final EntityId entityId;
+
+    public EntityContentGitRequest(TenantId tenantId, String versionId, EntityId entityId) {
+        super(tenantId);
+        this.versionId = versionId;
+        this.entityId = entityId;
     }
 }

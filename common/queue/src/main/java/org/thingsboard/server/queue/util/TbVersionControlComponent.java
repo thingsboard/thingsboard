@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.queue;
+package org.thingsboard.server.queue.util;
 
-public enum ServiceType {
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 
-    TB_CORE, TB_RULE_ENGINE, TB_TRANSPORT, JS_EXECUTOR, TB_VC_EXECUTOR;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
-    public static ServiceType of(String serviceType) {
-        return ServiceType.valueOf(serviceType.replace("-", "_").toUpperCase());
-    }
+@Retention(RetentionPolicy.RUNTIME)
+@ConditionalOnExpression("'${service.type:null}'=='monolith' || '${service.type:null}'=='tb-vc-executor'")
+public @interface TbVersionControlComponent {
 }
