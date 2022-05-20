@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -27,16 +27,19 @@ import {
   TwoFaProviderInfo
 } from '@shared/models/two-factor-auth.models';
 import { TranslateService } from '@ngx-translate/core';
+import { interval, Subscription } from 'rxjs';
 
 @Component({
   selector: 'tb-two-factor-auth-login',
   templateUrl: './two-factor-auth-login.component.html',
   styleUrls: ['./two-factor-auth-login.component.scss']
 })
-export class TwoFactorAuthLoginComponent extends PageComponent implements OnInit {
+export class TwoFactorAuthLoginComponent extends PageComponent implements OnInit, OnDestroy {
 
   private providersInfo: TwoFaProviderInfo[];
   private prevProvider: TwoFactorAuthProviderType;
+  private timer: Subscription;
+  private minVerificationPeriod = 0;
 
   selectedProvider: TwoFactorAuthProviderType;
   twoFactorAuthProvider = TwoFactorAuthProviderType;
@@ -44,6 +47,8 @@ export class TwoFactorAuthLoginComponent extends PageComponent implements OnInit
 
   providersData = twoFactorAuthProvidersLoginData;
   providerDescription = '';
+  disabledResendButton = true;
+  countDownTime = 0;
 
   verificationForm = this.fb.group({
     verificationCode: ['', [
@@ -72,6 +77,7 @@ export class TwoFactorAuthLoginComponent extends PageComponent implements OnInit
           this.providerDescription = this.translate.instant(this.providersData.get(providerConfig.type).description, {
             contact: providerConfig.contact
           });
+          this.minVerificationPeriod = providerConfig?.minVerificationCodeSendPeriod || 30;
         }
         this.allowProviders.push(providerConfig.type);
       }
@@ -79,6 +85,12 @@ export class TwoFactorAuthLoginComponent extends PageComponent implements OnInit
     if (this.selectedProvider !== TwoFactorAuthProviderType.TOTP) {
       this.sendCode();
     }
+    this.timer = interval(1000).subscribe(() => this.updatedTime());
+  }
+
+  ngOnDestroy() {
+    super.ngOnDestroy();
+    this.timer.unsubscribe();
   }
 
   sendVerificationCode() {
@@ -93,18 +105,28 @@ export class TwoFactorAuthLoginComponent extends PageComponent implements OnInit
     this.prevProvider = type === null ? this.selectedProvider : null;
     this.selectedProvider = type;
     if (type !== null) {
+      this.verificationForm.get('verificationCode').reset();
       const providerConfig = this.providersInfo.find(config => config.type === type);
       this.providerDescription = this.translate.instant(this.providersData.get(providerConfig.type).description, {
         contact: providerConfig.contact
       });
+      this.minVerificationPeriod = providerConfig?.minVerificationCodeSendPeriod || 30;
       if (type !== TwoFactorAuthProviderType.TOTP) {
         this.sendCode();
       }
     }
   }
 
-  sendCode() {
-    this.twoFactorAuthService.requestTwoFaVerificationCodeSend(this.selectedProvider).subscribe(() => {});
+  sendCode($event?: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.disabledResendButton = true;
+    this.twoFactorAuthService.requestTwoFaVerificationCodeSend(this.selectedProvider).subscribe(() => {
+      this.countDownTime = this.minVerificationPeriod;
+    }, () => {
+      this.countDownTime = 30;
+    });
   }
 
   cancelLogin() {
@@ -113,6 +135,15 @@ export class TwoFactorAuthLoginComponent extends PageComponent implements OnInit
       this.prevProvider = null;
     } else {
       this.authService.logout();
+    }
+  }
+
+  private updatedTime() {
+    if (this.countDownTime > 0) {
+      this.countDownTime--;
+      if (this.countDownTime === 0) {
+        this.disabledResendButton = false;
+      }
     }
   }
 }

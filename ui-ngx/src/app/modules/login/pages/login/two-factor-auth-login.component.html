@@ -46,20 +46,25 @@
                        inputmode="numeric" pattern="[0-9]*"
                        autocomplete="off"
                        placeholder="{{ 'security.2fa.dialog.verification-code' | translate }}"/>
-                <mat-error *ngIf="verificationForm.get('verificationCode').invalid">
-                  {{ 'security.2fa.dialog.verification-code-invalid' | translate }}
-                </mat-error>
-              </mat-form-field>
-              <div fxLayoutAlign="start center" *ngIf="selectedProvider !== twoFactorAuthProvider.TOTP">
-                <button
-                  mat-button
-                  (click)="sendCode()"
-                  type="button">
+                <button *ngIf="selectedProvider !== twoFactorAuthProvider.TOTP"
+                        mat-button matSuffix
+                        (click)="sendCode($event)"
+                        [disabled]="disabledResendButton"
+                        type="button" tabindex="-1">
                   {{ 'login.resend-code' | translate }}
                 </button>
-              </div>
+                <mat-error *ngIf="verificationForm.get('verificationCode').invalid" style="margin-bottom: 8px">
+                  {{ 'security.2fa.dialog.verification-code-invalid' | translate }}
+                </mat-error>
+                <mat-error *ngIf="verificationForm.get('verificationCode').invalid && selectedProvider !== twoFactorAuthProvider.TOTP && countDownTime" class="timer">
+                  {{ 'login.resend-code-wait' | translate : {time: countDownTime} }}
+                </mat-error>
+                <mat-hint *ngIf="selectedProvider !== twoFactorAuthProvider.TOTP && countDownTime" class="timer">
+                  {{ 'login.resend-code-wait' | translate : {time: countDownTime} }}
+                </mat-hint>
+              </mat-form-field>
             </div>
-            <span style="height: 40px;"></span>
+            <span style="height: 50px;"></span>
             <div fxLayout="column" fxLayoutGap="8px">
               <button mat-raised-button
                       color="accent"

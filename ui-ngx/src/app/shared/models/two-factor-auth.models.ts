@@ -20,7 +20,7 @@ export interface TwoFactorAuthSettings {
   totalAllowedTimeForVerification: number;
   useSystemTwoFactorAuthSettings: boolean;
   verificationCodeCheckRateLimit: string;
-  verificationCodeSendRateLimit: string;
+  minVerificationCodeSendPeriod: number;
 }
 
 export interface TwoFactorAuthSettingsForm extends TwoFactorAuthSettings{
@@ -28,9 +28,6 @@ export interface TwoFactorAuthSettingsForm extends TwoFactorAuthSettings{
   verificationCodeCheckRateLimitEnable: boolean;
   verificationCodeCheckRateLimitNumber: number;
   verificationCodeCheckRateLimitTime: number;
-  verificationCodeSendRateLimitEnable: boolean;
-  verificationCodeSendRateLimitNumber: number;
-  verificationCodeSendRateLimitTime: number;
 }
 
 export type TwoFactorAuthProviderConfig = Partial<TotpTwoFactorAuthProviderConfig | SmsTwoFactorAuthProviderConfig |
@@ -93,6 +90,7 @@ export interface TwoFaProviderInfo {
   type: TwoFactorAuthProviderType;
   default: boolean;
   contact?: string;
+  minVerificationCodeSendPeriod?: number;
 }
 
 export interface TwoFactorAuthProviderData {

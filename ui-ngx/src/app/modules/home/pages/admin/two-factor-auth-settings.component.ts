@@ -35,7 +35,7 @@ import { MatExpansionPanel } from '@angular/material/expansion';
 @Component({
   selector: 'tb-2fa-settings',
   templateUrl: './two-factor-auth-settings.component.html',
-  styleUrls: ['./two-factor-auth-settings.component.scss', './settings-card.scss']
+  styleUrls: [ './settings-card.scss', './two-factor-auth-settings.component.scss']
 })
 export class TwoFactorAuthSettingsComponent extends PageComponent implements OnInit, HasConfirmForm, OnDestroy {
 
@@ -73,7 +73,6 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
     if (this.twoFaFormGroup.valid) {
       const setting = this.twoFaFormGroup.value as TwoFactorAuthSettingsForm;
       this.joinRateLimit(setting, 'verificationCodeCheckRateLimit');
-      this.joinRateLimit(setting, 'verificationCodeSendRateLimit');
       const providers = setting.providers.filter(provider => provider.enable);
       providers.forEach(provider => delete provider.enable);
       const config = Object.assign(setting, {providers});
@@ -91,18 +90,14 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
     }
   }
 
-  toggleProviders($event: Event, i: number): void {
-    this.toggleExtensionPanel($event, i + 2, this.providersForm.at(i).get('enable').value);
-  }
-
-  toggleExtensionPanel($event: Event, i: number, currentState: boolean) {
+  toggleExtensionPanel($event: Event, index: number, currentState: boolean) {
     if ($event) {
       $event.stopPropagation();
     }
     if (currentState) {
-      this.getByIndexPanel(i).close();
+      this.getByIndexPanel(index).close();
     } else {
-      this.getByIndexPanel(i).open();
+      this.getByIndexPanel(index).open();
     }
   }
 
@@ -130,9 +125,7 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
       verificationCodeCheckRateLimitEnable: [false],
       verificationCodeCheckRateLimitNumber: ['3', [Validators.required, Validators.min(1), Validators.pattern(/^\d*$/)]],
       verificationCodeCheckRateLimitTime: ['900', [Validators.required, Validators.min(1), Validators.pattern(/^\d*$/)]],
-      verificationCodeSendRateLimitEnable: [false],
-      verificationCodeSendRateLimitNumber: ['1', [Validators.required, Validators.min(1), Validators.pattern(/^\d*$/)]],
-      verificationCodeSendRateLimitTime: ['60', [Validators.required, Validators.min(1), Validators.pattern(/^\d*$/)]],
+      minVerificationCodeSendPeriod: ['30', [Validators.required, Validators.min(5), Validators.pattern(/^\d*$/)]],
       providers: this.fb.array([])
     });
     Object.values(TwoFactorAuthProviderType).forEach(provider => {
@@ -149,43 +142,25 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
         this.twoFaFormGroup.get('verificationCodeCheckRateLimitTime').disable({emitEvent: false});
       }
     });
-    this.twoFaFormGroup.get('verificationCodeSendRateLimitEnable').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe(value => {
-      if (value) {
-        this.twoFaFormGroup.get('verificationCodeSendRateLimitNumber').enable({emitEvent: false});
-        this.twoFaFormGroup.get('verificationCodeSendRateLimitTime').enable({emitEvent: false});
-      } else {
-        this.twoFaFormGroup.get('verificationCodeSendRateLimitNumber').disable({emitEvent: false});
-        this.twoFaFormGroup.get('verificationCodeSendRateLimitTime').disable({emitEvent: false});
-      }
-    });
   }
 
   private setAuthConfigFormValue(settings: TwoFactorAuthSettings) {
     const [checkRateLimitNumber, checkRateLimitTime] = this.splitRateLimit(settings.verificationCodeCheckRateLimit);
-    const [sendRateLimitNumber, sendRateLimitTime] = this.splitRateLimit(settings.verificationCodeSendRateLimit);
     const allowProvidersConfig = settings.providers.map(provider => provider.providerType);
     const processFormValue: TwoFactorAuthSettingsForm = Object.assign(deepClone(settings), {
       verificationCodeCheckRateLimitEnable: checkRateLimitNumber > 0,
       verificationCodeCheckRateLimitNumber: checkRateLimitNumber || 3,
       verificationCodeCheckRateLimitTime: checkRateLimitTime || 900,
-      verificationCodeSendRateLimitEnable: sendRateLimitNumber > 0,
-      verificationCodeSendRateLimitNumber: sendRateLimitNumber || 1,
-      verificationCodeSendRateLimitTime: sendRateLimitTime || 60,
       providers: []
     });
-    if (sendRateLimitNumber > 0) {
-      this.getByIndexPanel(0).open();
-    }
     if (checkRateLimitNumber > 0) {
-      this.getByIndexPanel(1).open();
+      this.getByIndexPanel(3).open();
     }
     Object.values(TwoFactorAuthProviderType).forEach((provider, index) => {
       const findIndex = allowProvidersConfig.indexOf(provider);
       if (findIndex > -1) {
         processFormValue.providers.push(Object.assign(settings.providers[findIndex], {enable: true}));
-        this.getByIndexPanel(index + 2).open();
+        this.getByIndexPanel(index).open();
       } else {
         processFormValue.providers.push({enable: false});
       }
@@ -203,9 +178,9 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
         formControlConfig.issuerName = [{value: 'ThingsBoard', disabled: true}, Validators.required];
         break;
       case TwoFactorAuthProviderType.SMS:
-        formControlConfig.smsVerificationMessageTemplate = [{value: 'Verification code: ${сode}', disabled: true}, [
+        formControlConfig.smsVerificationMessageTemplate = [{value: 'Verification code: ${code}', disabled: true}, [
           Validators.required,
-          Validators.pattern(/\${сode}/)
+          Validators.pattern(/\${code}/)
         ]];
         formControlConfig.verificationCodeLifetime = [{value: 120, disabled: true}, [
           Validators.required,

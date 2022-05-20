@@ -53,6 +53,12 @@
           padding-bottom: 8px;
         }
       }
+
+      .timer {
+        font: 400 12px / 14px Roboto, "Helvetica Neue", sans-serif;
+        letter-spacing: 0.4px;
+        color: rgba(255, 255, 255, 0.8);
+      }
     }
   }
   ::ng-deep{
@@ -67,6 +73,9 @@
         width: 18px;
         vertical-align: sub;
       }
+    }
+    .mat-form-field-invalid .mat-hint {
+      margin-top: 20px;
     }
   }
 }
