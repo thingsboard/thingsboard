@@ -32,6 +32,7 @@ import { ResourcesLibraryTableConfigResolver } from '@home/pages/admin/resource/
 import { EntityDetailsPageComponent } from '@home/components/entity/entity-details-page.component';
 import { entityDetailsPageBreadcrumbLabelFunction } from '@home/pages/home-pages.models';
 import { BreadCrumbConfig } from '@shared/components/breadcrumb';
+import { VersionControlSettingsComponent } from '@home/pages/admin/version-control-settings.component';
 
 @Injectable()
 export class OAuth2LoginProcessingUrlResolver implements Resolve<string> {
@@ -183,6 +184,19 @@ const routes: Routes = [
             }
           }
         ]
+      },
+      {
+        path: 'vc',
+        component: VersionControlSettingsComponent,
+        canDeactivate: [ConfirmOnExitGuard],
+        data: {
+          auth: [Authority.TENANT_ADMIN],
+          title: 'admin.git-settings',
+          breadcrumb: {
+            label: 'admin.git-settings',
+            icon: 'manage_history'
+          }
+        }
       }
     ]
   }

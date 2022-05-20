@@ -396,3 +396,24 @@ export function createSmsProviderConfiguration(type: SmsProviderType): SmsProvid
   }
   return smsProviderConfiguration;
 }
+
+export enum VersionControlAuthMethod {
+  USERNAME_PASSWORD = 'USERNAME_PASSWORD',
+  PRIVATE_KEY = 'PRIVATE_KEY'
+}
+
+export const versionControlAuthMethodTranslationMap = new Map<VersionControlAuthMethod, string>([
+  [VersionControlAuthMethod.USERNAME_PASSWORD, 'admin.auth-method-username-password'],
+  [VersionControlAuthMethod.PRIVATE_KEY, 'admin.auth-method-private-key']
+]);
+
+export interface EntitiesVersionControlSettings {
+  repositoryUri: string;
+  defaultBranch: string;
+  authMethod: VersionControlAuthMethod;
+  username: string;
+  password: string;
+  privateKeyFileName: string;
+  privateKey: string;
+  privateKeyPassword: string;
+}

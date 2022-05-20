@@ -133,7 +133,8 @@ export const HelpLinks = {
     widgetsConfigAlarm: helpBaseUrl +  '/docs/user-guide/ui/dashboards#alarm',
     widgetsConfigStatic: helpBaseUrl +  '/docs/user-guide/ui/dashboards#static',
     ruleNodePushToCloud: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#push-to-cloud',
-    ruleNodePushToEdge: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#push-to-edge'
+    ruleNodePushToEdge: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#push-to-edge',
+    versionControlSettings: helpBaseUrl + '/docs/user-guide/ui/version-control-settings'
   }
 };
 

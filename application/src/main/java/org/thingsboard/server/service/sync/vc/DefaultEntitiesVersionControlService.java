@@ -291,11 +291,21 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
     @Override
     public EntitiesVersionControlSettings saveVersionControlSettings(TenantId tenantId, EntitiesVersionControlSettings versionControlSettings) {
-        EntitiesVersionControlSettings storedSettings = getVersionControlSettings(tenantId);
+        AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey(tenantId, SETTINGS_KEY);
+        EntitiesVersionControlSettings storedSettings = null;
+        if (adminSettings != null) {
+            try {
+                storedSettings = JacksonUtil.convertValue(adminSettings.getJsonValue(), EntitiesVersionControlSettings.class);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to load version control settings!", e);
+            }
+        }
         versionControlSettings = this.restoreCredentials(versionControlSettings, storedSettings);
-        AdminSettings adminSettings = new AdminSettings();
-        adminSettings.setTenantId(tenantId);
-        adminSettings.setKey(SETTINGS_KEY);
+        if (adminSettings == null) {
+            adminSettings = new AdminSettings();
+            adminSettings.setKey(SETTINGS_KEY);
+            adminSettings.setTenantId(tenantId);
+        }
         adminSettings.setJsonValue(JacksonUtil.valueToTree(versionControlSettings));
         AdminSettings savedAdminSettings = adminSettingsService.saveAdminSettings(tenantId, adminSettings);
         EntitiesVersionControlSettings savedVersionControlSettings;
@@ -341,8 +351,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         } else if (VersionControlAuthMethod.PRIVATE_KEY.equals(authMethod) && settings.getPrivateKey() == null) {
             if (storedSettings != null) {
                 settings.setPrivateKey(storedSettings.getPrivateKey());
-                if (StringUtils.isEmpty(settings.getPrivateKeyPassword()) &&
-                        StringUtils.isNotEmpty(storedSettings.getPrivateKeyPassword())) {
+                if (settings.getPrivateKeyPassword() == null) {
                     settings.setPrivateKeyPassword(storedSettings.getPrivateKeyPassword());
                 }
             }

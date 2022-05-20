@@ -207,10 +207,14 @@ public class AdminController extends BaseController {
             notes = "Creates or Updates the version control settings object. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping("/vcSettings")
-    public void saveVersionControlSettings(@RequestBody EntitiesVersionControlSettings settings) throws ThingsboardException {
+    public EntitiesVersionControlSettings saveVersionControlSettings(@RequestBody EntitiesVersionControlSettings settings) throws ThingsboardException {
         try {
             accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.WRITE);
-            versionControlService.saveVersionControlSettings(getTenantId(), settings);
+            EntitiesVersionControlSettings versionControlSettings = checkNotNull(versionControlService.saveVersionControlSettings(getTenantId(), settings));
+            versionControlSettings.setPassword(null);
+            versionControlSettings.setPrivateKey(null);
+            versionControlSettings.setPrivateKeyPassword(null);
+            return versionControlSettings;
         } catch (Exception e) {
             throw handleException(e);
         }
