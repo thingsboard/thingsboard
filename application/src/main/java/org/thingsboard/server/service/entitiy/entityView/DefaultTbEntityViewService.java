@@ -121,13 +121,12 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         }
     }
 
-
     @Override
-    public EntityView assignEntityViewToCustomer(TenantId tenantId, EntityView savedEntityView, Customer customer, SecurityUser user) throws ThingsboardException {
+    public EntityView assignEntityViewToCustomer(TenantId tenantId, EntityViewId entityViewId, Customer customer, SecurityUser user) throws ThingsboardException {
         ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER;
         CustomerId customerId = customer.getId();
-        EntityViewId entityViewId = savedEntityView.getId();
         try {
+            EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToCustomer(tenantId, entityViewId, customerId));
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, entityViewId, customerId, savedEntityView,
                     actionType, EdgeEventActionType.ASSIGNED_TO_CUSTOMER, user, true, customerId.toString(), customer.getName());
             return savedEntityView;
@@ -140,10 +139,11 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
 
     @Override
     public EntityView assignEntityViewToPublicCustomer(TenantId tenantId, CustomerId customerId, Customer publicCustomer,
-                                                       EntityView savedEntityView, SecurityUser user) throws ThingsboardException {
+                                                       EntityViewId entityViewId, SecurityUser user) throws ThingsboardException {
         ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER;
-        EntityViewId entityViewId = savedEntityView.getId();
         try {
+            EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToCustomer(tenantId,
+                    entityViewId, publicCustomer.getId()));
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, entityViewId, customerId, savedEntityView,
                     actionType, null, user, false, savedEntityView.getEntityId().toString(),
                     publicCustomer.getId().toString(), publicCustomer.getName());
@@ -156,10 +156,10 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
     }
 
     @Override
-    public EntityView assignEntityViewToEdge(TenantId tenantId, CustomerId customerId, EntityView savedEntityView, Edge edge, SecurityUser user) throws ThingsboardException {
+    public EntityView assignEntityViewToEdge(TenantId tenantId, CustomerId customerId, EntityViewId entityViewId, Edge edge, SecurityUser user) throws ThingsboardException {
         ActionType actionType = ActionType.ASSIGNED_TO_EDGE;
         EdgeId edgeId = edge.getId();
-        EntityViewId entityViewId = savedEntityView.getId();
+        EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToEdge(tenantId, entityViewId, edgeId));
         try {
             notificationEntityService.notifyAssignOrUnassignEntityToEdge(tenantId, entityViewId, customerId,
                     edgeId, savedEntityView, actionType, EdgeEventActionType.ASSIGNED_TO_EDGE, user, savedEntityView.getEntityId().toString(),
@@ -174,11 +174,12 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
 
     @Override
     public EntityView unassignEntityViewFromEdge(TenantId tenantId, CustomerId customerId, EntityView entityView,
-                                                 EntityView savedEntityView, Edge edge, SecurityUser user) throws ThingsboardException {
+                                                 Edge edge, SecurityUser user) throws ThingsboardException {
         ActionType actionType = ActionType.UNASSIGNED_FROM_EDGE;
         EntityViewId entityViewId = entityView.getId();
         EdgeId edgeId = edge.getId();
         try {
+            EntityView savedEntityView = checkNotNull(entityViewService.unassignEntityViewFromEdge(tenantId, entityViewId, edgeId));
             notificationEntityService.notifyAssignOrUnassignEntityToEdge(tenantId, entityViewId, customerId,
                     edgeId, entityView, actionType, EdgeEventActionType.UNASSIGNED_FROM_EDGE, user, entityViewId.toString(),
                     edgeId.toString(), edge.getName());
@@ -191,10 +192,10 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
     }
 
     @Override
-    public EntityView unassignEntityViewFromCustomer(TenantId tenantId, EntityView savedEntityView, Customer customer, SecurityUser user) throws ThingsboardException {
+    public EntityView unassignEntityViewFromCustomer(TenantId tenantId, EntityViewId entityViewId, Customer customer, SecurityUser user) throws ThingsboardException {
         ActionType actionType = ActionType.UNASSIGNED_FROM_CUSTOMER;
-        EntityViewId entityViewId = savedEntityView.getId();
         try {
+            EntityView savedEntityView = checkNotNull(entityViewService.unassignEntityViewFromCustomer(tenantId, entityViewId));
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, entityViewId, customer.getId(), savedEntityView,
                     actionType, EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER, user, true, customer.getId().toString(), customer.getName());
             return savedEntityView;

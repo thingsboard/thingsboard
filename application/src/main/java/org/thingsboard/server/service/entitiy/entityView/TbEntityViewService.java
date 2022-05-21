@@ -20,6 +20,7 @@ import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
@@ -29,18 +30,18 @@ public interface TbEntityViewService {
 
     void  delete (EntityView entity, SecurityUser user) throws ThingsboardException;
 
-    EntityView assignEntityViewToCustomer(TenantId tenantId, EntityView savedEntityView, Customer customer,
+    EntityView assignEntityViewToCustomer(TenantId tenantId, EntityViewId entityViewId, Customer customer,
                                           SecurityUser user) throws ThingsboardException;
 
     EntityView assignEntityViewToPublicCustomer(TenantId tenantId, CustomerId customerId, Customer publicCustomer,
-                                                EntityView savedEntityView, SecurityUser user) throws ThingsboardException;
+                                                EntityViewId entityViewId, SecurityUser user) throws ThingsboardException;
 
-    EntityView assignEntityViewToEdge(TenantId tenantId, CustomerId customerId, EntityView savedEntityView, Edge edge,
+    EntityView assignEntityViewToEdge(TenantId tenantId, CustomerId customerId, EntityViewId entityViewId, Edge edge,
                                       SecurityUser user) throws ThingsboardException;
 
     EntityView unassignEntityViewFromEdge(TenantId tenantId, CustomerId customerId, EntityView entityView,
-                                          EntityView savedEntityView, Edge edge, SecurityUser user) throws ThingsboardException;
+                                          Edge edge, SecurityUser user) throws ThingsboardException;
 
-    EntityView unassignEntityViewFromCustomer(TenantId tenantId, EntityView savedEntityView, Customer customer,
+    EntityView unassignEntityViewFromCustomer(TenantId tenantId, EntityViewId entityViewId, Customer customer,
                                               SecurityUser user) throws ThingsboardException;
 }
