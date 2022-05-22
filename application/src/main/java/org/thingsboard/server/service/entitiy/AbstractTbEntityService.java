@@ -119,8 +119,6 @@ public abstract class AbstractTbEntityService {
     @Autowired
     protected AttributesService attributesService;
     @Autowired
-    protected EntityViewService entityView;
-    @Autowired
     protected AccessControlService accessControlService;
 
     protected ListenableFuture<Void> removeAlarmsByEntityId(TenantId tenantId, EntityId entityId) {
