@@ -140,14 +140,18 @@ public class TwoFaConfigController extends BaseController {
     @PostMapping("/account/config")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public AccountTwoFaSettings verifyAndSaveTwoFaAccountConfig(@Valid @RequestBody TwoFaAccountConfig accountConfig,
-                                                                @ApiParam(value = "6-digit code from an authenticator app in case of TOTP 2FA, or the one sent via an SMS or email message in case of SMS or EMAIL 2FA", required = true)
-                                                                @RequestParam String verificationCode) throws Exception {
+                                                                @RequestParam(required = false) String verificationCode) throws Exception {
         SecurityUser user = getCurrentUser();
         if (twoFaConfigManager.getTwoFaAccountConfig(user.getTenantId(), user.getId(), accountConfig.getProviderType()).isPresent()) {
             throw new IllegalArgumentException("2FA provider is already configured");
         }
 
-        boolean verificationSuccess = twoFactorAuthService.checkVerificationCode(user, verificationCode, accountConfig, false);
+        boolean verificationSuccess;
+        if (accountConfig.getProviderType() != TwoFaProviderType.BACKUP_CODE) {
+            verificationSuccess = twoFactorAuthService.checkVerificationCode(user, verificationCode, accountConfig, false);
+        } else {
+            verificationSuccess = true;
+        }
         if (verificationSuccess) {
             return twoFaConfigManager.saveTwoFaAccountConfig(user.getTenantId(), user.getId(), accountConfig);
         } else {

@@ -28,7 +28,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonSubTypes({
         @Type(name = "TOTP", value = TotpTwoFaProviderConfig.class),
         @Type(name = "SMS", value = SmsTwoFaProviderConfig.class),
-        @Type(name = "EMAIL", value = EmailTwoFaProviderConfig.class)
+        @Type(name = "EMAIL", value = EmailTwoFaProviderConfig.class),
+        @Type(name = "BACKUP_CODE", value = BackupCodeTwoFaProviderConfig.class)
 })
 public interface TwoFaProviderConfig {
 

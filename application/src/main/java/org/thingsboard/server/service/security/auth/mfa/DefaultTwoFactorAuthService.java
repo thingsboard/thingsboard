@@ -122,7 +122,7 @@ public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
                 .orElseThrow(() -> PROVIDER_NOT_CONFIGURED_ERROR);
 
         boolean verificationSuccess;
-        if (StringUtils.isNumeric(verificationCode) && verificationCode.length() == 6) {
+        if (StringUtils.isNotBlank(verificationCode)) {
             verificationSuccess = getTwoFaProvider(accountConfig.getProviderType()).checkVerificationCode(user, verificationCode, providerConfig, accountConfig);
         } else {
             verificationSuccess = false;

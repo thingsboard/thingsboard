@@ -15,9 +15,19 @@
  */
 package org.thingsboard.server.common.data.security.model.mfa.provider;
 
-public enum TwoFaProviderType {
-    TOTP,
-    SMS,
-    EMAIL,
-    BACKUP_CODE
+import lombok.Data;
+
+import javax.validation.constraints.Min;
+
+@Data
+public class BackupCodeTwoFaProviderConfig implements TwoFaProviderConfig {
+
+    @Min(0)
+    private int codesQuantity;
+
+    @Override
+    public TwoFaProviderType getProviderType() {
+        return TwoFaProviderType.BACKUP_CODE;
+    }
+
 }

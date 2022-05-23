@@ -29,7 +29,7 @@ public interface TwoFaProvider<C extends TwoFaProviderConfig, A extends TwoFaAcc
 
     default void prepareVerificationCode(SecurityUser user, C providerConfig, A accountConfig) throws ThingsboardException {}
 
-    boolean checkVerificationCode(SecurityUser user, String verificationCode, C providerConfig, A accountConfig);
+    boolean checkVerificationCode(SecurityUser user, String code, C providerConfig, A accountConfig);
 
     default void check(TenantId tenantId) throws ThingsboardException {};
 

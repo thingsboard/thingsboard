@@ -30,7 +30,6 @@ import org.thingsboard.server.common.data.security.model.mfa.account.AccountTwoF
 import org.thingsboard.server.common.data.security.model.mfa.account.TwoFaAccountConfig;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderConfig;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
-import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.service.ConstraintValidator;
 import org.thingsboard.server.dao.settings.AdminSettingsDao;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
@@ -39,6 +38,7 @@ import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -74,7 +74,9 @@ public class DefaultTwoFaConfigManager implements TwoFaConfigManager {
                     return newUserAuthSettings;
                 });
         userAuthSettings.setTwoFaSettings(settings);
+        settings.getConfigs().values().forEach(accountConfig -> accountConfig.setSerializeHiddenFields(true));
         userAuthSettingsDao.save(tenantId, userAuthSettings);
+        settings.getConfigs().values().forEach(accountConfig -> accountConfig.setSerializeHiddenFields(false));
         return settings;
     }
 
@@ -96,12 +98,13 @@ public class DefaultTwoFaConfigManager implements TwoFaConfigManager {
             newSettings.setConfigs(new LinkedHashMap<>());
             return newSettings;
         });
+        Map<TwoFaProviderType, TwoFaAccountConfig> configs = settings.getConfigs();
         if (accountConfig.isUseByDefault()) {
-            settings.getConfigs().values().forEach(config -> config.setUseByDefault(false));
+            configs.values().forEach(config -> config.setUseByDefault(false));
         }
-        settings.getConfigs().put(accountConfig.getProviderType(), accountConfig);
-        if (settings.getConfigs().values().stream().noneMatch(TwoFaAccountConfig::isUseByDefault)) {
-            settings.getConfigs().values().stream().findFirst().ifPresent(config -> config.setUseByDefault(true));
+        configs.put(accountConfig.getProviderType(), accountConfig);
+        if (configs.values().stream().noneMatch(TwoFaAccountConfig::isUseByDefault)) {
+            configs.values().stream().findFirst().ifPresent(config -> config.setUseByDefault(true));
         }
         return saveAccountTwoFaSettings(tenantId, userId, settings);
     }

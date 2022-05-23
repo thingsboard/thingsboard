@@ -30,12 +30,16 @@ import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProvi
 @JsonSubTypes({
         @Type(name = "TOTP", value = TotpTwoFaAccountConfig.class),
         @Type(name = "SMS", value = SmsTwoFaAccountConfig.class),
-        @Type(name = "EMAIL", value = EmailTwoFaAccountConfig.class)
+        @Type(name = "EMAIL", value = EmailTwoFaAccountConfig.class),
+        @Type(name = "BACKUP_CODE", value = BackupCodeTwoFaAccountConfig.class)
 })
 @Data
 public abstract class TwoFaAccountConfig {
 
     private boolean useByDefault;
+
+    @JsonIgnore
+    protected transient boolean serializeHiddenFields;
 
     @JsonIgnore
     public abstract TwoFaProviderType getProviderType();

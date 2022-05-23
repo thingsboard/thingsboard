@@ -48,7 +48,7 @@ public abstract class OtpBasedTwoFaProvider<C extends OtpBasedTwoFaProviderConfi
 
 
     @Override
-    public final boolean checkVerificationCode(SecurityUser user, String verificationCode, C providerConfig, A accountConfig) {
+    public final boolean checkVerificationCode(SecurityUser user, String code, C providerConfig, A accountConfig) {
         Otp correctVerificationCode = verificationCodesCache.get(user.getId(), Otp.class);
         if (correctVerificationCode != null) {
             if (System.currentTimeMillis() - correctVerificationCode.getTimestamp()
@@ -56,7 +56,7 @@ public abstract class OtpBasedTwoFaProvider<C extends OtpBasedTwoFaProviderConfi
                 verificationCodesCache.evict(user.getId());
                 return false;
             }
-            if (verificationCode.equals(correctVerificationCode.getValue())
+            if (code.equals(correctVerificationCode.getValue())
                     && accountConfig.equals(correctVerificationCode.getAccountConfig())) {
                 verificationCodesCache.evict(user.getId());
                 return true;
