@@ -242,7 +242,7 @@ export class AuthService {
     if (authState && authState.authUser) {
       if (authState.authUser.authority === Authority.TENANT_ADMIN || authState.authUser.authority === Authority.CUSTOMER_USER) {
         if ((this.userHasDefaultDashboard(authState) && authState.forceFullscreen) || authState.authUser.isPublic) {
-          if (path === 'profile') {
+          if (path === 'profile' || path === 'security') {
             if (this.userHasProfile(authState.authUser)) {
               return false;
             } else {
