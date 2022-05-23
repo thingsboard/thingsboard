@@ -16,21 +16,17 @@
 package org.thingsboard.server.service.sync.vc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
@@ -38,7 +34,6 @@ import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.queue.util.AfterStartUp;
@@ -62,12 +57,15 @@ import java.util.stream.Collectors;
 @ConditionalOnProperty(prefix = "vc", value = "git.service", havingValue = "local", matchIfMissing = true)
 public class LocalGitVersionControlService implements GitVersionControlService {
 
-    private final ObjectWriter jsonWriter = new ObjectMapper().writer(SerializationFeature.INDENT_OUTPUT);
     private final GitRepositoryService gitRepositoryService;
     private final TenantDao tenantDao;
     private final AdminSettingsService adminSettingsService;
+
     private final ConcurrentMap<TenantId, Lock> tenantRepoLocks = new ConcurrentHashMap<>();
     private final Map<TenantId, PendingCommit> pendingCommitMap = new HashMap<>();
+
+    private final ObjectMapper jsonMapper = new ObjectMapper()
+            .enable(SerializationFeature.INDENT_OUTPUT);
 
     @AfterStartUp
     public void init() {
@@ -165,7 +163,7 @@ public class LocalGitVersionControlService implements GitVersionControlService {
         doInsideLock(commit, c -> {
             String entityDataJson;
             try {
-                entityDataJson = jsonWriter.writeValueAsString(entityData);
+                entityDataJson = jsonMapper.writeValueAsString(entityData);
                 gitRepositoryService.add(c, getRelativePath(entityData.getEntityType(),
                         entityData.getEntity().getId().toString()), entityDataJson);
             } catch (IOException e) {
@@ -230,7 +228,7 @@ public class LocalGitVersionControlService implements GitVersionControlService {
         try {
             String entityDataJson = gitRepositoryService.getFileContentAtCommit(tenantId,
                     getRelativePath(entityId.getEntityType(), entityId.getId().toString()), versionId);
-            return JacksonUtil.fromString(entityDataJson, EntityExportData.class);
+            return jsonMapper.readValue(entityDataJson, EntityExportData.class);
         } catch (Exception e) {
             //TODO: analyze and return meaningful exceptions that we can show to the client;
             throw new RuntimeException(e);
