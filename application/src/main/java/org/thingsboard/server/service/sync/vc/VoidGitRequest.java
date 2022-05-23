@@ -15,22 +15,15 @@
  */
 package org.thingsboard.server.service.sync.vc;
 
-import com.google.common.util.concurrent.SettableFuture;
-import lombok.Getter;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.sync.vc.EntityVersion;
 
-import java.util.UUID;
+import java.util.List;
 
-@Getter
-public class PendingGitRequest<T> {
+public class VoidGitRequest extends PendingGitRequest<Void> {
 
-    private final UUID requestId;
-    private final TenantId tenantId;
-    private final SettableFuture<T> future;
-
-    public PendingGitRequest(TenantId tenantId) {
-        this.requestId = UUID.randomUUID();
-        this.tenantId = tenantId;
-        this.future = SettableFuture.create();
+    public VoidGitRequest(TenantId tenantId) {
+        super(tenantId);
     }
+
 }

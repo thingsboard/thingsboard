@@ -37,6 +37,14 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.thingsboard.common</groupId>
+            <artifactId>data</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common</groupId>
+            <artifactId>queue</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-core</artifactId>
         </dependency>
@@ -104,10 +112,6 @@
             <groupId>org.awaitility</groupId>
             <artifactId>awaitility</artifactId>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.thingsboard.common</groupId>
-            <artifactId>data</artifactId>
         </dependency>
     </dependencies>
 

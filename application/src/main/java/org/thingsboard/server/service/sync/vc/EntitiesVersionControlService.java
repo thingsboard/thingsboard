@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadReques
 import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public interface EntitiesVersionControlService {
 
@@ -57,8 +58,8 @@ public interface EntitiesVersionControlService {
 
     EntitiesVersionControlSettings saveVersionControlSettings(TenantId tenantId, EntitiesVersionControlSettings versionControlSettings);
 
-    void deleteVersionControlSettings(TenantId tenantId);
+    void deleteVersionControlSettings(TenantId tenantId) throws Exception;
 
-    void checkVersionControlAccess(TenantId tenantId, EntitiesVersionControlSettings settings) throws ThingsboardException;
+    void checkVersionControlAccess(TenantId tenantId, EntitiesVersionControlSettings settings) throws Exception;
 
 }

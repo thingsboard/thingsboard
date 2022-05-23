@@ -15,22 +15,8 @@
  */
 package org.thingsboard.server.service.sync.vc;
 
-import com.google.common.util.concurrent.SettableFuture;
-import lombok.Getter;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
+import org.springframework.context.ApplicationListener;
 
-import java.util.UUID;
-
-@Getter
-public class PendingGitRequest<T> {
-
-    private final UUID requestId;
-    private final TenantId tenantId;
-    private final SettableFuture<T> future;
-
-    public PendingGitRequest(TenantId tenantId) {
-        this.requestId = UUID.randomUUID();
-        this.tenantId = tenantId;
-        this.future = SettableFuture.create();
-    }
+public interface ClusterVersionControlService extends ApplicationListener<PartitionChangeEvent> {
 }

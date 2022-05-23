@@ -36,30 +36,34 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.sync.vc.*;
-import org.thingsboard.server.common.data.sync.vc.request.load.EntityTypeVersionLoadConfig;
-import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.settings.AdminSettingsService;
-import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.permission.Operation;
-
-import org.thingsboard.server.service.sync.ie.EntitiesExportImportService;
-import org.thingsboard.server.service.sync.ie.exporting.ExportableEntitiesService;
+import org.thingsboard.server.common.data.sync.ThrowingRunnable;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
 import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
 import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
+import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
+import org.thingsboard.server.common.data.sync.vc.EntityVersion;
+import org.thingsboard.server.common.data.sync.vc.VersionControlAuthMethod;
+import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
+import org.thingsboard.server.common.data.sync.vc.VersionLoadResult;
+import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.common.data.sync.vc.request.create.ComplexVersionCreateRequest;
 import org.thingsboard.server.common.data.sync.vc.request.create.SingleEntityVersionCreateRequest;
 import org.thingsboard.server.common.data.sync.vc.request.create.SyncStrategy;
 import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateConfig;
 import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
+import org.thingsboard.server.common.data.sync.vc.request.load.EntityTypeVersionLoadConfig;
 import org.thingsboard.server.common.data.sync.vc.request.load.EntityTypeVersionLoadRequest;
 import org.thingsboard.server.common.data.sync.vc.request.load.SingleEntityVersionLoadRequest;
 import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadConfig;
 import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadRequest;
-import org.thingsboard.server.common.data.sync.ThrowingRunnable;
+import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.settings.AdminSettingsService;
+import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.sync.ie.EntitiesExportImportService;
+import org.thingsboard.server.service.sync.ie.exporting.ExportableEntitiesService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -330,35 +334,34 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         } catch (Exception e) {
             throw new RuntimeException("Failed to load version control settings!", e);
         }
-        //TODO: ashvayka
-//        try {
-//            gitService.clearRepository(tenantId);
-//            gitService.initRepository(tenantId, savedVersionControlSettings);
-//        } catch (Exception e) {
-//            throw new RuntimeException("Failed to init repository!", e);
-//        }
+        try {
+            //TODO: ashvayka: replace future.get with deferred result. Don't forget to call when tenant is deleted.
+            gitServiceQueue.initRepository(tenantId, versionControlSettings).get();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to init repository!", e);
+        }
         return savedVersionControlSettings;
     }
 
     @Override
-    public void deleteVersionControlSettings(TenantId tenantId) {
-        //TODO: ashvayka
-//        if (adminSettingsService.deleteAdminSettings(tenantId, SETTINGS_KEY)) {
-//            gitService.clearRepository(tenantId);
-//        }
+    public void deleteVersionControlSettings(TenantId tenantId) throws Exception {
+        if (adminSettingsService.deleteAdminSettings(tenantId, SETTINGS_KEY)) {
+            //TODO: ashvayka: replace future.get with deferred result. Don't forget to call when tenant is deleted.
+            gitServiceQueue.clearRepository(tenantId).get();
+        }
     }
 
     @Override
     public void checkVersionControlAccess(TenantId tenantId, EntitiesVersionControlSettings settings) throws ThingsboardException {
         EntitiesVersionControlSettings storedSettings = getVersionControlSettings(tenantId);
         settings = this.restoreCredentials(settings, storedSettings);
-        //TODO: ashvayka
-//        try {
-//            gitService.testRepository(tenantId, settings);
-//        } catch (Exception e) {
-//            throw new ThingsboardException(String.format("Unable to access repository: %s", e.getMessage()),
-//                    ThingsboardErrorCode.GENERAL);
-//        }
+        try {
+            //TODO: ashvayka: replace future.get with deferred result.
+            gitServiceQueue.testRepository(tenantId, settings).get();
+        } catch (Exception e) {
+            throw new ThingsboardException(String.format("Unable to access repository: %s", e.getMessage()),
+                    ThingsboardErrorCode.GENERAL);
+        }
     }
 
     private EntitiesVersionControlSettings restoreCredentials(EntitiesVersionControlSettings settings, EntitiesVersionControlSettings storedSettings) {

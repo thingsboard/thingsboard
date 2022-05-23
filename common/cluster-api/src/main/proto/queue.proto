@@ -745,24 +745,34 @@ message EntitiesContentRequestMsg {
   int32 limit = 4;
 }
 
+message GenericRepositoryRequestMsg {}
+
+message GenericRepositoryResponseMsg {}
+
 message ToVersionControlServiceMsg {
   string nodeId = 1;
   int64 tenantIdMSB = 2;
   int64 tenantIdLSB = 3;
   int64 requestIdMSB = 4;
   int64 requestIdLSB = 5;
-  CommitRequestMsg commitRequest = 6;
-  ListVersionsRequestMsg listVersionRequest = 7;
-  ListEntitiesRequestMsg listEntitiesRequest = 8;
-  ListBranchesRequestMsg listBranchesRequest = 9;
-  EntityContentRequestMsg entityContentRequest = 10;
-  EntitiesContentRequestMsg entitiesContentRequest = 11;
+  bytes vcSettings = 6;
+  GenericRepositoryRequestMsg initRepositoryRequest = 7;
+  GenericRepositoryRequestMsg testRepositoryRequest = 8;
+  GenericRepositoryRequestMsg clearRepositoryRequest = 9;
+  CommitRequestMsg commitRequest = 10;
+  ListVersionsRequestMsg listVersionRequest = 11;
+  ListEntitiesRequestMsg listEntitiesRequest = 12;
+  ListBranchesRequestMsg listBranchesRequest = 13;
+  EntityContentRequestMsg entityContentRequest = 14;
+  EntitiesContentRequestMsg entitiesContentRequest = 15;
 }
 
 message VersionControlResponseMsg {
   int64 requestIdMSB = 1;
   int64 requestIdLSB = 2;
-  CommitResponseMsg commitResponse = 3;
+  string error = 3;
+  GenericRepositoryResponseMsg genericResponse = 4;
+  CommitResponseMsg commitResponse = 5;
 }
 
 /**

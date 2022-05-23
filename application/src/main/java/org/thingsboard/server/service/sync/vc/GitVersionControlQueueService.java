@@ -21,10 +21,12 @@ import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
+import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
+import org.thingsboard.server.gen.transport.TransportProtos.VersionControlResponseMsg;
 
 import java.util.List;
 
@@ -54,4 +56,11 @@ public interface GitVersionControlQueueService {
 
     ListenableFuture<List<EntityExportData>> getEntities(TenantId tenantId, String versionId, EntityType entityType, int offset, int limit);
 
+    ListenableFuture<Void> initRepository(TenantId tenantId, EntitiesVersionControlSettings settings);
+
+    ListenableFuture<Void> testRepository(TenantId tenantId, EntitiesVersionControlSettings settings);
+
+    ListenableFuture<Void> clearRepository(TenantId tenantId);
+
+    void processResponse(VersionControlResponseMsg vcResponseMsg);
 }

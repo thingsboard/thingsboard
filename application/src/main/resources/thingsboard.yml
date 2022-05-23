@@ -1024,6 +1024,8 @@ queue:
   vc:
     topic: "${TB_QUEUE_VC_TOPIC:tb_version_control}"
     partitions: "${TB_QUEUE_VC_PARTITIONS:10}"
+    poll-interval: "${TB_QUEUE_VC_INTERVAL_MS:25}"
+    pack-processing-timeout: "${TB_QUEUE_VC_PACK_PROCESSING_TIMEOUT_MS:2000}"
   js:
     # JS Eval request topic
     request_topic: "${REMOTE_JS_EVAL_REQUEST_TOPIC:js_eval.requests}"

@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport.util;
+package org.thingsboard.server.queue.util;
 
 import lombok.extern.slf4j.Slf4j;
 import org.nustaq.serialization.FSTConfiguration;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 
 import java.util.Optional;
 

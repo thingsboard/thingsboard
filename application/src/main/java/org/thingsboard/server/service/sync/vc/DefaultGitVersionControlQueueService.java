@@ -21,26 +21,30 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
+import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.CommitRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.EntitiesContentRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.EntityContentRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GenericRepositoryRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ListEntitiesRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ListVersionsRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.EntityContentRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.EntitiesContentRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PrepareMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToVersionControlServiceMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.VersionControlResponseMsg;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
@@ -56,6 +60,7 @@ import java.util.function.Function;
 @TbCoreComponent
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DefaultGitVersionControlQueueService implements GitVersionControlQueueService {
 
     private final ObjectWriter jsonWriter = new ObjectMapper().writer(SerializationFeature.INDENT_OUTPUT);
@@ -188,15 +193,6 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
         return request.getFuture();
     }
 
-    private <T> void registerAndSend(PendingGitRequest<T> request, Function<ToVersionControlServiceMsg.Builder, ToVersionControlServiceMsg> enrichFunction, TbQueueCallback callback) {
-        if (!request.getFuture().isDone()) {
-            pendingRequestMap.putIfAbsent(request.getRequestId(), request);
-            clusterService.pushMsgToVersionControl(request.getTenantId(), enrichFunction.apply(newRequestProto(request)), callback);
-        } else {
-            throw new RuntimeException("Future is already done!");
-        }
-    }
-
     @Override
     public ListenableFuture<EntityExportData> getEntity(TenantId tenantId, String versionId, EntityId entityId) {
         EntityContentGitRequest request = new EntityContentGitRequest(tenantId, versionId, entityId);
@@ -218,6 +214,15 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
 //        }
     }
 
+    private <T> void registerAndSend(PendingGitRequest<T> request, Function<ToVersionControlServiceMsg.Builder, ToVersionControlServiceMsg> enrichFunction, TbQueueCallback callback) {
+        if (!request.getFuture().isDone()) {
+            pendingRequestMap.putIfAbsent(request.getRequestId(), request);
+            clusterService.pushMsgToVersionControl(request.getTenantId(), enrichFunction.apply(newRequestProto(request)), callback);
+        } else {
+            throw new RuntimeException("Future is already done!");
+        }
+    }
+
     @Override
     public ListenableFuture<List<EntityExportData>> getEntities(TenantId tenantId, String versionId, EntityType entityType, int offset, int limit) {
         EntitiesContentGitRequest request = new EntitiesContentGitRequest(tenantId, versionId, entityType);
@@ -231,6 +236,56 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
                 , wrap(request.getFuture()));
 
         return request.getFuture();
+    }
+
+    @Override
+    public ListenableFuture<Void> initRepository(TenantId tenantId, EntitiesVersionControlSettings settings) {
+        VoidGitRequest request = new VoidGitRequest(tenantId);
+
+        registerAndSend(request, builder -> builder.setInitRepositoryRequest(GenericRepositoryRequestMsg.newBuilder().build()).build()
+                , wrap(request.getFuture()));
+
+        return request.getFuture();
+    }
+
+    @Override
+    public ListenableFuture<Void> testRepository(TenantId tenantId, EntitiesVersionControlSettings settings) {
+        VoidGitRequest request = new VoidGitRequest(tenantId);
+
+        registerAndSend(request, builder -> builder.setTestRepositoryRequest(GenericRepositoryRequestMsg.newBuilder().build()).build()
+                , wrap(request.getFuture()));
+
+        return request.getFuture();
+    }
+
+    @Override
+    public ListenableFuture<Void> clearRepository(TenantId tenantId) {
+        VoidGitRequest request = new VoidGitRequest(tenantId);
+
+        registerAndSend(request, builder -> builder.setClearRepositoryRequest(GenericRepositoryRequestMsg.newBuilder().build()).build()
+                , wrap(request.getFuture()));
+
+        return request.getFuture();
+    }
+
+    @Override
+    public void processResponse(VersionControlResponseMsg vcResponseMsg) {
+        UUID requestId = new UUID(vcResponseMsg.getRequestIdMSB(), vcResponseMsg.getRequestIdLSB());
+        PendingGitRequest<?> request = pendingRequestMap.get(requestId);
+        if (request == null) {
+            log.debug("[{}] received stale response: {}", requestId, vcResponseMsg);
+            return;
+        } else {
+            log.debug("[{}] processing response: {}", requestId, vcResponseMsg);
+        }
+        var future = request.getFuture();
+        if (!StringUtils.isEmpty(vcResponseMsg.getError())) {
+            future.setException(new RuntimeException(vcResponseMsg.getError()));
+        } else {
+            if (vcResponseMsg.hasGenericResponse()) {
+                future.set(null);
+            }
+        }
     }
 
     private static <T> TbQueueCallback wrap(SettableFuture<T> future) {

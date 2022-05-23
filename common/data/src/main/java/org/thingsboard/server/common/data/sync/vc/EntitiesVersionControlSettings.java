@@ -16,8 +16,13 @@
 package org.thingsboard.server.common.data.sync.vc;
 
 import lombok.Data;
+
+import java.io.Serializable;
+
 @Data
-public class EntitiesVersionControlSettings {
+public class EntitiesVersionControlSettings implements Serializable {
+    private static final long serialVersionUID = -3211552851889198721L;
+
     private String repositoryUri;
     private VersionControlAuthMethod authMethod;
     private String username;
