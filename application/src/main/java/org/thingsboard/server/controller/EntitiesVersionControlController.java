@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
@@ -41,6 +42,7 @@ import java.util.UUID;
 import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
 
 @RestController
+@TbCoreComponent
 @RequestMapping("/api/entities/vc")
 @PreAuthorize("hasAuthority('TENANT_ADMIN')")
 @RequiredArgsConstructor
