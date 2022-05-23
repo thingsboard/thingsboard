@@ -44,6 +44,8 @@ public interface GitRepositoryService {
 
     VersionCreationResult push(PendingCommit commit);
 
+    void cleanUp(PendingCommit commit);
+
     void abort(PendingCommit commit);
 
     List<String> listBranches(TenantId tenantId);

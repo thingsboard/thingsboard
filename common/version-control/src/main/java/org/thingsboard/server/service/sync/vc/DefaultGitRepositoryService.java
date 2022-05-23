@@ -20,8 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.JGitInternalException;
-import org.eclipse.jgit.api.errors.RefAlreadyExistsException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
@@ -55,7 +53,7 @@ import java.util.stream.Collectors;
 @Service
 public class DefaultGitRepositoryService implements GitRepositoryService {
 
-    @Value("${vc.git.repos-poll-interval:${java.io.tmpdir}/repositories}")
+    @Value("${vc.git.repositories-folder}")
     private String repositoriesFolder;
 
     @Value("${vc.git.repos-poll-interval:60}")
@@ -92,22 +90,12 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
         String branch = commit.getRequest().getBranch();
         try {
             repository.fetch();
-            if (repository.listBranches().contains(branch)) {
-                repository.checkout("origin/" + branch, false);
-                try {
-                    repository.checkout(branch, true);
-                } catch (RefAlreadyExistsException e) {
-                    repository.checkout(branch, false);
-                }
+
+            repository.createAndCheckoutOrphanBranch(commit.getWorkingBranch());
+            repository.resetAndClean();
+
+            if (repository.listRemoteBranches().contains(branch)) {
                 repository.merge(branch);
-            } else { // TODO [viacheslav]: rollback orphan branch on failure
-                try {
-                    repository.createAndCheckoutOrphanBranch(branch); // FIXME [viacheslav]: Checkout returned unexpected result NO_CHANGE for master branch
-                } catch (JGitInternalException e) {
-                    if (!e.getMessage().contains("NO_CHANGE")) {
-                        throw e;
-                    }
-                }
             }
         } catch (IOException | GitAPIException gitAPIException) {
             //TODO: analyze and return meaningful exceptions that we can show to the client;
@@ -140,32 +128,49 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
             result.setRemoved(status.getRemoved().size());
 
             GitRepository.Commit gitCommit = repository.commit(commit.getRequest().getVersionName());
-            repository.push();
+            repository.push(commit.getWorkingBranch(), commit.getRequest().getBranch());
 
             result.setVersion(toVersion(gitCommit));
             return result;
         } catch (GitAPIException gitAPIException) {
             //TODO: analyze and return meaningful exceptions that we can show to the client;
             throw new RuntimeException(gitAPIException);
+        } finally {
+            cleanUp(commit);
         }
+    }
+
+    @SneakyThrows
+    @Override
+    public void cleanUp(PendingCommit commit) {
+        GitRepository repository = checkRepository(commit.getTenantId());
+        try {
+            repository.createAndCheckoutOrphanBranch(EntityId.NULL_UUID.toString());
+        } catch (Exception e) {
+            if (!e.getMessage().contains("NO_CHANGE")) {
+                throw e;
+            }
+        }
+        repository.resetAndClean();
+        repository.deleteLocalBranchIfExists(commit.getWorkingBranch());
     }
 
     @Override
     public void abort(PendingCommit commit) {
-        //TODO: implement;
+        cleanUp(commit);
     }
 
     @Override
     public String getFileContentAtCommit(TenantId tenantId, String relativePath, String versionId) throws IOException {
-       GitRepository repository = checkRepository(tenantId);
-       return repository.getFileContentAtCommit(relativePath, versionId);
+        GitRepository repository = checkRepository(tenantId);
+        return repository.getFileContentAtCommit(relativePath, versionId);
     }
 
     @Override
     public List<String> listBranches(TenantId tenantId) {
         GitRepository repository = checkRepository(tenantId);
         try {
-            return repository.listBranches();
+            return repository.listRemoteBranches();
         } catch (GitAPIException gitAPIException) {
             //TODO: analyze and return meaningful exceptions that we can show to the client;
             throw new RuntimeException(gitAPIException);

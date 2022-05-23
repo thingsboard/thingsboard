@@ -135,7 +135,13 @@ public class LocalGitVersionControlService implements GitVersionControlService {
             if (old != null) {
                 gitRepositoryService.abort(old);
             }
-            gitRepositoryService.prepareCommit(pendingCommit);
+            try {
+                gitRepositoryService.prepareCommit(pendingCommit);
+            } catch (Exception e) {
+                pendingCommitMap.remove(tenantId);
+                gitRepositoryService.cleanUp(pendingCommit);
+                throw e;
+            }
             return pendingCommit;
         } finally {
             lock.unlock();
@@ -171,7 +177,9 @@ public class LocalGitVersionControlService implements GitVersionControlService {
 
     @Override
     public VersionCreationResult push(PendingCommit commit) {
-        return executeInsideLock(commit, gitRepositoryService::push);
+        VersionCreationResult result = executeInsideLock(commit, gitRepositoryService::push);
+        pendingCommitMap.remove(commit.getTenantId());
+        return result;
     }
 
     @Override
@@ -256,6 +264,10 @@ public class LocalGitVersionControlService implements GitVersionControlService {
         try {
             checkCommit(commit);
             r.accept(commit);
+        } catch (Exception e) {
+            pendingCommitMap.remove(commit.getTenantId());
+            gitRepositoryService.cleanUp(commit);
+            throw e;
         } finally {
             lock.unlock();
         }
@@ -267,6 +279,10 @@ public class LocalGitVersionControlService implements GitVersionControlService {
         try {
             checkCommit(commit);
             return c.apply(commit);
+        } catch (Exception e) {
+            pendingCommitMap.remove(commit.getTenantId());
+            gitRepositoryService.cleanUp(commit);
+            throw e;
         } finally {
             lock.unlock();
         }
