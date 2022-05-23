@@ -19,6 +19,8 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
@@ -44,11 +46,11 @@ public interface GitVersionControlService {
 
     VersionCreationResult push(PendingCommit commit);
 
-    List<EntityVersion> listVersions(TenantId tenantId, String branch);
+    PageData<EntityVersion> listVersions(TenantId tenantId, String branch, PageLink pageLink);
 
-    List<EntityVersion> listVersions(TenantId tenantId, String branch, EntityType entityType);
+    PageData<EntityVersion> listVersions(TenantId tenantId, String branch, EntityType entityType, PageLink pageLink);
 
-    List<EntityVersion> listVersions(TenantId tenantId, String branch, EntityId entityId);
+    PageData<EntityVersion> listVersions(TenantId tenantId, String branch, EntityId entityId, PageLink pageLink);
 
     List<VersionedEntityInfo> listEntitiesAtVersion(TenantId tenantId, String branch, String versionId, EntityType entityType);
 

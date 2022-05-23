@@ -31,6 +31,8 @@ import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
@@ -183,18 +185,18 @@ public class LocalGitVersionControlService implements GitVersionControlService {
     }
 
     @Override
-    public List<EntityVersion> listVersions(TenantId tenantId, String branch) {
-        return listVersions(tenantId, branch, (String) null);
+    public PageData<EntityVersion> listVersions(TenantId tenantId, String branch, PageLink pageLink) {
+        return listVersions(tenantId, branch, (String) null, pageLink);
     }
 
     @Override
-    public List<EntityVersion> listVersions(TenantId tenantId, String branch, EntityType entityType) {
-        return listVersions(tenantId, branch, getRelativePath(entityType, null));
+    public PageData<EntityVersion> listVersions(TenantId tenantId, String branch, EntityType entityType, PageLink pageLink) {
+        return listVersions(tenantId, branch, getRelativePath(entityType, null), pageLink);
     }
 
     @Override
-    public List<EntityVersion> listVersions(TenantId tenantId, String branch, EntityId entityId) {
-        return listVersions(tenantId, branch, getRelativePath(entityId.getEntityType(), entityId.getId().toString()));
+    public PageData<EntityVersion> listVersions(TenantId tenantId, String branch, EntityId entityId, PageLink pageLink) {
+        return listVersions(tenantId, branch, getRelativePath(entityId.getEntityType(), entityId.getId().toString()), pageLink);
     }
 
     @Override
@@ -249,9 +251,9 @@ public class LocalGitVersionControlService implements GitVersionControlService {
         return null;
     }
 
-    private List<EntityVersion> listVersions(TenantId tenantId, String branch, String path) {
+    private PageData<EntityVersion> listVersions(TenantId tenantId, String branch, String path, PageLink pageLink) {
         try {
-            return gitRepositoryService.listVersions(tenantId, branch, path);
+            return gitRepositoryService.listVersions(tenantId, branch, path, pageLink);
         } catch (Exception e) {
             //TODO: analyze and return meaningful exceptions that we can show to the client;
             throw new RuntimeException(e);

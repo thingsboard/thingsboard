@@ -16,6 +16,8 @@
 package org.thingsboard.server.service.sync.vc;
 
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
@@ -28,7 +30,7 @@ public interface GitRepositoryService {
 
     void prepareCommit(PendingCommit pendingCommit);
 
-    List<EntityVersion> listVersions(TenantId tenantId, String branch, String path) throws Exception;
+    PageData<EntityVersion> listVersions(TenantId tenantId, String branch, String path, PageLink pageLink) throws Exception;
 
     List<VersionedEntityInfo> listEntitiesAtVersion(TenantId tenantId, String branch, String versionId, String path) throws Exception;
 

@@ -16,6 +16,7 @@
 package org.thingsboard.server.controller;
 
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,6 +26,8 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
@@ -39,7 +42,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
+import static org.thingsboard.server.controller.ControllerConstants.*;
 
 @RestController
 @TbCoreComponent
@@ -109,13 +112,18 @@ public class EntitiesVersionControlController extends BaseController {
             "    \"name\": \"Device profile 1 version 1.0\"\n" +
             "  }\n" +
             "]\n```")
-    @GetMapping("/version/{branch}/{entityType}/{externalEntityUuid}")
-    public List<EntityVersion> listEntityVersions(@PathVariable String branch,
-                                                  @PathVariable EntityType entityType,
-                                                  @PathVariable UUID externalEntityUuid) throws ThingsboardException {
+    @GetMapping(value = "/version/{branch}/{entityType}/{externalEntityUuid}", params = {"pageSize", "page"})
+    public PageData<EntityVersion> listEntityVersions(@PathVariable String branch,
+                                                      @PathVariable EntityType entityType,
+                                                      @PathVariable UUID externalEntityUuid,
+                                                      @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+                                                      @RequestParam int pageSize,
+                                                      @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+                                                      @RequestParam int page) throws ThingsboardException {
         try {
             EntityId externalEntityId = EntityIdFactory.getByTypeAndUuid(entityType, externalEntityUuid);
-            return versionControlService.listEntityVersions(getTenantId(), branch, externalEntityId);
+            PageLink pageLink = new PageLink(pageSize, page);
+            return versionControlService.listEntityVersions(getTenantId(), branch, externalEntityId, pageLink);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -128,11 +136,16 @@ public class EntitiesVersionControlController extends BaseController {
             "    \"name\": \"Device profiles from dev\"\n" +
             "  }\n" +
             "]\n```")
-    @GetMapping("/version/{branch}/{entityType}")
-    public List<EntityVersion> listEntityTypeVersions(@PathVariable String branch,
-                                                      @PathVariable EntityType entityType) throws ThingsboardException {
+    @GetMapping(value = "/version/{branch}/{entityType}", params = {"pageSize", "page"})
+    public PageData<EntityVersion> listEntityTypeVersions(@PathVariable String branch,
+                                                          @PathVariable EntityType entityType,
+                                                          @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+                                                          @RequestParam int pageSize,
+                                                          @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+                                                          @RequestParam int page) throws ThingsboardException {
         try {
-            return versionControlService.listEntityTypeVersions(getTenantId(), branch, entityType);
+            PageLink pageLink = new PageLink(pageSize, page);
+            return versionControlService.listEntityTypeVersions(getTenantId(), branch, entityType, pageLink);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -153,10 +166,15 @@ public class EntitiesVersionControlController extends BaseController {
             "    \"name\": \"Devices added\"\n" +
             "  }\n" +
             "]\n```")
-    @GetMapping("/version/{branch}")
-    public List<EntityVersion> listVersions(@PathVariable String branch) throws ThingsboardException {
+    @GetMapping(value = "/version/{branch}", params = {"pageSize", "page"})
+    public PageData<EntityVersion> listVersions(@PathVariable String branch,
+                                                @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+                                                @RequestParam int pageSize,
+                                                @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+                                                @RequestParam int page) throws ThingsboardException {
         try {
-            return versionControlService.listVersions(getTenantId(), branch);
+            PageLink pageLink = new PageLink(pageSize, page);
+            return versionControlService.listVersions(getTenantId(), branch, pageLink);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -223,9 +241,9 @@ public class EntitiesVersionControlController extends BaseController {
         try {
             String versionId = request.getVersionId();
             if (versionId == null) {
-                List<EntityVersion> versions = versionControlService.listVersions(user.getTenantId(), request.getBranch());
-                if (versions.size() > 0) {
-                    versionId = versions.get(0).getId();
+                PageData<EntityVersion> versions = versionControlService.listVersions(user.getTenantId(), request.getBranch(), new PageLink(1));
+                if (versions.getData().size() > 0) {
+                    versionId = versions.getData().get(0).getId();
                 } else {
                     throw new IllegalArgumentException("No versions available in branch");
                 }
