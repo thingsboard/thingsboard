@@ -26,13 +26,13 @@ VALUES ( '61441950-4612-11e7-a919-92ebcb67fe33', 1592576748000, '5a797660-4612-1
          '$2a$10$5JTB8/hxWc9WAy62nCGSxeefl3KWmipA9nFpVdDa0/xfIseeBB4Bu' );
 
 /** System settings **/
-INSERT INTO admin_settings ( id, created_time, key, json_value )
-VALUES ( '6a2266e4-4612-11e7-a919-92ebcb67fe33', 1592576748000, 'general', '{
+INSERT INTO admin_settings ( id, created_time, tenant_id, key, json_value )
+VALUES ( '6a2266e4-4612-11e7-a919-92ebcb67fe33', 1592576748000, '13814000-1dd2-11b2-8080-808080808080', 'general', '{
 	"baseUrl": "http://localhost:8080"
 }' );
 
-INSERT INTO admin_settings ( id, created_time, key, json_value )
-VALUES ( '6eaaefa6-4612-11e7-a919-92ebcb67fe33', 1592576748000, 'mail', '{
+INSERT INTO admin_settings ( id, created_time, tenant_id, key, json_value )
+VALUES ( '6eaaefa6-4612-11e7-a919-92ebcb67fe33', 1592576748000, '13814000-1dd2-11b2-8080-808080808080', 'mail', '{
 	"mailFrom": "Thingsboard <sysadmin@localhost.localdomain>",
 	"smtpProtocol": "smtp",
 	"smtpHost": "localhost",
