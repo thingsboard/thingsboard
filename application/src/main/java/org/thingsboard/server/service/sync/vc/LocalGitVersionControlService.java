@@ -63,7 +63,7 @@ public class LocalGitVersionControlService {
     private final TenantDao tenantDao;
     private final AdminSettingsService adminSettingsService;
     private final ConcurrentMap<TenantId, Lock> tenantRepoLocks = new ConcurrentHashMap<>();
-//    private final Map<TenantId, PendingCommit> pendingCommitMap = new HashMap<>();
+    private final Map<TenantId, PendingCommit> pendingCommitMap = new HashMap<>();
 //
 //    @AfterStartUp
 //    public void init() {

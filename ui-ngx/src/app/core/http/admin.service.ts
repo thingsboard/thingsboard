@@ -20,6 +20,7 @@ import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import {
   AdminSettings,
+  EntitiesVersionControlSettings,
   MailServerSettings,
   SecuritySettings,
   TestSmsRequest,
@@ -62,6 +63,25 @@ export class AdminService {
                               config?: RequestConfig): Observable<SecuritySettings> {
     return this.http.post<SecuritySettings>('/api/admin/securitySettings', securitySettings,
       defaultHttpOptionsFromConfig(config));
+  }
+
+  public getEntitiesVersionControlSettings(config?: RequestConfig): Observable<EntitiesVersionControlSettings> {
+    return this.http.get<EntitiesVersionControlSettings>(`/api/admin/vcSettings`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public saveEntitiesVersionControlSettings(versionControlSettings: EntitiesVersionControlSettings,
+                                            config?: RequestConfig): Observable<EntitiesVersionControlSettings> {
+    return this.http.post<EntitiesVersionControlSettings>('/api/admin/vcSettings', versionControlSettings,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public deleteEntitiesVersionControlSettings(config?: RequestConfig) {
+    return this.http.delete('/api/admin/vcSettings', defaultHttpOptionsFromConfig(config));
+  }
+
+  public checkVersionControlAccess(versionControlSettings: EntitiesVersionControlSettings,
+                                   config?: RequestConfig): Observable<void> {
+    return this.http.post<void>('/api/admin/vcSettings/checkAccess', versionControlSettings, defaultHttpOptionsFromConfig(config));
   }
 
   public checkUpdates(config?: RequestConfig): Observable<UpdateMessage> {

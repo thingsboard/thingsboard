@@ -17,28 +17,25 @@ package org.thingsboard.server.service.sync.vc;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
-import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.*;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToVersionControlServiceMsg;
-import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueConsumer;
-import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.NotificationsTopicService;
-import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
@@ -48,11 +45,19 @@ import org.thingsboard.server.queue.util.TbVersionControlComponent;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Function;
 
 @Slf4j
 @TbVersionControlComponent
@@ -65,6 +70,9 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
     private final DataDecodingEncodingService encodingService;
     private final GitRepositoryService vcService;
     private final NotificationsTopicService notificationsTopicService;
+
+    private final ConcurrentMap<TenantId, Lock> tenantRepoLocks = new ConcurrentHashMap<>();
+    private final Map<TenantId, PendingCommit> pendingCommitMap = new HashMap<>();
 
     private volatile ExecutorService consumerExecutor;
     private volatile TbQueueConsumer<TbProtoQueueMsg<ToVersionControlServiceMsg>> consumer;
@@ -100,6 +108,11 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
         consumer.subscribe(event.getPartitions());
     }
 
+    @Override
+    protected boolean filterTbApplicationEvent(PartitionChangeEvent event) {
+        return ServiceType.TB_VC_EXECUTOR.equals(event.getServiceType());
+    }
+
     @EventListener(ApplicationReadyEvent.class)
     @Order(value = 2)
     public void onApplicationEvent(ApplicationReadyEvent event) {
@@ -115,36 +128,35 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
                 }
                 for (TbProtoQueueMsg<ToVersionControlServiceMsg> msgWrapper : msgs) {
                     ToVersionControlServiceMsg msg = msgWrapper.getValue();
-                    if (msg.hasClearRepositoryRequest()) {
-                        handleClearRepositoryCommand(new VersionControlRequestCtx(msg, null));
-                    } else {
-                        VersionControlRequestCtx ctx = new VersionControlRequestCtx(msg, getEntitiesVersionControlSettings(msg));
-                        if (msg.hasTestRepositoryRequest()) {
-                            handleTestRepositoryCommand(ctx);
-                        } else if (msg.hasInitRepositoryRequest()) {
-                            handleInitRepositoryCommand(ctx);
+                    var ctx = new VersionControlRequestCtx(msg, msg.hasClearRepositoryRequest() ? null : getEntitiesVersionControlSettings(msg));
+                    var lock = getRepoLock(ctx.getTenantId());
+                    lock.lock();
+                    try {
+                        if (msg.hasClearRepositoryRequest()) {
+                            handleClearRepositoryCommand(ctx);
+                        } else {
+                            if (msg.hasTestRepositoryRequest()) {
+                                handleTestRepositoryCommand(ctx);
+                            } else if (msg.hasInitRepositoryRequest()) {
+                                handleInitRepositoryCommand(ctx);
+                            } else {
+                                var currentSettings = vcService.getRepositorySettings(ctx.getTenantId());
+                                var newSettings = ctx.getSettings();
+                                if (!newSettings.equals(currentSettings)) {
+                                    vcService.initRepository(ctx.getTenantId(), ctx.getSettings());
+                                }
+                                if (msg.hasCommitRequest()) {
+                                    handleCommitRequest(ctx, msg.getCommitRequest());
+                                }
+                            }
                         }
+                    } catch (Exception e) {
+                        reply(ctx, Optional.of(e));
+                    } finally {
+                        lock.unlock();
                     }
                 }
-//                ConcurrentMap<UUID, TbProtoQueueMsg<ToIntegrationExecutorDownlinkMsg>> pendingMap = msgs.stream().collect(
-//                        Collectors.toConcurrentMap(s -> UUID.randomUUID(), Function.identity()));
-//                CountDownLatch processingTimeoutLatch = new CountDownLatch(1);
-//                TbPackProcessingContext<TbProtoQueueMsg<ToIntegrationExecutorDownlinkMsg>> ctx = new TbPackProcessingContext<>(
-//                        processingTimeoutLatch, pendingMap, new ConcurrentHashMap<>());
-//                pendingMap.forEach((id, msg) -> {
-//                    log.trace("[{}] Creating downlink callback for message: {}", id, msg.getValue());
-//                    TbCallback callback = new TbPackCallback<>(id, ctx);
-//                    try {
-//                        handleDownlink(id, msg, callback);
-//                    } catch (Throwable e) {
-//                        log.warn("[{}] Failed to process notification: {}", id, msg, e);
-//                        callback.onFailure(e);
-//                    }
-//                });
-//                if (!processingTimeoutLatch.await(processingTimeout, TimeUnit.MILLISECONDS)) {
-//                    ctx.getAckMap().forEach((id, msg) -> log.warn("[{}] Timeout to process downlink: {}", id, msg.getValue()));
-//                    ctx.getFailedMap().forEach((id, msg) -> log.warn("[{}] Failed to process downlink: {}", id, msg.getValue()));
-//                }
+                //TODO: handle timeouts and async processing for multiple tenants;
                 consumer.commit();
             } catch (Exception e) {
                 if (!stopped) {
@@ -158,6 +170,66 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
             }
         }
         log.info("TB Version Control request consumer stopped.");
+    }
+
+    private void handleCommitRequest(VersionControlRequestCtx ctx, CommitRequestMsg commitRequest) throws Exception {
+        var tenantId = ctx.getTenantId();
+        UUID txId = UUID.fromString(commitRequest.getTxId());
+        if (commitRequest.hasPrepareMsg()) {
+            prepareCommit(ctx, txId, commitRequest.getPrepareMsg());
+        } else if (commitRequest.hasAbortMsg()) {
+            PendingCommit current = pendingCommitMap.get(tenantId);
+            if (current != null && current.getTxId().equals(txId)) {
+                doAbortCurrentCommit(tenantId, current);
+            }
+        } else {
+            PendingCommit current = pendingCommitMap.get(tenantId);
+            if (current != null && current.getTxId().equals(txId)) {
+                try {
+                    if (commitRequest.hasAddMsg()) {
+                        addToCommit(ctx, current, commitRequest.getAddMsg());
+                    } else if (commitRequest.hasDeleteMsg()) {
+                        deleteFromCommit(ctx, current, commitRequest.getDeleteMsg());
+                    } else if (commitRequest.hasPushMsg()) {
+                        reply(ctx, vcService.push(current));
+                    }
+                } catch (Exception e) {
+                    doAbortCurrentCommit(tenantId, current, e);
+                    throw e;
+                }
+            } else {
+                log.debug("[{}] Ignore request due to stale commit: {}", txId, commitRequest);
+            }
+        }
+    }
+
+    private void prepareCommit(VersionControlRequestCtx ctx, UUID txId, PrepareMsg prepareMsg) {
+        var tenantId = ctx.getTenantId();
+        var pendingCommit = new PendingCommit(tenantId, ctx.getNodeId(), txId, prepareMsg.getBranchName(), prepareMsg.getCommitMsg());
+        PendingCommit old = pendingCommitMap.get(tenantId);
+        if (old != null) {
+            doAbortCurrentCommit(tenantId, old);
+        }
+        pendingCommitMap.put(tenantId, pendingCommit);
+        vcService.prepareCommit(pendingCommit);
+    }
+
+    private void deleteFromCommit(VersionControlRequestCtx ctx, PendingCommit commit, DeleteMsg deleteMsg) throws IOException {
+        vcService.deleteFolderContent(commit, deleteMsg.getRelativePath());
+    }
+
+    private void addToCommit(VersionControlRequestCtx ctx, PendingCommit commit, AddMsg addMsg) throws IOException {
+        vcService.add(commit, addMsg.getRelativePath(), addMsg.getEntityDataJson());
+    }
+
+    private void doAbortCurrentCommit(TenantId tenantId, PendingCommit current) {
+        doAbortCurrentCommit(tenantId, current, null);
+    }
+
+    private void doAbortCurrentCommit(TenantId tenantId, PendingCommit current, Exception e) {
+        vcService.abort(current);
+        pendingCommitMap.remove(tenantId);
+        //TODO: push notification to core using old.getNodeId() to cancel old commit processing on the caller side.
     }
 
     private void handleClearRepositoryCommand(VersionControlRequestCtx ctx) {
@@ -191,13 +263,29 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
         }
     }
 
+    private void reply(VersionControlRequestCtx ctx, VersionCreationResult result) {
+        reply(ctx, Optional.empty(), builder -> builder.setCommitResponse(CommitResponseMsg.newBuilder()
+                .setCommitId(result.getVersion().getId())
+                .setName(result.getVersion().getName())
+                .setAdded(result.getAdded())
+                .setModified(result.getModified())
+                .setRemoved(result.getRemoved())));
+    }
+
     private void reply(VersionControlRequestCtx ctx, Optional<Exception> e) {
+        reply(ctx, e, null);
+    }
+
+    private void reply(VersionControlRequestCtx ctx, Optional<Exception> e, Function<VersionControlResponseMsg.Builder, VersionControlResponseMsg.Builder> enrichFunction) {
         TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, ctx.getNodeId());
-        TransportProtos.VersionControlResponseMsg.Builder builder = TransportProtos.VersionControlResponseMsg.newBuilder()
+        VersionControlResponseMsg.Builder builder = VersionControlResponseMsg.newBuilder()
                 .setRequestIdMSB(ctx.getRequestId().getMostSignificantBits())
                 .setRequestIdLSB(ctx.getRequestId().getLeastSignificantBits());
         if (e.isPresent()) {
             builder.setError(e.get().getMessage());
+        }
+        if (enrichFunction != null) {
+            builder = enrichFunction.apply(builder);
         } else {
             builder.setGenericResponse(TransportProtos.GenericRepositoryResponseMsg.newBuilder().build());
         }
@@ -215,5 +303,10 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
             throw new RuntimeException("Failed to parse vc settings!");
         }
     }
+
+    private Lock getRepoLock(TenantId tenantId) {
+        return tenantRepoLocks.computeIfAbsent(tenantId, t -> new ReentrantLock(true));
+    }
+
 
 }

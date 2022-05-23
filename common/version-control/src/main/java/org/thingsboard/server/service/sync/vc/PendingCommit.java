@@ -25,12 +25,16 @@ import java.util.UUID;
 public class PendingCommit {
 
     private final UUID txId;
+    private final String nodeId;
     private final TenantId tenantId;
-    private final VersionCreateRequest request;
+    private String branch;
+    private String versionName;
 
-    public PendingCommit(TenantId tenantId, VersionCreateRequest request) {
-        this.txId = UUID.randomUUID();
+    public PendingCommit(TenantId tenantId, String nodeId, UUID txId, String branch, String versionName) {
         this.tenantId = tenantId;
-        this.request = request;
+        this.nodeId = nodeId;
+        this.txId = txId;
+        this.branch = branch;
+        this.versionName = versionName;
     }
 }

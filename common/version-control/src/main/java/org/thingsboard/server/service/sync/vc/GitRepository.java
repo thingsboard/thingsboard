@@ -56,14 +56,17 @@ import java.util.stream.Collectors;
 public class GitRepository {
 
     private final Git git;
+    @Getter
+    private final EntitiesVersionControlSettings settings;
     private final CredentialsProvider credentialsProvider;
     private final SshdSessionFactory sshSessionFactory;
 
     @Getter
     private final String directory;
 
-    private GitRepository(Git git, CredentialsProvider credentialsProvider, SshdSessionFactory sshSessionFactory, String directory) {
+    private GitRepository(Git git, EntitiesVersionControlSettings settings, CredentialsProvider credentialsProvider, SshdSessionFactory sshSessionFactory, String directory) {
         this.git = git;
+        this.settings = settings;
         this.credentialsProvider = credentialsProvider;
         this.sshSessionFactory = sshSessionFactory;
         this.directory = directory;
@@ -83,7 +86,7 @@ public class GitRepository {
                 .setNoCheckout(true);
         configureTransportCommand(cloneCommand, credentialsProvider, sshSessionFactory);
         Git git = cloneCommand.call();
-        return new GitRepository(git, credentialsProvider, sshSessionFactory, directory.getAbsolutePath());
+        return new GitRepository(git, settings, credentialsProvider, sshSessionFactory, directory.getAbsolutePath());
     }
 
     public static GitRepository open(File directory, EntitiesVersionControlSettings settings) throws IOException {
@@ -95,7 +98,7 @@ public class GitRepository {
         } else if (VersionControlAuthMethod.PRIVATE_KEY.equals(settings.getAuthMethod())) {
             sshSessionFactory = newSshdSessionFactory(settings.getPrivateKey(), settings.getPrivateKeyPassword(), directory);
         }
-        return new GitRepository(git, credentialsProvider, sshSessionFactory, directory.getAbsolutePath());
+        return new GitRepository(git, settings, credentialsProvider, sshSessionFactory, directory.getAbsolutePath());
     }
 
     public static void test(EntitiesVersionControlSettings settings, File directory) throws GitAPIException {

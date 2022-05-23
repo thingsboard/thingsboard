@@ -13,28 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.sync.vc;
+:host {
+  .fields-group {
+    padding: 0 16px 8px;
+    margin-bottom: 10px;
+    border: 1px groove rgba(0, 0, 0, .25);
+    border-radius: 4px;
 
-import com.google.common.util.concurrent.SettableFuture;
-import lombok.Getter;
-import org.thingsboard.server.common.data.id.TenantId;
-
-import java.util.UUID;
-
-@Getter
-public class PendingGitRequest<T> {
-
-    private final UUID requestId;
-    private final TenantId tenantId;
-    private final SettableFuture<T> future;
-
-    public PendingGitRequest(TenantId tenantId) {
-        this.requestId = UUID.randomUUID();
-        this.tenantId = tenantId;
-        this.future = SettableFuture.create();
+    legend {
+      color: rgba(0, 0, 0, .7);
+      width: fit-content;
     }
 
-    public boolean requiresSettings(){
-        return true;
+    legend + * {
+      display: block;
+      margin-top: 16px;
     }
+  }
 }

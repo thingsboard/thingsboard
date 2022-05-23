@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.sync.vc;
 
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -55,7 +54,10 @@ import java.util.stream.Collectors;
 @Service
 public class DefaultGitRepositoryService implements GitRepositoryService {
 
-    @Value("${vc.git.repos-poll-interval:${java.io.tmpdir}/repositories}")
+    @Value("${java.io.tmpdir}/repositories")
+    private String defaultFolder;
+
+    @Value("${vc.git.folder:${java.io.tmpdir}/repositories}")
     private String repositoriesFolder;
 
     @Value("${vc.git.repos-poll-interval:60}")
@@ -66,6 +68,9 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
 
     @PostConstruct
     public void init() {
+        if (StringUtils.isEmpty(repositoriesFolder)) {
+            repositoriesFolder = defaultFolder;
+        }
         scheduler = Executors.newSingleThreadScheduledExecutor();
         scheduler.scheduleWithFixedDelay(() -> {
             repositories.forEach((tenantId, repository) -> {
@@ -89,7 +94,7 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     @Override
     public void prepareCommit(PendingCommit commit) {
         GitRepository repository = checkRepository(commit.getTenantId());
-        String branch = commit.getRequest().getBranch();
+        String branch = commit.getBranch();
         try {
             repository.fetch();
             if (repository.listBranches().contains(branch)) {
@@ -139,7 +144,7 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
             result.setModified(status.getModified().size());
             result.setRemoved(status.getRemoved().size());
 
-            GitRepository.Commit gitCommit = repository.commit(commit.getRequest().getVersionName());
+            GitRepository.Commit gitCommit = repository.commit(commit.getVersionName());
             repository.push();
 
             result.setVersion(toVersion(gitCommit));
@@ -157,8 +162,8 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
 
     @Override
     public String getFileContentAtCommit(TenantId tenantId, String relativePath, String versionId) throws IOException {
-       GitRepository repository = checkRepository(tenantId);
-       return repository.getFileContentAtCommit(relativePath, versionId);
+        GitRepository repository = checkRepository(tenantId);
+        return repository.getFileContentAtCommit(relativePath, versionId);
     }
 
     @Override
@@ -213,6 +218,7 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
 
     @Override
     public void initRepository(TenantId tenantId, EntitiesVersionControlSettings settings) throws Exception {
+        clearRepository(tenantId);
         Path repositoryDirectory = Path.of(repositoriesFolder, tenantId.getId().toString());
         GitRepository repository;
         if (Files.exists(repositoryDirectory)) {
@@ -222,6 +228,12 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
         Files.createDirectories(repositoryDirectory);
         repository = GitRepository.clone(settings, repositoryDirectory.toFile());
         repositories.put(tenantId, repository);
+    }
+
+    @Override
+    public EntitiesVersionControlSettings getRepositorySettings(TenantId tenantId) throws Exception {
+        var gitRepository = repositories.get(tenantId);
+        return gitRepository != null ? gitRepository.getSettings() : null;
     }
 
     @Override

@@ -153,6 +153,7 @@ import { TenantProfileQueuesComponent } from '@home/components/profile/queue/ten
 import { QueueFormComponent } from '@home/components/queue/queue-form.component';
 import { WidgetSettingsModule } from '@home/components/widget/lib/settings/widget-settings.module';
 import { WidgetSettingsComponent } from '@home/components/widget/widget-settings.component';
+import { VcEntityExportDialogComponent } from '@home/components/vc/vc-entity-export-dialog.component';
 
 @NgModule({
   declarations:
@@ -276,7 +277,8 @@ import { WidgetSettingsComponent } from '@home/components/widget/widget-settings
       EmbedDashboardDialogComponent,
       DisplayWidgetTypesPanelComponent,
       TenantProfileQueuesComponent,
-      QueueFormComponent
+      QueueFormComponent,
+      VcEntityExportDialogComponent
     ],
   imports: [
     CommonModule,
@@ -394,7 +396,8 @@ import { WidgetSettingsComponent } from '@home/components/widget/widget-settings
     EmbedDashboardDialogComponent,
     DisplayWidgetTypesPanelComponent,
     TenantProfileQueuesComponent,
-    QueueFormComponent
+    QueueFormComponent,
+    VcEntityExportDialogComponent
   ],
   providers: [
     WidgetComponentService,

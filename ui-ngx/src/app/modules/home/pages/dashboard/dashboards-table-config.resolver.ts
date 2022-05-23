@@ -69,6 +69,7 @@ import {
   AddEntitiesToEdgeDialogComponent,
   AddEntitiesToEdgeDialogData
 } from '@home/dialogs/add-entities-to-edge-dialog.component';
+import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
 
 @Injectable()
 export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<DashboardInfo | Dashboard>> {
@@ -80,6 +81,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
               private customerService: CustomerService,
               private edgeService: EdgeService,
               private dialogService: DialogService,
+              private homeDialogs: HomeDialogsService,
               private importExport: ImportExportService,
               private translate: TranslateService,
               private datePipe: DatePipe,
@@ -537,6 +539,13 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
     );
   }
 
+  vcExport($event: Event, dashboard: DashboardInfo) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.homeDialogs.exportVcEntity(dashboard.id);
+  }
+
   onDashboardAction(action: EntityAction<DashboardInfo>): boolean {
     switch (action.action) {
       case 'open':
@@ -559,6 +568,9 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
         return true;
       case 'unassignFromEdge':
         this.unassignFromEdge(action.event, action.entity);
+        return true;
+      case 'vcExport':
+        this.vcExport(action.event, action.entity);
         return true;
     }
     return false;

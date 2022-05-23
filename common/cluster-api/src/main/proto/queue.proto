@@ -680,11 +680,12 @@ message EdgeNotificationMsgProto {
    TB Core to Version Control Service
  */
 message CommitRequestMsg {
-  PrepareMsg prepareMsg = 1;
-  AddMsg addMsg = 2;
-  DeleteMsg deleteMsg = 3;
-  PushMsg pushMsg = 4;
-  AbortMsg abortMsg = 5;
+  string txId = 1; // To correlate prepare, add, delete and push messages
+  PrepareMsg prepareMsg = 2;
+  AddMsg addMsg = 3;
+  DeleteMsg deleteMsg = 4;
+  PushMsg pushMsg = 5;
+  AbortMsg abortMsg = 6;
 }
 
 message CommitResponseMsg {

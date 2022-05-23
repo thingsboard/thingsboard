@@ -362,7 +362,7 @@ export class MenuService {
         name: 'admin.system-settings',
         type: 'toggle',
         path: '/settings',
-        height: '80px',
+        height: '120px',
         icon: 'settings',
         pages: [
           {
@@ -378,6 +378,13 @@ export class MenuService {
             type: 'link',
             path: '/settings/resources-library',
             icon: 'folder'
+          },
+          {
+            id: guid(),
+            name: 'admin.git-settings',
+            type: 'link',
+            path: '/settings/vc',
+            icon: 'manage_history'
           }
         ]
       }
@@ -512,6 +519,11 @@ export class MenuService {
             name: 'resource.resources-library',
             icon: 'folder',
             path: '/settings/resources-library'
+          },
+          {
+            name: 'admin.git-settings',
+            icon: 'manage_history',
+            path: '/settings/vc',
           }
         ]
       }

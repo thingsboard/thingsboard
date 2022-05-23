@@ -468,6 +468,13 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
     );
   }
 
+  vcExport($event: Event, asset: Asset) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.homeDialogs.exportVcEntity(asset.id);
+  }
+
   onAssetAction(action: EntityAction<AssetInfo>, config: EntityTableConfig<AssetInfo>): boolean {
     switch (action.action) {
       case 'open':
@@ -484,6 +491,9 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
         return true;
       case 'unassignFromEdge':
         this.unassignFromEdge(action.event, action.entity);
+        return true;
+      case 'vcExport':
+        this.vcExport(action.event, action.entity);
         return true;
     }
     return false;

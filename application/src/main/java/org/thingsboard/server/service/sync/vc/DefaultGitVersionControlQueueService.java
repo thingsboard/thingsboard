@@ -20,10 +20,14 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import com.google.protobuf.ByteString;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.StringUtils;
@@ -48,6 +52,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.VersionControlRespon
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.io.IOException;
@@ -59,14 +64,25 @@ import java.util.function.Function;
 
 @TbCoreComponent
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class DefaultGitVersionControlQueueService implements GitVersionControlQueueService {
 
-    private final ObjectWriter jsonWriter = new ObjectMapper().writer(SerializationFeature.INDENT_OUTPUT);
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TbClusterService clusterService;
+    private final DataDecodingEncodingService encodingService;
+    private final DefaultEntitiesVersionControlService entitiesVersionControlService;
+
     private final Map<UUID, PendingGitRequest<?>> pendingRequestMap = new HashMap<>();
+    private final ObjectWriter jsonWriter = new ObjectMapper().writer(SerializationFeature.INDENT_OUTPUT);
+
+    public DefaultGitVersionControlQueueService(TbServiceInfoProvider serviceInfoProvider, TbClusterService clusterService,
+                                                DataDecodingEncodingService encodingService,
+                                                @Lazy DefaultEntitiesVersionControlService entitiesVersionControlService) {
+        this.serviceInfoProvider = serviceInfoProvider;
+        this.clusterService = clusterService;
+        this.encodingService = encodingService;
+        this.entitiesVersionControlService = entitiesVersionControlService;
+    }
 
     @Override
     public ListenableFuture<CommitGitRequest> prepareCommit(TenantId tenantId, VersionCreateRequest request) {
@@ -74,9 +90,8 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
 
         CommitGitRequest commit = new CommitGitRequest(tenantId, request);
         registerAndSend(commit, builder -> builder.setCommitRequest(
-                CommitRequestMsg.newBuilder().setPrepareMsg(getCommitPrepareMsg(request)).build()
+                buildCommitRequest(commit).setPrepareMsg(getCommitPrepareMsg(request)).build()
         ).build(), wrap(future, commit));
-
         return future;
     }
 
@@ -94,11 +109,11 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
         }
 
         registerAndSend(commit, builder -> builder.setCommitRequest(
-                CommitRequestMsg.newBuilder().setAddMsg(
+                buildCommitRequest(commit).setAddMsg(
                         TransportProtos.AddMsg.newBuilder()
                                 .setRelativePath(path).setEntityDataJson(entityDataJson).build()
                 ).build()
-        ).build(), wrap(commit.getFuture(), null));
+        ).build(), wrap(future, null));
         return future;
     }
 
@@ -109,7 +124,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
         String path = getRelativePath(entityType, null);
 
         registerAndSend(commit, builder -> builder.setCommitRequest(
-                CommitRequestMsg.newBuilder().setDeleteMsg(
+                buildCommitRequest(commit).setDeleteMsg(
                         TransportProtos.DeleteMsg.newBuilder().setRelativePath(path).build()
                 ).build()
         ).build(), wrap(commit.getFuture(), null));
@@ -120,7 +135,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     @Override
     public ListenableFuture<VersionCreationResult> push(CommitGitRequest commit) {
         registerAndSend(commit, builder -> builder.setCommitRequest(
-                CommitRequestMsg.newBuilder().setPushMsg(
+                buildCommitRequest(commit).setPushMsg(
                         TransportProtos.PushMsg.newBuilder().build()
                 ).build()
         ).build(), wrap(commit.getFuture()));
@@ -202,7 +217,6 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
                         .setEntityIdMSB(entityId.getId().getMostSignificantBits())
                         .setEntityIdLSB(entityId.getId().getLeastSignificantBits())).build()
                 , wrap(request.getFuture()));
-
         return request.getFuture();
 //        try {
 //            String entityDataJson = gitRepositoryService.getFileContentAtCommit(tenantId,
@@ -214,10 +228,16 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
 //        }
     }
 
-    private <T> void registerAndSend(PendingGitRequest<T> request, Function<ToVersionControlServiceMsg.Builder, ToVersionControlServiceMsg> enrichFunction, TbQueueCallback callback) {
+    private <T> void registerAndSend(PendingGitRequest<T> request,
+                                     Function<ToVersionControlServiceMsg.Builder, ToVersionControlServiceMsg> enrichFunction, TbQueueCallback callback) {
+        registerAndSend(request, enrichFunction, null, callback);
+    }
+
+    private <T> void registerAndSend(PendingGitRequest<T> request,
+                                     Function<ToVersionControlServiceMsg.Builder, ToVersionControlServiceMsg> enrichFunction, EntitiesVersionControlSettings settings, TbQueueCallback callback) {
         if (!request.getFuture().isDone()) {
             pendingRequestMap.putIfAbsent(request.getRequestId(), request);
-            clusterService.pushMsgToVersionControl(request.getTenantId(), enrichFunction.apply(newRequestProto(request)), callback);
+            clusterService.pushMsgToVersionControl(request.getTenantId(), enrichFunction.apply(newRequestProto(request, settings)), callback);
         } else {
             throw new RuntimeException("Future is already done!");
         }
@@ -243,7 +263,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
         VoidGitRequest request = new VoidGitRequest(tenantId);
 
         registerAndSend(request, builder -> builder.setInitRepositoryRequest(GenericRepositoryRequestMsg.newBuilder().build()).build()
-                , wrap(request.getFuture()));
+                , settings, wrap(request.getFuture()));
 
         return request.getFuture();
     }
@@ -252,15 +272,16 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     public ListenableFuture<Void> testRepository(TenantId tenantId, EntitiesVersionControlSettings settings) {
         VoidGitRequest request = new VoidGitRequest(tenantId);
 
-        registerAndSend(request, builder -> builder.setTestRepositoryRequest(GenericRepositoryRequestMsg.newBuilder().build()).build()
-                , wrap(request.getFuture()));
+        registerAndSend(request, builder -> builder
+                        .setTestRepositoryRequest(GenericRepositoryRequestMsg.newBuilder().build()).build()
+                , settings, wrap(request.getFuture()));
 
         return request.getFuture();
     }
 
     @Override
     public ListenableFuture<Void> clearRepository(TenantId tenantId) {
-        VoidGitRequest request = new VoidGitRequest(tenantId);
+        ClearRepositoryGitRequest request = new ClearRepositoryGitRequest(tenantId);
 
         registerAndSend(request, builder -> builder.setClearRepositoryRequest(GenericRepositoryRequestMsg.newBuilder().build()).build()
                 , wrap(request.getFuture()));
@@ -284,6 +305,14 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
         } else {
             if (vcResponseMsg.hasGenericResponse()) {
                 future.set(null);
+            } else if (vcResponseMsg.hasCommitResponse()) {
+                var commitResponse = vcResponseMsg.getCommitResponse();
+                var commitResult = new VersionCreationResult();
+                commitResult.setVersion(new EntityVersion(commitResponse.getCommitId(), commitResponse.getName()));
+                commitResult.setAdded(commitResponse.getAdded());
+                commitResult.setRemoved(commitResponse.getRemoved());
+                commitResult.setModified(commitResponse.getModified());
+                ((CommitGitRequest) request).getFuture().set(commitResult);
             }
         }
     }
@@ -327,16 +356,29 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
         return PrepareMsg.newBuilder().setCommitMsg(request.getVersionName()).setBranchName(request.getBranch()).build();
     }
 
-    private ToVersionControlServiceMsg.Builder newRequestProto(PendingGitRequest<?> request) {
+    private ToVersionControlServiceMsg.Builder newRequestProto(PendingGitRequest<?> request, EntitiesVersionControlSettings settings) {
         var tenantId = request.getTenantId();
         var requestId = request.getRequestId();
-        return ToVersionControlServiceMsg.newBuilder()
+        var builder = ToVersionControlServiceMsg.newBuilder()
                 .setNodeId(serviceInfoProvider.getServiceId())
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
                 .setRequestIdMSB(requestId.getMostSignificantBits())
                 .setRequestIdLSB(requestId.getLeastSignificantBits());
+        EntitiesVersionControlSettings vcSettings = settings;
+        if (vcSettings == null && request.requiresSettings()) {
+            vcSettings = entitiesVersionControlService.getVersionControlSettings(tenantId);
+        }
+        if (vcSettings != null) {
+            builder.setVcSettings(ByteString.copyFrom(encodingService.encode(vcSettings)));
+        } else {
+            throw new RuntimeException("No entity version control settings provisioned!");
+        }
+        return builder;
+    }
 
+    private CommitRequestMsg.Builder buildCommitRequest(CommitGitRequest commit) {
+        return CommitRequestMsg.newBuilder().setTxId(commit.getTxId().toString());
     }
 }
 
