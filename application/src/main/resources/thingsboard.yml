@@ -1119,6 +1119,7 @@ vc:
   git:
     service: "${JS_VC_GIT_SERVICE:local}" # local/remote
     repos-poll-interval: "${TB_VC_GIT_REPOS_POLL_INTERVAL_SEC:60}"
+    repositories-folder: "${TB_VC_GIT_REPOSITORIES_FOLDER:${java.io.tmpdir}/repositories}"
 
 management:
   endpoints:

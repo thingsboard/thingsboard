@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.sync.vc;
 
 import lombok.Data;
+
 @Data
 public class EntitiesVersionControlSettings {
     private String repositoryUri;

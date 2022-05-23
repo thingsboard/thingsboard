@@ -27,10 +27,12 @@ public class PendingCommit {
     private final UUID txId;
     private final TenantId tenantId;
     private final VersionCreateRequest request;
+    private final String workingBranch;
 
     public PendingCommit(TenantId tenantId, VersionCreateRequest request) {
         this.txId = UUID.randomUUID();
         this.tenantId = tenantId;
         this.request = request;
+        this.workingBranch = txId.toString();
     }
 }

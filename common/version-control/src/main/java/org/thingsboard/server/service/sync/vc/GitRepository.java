@@ -18,8 +18,16 @@ package org.thingsboard.server.service.sync.vc;
 import com.google.common.collect.Streams;
 import lombok.Data;
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.sshd.common.util.security.SecurityUtils;
-import org.eclipse.jgit.api.*;
+import org.eclipse.jgit.api.CloneCommand;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.GitCommand;
+import org.eclipse.jgit.api.ListBranchCommand;
+import org.eclipse.jgit.api.LogCommand;
+import org.eclipse.jgit.api.LsRemoteCommand;
+import org.eclipse.jgit.api.ResetCommand;
+import org.eclipse.jgit.api.TransportCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
@@ -28,6 +36,7 @@ import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.SshTransport;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.transport.sshd.JGitKeyCache;
@@ -36,7 +45,6 @@ import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
 import org.thingsboard.server.common.data.sync.vc.VersionControlAuthMethod;
 
@@ -116,15 +124,18 @@ public class GitRepository {
                 .setRemoveDeletedRefs(true));
     }
 
-    public void checkout(String branch, boolean createBranch) throws GitAPIException {
-        execute(git.checkout()
-                .setCreateBranch(createBranch)
-                .setName(branch));
+    public void deleteLocalBranchIfExists(String branch) throws GitAPIException {
+        execute(git.branchDelete()
+                .setBranchNames(branch)
+                .setForce(true));
     }
 
-    public void reset() throws GitAPIException {
+    public void resetAndClean() throws GitAPIException {
         execute(git.reset()
                 .setMode(ResetCommand.ResetType.HARD));
+        execute(git.clean()
+                .setForce(true)
+                .setCleanDirectories(true));
     }
 
     public void merge(String branch) throws IOException, GitAPIException {
@@ -137,9 +148,9 @@ public class GitRepository {
     }
 
 
-    public List<String> listBranches() throws GitAPIException {
+    public List<String> listRemoteBranches() throws GitAPIException {
         return execute(git.branchList()
-                .setListMode(ListBranchCommand.ListMode.ALL)).stream()
+                .setListMode(ListBranchCommand.ListMode.REMOTE)).stream()
                 .filter(ref -> !ref.getName().equals(Constants.HEAD))
                 .map(ref -> org.eclipse.jgit.lib.Repository.shortenRefName(ref.getName()))
                 .map(name -> StringUtils.removeStart(name, "origin/"))
@@ -209,16 +220,9 @@ public class GitRepository {
                 .setOrphan(true)
                 .setForced(true)
                 .setName(name));
-//        Set<String> uncommittedChanges = git.status().call().getUncommittedChanges();
-//        if (!uncommittedChanges.isEmpty()) {
-//            RmCommand rm = git.rm();
-//            uncommittedChanges.forEach(rm::addFilepattern);
-//            execute(rm);
-//        }
-//        execute(git.clean());
     }
 
-    public void add(String filesPattern) throws GitAPIException { // FIXME [viacheslav]
+    public void add(String filesPattern) throws GitAPIException {
         execute(git.add().setUpdate(true).addFilepattern(filesPattern));
         execute(git.add().addFilepattern(filesPattern));
     }
@@ -230,13 +234,14 @@ public class GitRepository {
 
     public Commit commit(String message) throws GitAPIException {
         RevCommit revCommit = execute(git.commit()
-                .setMessage(message)); // TODO [viacheslav]: set configurable author for commit
+                .setMessage(message));
         return toCommit(revCommit);
     }
 
 
-    public void push() throws GitAPIException {
-        execute(git.push());
+    public void push(String localBranch, String remoteBranch) throws GitAPIException {
+        execute(git.push()
+                .setRefSpecs(new RefSpec(localBranch + ":" + remoteBranch)));
     }
 
 
