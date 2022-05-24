@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
@@ -88,7 +89,12 @@ public interface TbNotificationEntityService {
 
     void notifyCreateOrUpdateAlarm(Alarm alarm, ActionType actionType, SecurityUser user, Object... additionalInfo);
 
-    <E extends HasName, I extends EntityId> void  notifyCreateOrUpdateOrDelete(I entityId, E entity, SecurityUser user,
+    <E extends HasName, I extends EntityId> void  notifyCreateOrUpdateOrDelete(TenantId tenantId, CustomerId customerId,
+                                                                               I entityId, E entity, SecurityUser user,
                                                                                ActionType actionType, Exception e,
                                                                                Object... additionalInfo);
+    void  notifyCreateOrUpdateOrDeleteRelation (TenantId tenantId, CustomerId customerId, EntityId entityId,
+                                                EntityRelation relation, SecurityUser user,
+                                                ActionType actionType, Exception e,
+                                                Object... additionalInfo);
 }

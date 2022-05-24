@@ -37,11 +37,15 @@ public class DefaultTbEntityRelationService extends AbstractTbEntityService impl
         TenantId tenantId = user.getTenantId();
         try {
             relationService.saveRelation(tenantId, relation);
-            notificationEntityService.notifyCreateOrUpdateOrDelete(relation.getFrom(), null, user, ActionType.RELATION_ADD_OR_UPDATE, null, relation);
-            notificationEntityService.notifyCreateOrUpdateOrDelete(relation.getTo(), null, user, ActionType.RELATION_ADD_OR_UPDATE, null, relation);
+            notificationEntityService.notifyCreateOrUpdateOrDeleteRelation (user.getTenantId(), user.getCustomerId(),
+                    relation.getFrom(), relation, user, ActionType.RELATION_ADD_OR_UPDATE, null, relation);
+            notificationEntityService.notifyCreateOrUpdateOrDeleteRelation(user.getTenantId(), user.getCustomerId(),
+                    relation.getTo(), relation, user, ActionType.RELATION_ADD_OR_UPDATE, null, relation);
         } catch (Exception e) {
-            notificationEntityService.notifyCreateOrUpdateOrDelete(relation.getFrom(), null, user, ActionType.RELATION_ADD_OR_UPDATE, e, relation);
-            notificationEntityService.notifyCreateOrUpdateOrDelete(relation.getTo(), null, user, ActionType.RELATION_ADD_OR_UPDATE, e, relation);
+            notificationEntityService.notifyCreateOrUpdateOrDelete(user.getTenantId(), user.getCustomerId(),
+                    relation.getFrom(), null, user, ActionType.RELATION_ADD_OR_UPDATE, e, relation);
+            notificationEntityService.notifyCreateOrUpdateOrDelete(user.getTenantId(), user.getCustomerId(),
+                    relation.getTo(), null, user, ActionType.RELATION_ADD_OR_UPDATE, e, relation);
             throw handleException(e);
         }
     }
@@ -53,11 +57,15 @@ public class DefaultTbEntityRelationService extends AbstractTbEntityService impl
             if (!found) {
                 throw new ThingsboardException("Requested item wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND);
             }
-            notificationEntityService.notifyCreateOrUpdateOrDelete(relation.getFrom(), null, user, ActionType.RELATION_DELETED, null, relation);
-            notificationEntityService.notifyCreateOrUpdateOrDelete(relation.getTo(), null, user, ActionType.RELATION_DELETED, null, relation);
+            notificationEntityService.notifyCreateOrUpdateOrDeleteRelation(user.getTenantId(), user.getCustomerId(),
+                    relation.getFrom(), relation, user, ActionType.RELATION_DELETED, null, relation);
+            notificationEntityService.notifyCreateOrUpdateOrDeleteRelation(user.getTenantId(), user.getCustomerId(),
+                    relation.getTo(), relation, user, ActionType.RELATION_DELETED, null, relation);
         } catch (Exception e) {
-            notificationEntityService.notifyCreateOrUpdateOrDelete(relation.getFrom(), null, user, ActionType.RELATION_DELETED, e, relation);
-            notificationEntityService.notifyCreateOrUpdateOrDelete(relation.getTo(), null, user, ActionType.RELATION_DELETED, e, relation);
+            notificationEntityService.notifyCreateOrUpdateOrDelete(user.getTenantId(), user.getCustomerId(),
+                    relation.getFrom(), null, user, ActionType.RELATION_DELETED, e, relation);
+            notificationEntityService.notifyCreateOrUpdateOrDelete(user.getTenantId(), user.getCustomerId(),
+                    relation.getTo(), null, user, ActionType.RELATION_DELETED, e, relation);
             throw handleException(e);
         }
     }
