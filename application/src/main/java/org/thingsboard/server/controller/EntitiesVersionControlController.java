@@ -243,7 +243,7 @@ public class EntitiesVersionControlController extends BaseController {
             if (versionId == null) {
                 PageData<EntityVersion> versions = versionControlService.listVersions(user.getTenantId(), request.getBranch(), new PageLink(1));
                 if (versions.getData().size() > 0) {
-                    versionId = versions.getData().get(0).getId();
+                    request.setVersionId(versions.getData().get(0).getId());
                 } else {
                     throw new IllegalArgumentException("No versions available in branch");
                 }
