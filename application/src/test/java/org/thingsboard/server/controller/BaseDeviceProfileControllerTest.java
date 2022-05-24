@@ -126,6 +126,16 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
     }
 
     @Test
+    public void whenGetDeviceProfileById_thenPermissionsAreChecked() throws Exception {
+        DeviceProfile deviceProfile = createDeviceProfile("Device profile 1", null);
+        deviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+
+        loginDifferentTenant();
+        doGet("/api/deviceProfile/" + deviceProfile.getId())
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     public void testFindDeviceProfileInfoById() throws Exception {
         DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile", null);
         DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
@@ -134,6 +144,16 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         Assert.assertEquals(savedDeviceProfile.getId(), foundDeviceProfileInfo.getId());
         Assert.assertEquals(savedDeviceProfile.getName(), foundDeviceProfileInfo.getName());
         Assert.assertEquals(savedDeviceProfile.getType(), foundDeviceProfileInfo.getType());
+    }
+
+    @Test
+    public void whenGetDeviceProfileInfoById_thenPermissionsAreChecked() throws Exception {
+        DeviceProfile deviceProfile = createDeviceProfile("Device profile 1", null);
+        deviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+
+        loginDifferentTenant();
+        doGet("/api/deviceProfileInfo/" + deviceProfile.getId())
+                .andExpect(status().isForbidden());
     }
 
     @Test
