@@ -248,7 +248,7 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     }
 
     private EntityVersion toVersion(GitRepository.Commit commit) {
-        return new EntityVersion(commit.getId(), commit.getMessage());
+        return new EntityVersion(commit.getTimestamp(), commit.getId(), commit.getMessage());
     }
 
     private EntityId fromRelativePath(String path) {

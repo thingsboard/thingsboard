@@ -689,11 +689,12 @@ message CommitRequestMsg {
 }
 
 message CommitResponseMsg {
-  string commitId = 1;
-  string name = 2;
-  int32 added = 3;
-  int32 modified = 4;
-  int32 removed = 5;
+  int64 ts = 1;
+  string commitId = 2;
+  string name = 3;
+  int32 added = 4;
+  int32 modified = 5;
+  int32 removed = 6;
 }
 
 message PrepareMsg {

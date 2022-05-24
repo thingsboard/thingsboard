@@ -23,6 +23,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class EntityVersion {
+    private long timestamp;
     private String id;
     private String name;
 }
