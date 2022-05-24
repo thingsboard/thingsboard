@@ -229,9 +229,6 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
     private void sendEntityNotificationMsg(TenantId tenantId, EntityId entityId, EdgeEventActionType action) {
         sendNotificationMsgToEdgeService(tenantId, null, entityId, null, null, action);
     }
-    private void sendEntityRelationNotificationMsg(TenantId tenantId, EntityId entityId, EdgeEventActionType action) {
-        sendNotificationMsgToEdgeService(tenantId, null, entityId, null, null, action);
-    }
 
     private void sendEntityAssignToCustomerNotificationMsg(TenantId tenantId, EntityId entityId, CustomerId customerId, EdgeEventActionType action) {
         try {
