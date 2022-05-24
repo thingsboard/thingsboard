@@ -159,6 +159,7 @@ import { TbMarkdownComponent } from '@shared/components/markdown.component';
 import { ProtobufContentComponent } from '@shared/components/protobuf-content.component';
 import { CssComponent } from '@shared/components/css.component';
 import { SafePipe } from '@shared/pipe/safe.pipe';
+import { PhoneInputComponent } from '@shared/components/phone-input.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -277,7 +278,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     WidgetsBundleSearchComponent,
     CopyButtonComponent,
     TogglePasswordComponent,
-    ProtobufContentComponent
+    ProtobufContentComponent,
+    PhoneInputComponent
   ],
   imports: [
     CommonModule,
@@ -472,7 +474,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     WidgetsBundleSearchComponent,
     CopyButtonComponent,
     TogglePasswordComponent,
-    ProtobufContentComponent
+    ProtobufContentComponent,
+    PhoneInputComponent
   ]
 })
 export class SharedModule { }
