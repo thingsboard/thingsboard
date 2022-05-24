@@ -40,11 +40,11 @@ public class QueueValidator extends DataValidator<Queue> {
 
     @Override
     protected void validateCreate(TenantId tenantId, Queue queue) {
-        if (queueDao.findQueueByTenantIdAndTopic(tenantId, queue.getTopic()) != null) {
-            throw new DataValidationException(String.format("Queue with topic: %s already exists!", queue.getTopic()));
-        }
         if (queueDao.findQueueByTenantIdAndName(tenantId, queue.getName()) != null) {
             throw new DataValidationException(String.format("Queue with name: %s already exists!", queue.getName()));
+        }
+        if (queueDao.findQueueByTenantIdAndTopic(tenantId, queue.getTopic()) != null) {
+            throw new DataValidationException(String.format("Queue with topic: %s already exists!", queue.getTopic()));
         }
     }
 
