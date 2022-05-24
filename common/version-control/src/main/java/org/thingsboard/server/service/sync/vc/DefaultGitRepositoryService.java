@@ -15,12 +15,11 @@
  */
 package org.thingsboard.server.service.sync.vc;
 
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.JGitInternalException;
-import org.eclipse.jgit.api.errors.RefAlreadyExistsException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
@@ -28,6 +27,8 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
@@ -57,7 +58,7 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     @Value("${java.io.tmpdir}/repositories")
     private String defaultFolder;
 
-    @Value("${vc.git.folder:${java.io.tmpdir}/repositories}")
+    @Value("${vc.git.repositories-folder:${java.io.tmpdir}/repositories}")
     private String repositoriesFolder;
 
     @Value("${vc.git.repos-poll-interval:60}")
@@ -97,22 +98,12 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
         String branch = commit.getBranch();
         try {
             repository.fetch();
-            if (repository.listBranches().contains(branch)) {
-                repository.checkout("origin/" + branch, false);
-                try {
-                    repository.checkout(branch, true);
-                } catch (RefAlreadyExistsException e) {
-                    repository.checkout(branch, false);
-                }
+
+            repository.createAndCheckoutOrphanBranch(commit.getWorkingBranch());
+            repository.resetAndClean();
+
+            if (repository.listRemoteBranches().contains(branch)) {
                 repository.merge(branch);
-            } else { // TODO [viacheslav]: rollback orphan branch on failure
-                try {
-                    repository.createAndCheckoutOrphanBranch(branch); // FIXME [viacheslav]: Checkout returned unexpected result NO_CHANGE for master branch
-                } catch (JGitInternalException e) {
-                    if (!e.getMessage().contains("NO_CHANGE")) {
-                        throw e;
-                    }
-                }
             }
         } catch (IOException | GitAPIException gitAPIException) {
             //TODO: analyze and return meaningful exceptions that we can show to the client;
@@ -145,24 +136,44 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
             result.setRemoved(status.getRemoved().size());
 
             GitRepository.Commit gitCommit = repository.commit(commit.getVersionName());
-            repository.push();
+            repository.push(commit.getWorkingBranch(), commit.getBranch());
 
             result.setVersion(toVersion(gitCommit));
             return result;
         } catch (GitAPIException gitAPIException) {
             //TODO: analyze and return meaningful exceptions that we can show to the client;
             throw new RuntimeException(gitAPIException);
+        } finally {
+            cleanUp(commit);
         }
+    }
+
+    @SneakyThrows
+    @Override
+    public void cleanUp(PendingCommit commit) {
+        GitRepository repository = checkRepository(commit.getTenantId());
+        try {
+            repository.createAndCheckoutOrphanBranch(EntityId.NULL_UUID.toString());
+        } catch (Exception e) {
+            if (!e.getMessage().contains("NO_CHANGE")) {
+                throw e;
+            }
+        }
+        repository.resetAndClean();
+        repository.deleteLocalBranchIfExists(commit.getWorkingBranch());
     }
 
     @Override
     public void abort(PendingCommit commit) {
-        //TODO: implement;
+        cleanUp(commit);
     }
 
     @Override
-    public void fetch(TenantId tenantId) {
-        //Fetch latest changes on demand.
+    public void fetch(TenantId tenantId) throws GitAPIException {
+        var repository = repositories.get(tenantId);
+        if (repository != null) {
+            repository.fetch();
+        }
     }
 
     @Override
@@ -175,7 +186,7 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     public List<String> listBranches(TenantId tenantId) {
         GitRepository repository = checkRepository(tenantId);
         try {
-            return repository.listBranches();
+            return repository.listRemoteBranches();
         } catch (GitAPIException gitAPIException) {
             //TODO: analyze and return meaningful exceptions that we can show to the client;
             throw new RuntimeException(gitAPIException);
@@ -183,7 +194,7 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     }
 
     private EntityVersion checkVersion(TenantId tenantId, String branch, String versionId) throws Exception {
-        return listVersions(tenantId, branch, null).stream()
+        return listVersions(tenantId, branch, null, new PageLink(Integer.MAX_VALUE)).getData().stream()
                 .filter(version -> version.getId().equals(versionId))
                 .findFirst().orElseThrow(() -> new IllegalArgumentException("Version not found"));
     }
@@ -194,11 +205,9 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     }
 
     @Override
-    public List<EntityVersion> listVersions(TenantId tenantId, String branch, String path) throws Exception {
+    public PageData<EntityVersion> listVersions(TenantId tenantId, String branch, String path, PageLink pageLink) throws Exception {
         GitRepository repository = checkRepository(tenantId);
-        return repository.listCommits(branch, path, Integer.MAX_VALUE).stream()
-                .map(this::toVersion)
-                .collect(Collectors.toList());
+        return repository.listCommits(branch, path, pageLink).mapData(this::toVersion);
     }
 
     @Override

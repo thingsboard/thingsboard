@@ -15,7 +15,10 @@
  */
 package org.thingsboard.server.service.sync.vc;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
@@ -28,7 +31,7 @@ public interface GitRepositoryService {
 
     void prepareCommit(PendingCommit pendingCommit);
 
-    List<EntityVersion> listVersions(TenantId tenantId, String branch, String path) throws Exception;
+    PageData<EntityVersion> listVersions(TenantId tenantId, String branch, String path, PageLink pageLink) throws Exception;
 
     List<VersionedEntityInfo> listEntitiesAtVersion(TenantId tenantId, String versionId, String path) throws Exception;
 
@@ -46,11 +49,13 @@ public interface GitRepositoryService {
 
     VersionCreationResult push(PendingCommit commit);
 
+    void cleanUp(PendingCommit commit);
+
     void abort(PendingCommit commit);
 
     List<String> listBranches(TenantId tenantId);
 
     String getFileContentAtCommit(TenantId tenantId, String relativePath, String versionId) throws IOException;
 
-    void fetch(TenantId tenantId);
+    void fetch(TenantId tenantId) throws GitAPIException;
 }

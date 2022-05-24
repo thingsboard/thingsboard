@@ -26,15 +26,33 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.gen.transport.TransportProtos.*;
+import org.thingsboard.server.gen.transport.TransportProtos.AddMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.CommitRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.CommitResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.DeleteMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.EntitiesContentRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.EntitiesContentResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.EntityContentRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.EntityContentResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.EntityVersionProto;
+import org.thingsboard.server.gen.transport.TransportProtos.ListBranchesRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ListBranchesResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ListEntitiesRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ListEntitiesResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ListVersionsRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ListVersionsResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.PrepareMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToVersionControlServiceMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.VersionControlResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.VersionedEntityInfoProto;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
@@ -220,12 +238,16 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
         } else {
             path = null;
         }
-        var data = vcService.listVersions(ctx.getTenantId(), request.getBranchName(), path);
+        var data = vcService.listVersions(ctx.getTenantId(), request.getBranchName(), path, new PageLink(request.getPageSize(), request.getPage()));
         reply(ctx, Optional.empty(), builder ->
                 builder.setListVersionsResponse(ListVersionsResponseMsg.newBuilder()
-                        .addAllVersions(data.stream().map(
+                        .setTotalPages(data.getTotalPages())
+                        .setTotalElements(data.getTotalElements())
+                        .setHasNext(data.hasNext())
+                        .addAllVersions(data.getData().stream().map(
                                 v -> EntityVersionProto.newBuilder().setId(v.getId()).setName(v.getName()).build()
-                        ).collect(Collectors.toList()))));
+                        ).collect(Collectors.toList())))
+        );
     }
 
     private void handleListEntities(VersionControlRequestCtx ctx, ListEntitiesRequestMsg request) throws Exception {
@@ -266,7 +288,9 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
                     } else if (request.hasDeleteMsg()) {
                         deleteFromCommit(ctx, current, request.getDeleteMsg());
                     } else if (request.hasPushMsg()) {
-                        reply(ctx, vcService.push(current));
+                        var result = vcService.push(current);
+                        pendingCommitMap.remove(ctx.getTenantId());
+                        reply(ctx, result);
                     }
                 } catch (Exception e) {
                     doAbortCurrentCommit(tenantId, current, e);

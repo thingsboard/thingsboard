@@ -1122,8 +1122,8 @@ metrics:
 vc:
   thread_pool_size: "${TB_VC_POOL_SIZE:4}"
   git:
-    folder: "${TB_VC_GIT_FOLDER:}"
     repos-poll-interval: "${TB_VC_GIT_REPOS_POLL_INTERVAL_SEC:60}"
+    repositories-folder: "${TB_VC_GIT_REPOSITORIES_FOLDER:${java.io.tmpdir}/repositories}"
 
 management:
   endpoints:

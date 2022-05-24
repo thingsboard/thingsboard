@@ -37,6 +37,9 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.sync.ThrowingRunnable;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.sync.ThrowingRunnable;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
 import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
@@ -160,18 +163,18 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     }
 
     @Override
-    public ListenableFuture<List<EntityVersion>> listEntityVersions(TenantId tenantId, String branch, EntityId externalId) throws Exception {
-        return gitServiceQueue.listVersions(tenantId, branch, externalId);
+    public ListenableFuture<PageData<EntityVersion>> listEntityVersions(TenantId tenantId, String branch, EntityId externalId, PageLink pageLink) throws Exception {
+        return gitServiceQueue.listVersions(tenantId, branch, externalId, pageLink);
     }
 
     @Override
-    public ListenableFuture<List<EntityVersion>> listEntityTypeVersions(TenantId tenantId, String branch, EntityType entityType) throws Exception {
-        return gitServiceQueue.listVersions(tenantId, branch, entityType);
+    public ListenableFuture<PageData<EntityVersion>> listEntityTypeVersions(TenantId tenantId, String branch, EntityType entityType, PageLink pageLink) throws Exception {
+        return gitServiceQueue.listVersions(tenantId, branch, entityType, pageLink);
     }
 
     @Override
-    public ListenableFuture<List<EntityVersion>> listVersions(TenantId tenantId, String branch) throws Exception {
-        return gitServiceQueue.listVersions(tenantId, branch);
+    public ListenableFuture<PageData<EntityVersion>> listVersions(TenantId tenantId, String branch, PageLink pageLink) throws Exception {
+        return gitServiceQueue.listVersions(tenantId, branch, pageLink);
     }
 
     @Override
@@ -336,6 +339,12 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
             adminSettings.setKey(SETTINGS_KEY);
             adminSettings.setTenantId(tenantId);
         }
+        try {
+            //TODO: ashvayka: replace future.get with deferred result. Don't forget to call when tenant is deleted.
+            gitServiceQueue.initRepository(tenantId, versionControlSettings).get();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to init repository!", e);
+        }
         adminSettings.setJsonValue(JacksonUtil.valueToTree(versionControlSettings));
         AdminSettings savedAdminSettings = adminSettingsService.saveAdminSettings(tenantId, adminSettings);
         EntitiesVersionControlSettings savedVersionControlSettings;
@@ -343,12 +352,6 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
             savedVersionControlSettings = JacksonUtil.convertValue(savedAdminSettings.getJsonValue(), EntitiesVersionControlSettings.class);
         } catch (Exception e) {
             throw new RuntimeException("Failed to load version control settings!", e);
-        }
-        try {
-            //TODO: ashvayka: replace future.get with deferred result. Don't forget to call when tenant is deleted.
-            gitServiceQueue.initRepository(tenantId, versionControlSettings).get();
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to init repository!", e);
         }
         return savedVersionControlSettings;
     }

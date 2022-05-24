@@ -721,6 +721,8 @@ message ListVersionsRequestMsg {
   string entityType = 2;
   int64 entityIdMSB = 3;
   int64 entityIdLSB = 4;
+  int32 pageSize = 5;
+  int32 page = 6;
 }
 
 message EntityVersionProto {
@@ -731,6 +733,9 @@ message EntityVersionProto {
 
 message ListVersionsResponseMsg {
   repeated EntityVersionProto versions = 1;
+  int32 totalPages = 2;
+  int64 totalElements = 3;
+  bool hasNext = 4;
 }
 
 message ListEntitiesRequestMsg {

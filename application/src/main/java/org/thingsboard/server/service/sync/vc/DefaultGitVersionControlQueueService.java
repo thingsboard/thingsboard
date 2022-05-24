@@ -16,15 +16,14 @@
 package org.thingsboard.server.service.sync.vc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
@@ -32,6 +31,8 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
@@ -73,7 +74,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     private final DefaultEntitiesVersionControlService entitiesVersionControlService;
 
     private final Map<UUID, PendingGitRequest<?>> pendingRequestMap = new HashMap<>();
-    private final ObjectWriter jsonWriter = new ObjectMapper().writer(SerializationFeature.INDENT_OUTPUT);
+    private final ObjectMapper jsonMapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
 
     public DefaultGitVersionControlQueueService(TbServiceInfoProvider serviceInfoProvider, TbClusterService clusterService,
                                                 DataDecodingEncodingService encodingService,
@@ -102,7 +103,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
         String path = getRelativePath(entityData.getEntityType(), entityData.getEntity().getId());
         String entityDataJson;
         try {
-            entityDataJson = jsonWriter.writeValueAsString(entityData);
+            entityDataJson = jsonMapper.writeValueAsString(entityData);
         } catch (IOException e) {
             //TODO: analyze and return meaningful exceptions that we can show to the client;
             throw new RuntimeException(e);
@@ -144,29 +145,36 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     }
 
     @Override
-    public ListenableFuture<List<EntityVersion>> listVersions(TenantId tenantId, String branch) {
+    public ListenableFuture<PageData<EntityVersion>> listVersions(TenantId tenantId, String branch, PageLink pageLink) {
         return listVersions(tenantId, ListVersionsRequestMsg.newBuilder()
-                .setBranchName(branch).build());
-    }
-
-    @Override
-    public ListenableFuture<List<EntityVersion>> listVersions(TenantId tenantId, String branch, EntityType entityType) {
-        return listVersions(tenantId, ListVersionsRequestMsg.newBuilder()
-                .setBranchName(branch).setEntityType(entityType.name())
+                .setBranchName(branch)
+                .setPageSize(pageLink.getPageSize())
+                .setPage(pageLink.getPage())
                 .build());
     }
 
     @Override
-    public ListenableFuture<List<EntityVersion>> listVersions(TenantId tenantId, String branch, EntityId entityId) {
+    public ListenableFuture<PageData<EntityVersion>> listVersions(TenantId tenantId, String branch, EntityType entityType, PageLink pageLink) {
+        return listVersions(tenantId, ListVersionsRequestMsg.newBuilder()
+                .setBranchName(branch).setEntityType(entityType.name())
+                .setPageSize(pageLink.getPageSize())
+                .setPage(pageLink.getPage())
+                .build());
+    }
+
+    @Override
+    public ListenableFuture<PageData<EntityVersion>> listVersions(TenantId tenantId, String branch, EntityId entityId, PageLink pageLink) {
         return listVersions(tenantId, ListVersionsRequestMsg.newBuilder()
                 .setBranchName(branch)
                 .setEntityType(entityId.getEntityType().name())
                 .setEntityIdMSB(entityId.getId().getMostSignificantBits())
                 .setEntityIdLSB(entityId.getId().getLeastSignificantBits())
+                .setPageSize(pageLink.getPageSize())
+                .setPage(pageLink.getPage())
                 .build());
     }
 
-    private ListenableFuture<List<EntityVersion>> listVersions(TenantId tenantId, ListVersionsRequestMsg requestMsg) {
+    private ListenableFuture<PageData<EntityVersion>> listVersions(TenantId tenantId, ListVersionsRequestMsg requestMsg) {
         ListVersionsGitRequest request = new ListVersionsGitRequest(tenantId);
 
         registerAndSend(request, builder -> builder.setListVersionRequest(requestMsg).build(), wrap(request.getFuture()));
@@ -318,8 +326,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
                         listEntitiesResponse.getEntitiesList().stream().map(this::getVersionedEntityInfo).collect(Collectors.toList()));
             } else if (vcResponseMsg.hasListVersionsResponse()) {
                 var listVersionsResponse = vcResponseMsg.getListVersionsResponse();
-                ((ListVersionsGitRequest) request).getFuture().set(
-                        listVersionsResponse.getVersionsList().stream().map(this::getEntityVersion).collect(Collectors.toList()));
+                ((ListVersionsGitRequest) request).getFuture().set(toPageData(listVersionsResponse));
             } else if (vcResponseMsg.hasEntityContentResponse()) {
                 var data = vcResponseMsg.getEntityContentResponse().getData();
                 ((EntityContentGitRequest) request).getFuture().set(toData(data));
@@ -331,6 +338,11 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
         }
     }
 
+    private PageData<EntityVersion> toPageData(TransportProtos.ListVersionsResponseMsg listVersionsResponse) {
+        var listVersions = listVersionsResponse.getVersionsList().stream().map(this::getEntityVersion).collect(Collectors.toList());
+        return new PageData<>(listVersions, listVersionsResponse.getTotalPages(), listVersionsResponse.getTotalElements(), listVersionsResponse.getHasNext());
+    }
+
     private EntityVersion getEntityVersion(TransportProtos.EntityVersionProto proto) {
         return new EntityVersion(proto.getId(), proto.getName());
     }
@@ -340,8 +352,9 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     }
 
     @SuppressWarnings("rawtypes")
+    @SneakyThrows
     private EntityExportData toData(String data) {
-        return JacksonUtil.fromString(data, EntityExportData.class);
+        return jsonMapper.readValue(data, EntityExportData.class);
     }
 
     private static <T> TbQueueCallback wrap(SettableFuture<T> future) {

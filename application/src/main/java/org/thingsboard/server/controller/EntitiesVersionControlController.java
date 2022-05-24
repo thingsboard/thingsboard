@@ -15,17 +15,21 @@
  */
 package org.thingsboard.server.controller;
 
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
@@ -33,25 +37,28 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.device.claim.ClaimResponse;
-import org.thingsboard.server.dao.device.claim.ClaimResult;
-import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionLoadResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
 import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadRequest;
+import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
 
 @RestController
+@TbCoreComponent
 @RequestMapping("/api/entities/vc")
 @PreAuthorize("hasAuthority('TENANT_ADMIN')")
 @RequiredArgsConstructor
@@ -117,13 +124,18 @@ public class EntitiesVersionControlController extends BaseController {
             "    \"name\": \"Device profile 1 version 1.0\"\n" +
             "  }\n" +
             "]\n```")
-    @GetMapping("/version/{branch}/{entityType}/{externalEntityUuid}")
-    public DeferredResult<List<EntityVersion>> listEntityVersions(@PathVariable String branch,
-                                                                  @PathVariable EntityType entityType,
-                                                                  @PathVariable UUID externalEntityUuid) throws ThingsboardException {
+    @GetMapping(value = "/version/{branch}/{entityType}/{externalEntityUuid}", params = {"pageSize", "page"})
+    public DeferredResult<PageData<EntityVersion>> listEntityVersions(@PathVariable String branch,
+                                                                      @PathVariable EntityType entityType,
+                                                                      @PathVariable UUID externalEntityUuid,
+                                                                      @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+                                                                      @RequestParam int pageSize,
+                                                                      @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+                                                                      @RequestParam int page) throws ThingsboardException {
         try {
             EntityId externalEntityId = EntityIdFactory.getByTypeAndUuid(entityType, externalEntityUuid);
-            return wrapFuture(versionControlService.listEntityVersions(getTenantId(), branch, externalEntityId));
+            PageLink pageLink = new PageLink(pageSize, page);
+            return wrapFuture(versionControlService.listEntityVersions(getTenantId(), branch, externalEntityId, pageLink));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -136,11 +148,16 @@ public class EntitiesVersionControlController extends BaseController {
             "    \"name\": \"Device profiles from dev\"\n" +
             "  }\n" +
             "]\n```")
-    @GetMapping("/version/{branch}/{entityType}")
-    public DeferredResult<List<EntityVersion>> listEntityTypeVersions(@PathVariable String branch,
-                                                                      @PathVariable EntityType entityType) throws ThingsboardException {
+    @GetMapping(value = "/version/{branch}/{entityType}", params = {"pageSize", "page"})
+    public DeferredResult<PageData<EntityVersion>> listEntityTypeVersions(@PathVariable String branch,
+                                                                          @PathVariable EntityType entityType,
+                                                                          @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+                                                                          @RequestParam int pageSize,
+                                                                          @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+                                                                          @RequestParam int page) throws ThingsboardException {
         try {
-            return wrapFuture(versionControlService.listEntityTypeVersions(getTenantId(), branch, entityType));
+            PageLink pageLink = new PageLink(pageSize, page);
+            return wrapFuture(versionControlService.listEntityTypeVersions(getTenantId(), branch, entityType, pageLink));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -161,10 +178,15 @@ public class EntitiesVersionControlController extends BaseController {
             "    \"name\": \"Devices added\"\n" +
             "  }\n" +
             "]\n```")
-    @GetMapping("/version/{branch}")
-    public DeferredResult<List<EntityVersion>> listVersions(@PathVariable String branch) throws ThingsboardException {
+    @GetMapping(value = "/version/{branch}", params = {"pageSize", "page"})
+    public DeferredResult<PageData<EntityVersion>> listVersions(@PathVariable String branch,
+                                                                @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+                                                                @RequestParam int pageSize,
+                                                                @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+                                                                @RequestParam int page) throws ThingsboardException {
         try {
-            return wrapFuture(versionControlService.listVersions(getTenantId(), branch));
+            PageLink pageLink = new PageLink(pageSize, page);
+            return wrapFuture(versionControlService.listVersions(getTenantId(), branch, pageLink));
         } catch (Exception e) {
             throw handleException(e);
         }
