@@ -15,8 +15,14 @@
  */
 package org.thingsboard.server.service.sync.vc;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
@@ -57,9 +63,10 @@ import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.NotificationsTopicService;
+import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
-import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
+import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.provider.TbVersionControlQueueFactory;
 import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbVersionControlComponent;
@@ -67,6 +74,7 @@ import org.thingsboard.server.queue.util.TbVersionControlComponent;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,6 +84,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
@@ -87,7 +97,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DefaultClusterVersionControlService extends TbApplicationEventListener<PartitionChangeEvent> implements ClusterVersionControlService {
 
-    private final TbServiceInfoProvider serviceInfoProvider;
+    private final PartitionService partitionService;
+    private final TbQueueProducerProvider producerProvider;
     private final TbVersionControlQueueFactory queueFactory;
     private final DataDecodingEncodingService encodingService;
     private final GitRepositoryService vcService;
@@ -105,11 +116,21 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
     private long pollDuration;
     @Value("${queue.vc.pack-processing-timeout:60000}")
     private long packProcessingTimeout;
+    @Value("${vc.git.io_pool_size:3}")
+    private int ioPoolSize;
+
+    //We need to manually manage the threads since tasks for particular tenant need to be processed sequentially.
+    private final List<ListeningExecutorService> ioThreads = new ArrayList<>();
+
 
     @PostConstruct
     public void init() {
         consumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("vc-consumer"));
-        producer = queueFactory.createTbCoreNotificationsMsgProducer();
+        var threadFactory = ThingsBoardThreadFactory.forName("vc-io-thread");
+        for (int i = 0; i < ioPoolSize; i++) {
+            ioThreads.add(MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(threadFactory)));
+        }
+        producer = producerProvider.getTbCoreNotificationsMsgProducer();
         consumer = queueFactory.createToVersionControlMsgConsumer();
     }
 
@@ -122,11 +143,25 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
         if (consumerExecutor != null) {
             consumerExecutor.shutdownNow();
         }
+        ioThreads.forEach(ExecutorService::shutdownNow);
     }
 
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
-        //TODO: cleanup repositories that we no longer manage in this node.
+        for (TenantId tenantId : vcService.getActiveRepositoryTenants()) {
+            if (!partitionService.resolve(ServiceType.TB_VC_EXECUTOR, tenantId, tenantId).isMyPartition()) {
+                var lock = getRepoLock(tenantId);
+                lock.lock();
+                try {
+                    pendingCommitMap.remove(tenantId);
+                    vcService.clearRepository(tenantId);
+                } catch (Exception e) {
+                    log.warn("[{}] Failed to cleanup the tenant repository", tenantId, e);
+                } finally {
+                    lock.unlock();
+                }
+            }
+        }
         consumer.subscribe(event.getPartitions());
     }
 
@@ -143,6 +178,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
 
     void consumerLoop(TbQueueConsumer<TbProtoQueueMsg<ToVersionControlServiceMsg>> consumer) {
         while (!stopped && !consumer.isStopped()) {
+            List<ListenableFuture<?>> futures = new ArrayList<>();
             try {
                 List<TbProtoQueueMsg<ToVersionControlServiceMsg>> msgs = consumer.poll(pollDuration);
                 if (msgs.isEmpty()) {
@@ -151,46 +187,17 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
                 for (TbProtoQueueMsg<ToVersionControlServiceMsg> msgWrapper : msgs) {
                     ToVersionControlServiceMsg msg = msgWrapper.getValue();
                     var ctx = new VersionControlRequestCtx(msg, msg.hasClearRepositoryRequest() ? null : getEntitiesVersionControlSettings(msg));
-                    var lock = getRepoLock(ctx.getTenantId());
-                    lock.lock();
-                    try {
-                        if (msg.hasClearRepositoryRequest()) {
-                            handleClearRepositoryCommand(ctx);
-                        } else {
-                            if (msg.hasTestRepositoryRequest()) {
-                                handleTestRepositoryCommand(ctx);
-                            } else if (msg.hasInitRepositoryRequest()) {
-                                handleInitRepositoryCommand(ctx);
-                            } else {
-                                var currentSettings = vcService.getRepositorySettings(ctx.getTenantId());
-                                var newSettings = ctx.getSettings();
-                                if (!newSettings.equals(currentSettings)) {
-                                    vcService.initRepository(ctx.getTenantId(), ctx.getSettings());
-                                } else {
-                                    vcService.fetch(ctx.getTenantId());
-                                }
-                                if (msg.hasCommitRequest()) {
-                                    handleCommitRequest(ctx, msg.getCommitRequest());
-                                } else if (msg.hasListBranchesRequest()) {
-                                    handleListBranches(ctx, msg.getListBranchesRequest());
-                                } else if (msg.hasListEntitiesRequest()) {
-                                    handleListEntities(ctx, msg.getListEntitiesRequest());
-                                } else if (msg.hasListVersionRequest()) {
-                                    handleListVersions(ctx, msg.getListVersionRequest());
-                                } else if (msg.hasEntityContentRequest()) {
-                                    handleEntityContentRequest(ctx, msg.getEntityContentRequest());
-                                } else if (msg.hasEntitiesContentRequest()) {
-                                    handleEntitiesContentRequest(ctx, msg.getEntitiesContentRequest());
-                                }
-                            }
-                        }
-                    } catch (Exception e) {
-                        reply(ctx, Optional.of(e));
-                    } finally {
-                        lock.unlock();
-                    }
+                    long startTs = System.currentTimeMillis();
+                    log.trace("[{}][{}] Submitting task.", ctx.getTenantId(), ctx.getRequestId());
+                    ListenableFuture<Void> future = ioThreads.get(ctx.getTenantId().hashCode() % ioPoolSize).submit(() -> processMessage(ctx, msg));
+                    logTaskExecution(ctx, future, startTs);
+                    futures.add(future);
                 }
-                //TODO: handle timeouts and async processing for multiple tenants;
+                try {
+                    Futures.allAsList(futures).get(packProcessingTimeout, TimeUnit.MILLISECONDS);
+                } catch (TimeoutException e) {
+                    log.info("Timeout for processing the version control tasks.", e);
+                }
                 consumer.commit();
             } catch (Exception e) {
                 if (!stopped) {
@@ -204,6 +211,51 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
             }
         }
         log.info("TB Version Control request consumer stopped.");
+    }
+
+    private Void processMessage(VersionControlRequestCtx ctx, ToVersionControlServiceMsg msg) {
+        var lock = getRepoLock(ctx.getTenantId());
+        lock.lock();
+        try {
+            if (msg.hasClearRepositoryRequest()) {
+                handleClearRepositoryCommand(ctx);
+            } else {
+                if (msg.hasTestRepositoryRequest()) {
+                    handleTestRepositoryCommand(ctx);
+                } else if (msg.hasInitRepositoryRequest()) {
+                    handleInitRepositoryCommand(ctx);
+                } else {
+                    var currentSettings = vcService.getRepositorySettings(ctx.getTenantId());
+                    var newSettings = ctx.getSettings();
+                    if (!newSettings.equals(currentSettings)) {
+                        vcService.initRepository(ctx.getTenantId(), ctx.getSettings());
+                    }
+                    if (msg.hasCommitRequest()) {
+                        handleCommitRequest(ctx, msg.getCommitRequest());
+                    } else if (msg.hasListBranchesRequest()) {
+                        vcService.fetch(ctx.getTenantId());
+                        handleListBranches(ctx, msg.getListBranchesRequest());
+                    } else if (msg.hasListEntitiesRequest()) {
+                        vcService.fetch(ctx.getTenantId());
+                        handleListEntities(ctx, msg.getListEntitiesRequest());
+                    } else if (msg.hasListVersionRequest()) {
+                        vcService.fetch(ctx.getTenantId());
+                        handleListVersions(ctx, msg.getListVersionRequest());
+                    } else if (msg.hasEntityContentRequest()) {
+                        vcService.fetch(ctx.getTenantId());
+                        handleEntityContentRequest(ctx, msg.getEntityContentRequest());
+                    } else if (msg.hasEntitiesContentRequest()) {
+                        vcService.fetch(ctx.getTenantId());
+                        handleEntitiesContentRequest(ctx, msg.getEntitiesContentRequest());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            reply(ctx, Optional.of(e));
+        } finally {
+            lock.unlock();
+        }
+        return null;
     }
 
     private void handleEntitiesContentRequest(VersionControlRequestCtx ctx, EntitiesContentRequestMsg request) throws Exception {
@@ -273,6 +325,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
         var tenantId = ctx.getTenantId();
         UUID txId = UUID.fromString(request.getTxId());
         if (request.hasPrepareMsg()) {
+            vcService.fetch(ctx.getTenantId());
             prepareCommit(ctx, txId, request.getPrepareMsg());
         } else if (request.hasAbortMsg()) {
             PendingCommit current = pendingCommitMap.get(tenantId);
@@ -413,5 +466,22 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
 
     private Lock getRepoLock(TenantId tenantId) {
         return tenantRepoLocks.computeIfAbsent(tenantId, t -> new ReentrantLock(true));
+    }
+
+    private void logTaskExecution(VersionControlRequestCtx ctx, ListenableFuture<Void> future, long startTs) {
+        if (log.isTraceEnabled()) {
+            Futures.addCallback(future, new FutureCallback<Object>() {
+
+                @Override
+                public void onSuccess(@Nullable Object result) {
+                    log.trace("[{}][{}] Task processing took: {}ms", ctx.getTenantId(), ctx.getRequestId(), (System.currentTimeMillis() - startTs));
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    log.trace("[{}][{}] Task failed: ", ctx.getTenantId(), ctx.getRequestId(), t);
+                }
+            }, MoreExecutors.directExecutor());
+        }
     }
 }

@@ -1025,7 +1025,7 @@ queue:
     topic: "${TB_QUEUE_VC_TOPIC:tb_version_control}"
     partitions: "${TB_QUEUE_VC_PARTITIONS:10}"
     poll-interval: "${TB_QUEUE_VC_INTERVAL_MS:25}"
-    pack-processing-timeout: "${TB_QUEUE_VC_PACK_PROCESSING_TIMEOUT_MS:2000}"
+    pack-processing-timeout: "${TB_QUEUE_VC_PACK_PROCESSING_TIMEOUT_MS:60000}"
   js:
     # JS Eval request topic
     request_topic: "${REMOTE_JS_EVAL_REQUEST_TOPIC:js_eval.requests}"
@@ -1120,9 +1120,11 @@ metrics:
     percentiles: "${METRICS_TIMER_PERCENTILES:0.5}"
 
 vc:
-  thread_pool_size: "${TB_VC_POOL_SIZE:4}"
+  # Pool size for handling export tasks
+  thread_pool_size: "${TB_VC_POOL_SIZE:2}"
   git:
-    repos-poll-interval: "${TB_VC_GIT_REPOS_POLL_INTERVAL_SEC:60}"
+    # Pool size for handling the git IO operations
+    io_pool_size: "${TB_VC_GIT_POOL_SIZE:3}"
     repositories-folder: "${TB_VC_GIT_REPOSITORIES_FOLDER:${java.io.tmpdir}/repositories}"
 
 management:

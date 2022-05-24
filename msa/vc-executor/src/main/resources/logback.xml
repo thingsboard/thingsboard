@@ -25,6 +25,7 @@
         </encoder>
     </appender>
 
+    <logger name="org.thingsboard.server.queue" level="INFO" />
     <logger name="org.thingsboard.server" level="TRACE" />
 
     <root level="INFO">

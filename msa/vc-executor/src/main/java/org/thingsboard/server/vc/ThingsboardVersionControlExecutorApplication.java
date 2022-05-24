@@ -15,17 +15,17 @@ package org.thingsboard.server.vc; /**
  */
 
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.SpringBootConfiguration;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.util.Arrays;
 
-@SpringBootConfiguration
+@SpringBootApplication
 @EnableAsync
 @EnableScheduling
-@ComponentScan({"org.thingsboard.server.vc", "org.thingsboard.server.common", "org.thingsboard.server.service.sync.vc"})
+@ComponentScan({"org.thingsboard.server", "org.thingsboard.server.common", "org.thingsboard.server.service.sync.vc"})
 public class ThingsboardVersionControlExecutorApplication {
 
     private static final String SPRING_CONFIG_NAME_KEY = "--spring.config.name";
