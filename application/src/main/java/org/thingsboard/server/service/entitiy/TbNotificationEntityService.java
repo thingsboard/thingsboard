@@ -68,6 +68,7 @@ public interface TbNotificationEntityService {
 
     void notifyCreateOruUpdateTenant(Tenant tenant, ComponentLifecycleEvent event);
 
+
     void notifyDeleteTenant(Tenant tenant);
 
     void notifyCreateOrUpdateDevice(TenantId tenantId, DeviceId deviceId, CustomerId customerId, Device device,
@@ -82,7 +83,12 @@ public interface TbNotificationEntityService {
     void notifyAssignDeviceToTenant(TenantId tenantId, TenantId newTenantId, DeviceId deviceId, CustomerId customerId,
                                     Device device, Tenant tenant, SecurityUser user, Object... additionalInfo);
 
-    void notifyEdge(TenantId tenantId, EdgeId edgeId, CustomerId customerId, Edge edge, ActionType actionType, SecurityUser user, Object... additionalInfo);
+    void notifyEdge(TenantId tenantId, EdgeId edgeId, CustomerId customerId, Edge edge, ActionType actionType,
+                    SecurityUser user, Object... additionalInfo);
 
     void notifyCreateOrUpdateAlarm(Alarm alarm, ActionType actionType, SecurityUser user, Object... additionalInfo);
+
+    <E extends HasName, I extends EntityId> void  notifyCreateOrUpdateOrDelete(I entityId, E entity, SecurityUser user,
+                                                                               ActionType actionType, Exception e,
+                                                                               Object... additionalInfo);
 }

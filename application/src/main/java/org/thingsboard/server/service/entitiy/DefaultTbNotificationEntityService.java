@@ -202,6 +202,16 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
         sendEntityNotificationMsg(alarm.getTenantId(), alarm.getId(), edgeTypeByActionType(actionType));
     }
 
+    @Override
+    public <E extends HasName, I extends EntityId> void notifyCreateOrUpdateOrDelete(I entityId, E entity, SecurityUser user,
+                                                                                     ActionType actionType, Exception e,
+                                                                                     Object... additionalInfo) {
+        notifyEntity(user.getTenantId(), entityId, entity, null, actionType, user, e, additionalInfo);
+        if (e == null) {
+            sendEntityNotificationMsg(user.getTenantId(), entityId, edgeTypeByActionType(actionType));
+        }
+    }
+
     private <E extends HasName, I extends EntityId> void logEntityAction(TenantId tenantId, I entityId, E entity, CustomerId customerId,
                                                                          ActionType actionType, SecurityUser user, Object... additionalInfo) {
         logEntityAction(tenantId, entityId, entity, customerId, actionType, user, null, additionalInfo);
@@ -217,6 +227,9 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
     }
 
     private void sendEntityNotificationMsg(TenantId tenantId, EntityId entityId, EdgeEventActionType action) {
+        sendNotificationMsgToEdgeService(tenantId, null, entityId, null, null, action);
+    }
+    private void sendEntityRelationNotificationMsg(TenantId tenantId, EntityId entityId, EdgeEventActionType action) {
         sendNotificationMsgToEdgeService(tenantId, null, entityId, null, null, action);
     }
 
@@ -297,6 +310,8 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
                 return EdgeEventActionType.ALARM_CLEAR;
             case DELETED:
                 return EdgeEventActionType.DELETED;
+            case RELATION_ADD_OR_UPDATE:
+                return EdgeEventActionType.RELATION_ADD_OR_UPDATE;
             default:
                 return null;
         }
