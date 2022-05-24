@@ -16,13 +16,18 @@
 package org.thingsboard.server.service.entitiy.entityRelation;
 
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface TbEntityRelationService {
 
-    void save(EntityRelation entity, SecurityUser user) throws ThingsboardException;
+    void save(TenantId tenantId, CustomerId customerId, EntityRelation entity, SecurityUser user) throws ThingsboardException;
 
-    void delete(EntityRelation entity, SecurityUser user) throws ThingsboardException;
+    void delete(TenantId tenantId, CustomerId customerId, EntityRelation entity, SecurityUser user) throws ThingsboardException;
+
+    void deleteRelations (TenantId tenantId, CustomerId customerId, EntityId entityId, SecurityUser user, Exception e) throws ThingsboardException;
 
 }

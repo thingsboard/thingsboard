@@ -50,9 +50,9 @@ public interface TbNotificationEntityService {
                                                                     SecurityUser user, Object... additionalInfo);
 
     void notifyDeleteAlarm(TenantId tenantId, Alarm alarm, EntityId originatorId,
-                                                                   CustomerId customerId, ActionType actionType,
-                                                                   List<EdgeId> relatedEdgeIds,
-                                                                   SecurityUser user, String body, Object... additionalInfo);
+                           CustomerId customerId, ActionType actionType,
+                           List<EdgeId> relatedEdgeIds,
+                           SecurityUser user, String body, Object... additionalInfo);
 
     <E extends HasName, I extends EntityId> void notifyAssignOrUnassignEntityToCustomer(TenantId tenantId, I entityId,
                                                                                         CustomerId customerId, E entity,
@@ -89,12 +89,13 @@ public interface TbNotificationEntityService {
 
     void notifyCreateOrUpdateAlarm(Alarm alarm, ActionType actionType, SecurityUser user, Object... additionalInfo);
 
-    <E extends HasName, I extends EntityId> void  notifyCreateOrUpdateOrDelete(TenantId tenantId, CustomerId customerId,
-                                                                               I entityId, E entity, SecurityUser user,
-                                                                               ActionType actionType, Exception e,
-                                                                               Object... additionalInfo);
-    void  notifyCreateOrUpdateOrDeleteRelation (TenantId tenantId, CustomerId customerId, EntityId entityId,
-                                                EntityRelation relation, SecurityUser user,
-                                                ActionType actionType, Exception e,
-                                                Object... additionalInfo);
+    <E extends HasName, I extends EntityId> void notifyCreateOrUpdateOrDelete(TenantId tenantId, CustomerId customerId,
+                                                                              I entityId, E entity, SecurityUser user,
+                                                                              ActionType actionType, Exception e,
+                                                                              Object... additionalInfo);
+
+    void notifyCreateOrUpdateOrDeleteRelation(TenantId tenantId, CustomerId customerId,
+                                              EntityRelation relation, SecurityUser user,
+                                              ActionType actionType, Exception e,
+                                              Object... additionalInfo);
 }

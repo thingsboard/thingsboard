@@ -216,19 +216,22 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
     }
 
     @Override
-    public void notifyCreateOrUpdateOrDeleteRelation(TenantId tenantId, CustomerId customerId, EntityId entityId,
+    public void notifyCreateOrUpdateOrDeleteRelation(TenantId tenantId, CustomerId customerId,
                                                      EntityRelation relation, SecurityUser user,
                                                      ActionType actionType, Exception e,
                                                      Object... additionalInfo) {
-        notifyEntity(tenantId, entityId, null, customerId, actionType, user, e, additionalInfo);
-        try {
-            if (!relation.getFrom().getEntityType().equals(EntityType.EDGE) &&
-                    !relation.getTo().getEntityType().equals(EntityType.EDGE)) {
-                sendNotificationMsgToEdgeService(tenantId, null, null, json.writeValueAsString(relation),
-                        EdgeEventType.RELATION, edgeTypeByActionType(actionType));
+        notifyEntity(tenantId, relation.getFrom(), null, customerId, actionType, user, e, additionalInfo);
+        notifyEntity(tenantId, relation.getTo(), null, customerId, actionType, user, e, additionalInfo);
+        if (e == null) {
+            try {
+                if (!relation.getFrom().getEntityType().equals(EntityType.EDGE) &&
+                        !relation.getTo().getEntityType().equals(EntityType.EDGE)) {
+                    sendNotificationMsgToEdgeService(tenantId, null, null, json.writeValueAsString(relation),
+                            EdgeEventType.RELATION, edgeTypeByActionType(actionType));
+                }
+            } catch (Exception e1) {
+                log.warn("Failed to push relation to core: {}", relation, e1);
             }
-        } catch (Exception e1) {
-            log.warn("Failed to push relation to core: {}", relation, e1);
         }
     }
 
@@ -329,6 +332,8 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
                 return EdgeEventActionType.DELETED;
             case RELATION_ADD_OR_UPDATE:
                 return EdgeEventActionType.RELATION_ADD_OR_UPDATE;
+            case RELATION_DELETED:
+                return EdgeEventActionType.RELATION_DELETED;
             default:
                 return null;
         }
