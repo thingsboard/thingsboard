@@ -36,6 +36,7 @@ import org.thingsboard.server.common.stats.DefaultCounter;
 import org.thingsboard.server.common.stats.StatsCounter;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.stats.StatsType;
+import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 
@@ -79,16 +80,19 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
 
     protected final AtomicInteger concurrencyLevel;
     protected final BufferedRateExecutorStats stats;
+    protected final TbPrintStatsExecutorService tbPrintStatsExecutorService;
 
+    protected final long printInterval;
 
     private final EntityService entityService;
     private final Map<TenantId, String> tenantNamesCache = new HashMap<>();
 
     private final boolean printTenantNames;
 
-    public AbstractBufferedRateExecutor(int queueLimit, int concurrencyLimit, long maxWaitTime, int dispatcherThreads, int callbackThreads, long pollMs,
+    public AbstractBufferedRateExecutor(long printInterval, int queueLimit, int concurrencyLimit, long maxWaitTime, int dispatcherThreads, int callbackThreads, long pollMs,
                                         boolean perTenantLimitsEnabled, String perTenantLimitsConfiguration, int printQueriesFreq, StatsFactory statsFactory,
-                                        EntityService entityService, boolean printTenantNames) {
+                                        TbPrintStatsExecutorService tbPrintStatsExecutorService, EntityService entityService, boolean printTenantNames) {
+        this.printInterval = printInterval;
         this.maxWaitTime = maxWaitTime;
         this.pollMs = pollMs;
         this.concurrencyLimit = concurrencyLimit;
@@ -96,6 +100,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
         this.queue = new LinkedBlockingDeque<>(queueLimit);
         this.dispatcherExecutor = Executors.newFixedThreadPool(dispatcherThreads, ThingsBoardThreadFactory.forName("nosql-" + getBufferName() + "-dispatcher"));
         this.callbackExecutor = ThingsBoardExecutors.newWorkStealingPool(callbackThreads, "nosql-" + getBufferName() + "-callback");
+        this.tbPrintStatsExecutorService = tbPrintStatsExecutorService;
         this.timeoutExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("nosql-" + getBufferName() + "-timeout"));
         this.perTenantLimitsEnabled = perTenantLimitsEnabled;
         this.perTenantLimitsConfiguration = perTenantLimitsConfiguration;

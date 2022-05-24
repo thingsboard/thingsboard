@@ -28,12 +28,12 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.stats.StatsFactory;
+import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.attributes.AttributesDao;
 import org.thingsboard.server.dao.model.sql.AttributeKvCompositeKey;
 import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
-import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
 
@@ -51,7 +51,7 @@ import java.util.stream.Collectors;
 public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService implements AttributesDao {
 
     @Autowired
-    ScheduledLogExecutorComponent logExecutor;
+    TbPrintStatsExecutorService tbPrintStatsExecutorService;
 
     @Autowired
     private AttributeKvRepository attributeKvRepository;
@@ -92,7 +92,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
 
         Function<AttributeKvEntity, Integer> hashcodeFunction = entity -> entity.getId().getEntityId().hashCode();
         queue = new TbSqlBlockingQueueWrapper<>(params, hashcodeFunction, batchThreads, statsFactory);
-        queue.init(logExecutor, v -> attributeKvInsertRepository.saveOrUpdate(v),
+        queue.init(tbPrintStatsExecutorService, v -> attributeKvInsertRepository.saveOrUpdate(v),
                 Comparator.comparing((AttributeKvEntity attributeKvEntity) -> attributeKvEntity.getId().getEntityId())
                         .thenComparing(attributeKvEntity -> attributeKvEntity.getId().getEntityType().name())
                         .thenComparing(attributeKvEntity -> attributeKvEntity.getId().getAttributeType())

@@ -35,11 +35,11 @@ import org.thingsboard.server.common.data.id.EventId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.stats.StatsFactory;
+import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.event.EventDao;
 import org.thingsboard.server.dao.model.sql.EventEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
-import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
 
@@ -82,7 +82,7 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
     }
 
     @Autowired
-    ScheduledLogExecutorComponent logExecutor;
+    TbPrintStatsExecutorService tbPrintStatsExecutorService;
 
     @Autowired
     private StatsFactory statsFactory;
@@ -116,7 +116,7 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
                 .build();
         Function<EventEntity, Integer> hashcodeFunction = entity -> entity.getEntityId().hashCode();
         queue = new TbSqlBlockingQueueWrapper<>(params, hashcodeFunction, batchThreads, statsFactory);
-        queue.init(logExecutor, v -> eventInsertRepository.save(v),
+        queue.init(tbPrintStatsExecutorService, v -> eventInsertRepository.save(v),
                 Comparator.comparing((EventEntity eventEntity) -> eventEntity.getTs())
         );
     }

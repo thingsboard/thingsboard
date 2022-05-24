@@ -105,7 +105,6 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     private final ConcurrentMap<String, TbRuleEngineQueueConfiguration> consumerConfigurations = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, TbRuleEngineConsumerStats> consumerStats = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, TbTopicWithConsumerPerPartition> topicsConsumerPerPartition = new ConcurrentHashMap<>();
-    private final TbPrintStatsExecutorService tbPrintStatsExecutorService;
     final ExecutorService submitExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-rule-engine-consumer-submit"));
     final ScheduledExecutorService repartitionExecutor = Executors.newScheduledThreadPool(1, ThingsBoardThreadFactory.forName("tb-rule-engine-consumer-repartition"));
 
@@ -122,7 +121,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                                               TbTenantProfileCache tenantProfileCache,
                                               TbApiUsageStateService apiUsageStateService,
                                               TbPrintStatsExecutorService tbPrintStatsExecutorService) {
-        super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, apiUsageStateService, tbRuleEngineQueueFactory.createToRuleEngineNotificationsMsgConsumer());
+        super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, apiUsageStateService, tbPrintStatsExecutorService, tbRuleEngineQueueFactory.createToRuleEngineNotificationsMsgConsumer());
         this.statisticsService = statisticsService;
         this.ruleEngineSettings = ruleEngineSettings;
         this.tbRuleEngineQueueFactory = tbRuleEngineQueueFactory;
@@ -130,7 +129,6 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
         this.processingStrategyFactory = processingStrategyFactory;
         this.tbDeviceRpcService = tbDeviceRpcService;
         this.statsFactory = statsFactory;
-        this.tbPrintStatsExecutorService = tbPrintStatsExecutorService;
     }
 
     @PostConstruct

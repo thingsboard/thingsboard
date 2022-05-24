@@ -33,6 +33,7 @@ import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
@@ -69,17 +70,19 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     protected final TbTenantProfileCache tenantProfileCache;
     protected final TbDeviceProfileCache deviceProfileCache;
     protected final TbApiUsageStateService apiUsageStateService;
+    protected final TbPrintStatsExecutorService tbPrintStatsExecutorService;
 
     protected final TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer;
 
     public AbstractConsumerService(ActorSystemContext actorContext, DataDecodingEncodingService encodingService,
                                    TbTenantProfileCache tenantProfileCache, TbDeviceProfileCache deviceProfileCache,
-                                   TbApiUsageStateService apiUsageStateService, TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer) {
+                                   TbApiUsageStateService apiUsageStateService, TbPrintStatsExecutorService tbPrintStatsExecutorService, TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer) {
         this.actorContext = actorContext;
         this.encodingService = encodingService;
         this.tenantProfileCache = tenantProfileCache;
         this.deviceProfileCache = deviceProfileCache;
         this.apiUsageStateService = apiUsageStateService;
+        this.tbPrintStatsExecutorService = tbPrintStatsExecutorService;
         this.nfConsumer = nfConsumer;
     }
 

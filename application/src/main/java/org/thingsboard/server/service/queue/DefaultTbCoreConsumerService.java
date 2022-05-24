@@ -119,7 +119,6 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     private final TbCoreConsumerStats stats;
     protected final TbQueueConsumer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> usageStatsConsumer;
     private final TbQueueConsumer<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>> firmwareStatesConsumer;
-    private final TbPrintStatsExecutorService tbPrintStatsExecutorService;
 
     protected volatile ExecutorService usageStatsExecutor;
 
@@ -138,8 +137,9 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                         TbTenantProfileCache tenantProfileCache,
                                         TbApiUsageStateService apiUsageStateService,
                                         EdgeNotificationService edgeNotificationService,
-                                        OtaPackageStateService firmwareStateService, TbPrintStatsExecutorService tbPrintStatsExecutorService) {
-        super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, apiUsageStateService, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer());
+                                        OtaPackageStateService firmwareStateService,
+                                        TbPrintStatsExecutorService tbPrintStatsExecutorService) {
+        super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, apiUsageStateService, tbPrintStatsExecutorService, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer());
         this.mainConsumer = tbCoreQueueFactory.createToCoreMsgConsumer();
         this.usageStatsConsumer = tbCoreQueueFactory.createToUsageStatsServiceMsgConsumer();
         this.firmwareStatesConsumer = tbCoreQueueFactory.createToOtaPackageStateServiceMsgConsumer();
@@ -151,7 +151,6 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         this.stats = new TbCoreConsumerStats(statsFactory);
         this.statsService = statsService;
         this.firmwareStateService = firmwareStateService;
-        this.tbPrintStatsExecutorService = tbPrintStatsExecutorService;
     }
 
     @PostConstruct

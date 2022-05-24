@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -73,11 +72,11 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
 
         Function<TsKvEntity, Integer> hashcodeFunction = entity -> entity.getEntityId().hashCode();
         tsQueue = new TbSqlBlockingQueueWrapper<>(tsParams, hashcodeFunction, tsBatchThreads, statsFactory);
-        tsQueue.init(logExecutor, v -> insertRepository.saveOrUpdate(v),
+        tsQueue.init(tbPrintStatsExecutorService, v -> insertRepository.saveOrUpdate(v),
                 Comparator.comparing((Function<TsKvEntity, UUID>) AbstractTsKvEntity::getEntityId)
                         .thenComparing(AbstractTsKvEntity::getKey)
                         .thenComparing(AbstractTsKvEntity::getTs)
-                );
+        );
     }
 
     @PreDestroy
@@ -140,7 +139,7 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
                 query.getStartTs(),
                 query.getEndTs(),
                 PageRequest.of(0, query.getLimit(),
-                        Sort.by(new Sort.Order(Sort.Direction.fromString(query.getOrder()),  "ts").nullsNative())));
+                        Sort.by(new Sort.Order(Sort.Direction.fromString(query.getOrder()), "ts").nullsNative())));
         tsKvEntities.forEach(tsKvEntity -> tsKvEntity.setStrKey(query.getKey()));
         return Futures.immediateFuture(DaoUtil.convertDataList(tsKvEntities));
     }
