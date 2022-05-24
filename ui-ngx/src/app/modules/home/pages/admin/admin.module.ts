@@ -28,6 +28,7 @@ import { SmsProviderComponent } from '@home/pages/admin/sms-provider.component';
 import { SendTestSmsDialogComponent } from '@home/pages/admin/send-test-sms-dialog.component';
 import { HomeSettingsComponent } from '@home/pages/admin/home-settings.component';
 import { ResourcesLibraryComponent } from '@home/pages/admin/resource/resources-library.component';
+import { QueueComponent} from '@home/pages/admin/queue/queue.component';
 import { VersionControlSettingsComponent } from '@home/pages/admin/version-control-settings.component';
 
 @NgModule({
@@ -41,6 +42,7 @@ import { VersionControlSettingsComponent } from '@home/pages/admin/version-contr
       OAuth2SettingsComponent,
       HomeSettingsComponent,
       ResourcesLibraryComponent,
+      QueueComponent,
       VersionControlSettingsComponent
     ],
   imports: [

@@ -55,7 +55,10 @@ import java.util.stream.Collectors;
 @Service
 public class DefaultGitRepositoryService implements GitRepositoryService {
 
-    @Value("${vc.git.repositories-folder}")
+    @Value("${java.io.tmpdir}/repositories")
+    private String defaultFolder;
+
+    @Value("${vc.git.repositories-folder:${java.io.tmpdir}/repositories}")
     private String repositoriesFolder;
 
     @Value("${vc.git.repos-poll-interval:60}")
@@ -66,6 +69,9 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
 
     @PostConstruct
     public void init() {
+        if (StringUtils.isEmpty(repositoriesFolder)) {
+            repositoriesFolder = defaultFolder;
+        }
         scheduler = Executors.newSingleThreadScheduledExecutor();
         scheduler.scheduleWithFixedDelay(() -> {
             repositories.forEach((tenantId, repository) -> {
@@ -89,7 +95,7 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     @Override
     public void prepareCommit(PendingCommit commit) {
         GitRepository repository = checkRepository(commit.getTenantId());
-        String branch = commit.getRequest().getBranch();
+        String branch = commit.getBranch();
         try {
             repository.fetch();
 
@@ -129,8 +135,8 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
             result.setModified(status.getModified().size());
             result.setRemoved(status.getRemoved().size());
 
-            GitRepository.Commit gitCommit = repository.commit(commit.getRequest().getVersionName());
-            repository.push(commit.getWorkingBranch(), commit.getRequest().getBranch());
+            GitRepository.Commit gitCommit = repository.commit(commit.getVersionName());
+            repository.push(commit.getWorkingBranch(), commit.getBranch());
 
             result.setVersion(toVersion(gitCommit));
             return result;
@@ -160,6 +166,14 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     @Override
     public void abort(PendingCommit commit) {
         cleanUp(commit);
+    }
+
+    @Override
+    public void fetch(TenantId tenantId) throws GitAPIException {
+        var repository = repositories.get(tenantId);
+        if (repository != null) {
+            repository.fetch();
+        }
     }
 
     @Override
@@ -197,9 +211,8 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     }
 
     @Override
-    public List<VersionedEntityInfo> listEntitiesAtVersion(TenantId tenantId, String branch, String versionId, String path) throws Exception {
+    public List<VersionedEntityInfo> listEntitiesAtVersion(TenantId tenantId, String versionId, String path) throws Exception {
         GitRepository repository = checkRepository(tenantId);
-        checkVersion(tenantId, branch, versionId);
         return repository.listFilesAtCommit(versionId, path).stream()
                 .map(filePath -> {
                     EntityId entityId = fromRelativePath(filePath);
@@ -218,6 +231,7 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
 
     @Override
     public void initRepository(TenantId tenantId, EntitiesVersionControlSettings settings) throws Exception {
+        clearRepository(tenantId);
         Path repositoryDirectory = Path.of(repositoriesFolder, tenantId.getId().toString());
         GitRepository repository;
         if (Files.exists(repositoryDirectory)) {
@@ -230,6 +244,12 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     }
 
     @Override
+    public EntitiesVersionControlSettings getRepositorySettings(TenantId tenantId) throws Exception {
+        var gitRepository = repositories.get(tenantId);
+        return gitRepository != null ? gitRepository.getSettings() : null;
+    }
+
+    @Override
     public void clearRepository(TenantId tenantId) throws IOException {
         GitRepository repository = repositories.get(tenantId);
         if (repository != null) {
@@ -237,7 +257,6 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
             repositories.remove(tenantId);
         }
     }
-
 
     private EntityVersion toVersion(GitRepository.Commit commit) {
         return new EntityVersion(commit.getId(), commit.getMessage());

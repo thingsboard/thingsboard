@@ -17,7 +17,9 @@ package org.thingsboard.server.queue.usagestats;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.EntityType;
@@ -57,7 +59,9 @@ public class DefaultTbApiUsageClient implements TbApiUsageClient {
 
     private final EnumMap<ApiUsageRecordKey, ConcurrentMap<OwnerId, AtomicLong>> stats = new EnumMap<>(ApiUsageRecordKey.class);
 
-    private final PartitionService partitionService;
+    @Lazy
+    @Autowired
+    private PartitionService partitionService;
     private final SchedulerComponent scheduler;
     private final TbQueueProducerProvider producerProvider;
     private TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> msgProducer;

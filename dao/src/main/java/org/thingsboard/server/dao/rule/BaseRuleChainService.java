@@ -674,6 +674,14 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     @Override
+    public List<RuleNode> findRuleNodesByTenantIdAndType(TenantId tenantId, String type) {
+        log.trace("Executing findRuleNodes, tenantId [{}], type {}", tenantId, type);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateString(type, "Incorrect type of the rule node");
+        return ruleNodeDao.findRuleNodesByTenantIdAndType(tenantId, type, "");
+    }
+
+    @Override
     public RuleNode saveRuleNode(TenantId tenantId, RuleNode ruleNode) {
         return ruleNodeDao.save(tenantId, ruleNode);
     }

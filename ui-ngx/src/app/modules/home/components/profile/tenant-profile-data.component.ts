@@ -79,7 +79,7 @@ export class TenantProfileDataComponent implements ControlValueAccessor, OnInit 
   }
 
   writeValue(value: TenantProfileData | null): void {
-    this.tenantProfileDataFormGroup.patchValue({configuration: value?.configuration}, {emitEvent: false});
+    this.tenantProfileDataFormGroup.patchValue({configuration: value}, {emitEvent: false});
   }
 
   private updateModel() {

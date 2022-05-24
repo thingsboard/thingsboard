@@ -29,3 +29,18 @@ ALTER TABLE customer
 
 ALTER TABLE admin_settings
     ADD COLUMN IF NOT EXISTS tenant_id uuid NOT NULL DEFAULT '13814000-1dd2-11b2-8080-808080808080';
+
+CREATE TABLE IF NOT EXISTS queue (
+    id uuid NOT NULL CONSTRAINT queue_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid,
+    name varchar(255),
+    topic varchar(255),
+    poll_interval int,
+    partitions int,
+    consumer_per_partition boolean,
+    pack_processing_timeout bigint,
+    submit_strategy varchar(255),
+    processing_strategy varchar(255),
+    additional_info varchar
+);

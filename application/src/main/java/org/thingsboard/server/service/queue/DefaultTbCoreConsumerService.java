@@ -36,8 +36,9 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.common.stats.StatsFactory;
-import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
+import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceStateServiceMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.EdgeNotificationMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.FromDeviceRPCResponseProto;
@@ -57,6 +58,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceM
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -72,6 +74,8 @@ import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.subscription.SubscriptionManagerService;
 import org.thingsboard.server.service.subscription.TbLocalSubscriptionService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
+import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
+import org.thingsboard.server.service.sync.vc.GitVersionControlQueueService;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
 import javax.annotation.PostConstruct;
@@ -114,6 +118,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     private final TbCoreDeviceRpcService tbCoreDeviceRpcService;
     private final EdgeNotificationService edgeNotificationService;
     private final OtaPackageStateService firmwareStateService;
+    private final GitVersionControlQueueService vcQueueService;
     private final TbCoreConsumerStats stats;
     protected final TbQueueConsumer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> usageStatsConsumer;
     private final TbQueueConsumer<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>> firmwareStatesConsumer;
@@ -135,8 +140,10 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                         TbTenantProfileCache tenantProfileCache,
                                         TbApiUsageStateService apiUsageStateService,
                                         EdgeNotificationService edgeNotificationService,
-                                        OtaPackageStateService firmwareStateService) {
-        super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, apiUsageStateService, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer());
+                                        OtaPackageStateService firmwareStateService,
+                                        GitVersionControlQueueService vcQueueService,
+                                        PartitionService partitionService) {
+        super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, apiUsageStateService, partitionService, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer());
         this.mainConsumer = tbCoreQueueFactory.createToCoreMsgConsumer();
         this.usageStatsConsumer = tbCoreQueueFactory.createToUsageStatsServiceMsgConsumer();
         this.firmwareStatesConsumer = tbCoreQueueFactory.createToOtaPackageStateServiceMsgConsumer();
@@ -148,6 +155,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         this.stats = new TbCoreConsumerStats(statsFactory);
         this.statsService = statsService;
         this.firmwareStateService = firmwareStateService;
+        this.vcQueueService = vcQueueService;
     }
 
     @PostConstruct
@@ -311,6 +319,17 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                 log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg.get());
                 actorContext.tellWithHighPriority(actorMsg.get());
             }
+            callback.onSuccess();
+        } else if (toCoreNotification.hasQueueUpdateMsg()) {
+            TransportProtos.QueueUpdateMsg queue = toCoreNotification.getQueueUpdateMsg();
+            partitionService.updateQueue(queue);
+            callback.onSuccess();
+        } else if (toCoreNotification.hasQueueDeleteMsg()) {
+            TransportProtos.QueueDeleteMsg queue = toCoreNotification.getQueueDeleteMsg();
+            partitionService.removeQueue(queue);
+            callback.onSuccess();
+        } else if (toCoreNotification.hasVcResponseMsg()) {
+            vcQueueService.processResponse(toCoreNotification.getVcResponseMsg());
             callback.onSuccess();
         }
         if (statsEnabled) {

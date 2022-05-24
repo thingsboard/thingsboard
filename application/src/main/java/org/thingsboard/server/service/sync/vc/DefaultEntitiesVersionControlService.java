@@ -15,20 +15,28 @@
  */
 package org.thingsboard.server.service.sync.vc;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.sync.ThrowingRunnable;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.sync.ThrowingRunnable;
@@ -60,6 +68,8 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.sync.ie.EntitiesExportImportService;
 import org.thingsboard.server.service.sync.ie.exporting.ExportableEntitiesService;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -76,117 +86,137 @@ import java.util.stream.Collectors;
 @Slf4j
 public class DefaultEntitiesVersionControlService implements EntitiesVersionControlService {
 
-    private final GitVersionControlService gitService;
+    private final GitVersionControlQueueService gitServiceQueue;
     private final EntitiesExportImportService exportImportService;
     private final ExportableEntitiesService exportableEntitiesService;
     private final AdminSettingsService adminSettingsService;
     private final TransactionTemplate transactionTemplate;
 
-    @Override
-    public VersionCreationResult saveEntitiesVersion(SecurityUser user, VersionCreateRequest request) throws Exception {
-        var commit = gitService.prepareCommit(user.getTenantId(), request);
+    private ListeningExecutorService executor;
 
-        switch (request.getType()) {
-            case SINGLE_ENTITY: {
-                SingleEntityVersionCreateRequest versionCreateRequest = (SingleEntityVersionCreateRequest) request;
-                saveEntityData(user, commit, versionCreateRequest.getEntityId(), versionCreateRequest.getConfig());
-                break;
-            }
-            case COMPLEX: {
-                ComplexVersionCreateRequest versionCreateRequest = (ComplexVersionCreateRequest) request;
-                versionCreateRequest.getEntityTypes().forEach((entityType, config) -> {
-                    if (ObjectUtils.defaultIfNull(config.getSyncStrategy(), versionCreateRequest.getSyncStrategy()) == SyncStrategy.OVERWRITE) {
-                        gitService.deleteAll(commit, entityType);
-                    }
+    @Value("${vc.thread_pool_size:4}")
+    private int threadPoolSize;
 
-                    if (config.isAllEntities()) {
-                        DaoUtil.processInBatches(pageLink -> {
-                            return exportableEntitiesService.findEntitiesByTenantId(user.getTenantId(), entityType, pageLink);
-                        }, 100, entity -> {
-                            try {
-                                saveEntityData(user, commit, entity.getId(), config);
-                            } catch (Exception e) {
-                                throw new RuntimeException(e);
-                            }
-                        });
-                    } else {
-                        for (UUID entityId : config.getEntityIds()) {
-                            try {
-                                saveEntityData(user, commit, EntityIdFactory.getByTypeAndUuid(entityType, entityId), config);
-                            } catch (Exception e) {
-                                throw new RuntimeException(e);
-                            }
-                        }
-                    }
-
-                });
-                break;
-            }
-        }
-
-        return gitService.push(commit);
+    @PostConstruct
+    public void init() {
+        executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(threadPoolSize, DefaultEntitiesVersionControlService.class));
     }
 
-    private void saveEntityData(SecurityUser user, PendingCommit commit, EntityId entityId, VersionCreateConfig config) throws Exception {
+    @PreDestroy
+    public void shutdown() {
+        if (executor != null) {
+            executor.shutdownNow();
+        }
+    }
+
+    @SuppressWarnings("UnstableApiUsage")
+    @Override
+    public ListenableFuture<VersionCreationResult> saveEntitiesVersion(SecurityUser user, VersionCreateRequest request) throws Exception {
+        var pendingCommit = gitServiceQueue.prepareCommit(user.getTenantId(), request);
+
+        return Futures.transformAsync(pendingCommit, commit -> {
+            List<ListenableFuture<Void>> gitFutures = new ArrayList<>();
+            switch (request.getType()) {
+                case SINGLE_ENTITY: {
+                    SingleEntityVersionCreateRequest versionCreateRequest = (SingleEntityVersionCreateRequest) request;
+                    gitFutures.add(saveEntityData(user, commit, versionCreateRequest.getEntityId(), versionCreateRequest.getConfig()));
+                    break;
+                }
+                case COMPLEX: {
+                    ComplexVersionCreateRequest versionCreateRequest = (ComplexVersionCreateRequest) request;
+                    versionCreateRequest.getEntityTypes().forEach((entityType, config) -> {
+                        if (ObjectUtils.defaultIfNull(config.getSyncStrategy(), versionCreateRequest.getSyncStrategy()) == SyncStrategy.OVERWRITE) {
+                            gitFutures.add(gitServiceQueue.deleteAll(commit, entityType));
+                        }
+
+                        if (config.isAllEntities()) {
+                            DaoUtil.processInBatches(pageLink -> exportableEntitiesService.findEntitiesByTenantId(user.getTenantId(), entityType, pageLink)
+                                    , 100, entity -> {
+                                        try {
+                                            gitFutures.add(saveEntityData(user, commit, entity.getId(), config));
+                                        } catch (Exception e) {
+                                            throw new RuntimeException(e);
+                                        }
+                                    });
+                        } else {
+                            for (UUID entityId : config.getEntityIds()) {
+                                try {
+                                    gitFutures.add(saveEntityData(user, commit, EntityIdFactory.getByTypeAndUuid(entityType, entityId), config));
+                                } catch (Exception e) {
+                                    throw new RuntimeException(e);
+                                }
+                            }
+                        }
+                    });
+                    break;
+                }
+            }
+            return Futures.transformAsync(Futures.allAsList(gitFutures), success -> gitServiceQueue.push(commit), executor);
+        }, executor);
+    }
+
+    private ListenableFuture<Void> saveEntityData(SecurityUser user, CommitGitRequest commit, EntityId entityId, VersionCreateConfig config) throws Exception {
         EntityExportData<ExportableEntity<EntityId>> entityData = exportImportService.exportEntity(user, entityId, EntityExportSettings.builder()
                 .exportRelations(config.isSaveRelations())
                 .build());
-        gitService.addToCommit(commit, entityData);
-    }
-
-
-    @Override
-    public PageData<EntityVersion> listEntityVersions(TenantId tenantId, String branch, EntityId externalId, PageLink pageLink) throws Exception {
-        return gitService.listVersions(tenantId, branch, externalId, pageLink);
+        return gitServiceQueue.addToCommit(commit, entityData);
     }
 
     @Override
-    public PageData<EntityVersion> listEntityTypeVersions(TenantId tenantId, String branch, EntityType entityType, PageLink pageLink) throws Exception {
-        return gitService.listVersions(tenantId, branch, entityType, pageLink);
+    public ListenableFuture<PageData<EntityVersion>> listEntityVersions(TenantId tenantId, String branch, EntityId externalId, PageLink pageLink) throws Exception {
+        return gitServiceQueue.listVersions(tenantId, branch, externalId, pageLink);
     }
 
     @Override
-    public PageData<EntityVersion> listVersions(TenantId tenantId, String branch, PageLink pageLink) throws Exception {
-        return gitService.listVersions(tenantId, branch, pageLink);
+    public ListenableFuture<PageData<EntityVersion>> listEntityTypeVersions(TenantId tenantId, String branch, EntityType entityType, PageLink pageLink) throws Exception {
+        return gitServiceQueue.listVersions(tenantId, branch, entityType, pageLink);
     }
 
     @Override
-    public List<VersionedEntityInfo> listEntitiesAtVersion(TenantId tenantId, String branch, String versionId, EntityType entityType) throws Exception {
-        return gitService.listEntitiesAtVersion(tenantId, branch, versionId, entityType);
+    public ListenableFuture<PageData<EntityVersion>> listVersions(TenantId tenantId, String branch, PageLink pageLink) throws Exception {
+        return gitServiceQueue.listVersions(tenantId, branch, pageLink);
     }
 
     @Override
-    public List<VersionedEntityInfo> listAllEntitiesAtVersion(TenantId tenantId, String branch, String versionId) throws Exception {
-        return gitService.listEntitiesAtVersion(tenantId, branch, versionId);
+    public ListenableFuture<List<VersionedEntityInfo>> listEntitiesAtVersion(TenantId tenantId, String branch, String versionId, EntityType entityType) throws Exception {
+        return gitServiceQueue.listEntitiesAtVersion(tenantId, branch, versionId, entityType);
     }
 
     @Override
-    public List<VersionLoadResult> loadEntitiesVersion(SecurityUser user, VersionLoadRequest request) throws Exception {
+    public ListenableFuture<List<VersionedEntityInfo>> listAllEntitiesAtVersion(TenantId tenantId, String branch, String versionId) throws Exception {
+        return gitServiceQueue.listEntitiesAtVersion(tenantId, branch, versionId);
+    }
+
+    @SuppressWarnings({"UnstableApiUsage", "rawtypes"})
+    @Override
+    public ListenableFuture<List<VersionLoadResult>> loadEntitiesVersion(SecurityUser user, VersionLoadRequest request) throws Exception {
         switch (request.getType()) {
             case SINGLE_ENTITY: {
                 SingleEntityVersionLoadRequest versionLoadRequest = (SingleEntityVersionLoadRequest) request;
                 VersionLoadConfig config = versionLoadRequest.getConfig();
-                EntityImportResult<?> importResult = transactionTemplate.execute(status -> {
-                    try {
-                        EntityExportData entityData = gitService.getEntity(user.getTenantId(), request.getVersionId(), versionLoadRequest.getExternalEntityId());
-                        return exportImportService.importEntity(user, entityData, EntityImportSettings.builder()
-                                .updateRelations(config.isLoadRelations())
-                                .findExistingByName(config.isFindExistingEntityByName())
-                                .build(), true, true);
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-                return List.of(VersionLoadResult.builder()
-                        .entityType(importResult.getEntityType())
-                        .created(importResult.getOldEntity() == null ? 1 : 0)
-                        .updated(importResult.getOldEntity() != null ? 1 : 0)
-                        .deleted(0)
-                        .build());
+                ListenableFuture<EntityExportData> future = gitServiceQueue.getEntity(user.getTenantId(), request.getVersionId(), versionLoadRequest.getExternalEntityId());
+                Futures.transform(future, entityData -> {
+                    EntityImportResult<?> importResult = transactionTemplate.execute(status -> {
+                        try {
+                            return exportImportService.importEntity(user, entityData, EntityImportSettings.builder()
+                                    .updateRelations(config.isLoadRelations())
+                                    .findExistingByName(config.isFindExistingEntityByName())
+                                    .build(), true, true);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+                    return List.of(VersionLoadResult.builder()
+                            .entityType(importResult.getEntityType())
+                            .created(importResult.getOldEntity() == null ? 1 : 0)
+                            .updated(importResult.getOldEntity() != null ? 1 : 0)
+                            .deleted(0)
+                            .build());
+                }, executor);
             }
             case ENTITY_TYPE: {
                 EntityTypeVersionLoadRequest versionLoadRequest = (EntityTypeVersionLoadRequest) request;
-                return transactionTemplate.execute(status -> {
+                return executor.submit(() -> transactionTemplate.execute(status -> {
                     Map<EntityType, VersionLoadResult> results = new HashMap<>();
                     Map<EntityType, Set<EntityId>> importedEntities = new HashMap<>();
                     List<ThrowingRunnable> saveReferencesCallbacks = new ArrayList<>();
@@ -202,9 +232,9 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                                 try {
                                     int limit = 100;
                                     int offset = 0;
-                                    List<EntityExportData<?>> entityDataList;
+                                    List<EntityExportData> entityDataList;
                                     do {
-                                        entityDataList = gitService.getEntities(user.getTenantId(), request.getBranch(), request.getVersionId(), entityType, offset, limit);
+                                        entityDataList = gitServiceQueue.getEntities(user.getTenantId(), request.getVersionId(), entityType, offset, limit).get();
                                         for (EntityExportData entityData : entityDataList) {
                                             EntityImportResult<?> importResult = exportImportService.importEntity(user, entityData, EntityImportSettings.builder()
                                                     .updateRelations(config.isLoadRelations())
@@ -218,7 +248,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                                         }
                                         offset += limit;
                                         importedEntities.computeIfAbsent(entityType, t -> new HashSet<>())
-                                                .addAll(entityDataList.stream().map(entityData -> entityData.getEntity().getId()).collect(Collectors.toSet()));
+                                                .addAll(entityDataList.stream().map(entityData -> entityData.getEntity().getExternalId()).collect(Collectors.toSet()));
                                     } while (entityDataList.size() == limit);
                                 } catch (Exception e) {
                                     throw new RuntimeException(e);
@@ -266,7 +296,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                         }
                     }
                     return new ArrayList<>(results.values());
-                });
+                }));
             }
             default:
                 throw new IllegalArgumentException("Unsupported version load request");
@@ -275,8 +305,8 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
 
     @Override
-    public List<String> listBranches(TenantId tenantId) throws Exception {
-        return gitService.listBranches(tenantId);
+    public ListenableFuture<List<String>> listBranches(TenantId tenantId) throws Exception {
+        return gitServiceQueue.listBranches(tenantId);
     }
 
     @Override
@@ -310,8 +340,8 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
             adminSettings.setTenantId(tenantId);
         }
         try {
-            gitService.clearRepository(tenantId);
-            gitService.initRepository(tenantId, versionControlSettings);
+            //TODO: ashvayka: replace future.get with deferred result. Don't forget to call when tenant is deleted.
+            gitServiceQueue.initRepository(tenantId, versionControlSettings).get();
         } catch (Exception e) {
             throw new RuntimeException("Failed to init repository!", e);
         }
@@ -327,9 +357,10 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     }
 
     @Override
-    public void deleteVersionControlSettings(TenantId tenantId) {
+    public void deleteVersionControlSettings(TenantId tenantId) throws Exception {
         if (adminSettingsService.deleteAdminSettings(tenantId, SETTINGS_KEY)) {
-            gitService.clearRepository(tenantId);
+            //TODO: ashvayka: replace future.get with deferred result. Don't forget to call when tenant is deleted.
+            gitServiceQueue.clearRepository(tenantId).get();
         }
     }
 
@@ -338,11 +369,22 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         EntitiesVersionControlSettings storedSettings = getVersionControlSettings(tenantId);
         settings = this.restoreCredentials(settings, storedSettings);
         try {
-            gitService.testRepository(tenantId, settings);
+            //TODO: ashvayka: replace future.get with deferred result.
+            gitServiceQueue.testRepository(tenantId, settings).get();
         } catch (Exception e) {
-            throw new ThingsboardException(String.format("Unable to access repository: %s", e.getMessage()),
+            throw new ThingsboardException(String.format("Unable to access repository: %s", getCauseMessage(e)),
                     ThingsboardErrorCode.GENERAL);
         }
+    }
+
+    private String getCauseMessage(Exception e) {
+        String message;
+        if(e.getCause() != null && StringUtils.isNotEmpty(e.getCause().getMessage())){
+            message = e.getCause().getMessage();
+        } else {
+            message = e.getMessage();
+        }
+        return message;
     }
 
     private EntitiesVersionControlSettings restoreCredentials(EntitiesVersionControlSettings settings, EntitiesVersionControlSettings storedSettings) {

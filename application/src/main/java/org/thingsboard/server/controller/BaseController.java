@@ -18,6 +18,10 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -27,6 +31,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -69,6 +74,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
+import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.RpcId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -84,6 +90,7 @@ import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -108,6 +115,7 @@ import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rpc.RpcService;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -147,6 +155,7 @@ import java.util.UUID;
 
 import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_PAGE_SIZE;
 import static org.thingsboard.server.controller.ControllerConstants.INCORRECT_TENANT_ID;
+import static org.thingsboard.server.controller.UserController.YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Slf4j
@@ -270,6 +279,9 @@ public abstract class BaseController {
 
     @Autowired
     protected EntityActionService entityActionService;
+
+    @Autowired
+    protected QueueService queueService;
 
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
@@ -519,6 +531,9 @@ public abstract class BaseController {
                     return;
                 case OTA_PACKAGE:
                     checkOtaPackageId(new OtaPackageId(entityId.getId()), operation);
+                    return;
+                case QUEUE:
+                    checkQueueId(new QueueId(entityId.getId()), operation);
                     return;
                 default:
                     throw new IllegalArgumentException("Unsupported entity type: " + entityId.getEntityType());
@@ -811,7 +826,22 @@ public abstract class BaseController {
         }
     }
 
-    @SuppressWarnings("unchecked")
+    protected Queue checkQueueId(QueueId queueId, Operation operation) throws ThingsboardException {
+        validateId(queueId, "Incorrect queueId " + queueId);
+        Queue queue = queueService.findQueueById(getCurrentUser().getTenantId(), queueId);
+        checkNotNull(queue);
+        accessControlService.checkPermission(getCurrentUser(), Resource.QUEUE, operation, queueId, queue);
+        TenantId tenantId = getTenantId();
+        if (queue.getTenantId().isNullUid() && !tenantId.isNullUid()) {
+            TenantProfile tenantProfile = tenantProfileCache.get(tenantId);
+            if (tenantProfile.isIsolatedTbRuleEngine()) {
+                throw new ThingsboardException(YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION,
+                        ThingsboardErrorCode.PERMISSION_DENIED);
+            }
+        }
+        return queue;
+    }
+
     protected <I extends EntityId> I emptyId(EntityType entityType) {
         return (I) EntityIdFactory.getByTypeAndUuid(entityType, ModelConstants.NULL_UUID);
     }
@@ -922,5 +952,21 @@ public abstract class BaseController {
         } catch (Exception e) {
             return MediaType.APPLICATION_OCTET_STREAM;
         }
+    }
+
+    protected <T> DeferredResult<T> wrapFuture(ListenableFuture<T> future) {
+        final DeferredResult<T> deferredResult = new DeferredResult<>();
+        Futures.addCallback(future, new FutureCallback<>() {
+            @Override
+            public void onSuccess(T result) {
+                deferredResult.setResult(result);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                deferredResult.setErrorResult(t);
+            }
+        }, MoreExecutors.directExecutor());
+        return deferredResult;
     }
 }

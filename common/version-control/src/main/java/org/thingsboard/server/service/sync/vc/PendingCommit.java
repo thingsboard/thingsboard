@@ -17,7 +17,6 @@ package org.thingsboard.server.service.sync.vc;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
 
 import java.util.UUID;
 
@@ -25,14 +24,18 @@ import java.util.UUID;
 public class PendingCommit {
 
     private final UUID txId;
+    private final String nodeId;
     private final TenantId tenantId;
-    private final VersionCreateRequest request;
     private final String workingBranch;
+    private String branch;
+    private String versionName;
 
-    public PendingCommit(TenantId tenantId, VersionCreateRequest request) {
-        this.txId = UUID.randomUUID();
+    public PendingCommit(TenantId tenantId, String nodeId, UUID txId, String branch, String versionName) {
         this.tenantId = tenantId;
-        this.request = request;
+        this.nodeId = nodeId;
+        this.txId = txId;
+        this.branch = branch;
+        this.versionName = versionName;
         this.workingBranch = txId.toString();
     }
 }

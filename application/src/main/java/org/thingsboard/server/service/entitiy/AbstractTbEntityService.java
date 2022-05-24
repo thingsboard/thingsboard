@@ -15,14 +15,12 @@
  */
 package org.thingsboard.server.service.entitiy;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.User;
@@ -43,6 +41,7 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.ClaimDevicesService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -50,6 +49,7 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -68,8 +68,6 @@ import java.util.stream.Collectors;
 public abstract class AbstractTbEntityService {
 
     protected static final int DEFAULT_PAGE_SIZE = 1000;
-
-    private static final ObjectMapper json = new ObjectMapper();
 
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
@@ -106,6 +104,10 @@ public abstract class AbstractTbEntityService {
     protected RuleChainService ruleChainService;
     @Autowired
     protected EdgeNotificationService edgeNotificationService;
+    @Autowired
+    protected QueueService queueService;
+    @Autowired
+    protected DashboardService dashboardService;
 
     protected ListenableFuture<Void> removeAlarmsByEntityId(TenantId tenantId, EntityId entityId) {
         ListenableFuture<PageData<AlarmInfo>> alarmsFuture =
