@@ -23,9 +23,12 @@ import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
+import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -58,6 +61,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @TbVersionControlComponent
@@ -144,9 +148,21 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
                                 var newSettings = ctx.getSettings();
                                 if (!newSettings.equals(currentSettings)) {
                                     vcService.initRepository(ctx.getTenantId(), ctx.getSettings());
+                                } else {
+                                    vcService.fetch(ctx.getTenantId());
                                 }
                                 if (msg.hasCommitRequest()) {
                                     handleCommitRequest(ctx, msg.getCommitRequest());
+                                } else if (msg.hasListBranchesRequest()) {
+                                    handleListBranches(ctx, msg.getListBranchesRequest());
+                                } else if (msg.hasListEntitiesRequest()) {
+                                    handleListEntities(ctx, msg.getListEntitiesRequest());
+                                } else if (msg.hasListVersionRequest()) {
+                                    handleListVersions(ctx, msg.getListVersionRequest());
+                                } else if (msg.hasEntityContentRequest()) {
+                                    handleEntityContentRequest(ctx, msg.getEntityContentRequest());
+                                } else if (msg.hasEntitiesContentRequest()) {
+                                    handleEntitiesContentRequest(ctx, msg.getEntitiesContentRequest());
                                 }
                             }
                         }
@@ -172,12 +188,71 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
         log.info("TB Version Control request consumer stopped.");
     }
 
-    private void handleCommitRequest(VersionControlRequestCtx ctx, CommitRequestMsg commitRequest) throws Exception {
+    private void handleEntitiesContentRequest(VersionControlRequestCtx ctx, EntitiesContentRequestMsg request) throws Exception {
+        var entityType = EntityType.valueOf(request.getEntityType());
+        String path = getRelativePath(entityType, null);
+        var ids = vcService.listEntitiesAtVersion(ctx.getTenantId(), request.getVersionId(), path)
+                .stream().skip(request.getOffset()).limit(request.getLimit()).collect(Collectors.toList());
+        var response = EntitiesContentResponseMsg.newBuilder();
+        for (VersionedEntityInfo info : ids) {
+            var data = vcService.getFileContentAtCommit(ctx.getTenantId(),
+                    getRelativePath(info.getExternalId().getEntityType(), info.getExternalId().getId().toString()), request.getVersionId());
+            response.addData(data);
+        }
+        reply(ctx, Optional.empty(), builder -> builder.setEntitiesContentResponse(response));
+    }
+
+    private void handleEntityContentRequest(VersionControlRequestCtx ctx, EntityContentRequestMsg request) throws IOException {
+        String path = getRelativePath(EntityType.valueOf(request.getEntityType()), new UUID(request.getEntityIdMSB(), request.getEntityIdLSB()).toString());
+        String data = vcService.getFileContentAtCommit(ctx.getTenantId(), path, request.getVersionId());
+        reply(ctx, Optional.empty(), builder -> builder.setEntityContentResponse(EntityContentResponseMsg.newBuilder().setData(data)));
+    }
+
+    private void handleListVersions(VersionControlRequestCtx ctx, ListVersionsRequestMsg request) throws Exception {
+        String path;
+        if (StringUtils.isNotEmpty(request.getEntityType())) {
+            var entityType = EntityType.valueOf(request.getEntityType());
+            if (request.getEntityIdLSB() != 0 || request.getEntityIdMSB() != 0) {
+                path = getRelativePath(entityType, new UUID(request.getEntityIdMSB(), request.getEntityIdLSB()).toString());
+            } else {
+                path = getRelativePath(entityType, null);
+            }
+        } else {
+            path = null;
+        }
+        var data = vcService.listVersions(ctx.getTenantId(), request.getBranchName(), path);
+        reply(ctx, Optional.empty(), builder ->
+                builder.setListVersionsResponse(ListVersionsResponseMsg.newBuilder()
+                        .addAllVersions(data.stream().map(
+                                v -> EntityVersionProto.newBuilder().setId(v.getId()).setName(v.getName()).build()
+                        ).collect(Collectors.toList()))));
+    }
+
+    private void handleListEntities(VersionControlRequestCtx ctx, ListEntitiesRequestMsg request) throws Exception {
+        EntityType entityType = StringUtils.isNotEmpty(request.getEntityType()) ? EntityType.valueOf(request.getEntityType()) : null;
+        var path = entityType != null ? getRelativePath(entityType, null) : null;
+        var data = vcService.listEntitiesAtVersion(ctx.getTenantId(), request.getVersionId(), path);
+        reply(ctx, Optional.empty(), builder ->
+                builder.setListEntitiesResponse(ListEntitiesResponseMsg.newBuilder()
+                        .addAllEntities(data.stream().map(VersionedEntityInfo::getExternalId).map(
+                                id -> VersionedEntityInfoProto.newBuilder()
+                                        .setEntityType(id.getEntityType().name())
+                                        .setEntityIdMSB(id.getId().getMostSignificantBits())
+                                        .setEntityIdLSB(id.getId().getLeastSignificantBits()).build()
+                        ).collect(Collectors.toList()))));
+    }
+
+    private void handleListBranches(VersionControlRequestCtx ctx, ListBranchesRequestMsg request) {
+        var branches = vcService.listBranches(ctx.getTenantId());
+        reply(ctx, Optional.empty(), builder -> builder.setListBranchesResponse(ListBranchesResponseMsg.newBuilder().addAllBranches(branches)));
+    }
+
+    private void handleCommitRequest(VersionControlRequestCtx ctx, CommitRequestMsg request) throws Exception {
         var tenantId = ctx.getTenantId();
-        UUID txId = UUID.fromString(commitRequest.getTxId());
-        if (commitRequest.hasPrepareMsg()) {
-            prepareCommit(ctx, txId, commitRequest.getPrepareMsg());
-        } else if (commitRequest.hasAbortMsg()) {
+        UUID txId = UUID.fromString(request.getTxId());
+        if (request.hasPrepareMsg()) {
+            prepareCommit(ctx, txId, request.getPrepareMsg());
+        } else if (request.hasAbortMsg()) {
             PendingCommit current = pendingCommitMap.get(tenantId);
             if (current != null && current.getTxId().equals(txId)) {
                 doAbortCurrentCommit(tenantId, current);
@@ -186,11 +261,11 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
             PendingCommit current = pendingCommitMap.get(tenantId);
             if (current != null && current.getTxId().equals(txId)) {
                 try {
-                    if (commitRequest.hasAddMsg()) {
-                        addToCommit(ctx, current, commitRequest.getAddMsg());
-                    } else if (commitRequest.hasDeleteMsg()) {
-                        deleteFromCommit(ctx, current, commitRequest.getDeleteMsg());
-                    } else if (commitRequest.hasPushMsg()) {
+                    if (request.hasAddMsg()) {
+                        addToCommit(ctx, current, request.getAddMsg());
+                    } else if (request.hasDeleteMsg()) {
+                        deleteFromCommit(ctx, current, request.getDeleteMsg());
+                    } else if (request.hasPushMsg()) {
                         reply(ctx, vcService.push(current));
                     }
                 } catch (Exception e) {
@@ -198,7 +273,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
                     throw e;
                 }
             } else {
-                log.debug("[{}] Ignore request due to stale commit: {}", txId, commitRequest);
+                log.debug("[{}] Ignore request due to stale commit: {}", txId, request);
             }
         }
     }
@@ -290,7 +365,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
             builder.setGenericResponse(TransportProtos.GenericRepositoryResponseMsg.newBuilder().build());
         }
         ToCoreNotificationMsg msg = ToCoreNotificationMsg.newBuilder().setVcResponseMsg(builder).build();
-        log.trace("PUSHING msg: {} to: {}", msg, tpi);
+        log.trace("[{}][{}] PUSHING reply: {} to: {}", ctx.getTenantId(), ctx.getRequestId(), msg, tpi);
         producer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), null);
     }
 
@@ -304,9 +379,15 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
         }
     }
 
+    private String getRelativePath(EntityType entityType, String entityId) {
+        String path = entityType.name().toLowerCase();
+        if (entityId != null) {
+            path += "/" + entityId + ".json";
+        }
+        return path;
+    }
+
     private Lock getRepoLock(TenantId tenantId) {
         return tenantRepoLocks.computeIfAbsent(tenantId, t -> new ReentrantLock(true));
     }
-
-
 }

@@ -723,13 +723,37 @@ message ListVersionsRequestMsg {
   int64 entityIdLSB = 4;
 }
 
+message EntityVersionProto {
+  int64 ts = 1;
+  string id = 2;
+  string name = 3;
+}
+
+message ListVersionsResponseMsg {
+  repeated EntityVersionProto versions = 1;
+}
+
 message ListEntitiesRequestMsg {
   string branchName = 1;
   string versionId = 2;
   string entityType = 3;
 }
 
+message VersionedEntityInfoProto {
+  string entityType = 1;
+  int64 entityIdMSB = 2;
+  int64 entityIdLSB = 3;
+}
+
+message ListEntitiesResponseMsg {
+  repeated VersionedEntityInfoProto entities = 1;
+}
+
 message ListBranchesRequestMsg {
+}
+
+message ListBranchesResponseMsg {
+  repeated string branches = 1;
 }
 
 message EntityContentRequestMsg {
@@ -739,11 +763,19 @@ message EntityContentRequestMsg {
   int64 entityIdLSB = 4;
 }
 
+message EntityContentResponseMsg {
+  string data = 1;
+}
+
 message EntitiesContentRequestMsg {
   string versionId = 1;
   string entityType = 2;
   int32 offset = 3;
   int32 limit = 4;
+}
+
+message EntitiesContentResponseMsg {
+  repeated string data = 1;
 }
 
 message GenericRepositoryRequestMsg {}
@@ -774,6 +806,11 @@ message VersionControlResponseMsg {
   string error = 3;
   GenericRepositoryResponseMsg genericResponse = 4;
   CommitResponseMsg commitResponse = 5;
+  ListBranchesResponseMsg listBranchesResponse = 6;
+  ListEntitiesResponseMsg listEntitiesResponse = 7;
+  ListVersionsResponseMsg listVersionsResponse = 8;
+  EntityContentResponseMsg entityContentResponse = 9;
+  EntitiesContentResponseMsg entitiesContentResponse = 10;
 }
 
 /**

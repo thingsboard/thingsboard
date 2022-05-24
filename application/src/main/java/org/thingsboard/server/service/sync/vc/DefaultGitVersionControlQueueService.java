@@ -21,17 +21,16 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
-import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
@@ -61,6 +60,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @TbCoreComponent
 @Service
@@ -209,6 +209,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     }
 
     @Override
+    @SuppressWarnings("rawtypes")
     public ListenableFuture<EntityExportData> getEntity(TenantId tenantId, String versionId, EntityId entityId) {
         EntityContentGitRequest request = new EntityContentGitRequest(tenantId, versionId, entityId);
         registerAndSend(request, builder -> builder.setEntityContentRequest(EntityContentRequestMsg.newBuilder()
@@ -218,14 +219,6 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
                         .setEntityIdLSB(entityId.getId().getLeastSignificantBits())).build()
                 , wrap(request.getFuture()));
         return request.getFuture();
-//        try {
-//            String entityDataJson = gitRepositoryService.getFileContentAtCommit(tenantId,
-//                    getRelativePath(entityId.getEntityType(), entityId.getId().toString()), versionId);
-//            return JacksonUtil.fromString(entityDataJson, EntityExportData.class);
-//        } catch (Exception e) {
-//            //TODO: analyze and return meaningful exceptions that we can show to the client;
-//            throw new RuntimeException(e);
-//        }
     }
 
     private <T> void registerAndSend(PendingGitRequest<T> request,
@@ -237,13 +230,16 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
                                      Function<ToVersionControlServiceMsg.Builder, ToVersionControlServiceMsg> enrichFunction, EntitiesVersionControlSettings settings, TbQueueCallback callback) {
         if (!request.getFuture().isDone()) {
             pendingRequestMap.putIfAbsent(request.getRequestId(), request);
-            clusterService.pushMsgToVersionControl(request.getTenantId(), enrichFunction.apply(newRequestProto(request, settings)), callback);
+            var requestBody = enrichFunction.apply(newRequestProto(request, settings));
+            log.trace("[{}][{}] PUSHING request: {}", request.getTenantId(), request.getRequestId(), requestBody);
+            clusterService.pushMsgToVersionControl(request.getTenantId(), requestBody, callback);
         } else {
             throw new RuntimeException("Future is already done!");
         }
     }
 
     @Override
+    @SuppressWarnings("rawtypes")
     public ListenableFuture<List<EntityExportData>> getEntities(TenantId tenantId, String versionId, EntityType entityType, int offset, int limit) {
         EntitiesContentGitRequest request = new EntitiesContentGitRequest(tenantId, versionId, entityType);
 
@@ -313,8 +309,39 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
                 commitResult.setRemoved(commitResponse.getRemoved());
                 commitResult.setModified(commitResponse.getModified());
                 ((CommitGitRequest) request).getFuture().set(commitResult);
+            } else if (vcResponseMsg.hasListBranchesResponse()) {
+                var listBranchesResponse = vcResponseMsg.getListBranchesResponse();
+                ((ListBranchesGitRequest) request).getFuture().set(listBranchesResponse.getBranchesList());
+            } else if (vcResponseMsg.hasListEntitiesResponse()) {
+                var listEntitiesResponse = vcResponseMsg.getListEntitiesResponse();
+                ((ListEntitiesGitRequest) request).getFuture().set(
+                        listEntitiesResponse.getEntitiesList().stream().map(this::getVersionedEntityInfo).collect(Collectors.toList()));
+            } else if (vcResponseMsg.hasListVersionsResponse()) {
+                var listVersionsResponse = vcResponseMsg.getListVersionsResponse();
+                ((ListVersionsGitRequest) request).getFuture().set(
+                        listVersionsResponse.getVersionsList().stream().map(this::getEntityVersion).collect(Collectors.toList()));
+            } else if (vcResponseMsg.hasEntityContentResponse()) {
+                var data = vcResponseMsg.getEntityContentResponse().getData();
+                ((EntityContentGitRequest) request).getFuture().set(toData(data));
+            } else if (vcResponseMsg.hasEntitiesContentResponse()) {
+                var dataList = vcResponseMsg.getEntitiesContentResponse().getDataList();
+                ((EntitiesContentGitRequest) request).getFuture()
+                        .set(dataList.stream().map(this::toData).collect(Collectors.toList()));
             }
         }
+    }
+
+    private EntityVersion getEntityVersion(TransportProtos.EntityVersionProto proto) {
+        return new EntityVersion(proto.getId(), proto.getName());
+    }
+
+    private VersionedEntityInfo getVersionedEntityInfo(TransportProtos.VersionedEntityInfoProto proto) {
+        return new VersionedEntityInfo(EntityIdFactory.getByTypeAndUuid(proto.getEntityType(), new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB())));
+    }
+
+    @SuppressWarnings("rawtypes")
+    private EntityExportData toData(String data) {
+        return JacksonUtil.fromString(data, EntityExportData.class);
     }
 
     private static <T> TbQueueCallback wrap(SettableFuture<T> future) {

@@ -161,6 +161,11 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     }
 
     @Override
+    public void fetch(TenantId tenantId) {
+        //Fetch latest changes on demand.
+    }
+
+    @Override
     public String getFileContentAtCommit(TenantId tenantId, String relativePath, String versionId) throws IOException {
         GitRepository repository = checkRepository(tenantId);
         return repository.getFileContentAtCommit(relativePath, versionId);
@@ -197,9 +202,8 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     }
 
     @Override
-    public List<VersionedEntityInfo> listEntitiesAtVersion(TenantId tenantId, String branch, String versionId, String path) throws Exception {
+    public List<VersionedEntityInfo> listEntitiesAtVersion(TenantId tenantId, String versionId, String path) throws Exception {
         GitRepository repository = checkRepository(tenantId);
-        checkVersion(tenantId, branch, versionId);
         return repository.listFilesAtCommit(versionId, path).stream()
                 .map(filePath -> {
                     EntityId entityId = fromRelativePath(filePath);

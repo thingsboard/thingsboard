@@ -24,17 +24,19 @@ import java.util.UUID;
 @Getter
 public class PendingGitRequest<T> {
 
+    private final long createdTime;
     private final UUID requestId;
     private final TenantId tenantId;
     private final SettableFuture<T> future;
 
     public PendingGitRequest(TenantId tenantId) {
+        this.createdTime = System.currentTimeMillis();
         this.requestId = UUID.randomUUID();
         this.tenantId = tenantId;
         this.future = SettableFuture.create();
     }
 
-    public boolean requiresSettings(){
+    public boolean requiresSettings() {
         return true;
     }
 }

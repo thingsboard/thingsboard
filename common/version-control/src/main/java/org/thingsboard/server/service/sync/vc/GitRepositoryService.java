@@ -30,7 +30,7 @@ public interface GitRepositoryService {
 
     List<EntityVersion> listVersions(TenantId tenantId, String branch, String path) throws Exception;
 
-    List<VersionedEntityInfo> listEntitiesAtVersion(TenantId tenantId, String branch, String versionId, String path) throws Exception;
+    List<VersionedEntityInfo> listEntitiesAtVersion(TenantId tenantId, String versionId, String path) throws Exception;
 
     void testRepository(TenantId tenantId, EntitiesVersionControlSettings settings) throws Exception;
 
@@ -51,4 +51,6 @@ public interface GitRepositoryService {
     List<String> listBranches(TenantId tenantId);
 
     String getFileContentAtCommit(TenantId tenantId, String relativePath, String versionId) throws IOException;
+
+    void fetch(TenantId tenantId);
 }
