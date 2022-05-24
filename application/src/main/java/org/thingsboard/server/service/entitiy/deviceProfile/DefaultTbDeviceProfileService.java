@@ -60,7 +60,7 @@ public class DefaultTbDeviceProfileService extends AbstractTbEntityService imple
 
             otaPackageStateService.update(savedDeviceProfile, isFirmwareChanged, isSoftwareChanged);
 
-            notificationEntityService.notifyCreateOrUpdateOrDelete(deviceProfile.getId(), deviceProfile, user, actionType, null);
+            notificationEntityService.notifyCreateOrUpdateOrDelete(savedDeviceProfile.getId(), savedDeviceProfile, user, actionType, null);
             return savedDeviceProfile;
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.DEVICE_PROFILE), deviceProfile, null,
