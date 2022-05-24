@@ -27,6 +27,8 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
@@ -178,7 +180,7 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     }
 
     private EntityVersion checkVersion(TenantId tenantId, String branch, String versionId) throws Exception {
-        return listVersions(tenantId, branch, null).stream()
+        return listVersions(tenantId, branch, null, new PageLink(Integer.MAX_VALUE)).getData().stream()
                 .filter(version -> version.getId().equals(versionId))
                 .findFirst().orElseThrow(() -> new IllegalArgumentException("Version not found"));
     }
@@ -189,11 +191,9 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     }
 
     @Override
-    public List<EntityVersion> listVersions(TenantId tenantId, String branch, String path) throws Exception {
+    public PageData<EntityVersion> listVersions(TenantId tenantId, String branch, String path, PageLink pageLink) throws Exception {
         GitRepository repository = checkRepository(tenantId);
-        return repository.listCommits(branch, path, Integer.MAX_VALUE).stream()
-                .map(this::toVersion)
-                .collect(Collectors.toList());
+        return repository.listCommits(branch, path, pageLink).mapData(this::toVersion);
     }
 
     @Override

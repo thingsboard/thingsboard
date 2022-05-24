@@ -19,6 +19,8 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
@@ -37,11 +39,11 @@ public interface EntitiesVersionControlService {
     VersionCreationResult saveEntitiesVersion(SecurityUser user, VersionCreateRequest request) throws Exception;
 
 
-    List<EntityVersion> listEntityVersions(TenantId tenantId, String branch, EntityId externalId) throws Exception;
+    PageData<EntityVersion> listEntityVersions(TenantId tenantId, String branch, EntityId externalId, PageLink pageLink) throws Exception;
 
-    List<EntityVersion> listEntityTypeVersions(TenantId tenantId, String branch, EntityType entityType) throws Exception;
+    PageData<EntityVersion> listEntityTypeVersions(TenantId tenantId, String branch, EntityType entityType, PageLink pageLink) throws Exception;
 
-    List<EntityVersion> listVersions(TenantId tenantId, String branch) throws Exception;
+    PageData<EntityVersion> listVersions(TenantId tenantId, String branch, PageLink pageLink) throws Exception;
 
 
     List<VersionedEntityInfo> listEntitiesAtVersion(TenantId tenantId, String branch, String versionId, EntityType entityType) throws Exception;

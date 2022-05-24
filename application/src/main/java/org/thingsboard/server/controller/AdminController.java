@@ -203,6 +203,20 @@ public class AdminController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Check version control settings exists (versionControlSettingsExists)",
+            notes = "Check whether the version control settings exists. " + TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping("/vcSettings/exists")
+    @ResponseBody
+    public Boolean versionControlSettingsExists() throws ThingsboardException {
+        try {
+            accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
+            return versionControlService.getVersionControlSettings(getTenantId()) != null;
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
     @ApiOperation(value = "Creates or Updates the version control settings (saveVersionControlSettings)",
             notes = "Creates or Updates the version control settings object. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
