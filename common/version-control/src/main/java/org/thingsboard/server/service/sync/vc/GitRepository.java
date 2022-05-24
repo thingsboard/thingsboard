@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.sync.vc;
 
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Ordering;
 import com.google.common.collect.Streams;
 import lombok.Data;
 import lombok.Getter;
@@ -48,6 +49,7 @@ import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
 import org.thingsboard.server.common.data.sync.vc.VersionControlAuthMethod;
 
@@ -58,10 +60,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.PublicKey;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -180,7 +179,7 @@ public class GitRepository {
             command.addPath(path);
         }
         Iterable<RevCommit> commits = execute(command);
-        return iterableToPageData(commits, this::toCommit, pageLink);
+        return iterableToPageData(commits, this::toCommit, pageLink, revCommitComparatorFunction);
     }
 
     public List<String> listFilesAtCommit(String commitId) throws IOException {
@@ -282,7 +281,7 @@ public class GitRepository {
 //    }
 
     private Commit toCommit(RevCommit revCommit) {
-        return new Commit(revCommit.getName(), revCommit.getFullMessage(), revCommit.getAuthorIdent().getName());
+        return new Commit(revCommit.getCommitTime() * 1000, revCommit.getName(), revCommit.getFullMessage(), revCommit.getAuthorIdent().getName());
     }
 
     private RevCommit resolveCommit(String id) throws IOException {
@@ -300,11 +299,30 @@ public class GitRepository {
         return command.call();
     }
 
-    private static <T,R> PageData<R> iterableToPageData (Iterable<T> iterable, Function<? super T, ? extends R> mapper, PageLink pageLink) {
+    private static Function<PageLink, Comparator<RevCommit>> revCommitComparatorFunction = pageLink -> {
+        SortOrder sortOrder = pageLink.getSortOrder();
+        if (sortOrder != null
+                && sortOrder.getProperty().equals("timestamp")
+                && SortOrder.Direction.ASC.equals(sortOrder.getDirection())) {
+            return Comparator.comparingInt(RevCommit::getCommitTime);
+        }
+        return null;
+    };
+
+    private static <T,R> PageData<R> iterableToPageData (Iterable<T> iterable,
+                                                         Function<? super T, ? extends R> mapper,
+                                                         PageLink pageLink,
+                                                         Function<PageLink, Comparator<T>> comparatorFunction) {
         int totalElements = Iterables.size(iterable);
         int totalPages = pageLink.getPageSize() > 0 ? (int) Math.ceil((float) totalElements / pageLink.getPageSize()) : 1;
         int startIndex = pageLink.getPageSize() * pageLink.getPage();
         int limit = startIndex + pageLink.getPageSize();
+        if (comparatorFunction != null) {
+            Comparator<T> comparator = comparatorFunction.apply(pageLink);
+            if (comparator != null) {
+                iterable = Ordering.from(comparator).immutableSortedCopy(iterable);
+            }
+        }
         iterable = Iterables.limit(iterable, limit);
         if (startIndex < totalElements) {
             iterable = Iterables.skip(iterable, startIndex);
@@ -374,6 +392,7 @@ public class GitRepository {
 
     @Data
     public static class Commit {
+        private final long timestamp;
         private final String id;
         private final String message;
         private final String authorName;

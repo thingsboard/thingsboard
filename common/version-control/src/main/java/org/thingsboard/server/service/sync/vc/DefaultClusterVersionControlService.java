@@ -245,7 +245,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
                         .setTotalElements(data.getTotalElements())
                         .setHasNext(data.hasNext())
                         .addAllVersions(data.getData().stream().map(
-                                v -> EntityVersionProto.newBuilder().setId(v.getId()).setName(v.getName()).build()
+                                v -> EntityVersionProto.newBuilder().setTs(v.getTimestamp()).setId(v.getId()).setName(v.getName()).build()
                         ).collect(Collectors.toList())))
         );
     }
@@ -364,6 +364,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
 
     private void reply(VersionControlRequestCtx ctx, VersionCreationResult result) {
         reply(ctx, Optional.empty(), builder -> builder.setCommitResponse(CommitResponseMsg.newBuilder()
+                .setTs(result.getVersion().getTimestamp())
                 .setCommitId(result.getVersion().getId())
                 .setName(result.getVersion().getName())
                 .setAdded(result.getAdded())

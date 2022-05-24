@@ -312,7 +312,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
             } else if (vcResponseMsg.hasCommitResponse()) {
                 var commitResponse = vcResponseMsg.getCommitResponse();
                 var commitResult = new VersionCreationResult();
-                commitResult.setVersion(new EntityVersion(commitResponse.getCommitId(), commitResponse.getName()));
+                commitResult.setVersion(new EntityVersion(commitResponse.getTs(), commitResponse.getCommitId(), commitResponse.getName()));
                 commitResult.setAdded(commitResponse.getAdded());
                 commitResult.setRemoved(commitResponse.getRemoved());
                 commitResult.setModified(commitResponse.getModified());
@@ -344,7 +344,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     }
 
     private EntityVersion getEntityVersion(TransportProtos.EntityVersionProto proto) {
-        return new EntityVersion(proto.getId(), proto.getName());
+        return new EntityVersion(proto.getTs(), proto.getId(), proto.getName());
     }
 
     private VersionedEntityInfo getVersionedEntityInfo(TransportProtos.VersionedEntityInfoProto proto) {
