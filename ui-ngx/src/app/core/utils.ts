@@ -313,6 +313,10 @@ export function deepClone<T>(target: T, ignoreFields?: string[]): T {
   return target;
 }
 
+export function extractType<T extends object>(target: any, keysOfProps: (keyof T)[]): T {
+  return _.pick(target, keysOfProps);
+}
+
 export function isEqual(a: any, b: any): boolean {
   return _.isEqual(a, b);
 }

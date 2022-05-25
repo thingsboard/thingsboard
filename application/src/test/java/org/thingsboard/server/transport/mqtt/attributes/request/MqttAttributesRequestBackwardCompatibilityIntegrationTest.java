@@ -85,7 +85,6 @@ public class MqttAttributesRequestBackwardCompatibilityIntegrationTest extends A
     @Test
     public void testRequestAttributesValuesFromTheServerGatewayWithEnabledJsonCompatibilityAndJsonDownlinks() throws Exception {
         MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
-                .deviceName("Test Request attribute values from the server proto")
                 .gatewayName("Gateway Test Request attribute values from the server proto")
                 .transportPayloadType(TransportPayloadType.PROTOBUF)
                 .enableCompatibilityWithJsonPayloadFormat(true)
@@ -99,7 +98,6 @@ public class MqttAttributesRequestBackwardCompatibilityIntegrationTest extends A
     public void testRequestAttributesValuesFromTheServerOnShortJsonTopicWithEnabledJsonCompatibilityAndJsonDownlinks() throws Exception {
         MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
                 .deviceName("Test Request attribute values from the server proto")
-                .gatewayName("Gateway Test Request attribute values from the server proto")
                 .transportPayloadType(TransportPayloadType.PROTOBUF)
                 .enableCompatibilityWithJsonPayloadFormat(true)
                 .useJsonPayloadFormatForDefaultDownlinkTopics(true)

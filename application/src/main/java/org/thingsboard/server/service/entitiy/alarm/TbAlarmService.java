@@ -21,11 +21,11 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface TbAlarmService {
 
-    Alarm save (Alarm alarm, SecurityUser user) throws ThingsboardException;
+    Alarm save(Alarm entity, SecurityUser user) throws ThingsboardException;
 
-    void ack (Alarm alarm, SecurityUser user) throws ThingsboardException;
+    void ack(Alarm alarm, SecurityUser user) throws ThingsboardException;
 
-    void clear (Alarm alarm, SecurityUser user) throws ThingsboardException;
+    void clear(Alarm alarm, SecurityUser user) throws ThingsboardException;
 
-    Boolean delete (Alarm alarm, SecurityUser user) throws ThingsboardException;
+    Boolean delete(Alarm alarm, SecurityUser user) throws ThingsboardException;
 }

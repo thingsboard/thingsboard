@@ -23,7 +23,6 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.cache.EntitiesCacheManager;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.edge.EdgeDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -39,18 +38,14 @@ public class EdgeDataValidator extends DataValidator<Edge> {
     private final EdgeDao edgeDao;
     private final TenantDao tenantDao;
     private final CustomerDao customerDao;
-    private final EntitiesCacheManager cacheManager;
 
     @Override
     protected void validateCreate(TenantId tenantId, Edge edge) {
     }
 
     @Override
-    protected void validateUpdate(TenantId tenantId, Edge edge) {
-        Edge old = edgeDao.findById(edge.getTenantId(), edge.getId().getId());
-        if (!old.getName().equals(edge.getName())) {
-            cacheManager.removeEdgeFromCacheByName(tenantId, old.getName());
-        }
+    protected Edge validateUpdate(TenantId tenantId, Edge edge) {
+        return edgeDao.findById(edge.getTenantId(), edge.getId().getId());
     }
 
     @Override

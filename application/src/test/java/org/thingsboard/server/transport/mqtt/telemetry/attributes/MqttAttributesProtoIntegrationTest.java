@@ -25,7 +25,6 @@ import org.junit.Test;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
-import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -38,6 +37,9 @@ import java.util.List;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_ATTRIBUTES_SHORT_JSON_TOPIC;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_ATTRIBUTES_SHORT_PROTO_TOPIC;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_ATTRIBUTES_SHORT_TOPIC;
 
 @Slf4j
 @DaoSqlTest
@@ -122,7 +124,7 @@ public class MqttAttributesProtoIntegrationTest extends MqttAttributesIntegratio
                 .build();
         processBeforeTest(configProperties);
         DynamicMessage postAttributesMsg = getDefaultDynamicMessage();
-        processAttributesTest(MqttTopics.DEVICE_ATTRIBUTES_SHORT_TOPIC, Arrays.asList("key1", "key2", "key3", "key4", "key5"), postAttributesMsg.toByteArray(), false);
+        processAttributesTest(DEVICE_ATTRIBUTES_SHORT_TOPIC, Arrays.asList("key1", "key2", "key3", "key4", "key5"), postAttributesMsg.toByteArray(), false);
     }
 
     @Test
@@ -133,7 +135,7 @@ public class MqttAttributesProtoIntegrationTest extends MqttAttributesIntegratio
                 .attributesTopicFilter(POST_DATA_ATTRIBUTES_TOPIC)
                 .build();
         processBeforeTest(configProperties);
-        processJsonPayloadAttributesTest(MqttTopics.DEVICE_ATTRIBUTES_SHORT_JSON_TOPIC, Arrays.asList("key1", "key2", "key3", "key4", "key5"), PAYLOAD_VALUES_STR.getBytes());
+        processJsonPayloadAttributesTest(DEVICE_ATTRIBUTES_SHORT_JSON_TOPIC, Arrays.asList("key1", "key2", "key3", "key4", "key5"), PAYLOAD_VALUES_STR.getBytes());
     }
 
     @Test
@@ -145,7 +147,7 @@ public class MqttAttributesProtoIntegrationTest extends MqttAttributesIntegratio
                 .build();
         processBeforeTest(configProperties);
         DynamicMessage postAttributesMsg = getDefaultDynamicMessage();
-        processAttributesTest(MqttTopics.DEVICE_ATTRIBUTES_SHORT_PROTO_TOPIC, Arrays.asList("key1", "key2", "key3", "key4", "key5"), postAttributesMsg.toByteArray(), false);
+        processAttributesTest(DEVICE_ATTRIBUTES_SHORT_PROTO_TOPIC, Arrays.asList("key1", "key2", "key3", "key4", "key5"), postAttributesMsg.toByteArray(), false);
     }
 
     @Test

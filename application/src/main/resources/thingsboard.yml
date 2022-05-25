@@ -387,8 +387,6 @@ cache:
   attributes:
     # make sure that if cache.type is 'redis' and cache.attributes.enabled is 'true' that you change 'maxmemory-policy' Redis config property to 'allkeys-lru', 'allkeys-lfu' or 'allkeys-random'
     enabled: "${CACHE_ATTRIBUTES_ENABLED:true}"
-
-caffeine:
   specs:
     relations:
       timeToLiveInMinutes: "${CACHE_SPECS_RELATIONS_TTL:1440}"
@@ -475,6 +473,8 @@ redis:
     maxWaitMills: "${REDIS_POOL_CONFIG_MAX_WAIT_MS:60000}"
     numberTestsPerEvictionRun: "${REDIS_POOL_CONFIG_NUMBER_TESTS_PER_EVICTION_RUN:3}"
     blockWhenExhausted: "${REDIS_POOL_CONFIG_BLOCK_WHEN_EXHAUSTED:true}"
+  # TTL for short-living SET commands that are used to replace DEL in order to enable transaction support
+  evictTtlInMs: "${REDIS_EVICT_TTL_MS:60000}"
 
 # Check new version updates parameters
 updates:
