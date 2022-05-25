@@ -39,7 +39,6 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
-import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HomeDashboard;
 import org.thingsboard.server.common.data.HomeDashboardInfo;
 import org.thingsboard.server.common.data.Tenant;
@@ -182,9 +181,9 @@ public class DashboardController extends BaseController {
     public Dashboard saveDashboard(
             @ApiParam(value = "A JSON value representing the dashboard.")
             @RequestBody Dashboard dashboard) throws ThingsboardException {
-        dashboard.setTenantId(getCurrentUser().getTenantId());
+        dashboard.setTenantId(getTenantId());
         checkEntity(dashboard.getId(), dashboard, Resource.DASHBOARD);
-        return tbDashboardService.save(dashboard, getCurrentUser());
+        return tbDashboardService.save(getTenantId(), null, dashboard, getCurrentUser());
     }
 
     @ApiOperation(value = "Delete the Dashboard (deleteDashboard)",
@@ -198,7 +197,7 @@ public class DashboardController extends BaseController {
         checkParameter(DASHBOARD_ID, strDashboardId);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
         Dashboard dashboard = checkDashboardId(dashboardId, Operation.DELETE);
-        tbDashboardService.delete(dashboard, getCurrentUser());
+        tbDashboardService.delete(getTenantId(), null, dashboard, getCurrentUser());
     }
 
     @ApiOperation(value = "Assign the Dashboard (assignDashboardToCustomer)",

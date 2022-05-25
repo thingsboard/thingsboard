@@ -204,7 +204,7 @@ public class DeviceProfileController extends BaseController {
 
         checkEntity(deviceProfile.getId(), deviceProfile, Resource.DEVICE_PROFILE);
 
-        return tbDeviceProfileService.save(deviceProfile, getCurrentUser());
+        return tbDeviceProfileService.save(getTenantId(), getCurrentUser().getCustomerId(), deviceProfile, getCurrentUser());
     }
 
     @ApiOperation(value = "Delete device profile (deleteDeviceProfile)",
@@ -220,7 +220,7 @@ public class DeviceProfileController extends BaseController {
         checkParameter(DEVICE_PROFILE_ID, strDeviceProfileId);
         DeviceProfileId deviceProfileId = new DeviceProfileId(toUUID(strDeviceProfileId));
         DeviceProfile deviceProfile = checkDeviceProfileId(deviceProfileId, Operation.DELETE);
-        tbDeviceProfileService.delete(deviceProfile, getCurrentUser());
+        tbDeviceProfileService.delete(getTenantId(), getCurrentUser().getCustomerId(), deviceProfile, getCurrentUser());
      }
 
     @ApiOperation(value = "Make Device Profile Default (setDefaultDeviceProfile)",
@@ -236,7 +236,7 @@ public class DeviceProfileController extends BaseController {
         DeviceProfileId deviceProfileId = new DeviceProfileId(toUUID(strDeviceProfileId));
         DeviceProfile deviceProfile = checkDeviceProfileId(deviceProfileId, Operation.WRITE);
         DeviceProfile previousDefaultDeviceProfile = deviceProfileService.findDefaultDeviceProfile(getTenantId());
-        return tbDeviceProfileService.setDefaultDeviceProfile(deviceProfile, previousDefaultDeviceProfile, getCurrentUser());
+        return tbDeviceProfileService.setDefaultDeviceProfile(null, deviceProfile, previousDefaultDeviceProfile, getCurrentUser());
     }
 
     @ApiOperation(value = "Get Device Profiles (getDeviceProfiles)",

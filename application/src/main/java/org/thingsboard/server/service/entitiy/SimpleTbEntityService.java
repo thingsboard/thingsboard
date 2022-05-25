@@ -16,12 +16,14 @@
 package org.thingsboard.server.service.entitiy;
 
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface SimpleTbEntityService<T> {
 
-   T save(T entity, SecurityUser user) throws ThingsboardException;
+   T save(TenantId tenantId, CustomerId customerId, T entity, SecurityUser user) throws ThingsboardException;
 
-   void  delete (T entity, SecurityUser user) throws ThingsboardException;
+   void  delete (TenantId tenantId, CustomerId customerId, T entity, SecurityUser user) throws ThingsboardException;
 
 }

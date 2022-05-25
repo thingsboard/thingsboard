@@ -43,31 +43,29 @@ import java.util.Set;
 public class DefaultTbDashboardService extends AbstractTbEntityService implements TbDashboardService {
 
     @Override
-    public Dashboard save(Dashboard dashboard, SecurityUser user) throws ThingsboardException {
+    public Dashboard save(TenantId tenantId, CustomerId customerId, Dashboard dashboard, SecurityUser user) throws ThingsboardException {
         ActionType actionType = dashboard.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
-        TenantId tenantId = dashboard.getTenantId();
         try {
             Dashboard savedDashboard = checkNotNull(dashboardService.saveDashboard(dashboard));
             notificationEntityService.notifyCreateOrUpdateEntity(tenantId, savedDashboard.getId(), savedDashboard,
-                    null, actionType, user);
+                    customerId, actionType, user);
             return savedDashboard;
         } catch (Exception e) {
-            notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.DASHBOARD), dashboard, null, actionType, user, e);
+            notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.DASHBOARD), dashboard, customerId, actionType, user, e);
             throw handleException(e);
         }
     }
 
     @Override
-    public void delete(Dashboard dashboard, SecurityUser user) throws ThingsboardException {
-        TenantId tenantId = dashboard.getTenantId();
+    public void delete(TenantId tenantId, CustomerId customerId, Dashboard dashboard, SecurityUser user) throws ThingsboardException {
         DashboardId dashboardId = dashboard.getId();
         try {
             List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, dashboardId);
             dashboardService.deleteDashboard(tenantId, dashboardId);
-            notificationEntityService.notifyDeleteEntity(tenantId, dashboardId, dashboard, user.getCustomerId(),
+            notificationEntityService.notifyDeleteEntity(tenantId, dashboardId, dashboard, customerId,
                     ActionType.DELETED, relatedEdgeIds, user, dashboardId.toString());
         } catch (Exception e) {
-            notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.DASHBOARD), null, null,
+            notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.DASHBOARD), null, customerId,
                     ActionType.DELETED, user, e, dashboardId.toString());
             throw handleException(e);
         }

@@ -35,11 +35,12 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 @Slf4j
 public class DefaultTbEntityRelationService extends AbstractTbEntityService implements TbEntityRelationService {
     @Override
-    public void save(TenantId tenantId, CustomerId customerId, EntityRelation relation, SecurityUser user) throws ThingsboardException {
+    public EntityRelation save(TenantId tenantId, CustomerId customerId, EntityRelation relation, SecurityUser user) throws ThingsboardException {
         try {
             relationService.saveRelation(tenantId, relation);
             notificationEntityService.notifyCreateOrUpdateOrDeleteRelation (tenantId, customerId,
                     relation, user, ActionType.RELATION_ADD_OR_UPDATE, null, relation);
+            return relation;
         } catch (Exception e) {
             notificationEntityService.notifyCreateOrUpdateOrDeleteRelation (tenantId, customerId,
                     relation, user, ActionType.RELATION_ADD_OR_UPDATE, e, relation);
