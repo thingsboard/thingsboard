@@ -13,33 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host ::ng-deep {
-  .mat-checkbox{
-    &.hinted-checkbox {
-      .mat-checkbox-inner-container {
-        margin-top: 4px;
-      }
-    }
 
-    .mat-checkbox-layout{
-      white-space: normal;
+::ng-deep {
+  .queue-option {
+    .mat-option-text {
+      display: inline;
     }
-  }
-  .fields-group {
-    padding: 0 16px 8px;
-    margin-bottom: 10px;
-    border: 1px groove rgba(0, 0, 0, .25);
-    border-radius: 4px;
-    legend {
-      color: rgba(0, 0, 0, .7);
-      width: fit-content;
+    .queue-option-description {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
-  }
-
-  .mat-expansion-panel-header {
-    height: 48px;
-  }
-  .expansion-panel-block {
-    padding-bottom: 16px;
   }
 }
