@@ -310,31 +310,30 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     }
 
     @Override
-    public EntitiesVersionControlSettings saveVersionControlSettings(TenantId tenantId, EntitiesVersionControlSettings versionControlSettings) {
-        versionControlSettings = this.vcSettingsService.restore(tenantId, versionControlSettings);
+    public ListenableFuture<EntitiesVersionControlSettings> saveVersionControlSettings(TenantId tenantId, EntitiesVersionControlSettings versionControlSettings) {
+        var restoredSettings = this.vcSettingsService.restore(tenantId, versionControlSettings);
         try {
-            //TODO: ashvayka: replace future.get with deferred result. Don't forget to call when tenant is deleted.
-            gitServiceQueue.initRepository(tenantId, versionControlSettings).get();
+            var future = gitServiceQueue.initRepository(tenantId, restoredSettings);
+            return Futures.transform(future, f -> vcSettingsService.save(tenantId, restoredSettings), MoreExecutors.directExecutor());
         } catch (Exception e) {
             throw new RuntimeException("Failed to init repository!", e);
         }
-        return vcSettingsService.save(tenantId, versionControlSettings);
     }
 
     @Override
-    public void deleteVersionControlSettings(TenantId tenantId) throws Exception {
+    public ListenableFuture<Void> deleteVersionControlSettings(TenantId tenantId) throws Exception {
         if (vcSettingsService.delete(tenantId)) {
-            //TODO: ashvayka: replace future.get with deferred result. Don't forget to call when tenant is deleted.
-            gitServiceQueue.clearRepository(tenantId).get();
+            return gitServiceQueue.clearRepository(tenantId);
+        } else {
+            return Futures.immediateFuture(null);
         }
     }
 
     @Override
-    public void checkVersionControlAccess(TenantId tenantId, EntitiesVersionControlSettings settings) throws ThingsboardException {
+    public ListenableFuture<Void> checkVersionControlAccess(TenantId tenantId, EntitiesVersionControlSettings settings) throws ThingsboardException {
         settings = this.vcSettingsService.restore(tenantId, settings);
         try {
-            //TODO: ashvayka: replace future.get with deferred result.
-            gitServiceQueue.testRepository(tenantId, settings).get();
+            return gitServiceQueue.testRepository(tenantId, settings);
         } catch (Exception e) {
             throw new ThingsboardException(String.format("Unable to access repository: %s", getCauseMessage(e)),
                     ThingsboardErrorCode.GENERAL);
