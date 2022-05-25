@@ -724,6 +724,8 @@ message ListVersionsRequestMsg {
   int64 entityIdLSB = 4;
   int32 pageSize = 5;
   int32 page = 6;
+  string sortProperty = 7;
+  string sortDirection = 8;
 }
 
 message EntityVersionProto {

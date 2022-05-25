@@ -41,6 +41,7 @@ import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { BranchAutocompleteComponent } from '@shared/components/vc/branch-autocomplete.component';
+import { isNotEmptyStr } from '@core/utils';
 
 @Component({
   selector: 'tb-entity-versions-table',
@@ -125,10 +126,12 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
   }
 
   branchChanged(newBranch: string) {
-    this.branch = newBranch;
-    this.paginator.pageIndex = 0;
-    if (this.activeValue) {
-      this.updateData();
+    if (isNotEmptyStr(newBranch) && this.branch !== newBranch) {
+      this.branch = newBranch;
+      this.paginator.pageIndex = 0;
+      if (this.activeValue) {
+        this.updateData();
+      }
     }
   }
 
@@ -151,8 +154,23 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
     }
   }
 
+  versionIdContent(entityVersion: EntityVersion): string {
+    let versionId = entityVersion.id;
+    if (versionId.length > 7) {
+      versionId = versionId.slice(0, 7);
+    }
+    return versionId;
+  }
+
   private initFromDefaultBranch() {
-    this.branchAutocompleteComponent.selectDefaultBranchIfNeeded(false, true);
+    if (this.branchAutocompleteComponent.isDefaultBranchSelected()) {
+      this.paginator.pageIndex = 0;
+      if (this.activeValue) {
+        this.updateData();
+      }
+    } else {
+      this.branchAutocompleteComponent.selectDefaultBranchIfNeeded(true);
+    }
   }
 
   private updateData() {
@@ -164,7 +182,6 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
   }
 
   private resetSortAndFilter(update: boolean) {
-    this.branch = null;
     this.pageLink.textSearch = null;
     if (this.viewsInited) {
       this.paginator.pageIndex = 0;
@@ -185,6 +202,8 @@ class EntityVersionsDatasource implements DataSource<EntityVersion> {
 
   public pageData$ = this.pageDataSubject.asObservable();
 
+  public dataLoading = true;
+
   constructor(private entitiesVersionControlService: EntitiesVersionControlService) {}
 
   connect(collectionViewer: CollectionViewer): Observable<EntityVersion[] | ReadonlyArray<EntityVersion>> {
@@ -199,6 +218,7 @@ class EntityVersionsDatasource implements DataSource<EntityVersion> {
   loadEntityVersions(singleEntityMode: boolean,
                      branch: string, externalEntityId: EntityId,
                      pageLink: PageLink): Observable<PageData<EntityVersion>> {
+    this.dataLoading = true;
     const result = new ReplaySubject<PageData<EntityVersion>>();
     this.fetchEntityVersions(singleEntityMode, branch, externalEntityId, pageLink).pipe(
       catchError(() => of(emptyPageData<EntityVersion>())),
@@ -207,6 +227,7 @@ class EntityVersionsDatasource implements DataSource<EntityVersion> {
         this.entityVersionsSubject.next(pageData.data);
         this.pageDataSubject.next(pageData);
         result.next(pageData);
+        this.dataLoading = false;
       }
     );
     return result;
