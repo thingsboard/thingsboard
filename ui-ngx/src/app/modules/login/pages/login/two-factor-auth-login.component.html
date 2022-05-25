@@ -42,11 +42,11 @@
               <mat-form-field class="mat-block" fxFlex floatLabel="always" hideRequiredMarker>
                 <mat-label></mat-label>
                 <input matInput formControlName="verificationCode"
-                       required maxlength="6" type="text"
-                       inputmode="numeric" pattern="[0-9]*"
+                       required [maxlength]="maxLengthInput" type="text"
+                       [attr.inputmode]="inputMode" [pattern]="pattern"
                        autocomplete="off"
-                       placeholder="{{ 'security.2fa.dialog.verification-code' | translate }}"/>
-                <button *ngIf="selectedProvider !== twoFactorAuthProvider.TOTP"
+                       placeholder="{{ providersData.get(selectedProvider).placeholder | translate }}"/>
+                <button *ngIf="showResendButton"
                         mat-button matSuffix
                         (click)="sendCode($event)"
                         [disabled]="disabledResendButton"
@@ -56,10 +56,10 @@
                 <mat-error *ngIf="verificationForm.get('verificationCode').invalid" style="margin-bottom: 8px">
                   {{ 'security.2fa.dialog.verification-code-invalid' | translate }}
                 </mat-error>
-                <mat-error *ngIf="verificationForm.get('verificationCode').invalid && selectedProvider !== twoFactorAuthProvider.TOTP && countDownTime" class="timer">
+                <mat-error *ngIf="verificationForm.get('verificationCode').invalid && showResendButton && countDownTime" class="timer">
                   {{ 'login.resend-code-wait' | translate : {time: countDownTime} }}
                 </mat-error>
-                <mat-hint *ngIf="selectedProvider !== twoFactorAuthProvider.TOTP && countDownTime" class="timer">
+                <mat-hint *ngIf="showResendButton && countDownTime" class="timer">
                   {{ 'login.resend-code-wait' | translate : {time: countDownTime} }}
                 </mat-hint>
               </mat-form-field>

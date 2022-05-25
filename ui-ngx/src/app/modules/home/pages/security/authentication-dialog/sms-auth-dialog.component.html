@@ -82,7 +82,7 @@
                   type="submit"
                   color="primary"
                   [disabled]="(isLoading$ | async) || smsVerificationForm.invalid">
-            {{ 'security.2fa.dialog.activate' | translate }}
+            {{ 'action.activate' | translate }}
           </button>
         </div>
       </form>
@@ -96,8 +96,8 @@
           <button mat-raised-button
                   type="button"
                   color="primary"
-                  [mat-dialog-close]="true">
-            {{ 'import.stepper-text.done' | translate }}
+                  (click)="closeDialog()">
+            {{ 'action.done' | translate }}
           </button>
         </div>
       </div>

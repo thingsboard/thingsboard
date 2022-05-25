@@ -22,7 +22,11 @@ import { Router } from '@angular/router';
 import { MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TwoFactorAuthenticationService } from '@core/http/two-factor-authentication.service';
-import { TwoFactorAuthAccountConfig, TwoFactorAuthProviderType } from '@shared/models/two-factor-auth.models';
+import {
+  AccountTwoFaSettings,
+  TwoFactorAuthAccountConfig,
+  TwoFactorAuthProviderType
+} from '@shared/models/two-factor-auth.models';
 import { phoneNumberPattern } from '@shared/models/settings.models';
 import { MatStepper } from '@angular/material/stepper';
 
@@ -34,6 +38,7 @@ import { MatStepper } from '@angular/material/stepper';
 export class SMSAuthDialogComponent extends DialogComponent<SMSAuthDialogComponent> {
 
   private authAccountConfig: TwoFactorAuthAccountConfig;
+  private config: AccountTwoFaSettings;
 
   phoneNumberPattern = phoneNumberPattern;
 
@@ -82,9 +87,10 @@ export class SMSAuthDialogComponent extends DialogComponent<SMSAuthDialogCompone
       case 1:
         if (this.smsVerificationForm.valid) {
           this.twoFaService.verifyAndSaveTwoFaAccountConfig(this.authAccountConfig,
-            this.smsVerificationForm.get('verificationCode').value).subscribe(() => {
-            this.stepper.next();
-          });
+            this.smsVerificationForm.get('verificationCode').value).subscribe((config) => {
+              this.config = config;
+              this.stepper.next();
+            });
         } else {
           this.showFormErrors(this.smsVerificationForm);
         }
@@ -93,7 +99,7 @@ export class SMSAuthDialogComponent extends DialogComponent<SMSAuthDialogCompone
   }
 
   closeDialog() {
-    return this.dialogRef.close(this.stepper.selectedIndex > 1);
+    return this.dialogRef.close(this.config);
   }
 
   private showFormErrors(form: FormGroup) {

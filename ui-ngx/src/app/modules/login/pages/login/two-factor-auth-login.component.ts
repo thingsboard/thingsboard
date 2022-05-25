@@ -41,14 +41,18 @@ export class TwoFactorAuthLoginComponent extends PageComponent implements OnInit
   private timer: Subscription;
   private minVerificationPeriod = 0;
 
+  showResendButton = false;
   selectedProvider: TwoFactorAuthProviderType;
-  twoFactorAuthProvider = TwoFactorAuthProviderType;
   allowProviders: TwoFactorAuthProviderType[] = [];
 
   providersData = twoFactorAuthProvidersLoginData;
   providerDescription = '';
   disabledResendButton = true;
   countDownTime = 0;
+
+  maxLengthInput = 6;
+  inputMode = 'numeric';
+  pattern = '[0-9]*';
 
   verificationForm = this.fb.group({
     verificationCode: ['', [
@@ -84,6 +88,7 @@ export class TwoFactorAuthLoginComponent extends PageComponent implements OnInit
     });
     if (this.selectedProvider !== TwoFactorAuthProviderType.TOTP) {
       this.sendCode();
+      this.showResendButton = true;
     }
     this.timer = interval(1000).subscribe(() => this.updatedTime());
   }
@@ -104,16 +109,40 @@ export class TwoFactorAuthLoginComponent extends PageComponent implements OnInit
   selectProvider(type: TwoFactorAuthProviderType) {
     this.prevProvider = type === null ? this.selectedProvider : null;
     this.selectedProvider = type;
+    this.showResendButton = false;
     if (type !== null) {
       this.verificationForm.get('verificationCode').reset();
       const providerConfig = this.providersInfo.find(config => config.type === type);
       this.providerDescription = this.translate.instant(this.providersData.get(providerConfig.type).description, {
         contact: providerConfig.contact
       });
-      this.minVerificationPeriod = providerConfig?.minVerificationCodeSendPeriod || 30;
-      if (type !== TwoFactorAuthProviderType.TOTP) {
+      if (type !== TwoFactorAuthProviderType.TOTP && type !== TwoFactorAuthProviderType.BACKUP_CODE) {
         this.sendCode();
+        this.showResendButton = true;
+        this.minVerificationPeriod = providerConfig?.minVerificationCodeSendPeriod || 30;
       }
+      if (type === TwoFactorAuthProviderType.BACKUP_CODE) {
+        this.verificationForm.get('verificationCode').setValidators([
+          Validators.required,
+          Validators.minLength(8),
+          Validators.maxLength(8),
+          Validators.pattern(/^[\dabcdef]*$/)
+        ]);
+        this.maxLengthInput = 8;
+        this.inputMode = 'text';
+        this.pattern = '[0-9abcdef]*';
+      } else {
+        this.verificationForm.get('verificationCode').setValidators([
+          Validators.required,
+          Validators.minLength(6),
+          Validators.maxLength(6),
+          Validators.pattern(/^\d*$/)
+        ]);
+        this.maxLengthInput = 6;
+        this.inputMode = 'numeric';
+        this.pattern = '[0-9]*';
+      }
+      this.verificationForm.get('verificationCode').updateValueAndValidity({emitEvent: false});
     }
   }
 

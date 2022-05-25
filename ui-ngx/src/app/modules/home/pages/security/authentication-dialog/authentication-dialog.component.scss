@@ -30,6 +30,13 @@
     &:not(:first-of-type) {
       margin: 0 0 8px;
     }
+    &.description {
+      margin: 0;
+      color: rgba(0, 0, 0, 0.54);
+      &:last-of-type {
+        margin-bottom: 24px;
+      }
+    }
   }
 
   .input-container {
@@ -67,6 +74,23 @@
     letter-spacing: 0.25px;
     color: rgba(0, 0, 0, 0.87);
     margin-bottom: 0;
+  }
+
+  .backup-code {
+    max-width: 500px;
+    .container {
+      max-width: 500px;
+      margin: 40px 0 24px;
+      .code {
+        letter-spacing: 0.25px;
+        padding: 0 30px;
+        margin-bottom: 16px;
+        font-family: Roboto Mono, "Helvetica Neue", monospace;
+        &.even {
+          text-align: right;
+        }
+      }
+    }
   }
 
   & ::ng-deep {

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { Store } from '@ngrx/store';
@@ -22,6 +22,7 @@ import { AppState } from '@core/core.state';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TwoFactorAuthenticationService } from '@core/http/two-factor-authentication.service';
 import {
+  twoFactorAuthProvidersData,
   TwoFactorAuthProviderType,
   TwoFactorAuthSettings,
   TwoFactorAuthSettingsForm
@@ -29,7 +30,6 @@ import {
 import { deepClone, isNotEmptyStr } from '@core/utils';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { MatStepper } from '@angular/material/stepper';
 import { MatExpansionPanel } from '@angular/material/expansion';
 
 @Component({
@@ -40,9 +40,11 @@ import { MatExpansionPanel } from '@angular/material/expansion';
 export class TwoFactorAuthSettingsComponent extends PageComponent implements OnInit, HasConfirmForm, OnDestroy {
 
   private readonly destroy$ = new Subject<void>();
+  private readonly posIntValidation = [Validators.required, Validators.min(1), Validators.pattern(/^\d*$/)];
 
   twoFaFormGroup: FormGroup;
   twoFactorAuthProviderType = TwoFactorAuthProviderType;
+  twoFactorAuthProvidersData = twoFactorAuthProvidersData;
 
   @ViewChildren(MatExpansionPanel) expansionPanel: QueryList<MatExpansionPanel>;
 
@@ -123,8 +125,8 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
         Validators.pattern(/^\d*$/)
       ]],
       verificationCodeCheckRateLimitEnable: [false],
-      verificationCodeCheckRateLimitNumber: ['3', [Validators.required, Validators.min(1), Validators.pattern(/^\d*$/)]],
-      verificationCodeCheckRateLimitTime: ['900', [Validators.required, Validators.min(1), Validators.pattern(/^\d*$/)]],
+      verificationCodeCheckRateLimitNumber: ['3', this.posIntValidation],
+      verificationCodeCheckRateLimitTime: ['900', this.posIntValidation],
       minVerificationCodeSendPeriod: ['30', [Validators.required, Validators.min(5), Validators.pattern(/^\d*$/)]],
       providers: this.fb.array([])
     });
@@ -154,7 +156,7 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
       providers: []
     });
     if (checkRateLimitNumber > 0) {
-      this.getByIndexPanel(3).open();
+      this.getByIndexPanel(this.providersForm.length).open();
     }
     Object.values(TwoFactorAuthProviderType).forEach((provider, index) => {
       const findIndex = allowProvidersConfig.indexOf(provider);
@@ -182,18 +184,13 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
           Validators.required,
           Validators.pattern(/\${code}/)
         ]];
-        formControlConfig.verificationCodeLifetime = [{value: 120, disabled: true}, [
-          Validators.required,
-          Validators.min(1),
-          Validators.pattern(/^\d*$/)
-        ]];
+        formControlConfig.verificationCodeLifetime = [{value: 120, disabled: true}, this.posIntValidation];
         break;
       case TwoFactorAuthProviderType.EMAIL:
-        formControlConfig.verificationCodeLifetime = [{value: 120, disabled: true}, [
-          Validators.required,
-          Validators.min(1),
-          Validators.pattern(/^\d*$/)
-        ]];
+        formControlConfig.verificationCodeLifetime = [{value: 120, disabled: true}, this.posIntValidation];
+        break;
+      case TwoFactorAuthProviderType.BACKUP_CODE:
+        formControlConfig.codesQuantity = [{value: 10, disabled: true}, this.posIntValidation];
         break;
     }
     const newProviders = this.fb.group(formControlConfig);

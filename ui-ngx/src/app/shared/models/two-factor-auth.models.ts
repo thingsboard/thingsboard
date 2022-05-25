@@ -59,7 +59,8 @@ export interface TwoFactorAuthProviderFormConfig {
 export enum TwoFactorAuthProviderType{
   TOTP = 'TOTP',
   SMS = 'SMS',
-  EMAIL = 'EMAIL'
+  EMAIL = 'EMAIL',
+  BACKUP_CODE = 'BACKUP_CODE'
 }
 
 interface GeneralTwoFactorAuthAccountConfig {
@@ -79,7 +80,13 @@ export interface EmailTwoFactorAuthAccountConfig extends GeneralTwoFactorAuthAcc
   email: string;
 }
 
-export type TwoFactorAuthAccountConfig = TotpTwoFactorAuthAccountConfig | SmsTwoFactorAuthAccountConfig | EmailTwoFactorAuthAccountConfig;
+export interface BackupCodeTwoFactorAuthAccountConfig extends GeneralTwoFactorAuthAccountConfig {
+  codesLeft: number;
+  codes?: Array<string>;
+}
+
+export type TwoFactorAuthAccountConfig = TotpTwoFactorAuthAccountConfig | SmsTwoFactorAuthAccountConfig |
+  EmailTwoFactorAuthAccountConfig | BackupCodeTwoFactorAuthAccountConfig;
 
 
 export interface AccountTwoFaSettings {
@@ -100,6 +107,7 @@ export interface TwoFactorAuthProviderData {
 
 export interface TwoFactorAuthProviderLoginData extends TwoFactorAuthProviderData {
   icon: string;
+  placeholder: string;
 }
 
 export const twoFactorAuthProvidersData = new Map<TwoFactorAuthProviderType, TwoFactorAuthProviderData>(
@@ -122,6 +130,12 @@ export const twoFactorAuthProvidersData = new Map<TwoFactorAuthProviderType, Two
         description: 'security.2fa.provider.email-description'
       }
     ],
+    [
+      TwoFactorAuthProviderType.BACKUP_CODE, {
+        name: 'security.2fa.provider.backup_code',
+        description: 'security.2fa.provider.backup-code-description'
+      }
+    ]
   ]
 );
 
@@ -129,24 +143,35 @@ export const twoFactorAuthProvidersLoginData = new Map<TwoFactorAuthProviderType
   [
     [
       TwoFactorAuthProviderType.TOTP, {
-      name: 'security.2fa.provider.totp',
-      description: 'login.totp-auth-description',
-      icon: 'mdi:cellphone-key'
-    }
+        name: 'security.2fa.provider.totp',
+        description: 'login.totp-auth-description',
+        placeholder: 'login.totp-auth-placeholder',
+        icon: 'mdi:cellphone-key'
+      }
     ],
     [
       TwoFactorAuthProviderType.SMS, {
-      name: 'security.2fa.provider.sms',
-      description: 'login.sms-auth-description',
-      icon: 'mdi:message-reply-text-outline'
-    }
+        name: 'security.2fa.provider.sms',
+        description: 'login.sms-auth-description',
+        placeholder: 'login.sms-auth-placeholder',
+        icon: 'mdi:message-reply-text-outline'
+      }
     ],
     [
       TwoFactorAuthProviderType.EMAIL, {
-      name: 'security.2fa.provider.email',
-      description: 'login.email-auth-description',
-      icon: 'mdi:email-outline'
-    }
+        name: 'security.2fa.provider.email',
+        description: 'login.email-auth-description',
+        placeholder: 'login.email-auth-placeholder',
+        icon: 'mdi:email-outline'
+      }
     ],
+    [
+      TwoFactorAuthProviderType.BACKUP_CODE, {
+        name: 'security.2fa.provider.backup_code',
+        description: 'login.backup-code-auth-description',
+        placeholder: 'login.backup-code-auth-placeholder',
+        icon: 'mdi:lock-outline'
+      }
+    ]
   ]
 );

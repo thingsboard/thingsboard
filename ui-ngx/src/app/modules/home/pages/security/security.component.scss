@@ -29,13 +29,6 @@
     @media #{$mat-gt-xl} {
       width: 45%;
     }
-    .title-container {
-      margin: 0;
-    }
-    .profile-email {
-      font-size: 16px;
-      font-weight: 400;
-    }
     .mat-subheader {
       line-height: 24px;
       color: rgba(0,0,0,0.54);
@@ -52,35 +45,12 @@
       opacity: 0.6;
       padding: 8px 0;
     }
-    .tb-home-dashboard {
-      tb-dashboard-autocomplete {
-        @media #{$mat-gt-sm} {
-          padding-right: 12px;
-        }
-
-        @media #{$mat-lt-md} {
-          padding-bottom: 12px;
-        }
-      }
-      mat-checkbox {
-        @media #{$mat-gt-sm} {
-          margin-top: 16px;
-        }
-      }
-    }
   }
 
   .description {
     color: rgba(0, 0, 0, 0.54);
     letter-spacing: 0.25px;
     margin-right: 8px;
-  }
-
-  .auth-title {
-    font-weight: 500;
-    line-height: 20px;
-    letter-spacing: 0.25px;
-    margin: 0;
   }
 
   .mat-divider-horizontal {
@@ -109,6 +79,10 @@
     }
 
     .mat-checkbox {
+      margin-top: 8px;
+    }
+
+    .mat-stroked-button {
       margin-top: 8px;
     }
   }

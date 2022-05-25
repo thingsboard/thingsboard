@@ -35,7 +35,8 @@ import {
 } from '@shared/models/two-factor-auth.models';
 import { authenticationDialogMap } from '@home/pages/security/authentication-dialog/authentication-dialog.map';
 import { takeUntil, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { Observable, of, Subject } from 'rxjs';
+import { isDefinedAndNotNull } from '@core/utils';
 
 @Component({
   selector: 'tb-security',
@@ -45,11 +46,13 @@ import { Subject } from 'rxjs';
 export class SecurityComponent extends PageComponent implements OnInit, OnDestroy {
 
   private readonly destroy$ = new Subject<void>();
+  private accountConfig: AccountTwoFaSettings;
 
   twoFactorAuth: FormGroup;
   user: User;
   allowTwoFactorProviders: TwoFactorAuthProviderType[] = [];
   providersData = twoFactorAuthProvidersData;
+  twoFactorAuthProviderType = TwoFactorAuthProviderType;
   useByDefault: TwoFactorAuthProviderType = null;
   activeSingleProvider = true;
 
@@ -94,13 +97,19 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
     this.twoFactorAuth = this.fb.group({
       TOTP: [false],
       SMS: [false],
-      EMAIL: [false]
+      EMAIL: [false],
+      BACKUP_CODE: [{value: false, disabled: true}]
     });
     this.twoFactorAuth.valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe((value: {TwoFactorAuthProviderType: boolean}) => {
-      const formActiveValue = Object.values(value).filter(item => item);
+      const formActiveValue = Object.keys(value).filter(item => value[item] && item !== TwoFactorAuthProviderType.BACKUP_CODE);
       this.activeSingleProvider = formActiveValue.length < 2;
+      if (formActiveValue.length) {
+        this.twoFactorAuth.get('BACKUP_CODE').enable({emitEvent: false});
+      } else {
+        this.twoFactorAuth.get('BACKUP_CODE').disable({emitEvent: false});
+      }
     });
   }
 
@@ -116,7 +125,8 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
   }
 
   private processTwoFactorAuthConfig(setting: AccountTwoFaSettings) {
-    const configs = setting.configs;
+    this.accountConfig = setting;
+    const configs = this.accountConfig.configs;
     Object.values(TwoFactorAuthProviderType).forEach(provider => {
       if (configs[provider]) {
         this.twoFactorAuth.get(provider).setValue(true);
@@ -171,18 +181,21 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
         }
       });
     } else {
-      const dialogData = provider === TwoFactorAuthProviderType.EMAIL ? {email: this.user.email} : {};
-      this.dialog.open(authenticationDialogMap.get(provider), {
-        disableClose: true,
-        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-        data: dialogData
-      }).afterClosed().subscribe(res => {
-        if (res) {
-          this.twoFactorAuth.get(provider).setValue(res);
-          this.useByDefault = provider;
-        }
-      });
+      this.createdNewAuthConfig(provider);
     }
+  }
+
+  private createdNewAuthConfig(provider: TwoFactorAuthProviderType) {
+    const dialogData = provider === TwoFactorAuthProviderType.EMAIL ? {email: this.user.email} : {};
+    this.dialog.open(authenticationDialogMap.get(provider), {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: dialogData
+    }).afterClosed().subscribe(res => {
+      if (isDefinedAndNotNull(res)) {
+        this.processTwoFactorAuthConfig(res);
+      }
+    });
   }
 
   changeDefaultProvider(event: MouseEvent, provider: TwoFactorAuthProviderType) {
@@ -194,5 +207,28 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
         .pipe(tap(() => this.twoFactorAuth.enable({emitEvent: false})))
         .subscribe(data => this.processTwoFactorAuthConfig(data));
     }
+  }
+
+  generateNewBackupCode() {
+    const codeLeft = this.accountConfig.configs[TwoFactorAuthProviderType.BACKUP_CODE].codesLeft;
+    let subscription: Observable<boolean>;
+    if (codeLeft) {
+      subscription = this.dialogService.confirm(
+        'Get new set of backup codes?',
+        `If you get new backup codes, ${codeLeft} remaining codes you have left will be unusable.`,
+        '',
+        'Get new codes'
+      );
+    } else {
+      subscription = of(true);
+    }
+    subscription.subscribe(res => {
+      if (res) {
+        this.twoFactorAuth.disable({emitEvent: false});
+        this.twoFaService.deleteTwoFaAccountConfig(TwoFactorAuthProviderType.BACKUP_CODE)
+          .pipe(tap(() => this.twoFactorAuth.enable({emitEvent: false})))
+          .subscribe(() => this.createdNewAuthConfig(TwoFactorAuthProviderType.BACKUP_CODE));
+      }
+    });
   }
 }

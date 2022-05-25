@@ -22,7 +22,11 @@ import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TwoFactorAuthenticationService } from '@core/http/two-factor-authentication.service';
-import { TwoFactorAuthAccountConfig, TwoFactorAuthProviderType } from '@shared/models/two-factor-auth.models';
+import {
+  AccountTwoFaSettings,
+  TwoFactorAuthAccountConfig,
+  TwoFactorAuthProviderType
+} from '@shared/models/two-factor-auth.models';
 import { MatStepper } from '@angular/material/stepper';
 
 export interface EmailAuthDialogData {
@@ -37,6 +41,7 @@ export interface EmailAuthDialogData {
 export class EmailAuthDialogComponent extends DialogComponent<EmailAuthDialogComponent> {
 
   private authAccountConfig: TwoFactorAuthAccountConfig;
+  private config: AccountTwoFaSettings;
 
   emailConfigForm: FormGroup;
   emailVerificationForm: FormGroup;
@@ -84,9 +89,10 @@ export class EmailAuthDialogComponent extends DialogComponent<EmailAuthDialogCom
       case 1:
         if (this.emailVerificationForm.valid) {
           this.twoFaService.verifyAndSaveTwoFaAccountConfig(this.authAccountConfig,
-            this.emailVerificationForm.get('verificationCode').value).subscribe(() => {
-            this.stepper.next();
-          });
+            this.emailVerificationForm.get('verificationCode').value).subscribe((config) => {
+              this.config = config;
+              this.stepper.next();
+            });
         } else {
           this.showFormErrors(this.emailVerificationForm);
         }
@@ -95,7 +101,7 @@ export class EmailAuthDialogComponent extends DialogComponent<EmailAuthDialogCom
   }
 
   closeDialog() {
-    return this.dialogRef.close(this.stepper.selectedIndex > 1);
+    return this.dialogRef.close(this.config);
   }
 
   private showFormErrors(form: FormGroup) {

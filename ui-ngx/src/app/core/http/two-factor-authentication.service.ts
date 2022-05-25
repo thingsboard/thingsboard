@@ -24,6 +24,7 @@ import {
   TwoFactorAuthProviderType,
   TwoFactorAuthSettings
 } from '@shared/models/two-factor-auth.models';
+import { isDefinedAndNotNull } from '@core/utils';
 
 @Injectable({
   providedIn: 'root'
@@ -66,10 +67,13 @@ export class TwoFactorAuthenticationService {
     return this.http.post(`/api/2fa/account/config/submit`, authConfig, defaultHttpOptionsFromConfig(config));
   }
 
-  verifyAndSaveTwoFaAccountConfig(authConfig: TwoFactorAuthAccountConfig, verificationCode: number,
+  verifyAndSaveTwoFaAccountConfig(authConfig: TwoFactorAuthAccountConfig, verificationCode?: number,
                                   config?: RequestConfig): Observable<AccountTwoFaSettings> {
-    return this.http.post<AccountTwoFaSettings>(`/api/2fa/account/config?verificationCode=${verificationCode}`,
-      authConfig, defaultHttpOptionsFromConfig(config));
+    let url = '/api/2fa/account/config';
+    if (isDefinedAndNotNull(verificationCode)) {
+      url += `?verificationCode=${verificationCode}`;
+    }
+    return this.http.post<AccountTwoFaSettings>(url, authConfig, defaultHttpOptionsFromConfig(config));
   }
 
   deleteTwoFaAccountConfig(providerType: TwoFactorAuthProviderType, config?: RequestConfig): Observable<AccountTwoFaSettings> {

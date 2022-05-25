@@ -41,7 +41,7 @@
                         (click)="toggleExtensionPanel($event, i, provider.get('enable').value)"
                         formControlName="enable">
                       </mat-slide-toggle>
-                      {{ provider.value.providerType }}
+                      {{ twoFactorAuthProvidersData.get(provider.value.providerType).name | translate }}
                     </mat-panel-title>
                   </mat-expansion-panel-header>
 
@@ -94,6 +94,19 @@
                           </mat-error>
                         </mat-form-field>
                       </div>
+                      <div *ngSwitchCase="twoFactorAuthProviderType.BACKUP_CODE">
+                        <mat-form-field fxFlex class="mat-block">
+                          <mat-label translate>admin.2fa.number-of-codes</mat-label>
+                          <input matInput formControlName="codesQuantity" type="number" step="1" min="1" required>
+                          <mat-error *ngIf="provider.get('codesQuantity').hasError('required')">
+                            {{ "admin.2fa.number-of-codes-required" | translate }}
+                          </mat-error>
+                          <mat-error *ngIf="provider.get('codesQuantity').hasError('min') ||
+                                            provider.get('codesQuantity').hasError('pattern')">
+                            {{ "admin.2fa.number-of-codes-pattern" | translate }}
+                          </mat-error>
+                        </mat-form-field>
+                      </div>
                     </ng-container>
                   </ng-template>
                 </mat-expansion-panel>
@@ -142,7 +155,7 @@
               <mat-expansion-panel class="provider">
                 <mat-expansion-panel-header>
                   <mat-panel-title fxLayoutAlign="start center">
-                    <mat-slide-toggle (click)="toggleExtensionPanel($event, 3, twoFaFormGroup.get('verificationCodeCheckRateLimitEnable').value)"
+                    <mat-slide-toggle (click)="toggleExtensionPanel($event, providersForm.length, twoFaFormGroup.get('verificationCodeCheckRateLimitEnable').value)"
                                       formControlName="verificationCodeCheckRateLimitEnable">
                     </mat-slide-toggle>
                     {{ 'admin.2fa.verification-code-check-rate-limit' | translate }}

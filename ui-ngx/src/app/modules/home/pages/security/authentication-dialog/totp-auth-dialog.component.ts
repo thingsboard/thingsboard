@@ -22,7 +22,11 @@ import { Router } from '@angular/router';
 import { MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TwoFactorAuthenticationService } from '@core/http/two-factor-authentication.service';
-import { TotpTwoFactorAuthAccountConfig, TwoFactorAuthProviderType } from '@shared/models/two-factor-auth.models';
+import {
+  AccountTwoFaSettings,
+  TotpTwoFactorAuthAccountConfig,
+  TwoFactorAuthProviderType
+} from '@shared/models/two-factor-auth.models';
 import { MatStepper } from '@angular/material/stepper';
 
 @Component({
@@ -33,6 +37,7 @@ import { MatStepper } from '@angular/material/stepper';
 export class TotpAuthDialogComponent extends DialogComponent<TotpAuthDialogComponent> {
 
   private authAccountConfig: TotpTwoFactorAuthAccountConfig;
+  private config: AccountTwoFaSettings;
 
   totpConfigForm: FormGroup;
   totpAuthURL: string;
@@ -69,7 +74,8 @@ export class TotpAuthDialogComponent extends DialogComponent<TotpAuthDialogCompo
   onSaveConfig() {
     if (this.totpConfigForm.valid) {
       this.twoFaService.verifyAndSaveTwoFaAccountConfig(this.authAccountConfig,
-        this.totpConfigForm.get('verificationCode').value).subscribe(() => {
+        this.totpConfigForm.get('verificationCode').value).subscribe((config) => {
+          this.config = config;
           this.stepper.next();
         });
     } else {
@@ -81,7 +87,7 @@ export class TotpAuthDialogComponent extends DialogComponent<TotpAuthDialogCompo
   }
 
   closeDialog() {
-    return this.dialogRef.close(this.stepper.selectedIndex > 1);
+    return this.dialogRef.close(this.config);
   }
 
 }

@@ -57,7 +57,9 @@
         "download": "Download",
         "next-with-label": "Next: {{label}}",
         "read-more": "Read more",
-        "hide": "Hide"
+        "hide": "Hide",
+        "done": "Done",
+        "print": "Print"
     },
     "aggregation": {
         "aggregation": "Aggregation",
@@ -323,6 +325,9 @@
             "number-of-checking-attempts": "Number of checking attempts",
             "number-of-checking-attempts-pattern": "Number of checking attempts must be a positive integer.",
             "number-of-checking-attempts-required": "Number of checking attempts is required.",
+            "number-of-codes": "Number of codes",
+            "number-of-codes-pattern": "Number of codes must be a positive integer.",
+            "number-of-codes-required": "Number of codes is required.",
             "provider": "Provider",
             "retry-verification-code-period": "Retry verification code period (sec)",
             "retry-verification-code-period-pattern": "Minimal period time is 5 sec",
@@ -2404,8 +2409,7 @@
             "select-file": "Select a file",
             "configuration": "Import configuration",
             "column-type": "Select columns type",
-            "creat-entities": "Creating new entities",
-            "done": "Done"
+            "creat-entities": "Creating new entities"
         },
         "message": {
             "create-entities": "{{count}} new entities were successfully created.",
@@ -2486,8 +2490,13 @@
         "resend-code-wait": "Resend code wait { time, plural, 1 {1 second} other {# seconds} }",
         "try-another-way": "Try another way",
         "totp-auth-description": "Please enter the security code from your authenticator app.",
+        "totp-auth-placeholder": "Code",
         "sms-auth-description": "A security code has been sent to your phone at {{contact}}.",
-        "email-auth-description": "A security code has been sent to your email address at {{contact}}."
+        "sms-auth-placeholder": "SMS code",
+        "email-auth-description": "A security code has been sent to your email address at {{contact}}.",
+        "email-auth-placeholder": "Email code",
+        "backup-code-auth-description": "Please enter one of your backup codes.",
+        "backup-code-auth-placeholder": "Backup code"
     },
     "markdown": {
         "copy-code": "Click to copy",
@@ -2583,17 +2592,20 @@
             "disable-2fa-provider-title": "Are you sure you want to disable {{name}}?",
             "main-2fa-method": "Use as main two-factor authentication method",
             "dialog": {
-                "activate": "Activate",
                 "activation-step-description-email": "The next time you login in, you will be prompted to enter the security code that will be sent to your email address.",
                 "activation-step-description-sms": "The next time you login in, you will be prompted to enter the security code that will be sent to the phone number.",
                 "activation-step-description-totp": "The next time you login in, you will need to provide a two-factor authentication code.",
                 "activation-step-label": "Activation",
+                "backup-code-description": "Print out the codes so you have them handy when you need to use them to log in to your account. You can use each backup code once.",
+                "backup-code-warn": "Once you leave this page, these codes cannot be shown again. Store them safely using the options below.",
+                "download-txt": "Download (txt)",
                 "email-step-description": "Enter an email to use as your authenticator.",
                 "email-step-label": "Email",
                 "enable-email-title": "Enable email authenticator",
                 "enable-sms-title": "Enable SMS authenticator",
                 "enable-totp-title": "Enable authenticator app",
                 "enter-verification-code": "Enter the 6-digit code here",
+                "get-backup-code-title": "Get backup code",
                 "next": "Next",
                 "scan-qr-code": "Scan this QR code with your verification app",
                 "send-code": "Send code",
@@ -2614,7 +2626,9 @@
                 "sms": "SMS",
                 "sms-description": "Use your phone to authenticate. We'll send you a security code via SMS message when you log in.",
                 "totp": "Authenticator app",
-                "totp-description": "Use apps like Google Authenticator, Authy, or Duo on your phone to authenticate. It will generate a security code for logging in."
+                "totp-description": "Use apps like Google Authenticator, Authy, or Duo on your phone to authenticate. It will generate a security code for logging in.",
+                "backup_code": "Backup code",
+                "backup-code-description": "These printable one-time passcodes allow you to sign in when away from your phone, like when you’re traveling."
             }
         }
     },
