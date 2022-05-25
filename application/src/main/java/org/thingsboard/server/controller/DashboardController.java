@@ -183,7 +183,7 @@ public class DashboardController extends BaseController {
             @RequestBody Dashboard dashboard) throws ThingsboardException {
         dashboard.setTenantId(getTenantId());
         checkEntity(dashboard.getId(), dashboard, Resource.DASHBOARD);
-        return tbDashboardService.save(getTenantId(), null, dashboard, getCurrentUser());
+        return tbDashboardService.save(dashboard, getCurrentUser());
     }
 
     @ApiOperation(value = "Delete the Dashboard (deleteDashboard)",
@@ -197,7 +197,7 @@ public class DashboardController extends BaseController {
         checkParameter(DASHBOARD_ID, strDashboardId);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
         Dashboard dashboard = checkDashboardId(dashboardId, Operation.DELETE);
-        tbDashboardService.delete(getTenantId(), null, dashboard, getCurrentUser());
+        tbDashboardService.delete(dashboard, getCurrentUser());
     }
 
     @ApiOperation(value = "Assign the Dashboard (assignDashboardToCustomer)",

@@ -144,9 +144,8 @@ public class CustomerController extends BaseController {
     @ResponseBody
     public Customer saveCustomer(@ApiParam(value = "A JSON value representing the customer.") @RequestBody Customer customer) throws ThingsboardException {
         customer.setTenantId(getTenantId());
-        CustomerId customerId = customer.getId();
-        checkEntity(customerId, customer, Resource.CUSTOMER);
-        return tbCustomerService.save(getTenantId(), customerId, customer, getCurrentUser());
+        checkEntity(customer.getId(), customer, Resource.CUSTOMER);
+        return tbCustomerService.save(customer, getCurrentUser());
     }
 
     @ApiOperation(value = "Delete Customer (deleteCustomer)",
@@ -162,7 +161,7 @@ public class CustomerController extends BaseController {
         CustomerId customerId = new CustomerId(toUUID(strCustomerId));
         Customer customer = checkCustomerId(customerId, Operation.DELETE);
         try {
-            tbCustomerService.delete(getTenantId(), customerId, customer, getCurrentUser());
+            tbCustomerService.delete(customer, getCurrentUser());
         } catch (Exception e) {
             throw handleException(e);
         }

@@ -17,11 +17,10 @@ package org.thingsboard.server.service.entitiy.deviceProfile;
 
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.service.entitiy.SimpleTbEntityService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface TbDeviceProfileService extends SimpleTbEntityService<DeviceProfile> {
 
-    DeviceProfile setDefaultDeviceProfile(CustomerId customerId, DeviceProfile deviceProfile, DeviceProfile previousDefaultDeviceProfile, SecurityUser user) throws ThingsboardException;
+    DeviceProfile setDefaultDeviceProfile(DeviceProfile deviceProfile, DeviceProfile previousDefaultDeviceProfile, SecurityUser user) throws ThingsboardException;
 }

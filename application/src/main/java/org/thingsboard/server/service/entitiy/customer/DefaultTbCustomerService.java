@@ -40,8 +40,10 @@ public class DefaultTbCustomerService extends AbstractTbEntityService implements
     private final TbClusterService tbClusterService;
 
     @Override
-    public Customer save(TenantId tenantId, CustomerId customerId, Customer customer, SecurityUser user) throws ThingsboardException {
+    public Customer save(Customer customer, SecurityUser user) throws ThingsboardException {
         ActionType actionType = customer.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
+        TenantId tenantId = customer.getTenantId();
+        CustomerId customerId = customer.getId();
         try {
             Customer savedCustomer = checkNotNull(customerService.saveCustomer(customer));
             notificationEntityService.notifyCreateOrUpdateEntity(tenantId, savedCustomer.getId(), savedCustomer, customerId, actionType, user);
@@ -54,7 +56,9 @@ public class DefaultTbCustomerService extends AbstractTbEntityService implements
 
 
     @Override
-    public void delete(TenantId tenantId, CustomerId customerId, Customer customer, SecurityUser user) throws ThingsboardException {
+    public void delete(Customer customer, SecurityUser user) throws ThingsboardException {
+        TenantId tenantId = customer.getTenantId();
+        CustomerId customerId = customer.getId();
         try {
             List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, customer.getId());
             customerService.deleteCustomer(tenantId, customerId);

@@ -22,7 +22,6 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
@@ -38,8 +37,9 @@ import java.util.Objects;
 @Slf4j
 public class DefaultTbDeviceProfileService extends AbstractTbEntityService implements TbDeviceProfileService {
     @Override
-    public DeviceProfile save(TenantId tenantId, CustomerId customerId, DeviceProfile deviceProfile, SecurityUser user) throws ThingsboardException {
+    public DeviceProfile save(DeviceProfile deviceProfile, SecurityUser user) throws ThingsboardException {
         ActionType actionType = deviceProfile.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
+        TenantId tenantId = deviceProfile.getTenantId();
         try {
             boolean isFirmwareChanged = false;
             boolean isSoftwareChanged = false;
@@ -61,7 +61,7 @@ public class DefaultTbDeviceProfileService extends AbstractTbEntityService imple
 
             otaPackageStateService.update(savedDeviceProfile, isFirmwareChanged, isSoftwareChanged);
 
-            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, customerId, savedDeviceProfile.getId(), savedDeviceProfile, user, actionType, null);
+            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, savedDeviceProfile.getId(), savedDeviceProfile, user, actionType, null);
             return savedDeviceProfile;
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.DEVICE_PROFILE), deviceProfile, null,
@@ -71,39 +71,40 @@ public class DefaultTbDeviceProfileService extends AbstractTbEntityService imple
     }
 
     @Override
-    public void delete(TenantId tenantId, CustomerId customerId, DeviceProfile deviceProfile, SecurityUser user) throws ThingsboardException {
+    public void delete(DeviceProfile deviceProfile, SecurityUser user) throws ThingsboardException {
         DeviceProfileId deviceProfileId = deviceProfile.getId();
+        TenantId tenantId = deviceProfile.getTenantId();
         try {
             deviceProfileService.deleteDeviceProfile(tenantId, deviceProfileId);
 
             tbClusterService.onDeviceProfileDelete(deviceProfile, null);
             tbClusterService.broadcastEntityStateChangeEvent(tenantId, deviceProfileId, ComponentLifecycleEvent.DELETED);
-            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, customerId, deviceProfileId, deviceProfile, user, ActionType.DELETED,  null, deviceProfileId.toString());
+            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, deviceProfileId, deviceProfile, user, ActionType.DELETED,  null, deviceProfileId.toString());
         } catch (Exception e) {
-            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, customerId, emptyId(EntityType.DEVICE_PROFILE), null, user, ActionType.DELETED,  e, deviceProfileId.toString());
+            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, emptyId(EntityType.DEVICE_PROFILE), null, user, ActionType.DELETED,  e, deviceProfileId.toString());
             throw handleException(e);
         }
     }
 
     @Override
-    public DeviceProfile setDefaultDeviceProfile(CustomerId customerId, DeviceProfile deviceProfile, DeviceProfile previousDefaultDeviceProfile, SecurityUser user) throws ThingsboardException {
+    public DeviceProfile setDefaultDeviceProfile(DeviceProfile deviceProfile, DeviceProfile previousDefaultDeviceProfile, SecurityUser user) throws ThingsboardException {
         TenantId tenantId = deviceProfile.getTenantId();
         try {
 
             if (deviceProfileService.setDefaultDeviceProfile(tenantId, deviceProfile.getId())) {
                 if (previousDefaultDeviceProfile != null) {
                     previousDefaultDeviceProfile = deviceProfileService.findDeviceProfileById(tenantId, previousDefaultDeviceProfile.getId());
-                    notificationEntityService.notifyEntity(tenantId, previousDefaultDeviceProfile.getId(), previousDefaultDeviceProfile, customerId,
+                    notificationEntityService.notifyEntity(tenantId, previousDefaultDeviceProfile.getId(), previousDefaultDeviceProfile, null,
                             ActionType.UPDATED, user, null);
                 }
                 deviceProfile = deviceProfileService.findDeviceProfileById(tenantId, deviceProfile.getId());
 
-                notificationEntityService.notifyEntity(tenantId, deviceProfile.getId(), deviceProfile, customerId,
+                notificationEntityService.notifyEntity(tenantId, deviceProfile.getId(), deviceProfile, null,
                         ActionType.UPDATED, user, null);
             }
             return deviceProfile;
         } catch (Exception e) {
-            notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.DEVICE_PROFILE), null, customerId,
+            notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.DEVICE_PROFILE), null, null,
                     ActionType.UPDATED, user, e, deviceProfile.getId().toString());
             throw handleException(e);
         }
