@@ -31,10 +31,12 @@
           </tb-branch-autocomplete>
         </div>
         <span fxFlex></span>
-        <button *ngIf="singleEntityMode" mat-raised-button color="primary"
+        <button *ngIf="singleEntityMode" mat-stroked-button color="primary"
+                #exportButton
                 [disabled]="(isLoading$ | async)"
-                (click)="vcExport($event)">
-          {{'version-control.export-to-git' | translate }}
+                (click)="toggleVcExport($event, exportButton)">
+          <mat-icon>update</mat-icon>
+          {{'version-control.create-version' | translate }}
         </button>
       </div>
     </mat-toolbar>

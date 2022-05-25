@@ -14,9 +14,19 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, ElementRef, forwardRef, Input, NgZone, OnInit, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  forwardRef,
+  Input,
+  NgZone,
+  OnInit,
+  ViewChild,
+  ViewEncapsulation
+} from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, map, share, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
@@ -29,12 +39,13 @@ import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autoc
 @Component({
   selector: 'tb-branch-autocomplete',
   templateUrl: './branch-autocomplete.component.html',
-  styleUrls: [],
+  styleUrls: ['./branch-autocomplete.component.scss'],
   providers: [{
     provide: NG_VALUE_ACCESSOR,
     useExisting: forwardRef(() => BranchAutocompleteComponent),
     multi: true
-  }]
+  }],
+  encapsulation: ViewEncapsulation.None
 })
 export class BranchAutocompleteComponent implements ControlValueAccessor, OnInit, AfterViewInit {
 
@@ -216,30 +227,22 @@ export class BranchAutocompleteComponent implements ControlValueAccessor, OnInit
   selectAvailableValue() {
     if (this.selectionMode) {
       const branch = this.branchFormGroup.get('branch').value;
-      let branchInfo: Observable<BranchInfo> = null;
-      if (isNotEmptyStr(branch)) {
-        branchInfo = this.getBranches().pipe(
-          map(branches => {
-            let foundBranch = branches.find(b => b.name === branch);
-            if (!foundBranch && isNotEmptyStr(this.modelValue)) {
-              foundBranch = branches.find(b => b.name === this.modelValue);
-            }
-            return foundBranch;
-          })
-        );
-      } else if (!branch) {
-        branchInfo = of(null);
-      }
-      if (branchInfo) {
-        branchInfo.subscribe((val) => {
-          if (!val && this.defaultBranch) {
-            val = this.defaultBranch;
+      this.getBranches().pipe(
+        map(branches => {
+          let foundBranch = branches.find(b => b.name === branch);
+          if (!foundBranch && isNotEmptyStr(this.modelValue)) {
+            foundBranch = branches.find(b => b.name === this.modelValue);
           }
-          this.zone.run(() => {
-            this.branchFormGroup.get('branch').patchValue(val, {emitEvent: true});
-          }, 0);
-        });
-      }
+          return foundBranch;
+        })
+      ).subscribe((val) => {
+        if (!val && this.defaultBranch) {
+          val = this.defaultBranch;
+        }
+        this.zone.run(() => {
+          this.branchFormGroup.get('branch').patchValue(val, {emitEvent: true});
+        }, 0);
+      });
     }
   }
 

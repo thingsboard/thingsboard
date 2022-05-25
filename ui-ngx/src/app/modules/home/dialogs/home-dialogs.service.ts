@@ -22,11 +22,6 @@ import {
   ImportDialogCsvComponent,
   ImportDialogCsvData
 } from '@home/components/import-export/import-dialog-csv.component';
-import { EntityId } from '@shared/models/id/entity-id';
-import {
-  VcEntityExportDialogComponent,
-  VcEntityExportDialogData
-} from '@home/components/vc/vc-entity-export-dialog.component';
 
 @Injectable()
 export class HomeDialogsService {
@@ -44,17 +39,6 @@ export class HomeDialogsService {
       case EntityType.EDGE:
         return this.openImportDialogCSV(entityType, 'edge.import', 'edge.edge-file');
     }
-  }
-
-  public exportVcEntity(entityId: EntityId): Observable<void> {
-    return this.dialog.open<VcEntityExportDialogComponent, VcEntityExportDialogData>(VcEntityExportDialogComponent,
-      {
-        disableClose: true,
-        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-        data: {
-          entityId
-        }
-      }).afterClosed();
   }
 
   private openImportDialogCSV(entityType: EntityType, importTitle: string, importFileLabel: string): Observable<boolean> {

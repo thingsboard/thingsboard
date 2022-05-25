@@ -48,12 +48,6 @@
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'vcExport')"
-          [fxShow]="!isEdit && (assetScope === 'customer' || assetScope === 'tenant')">
-    {{'version-control.export-to-git' | translate }}
-  </button>
-  <button mat-raised-button color="primary"
-          [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
           [fxShow]="!hideDelete() && !isEdit">
     {{'asset.delete' | translate }}

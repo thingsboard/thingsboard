@@ -539,13 +539,6 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
     );
   }
 
-  vcExport($event: Event, dashboard: DashboardInfo) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.homeDialogs.exportVcEntity(dashboard.id);
-  }
-
   onDashboardAction(action: EntityAction<DashboardInfo>): boolean {
     switch (action.action) {
       case 'open':
@@ -568,9 +561,6 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
         return true;
       case 'unassignFromEdge':
         this.unassignFromEdge(action.event, action.entity);
-        return true;
-      case 'vcExport':
-        this.vcExport(action.event, action.entity);
         return true;
     }
     return false;

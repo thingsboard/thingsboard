@@ -36,8 +36,11 @@
     (closed)="onPanelClosed()"
     #branchAutocomplete="matAutocomplete"
     [displayWith]="displayBranchFn">
-    <mat-option *ngFor="let branch of filteredBranches | async" [value]="branch">
+    <mat-option *ngFor="let branch of filteredBranches | async" [value]="branch" class="branch-option">
+      <mat-icon class="tb-mat-18" *ngIf="selectionMode && branch.name === modelValue">check</mat-icon>
+      <span class="check-placeholder" *ngIf="selectionMode && branch.name !== modelValue"></span>
       <span [innerHTML]="branch.name | highlight:searchText"></span>
+      <small *ngIf="branch.default"  class="default-branch">{{ 'version-control.default' | translate }}</small>
     </mat-option>
   </mat-autocomplete>
   <mat-error *ngIf="branchFormGroup.get('branch').hasError('required')">

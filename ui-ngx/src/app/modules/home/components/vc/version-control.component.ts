@@ -44,6 +44,9 @@ export class VersionControlComponent implements OnInit, HasConfirmForm {
   @Input()
   externalEntityId: EntityId;
 
+  @Input()
+  entityId: EntityId;
+
   hasVersionControl$ = this.store.pipe(select(selectHasVersionControl));
 
   constructor(private store: Store<AppState>) {

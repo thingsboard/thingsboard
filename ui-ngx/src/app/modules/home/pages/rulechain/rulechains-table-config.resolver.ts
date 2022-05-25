@@ -360,13 +360,6 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     );
   }
 
-  vcExport($event: Event, ruleChain: RuleChain) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.homeDialogs.exportVcEntity(ruleChain.id);
-  }
-
   onRuleChainAction(action: EntityAction<RuleChain>): boolean {
     switch (action.action) {
       case 'open':
@@ -389,9 +382,6 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
         return true;
       case 'unsetAutoAssignToEdge':
         this.unsetAutoAssignToEdgeRuleChain(action.event, action.entity);
-        return true;
-      case 'vcExport':
-        this.vcExport(action.event, action.entity);
         return true;
     }
     return false;

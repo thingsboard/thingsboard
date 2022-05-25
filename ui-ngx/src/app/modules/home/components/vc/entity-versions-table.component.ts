@@ -21,8 +21,8 @@ import {
   ElementRef,
   Input,
   OnDestroy,
-  OnInit,
-  ViewChild
+  OnInit, Renderer2,
+  ViewChild, ViewContainerRef
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -33,7 +33,7 @@ import { BehaviorSubject, merge, Observable, of, ReplaySubject } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { PageLink } from '@shared/models/page/page-link';
 import { catchError, map, tap } from 'rxjs/operators';
-import { EntityVersion } from '@shared/models/vc.models';
+import { EntityVersion, VersionCreationResult } from '@shared/models/vc.models';
 import { EntitiesVersionControlService } from '@core/http/entities-version-control.service';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
@@ -42,6 +42,10 @@ import { hidePageSizePixelValue } from '@shared/models/constants';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { BranchAutocompleteComponent } from '@shared/components/vc/branch-autocomplete.component';
 import { isNotEmptyStr } from '@core/utils';
+import { TbPopoverService } from '@shared/components/popover.service';
+import { EntityVersionExportComponent } from '@home/components/vc/entity-version-export.component';
+import { MatButton } from '@angular/material/button';
+import { TbPopoverComponent } from '@shared/components/popover.component';
 
 @Component({
   selector: 'tb-entity-versions-table',
@@ -67,6 +71,8 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
   externalEntityIdValue: EntityId;
 
   viewsInited = false;
+
+  vcExportPopover: TbPopoverComponent;
 
   private componentResize$: ResizeObserver;
 
@@ -94,12 +100,18 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
     }
   }
 
+  @Input()
+  entityId: EntityId;
+
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
 
   constructor(protected store: Store<AppState>,
               private entitiesVersionControlService: EntitiesVersionControlService,
+              private popoverService: TbPopoverService,
+              private renderer: Renderer2,
               private cd: ChangeDetectorRef,
+              private viewContainerRef: ViewContainerRef,
               private elementRef: ElementRef) {
     super(store);
     this.dirtyValue = !this.activeValue;
@@ -148,9 +160,35 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
     }
   }
 
-  vcExport($event: Event) {
+  toggleVcExport($event: Event, exportButton: MatButton) {
     if ($event) {
       $event.stopPropagation();
+    }
+    const trigger = exportButton._elementRef.nativeElement;
+    if (this.popoverService.hasPopover(trigger)) {
+      this.popoverService.hidePopover(trigger);
+    } else {
+      this.vcExportPopover = this.popoverService.displayPopover(trigger, this.renderer,
+        this.viewContainerRef, EntityVersionExportComponent, 'bottom', true, null,
+        {
+          branch: this.branch,
+          entityId: this.entityId,
+          onClose: (result: VersionCreationResult | null, branch: string | null) => {
+            this.vcExportPopover.hide();
+            if (result) {
+              if (this.branch !== branch) {
+                this.branchChanged(branch);
+              } else {
+                this.updateData();
+              }
+            }
+          }
+        }, {}, {}, {}, false);
+      this.vcExportPopover.tbVisibleChange.subscribe((visible: boolean) => {
+        if (!visible) {
+          this.vcExportPopover = null;
+        }
+      });
     }
   }
 
