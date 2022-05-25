@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
@@ -290,7 +291,15 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
         } else {
             path = null;
         }
-        var data = vcService.listVersions(ctx.getTenantId(), request.getBranchName(), path, new PageLink(request.getPageSize(), request.getPage()));
+        SortOrder sortOrder = null;
+        if (StringUtils.isNotEmpty(request.getSortProperty())) {
+            var direction = SortOrder.Direction.DESC;
+            if (StringUtils.isNotEmpty(request.getSortDirection())) {
+                direction = SortOrder.Direction.valueOf(request.getSortDirection());
+            }
+            sortOrder = new SortOrder(request.getSortProperty(), direction);
+        }
+        var data = vcService.listVersions(ctx.getTenantId(), request.getBranchName(), path, new PageLink(request.getPageSize(), request.getPage(), null, sortOrder));
         reply(ctx, Optional.empty(), builder ->
                 builder.setListVersionsResponse(ListVersionsResponseMsg.newBuilder()
                         .setTotalPages(data.getTotalPages())

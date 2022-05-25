@@ -281,7 +281,7 @@ public class GitRepository {
 //    }
 
     private Commit toCommit(RevCommit revCommit) {
-        return new Commit(revCommit.getCommitTime() * 1000, revCommit.getName(), revCommit.getFullMessage(), revCommit.getAuthorIdent().getName());
+        return new Commit(revCommit.getCommitTime() * 1000l, revCommit.getName(), revCommit.getFullMessage(), revCommit.getAuthorIdent().getName());
     }
 
     private RevCommit resolveCommit(String id) throws IOException {

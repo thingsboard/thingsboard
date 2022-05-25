@@ -150,6 +150,9 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
                 .setBranchName(branch)
                 .setPageSize(pageLink.getPageSize())
                 .setPage(pageLink.getPage())
+                .setSortProperty(pageLink.getSortOrder() != null ? pageLink.getSortOrder().getProperty() : null)
+                .setSortDirection(pageLink.getSortOrder() != null &&  pageLink.getSortOrder().getDirection() != null
+                        ? pageLink.getSortOrder().getDirection().name() : null)
                 .build());
     }
 
@@ -159,6 +162,9 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
                 .setBranchName(branch).setEntityType(entityType.name())
                 .setPageSize(pageLink.getPageSize())
                 .setPage(pageLink.getPage())
+                .setSortProperty(pageLink.getSortOrder() != null ? pageLink.getSortOrder().getProperty() : null)
+                .setSortDirection(pageLink.getSortOrder() != null &&  pageLink.getSortOrder().getDirection() != null
+                        ? pageLink.getSortOrder().getDirection().name() : null)
                 .build());
     }
 
@@ -171,6 +177,9 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
                 .setEntityIdLSB(entityId.getId().getLeastSignificantBits())
                 .setPageSize(pageLink.getPageSize())
                 .setPage(pageLink.getPage())
+                .setSortProperty(pageLink.getSortOrder() != null ? pageLink.getSortOrder().getProperty() : null)
+                .setSortDirection(pageLink.getSortOrder() != null &&  pageLink.getSortOrder().getDirection() != null
+                        ? pageLink.getSortOrder().getDirection().name() : null)
                 .build());
     }
 

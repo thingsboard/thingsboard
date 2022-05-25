@@ -3126,7 +3126,8 @@
         "created-time": "Created time",
         "version-id": "Version ID",
         "no-entity-versions-text": "No entity versions found",
-        "no-versions-text": "No versions found"
+        "no-versions-text": "No versions found",
+        "copy-full-version-id": "Copy full version id"
     },
     "widget": {
         "widget-library": "Widgets Library",

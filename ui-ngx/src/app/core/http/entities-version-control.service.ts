@@ -17,30 +17,63 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-utils';
-import { Observable } from 'rxjs';
+import { combineLatest, Observable, of } from 'rxjs';
 import { BranchInfo, EntityVersion, VersionCreateRequest, VersionCreationResult } from '@shared/models/vc.models';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
-import { DeviceInfo } from '@shared/models/device.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType } from '@shared/models/entity-type.models';
+import { createSelector, select, Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { selectHasVersionControl, selectIsAuthenticated, selectIsUserLoaded } from '@core/auth/auth.selectors';
+import { catchError, combineAll, tap } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
 })
 export class EntitiesVersionControlService {
 
+  branchList: Array<BranchInfo> = null;
+
   constructor(
-    private http: HttpClient
+    private http: HttpClient,
+    private store: Store<AppState>
   ) {
+
+    this.store.pipe(select(selectIsUserLoaded)).subscribe(
+      () => {
+        this.branchList = null;
+      }
+    );
   }
 
-  public listBranches(config?: RequestConfig): Observable<Array<BranchInfo>> {
-    return this.http.get<Array<BranchInfo>>('/api/entities/vc/branches', defaultHttpOptionsFromConfig(config));
+  public clearBranchList(): void {
+    this.branchList = null;
+  }
+
+  public listBranches(): Observable<Array<BranchInfo>> {
+    if (!this.branchList) {
+      return this.http.get<Array<BranchInfo>>('/api/entities/vc/branches',
+        defaultHttpOptionsFromConfig({ignoreErrors: true, ignoreLoading: false})).pipe(
+        catchError(() => of([] as Array<BranchInfo>)),
+        tap((list) => {
+          this.branchList = list;
+        })
+      );
+    } else {
+      return of(this.branchList);
+    }
   }
 
   public saveEntitiesVersion(request: VersionCreateRequest, config?: RequestConfig): Observable<VersionCreationResult> {
-    return this.http.post<VersionCreationResult>('/api/entities/vc/version', request, defaultHttpOptionsFromConfig(config));
+    return this.http.post<VersionCreationResult>('/api/entities/vc/version', request, defaultHttpOptionsFromConfig(config)).pipe(
+      tap(() => {
+        const branch = request.branch;
+        if (this.branchList && !this.branchList.find(b => b.name === branch)) {
+          this.branchList = null;
+        }
+      })
+    );
   }
 
   public listEntityVersions(pageLink: PageLink, branch: string,
