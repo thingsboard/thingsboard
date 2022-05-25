@@ -35,19 +35,17 @@ import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -61,10 +59,6 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     @Value("${vc.git.repositories-folder:${java.io.tmpdir}/repositories}")
     private String repositoriesFolder;
 
-    @Value("${vc.git.repos-poll-interval:60}")
-    private long reposPollInterval;
-
-    private ScheduledExecutorService scheduler;
     private final Map<TenantId, GitRepository> repositories = new ConcurrentHashMap<>();
 
     @PostConstruct
@@ -72,24 +66,11 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
         if (StringUtils.isEmpty(repositoriesFolder)) {
             repositoriesFolder = defaultFolder;
         }
-        scheduler = Executors.newSingleThreadScheduledExecutor();
-        scheduler.scheduleWithFixedDelay(() -> {
-            repositories.forEach((tenantId, repository) -> {
-                try {
-                    repository.fetch();
-                    log.info("Fetching remote repository for tenant {}", tenantId);
-                } catch (Exception e) {
-                    log.warn("Failed to fetch repository for tenant {}", tenantId, e);
-                }
-            });
-        }, reposPollInterval, reposPollInterval, TimeUnit.SECONDS);
     }
 
-    @PreDestroy
-    public void stop() {
-        if (scheduler != null) {
-            scheduler.shutdownNow();
-        }
+    @Override
+    public Set<TenantId> getActiveRepositoryTenants() {
+        return new HashSet<>(repositories.keySet());
     }
 
     @Override
@@ -151,6 +132,7 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     @SneakyThrows
     @Override
     public void cleanUp(PendingCommit commit) {
+        log.debug("[{}] Cleanup tenant repository started.", commit.getTenantId());
         GitRepository repository = checkRepository(commit.getTenantId());
         try {
             repository.createAndCheckoutOrphanBranch(EntityId.NULL_UUID.toString());
@@ -161,6 +143,7 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
         }
         repository.resetAndClean();
         repository.deleteLocalBranchIfExists(commit.getWorkingBranch());
+        log.debug("[{}] Cleanup tenant repository completed.", commit.getTenantId());
     }
 
     @Override
@@ -172,7 +155,9 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     public void fetch(TenantId tenantId) throws GitAPIException {
         var repository = repositories.get(tenantId);
         if (repository != null) {
+            log.debug("[{}] Fetching tenant repository.", tenantId);
             repository.fetch();
+            log.debug("[{}] Fetched tenant repository.", tenantId);
         }
     }
 
@@ -232,6 +217,7 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     @Override
     public void initRepository(TenantId tenantId, EntitiesVersionControlSettings settings) throws Exception {
         clearRepository(tenantId);
+        log.debug("[{}] Init tenant repository started.", tenantId);
         Path repositoryDirectory = Path.of(repositoriesFolder, tenantId.getId().toString());
         GitRepository repository;
         if (Files.exists(repositoryDirectory)) {
@@ -241,6 +227,7 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
         Files.createDirectories(repositoryDirectory);
         repository = GitRepository.clone(settings, repositoryDirectory.toFile());
         repositories.put(tenantId, repository);
+        log.debug("[{}] Init tenant repository completed.", tenantId);
     }
 
     @Override
@@ -253,8 +240,10 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     public void clearRepository(TenantId tenantId) throws IOException {
         GitRepository repository = repositories.get(tenantId);
         if (repository != null) {
+            log.debug("[{}] Clear tenant repository started.", tenantId);
             FileUtils.deleteDirectory(new File(repository.getDirectory()));
             repositories.remove(tenantId);
+            log.debug("[{}] Clear tenant repository completed.", tenantId);
         }
     }
 

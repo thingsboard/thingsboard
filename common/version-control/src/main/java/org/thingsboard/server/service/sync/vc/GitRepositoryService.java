@@ -26,8 +26,11 @@ import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 public interface GitRepositoryService {
+
+    Set<TenantId> getActiveRepositoryTenants();
 
     void prepareCommit(PendingCommit pendingCommit);
 

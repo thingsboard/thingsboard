@@ -13,24 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.settings;
+package org.thingsboard.server.vc.service;
 
-import lombok.Data;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+import org.thingsboard.server.queue.discovery.QueueRoutingInfo;
+import org.thingsboard.server.queue.discovery.QueueRoutingInfoService;
 
-@Lazy
-@Data
-@Component
-public class TbQueueVersionControlSettings {
+import java.util.Collections;
+import java.util.List;
 
-    @Value("${queue.vc.topic:tb_version_control}")
-    private String topic;
-
-    @Value("${queue.vc.usage-stats-topic:tb_usage_stats}")
-    private String usageStatsTopic;
-
-    @Value("${queue.vc.partitions:10}")
-    private int partitions;
+@Service
+public class VersionControlQueueRoutingInfoService implements QueueRoutingInfoService {
+    @Override
+    public List<QueueRoutingInfo> getAllQueuesRoutingInfo() {
+        return Collections.emptyList();
+    }
 }
