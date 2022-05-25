@@ -55,27 +55,6 @@ public class QueueController extends BaseController {
 
     private final TbQueueService tbQueueService;
 
-    @ApiOperation(value = "Get queue names (getTenantQueuesByServiceType)",
-            notes = "Returns a set of unique queue names based on service type. " + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/queues", params = {"serviceType"}, produces = MediaType.APPLICATION_JSON_VALUE, method = RequestMethod.GET)
-    @ResponseBody()
-    public Set<String> getTenantQueuesByServiceType(@ApiParam(value = QUEUE_SERVICE_TYPE_DESCRIPTION, allowableValues = QUEUE_SERVICE_TYPE_ALLOWABLE_VALUES)
-                                                    @RequestParam String serviceType) throws ThingsboardException {
-        checkParameter("serviceType", serviceType);
-        try {
-            ServiceType type = ServiceType.valueOf(serviceType);
-            switch (type) {
-                case TB_RULE_ENGINE:
-                    return queueService.findQueuesByTenantId(getTenantId()).stream().map(Queue::getName).collect(Collectors.toSet());
-                default:
-                    return Collections.emptySet();
-            }
-        } catch (Exception e) {
-            throw handleException(e);
-        }
-    }
-
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/queues", params = {"serviceType", "pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody

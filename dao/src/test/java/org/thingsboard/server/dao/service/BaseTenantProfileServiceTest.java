@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.service;
 
+import com.fasterxml.jackson.databind.node.NullNode;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -73,6 +74,7 @@ public abstract class BaseTenantProfileServiceTest extends AbstractServiceTest {
         mainQueueProcessingStrategy.setPauseBetweenRetries(3);
         mainQueueProcessingStrategy.setMaxPauseBetweenRetries(3);
         mainQueueConfiguration.setProcessingStrategy(mainQueueProcessingStrategy);
+        mainQueueConfiguration.setAdditionalInfo(NullNode.getInstance());
         tenantProfile.getProfileData().setQueueConfiguration(Collections.singletonList(mainQueueConfiguration));
 
         TenantProfile savedTenantProfile = tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
