@@ -433,6 +433,9 @@ cache:
     edges:
       timeToLiveInMinutes: "${CACHE_SPECS_EDGES_TTL:1440}"
       maxSize: "${CACHE_SPECS_EDGES_MAX_SIZE:10000}"
+    vcSettings:
+      timeToLiveInMinutes: "${CACHE_SPECS_VC_SETTINGS_TTL:1440}"
+      maxSize: "${CACHE_SPECS_VC_SETTINGS_MAX_SIZE:10000}"
 
 redis:
   # standalone or cluster
