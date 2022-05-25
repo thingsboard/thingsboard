@@ -188,8 +188,9 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
                     ToVersionControlServiceMsg msg = msgWrapper.getValue();
                     var ctx = new VersionControlRequestCtx(msg, msg.hasClearRepositoryRequest() ? null : getEntitiesVersionControlSettings(msg));
                     long startTs = System.currentTimeMillis();
-                    log.trace("[{}][{}] Submitting task.", ctx.getTenantId(), ctx.getRequestId());
-                    ListenableFuture<Void> future = ioThreads.get(ctx.getTenantId().hashCode() % ioPoolSize).submit(() -> processMessage(ctx, msg));
+                    log.trace("[{}][{}] RECEIVED task: {}", ctx.getTenantId(), ctx.getRequestId(), msg);
+                    int threadIdx = Math.abs(ctx.getTenantId().hashCode() % ioPoolSize);
+                    ListenableFuture<Void> future = ioThreads.get(threadIdx).submit(() -> processMessage(ctx, msg));
                     logTaskExecution(ctx, future, startTs);
                     futures.add(future);
                 }
@@ -435,13 +436,17 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
                 .setRequestIdMSB(ctx.getRequestId().getMostSignificantBits())
                 .setRequestIdLSB(ctx.getRequestId().getLeastSignificantBits());
         if (e.isPresent()) {
+            log.debug("[{}][{}] Failed to process task", ctx.getTenantId(), ctx.getRequestId(), e.get());
             builder.setError(e.get().getMessage());
-        }
-        if (enrichFunction != null) {
-            builder = enrichFunction.apply(builder);
         } else {
-            builder.setGenericResponse(TransportProtos.GenericRepositoryResponseMsg.newBuilder().build());
+            if (enrichFunction != null) {
+                builder = enrichFunction.apply(builder);
+            } else {
+                builder.setGenericResponse(TransportProtos.GenericRepositoryResponseMsg.newBuilder().build());
+            }
+            log.debug("[{}][{}] Processed task", ctx.getTenantId(), ctx.getRequestId());
         }
+
         ToCoreNotificationMsg msg = ToCoreNotificationMsg.newBuilder().setVcResponseMsg(builder).build();
         log.trace("[{}][{}] PUSHING reply: {} to: {}", ctx.getTenantId(), ctx.getRequestId(), msg, tpi);
         producer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), null);

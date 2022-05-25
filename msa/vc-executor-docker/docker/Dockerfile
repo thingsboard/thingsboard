@@ -18,6 +18,9 @@ FROM thingsboard/openjdk11
 
 COPY start-tb-vc-executor.sh ${pkg.name}.deb /tmp/
 
+RUN mkdir -p /home/thingsboard/.config/jgit
+RUN chown -R ${pkg.user}:${pkg.user} /home/thingsboard
+
 RUN chmod a+x /tmp/*.sh \
     && mv /tmp/start-tb-vc-executor.sh /usr/bin
 

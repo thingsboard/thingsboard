@@ -54,7 +54,7 @@ public class HashPartitionService implements PartitionService {
     private String coreTopic;
     @Value("${queue.core.partitions:100}")
     private Integer corePartitions;
-    @Value("${queue.vc.topic}")
+    @Value("${queue.vc.topic:tb_version_control}")
     private String vcTopic;
     @Value("${queue.vc.partitions:10}")
     private Integer vcPartitions;

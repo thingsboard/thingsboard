@@ -50,9 +50,7 @@ public interface EntitiesVersionControlService {
 
     ListenableFuture<List<VersionedEntityInfo>> listAllEntitiesAtVersion(TenantId tenantId, String branch, String versionId) throws Exception;
 
-
     ListenableFuture<List<VersionLoadResult>> loadEntitiesVersion(SecurityUser user, VersionLoadRequest request) throws Exception;
-
 
     ListenableFuture<List<String>> listBranches(TenantId tenantId) throws Exception;
 
