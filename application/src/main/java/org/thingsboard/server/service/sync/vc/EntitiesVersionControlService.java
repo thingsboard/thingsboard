@@ -36,8 +36,6 @@ import java.util.concurrent.ExecutionException;
 
 public interface EntitiesVersionControlService {
 
-    String SETTINGS_KEY = "entitiesVersionControl";
-
     ListenableFuture<VersionCreationResult> saveEntitiesVersion(SecurityUser user, VersionCreateRequest request) throws Exception;
 
     ListenableFuture<PageData<EntityVersion>> listEntityVersions(TenantId tenantId, String branch, EntityId externalId, PageLink pageLink) throws Exception;

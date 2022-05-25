@@ -25,9 +25,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
-import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.StringUtils;
@@ -36,7 +34,6 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.sync.ThrowingRunnable;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.sync.ThrowingRunnable;
@@ -46,7 +43,6 @@ import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
 import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
 import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
-import org.thingsboard.server.common.data.sync.vc.VersionControlAuthMethod;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionLoadResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
@@ -61,7 +57,6 @@ import org.thingsboard.server.common.data.sync.vc.request.load.SingleEntityVersi
 import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadConfig;
 import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadRequest;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -86,10 +81,10 @@ import java.util.stream.Collectors;
 @Slf4j
 public class DefaultEntitiesVersionControlService implements EntitiesVersionControlService {
 
+    private final TbVersionControlSettingsService vcSettingsService;
     private final GitVersionControlQueueService gitServiceQueue;
     private final EntitiesExportImportService exportImportService;
     private final ExportableEntitiesService exportableEntitiesService;
-    private final AdminSettingsService adminSettingsService;
     private final TransactionTemplate transactionTemplate;
 
     private ListeningExecutorService executor;
@@ -311,54 +306,24 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
     @Override
     public EntitiesVersionControlSettings getVersionControlSettings(TenantId tenantId) {
-        AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey(tenantId, SETTINGS_KEY);
-        if (adminSettings != null) {
-            try {
-                return JacksonUtil.convertValue(adminSettings.getJsonValue(), EntitiesVersionControlSettings.class);
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to load version control settings!", e);
-            }
-        }
-        return null;
+        return vcSettingsService.get(tenantId);
     }
 
     @Override
     public EntitiesVersionControlSettings saveVersionControlSettings(TenantId tenantId, EntitiesVersionControlSettings versionControlSettings) {
-        AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey(tenantId, SETTINGS_KEY);
-        EntitiesVersionControlSettings storedSettings = null;
-        if (adminSettings != null) {
-            try {
-                storedSettings = JacksonUtil.convertValue(adminSettings.getJsonValue(), EntitiesVersionControlSettings.class);
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to load version control settings!", e);
-            }
-        }
-        versionControlSettings = this.restoreCredentials(versionControlSettings, storedSettings);
-        if (adminSettings == null) {
-            adminSettings = new AdminSettings();
-            adminSettings.setKey(SETTINGS_KEY);
-            adminSettings.setTenantId(tenantId);
-        }
+        versionControlSettings = this.vcSettingsService.restore(tenantId, versionControlSettings);
         try {
             //TODO: ashvayka: replace future.get with deferred result. Don't forget to call when tenant is deleted.
             gitServiceQueue.initRepository(tenantId, versionControlSettings).get();
         } catch (Exception e) {
             throw new RuntimeException("Failed to init repository!", e);
         }
-        adminSettings.setJsonValue(JacksonUtil.valueToTree(versionControlSettings));
-        AdminSettings savedAdminSettings = adminSettingsService.saveAdminSettings(tenantId, adminSettings);
-        EntitiesVersionControlSettings savedVersionControlSettings;
-        try {
-            savedVersionControlSettings = JacksonUtil.convertValue(savedAdminSettings.getJsonValue(), EntitiesVersionControlSettings.class);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to load version control settings!", e);
-        }
-        return savedVersionControlSettings;
+        return vcSettingsService.save(tenantId, versionControlSettings);
     }
 
     @Override
     public void deleteVersionControlSettings(TenantId tenantId) throws Exception {
-        if (adminSettingsService.deleteAdminSettings(tenantId, SETTINGS_KEY)) {
+        if (vcSettingsService.delete(tenantId)) {
             //TODO: ashvayka: replace future.get with deferred result. Don't forget to call when tenant is deleted.
             gitServiceQueue.clearRepository(tenantId).get();
         }
@@ -366,8 +331,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
     @Override
     public void checkVersionControlAccess(TenantId tenantId, EntitiesVersionControlSettings settings) throws ThingsboardException {
-        EntitiesVersionControlSettings storedSettings = getVersionControlSettings(tenantId);
-        settings = this.restoreCredentials(settings, storedSettings);
+        settings = this.vcSettingsService.restore(tenantId, settings);
         try {
             //TODO: ashvayka: replace future.get with deferred result.
             gitServiceQueue.testRepository(tenantId, settings).get();
@@ -379,7 +343,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
     private String getCauseMessage(Exception e) {
         String message;
-        if(e.getCause() != null && StringUtils.isNotEmpty(e.getCause().getMessage())){
+        if (e.getCause() != null && StringUtils.isNotEmpty(e.getCause().getMessage())) {
             message = e.getCause().getMessage();
         } else {
             message = e.getMessage();
@@ -387,20 +351,4 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         return message;
     }
 
-    private EntitiesVersionControlSettings restoreCredentials(EntitiesVersionControlSettings settings, EntitiesVersionControlSettings storedSettings) {
-        VersionControlAuthMethod authMethod = settings.getAuthMethod();
-        if (VersionControlAuthMethod.USERNAME_PASSWORD.equals(authMethod) && settings.getPassword() == null) {
-            if (storedSettings != null) {
-                settings.setPassword(storedSettings.getPassword());
-            }
-        } else if (VersionControlAuthMethod.PRIVATE_KEY.equals(authMethod) && settings.getPrivateKey() == null) {
-            if (storedSettings != null) {
-                settings.setPrivateKey(storedSettings.getPrivateKey());
-                if (settings.getPrivateKeyPassword() == null) {
-                    settings.setPrivateKeyPassword(storedSettings.getPrivateKeyPassword());
-                }
-            }
-        }
-        return settings;
-    }
 }
