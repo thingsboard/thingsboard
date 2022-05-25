@@ -127,12 +127,7 @@ public class EntityRelationController extends BaseController {
         checkParameter("entityType", strType);
         EntityId entityId = EntityIdFactory.getByTypeAndId(strType, strId);
         checkEntityId(entityId, Operation.WRITE);
-        try {
-            tbEntityRelationService.deleteRelations (getTenantId(), getCurrentUser().getCustomerId(), entityId, getCurrentUser(), null);
-        } catch (Exception e) {
-            tbEntityRelationService.deleteRelations (getTenantId(), getCurrentUser().getCustomerId(), entityId, getCurrentUser(), e);
-            throw handleException(e);
-        }
+        tbEntityRelationService.deleteRelations (getTenantId(), getCurrentUser().getCustomerId(), entityId, getCurrentUser());
     }
 
     @ApiOperation(value = "Get Relation (getRelation)",
