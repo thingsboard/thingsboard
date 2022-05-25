@@ -33,7 +33,7 @@ import { EntityDetailsPageComponent } from '@home/components/entity/entity-detai
 import { entityDetailsPageBreadcrumbLabelFunction } from '@home/pages/home-pages.models';
 import { BreadCrumbConfig } from '@shared/components/breadcrumb';
 import { QueuesTableConfigResolver } from '@home/pages/admin/queue/queues-table-config.resolver';
-import { VersionControlSettingsComponent } from '@home/pages/admin/version-control-settings.component';
+import { VersionControlAdminSettingsComponent } from '@home/pages/admin/version-control-admin-settings.component';
 
 @Injectable()
 export class OAuth2LoginProcessingUrlResolver implements Resolve<string> {
@@ -226,7 +226,7 @@ const routes: Routes = [
       },
       {
         path: 'vc',
-        component: VersionControlSettingsComponent,
+        component: VersionControlAdminSettingsComponent,
         canDeactivate: [ConfirmOnExitGuard],
         data: {
           auth: [Authority.TENANT_ADMIN],

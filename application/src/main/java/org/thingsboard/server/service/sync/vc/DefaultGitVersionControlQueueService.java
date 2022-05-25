@@ -411,7 +411,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
         }
         if (vcSettings != null) {
             builder.setVcSettings(ByteString.copyFrom(encodingService.encode(vcSettings)));
-        } else {
+        } else if (request.requiresSettings()) {
             throw new RuntimeException("No entity version control settings provisioned!");
         }
         return builder;

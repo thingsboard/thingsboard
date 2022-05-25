@@ -14,19 +14,18 @@
 /// limitations under the License.
 ///
 
-import { CustomerId } from '@shared/models/id/customer-id';
-import { ContactBased } from '@shared/models/contact-based.model';
-import { TenantId } from './id/tenant-id';
-import { ExportableEntity } from '@shared/models/base-data';
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { SharedModule } from '@shared/shared.module';
+import { VcRoutingModule } from '@home/pages/vc/vc-routing.module';
 
-export interface Customer extends ContactBased<CustomerId>, ExportableEntity<CustomerId> {
-  tenantId: TenantId;
-  title: string;
-  additionalInfo?: any;
-}
-
-export interface ShortCustomerInfo {
-  customerId: CustomerId;
-  title: string;
-  public: boolean;
-}
+@NgModule({
+  declarations: [
+  ],
+  imports: [
+    CommonModule,
+    SharedModule,
+    VcRoutingModule
+  ]
+})
+export class VcModule { }

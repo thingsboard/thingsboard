@@ -14,7 +14,17 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  forwardRef,
+  Input,
+  NgZone,
+  OnInit,
+  ViewChild
+} from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, of } from 'rxjs';
 import {
@@ -24,6 +34,7 @@ import {
   map,
   publishReplay,
   refCount,
+  share,
   switchMap,
   tap
 } from 'rxjs/operators';
@@ -32,6 +43,7 @@ import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { BranchInfo } from '@shared/models/vc.models';
 import { EntitiesVersionControlService } from '@core/http/entities-version-control.service';
+import { isNotEmptyStr } from '@core/utils';
 
 @Component({
   selector: 'tb-branch-autocomplete',
@@ -60,27 +72,48 @@ export class BranchAutocompleteComponent implements ControlValueAccessor, OnInit
     this.requiredValue = coerceBooleanProperty(value);
   }
 
+  private disabledValue: boolean;
+
+  get disabled(): boolean {
+    return this.disabledValue;
+  }
+
   @Input()
-  disabled: boolean;
+  set disabled(value: boolean) {
+    this.disabledValue = coerceBooleanProperty(value);
+    if (this.disabledValue) {
+      this.branchFormGroup.disable({emitEvent: false});
+    } else {
+      this.branchFormGroup.enable({emitEvent: false});
+    }
+  }
 
   @Input()
   selectDefaultBranch = true;
 
+  @Input()
+  selectionMode = false;
+
   @ViewChild('branchInput', {static: true}) branchInput: ElementRef;
 
-  filteredBranches: Observable<Array<string>>;
+  filteredBranches: Observable<Array<BranchInfo>>;
 
-  branches: Observable<Array<BranchInfo>>;
+  branches: Observable<Array<BranchInfo>> = null;
+
+  defaultBranch: BranchInfo = null;
 
   searchText = '';
 
   private dirty = false;
 
+  private ignoreClosedPanel = false;
+
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
               private entitiesVersionControlService: EntitiesVersionControlService,
-              private fb: FormBuilder) {
+              private fb: FormBuilder,
+              private zone: NgZone) {
     this.branchFormGroup = this.fb.group({
       branch: [null, []]
     });
@@ -94,17 +127,36 @@ export class BranchAutocompleteComponent implements ControlValueAccessor, OnInit
   }
 
   ngOnInit() {
-
-    this.branches = null;
     this.filteredBranches = this.branchFormGroup.get('branch').valueChanges
       .pipe(
+        tap((value: BranchInfo | string) => {
+          let modelValue: BranchInfo | null;
+          if (typeof value === 'string' || !value) {
+            if (!this.selectionMode && typeof value === 'string' && isNotEmptyStr(value)) {
+              modelValue = {name: value, default: false};
+            } else {
+              modelValue = null;
+            }
+          } else {
+            modelValue = value;
+          }
+          this.updateView(modelValue);
+        }),
+        map(value => {
+          if (value) {
+            if (typeof value === 'string') {
+              return value;
+            } else {
+              return value.name;
+            }
+          } else {
+            return '';
+          }
+        }),
         debounceTime(150),
         distinctUntilChanged(),
-        tap(value => {
-          this.updateView(value);
-        }),
-        map(value => value ? value : ''),
-        switchMap(branch => this.fetchBranches(branch))
+        switchMap(name => this.fetchBranches(name)),
+        share()
       );
   }
 
@@ -113,24 +165,16 @@ export class BranchAutocompleteComponent implements ControlValueAccessor, OnInit
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
-    if (this.disabled) {
-      this.branchFormGroup.disable({emitEvent: false});
-    } else {
-      this.branchFormGroup.enable({emitEvent: false});
-    }
   }
 
-  selectDefaultBranchIfNeeded(): void {
-    if (this.selectDefaultBranch && !this.modelValue) {
-      this.getBranches().subscribe(
+  selectDefaultBranchIfNeeded(ignoreLoading = true, force = false): void {
+    if ((this.selectDefaultBranch && !this.modelValue) || force) {
+      this.getBranches(ignoreLoading).subscribe(
         (data) => {
-          if (data && data.length) {
-            const defaultBranch = data.find(branch => branch.default);
-            if (defaultBranch) {
-              this.modelValue = defaultBranch.name;
-              this.branchFormGroup.get('branch').patchValue(this.modelValue, {emitEvent: false});
-              this.propagateChange(this.modelValue);
-            }
+          if (this.defaultBranch || force) {
+            this.branchFormGroup.get('branch').patchValue(this.defaultBranch, {emitEvent: false});
+            this.modelValue = this.defaultBranch?.name;
+            this.propagateChange(this.modelValue);
           }
         }
       );
@@ -141,9 +185,9 @@ export class BranchAutocompleteComponent implements ControlValueAccessor, OnInit
     this.searchText = '';
     this.modelValue = value;
     if (value != null) {
-      this.branchFormGroup.get('branch').patchValue(value, {emitEvent: false});
+      this.branchFormGroup.get('branch').patchValue({name: value}, {emitEvent: false});
     } else {
-      this.branchFormGroup.get('branch').patchValue('', {emitEvent: false});
+      this.branchFormGroup.get('branch').patchValue(null, {emitEvent: false});
       this.selectDefaultBranchIfNeeded();
     }
     this.dirty = true;
@@ -156,31 +200,53 @@ export class BranchAutocompleteComponent implements ControlValueAccessor, OnInit
     }
   }
 
-  updateView(value: string | null) {
-    if (this.modelValue !== value) {
-      this.modelValue = value;
+  onPanelClosed() {
+    if (this.ignoreClosedPanel) {
+      this.ignoreClosedPanel = false;
+    } else {
+      if (this.selectionMode && !this.branchFormGroup.get('branch').value && this.defaultBranch) {
+        this.zone.run(() => {
+          this.branchFormGroup.get('branch').patchValue(this.defaultBranch, {emitEvent: true});
+        }, 0);
+      }
+    }
+  }
+
+  updateView(value: BranchInfo | null) {
+    if (this.modelValue !== value?.name) {
+      this.modelValue = value?.name;
       this.propagateChange(this.modelValue);
     }
   }
 
-  displayBranchFn(branch?: string): string | undefined {
-    return branch ? branch : undefined;
+  displayBranchFn(branch?: BranchInfo): string | undefined {
+    return branch ? branch.name : undefined;
   }
 
-  fetchBranches(searchText?: string): Observable<Array<string>> {
+  fetchBranches(searchText?: string): Observable<Array<BranchInfo>> {
     this.searchText = searchText;
     return this.getBranches().pipe(
-      map(branches => branches.map(branch => branch.name).filter(branchName => {
-        return searchText ? branchName.toUpperCase().startsWith(searchText.toUpperCase()) : true;
-      }))
+      map(branches => {
+          let res = branches.filter(branch => {
+            return searchText ? branch.name.toUpperCase().startsWith(searchText.toUpperCase()) : true;
+          });
+          if (!this.selectionMode && isNotEmptyStr(searchText) && !res.find(b => b.name === searchText)) {
+            res = [{name: searchText, default: false}, ...res];
+          }
+          return res;
+        }
+      )
     );
   }
 
-  getBranches(): Observable<Array<BranchInfo>> {
+  getBranches(ignoreLoading = true): Observable<Array<BranchInfo>> {
     if (!this.branches) {
-      const branchesObservable = this.entitiesVersionControlService.listBranches({ignoreLoading: true, ignoreErrors: true});
+      const branchesObservable = this.entitiesVersionControlService.listBranches({ignoreLoading, ignoreErrors: true});
       this.branches = branchesObservable.pipe(
         catchError(() => of([] as Array<BranchInfo>)),
+        tap((data) => {
+          this.defaultBranch = data.find(branch => branch.default);
+        }),
         publishReplay(1),
         refCount()
       );
@@ -189,6 +255,7 @@ export class BranchAutocompleteComponent implements ControlValueAccessor, OnInit
   }
 
   clear() {
+    this.ignoreClosedPanel = true;
     this.branchFormGroup.get('branch').patchValue(null, {emitEvent: true});
     setTimeout(() => {
       this.branchInput.nativeElement.blur();

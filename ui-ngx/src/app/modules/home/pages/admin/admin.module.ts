@@ -29,7 +29,7 @@ import { SendTestSmsDialogComponent } from '@home/pages/admin/send-test-sms-dial
 import { HomeSettingsComponent } from '@home/pages/admin/home-settings.component';
 import { ResourcesLibraryComponent } from '@home/pages/admin/resource/resources-library.component';
 import { QueueComponent} from '@home/pages/admin/queue/queue.component';
-import { VersionControlSettingsComponent } from '@home/pages/admin/version-control-settings.component';
+import { VersionControlAdminSettingsComponent } from '@home/pages/admin/version-control-admin-settings.component';
 
 @NgModule({
   declarations:
@@ -43,7 +43,7 @@ import { VersionControlSettingsComponent } from '@home/pages/admin/version-contr
       HomeSettingsComponent,
       ResourcesLibraryComponent,
       QueueComponent,
-      VersionControlSettingsComponent
+      VersionControlAdminSettingsComponent
     ],
   imports: [
     CommonModule,

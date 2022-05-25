@@ -345,6 +345,13 @@ export class MenuService {
       },
       {
         id: guid(),
+        name: 'version-control.version-control',
+        type: 'link',
+        path: '/vc',
+        icon: 'history'
+      },
+      {
+        id: guid(),
         name: 'audit-log.audit-logs',
         type: 'link',
         path: '/auditLogs',
@@ -489,6 +496,16 @@ export class MenuService {
             name: 'dashboard.dashboards',
             icon: 'dashboard',
             path: '/dashboards'
+          }
+        ]
+      },
+      {
+        name: 'version-control.management',
+        places: [
+          {
+            name: 'version-control.version-control',
+            icon: 'history',
+            path: '/vc'
           }
         ]
       },

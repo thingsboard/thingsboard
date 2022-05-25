@@ -14,11 +14,11 @@
 /// limitations under the License.
 ///
 
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { FormBuilder, FormGroup, FormGroupDirective, Validators } from '@angular/forms';
-import { Store } from '@ngrx/store';
+import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { AdminService } from '@core/http/admin.service';
 import {
@@ -30,13 +30,21 @@ import { ActionNotificationShow } from '@core/notification/notification.actions'
 import { TranslateService } from '@ngx-translate/core';
 import { isNotEmptyStr } from '@core/utils';
 import { DialogService } from '@core/services/dialog.service';
+import { ActionSettingsChangeLanguage } from '@core/settings/settings.actions';
+import { ActionAuthUpdateHasVersionControl } from '@core/auth/auth.actions';
+import { selectHasVersionControl } from '@core/auth/auth.selectors';
+import { catchError, mergeMap } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'tb-version-control-settings',
   templateUrl: './version-control-settings.component.html',
-  styleUrls: ['./version-control-settings.component.scss', './settings-card.scss']
+  styleUrls: ['./version-control-settings.component.scss', './../../pages/admin/settings-card.scss']
 })
-export class VersionControlSettingsComponent extends PageComponent implements OnInit, HasConfirmForm {
+export class VersionControlSettingsComponent extends PageComponent implements OnInit {
+
+  @Input()
+  detailsMode = false;
 
   versionControlSettingsForm: FormGroup;
   settings: EntitiesVersionControlSettings = null;
@@ -62,7 +70,7 @@ export class VersionControlSettingsComponent extends PageComponent implements On
   ngOnInit() {
     this.versionControlSettingsForm = this.fb.group({
       repositoryUri: [null, [Validators.required]],
-      defaultBranch: [null, []],
+      defaultBranch: ['main', []],
       authMethod: [VersionControlAuthMethod.USERNAME_PASSWORD, [Validators.required]],
       username: [null, []],
       password: [null, []],
@@ -77,16 +85,29 @@ export class VersionControlSettingsComponent extends PageComponent implements On
     this.versionControlSettingsForm.get('privateKeyFileName').valueChanges.subscribe(() => {
       this.updateValidators(false);
     });
-    this.adminService.getEntitiesVersionControlSettings({ignoreErrors: true}).subscribe(
+    this.store.pipe(
+      select(selectHasVersionControl),
+      mergeMap((hasVersionControl) => {
+        if (hasVersionControl) {
+          return this.adminService.getEntitiesVersionControlSettings({ignoreErrors: true}).pipe(
+            catchError(() => of(null))
+          );
+        } else {
+          return of(null);
+        }
+      })
+    ).subscribe(
       (settings) => {
         this.settings = settings;
-        if (this.settings.authMethod === VersionControlAuthMethod.USERNAME_PASSWORD) {
-          this.showChangePassword = true;
-        } else {
-          this.showChangePrivateKeyPassword = true;
+        if (this.settings != null) {
+          if (this.settings.authMethod === VersionControlAuthMethod.USERNAME_PASSWORD) {
+            this.showChangePassword = true;
+          } else {
+            this.showChangePrivateKeyPassword = true;
+          }
+          this.versionControlSettingsForm.reset(this.settings);
+          this.updateValidators(false);
         }
-        this.versionControlSettingsForm.reset(this.settings);
-        this.updateValidators(false);
     });
   }
 
@@ -112,6 +133,7 @@ export class VersionControlSettingsComponent extends PageComponent implements On
         }
         this.versionControlSettingsForm.reset(this.settings);
         this.updateValidators(false);
+        this.store.dispatch(new ActionAuthUpdateHasVersionControl({ hasVersionControl: true }));
       }
     );
   }
@@ -131,16 +153,13 @@ export class VersionControlSettingsComponent extends PageComponent implements On
             this.showChangePrivateKeyPassword = false;
             this.changePrivateKeyPassword = false;
             formDirective.resetForm();
-            this.versionControlSettingsForm.reset({ authMethod: VersionControlAuthMethod.USERNAME_PASSWORD });
+            this.versionControlSettingsForm.reset({ defaultBranch: 'main', authMethod: VersionControlAuthMethod.USERNAME_PASSWORD });
             this.updateValidators(false);
+            this.store.dispatch(new ActionAuthUpdateHasVersionControl({ hasVersionControl: false }));
           }
         );
       }
     });
-  }
-
-  confirmForm(): FormGroup {
-    return this.versionControlSettingsForm;
   }
 
   changePasswordChanged() {

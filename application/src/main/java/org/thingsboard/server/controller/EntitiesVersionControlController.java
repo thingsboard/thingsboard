@@ -294,11 +294,14 @@ public class EntitiesVersionControlController extends BaseController {
 
                 String defaultBranch = versionControlService.getVersionControlSettings(tenantId).getDefaultBranch();
                 if (StringUtils.isNotEmpty(defaultBranch)) {
-                    remoteBranches.remove(defaultBranch);
                     infos.add(new BranchInfo(defaultBranch, true));
                 }
 
-                remoteBranches.forEach(branch -> infos.add(new BranchInfo(branch, false)));
+                remoteBranches.forEach(branch -> {
+                    if (!branch.equals(defaultBranch)) {
+                        infos.add(new BranchInfo(branch, false));
+                    }
+                });
                 return infos;
             }, MoreExecutors.directExecutor()));
         } catch (Exception e) {

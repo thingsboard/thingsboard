@@ -3109,6 +3109,8 @@
         "json-value-required": "JSON value is required."
     },
     "version-control": {
+        "version-control": "Version control",
+        "management": "Version control management",
         "branch": "Branch",
         "select-branch": "Select branch",
         "branch-required": "Branch is required",
@@ -3118,7 +3120,13 @@
         "version-name-required": "Version name is required",
         "export-entity-relations": "Export entity relations",
         "export-entity-version-result-message": "Entity exported with version '{{name}}' and commit id '{{commitId}}'.",
-        "export-to-git": "Export to Git"
+        "export-to-git": "Export to Git",
+        "entity-versions": "Entity versions",
+        "versions": "Versions",
+        "created-time": "Created time",
+        "version-id": "Version ID",
+        "no-entity-versions-text": "No entity versions found",
+        "no-versions-text": "No versions found"
     },
     "widget": {
         "widget-library": "Widgets Library",
