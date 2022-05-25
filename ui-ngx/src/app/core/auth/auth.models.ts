@@ -20,6 +20,7 @@ export interface SysParamsState {
   userTokenAccessEnabled: boolean;
   allowedDashboardIds: string[];
   edgesSupportEnabled: boolean;
+  hasVersionControl: boolean;
 }
 
 export interface AuthPayload extends SysParamsState {

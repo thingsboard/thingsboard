@@ -43,6 +43,7 @@ export interface BranchInfo {
 }
 
 export interface EntityVersion {
+  timestamp: number;
   id: string;
   name: string;
 }

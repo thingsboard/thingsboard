@@ -154,6 +154,9 @@ import { QueueFormComponent } from '@home/components/queue/queue-form.component'
 import { WidgetSettingsModule } from '@home/components/widget/lib/settings/widget-settings.module';
 import { WidgetSettingsComponent } from '@home/components/widget/widget-settings.component';
 import { VcEntityExportDialogComponent } from '@home/components/vc/vc-entity-export-dialog.component';
+import { VersionControlSettingsComponent } from '@home/components/vc/version-control-settings.component';
+import { VersionControlComponent } from '@home/components/vc/version-control.component';
+import { EntityVersionsTableComponent } from '@home/components/vc/entity-versions-table.component';
 
 @NgModule({
   declarations:
@@ -278,7 +281,10 @@ import { VcEntityExportDialogComponent } from '@home/components/vc/vc-entity-exp
       DisplayWidgetTypesPanelComponent,
       TenantProfileQueuesComponent,
       QueueFormComponent,
-      VcEntityExportDialogComponent
+      VcEntityExportDialogComponent,
+      VersionControlSettingsComponent,
+      VersionControlComponent,
+      EntityVersionsTableComponent
     ],
   imports: [
     CommonModule,
@@ -397,7 +403,10 @@ import { VcEntityExportDialogComponent } from '@home/components/vc/vc-entity-exp
     DisplayWidgetTypesPanelComponent,
     TenantProfileQueuesComponent,
     QueueFormComponent,
-    VcEntityExportDialogComponent
+    VcEntityExportDialogComponent,
+    VersionControlSettingsComponent,
+    VersionControlComponent,
+    EntityVersionsTableComponent
   ],
   providers: [
     WidgetComponentService,

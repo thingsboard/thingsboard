@@ -170,7 +170,7 @@ public class GitRepository {
     public PageData<Commit> listCommits(String branch, String path, PageLink pageLink) throws IOException, GitAPIException {
         ObjectId branchId = resolve("origin/" + branch);
         if (branchId == null) {
-            throw new IllegalArgumentException("Branch not found");
+            return new PageData<>();
         }
         LogCommand command = git.log()
                 .add(branchId)
@@ -313,6 +313,7 @@ public class GitRepository {
                                                          Function<? super T, ? extends R> mapper,
                                                          PageLink pageLink,
                                                          Function<PageLink, Comparator<T>> comparatorFunction) {
+        iterable = Streams.stream(iterable).collect(Collectors.toList());
         int totalElements = Iterables.size(iterable);
         int totalPages = pageLink.getPageSize() > 0 ? (int) Math.ceil((float) totalElements / pageLink.getPageSize()) : 1;
         int startIndex = pageLink.getPageSize() * pageLink.getPage();

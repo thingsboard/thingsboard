@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 :host {
+  mat-card.vc-settings {
+    margin: 8px;
+  }
   .fields-group {
     padding: 0 16px 8px;
     margin-bottom: 10px;

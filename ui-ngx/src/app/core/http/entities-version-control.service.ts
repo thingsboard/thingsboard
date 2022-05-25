@@ -18,7 +18,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-utils';
 import { Observable } from 'rxjs';
-import { BranchInfo, VersionCreateRequest, VersionCreationResult } from '@shared/models/vc.models';
+import { BranchInfo, EntityVersion, VersionCreateRequest, VersionCreationResult } from '@shared/models/vc.models';
+import { PageLink } from '@shared/models/page/page-link';
+import { PageData } from '@shared/models/page/page-data';
+import { DeviceInfo } from '@shared/models/device.models';
+import { EntityId } from '@shared/models/id/entity-id';
+import { EntityType } from '@shared/models/entity-type.models';
 
 @Injectable({
   providedIn: 'root'
@@ -36,5 +41,25 @@ export class EntitiesVersionControlService {
 
   public saveEntitiesVersion(request: VersionCreateRequest, config?: RequestConfig): Observable<VersionCreationResult> {
     return this.http.post<VersionCreationResult>('/api/entities/vc/version', request, defaultHttpOptionsFromConfig(config));
+  }
+
+  public listEntityVersions(pageLink: PageLink, branch: string,
+                            externalEntityId: EntityId,
+                            config?: RequestConfig): Observable<PageData<EntityVersion>> {
+    return this.http.get<PageData<EntityVersion>>(`/api/entities/vc/version/${branch}/${externalEntityId.entityType}/${externalEntityId.id}${pageLink.toQuery()}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public listEntityTypeVersions(pageLink: PageLink, branch: string,
+                                entityType: EntityType,
+                                config?: RequestConfig): Observable<PageData<EntityVersion>> {
+    return this.http.get<PageData<EntityVersion>>(`/api/entities/vc/version/${branch}/${entityType}${pageLink.toQuery()}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public listVersions(pageLink: PageLink, branch: string,
+                      config?: RequestConfig): Observable<PageData<EntityVersion>> {
+    return this.http.get<PageData<EntityVersion>>(`/api/entities/vc/version/${branch}${pageLink.toQuery()}`,
+      defaultHttpOptionsFromConfig(config));
   }
 }

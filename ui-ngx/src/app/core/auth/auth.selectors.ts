@@ -55,6 +55,11 @@ export const selectUserTokenAccessEnabled = createSelector(
   (state: AuthState) => state.userTokenAccessEnabled
 );
 
+export const selectHasVersionControl = createSelector(
+  selectAuthState,
+  (state: AuthState) => state.hasVersionControl
+);
+
 export function getCurrentAuthState(store: Store<AppState>): AuthState {
   let state: AuthState;
   store.pipe(select(selectAuth), take(1)).subscribe(

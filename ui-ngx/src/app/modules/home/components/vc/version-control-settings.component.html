@@ -16,7 +16,7 @@
 
 -->
 <div>
-  <mat-card class="settings-card">
+  <mat-card class="vc-settings" [ngClass]="{'settings-card': !detailsMode}">
     <mat-card-title>
       <div fxLayout="row">
         <span class="mat-headline" translate>admin.git-repository-settings</span>

@@ -437,17 +437,27 @@ export class AuthService {
     return this.http.get<boolean>('/api/edges/enabled', defaultHttpOptions());
   }
 
+  private loadHasVersionControl(authUser: AuthUser): Observable<boolean> {
+    if (authUser.authority === Authority.TENANT_ADMIN) {
+      return this.http.get<boolean>('/api/admin/vcSettings/exists', defaultHttpOptions());
+    } else {
+      return of(false);
+    }
+  }
+
   private loadSystemParams(authPayload: AuthPayload): Observable<SysParamsState> {
     const sources = [this.loadIsUserTokenAccessEnabled(authPayload.authUser),
                      this.fetchAllowedDashboardIds(authPayload),
                      this.loadIsEdgesSupportEnabled(),
+                     this.loadHasVersionControl(authPayload.authUser),
                      this.timeService.loadMaxDatapointsLimit()];
     return forkJoin(sources)
       .pipe(map((data) => {
         const userTokenAccessEnabled: boolean = data[0] as boolean;
         const allowedDashboardIds: string[] = data[1] as string[];
         const edgesSupportEnabled: boolean = data[2] as boolean;
-        return {userTokenAccessEnabled, allowedDashboardIds, edgesSupportEnabled};
+        const hasVersionControl: boolean = data[3] as boolean;
+        return {userTokenAccessEnabled, allowedDashboardIds, edgesSupportEnabled, hasVersionControl};
       }, catchError((err) => {
         return of({});
       })));

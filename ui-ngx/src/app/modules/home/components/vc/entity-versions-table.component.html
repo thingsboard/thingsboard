@@ -1,0 +1,81 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="mat-padding tb-entity-table tb-absolute-fill">
+  <div fxFlex fxLayout="column" class="mat-elevation-z1 tb-entity-table-content">
+    <mat-toolbar class="mat-table-toolbar">
+      <div class="mat-toolbar-tools">
+        <div fxLayout="row" fxLayoutAlign="start center" fxLayout.xs="column" fxLayoutAlign.xs="center start" class="title-container">
+          <span class="tb-entity-table-title">{{(singleEntityMode ? 'version-control.entity-versions' : 'version-control.versions') | translate}}</span>
+          <tb-branch-autocomplete
+            #branchAutocompleteComponent
+            [selectionMode]="true"
+            [selectDefaultBranch]="false"
+            [disabled]="isLoading$ | async"
+            [ngModel]="branch"
+            (ngModelChange)="branchChanged($event)">
+          </tb-branch-autocomplete>
+        </div>
+        <span fxFlex></span>
+        <button *ngIf="singleEntityMode" mat-raised-button color="primary"
+                [disabled]="(isLoading$ | async)"
+                (click)="vcExport($event)">
+          {{'version-control.export-to-git' | translate }}
+        </button>
+      </div>
+    </mat-toolbar>
+    <div fxFlex class="table-container">
+      <table mat-table [dataSource]="dataSource"
+             matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
+        <ng-container matColumnDef="timestamp">
+          <mat-header-cell *matHeaderCellDef mat-sort-header style="min-width: 150px; max-width: 150px; width: 150px;"> {{ 'version-control.created-time' | translate }} </mat-header-cell>
+          <mat-cell *matCellDef="let entityVersion">
+            {{ entityVersion.timestamp | date:'yyyy-MM-dd HH:mm:ss' }}
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="id">
+          <mat-header-cell *matHeaderCellDef style="width: 40%"> {{ 'version-control.version-id' | translate }} </mat-header-cell>
+          <mat-cell *matCellDef="let entityVersion">
+            {{ entityVersion.id }}
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="name">
+          <mat-header-cell *matHeaderCellDef style="width: 60%"> {{ 'version-control.version-name' | translate }} </mat-header-cell>
+          <mat-cell *matCellDef="let entityVersion">
+            {{ entityVersion.name }}
+          </mat-cell>
+        </ng-container>
+        <mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
+        <mat-row *matRowDef="let entityVersion; columns: displayedColumns;"></mat-row>
+      </table>
+      <span [fxShow]="dataSource.isEmpty() | async"
+            fxLayoutAlign="center center"
+            class="no-data-found" translate>{{
+        singleEntityMode
+          ? 'version-control.no-entity-versions-text'
+          : 'version-control.no-versions-text'
+        }}</span>
+    </div>
+    <mat-divider></mat-divider>
+    <mat-paginator [length]="dataSource.total() | async"
+                   [pageIndex]="pageLink.page"
+                   [pageSize]="pageLink.pageSize"
+                   [pageSizeOptions]="[10, 20, 30]"
+                   [hidePageSize]="hidePageSize"
+                   showFirstLastButtons></mat-paginator>
+  </div>
+</div>
