@@ -55,12 +55,7 @@ public abstract class AbstractCoapIntegrationTest extends AbstractTransportInteg
 
     protected final byte[] EMPTY_PAYLOAD = new byte[0];
 
-    protected CoapClient client;
-
     protected void processAfterTest() throws Exception {
-        if (client != null) {
-            client.shutdown();
-        }
     }
 
     protected void processBeforeTest(CoapTestConfigProperties config) throws Exception {
@@ -155,17 +150,5 @@ public abstract class AbstractCoapIntegrationTest extends AbstractTransportInteg
         device.setName(name);
         device.setType(type);
         return doPost("/api/device", device, Device.class);
-    }
-
-    protected CoapClient getCoapClient(FeatureType featureType) {
-        return new CoapClient(getFeatureTokenUrl(accessToken, featureType));
-    }
-
-    protected CoapClient getCoapClient(String featureTokenUrl) {
-        return new CoapClient(featureTokenUrl);
-    }
-
-    protected String getFeatureTokenUrl(String token, FeatureType featureType) {
-        return COAP_BASE_URL + token + "/" + featureType.name().toLowerCase();
     }
 }

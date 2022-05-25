@@ -1,8 +1,12 @@
 package org.thingsboard.server.transport.coap;
 
 import org.eclipse.californium.core.CoapClient;
+import org.eclipse.californium.core.CoapHandler;
+import org.eclipse.californium.core.CoapObserveRelation;
 import org.eclipse.californium.core.CoapResponse;
+import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
+import org.eclipse.californium.core.coap.Request;
 import org.eclipse.californium.elements.exception.ConnectorException;
 import org.thingsboard.server.common.msg.session.FeatureType;
 
@@ -49,8 +53,22 @@ public class CoapTestClient {
         return client.setTimeout(CLIENT_REQUEST_TIMEOUT).post(requestBodyBytes, MediaTypeRegistry.APPLICATION_JSON);
     }
 
+    public void postMethod(CoapHandler handler, String payload, int format) {
+        client.post(handler, payload, format);
+    }
+
+    public void postMethod(CoapHandler handler, byte[] payload, int format) {
+        client.post(handler, payload, format);
+    }
+
     public CoapResponse getMethod() throws ConnectorException, IOException {
         return client.setTimeout(CLIENT_REQUEST_TIMEOUT).get();
+    }
+
+    public CoapObserveRelation getObserveRelation(CoapTestCallback callback){
+        Request request = Request.newGet().setObserve();
+        request.setType(CoAP.Type.CON);
+        return client.observe(request, callback);
     }
 
     public void setURI(String featureTokenUrl) {
@@ -77,5 +95,9 @@ public class CoapTestClient {
 
     public static String getFeatureTokenUrl(String token, FeatureType featureType) {
         return COAP_BASE_URL + token + "/" + featureType.name().toLowerCase();
+    }
+
+    public static String getFeatureTokenUrl(String token, FeatureType featureType, int requestId) {
+        return COAP_BASE_URL + token + "/" + featureType.name().toLowerCase() + "/" + requestId;
     }
 }

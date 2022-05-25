@@ -15,27 +15,13 @@
  */
 package org.thingsboard.server.transport.coap.attributes.request;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.californium.core.CoapResponse;
-import org.eclipse.californium.core.coap.CoAP;
-import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.coap.CoapTestConfigProperties;
 import org.thingsboard.server.transport.coap.attributes.AbstractCoapAttributesIntegrationTest;
-import org.thingsboard.server.common.msg.session.FeatureType;
-
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
 @DaoSqlTest

@@ -23,9 +23,12 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.squareup.wire.schema.internal.parser.ProtoFileElement;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.extern.slf4j.Slf4j;
+import org.awaitility.Awaitility;
+import org.eclipse.californium.core.CoapObserveRelation;
 import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.device.profile.*;
 import org.thingsboard.server.common.data.query.DeviceTypeFilter;
@@ -33,16 +36,20 @@ import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.msg.session.FeatureType;
+import org.thingsboard.server.common.transport.service.DefaultTransportService;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.coap.AbstractCoapIntegrationTest;
+import org.thingsboard.server.transport.coap.CoapTestCallback;
 import org.thingsboard.server.transport.coap.CoapTestClient;
+import org.thingsboard.server.transport.coap.attributes.updates.CoapAttributesUpdatesIntegrationTest;
 import org.thingsboard.server.transport.mqtt.MqttTestCallback;
 import org.thingsboard.server.transport.mqtt.MqttTestClient;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -56,10 +63,8 @@ import static org.thingsboard.server.common.data.query.EntityKeyType.SHARED_ATTR
 @Slf4j
 public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoapIntegrationTest {
 
-    protected static final long CLIENT_REQUEST_TIMEOUT = 60000L;
-
-    protected static final String POST_ATTRIBUTES_PAYLOAD = "{\"attribute1\":\"value1\",\"attribute2\":true,\"attribute3\":42.0,\"attribute4\":73," +
-            "\"attribute5\":{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}}";
+    @Autowired
+    DefaultTransportService defaultTransportService;
 
     public static final String ATTRIBUTES_SCHEMA_STR = "syntax =\"proto3\";\n" +
             "\n" +
@@ -88,27 +93,17 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
     private static final String SHARED_ATTRIBUTES_PAYLOAD = "{\"sharedStr\":\"value1\",\"sharedBool\":true,\"sharedDbl\":42.0,\"sharedLong\":73," +
             "\"sharedJson\":{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}}";
 
-     private List<TransportProtos.TsKvProto> getTsKvProtoList(String attributePrefix) {
+    protected static final String SHARED_ATTRIBUTES_PAYLOAD_ON_CURRENT_STATE_NOTIFICATION = "{\"sharedStr\":\"value\",\"sharedBool\":false,\"sharedDbl\":41.0,\"sharedLong\":72," +
+            "\"sharedJson\":{\"someNumber\":41,\"someArray\":[],\"someNestedObject\":{\"key\":\"value\"}}}";
+
+    private static final String SHARED_ATTRIBUTES_DELETED_RESPONSE = "{\"deleted\":[\"sharedJson\"]}";
+
+    private List<TransportProtos.TsKvProto> getTsKvProtoList(String attributePrefix) {
         TransportProtos.TsKvProto tsKvProtoAttribute1 = getTsKvProto(attributePrefix + "Str", "value1", TransportProtos.KeyValueType.STRING_V);
         TransportProtos.TsKvProto tsKvProtoAttribute2 = getTsKvProto(attributePrefix + "Bool", "true", TransportProtos.KeyValueType.BOOLEAN_V);
         TransportProtos.TsKvProto tsKvProtoAttribute3 = getTsKvProto(attributePrefix + "Dbl", "42.0", TransportProtos.KeyValueType.DOUBLE_V);
         TransportProtos.TsKvProto tsKvProtoAttribute4 = getTsKvProto(attributePrefix + "Long", "73", TransportProtos.KeyValueType.LONG_V);
         TransportProtos.TsKvProto tsKvProtoAttribute5 = getTsKvProto(attributePrefix + "Json", "{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}", TransportProtos.KeyValueType.JSON_V);
-        List<TransportProtos.TsKvProto> tsKvProtoList = new ArrayList<>();
-        tsKvProtoList.add(tsKvProtoAttribute1);
-        tsKvProtoList.add(tsKvProtoAttribute2);
-        tsKvProtoList.add(tsKvProtoAttribute3);
-        tsKvProtoList.add(tsKvProtoAttribute4);
-        tsKvProtoList.add(tsKvProtoAttribute5);
-        return tsKvProtoList;
-    }
-
-    public List<TransportProtos.TsKvProto> getTsKvProtoList() {
-        TransportProtos.TsKvProto tsKvProtoAttribute1 = getTsKvProto("Str", "value1", TransportProtos.KeyValueType.STRING_V);
-        TransportProtos.TsKvProto tsKvProtoAttribute2 = getTsKvProto("Bool", "true", TransportProtos.KeyValueType.BOOLEAN_V);
-        TransportProtos.TsKvProto tsKvProtoAttribute3 = getTsKvProto("Dbl", "42.0", TransportProtos.KeyValueType.DOUBLE_V);
-        TransportProtos.TsKvProto tsKvProtoAttribute4 = getTsKvProto("Long", "73", TransportProtos.KeyValueType.LONG_V);
-        TransportProtos.TsKvProto tsKvProtoAttribute5 = getTsKvProto("Json", "{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}", TransportProtos.KeyValueType.JSON_V);
         List<TransportProtos.TsKvProto> tsKvProtoList = new ArrayList<>();
         tsKvProtoList.add(tsKvProtoAttribute1);
         tsKvProtoList.add(tsKvProtoAttribute2);
@@ -225,43 +220,86 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         CoapResponse coapResponse = client.postMethod(getAttributesProtoPayloadBytes());
         assertEquals(CoAP.ResponseCode.CREATED, coapResponse.getCode());
 
-        //validateProtoResponse(callback, getExpectedAttributeResponseMsg());
-
-//        client.publishAndWait(attrPubTopic, getAttributesProtoPayloadBytes());
-//        client.subscribeAndWait(attrSubTopic, MqttQoS.AT_MOST_ONCE);
         String update = getWsClient().waitForUpdate();
         assertThat(update).as("ws update received").isNotBlank();
 
-        //        MqttTestCallback callback = new MqttTestCallback(attrSubTopic.replace("+", "1"));
-//        client.setCallback(callback);
-        TransportApiProtos.AttributesRequest.Builder attributesRequestBuilder = TransportApiProtos.AttributesRequest.newBuilder();
-        attributesRequestBuilder.setClientKeys(clientKeysStr);
-        attributesRequestBuilder.setSharedKeys(sharedKeysStr);
-        TransportApiProtos.AttributesRequest attributesRequest = attributesRequestBuilder.build();
-//        client.publishAndWait(attrReqTopicPrefix + "1", attributesRequest.toByteArray());
-
         String featureTokenUrl = CoapTestClient.getFeatureTokenUrl(accessToken, FeatureType.ATTRIBUTES) + "?clientKeys=" + clientKeysStr + "&sharedKeys=" + sharedKeysStr;
         client.setURI(featureTokenUrl);
-
         validateProtoResponse(client.getMethod());
         client.disconnect();
     }
 
-    protected void postAttributes() throws Exception {
-//        //doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", POST_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
-//
-//        doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE",
-//                SHARED_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
-//
-//
-//
-//        //client = getCoapClient(FeatureType.ATTRIBUTES);
-//        //CoapResponse coapResponse = client.setTimeout(CLIENT_REQUEST_TIMEOUT).post(POST_ATTRIBUTES_PAYLOAD.getBytes(), MediaTypeRegistry.APPLICATION_JSON);
-//
-//        CoapTestClient client = new CoapTestClient(accessToken, FeatureType.ATTRIBUTES);
-//        CoapResponse coapResponse = client.postMethod(CLIENT_ATTRIBUTES_PAYLOAD);
-//        assertEquals(CoAP.ResponseCode.CREATED, coapResponse.getCode());
-}
+    protected void processJsonTestSubscribeToAttributesUpdates(boolean emptyCurrentStateNotification) throws Exception {
+        if (!emptyCurrentStateNotification) {
+            doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", SHARED_ATTRIBUTES_PAYLOAD_ON_CURRENT_STATE_NOTIFICATION, String.class, status().isOk());
+        }
+
+        CoapTestClient client = new CoapTestClient(accessToken, FeatureType.ATTRIBUTES);
+        CoapTestCallback callbackCoap = new CoapTestCallback(1);
+
+        CoapObserveRelation observeRelation = client.getObserveRelation(callbackCoap);
+        callbackCoap.getLatch().await(3, TimeUnit.SECONDS);
+
+        if (emptyCurrentStateNotification) {
+            validateUpdateAttributesJsonResponse(callbackCoap, "{}", 0);
+        } else {
+            validateUpdateAttributesJsonResponse(callbackCoap, SHARED_ATTRIBUTES_PAYLOAD_ON_CURRENT_STATE_NOTIFICATION, 0);
+        }
+
+        CountDownLatch latch = new CountDownLatch(1);
+        int expectedObserveCnt = callbackCoap.getObserve().intValue() + 1;
+        doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", SHARED_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
+        latch.await(3, TimeUnit.SECONDS);
+        validateUpdateAttributesJsonResponse(callbackCoap, SHARED_ATTRIBUTES_PAYLOAD, expectedObserveCnt);
+
+        latch = new CountDownLatch(1);
+        int expectedObserveBeforeDeleteCnt = callbackCoap.getObserve().intValue() + 1;
+        doDelete("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/SHARED_SCOPE?keys=sharedJson", String.class);
+        latch.await(3, TimeUnit.SECONDS);
+        validateUpdateAttributesJsonResponse(callbackCoap, SHARED_ATTRIBUTES_DELETED_RESPONSE, expectedObserveBeforeDeleteCnt);
+
+        observeRelation.proactiveCancel();
+        assertTrue(observeRelation.isCanceled());
+
+        awaitClientAfterCancelObserve();
+        client.disconnect();
+    }
+
+    protected void processProtoTestSubscribeToAttributesUpdates(boolean emptyCurrentStateNotification) throws Exception {
+        if (!emptyCurrentStateNotification) {
+            doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", SHARED_ATTRIBUTES_PAYLOAD_ON_CURRENT_STATE_NOTIFICATION, String.class, status().isOk());
+        }
+
+        CoapTestClient client = new CoapTestClient(accessToken, FeatureType.ATTRIBUTES);
+        CoapTestCallback callbackCoap = new CoapTestCallback(1);
+
+        CoapObserveRelation observeRelation = client.getObserveRelation(callbackCoap);
+        callbackCoap.getLatch().await(3, TimeUnit.SECONDS);
+
+        if (emptyCurrentStateNotification) {
+            validateEmptyCurrentStateAttributesProtoResponse(callbackCoap);
+        } else {
+            validateCurrentStateAttributesProtoResponse(callbackCoap);
+        }
+
+        CountDownLatch latch = new CountDownLatch(1);
+        int expectedObserveCnt = callbackCoap.getObserve().intValue() + 1;
+        doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", SHARED_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
+        latch.await(3, TimeUnit.SECONDS);
+        validateUpdateProtoAttributesResponse(callbackCoap, expectedObserveCnt);
+
+        latch = new CountDownLatch(1);
+        int expectedObserveBeforeDeleteCnt = callbackCoap.getObserve().intValue() + 1;
+        doDelete("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/SHARED_SCOPE?keys=sharedJson", String.class);
+        latch.await(3, TimeUnit.SECONDS);
+        validateDeleteProtoAttributesResponse(callbackCoap, expectedObserveBeforeDeleteCnt);
+
+        observeRelation.proactiveCancel();
+        assertTrue(observeRelation.isCanceled());
+
+        awaitClientAfterCancelObserve();
+        client.disconnect();
+    }
 
     protected void validateJsonResponse(CoapResponse getAttributesResponse) throws InvalidProtocolBufferException {
         assertEquals(CoAP.ResponseCode.CONTENT, getAttributesResponse.getCode());
@@ -279,6 +317,92 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         List<TransportProtos.KeyValueProto> actualSharedKeyValueProtos = actualAttributesResponse.getSharedAttributeListList().stream().map(TransportProtos.TsKvProto::getKv).collect(Collectors.toList());
         assertTrue(actualClientKeyValueProtos.containsAll(expectedClientKeyValueProtos));
         assertTrue(actualSharedKeyValueProtos.containsAll(expectedSharedKeyValueProtos));
+    }
+
+    protected void validateUpdateAttributesJsonResponse(CoapTestCallback callback, String expectedResponse, int expectedObserveCnt) {
+        assertNotNull(callback.getPayloadBytes());
+        assertNotNull(callback.getObserve());
+        assertEquals(CoAP.ResponseCode.CONTENT, callback.getResponseCode());
+        assertEquals(expectedObserveCnt, callback.getObserve().intValue());
+        String response = new String(callback.getPayloadBytes(), StandardCharsets.UTF_8);
+        assertEquals(JacksonUtil.toJsonNode(expectedResponse), JacksonUtil.toJsonNode(response));
+    }
+
+    protected void validateEmptyCurrentStateAttributesProtoResponse(CoapTestCallback callback) throws InvalidProtocolBufferException {
+        assertArrayEquals(EMPTY_PAYLOAD, callback.getPayloadBytes());
+        assertNotNull(callback.getObserve());
+        assertEquals(CoAP.ResponseCode.CONTENT, callback.getResponseCode());
+        assertEquals(0, callback.getObserve().intValue());
+    }
+
+    protected void validateCurrentStateAttributesProtoResponse(CoapTestCallback callback) throws InvalidProtocolBufferException {
+        assertNotNull(callback.getPayloadBytes());
+        assertNotNull(callback.getObserve());
+        assertEquals(CoAP.ResponseCode.CONTENT, callback.getResponseCode());
+        assertEquals(0, callback.getObserve().intValue());
+        TransportProtos.AttributeUpdateNotificationMsg.Builder expectedCurrentStateNotificationMsgBuilder = TransportProtos.AttributeUpdateNotificationMsg.newBuilder();
+        TransportProtos.TsKvProto tsKvProtoAttribute1 = getTsKvProto("sharedStr", "value", TransportProtos.KeyValueType.STRING_V);
+        TransportProtos.TsKvProto tsKvProtoAttribute2 = getTsKvProto("sharedBool", "false", TransportProtos.KeyValueType.BOOLEAN_V);
+        TransportProtos.TsKvProto tsKvProtoAttribute3 = getTsKvProto("sharedDbl", "41.0", TransportProtos.KeyValueType.DOUBLE_V);
+        TransportProtos.TsKvProto tsKvProtoAttribute4 = getTsKvProto("sharedLong", "72", TransportProtos.KeyValueType.LONG_V);
+        TransportProtos.TsKvProto tsKvProtoAttribute5 = getTsKvProto("sharedJson", "{\"someNumber\":41,\"someArray\":[],\"someNestedObject\":{\"key\":\"value\"}}", TransportProtos.KeyValueType.JSON_V);
+        List<TransportProtos.TsKvProto> tsKvProtoList = new ArrayList<>();
+        tsKvProtoList.add(tsKvProtoAttribute1);
+        tsKvProtoList.add(tsKvProtoAttribute2);
+        tsKvProtoList.add(tsKvProtoAttribute3);
+        tsKvProtoList.add(tsKvProtoAttribute4);
+        tsKvProtoList.add(tsKvProtoAttribute5);
+        TransportProtos.AttributeUpdateNotificationMsg expectedCurrentStateNotificationMsg = expectedCurrentStateNotificationMsgBuilder.addAllSharedUpdated(tsKvProtoList).build();
+        TransportProtos.AttributeUpdateNotificationMsg actualCurrentStateNotificationMsg = TransportProtos.AttributeUpdateNotificationMsg.parseFrom(callback.getPayloadBytes());
+
+        List<TransportProtos.KeyValueProto> expectedSharedUpdatedList = expectedCurrentStateNotificationMsg.getSharedUpdatedList().stream().map(TransportProtos.TsKvProto::getKv).collect(Collectors.toList());
+        List<TransportProtos.KeyValueProto> actualSharedUpdatedList = actualCurrentStateNotificationMsg.getSharedUpdatedList().stream().map(TransportProtos.TsKvProto::getKv).collect(Collectors.toList());
+
+        assertEquals(expectedSharedUpdatedList.size(), actualSharedUpdatedList.size());
+        assertTrue(actualSharedUpdatedList.containsAll(expectedSharedUpdatedList));
+    }
+
+    protected void validateUpdateProtoAttributesResponse(CoapTestCallback callback, int expectedObserveCnt) throws InvalidProtocolBufferException {
+        assertNotNull(callback.getPayloadBytes());
+        assertNotNull(callback.getObserve());
+        assertEquals(CoAP.ResponseCode.CONTENT, callback.getResponseCode());
+        assertEquals(expectedObserveCnt, callback.getObserve().intValue());
+        TransportProtos.AttributeUpdateNotificationMsg.Builder attributeUpdateNotificationMsgBuilder = TransportProtos.AttributeUpdateNotificationMsg.newBuilder();
+        List<TransportProtos.TsKvProto> tsKvProtoList = getTsKvProtoList("shared");
+        attributeUpdateNotificationMsgBuilder.addAllSharedUpdated(tsKvProtoList);
+
+        TransportProtos.AttributeUpdateNotificationMsg expectedAttributeUpdateNotificationMsg = attributeUpdateNotificationMsgBuilder.build();
+        TransportProtos.AttributeUpdateNotificationMsg actualAttributeUpdateNotificationMsg = TransportProtos.AttributeUpdateNotificationMsg.parseFrom(callback.getPayloadBytes());
+
+        List<TransportProtos.KeyValueProto> actualSharedUpdatedList = actualAttributeUpdateNotificationMsg.getSharedUpdatedList().stream().map(TransportProtos.TsKvProto::getKv).collect(Collectors.toList());
+        List<TransportProtos.KeyValueProto> expectedSharedUpdatedList = expectedAttributeUpdateNotificationMsg.getSharedUpdatedList().stream().map(TransportProtos.TsKvProto::getKv).collect(Collectors.toList());
+
+        assertEquals(expectedSharedUpdatedList.size(), actualSharedUpdatedList.size());
+        assertTrue(actualSharedUpdatedList.containsAll(expectedSharedUpdatedList));
+    }
+
+    protected void validateDeleteProtoAttributesResponse(CoapTestCallback callback, int expectedObserveCnt) throws InvalidProtocolBufferException {
+        assertNotNull(callback.getPayloadBytes());
+        assertNotNull(callback.getObserve());
+        assertEquals(CoAP.ResponseCode.CONTENT, callback.getResponseCode());
+        assertEquals(expectedObserveCnt, callback.getObserve().intValue());
+        TransportProtos.AttributeUpdateNotificationMsg.Builder attributeUpdateNotificationMsgBuilder = TransportProtos.AttributeUpdateNotificationMsg.newBuilder();
+        attributeUpdateNotificationMsgBuilder.addSharedDeleted("sharedJson");
+
+        TransportProtos.AttributeUpdateNotificationMsg expectedAttributeUpdateNotificationMsg = attributeUpdateNotificationMsgBuilder.build();
+        TransportProtos.AttributeUpdateNotificationMsg actualAttributeUpdateNotificationMsg = TransportProtos.AttributeUpdateNotificationMsg.parseFrom(callback.getPayloadBytes());
+
+        assertEquals(expectedAttributeUpdateNotificationMsg.getSharedDeletedList().size(), actualAttributeUpdateNotificationMsg.getSharedDeletedList().size());
+        assertEquals("sharedJson", actualAttributeUpdateNotificationMsg.getSharedDeletedList().get(0));
+    }
+
+    private void awaitClientAfterCancelObserve() {
+        Awaitility.await("awaitClientAfterCancelObserve")
+                .pollInterval(10, TimeUnit.MILLISECONDS)
+                .atMost(5, TimeUnit.SECONDS)
+                .until(()->{
+                    log.trace("awaiting defaultTransportService.sessions is empty");
+                    return defaultTransportService.sessions.isEmpty();});
     }
 
     private TransportProtos.GetAttributeResponseMsg getExpectedAttributeResponseMsg() {
