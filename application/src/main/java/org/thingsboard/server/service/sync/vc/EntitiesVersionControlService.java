@@ -54,10 +54,10 @@ public interface EntitiesVersionControlService {
 
     EntitiesVersionControlSettings getVersionControlSettings(TenantId tenantId);
 
-    EntitiesVersionControlSettings saveVersionControlSettings(TenantId tenantId, EntitiesVersionControlSettings versionControlSettings);
+    ListenableFuture<EntitiesVersionControlSettings> saveVersionControlSettings(TenantId tenantId, EntitiesVersionControlSettings versionControlSettings);
 
-    void deleteVersionControlSettings(TenantId tenantId) throws Exception;
+    ListenableFuture<Void> deleteVersionControlSettings(TenantId tenantId) throws Exception;
 
-    void checkVersionControlAccess(TenantId tenantId, EntitiesVersionControlSettings settings) throws Exception;
+    ListenableFuture<Void> checkVersionControlAccess(TenantId tenantId, EntitiesVersionControlSettings settings) throws Exception;
 
 }
