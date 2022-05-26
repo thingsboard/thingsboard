@@ -99,6 +99,21 @@
             {{ entityVersion.name }}
           </mat-cell>
         </ng-container>
+        <ng-container matColumnDef="actions" stickyEnd>
+          <mat-header-cell *matHeaderCellDef style="min-width: 40px; max-width: 40px; width: 40px">
+          </mat-header-cell>
+          <mat-cell *matCellDef="let entityVersion">
+            <div fxFlex fxLayout="row" fxLayoutAlign="end">
+              <button *ngIf="singleEntityMode" mat-icon-button [disabled]="isLoading$ | async"
+                      matTooltip="{{ 'version-control.restore-version' | translate }}"
+                      matTooltipPosition="above"
+                      #restoreVersionButton
+                      (click)="toggleRestoreEntityVersion($event, restoreVersionButton, entityVersion)">
+                <mat-icon>restore</mat-icon>
+              </button>
+            </div>
+          </mat-cell>
+        </ng-container>
         <mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
         <mat-row [fxShow]="!dataSource.dataLoading" *matRowDef="let entityVersion; columns: displayedColumns;"></mat-row>
       </table>

@@ -22,5 +22,6 @@
   <tb-entity-versions-table [singleEntityMode]="singleEntityMode"
                             [active]="active"
                             [entityId]="entityId"
-                            [externalEntityId]="externalEntityId"></tb-entity-versions-table>
+                            [externalEntityId]="externalEntityId"
+                            (versionRestored)="versionRestored.emit()"></tb-entity-versions-table>
 </ng-template>
