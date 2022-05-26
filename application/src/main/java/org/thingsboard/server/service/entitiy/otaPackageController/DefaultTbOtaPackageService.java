@@ -42,7 +42,7 @@ public class DefaultTbOtaPackageService extends AbstractTbEntityService implemen
         ActionType actionType = saveOtaPackageInfoRequest.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         try {
             OtaPackageInfo savedOtaPackageInfo = otaPackageService.saveOtaPackageInfo(new OtaPackageInfo(saveOtaPackageInfoRequest), saveOtaPackageInfoRequest.isUsesUrl());
-            notificationEntityService.notifyEntity(tenantId, saveOtaPackageInfoRequest.getId(), saveOtaPackageInfoRequest, null,
+            notificationEntityService.notifyEntity(tenantId, savedOtaPackageInfo.getId(), savedOtaPackageInfo, null,
                     actionType, user, null);
             return savedOtaPackageInfo;
         } catch (Exception e) {
