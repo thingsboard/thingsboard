@@ -426,6 +426,9 @@ export interface WidgetConfigComponentData {
   settingsSchema: JsonSettingsSchema;
   dataKeySettingsSchema: JsonSettingsSchema;
   latestDataKeySettingsSchema: JsonSettingsSchema;
+  settingsDirective: string;
+  dataKeySettingsDirective: string;
+  latestDataKeySettingsDirective: string;
 }
 
 export const MissingWidgetType: WidgetInfo = {
@@ -515,6 +518,9 @@ export function toWidgetInfo(widgetTypeEntity: WidgetType): WidgetInfo {
     settingsSchema: widgetTypeEntity.descriptor.settingsSchema,
     dataKeySettingsSchema: widgetTypeEntity.descriptor.dataKeySettingsSchema,
     latestDataKeySettingsSchema: widgetTypeEntity.descriptor.latestDataKeySettingsSchema,
+    settingsDirective: widgetTypeEntity.descriptor.settingsDirective,
+    dataKeySettingsDirective: widgetTypeEntity.descriptor.dataKeySettingsDirective,
+    latestDataKeySettingsDirective: widgetTypeEntity.descriptor.latestDataKeySettingsDirective,
     defaultConfig: widgetTypeEntity.descriptor.defaultConfig
   };
 }
@@ -542,6 +548,9 @@ export function toWidgetType(widgetInfo: WidgetInfo, id: WidgetTypeId, tenantId:
     settingsSchema: widgetInfo.settingsSchema,
     dataKeySettingsSchema: widgetInfo.dataKeySettingsSchema,
     latestDataKeySettingsSchema: widgetInfo.latestDataKeySettingsSchema,
+    settingsDirective: widgetInfo.settingsDirective,
+    dataKeySettingsDirective: widgetInfo.dataKeySettingsDirective,
+    latestDataKeySettingsDirective: widgetInfo.latestDataKeySettingsDirective,
     defaultConfig: widgetInfo.defaultConfig
   };
   return {

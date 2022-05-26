@@ -18,14 +18,13 @@ package org.thingsboard.server.transport.mqtt.telemetry.attributes;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
+import org.thingsboard.server.transport.mqtt.MqttTestClient;
 import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 
 import java.util.Arrays;
@@ -38,6 +37,10 @@ import java.util.Set;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_ATTRIBUTES_SHORT_JSON_TOPIC;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_ATTRIBUTES_SHORT_TOPIC;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_ATTRIBUTES_TOPIC;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.GATEWAY_ATTRIBUTES_TOPIC;
 
 @Slf4j
 @DaoSqlTest
@@ -58,19 +61,19 @@ public class MqttAttributesIntegrationTest extends AbstractMqttIntegrationTest {
     @Test
     public void testPushAttributes() throws Exception {
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
-        processJsonPayloadAttributesTest(MqttTopics.DEVICE_ATTRIBUTES_TOPIC, expectedKeys, PAYLOAD_VALUES_STR.getBytes());
+        processJsonPayloadAttributesTest(DEVICE_ATTRIBUTES_TOPIC, expectedKeys, PAYLOAD_VALUES_STR.getBytes());
     }
 
     @Test
     public void testPushAttributesOnShortTopic() throws Exception {
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
-        processJsonPayloadAttributesTest(MqttTopics.DEVICE_ATTRIBUTES_SHORT_TOPIC, expectedKeys, PAYLOAD_VALUES_STR.getBytes());
+        processJsonPayloadAttributesTest(DEVICE_ATTRIBUTES_SHORT_TOPIC, expectedKeys, PAYLOAD_VALUES_STR.getBytes());
     }
 
     @Test
     public void testPushAttributesOnShortJsonTopic() throws Exception {
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
-        processJsonPayloadAttributesTest(MqttTopics.DEVICE_ATTRIBUTES_SHORT_JSON_TOPIC, expectedKeys, PAYLOAD_VALUES_STR.getBytes());
+        processJsonPayloadAttributesTest(DEVICE_ATTRIBUTES_SHORT_JSON_TOPIC, expectedKeys, PAYLOAD_VALUES_STR.getBytes());
     }
 
     @Test
@@ -87,9 +90,11 @@ public class MqttAttributesIntegrationTest extends AbstractMqttIntegrationTest {
     }
 
     protected void processAttributesTest(String topic, List<String> expectedKeys, byte[] payload, boolean presenceFieldsTest) throws Exception {
-        MqttAsyncClient client = getMqttAsyncClient(accessToken);
+        MqttTestClient client = new MqttTestClient();
+        client.connectAndWait(accessToken);
 
-        publishMqttMsg(client, payload, topic);
+        client.publishAndWait(topic, payload);
+        client.disconnect();
 
         DeviceId deviceId = savedDevice.getId();
 
@@ -125,9 +130,11 @@ public class MqttAttributesIntegrationTest extends AbstractMqttIntegrationTest {
     }
 
     protected void processGatewayAttributesTest(List<String> expectedKeys, byte[] payload, String firstDeviceName, String secondDeviceName) throws Exception {
-        MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
+        MqttTestClient client = new MqttTestClient();
+        client.connectAndWait(gatewayAccessToken);
 
-        publishMqttMsg(client, payload, MqttTopics.GATEWAY_ATTRIBUTES_TOPIC);
+        client.publishAndWait(GATEWAY_ATTRIBUTES_TOPIC, payload);
+        client.disconnect();
 
         Device firstDevice = doExecuteWithRetriesAndInterval(() -> doGet("/api/tenant/devices?deviceName=" + firstDeviceName, Device.class),
                 20,
@@ -141,12 +148,12 @@ public class MqttAttributesIntegrationTest extends AbstractMqttIntegrationTest {
 
         assertNotNull(secondDevice);
 
-        Thread.sleep(2000);
-
-        List<String> firstDeviceActualKeys = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + firstDevice.getId() + "/keys/attributes/CLIENT_SCOPE", new TypeReference<>() {});
+        List<String> firstDeviceActualKeys = getActualKeysList(firstDevice.getId(), expectedKeys);
+        assertNotNull(firstDeviceActualKeys);
         Set<String> firstDeviceActualKeySet = new HashSet<>(firstDeviceActualKeys);
 
-        List<String> secondDeviceActualKeys = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + secondDevice.getId() + "/keys/attributes/CLIENT_SCOPE", new TypeReference<>() {});
+        List<String> secondDeviceActualKeys = getActualKeysList(secondDevice.getId(), expectedKeys);
+        assertNotNull(secondDeviceActualKeys);
         Set<String> secondDeviceActualKeySet = new HashSet<>(secondDeviceActualKeys);
 
         Set<String> expectedKeySet = new HashSet<>(expectedKeys);
@@ -163,6 +170,21 @@ public class MqttAttributesIntegrationTest extends AbstractMqttIntegrationTest {
         assertAttributesValues(firstDeviceValues, expectedKeySet);
         assertAttributesValues(secondDeviceValues, expectedKeySet);
 
+    }
+
+    private List<String> getActualKeysList(DeviceId deviceId, List<String> expectedKeys) throws Exception {
+        long start = System.currentTimeMillis();
+        long end = System.currentTimeMillis() + 3000;
+        List<String> firstDeviceActualKeys = null;
+        while (start <= end) {
+            firstDeviceActualKeys = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + deviceId + "/keys/attributes/CLIENT_SCOPE", new TypeReference<>() {});
+            if (firstDeviceActualKeys.size() == expectedKeys.size()) {
+                break;
+            }
+            Thread.sleep(100);
+            start += 100;
+        }
+        return firstDeviceActualKeys;
     }
 
     @SuppressWarnings("unchecked")

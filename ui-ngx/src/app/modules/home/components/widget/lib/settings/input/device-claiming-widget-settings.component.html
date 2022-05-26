@@ -1,0 +1,84 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section class="tb-widget-settings" [formGroup]="deviceClaimingWidgetSettingsForm" fxLayout="column">
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>widgets.input-widgets.general-settings</legend>
+    <mat-form-field fxFlex class="mat-block">
+      <mat-label translate>widgets.input-widgets.widget-title</mat-label>
+      <input matInput formControlName="widgetTitle">
+    </mat-form-field>
+    <mat-form-field fxFlex class="mat-block">
+      <mat-label translate>widgets.input-widgets.claim-button-label</mat-label>
+      <input matInput formControlName="labelClaimButon">
+    </mat-form-field>
+    <mat-slide-toggle class="slide-block" formControlName="deviceSecret">
+      {{ 'widgets.input-widgets.show-secret-key-field' | translate }}
+    </mat-slide-toggle>
+  </fieldset>
+  <fieldset class="fields-group fields-group-slider">
+    <legend class="group-title" translate>widgets.input-widgets.labels-settings</legend>
+    <mat-expansion-panel class="tb-settings" [expanded]="deviceClaimingWidgetSettingsForm.get('showLabel').value">
+      <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-panel-title>
+          <mat-slide-toggle formControlName="showLabel" (click)="$event.stopPropagation()"
+                            fxLayoutAlign="center">
+            {{ 'widgets.input-widgets.show-labels' | translate }}
+          </mat-slide-toggle>
+        </mat-panel-title>
+        <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+          widget-config.advanced-settings
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <section fxLayout="column">
+          <mat-form-field fxFlex class="mat-block">
+            <mat-label translate>widgets.input-widgets.device-name-label</mat-label>
+            <input matInput formControlName="deviceLabel">
+          </mat-form-field>
+          <mat-form-field [fxShow]="deviceClaimingWidgetSettingsForm.get('deviceSecret').value" fxFlex class="mat-block">
+            <mat-label translate>widgets.input-widgets.secret-key-label</mat-label>
+            <input matInput formControlName="secretKeyLabel">
+          </mat-form-field>
+        </section>
+      </ng-template>
+    </mat-expansion-panel>
+  </fieldset>
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>widgets.input-widgets.messages-settings</legend>
+    <mat-form-field fxFlex class="mat-block">
+      <mat-label translate>widgets.input-widgets.claim-device-success-message</mat-label>
+      <input matInput formControlName="successfulClaimDevice">
+    </mat-form-field>
+    <mat-form-field fxFlex class="mat-block">
+      <mat-label translate>widgets.input-widgets.claim-device-not-found-message</mat-label>
+      <input matInput formControlName="deviceNotFound">
+    </mat-form-field>
+    <mat-form-field fxFlex class="mat-block">
+      <mat-label translate>widgets.input-widgets.claim-device-failed-message</mat-label>
+      <input matInput formControlName="failedClaimDevice">
+    </mat-form-field>
+    <mat-form-field fxFlex class="mat-block">
+      <mat-label translate>widgets.input-widgets.claim-device-name-required-message</mat-label>
+      <input matInput formControlName="requiredErrorDevice">
+    </mat-form-field>
+    <mat-form-field [fxShow]="deviceClaimingWidgetSettingsForm.get('deviceSecret').value" fxFlex class="mat-block">
+      <mat-label translate>widgets.input-widgets.claim-device-secret-key-required-message</mat-label>
+      <input matInput formControlName="requiredErrorSecretKey">
+    </mat-form-field>
+  </fieldset>
+</section>

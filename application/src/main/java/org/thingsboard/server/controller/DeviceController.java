@@ -82,6 +82,7 @@ import java.util.stream.Collectors;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_INFO_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_NAME_DESCRIPTION;
@@ -102,6 +103,7 @@ import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_A
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_ID;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
@@ -114,9 +116,7 @@ import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
 @Slf4j
 public class DeviceController extends BaseController {
 
-    protected static final String DEVICE_ID = "deviceId";
     protected static final String DEVICE_NAME = "deviceName";
-    protected static final String TENANT_ID = "tenantId";
 
     private final DeviceBulkImportService deviceBulkImportService;
 
@@ -206,7 +206,7 @@ public class DeviceController extends BaseController {
         DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
         Device device = checkDeviceId(deviceId, Operation.DELETE);
         try {
-            tbDeviceService.deleteDevice(device, getCurrentUser()).get();
+            tbDeviceService.delete(device, getCurrentUser()).get();
         } catch (Exception e) {
             throw handleException(e);
         }

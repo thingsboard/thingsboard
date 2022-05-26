@@ -17,25 +17,17 @@
 import { WidgetContext } from '@home/models/widget-component.models';
 import * as CanvasGauges from 'canvas-gauges';
 import {
-  AnalogueCompassSettings,
-  analogueCompassSettingsSchema
+  AnalogueCompassSettings
 } from '@home/components/widget/lib/analogue-compass.models';
 import { deepClone, isDefined } from '@core/utils';
-import { JsonSettingsSchema } from '@shared/models/widget.models';
 import { getFontFamily } from '@home/components/widget/lib/settings.models';
 import { TbBaseGauge } from '@home/components/widget/lib/analogue-gauge.models';
 import RadialGaugeOptions = CanvasGauges.RadialGaugeOptions;
 import BaseGauge = CanvasGauges.BaseGauge;
 import RadialGauge = CanvasGauges.RadialGauge;
 
-const analogueCompassSettingsSchemaValue = analogueCompassSettingsSchema;
-
 // @dynamic
 export class TbAnalogueCompass extends TbBaseGauge<AnalogueCompassSettings, RadialGaugeOptions> {
-
-  static get settingsSchema(): JsonSettingsSchema {
-    return analogueCompassSettingsSchemaValue;
-  }
 
   constructor(ctx: WidgetContext, canvasId: string) {
     super(ctx, canvasId);
