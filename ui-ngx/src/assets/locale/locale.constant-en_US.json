@@ -57,7 +57,8 @@
         "download": "Download",
         "next-with-label": "Next: {{label}}",
         "read-more": "Read more",
-        "hide": "Hide"
+        "hide": "Hide",
+        "restore": "Restore"
     },
     "aggregation": {
         "aggregation": "Aggregation",
@@ -3126,7 +3127,11 @@
         "no-entity-versions-text": "No entity versions found",
         "no-versions-text": "No versions found",
         "copy-full-version-id": "Copy full version id",
-        "create-version": "Create version"
+        "create-version": "Create version",
+        "nothing-to-commit": "Nothing to commit",
+        "restore-version": "Restore version",
+        "restore-entity-from-version": "Restore entity from version '{{versionName}}'",
+        "load-entity-relations": "Load entity relations"
     },
     "widget": {
         "widget-library": "Widgets Library",

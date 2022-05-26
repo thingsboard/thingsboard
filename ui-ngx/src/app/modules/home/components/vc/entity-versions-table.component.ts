@@ -18,10 +18,10 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
-  ElementRef,
+  ElementRef, EventEmitter,
   Input,
   OnDestroy,
-  OnInit, Renderer2,
+  OnInit, Output, Renderer2,
   ViewChild, ViewContainerRef
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
@@ -33,7 +33,7 @@ import { BehaviorSubject, fromEvent, merge, Observable, of, ReplaySubject } from
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { PageLink } from '@shared/models/page/page-link';
 import { catchError, debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
-import { EntityVersion, VersionCreationResult } from '@shared/models/vc.models';
+import { EntityVersion, VersionCreationResult, VersionLoadResult } from '@shared/models/vc.models';
 import { EntitiesVersionControlService } from '@core/http/entities-version-control.service';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
@@ -46,6 +46,7 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { EntityVersionExportComponent } from '@home/components/vc/entity-version-export.component';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverComponent } from '@shared/components/popover.component';
+import { EntityVersionRestoreComponent } from '@home/components/vc/entity-version-restore.component';
 
 @Component({
   selector: 'tb-entity-versions-table',
@@ -59,7 +60,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
   @Input()
   singleEntityMode = false;
 
-  displayedColumns = ['timestamp', 'id', 'name'];
+  displayedColumns = ['timestamp', 'id', 'name', 'actions'];
   pageLink: PageLink;
   textSearchMode = false;
   dataSource: EntityVersionsDatasource;
@@ -72,8 +73,6 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
   externalEntityIdValue: EntityId;
 
   viewsInited = false;
-
-  vcExportPopover: TbPopoverComponent;
 
   private componentResize$: ResizeObserver;
 
@@ -103,6 +102,9 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
 
   @Input()
   entityId: EntityId;
+
+  @Output()
+  versionRestored = new EventEmitter<void>();
 
   @ViewChild('searchInput') searchInputField: ElementRef;
 
@@ -182,13 +184,13 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      this.vcExportPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, EntityVersionExportComponent, 'bottom', true, null,
+      const vcExportPopover = this.popoverService.displayPopover(trigger, this.renderer,
+        this.viewContainerRef, EntityVersionExportComponent, 'left', true, null,
         {
           branch: this.branch,
           entityId: this.entityId,
           onClose: (result: VersionCreationResult | null, branch: string | null) => {
-            this.vcExportPopover.hide();
+            vcExportPopover.hide();
             if (result) {
               if (this.branch !== branch) {
                 this.branchChanged(branch);
@@ -196,13 +198,39 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
                 this.updateData();
               }
             }
+          },
+          onContentUpdated: () => {
+            vcExportPopover.updatePosition();
+            setTimeout(() => {
+              vcExportPopover.updatePosition();
+            });
           }
         }, {}, {}, {}, false);
-      this.vcExportPopover.tbVisibleChange.subscribe((visible: boolean) => {
-        if (!visible) {
-          this.vcExportPopover = null;
-        }
-      });
+    }
+  }
+
+  toggleRestoreEntityVersion($event: Event, restoreVersionButton: MatButton, entityVersion: EntityVersion) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const trigger = restoreVersionButton._elementRef.nativeElement;
+    if (this.popoverService.hasPopover(trigger)) {
+      this.popoverService.hidePopover(trigger);
+    } else {
+      const restoreVersionPopover = this.popoverService.displayPopover(trigger, this.renderer,
+        this.viewContainerRef, EntityVersionRestoreComponent, 'left', true, null,
+        {
+          branch: this.branch,
+          versionName: entityVersion.name,
+          versionId: entityVersion.id,
+          externalEntityId: this.externalEntityIdValue,
+          onClose: (result: Array<VersionLoadResult> | null) => {
+            restoreVersionPopover.hide();
+            if (result && result.length) {
+              this.versionRestored.emit();
+            }
+          }
+        }, {}, {}, {}, false);
     }
   }
 

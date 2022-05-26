@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { selectHasVersionControl } from '@core/auth/auth.selectors';
@@ -46,6 +46,9 @@ export class VersionControlComponent implements OnInit, HasConfirmForm {
 
   @Input()
   entityId: EntityId;
+
+  @Output()
+  versionRestored = new EventEmitter<void>();
 
   hasVersionControl$ = this.store.pipe(select(selectHasVersionControl));
 

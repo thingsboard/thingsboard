@@ -26,11 +26,12 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntitiesVersionControlService } from '@core/http/entities-version-control.service';
 import { EntityId } from '@shared/models/id/entity-id';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'tb-entity-version-export',
   templateUrl: './entity-version-export.component.html',
-  styleUrls: []
+  styleUrls: ['./entity-version-export.component.scss']
 })
 export class EntityVersionExportComponent extends PageComponent implements OnInit {
 
@@ -43,10 +44,16 @@ export class EntityVersionExportComponent extends PageComponent implements OnIni
   @Input()
   onClose: (result: VersionCreationResult | null, branch: string | null) => void;
 
+  @Input()
+  onContentUpdated: () => void;
+
   exportFormGroup: FormGroup;
+
+  resultMessage: string;
 
   constructor(protected store: Store<AppState>,
               private entitiesVersionControlService: EntitiesVersionControlService,
+              private translate: TranslateService,
               private fb: FormBuilder) {
     super(store);
   }
@@ -76,7 +83,12 @@ export class EntityVersionExportComponent extends PageComponent implements OnIni
       type: VersionCreateRequestType.SINGLE_ENTITY
     };
     this.entitiesVersionControlService.saveEntitiesVersion(request).subscribe((result) => {
-      if (this.onClose) {
+      if (!result.added && !result.modified) {
+        this.resultMessage = this.translate.instant('version-control.nothing-to-commit');
+        if (this.onContentUpdated) {
+          this.onContentUpdated();
+        }
+      } else if (this.onClose) {
         this.onClose(result, request.branch);
       }
     });

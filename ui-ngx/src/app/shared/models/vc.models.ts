@@ -15,14 +15,24 @@
 ///
 
 import { EntityId } from '@shared/models/id/entity-id';
+import { EntityType } from '@shared/models/entity-type.models';
 
 export interface VersionCreateConfig {
   saveRelations: boolean;
 }
 
+export interface VersionLoadConfig {
+  loadRelations: boolean;
+}
+
 export enum VersionCreateRequestType {
   SINGLE_ENTITY = 'SINGLE_ENTITY',
   COMPLEX = 'COMPLEX'
+}
+
+export enum VersionLoadRequestType {
+  SINGLE_ENTITY = 'SINGLE_ENTITY',
+  ENTITY_TYPE = 'ENTITY_TYPE'
 }
 
 export interface VersionCreateRequest {
@@ -35,6 +45,18 @@ export interface SingleEntityVersionCreateRequest extends VersionCreateRequest {
   entityId: EntityId;
   config: VersionCreateConfig;
   type: VersionCreateRequestType.SINGLE_ENTITY;
+}
+
+export interface VersionLoadRequest {
+  branch: string;
+  versionId: string;
+  type: VersionLoadRequestType;
+}
+
+export interface SingleEntityVersionLoadRequest extends VersionLoadRequest {
+  externalEntityId: EntityId;
+  config: VersionLoadConfig;
+  type: VersionLoadRequestType.SINGLE_ENTITY;
 }
 
 export interface BranchInfo {
@@ -53,4 +75,11 @@ export interface VersionCreationResult {
   added: number;
   modified: number;
   removed: number;
+}
+
+export interface VersionLoadResult {
+  entityType: EntityType;
+  created: number;
+  updated: number;
+  deleted: number;
 }

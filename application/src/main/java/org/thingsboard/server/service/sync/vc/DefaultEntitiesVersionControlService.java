@@ -190,7 +190,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                 SingleEntityVersionLoadRequest versionLoadRequest = (SingleEntityVersionLoadRequest) request;
                 VersionLoadConfig config = versionLoadRequest.getConfig();
                 ListenableFuture<EntityExportData> future = gitServiceQueue.getEntity(user.getTenantId(), request.getVersionId(), versionLoadRequest.getExternalEntityId());
-                Futures.transform(future, entityData -> {
+                return Futures.transform(future, entityData -> {
                     EntityImportResult<?> importResult = transactionTemplate.execute(status -> {
                         try {
                             return exportImportService.importEntity(user, entityData, EntityImportSettings.builder()

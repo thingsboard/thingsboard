@@ -18,7 +18,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-utils';
 import { combineLatest, Observable, of } from 'rxjs';
-import { BranchInfo, EntityVersion, VersionCreateRequest, VersionCreationResult } from '@shared/models/vc.models';
+import {
+  BranchInfo,
+  EntityVersion,
+  VersionCreateRequest,
+  VersionCreationResult,
+  VersionLoadRequest, VersionLoadResult
+} from '@shared/models/vc.models';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
@@ -94,5 +100,9 @@ export class EntitiesVersionControlService {
                       config?: RequestConfig): Observable<PageData<EntityVersion>> {
     return this.http.get<PageData<EntityVersion>>(`/api/entities/vc/version/${branch}${pageLink.toQuery()}`,
       defaultHttpOptionsFromConfig(config));
+  }
+
+  public loadEntitiesVersion(request: VersionLoadRequest, config?: RequestConfig): Observable<Array<VersionLoadResult>> {
+    return this.http.post<Array<VersionLoadResult>>('/api/entities/vc/entity', request, defaultHttpOptionsFromConfig(config));
   }
 }
