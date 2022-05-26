@@ -258,9 +258,9 @@ public class TwoFaConfigController extends BaseController {
                     ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PostMapping("/settings")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
-    public void savePlatformTwoFaSettings(@ApiParam(value = "Settings value", required = true)
+    public PlatformTwoFaSettings savePlatformTwoFaSettings(@ApiParam(value = "Settings value", required = true)
                                           @RequestBody PlatformTwoFaSettings twoFaSettings) throws ThingsboardException {
-        twoFaConfigManager.savePlatformTwoFaSettings(getTenantId(), twoFaSettings);
+        return twoFaConfigManager.savePlatformTwoFaSettings(getTenantId(), twoFaSettings);
     }
 
 

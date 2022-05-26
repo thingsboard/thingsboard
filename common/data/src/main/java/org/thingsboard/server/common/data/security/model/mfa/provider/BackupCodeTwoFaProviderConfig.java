@@ -22,7 +22,7 @@ import javax.validation.constraints.Min;
 @Data
 public class BackupCodeTwoFaProviderConfig implements TwoFaProviderConfig {
 
-    @Min(0)
+    @Min(1)
     private int codesQuantity;
 
     @Override

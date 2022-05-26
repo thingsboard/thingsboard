@@ -55,7 +55,9 @@ public class RestAwareAuthenticationSuccessHandler implements AuthenticationSucc
 
         if (authentication instanceof MfaAuthenticationToken) {
             int preVerificationTokenLifetime = twoFaConfigManager.getPlatformTwoFaSettings(securityUser.getTenantId(), true)
-                    .flatMap(settings -> Optional.ofNullable(settings.getTotalAllowedTimeForVerification())).orElse((int) TimeUnit.MINUTES.toSeconds(30));
+                    .flatMap(settings -> Optional.ofNullable(settings.getTotalAllowedTimeForVerification())
+                            .filter(time -> time > 0))
+                    .orElse((int) TimeUnit.MINUTES.toSeconds(30));
             tokenPair.setToken(tokenFactory.createPreVerificationToken(securityUser, preVerificationTokenLifetime).getToken());
             tokenPair.setRefreshToken(null);
             tokenPair.setScope(Authority.PRE_VERIFICATION_TOKEN);

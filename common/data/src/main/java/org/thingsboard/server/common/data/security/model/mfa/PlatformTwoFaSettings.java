@@ -37,7 +37,7 @@ public class PlatformTwoFaSettings {
     @Pattern(regexp = "[1-9]\\d*:[1-9]\\d*", message = "verification code check rate limit configuration is invalid")
     private String verificationCodeCheckRateLimit;
     @Min(value = 0, message = "maximum number of verification failure before user lockout must be positive")
-    private int maxVerificationFailuresBeforeUserLockout;
+    private Integer maxVerificationFailuresBeforeUserLockout;
     @Min(value = 1, message = "total amount of time allotted for verification must be greater than 0")
     private Integer totalAllowedTimeForVerification;
 

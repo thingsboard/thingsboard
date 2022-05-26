@@ -99,6 +99,9 @@ public class DefaultTwoFaConfigManager implements TwoFaConfigManager {
             return newSettings;
         });
         Map<TwoFaProviderType, TwoFaAccountConfig> configs = settings.getConfigs();
+        if (configs.isEmpty() && accountConfig.getProviderType() == TwoFaProviderType.BACKUP_CODE) {
+            throw new IllegalArgumentException("To use 2FA backup codes you first need to configure at least one provider");
+        }
         if (accountConfig.isUseByDefault()) {
             configs.values().forEach(config -> config.setUseByDefault(false));
         }
@@ -114,7 +117,11 @@ public class DefaultTwoFaConfigManager implements TwoFaConfigManager {
         AccountTwoFaSettings settings = getAccountTwoFaSettings(tenantId, userId)
                 .orElseThrow(() -> new IllegalArgumentException("2FA not configured"));
         settings.getConfigs().remove(providerType);
-        if (!settings.getConfigs().isEmpty() && settings.getConfigs().values().stream().noneMatch(TwoFaAccountConfig::isUseByDefault)) {
+        if (settings.getConfigs().size() == 1) {
+            settings.getConfigs().remove(TwoFaProviderType.BACKUP_CODE);
+        }
+        if (!settings.getConfigs().isEmpty() && settings.getConfigs().values().stream()
+                .noneMatch(TwoFaAccountConfig::isUseByDefault)) {
             settings.getConfigs().values().stream()
                     .min(Comparator.comparing(TwoFaAccountConfig::getProviderType))
                     .ifPresent(config -> config.setUseByDefault(true));
@@ -135,7 +142,7 @@ public class DefaultTwoFaConfigManager implements TwoFaConfigManager {
     }
 
     @Override
-    public void savePlatformTwoFaSettings(TenantId tenantId, PlatformTwoFaSettings twoFactorAuthSettings) throws ThingsboardException {
+    public PlatformTwoFaSettings savePlatformTwoFaSettings(TenantId tenantId, PlatformTwoFaSettings twoFactorAuthSettings) throws ThingsboardException {
         ConstraintValidator.validateFields(twoFactorAuthSettings);
         for (TwoFaProviderConfig providerConfig : twoFactorAuthSettings.getProviders()) {
             twoFactorAuthService.checkProvider(tenantId, providerConfig.getProviderType());
@@ -149,6 +156,7 @@ public class DefaultTwoFaConfigManager implements TwoFaConfigManager {
                 });
         settings.setJsonValue(JacksonUtil.valueToTree(twoFactorAuthSettings));
         adminSettingsService.saveAdminSettings(tenantId, settings);
+        return twoFactorAuthSettings;
     }
 
     @Override
