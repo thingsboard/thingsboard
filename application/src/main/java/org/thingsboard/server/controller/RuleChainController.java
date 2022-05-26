@@ -263,10 +263,8 @@ public class RuleChainController extends BaseController {
                     null,
                     created ? ActionType.ADDED : ActionType.UPDATED, null);
 
-            if (RuleChainType.EDGE.equals(savedRuleChain.getType())) {
-                if (!created) {
-                    sendEntityNotificationMsg(savedRuleChain.getTenantId(), savedRuleChain.getId(), EdgeEventActionType.UPDATED);
-                }
+            if (RuleChainType.EDGE.equals(savedRuleChain.getType()) && !created) {
+                sendEntityNotificationMsg(savedRuleChain.getTenantId(), savedRuleChain.getId(), EdgeEventActionType.UPDATED);
             }
 
             return savedRuleChain;
