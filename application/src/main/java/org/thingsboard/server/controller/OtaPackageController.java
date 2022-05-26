@@ -33,11 +33,9 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
-import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
@@ -289,15 +287,6 @@ public class OtaPackageController extends BaseController {
         OtaPackageInfo otaPackageInfo = checkOtaPackageInfoId(otaPackageId, Operation.DELETE);
 
         tbOtaPackageService.delete(otaPackageInfo, getCurrentUser());
-        try {
-
-
-            otaPackageService.deleteOtaPackage(getTenantId(), otaPackageId);
-            logEntityAction(otaPackageId, otaPackageInfo, null, ActionType.DELETED, null, strOtaPackageId);
-        } catch (Exception e) {
-            logEntityAction(emptyId(EntityType.OTA_PACKAGE), null, null, ActionType.DELETED, e, strOtaPackageId);
-            throw handleException(e);
-        }
     }
 
 }
