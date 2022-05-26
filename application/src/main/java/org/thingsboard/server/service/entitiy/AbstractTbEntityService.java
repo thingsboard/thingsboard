@@ -42,20 +42,28 @@ import org.thingsboard.server.common.data.page.PageDataIterableByTenantIdEntityI
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
+import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.ClaimDevicesService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
+import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.edge.EdgeNotificationService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
+import org.thingsboard.server.service.ota.OtaPackageStateService;
+import org.thingsboard.server.service.security.permission.AccessControlService;
+import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import javax.mail.MessagingException;
 import java.util.ArrayList;
@@ -106,6 +114,24 @@ public abstract class AbstractTbEntityService {
     protected RuleChainService ruleChainService;
     @Autowired
     protected EdgeNotificationService edgeNotificationService;
+    @Autowired
+    protected DashboardService dashboardService;
+    @Autowired
+    protected EntityViewService entityViewService;
+    @Autowired
+    protected TelemetrySubscriptionService tsSubService;
+    @Autowired
+    protected AttributesService attributesService;
+    @Autowired
+    protected AccessControlService accessControlService;
+    @Autowired
+    protected DeviceProfileService deviceProfileService;
+    @Autowired
+    protected TbClusterService tbClusterService;
+    @Autowired
+    protected OtaPackageStateService otaPackageStateService;
+    @Autowired
+    protected RelationService relationService;
 
     protected ListenableFuture<Void> removeAlarmsByEntityId(TenantId tenantId, EntityId entityId) {
         ListenableFuture<PageData<AlarmInfo>> alarmsFuture =

@@ -13,19 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy.alarm;
+package org.thingsboard.server.service.entitiy.entityRelation;
 
-import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-public interface TbAlarmService {
+public interface TbEntityRelationService {
 
-    Alarm save(Alarm entity, SecurityUser user) throws ThingsboardException;
+    void save(TenantId tenantId, CustomerId customerId, EntityRelation entity, SecurityUser user) throws ThingsboardException;
 
-    void ack(Alarm alarm, SecurityUser user) throws ThingsboardException;
+    void  delete (TenantId tenantId, CustomerId customerId, EntityRelation entity, SecurityUser user) throws ThingsboardException;
 
-    void clear(Alarm alarm, SecurityUser user) throws ThingsboardException;
+    void deleteRelations (TenantId tenantId, CustomerId customerId, EntityId entityId, SecurityUser user) throws ThingsboardException;
 
-    Boolean delete(Alarm alarm, SecurityUser user) throws ThingsboardException;
 }

@@ -13,19 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy.alarm;
+package org.thingsboard.server.service.entitiy.deviceProfile;
 
-import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.service.entitiy.SimpleTbEntityService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-public interface TbAlarmService {
+public interface TbDeviceProfileService extends SimpleTbEntityService<DeviceProfile> {
 
-    Alarm save(Alarm entity, SecurityUser user) throws ThingsboardException;
-
-    void ack(Alarm alarm, SecurityUser user) throws ThingsboardException;
-
-    void clear(Alarm alarm, SecurityUser user) throws ThingsboardException;
-
-    Boolean delete(Alarm alarm, SecurityUser user) throws ThingsboardException;
+    DeviceProfile setDefaultDeviceProfile(DeviceProfile deviceProfile, DeviceProfile previousDefaultDeviceProfile, SecurityUser user) throws ThingsboardException;
 }
