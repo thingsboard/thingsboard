@@ -26,7 +26,7 @@ import org.thingsboard.server.dao.util.TbAutoConfiguration;
 
 @Configuration
 @TbAutoConfiguration
-@ComponentScan({"org.thingsboard.server.dao.sqlts.hsql"})
+@ComponentScan({"org.thingsboard.server.dao.sqlts.hsql","org.thingsboard.server.common.stats"})
 @EnableJpaRepositories({"org.thingsboard.server.dao.sqlts.insert.latest.hsql", "org.thingsboard.server.dao.sqlts.latest"})
 @EntityScan({"org.thingsboard.server.dao.model.sqlts.latest"})
 @EnableTransactionManagement
