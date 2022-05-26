@@ -27,7 +27,7 @@ import {
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { EntityId } from '@shared/models/id/entity-id';
+import { EntityId, entityIdEquals } from '@shared/models/id/entity-id';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { BehaviorSubject, fromEvent, merge, Observable, of, ReplaySubject } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
@@ -91,7 +91,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
 
   @Input()
   set externalEntityId(externalEntityId: EntityId) {
-    if (this.externalEntityIdValue !== externalEntityId) {
+    if (!entityIdEquals(this.externalEntityIdValue, externalEntityId)) {
       this.externalEntityIdValue = externalEntityId;
       this.resetSortAndFilter(this.activeValue);
       if (!this.activeValue) {
