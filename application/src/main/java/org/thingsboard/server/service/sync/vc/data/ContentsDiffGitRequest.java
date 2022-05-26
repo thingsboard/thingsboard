@@ -13,18 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.sync.vc;
+package org.thingsboard.server.service.sync.vc.data;
 
+import lombok.Getter;
 import org.thingsboard.server.common.data.id.TenantId;
 
-public class ClearRepositoryGitRequest extends VoidGitRequest {
+@Getter
+public class ContentsDiffGitRequest extends PendingGitRequest<String> {
 
-    public ClearRepositoryGitRequest(TenantId tenantId) {
+    private final String content1;
+    private final String content2;
+
+    public ContentsDiffGitRequest(TenantId tenantId, String content1, String content2) {
         super(tenantId);
-    }
-
-    public boolean requiresSettings() {
-        return false;
+        this.content1 = content1;
+        this.content2 = content2;
     }
 
 }

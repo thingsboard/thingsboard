@@ -25,6 +25,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
@@ -33,6 +34,7 @@ import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -42,6 +44,7 @@ import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
 import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
 import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
 import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
+import org.thingsboard.server.common.data.sync.vc.EntityDataDiff;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionLoadResult;
@@ -57,11 +60,13 @@ import org.thingsboard.server.common.data.sync.vc.request.load.SingleEntityVersi
 import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadConfig;
 import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadRequest;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.sync.ie.EntitiesExportImportService;
 import org.thingsboard.server.service.sync.ie.exporting.ExportableEntitiesService;
+import org.thingsboard.server.service.sync.vc.data.CommitGitRequest;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -74,6 +79,9 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+
+import static com.google.common.util.concurrent.Futures.transform;
+import static com.google.common.util.concurrent.Futures.transformAsync;
 
 @Service
 @TbCoreComponent
@@ -109,7 +117,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     public ListenableFuture<VersionCreationResult> saveEntitiesVersion(SecurityUser user, VersionCreateRequest request) throws Exception {
         var pendingCommit = gitServiceQueue.prepareCommit(user.getTenantId(), request);
 
-        return Futures.transformAsync(pendingCommit, commit -> {
+        return transformAsync(pendingCommit, commit -> {
             List<ListenableFuture<Void>> gitFutures = new ArrayList<>();
             switch (request.getType()) {
                 case SINGLE_ENTITY: {
@@ -146,7 +154,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                     break;
                 }
             }
-            return Futures.transformAsync(Futures.allAsList(gitFutures), success -> gitServiceQueue.push(commit), executor);
+            return transformAsync(Futures.allAsList(gitFutures), success -> gitServiceQueue.push(commit), executor);
         }, executor);
     }
 
@@ -195,7 +203,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                         try {
                             return exportImportService.importEntity(user, entityData, EntityImportSettings.builder()
                                     .updateRelations(config.isLoadRelations())
-                                    .findExistingByName(config.isFindExistingEntityByName())
+                                    .findExistingByName(false)
                                     .build(), true, true);
                         } catch (Exception e) {
                             throw new RuntimeException(e);
@@ -298,6 +306,24 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         }
     }
 
+    @Override
+    public ListenableFuture<EntityDataDiff> compareEntityDataToVersion(SecurityUser user, String branch, EntityId entityId, String versionId) throws Exception {
+        HasId<EntityId> entity = exportableEntitiesService.findEntityByTenantIdAndId(user.getTenantId(), entityId);
+        if (!(entity instanceof ExportableEntity)) throw new IllegalArgumentException("Unsupported entity type");
+
+        EntityId externalId = ((ExportableEntity<EntityId>) entity).getExternalId();
+        if (externalId == null) externalId = entityId;
+
+        EntityExportData<?> currentVersion = exportImportService.exportEntity(user, entityId, EntityExportSettings.builder()
+                .exportRelations(true)
+                .build());
+        return transformAsync(gitServiceQueue.getEntity(user.getTenantId(), versionId, externalId),
+                otherVersion -> transform(gitServiceQueue.getContentsDiff(user.getTenantId(),
+                        JacksonUtil.toPrettyString(currentVersion),
+                        JacksonUtil.toPrettyString(otherVersion)), rawDiff -> {
+                    return new EntityDataDiff(currentVersion, otherVersion, rawDiff);
+                }, MoreExecutors.directExecutor()), MoreExecutors.directExecutor());
+    }
 
     @Override
     public ListenableFuture<List<String>> listBranches(TenantId tenantId) throws Exception {

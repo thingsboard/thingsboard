@@ -31,6 +31,12 @@ import org.eclipse.jgit.api.LsRemoteCommand;
 import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.TransportCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.diff.DiffEntry;
+import org.eclipse.jgit.diff.DiffFormatter;
+import org.eclipse.jgit.diff.EditList;
+import org.eclipse.jgit.diff.HistogramDiff;
+import org.eclipse.jgit.diff.RawText;
+import org.eclipse.jgit.diff.RawTextComparator;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
@@ -45,6 +51,7 @@ import org.eclipse.jgit.transport.sshd.JGitKeyCache;
 import org.eclipse.jgit.transport.sshd.ServerKeyDatabase;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
+import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
 import org.thingsboard.server.common.data.page.PageData;
@@ -54,6 +61,7 @@ import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings
 import org.thingsboard.server.common.data.sync.vc.VersionControlAuthMethod;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -207,7 +215,7 @@ public class GitRepository {
         RevCommit revCommit = resolveCommit(commitId);
         try (TreeWalk treeWalk = TreeWalk.forPath(git.getRepository(), file, revCommit.getTree())) {
             if (treeWalk == null) {
-                throw new IllegalArgumentException("Not found");
+                throw new IllegalArgumentException("File not found");
             }
             ObjectId blobId = treeWalk.getObjectId(0);
             try (ObjectReader objectReader = git.getRepository().newObjectReader()) {
@@ -248,40 +256,65 @@ public class GitRepository {
                 .setRefSpecs(new RefSpec(localBranch + ":" + remoteBranch)));
     }
 
+    public String getContentsDiff(String content1, String content2) throws IOException {
+        RawText rawContent1 = new RawText(content1.getBytes());
+        RawText rawContent2 = new RawText(content2.getBytes());
 
-//    public List<Diff> getCommitChanges(Commit commit) throws IOException, GitAPIException {
-//        RevCommit revCommit = resolveCommit(commit.getId());
-//        if (revCommit.getParentCount() == 0) {
-//            return null; // just takes the first parent of a commit, but should find a parent in branch provided
-//        }
-//        return execute(git.diff()
-//                .setOldTree(prepareTreeParser(git.getRepository().parseCommit(revCommit.getParent(0))))
-//                .setNewTree(prepareTreeParser(revCommit))).stream()
-//                .map(diffEntry -> new Diff(diffEntry.getChangeType().name(), diffEntry.getOldPath(), diffEntry.getNewPath()))
-//                .collect(Collectors.toList());
-//    }
-//
-//
-//    private AbstractTreeIterator prepareTreeParser(RevCommit revCommit) throws IOException {
-//        // from the commit we can build the tree which allows us to construct the TreeParser
-//        //noinspection Duplicates
-//        org.eclipse.jgit.lib.Repository repository = git.getRepository();
-//        try (RevWalk walk = new RevWalk(repository)) {
-//            RevTree tree = walk.parseTree(revCommit.getTree().getId());
-//
-//            CanonicalTreeParser treeParser = new CanonicalTreeParser();
-//            try (ObjectReader reader = repository.newObjectReader()) {
-//                treeParser.reset(reader, tree.getId());
-//            }
-//
-//            walk.dispose();
-//
-//            return treeParser;
-//        }
-//    }
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        DiffFormatter diffFormatter = new DiffFormatter(out);
+        diffFormatter.setRepository(git.getRepository());
+
+        EditList edits = new EditList();
+        edits.addAll(new HistogramDiff().diff(RawTextComparator.DEFAULT, rawContent1, rawContent2));
+        diffFormatter.format(edits, rawContent1, rawContent2);
+        return out.toString();
+    }
+
+    public List<Diff> getDiffList(String commit1, String commit2, String path) throws IOException {
+        ObjectReader reader = git.getRepository().newObjectReader();
+
+        CanonicalTreeParser tree1Iter = new CanonicalTreeParser();
+        ObjectId tree1 = resolveCommit(commit1).getTree();
+        tree1Iter.reset(reader, tree1);
+
+        CanonicalTreeParser tree2Iter = new CanonicalTreeParser();
+        ObjectId tree2 = resolveCommit(commit2).getTree();
+        tree2Iter.reset(reader, tree2);
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        DiffFormatter diffFormatter = new DiffFormatter(out);
+        diffFormatter.setRepository(git.getRepository());
+        if (StringUtils.isNotEmpty(path)) {
+            diffFormatter.setPathFilter(PathFilter.create(path));
+        }
+
+        return diffFormatter.scan(tree1, tree2).stream()
+                .map(diffEntry -> {
+                    Diff diff = new Diff();
+                    try {
+                        out.reset();
+                        diffFormatter.format(diffEntry);
+                        diff.setDiffStringValue(out.toString());
+                        diff.setFilePath(diffEntry.getChangeType() != DiffEntry.ChangeType.DELETE ? diffEntry.getNewPath() : diffEntry.getOldPath());
+                        diff.setChangeType(diffEntry.getChangeType());
+                        try {
+                            diff.setFileContentAtCommit1(getFileContentAtCommit(diff.getFilePath(), commit1));
+                        } catch (IllegalArgumentException ignored) {
+                        }
+                        try {
+                            diff.setFileContentAtCommit2(getFileContentAtCommit(diff.getFilePath(), commit2));
+                        } catch (IllegalArgumentException ignored) {
+                        }
+                        return diff;
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .collect(Collectors.toList());
+    }
 
     private Commit toCommit(RevCommit revCommit) {
-        return new Commit(revCommit.getCommitTime() * 1000, revCommit.getName(), revCommit.getFullMessage(), revCommit.getAuthorIdent().getName());
+        return new Commit(revCommit.getCommitTime() * 1000L, revCommit.getName(), revCommit.getFullMessage(), revCommit.getAuthorIdent().getName());
     }
 
     private RevCommit resolveCommit(String id) throws IOException {
@@ -309,7 +342,7 @@ public class GitRepository {
         return null;
     };
 
-    private static <T,R> PageData<R> iterableToPageData (Iterable<T> iterable,
+    private static <T, R> PageData<R> iterableToPageData(Iterable<T> iterable,
                                                          Function<? super T, ? extends R> mapper,
                                                          PageLink pageLink,
                                                          Function<PageLink, Comparator<T>> comparatorFunction) {
@@ -404,6 +437,15 @@ public class GitRepository {
         private final Set<String> added;
         private final Set<String> modified;
         private final Set<String> removed;
+    }
+
+    @Data
+    public static class Diff {
+        private String filePath;
+        private DiffEntry.ChangeType changeType;
+        private String fileContentAtCommit1;
+        private String fileContentAtCommit2;
+        private String diffStringValue;
     }
 
 }

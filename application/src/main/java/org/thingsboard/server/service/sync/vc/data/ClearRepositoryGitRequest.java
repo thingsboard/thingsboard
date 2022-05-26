@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.sync.vc;
+package org.thingsboard.server.service.sync.vc.data;
 
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.sync.vc.EntityVersion;
-import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
-import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
 
-import java.util.List;
+public class ClearRepositoryGitRequest extends VoidGitRequest {
 
-public class ListVersionsGitRequest extends PendingGitRequest<PageData<EntityVersion>> {
-
-    public ListVersionsGitRequest(TenantId tenantId) {
+    public ClearRepositoryGitRequest(TenantId tenantId) {
         super(tenantId);
+    }
+
+    public boolean requiresSettings() {
+        return false;
     }
 
 }

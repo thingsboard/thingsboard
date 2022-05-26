@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
+import org.thingsboard.server.service.sync.vc.GitRepository.Diff;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
@@ -168,6 +169,18 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     }
 
     @Override
+    public List<Diff> getVersionsDiffList(TenantId tenantId, String path, String versionId1, String versionId2) throws IOException {
+        GitRepository repository = checkRepository(tenantId);
+        return repository.getDiffList(versionId1, versionId2, path);
+    }
+
+    @Override
+    public String getContentsDiff(TenantId tenantId, String content1, String content2) throws IOException {
+        GitRepository repository = checkRepository(tenantId);
+        return repository.getContentsDiff(content1, content2);
+    }
+
+    @Override
     public List<String> listBranches(TenantId tenantId) {
         GitRepository repository = checkRepository(tenantId);
         try {
@@ -176,12 +189,6 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
             //TODO: analyze and return meaningful exceptions that we can show to the client;
             throw new RuntimeException(gitAPIException);
         }
-    }
-
-    private EntityVersion checkVersion(TenantId tenantId, String branch, String versionId) throws Exception {
-        return listVersions(tenantId, branch, null, new PageLink(Integer.MAX_VALUE)).getData().stream()
-                .filter(version -> version.getId().equals(versionId))
-                .findFirst().orElseThrow(() -> new IllegalArgumentException("Version not found"));
     }
 
     private GitRepository checkRepository(TenantId tenantId) {
@@ -251,7 +258,7 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
         return new EntityVersion(commit.getTimestamp(), commit.getId(), commit.getMessage());
     }
 
-    private EntityId fromRelativePath(String path) {
+    public static EntityId fromRelativePath(String path) {
         EntityType entityType = EntityType.valueOf(StringUtils.substringBefore(path, "/").toUpperCase());
         String entityId = StringUtils.substringBetween(path, "/", ".json");
         return EntityIdFactory.getByTypeAndUuid(entityType, entityId);

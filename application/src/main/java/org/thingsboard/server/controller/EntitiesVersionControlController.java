@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.sync.vc.EntityDataDiff;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionLoadResult;
@@ -225,6 +226,18 @@ public class EntitiesVersionControlController extends BaseController {
         }
     }
 
+    @GetMapping("/diff/{branch}/{entityType}/{internalEntityUuid}")
+    public DeferredResult<EntityDataDiff> compareEntityDataToVersion(@PathVariable String branch,
+                                                                     @PathVariable EntityType entityType,
+                                                                     @PathVariable UUID internalEntityUuid,
+                                                                     @RequestParam String versionId) throws ThingsboardException {
+        try {
+            EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, internalEntityUuid);
+            return wrapFuture(versionControlService.compareEntityDataToVersion(getCurrentUser(), branch, entityId, versionId));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
 
     @ApiOperation(value = "", notes = "" +
             "SINGLE_ENTITY:" + NEW_LINE +

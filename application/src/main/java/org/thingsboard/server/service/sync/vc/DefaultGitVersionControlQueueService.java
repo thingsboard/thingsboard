@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.service.sync.vc;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
@@ -24,6 +22,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
@@ -36,6 +35,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
+import org.thingsboard.server.common.data.sync.vc.EntityVersionsDiff;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
@@ -54,12 +54,23 @@ import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.sync.vc.data.ClearRepositoryGitRequest;
+import org.thingsboard.server.service.sync.vc.data.CommitGitRequest;
+import org.thingsboard.server.service.sync.vc.data.ContentsDiffGitRequest;
+import org.thingsboard.server.service.sync.vc.data.EntitiesContentGitRequest;
+import org.thingsboard.server.service.sync.vc.data.EntityContentGitRequest;
+import org.thingsboard.server.service.sync.vc.data.ListBranchesGitRequest;
+import org.thingsboard.server.service.sync.vc.data.ListEntitiesGitRequest;
+import org.thingsboard.server.service.sync.vc.data.ListVersionsGitRequest;
+import org.thingsboard.server.service.sync.vc.data.PendingGitRequest;
+import org.thingsboard.server.service.sync.vc.data.VersionsDiffGitRequest;
+import org.thingsboard.server.service.sync.vc.data.VoidGitRequest;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -74,7 +85,6 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     private final DefaultEntitiesVersionControlService entitiesVersionControlService;
 
     private final Map<UUID, PendingGitRequest<?>> pendingRequestMap = new HashMap<>();
-    private final ObjectMapper jsonMapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
 
     public DefaultGitVersionControlQueueService(TbServiceInfoProvider serviceInfoProvider, TbClusterService clusterService,
                                                 DataDecodingEncodingService encodingService,
@@ -101,13 +111,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
         SettableFuture<Void> future = SettableFuture.create();
 
         String path = getRelativePath(entityData.getEntityType(), entityData.getEntity().getId());
-        String entityDataJson;
-        try {
-            entityDataJson = jsonMapper.writeValueAsString(entityData);
-        } catch (IOException e) {
-            //TODO: analyze and return meaningful exceptions that we can show to the client;
-            throw new RuntimeException(e);
-        }
+        String entityDataJson = JacksonUtil.toPrettyString(entityData);
 
         registerAndSend(commit, builder -> builder.setCommitRequest(
                 buildCommitRequest(commit).setAddMsg(
@@ -176,10 +180,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
 
     private ListenableFuture<PageData<EntityVersion>> listVersions(TenantId tenantId, ListVersionsRequestMsg requestMsg) {
         ListVersionsGitRequest request = new ListVersionsGitRequest(tenantId);
-
-        registerAndSend(request, builder -> builder.setListVersionRequest(requestMsg).build(), wrap(request.getFuture()));
-
-        return request.getFuture();
+        return sendRequest(request, builder -> builder.setListVersionRequest(requestMsg));
     }
 
     @Override
@@ -201,19 +202,32 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
 
     private ListenableFuture<List<VersionedEntityInfo>> listEntitiesAtVersion(TenantId tenantId, TransportProtos.ListEntitiesRequestMsg requestMsg) {
         ListEntitiesGitRequest request = new ListEntitiesGitRequest(tenantId);
-
-        registerAndSend(request, builder -> builder.setListEntitiesRequest(requestMsg).build(), wrap(request.getFuture()));
-
-        return request.getFuture();
+        return sendRequest(request, builder -> builder.setListEntitiesRequest(requestMsg));
     }
 
     @Override
     public ListenableFuture<List<String>> listBranches(TenantId tenantId) {
         ListBranchesGitRequest request = new ListBranchesGitRequest(tenantId);
+        return sendRequest(request, builder -> builder.setListBranchesRequest(TransportProtos.ListBranchesRequestMsg.newBuilder().build()));
+    }
 
-        registerAndSend(request, builder -> builder.setListBranchesRequest(TransportProtos.ListBranchesRequestMsg.newBuilder().build()).build(), wrap(request.getFuture()));
+    @Override
+    public ListenableFuture<List<EntityVersionsDiff>> getVersionsDiff(TenantId tenantId, EntityType entityType, EntityId externalId, String versionId1, String versionId2) {
+        String path = entityType != null ? getRelativePath(entityType, externalId) : "";
+        VersionsDiffGitRequest request = new VersionsDiffGitRequest(tenantId, path, versionId1, versionId2);
+        return sendRequest(request, builder -> builder.setVersionsDiffRequest(TransportProtos.VersionsDiffRequestMsg.newBuilder()
+                .setPath(request.getPath())
+                .setVersionId1(request.getVersionId1())
+                .setVersionId2(request.getVersionId2())
+                .build()));
+    }
 
-        return request.getFuture();
+    @Override
+    public ListenableFuture<String> getContentsDiff(TenantId tenantId, String content1, String content2) {
+        ContentsDiffGitRequest request = new ContentsDiffGitRequest(tenantId, content1, content2);
+        return sendRequest(request, builder -> builder.setContentsDiffRequest(TransportProtos.ContentsDiffRequestMsg.newBuilder()
+                .setContent1(content1)
+                .setContent2(content2)));
     }
 
     @Override
@@ -244,6 +258,14 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
         } else {
             throw new RuntimeException("Future is already done!");
         }
+    }
+
+    private <T> ListenableFuture<T> sendRequest(PendingGitRequest<T> request, Consumer<ToVersionControlServiceMsg.Builder> enrichFunction) {
+        registerAndSend(request, builder -> {
+            enrichFunction.accept(builder);
+            return builder.build();
+        }, wrap(request.getFuture()));
+        return request.getFuture();
     }
 
     @Override
@@ -334,6 +356,23 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
                 var dataList = vcResponseMsg.getEntitiesContentResponse().getDataList();
                 ((EntitiesContentGitRequest) request).getFuture()
                         .set(dataList.stream().map(this::toData).collect(Collectors.toList()));
+            } else if (vcResponseMsg.hasVersionsDiffResponse()) {
+                TransportProtos.VersionsDiffResponseMsg diffResponse = vcResponseMsg.getVersionsDiffResponse();
+                List<EntityVersionsDiff> entityVersionsDiffList = diffResponse.getDiffList().stream()
+                        .map(diff -> EntityVersionsDiff.builder()
+                                .externalId(EntityIdFactory.getByTypeAndUuid(EntityType.valueOf(diff.getEntityType()),
+                                        new UUID(diff.getEntityIdMSB(), diff.getEntityIdLSB())))
+                                .entityDataAtVersion1(StringUtils.isNotEmpty(diff.getEntityDataAtVersion1()) ?
+                                        toData(diff.getEntityDataAtVersion1()) : null)
+                                .entityDataAtVersion2(StringUtils.isNotEmpty(diff.getEntityDataAtVersion2()) ?
+                                        toData(diff.getEntityDataAtVersion2()) : null)
+                                .rawDiff(diff.getRawDiff())
+                                .build())
+                        .collect(Collectors.toList());
+                ((VersionsDiffGitRequest) request).getFuture().set(entityVersionsDiffList);
+            } else if (vcResponseMsg.hasContentsDiffResponse()) {
+                String diff = vcResponseMsg.getContentsDiffResponse().getDiff();
+                ((ContentsDiffGitRequest) request).getFuture().set(diff);
             }
         }
     }
@@ -354,7 +393,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     @SuppressWarnings("rawtypes")
     @SneakyThrows
     private EntityExportData toData(String data) {
-        return jsonMapper.readValue(data, EntityExportData.class);
+        return JacksonUtil.fromString(data, EntityExportData.class);
     }
 
     private static <T> TbQueueCallback wrap(SettableFuture<T> future) {

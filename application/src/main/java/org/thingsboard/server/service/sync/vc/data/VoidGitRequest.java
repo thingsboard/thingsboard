@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.sync.vc.request.load;
+package org.thingsboard.server.service.sync.vc.data;
 
-import lombok.Data;
+import org.thingsboard.server.common.data.id.TenantId;
 
-@Data
-public class VersionLoadConfig {
+public class VoidGitRequest extends PendingGitRequest<Void> {
 
-    private boolean loadRelations;
+    public VoidGitRequest(TenantId tenantId) {
+        super(tenantId);
+    }
 
 }
