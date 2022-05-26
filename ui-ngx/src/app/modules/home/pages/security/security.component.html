@@ -66,15 +66,15 @@
             <mat-checkbox [value]="provider"
                           [checked]="useByDefault === provider"
                           (click)="changeDefaultProvider($event, provider)"
-                          [disabled]="(isLoading$ | async) || activeSingleProvider"
-                           *ngIf="twoFactorAuth.get(provider).value && provider !== twoFactorAuthProviderType.BACKUP_CODE">
+                          [disabled]="(isLoading$ | async)"
+                           *ngIf="twoFactorAuth.get(provider).value && provider !== twoFactorAuthProviderType.BACKUP_CODE && !activeSingleProvider">
               <span class="checkbox-label" translate>security.2fa.main-2fa-method</span>
             </mat-checkbox>
             <button type="button"
              mat-stroked-button color="primary"
              (click)="generateNewBackupCode()"
              *ngIf="twoFactorAuth.get(provider).value && provider === twoFactorAuthProviderType.BACKUP_CODE">
-              Get new code
+              {{ 'security.2fa.get-new-code' | translate }}
             </button>
           </div>
           <mat-divider *ngIf="!$last"></mat-divider>

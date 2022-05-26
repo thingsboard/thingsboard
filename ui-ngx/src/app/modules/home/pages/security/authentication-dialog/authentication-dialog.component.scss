@@ -80,16 +80,19 @@
     max-width: 500px;
     .container {
       max-width: 500px;
-      margin: 40px 0 24px;
+      margin: 40px 0 8px;
       .code {
         letter-spacing: 0.25px;
-        padding: 0 30px;
+        padding: 0 24px;
         margin-bottom: 16px;
         font-family: Roboto Mono, "Helvetica Neue", monospace;
         &.even {
           text-align: right;
         }
       }
+    }
+    .action-buttons {
+      margin-bottom: 40px;
     }
   }
 

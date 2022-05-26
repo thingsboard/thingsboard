@@ -34,13 +34,18 @@
       {{ code }}
     </div>
   </div>
-  <p class="mat-body-1 description" translate>security.2fa.dialog.backup-code-warn</p>
-  <div fxLayout="row" fxLayoutAlign="center start"  fxLayoutGap="16px">
+  <div fxLayout="row" fxLayoutAlign="center start"  fxLayoutGap="16px" class="action-buttons">
     <button type="button" mat-stroked-button color="primary" (click)="downloadFile()">
       {{ 'security.2fa.dialog.download-txt' | translate }}
     </button>
-    <button type="button" mat-raised-button color="primary">
+    <button type="button" mat-raised-button color="primary" (click)="printCode()">
       {{ 'action.print' | translate }}
+    </button>
+  </div>
+  <p class="mat-body-1 description" translate>security.2fa.dialog.backup-code-warn</p>
+  <div fxLayout="row" fxLayoutAlign="end start">
+    <button type="button" mat-raised-button color="primary" (click)="closeDialog()">
+      {{ 'action.done' | translate }}
     </button>
   </div>
 </div>

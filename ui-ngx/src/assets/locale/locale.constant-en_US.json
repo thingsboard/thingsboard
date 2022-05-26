@@ -2590,6 +2590,7 @@
             "authenticate-with": "You can authenticate with:",
             "disable-2fa-provider-text": "Disabling {{name}} will make your account less secure",
             "disable-2fa-provider-title": "Are you sure you want to disable {{name}}?",
+            "get-new-code": "Get new code",
             "main-2fa-method": "Use as main two-factor authentication method",
             "dialog": {
                 "activation-step-description-email": "The next time you login in, you will be prompted to enter the security code that will be sent to your email address.",

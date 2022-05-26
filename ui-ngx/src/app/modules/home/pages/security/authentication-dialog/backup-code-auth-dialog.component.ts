@@ -29,6 +29,9 @@ import {
 } from '@shared/models/two-factor-auth.models';
 import { mergeMap, tap } from 'rxjs/operators';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { deepClone } from '@core/utils';
+
+import printTemplate from '!raw-loader!./backup-code-print-template.raw';
 
 @Component({
   selector: 'tb-backup-code-auth-dialog',
@@ -61,5 +64,25 @@ export class BackupCodeAuthDialogComponent extends DialogComponent<BackupCodeAut
 
   downloadFile() {
     this.importExportService.exportText(this.backupCode.codes, 'backup-codes');
+  }
+
+  printCode() {
+    const codeTemplate = deepClone(this.backupCode.codes)
+      .map(code => `<div class="code-row"><input type="checkbox"><span class="code">${code}</span></div>`).join('');
+    const printPage = printTemplate.replace('${codesBlock}', codeTemplate);
+    const newWindow = window.open('', 'Print backup code');
+
+    newWindow.document.open();
+    newWindow.document.write(printPage);
+
+    setTimeout(() => {
+      newWindow.print();
+
+      newWindow.document.close();
+
+      setTimeout(() => {
+        newWindow.close();
+      }, 10);
+    }, 0);
   }
 }
