@@ -23,5 +23,6 @@ import lombok.EqualsAndHashCode;
 public class EntityTypeVersionLoadConfig extends VersionLoadConfig {
 
     private boolean removeOtherEntities;
+    private boolean findExistingEntityByName;
 
 }

@@ -13,17 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.sync.vc;
+package org.thingsboard.server.service.sync.vc.data;
 
+import lombok.Getter;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.sync.vc.EntityVersion;
+import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 
 import java.util.List;
 
-public class VoidGitRequest extends PendingGitRequest<Void> {
+@Getter
+public class EntitiesContentGitRequest extends PendingGitRequest<List<EntityExportData>> {
 
-    public VoidGitRequest(TenantId tenantId) {
+    private final String versionId;
+    private final EntityType entityType;
+
+    public EntitiesContentGitRequest(TenantId tenantId, String versionId, EntityType entityType) {
         super(tenantId);
+        this.versionId = versionId;
+        this.entityType = entityType;
     }
-
 }

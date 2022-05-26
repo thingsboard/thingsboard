@@ -19,12 +19,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Created by Valerii Sosliuk on 5/12/2017.
@@ -32,6 +31,8 @@ import java.util.Set;
 public class JacksonUtil {
 
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    public static final ObjectMapper PRETTY_JSON_MAPPER = new ObjectMapper()
+            .enable(SerializationFeature.INDENT_OUTPUT);
 
     public static <T> T convertValue(Object fromValue, Class<T> toValueType) {
         try {
@@ -93,6 +94,14 @@ public class JacksonUtil {
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("The given Json object value: "
                     + value + " cannot be transformed to a String", e);
+        }
+    }
+
+    public static String toPrettyString(Object o) {
+        try {
+            return PRETTY_JSON_MAPPER.writeValueAsString(o);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         }
     }
 

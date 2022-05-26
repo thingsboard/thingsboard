@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
@@ -91,6 +92,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.service.sync.vc.DefaultGitRepositoryService.fromRelativePath;
 
 @Slf4j
 @TbVersionControlComponent
@@ -238,17 +241,18 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
                         vcService.fetch(ctx.getTenantId());
                         handleListBranches(ctx, msg.getListBranchesRequest());
                     } else if (msg.hasListEntitiesRequest()) {
-                        vcService.fetch(ctx.getTenantId());
                         handleListEntities(ctx, msg.getListEntitiesRequest());
                     } else if (msg.hasListVersionRequest()) {
                         vcService.fetch(ctx.getTenantId());
                         handleListVersions(ctx, msg.getListVersionRequest());
                     } else if (msg.hasEntityContentRequest()) {
-                        vcService.fetch(ctx.getTenantId());
                         handleEntityContentRequest(ctx, msg.getEntityContentRequest());
                     } else if (msg.hasEntitiesContentRequest()) {
-                        vcService.fetch(ctx.getTenantId());
                         handleEntitiesContentRequest(ctx, msg.getEntitiesContentRequest());
+                    } else if (msg.hasVersionsDiffRequest()) {
+                        handleVersionsDiffRequest(ctx, msg.getVersionsDiffRequest());
+                    } else if (msg.hasContentsDiffRequest()) {
+                        handleContentsDiffRequest(ctx, msg.getContentsDiffRequest());
                     }
                 }
             }
@@ -330,6 +334,31 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
     private void handleListBranches(VersionControlRequestCtx ctx, ListBranchesRequestMsg request) {
         var branches = vcService.listBranches(ctx.getTenantId());
         reply(ctx, Optional.empty(), builder -> builder.setListBranchesResponse(ListBranchesResponseMsg.newBuilder().addAllBranches(branches)));
+    }
+
+    private void handleVersionsDiffRequest(VersionControlRequestCtx ctx, TransportProtos.VersionsDiffRequestMsg request) throws IOException {
+        List<TransportProtos.EntityVersionsDiff> diffList = vcService.getVersionsDiffList(ctx.getTenantId(), request.getPath(), request.getVersionId1(), request.getVersionId2()).stream()
+                .map(diff -> {
+                    EntityId entityId = fromRelativePath(diff.getFilePath());
+                    return TransportProtos.EntityVersionsDiff.newBuilder()
+                            .setEntityType(entityId.getEntityType().name())
+                            .setEntityIdMSB(entityId.getId().getMostSignificantBits())
+                            .setEntityIdLSB(entityId.getId().getLeastSignificantBits())
+                            .setEntityDataAtVersion1(diff.getFileContentAtCommit1())
+                            .setEntityDataAtVersion2(diff.getFileContentAtCommit2())
+                            .setRawDiff(diff.getDiffStringValue())
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        reply(ctx, builder -> builder.setVersionsDiffResponse(TransportProtos.VersionsDiffResponseMsg.newBuilder()
+                .addAllDiff(diffList)));
+    }
+
+    private void handleContentsDiffRequest(VersionControlRequestCtx ctx, TransportProtos.ContentsDiffRequestMsg request) throws IOException {
+        String diff = vcService.getContentsDiff(ctx.getTenantId(), request.getContent1(), request.getContent2());
+        reply(ctx, builder -> builder.setContentsDiffResponse(TransportProtos.ContentsDiffResponseMsg.newBuilder()
+                .setDiff(diff)));
     }
 
     private void handleCommitRequest(VersionControlRequestCtx ctx, CommitRequestMsg request) throws Exception {
@@ -438,6 +467,10 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
 
     private void reply(VersionControlRequestCtx ctx, Optional<Exception> e) {
         reply(ctx, e, null);
+    }
+
+    private void reply(VersionControlRequestCtx ctx, Function<VersionControlResponseMsg.Builder, VersionControlResponseMsg.Builder> enrichFunction) {
+        reply(ctx, Optional.empty(), enrichFunction);
     }
 
     private void reply(VersionControlRequestCtx ctx, Optional<Exception> e, Function<VersionControlResponseMsg.Builder, VersionControlResponseMsg.Builder> enrichFunction) {

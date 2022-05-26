@@ -13,30 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.sync.vc;
+package org.thingsboard.server.service.sync.vc.data;
 
-import com.google.common.util.concurrent.SettableFuture;
-import lombok.Getter;
 import org.thingsboard.server.common.data.id.TenantId;
 
-import java.util.UUID;
+import java.util.List;
 
-@Getter
-public class PendingGitRequest<T> {
+public class ListBranchesGitRequest extends PendingGitRequest<List<String>> {
 
-    private final long createdTime;
-    private final UUID requestId;
-    private final TenantId tenantId;
-    private final SettableFuture<T> future;
-
-    public PendingGitRequest(TenantId tenantId) {
-        this.createdTime = System.currentTimeMillis();
-        this.requestId = UUID.randomUUID();
-        this.tenantId = tenantId;
-        this.future = SettableFuture.create();
+    public ListBranchesGitRequest(TenantId tenantId) {
+        super(tenantId);
     }
 
-    public boolean requiresSettings() {
-        return true;
-    }
 }
