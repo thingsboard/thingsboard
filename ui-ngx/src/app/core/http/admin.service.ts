@@ -26,6 +26,8 @@ import {
   TestSmsRequest,
   UpdateMessage
 } from '@shared/models/settings.models';
+import { EntitiesVersionControlService } from '@core/http/entities-version-control.service';
+import { tap } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -33,7 +35,8 @@ import {
 export class AdminService {
 
   constructor(
-    private http: HttpClient
+    private http: HttpClient,
+    private entitiesVersionControlService: EntitiesVersionControlService
   ) { }
 
   public getAdminSettings<T>(key: string, config?: RequestConfig): Observable<AdminSettings<T>> {
@@ -72,11 +75,19 @@ export class AdminService {
   public saveEntitiesVersionControlSettings(versionControlSettings: EntitiesVersionControlSettings,
                                             config?: RequestConfig): Observable<EntitiesVersionControlSettings> {
     return this.http.post<EntitiesVersionControlSettings>('/api/admin/vcSettings', versionControlSettings,
-      defaultHttpOptionsFromConfig(config));
+      defaultHttpOptionsFromConfig(config)).pipe(
+      tap(() => {
+        this.entitiesVersionControlService.clearBranchList();
+      })
+    );
   }
 
   public deleteEntitiesVersionControlSettings(config?: RequestConfig) {
-    return this.http.delete('/api/admin/vcSettings', defaultHttpOptionsFromConfig(config));
+    return this.http.delete('/api/admin/vcSettings', defaultHttpOptionsFromConfig(config)).pipe(
+      tap(() => {
+        this.entitiesVersionControlService.clearBranchList();
+      })
+    );
   }
 
   public checkVersionControlAccess(versionControlSettings: EntitiesVersionControlSettings,

@@ -150,32 +150,54 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
 
     @Override
     public ListenableFuture<PageData<EntityVersion>> listVersions(TenantId tenantId, String branch, PageLink pageLink) {
-        return listVersions(tenantId, ListVersionsRequestMsg.newBuilder()
-                .setBranchName(branch)
-                .setPageSize(pageLink.getPageSize())
-                .setPage(pageLink.getPage())
-                .build());
+
+        return listVersions(tenantId,
+                applyPageLinkParameters(
+                        ListVersionsRequestMsg.newBuilder()
+                                        .setBranchName(branch),
+                        pageLink
+                ).build());
     }
 
     @Override
     public ListenableFuture<PageData<EntityVersion>> listVersions(TenantId tenantId, String branch, EntityType entityType, PageLink pageLink) {
-        return listVersions(tenantId, ListVersionsRequestMsg.newBuilder()
-                .setBranchName(branch).setEntityType(entityType.name())
-                .setPageSize(pageLink.getPageSize())
-                .setPage(pageLink.getPage())
-                .build());
+        return listVersions(tenantId,
+                applyPageLinkParameters(
+                        ListVersionsRequestMsg.newBuilder()
+                                        .setBranchName(branch)
+                                        .setEntityType(entityType.name()),
+                        pageLink
+                ).build());
     }
 
     @Override
     public ListenableFuture<PageData<EntityVersion>> listVersions(TenantId tenantId, String branch, EntityId entityId, PageLink pageLink) {
-        return listVersions(tenantId, ListVersionsRequestMsg.newBuilder()
-                .setBranchName(branch)
-                .setEntityType(entityId.getEntityType().name())
-                .setEntityIdMSB(entityId.getId().getMostSignificantBits())
-                .setEntityIdLSB(entityId.getId().getLeastSignificantBits())
-                .setPageSize(pageLink.getPageSize())
-                .setPage(pageLink.getPage())
-                .build());
+        return listVersions(tenantId,
+                applyPageLinkParameters(
+                        ListVersionsRequestMsg.newBuilder()
+                                        .setBranchName(branch)
+                                        .setEntityType(entityId.getEntityType().name())
+                                        .setEntityIdMSB(entityId.getId().getMostSignificantBits())
+                                        .setEntityIdLSB(entityId.getId().getLeastSignificantBits()),
+                        pageLink
+                ).build());
+    }
+
+    private ListVersionsRequestMsg.Builder applyPageLinkParameters(ListVersionsRequestMsg.Builder builder, PageLink pageLink) {
+        builder.setPageSize(pageLink.getPageSize())
+                .setPage(pageLink.getPage());
+        if (pageLink.getTextSearch() != null) {
+            builder.setTextSearch(pageLink.getTextSearch());
+        }
+        if (pageLink.getSortOrder() != null) {
+            if (pageLink.getSortOrder().getProperty() != null) {
+                builder.setSortProperty(pageLink.getSortOrder().getProperty());
+            }
+            if (pageLink.getSortOrder().getDirection() != null) {
+                builder.setSortDirection(pageLink.getSortOrder().getDirection().name());
+            }
+        }
+        return builder;
     }
 
     private ListenableFuture<PageData<EntityVersion>> listVersions(TenantId tenantId, ListVersionsRequestMsg requestMsg) {

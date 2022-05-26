@@ -17,12 +17,14 @@
 -->
 <mat-form-field [formGroup]="branchFormGroup" class="mat-block" [floatLabel]="selectionMode ? 'always' : 'auto'">
   <mat-label>{{ 'version-control.branch' | translate }}</mat-label>
-  <input matInput type="text" placeholder="{{ 'version-control.select-branch' | translate }}"
+  <input matInput type="text" placeholder="{{(loading ? 'common.loading' : 'version-control.select-branch') | translate}}"
          #branchInput
          formControlName="branch"
+         (keydown.enter)="branchInput.blur(); autoCompleteTrigger.closePanel();"
          (focusin)="onFocus()"
+         (blur)="onBlur()"
          [required]="required"
-         [matAutocomplete]="subTypeAutocomplete">
+         [matAutocomplete]="branchAutocomplete">
   <button *ngIf="branchFormGroup.get('branch').value && !disabled"
           type="button"
           matSuffix mat-button mat-icon-button aria-label="Clear"
@@ -32,10 +34,13 @@
   <mat-autocomplete
     class="tb-autocomplete"
     (closed)="onPanelClosed()"
-    #subTypeAutocomplete="matAutocomplete"
+    #branchAutocomplete="matAutocomplete"
     [displayWith]="displayBranchFn">
-    <mat-option *ngFor="let branch of filteredBranches | async" [value]="branch">
+    <mat-option *ngFor="let branch of filteredBranches | async" [value]="branch" class="branch-option">
+      <mat-icon class="tb-mat-18" *ngIf="selectionMode && branch.name === modelValue">check</mat-icon>
+      <span class="check-placeholder" *ngIf="selectionMode && branch.name !== modelValue"></span>
       <span [innerHTML]="branch.name | highlight:searchText"></span>
+      <small *ngIf="branch.default"  class="default-branch">{{ 'version-control.default' | translate }}</small>
     </mat-option>
   </mat-autocomplete>
   <mat-error *ngIf="branchFormGroup.get('branch').hasError('required')">

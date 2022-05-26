@@ -206,13 +206,6 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
     this.importExport.exportDeviceProfile(deviceProfile.id.id);
   }
 
-  vcExport($event: Event, deviceProfile: DeviceProfile) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.homeDialogs.exportVcEntity(deviceProfile.id);
-  }
-
   onDeviceProfileAction(action: EntityAction<DeviceProfile>): boolean {
     switch (action.action) {
       case 'open':
@@ -223,9 +216,6 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
         return true;
       case 'export':
         this.exportDeviceProfile(action.event, action.entity);
-        return true;
-      case 'vcExport':
-        this.vcExport(action.event, action.entity);
         return true;
     }
     return false;

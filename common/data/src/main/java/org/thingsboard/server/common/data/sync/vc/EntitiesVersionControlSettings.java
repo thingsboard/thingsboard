@@ -31,4 +31,17 @@ public class EntitiesVersionControlSettings implements Serializable {
     private String privateKey;
     private String privateKeyPassword;
     private String defaultBranch;
+
+    public EntitiesVersionControlSettings() {}
+
+    public EntitiesVersionControlSettings(EntitiesVersionControlSettings settings) {
+        this.repositoryUri = settings.getRepositoryUri();
+        this.authMethod = settings.getAuthMethod();
+        this.username = settings.getUsername();
+        this.password = settings.getPassword();
+        this.privateKeyFileName = settings.getPrivateKeyFileName();
+        this.privateKey = settings.getPrivateKey();
+        this.privateKeyPassword = settings.getPrivateKeyPassword();
+        this.defaultBranch = settings.getDefaultBranch();
+    }
 }

@@ -18,22 +18,22 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
-  ElementRef,
+  ElementRef, EventEmitter,
   Input,
   OnDestroy,
-  OnInit,
-  ViewChild
+  OnInit, Output, Renderer2,
+  ViewChild, ViewContainerRef
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { EntityId } from '@shared/models/id/entity-id';
+import { EntityId, entityIdEquals } from '@shared/models/id/entity-id';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
-import { BehaviorSubject, merge, Observable, of, ReplaySubject } from 'rxjs';
+import { BehaviorSubject, fromEvent, merge, Observable, of, ReplaySubject } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { PageLink } from '@shared/models/page/page-link';
-import { catchError, map, tap } from 'rxjs/operators';
-import { EntityVersion } from '@shared/models/vc.models';
+import { catchError, debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
+import { EntityVersion, VersionCreationResult, VersionLoadResult } from '@shared/models/vc.models';
 import { EntitiesVersionControlService } from '@core/http/entities-version-control.service';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
@@ -41,6 +41,12 @@ import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { BranchAutocompleteComponent } from '@shared/components/vc/branch-autocomplete.component';
+import { isNotEmptyStr } from '@core/utils';
+import { TbPopoverService } from '@shared/components/popover.service';
+import { EntityVersionExportComponent } from '@home/components/vc/entity-version-export.component';
+import { MatButton } from '@angular/material/button';
+import { TbPopoverComponent } from '@shared/components/popover.component';
+import { EntityVersionRestoreComponent } from '@home/components/vc/entity-version-restore.component';
 
 @Component({
   selector: 'tb-entity-versions-table',
@@ -54,8 +60,9 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
   @Input()
   singleEntityMode = false;
 
-  displayedColumns = ['timestamp', 'id', 'name'];
+  displayedColumns = ['timestamp', 'id', 'name', 'actions'];
   pageLink: PageLink;
+  textSearchMode = false;
   dataSource: EntityVersionsDatasource;
   hidePageSize = false;
 
@@ -84,7 +91,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
 
   @Input()
   set externalEntityId(externalEntityId: EntityId) {
-    if (this.externalEntityIdValue !== externalEntityId) {
+    if (!entityIdEquals(this.externalEntityIdValue, externalEntityId)) {
       this.externalEntityIdValue = externalEntityId;
       this.resetSortAndFilter(this.activeValue);
       if (!this.activeValue) {
@@ -93,12 +100,23 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
     }
   }
 
+  @Input()
+  entityId: EntityId;
+
+  @Output()
+  versionRestored = new EventEmitter<void>();
+
+  @ViewChild('searchInput') searchInputField: ElementRef;
+
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
 
   constructor(protected store: Store<AppState>,
               private entitiesVersionControlService: EntitiesVersionControlService,
+              private popoverService: TbPopoverService,
+              private renderer: Renderer2,
               private cd: ChangeDetectorRef,
+              private viewContainerRef: ViewContainerRef,
               private elementRef: ElementRef) {
     super(store);
     this.dirtyValue = !this.activeValue;
@@ -125,14 +143,27 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
   }
 
   branchChanged(newBranch: string) {
-    this.branch = newBranch;
-    this.paginator.pageIndex = 0;
-    if (this.activeValue) {
-      this.updateData();
+    if (isNotEmptyStr(newBranch) && this.branch !== newBranch) {
+      this.branch = newBranch;
+      this.paginator.pageIndex = 0;
+      if (this.activeValue) {
+        this.updateData();
+      }
     }
   }
 
   ngAfterViewInit() {
+    fromEvent(this.searchInputField.nativeElement, 'keyup')
+      .pipe(
+        debounceTime(400),
+        distinctUntilChanged(),
+        tap(() => {
+          this.paginator.pageIndex = 0;
+          this.updateData();
+        })
+      )
+      .subscribe();
+
     this.sort.sortChange.subscribe(() => this.paginator.pageIndex = 0);
     merge(this.sort.sortChange, this.paginator.page)
       .pipe(
@@ -140,19 +171,102 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
       )
       .subscribe();
     this.viewsInited = true;
-    if (!this.singleEntityMode) {
+    if (!this.singleEntityMode || (this.activeValue && this.externalEntityIdValue)) {
       this.initFromDefaultBranch();
     }
   }
 
-  vcExport($event: Event) {
+  toggleVcExport($event: Event, exportButton: MatButton) {
     if ($event) {
       $event.stopPropagation();
     }
+    const trigger = exportButton._elementRef.nativeElement;
+    if (this.popoverService.hasPopover(trigger)) {
+      this.popoverService.hidePopover(trigger);
+    } else {
+      const vcExportPopover = this.popoverService.displayPopover(trigger, this.renderer,
+        this.viewContainerRef, EntityVersionExportComponent, 'left', true, null,
+        {
+          branch: this.branch,
+          entityId: this.entityId,
+          onClose: (result: VersionCreationResult | null, branch: string | null) => {
+            vcExportPopover.hide();
+            if (result) {
+              if (this.branch !== branch) {
+                this.branchChanged(branch);
+              } else {
+                this.updateData();
+              }
+            }
+          },
+          onContentUpdated: () => {
+            vcExportPopover.updatePosition();
+            setTimeout(() => {
+              vcExportPopover.updatePosition();
+            });
+          }
+        }, {}, {}, {}, false);
+    }
+  }
+
+  toggleRestoreEntityVersion($event: Event, restoreVersionButton: MatButton, entityVersion: EntityVersion) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const trigger = restoreVersionButton._elementRef.nativeElement;
+    if (this.popoverService.hasPopover(trigger)) {
+      this.popoverService.hidePopover(trigger);
+    } else {
+      const restoreVersionPopover = this.popoverService.displayPopover(trigger, this.renderer,
+        this.viewContainerRef, EntityVersionRestoreComponent, 'left', true, null,
+        {
+          branch: this.branch,
+          versionName: entityVersion.name,
+          versionId: entityVersion.id,
+          externalEntityId: this.externalEntityIdValue,
+          onClose: (result: Array<VersionLoadResult> | null) => {
+            restoreVersionPopover.hide();
+            if (result && result.length) {
+              this.versionRestored.emit();
+            }
+          }
+        }, {}, {}, {}, false);
+    }
+  }
+
+  versionIdContent(entityVersion: EntityVersion): string {
+    let versionId = entityVersion.id;
+    if (versionId.length > 7) {
+      versionId = versionId.slice(0, 7);
+    }
+    return versionId;
+  }
+
+  enterFilterMode() {
+    this.textSearchMode = true;
+    this.pageLink.textSearch = '';
+    setTimeout(() => {
+      this.searchInputField.nativeElement.focus();
+      this.searchInputField.nativeElement.setSelectionRange(0, 0);
+    }, 10);
+  }
+
+  exitFilterMode() {
+    this.textSearchMode = false;
+    this.pageLink.textSearch = null;
+    this.paginator.pageIndex = 0;
+    this.updateData();
   }
 
   private initFromDefaultBranch() {
-    this.branchAutocompleteComponent.selectDefaultBranchIfNeeded(false, true);
+    if (this.branchAutocompleteComponent.isDefaultBranchSelected()) {
+      this.paginator.pageIndex = 0;
+      if (this.activeValue) {
+        this.updateData();
+      }
+    } else {
+      this.branchAutocompleteComponent.selectDefaultBranchIfNeeded(true);
+    }
   }
 
   private updateData() {
@@ -164,7 +278,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
   }
 
   private resetSortAndFilter(update: boolean) {
-    this.branch = null;
+    this.textSearchMode = false;
     this.pageLink.textSearch = null;
     if (this.viewsInited) {
       this.paginator.pageIndex = 0;
@@ -185,6 +299,8 @@ class EntityVersionsDatasource implements DataSource<EntityVersion> {
 
   public pageData$ = this.pageDataSubject.asObservable();
 
+  public dataLoading = true;
+
   constructor(private entitiesVersionControlService: EntitiesVersionControlService) {}
 
   connect(collectionViewer: CollectionViewer): Observable<EntityVersion[] | ReadonlyArray<EntityVersion>> {
@@ -199,6 +315,7 @@ class EntityVersionsDatasource implements DataSource<EntityVersion> {
   loadEntityVersions(singleEntityMode: boolean,
                      branch: string, externalEntityId: EntityId,
                      pageLink: PageLink): Observable<PageData<EntityVersion>> {
+    this.dataLoading = true;
     const result = new ReplaySubject<PageData<EntityVersion>>();
     this.fetchEntityVersions(singleEntityMode, branch, externalEntityId, pageLink).pipe(
       catchError(() => of(emptyPageData<EntityVersion>())),
@@ -207,6 +324,7 @@ class EntityVersionsDatasource implements DataSource<EntityVersion> {
         this.entityVersionsSubject.next(pageData.data);
         this.pageDataSubject.next(pageData);
         result.next(pageData);
+        this.dataLoading = false;
       }
     );
     return result;

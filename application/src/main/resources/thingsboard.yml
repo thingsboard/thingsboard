@@ -931,6 +931,9 @@ queue:
       tb_ota_package:
         - key: max.poll.records
           value: "${TB_QUEUE_KAFKA_OTA_MAX_POLL_RECORDS:10}"
+      tb_version_control:
+        - key: max.poll.interval.ms
+          value: "${TB_QUEUE_KAFKA_VC_MAX_POLL_INTERVAL_MS:600000}"
 #      tb_rule_engine.sq:
 #        - key: max.poll.records
 #          value: "${TB_QUEUE_KAFKA_SQ_MAX_POLL_RECORDS:1024}"

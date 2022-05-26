@@ -33,7 +33,7 @@ import { DialogService } from '@core/services/dialog.service';
 import { ActionSettingsChangeLanguage } from '@core/settings/settings.actions';
 import { ActionAuthUpdateHasVersionControl } from '@core/auth/auth.actions';
 import { selectHasVersionControl } from '@core/auth/auth.selectors';
-import { catchError, mergeMap } from 'rxjs/operators';
+import { catchError, mergeMap, take } from 'rxjs/operators';
 import { of } from 'rxjs';
 
 @Component({
@@ -87,6 +87,7 @@ export class VersionControlSettingsComponent extends PageComponent implements On
     });
     this.store.pipe(
       select(selectHasVersionControl),
+      take(1),
       mergeMap((hasVersionControl) => {
         if (hasVersionControl) {
           return this.adminService.getEntitiesVersionControlSettings({ignoreErrors: true}).pipe(

@@ -42,6 +42,7 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.RefSpec;
@@ -181,11 +182,18 @@ public class GitRepository {
             return new PageData<>();
         }
         LogCommand command = git.log()
-                .add(branchId)
-                .setRevFilter(RevFilter.NO_MERGES);
+                .add(branchId);
+
+        if (StringUtils.isNotEmpty(pageLink.getTextSearch())) {
+            command.setRevFilter(new NoMergesAndCommitMessageFilter(pageLink.getTextSearch()));
+        } else {
+            command.setRevFilter(RevFilter.NO_MERGES);
+        }
+
         if (StringUtils.isNotEmpty(path)) {
             command.addPath(path);
         }
+
         Iterable<RevCommit> commits = execute(command);
         return iterableToPageData(commits, this::toCommit, pageLink, revCommitComparatorFunction);
     }
@@ -241,7 +249,10 @@ public class GitRepository {
 
     public Status status() throws GitAPIException {
         org.eclipse.jgit.api.Status status = execute(git.status());
-        return new Status(status.getAdded(), status.getModified(), status.getRemoved());
+        Set<String> modified = new HashSet<>();
+        modified.addAll(status.getModified());
+        modified.addAll(status.getChanged());
+        return new Status(status.getAdded(), modified, status.getRemoved());
     }
 
     public Commit commit(String message) throws GitAPIException {
@@ -314,7 +325,7 @@ public class GitRepository {
     }
 
     private Commit toCommit(RevCommit revCommit) {
-        return new Commit(revCommit.getCommitTime() * 1000L, revCommit.getName(), revCommit.getFullMessage(), revCommit.getAuthorIdent().getName());
+        return new Commit(revCommit.getCommitTime() * 1000l, revCommit.getName(), revCommit.getFullMessage(), revCommit.getAuthorIdent().getName());
     }
 
     private RevCommit resolveCommit(String id) throws IOException {
@@ -422,6 +433,35 @@ public class GitRepository {
             throw new IllegalArgumentException("Failed to load ssh private key");
         }
         return keyPairs;
+    }
+
+    private static class NoMergesAndCommitMessageFilter extends RevFilter {
+
+        private final String textSearch;
+
+        NoMergesAndCommitMessageFilter(String textSearch) {
+            this.textSearch = textSearch.toLowerCase();
+        }
+
+        @Override
+        public boolean include(RevWalk walker, RevCommit c) {
+            return c.getParentCount() < 2 && c.getFullMessage().toLowerCase().contains(this.textSearch);
+        }
+
+        @Override
+        public RevFilter clone() {
+            return this;
+        }
+
+        @Override
+        public boolean requiresCommitBody() {
+            return false;
+        }
+
+        @Override
+        public String toString() {
+            return "NO_MERGES_AND_COMMIT_MESSAGE";
+        }
     }
 
     @Data

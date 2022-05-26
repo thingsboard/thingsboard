@@ -182,13 +182,6 @@ export class CustomersTableConfigResolver implements Resolve<EntityTableConfig<C
     this.router.navigateByUrl(`customers/${customer.id.id}/edgeInstances`);
   }
 
-  vcExport($event: Event, customer: Customer) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.homeDialogs.exportVcEntity(customer.id);
-  }
-
   onCustomerAction(action: EntityAction<Customer>, config: EntityTableConfig<Customer>): boolean {
     switch (action.action) {
       case 'open':
@@ -208,9 +201,6 @@ export class CustomersTableConfigResolver implements Resolve<EntityTableConfig<C
         return true;
       case 'manageEdges':
         this.manageCustomerEdges(action.event, action.entity);
-        return true;
-      case 'vcExport':
-        this.vcExport(action.event, action.entity);
         return true;
     }
     return false;

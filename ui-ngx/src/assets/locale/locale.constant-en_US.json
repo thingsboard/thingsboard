@@ -57,7 +57,8 @@
         "download": "Download",
         "next-with-label": "Next: {{label}}",
         "read-more": "Read more",
-        "hide": "Hide"
+        "hide": "Hide",
+        "restore": "Restore"
     },
     "aggregation": {
         "aggregation": "Aggregation",
@@ -3112,21 +3113,25 @@
         "version-control": "Version control",
         "management": "Version control management",
         "branch": "Branch",
+        "default": "Default",
         "select-branch": "Select branch",
         "branch-required": "Branch is required",
-        "export-entity-version": "Export entity version",
-        "entity-version-exported": "Entity version successfully exported",
+        "create-entity-version": "Create entity version",
         "version-name": "Version name",
         "version-name-required": "Version name is required",
         "export-entity-relations": "Export entity relations",
-        "export-entity-version-result-message": "Entity exported with version '{{name}}' and commit id '{{commitId}}'.",
-        "export-to-git": "Export to Git",
         "entity-versions": "Entity versions",
         "versions": "Versions",
         "created-time": "Created time",
         "version-id": "Version ID",
         "no-entity-versions-text": "No entity versions found",
-        "no-versions-text": "No versions found"
+        "no-versions-text": "No versions found",
+        "copy-full-version-id": "Copy full version id",
+        "create-version": "Create version",
+        "nothing-to-commit": "No changes to commit",
+        "restore-version": "Restore version",
+        "restore-entity-from-version": "Restore entity from version '{{versionName}}'",
+        "load-entity-relations": "Load entity relations"
     },
     "widget": {
         "widget-library": "Widgets Library",

@@ -16,12 +16,16 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.server.common.data.AdminSettings;
@@ -221,17 +225,15 @@ public class AdminController extends BaseController {
             notes = "Creates or Updates the version control settings object. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping("/vcSettings")
-    public EntitiesVersionControlSettings saveVersionControlSettings(@RequestBody EntitiesVersionControlSettings settings) throws ThingsboardException {
-        try {
-            accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.WRITE);
-            EntitiesVersionControlSettings versionControlSettings = checkNotNull(versionControlService.saveVersionControlSettings(getTenantId(), settings));
-            versionControlSettings.setPassword(null);
-            versionControlSettings.setPrivateKey(null);
-            versionControlSettings.setPrivateKeyPassword(null);
-            return versionControlSettings;
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+    public DeferredResult<EntitiesVersionControlSettings> saveVersionControlSettings(@RequestBody EntitiesVersionControlSettings settings) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.WRITE);
+        ListenableFuture<EntitiesVersionControlSettings> future = versionControlService.saveVersionControlSettings(getTenantId(), settings);
+        return wrapFuture(Futures.transform(future, savedSettings -> {
+            savedSettings.setPassword(null);
+            savedSettings.setPrivateKey(null);
+            savedSettings.setPrivateKeyPassword(null);
+            return savedSettings;
+        }, MoreExecutors.directExecutor()));
     }
 
     @ApiOperation(value = "Delete version control settings (deleteVersionControlSettings)",
@@ -240,10 +242,10 @@ public class AdminController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/vcSettings", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
-    public void deleteVersionControlSettings() throws ThingsboardException {
+    public DeferredResult<Void> deleteVersionControlSettings() throws ThingsboardException {
         try {
             accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.DELETE);
-            versionControlService.deleteVersionControlSettings(getTenantId());
+            return wrapFuture(versionControlService.deleteVersionControlSettings(getTenantId()));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -253,13 +255,13 @@ public class AdminController extends BaseController {
             notes = "Attempts to check version control access. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/vcSettings/checkAccess", method = RequestMethod.POST)
-    public void checkVersionControlAccess(
+    public DeferredResult<Void> checkVersionControlAccess(
             @ApiParam(value = "A JSON value representing the Entities Version Control Settings.")
             @RequestBody EntitiesVersionControlSettings settings) throws ThingsboardException {
         try {
             accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
             settings = checkNotNull(settings);
-            versionControlService.checkVersionControlAccess(getTenantId(), settings);
+            return wrapFuture(versionControlService.checkVersionControlAccess(getTenantId(), settings));
         } catch (Exception e) {
             throw handleException(e);
         }

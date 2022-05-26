@@ -54,7 +54,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static org.thingsboard.server.controller.ControllerConstants.*;
+import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.ENTITY_VERSION_TEXT_SEARCH_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_ALLOWABLE_VALUES;
 
 @RestController
@@ -132,13 +137,15 @@ public class EntitiesVersionControlController extends BaseController {
                                                                       @RequestParam int pageSize,
                                                                       @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
                                                                       @RequestParam int page,
+                                                                      @ApiParam(value = ENTITY_VERSION_TEXT_SEARCH_DESCRIPTION)
+                                                                      @RequestParam(required = false) String textSearch,
                                                                       @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = "timestamp")
                                                                       @RequestParam(required = false) String sortProperty,
                                                                       @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
                                                                       @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         try {
             EntityId externalEntityId = EntityIdFactory.getByTypeAndUuid(entityType, externalEntityUuid);
-            PageLink pageLink = createPageLink(pageSize, page, null, sortProperty, sortOrder);
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             return wrapFuture(versionControlService.listEntityVersions(getTenantId(), branch, externalEntityId, pageLink));
         } catch (Exception e) {
             throw handleException(e);
@@ -159,12 +166,14 @@ public class EntitiesVersionControlController extends BaseController {
                                                                           @RequestParam int pageSize,
                                                                           @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
                                                                           @RequestParam int page,
+                                                                          @ApiParam(value = ENTITY_VERSION_TEXT_SEARCH_DESCRIPTION)
+                                                                          @RequestParam(required = false) String textSearch,
                                                                           @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = "timestamp")
                                                                           @RequestParam(required = false) String sortProperty,
                                                                           @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
                                                                           @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         try {
-            PageLink pageLink = createPageLink(pageSize, page, null, sortProperty, sortOrder);
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             return wrapFuture(versionControlService.listEntityTypeVersions(getTenantId(), branch, entityType, pageLink));
         } catch (Exception e) {
             throw handleException(e);
@@ -192,12 +201,14 @@ public class EntitiesVersionControlController extends BaseController {
                                                                 @RequestParam int pageSize,
                                                                 @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
                                                                 @RequestParam int page,
+                                                                @ApiParam(value = ENTITY_VERSION_TEXT_SEARCH_DESCRIPTION)
+                                                                @RequestParam(required = false) String textSearch,
                                                                 @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = "timestamp")
                                                                 @RequestParam(required = false) String sortProperty,
                                                                 @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
                                                                 @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         try {
-            PageLink pageLink = createPageLink(pageSize, page, null, sortProperty, sortOrder);
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             return wrapFuture(versionControlService.listVersions(getTenantId(), branch, pageLink));
         } catch (Exception e) {
             throw handleException(e);

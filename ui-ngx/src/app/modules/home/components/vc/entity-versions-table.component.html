@@ -17,7 +17,7 @@
 -->
 <div class="mat-padding tb-entity-table tb-absolute-fill">
   <div fxFlex fxLayout="column" class="mat-elevation-z1 tb-entity-table-content">
-    <mat-toolbar class="mat-table-toolbar">
+    <mat-toolbar class="mat-table-toolbar" [fxShow]="!textSearchMode">
       <div class="mat-toolbar-tools">
         <div fxLayout="row" fxLayoutAlign="start center" fxLayout.xs="column" fxLayoutAlign.xs="center start" class="title-container">
           <span class="tb-entity-table-title">{{(singleEntityMode ? 'version-control.entity-versions' : 'version-control.versions') | translate}}</span>
@@ -31,10 +31,39 @@
           </tb-branch-autocomplete>
         </div>
         <span fxFlex></span>
-        <button *ngIf="singleEntityMode" mat-raised-button color="primary"
+        <button *ngIf="singleEntityMode" mat-stroked-button color="primary"
+                #exportButton
                 [disabled]="(isLoading$ | async)"
-                (click)="vcExport($event)">
-          {{'version-control.export-to-git' | translate }}
+                (click)="toggleVcExport($event, exportButton)">
+          <mat-icon>update</mat-icon>
+          {{'version-control.create-version' | translate }}
+        </button>
+        <button mat-icon-button
+                [disabled]="isLoading$ | async"
+                (click)="enterFilterMode()"
+                matTooltip="{{ 'action.search' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>search</mat-icon>
+        </button>
+      </div>
+    </mat-toolbar>
+    <mat-toolbar class="mat-table-toolbar" [fxShow]="textSearchMode">
+      <div class="mat-toolbar-tools">
+        <button mat-icon-button
+                matTooltip="{{ 'action.search' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>search</mat-icon>
+        </button>
+        <mat-form-field fxFlex>
+          <mat-label>&nbsp;</mat-label>
+          <input #searchInput matInput
+                 [(ngModel)]="pageLink.textSearch"
+                 placeholder="{{ 'common.enter-search' | translate }}"/>
+        </mat-form-field>
+        <button mat-icon-button (click)="exitFilterMode()"
+                matTooltip="{{ 'action.close' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>close</mat-icon>
         </button>
       </div>
     </mat-toolbar>
@@ -48,27 +77,56 @@
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="id">
-          <mat-header-cell *matHeaderCellDef style="width: 40%"> {{ 'version-control.version-id' | translate }} </mat-header-cell>
+          <mat-header-cell *matHeaderCellDef style="min-width: 100px; max-width: 100px; width: 100px;"> {{ 'version-control.version-id' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let entityVersion">
-            {{ entityVersion.id }}
+            <span style="display: inline-block; width: 54px;" [innerHTML]="versionIdContent(entityVersion)"></span>
+            <tb-copy-button
+              [disabled]="isLoading$ | async"
+              [copyText]="entityVersion.id"
+              tooltipText="{{ 'version-control.copy-full-version-id' | translate }}"
+              tooltipPosition="above"
+              icon="content_paste"
+              [style]="{
+                 'font-size': '16px',
+                 color: 'rgba(0,0,0,.87)'
+              }">
+            </tb-copy-button>
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="name">
-          <mat-header-cell *matHeaderCellDef style="width: 60%"> {{ 'version-control.version-name' | translate }} </mat-header-cell>
+          <mat-header-cell *matHeaderCellDef style="width: 100%"> {{ 'version-control.version-name' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let entityVersion">
             {{ entityVersion.name }}
           </mat-cell>
         </ng-container>
+        <ng-container matColumnDef="actions" stickyEnd>
+          <mat-header-cell *matHeaderCellDef style="min-width: 40px; max-width: 40px; width: 40px">
+          </mat-header-cell>
+          <mat-cell *matCellDef="let entityVersion">
+            <div fxFlex fxLayout="row" fxLayoutAlign="end">
+              <button *ngIf="singleEntityMode" mat-icon-button [disabled]="isLoading$ | async"
+                      matTooltip="{{ 'version-control.restore-version' | translate }}"
+                      matTooltipPosition="above"
+                      #restoreVersionButton
+                      (click)="toggleRestoreEntityVersion($event, restoreVersionButton, entityVersion)">
+                <mat-icon>restore</mat-icon>
+              </button>
+            </div>
+          </mat-cell>
+        </ng-container>
         <mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
-        <mat-row *matRowDef="let entityVersion; columns: displayedColumns;"></mat-row>
+        <mat-row [fxShow]="!dataSource.dataLoading" *matRowDef="let entityVersion; columns: displayedColumns;"></mat-row>
       </table>
-      <span [fxShow]="dataSource.isEmpty() | async"
+      <span [fxShow]="!(isLoading$ | async) && (dataSource.isEmpty() | async) && !dataSource.dataLoading"
             fxLayoutAlign="center center"
             class="no-data-found" translate>{{
         singleEntityMode
           ? 'version-control.no-entity-versions-text'
           : 'version-control.no-versions-text'
         }}</span>
+      <span [fxShow]="dataSource.dataLoading"
+            fxLayoutAlign="center center"
+            class="no-data-found">{{ 'common.loading' | translate }}</span>
     </div>
     <mat-divider></mat-divider>
     <mat-paginator [length]="dataSource.total() | async"
