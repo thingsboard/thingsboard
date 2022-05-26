@@ -56,9 +56,14 @@
           <div class="provider">
             <h4 class="provider-title">{{ providersData.get(provider).name | translate }}</h4>
             <div fxLayout="row" fxLayoutAlign="space-between start">
-              <div class="mat-body-1 description">
+              <div class="mat-body-1 description" *ngIf="!twoFactorAuth.get(provider).value; else providerInfo">
                 {{ providersData.get(provider).description | translate }}
               </div>
+              <ng-template #providerInfo>
+                <div class="mat-body-1 description">
+                  {{ providersData.get(provider).activatedHint | translate: providerDataInfo(provider) }}
+                </div>
+              </ng-template>
               <mat-slide-toggle [formControlName]="provider"
                                 (click)="confirm2FAChange($event, provider)">
               </mat-slide-toggle>

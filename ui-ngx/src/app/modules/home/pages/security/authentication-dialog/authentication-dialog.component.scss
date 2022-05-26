@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host{
+@import "../../../../../../scss/constants";
+
+:host {
   .mat-toolbar > h2 {
     font-weight: 400;
     letter-spacing: 0.25px;
@@ -30,9 +32,11 @@
     &:not(:first-of-type) {
       margin: 0 0 8px;
     }
+
     &.description {
       margin: 0;
       color: rgba(0, 0, 0, 0.54);
+
       &:last-of-type {
         margin-bottom: 24px;
       }
@@ -45,6 +49,13 @@
 
   .code-container {
     max-width: 170px;
+
+    &.full-width-xs {
+      @media #{$mat-xs} {
+        max-width: 100%;
+        width: 100%;
+      }
+    }
   }
 
   .result-title {
@@ -63,6 +74,7 @@
 
   .step-description {
     max-width: 450px;
+
     &.input {
       margin: 12px 0 0;
     }
@@ -78,26 +90,30 @@
 
   .backup-code {
     max-width: 500px;
+
     .container {
       max-width: 500px;
       margin: 40px 0 8px;
+
       .code {
         letter-spacing: 0.25px;
         padding: 0 24px;
         margin-bottom: 16px;
         font-family: Roboto Mono, "Helvetica Neue", monospace;
+
         &.even {
           text-align: right;
         }
       }
     }
+
     .action-buttons {
       margin-bottom: 40px;
     }
   }
 
   & ::ng-deep {
-    .mat-horizontal-stepper-header{
+    .mat-horizontal-stepper-header {
       pointer-events: none !important;
     }
   }

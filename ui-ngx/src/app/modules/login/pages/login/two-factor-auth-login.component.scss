@@ -18,8 +18,10 @@
 :host {
   display: flex;
   flex: 1 1 0;
+
   .tb-two-factor-auth-login-content {
     background-color: #eee;
+
     .tb-two-factor-auth-login-card {
       padding: 48px 48px 48px 16px;
 
@@ -27,7 +29,7 @@
         width: 450px !important;
       }
 
-      .mat-card-title{
+      .mat-card-title {
         font: 400 28px / 36px Roboto, "Helvetica Neue", sans-serif;
       }
 
@@ -46,7 +48,7 @@
         margin-top: 16px;
       }
 
-      .providers-container{
+      .providers-container {
         padding: 0;
 
         .mat-body {
@@ -61,19 +63,23 @@
       }
     }
   }
-  ::ng-deep{
+
+  ::ng-deep {
     button.provider {
       text-align: start;
       font-weight: 400;
+
       &:not(.mat-button-disabled) {
         border-color: rgba(255, 255, 255, .8);
       }
-      .icon{
+
+      .icon {
         height: 18px;
         width: 18px;
         vertical-align: sub;
       }
     }
+
     .mat-form-field-invalid .mat-hint {
       margin-top: 20px;
     }

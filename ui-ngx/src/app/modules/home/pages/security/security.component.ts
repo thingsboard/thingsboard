@@ -30,6 +30,9 @@ import { ClipboardService } from 'ngx-clipboard';
 import { TwoFactorAuthenticationService } from '@core/http/two-factor-authentication.service';
 import {
   AccountTwoFaSettings,
+  BackupCodeTwoFactorAuthAccountConfig,
+  EmailTwoFactorAuthAccountConfig,
+  SmsTwoFactorAuthAccountConfig,
   twoFactorAuthProvidersData,
   TwoFactorAuthProviderType
 } from '@shared/models/two-factor-auth.models';
@@ -230,5 +233,24 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
           .subscribe(() => this.createdNewAuthConfig(TwoFactorAuthProviderType.BACKUP_CODE));
       }
     });
+  }
+
+  providerDataInfo(provider: TwoFactorAuthProviderType) {
+    const info = {info: null};
+    const providerConfig = this.accountConfig.configs[provider];
+    if (isDefinedAndNotNull(providerConfig)) {
+      switch (provider) {
+        case TwoFactorAuthProviderType.EMAIL:
+          info.info = (providerConfig as EmailTwoFactorAuthAccountConfig).email;
+          break;
+        case TwoFactorAuthProviderType.SMS:
+          info.info = (providerConfig as SmsTwoFactorAuthAccountConfig).phoneNumber;
+          break;
+        case TwoFactorAuthProviderType.BACKUP_CODE:
+          info.info = (providerConfig as BackupCodeTwoFactorAuthAccountConfig).codesLeft;
+          break;
+      }
+    }
+    return info;
   }
 }

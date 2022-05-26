@@ -114,7 +114,6 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
   private build2faSettingsForm(): void {
     this.twoFaFormGroup = this.fb.group({
       maxVerificationFailuresBeforeUserLockout: [30, [
-        Validators.required,
         Validators.pattern(/^\d*$/),
         Validators.min(0),
         Validators.max(65535)

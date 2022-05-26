@@ -140,10 +140,7 @@
                 </mat-form-field>
                 <mat-form-field fxFlex class="mat-block">
                   <mat-label translate>admin.2fa.max-verification-failures-before-user-lockout</mat-label>
-                  <input matInput required formControlName="maxVerificationFailuresBeforeUserLockout" type="number" step="1" min="0" max="65535">
-                  <mat-error *ngIf="twoFaFormGroup.get('maxVerificationFailuresBeforeUserLockout').hasError('required')">
-                    {{ 'admin.2fa.max-verification-failures-before-user-lockout-required' | translate }}
-                  </mat-error>
+                  <input matInput formControlName="maxVerificationFailuresBeforeUserLockout" type="number" step="1" min="0" max="65535">
                   <mat-error *ngIf="twoFaFormGroup.get('maxVerificationFailuresBeforeUserLockout').hasError('pattern')
                     || twoFaFormGroup.get('maxVerificationFailuresBeforeUserLockout').hasError('min')
                     || twoFaFormGroup.get('maxVerificationFailuresBeforeUserLockout').hasError('max')">

@@ -321,7 +321,6 @@
             "issuer-name-required": "Issuer name is required.",
             "max-verification-failures-before-user-lockout": "Max verification failures before user lockout",
             "max-verification-failures-before-user-lockout-pattern": "Max verification failures must be a positive integer.",
-            "max-verification-failures-before-user-lockout-required": "Max verification failures is required.",
             "number-of-checking-attempts": "Number of checking attempts",
             "number-of-checking-attempts-pattern": "Number of checking attempts must be a positive integer.",
             "number-of-checking-attempts-required": "Number of checking attempts is required.",
@@ -2624,12 +2623,16 @@
             "provider": {
                 "email": "Email",
                 "email-description": "Use a security code sent to your email address to authenticate.",
+                "email-hint": "Authentication codes are sent via email to {{ info }}",
                 "sms": "SMS",
                 "sms-description": "Use your phone to authenticate. We'll send you a security code via SMS message when you log in.",
+                "sms-hint": "Authentication codes are sent by text message to {{ info }}",
                 "totp": "Authenticator app",
                 "totp-description": "Use apps like Google Authenticator, Authy, or Duo on your phone to authenticate. It will generate a security code for logging in.",
+                "totp-hint": "Authenticator app is set up for your account",
                 "backup_code": "Backup code",
-                "backup-code-description": "These printable one-time passcodes allow you to sign in when away from your phone, like when you’re traveling."
+                "backup-code-description": "These printable one-time passcodes allow you to sign in when away from your phone, like when you’re traveling.",
+                "backup-code-hint": "{{ info }} single-use codes are active at this time"
             }
         }
     },

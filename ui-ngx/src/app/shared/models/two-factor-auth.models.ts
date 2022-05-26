@@ -103,9 +103,10 @@ export interface TwoFaProviderInfo {
 export interface TwoFactorAuthProviderData {
   name: string;
   description: string;
+  activatedHint: string;
 }
 
-export interface TwoFactorAuthProviderLoginData extends TwoFactorAuthProviderData {
+export interface TwoFactorAuthProviderLoginData extends Omit<TwoFactorAuthProviderData, 'activatedHint'> {
   icon: string;
   placeholder: string;
 }
@@ -115,25 +116,29 @@ export const twoFactorAuthProvidersData = new Map<TwoFactorAuthProviderType, Two
     [
       TwoFactorAuthProviderType.TOTP, {
         name: 'security.2fa.provider.totp',
-        description: 'security.2fa.provider.totp-description'
+        description: 'security.2fa.provider.totp-description',
+        activatedHint: 'security.2fa.provider.totp-hint'
       }
     ],
     [
       TwoFactorAuthProviderType.SMS, {
         name: 'security.2fa.provider.sms',
-        description: 'security.2fa.provider.sms-description'
+        description: 'security.2fa.provider.sms-description',
+        activatedHint: 'security.2fa.provider.sms-hint'
       }
     ],
     [
       TwoFactorAuthProviderType.EMAIL, {
         name: 'security.2fa.provider.email',
-        description: 'security.2fa.provider.email-description'
+        description: 'security.2fa.provider.email-description',
+        activatedHint: 'security.2fa.provider.email-hint'
       }
     ],
     [
       TwoFactorAuthProviderType.BACKUP_CODE, {
         name: 'security.2fa.provider.backup_code',
-        description: 'security.2fa.provider.backup-code-description'
+        description: 'security.2fa.provider.backup-code-description',
+        activatedHint: 'security.2fa.provider.backup-code-hint'
       }
     ]
   ]

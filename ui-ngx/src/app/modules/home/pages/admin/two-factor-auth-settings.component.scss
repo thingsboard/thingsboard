@@ -16,8 +16,7 @@
 
 @import "../../../../../scss/constants";
 
-:host{
-
+:host {
   mat-card.settings-card {
     @media #{$mat-md} {
       width: 90%;
@@ -48,17 +47,22 @@
     .mat-expansion-panel {
       box-shadow: none;
       margin: 1px 0 0;
+
       &.provider {
         overflow: inherit;
+
         .mat-expansion-panel-header {
           padding: 0 24px 0 8px;
+
           &.mat-expanded {
             height: 48px;
           }
+
           .mat-slide-toggle {
             margin-right: 8px;
           }
         }
+
         .mat-expansion-panel-header-title {
           height: 40px;
         }
@@ -73,6 +77,7 @@
       .mat-expansion-panel-header > .mat-content {
         overflow: inherit;
       }
+
       .mat-expansion-panel-body {
         padding: 0 16px 8px 8px;
       }
