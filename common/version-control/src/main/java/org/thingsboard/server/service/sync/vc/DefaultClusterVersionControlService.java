@@ -300,7 +300,8 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
             }
             sortOrder = new SortOrder(request.getSortProperty(), direction);
         }
-        var data = vcService.listVersions(ctx.getTenantId(), request.getBranchName(), path, new PageLink(request.getPageSize(), request.getPage(), null, sortOrder));
+        var data = vcService.listVersions(ctx.getTenantId(), request.getBranchName(), path,
+                new PageLink(request.getPageSize(), request.getPage(), request.getTextSearch(), sortOrder));
         reply(ctx, Optional.empty(), builder ->
                 builder.setListVersionsResponse(ListVersionsResponseMsg.newBuilder()
                         .setTotalPages(data.getTotalPages())

@@ -17,7 +17,7 @@
 -->
 <div class="mat-padding tb-entity-table tb-absolute-fill">
   <div fxFlex fxLayout="column" class="mat-elevation-z1 tb-entity-table-content">
-    <mat-toolbar class="mat-table-toolbar">
+    <mat-toolbar class="mat-table-toolbar" [fxShow]="!textSearchMode">
       <div class="mat-toolbar-tools">
         <div fxLayout="row" fxLayoutAlign="start center" fxLayout.xs="column" fxLayoutAlign.xs="center start" class="title-container">
           <span class="tb-entity-table-title">{{(singleEntityMode ? 'version-control.entity-versions' : 'version-control.versions') | translate}}</span>
@@ -37,6 +37,33 @@
                 (click)="toggleVcExport($event, exportButton)">
           <mat-icon>update</mat-icon>
           {{'version-control.create-version' | translate }}
+        </button>
+        <button mat-icon-button
+                [disabled]="isLoading$ | async"
+                (click)="enterFilterMode()"
+                matTooltip="{{ 'action.search' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>search</mat-icon>
+        </button>
+      </div>
+    </mat-toolbar>
+    <mat-toolbar class="mat-table-toolbar" [fxShow]="textSearchMode">
+      <div class="mat-toolbar-tools">
+        <button mat-icon-button
+                matTooltip="{{ 'action.search' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>search</mat-icon>
+        </button>
+        <mat-form-field fxFlex>
+          <mat-label>&nbsp;</mat-label>
+          <input #searchInput matInput
+                 [(ngModel)]="pageLink.textSearch"
+                 placeholder="{{ 'common.enter-search' | translate }}"/>
+        </mat-form-field>
+        <button mat-icon-button (click)="exitFilterMode()"
+                matTooltip="{{ 'action.close' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>close</mat-icon>
         </button>
       </div>
     </mat-toolbar>

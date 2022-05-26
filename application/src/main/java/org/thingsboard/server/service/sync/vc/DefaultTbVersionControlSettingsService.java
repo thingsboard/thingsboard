@@ -54,7 +54,7 @@ public class DefaultTbVersionControlSettingsService implements TbVersionControlS
 
     @Override
     public EntitiesVersionControlSettings get(TenantId tenantId) {
-        return cache.getAndPutInTransaction(tenantId, () -> {
+        EntitiesVersionControlSettings settings = cache.getAndPutInTransaction(tenantId, () -> {
             AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey(tenantId, SETTINGS_KEY);
             if (adminSettings != null) {
                 try {
@@ -65,6 +65,10 @@ public class DefaultTbVersionControlSettingsService implements TbVersionControlS
             }
             return null;
         }, true);
+        if (settings != null) {
+            settings = new EntitiesVersionControlSettings(settings);
+        }
+        return settings;
     }
 
     @Override

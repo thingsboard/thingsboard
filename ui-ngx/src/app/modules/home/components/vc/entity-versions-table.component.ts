@@ -29,10 +29,10 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityId } from '@shared/models/id/entity-id';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
-import { BehaviorSubject, merge, Observable, of, ReplaySubject } from 'rxjs';
+import { BehaviorSubject, fromEvent, merge, Observable, of, ReplaySubject } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { PageLink } from '@shared/models/page/page-link';
-import { catchError, map, tap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { EntityVersion, VersionCreationResult } from '@shared/models/vc.models';
 import { EntitiesVersionControlService } from '@core/http/entities-version-control.service';
 import { MatPaginator } from '@angular/material/paginator';
@@ -61,6 +61,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
 
   displayedColumns = ['timestamp', 'id', 'name'];
   pageLink: PageLink;
+  textSearchMode = false;
   dataSource: EntityVersionsDatasource;
   hidePageSize = false;
 
@@ -102,6 +103,8 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
 
   @Input()
   entityId: EntityId;
+
+  @ViewChild('searchInput') searchInputField: ElementRef;
 
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
@@ -148,6 +151,17 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
   }
 
   ngAfterViewInit() {
+    fromEvent(this.searchInputField.nativeElement, 'keyup')
+      .pipe(
+        debounceTime(400),
+        distinctUntilChanged(),
+        tap(() => {
+          this.paginator.pageIndex = 0;
+          this.updateData();
+        })
+      )
+      .subscribe();
+
     this.sort.sortChange.subscribe(() => this.paginator.pageIndex = 0);
     merge(this.sort.sortChange, this.paginator.page)
       .pipe(
@@ -155,7 +169,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
       )
       .subscribe();
     this.viewsInited = true;
-    if (!this.singleEntityMode) {
+    if (!this.singleEntityMode || (this.activeValue && this.externalEntityIdValue)) {
       this.initFromDefaultBranch();
     }
   }
@@ -200,6 +214,22 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
     return versionId;
   }
 
+  enterFilterMode() {
+    this.textSearchMode = true;
+    this.pageLink.textSearch = '';
+    setTimeout(() => {
+      this.searchInputField.nativeElement.focus();
+      this.searchInputField.nativeElement.setSelectionRange(0, 0);
+    }, 10);
+  }
+
+  exitFilterMode() {
+    this.textSearchMode = false;
+    this.pageLink.textSearch = null;
+    this.paginator.pageIndex = 0;
+    this.updateData();
+  }
+
   private initFromDefaultBranch() {
     if (this.branchAutocompleteComponent.isDefaultBranchSelected()) {
       this.paginator.pageIndex = 0;
@@ -220,6 +250,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
   }
 
   private resetSortAndFilter(update: boolean) {
+    this.textSearchMode = false;
     this.pageLink.textSearch = null;
     if (this.viewsInited) {
       this.paginator.pageIndex = 0;
