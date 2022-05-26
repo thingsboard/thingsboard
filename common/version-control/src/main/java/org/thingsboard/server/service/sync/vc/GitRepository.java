@@ -241,7 +241,10 @@ public class GitRepository {
 
     public Status status() throws GitAPIException {
         org.eclipse.jgit.api.Status status = execute(git.status());
-        return new Status(status.getAdded(), status.getModified(), status.getRemoved());
+        Set<String> modified = new HashSet<>();
+        modified.addAll(status.getModified());
+        modified.addAll(status.getChanged());
+        return new Status(status.getAdded(), modified, status.getRemoved());
     }
 
     public Commit commit(String message) throws GitAPIException {
