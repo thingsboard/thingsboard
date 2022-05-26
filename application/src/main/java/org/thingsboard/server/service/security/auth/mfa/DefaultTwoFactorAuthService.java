@@ -88,7 +88,7 @@ public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
         if (checkLimits) {
             Integer minVerificationCodeSendPeriod = twoFaSettings.getMinVerificationCodeSendPeriod();
             String rateLimit = null;
-            if (minVerificationCodeSendPeriod != null && minVerificationCodeSendPeriod > 0) {
+            if (minVerificationCodeSendPeriod != null && minVerificationCodeSendPeriod > 4) {
                 rateLimit = "1:" + minVerificationCodeSendPeriod;
             }
             checkRateLimits(user.getId(), accountConfig.getProviderType(), rateLimit, verificationCodeSendingRateLimits);

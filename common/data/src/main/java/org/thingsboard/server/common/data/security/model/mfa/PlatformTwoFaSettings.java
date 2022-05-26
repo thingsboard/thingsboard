@@ -33,6 +33,7 @@ public class PlatformTwoFaSettings {
     @Valid
     private List<TwoFaProviderConfig> providers;
 
+    @Min(value = 5, message = "minimum verification code sent period must be greater than or equal 5")
     private Integer minVerificationCodeSendPeriod;
     @Pattern(regexp = "[1-9]\\d*:[1-9]\\d*", message = "verification code check rate limit configuration is invalid")
     private String verificationCodeCheckRateLimit;

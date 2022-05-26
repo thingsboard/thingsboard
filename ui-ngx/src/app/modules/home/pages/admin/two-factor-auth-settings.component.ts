@@ -79,7 +79,8 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
       providers.forEach(provider => delete provider.enable);
       const config = Object.assign(setting, {providers});
       this.twoFaService.saveTwoFaSettings(config).subscribe(
-        () => {
+        (settings) => {
+          this.setAuthConfigFormValue(settings);
           this.twoFaFormGroup.markAsUntouched();
           this.twoFaFormGroup.markAsPristine();
         }
@@ -124,8 +125,8 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
         Validators.pattern(/^\d*$/)
       ]],
       verificationCodeCheckRateLimitEnable: [false],
-      verificationCodeCheckRateLimitNumber: ['3', this.posIntValidation],
-      verificationCodeCheckRateLimitTime: ['900', this.posIntValidation],
+      verificationCodeCheckRateLimitNumber: [{value: 3, disabled: true}, this.posIntValidation],
+      verificationCodeCheckRateLimitTime: [{value: 900, disabled: true}, this.posIntValidation],
       minVerificationCodeSendPeriod: ['30', [Validators.required, Validators.min(5), Validators.pattern(/^\d*$/)]],
       providers: this.fb.array([])
     });

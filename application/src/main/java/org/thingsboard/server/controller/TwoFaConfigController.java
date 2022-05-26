@@ -218,10 +218,10 @@ public class TwoFaConfigController extends BaseController {
     @ApiOperation(value = "Save platform 2FA settings (savePlatformTwoFaSettings)",
             notes = "Save 2FA settings for platform. The settings have following properties:\n" +
                     "- `providers` - the list of 2FA providers' configs. Users will only be allowed to use 2FA providers from this list. \n\n" +
-                    "- `minVerificationCodeSendPeriod` - minimal period in seconds to wait after verification code send request to send next request. " +
-                    "The format is standard: 'amountOfRequests:periodInSeconds'. The value of '1:60' would limit verification " +
-                    "code sending requests to one per minute.\n" +
+                    "- `minVerificationCodeSendPeriod` - minimal period in seconds to wait after verification code send request to send next request. \n" +
                     "- `verificationCodeCheckRateLimit` - rate limit configuration for verification code checking.\n" +
+                    "The format is standard: 'amountOfRequests:periodInSeconds'. The value of '1:60' would limit verification " +
+                    "code checking requests to one per minute.\n" +
                     "- `maxVerificationFailuresBeforeUserLockout` - maximum number of verification failures before a user gets disabled.\n" +
                     "- `totalAllowedTimeForVerification` - total amount of time in seconds allotted for verification. " +
                     "Basically, this property sets a lifetime for pre-verification token. If not set, default value of 30 minutes is used.\n" + NEW_LINE +
