@@ -238,7 +238,7 @@ export class AuthService {
     );
   }
 
-  private forceDefaultPlace(authState?: AuthState, path?: string, params?: any): boolean {
+  public forceDefaultPlace(authState?: AuthState, path?: string, params?: any): boolean {
     if (authState && authState.authUser) {
       if (authState.authUser.authority === Authority.TENANT_ADMIN || authState.authUser.authority === Authority.CUSTOMER_USER) {
         if ((this.userHasDefaultDashboard(authState) && authState.forceFullscreen) || authState.authUser.isPublic) {
