@@ -15,36 +15,33 @@
  */
 package org.thingsboard.server.transport.coap.attributes;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.github.os72.protobuf.dynamic.DynamicSchema;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.squareup.wire.schema.internal.parser.ProtoFileElement;
-import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.extern.slf4j.Slf4j;
 import org.awaitility.Awaitility;
 import org.eclipse.californium.core.CoapObserveRelation;
 import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.CoAP;
-import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.device.profile.*;
-import org.thingsboard.server.common.data.query.DeviceTypeFilter;
+import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.CoapDeviceTypeConfiguration;
+import org.thingsboard.server.common.data.device.profile.DefaultCoapDeviceTypeConfiguration;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
+import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.common.transport.service.DefaultTransportService;
-import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.coap.AbstractCoapIntegrationTest;
 import org.thingsboard.server.transport.coap.CoapTestCallback;
 import org.thingsboard.server.transport.coap.CoapTestClient;
-import org.thingsboard.server.transport.coap.attributes.updates.CoapAttributesUpdatesIntegrationTest;
-import org.thingsboard.server.transport.mqtt.MqttTestCallback;
-import org.thingsboard.server.transport.mqtt.MqttTestClient;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -54,7 +51,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.common.data.query.EntityKeyType.CLIENT_ATTRIBUTE;
@@ -168,7 +167,7 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
     }
 
     protected void processJsonTestRequestAttributesValuesFromTheServer() throws Exception {
-        CoapTestClient client = new CoapTestClient(accessToken, FeatureType.ATTRIBUTES);
+        client = new CoapTestClient(accessToken, FeatureType.ATTRIBUTES);
         SingleEntityFilter dtf = new SingleEntityFilter();
         dtf.setSingleEntity(savedDevice.getId());
         String clientKeysStr = "clientStr,clientBool,clientDbl,clientLong,clientJson";
@@ -195,11 +194,10 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         String featureTokenUrl = CoapTestClient.getFeatureTokenUrl(accessToken, FeatureType.ATTRIBUTES) + "?clientKeys=" + clientKeysStr + "&sharedKeys=" + sharedKeysStr;
         client.setURI(featureTokenUrl);
         validateJsonResponse(client.getMethod());
-        client.disconnect();
     }
 
     protected void processProtoTestRequestAttributesValuesFromTheServer() throws Exception {
-        CoapTestClient client = new CoapTestClient(accessToken, FeatureType.ATTRIBUTES);
+        client = new CoapTestClient(accessToken, FeatureType.ATTRIBUTES);
         SingleEntityFilter dtf = new SingleEntityFilter();
         dtf.setSingleEntity(savedDevice.getId());
         String clientKeysStr = "clientStr,clientBool,clientDbl,clientLong,clientJson";
@@ -226,7 +224,6 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         String featureTokenUrl = CoapTestClient.getFeatureTokenUrl(accessToken, FeatureType.ATTRIBUTES) + "?clientKeys=" + clientKeysStr + "&sharedKeys=" + sharedKeysStr;
         client.setURI(featureTokenUrl);
         validateProtoResponse(client.getMethod());
-        client.disconnect();
     }
 
     protected void processJsonTestSubscribeToAttributesUpdates(boolean emptyCurrentStateNotification) throws Exception {
@@ -234,7 +231,7 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
             doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", SHARED_ATTRIBUTES_PAYLOAD_ON_CURRENT_STATE_NOTIFICATION, String.class, status().isOk());
         }
 
-        CoapTestClient client = new CoapTestClient(accessToken, FeatureType.ATTRIBUTES);
+        client = new CoapTestClient(accessToken, FeatureType.ATTRIBUTES);
         CoapTestCallback callbackCoap = new CoapTestCallback(1);
 
         CoapObserveRelation observeRelation = client.getObserveRelation(callbackCoap);
@@ -262,7 +259,6 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         assertTrue(observeRelation.isCanceled());
 
         awaitClientAfterCancelObserve();
-        client.disconnect();
     }
 
     protected void processProtoTestSubscribeToAttributesUpdates(boolean emptyCurrentStateNotification) throws Exception {
@@ -270,7 +266,7 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
             doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", SHARED_ATTRIBUTES_PAYLOAD_ON_CURRENT_STATE_NOTIFICATION, String.class, status().isOk());
         }
 
-        CoapTestClient client = new CoapTestClient(accessToken, FeatureType.ATTRIBUTES);
+        client = new CoapTestClient(accessToken, FeatureType.ATTRIBUTES);
         CoapTestCallback callbackCoap = new CoapTestCallback(1);
 
         CoapObserveRelation observeRelation = client.getObserveRelation(callbackCoap);
@@ -298,7 +294,6 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         assertTrue(observeRelation.isCanceled());
 
         awaitClientAfterCancelObserve();
-        client.disconnect();
     }
 
     protected void validateJsonResponse(CoapResponse getAttributesResponse) throws InvalidProtocolBufferException {

@@ -227,10 +227,8 @@ public class CoapProvisionJsonDeviceTest extends AbstractCoapIntegrationTest {
 
     private byte[] createCoapClientAndPublish(String deviceCredentials) throws Exception {
         String provisionRequestMsg = createTestProvisionMessage(deviceCredentials);
-        CoapTestClient client = new CoapTestClient(accessToken, FeatureType.PROVISION);
-        byte[] responseByte = client.postMethod(provisionRequestMsg.getBytes()).getPayload();
-        client.disconnect();
-        return responseByte;
+        client = new CoapTestClient(accessToken, FeatureType.PROVISION);
+        return client.postMethod(provisionRequestMsg.getBytes()).getPayload();
     }
 
     private String createTestProvisionMessage(String deviceCredentials) {

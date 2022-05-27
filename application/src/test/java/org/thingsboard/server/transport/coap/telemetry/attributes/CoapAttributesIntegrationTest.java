@@ -72,7 +72,7 @@ public class CoapAttributesIntegrationTest extends AbstractCoapIntegrationTest {
 
     protected void processAttributesTest(List<String> expectedKeys, byte[] payload, boolean presenceFieldsTest) throws Exception {
 
-        CoapTestClient client = new CoapTestClient(accessToken, FeatureType.ATTRIBUTES);
+        client = new CoapTestClient(accessToken, FeatureType.ATTRIBUTES);
         CoapResponse coapResponse = client.postMethod(payload);
         assertEquals(CoAP.ResponseCode.CREATED, coapResponse.getCode());
 

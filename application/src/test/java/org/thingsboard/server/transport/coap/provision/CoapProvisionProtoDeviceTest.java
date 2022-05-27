@@ -16,10 +16,7 @@
 package org.thingsboard.server.transport.coap.provision;
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapResponse;
-import org.eclipse.californium.core.coap.MediaTypeRegistry;
-import org.eclipse.californium.elements.exception.ConnectorException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -46,8 +43,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenR
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
 import org.thingsboard.server.transport.coap.CoapTestClient;
 import org.thingsboard.server.transport.coap.CoapTestConfigProperties;
-
-import java.io.IOException;
 
 @Slf4j
 @DaoSqlTest
@@ -231,10 +226,9 @@ public class CoapProvisionProtoDeviceTest extends AbstractCoapIntegrationTest {
     }
 
     private byte[] createCoapClientAndPublish(byte[] provisionRequestMsg) throws Exception {
-        CoapTestClient client = new CoapTestClient(accessToken, FeatureType.PROVISION);
+        client = new CoapTestClient(accessToken, FeatureType.PROVISION);
         CoapResponse coapResponse = client.postMethod(provisionRequestMsg);
         Assert.assertNotNull("COAP response", coapResponse);
-        client.disconnect();
         return coapResponse.getPayload();
     }
 

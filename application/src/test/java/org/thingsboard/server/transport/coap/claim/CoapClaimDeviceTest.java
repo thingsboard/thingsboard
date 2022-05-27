@@ -16,10 +16,8 @@
 package org.thingsboard.server.transport.coap.claim;
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.CoAP;
-import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.eclipse.californium.elements.exception.ConnectorException;
 import org.junit.After;
 import org.junit.Before;
@@ -97,7 +95,7 @@ public class CoapClaimDeviceTest extends AbstractCoapIntegrationTest {
 
     protected void processTestClaimingDevice(boolean emptyPayload) throws Exception {
         log.warn("[testClaimingDevice] Device: {}, Transport type: {}", savedDevice.getName(), savedDevice.getType());
-        CoapTestClient client = new CoapTestClient(accessToken, FeatureType.CLAIM);
+        client = new CoapTestClient(accessToken, FeatureType.CLAIM);
         byte[] payloadBytes;
         byte[] failurePayloadBytes;
         if (emptyPayload) {
@@ -144,7 +142,6 @@ public class CoapClaimDeviceTest extends AbstractCoapIntegrationTest {
 
         claimResponse = doPostClaimAsync("/api/customer/device/" + savedDevice.getName() + "/claim", claimRequest, ClaimResponse.class, status().isBadRequest());
         assertEquals(claimResponse, ClaimResponse.CLAIMED);
-        client.disconnect();
     }
 
     private void postClaimRequest(CoapTestClient client, byte[] payload) throws IOException, ConnectorException {

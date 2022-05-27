@@ -73,7 +73,7 @@ public abstract class AbstractCoapTimeseriesIntegrationTest extends AbstractCoap
     }
 
     protected void processTestPostTelemetry(byte[] payloadBytes, List<String> expectedKeys, boolean withTs, boolean presenceFieldsTest) throws Exception {
-        CoapTestClient client = new CoapTestClient(accessToken, FeatureType.TELEMETRY);
+        client = new CoapTestClient(accessToken, FeatureType.TELEMETRY);
         CoapResponse coapResponse = client.postMethod(payloadBytes);
         assertEquals(CoAP.ResponseCode.CREATED, coapResponse.getCode());
 
@@ -128,7 +128,6 @@ public abstract class AbstractCoapTimeseriesIntegrationTest extends AbstractCoap
         } else {
             assertValues(values, 0);
         }
-        client.disconnect();
     }
 
     private void assertTs(Map<String, List<Map<String, Object>>> deviceValues, List<String> expectedKeys, int ts, int arrayIndex) {

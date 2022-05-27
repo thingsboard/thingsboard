@@ -71,7 +71,7 @@ public abstract class AbstractCoapServerSideRpcIntegrationTest extends AbstractC
     protected static final Long asyncContextTimeoutToUseRpcPlugin = 10000L;
 
     protected void processOneWayRpcTest(boolean protobuf) throws Exception {
-        CoapTestClient client = new CoapTestClient(accessToken, FeatureType.RPC);
+        client = new CoapTestClient(accessToken, FeatureType.RPC);
         CoapTestCallback callbackCoap = new TestCoapCallbackForRPC(client, 1, true, protobuf);
 
         CoapObserveRelation observeRelation = client.getObserveRelation(callbackCoap);
@@ -87,11 +87,10 @@ public abstract class AbstractCoapServerSideRpcIntegrationTest extends AbstractC
 
         observeRelation.proactiveCancel();
         assertTrue(observeRelation.isCanceled());
-        client.disconnect();
     }
 
     protected void processTwoWayRpcTest(String expectedResponseResult, boolean protobuf) throws Exception {
-        CoapTestClient client = new CoapTestClient(accessToken, FeatureType.RPC);
+        client = new CoapTestClient(accessToken, FeatureType.RPC);
         CoapTestCallback callbackCoap = new TestCoapCallbackForRPC(client, 1, false, protobuf);
 
         CoapObserveRelation observeRelation = client.getObserveRelation(callbackCoap);
@@ -115,7 +114,6 @@ public abstract class AbstractCoapServerSideRpcIntegrationTest extends AbstractC
 
         observeRelation.proactiveCancel();
         assertTrue(observeRelation.isCanceled());
-        client.disconnect();
     }
 
     protected void processOnLoadResponse(CoapResponse response, CoapTestClient client, Integer observe, CountDownLatch latch) {
