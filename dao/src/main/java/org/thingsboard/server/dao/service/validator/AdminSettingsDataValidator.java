@@ -39,13 +39,14 @@ public class AdminSettingsDataValidator extends DataValidator<AdminSettings> {
     }
 
     @Override
-    protected void validateUpdate(TenantId tenantId, AdminSettings adminSettings) {
+    protected AdminSettings validateUpdate(TenantId tenantId, AdminSettings adminSettings) {
         AdminSettings existentAdminSettings = adminSettingsService.findAdminSettingsById(tenantId, adminSettings.getId());
         if (existentAdminSettings != null) {
             if (!existentAdminSettings.getKey().equals(adminSettings.getKey())) {
                 throw new DataValidationException("Changing key of admin settings entry is prohibited!");
             }
         }
+        return existentAdminSettings;
     }
 
 

@@ -144,7 +144,7 @@ public interface EntityViewDao extends Dao<EntityView> {
      */
     PageData<EntityViewInfo> findEntityViewInfosByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, PageLink pageLink);
 
-    ListenableFuture<List<EntityView>> findEntityViewsByTenantIdAndEntityIdAsync(UUID tenantId, UUID entityId);
+    List<EntityView> findEntityViewsByTenantIdAndEntityId(UUID tenantId, UUID entityId);
 
     /**
      * Find tenants entity view types.
