@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.sync.vc;
+package org.thingsboard.server.common.data.sync.vc;
 
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 
-import java.util.List;
-
-public class ListBranchesGitRequest extends PendingGitRequest<List<String>> {
-
-    public ListBranchesGitRequest(TenantId tenantId) {
-        super(tenantId);
-    }
-
+@Data
+@AllArgsConstructor
+public class EntityDataDiff {
+    private EntityExportData<?> currentVersion;
+    private EntityExportData<?> otherVersion;
+    private String rawDiff;
 }

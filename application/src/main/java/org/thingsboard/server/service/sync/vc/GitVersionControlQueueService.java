@@ -29,6 +29,8 @@ import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
 import org.thingsboard.server.gen.transport.TransportProtos.VersionControlResponseMsg;
+import org.thingsboard.server.service.sync.vc.data.CommitGitRequest;
+import org.thingsboard.server.common.data.sync.vc.EntityVersionsDiff;
 
 import java.util.List;
 
@@ -57,6 +59,10 @@ public interface GitVersionControlQueueService {
     ListenableFuture<EntityExportData> getEntity(TenantId tenantId, String versionId, EntityId entityId);
 
     ListenableFuture<List<EntityExportData>> getEntities(TenantId tenantId, String versionId, EntityType entityType, int offset, int limit);
+
+    ListenableFuture<List<EntityVersionsDiff>> getVersionsDiff(TenantId tenantId, EntityType entityType, EntityId externalId, String versionId1, String versionId2);
+
+    ListenableFuture<String> getContentsDiff(TenantId tenantId, String rawEntityData1, String rawEntityData2);
 
     ListenableFuture<Void> initRepository(TenantId tenantId, EntitiesVersionControlSettings settings);
 

@@ -787,6 +787,34 @@ message EntitiesContentResponseMsg {
   repeated string data = 1;
 }
 
+message VersionsDiffRequestMsg {
+  string path = 1;
+  string versionId1 = 2;
+  string versionId2 = 3;
+}
+
+message VersionsDiffResponseMsg {
+  repeated EntityVersionsDiff diff = 1;
+}
+
+message EntityVersionsDiff {
+  string entityType = 1;
+  int64 entityIdMSB = 2;
+  int64 entityIdLSB = 3;
+  string entityDataAtVersion1 = 4;
+  string entityDataAtVersion2 = 5;
+  string rawDiff = 6;
+}
+
+message ContentsDiffRequestMsg {
+  string content1 = 1;
+  string content2 = 2;
+}
+
+message ContentsDiffResponseMsg {
+  string diff = 1;
+}
+
 message GenericRepositoryRequestMsg {}
 
 message GenericRepositoryResponseMsg {}
@@ -807,6 +835,8 @@ message ToVersionControlServiceMsg {
   ListBranchesRequestMsg listBranchesRequest = 13;
   EntityContentRequestMsg entityContentRequest = 14;
   EntitiesContentRequestMsg entitiesContentRequest = 15;
+  VersionsDiffRequestMsg versionsDiffRequest = 16;
+  ContentsDiffRequestMsg contentsDiffRequest = 17;
 }
 
 message VersionControlResponseMsg {
@@ -820,6 +850,8 @@ message VersionControlResponseMsg {
   ListVersionsResponseMsg listVersionsResponse = 8;
   EntityContentResponseMsg entityContentResponse = 9;
   EntitiesContentResponseMsg entitiesContentResponse = 10;
+  VersionsDiffResponseMsg versionsDiffResponse = 11;
+  ContentsDiffResponseMsg contentsDiffResponse = 12;
 }
 
 /**
