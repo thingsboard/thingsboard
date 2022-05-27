@@ -76,7 +76,7 @@ const routes: Routes = [
     path: 'login/mfa',
     component: TwoFactorAuthLoginComponent,
     data: {
-      title: 'login.create-password',
+      title: 'login.two-factor-authentication',
       auth: [Authority.PRE_VERIFICATION_TOKEN],
       module: 'public'
     },

@@ -2480,6 +2480,7 @@
         "request-password-reset": "Request Password Reset",
         "reset-password": "Reset Password",
         "create-password": "Create Password",
+        "two-factor-authentication": "Two factor authentication",
         "passwords-mismatch-error": "Entered passwords must be same!",
         "password-again": "Password again",
         "sign-in": "Please sign in",

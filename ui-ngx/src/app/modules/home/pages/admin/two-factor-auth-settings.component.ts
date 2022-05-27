@@ -22,12 +22,13 @@ import { AppState } from '@core/core.state';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TwoFactorAuthenticationService } from '@core/http/two-factor-authentication.service';
 import {
+  TwoFactorAuthProviderConfigForm,
   twoFactorAuthProvidersData,
   TwoFactorAuthProviderType,
   TwoFactorAuthSettings,
   TwoFactorAuthSettingsForm
 } from '@shared/models/two-factor-auth.models';
-import { deepClone, isNotEmptyStr } from '@core/utils';
+import { isNotEmptyStr } from '@core/utils';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { MatExpansionPanel } from '@angular/material/expansion';
@@ -73,7 +74,7 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
 
   save() {
     if (this.twoFaFormGroup.valid) {
-      const setting = this.twoFaFormGroup.value as TwoFactorAuthSettingsForm;
+      const setting = this.twoFaFormGroup.getRawValue() as TwoFactorAuthSettingsForm;
       this.joinRateLimit(setting, 'verificationCodeCheckRateLimit');
       const providers = setting.providers.filter(provider => provider.enable);
       providers.forEach(provider => delete provider.enable);
@@ -144,6 +145,20 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
         this.twoFaFormGroup.get('verificationCodeCheckRateLimitTime').disable({emitEvent: false});
       }
     });
+    this.providersForm.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((value: TwoFactorAuthProviderConfigForm[]) => {
+      const activeProvider = value.filter(provider => provider.enable);
+      const indexBackupCode = Object.values(TwoFactorAuthProviderType).indexOf(TwoFactorAuthProviderType.BACKUP_CODE);
+      if (!activeProvider.length ||
+        activeProvider.length === 1 && activeProvider[0].providerType === TwoFactorAuthProviderType.BACKUP_CODE) {
+        this.providersForm.at(indexBackupCode).get('enable').setValue(false, {emitEvent: false});
+        this.providersForm.at(indexBackupCode).disable( {emitEvent: false});
+        this.providersForm.at(indexBackupCode).get('providerType').enable({emitEvent: false});
+      } else {
+        this.providersForm.at(indexBackupCode).get('enable').enable( {emitEvent: false});
+      }
+    });
   }
 
   private setAuthConfigFormValue(settings: TwoFactorAuthSettings) {
@@ -205,7 +220,7 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
         newProviders.get('providerType').enable({emitEvent: false});
       }
     });
-    this.providersForm.push(newProviders);
+    this.providersForm.push(newProviders, {emitEvent: false});
   }
 
   private getByIndexPanel(index: number) {
