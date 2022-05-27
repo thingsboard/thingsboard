@@ -105,16 +105,6 @@ public class DefaultMailService implements MailService {
         }
     }
 
-    @Override
-    public boolean isConfigured(TenantId tenantId) {
-        try {
-            mailSender.testConnection();
-            return true;
-        } catch (MessagingException e) {
-            return false;
-        }
-    }
-
     private JavaMailSenderImpl createMailSender(JsonNode jsonConfig) {
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
         mailSender.setHost(jsonConfig.get("smtpHost").asText());
@@ -358,6 +348,11 @@ public class DefaultMailService implements MailService {
                 break;
         }
         sendMail(mailSender, mailFrom, email, subject, message);
+    }
+
+    @Override
+    public void testConnection(TenantId tenantId) throws Exception {
+        mailSender.testConnection();
     }
 
     private String toEnabledValueLabel(ApiFeature apiFeature) {

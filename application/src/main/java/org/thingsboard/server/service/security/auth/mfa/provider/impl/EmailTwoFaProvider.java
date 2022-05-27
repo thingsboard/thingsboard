@@ -48,7 +48,9 @@ public class EmailTwoFaProvider extends OtpBasedTwoFaProvider<EmailTwoFaProvider
 
     @Override
     public void check(TenantId tenantId) throws ThingsboardException {
-        if (!mailService.isConfigured(tenantId)) {
+        try {
+            mailService.testConnection(tenantId);
+        } catch (Exception e) {
             throw new ThingsboardException("Mail service is not set up", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
     }

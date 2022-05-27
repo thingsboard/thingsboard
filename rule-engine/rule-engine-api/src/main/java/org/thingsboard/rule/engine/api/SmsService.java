@@ -24,10 +24,10 @@ public interface SmsService {
 
     void updateSmsConfiguration();
 
-    boolean isConfigured(TenantId tenantId);
-
     void sendSms(TenantId tenantId, CustomerId customerId, String[] numbersTo, String message) throws ThingsboardException;;
 
     void sendTestSms(TestSmsRequest testSmsRequest) throws ThingsboardException;
+
+    boolean isConfigured(TenantId tenantId);
 
 }

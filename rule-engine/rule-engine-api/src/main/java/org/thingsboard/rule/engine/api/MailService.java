@@ -28,8 +28,6 @@ public interface MailService {
 
     void updateMailConfiguration();
 
-    boolean isConfigured(TenantId tenantId);
-
     void sendEmail(TenantId tenantId, String email, String subject, String message) throws ThingsboardException;
 
     void sendTestMail(JsonNode config, String email) throws ThingsboardException;
@@ -53,5 +51,7 @@ public interface MailService {
     void send(TenantId tenantId, CustomerId customerId, TbEmail tbEmail, JavaMailSender javaMailSender) throws ThingsboardException;
 
     void sendApiFeatureStateEmail(ApiFeature apiFeature, ApiUsageStateValue stateValue, String email, ApiUsageStateMailMessage msg) throws ThingsboardException;
+
+    void testConnection(TenantId tenantId) throws Exception;
 
 }

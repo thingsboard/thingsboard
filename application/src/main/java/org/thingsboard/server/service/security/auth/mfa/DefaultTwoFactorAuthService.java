@@ -121,11 +121,11 @@ public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
         TwoFaProviderConfig providerConfig = twoFaSettings.getProviderConfig(accountConfig.getProviderType())
                 .orElseThrow(() -> PROVIDER_NOT_CONFIGURED_ERROR);
 
-        boolean verificationSuccess;
+        boolean verificationSuccess = false;
         if (StringUtils.isNotBlank(verificationCode)) {
-            verificationSuccess = getTwoFaProvider(accountConfig.getProviderType()).checkVerificationCode(user, verificationCode, providerConfig, accountConfig);
-        } else {
-            verificationSuccess = false;
+            if (StringUtils.isNumeric(verificationCode) || accountConfig.getProviderType() == TwoFaProviderType.BACKUP_CODE) {
+                verificationSuccess = getTwoFaProvider(accountConfig.getProviderType()).checkVerificationCode(user, verificationCode, providerConfig, accountConfig);
+            }
         }
         if (checkLimits) {
             try {

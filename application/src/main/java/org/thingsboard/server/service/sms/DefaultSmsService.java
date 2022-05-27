@@ -86,11 +86,6 @@ public class DefaultSmsService implements SmsService {
         }
     }
 
-    @Override
-    public boolean isConfigured(TenantId tenantId) {
-        return smsSender != null;
-    }
-
     private int sendSms(String numberTo, String message) throws ThingsboardException {
         if (this.smsSender == null) {
             throw new ThingsboardException("Unable to send SMS: no SMS provider configured!", ThingsboardErrorCode.GENERAL);
@@ -126,6 +121,11 @@ public class DefaultSmsService implements SmsService {
         }
         this.sendSms(testSmsSender, testSmsRequest.getNumberTo(), testSmsRequest.getMessage());
         testSmsSender.destroy();
+    }
+
+    @Override
+    public boolean isConfigured(TenantId tenantId) {
+        return smsSender != null;
     }
 
     private int sendSms(SmsSender smsSender, String numberTo, String message) throws ThingsboardException {
