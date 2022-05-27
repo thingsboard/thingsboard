@@ -13,11 +13,53 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
+
+@import '../../../../../scss/constants';
+
+.entity-version-diff-view {
+  position: relative;
+  &:not(.tb-fullscreen) {
+    &.content-ready {
+      width: 600px;
+      @media #{$mat-gt-sm} {
+        width: 800px;
+      }
+      @media #{$mat-gt-md} {
+        width: 1000px
+      }
+      @media #{$mat-gt-xmd} {
+        width: 1200px
+      }
+    }
+  }
+  &.tb-fullscreen {
+    height: 100%;
+    background: #fff;
+    .bottom-panel {
+      margin-bottom: 16px;
+    }
+  }
+  .mat-toolbar {
+    background: #fff;
+    .mat-divider-vertical {
+      height: 40px;
+      margin-right: 16px;
+      margin-left: 16px;
+    }
+    .diff-count {
+      font-size: 16px;
+    }
+  }
+  .version-title {
+    margin-left: 4px;
+  }
   .diff-viewer {
     position: relative;
     border: 1px solid #c0c0c0;
-    margin-top: 16px;
+    margin-top: 4px;
     margin-bottom: 16px;
+    .acediff__diffLine {
+      z-index: 1;
+    }
   }
 }

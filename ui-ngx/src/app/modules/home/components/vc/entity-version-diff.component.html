@@ -15,16 +15,52 @@
     limitations under the License.
 
 -->
-<section style="min-width: 400px; width: 800px; position: relative;">
-  <mat-toolbar>
+<section class="entity-version-diff-view" [ngClass]="{'content-ready': contentReady}"
+         tb-fullscreen [fullscreen]="isFullscreen" (fullscreenChanged)="onFullscreenChanged($event)"
+         [ngStyle]="isFullscreen || !contentReady ? {} : {height: preferredDiffHeight}"
+         fxLayout="column">
+  <mat-toolbar *ngIf="contentReady">
     <h2>{{ 'version-control.diff-entity-with-version' | translate: {versionName} }}</h2>
     <span fxFlex></span>
+    <button mat-icon-button
+            matTooltip="{{'version-control.previous-difference' | translate}}"
+            matTooltipPosition="below"
+            [disabled]="!hasPrevious"
+            (click)="prevDifference($event)">
+      <mat-icon>arrow_upward</mat-icon>
+    </button>
+    <button mat-icon-button
+            matTooltip="{{'version-control.next-difference' | translate}}"
+            matTooltipPosition="below"
+            [disabled]="!hasNext"
+            (click)="nextDifference($event)">
+      <mat-icon>arrow_downward</mat-icon>
+    </button>
+    <mat-divider vertical></mat-divider>
+    <span class="diff-count">{{ 'version-control.differences' | translate : {count: diffCount} }}</span>
+    <mat-divider vertical></mat-divider>
+    <button mat-stroked-button color="primary"
+            #restoreVersionButton
+            [disabled]="(isLoading$ | async)"
+            (click)="toggleRestoreEntityVersion($event, restoreVersionButton)">
+      <mat-icon>restore</mat-icon>
+      {{'version-control.restore-version' | translate }}
+    </button>
+    <button mat-icon-button
+            matTooltip="{{(isFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
+            matTooltipPosition="below"
+            (click)="isFullscreen = !isFullscreen">
+      <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+    </button>
   </mat-toolbar>
-  <mat-progress-bar color="warn" style="z-index: 10; width: 100%; margin-bottom: -4px;" mode="indeterminate"
-                    *ngIf="isLoading$ | async">
-  </mat-progress-bar>
-  <div class="diff-viewer" #diffViewer style="height: 350px;"></div>
-  <div fxLayoutAlign="end center" fxLayoutGap="8px">
+  <div fxLayout="row" *ngIf="contentReady">
+    <div class="version-title" fxFlex>{{ 'version-control.current' | translate }}</div>
+    <div style="width: 58px;"></div>
+    <div class="version-title" fxFlex>{{ versionIdContent() }}</div>
+  </div>
+  <mat-spinner *ngIf="!contentReady" mode="indeterminate" diameter="80"></mat-spinner>
+  <div fxFlex [fxShow]="contentReady" class="diff-viewer" #diffViewer></div>
+  <div class="bottom-panel" *ngIf="contentReady" fxLayoutAlign="end center" fxLayoutGap="8px">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

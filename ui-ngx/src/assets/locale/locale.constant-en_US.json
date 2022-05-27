@@ -3133,7 +3133,11 @@
         "restore-entity-from-version": "Restore entity from version '{{versionName}}'",
         "load-entity-relations": "Load entity relations",
         "show-version-diff": "Show version diff",
-        "diff-entity-with-version": "Diff with entity version '{{versionName}}'"
+        "diff-entity-with-version": "Diff with entity version '{{versionName}}'",
+        "previous-difference": "Previous Difference",
+        "next-difference": "Next Difference",
+        "current": "Current",
+        "differences": "{ count, plural, 1 {1 difference} other {# differences} }"
     },
     "widget": {
         "widget-library": "Widgets Library",

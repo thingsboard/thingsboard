@@ -16,6 +16,10 @@
 
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType } from '@shared/models/entity-type.models';
+import { ExportableEntity } from '@shared/models/base-data';
+import { EntityRelation } from '@shared/models/relation.models';
+import { Device, DeviceCredentials } from '@shared/models/device.models';
+import { RuleChain, RuleChainMetaData } from '@shared/models/rule-chain.models';
 
 export interface VersionCreateConfig {
   saveRelations: boolean;
@@ -82,4 +86,41 @@ export interface VersionLoadResult {
   created: number;
   updated: number;
   deleted: number;
+}
+
+export interface EntityExportData<E extends ExportableEntity<EntityId>> {
+  entity: E;
+  entityType: EntityType;
+  relations: Array<EntityRelation>;
+}
+
+export interface DeviceExportData extends EntityExportData<Device> {
+  credentials: DeviceCredentials;
+}
+
+export interface RuleChainExportData extends EntityExportData<RuleChain> {
+  metaData: RuleChainMetaData;
+}
+
+export interface EntityDataDiff {
+  currentVersion: EntityExportData<any>;
+  otherVersion: EntityExportData<any>;
+  rawDiff: string;
+}
+
+export function entityExportDataToJsonString(data: EntityExportData<any>): string {
+  if (!data.relations) {
+    data.relations = [];
+  }
+  const allKeys = new Set<string>();
+  JSON.stringify(data, (key, value) => (allKeys.add(key), value));
+  return JSON.stringify(data, Array.from(allKeys).sort((key1, key2) => {
+    if (key1 === 'relations') {
+      return 1;
+    } else if (key2 === 'relations') {
+      return -1;
+    } else {
+      return 0;
+    }
+  }), 4);
 }

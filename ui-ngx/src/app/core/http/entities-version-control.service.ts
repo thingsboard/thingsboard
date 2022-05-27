@@ -19,7 +19,7 @@ import { HttpClient } from '@angular/common/http';
 import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-utils';
 import { combineLatest, Observable, of } from 'rxjs';
 import {
-  BranchInfo,
+  BranchInfo, EntityDataDiff,
   EntityVersion,
   VersionCreateRequest,
   VersionCreationResult,
@@ -104,5 +104,13 @@ export class EntitiesVersionControlService {
 
   public loadEntitiesVersion(request: VersionLoadRequest, config?: RequestConfig): Observable<Array<VersionLoadResult>> {
     return this.http.post<Array<VersionLoadResult>>('/api/entities/vc/entity', request, defaultHttpOptionsFromConfig(config));
+  }
+
+  public compareEntityDataToVersion(branch: string,
+                                    entityId: EntityId,
+                                    versionId: string,
+                                    config?: RequestConfig): Observable<EntityDataDiff> {
+    return this.http.get<EntityDataDiff>(`/api/entities/vc/diff/${branch}/${entityId.entityType}/${entityId.id}?versionId=${versionId}`,
+      defaultHttpOptionsFromConfig(config));
   }
 }
