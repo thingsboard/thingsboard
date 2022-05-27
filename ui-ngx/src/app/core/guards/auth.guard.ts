@@ -78,7 +78,7 @@ export class AuthGuard implements CanActivate, CanActivateChild {
         const params = lastChild.params || {};
         const isPublic = data.module === 'public';
 
-        if (!authState.isAuthenticated) {
+        if (!authState.isAuthenticated || isPublic) {
           if (publicId && publicId.length > 0) {
             this.authService.setUserFromJwtToken(null, null, false);
             this.authService.reloadUser();
@@ -95,7 +95,15 @@ export class AuthGuard implements CanActivate, CanActivateChild {
                 })
               );
             } else if (path === 'login.mfa') {
-              return of(this.router.parseUrl('/login'));
+              if (authState.authUser?.authority === Authority.PRE_VERIFICATION_TOKEN) {
+                return this.authService.getAvailableTwoFaLoginProviders().pipe(
+                  map(() => {
+                    return true;
+                  })
+                );
+              }
+              this.authService.logout();
+              return of(this.authService.defaultUrl(false));
             } else {
               return of(true);
             }
@@ -117,13 +125,6 @@ export class AuthGuard implements CanActivate, CanActivateChild {
             return of(false);
           }
           if (authState.authUser.authority === Authority.PRE_VERIFICATION_TOKEN) {
-            if (path === 'login.mfa') {
-              return this.authService.getAvailableTwoFaLoginProviders().pipe(
-                map(() => {
-                  return true;
-                })
-              );
-            }
             this.authService.logout();
             return of(false);
           }

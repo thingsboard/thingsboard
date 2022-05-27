@@ -30,7 +30,7 @@
     <mat-card-content>
       <form [formGroup]="twoFaFormGroup" (ngSubmit)="save()">
         <fieldset [disabled]="isLoading$ | async">
-          <ng-container>
+          <div>
             <fieldset class="fields-group" formArrayName="providers">
               <legend class="group-title" translate>admin.2fa.available-providers</legend>
               <ng-container *ngFor="let provider of providersForm.controls; let i = index; let $last = last; trackBy: trackByElement">
@@ -186,14 +186,14 @@
                 </ng-template>
               </mat-expansion-panel>
             </fieldset>
-            <div fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="8px">
-              <button mat-button mat-raised-button color="primary"
-                      [disabled]="(isLoading$ | async) || twoFaFormGroup.invalid || !twoFaFormGroup.dirty"
-                      type="submit">
-                {{'action.save' | translate}}
-              </button>
-            </div>
-          </ng-container>
+          </div>
+          <div fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="8px">
+            <button mat-button mat-raised-button color="primary"
+                    [disabled]="(isLoading$ | async) || twoFaFormGroup.invalid || !twoFaFormGroup.dirty"
+                    type="submit">
+              {{'action.save' | translate}}
+            </button>
+          </div>
         </fieldset>
       </form>
     </mat-card-content>

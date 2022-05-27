@@ -147,9 +147,9 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
   }
 
   private setAuthConfigFormValue(settings: TwoFactorAuthSettings) {
-    const [checkRateLimitNumber, checkRateLimitTime] = this.splitRateLimit(settings.verificationCodeCheckRateLimit);
-    const allowProvidersConfig = settings.providers.map(provider => provider.providerType);
-    const processFormValue: TwoFactorAuthSettingsForm = Object.assign(deepClone(settings), {
+    const [checkRateLimitNumber, checkRateLimitTime] = this.splitRateLimit(settings?.verificationCodeCheckRateLimit);
+    const allowProvidersConfig = settings?.providers.map(provider => provider.providerType) || [];
+    const processFormValue: TwoFactorAuthSettingsForm = Object.assign({}, settings, {
       verificationCodeCheckRateLimitEnable: checkRateLimitNumber > 0,
       verificationCodeCheckRateLimitNumber: checkRateLimitNumber || 3,
       verificationCodeCheckRateLimitTime: checkRateLimitTime || 900,
