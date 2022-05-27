@@ -47,6 +47,7 @@ import { EntityVersionExportComponent } from '@home/components/vc/entity-version
 import { MatButton } from '@angular/material/button';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { EntityVersionRestoreComponent } from '@home/components/vc/entity-version-restore.component';
+import { EntityVersionDiffComponent } from '@home/components/vc/entity-version-diff.component';
 
 @Component({
   selector: 'tb-entity-versions-table',
@@ -204,6 +205,28 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
             setTimeout(() => {
               vcExportPopover.updatePosition();
             });
+          }
+        }, {}, {}, {}, false);
+    }
+  }
+
+  toggleShowVersionDiff($event: Event, diffVersionButton: MatButton, entityVersion: EntityVersion) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const trigger = diffVersionButton._elementRef.nativeElement;
+    if (this.popoverService.hasPopover(trigger)) {
+      this.popoverService.hidePopover(trigger);
+    } else {
+      const diffVersionPopover = this.popoverService.displayPopover(trigger, this.renderer,
+        this.viewContainerRef, EntityVersionDiffComponent, 'left', true, null,
+        {
+          branch: this.branch,
+          versionName: entityVersion.name,
+          versionId: entityVersion.id,
+          externalEntityId: this.externalEntityIdValue,
+          onClose: () => {
+            diffVersionPopover.hide();
           }
         }, {}, {}, {}, false);
     }

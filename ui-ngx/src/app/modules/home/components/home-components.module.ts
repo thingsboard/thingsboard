@@ -158,6 +158,7 @@ import { VersionControlComponent } from '@home/components/vc/version-control.com
 import { EntityVersionsTableComponent } from '@home/components/vc/entity-versions-table.component';
 import { EntityVersionExportComponent } from '@home/components/vc/entity-version-export.component';
 import { EntityVersionRestoreComponent } from '@home/components/vc/entity-version-restore.component';
+import { EntityVersionDiffComponent } from '@home/components/vc/entity-version-diff.component';
 
 @NgModule({
   declarations:
@@ -286,7 +287,8 @@ import { EntityVersionRestoreComponent } from '@home/components/vc/entity-versio
       VersionControlComponent,
       EntityVersionsTableComponent,
       EntityVersionExportComponent,
-      EntityVersionRestoreComponent
+      EntityVersionRestoreComponent,
+      EntityVersionDiffComponent
     ],
   imports: [
     CommonModule,
@@ -409,7 +411,8 @@ import { EntityVersionRestoreComponent } from '@home/components/vc/entity-versio
     VersionControlComponent,
     EntityVersionsTableComponent,
     EntityVersionExportComponent,
-    EntityVersionRestoreComponent
+    EntityVersionRestoreComponent,
+    EntityVersionDiffComponent
   ],
   providers: [
     WidgetComponentService,

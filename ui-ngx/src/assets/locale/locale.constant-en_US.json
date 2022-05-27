@@ -3131,7 +3131,9 @@
         "nothing-to-commit": "No changes to commit",
         "restore-version": "Restore version",
         "restore-entity-from-version": "Restore entity from version '{{versionName}}'",
-        "load-entity-relations": "Load entity relations"
+        "load-entity-relations": "Load entity relations",
+        "show-version-diff": "Show version diff",
+        "diff-entity-with-version": "Diff with entity version '{{versionName}}'"
     },
     "widget": {
         "widget-library": "Widgets Library",
