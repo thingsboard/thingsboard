@@ -608,7 +608,6 @@ public class RuleChainController extends BaseController {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
         RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.WRITE);
-        TenantId tenantId = getTenantId();
         return tbRuleChainNotifyService.setEdgeRuleChain(getTenantId(), ruleChain, getCurrentUser(), true);
     }
 
@@ -623,7 +622,6 @@ public class RuleChainController extends BaseController {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
         RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.WRITE);
-        TenantId tenantId = getTenantId();
         return tbRuleChainNotifyService.setEdgeRuleChain(getTenantId(), ruleChain, getCurrentUser(), false);
       }
 
