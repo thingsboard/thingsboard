@@ -156,9 +156,11 @@ import { WidgetSettingsComponent } from '@home/components/widget/widget-settings
 import { VersionControlSettingsComponent } from '@home/components/vc/version-control-settings.component';
 import { VersionControlComponent } from '@home/components/vc/version-control.component';
 import { EntityVersionsTableComponent } from '@home/components/vc/entity-versions-table.component';
-import { EntityVersionExportComponent } from '@home/components/vc/entity-version-export.component';
+import { EntityVersionCreateComponent } from '@home/components/vc/entity-version-create.component';
 import { EntityVersionRestoreComponent } from '@home/components/vc/entity-version-restore.component';
 import { EntityVersionDiffComponent } from '@home/components/vc/entity-version-diff.component';
+import { ComplexVersionCreateComponent } from '@home/components/vc/complex-version-create.component';
+import { EntityTypesVersionCreateComponent } from '@home/components/vc/entity-types-version-create.component';
 
 @NgModule({
   declarations:
@@ -286,9 +288,11 @@ import { EntityVersionDiffComponent } from '@home/components/vc/entity-version-d
       VersionControlSettingsComponent,
       VersionControlComponent,
       EntityVersionsTableComponent,
-      EntityVersionExportComponent,
+      EntityVersionCreateComponent,
       EntityVersionRestoreComponent,
-      EntityVersionDiffComponent
+      EntityVersionDiffComponent,
+      ComplexVersionCreateComponent,
+      EntityTypesVersionCreateComponent
     ],
   imports: [
     CommonModule,
@@ -410,9 +414,11 @@ import { EntityVersionDiffComponent } from '@home/components/vc/entity-version-d
     VersionControlSettingsComponent,
     VersionControlComponent,
     EntityVersionsTableComponent,
-    EntityVersionExportComponent,
+    EntityVersionCreateComponent,
     EntityVersionRestoreComponent,
-    EntityVersionDiffComponent
+    EntityVersionDiffComponent,
+    ComplexVersionCreateComponent,
+    EntityTypesVersionCreateComponent
   ],
   providers: [
     WidgetComponentService,

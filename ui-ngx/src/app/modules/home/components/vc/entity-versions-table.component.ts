@@ -43,11 +43,11 @@ import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { BranchAutocompleteComponent } from '@shared/components/vc/branch-autocomplete.component';
 import { isNotEmptyStr } from '@core/utils';
 import { TbPopoverService } from '@shared/components/popover.service';
-import { EntityVersionExportComponent } from '@home/components/vc/entity-version-export.component';
+import { EntityVersionCreateComponent } from '@home/components/vc/entity-version-create.component';
 import { MatButton } from '@angular/material/button';
-import { TbPopoverComponent } from '@shared/components/popover.component';
 import { EntityVersionRestoreComponent } from '@home/components/vc/entity-version-restore.component';
 import { EntityVersionDiffComponent } from '@home/components/vc/entity-version-diff.component';
+import { ComplexVersionCreateComponent } from '@home/components/vc/complex-version-create.component';
 
 @Component({
   selector: 'tb-entity-versions-table',
@@ -177,21 +177,21 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
     }
   }
 
-  toggleVcExport($event: Event, exportButton: MatButton) {
+  toggleCreateVersion($event: Event, createVersionButton: MatButton) {
     if ($event) {
       $event.stopPropagation();
     }
-    const trigger = exportButton._elementRef.nativeElement;
+    const trigger = createVersionButton._elementRef.nativeElement;
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const vcExportPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, EntityVersionExportComponent, 'left', true, null,
+      const createVersionPopover = this.popoverService.displayPopover(trigger, this.renderer,
+        this.viewContainerRef, EntityVersionCreateComponent, 'left', true, null,
         {
           branch: this.branch,
           entityId: this.entityId,
           onClose: (result: VersionCreationResult | null, branch: string | null) => {
-            vcExportPopover.hide();
+            createVersionPopover.hide();
             if (result) {
               if (this.branch !== branch) {
                 this.branchChanged(branch);
@@ -201,9 +201,41 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
             }
           },
           onContentUpdated: () => {
-            vcExportPopover.updatePosition();
+            createVersionPopover.updatePosition();
             setTimeout(() => {
-              vcExportPopover.updatePosition();
+              createVersionPopover.updatePosition();
+            });
+          }
+        }, {}, {}, {}, false);
+    }
+  }
+
+  toggleComplexCreateVersion($event: Event, complexCreateVersionButton: MatButton) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const trigger = complexCreateVersionButton._elementRef.nativeElement;
+    if (this.popoverService.hasPopover(trigger)) {
+      this.popoverService.hidePopover(trigger);
+    } else {
+      const complexCreateVersionPopover = this.popoverService.displayPopover(trigger, this.renderer,
+        this.viewContainerRef, ComplexVersionCreateComponent, 'leftTop', true, null,
+        {
+          branch: this.branch,
+          onClose: (result: VersionCreationResult | null, branch: string | null) => {
+            complexCreateVersionPopover.hide();
+            if (result) {
+              if (this.branch !== branch) {
+                this.branchChanged(branch);
+              } else {
+                this.updateData();
+              }
+            }
+          },
+          onContentUpdated: () => {
+            complexCreateVersionPopover.updatePosition();
+            setTimeout(() => {
+              complexCreateVersionPopover.updatePosition();
             });
           }
         }, {}, {}, {}, false);

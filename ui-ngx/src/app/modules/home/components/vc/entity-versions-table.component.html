@@ -32,11 +32,18 @@
         </div>
         <span fxFlex></span>
         <button *ngIf="singleEntityMode" mat-stroked-button color="primary"
-                #exportButton
+                #createVersionButton
                 [disabled]="(isLoading$ | async)"
-                (click)="toggleVcExport($event, exportButton)">
+                (click)="toggleCreateVersion($event, createVersionButton)">
           <mat-icon>update</mat-icon>
           {{'version-control.create-version' | translate }}
+        </button>
+        <button *ngIf="!singleEntityMode" mat-stroked-button color="primary"
+                #complexCreateVersionButton
+                [disabled]="(isLoading$ | async)"
+                (click)="toggleComplexCreateVersion($event, complexCreateVersionButton)">
+          <mat-icon>update</mat-icon>
+          {{'version-control.create-entities-version' | translate }}
         </button>
         <button mat-icon-button
                 [disabled]="isLoading$ | async"

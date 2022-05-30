@@ -21,6 +21,15 @@ import { EntityRelation } from '@shared/models/relation.models';
 import { Device, DeviceCredentials } from '@shared/models/device.models';
 import { RuleChain, RuleChainMetaData } from '@shared/models/rule-chain.models';
 
+export const exportableEntityTypes: Array<EntityType> = [
+  EntityType.ASSET,
+  EntityType.DEVICE,
+  EntityType.DASHBOARD,
+  EntityType.CUSTOMER,
+  EntityType.DEVICE_PROFILE,
+  EntityType.RULE_CHAIN
+];
+
 export interface VersionCreateConfig {
   saveRelations: boolean;
 }
@@ -51,6 +60,43 @@ export interface SingleEntityVersionCreateRequest extends VersionCreateRequest {
   type: VersionCreateRequestType.SINGLE_ENTITY;
 }
 
+export enum SyncStrategy {
+  MERGE = 'MERGE',
+  OVERWRITE = 'OVERWRITE'
+}
+
+export const syncStrategyTranslationMap = new Map<SyncStrategy, string>(
+  [
+    [SyncStrategy.MERGE, 'version-control.sync-strategy-merge'],
+    [SyncStrategy.OVERWRITE, 'version-control.sync-strategy-overwrite']
+  ]
+);
+
+export interface EntityTypeVersionCreateConfig extends VersionCreateConfig {
+  syncStrategy: SyncStrategy;
+  entityIds: string[];
+  allEntities: boolean;
+}
+
+export interface ComplexVersionCreateRequest extends VersionCreateRequest {
+  syncStrategy: SyncStrategy;
+  entityTypes: {[entityType: string]: EntityTypeVersionCreateConfig};
+  type: VersionCreateRequestType.COMPLEX;
+}
+
+export function createDefaultEntityTypesVersionCreate(): {[entityType: string]: EntityTypeVersionCreateConfig} {
+  const res: {[entityType: string]: EntityTypeVersionCreateConfig} = {};
+  for (const entityType of exportableEntityTypes) {
+    res[entityType] = {
+      syncStrategy: null,
+      saveRelations: false,
+      allEntities: true,
+      entityIds: []
+    };
+  }
+  return res;
+}
+
 export interface VersionLoadRequest {
   branch: string;
   versionId: string;
@@ -62,6 +108,7 @@ export interface SingleEntityVersionLoadRequest extends VersionLoadRequest {
   config: VersionLoadConfig;
   type: VersionLoadRequestType.SINGLE_ENTITY;
 }
+
 
 export interface BranchInfo {
   name: string;

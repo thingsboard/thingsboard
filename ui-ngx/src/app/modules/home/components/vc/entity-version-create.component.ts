@@ -29,11 +29,11 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
-  selector: 'tb-entity-version-export',
-  templateUrl: './entity-version-export.component.html',
-  styleUrls: ['./entity-version-export.component.scss']
+  selector: 'tb-entity-version-create',
+  templateUrl: './entity-version-create.component.html',
+  styleUrls: ['./entity-version-create.component.scss']
 })
-export class EntityVersionExportComponent extends PageComponent implements OnInit {
+export class EntityVersionCreateComponent extends PageComponent implements OnInit {
 
   @Input()
   branch: string;
@@ -47,7 +47,7 @@ export class EntityVersionExportComponent extends PageComponent implements OnIni
   @Input()
   onContentUpdated: () => void;
 
-  exportFormGroup: FormGroup;
+  createVersionFormGroup: FormGroup;
 
   resultMessage: string;
 
@@ -59,7 +59,7 @@ export class EntityVersionExportComponent extends PageComponent implements OnIni
   }
 
   ngOnInit(): void {
-    this.exportFormGroup = this.fb.group({
+    this.createVersionFormGroup = this.fb.group({
       branch: [this.branch, [Validators.required]],
       versionName: [null, [Validators.required]],
       saveRelations: [false, []]
@@ -75,10 +75,10 @@ export class EntityVersionExportComponent extends PageComponent implements OnIni
   export(): void {
     const request: SingleEntityVersionCreateRequest = {
       entityId: this.entityId,
-      branch: this.exportFormGroup.get('branch').value,
-      versionName: this.exportFormGroup.get('versionName').value,
+      branch: this.createVersionFormGroup.get('branch').value,
+      versionName: this.createVersionFormGroup.get('versionName').value,
       config: {
-        saveRelations: this.exportFormGroup.get('saveRelations').value
+        saveRelations: this.createVersionFormGroup.get('saveRelations').value
       },
       type: VersionCreateRequestType.SINGLE_ENTITY
     };

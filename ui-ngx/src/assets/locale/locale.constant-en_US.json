@@ -3137,7 +3137,19 @@
         "previous-difference": "Previous Difference",
         "next-difference": "Next Difference",
         "current": "Current",
-        "differences": "{ count, plural, 1 {1 difference} other {# differences} }"
+        "differences": "{ count, plural, 1 {1 difference} other {# differences} }",
+        "create-entities-version": "Create entities version",
+        "default-sync-strategy": "Default sync strategy",
+        "sync-strategy-merge": "Merge",
+        "sync-strategy-overwrite": "Overwrite",
+        "entity-types": "Entity types",
+        "sync-strategy": "Sync strategy",
+        "default": "Default",
+        "all-entities": "All entities",
+        "no-entity-types": "No entity types configured",
+        "add-entity-type": "Add entity type",
+        "remove-all": "Remove all",
+        "version-create-result": "{ added, plural, 0 {No entities} 1 {1 entity} other {# entities} } added.\n{ modified, plural, 0 {No entities} 1 {1 entity} other {# entities} } modified.\n{ removed, plural, 0 {No entities} 1 {1 entity} other {# entities} } removed."
     },
     "widget": {
         "widget-library": "Widgets Library",
