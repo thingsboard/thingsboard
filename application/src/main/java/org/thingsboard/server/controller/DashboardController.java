@@ -39,7 +39,6 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
-import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HomeDashboard;
 import org.thingsboard.server.common.data.HomeDashboardInfo;
 import org.thingsboard.server.common.data.Tenant;
@@ -632,7 +631,7 @@ public class DashboardController extends BaseController {
 
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
         checkDashboardId(dashboardId, Operation.READ);
-        return tbDashboardService.asignDashboardToEdge(dashboardId, edge, getCurrentUser());
+        return tbDashboardService.assignDashboardToEdge(dashboardId, edge, getCurrentUser());
     }
 
     @ApiOperation(value = "Unassign dashboard from edge (unassignDashboardFromEdge)",

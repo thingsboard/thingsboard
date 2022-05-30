@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.sync.vc;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -61,4 +62,5 @@ public interface EntitiesVersionControlService {
 
     ListenableFuture<Void> checkVersionControlAccess(TenantId tenantId, EntitiesVersionControlSettings settings) throws Exception;
 
+    ListenableFuture<VersionCreationResult> autoCommit(SecurityUser user, EntityId entityId) throws Exception;
 }

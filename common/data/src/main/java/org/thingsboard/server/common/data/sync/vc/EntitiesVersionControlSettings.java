@@ -16,8 +16,12 @@
 package org.thingsboard.server.common.data.sync.vc;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.sync.vc.request.create.AutoVersionCreateConfig;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 @Data
 public class EntitiesVersionControlSettings implements Serializable {
@@ -32,7 +36,10 @@ public class EntitiesVersionControlSettings implements Serializable {
     private String privateKeyPassword;
     private String defaultBranch;
 
-    public EntitiesVersionControlSettings() {}
+    private Map<EntityType, AutoVersionCreateConfig> autoCommitSettings;
+
+    public EntitiesVersionControlSettings() {
+    }
 
     public EntitiesVersionControlSettings(EntitiesVersionControlSettings settings) {
         this.repositoryUri = settings.getRepositoryUri();
@@ -43,5 +50,6 @@ public class EntitiesVersionControlSettings implements Serializable {
         this.privateKey = settings.getPrivateKey();
         this.privateKeyPassword = settings.getPrivateKeyPassword();
         this.defaultBranch = settings.getDefaultBranch();
+        this.autoCommitSettings = settings.getAutoCommitSettings() != null ? new HashMap<>(settings.getAutoCommitSettings()) : new HashMap<>();
     }
 }

@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.StringUtils;
@@ -49,6 +50,7 @@ import org.thingsboard.server.common.data.sync.vc.EntityVersion;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionLoadResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
+import org.thingsboard.server.common.data.sync.vc.request.create.AutoVersionCreateConfig;
 import org.thingsboard.server.common.data.sync.vc.request.create.ComplexVersionCreateRequest;
 import org.thingsboard.server.common.data.sync.vc.request.create.SingleEntityVersionCreateRequest;
 import org.thingsboard.server.common.data.sync.vc.request.create.SyncStrategy;
@@ -70,6 +72,9 @@ import org.thingsboard.server.service.sync.vc.data.CommitGitRequest;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -342,6 +347,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
             var future = gitServiceQueue.initRepository(tenantId, restoredSettings);
             return Futures.transform(future, f -> vcSettingsService.save(tenantId, restoredSettings), MoreExecutors.directExecutor());
         } catch (Exception e) {
+            log.debug("{} Failed to init repository: {}", tenantId, versionControlSettings, e);
             throw new RuntimeException("Failed to init repository!", e);
         }
     }
@@ -364,6 +370,26 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
             throw new ThingsboardException(String.format("Unable to access repository: %s", getCauseMessage(e)),
                     ThingsboardErrorCode.GENERAL);
         }
+    }
+
+    @Override
+    public ListenableFuture<VersionCreationResult> autoCommit(SecurityUser user, EntityId entityId) throws Exception {
+        var settings = vcSettingsService.get(user.getTenantId());
+        var entityType = entityId.getEntityType();
+        if (settings != null && settings.getAutoCommitSettings() != null && settings.getAutoCommitSettings().containsKey(entityType)) {
+            AutoVersionCreateConfig autoCommitConfig = settings.getAutoCommitSettings().get(entityType);
+            SingleEntityVersionCreateRequest vcr = new SingleEntityVersionCreateRequest();
+            var autoCommitBranchName = autoCommitConfig.getBranch();
+            if (StringUtils.isEmpty(autoCommitBranchName)) {
+                autoCommitBranchName = StringUtils.isNotEmpty(settings.getDefaultBranch()) ? settings.getDefaultBranch() : "auto-commits";
+            }
+            vcr.setBranch(autoCommitBranchName);
+            vcr.setVersionName("auto-commit by " + user.getEmail() + " at " + Instant.ofEpochSecond(System.currentTimeMillis() / 1000));
+            vcr.setEntityId(entityId);
+            vcr.setConfig(autoCommitConfig);
+            return saveEntitiesVersion(user, vcr);
+        }
+        return Futures.immediateFuture(null);
     }
 
     private String getCauseMessage(Exception e) {

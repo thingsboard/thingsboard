@@ -26,7 +26,7 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.Set;
 
-public interface  TbDashboardService extends SimpleTbEntityService<Dashboard> {
+public interface TbDashboardService extends SimpleTbEntityService<Dashboard> {
 
     Dashboard assignDashboardToCustomer(DashboardId dashboardId, Customer customer, SecurityUser user) throws ThingsboardException;
 
@@ -40,7 +40,7 @@ public interface  TbDashboardService extends SimpleTbEntityService<Dashboard> {
 
     Dashboard removeDashboardCustomers(Dashboard dashboard, Set<CustomerId> customerIds, SecurityUser user) throws ThingsboardException;
 
-    Dashboard asignDashboardToEdge(DashboardId dashboardId, Edge edge, SecurityUser user) throws ThingsboardException;
+    Dashboard assignDashboardToEdge(DashboardId dashboardId, Edge edge, SecurityUser user) throws ThingsboardException;
 
     Dashboard unassignDashboardFromEdge(Dashboard dashboard, Edge edge, SecurityUser user) throws ThingsboardException;
 
