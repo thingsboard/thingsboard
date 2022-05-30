@@ -186,7 +186,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
       this.popoverService.hidePopover(trigger);
     } else {
       const createVersionPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, EntityVersionCreateComponent, 'left', true, null,
+        this.viewContainerRef, EntityVersionCreateComponent, 'leftTop', true, null,
         {
           branch: this.branch,
           entityId: this.entityId,
@@ -251,7 +251,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
       this.popoverService.hidePopover(trigger);
     } else {
       const diffVersionPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, EntityVersionDiffComponent, 'left', true, null,
+        this.viewContainerRef, EntityVersionDiffComponent, 'leftTop', true, null,
         {
           branch: this.branch,
           versionName: entityVersion.name,
@@ -275,7 +275,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
       this.popoverService.hidePopover(trigger);
     } else {
       const restoreVersionPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, EntityVersionRestoreComponent, 'left', true, null,
+        this.viewContainerRef, EntityVersionRestoreComponent, 'leftTop', true, null,
         {
           branch: this.branch,
           versionName: entityVersion.name,
