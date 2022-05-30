@@ -16,12 +16,14 @@
 package org.thingsboard.server.common.data.sync.vc.request.create;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-import java.io.Serializable;
-
+@EqualsAndHashCode(callSuper = true)
 @Data
-public class VersionCreateConfig implements Serializable {
-    private static final long serialVersionUID = 1223723167716612772L;
+public class AutoVersionCreateConfig extends VersionCreateConfig {
 
-    private boolean saveRelations;
+    private static final long serialVersionUID = 8245450889383315551L;
+
+    private String branch;
+
 }

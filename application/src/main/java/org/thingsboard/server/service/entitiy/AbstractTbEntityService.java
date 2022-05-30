@@ -56,6 +56,7 @@ import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.edge.EdgeNotificationService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
+import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 
 import javax.mail.MessagingException;
 import java.util.ArrayList;
@@ -108,6 +109,8 @@ public abstract class AbstractTbEntityService {
     protected QueueService queueService;
     @Autowired
     protected DashboardService dashboardService;
+    @Autowired
+    protected EntitiesVersionControlService vcService;
 
     protected ListenableFuture<Void> removeAlarmsByEntityId(TenantId tenantId, EntityId entityId) {
         ListenableFuture<PageData<AlarmInfo>> alarmsFuture =
