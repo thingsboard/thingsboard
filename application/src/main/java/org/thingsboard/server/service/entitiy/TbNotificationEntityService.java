@@ -54,8 +54,8 @@ public interface TbNotificationEntityService {
                            CustomerId customerId, List<EdgeId> relatedEdgeIds,
                            SecurityUser user, String body, Object... additionalInfo);
 
-    void notifyDeleteRuleChane(TenantId tenantId, RuleChain ruleChain,
-                               List<EdgeId> relatedEdgeIds,  SecurityUser user);
+    void notifyDeleteRuleChain(TenantId tenantId, RuleChain ruleChain,
+                               List<EdgeId> relatedEdgeIds, SecurityUser user);
 
     void notifySaveRuleChainMetaData(TenantId tenantId, RuleChain ruleChain, Object... others);
 
@@ -95,7 +95,7 @@ public interface TbNotificationEntityService {
 
     <E extends HasName, I extends EntityId> void notifyCreateOrUpdateOrDelete(TenantId tenantId, CustomerId customerId,
                                                                               I entityId, E entity, SecurityUser user,
-                                                                              ActionType actionType, boolean isSendMsg, Exception e,
+                                                                              ActionType actionType, boolean sendNotifyMsgToEdge, Exception e,
                                                                               Object... additionalInfo);
 
     void notifyCreateOrUpdateOrDeleteRelation(TenantId tenantId, CustomerId customerId,

@@ -15,9 +15,9 @@
  */
 package org.thingsboard.server.service.entitiy.ruleChain;
 
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.DefaultRuleChainCreateRequest;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -27,18 +27,19 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface TbRuleChainNotifyService extends SimpleTbEntityService<RuleChain> {
 
-    RuleChain saveRuleChain(TenantId tenantId, DefaultRuleChainCreateRequest request, SecurityUser user) throws ThingsboardException;
+    RuleChain saveDefaultByName(TenantId tenantId, DefaultRuleChainCreateRequest request, SecurityUser user) throws ThingsboardException;
 
     RuleChain setRootRuleChain(TenantId tenantId, RuleChain ruleChain, SecurityUser user) throws ThingsboardException;
 
     RuleChainMetaData saveRuleChainMetaData(TenantId tenantId, RuleChain ruleChain, RuleChainMetaData ruleChainMetaData,
                                             boolean updateRelated, SecurityUser user) throws ThingsboardException;
 
-    RuleChain assignRuleChainToEdge(TenantId tenantId, RuleChainId ruleChainId, Edge edge, SecurityUser user) throws ThingsboardException;
+    RuleChain assignUnassignRuleChainToEdge(TenantId tenantId, RuleChain ruleChain, Edge edge, ActionType actionType,
+                                            SecurityUser user) throws ThingsboardException;
 
-    RuleChain unassignRuleChainFromEdge(TenantId tenantId, RuleChain ruleChain, Edge edge, SecurityUser user) throws ThingsboardException;
+    RuleChain setEdgeTemplateRootRuleChain(TenantId tenantId, RuleChain ruleChain, SecurityUser user) throws ThingsboardException;
 
-    RuleChain setEdgeRuleChain(TenantId tenantId, RuleChain ruleChain, SecurityUser user, boolean isSetEdgeTemplateRootRuleChain) throws ThingsboardException;
+    RuleChain setAutoAssignToEdgeRuleChain(TenantId tenantId, RuleChain ruleChain, SecurityUser user) throws ThingsboardException;
 
     RuleChain unsetAutoAssignToEdgeRuleChain(TenantId tenantId, RuleChain ruleChain, SecurityUser user) throws ThingsboardException;
 }
