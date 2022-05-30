@@ -17,6 +17,7 @@ package org.thingsboard.server.service.entitiy.otaPackageController;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.OtaPackage;
@@ -71,36 +72,33 @@ public class DefaultTbOtaPackageService extends AbstractTbEntityService implemen
 
     @Override
     public OtaPackageInfo saveOtaPackageData(OtaPackageInfo otaPackageInfo, String checksum, ChecksumAlgorithm checksumAlgorithm,
-                                             byte[] data, String filename, String contentType, SecurityUser user, Exception e) throws ThingsboardException {
+                                             byte[] data, String filename, String contentType, SecurityUser user) throws ThingsboardException {
         TenantId tenantId = otaPackageInfo.getTenantId();
         OtaPackageId otaPackageId = otaPackageInfo.getId();
-        if (e == null) {
-            try {
-                OtaPackage otaPackage = new OtaPackage(otaPackageId);
-                otaPackage.setCreatedTime(otaPackageInfo.getCreatedTime());
-                otaPackage.setTenantId(tenantId);
-                otaPackage.setDeviceProfileId(otaPackageInfo.getDeviceProfileId());
-                otaPackage.setType(otaPackageInfo.getType());
-                otaPackage.setTitle(otaPackageInfo.getTitle());
-                otaPackage.setVersion(otaPackageInfo.getVersion());
-                otaPackage.setTag(otaPackageInfo.getTag());
-                otaPackage.setAdditionalInfo(otaPackageInfo.getAdditionalInfo());
-                otaPackage.setChecksumAlgorithm(checksumAlgorithm);
-                otaPackage.setChecksum(checksum);
-                otaPackage.setFileName(filename);
-                otaPackage.setContentType(contentType);
-                otaPackage.setData(ByteBuffer.wrap(data));
-                otaPackage.setDataSize((long) data.length);
-                OtaPackageInfo savedOtaPackage = otaPackageService.saveOtaPackage(otaPackage);
-                notificationEntityService.notifyEntity(tenantId, savedOtaPackage.getId(), savedOtaPackage, null,
-                        ActionType.UPDATED, user, null);
-                return savedOtaPackage;
-            } catch (Exception e1) {
-                notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.OTA_PACKAGE), null, null,
-                        ActionType.UPDATED, user, e1, otaPackageId.toString());
-                throw handleException(e1);
+        try {
+            if (StringUtils.isEmpty(checksum)) {
+                checksum = otaPackageService.generateChecksum(checksumAlgorithm, ByteBuffer.wrap(data));
             }
-        } else {
+            OtaPackage otaPackage = new OtaPackage(otaPackageId);
+            otaPackage.setCreatedTime(otaPackageInfo.getCreatedTime());
+            otaPackage.setTenantId(tenantId);
+            otaPackage.setDeviceProfileId(otaPackageInfo.getDeviceProfileId());
+            otaPackage.setType(otaPackageInfo.getType());
+            otaPackage.setTitle(otaPackageInfo.getTitle());
+            otaPackage.setVersion(otaPackageInfo.getVersion());
+            otaPackage.setTag(otaPackageInfo.getTag());
+            otaPackage.setAdditionalInfo(otaPackageInfo.getAdditionalInfo());
+            otaPackage.setChecksumAlgorithm(checksumAlgorithm);
+            otaPackage.setChecksum(checksum);
+            otaPackage.setFileName(filename);
+            otaPackage.setContentType(contentType);
+            otaPackage.setData(ByteBuffer.wrap(data));
+            otaPackage.setDataSize((long) data.length);
+            OtaPackageInfo savedOtaPackage = otaPackageService.saveOtaPackage(otaPackage);
+            notificationEntityService.notifyEntity(tenantId, savedOtaPackage.getId(), savedOtaPackage, null,
+                    ActionType.UPDATED, user, null);
+            return savedOtaPackage;
+        } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.OTA_PACKAGE), null, null,
                     ActionType.UPDATED, user, e, otaPackageId.toString());
             throw handleException(e);

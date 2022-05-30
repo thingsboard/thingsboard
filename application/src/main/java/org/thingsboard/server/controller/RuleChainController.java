@@ -65,7 +65,6 @@ import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.entitiy.ruleChain.TbRuleChainNotifyService;
 import org.thingsboard.server.service.rule.TbRuleChainService;
 import org.thingsboard.server.service.script.JsInvokeService;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
@@ -108,8 +107,6 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 @RequestMapping("/api")
 @RequiredArgsConstructor
 public class RuleChainController extends BaseController {
-
-    private final TbRuleChainNotifyService tbRuleChainNotifyService;
 
     public static final String RULE_CHAIN_ID = "ruleChainId";
     public static final String RULE_NODE_ID = "ruleNodeId";
@@ -241,7 +238,7 @@ public class RuleChainController extends BaseController {
 
         ruleChain.setTenantId(getCurrentUser().getTenantId());
         checkEntity(ruleChain.getId(), ruleChain, Resource.RULE_CHAIN);
-        return tbRuleChainNotifyService.save(ruleChain, getCurrentUser());
+        return tbRuleChainService.save(ruleChain, getCurrentUser());
      }
 
     @ApiOperation(value = "Create Default Rule Chain",
@@ -256,7 +253,7 @@ public class RuleChainController extends BaseController {
 
         checkNotNull(request);
         checkParameter(request.getName(), "name");
-        return tbRuleChainNotifyService.saveDefaultByName(getTenantId(), request, getCurrentUser());
+        return tbRuleChainService.saveDefaultByName(getTenantId(), request, getCurrentUser());
      }
 
     @ApiOperation(value = "Set Root Rule Chain (setRootRuleChain)",
@@ -270,7 +267,7 @@ public class RuleChainController extends BaseController {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
         RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.WRITE);
-        return tbRuleChainNotifyService.setRootRuleChain(getTenantId(),ruleChain, getCurrentUser());
+        return tbRuleChainService.setRootRuleChain(getTenantId(),ruleChain, getCurrentUser());
 
     }
 
@@ -295,7 +292,7 @@ public class RuleChainController extends BaseController {
         }
         RuleChain ruleChain = checkRuleChain(ruleChainMetaData.getRuleChainId(), Operation.WRITE);
 
-        return tbRuleChainNotifyService.saveRuleChainMetaData(tenantId, ruleChain, ruleChainMetaData, updateRelated,
+        return tbRuleChainService.saveRuleChainMetaData(tenantId, ruleChain, ruleChainMetaData, updateRelated,
                 getCurrentUser());
      }
 
@@ -343,7 +340,7 @@ public class RuleChainController extends BaseController {
 
         RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
         RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.DELETE);
-        tbRuleChainNotifyService.delete(ruleChain, getCurrentUser());
+        tbRuleChainService.delete(ruleChain, getCurrentUser());
      }
 
     @ApiOperation(value = "Get latest input message (getLatestRuleNodeDebugInput)",
@@ -536,7 +533,7 @@ public class RuleChainController extends BaseController {
         RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
         RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.READ);
 
-        return tbRuleChainNotifyService.assignRuleChainToEdge(getTenantId(), ruleChain, edge, getCurrentUser());
+        return tbRuleChainService.assignRuleChainToEdge(getTenantId(), ruleChain, edge, getCurrentUser());
      }
 
     @ApiOperation(value = "Unassign rule chain from edge (unassignRuleChainFromEdge)",
@@ -558,7 +555,7 @@ public class RuleChainController extends BaseController {
         RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
         RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.READ);
 
-        return tbRuleChainNotifyService.unassignRuleChainToEdge(getTenantId(), ruleChain, edge, getCurrentUser());
+        return tbRuleChainService.unassignRuleChainToEdge(getTenantId(), ruleChain, edge, getCurrentUser());
      }
 
     @ApiOperation(value = "Get Edge Rule Chains (getEdgeRuleChains)",
@@ -602,7 +599,7 @@ public class RuleChainController extends BaseController {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
         RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.WRITE);
-        return tbRuleChainNotifyService.setEdgeTemplateRootRuleChain(getTenantId(), ruleChain, getCurrentUser());
+        return tbRuleChainService.setEdgeTemplateRootRuleChain(getTenantId(), ruleChain, getCurrentUser());
     }
 
     @ApiOperation(value = "Set Auto Assign To Edge Rule Chain (setAutoAssignToEdgeRuleChain)",
@@ -616,7 +613,7 @@ public class RuleChainController extends BaseController {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
         RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.WRITE);
-        return tbRuleChainNotifyService.setAutoAssignToEdgeRuleChain(getTenantId(), ruleChain, getCurrentUser());
+        return tbRuleChainService.setAutoAssignToEdgeRuleChain(getTenantId(), ruleChain, getCurrentUser());
       }
 
     @ApiOperation(value = "Unset Auto Assign To Edge Rule Chain (unsetAutoAssignToEdgeRuleChain)",
@@ -631,7 +628,7 @@ public class RuleChainController extends BaseController {
         RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
         RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.WRITE);
 
-        return tbRuleChainNotifyService.unsetAutoAssignToEdgeRuleChain(getTenantId(), ruleChain, getCurrentUser());
+        return tbRuleChainService.unsetAutoAssignToEdgeRuleChain(getTenantId(), ruleChain, getCurrentUser());
      }
 
     // TODO: @voba refactor this - add new config to edge rule chain to set it as auto-assign
