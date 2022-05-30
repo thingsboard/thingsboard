@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -176,16 +177,22 @@ public class DefaultTbRuleChainNotifyService extends AbstractTbEntityService imp
                     ruleChain, user, ActionType.UPDATED, false, null, ruleChainMetaData);
 
             if (RuleChainType.EDGE.equals(ruleChain.getType())) {
-                notificationEntityService.notifySaveRuleChainMetaData(tenantId, ruleChain);
+                notificationEntityService.notifySendMsgToEdgeService(tenantId, ruleChain, EdgeEventActionType.UPDATED);
             }
 
-            for (RuleChain updatedRuleChain : updatedRuleChains) {
-                RuleChainMetaData updatedRuleChainMetaData = checkNotNull(ruleChainService.loadRuleChainMetaData(tenantId,
-                        updatedRuleChain.getId()));
-                notificationEntityService.notifySaveRuleChainMetaData(tenantId, ruleChain, updatedRuleChain,
-                        updatedRuleChainMetaData, user);
-            }
-
+            updatedRuleChains.forEach(updatedRuleChain -> {
+                if (RuleChainType.EDGE.equals(ruleChain.getType())) {
+                    notificationEntityService.notifySendMsgToEdgeService(tenantId, updatedRuleChain, EdgeEventActionType.UPDATED);
+                } else {
+                    try {
+                        RuleChainMetaData updatedRuleChainMetaData = checkNotNull(ruleChainService.loadRuleChainMetaData(tenantId, updatedRuleChain.getId()));
+                        notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, updatedRuleChain.getId(),
+                                updatedRuleChain, user, ActionType.UPDATED, false, null, updatedRuleChainMetaData);
+                    } catch (ThingsboardException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
             return savedRuleChainMetaData;
         } catch (Exception e) {
             notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, emptyId(EntityType.RULE_CHAIN),

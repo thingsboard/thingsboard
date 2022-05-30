@@ -57,7 +57,7 @@ public interface TbNotificationEntityService {
     void notifyDeleteRuleChain(TenantId tenantId, RuleChain ruleChain,
                                List<EdgeId> relatedEdgeIds, SecurityUser user);
 
-    void notifySaveRuleChainMetaData(TenantId tenantId, RuleChain ruleChain, Object... others);
+    void notifySendMsgToEdgeService(TenantId tenantId, RuleChain ruleChain, EdgeEventActionType edgeEventActionType);
 
     <E extends HasName, I extends EntityId> void notifyAssignOrUnassignEntityToCustomer(TenantId tenantId, I entityId,
                                                                                         CustomerId customerId, E entity,

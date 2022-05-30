@@ -41,7 +41,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.rule.RuleChain;
-import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -101,19 +100,9 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
     }
 
     @Override
-    public void notifySaveRuleChainMetaData(TenantId tenantId, RuleChain ruleChain, Object... others) {
-        if (others.length == 0) {
-            sendEntityNotificationMsg(tenantId, ruleChain.getId(), EdgeEventActionType.UPDATED);
-        } else {
-            RuleChain updatedRuleChain = (RuleChain)others[0];
-            RuleChainMetaData updatedRuleChainMetaData = (RuleChainMetaData)others[1];
-            SecurityUser user = (SecurityUser)others[2];
-            logEntityAction(tenantId, updatedRuleChain.getId(), updatedRuleChain, null, ActionType.UPDATED, user, null, updatedRuleChainMetaData);
-            if (RuleChainType.EDGE.equals(ruleChain.getType())) {
-                sendEntityNotificationMsg(updatedRuleChain.getTenantId(), updatedRuleChain.getId(), EdgeEventActionType.UPDATED);
-            }
-        }
-    }
+    public void notifySendMsgToEdgeService(TenantId tenantId, RuleChain ruleChain, EdgeEventActionType edgeEventActionType) {
+            sendEntityNotificationMsg(tenantId, ruleChain.getId(), edgeEventActionType);
+     }
 
     @Override
     public <E extends HasName, I extends EntityId> void notifyAssignOrUnassignEntityToCustomer(TenantId tenantId, I entityId,
