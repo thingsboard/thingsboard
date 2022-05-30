@@ -46,33 +46,32 @@
                        [attr.inputmode]="inputMode" [pattern]="pattern"
                        autocomplete="off"
                        placeholder="{{ providersData.get(selectedProvider).placeholder | translate }}"/>
-                <button *ngIf="showResendButton"
-                        mat-button matSuffix
-                        (click)="sendCode($event)"
-                        [disabled]="disabledResendButton"
-                        type="button" tabindex="-1">
-                  {{ 'login.resend-code' | translate }}
-                </button>
-                <mat-error *ngIf="verificationForm.get('verificationCode').invalid" style="margin-bottom: 8px">
+                <mat-error *ngIf="verificationForm.get('verificationCode').invalid">
                   {{ 'security.2fa.dialog.verification-code-invalid' | translate }}
                 </mat-error>
-                <mat-error *ngIf="verificationForm.get('verificationCode').invalid && showResendButton && countDownTime" class="timer">
-                  {{ 'login.resend-code-wait' | translate : {time: countDownTime} }}
-                </mat-error>
-                <mat-hint *ngIf="showResendButton && countDownTime" class="timer">
-                  {{ 'login.resend-code-wait' | translate : {time: countDownTime} }}
-                </mat-hint>
               </mat-form-field>
             </div>
             <span style="height: 50px;"></span>
-            <div fxLayout="column" fxLayoutGap="8px">
-              <button mat-raised-button
-                      color="accent"
-                      [disabled]="(isLoading$ | async) || verificationForm.invalid"
-                      type="submit">
-                {{ 'action.continue' | translate }}
-              </button>
-              <button mat-button
+            <button mat-raised-button
+                    color="accent"
+                    [disabled]="(isLoading$ | async) || verificationForm.invalid"
+                    type="submit">
+              {{ 'action.continue' | translate }}
+            </button>
+            <span style="height: 16px;"></span>
+            <div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="8px">
+              <div *ngIf="showResendButton" fxFlex="50" fxLayoutAlign="center center">
+                <div *ngIf="countDownTime" class="timer">
+                  {{ 'login.resend-code-wait' | translate : {time: countDownTime} }}
+                </div>
+                <button *ngIf="!disabledResendButton"
+                        mat-button fxFlex
+                        (click)="sendCode($event)"
+                        type="button">
+                  {{ 'login.resend-code' | translate }}
+                </button>
+              </div>
+              <button mat-button fxFlex
                       type="button"
                       (click)="selectProvider(null)">
                 {{ 'login.try-another-way' | translate }}

@@ -76,7 +76,7 @@
                                 </tr>
                                 <tr style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">
                                     <td class="content-block" style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; color: #348eda; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0; padding: 0 0 20px;" valign="top" align="center">
-                                        <h2 style="margin-top: 8px;">${сode}</h2>
+                                        <h2 style="margin-top: 8px;">${code}</h2>
                                     </td>
                                 </tr>
                                 <tr style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">

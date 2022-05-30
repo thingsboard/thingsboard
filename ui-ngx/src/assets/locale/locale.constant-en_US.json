@@ -2499,7 +2499,7 @@
         "verify-your-identity": "Verify your identity",
         "select-way-to-verify": "Select a way to verify",
         "resend-code": "Resend code",
-        "resend-code-wait": "Resend code wait { time, plural, 1 {1 second} other {# seconds} }",
+        "resend-code-wait": "Resend code in { time, plural, 1 {1 second} other {# seconds} }",
         "try-another-way": "Try another way",
         "totp-auth-description": "Please enter the security code from your authenticator app.",
         "totp-auth-placeholder": "Code",

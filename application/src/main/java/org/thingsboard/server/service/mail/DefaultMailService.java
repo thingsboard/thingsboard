@@ -316,7 +316,7 @@ public class DefaultMailService implements MailService {
         String subject = messages.getMessage("2fa.verification.code.subject", null, Locale.US);
         String message = mergeTemplateIntoString("2fa.verification.code.ftl", Map.of(
                 TARGET_EMAIL, email,
-                "сode", verificationCode,
+                "code", verificationCode,
                 "expirationTimeSeconds", expirationTimeSeconds
         ));
 
