@@ -442,7 +442,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
     private void handleWsAttributesSubscriptionByKeys(TelemetryWebSocketSessionRef sessionRef,
                                                       AttributesSubscriptionCmd cmd, String sessionId, EntityId entityId,
                                                       List<String> keys) {
-        FutureCallback<List<AttributeKvEntry>> callback = new FutureCallback<List<AttributeKvEntry>>() {
+        FutureCallback<List<AttributeKvEntry>> callback = new FutureCallback<>() {
             @Override
             public void onSuccess(List<AttributeKvEntry> data) {
                 List<TsKvEntry> attributesData = data.stream().map(d -> new BasicTsKvEntry(d.getLastUpdateTs(), d)).collect(Collectors.toList());
@@ -542,7 +542,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
 
     private void handleWsAttributesSubscription(TelemetryWebSocketSessionRef sessionRef,
                                                 AttributesSubscriptionCmd cmd, String sessionId, EntityId entityId) {
-        FutureCallback<List<AttributeKvEntry>> callback = new FutureCallback<List<AttributeKvEntry>>() {
+        FutureCallback<List<AttributeKvEntry>> callback = new FutureCallback<>() {
             @Override
             public void onSuccess(List<AttributeKvEntry> data) {
                 List<TsKvEntry> attributesData = data.stream().map(d -> new BasicTsKvEntry(d.getLastUpdateTs(), d)).collect(Collectors.toList());
@@ -666,7 +666,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
     }
 
     private FutureCallback<List<TsKvEntry>> getSubscriptionCallback(final TelemetryWebSocketSessionRef sessionRef, final TimeseriesSubscriptionCmd cmd, final String sessionId, final EntityId entityId, final long startTs, final List<String> keys) {
-        return new FutureCallback<List<TsKvEntry>>() {
+        return new FutureCallback<>() {
             @Override
             public void onSuccess(List<TsKvEntry> data) {
                 sendWsMsg(sessionRef, new TelemetrySubscriptionUpdate(cmd.getCmdId(), data));

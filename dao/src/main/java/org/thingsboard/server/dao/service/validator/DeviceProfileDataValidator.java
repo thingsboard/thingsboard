@@ -236,7 +236,7 @@ public class DeviceProfileDataValidator extends DataValidator<DeviceProfile> {
     }
 
     @Override
-    protected void validateUpdate(TenantId tenantId, DeviceProfile deviceProfile) {
+    protected DeviceProfile validateUpdate(TenantId tenantId, DeviceProfile deviceProfile) {
         DeviceProfile old = deviceProfileDao.findById(deviceProfile.getTenantId(), deviceProfile.getId().getId());
         if (old == null) {
             throw new DataValidationException("Can't update non existing device profile!");
@@ -255,6 +255,7 @@ public class DeviceProfileDataValidator extends DataValidator<DeviceProfile> {
                 throw new DataValidationException(message);
             }
         }
+        return old;
     }
 
     private void validateProtoSchemas(ProtoTransportPayloadConfiguration protoTransportPayloadTypeConfiguration) {

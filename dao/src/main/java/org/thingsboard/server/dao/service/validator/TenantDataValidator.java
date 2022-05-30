@@ -51,12 +51,13 @@ public class TenantDataValidator extends DataValidator<Tenant> {
     }
 
     @Override
-    protected void validateUpdate(TenantId tenantId, Tenant tenant) {
+    protected Tenant validateUpdate(TenantId tenantId, Tenant tenant) {
         Tenant old = tenantDao.findById(TenantId.SYS_TENANT_ID, tenantId.getId());
         if (old == null) {
             throw new DataValidationException("Can't update non existing tenant!");
         }
         validateTenantProfile(tenantId, tenant);
+        return old;
     }
 
     private void validateTenantProfile(TenantId tenantId, Tenant tenant) {

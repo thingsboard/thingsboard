@@ -117,6 +117,7 @@ import { DefaultTenantProfileConfigurationComponent } from '@home/components/pro
 import { TenantProfileConfigurationComponent } from '@home/components/profile/tenant/tenant-profile-configuration.component';
 import { SmsProviderConfigurationComponent } from '@home/components/sms/sms-provider-configuration.component';
 import { AwsSnsProviderConfigurationComponent } from '@home/components/sms/aws-sns-provider-configuration.component';
+import { SmppSmsProviderConfigurationComponent } from '@home/components/sms/smpp-sms-provider-configuration.component';
 import { TwilioSmsProviderConfigurationComponent } from '@home/components/sms/twilio-sms-provider-configuration.component';
 import { Lwm2mProfileComponentsModule } from '@home/components/profile/device/lwm2m/lwm2m-profile-components.module';
 import { DashboardPageComponent } from '@home/components/dashboard-page/dashboard-page.component';
@@ -148,6 +149,8 @@ import {
 } from '@home/components/tokens';
 import { DashboardStateComponent } from '@home/components/dashboard-page/dashboard-state.component';
 import { EntityDetailsPageComponent } from '@home/components/entity/entity-details-page.component';
+import { WidgetSettingsModule } from '@home/components/widget/lib/settings/widget-settings.module';
+import { WidgetSettingsComponent } from '@home/components/widget/widget-settings.component';
 
 @NgModule({
   declarations:
@@ -182,6 +185,7 @@ import { EntityDetailsPageComponent } from '@home/components/entity/entity-detai
       WidgetContainerComponent,
       WidgetComponent,
       LegendComponent,
+      WidgetSettingsComponent,
       WidgetConfigComponent,
       EntityFilterViewComponent,
       EntityFilterComponent,
@@ -253,6 +257,7 @@ import { EntityDetailsPageComponent } from '@home/components/entity/entity-detai
       EditAlarmDetailsDialogComponent,
       SmsProviderConfigurationComponent,
       AwsSnsProviderConfigurationComponent,
+      SmppSmsProviderConfigurationComponent,
       TwilioSmsProviderConfigurationComponent,
       DashboardToolbarComponent,
       DashboardPageComponent,
@@ -273,6 +278,7 @@ import { EntityDetailsPageComponent } from '@home/components/entity/entity-detai
     CommonModule,
     SharedModule,
     SharedHomeComponentsModule,
+    WidgetSettingsModule,
     Lwm2mProfileComponentsModule,
     SnmpDeviceProfileTransportModule,
     StatesControllerModule,
@@ -301,6 +307,7 @@ import { EntityDetailsPageComponent } from '@home/components/entity/entity-detai
     WidgetContainerComponent,
     WidgetComponent,
     LegendComponent,
+    WidgetSettingsComponent,
     WidgetConfigComponent,
     EntityFilterViewComponent,
     EntityFilterComponent,
@@ -366,6 +373,7 @@ import { EntityDetailsPageComponent } from '@home/components/entity/entity-detai
     AlarmScheduleComponent,
     SmsProviderConfigurationComponent,
     AwsSnsProviderConfigurationComponent,
+    SmppSmsProviderConfigurationComponent,
     TwilioSmsProviderConfigurationComponent,
     DashboardToolbarComponent,
     DashboardPageComponent,
