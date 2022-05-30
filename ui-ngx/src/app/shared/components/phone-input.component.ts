@@ -59,6 +59,15 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
   @Input() enableFlagsSelect = true;
   @Input() required = true;
 
+  private floatLabel = 'always';
+  get showLabel(): string {
+    return this.floatLabel;
+  }
+  @Input()
+  set showLabel(value) {
+    this.floatLabel = value ? 'always' : 'never';
+  }
+
   allCountries: Array<Country> = [];
   phonePlaceholder: string;
   countryCallingCode: string;
@@ -82,11 +91,9 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
     }
     this.phoneFormGroup = this.fb.group({
       country: [this.defaultCountry, []],
-      phoneNumber: [
-        this.countryCallingCode,
-        this.required ? [Validators.required, Validators.pattern(phoneNumberPattern), this.validatePhoneNumber()] : []
-      ]
+      phoneNumber: [null, this.required ? [Validators.required] : []]
     });
+    this.phoneFormGroup.get('phoneNumber').setValidators([Validators.pattern(phoneNumberPattern), this.validatePhoneNumber()]);
 
     this.valueChange$ = this.phoneFormGroup.get('phoneNumber').valueChanges.subscribe(() => {
       this.updateModel();
@@ -97,12 +104,14 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
         const code = this.countryCallingCode;
         this.getFlagAndPhoneNumberData(value);
         let phoneNumber = this.phoneFormGroup.get('phoneNumber').value;
-        if (code !== this.countryCallingCode && phoneNumber) {
-          phoneNumber = phoneNumber.replace(code, this.countryCallingCode);
-        } else {
-          phoneNumber = this.countryCallingCode;
+        if (phoneNumber) {
+          if (code !== this.countryCallingCode && phoneNumber.includes(code)) {
+            phoneNumber = phoneNumber.replace(code, this.countryCallingCode);
+          } else {
+            phoneNumber = this.countryCallingCode;
+          }
+          this.phoneFormGroup.get('phoneNumber').patchValue(phoneNumber);
         }
-        this.phoneFormGroup.get('phoneNumber').patchValue(phoneNumber);
       }
     });
 
@@ -120,6 +129,13 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
   ngOnDestroy() {
     if (this.valueChange$) {
       this.valueChange$.unsubscribe();
+    }
+  }
+
+  focus() {
+    const phoneNumber = this.phoneFormGroup.get('phoneNumber');
+    if (!phoneNumber.value) {
+      phoneNumber.patchValue(this.countryCallingCode);
     }
   }
 

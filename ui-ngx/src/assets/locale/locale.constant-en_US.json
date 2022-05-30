@@ -3355,7 +3355,7 @@
         "phone-input-label": "Phone number",
         "phone-input-required": "Phone number is required",
         "phone-input-validation": "Phone number is invalid or not possible",
-        "phone-input-pattern": "Invalid phone number. Should be in E.164 format, ex. +19995550123."
+        "phone-input-pattern": "Invalid phone number. Should be in E.164 format, ex. {{phoneNumber}}"
     },
     "custom": {
         "widget-action": {

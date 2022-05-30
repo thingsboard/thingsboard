@@ -27,7 +27,7 @@
         </mat-option>
       </mat-select>
     </div>
-    <mat-form-field class="phone-input">
+    <mat-form-field class="phone-input" [floatLabel]="showLabel">
       <mat-label translate>phone-input.phone-input-label</mat-label>
       <input
         formControlName="phoneNumber"
@@ -35,6 +35,7 @@
         matInput
         [placeholder]="phonePlaceholder"
         [pattern]="phoneNumberPattern"
+        (focus)="focus()"
         autocomplete="off"
         [required]="required">
       <mat-error *ngIf="phoneFormGroup.get('phoneNumber').hasError('required')">
