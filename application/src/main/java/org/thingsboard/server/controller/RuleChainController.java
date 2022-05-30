@@ -294,7 +294,6 @@ public class RuleChainController extends BaseController {
                 debugPerTenantLimits.remove(tenantId, debugTbRateLimits);
             }
         }
-
         RuleChain ruleChain = checkRuleChain(ruleChainMetaData.getRuleChainId(), Operation.WRITE);
 
         return tbRuleChainNotifyService.saveRuleChainMetaData(tenantId, ruleChain, ruleChainMetaData, updateRelated,
@@ -659,5 +658,4 @@ public class RuleChainController extends BaseController {
             throw handleException(e);
         }
     }
-
 }
