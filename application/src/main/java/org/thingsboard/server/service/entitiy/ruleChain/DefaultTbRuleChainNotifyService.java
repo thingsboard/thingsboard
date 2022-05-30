@@ -122,20 +122,21 @@ public class DefaultTbRuleChainNotifyService extends AbstractTbEntityService imp
     @Override
     public RuleChain setRootRuleChain(TenantId tenantId, RuleChain ruleChain, SecurityUser user) throws ThingsboardException {
         RuleChain previousRootRuleChain = ruleChainService.getRootTenantRuleChain(tenantId);
-        RuleChainId ruleChainId = previousRootRuleChain.getId();
+        RuleChainId previousRootRuleChainId = previousRootRuleChain.getId();
+        RuleChainId ruleChainId = ruleChain.getId();
         try {
             if (ruleChainService.setRootRuleChain(tenantId, ruleChainId)) {
                 if (previousRootRuleChain != null) {
-                    previousRootRuleChain = ruleChainService.findRuleChainById(tenantId, previousRootRuleChain.getId());
+                    previousRootRuleChain = ruleChainService.findRuleChainById(tenantId, previousRootRuleChainId);
 
-                    tbClusterService.broadcastEntityStateChangeEvent(tenantId, previousRootRuleChain.getId(),
+                    tbClusterService.broadcastEntityStateChangeEvent(tenantId, previousRootRuleChainId,
                             ComponentLifecycleEvent.UPDATED);
-                    notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null,ruleChainId,
+                    notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, previousRootRuleChainId,
                             previousRootRuleChain, user, ActionType.UPDATED, false, null);
                 }
                 ruleChain = ruleChainService.findRuleChainById(tenantId, ruleChainId);
 
-                tbClusterService.broadcastEntityStateChangeEvent(tenantId, ruleChain.getId(),
+                tbClusterService.broadcastEntityStateChangeEvent(tenantId, ruleChainId,
                         ComponentLifecycleEvent.UPDATED);
                 notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, ruleChainId,
                         ruleChain, user, ActionType.UPDATED, false, null);
