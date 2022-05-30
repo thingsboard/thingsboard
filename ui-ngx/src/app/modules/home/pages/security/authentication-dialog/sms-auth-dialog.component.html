@@ -36,7 +36,7 @@
       <ng-template matStepLabel>{{ 'security.2fa.dialog.sms-step-label' | translate }}</ng-template>
       <form [formGroup]="smsConfigForm" (ngSubmit)="nextStep()">
         <p class="mat-body step-description input" translate>security.2fa.dialog.sms-step-description</p>
-        <div fxLayout="row" fxLayoutAlign="space-between center">
+        <div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="8px">
           <mat-form-field  fxFlex class="mat-block input-container" floatLabel="always" hideRequiredMarker>
             <mat-label></mat-label>
             <input type="tel" required
