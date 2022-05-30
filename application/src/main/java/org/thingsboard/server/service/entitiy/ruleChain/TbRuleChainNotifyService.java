@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.entitiy.ruleChain;
 
-import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -34,7 +33,9 @@ public interface TbRuleChainNotifyService extends SimpleTbEntityService<RuleChai
     RuleChainMetaData saveRuleChainMetaData(TenantId tenantId, RuleChain ruleChain, RuleChainMetaData ruleChainMetaData,
                                             boolean updateRelated, SecurityUser user) throws ThingsboardException;
 
-    RuleChain assignUnassignRuleChainToEdge(TenantId tenantId, RuleChain ruleChain, Edge edge, ActionType actionType,
+    RuleChain assignRuleChainToEdge(TenantId tenantId, RuleChain ruleChain, Edge edge,
+                                    SecurityUser user) throws ThingsboardException;
+    RuleChain unassignRuleChainToEdge(TenantId tenantId, RuleChain ruleChain, Edge edge,
                                             SecurityUser user) throws ThingsboardException;
 
     RuleChain setEdgeTemplateRootRuleChain(TenantId tenantId, RuleChain ruleChain, SecurityUser user) throws ThingsboardException;

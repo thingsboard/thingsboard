@@ -182,36 +182,21 @@ public class OtaPackageController extends BaseController {
                                              @RequestPart MultipartFile file) throws ThingsboardException {
         checkParameter(OTA_PACKAGE_ID, strOtaPackageId);
         checkParameter(CHECKSUM_ALGORITHM, checksumAlgorithmStr);
+        OtaPackageId otaPackageId = new OtaPackageId(toUUID(strOtaPackageId));
+        OtaPackageInfo otaPackageInfo = checkOtaPackageInfoId(otaPackageId, Operation.READ);
         try {
-            OtaPackageId otaPackageId = new OtaPackageId(toUUID(strOtaPackageId));
-            OtaPackageInfo otaPackageInfo = checkOtaPackageInfoId(otaPackageId, Operation.READ);
 
-            OtaPackage otaPackage = new OtaPackage(otaPackageId);
-            otaPackage.setCreatedTime(otaPackageInfo.getCreatedTime());
-            otaPackage.setTenantId(getTenantId());
-            otaPackage.setDeviceProfileId(otaPackageInfo.getDeviceProfileId());
-            otaPackage.setType(otaPackageInfo.getType());
-            otaPackage.setTitle(otaPackageInfo.getTitle());
-            otaPackage.setVersion(otaPackageInfo.getVersion());
-            otaPackage.setTag(otaPackageInfo.getTag());
-            otaPackage.setAdditionalInfo(otaPackageInfo.getAdditionalInfo());
 
             ChecksumAlgorithm checksumAlgorithm = ChecksumAlgorithm.valueOf(checksumAlgorithmStr.toUpperCase());
-
-            byte[] bytes = file.getBytes();
+            byte[] data = file.getBytes();
             if (StringUtils.isEmpty(checksum)) {
-                checksum = otaPackageService.generateChecksum(checksumAlgorithm, ByteBuffer.wrap(bytes));
+                checksum = otaPackageService.generateChecksum(checksumAlgorithm, ByteBuffer.wrap(data));
             }
-
-            otaPackage.setChecksumAlgorithm(checksumAlgorithm);
-            otaPackage.setChecksum(checksum);
-            otaPackage.setFileName(file.getOriginalFilename());
-            otaPackage.setContentType(file.getContentType());
-            otaPackage.setData(ByteBuffer.wrap(bytes));
-            otaPackage.setDataSize((long) bytes.length);
-            return tbOtaPackageService.saveOtaPackageData(otaPackageId, otaPackage, getCurrentUser(), null);
+            return tbOtaPackageService.saveOtaPackageData(otaPackageInfo, checksum, checksumAlgorithm,
+            data, file.getOriginalFilename(), file.getContentType(), getCurrentUser(), null);
         } catch (Exception e) {
-            tbOtaPackageService.saveOtaPackageData(null, null, getCurrentUser(), e);
+            tbOtaPackageService.saveOtaPackageData(otaPackageInfo, null, null,
+                    null, null, null, getCurrentUser(), e);
             throw handleException(e);
         }
     }

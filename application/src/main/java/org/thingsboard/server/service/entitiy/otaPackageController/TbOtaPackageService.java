@@ -15,11 +15,10 @@
  */
 package org.thingsboard.server.service.entitiy.otaPackageController;
 
-import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface TbOtaPackageService  {
@@ -28,5 +27,6 @@ public interface TbOtaPackageService  {
 
     void  delete(OtaPackageInfo otaPackageInfo, SecurityUser user) throws ThingsboardException;
 
-    OtaPackageInfo saveOtaPackageData(EntityId otaPackageId, OtaPackage otaPackage, SecurityUser user, Exception e) throws ThingsboardException;
+    OtaPackageInfo saveOtaPackageData(OtaPackageInfo otaPackageInfo, String checksum, ChecksumAlgorithm checksumAlgorithm,
+                                      byte[] data, String filename, String contentType, SecurityUser securityUser, Exception e) throws ThingsboardException;
 }

@@ -202,18 +202,35 @@ public class DefaultTbRuleChainNotifyService extends AbstractTbEntityService imp
     }
 
     @Override
-    public RuleChain assignUnassignRuleChainToEdge(TenantId tenantId, RuleChain ruleChain, Edge edge, ActionType actionType, SecurityUser user) throws ThingsboardException {
+    public RuleChain assignRuleChainToEdge(TenantId tenantId, RuleChain ruleChain, Edge edge, SecurityUser user) throws ThingsboardException {
         RuleChainId ruleChainId = ruleChain.getId();
         try {
             RuleChain savedRuleChain = checkNotNull(ruleChainService.assignRuleChainToEdge(tenantId, ruleChainId, edge.getId()));
             notificationEntityService.notifyAssignOrUnassignEntityToEdge(tenantId, ruleChainId,
                     null, edge.getId(),
-                    savedRuleChain, actionType,
+                    savedRuleChain, ActionType.ASSIGNED_TO_EDGE,
                     user, ruleChainId.toString(), edge.getId().toString(), edge.getName());
             return savedRuleChain;
         } catch (Exception e) {
             notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, emptyId(EntityType.RULE_CHAIN),
-                    null, user, actionType, false, e, ruleChainId.toString(), edge.getId().toString());
+                    null, user, ActionType.ASSIGNED_TO_EDGE, false, e, ruleChainId.toString(), edge.getId().toString());
+            throw handleException(e);
+        }
+    }
+
+    @Override
+    public RuleChain unassignRuleChainToEdge(TenantId tenantId, RuleChain ruleChain, Edge edge, SecurityUser user) throws ThingsboardException {
+        RuleChainId ruleChainId = ruleChain.getId();
+        try {
+            RuleChain savedRuleChain = checkNotNull(ruleChainService.unassignRuleChainFromEdge(tenantId, ruleChainId, edge.getId(), false));
+            notificationEntityService.notifyAssignOrUnassignEntityToEdge(tenantId, ruleChainId,
+                    null, edge.getId(),
+                    savedRuleChain, ActionType.UNASSIGNED_FROM_EDGE,
+                    user, ruleChainId.toString(), edge.getId().toString(), edge.getName());
+            return savedRuleChain;
+        } catch (Exception e) {
+            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, emptyId(EntityType.RULE_CHAIN),
+                    null, user, ActionType.UNASSIGNED_FROM_EDGE, false, e, ruleChainId.toString(), edge.getId().toString());
             throw handleException(e);
         }
     }

@@ -24,12 +24,14 @@ import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.security.model.SecurityUser;
+
+import java.nio.ByteBuffer;
 
 @Service
 @TbCoreComponent
@@ -65,15 +67,30 @@ public class DefaultTbOtaPackageService extends AbstractTbEntityService implemen
                     ActionType.DELETED, user, e, otaPackageInfo.getId().toString());
             throw handleException(e);
         }
-
-
     }
 
     @Override
-    public OtaPackageInfo saveOtaPackageData(EntityId otaPackageId, OtaPackage otaPackage, SecurityUser user, Exception e) throws ThingsboardException {
-        TenantId tenantId = otaPackage.getTenantId();
+    public OtaPackageInfo saveOtaPackageData(OtaPackageInfo otaPackageInfo, String checksum, ChecksumAlgorithm checksumAlgorithm,
+                                             byte[] data, String filename, String contentType, SecurityUser user, Exception e) throws ThingsboardException {
+        TenantId tenantId = otaPackageInfo.getTenantId();
+        OtaPackageId otaPackageId = otaPackageInfo.getId();
         if (e == null) {
             try {
+                OtaPackage otaPackage = new OtaPackage(otaPackageId);
+                otaPackage.setCreatedTime(otaPackageInfo.getCreatedTime());
+                otaPackage.setTenantId(tenantId);
+                otaPackage.setDeviceProfileId(otaPackageInfo.getDeviceProfileId());
+                otaPackage.setType(otaPackageInfo.getType());
+                otaPackage.setTitle(otaPackageInfo.getTitle());
+                otaPackage.setVersion(otaPackageInfo.getVersion());
+                otaPackage.setTag(otaPackageInfo.getTag());
+                otaPackage.setAdditionalInfo(otaPackageInfo.getAdditionalInfo());
+                otaPackage.setChecksumAlgorithm(checksumAlgorithm);
+                otaPackage.setChecksum(checksum);
+                otaPackage.setFileName(filename);
+                otaPackage.setContentType(contentType);
+                otaPackage.setData(ByteBuffer.wrap(data));
+                otaPackage.setDataSize((long) data.length);
                 OtaPackageInfo savedOtaPackage = otaPackageService.saveOtaPackage(otaPackage);
                 notificationEntityService.notifyEntity(tenantId, savedOtaPackage.getId(), savedOtaPackage, null,
                         ActionType.UPDATED, user, null);
@@ -89,6 +106,4 @@ public class DefaultTbOtaPackageService extends AbstractTbEntityService implemen
             throw handleException(e);
         }
     }
-
-
 }
