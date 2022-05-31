@@ -48,17 +48,14 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
     private final SystemSecurityService systemSecurityService;
 
     @Override
-    public User save(User tbUser, boolean sendActivationMail,
+    public User save(TenantId tenantId, CustomerId customerId, User tbUser, boolean sendActivationMail,
                      HttpServletRequest request, SecurityUser user) throws ThingsboardException {
         ActionType actionType = tbUser.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
-        TenantId tenantId = tbUser.getTenantId();
-        CustomerId customerId = tbUser.getCustomerId();
         try {
             boolean sendEmail = tbUser.getId() == null && sendActivationMail;
             User savedUser = checkNotNull(userService.saveUser(tbUser));
             if (sendEmail) {
-                SecurityUser authUser = user;
-                UserCredentials userCredentials = userService.findUserCredentialsByUserId(authUser.getTenantId(), savedUser.getId());
+                UserCredentials userCredentials = userService.findUserCredentialsByUserId(tenantId, savedUser.getId());
                 String baseUrl = systemSecurityService.getBaseUrl(tenantId, customerId, request);
                 String activateUrl = String.format(ACTIVATE_URL_PATTERN, baseUrl,
                         userCredentials.getActivateToken());
@@ -66,7 +63,7 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
                 try {
                     mailService.sendActivationEmail(activateUrl, email);
                 } catch (ThingsboardException e) {
-                    userService.deleteUser(authUser.getTenantId(), savedUser.getId());
+                    userService.deleteUser(tenantId, savedUser.getId());
                     throw e;
                 }
             }
@@ -81,20 +78,17 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
     }
 
     @Override
-    public void delete(User tbUser, SecurityUser user) throws ThingsboardException {
-        TenantId tenantId = tbUser.getTenantId();
+    public void delete(TenantId tenantId, CustomerId customerId, User tbUser, SecurityUser user) throws ThingsboardException {
         UserId userId = tbUser.getId();
         try {
-
-
             List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, userId);
 
             userService.deleteUser(tenantId, userId);
-            notificationEntityService.notifyDeleteEntity(tenantId, userId, tbUser, tbUser.getCustomerId(),
+            notificationEntityService.notifyDeleteEntity(tenantId, userId, tbUser, customerId,
                     ActionType.DELETED,  relatedEdgeIds, user, userId.toString());
         } catch (Exception e) {
             notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, emptyId(EntityType.USER),
-                    null, user, ActionType.DELETED, false, e);
+                    null, user, ActionType.DELETED, false, e, userId.toString());
             throw handleException(e);
         }
     }

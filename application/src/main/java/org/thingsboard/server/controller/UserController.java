@@ -189,9 +189,7 @@ public class UserController extends BaseController {
             user.setTenantId(getCurrentUser().getTenantId());
         }
         checkEntity(user.getId(), user, Resource.USER);
-        user.setTenantId(getTenantId());
-        user.setCustomerId(getCurrentUser().getCustomerId());
-        return tbUserService.save(user, sendActivationMail, request, getCurrentUser());
+        return tbUserService.save(getTenantId(), getCurrentUser().getCustomerId(), user, sendActivationMail, request, getCurrentUser());
      }
 
     @ApiOperation(value = "Send or re-send the activation email",
@@ -267,7 +265,7 @@ public class UserController extends BaseController {
         if (user.getAuthority() == Authority.SYS_ADMIN && getCurrentUser().getId().equals(userId)) {
             throw new ThingsboardException("Sysadmin is not allowed to delete himself", ThingsboardErrorCode.PERMISSION_DENIED);
         }
-        tbUserService.delete(user, getCurrentUser());
+        tbUserService.delete(getTenantId(), getCurrentUser().getCustomerId(), user, getCurrentUser());
     }
 
     @ApiOperation(value = "Get Users (getUsers)",
