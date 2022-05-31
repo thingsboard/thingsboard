@@ -24,10 +24,11 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.service.entitiy.SimpleTbEntityService;
 
 import java.util.List;
 
-public interface TbResourceService {
+public interface TbResourceService extends SimpleTbEntityService<TbResource> {
 
     TbResource saveResource(TbResource resource) throws ThingsboardException;
 
