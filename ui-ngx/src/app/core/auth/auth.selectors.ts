@@ -55,9 +55,9 @@ export const selectUserTokenAccessEnabled = createSelector(
   (state: AuthState) => state.userTokenAccessEnabled
 );
 
-export const selectHasVersionControl = createSelector(
+export const selectHasRepository = createSelector(
   selectAuthState,
-  (state: AuthState) => state.hasVersionControl
+  (state: AuthState) => state.hasRepository
 );
 
 export function getCurrentAuthState(store: Store<AppState>): AuthState {

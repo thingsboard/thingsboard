@@ -57,7 +57,8 @@ export class EntityVersionRestoreComponent extends PageComponent implements OnIn
 
   ngOnInit(): void {
     this.restoreFormGroup = this.fb.group({
-      loadRelations: [false, []]
+      loadRelations: [false, []],
+      loadAttributes: [false, []]
     });
   }
 
@@ -73,7 +74,8 @@ export class EntityVersionRestoreComponent extends PageComponent implements OnIn
       versionId: this.versionId,
       externalEntityId: this.externalEntityId,
       config: {
-        loadRelations: this.restoreFormGroup.get('loadRelations').value
+        loadRelations: this.restoreFormGroup.get('loadRelations').value,
+        loadAttributes: this.restoreFormGroup.get('loadAttributes').value
       },
       type: VersionLoadRequestType.SINGLE_ENTITY
     };

@@ -17,7 +17,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-utils';
-import { combineLatest, Observable, of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import {
   BranchInfo, EntityDataDiff,
   EntityVersion,
@@ -29,10 +29,10 @@ import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType } from '@shared/models/entity-type.models';
-import { createSelector, select, Store } from '@ngrx/store';
+import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { selectHasVersionControl, selectIsAuthenticated, selectIsUserLoaded } from '@core/auth/auth.selectors';
-import { catchError, combineAll, tap } from 'rxjs/operators';
+import { selectIsUserLoaded } from '@core/auth/auth.selectors';
+import { catchError, tap } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'

@@ -191,12 +191,12 @@ public class AdminController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Get version control settings (getVersionControlSettings)",
-            notes = "Get the version control settings object. " + TENANT_AUTHORITY_PARAGRAPH)
+    @ApiOperation(value = "Get repository settings (getRepositorySettings)",
+            notes = "Get the repository settings object. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @GetMapping("/vcSettings")
+    @GetMapping("/repositorySettings")
     @ResponseBody
-    public RepositorySettings getVersionControlSettings() throws ThingsboardException {
+    public RepositorySettings getRepositorySettings() throws ThingsboardException {
         try {
             accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
             RepositorySettings versionControlSettings = checkNotNull(versionControlService.getVersionControlSettings(getTenantId()));
@@ -209,12 +209,12 @@ public class AdminController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Check version control settings exists (versionControlSettingsExists)",
-            notes = "Check whether the version control settings exists. " + TENANT_AUTHORITY_PARAGRAPH)
+    @ApiOperation(value = "Check repository settings exists (repositorySettingsExists)",
+            notes = "Check whether the repository settings exists. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @GetMapping("/vcSettings/exists")
+    @GetMapping("/repositorySettings/exists")
     @ResponseBody
-    public Boolean versionControlSettingsExists() throws ThingsboardException {
+    public Boolean repositorySettingsExists() throws ThingsboardException {
         try {
             accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
             return versionControlService.getVersionControlSettings(getTenantId()) != null;
@@ -223,11 +223,11 @@ public class AdminController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Creates or Updates the version control settings (saveVersionControlSettings)",
-            notes = "Creates or Updates the version control settings object. " + TENANT_AUTHORITY_PARAGRAPH)
+    @ApiOperation(value = "Creates or Updates the repository settings (saveRepositorySettings)",
+            notes = "Creates or Updates the repository settings object. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @PostMapping("/vcSettings")
-    public DeferredResult<RepositorySettings> saveVersionControlSettings(@RequestBody RepositorySettings settings) throws ThingsboardException {
+    @PostMapping("/repositorySettings")
+    public DeferredResult<RepositorySettings> saveRepositorySettings(@RequestBody RepositorySettings settings) throws ThingsboardException {
         accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.WRITE);
         ListenableFuture<RepositorySettings> future = versionControlService.saveVersionControlSettings(getTenantId(), settings);
         return wrapFuture(Futures.transform(future, savedSettings -> {
@@ -238,16 +238,33 @@ public class AdminController extends BaseController {
         }, MoreExecutors.directExecutor()));
     }
 
-    @ApiOperation(value = "Delete version control settings (deleteVersionControlSettings)",
-            notes = "Deletes the version control settings."
+    @ApiOperation(value = "Delete repository settings (deleteRepositorySettings)",
+            notes = "Deletes the repository settings."
                     + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/vcSettings", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/repositorySettings", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
-    public DeferredResult<Void> deleteVersionControlSettings() throws ThingsboardException {
+    public DeferredResult<Void> deleteRepositorySettings() throws ThingsboardException {
         try {
             accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.DELETE);
             return wrapFuture(versionControlService.deleteVersionControlSettings(getTenantId()));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+
+    @ApiOperation(value = "Check repository access (checkRepositoryAccess)",
+            notes = "Attempts to check repository access. " + TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/repositorySettings/checkAccess", method = RequestMethod.POST)
+    public DeferredResult<Void> checkRepositoryAccess(
+            @ApiParam(value = "A JSON value representing the Repository Settings.")
+            @RequestBody RepositorySettings settings) throws ThingsboardException {
+        try {
+            accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
+            settings = checkNotNull(settings);
+            return wrapFuture(versionControlService.checkVersionControlAccess(getTenantId(), settings));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -267,8 +284,8 @@ public class AdminController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Check version control settings exists (versionControlSettingsExists)",
-            notes = "Check whether the version control settings exists. " + TENANT_AUTHORITY_PARAGRAPH)
+    @ApiOperation(value = "Check auto commit settings exists (autoCommitSettingsExists)",
+            notes = "Check whether the auto commit settings exists. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping("/vc/autoCommitSettings/exists")
     @ResponseBody
@@ -281,8 +298,8 @@ public class AdminController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Creates or Updates the version control settings (saveVersionControlSettings)",
-            notes = "Creates or Updates the version control settings object. " + TENANT_AUTHORITY_PARAGRAPH)
+    @ApiOperation(value = "Creates or Updates the auto commit settings (saveAutoCommitSettings)",
+            notes = "Creates or Updates the auto commit settings object. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping("/vc/autoCommitSettings")
     public AutoCommitSettings saveAutoCommitSettings(@RequestBody AutoCommitSettings settings) throws ThingsboardException {
@@ -290,8 +307,8 @@ public class AdminController extends BaseController {
         return autoCommitSettingsService.save(getTenantId(), settings);
     }
 
-    @ApiOperation(value = "Delete version control settings (deleteVersionControlSettings)",
-            notes = "Deletes the version control settings."
+    @ApiOperation(value = "Delete auto commit settings (deleteAutoCommitSettings)",
+            notes = "Deletes the auto commit settings."
                     + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/vc/autoCommitSettings", method = RequestMethod.DELETE)
@@ -300,22 +317,6 @@ public class AdminController extends BaseController {
         try {
             accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.DELETE);
             autoCommitSettingsService.delete(getTenantId());
-        } catch (Exception e) {
-            throw handleException(e);
-        }
-    }
-
-    @ApiOperation(value = "Check version control access (checkVersionControlAccess)",
-            notes = "Attempts to check version control access. " + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/vcSettings/checkAccess", method = RequestMethod.POST)
-    public DeferredResult<Void> checkVersionControlAccess(
-            @ApiParam(value = "A JSON value representing the Entities Version Control Settings.")
-            @RequestBody RepositorySettings settings) throws ThingsboardException {
-        try {
-            accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
-            settings = checkNotNull(settings);
-            return wrapFuture(versionControlService.checkVersionControlAccess(getTenantId(), settings));
         } catch (Exception e) {
             throw handleException(e);
         }

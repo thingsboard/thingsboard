@@ -53,7 +53,7 @@
                     [allowedEntityTypes]="allowedEntityTypes(entityTypeFormGroup)">
                   </tb-entity-type-select>
                   <div fxFlex fxLayout="row" fxLayoutGap="16px" fxLayoutAlign="start center" formGroupName="config">
-                    <mat-form-field class="mat-block">
+                    <mat-form-field fxFlex class="mat-block">
                       <mat-label translate>version-control.sync-strategy</mat-label>
                       <mat-select formControlName="syncStrategy">
                         <mat-option [value]="'default'">
@@ -64,9 +64,14 @@
                         </mat-option>
                       </mat-select>
                     </mat-form-field>
-                    <mat-checkbox formControlName="saveRelations">
-                      {{ 'version-control.export-entity-relations' | translate }}
-                    </mat-checkbox>
+                    <div fxFlex fxLayout="column" fxLayoutGap="8px">
+                      <mat-checkbox formControlName="saveRelations">
+                        {{ 'version-control.export-entity-relations' | translate }}
+                      </mat-checkbox>
+                      <mat-checkbox formControlName="saveAttributes">
+                        {{ 'version-control.export-entity-attributes' | translate }}
+                      </mat-checkbox>
+                    </div>
                   </div>
                 </div>
                 <div fxLayout="row" fxLayoutGap="16px" fxLayoutAlign="start center"

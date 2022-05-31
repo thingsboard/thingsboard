@@ -17,9 +17,9 @@
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { selectHasVersionControl } from '@core/auth/auth.selectors';
+import { selectHasRepository } from '@core/auth/auth.selectors';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
-import { VersionControlSettingsComponent } from '@home/components/vc/version-control-settings.component';
+import { RepositorySettingsComponent } from '@home/components/vc/repository-settings.component';
 import { FormGroup } from '@angular/forms';
 import { EntityId } from '@shared/models/id/entity-id';
 
@@ -30,7 +30,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 })
 export class VersionControlComponent implements OnInit, HasConfirmForm {
 
-  @ViewChild('versionControlSettingsComponent', {static: false}) versionControlSettingsComponent: VersionControlSettingsComponent;
+  @ViewChild('repositorySettingsComponent', {static: false}) repositorySettingsComponent: RepositorySettingsComponent;
 
   @Input()
   detailsMode = false;
@@ -50,7 +50,7 @@ export class VersionControlComponent implements OnInit, HasConfirmForm {
   @Output()
   versionRestored = new EventEmitter<void>();
 
-  hasVersionControl$ = this.store.pipe(select(selectHasVersionControl));
+  hasRepository$ = this.store.pipe(select(selectHasRepository));
 
   constructor(private store: Store<AppState>) {
 
@@ -61,7 +61,7 @@ export class VersionControlComponent implements OnInit, HasConfirmForm {
   }
 
   confirmForm(): FormGroup {
-    return this.versionControlSettingsComponent?.versionControlSettingsForm;
+    return this.repositorySettingsComponent?.repositorySettingsForm;
   }
 
 }

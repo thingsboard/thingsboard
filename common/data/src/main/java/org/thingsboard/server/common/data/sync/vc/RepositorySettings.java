@@ -17,12 +17,8 @@ package org.thingsboard.server.common.data.sync.vc;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.sync.vc.request.create.AutoVersionCreateConfig;
 
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true) // temporary to make sure no need to wipe db during development.
@@ -30,7 +26,7 @@ public class RepositorySettings implements Serializable {
     private static final long serialVersionUID = -3211552851889198721L;
 
     private String repositoryUri;
-    private VersionControlAuthMethod authMethod;
+    private RepositoryAuthMethod authMethod;
     private String username;
     private String password;
     private String privateKeyFileName;

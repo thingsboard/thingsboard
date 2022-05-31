@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.common.data.sync.vc;
 
-public enum VersionControlAuthMethod {
+public enum RepositoryAuthMethod {
     USERNAME_PASSWORD,
     PRIVATE_KEY
 }

@@ -16,24 +16,24 @@
 
 -->
 <div>
-  <mat-card class="vc-settings" [ngClass]="{'settings-card': !detailsMode}">
+  <mat-card class="repository-settings" [ngClass]="{'settings-card': !detailsMode}">
     <mat-card-title>
       <div fxLayout="row">
-        <span class="mat-headline" translate>admin.git-repository-settings</span>
+        <span class="mat-headline" translate>admin.repository-settings</span>
         <span fxFlex></span>
-        <div tb-help="versionControlSettings"></div>
+        <div tb-help="repositorySettings"></div>
       </div>
     </mat-card-title>
     <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
     </mat-progress-bar>
     <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
     <mat-card-content style="padding-top: 16px;">
-      <form [formGroup]="versionControlSettingsForm" #formDirective="ngForm" (ngSubmit)="save()">
+      <form [formGroup]="repositorySettingsForm" #formDirective="ngForm" (ngSubmit)="save()">
         <fieldset [disabled]="isLoading$ | async">
           <mat-form-field class="mat-block">
             <mat-label translate>admin.repository-url</mat-label>
             <input matInput required formControlName="repositoryUri">
-            <mat-error translate *ngIf="versionControlSettingsForm.get('repositoryUri').hasError('required')">
+            <mat-error translate *ngIf="repositorySettingsForm.get('repositoryUri').hasError('required')">
               admin.repository-url-required
             </mat-error>
           </mat-form-field>
@@ -46,12 +46,12 @@
             <mat-form-field fxFlex class="mat-block">
               <mat-label translate>admin.auth-method</mat-label>
               <mat-select required formControlName="authMethod">
-                <mat-option *ngFor="let method of versionControlAuthMethods" [value]="method">
-                  {{versionControlAuthMethodTranslations.get(method) | translate}}
+                <mat-option *ngFor="let method of repositoryAuthMethods" [value]="method">
+                  {{repositoryAuthMethodTranslations.get(method) | translate}}
                 </mat-option>
               </mat-select>
             </mat-form-field>
-            <section [fxShow]="versionControlSettingsForm.get('authMethod').value === versionControlAuthMethod.USERNAME_PASSWORD" fxLayout="column">
+            <section [fxShow]="repositorySettingsForm.get('authMethod').value === repositoryAuthMethod.USERNAME_PASSWORD" fxLayout="column">
               <mat-form-field fxFlex class="mat-block">
                 <mat-label translate>common.username</mat-label>
                 <input matInput formControlName="username" placeholder="{{ 'common.enter-username' | translate }}"
@@ -68,14 +68,14 @@
                 <tb-toggle-password matSuffix></tb-toggle-password>
               </mat-form-field>
             </section>
-            <section [fxShow]="versionControlSettingsForm.get('authMethod').value === versionControlAuthMethod.PRIVATE_KEY" fxLayout="column">
+            <section [fxShow]="repositorySettingsForm.get('authMethod').value === repositoryAuthMethod.PRIVATE_KEY" fxLayout="column">
               <tb-file-input style="margin-bottom: 16px;"
-                             [existingFileName]="versionControlSettingsForm.get('privateKeyFileName').value"
+                             [existingFileName]="repositorySettingsForm.get('privateKeyFileName').value"
                              required
                              formControlName="privateKey"
                              dropLabel="{{ 'admin.drop-private-key-file-or' | translate }}"
                              [label]="'admin.private-key' | translate"
-                             (fileNameChanged)="versionControlSettingsForm.get('privateKeyFileName').patchValue($event)">
+                             (fileNameChanged)="repositorySettingsForm.get('privateKeyFileName').patchValue($event)">
               </tb-file-input>
               <mat-checkbox *ngIf="showChangePrivateKeyPassword" (change)="changePrivateKeyPasswordChanged()"
                             [(ngModel)]="changePrivateKeyPassword" [ngModelOptions]="{ standalone: true }" style="padding-bottom: 16px;">
@@ -96,10 +96,10 @@
             </button>
             <span fxFlex></span>
             <button mat-raised-button type="button"
-                    [disabled]="(isLoading$ | async) || versionControlSettingsForm.invalid" (click)="checkAccess()">
+                    [disabled]="(isLoading$ | async) || repositorySettingsForm.invalid" (click)="checkAccess()">
               {{'admin.check-access' | translate}}
             </button>
-            <button mat-raised-button color="primary" [disabled]="(isLoading$ | async) || versionControlSettingsForm.invalid || !versionControlSettingsForm.dirty"
+            <button mat-raised-button color="primary" [disabled]="(isLoading$ | async) || repositorySettingsForm.invalid || !repositorySettingsForm.dirty"
                     type="submit">{{'action.save' | translate}}
             </button>
           </div>

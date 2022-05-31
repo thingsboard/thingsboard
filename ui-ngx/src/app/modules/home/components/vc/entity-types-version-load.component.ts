@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, forwardRef, Input, OnInit, Renderer2, ViewContainerRef } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -28,11 +28,15 @@ import {
   Validators
 } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
-import { EntityTypeVersionLoadConfig, exportableEntityTypes } from '@shared/models/vc.models';
+import { EntityTypeVersionLoadConfig, exportableEntityTypes, VersionCreationResult } from '@shared/models/vc.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
+import { MatCheckbox } from '@angular/material/checkbox/checkbox';
+import { TbPopoverService } from '@shared/components/popover.service';
+import { EntityVersionCreateComponent } from '@home/components/vc/entity-version-create.component';
+import { RemoveOtherEntitiesConfirmComponent } from '@home/components/vc/remove-other-entities-confirm.component';
 
 @Component({
   selector: 'tb-entity-types-version-load',
@@ -64,6 +68,9 @@ export class EntityTypesVersionLoadComponent extends PageComponent implements On
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
+              private popoverService: TbPopoverService,
+              private renderer: Renderer2,
+              private viewContainerRef: ViewContainerRef,
               private fb: FormBuilder) {
     super(store);
   }
@@ -124,7 +131,9 @@ export class EntityTypesVersionLoadComponent extends PageComponent implements On
         entityType: [entityType, [Validators.required]],
         config: this.fb.group({
           loadRelations: [config.loadRelations, []],
-          removeOtherEntities: [config.removeOtherEntities, []]
+          loadAttributes: [config.loadAttributes, []],
+          removeOtherEntities: [config.removeOtherEntities, []],
+          findExistingEntityByName: [config.findExistingEntityByName, []]
         })
       }
     );
@@ -156,7 +165,9 @@ export class EntityTypesVersionLoadComponent extends PageComponent implements On
     const entityTypesArray = this.entityTypesVersionLoadFormGroup.get('entityTypes') as FormArray;
     const config: EntityTypeVersionLoadConfig = {
       loadRelations: false,
-      removeOtherEntities: false
+      loadAttributes: false,
+      removeOtherEntities: false,
+      findExistingEntityByName: false
     };
     const allowed = this.allowedEntityTypes();
     let entityType: EntityType = null;
@@ -192,6 +203,29 @@ export class EntityTypesVersionLoadComponent extends PageComponent implements On
     const usedEntityTypes = value.map(val => val.entityType).filter(val => val);
     res = res.filter(entityType => !usedEntityTypes.includes(entityType) || entityType === currentEntityType);
     return res;
+  }
+
+  onRemoveOtherEntities(removeOtherEntitiesCheckbox: MatCheckbox, entityTypeControl: AbstractControl, $event: Event) {
+    const removeOtherEntities: boolean = entityTypeControl.get('config.removeOtherEntities').value;
+    if (!removeOtherEntities) {
+      $event.preventDefault();
+      $event.stopPropagation();
+      const trigger = $('.mat-checkbox-frame', removeOtherEntitiesCheckbox._elementRef.nativeElement)[0];
+      if (this.popoverService.hasPopover(trigger)) {
+        this.popoverService.hidePopover(trigger);
+      } else {
+        const removeOtherEntitiesConfirmPopover = this.popoverService.displayPopover(trigger, this.renderer,
+          this.viewContainerRef, RemoveOtherEntitiesConfirmComponent, 'bottom', true, null,
+          {
+            onClose: (result: boolean | null) => {
+              removeOtherEntitiesConfirmPopover.hide();
+              if (result) {
+                entityTypeControl.get('config').get('removeOtherEntities').patchValue(true, {emitEvent: true});
+              }
+            }
+          }, {}, {}, {}, false);
+      }
+    }
   }
 
   private updateModel() {

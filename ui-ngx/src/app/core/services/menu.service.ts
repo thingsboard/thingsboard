@@ -388,9 +388,9 @@ export class MenuService {
           },
           {
             id: guid(),
-            name: 'admin.git-settings',
+            name: 'admin.repository-settings',
             type: 'link',
-            path: '/settings/vc',
+            path: '/settings/repository',
             icon: 'manage_history'
           }
         ]
@@ -538,9 +538,9 @@ export class MenuService {
             path: '/settings/resources-library'
           },
           {
-            name: 'admin.git-settings',
+            name: 'admin.repository-settings',
             icon: 'manage_history',
-            path: '/settings/vc',
+            path: '/settings/repository',
           }
         ]
       }
