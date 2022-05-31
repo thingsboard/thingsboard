@@ -59,6 +59,7 @@ import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.edge.EdgeNotificationService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
@@ -141,6 +142,8 @@ public abstract class AbstractTbEntityService {
     protected OtaPackageService otaPackageService;
     @Autowired
     protected InstallScripts installScripts;
+    @Autowired
+    protected UserService userService;
 
     protected ListenableFuture<Void> removeAlarmsByEntityId(TenantId tenantId, EntityId entityId) {
         ListenableFuture<PageData<AlarmInfo>> alarmsFuture =
