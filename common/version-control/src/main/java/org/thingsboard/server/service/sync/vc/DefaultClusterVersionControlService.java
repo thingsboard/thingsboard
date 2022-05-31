@@ -457,14 +457,18 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
     }
 
     private void reply(VersionControlRequestCtx ctx, VersionCreationResult result) {
-        reply(ctx, Optional.empty(), builder -> builder.setCommitResponse(CommitResponseMsg.newBuilder()
-                .setTs(result.getVersion().getTimestamp())
-                .setCommitId(result.getVersion().getId())
-                .setName(result.getVersion().getName())
-                .setAuthor(result.getVersion().getAuthor())
-                .setAdded(result.getAdded())
+        var responseBuilder = CommitResponseMsg.newBuilder().setAdded(result.getAdded())
                 .setModified(result.getModified())
-                .setRemoved(result.getRemoved())));
+                .setRemoved(result.getRemoved());
+
+        if (result.getVersion() != null) {
+            responseBuilder.setTs(result.getVersion().getTimestamp())
+                    .setCommitId(result.getVersion().getId())
+                    .setName(result.getVersion().getName())
+                    .setAuthor(result.getVersion().getAuthor());
+        }
+
+        reply(ctx, Optional.empty(), builder -> builder.setCommitResponse(responseBuilder));
     }
 
     private void reply(VersionControlRequestCtx ctx, Optional<Exception> e) {

@@ -21,7 +21,6 @@ import lombok.Data;
 import java.io.Serializable;
 
 @Data
-@JsonIgnoreProperties(ignoreUnknown = true) // temporary to make sure no need to wipe db during development.
 public class RepositorySettings implements Serializable {
     private static final long serialVersionUID = -3211552851889198721L;
 

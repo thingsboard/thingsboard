@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.sync.vc.EntityDataDiff;
+import org.thingsboard.server.common.data.sync.vc.EntityDataInfo;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
@@ -62,4 +63,6 @@ public interface EntitiesVersionControlService {
     ListenableFuture<Void> checkVersionControlAccess(TenantId tenantId, RepositorySettings settings) throws Exception;
 
     ListenableFuture<VersionCreationResult> autoCommit(SecurityUser user, EntityId entityId) throws Exception;
+
+    ListenableFuture<EntityDataInfo> getEntityDataInfo(SecurityUser user, EntityId entityId, String versionId);
 }

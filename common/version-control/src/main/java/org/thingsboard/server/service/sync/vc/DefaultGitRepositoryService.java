@@ -117,10 +117,11 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
             result.setModified(status.getModified().size());
             result.setRemoved(status.getRemoved().size());
 
-            GitRepository.Commit gitCommit = repository.commit(commit.getVersionName(), commit.getAuthorName(), commit.getAuthorEmail());
-            repository.push(commit.getWorkingBranch(), commit.getBranch());
-
-            result.setVersion(toVersion(gitCommit));
+            if (result.getAdded() > 0 || result.getModified() > 0 || result.getRemoved() > 0) {
+                GitRepository.Commit gitCommit = repository.commit(commit.getVersionName(), commit.getAuthorName(), commit.getAuthorEmail());
+                repository.push(commit.getWorkingBranch(), commit.getBranch());
+                result.setVersion(toVersion(gitCommit));
+            }
             return result;
         } catch (GitAPIException gitAPIException) {
             //TODO: analyze and return meaningful exceptions that we can show to the client;

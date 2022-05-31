@@ -44,6 +44,7 @@ import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
 import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
 import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
+import org.thingsboard.server.common.data.sync.vc.EntityDataInfo;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.EntityDataDiff;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
@@ -328,17 +329,25 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         EntityId externalId = ((ExportableEntity<EntityId>) entity).getExternalId();
         if (externalId == null) externalId = entityId;
 
-        EntityExportData<?> currentVersion = exportImportService.exportEntity(user, entityId, EntityExportSettings.builder()
-                .exportRelations(true)
-                .exportAttributes(true)
-                .build());
         return transformAsync(gitServiceQueue.getEntity(user.getTenantId(), versionId, externalId),
-                otherVersion -> transform(gitServiceQueue.getContentsDiff(user.getTenantId(),
-                        JacksonUtil.toPrettyString(currentVersion),
-                        JacksonUtil.toPrettyString(otherVersion)), rawDiff -> {
-                    return new EntityDataDiff(currentVersion, otherVersion, rawDiff);
-                }, MoreExecutors.directExecutor()), MoreExecutors.directExecutor());
+                otherVersion -> {
+                    EntityExportData<?> currentVersion = exportImportService.exportEntity(user, entityId, EntityExportSettings.builder()
+                            .exportRelations(otherVersion.getRelations() != null)
+                            .exportAttributes(otherVersion.getAttributes() != null)
+                            .build());
+                    return transform(gitServiceQueue.getContentsDiff(user.getTenantId(),
+                            JacksonUtil.toPrettyString(currentVersion.sort()),
+                            JacksonUtil.toPrettyString(otherVersion.sort())),
+                            rawDiff -> new EntityDataDiff(currentVersion, otherVersion, rawDiff), MoreExecutors.directExecutor());
+                }, MoreExecutors.directExecutor());
     }
+
+    @Override
+    public ListenableFuture<EntityDataInfo> getEntityDataInfo(SecurityUser user, EntityId entityId, String versionId) {
+        return Futures.transform(gitServiceQueue.getEntity(user.getTenantId(), versionId, entityId),
+                entity -> new EntityDataInfo(entity.getRelations() != null, entity.getAttributes() != null), MoreExecutors.directExecutor());
+    }
+
 
     @Override
     public ListenableFuture<List<String>> listBranches(TenantId tenantId) throws Exception {

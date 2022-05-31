@@ -109,7 +109,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
         SettableFuture<Void> future = SettableFuture.create();
 
         String path = getRelativePath(entityData.getEntityType(), entityData.getEntity().getId());
-        String entityDataJson = JacksonUtil.toPrettyString(entityData);
+        String entityDataJson = JacksonUtil.toPrettyString(entityData.sort());
 
         registerAndSend(commit, builder -> builder.setCommitRequest(
                 buildCommitRequest(commit).setAddMsg(
@@ -130,7 +130,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
                 buildCommitRequest(commit).setDeleteMsg(
                         TransportProtos.DeleteMsg.newBuilder().setRelativePath(path).build()
                 ).build()
-        ).build(), wrap(commit.getFuture(), null));
+        ).build(), wrap(future, null));
 
         return future;
     }
@@ -152,7 +152,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
         return listVersions(tenantId,
                 applyPageLinkParameters(
                         ListVersionsRequestMsg.newBuilder()
-                                        .setBranchName(branch),
+                                .setBranchName(branch),
                         pageLink
                 ).build());
     }
@@ -162,8 +162,8 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
         return listVersions(tenantId,
                 applyPageLinkParameters(
                         ListVersionsRequestMsg.newBuilder()
-                                        .setBranchName(branch)
-                                        .setEntityType(entityType.name()),
+                                .setBranchName(branch)
+                                .setEntityType(entityType.name()),
                         pageLink
                 ).build());
     }
@@ -173,10 +173,10 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
         return listVersions(tenantId,
                 applyPageLinkParameters(
                         ListVersionsRequestMsg.newBuilder()
-                                        .setBranchName(branch)
-                                        .setEntityType(entityId.getEntityType().name())
-                                        .setEntityIdMSB(entityId.getId().getMostSignificantBits())
-                                        .setEntityIdLSB(entityId.getId().getLeastSignificantBits()),
+                                .setBranchName(branch)
+                                .setEntityType(entityId.getEntityType().name())
+                                .setEntityIdMSB(entityId.getId().getMostSignificantBits())
+                                .setEntityIdLSB(entityId.getId().getLeastSignificantBits()),
                         pageLink
                 ).build());
     }
@@ -354,7 +354,9 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
             } else if (vcResponseMsg.hasCommitResponse()) {
                 var commitResponse = vcResponseMsg.getCommitResponse();
                 var commitResult = new VersionCreationResult();
-                commitResult.setVersion(new EntityVersion(commitResponse.getTs(), commitResponse.getCommitId(), commitResponse.getName(), commitResponse.getAuthor()));
+                if (commitResponse.getTs() > 0) {
+                    commitResult.setVersion(new EntityVersion(commitResponse.getTs(), commitResponse.getCommitId(), commitResponse.getName(), commitResponse.getAuthor()));
+                }
                 commitResult.setAdded(commitResponse.getAdded());
                 commitResult.setRemoved(commitResponse.getRemoved());
                 commitResult.setModified(commitResponse.getModified());
