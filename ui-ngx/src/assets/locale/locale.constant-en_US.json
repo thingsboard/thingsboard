@@ -2944,6 +2944,8 @@
         "transport-device-msg-rate-limit": "Transport device messages rate limit.",
         "transport-device-telemetry-msg-rate-limit": "Transport device telemetry messages rate limit.",
         "transport-device-telemetry-data-points-rate-limit": "Transport device telemetry data points rate limit.",
+        "tenant-entity-export-rate-limit": "Entity version creation rate limit",
+        "tenant-entity-import-rate-limit": "Entity version load rate limit",
         "max-transport-messages": "Maximum number of transport messages (0 - unlimited)",
         "max-transport-messages-required": "Maximum number of transport messages is required.",
         "max-transport-messages-range": "Maximum number of transport messages can't be negative",
