@@ -3144,12 +3144,18 @@
         "sync-strategy-overwrite": "Overwrite",
         "entity-types": "Entity types",
         "sync-strategy": "Sync strategy",
-        "default": "Default",
         "all-entities": "All entities",
         "no-entity-types": "No entity types configured",
         "add-entity-type": "Add entity type",
         "remove-all": "Remove all",
-        "version-create-result": "{ added, plural, 0 {No entities} 1 {1 entity} other {# entities} } added.\n{ modified, plural, 0 {No entities} 1 {1 entity} other {# entities} } modified.\n{ removed, plural, 0 {No entities} 1 {1 entity} other {# entities} } removed."
+        "version-create-result": "{ added, plural, 0 {No entities} 1 {1 entity} other {# entities} } added.\n{ modified, plural, 0 {No entities} 1 {1 entity} other {# entities} } modified.\n{ removed, plural, 0 {No entities} 1 {1 entity} other {# entities} } removed.",
+        "load-entities-relations": "Load entities relations",
+        "remove-other-entities": "Remove other entities",
+        "restore-entities-from-version": "Restore entities from version '{{versionName}}'",
+        "no-entities-restored": "No entities restored",
+        "created": "{{created}} created",
+        "updated": "{{updated}} updated",
+        "deleted": "{{deleted}} deleted"
     },
     "widget": {
         "widget-library": "Widgets Library",

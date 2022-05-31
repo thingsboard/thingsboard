@@ -28,49 +28,39 @@ import {
   Validators
 } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
-import {
-  EntityTypeVersionCreateConfig,
-  exportableEntityTypes,
-  SyncStrategy,
-  syncStrategyTranslationMap
-} from '@shared/models/vc.models';
+import { EntityTypeVersionLoadConfig, exportableEntityTypes } from '@shared/models/vc.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
-import { isDefinedAndNotNull } from '@core/utils';
 
 @Component({
-  selector: 'tb-entity-types-version-create',
-  templateUrl: './entity-types-version-create.component.html',
-  styleUrls: ['./entity-types-version-create.component.scss'],
+  selector: 'tb-entity-types-version-load',
+  templateUrl: './entity-types-version-load.component.html',
+  styleUrls: ['./entity-types-version-load.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => EntityTypesVersionCreateComponent),
+      useExisting: forwardRef(() => EntityTypesVersionLoadComponent),
       multi: true
     },
     {
       provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => EntityTypesVersionCreateComponent),
+      useExisting: forwardRef(() => EntityTypesVersionLoadComponent),
       multi: true
     }
   ]
 })
-export class EntityTypesVersionCreateComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
+export class EntityTypesVersionLoadComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
 
   @Input()
   disabled: boolean;
 
-  private modelValue: {[entityType: string]: EntityTypeVersionCreateConfig};
+  private modelValue: {[entityType: string]: EntityTypeVersionLoadConfig};
 
   private propagateChange = null;
 
-  public entityTypesVersionCreateFormGroup: FormGroup;
-
-  syncStrategies = Object.values(SyncStrategy);
-
-  syncStrategyTranslations = syncStrategyTranslationMap;
+  public entityTypesVersionLoadFormGroup: FormGroup;
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
@@ -79,10 +69,10 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
   }
 
   ngOnInit(): void {
-    this.entityTypesVersionCreateFormGroup = this.fb.group({
+    this.entityTypesVersionLoadFormGroup = this.fb.group({
       entityTypes: [this.fb.array([]), []]
     });
-    this.entityTypesVersionCreateFormGroup.valueChanges.subscribe(() => {
+    this.entityTypesVersionLoadFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
     });
   }
@@ -97,27 +87,27 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (isDisabled) {
-      this.entityTypesVersionCreateFormGroup.disable({emitEvent: false});
+      this.entityTypesVersionLoadFormGroup.disable({emitEvent: false});
     } else {
-      this.entityTypesVersionCreateFormGroup.enable({emitEvent: false});
+      this.entityTypesVersionLoadFormGroup.enable({emitEvent: false});
     }
   }
 
-  writeValue(value: {[entityType: string]: EntityTypeVersionCreateConfig} | undefined): void {
+  writeValue(value: {[entityType: string]: EntityTypeVersionLoadConfig} | undefined): void {
     this.modelValue = value;
-    this.entityTypesVersionCreateFormGroup.setControl('entityTypes',
+    this.entityTypesVersionLoadFormGroup.setControl('entityTypes',
       this.prepareEntityTypesFormArray(value), {emitEvent: false});
   }
 
   public validate(c: FormControl) {
-    return this.entityTypesVersionCreateFormGroup.valid && this.entityTypesFormGroupArray().length ? null : {
+    return this.entityTypesVersionLoadFormGroup.valid && this.entityTypesFormGroupArray().length ? null : {
       entityTypes: {
         valid: false,
       },
     };
   }
 
-  private prepareEntityTypesFormArray(entityTypes: {[entityType: string]: EntityTypeVersionCreateConfig} | undefined): FormArray {
+  private prepareEntityTypesFormArray(entityTypes: {[entityType: string]: EntityTypeVersionLoadConfig} | undefined): FormArray {
     const entityTypesControls: Array<AbstractControl> = [];
     if (entityTypes) {
       for (const entityType of Object.keys(entityTypes)) {
@@ -128,37 +118,21 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
     return this.fb.array(entityTypesControls);
   }
 
-  private createEntityTypeControl(entityType: EntityType, config: EntityTypeVersionCreateConfig): AbstractControl {
+  private createEntityTypeControl(entityType: EntityType, config: EntityTypeVersionLoadConfig): AbstractControl {
     const entityTypeControl = this.fb.group(
       {
         entityType: [entityType, [Validators.required]],
         config: this.fb.group({
-          syncStrategy: [config.syncStrategy === null ? 'default' : config.syncStrategy, []],
-          saveRelations: [config.saveRelations, []],
-          allEntities: [config.allEntities, []],
-          entityIds: [config.entityIds, [Validators.required]]
+          loadRelations: [config.loadRelations, []],
+          removeOtherEntities: [config.removeOtherEntities, []]
         })
       }
     );
-    this.updateEntityTypeValidators(entityTypeControl);
-    entityTypeControl.get('config').get('allEntities').valueChanges.subscribe(() => {
-      this.updateEntityTypeValidators(entityTypeControl);
-    });
     return entityTypeControl;
   }
 
-  private updateEntityTypeValidators(entityTypeControl: AbstractControl): void {
-    const allEntities: boolean = entityTypeControl.get('config').get('allEntities').value;
-    if (allEntities) {
-      entityTypeControl.get('config').get('entityIds').disable({emitEvent: false});
-    } else {
-      entityTypeControl.get('config').get('entityIds').enable({emitEvent: false});
-    }
-    entityTypeControl.get('config').get('entityIds').updateValueAndValidity({emitEvent: false});
-  }
-
   entityTypesFormGroupArray(): FormGroup[] {
-    return (this.entityTypesVersionCreateFormGroup.get('entityTypes') as FormArray).controls as FormGroup[];
+    return (this.entityTypesVersionLoadFormGroup.get('entityTypes') as FormArray).controls as FormGroup[];
   }
 
   entityTypesFormGroupExpanded(entityTypeControl: AbstractControl): boolean {
@@ -170,21 +144,19 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
   }
 
   public removeEntityType(index: number) {
-    (this.entityTypesVersionCreateFormGroup.get('entityTypes') as FormArray).removeAt(index);
+    (this.entityTypesVersionLoadFormGroup.get('entityTypes') as FormArray).removeAt(index);
   }
 
   public addEnabled(): boolean {
-    const entityTypesArray = this.entityTypesVersionCreateFormGroup.get('entityTypes') as FormArray;
+    const entityTypesArray = this.entityTypesVersionLoadFormGroup.get('entityTypes') as FormArray;
     return entityTypesArray.length < exportableEntityTypes.length;
   }
 
   public addEntityType() {
-    const entityTypesArray = this.entityTypesVersionCreateFormGroup.get('entityTypes') as FormArray;
-    const config: EntityTypeVersionCreateConfig = {
-      syncStrategy: null,
-      saveRelations: false,
-      allEntities: true,
-      entityIds: []
+    const entityTypesArray = this.entityTypesVersionLoadFormGroup.get('entityTypes') as FormArray;
+    const config: EntityTypeVersionLoadConfig = {
+      loadRelations: false,
+      removeOtherEntities: false
     };
     const allowed = this.allowedEntityTypes();
     let entityType: EntityType = null;
@@ -194,25 +166,19 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
     const entityTypeControl = this.createEntityTypeControl(entityType, config);
     (entityTypeControl as any).expanded = true;
     entityTypesArray.push(entityTypeControl);
-    this.entityTypesVersionCreateFormGroup.updateValueAndValidity();
+    this.entityTypesVersionLoadFormGroup.updateValueAndValidity();
   }
 
   public removeAll() {
-    const entityTypesArray = this.entityTypesVersionCreateFormGroup.get('entityTypes') as FormArray;
+    const entityTypesArray = this.entityTypesVersionLoadFormGroup.get('entityTypes') as FormArray;
     entityTypesArray.clear();
-    this.entityTypesVersionCreateFormGroup.updateValueAndValidity();
+    this.entityTypesVersionLoadFormGroup.updateValueAndValidity();
   }
 
   entityTypeText(entityTypeControl: AbstractControl): string {
     const entityType: EntityType = entityTypeControl.get('entityType').value;
-    const config: EntityTypeVersionCreateConfig = entityTypeControl.get('config').value;
-    let count = config?.entityIds?.length;
-    if (!isDefinedAndNotNull(count)) {
-      count = 0;
-    }
     if (entityType) {
-      return this.translate.instant((config?.allEntities ? entityTypeTranslations.get(entityType).typePlural
-        : entityTypeTranslations.get(entityType).list), { count });
+      return this.translate.instant(entityTypeTranslations.get(entityType).typePlural);
     } else {
       return 'Undefined';
     }
@@ -221,24 +187,21 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
   allowedEntityTypes(entityTypeControl?: AbstractControl): Array<EntityType> {
     let res = [...exportableEntityTypes];
     const currentEntityType: EntityType = entityTypeControl?.get('entityType')?.value;
-    const value: [{entityType: string, config: EntityTypeVersionCreateConfig}] =
-      this.entityTypesVersionCreateFormGroup.get('entityTypes').value || [];
+    const value: [{entityType: string, config: EntityTypeVersionLoadConfig}] =
+      this.entityTypesVersionLoadFormGroup.get('entityTypes').value || [];
     const usedEntityTypes = value.map(val => val.entityType).filter(val => val);
     res = res.filter(entityType => !usedEntityTypes.includes(entityType) || entityType === currentEntityType);
     return res;
   }
 
   private updateModel() {
-    const value: [{entityType: string, config: EntityTypeVersionCreateConfig}] =
-      this.entityTypesVersionCreateFormGroup.get('entityTypes').value || [];
-    let modelValue: {[entityType: string]: EntityTypeVersionCreateConfig} = null;
+    const value: [{entityType: string, config: EntityTypeVersionLoadConfig}] =
+      this.entityTypesVersionLoadFormGroup.get('entityTypes').value || [];
+    let modelValue: {[entityType: string]: EntityTypeVersionLoadConfig} = null;
     if (value && value.length) {
       modelValue = {};
       value.forEach((val) => {
         modelValue[val.entityType] = val.config;
-        if ((modelValue[val.entityType].syncStrategy as any) === 'default') {
-          modelValue[val.entityType].syncStrategy = null;
-        }
       });
     }
     this.modelValue = modelValue;

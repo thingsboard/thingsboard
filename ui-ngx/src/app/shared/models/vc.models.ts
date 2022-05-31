@@ -34,18 +34,9 @@ export interface VersionCreateConfig {
   saveRelations: boolean;
 }
 
-export interface VersionLoadConfig {
-  loadRelations: boolean;
-}
-
 export enum VersionCreateRequestType {
   SINGLE_ENTITY = 'SINGLE_ENTITY',
   COMPLEX = 'COMPLEX'
-}
-
-export enum VersionLoadRequestType {
-  SINGLE_ENTITY = 'SINGLE_ENTITY',
-  ENTITY_TYPE = 'ENTITY_TYPE'
 }
 
 export interface VersionCreateRequest {
@@ -97,6 +88,15 @@ export function createDefaultEntityTypesVersionCreate(): {[entityType: string]: 
   return res;
 }
 
+export interface VersionLoadConfig {
+  loadRelations: boolean;
+}
+
+export enum VersionLoadRequestType {
+  SINGLE_ENTITY = 'SINGLE_ENTITY',
+  ENTITY_TYPE = 'ENTITY_TYPE'
+}
+
 export interface VersionLoadRequest {
   branch: string;
   versionId: string;
@@ -109,6 +109,25 @@ export interface SingleEntityVersionLoadRequest extends VersionLoadRequest {
   type: VersionLoadRequestType.SINGLE_ENTITY;
 }
 
+export interface EntityTypeVersionLoadConfig extends VersionLoadConfig {
+  removeOtherEntities: boolean;
+}
+
+export interface EntityTypeVersionLoadRequest extends VersionLoadRequest {
+  entityTypes: {[entityType: string]: EntityTypeVersionLoadConfig};
+  type: VersionLoadRequestType.ENTITY_TYPE;
+}
+
+export function createDefaultEntityTypesVersionLoad(): {[entityType: string]: EntityTypeVersionLoadConfig} {
+  const res: {[entityType: string]: EntityTypeVersionLoadConfig} = {};
+  for (const entityType of exportableEntityTypes) {
+    res[entityType] = {
+      loadRelations: false,
+      removeOtherEntities: false
+    };
+  }
+  return res;
+}
 
 export interface BranchInfo {
   name: string;

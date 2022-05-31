@@ -161,6 +161,8 @@ import { EntityVersionRestoreComponent } from '@home/components/vc/entity-versio
 import { EntityVersionDiffComponent } from '@home/components/vc/entity-version-diff.component';
 import { ComplexVersionCreateComponent } from '@home/components/vc/complex-version-create.component';
 import { EntityTypesVersionCreateComponent } from '@home/components/vc/entity-types-version-create.component';
+import { EntityTypesVersionLoadComponent } from '@home/components/vc/entity-types-version-load.component';
+import { ComplexVersionLoadComponent } from '@home/components/vc/complex-version-load.component';
 
 @NgModule({
   declarations:
@@ -292,7 +294,9 @@ import { EntityTypesVersionCreateComponent } from '@home/components/vc/entity-ty
       EntityVersionRestoreComponent,
       EntityVersionDiffComponent,
       ComplexVersionCreateComponent,
-      EntityTypesVersionCreateComponent
+      EntityTypesVersionCreateComponent,
+      EntityTypesVersionLoadComponent,
+      ComplexVersionLoadComponent
     ],
   imports: [
     CommonModule,
@@ -418,7 +422,9 @@ import { EntityTypesVersionCreateComponent } from '@home/components/vc/entity-ty
     EntityVersionRestoreComponent,
     EntityVersionDiffComponent,
     ComplexVersionCreateComponent,
-    EntityTypesVersionCreateComponent
+    EntityTypesVersionCreateComponent,
+    EntityTypesVersionLoadComponent,
+    ComplexVersionLoadComponent
   ],
   providers: [
     WidgetComponentService,

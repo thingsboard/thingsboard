@@ -107,7 +107,8 @@
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="actions" stickyEnd>
-          <mat-header-cell *matHeaderCellDef style="min-width: 80px; max-width: 80px; width: 80px">
+          <mat-header-cell *matHeaderCellDef [ngStyle]="singleEntityMode ? {minWidth: '80px', maxWidth: '80px', width: '80px'} :
+                                                                           {minWidth: '40px', maxWidth: '40px', width: '40px'}">
           </mat-header-cell>
           <mat-cell *matCellDef="let entityVersion">
             <div fxFlex fxLayout="row" fxLayoutAlign="end">
@@ -123,6 +124,13 @@
                       matTooltipPosition="above"
                       #restoreVersionButton
                       (click)="toggleRestoreEntityVersion($event, restoreVersionButton, entityVersion)">
+                <mat-icon>restore</mat-icon>
+              </button>
+              <button *ngIf="!singleEntityMode" mat-icon-button [disabled]="isLoading$ | async"
+                      matTooltip="{{ 'version-control.restore-version' | translate }}"
+                      matTooltipPosition="above"
+                      #restoreEntitiesVersionButton
+                      (click)="toggleRestoreEntitiesVersion($event, restoreEntitiesVersionButton, entityVersion)">
                 <mat-icon>restore</mat-icon>
               </button>
             </div>

@@ -48,6 +48,7 @@ import { MatButton } from '@angular/material/button';
 import { EntityVersionRestoreComponent } from '@home/components/vc/entity-version-restore.component';
 import { EntityVersionDiffComponent } from '@home/components/vc/entity-version-diff.component';
 import { ComplexVersionCreateComponent } from '@home/components/vc/complex-version-create.component';
+import { ComplexVersionLoadComponent } from '@home/components/vc/complex-version-load.component';
 
 @Component({
   selector: 'tb-entity-versions-table',
@@ -286,6 +287,27 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
             if (result && result.length) {
               this.versionRestored.emit();
             }
+          }
+        }, {}, {}, {}, false);
+    }
+  }
+
+  toggleRestoreEntitiesVersion($event: Event, restoreEntitiesVersionButton: MatButton, entityVersion: EntityVersion) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const trigger = restoreEntitiesVersionButton._elementRef.nativeElement;
+    if (this.popoverService.hasPopover(trigger)) {
+      this.popoverService.hidePopover(trigger);
+    } else {
+      const restoreEntitiesVersionPopover = this.popoverService.displayPopover(trigger, this.renderer,
+        this.viewContainerRef, ComplexVersionLoadComponent, 'leftTop', true, null,
+        {
+          branch: this.branch,
+          versionName: entityVersion.name,
+          versionId: entityVersion.id,
+          onClose: (result: Array<VersionLoadResult> | null) => {
+            restoreEntitiesVersionPopover.hide();
           }
         }, {}, {}, {}, false);
     }
