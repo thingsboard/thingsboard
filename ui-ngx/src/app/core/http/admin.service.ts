@@ -101,7 +101,7 @@ export class AdminService {
     return this.http.get<AutoCommitSettings>(`/api/admin/autoCommitSettings`, defaultHttpOptionsFromConfig(config));
   }
 
-  private autoCommitSettingsExists(config?: RequestConfig): Observable<boolean> {
+  public autoCommitSettingsExists(config?: RequestConfig): Observable<boolean> {
     return this.http.get<boolean>('/api/admin/autoCommitSettings/exists', defaultHttpOptionsFromConfig(config));
   }
 

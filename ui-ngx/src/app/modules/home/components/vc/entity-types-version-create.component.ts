@@ -80,7 +80,7 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
 
   ngOnInit(): void {
     this.entityTypesVersionCreateFormGroup = this.fb.group({
-      entityTypes: [this.fb.array([]), []]
+      entityTypes: this.fb.array([], [])
     });
     this.entityTypesVersionCreateFormGroup.valueChanges.subscribe(() => {
       this.updateModel();

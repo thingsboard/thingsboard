@@ -34,6 +34,7 @@ import { entityDetailsPageBreadcrumbLabelFunction } from '@home/pages/home-pages
 import { BreadCrumbConfig } from '@shared/components/breadcrumb';
 import { QueuesTableConfigResolver } from '@home/pages/admin/queue/queues-table-config.resolver';
 import { RepositoryAdminSettingsComponent } from '@home/pages/admin/repository-admin-settings.component';
+import { AutoCommitAdminSettingsComponent } from '@home/pages/admin/auto-commit-admin-settings.component';
 
 @Injectable()
 export class OAuth2LoginProcessingUrlResolver implements Resolve<string> {
@@ -234,6 +235,19 @@ const routes: Routes = [
           breadcrumb: {
             label: 'admin.repository-settings',
             icon: 'manage_history'
+          }
+        }
+      },
+      {
+        path: 'auto-commit',
+        component: AutoCommitAdminSettingsComponent,
+        canDeactivate: [ConfirmOnExitGuard],
+        data: {
+          auth: [Authority.TENANT_ADMIN],
+          title: 'admin.auto-commit-settings',
+          breadcrumb: {
+            label: 'admin.auto-commit-settings',
+            icon: 'settings_backup_restore'
           }
         }
       }

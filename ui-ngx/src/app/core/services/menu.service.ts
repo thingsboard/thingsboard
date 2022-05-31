@@ -369,7 +369,7 @@ export class MenuService {
         name: 'admin.system-settings',
         type: 'toggle',
         path: '/settings',
-        height: '120px',
+        height: '160px',
         icon: 'settings',
         pages: [
           {
@@ -392,6 +392,13 @@ export class MenuService {
             type: 'link',
             path: '/settings/repository',
             icon: 'manage_history'
+          },
+          {
+            id: guid(),
+            name: 'admin.auto-commit-settings',
+            type: 'link',
+            path: '/settings/auto-commit',
+            icon: 'settings_backup_restore'
           }
         ]
       }
@@ -541,6 +548,11 @@ export class MenuService {
             name: 'admin.repository-settings',
             icon: 'manage_history',
             path: '/settings/repository',
+          },
+          {
+            name: 'admin.auto-commit-settings',
+            icon: 'settings_backup_restore',
+            path: '/settings/auto-commit'
           }
         ]
       }

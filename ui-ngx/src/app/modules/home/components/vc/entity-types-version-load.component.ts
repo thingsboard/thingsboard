@@ -77,7 +77,7 @@ export class EntityTypesVersionLoadComponent extends PageComponent implements On
 
   ngOnInit(): void {
     this.entityTypesVersionLoadFormGroup = this.fb.group({
-      entityTypes: [this.fb.array([]), []]
+      entityTypes: this.fb.array([], [])
     });
     this.entityTypesVersionLoadFormGroup.valueChanges.subscribe(() => {
       this.updateModel();

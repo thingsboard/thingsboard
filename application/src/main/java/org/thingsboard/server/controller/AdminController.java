@@ -273,7 +273,7 @@ public class AdminController extends BaseController {
     @ApiOperation(value = "Get auto commit settings (getAutoCommitSettings)",
             notes = "Get the auto commit settings object. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @GetMapping("/vc/autoCommitSettings")
+    @GetMapping("/autoCommitSettings")
     @ResponseBody
     public AutoCommitSettings getAutoCommitSettings() throws ThingsboardException {
         try {
@@ -287,7 +287,7 @@ public class AdminController extends BaseController {
     @ApiOperation(value = "Check auto commit settings exists (autoCommitSettingsExists)",
             notes = "Check whether the auto commit settings exists. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @GetMapping("/vc/autoCommitSettings/exists")
+    @GetMapping("/autoCommitSettings/exists")
     @ResponseBody
     public Boolean autoCommitSettingsExists() throws ThingsboardException {
         try {
@@ -301,7 +301,7 @@ public class AdminController extends BaseController {
     @ApiOperation(value = "Creates or Updates the auto commit settings (saveAutoCommitSettings)",
             notes = "Creates or Updates the auto commit settings object. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @PostMapping("/vc/autoCommitSettings")
+    @PostMapping("/autoCommitSettings")
     public AutoCommitSettings saveAutoCommitSettings(@RequestBody AutoCommitSettings settings) throws ThingsboardException {
         accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.WRITE);
         return autoCommitSettingsService.save(getTenantId(), settings);
@@ -311,7 +311,7 @@ public class AdminController extends BaseController {
             notes = "Deletes the auto commit settings."
                     + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/vc/autoCommitSettings", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/autoCommitSettings", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteAutoCommitSettings() throws ThingsboardException {
         try {

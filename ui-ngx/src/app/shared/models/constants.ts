@@ -135,7 +135,8 @@ export const HelpLinks = {
     ruleNodePushToCloud: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#push-to-cloud',
     ruleNodePushToEdge: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#push-to-edge',
     queue: helpBaseUrl + '/docs/user-guide/queue',
-    repositorySettings: helpBaseUrl + '/docs/user-guide/ui/repository-settings'
+    repositorySettings: helpBaseUrl + '/docs/user-guide/ui/repository-settings',
+    autoCommitSettings: helpBaseUrl + '/docs/user-guide/ui/auto-commit-settings',
   }
 };
 

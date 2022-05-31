@@ -340,7 +340,12 @@
         "check-access": "Check access",
         "check-repository-access-success": "Repository access successfully verified!",
         "delete-repository-settings-title": "Are you sure you want to delete repository settings?",
-        "delete-repository-settings-text": "Be careful, after the confirmation the repository settings will be removed and version control feature will be unavailable."
+        "delete-repository-settings-text": "Be careful, after the confirmation the repository settings will be removed and version control feature will be unavailable.",
+        "auto-commit-settings": "Auto-commit settings",
+        "auto-commit-entities": "Auto-commit entities",
+        "no-auto-commit-entities-prompt": "No entities configured for auto-commit",
+        "delete-auto-commit-settings-title": "Are you sure you want to delete auto-commit settings?",
+        "delete-auto-commit-settings-text": "Be careful, after the confirmation the auto-commit settings will be removed and auto-commit will be disabled for all entities."
     },
     "alarm": {
         "alarm": "Alarm",
@@ -3145,10 +3150,12 @@
         "default-sync-strategy": "Default sync strategy",
         "sync-strategy-merge": "Merge",
         "sync-strategy-overwrite": "Overwrite",
-        "entity-types": "Entity types",
+        "entities-to-export": "Entities to export",
+        "entities-to-restore": "Entities to restore",
         "sync-strategy": "Sync strategy",
         "all-entities": "All entities",
-        "no-entity-types": "No entity types configured",
+        "no-entities-to-export-prompt": "Please specify entities to export",
+        "no-entities-to-restore-prompt": "Please specify entities to restore",
         "add-entity-type": "Add entity type",
         "remove-all": "Remove all",
         "version-create-result": "{ added, plural, 0 {No entities} 1 {1 entity} other {# entities} } added.\n{ modified, plural, 0 {No entities} 1 {1 entity} other {# entities} } modified.\n{ removed, plural, 0 {No entities} 1 {1 entity} other {# entities} } removed.",
@@ -3161,7 +3168,8 @@
         "created": "{{created}} created",
         "updated": "{{updated}} updated",
         "deleted": "{{deleted}} deleted",
-        "remove-other-entities-confirm-text": "Be careful! This will permanently <b>delete</b> <b>all</b> current entities<br/>not present in the version you want to restore.<br/><br/>Please type <b>remove other entities</b> to confirm."
+        "remove-other-entities-confirm-text": "Be careful! This will permanently <b>delete</b> <b>all</b> current entities<br/>not present in the version you want to restore.<br/><br/>Please type <b>remove other entities</b> to confirm.",
+        "auto-commit-to-branch": "auto-commit to <b>{{ branch }}</b> branch"
     },
     "widget": {
         "widget-library": "Widgets Library",

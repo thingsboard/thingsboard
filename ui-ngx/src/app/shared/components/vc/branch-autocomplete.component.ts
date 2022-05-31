@@ -86,6 +86,9 @@ export class BranchAutocompleteComponent implements ControlValueAccessor, OnInit
   @Input()
   selectionMode = false;
 
+  @Input()
+  emptyPlaceholder: string;
+
   @ViewChild('branchAutocomplete') matAutocomplete: MatAutocomplete;
   @ViewChild('branchInput', { read: MatAutocompleteTrigger, static: true }) autoCompleteTrigger: MatAutocompleteTrigger;
   @ViewChild('branchInput', {static: true}) branchInput: ElementRef;

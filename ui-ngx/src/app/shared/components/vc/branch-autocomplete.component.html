@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="branchFormGroup" class="mat-block" [floatLabel]="selectionMode ? 'always' : 'auto'">
+<mat-form-field [formGroup]="branchFormGroup" class="mat-block" [floatLabel]="(selectionMode || emptyPlaceholder) ? 'always' : 'auto'">
   <mat-label>{{ 'version-control.branch' | translate }}</mat-label>
-  <input matInput type="text" placeholder="{{(loading ? 'common.loading' : 'version-control.select-branch') | translate}}"
+  <input matInput type="text" placeholder="{{emptyPlaceholder || ((loading ? 'common.loading' : 'version-control.select-branch') | translate)}}"
          #branchInput
          formControlName="branch"
          (keydown.enter)="branchInput.blur(); autoCompleteTrigger.closePanel();"

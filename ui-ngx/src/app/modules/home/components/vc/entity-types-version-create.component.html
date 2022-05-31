@@ -17,7 +17,7 @@
 -->
 <section class="entity-types-version-create" [formGroup]="entityTypesVersionCreateFormGroup" fxLayout="column">
   <fieldset class="fields-group">
-    <legend class="group-title" translate>version-control.entity-types</legend>
+    <legend class="group-title" translate>version-control.entities-to-export</legend>
     <div fxLayout="column">
       <div class="tb-control-list">
         <div *ngFor="let entityTypeFormGroup of entityTypesFormGroupArray(); trackBy: trackByEntityType;
@@ -94,7 +94,7 @@
       </div>
       <div *ngIf="!entityTypesFormGroupArray().length">
             <span translate fxLayoutAlign="center center"
-                  class="tb-prompt">version-control.no-entity-types</span>
+                  class="tb-prompt">version-control.no-entities-to-export-prompt</span>
       </div>
       <div style="padding-top: 16px;" fxLayout="row">
         <button mat-raised-button color="primary"

@@ -17,7 +17,7 @@
 -->
 <section class="entity-types-version-load" [formGroup]="entityTypesVersionLoadFormGroup" fxLayout="column">
   <fieldset class="fields-group">
-    <legend class="group-title" translate>version-control.entity-types</legend>
+    <legend class="group-title" translate>version-control.entities-to-restore</legend>
     <div fxLayout="column">
       <div class="tb-control-list">
         <div *ngFor="let entityTypeFormGroup of entityTypesFormGroupArray(); trackBy: trackByEntityType;
@@ -80,7 +80,7 @@
       </div>
       <div *ngIf="!entityTypesFormGroupArray().length">
             <span translate fxLayoutAlign="center center"
-                  class="tb-prompt">version-control.no-entity-types</span>
+                  class="tb-prompt">version-control.no-entities-to-restore-prompt</span>
       </div>
       <div style="padding-top: 16px;" fxLayout="row">
         <button mat-raised-button color="primary"

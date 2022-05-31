@@ -164,6 +164,7 @@ import { EntityTypesVersionCreateComponent } from '@home/components/vc/entity-ty
 import { EntityTypesVersionLoadComponent } from '@home/components/vc/entity-types-version-load.component';
 import { ComplexVersionLoadComponent } from '@home/components/vc/complex-version-load.component';
 import { RemoveOtherEntitiesConfirmComponent } from '@home/components/vc/remove-other-entities-confirm.component';
+import { AutoCommitSettingsComponent } from '@home/components/vc/auto-commit-settings.component';
 
 @NgModule({
   declarations:
@@ -298,7 +299,8 @@ import { RemoveOtherEntitiesConfirmComponent } from '@home/components/vc/remove-
       EntityTypesVersionCreateComponent,
       EntityTypesVersionLoadComponent,
       ComplexVersionLoadComponent,
-      RemoveOtherEntitiesConfirmComponent
+      RemoveOtherEntitiesConfirmComponent,
+      AutoCommitSettingsComponent
     ],
   imports: [
     CommonModule,
@@ -427,7 +429,8 @@ import { RemoveOtherEntitiesConfirmComponent } from '@home/components/vc/remove-
     EntityTypesVersionCreateComponent,
     EntityTypesVersionLoadComponent,
     ComplexVersionLoadComponent,
-    RemoveOtherEntitiesConfirmComponent
+    RemoveOtherEntitiesConfirmComponent,
+    AutoCommitSettingsComponent
   ],
   providers: [
     WidgetComponentService,
