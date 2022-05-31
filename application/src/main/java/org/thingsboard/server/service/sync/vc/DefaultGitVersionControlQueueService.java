@@ -27,6 +27,7 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -66,10 +67,7 @@ import org.thingsboard.server.service.sync.vc.data.PendingGitRequest;
 import org.thingsboard.server.service.sync.vc.data.VersionsDiffGitRequest;
 import org.thingsboard.server.service.sync.vc.data.VoidGitRequest;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -96,12 +94,12 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     }
 
     @Override
-    public ListenableFuture<CommitGitRequest> prepareCommit(TenantId tenantId, VersionCreateRequest request) {
+    public ListenableFuture<CommitGitRequest> prepareCommit(User user, VersionCreateRequest request) {
         SettableFuture<CommitGitRequest> future = SettableFuture.create();
 
-        CommitGitRequest commit = new CommitGitRequest(tenantId, request);
+        CommitGitRequest commit = new CommitGitRequest(user.getTenantId(), request);
         registerAndSend(commit, builder -> builder.setCommitRequest(
-                buildCommitRequest(commit).setPrepareMsg(getCommitPrepareMsg(request)).build()
+                buildCommitRequest(commit).setPrepareMsg(getCommitPrepareMsg(user, request)).build()
         ).build(), wrap(future, commit));
         return future;
     }
@@ -356,7 +354,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
             } else if (vcResponseMsg.hasCommitResponse()) {
                 var commitResponse = vcResponseMsg.getCommitResponse();
                 var commitResult = new VersionCreationResult();
-                commitResult.setVersion(new EntityVersion(commitResponse.getTs(), commitResponse.getCommitId(), commitResponse.getName()));
+                commitResult.setVersion(new EntityVersion(commitResponse.getTs(), commitResponse.getCommitId(), commitResponse.getName(), commitResponse.getAuthor()));
                 commitResult.setAdded(commitResponse.getAdded());
                 commitResult.setRemoved(commitResponse.getRemoved());
                 commitResult.setModified(commitResponse.getModified());
@@ -405,7 +403,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     }
 
     private EntityVersion getEntityVersion(TransportProtos.EntityVersionProto proto) {
-        return new EntityVersion(proto.getTs(), proto.getId(), proto.getName());
+        return new EntityVersion(proto.getTs(), proto.getId(), proto.getName(), proto.getAuthor());
     }
 
     private VersionedEntityInfo getVersionedEntityInfo(TransportProtos.VersionedEntityInfoProto proto) {
@@ -453,8 +451,23 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
         return path;
     }
 
-    private static PrepareMsg getCommitPrepareMsg(VersionCreateRequest request) {
-        return PrepareMsg.newBuilder().setCommitMsg(request.getVersionName()).setBranchName(request.getBranch()).build();
+    private static PrepareMsg getCommitPrepareMsg(User user, VersionCreateRequest request) {
+        return PrepareMsg.newBuilder().setCommitMsg(request.getVersionName())
+                .setBranchName(request.getBranch()).setAuthorName(getAuthorName(user)).setAuthorEmail(user.getEmail()).build();
+    }
+
+    private static String getAuthorName(User user) {
+        List<String> parts = new ArrayList<>();
+        if (StringUtils.isNotBlank(user.getFirstName())) {
+            parts.add(user.getFirstName());
+        }
+        if (StringUtils.isNotBlank(user.getLastName())) {
+            parts.add(user.getLastName());
+        }
+        if (parts.isEmpty()) {
+            parts.add(user.getName());
+        }
+        return String.join(" ", parts);
     }
 
     private ToVersionControlServiceMsg.Builder newRequestProto(PendingGitRequest<?> request, EntitiesVersionControlSettings settings) {

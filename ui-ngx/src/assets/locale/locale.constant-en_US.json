@@ -3119,6 +3119,7 @@
         "create-entity-version": "Create entity version",
         "version-name": "Version name",
         "version-name-required": "Version name is required",
+        "author": "Author",
         "export-entity-relations": "Export entity relations",
         "entity-versions": "Entity versions",
         "versions": "Versions",

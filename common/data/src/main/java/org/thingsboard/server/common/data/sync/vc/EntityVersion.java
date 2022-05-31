@@ -26,4 +26,5 @@ public class EntityVersion {
     private long timestamp;
     private String id;
     private String name;
+    private String author;
 }

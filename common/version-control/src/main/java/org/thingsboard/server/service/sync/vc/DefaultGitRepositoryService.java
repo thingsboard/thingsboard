@@ -117,7 +117,7 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
             result.setModified(status.getModified().size());
             result.setRemoved(status.getRemoved().size());
 
-            GitRepository.Commit gitCommit = repository.commit(commit.getVersionName());
+            GitRepository.Commit gitCommit = repository.commit(commit.getVersionName(), commit.getAuthorName(), commit.getAuthorEmail());
             repository.push(commit.getWorkingBranch(), commit.getBranch());
 
             result.setVersion(toVersion(gitCommit));
@@ -255,7 +255,15 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     }
 
     private EntityVersion toVersion(GitRepository.Commit commit) {
-        return new EntityVersion(commit.getTimestamp(), commit.getId(), commit.getMessage());
+        return new EntityVersion(commit.getTimestamp(), commit.getId(), commit.getMessage(), this.getAuthor(commit));
+    }
+
+    private String getAuthor(GitRepository.Commit commit) {
+        String author = String.format("<%s>", commit.getAuthorEmail());
+        if (StringUtils.isNotBlank(commit.getAuthorName())) {
+            author = String.format("%s %s", commit.getAuthorName(), author);
+        }
+        return author;
     }
 
     public static EntityId fromRelativePath(String path) {

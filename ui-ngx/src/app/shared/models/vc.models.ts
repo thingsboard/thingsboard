@@ -138,6 +138,7 @@ export interface EntityVersion {
   timestamp: number;
   id: string;
   name: string;
+  author: string;
 }
 
 export interface VersionCreationResult {

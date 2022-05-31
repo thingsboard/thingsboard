@@ -101,9 +101,15 @@
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="name">
-          <mat-header-cell *matHeaderCellDef style="width: 100%"> {{ 'version-control.version-name' | translate }} </mat-header-cell>
+          <mat-header-cell *matHeaderCellDef style="width: 50%"> {{ 'version-control.version-name' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let entityVersion">
             {{ entityVersion.name }}
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="author">
+          <mat-header-cell *matHeaderCellDef style="width: 50%"> {{ 'version-control.author' | translate }} </mat-header-cell>
+          <mat-cell *matCellDef="let entityVersion">
+            {{ entityVersion.author }}
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="actions" stickyEnd>

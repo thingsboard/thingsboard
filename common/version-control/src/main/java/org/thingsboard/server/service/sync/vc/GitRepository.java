@@ -255,8 +255,9 @@ public class GitRepository {
         return new Status(status.getAdded(), modified, status.getRemoved());
     }
 
-    public Commit commit(String message) throws GitAPIException {
+    public Commit commit(String message, String authorName, String authorEmail) throws GitAPIException {
         RevCommit revCommit = execute(git.commit()
+                .setAuthor(authorName, authorEmail)
                 .setMessage(message));
         return toCommit(revCommit);
     }
@@ -325,7 +326,8 @@ public class GitRepository {
     }
 
     private Commit toCommit(RevCommit revCommit) {
-        return new Commit(revCommit.getCommitTime() * 1000l, revCommit.getName(), revCommit.getFullMessage(), revCommit.getAuthorIdent().getName());
+        return new Commit(revCommit.getCommitTime() * 1000l, revCommit.getName(),
+                revCommit.getFullMessage(), revCommit.getAuthorIdent().getName(), revCommit.getAuthorIdent().getEmailAddress());
     }
 
     private RevCommit resolveCommit(String id) throws IOException {
@@ -470,6 +472,7 @@ public class GitRepository {
         private final String id;
         private final String message;
         private final String authorName;
+        private final String authorEmail;
     }
 
     @Data
