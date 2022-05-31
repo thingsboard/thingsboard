@@ -332,7 +332,7 @@
             "retry-verification-code-period-pattern": "Minimal period time is 5 sec",
             "retry-verification-code-period-required": "Retry verification code period is required.",
             "total-allowed-time-for-verification": "Total allowed time for verification (sec)",
-            "total-allowed-time-for-verification-pattern": "Total allowed time must be a positive integer.",
+            "total-allowed-time-for-verification-pattern": "Minimal total allowed time is 60 sec",
             "total-allowed-time-for-verification-required": "Total allowed time is required.",
             "use-system-two-factor-auth-settings": "Use system two factor auth settings",
             "verification-code-check-rate-limit": "Verification code check rate limit",

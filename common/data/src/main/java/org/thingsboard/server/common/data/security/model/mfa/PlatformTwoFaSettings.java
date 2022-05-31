@@ -41,7 +41,7 @@ public class PlatformTwoFaSettings {
     private String verificationCodeCheckRateLimit;
     @Min(value = 0, message = "maximum number of verification failure before user lockout must be positive")
     private Integer maxVerificationFailuresBeforeUserLockout;
-    @Min(value = 1, message = "total amount of time allotted for verification must be greater than 0")
+    @Min(value = 60, message = "total amount of time allotted for verification must be greater than or equal 60")
     private Integer totalAllowedTimeForVerification;
 
 

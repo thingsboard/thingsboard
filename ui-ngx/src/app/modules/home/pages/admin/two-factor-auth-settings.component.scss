@@ -73,6 +73,10 @@
 
 :host ::ng-deep {
   .mat-expansion-panel {
+    .mat-expansion-panel-content {
+      font-size: 16px;
+    }
+
     &.provider {
       .mat-expansion-panel-header > .mat-content {
         overflow: inherit;

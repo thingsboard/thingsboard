@@ -122,7 +122,7 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
       ]],
       totalAllowedTimeForVerification: [3600, [
         Validators.required,
-        Validators.min(1),
+        Validators.min(60),
         Validators.pattern(/^\d*$/)
       ]],
       verificationCodeCheckRateLimitEnable: [false],
@@ -192,7 +192,7 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
     };
     switch (provider) {
       case TwoFactorAuthProviderType.TOTP:
-        formControlConfig.issuerName = [{value: 'ThingsBoard', disabled: true}, Validators.required];
+        formControlConfig.issuerName = [{value: 'ThingsBoard', disabled: true}, [Validators.required, Validators.pattern(/^\S+$/)]];
         break;
       case TwoFactorAuthProviderType.SMS:
         formControlConfig.smsVerificationMessageTemplate = [{value: 'Verification code: ${code}', disabled: true}, [

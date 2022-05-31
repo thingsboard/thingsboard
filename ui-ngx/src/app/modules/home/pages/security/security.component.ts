@@ -170,6 +170,9 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
   confirm2FAChange(event: MouseEvent, provider: TwoFactorAuthProviderType) {
     event.stopPropagation();
     event.preventDefault();
+    if (this.twoFactorAuth.get(provider).disabled) {
+      return;
+    }
     if (this.twoFactorAuth.get(provider).value) {
       const providerName = this.translate.instant(`security.2fa.provider.${provider.toLowerCase()}`);
       this.dialogService.confirm(

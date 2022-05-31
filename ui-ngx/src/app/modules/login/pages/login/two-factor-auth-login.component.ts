@@ -169,10 +169,11 @@ export class TwoFactorAuthLoginComponent extends PageComponent implements OnInit
       $event.stopPropagation();
     }
     this.hideResendButton = true;
+    this.countDownTime = 0;
     this.twoFactorAuthService.requestTwoFaVerificationCodeSend(this.selectedProvider).subscribe(() => {
       this.countDownTime = this.minVerificationPeriod;
     }, () => {
-      this.countDownTime = 30;
+      this.countDownTime = this.minVerificationPeriod;
     });
   }
 

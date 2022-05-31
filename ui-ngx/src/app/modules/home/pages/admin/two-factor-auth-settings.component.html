@@ -51,7 +51,8 @@
                         <mat-form-field fxFlex class="mat-block">
                           <mat-label translate>admin.2fa.issuer-name</mat-label>
                           <input matInput formControlName="issuerName" required>
-                          <mat-error *ngIf="provider.get('issuerName').hasError('required')">
+                          <mat-error *ngIf="provider.get('issuerName').hasError('required') ||
+                                            provider.get('issuerName').hasError('pattern')">
                             {{ "admin.2fa.issuer-name-required" | translate }}
                           </mat-error>
                         </mat-form-field>
@@ -118,7 +119,7 @@
               <div class="input-row" fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
                 <mat-form-field fxFlex class="mat-block">
                   <mat-label translate>admin.2fa.total-allowed-time-for-verification</mat-label>
-                  <input matInput required formControlName="totalAllowedTimeForVerification" type="number" step="1" min="1">
+                  <input matInput required formControlName="totalAllowedTimeForVerification" type="number" step="1" min="60">
                   <mat-error *ngIf="twoFaFormGroup.get('totalAllowedTimeForVerification').hasError('required')">
                     {{ 'admin.2fa.total-allowed-time-for-verification-required' | translate }}
                   </mat-error>
