@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.sync.JsonTbEntity;
 
 import java.util.List;
+import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "entityType", include = As.EXISTING_PROPERTY, visible = true, defaultImpl = EntityExportData.class)
@@ -45,5 +46,6 @@ public class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
     private EntityType entityType;
 
     private List<EntityRelation> relations;
+    private Map<String, List<AttributeExportData>> attributes;
 
 }

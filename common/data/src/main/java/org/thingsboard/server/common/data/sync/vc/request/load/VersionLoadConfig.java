@@ -21,5 +21,6 @@ import lombok.Data;
 public class VersionLoadConfig {
 
     private boolean loadRelations;
+    private boolean loadAttributes;
 
 }

@@ -30,6 +30,7 @@ import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -62,6 +63,7 @@ import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadConfig
 import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadRequest;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.sync.ie.EntitiesExportImportService;
@@ -97,6 +99,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     private final GitVersionControlQueueService gitServiceQueue;
     private final EntitiesExportImportService exportImportService;
     private final ExportableEntitiesService exportableEntitiesService;
+    private final TbNotificationEntityService entityNotificationService;
     private final TransactionTemplate transactionTemplate;
 
     private ListeningExecutorService executor;
@@ -165,6 +168,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     private ListenableFuture<Void> saveEntityData(SecurityUser user, CommitGitRequest commit, EntityId entityId, VersionCreateConfig config) throws Exception {
         EntityExportData<ExportableEntity<EntityId>> entityData = exportImportService.exportEntity(user, entityId, EntityExportSettings.builder()
                 .exportRelations(config.isSaveRelations())
+                .exportAttributes(config.isSaveAttributes())
                 .build());
         return gitServiceQueue.addToCommit(commit, entityData);
     }
@@ -207,6 +211,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                         try {
                             return exportImportService.importEntity(user, entityData, EntityImportSettings.builder()
                                     .updateRelations(config.isLoadRelations())
+                                    .saveAttributes(config.isLoadAttributes())
                                     .findExistingByName(false)
                                     .build(), true, true);
                         } catch (Exception e) {
@@ -245,6 +250,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                                         for (EntityExportData entityData : entityDataList) {
                                             EntityImportResult<?> importResult = exportImportService.importEntity(user, entityData, EntityImportSettings.builder()
                                                     .updateRelations(config.isLoadRelations())
+                                                    .saveAttributes(config.isLoadAttributes())
                                                     .findExistingByName(config.isFindExistingEntityByName())
                                                     .build(), false, false);
 
@@ -282,6 +288,10 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                                         }
                                         exportableEntitiesService.deleteByTenantIdAndId(user.getTenantId(), entity.getId());
 
+                                        sendEventsCallbacks.add(() -> {
+                                            entityNotificationService.notifyDeleteEntity(user.getTenantId(), entity.getId(),
+                                                    entity, null, ActionType.DELETED, null, user);
+                                        });
                                         VersionLoadResult result = results.get(entityType);
                                         result.setDeleted(result.getDeleted() + 1);
                                     }
@@ -320,6 +330,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
         EntityExportData<?> currentVersion = exportImportService.exportEntity(user, entityId, EntityExportSettings.builder()
                 .exportRelations(true)
+                .exportAttributes(true)
                 .build());
         return transformAsync(gitServiceQueue.getEntity(user.getTenantId(), versionId, externalId),
                 otherVersion -> transform(gitServiceQueue.getContentsDiff(user.getTenantId(),
