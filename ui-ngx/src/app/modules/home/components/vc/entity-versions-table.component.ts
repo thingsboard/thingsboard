@@ -62,7 +62,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
   @Input()
   singleEntityMode = false;
 
-  displayedColumns = ['timestamp', 'id', 'name', 'actions'];
+  displayedColumns = ['timestamp', 'id', 'name', 'author', 'actions'];
   pageLink: PageLink;
   textSearchMode = false;
   dataSource: EntityVersionsDatasource;

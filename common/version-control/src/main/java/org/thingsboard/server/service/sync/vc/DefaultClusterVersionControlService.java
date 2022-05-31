@@ -312,7 +312,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
                         .setTotalElements(data.getTotalElements())
                         .setHasNext(data.hasNext())
                         .addAllVersions(data.getData().stream().map(
-                                v -> EntityVersionProto.newBuilder().setTs(v.getTimestamp()).setId(v.getId()).setName(v.getName()).build()
+                                v -> EntityVersionProto.newBuilder().setTs(v.getTimestamp()).setId(v.getId()).setName(v.getName()).setAuthor(v.getAuthor()).build()
                         ).collect(Collectors.toList())))
         );
     }
@@ -397,7 +397,8 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
 
     private void prepareCommit(VersionControlRequestCtx ctx, UUID txId, PrepareMsg prepareMsg) {
         var tenantId = ctx.getTenantId();
-        var pendingCommit = new PendingCommit(tenantId, ctx.getNodeId(), txId, prepareMsg.getBranchName(), prepareMsg.getCommitMsg());
+        var pendingCommit = new PendingCommit(tenantId, ctx.getNodeId(), txId, prepareMsg.getBranchName(),
+                prepareMsg.getCommitMsg(), prepareMsg.getAuthorName(), prepareMsg.getAuthorEmail());
         PendingCommit old = pendingCommitMap.get(tenantId);
         if (old != null) {
             doAbortCurrentCommit(tenantId, old);
@@ -460,6 +461,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
                 .setTs(result.getVersion().getTimestamp())
                 .setCommitId(result.getVersion().getId())
                 .setName(result.getVersion().getName())
+                .setAuthor(result.getVersion().getAuthor())
                 .setAdded(result.getAdded())
                 .setModified(result.getModified())
                 .setRemoved(result.getRemoved())));

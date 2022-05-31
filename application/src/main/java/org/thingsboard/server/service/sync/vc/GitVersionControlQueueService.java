@@ -18,6 +18,7 @@ package org.thingsboard.server.service.sync.vc;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -36,7 +37,7 @@ import java.util.List;
 
 public interface GitVersionControlQueueService {
 
-    ListenableFuture<CommitGitRequest> prepareCommit(TenantId tenantId, VersionCreateRequest request);
+    ListenableFuture<CommitGitRequest> prepareCommit(User user, VersionCreateRequest request);
 
     ListenableFuture<Void> addToCommit(CommitGitRequest commit, EntityExportData<ExportableEntity<EntityId>> entityData);
 

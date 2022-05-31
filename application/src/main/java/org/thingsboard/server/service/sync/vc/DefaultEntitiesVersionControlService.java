@@ -119,7 +119,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     @SuppressWarnings("UnstableApiUsage")
     @Override
     public ListenableFuture<VersionCreationResult> saveEntitiesVersion(SecurityUser user, VersionCreateRequest request) throws Exception {
-        var pendingCommit = gitServiceQueue.prepareCommit(user.getTenantId(), request);
+        var pendingCommit = gitServiceQueue.prepareCommit(user, request);
 
         return transformAsync(pendingCommit, commit -> {
             List<ListenableFuture<Void>> gitFutures = new ArrayList<>();
