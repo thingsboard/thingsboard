@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.sync.ThrowingRunnable;
@@ -31,6 +32,7 @@ import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
 import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.apiusage.RateLimitService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.ie.exporting.EntityExportService;
 import org.thingsboard.server.service.sync.ie.exporting.impl.BaseEntityExportService;
@@ -55,6 +57,8 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
     private final Map<EntityType, EntityExportService<?, ?, ?>> exportServices = new HashMap<>();
     private final Map<EntityType, EntityImportService<?, ?, ?>> importServices = new HashMap<>();
 
+    private final RateLimitService rateLimitService;
+
     protected static final List<EntityType> SUPPORTED_ENTITY_TYPES = List.of(
             EntityType.CUSTOMER, EntityType.ASSET, EntityType.RULE_CHAIN,
             EntityType.DASHBOARD, EntityType.DEVICE_PROFILE, EntityType.DEVICE
@@ -63,6 +67,10 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
 
     @Override
     public <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> exportEntity(SecurityUser user, I entityId, EntityExportSettings exportSettings) throws ThingsboardException {
+        if (!rateLimitService.checkEntityExportLimit(user.getTenantId())) {
+            throw new ThingsboardException("Rate limit for entities export is exceeded", ThingsboardErrorCode.TOO_MANY_REQUESTS);
+        }
+
         EntityType entityType = entityId.getEntityType();
         EntityExportService<I, E, EntityExportData<E>> exportService = getExportService(entityType);
 
@@ -73,6 +81,9 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
     @Override
     public <E extends ExportableEntity<I>, I extends EntityId> EntityImportResult<E> importEntity(SecurityUser user, EntityExportData<E> exportData, EntityImportSettings importSettings,
                                                                                                   boolean saveReferences, boolean sendEvents) throws ThingsboardException {
+        if (!rateLimitService.checkEntityImportLimit(user.getTenantId())) {
+            throw new ThingsboardException("Rate limit for entities import is exceeded", ThingsboardErrorCode.TOO_MANY_REQUESTS);
+        }
         if (exportData.getEntity() == null || exportData.getEntity().getId() == null) {
             throw new DataValidationException("Invalid entity data");
         }
