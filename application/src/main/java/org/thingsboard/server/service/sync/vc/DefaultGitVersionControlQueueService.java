@@ -109,7 +109,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
         SettableFuture<Void> future = SettableFuture.create();
 
         String path = getRelativePath(entityData.getEntityType(), entityData.getEntity().getId());
-        String entityDataJson = JacksonUtil.toPrettyString(entityData);
+        String entityDataJson = JacksonUtil.toPrettyString(entityData.sort());
 
         registerAndSend(commit, builder -> builder.setCommitRequest(
                 buildCommitRequest(commit).setAddMsg(
@@ -130,7 +130,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
                 buildCommitRequest(commit).setDeleteMsg(
                         TransportProtos.DeleteMsg.newBuilder().setRelativePath(path).build()
                 ).build()
-        ).build(), wrap(commit.getFuture(), null));
+        ).build(), wrap(future, null));
 
         return future;
     }

@@ -328,16 +328,17 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         EntityId externalId = ((ExportableEntity<EntityId>) entity).getExternalId();
         if (externalId == null) externalId = entityId;
 
-        EntityExportData<?> currentVersion = exportImportService.exportEntity(user, entityId, EntityExportSettings.builder()
-                .exportRelations(true)
-                .exportAttributes(true)
-                .build());
         return transformAsync(gitServiceQueue.getEntity(user.getTenantId(), versionId, externalId),
-                otherVersion -> transform(gitServiceQueue.getContentsDiff(user.getTenantId(),
-                        JacksonUtil.toPrettyString(currentVersion),
-                        JacksonUtil.toPrettyString(otherVersion)), rawDiff -> {
-                    return new EntityDataDiff(currentVersion, otherVersion, rawDiff);
-                }, MoreExecutors.directExecutor()), MoreExecutors.directExecutor());
+                otherVersion -> {
+                    EntityExportData<?> currentVersion = exportImportService.exportEntity(user, entityId, EntityExportSettings.builder()
+                            .exportRelations(otherVersion.getRelations() != null)
+                            .exportAttributes(otherVersion.getAttributes() != null)
+                            .build());
+                    return transform(gitServiceQueue.getContentsDiff(user.getTenantId(),
+                            JacksonUtil.toPrettyString(currentVersion.sort()),
+                            JacksonUtil.toPrettyString(otherVersion.sort())),
+                            rawDiff -> new EntityDataDiff(currentVersion, otherVersion, rawDiff), MoreExecutors.directExecutor());
+                }, MoreExecutors.directExecutor());
     }
 
     @Override

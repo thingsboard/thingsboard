@@ -28,6 +28,8 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.sync.JsonTbEntity;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -41,11 +43,30 @@ import java.util.Map;
 @Data
 public class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
 
+    public static final Comparator<EntityRelation> relationsComparator = Comparator
+            .comparing(EntityRelation::getFrom, Comparator.comparing(EntityId::getId))
+            .thenComparing(EntityRelation::getTo, Comparator.comparing(EntityId::getId))
+            .thenComparing(EntityRelation::getTypeGroup)
+            .thenComparing(EntityRelation::getType);
+
+    public static final Comparator<AttributeExportData> attrComparator = Comparator
+            .comparing(AttributeExportData::getKey).thenComparing(AttributeExportData::getLastUpdateTs);
+
     @JsonTbEntity
     private E entity;
     private EntityType entityType;
 
     private List<EntityRelation> relations;
     private Map<String, List<AttributeExportData>> attributes;
+
+    public EntityExportData<E> sort() {
+        if (relations != null && !relations.isEmpty()) {
+            relations.sort(relationsComparator);
+        }
+        if (attributes != null && !attributes.isEmpty()) {
+            attributes.values().forEach(list -> list.sort(attrComparator));
+        }
+        return this;
+    }
 
 }
