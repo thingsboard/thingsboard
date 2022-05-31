@@ -15,16 +15,16 @@
  */
 package org.thingsboard.server.common.data.sync.ie;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
-public class EntityExportSettings {
-    private boolean exportRelations;
-    private boolean exportAttributes;
+public class AttributeExportData {
+    private String key;
+    private Long lastUpdateTs;
+
+    private Boolean booleanValue;
+    private String strValue;
+    private Long longValue;
+    private Double doubleValue;
+    private String jsonValue;
 }

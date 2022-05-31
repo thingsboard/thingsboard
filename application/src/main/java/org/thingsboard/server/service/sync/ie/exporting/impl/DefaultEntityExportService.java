@@ -19,22 +19,31 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.sync.ie.AttributeExportData;
+import org.thingsboard.server.common.data.sync.ie.EntityExportData;
+import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
+import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
 import org.thingsboard.server.service.sync.ie.exporting.EntityExportService;
 import org.thingsboard.server.service.sync.ie.exporting.ExportableEntitiesService;
-import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 @Service
 @TbCoreComponent
@@ -45,6 +54,8 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
     private ExportableEntitiesService exportableEntitiesService;
     @Autowired
     private RelationService relationService;
+    @Autowired
+    private AttributesService attributesService;
 
     @Override
     public final D getExportData(SecurityUser user, I entityId, EntityExportSettings exportSettings) throws ThingsboardException {
@@ -65,22 +76,62 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
 
     protected void setAdditionalExportData(SecurityUser user, E entity, D exportData, EntityExportSettings exportSettings) throws ThingsboardException {
         if (exportSettings.isExportRelations()) {
-            List<EntityRelation> relations = new ArrayList<>();
-
-            List<EntityRelation> inboundRelations = relationService.findByTo(user.getTenantId(), entity.getId(), RelationTypeGroup.COMMON);
-            for (EntityRelation relation : inboundRelations) {
-                exportableEntitiesService.checkPermission(user, relation.getFrom(), Operation.READ);
-            }
-            relations.addAll(inboundRelations);
-
-            List<EntityRelation> outboundRelations = relationService.findByFrom(user.getTenantId(), entity.getId(), RelationTypeGroup.COMMON);
-            for (EntityRelation relation : outboundRelations) {
-                exportableEntitiesService.checkPermission(user, relation.getTo(), Operation.READ);
-            }
-            relations.addAll(outboundRelations);
-
+            List<EntityRelation> relations = exportRelations(user, entity);
             exportData.setRelations(relations);
         }
+        if (exportSettings.isExportAttributes()) {
+            Map<String, List<AttributeExportData>> attributes = exportAttributes(user, entity);
+            exportData.setAttributes(attributes);
+        }
+    }
+
+    private List<EntityRelation> exportRelations(SecurityUser user, E entity) throws ThingsboardException {
+        List<EntityRelation> relations = new ArrayList<>();
+
+        List<EntityRelation> inboundRelations = relationService.findByTo(user.getTenantId(), entity.getId(), RelationTypeGroup.COMMON);
+        for (EntityRelation relation : inboundRelations) {
+            exportableEntitiesService.checkPermission(user, relation.getFrom(), Operation.READ);
+        }
+        relations.addAll(inboundRelations);
+
+        List<EntityRelation> outboundRelations = relationService.findByFrom(user.getTenantId(), entity.getId(), RelationTypeGroup.COMMON);
+        for (EntityRelation relation : outboundRelations) {
+            exportableEntitiesService.checkPermission(user, relation.getTo(), Operation.READ);
+        }
+        relations.addAll(outboundRelations);
+        return relations;
+    }
+
+    private Map<String, List<AttributeExportData>> exportAttributes(SecurityUser user, E entity) throws ThingsboardException {
+        exportableEntitiesService.checkPermission(user, entity, entity.getId().getEntityType(), Operation.READ_ATTRIBUTES);
+
+        List<String> scopes;
+        if (entity.getId().getEntityType() == EntityType.DEVICE) {
+            scopes = List.of(DataConstants.SERVER_SCOPE, DataConstants.SHARED_SCOPE);
+        } else {
+            scopes = Collections.singletonList(DataConstants.SERVER_SCOPE);
+        }
+        Map<String, List<AttributeExportData>> attributes = new HashMap<>();
+        scopes.forEach(scope -> {
+            try {
+                attributes.put(scope, attributesService.findAll(user.getTenantId(), entity.getId(), scope).get().stream()
+                        .map(attribute -> {
+                            AttributeExportData attributeExportData = new AttributeExportData();
+                            attributeExportData.setKey(attribute.getKey());
+                            attributeExportData.setLastUpdateTs(attribute.getLastUpdateTs());
+                            attributeExportData.setStrValue(attribute.getStrValue().orElse(null));
+                            attributeExportData.setDoubleValue(attribute.getDoubleValue().orElse(null));
+                            attributeExportData.setLongValue(attribute.getLongValue().orElse(null));
+                            attributeExportData.setBooleanValue(attribute.getBooleanValue().orElse(null));
+                            attributeExportData.setJsonValue(attribute.getJsonValue().orElse(null));
+                            return attributeExportData;
+                        })
+                        .collect(Collectors.toList()));
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        return attributes;
     }
 
     protected D newExportData() {
