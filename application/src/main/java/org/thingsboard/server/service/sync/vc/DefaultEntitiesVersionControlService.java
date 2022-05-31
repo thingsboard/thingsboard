@@ -44,6 +44,7 @@ import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
 import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
 import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
+import org.thingsboard.server.common.data.sync.vc.EntityDataInfo;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.EntityDataDiff;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
@@ -340,6 +341,13 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                             rawDiff -> new EntityDataDiff(currentVersion, otherVersion, rawDiff), MoreExecutors.directExecutor());
                 }, MoreExecutors.directExecutor());
     }
+
+    @Override
+    public ListenableFuture<EntityDataInfo> getEntityDataInfo(SecurityUser user, EntityId entityId, String versionId) {
+        return Futures.transform(gitServiceQueue.getEntity(user.getTenantId(), versionId, entityId),
+                entity -> new EntityDataInfo(entity.getRelations() != null, entity.getAttributes() != null), MoreExecutors.directExecutor());
+    }
+
 
     @Override
     public ListenableFuture<List<String>> listBranches(TenantId tenantId) throws Exception {
