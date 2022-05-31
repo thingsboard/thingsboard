@@ -22,7 +22,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -105,7 +104,6 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
-@RequiredArgsConstructor
 public class RuleChainController extends BaseController {
 
     public static final String RULE_CHAIN_ID = "ruleChainId";
