@@ -28,6 +28,7 @@ import {
 } from '@shared/models/two-factor-auth.models';
 import { TranslateService } from '@ngx-translate/core';
 import { interval, Subscription } from 'rxjs';
+import { isEqual } from '@core/utils';
 
 @Component({
   selector: 'tb-two-factor-auth-login',
@@ -40,14 +41,15 @@ export class TwoFactorAuthLoginComponent extends PageComponent implements OnInit
   private prevProvider: TwoFactorAuthProviderType;
   private timer: Subscription;
   private minVerificationPeriod = 0;
+  private timerID: NodeJS.Timeout;
 
-  showResendButton = false;
+  showResendAction = false;
   selectedProvider: TwoFactorAuthProviderType;
   allowProviders: TwoFactorAuthProviderType[] = [];
 
   providersData = twoFactorAuthProvidersLoginData;
   providerDescription = '';
-  disabledResendButton = true;
+  hideResendButton = true;
   countDownTime = 0;
 
   maxLengthInput = 6;
@@ -88,7 +90,7 @@ export class TwoFactorAuthLoginComponent extends PageComponent implements OnInit
     });
     if (this.selectedProvider !== TwoFactorAuthProviderType.TOTP) {
       this.sendCode();
-      this.showResendButton = true;
+      this.showResendAction = true;
     }
     this.timer = interval(1000).subscribe(() => this.updatedTime());
   }
@@ -96,12 +98,28 @@ export class TwoFactorAuthLoginComponent extends PageComponent implements OnInit
   ngOnDestroy() {
     super.ngOnDestroy();
     this.timer.unsubscribe();
+    clearTimeout(this.timerID);
   }
 
   sendVerificationCode() {
     if (this.verificationForm.valid && this.selectedProvider) {
       this.authService.checkTwoFaVerificationCode(this.selectedProvider, this.verificationForm.get('verificationCode').value).subscribe(
-        () => {}
+        () => {},
+        (error) => {
+          if (error.status === 400) {
+            this.verificationForm.get('verificationCode').setErrors({incorrectCode: true});
+          } else if (error.status === 429) {
+            this.verificationForm.get('verificationCode').setErrors({tooManyRequest: true});
+            this.timerID = setTimeout(() => {
+              let errors = this.verificationForm.get('verificationCode').errors;
+              delete errors.tooManyRequest;
+              if (isEqual(errors, {})) {
+                errors = null;
+              }
+              this.verificationForm.get('verificationCode').setErrors(errors);
+            }, 5000);
+          }
+        }
       );
     }
   }
@@ -109,7 +127,7 @@ export class TwoFactorAuthLoginComponent extends PageComponent implements OnInit
   selectProvider(type: TwoFactorAuthProviderType) {
     this.prevProvider = type === null ? this.selectedProvider : null;
     this.selectedProvider = type;
-    this.showResendButton = false;
+    this.showResendAction = false;
     if (type !== null) {
       this.verificationForm.get('verificationCode').reset();
       const providerConfig = this.providersInfo.find(config => config.type === type);
@@ -118,7 +136,7 @@ export class TwoFactorAuthLoginComponent extends PageComponent implements OnInit
       });
       if (type !== TwoFactorAuthProviderType.TOTP && type !== TwoFactorAuthProviderType.BACKUP_CODE) {
         this.sendCode();
-        this.showResendButton = true;
+        this.showResendAction = true;
         this.minVerificationPeriod = providerConfig?.minVerificationCodeSendPeriod || 30;
       }
       if (type === TwoFactorAuthProviderType.BACKUP_CODE) {
@@ -150,7 +168,7 @@ export class TwoFactorAuthLoginComponent extends PageComponent implements OnInit
     if ($event) {
       $event.stopPropagation();
     }
-    this.disabledResendButton = true;
+    this.hideResendButton = true;
     this.twoFactorAuthService.requestTwoFaVerificationCodeSend(this.selectedProvider).subscribe(() => {
       this.countDownTime = this.minVerificationPeriod;
     }, () => {
@@ -171,7 +189,7 @@ export class TwoFactorAuthLoginComponent extends PageComponent implements OnInit
     if (this.countDownTime > 0) {
       this.countDownTime--;
       if (this.countDownTime === 0) {
-        this.disabledResendButton = false;
+        this.hideResendButton = false;
       }
     }
   }

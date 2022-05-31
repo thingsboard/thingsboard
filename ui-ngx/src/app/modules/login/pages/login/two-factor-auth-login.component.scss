@@ -60,6 +60,14 @@
         font: 500 12px / 14px Roboto, "Helvetica Neue", sans-serif;
         color: rgba(255, 255, 255, 0.8);
       }
+
+      .action-row:nth-child(n) {
+        min-height: 36px;
+
+        .action-resend {
+          min-width: 50%;
+        }
+      }
     }
   }
 

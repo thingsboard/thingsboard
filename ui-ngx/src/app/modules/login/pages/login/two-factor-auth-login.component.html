@@ -46,8 +46,17 @@
                        [attr.inputmode]="inputMode" [pattern]="pattern"
                        autocomplete="off"
                        placeholder="{{ providersData.get(selectedProvider).placeholder | translate }}"/>
-                <mat-error *ngIf="verificationForm.get('verificationCode').invalid">
+                <mat-error *ngIf="verificationForm.get('verificationCode').getError('required') ||
+                                  verificationForm.get('verificationCode').getError('minlength') ||
+                                  verificationForm.get('verificationCode').getError('maxlength') ||
+                                  verificationForm.get('verificationCode').getError('pattern')">
                   {{ 'security.2fa.dialog.verification-code-invalid' | translate }}
+                </mat-error>
+                <mat-error *ngIf="verificationForm.get('verificationCode').getError('incorrectCode')">
+                  {{ 'security.2fa.dialog.verification-code-incorrect' | translate }}
+                </mat-error>
+                <mat-error *ngIf="verificationForm.get('verificationCode').getError('tooManyRequest')">
+                  {{ 'security.2fa.dialog.verification-code-many-request' | translate }}
                 </mat-error>
               </mat-form-field>
             </div>
@@ -59,12 +68,12 @@
               {{ 'action.continue' | translate }}
             </button>
             <span style="height: 16px;"></span>
-            <div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="8px">
-              <div *ngIf="showResendButton" fxFlex="50" fxLayoutAlign="center center">
+            <div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="8px" class="action-row">
+              <div *ngIf="showResendAction" fxFlex fxLayoutAlign="center center" class="action-resend">
                 <div *ngIf="countDownTime" class="timer">
                   {{ 'login.resend-code-wait' | translate : {time: countDownTime} }}
                 </div>
-                <button *ngIf="!disabledResendButton"
+                <button [fxShow]="!hideResendButton"
                         mat-button fxFlex
                         (click)="sendCode($event)"
                         type="button">
@@ -73,6 +82,7 @@
               </div>
               <button mat-button fxFlex
                       type="button"
+                      *ngIf="allowProviders.length > 1"
                       (click)="selectProvider(null)">
                 {{ 'login.try-another-way' | translate }}
               </button>
