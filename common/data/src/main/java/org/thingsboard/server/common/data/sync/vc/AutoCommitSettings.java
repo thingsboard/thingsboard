@@ -13,19 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.sync.vc;
+package org.thingsboard.server.common.data.sync.vc;
 
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.sync.vc.request.create.AutoVersionCreateConfig;
 
-public interface TbVersionControlSettingsService {
+import java.util.HashMap;
 
-    EntitiesVersionControlSettings restore(TenantId tenantId, EntitiesVersionControlSettings versionControlSettings);
+public class AutoCommitSettings extends HashMap<EntityType, AutoVersionCreateConfig> {
 
-    EntitiesVersionControlSettings get(TenantId tenantId);
-
-    EntitiesVersionControlSettings save(TenantId tenantId, EntitiesVersionControlSettings versionControlSettings);
-
-    boolean delete(TenantId tenantId);
+    private static final long serialVersionUID = -5757067601838792059L;
 
 }

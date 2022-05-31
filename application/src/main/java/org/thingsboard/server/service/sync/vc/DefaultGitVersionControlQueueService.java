@@ -33,7 +33,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
-import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
+import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
 import org.thingsboard.server.common.data.sync.vc.EntityVersionsDiff;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
@@ -271,7 +271,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     }
 
     private <T> void registerAndSend(PendingGitRequest<T> request,
-                                     Function<ToVersionControlServiceMsg.Builder, ToVersionControlServiceMsg> enrichFunction, EntitiesVersionControlSettings settings, TbQueueCallback callback) {
+                                     Function<ToVersionControlServiceMsg.Builder, ToVersionControlServiceMsg> enrichFunction, RepositorySettings settings, TbQueueCallback callback) {
         if (!request.getFuture().isDone()) {
             pendingRequestMap.putIfAbsent(request.getRequestId(), request);
             var requestBody = enrichFunction.apply(newRequestProto(request, settings));
@@ -307,7 +307,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     }
 
     @Override
-    public ListenableFuture<Void> initRepository(TenantId tenantId, EntitiesVersionControlSettings settings) {
+    public ListenableFuture<Void> initRepository(TenantId tenantId, RepositorySettings settings) {
         VoidGitRequest request = new VoidGitRequest(tenantId);
 
         registerAndSend(request, builder -> builder.setInitRepositoryRequest(GenericRepositoryRequestMsg.newBuilder().build()).build()
@@ -317,7 +317,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     }
 
     @Override
-    public ListenableFuture<Void> testRepository(TenantId tenantId, EntitiesVersionControlSettings settings) {
+    public ListenableFuture<Void> testRepository(TenantId tenantId, RepositorySettings settings) {
         VoidGitRequest request = new VoidGitRequest(tenantId);
 
         registerAndSend(request, builder -> builder
@@ -457,7 +457,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
         return PrepareMsg.newBuilder().setCommitMsg(request.getVersionName()).setBranchName(request.getBranch()).build();
     }
 
-    private ToVersionControlServiceMsg.Builder newRequestProto(PendingGitRequest<?> request, EntitiesVersionControlSettings settings) {
+    private ToVersionControlServiceMsg.Builder newRequestProto(PendingGitRequest<?> request, RepositorySettings settings) {
         var tenantId = request.getTenantId();
         var requestId = request.getRequestId();
         var builder = ToVersionControlServiceMsg.newBuilder()
@@ -466,7 +466,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
                 .setRequestIdMSB(requestId.getMostSignificantBits())
                 .setRequestIdLSB(requestId.getLeastSignificantBits());
-        EntitiesVersionControlSettings vcSettings = settings;
+        RepositorySettings vcSettings = settings;
         if (vcSettings == null && request.requiresSettings()) {
             vcSettings = entitiesVersionControlService.getVersionControlSettings(tenantId);
         }

@@ -13,24 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.sync.vc;
+package org.thingsboard.server.service.sync.vc.autocommit;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.CaffeineTbTransactionalCache;
 import org.thingsboard.server.common.data.CacheConstants;
-import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
-import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.common.data.sync.vc.AutoCommitSettings;
 
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "caffeine", matchIfMissing = true)
-@Service("VersionControlCache")
-public class VersionControlSettingsCaffeineCache extends CaffeineTbTransactionalCache<TenantId, EntitiesVersionControlSettings> {
+@Service("AutoCommitSettingsCache")
+public class AutoCommitSettingsCaffeineCache extends CaffeineTbTransactionalCache<TenantId, AutoCommitSettings> {
 
-    public VersionControlSettingsCaffeineCache(CacheManager cacheManager) {
-        super(cacheManager, CacheConstants.VC_SETTINGS_CACHE);
+    public AutoCommitSettingsCaffeineCache(CacheManager cacheManager) {
+        super(cacheManager, CacheConstants.AUTO_COMMIT_SETTINGS_CACHE);
     }
 
 }

@@ -27,7 +27,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
-import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.StringUtils;
@@ -44,7 +43,7 @@ import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
 import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
 import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
-import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
+import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.EntityDataDiff;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
@@ -62,19 +61,18 @@ import org.thingsboard.server.common.data.sync.vc.request.load.SingleEntityVersi
 import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadConfig;
 import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadRequest;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.sync.ie.EntitiesExportImportService;
 import org.thingsboard.server.service.sync.ie.exporting.ExportableEntitiesService;
+import org.thingsboard.server.service.sync.vc.autocommit.TbAutoCommitSettingsService;
 import org.thingsboard.server.service.sync.vc.data.CommitGitRequest;
+import org.thingsboard.server.service.sync.vc.repository.TbRepositorySettingsService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -94,7 +92,8 @@ import static com.google.common.util.concurrent.Futures.transformAsync;
 @Slf4j
 public class DefaultEntitiesVersionControlService implements EntitiesVersionControlService {
 
-    private final TbVersionControlSettingsService vcSettingsService;
+    private final TbRepositorySettingsService repositorySettingsService;
+    private final TbAutoCommitSettingsService autoCommitSettingsService;
     private final GitVersionControlQueueService gitServiceQueue;
     private final EntitiesExportImportService exportImportService;
     private final ExportableEntitiesService exportableEntitiesService;
@@ -336,16 +335,16 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     }
 
     @Override
-    public EntitiesVersionControlSettings getVersionControlSettings(TenantId tenantId) {
-        return vcSettingsService.get(tenantId);
+    public RepositorySettings getVersionControlSettings(TenantId tenantId) {
+        return repositorySettingsService.get(tenantId);
     }
 
     @Override
-    public ListenableFuture<EntitiesVersionControlSettings> saveVersionControlSettings(TenantId tenantId, EntitiesVersionControlSettings versionControlSettings) {
-        var restoredSettings = this.vcSettingsService.restore(tenantId, versionControlSettings);
+    public ListenableFuture<RepositorySettings> saveVersionControlSettings(TenantId tenantId, RepositorySettings versionControlSettings) {
+        var restoredSettings = this.repositorySettingsService.restore(tenantId, versionControlSettings);
         try {
             var future = gitServiceQueue.initRepository(tenantId, restoredSettings);
-            return Futures.transform(future, f -> vcSettingsService.save(tenantId, restoredSettings), MoreExecutors.directExecutor());
+            return Futures.transform(future, f -> repositorySettingsService.save(tenantId, restoredSettings), MoreExecutors.directExecutor());
         } catch (Exception e) {
             log.debug("{} Failed to init repository: {}", tenantId, versionControlSettings, e);
             throw new RuntimeException("Failed to init repository!", e);
@@ -354,7 +353,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
     @Override
     public ListenableFuture<Void> deleteVersionControlSettings(TenantId tenantId) throws Exception {
-        if (vcSettingsService.delete(tenantId)) {
+        if (repositorySettingsService.delete(tenantId)) {
             return gitServiceQueue.clearRepository(tenantId);
         } else {
             return Futures.immediateFuture(null);
@@ -362,8 +361,8 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     }
 
     @Override
-    public ListenableFuture<Void> checkVersionControlAccess(TenantId tenantId, EntitiesVersionControlSettings settings) throws ThingsboardException {
-        settings = this.vcSettingsService.restore(tenantId, settings);
+    public ListenableFuture<Void> checkVersionControlAccess(TenantId tenantId, RepositorySettings settings) throws ThingsboardException {
+        settings = this.repositorySettingsService.restore(tenantId, settings);
         try {
             return gitServiceQueue.testRepository(tenantId, settings);
         } catch (Exception e) {
@@ -374,22 +373,29 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
     @Override
     public ListenableFuture<VersionCreationResult> autoCommit(SecurityUser user, EntityId entityId) throws Exception {
-        var settings = vcSettingsService.get(user.getTenantId());
-        var entityType = entityId.getEntityType();
-        if (settings != null && settings.getAutoCommitSettings() != null && settings.getAutoCommitSettings().containsKey(entityType)) {
-            AutoVersionCreateConfig autoCommitConfig = settings.getAutoCommitSettings().get(entityType);
-            SingleEntityVersionCreateRequest vcr = new SingleEntityVersionCreateRequest();
-            var autoCommitBranchName = autoCommitConfig.getBranch();
-            if (StringUtils.isEmpty(autoCommitBranchName)) {
-                autoCommitBranchName = StringUtils.isNotEmpty(settings.getDefaultBranch()) ? settings.getDefaultBranch() : "auto-commits";
-            }
-            vcr.setBranch(autoCommitBranchName);
-            vcr.setVersionName("auto-commit by " + user.getEmail() + " at " + Instant.ofEpochSecond(System.currentTimeMillis() / 1000));
-            vcr.setEntityId(entityId);
-            vcr.setConfig(autoCommitConfig);
-            return saveEntitiesVersion(user, vcr);
+        var repositorySettings = repositorySettingsService.get(user.getTenantId());
+        if (repositorySettings == null) {
+            return Futures.immediateFuture(null);
         }
-        return Futures.immediateFuture(null);
+        var autoCommitSettings = autoCommitSettingsService.get(user.getTenantId());
+        if (autoCommitSettings == null) {
+            return Futures.immediateFuture(null);
+        }
+        var entityType = entityId.getEntityType();
+        AutoVersionCreateConfig autoCommitConfig = autoCommitSettings.get(entityType);
+        if (autoCommitConfig == null) {
+            return Futures.immediateFuture(null);
+        }
+        SingleEntityVersionCreateRequest vcr = new SingleEntityVersionCreateRequest();
+        var autoCommitBranchName = autoCommitConfig.getBranch();
+        if (StringUtils.isEmpty(autoCommitBranchName)) {
+            autoCommitBranchName = StringUtils.isNotEmpty(repositorySettings.getDefaultBranch()) ? repositorySettings.getDefaultBranch() : "auto-commits";
+        }
+        vcr.setBranch(autoCommitBranchName);
+        vcr.setVersionName("auto-commit at " + Instant.ofEpochSecond(System.currentTimeMillis() / 1000));
+        vcr.setEntityId(entityId);
+        vcr.setConfig(autoCommitConfig);
+        return saveEntitiesVersion(user, vcr);
     }
 
     private String getCauseMessage(Exception e) {

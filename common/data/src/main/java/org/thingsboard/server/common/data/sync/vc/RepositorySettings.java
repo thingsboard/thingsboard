@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.sync.vc;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.sync.vc.request.create.AutoVersionCreateConfig;
@@ -24,7 +25,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Data
-public class EntitiesVersionControlSettings implements Serializable {
+@JsonIgnoreProperties(ignoreUnknown = true) // temporary to make sure no need to wipe db during development.
+public class RepositorySettings implements Serializable {
     private static final long serialVersionUID = -3211552851889198721L;
 
     private String repositoryUri;
@@ -36,12 +38,10 @@ public class EntitiesVersionControlSettings implements Serializable {
     private String privateKeyPassword;
     private String defaultBranch;
 
-    private Map<EntityType, AutoVersionCreateConfig> autoCommitSettings;
-
-    public EntitiesVersionControlSettings() {
+    public RepositorySettings() {
     }
 
-    public EntitiesVersionControlSettings(EntitiesVersionControlSettings settings) {
+    public RepositorySettings(RepositorySettings settings) {
         this.repositoryUri = settings.getRepositoryUri();
         this.authMethod = settings.getAuthMethod();
         this.username = settings.getUsername();
@@ -50,6 +50,5 @@ public class EntitiesVersionControlSettings implements Serializable {
         this.privateKey = settings.getPrivateKey();
         this.privateKeyPassword = settings.getPrivateKeyPassword();
         this.defaultBranch = settings.getDefaultBranch();
-        this.autoCommitSettings = settings.getAutoCommitSettings() != null ? new HashMap<>(settings.getAutoCommitSettings()) : new HashMap<>();
     }
 }

@@ -58,7 +58,7 @@ import org.eclipse.jgit.treewalk.filter.PathFilter;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
-import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
+import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.VersionControlAuthMethod;
 
 import java.io.ByteArrayInputStream;
@@ -77,14 +77,14 @@ public class GitRepository {
 
     private final Git git;
     @Getter
-    private final EntitiesVersionControlSettings settings;
+    private final RepositorySettings settings;
     private final CredentialsProvider credentialsProvider;
     private final SshdSessionFactory sshSessionFactory;
 
     @Getter
     private final String directory;
 
-    private GitRepository(Git git, EntitiesVersionControlSettings settings, CredentialsProvider credentialsProvider, SshdSessionFactory sshSessionFactory, String directory) {
+    private GitRepository(Git git, RepositorySettings settings, CredentialsProvider credentialsProvider, SshdSessionFactory sshSessionFactory, String directory) {
         this.git = git;
         this.settings = settings;
         this.credentialsProvider = credentialsProvider;
@@ -92,7 +92,7 @@ public class GitRepository {
         this.directory = directory;
     }
 
-    public static GitRepository clone(EntitiesVersionControlSettings settings, File directory) throws GitAPIException {
+    public static GitRepository clone(RepositorySettings settings, File directory) throws GitAPIException {
         CredentialsProvider credentialsProvider = null;
         SshdSessionFactory sshSessionFactory = null;
         if (VersionControlAuthMethod.USERNAME_PASSWORD.equals(settings.getAuthMethod())) {
@@ -109,7 +109,7 @@ public class GitRepository {
         return new GitRepository(git, settings, credentialsProvider, sshSessionFactory, directory.getAbsolutePath());
     }
 
-    public static GitRepository open(File directory, EntitiesVersionControlSettings settings) throws IOException {
+    public static GitRepository open(File directory, RepositorySettings settings) throws IOException {
         Git git = Git.open(directory);
         CredentialsProvider credentialsProvider = null;
         SshdSessionFactory sshSessionFactory = null;
@@ -121,7 +121,7 @@ public class GitRepository {
         return new GitRepository(git, settings, credentialsProvider, sshSessionFactory, directory.getAbsolutePath());
     }
 
-    public static void test(EntitiesVersionControlSettings settings, File directory) throws GitAPIException {
+    public static void test(RepositorySettings settings, File directory) throws GitAPIException {
         CredentialsProvider credentialsProvider = null;
         SshdSessionFactory sshSessionFactory = null;
         if (VersionControlAuthMethod.USERNAME_PASSWORD.equals(settings.getAuthMethod())) {

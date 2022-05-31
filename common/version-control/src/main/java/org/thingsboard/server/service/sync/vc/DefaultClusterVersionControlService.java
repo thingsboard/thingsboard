@@ -35,7 +35,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
-import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
+import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -495,8 +495,8 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
         producer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), null);
     }
 
-    private EntitiesVersionControlSettings getEntitiesVersionControlSettings(ToVersionControlServiceMsg msg) {
-        Optional<EntitiesVersionControlSettings> settingsOpt = encodingService.decode(msg.getVcSettings().toByteArray());
+    private RepositorySettings getEntitiesVersionControlSettings(ToVersionControlServiceMsg msg) {
+        Optional<RepositorySettings> settingsOpt = encodingService.decode(msg.getVcSettings().toByteArray());
         if (settingsOpt.isPresent()) {
             return settingsOpt.get();
         } else {
