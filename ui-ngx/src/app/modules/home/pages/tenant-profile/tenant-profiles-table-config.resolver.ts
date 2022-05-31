@@ -33,6 +33,8 @@ import { TenantProfileComponent } from '../../components/profile/tenant-profile.
 import { TenantProfileTabsComponent } from './tenant-profile-tabs.component';
 import { DialogService } from '@core/services/dialog.service';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { map } from 'rxjs/operators';
+import { guid } from '@core/utils';
 
 @Injectable()
 export class TenantProfilesTableConfigResolver implements Resolve<EntityTableConfig<TenantProfile>> {
@@ -84,13 +86,27 @@ export class TenantProfilesTableConfigResolver implements Resolve<EntityTableCon
     this.config.deleteEntitiesContent = () => this.translate.instant('tenant-profile.delete-tenant-profiles-text');
 
     this.config.entitiesFetchFunction = pageLink => this.tenantProfileService.getTenantProfiles(pageLink);
-    this.config.loadEntity = id => this.tenantProfileService.getTenantProfile(id.id);
+    this.config.loadEntity = id => this.tenantProfileService.getTenantProfile(id.id).pipe(
+      map(tenantProfile => ({
+        ...tenantProfile,
+        profileData: {...tenantProfile.profileData, queueConfiguration: this.addId(tenantProfile.profileData.queueConfiguration)},
+      }))
+    );
     this.config.saveEntity = tenantProfile => this.tenantProfileService.saveTenantProfile(tenantProfile);
     this.config.deleteEntity = id => this.tenantProfileService.deleteTenantProfile(id.id);
     this.config.onEntityAction = action => this.onTenantProfileAction(action);
     this.config.deleteEnabled = (tenantProfile) => tenantProfile && !tenantProfile.default;
     this.config.entitySelectionEnabled = (tenantProfile) => tenantProfile && !tenantProfile.default;
     this.config.addActionDescriptors = this.configureAddActions();
+  }
+
+  addId(queues) {
+    const queuesWithId = [];
+    queues.forEach(value => {
+      value.id = guid();
+      queuesWithId.push(value);
+    });
+    return queuesWithId;
   }
 
   resolve(): EntityTableConfig<TenantProfile> {

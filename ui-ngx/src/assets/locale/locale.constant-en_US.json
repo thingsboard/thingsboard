@@ -2794,6 +2794,7 @@
         "select-name": "Select queue name",
         "name": "Name",
         "name-required": "Queue name is required!",
+        "name-unique": "Queue name is not unique!",
         "queue-required": "Queue is required!",
         "topic-required": "Queue topic is required!",
         "poll-interval-required": "Poll interval is required!",
@@ -2840,7 +2841,8 @@
         "delete": "Delete queue",
         "copyId": "Copy queue Id",
         "idCopiedMessage": "Queue Id has been copied to clipboard",
-        "description": "Description"
+        "description": "Description",
+        "alt-description": "Submit Strategy: {{submitStrategy}}, Processing Strategy: {{processingStrategy}}"
     },
     "tenant": {
         "tenant": "Tenant",

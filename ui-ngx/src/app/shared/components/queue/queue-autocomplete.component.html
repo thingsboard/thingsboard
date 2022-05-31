@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="selectQueueFormGroup" class="mat-block">
+<mat-form-field [formGroup]="selectQueueFormGroup" class="mat-block autocomplete-queue">
   <input matInput type="text" placeholder="{{ 'queue.queue-name' | translate }}"
          #queueInput
          formControlName="queueId"
@@ -30,10 +30,11 @@
   </button>
   <mat-autocomplete class="tb-autocomplete"
                     #queueAutocomplete="matAutocomplete"
-                    [displayWith]="displayQueueFn">
-    <mat-option *ngFor="let queue of filteredQueues | async" [value]="queue">
+                    [displayWith]="displayQueueFn"
+                    >
+    <mat-option *ngFor="let queue of filteredQueues | async" [value]="queue" class="queue-option">
       <span [innerHTML]="queue.name | highlight:searchText"></span>
-      <small style="display: block;">{{getDescription(queue)}}</small>
+      <small class="queue-option-description">{{getDescription(queue)}}</small>
     </mat-option>
     <mat-option *ngIf="!(filteredQueues | async)?.length" [value]="null" class="tb-not-found">
       <div class="tb-not-found-content" (click)="$event.stopPropagation()">
