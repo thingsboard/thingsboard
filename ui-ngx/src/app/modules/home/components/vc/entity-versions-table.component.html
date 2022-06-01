@@ -16,7 +16,7 @@
 
 -->
 <div class="mat-padding tb-entity-table tb-absolute-fill">
-  <div fxFlex fxLayout="column" class="mat-elevation-z1 tb-entity-table-content">
+  <div fxFlex fxLayout="column" class="tb-entity-table-content" [ngClass]="{'mat-elevation-z1': !popoverMode}">
     <mat-toolbar class="mat-table-toolbar" [fxShow]="!textSearchMode">
       <div class="mat-toolbar-tools">
         <div fxLayout="row" fxLayoutAlign="start center" fxLayout.xs="column" fxLayoutAlign.xs="center start" class="title-container">
@@ -44,6 +44,11 @@
                 (click)="toggleComplexCreateVersion($event, complexCreateVersionButton)">
           <mat-icon>update</mat-icon>
           {{'version-control.create-entities-version' | translate }}
+        </button>
+        <button mat-icon-button [disabled]="isLoading$ | async" (click)="updateData()"
+                matTooltip="{{ 'action.refresh' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>refresh</mat-icon>
         </button>
         <button mat-icon-button
                 [disabled]="isLoading$ | async"

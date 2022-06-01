@@ -27,6 +27,7 @@ import { AppState } from '@core/core.state';
 import { EntitiesVersionControlService } from '@core/http/entities-version-control.service';
 import { EntityId } from '@shared/models/id/entity-id';
 import { TranslateService } from '@ngx-translate/core';
+import { Observable, of } from 'rxjs';
 
 @Component({
   selector: 'tb-entity-version-create',
@@ -49,6 +50,9 @@ export class EntityVersionCreateComponent extends PageComponent implements OnIni
 
   @Input()
   onContentUpdated: () => void;
+
+  @Input()
+  onBeforeCreateVersion: () => Observable<any>;
 
   createVersionFormGroup: FormGroup;
 
@@ -78,25 +82,29 @@ export class EntityVersionCreateComponent extends PageComponent implements OnIni
   }
 
   export(): void {
-    const request: SingleEntityVersionCreateRequest = {
-      entityId: this.entityId,
-      branch: this.createVersionFormGroup.get('branch').value,
-      versionName: this.createVersionFormGroup.get('versionName').value,
-      config: {
-        saveRelations: this.createVersionFormGroup.get('saveRelations').value,
-        saveAttributes: this.createVersionFormGroup.get('saveAttributes').value,
-      },
-      type: VersionCreateRequestType.SINGLE_ENTITY
-    };
-    this.entitiesVersionControlService.saveEntitiesVersion(request).subscribe((result) => {
-      if (!result.added && !result.modified) {
-        this.resultMessage = this.translate.instant('version-control.nothing-to-commit');
-        if (this.onContentUpdated) {
-          this.onContentUpdated();
+    const before = this.onBeforeCreateVersion ? this.onBeforeCreateVersion() : of(null);
+    before.subscribe(() => {
+      const request: SingleEntityVersionCreateRequest = {
+        entityId: this.entityId,
+        branch: this.createVersionFormGroup.get('branch').value,
+        versionName: this.createVersionFormGroup.get('versionName').value,
+        config: {
+          saveRelations: this.createVersionFormGroup.get('saveRelations').value,
+          saveAttributes: this.createVersionFormGroup.get('saveAttributes').value,
+        },
+        type: VersionCreateRequestType.SINGLE_ENTITY
+      };
+      this.entitiesVersionControlService.saveEntitiesVersion(request).subscribe((result) => {
+        if (!result.added && !result.modified) {
+          this.resultMessage = this.translate.instant('version-control.nothing-to-commit');
+          if (this.onContentUpdated) {
+            this.onContentUpdated();
+          }
+        } else if (this.onClose) {
+          this.onClose(result, request.branch);
         }
-      } else if (this.onClose) {
-        this.onClose(result, request.branch);
-      }
+      });
     });
   }
 }
+

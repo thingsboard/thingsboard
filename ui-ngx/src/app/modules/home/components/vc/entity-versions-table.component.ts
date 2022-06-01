@@ -62,6 +62,12 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
   @Input()
   singleEntityMode = false;
 
+  @Input()
+  popoverMode = false;
+
+  @Input()
+  onBeforeCreateVersion: () => Observable<any>;
+
   displayedColumns = ['timestamp', 'id', 'name', 'author', 'actions'];
   pageLink: PageLink;
   textSearchMode = false;
@@ -195,6 +201,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
           branch: this.branch,
           entityId: this.entityId,
           entityName: this.entityName,
+          onBeforeCreateVersion: this.onBeforeCreateVersion,
           onClose: (result: VersionCreationResult | null, branch: string | null) => {
             createVersionPopover.hide();
             if (result) {
@@ -353,7 +360,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
     }
   }
 
-  private updateData() {
+  updateData() {
     this.pageLink.page = this.paginator.pageIndex;
     this.pageLink.pageSize = this.paginator.pageSize;
     this.pageLink.sortOrder.property = this.sort.active;

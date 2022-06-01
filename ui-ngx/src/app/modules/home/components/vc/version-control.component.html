@@ -20,6 +20,8 @@
 </tb-repository-settings>
 <ng-template #versionsTable>
   <tb-entity-versions-table [singleEntityMode]="singleEntityMode"
+                            [popoverMode]="popoverMode"
+                            [onBeforeCreateVersion]="onBeforeCreateVersion"
                             [active]="active"
                             [entityId]="entityId"
                             [entityName]="entityName"

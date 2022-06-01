@@ -22,6 +22,7 @@ import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { RepositorySettingsComponent } from '@home/components/vc/repository-settings.component';
 import { FormGroup } from '@angular/forms';
 import { EntityId } from '@shared/models/id/entity-id';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'tb-version-control',
@@ -34,6 +35,9 @@ export class VersionControlComponent implements OnInit, HasConfirmForm {
 
   @Input()
   detailsMode = false;
+
+  @Input()
+  popoverMode = false;
 
   @Input()
   active = true;
@@ -49,6 +53,9 @@ export class VersionControlComponent implements OnInit, HasConfirmForm {
 
   @Input()
   entityName: string;
+
+  @Input()
+  onBeforeCreateVersion: () => Observable<any>;
 
   @Output()
   versionRestored = new EventEmitter<void>();
