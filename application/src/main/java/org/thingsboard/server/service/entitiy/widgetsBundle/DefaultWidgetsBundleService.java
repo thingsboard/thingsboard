@@ -15,12 +15,18 @@
  */
 package org.thingsboard.server.service.entitiy.widgetsBundle;
 
+import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
+@Service
+@TbCoreComponent
+@AllArgsConstructor
 public class DefaultWidgetsBundleService extends AbstractTbEntityService implements TbWidgetsBundleService{
     @Override
     public WidgetsBundle save(WidgetsBundle widgetsBundle, SecurityUser user) throws ThingsboardException {
