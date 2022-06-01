@@ -3168,7 +3168,9 @@
         "deleted": "{{deleted}} deleted",
         "remove-other-entities-confirm-text": "Be careful! This will permanently <b>delete</b> <b>all</b> current entities<br/>not present in the version you want to restore.<br/><br/>Please type <b>remove other entities</b> to confirm.",
         "auto-commit-to-branch": "auto-commit to <b>{{ branch }}</b> branch",
-        "default-create-entity-version-name": "{{entityName}} update"
+        "default-create-entity-version-name": "{{entityName}} update",
+        "sync-strategy-merge-hint": "Sync strategy <b>merge</b> hint",
+        "sync-strategy-overwrite-hint": "Sync strategy <b>overwrite</b> hint"
     },
     "widget": {
         "widget-library": "Widgets Library",

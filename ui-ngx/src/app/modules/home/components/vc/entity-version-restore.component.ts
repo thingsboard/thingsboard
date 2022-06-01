@@ -70,8 +70,8 @@ export class EntityVersionRestoreComponent extends PageComponent implements OnIn
 
   ngOnInit(): void {
     this.restoreFormGroup = this.fb.group({
-      loadRelations: [true, []],
-      loadAttributes: [true, []]
+      loadAttributes: [true, []],
+      loadRelations: [true, []]
     });
     this.entitiesVersionControlService.getEntityDataInfo(this.externalEntityId, this.versionId).subscribe((data) => {
       this.entityDataInfo = data;

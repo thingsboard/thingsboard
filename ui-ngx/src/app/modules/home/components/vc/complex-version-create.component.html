@@ -39,13 +39,14 @@
               {{ 'version-control.version-name-required' | translate }}
             </mat-error>
           </mat-form-field>
-          <mat-form-field fxFlex class="mat-block">
+          <mat-form-field fxFlex class="mat-block" style="margin-bottom: 16px;">
             <mat-label translate>version-control.default-sync-strategy</mat-label>
             <mat-select required formControlName="syncStrategy">
               <mat-option *ngFor="let strategy of syncStrategies" [value]="strategy">
                 {{syncStrategyTranslations.get(strategy) | translate}}
               </mat-option>
             </mat-select>
+            <mat-hint [innerHTML]="(syncStrategyHints.get(createVersionFormGroup.get('syncStrategy').value) | translate) | safe:'html'"></mat-hint>
           </mat-form-field>
           <tb-entity-types-version-create
             formControlName="entityTypes">
