@@ -297,19 +297,15 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
                 notificationEntityService.notifySendMsgToEdgeService(tenantId, ruleChain.getId(), EdgeEventActionType.UPDATED);
             }
 
-            updatedRuleChains.forEach(updatedRuleChain -> {
+            for (RuleChain updatedRuleChain : updatedRuleChains) {
                 if (RuleChainType.EDGE.equals(ruleChain.getType())) {
-                    notificationEntityService.notifySendMsgToEdgeService(tenantId, updatedRuleChain.getId(),  EdgeEventActionType.UPDATED);
+                    notificationEntityService.notifySendMsgToEdgeService(tenantId, updatedRuleChain.getId(), EdgeEventActionType.UPDATED);
                 } else {
-                    try {
-                        RuleChainMetaData updatedRuleChainMetaData = checkNotNull(ruleChainService.loadRuleChainMetaData(tenantId, updatedRuleChain.getId()));
-                        notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, updatedRuleChain.getId(),
-                                updatedRuleChain, user, ActionType.UPDATED, false, null, updatedRuleChainMetaData);
-                    } catch (ThingsboardException e) {
-                        e.printStackTrace();
-                    }
+                    RuleChainMetaData updatedRuleChainMetaData = checkNotNull(ruleChainService.loadRuleChainMetaData(tenantId, updatedRuleChain.getId()));
+                    notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, updatedRuleChain.getId(),
+                            updatedRuleChain, user, ActionType.UPDATED, false, null, updatedRuleChainMetaData);
                 }
-            });
+            }
             return savedRuleChainMetaData;
         } catch (Exception e) {
             notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, emptyId(EntityType.RULE_CHAIN),
@@ -398,6 +394,7 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
             throw handleException(e);
         }
     }
+
     public Set<RuleChainId> updateRelatedRuleChains(TenantId tenantId, RuleChainId ruleChainId, Map<String, String> labelsMap) {
         Set<RuleChainId> updatedRuleChains = new HashSet<>();
         List<RuleChainOutputLabelsUsage> usageList = getOutputLabelUsage(tenantId, ruleChainId);
