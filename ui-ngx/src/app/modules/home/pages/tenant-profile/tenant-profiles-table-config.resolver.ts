@@ -101,12 +101,15 @@ export class TenantProfilesTableConfigResolver implements Resolve<EntityTableCon
   }
 
   addId(queues) {
-    const queuesWithId = [];
-    queues.forEach(value => {
-      value.id = guid();
-      queuesWithId.push(value);
-    });
-    return queuesWithId;
+    if (queues) {
+      const queuesWithId = [];
+      queues.forEach(value => {
+        value.id = guid();
+        queuesWithId.push(value);
+      });
+      return queuesWithId;
+    }
+    return null;
   }
 
   resolve(): EntityTableConfig<TenantProfile> {

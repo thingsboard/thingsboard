@@ -2926,7 +2926,32 @@
         "copyId": "Copy queue Id",
         "idCopiedMessage": "Queue Id has been copied to clipboard",
         "description": "Description",
-        "alt-description": "Submit Strategy: {{submitStrategy}}, Processing Strategy: {{processingStrategy}}"
+        "description-hint": "This text will be displayed in the Queue description instead of the selected strategy",
+        "alt-description": "Submit Strategy: {{submitStrategy}}, Processing Strategy: {{processingStrategy}}",
+        "strategies": {
+            "sequential-by-originator-label": "Sequential by originator",
+            "sequential-by-originator-hint": "New message for e.g. device A is not submitted until previous message for device A is acknowledged",
+            "sequential-by-tenant-label": "Sequential by tenant",
+            "sequential-by-tenant-hint": "New message for e.g tenant A is not submitted until previous message for tenant A is acknowledged",
+            "sequential-label": "Sequential",
+            "sequential-hint": "New message is not submitted until previous message is acknowledged",
+            "burst-label": "Burst",
+            "burst-hint": "All messages are submitted to the rule chains in the order they arrive",
+            "batch-label": "Batch",
+            "batch-hint": "New batch is not submitted until previous batch is acknowledged",
+            "skip-all-failures-label": "Skip all failures",
+            "skip-all-failures-hint": "Ignore all failures",
+            "skip-all-failures-and-timeouts-label": "Skip all failures and timeouts",
+            "skip-all-failures-and-timeouts-hint": "Ignore all failures and timeouts",
+            "retry-all-label": "Retry all",
+            "retry-all-hint": "Retry all messages from processing pack",
+            "retry-failed-label": "Retry failed",
+            "retry-failed-hint": "Retry all failed messages from processing pack",
+            "retry-timeout-label": "Retry timeout",
+            "retry-timeout-hint": "Retry all timed-out messages from processing pack",
+            "retry-failed-and-timeout-label": "Retry failed and timeout",
+            "retry-failed-and-timeout-hint": "Retry all failed and timed-out messages from processing pack"
+        }
     },
     "tenant": {
         "tenant": "Tenant",
