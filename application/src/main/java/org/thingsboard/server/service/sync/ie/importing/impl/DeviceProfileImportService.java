@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
@@ -46,7 +47,7 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
     }
 
     @Override
-    protected DeviceProfile prepareAndSave(TenantId tenantId, DeviceProfile deviceProfile, EntityExportData<DeviceProfile> exportData, IdProvider idProvider) {
+    protected DeviceProfile prepareAndSave(TenantId tenantId, DeviceProfile deviceProfile, EntityExportData<DeviceProfile> exportData, IdProvider idProvider, EntityImportSettings importSettings) {
         deviceProfile.setDefaultRuleChainId(idProvider.getInternalId(deviceProfile.getDefaultRuleChainId()));
         deviceProfile.setDefaultDashboardId(idProvider.getInternalId(deviceProfile.getDefaultDashboardId()));
         deviceProfile.setFirmwareId(idProvider.getInternalId(deviceProfile.getFirmwareId()));

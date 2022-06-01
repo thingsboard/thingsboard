@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -41,11 +42,11 @@ public class DeviceImportService extends BaseEntityImportService<DeviceId, Devic
     }
 
     @Override
-    protected Device prepareAndSave(TenantId tenantId, Device device, DeviceExportData exportData, IdProvider idProvider) {
+    protected Device prepareAndSave(TenantId tenantId, Device device, DeviceExportData exportData, IdProvider idProvider, EntityImportSettings importSettings) {
         device.setDeviceProfileId(idProvider.getInternalId(device.getDeviceProfileId()));
         device.setFirmwareId(idProvider.getInternalId(device.getFirmwareId()));
         device.setSoftwareId(idProvider.getInternalId(device.getSoftwareId()));
-        if (exportData.getCredentials() != null) {
+        if (exportData.getCredentials() != null && importSettings.isSaveCredentials()) {
             exportData.getCredentials().setId(null);
             exportData.getCredentials().setDeviceId(null);
             return deviceService.saveDeviceWithCredentials(device, exportData.getCredentials());

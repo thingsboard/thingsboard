@@ -22,5 +22,6 @@ public class VersionLoadConfig {
 
     private boolean loadRelations;
     private boolean loadAttributes;
+    private boolean loadCredentials;
 
 }

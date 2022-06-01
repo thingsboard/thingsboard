@@ -23,11 +23,12 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.sync.vc.EntityDataDiff;
 import org.thingsboard.server.common.data.sync.vc.EntityDataInfo;
+import org.thingsboard.server.common.data.sync.vc.VersionLoadResult;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
-import org.thingsboard.server.common.data.sync.vc.VersionLoadResult;
+import org.thingsboard.server.common.data.sync.vc.EntityTypeLoadResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadRequest;
 import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
@@ -49,7 +50,7 @@ public interface EntitiesVersionControlService {
 
     ListenableFuture<List<VersionedEntityInfo>> listAllEntitiesAtVersion(TenantId tenantId, String branch, String versionId) throws Exception;
 
-    ListenableFuture<List<VersionLoadResult>> loadEntitiesVersion(SecurityUser user, VersionLoadRequest request) throws Exception;
+    ListenableFuture<VersionLoadResult> loadEntitiesVersion(SecurityUser user, VersionLoadRequest request) throws Exception;
 
     ListenableFuture<EntityDataDiff> compareEntityDataToVersion(SecurityUser user, String branch, EntityId entityId, String versionId) throws Exception;
 

@@ -21,6 +21,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.common.data.sync.ie.DeviceExportData;
@@ -35,8 +36,10 @@ public class DeviceExportService extends BaseEntityExportService<DeviceId, Devic
     private final DeviceCredentialsService deviceCredentialsService;
 
     @Override
-    protected void setRelatedEntities(TenantId tenantId, Device device, DeviceExportData exportData) {
-        exportData.setCredentials(deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, device.getId()));
+    protected void setRelatedEntities(TenantId tenantId, Device device, DeviceExportData exportData, EntityExportSettings settings) {
+        if (settings.isExportCredentials()) {
+            exportData.setCredentials(deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, device.getId()));
+        }
     }
 
     @Override
