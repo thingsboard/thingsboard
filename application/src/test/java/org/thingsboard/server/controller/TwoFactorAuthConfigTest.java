@@ -124,7 +124,7 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
         assertThat(errorMessage).contains(
                 "verification code check rate limit configuration is invalid",
                 "maximum number of verification failure before user lockout must be positive",
-                "total amount of time allotted for verification must be greater than 0"
+                "total amount of time allotted for verification must be greater than or equal 60"
         );
     }
 
