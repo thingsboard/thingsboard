@@ -126,9 +126,9 @@ export class TenantProfileQueuesComponent implements ControlValueAccessor, Valid
     } else {
       this.tenantProfileQueuesFormGroup.enable({emitEvent: false});
     }
-    this.valueChangeSubscription$ = this.tenantProfileQueuesFormGroup.valueChanges.subscribe(value => {
-      this.updateModel();
-    });
+    this.valueChangeSubscription$ = this.tenantProfileQueuesFormGroup.valueChanges.subscribe(() =>
+      this.updateModel()
+    );
   }
 
   public trackByQueue(index: number, queueControl: AbstractControl) {
@@ -181,10 +181,6 @@ export class TenantProfileQueuesComponent implements ControlValueAccessor, Valid
         valid: false,
       },
     };
-  }
-
-  getName(value) {
-    return this.utils.customTranslation(value, value);
   }
 
   private updateModel() {
