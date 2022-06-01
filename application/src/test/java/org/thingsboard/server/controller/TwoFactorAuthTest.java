@@ -156,14 +156,14 @@ public abstract class TwoFactorAuthTest extends AbstractControllerTest {
     @Test
     public void testTwoFaPreVerificationTokenLifetime() throws Exception {
         configureTotpTwoFa(twoFaSettings -> {
-            twoFaSettings.setTotalAllowedTimeForVerification(5);
+            twoFaSettings.setTotalAllowedTimeForVerification(65);
         });
 
         logInWithPreVerificationToken(username, password);
 
         await("expiration of the pre-verification token")
-                .atLeast(Duration.ofSeconds(3).plusMillis(500))
-                .atMost(Duration.ofSeconds(6))
+                .atLeast(Duration.ofSeconds(30).plusMillis(500))
+                .atMost(Duration.ofSeconds(70))
                 .untilAsserted(() -> {
                     doPost("/api/auth/2fa/verification/send?providerType=TOTP")
                             .andExpect(status().isUnauthorized());
