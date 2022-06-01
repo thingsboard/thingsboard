@@ -57,7 +57,8 @@
         "download": "Stáhnout",
         "next-with-label": "Další: {{label}}",
         "read-more": "Zobrazit více",
-        "hide": "Skrýt"
+        "hide": "Skrýt",
+        "done": "Hotovo"
     },
     "aggregation": {
         "aggregation": "Agregace",
@@ -2169,8 +2170,7 @@
             "select-file": "Vybrat soubor",
             "configuration": "Importovat konfiguraci",
             "column-type": "Vybrat typ sloupců",
-            "creat-entities": "Vytvořím nové entity",
-            "done": "Hotovo"
+            "creat-entities": "Vytvořím nové entity"
         },
         "message": {
             "create-entities": "{{count}} nových entit bylo úspěšně vytvořeno.",

@@ -33,6 +33,7 @@ import { EntityDetailsPageComponent } from '@home/components/entity/entity-detai
 import { entityDetailsPageBreadcrumbLabelFunction } from '@home/pages/home-pages.models';
 import { BreadCrumbConfig } from '@shared/components/breadcrumb';
 import { QueuesTableConfigResolver } from '@home/pages/admin/queue/queues-table-config.resolver';
+import { TwoFactorAuthSettingsComponent } from '@home/pages/admin/two-factor-auth-settings.component';
 
 @Injectable()
 export class OAuth2LoginProcessingUrlResolver implements Resolve<string> {
@@ -222,6 +223,20 @@ const routes: Routes = [
             }
           }
         ]
+      },
+      {
+        path: '2fa',
+        component: TwoFactorAuthSettingsComponent,
+        canDeactivate: [ConfirmOnExitGuard],
+        data: {
+          auth: [Authority.SYS_ADMIN],
+          title: 'admin.2fa.2fa',
+          breadcrumb: {
+            label: 'admin.2fa.2fa',
+            icon: 'mdi:two-factor-authentication',
+            isMdiIcon: true
+          }
+        }
       }
     ]
   }

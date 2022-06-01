@@ -148,6 +148,14 @@ export class MenuService {
           },
           {
             id: guid(),
+            name: 'admin.2fa.2fa',
+            type: 'link',
+            path: '/settings/2fa',
+            icon: 'mdi:two-factor-authentication',
+            isMdiIcon: true
+          },
+          {
+            id: guid(),
             name: 'resource.resources-library',
             type: 'link',
             path: '/settings/resources-library',
@@ -222,6 +230,12 @@ export class MenuService {
             name: 'admin.oauth2.oauth2',
             icon: 'security',
             path: '/settings/oauth2'
+          },
+          {
+            name: 'admin.2fa.2fa',
+            icon: 'mdi:two-factor-authentication',
+            isMdiIcon: true,
+            path: '/settings/2fa'
           },
           {
             name: 'resource.resources-library',
@@ -362,7 +376,7 @@ export class MenuService {
         name: 'admin.system-settings',
         type: 'toggle',
         path: '/settings',
-        height: '80px',
+        height: '120px',
         icon: 'settings',
         pages: [
           {
