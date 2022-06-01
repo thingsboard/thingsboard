@@ -184,3 +184,8 @@ export interface EntityDataDiff {
 export function entityExportDataToJsonString(data: EntityExportData<any>): string {
   return JSON.stringify(data, null, 4);
 }
+
+export interface EntityDataInfo {
+  hasRelations: boolean;
+  hasAttributes: boolean;
+}
