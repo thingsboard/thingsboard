@@ -68,17 +68,20 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
 
     private final UserDao userDao;
     private final UserCredentialsDao userCredentialsDao;
+    private final UserAuthSettingsDao userAuthSettingsDao;
     private final DataValidator<User> userValidator;
     private final DataValidator<UserCredentials> userCredentialsValidator;
     private final ApplicationEventPublisher eventPublisher;
 
     public UserServiceImpl(UserDao userDao,
                            UserCredentialsDao userCredentialsDao,
+                           UserAuthSettingsDao userAuthSettingsDao,
                            DataValidator<User> userValidator,
                            DataValidator<UserCredentials> userCredentialsValidator,
                            ApplicationEventPublisher eventPublisher) {
         this.userDao = userDao;
         this.userCredentialsDao = userCredentialsDao;
+        this.userAuthSettingsDao = userAuthSettingsDao;
         this.userValidator = userValidator;
         this.userCredentialsValidator = userCredentialsValidator;
         this.eventPublisher = eventPublisher;
@@ -215,6 +218,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         validateId(userId, INCORRECT_USER_ID + userId);
         UserCredentials userCredentials = userCredentialsDao.findByUserId(tenantId, userId.getId());
         userCredentialsDao.removeById(tenantId, userCredentials.getUuidId());
+        userAuthSettingsDao.removeByUserId(userId);
         deleteEntityRelations(tenantId, userId);
         userDao.removeById(tenantId, userId.getId());
         eventPublisher.publishEvent(new UserAuthDataChangedEvent(userId));
@@ -283,21 +287,11 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
 
 
     @Override
-    public void onUserLoginSuccessful(TenantId tenantId, UserId userId) {
+    public void resetFailedLoginAttempts(TenantId tenantId, UserId userId) {
         log.trace("Executing onUserLoginSuccessful [{}]", userId);
         User user = findUserById(tenantId, userId);
-        setLastLoginTs(user);
         resetFailedLoginAttempts(user);
         saveUser(user);
-    }
-
-    private void setLastLoginTs(User user) {
-        JsonNode additionalInfo = user.getAdditionalInfo();
-        if (!(additionalInfo instanceof ObjectNode)) {
-            additionalInfo = JacksonUtil.newObjectNode();
-        }
-        ((ObjectNode) additionalInfo).put(LAST_LOGIN_TS, System.currentTimeMillis());
-        user.setAdditionalInfo(additionalInfo);
     }
 
     private void resetFailedLoginAttempts(User user) {
@@ -310,7 +304,19 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     }
 
     @Override
-    public int onUserLoginIncorrectCredentials(TenantId tenantId, UserId userId) {
+    public void setLastLoginTs(TenantId tenantId, UserId userId) {
+        User user = findUserById(tenantId, userId);
+        JsonNode additionalInfo = user.getAdditionalInfo();
+        if (!(additionalInfo instanceof ObjectNode)) {
+            additionalInfo = JacksonUtil.newObjectNode();
+        }
+        ((ObjectNode) additionalInfo).put(LAST_LOGIN_TS, System.currentTimeMillis());
+        user.setAdditionalInfo(additionalInfo);
+        saveUser(user);
+    }
+
+    @Override
+    public int increaseFailedLoginAttempts(TenantId tenantId, UserId userId) {
         log.trace("Executing onUserLoginIncorrectCredentials [{}]", userId);
         User user = findUserById(tenantId, userId);
         int failedLoginAttempts = increaseFailedLoginAttempts(user);

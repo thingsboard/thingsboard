@@ -45,7 +45,8 @@ import { ActionNotificationShow } from '@core/notification/notification.actions'
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { AlertDialogComponent } from '@shared/components/dialog/alert-dialog.component';
 import { OAuth2ClientInfo, PlatformType } from '@shared/models/oauth2.models';
-import { isDefinedAndNotNull, isMobileApp } from '@core/utils';
+import { isMobileApp } from '@core/utils';
+import { TwoFactorAuthProviderType, TwoFaProviderInfo } from '@shared/models/two-factor-auth.models';
 
 @Injectable({
     providedIn: 'root'
@@ -70,6 +71,7 @@ export class AuthService {
 
   redirectUrl: string;
   oauth2Clients: Array<OAuth2ClientInfo> = null;
+  twoFactorAuthProviders: Array<TwoFaProviderInfo> = null;
 
   private refreshTokenSubject: ReplaySubject<LoginResponse> = null;
   private jwtHelper = new JwtHelperService();
@@ -114,6 +116,18 @@ export class AuthService {
 
   public login(loginRequest: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>('/api/auth/login', loginRequest, defaultHttpOptions()).pipe(
+      tap((loginResponse: LoginResponse) => {
+          this.setUserFromJwtToken(loginResponse.token, loginResponse.refreshToken, true);
+          if (loginResponse.scope === Authority.PRE_VERIFICATION_TOKEN) {
+            this.router.navigateByUrl(`login/mfa`);
+          }
+        }
+      ));
+  }
+
+  public checkTwoFaVerificationCode(providerType: TwoFactorAuthProviderType, verificationCode: number): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`/api/auth/2fa/verification/check?providerType=${providerType}&verificationCode=${verificationCode}`,
+      null, defaultHttpOptions(false, true)).pipe(
       tap((loginResponse: LoginResponse) => {
           this.setUserFromJwtToken(loginResponse.token, loginResponse.refreshToken, true);
         }
@@ -215,11 +229,20 @@ export class AuthService {
     );
   }
 
-  private forceDefaultPlace(authState?: AuthState, path?: string, params?: any): boolean {
+  public getAvailableTwoFaLoginProviders(): Observable<Array<TwoFaProviderInfo>> {
+    return this.http.get<Array<TwoFaProviderInfo>>(`/api/auth/2fa/providers`, defaultHttpOptions()).pipe(
+      catchError(() => of([])),
+      tap((providers) => {
+        this.twoFactorAuthProviders = providers;
+      })
+    );
+  }
+
+  public forceDefaultPlace(authState?: AuthState, path?: string, params?: any): boolean {
     if (authState && authState.authUser) {
       if (authState.authUser.authority === Authority.TENANT_ADMIN || authState.authUser.authority === Authority.CUSTOMER_USER) {
         if ((this.userHasDefaultDashboard(authState) && authState.forceFullscreen) || authState.authUser.isPublic) {
-          if (path === 'profile') {
+          if (path === 'profile' || path === 'security') {
             if (this.userHasProfile(authState.authUser)) {
               return false;
             } else {
@@ -382,6 +405,9 @@ export class AuthService {
               loadUserSubject.error(err);
             }
           );
+        } else if (authPayload.authUser.authority === Authority.PRE_VERIFICATION_TOKEN) {
+          loadUserSubject.next(authPayload);
+          loadUserSubject.complete();
         } else if (authPayload.authUser.userId) {
           this.userService.getUser(authPayload.authUser.userId).subscribe(
             (user) => {
@@ -594,8 +620,8 @@ export class AuthService {
   private updateAndValidateToken(token, prefix, notify) {
     let valid = false;
     const tokenData = this.jwtHelper.decodeToken(token);
-    const issuedAt = tokenData.iat;
-    const expTime = tokenData.exp;
+    const issuedAt = tokenData?.iat;
+    const expTime = tokenData?.exp;
     if (issuedAt && expTime) {
       const ttl = expTime - issuedAt;
       if (ttl > 0) {
