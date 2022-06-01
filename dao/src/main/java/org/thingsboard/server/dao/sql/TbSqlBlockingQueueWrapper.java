@@ -33,7 +33,6 @@ import java.util.function.Function;
 public class TbSqlBlockingQueueWrapper<E> {
     private final CopyOnWriteArrayList<TbSqlBlockingQueue<E>> queues = new CopyOnWriteArrayList<>();
     private final TbSqlBlockingQueueParams params;
-    private TbPrintStatsExecutorService tbPrintStatsExecutorService;
     private final Function<E, Integer> hashCodeFunction;
     private final int maxThreads;
     private final StatsFactory statsFactory;
