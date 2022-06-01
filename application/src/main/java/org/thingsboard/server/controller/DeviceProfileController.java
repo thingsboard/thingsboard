@@ -220,6 +220,7 @@ public class DeviceProfileController extends BaseController {
                 }
             }
             DeviceProfile savedDeviceProfile = checkNotNull(deviceProfileService.saveDeviceProfile(deviceProfile));
+            vcService.autoCommit(getCurrentUser(), savedDeviceProfile.getId());
 
             tbClusterService.onDeviceProfileChange(savedDeviceProfile, null);
             tbClusterService.broadcastEntityStateChangeEvent(deviceProfile.getTenantId(), savedDeviceProfile.getId(),

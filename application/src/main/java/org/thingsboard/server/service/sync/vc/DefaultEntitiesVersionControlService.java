@@ -53,6 +53,7 @@ import org.thingsboard.server.common.data.sync.vc.VersionLoadResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.common.data.sync.vc.request.create.AutoVersionCreateConfig;
 import org.thingsboard.server.common.data.sync.vc.request.create.ComplexVersionCreateRequest;
+import org.thingsboard.server.common.data.sync.vc.request.create.EntityTypeVersionCreateConfig;
 import org.thingsboard.server.common.data.sync.vc.request.create.SingleEntityVersionCreateRequest;
 import org.thingsboard.server.common.data.sync.vc.request.create.SyncStrategy;
 import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateConfig;
@@ -77,6 +78,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -415,6 +417,35 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         vcr.setVersionName("auto-commit at " + Instant.ofEpochSecond(System.currentTimeMillis() / 1000));
         vcr.setEntityId(entityId);
         vcr.setConfig(autoCommitConfig);
+        return saveEntitiesVersion(user, vcr);
+    }
+
+    @Override
+    public ListenableFuture<VersionCreationResult> autoCommit(SecurityUser user, EntityType entityType, List<UUID> entityIds) throws Exception {
+        var repositorySettings = repositorySettingsService.get(user.getTenantId());
+        if (repositorySettings == null) {
+            return Futures.immediateFuture(null);
+        }
+        var autoCommitSettings = autoCommitSettingsService.get(user.getTenantId());
+        if (autoCommitSettings == null) {
+            return Futures.immediateFuture(null);
+        }
+        AutoVersionCreateConfig autoCommitConfig = autoCommitSettings.get(entityType);
+        if (autoCommitConfig == null) {
+            return Futures.immediateFuture(null);
+        }
+        var autoCommitBranchName = autoCommitConfig.getBranch();
+        if (StringUtils.isEmpty(autoCommitBranchName)) {
+            autoCommitBranchName = StringUtils.isNotEmpty(repositorySettings.getDefaultBranch()) ? repositorySettings.getDefaultBranch() : "auto-commits";
+        }
+        ComplexVersionCreateRequest vcr = new ComplexVersionCreateRequest();
+        vcr.setBranch(autoCommitBranchName);
+        vcr.setVersionName("auto-commit at " + Instant.ofEpochSecond(System.currentTimeMillis() / 1000));
+        vcr.setSyncStrategy(SyncStrategy.MERGE);
+
+        EntityTypeVersionCreateConfig vcrConfig = new EntityTypeVersionCreateConfig();
+        vcrConfig.setEntityIds(entityIds);
+        vcr.setEntityTypes(Collections.singletonMap(entityType, vcrConfig));
         return saveEntitiesVersion(user, vcr);
     }
 

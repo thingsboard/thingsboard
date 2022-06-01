@@ -108,7 +108,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     public ListenableFuture<Void> addToCommit(CommitGitRequest commit, EntityExportData<ExportableEntity<EntityId>> entityData) {
         SettableFuture<Void> future = SettableFuture.create();
 
-        String path = getRelativePath(entityData.getEntityType(), entityData.getEntity().getId());
+        String path = getRelativePath(entityData.getEntityType(), getExternalId(entityData.getEntity()));
         String entityDataJson = JacksonUtil.toPrettyString(entityData.sort());
 
         registerAndSend(commit, builder -> builder.setCommitRequest(
@@ -118,6 +118,10 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
                 ).build()
         ).build(), wrap(future, null));
         return future;
+    }
+
+    private EntityId getExternalId(ExportableEntity<EntityId> entity) {
+        return entity.getExternalId() != null ? entity.getExternalId() : entity.getId();
     }
 
     @Override

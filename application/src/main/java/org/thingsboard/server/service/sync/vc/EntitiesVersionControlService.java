@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadReques
 import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface EntitiesVersionControlService {
 
@@ -63,6 +64,8 @@ public interface EntitiesVersionControlService {
     ListenableFuture<Void> checkVersionControlAccess(TenantId tenantId, RepositorySettings settings) throws Exception;
 
     ListenableFuture<VersionCreationResult> autoCommit(SecurityUser user, EntityId entityId) throws Exception;
+
+    ListenableFuture<VersionCreationResult> autoCommit(SecurityUser user, EntityType entityType, List<UUID> entityIds) throws Exception;
 
     ListenableFuture<EntityDataInfo> getEntityDataInfo(SecurityUser user, EntityId entityId, String versionId);
 }
