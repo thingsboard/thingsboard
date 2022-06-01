@@ -67,7 +67,7 @@ export class EntityVersionCreateComponent extends PageComponent implements OnIni
       versionName: [this.translate.instant('version-control.default-create-entity-version-name',
         {entityName: this.entityName}), [Validators.required]],
       saveRelations: [false, []],
-      saveAttributes: [false, []]
+      saveAttributes: [true, []]
     });
   }
 
