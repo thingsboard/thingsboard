@@ -105,6 +105,9 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
   @Input()
   entityId: EntityId;
 
+  @Input()
+  entityName: string;
+
   @Output()
   versionRestored = new EventEmitter<void>();
 
@@ -191,6 +194,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
         {
           branch: this.branch,
           entityId: this.entityId,
+          entityName: this.entityName,
           onClose: (result: VersionCreationResult | null, branch: string | null) => {
             createVersionPopover.hide();
             if (result) {
@@ -289,6 +293,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
             }
           }
         }, {}, {}, {}, false);
+      restoreVersionPopover.tbComponentRef.instance.popoverComponent = restoreVersionPopover;
     }
   }
 

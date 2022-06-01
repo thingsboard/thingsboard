@@ -57,7 +57,7 @@
       <button mat-raised-button color="primary"
               type="button"
               (click)="export()"
-              [disabled]="(isLoading$ | async) || createVersionFormGroup.invalid || !createVersionFormGroup.dirty">
+              [disabled]="(isLoading$ | async) || createVersionFormGroup.invalid">
         {{ 'action.create' | translate }}
       </button>
     </div>

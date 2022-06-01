@@ -238,12 +238,12 @@ public class EntitiesVersionControlController extends BaseController {
         }
     }
 
-    @GetMapping("/info/{versionId}/{entityType}/{internalEntityUuid}")
+    @GetMapping("/info/{versionId}/{entityType}/{externalEntityUuid}")
     public DeferredResult<EntityDataInfo> getEntityDataInfo(@PathVariable String versionId,
                                                             @PathVariable EntityType entityType,
-                                                            @PathVariable UUID internalEntityUuid) throws ThingsboardException {
+                                                            @PathVariable UUID externalEntityUuid) throws ThingsboardException {
         try {
-            EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, internalEntityUuid);
+            EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, externalEntityUuid);
             return wrapFuture(versionControlService.getEntityDataInfo(getCurrentUser(), entityId, versionId));
         } catch (Exception e) {
             throw handleException(e);
