@@ -15,13 +15,4 @@
     limitations under the License.
 
 -->
-<tb-repository-settings #repositorySettingsComponent [detailsMode]="detailsMode"
-  *ngIf="!(hasRepository$ | async); else versionsTable">
-</tb-repository-settings>
-<ng-template #versionsTable>
-  <tb-entity-versions-table [singleEntityMode]="singleEntityMode"
-                            [active]="active"
-                            [entityId]="entityId"
-                            [externalEntityId]="externalEntityId"
-                            (versionRestored)="versionRestored.emit()"></tb-entity-versions-table>
-</ng-template>
+<tb-repository-settings #repositorySettingsComponent></tb-repository-settings>

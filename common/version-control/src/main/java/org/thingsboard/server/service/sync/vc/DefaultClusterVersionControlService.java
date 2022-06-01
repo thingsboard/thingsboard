@@ -35,7 +35,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
-import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
+import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -312,7 +312,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
                         .setTotalElements(data.getTotalElements())
                         .setHasNext(data.hasNext())
                         .addAllVersions(data.getData().stream().map(
-                                v -> EntityVersionProto.newBuilder().setTs(v.getTimestamp()).setId(v.getId()).setName(v.getName()).build()
+                                v -> EntityVersionProto.newBuilder().setTs(v.getTimestamp()).setId(v.getId()).setName(v.getName()).setAuthor(v.getAuthor()).build()
                         ).collect(Collectors.toList())))
         );
     }
@@ -397,7 +397,8 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
 
     private void prepareCommit(VersionControlRequestCtx ctx, UUID txId, PrepareMsg prepareMsg) {
         var tenantId = ctx.getTenantId();
-        var pendingCommit = new PendingCommit(tenantId, ctx.getNodeId(), txId, prepareMsg.getBranchName(), prepareMsg.getCommitMsg());
+        var pendingCommit = new PendingCommit(tenantId, ctx.getNodeId(), txId, prepareMsg.getBranchName(),
+                prepareMsg.getCommitMsg(), prepareMsg.getAuthorName(), prepareMsg.getAuthorEmail());
         PendingCommit old = pendingCommitMap.get(tenantId);
         if (old != null) {
             doAbortCurrentCommit(tenantId, old);
@@ -456,13 +457,18 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
     }
 
     private void reply(VersionControlRequestCtx ctx, VersionCreationResult result) {
-        reply(ctx, Optional.empty(), builder -> builder.setCommitResponse(CommitResponseMsg.newBuilder()
-                .setTs(result.getVersion().getTimestamp())
-                .setCommitId(result.getVersion().getId())
-                .setName(result.getVersion().getName())
-                .setAdded(result.getAdded())
+        var responseBuilder = CommitResponseMsg.newBuilder().setAdded(result.getAdded())
                 .setModified(result.getModified())
-                .setRemoved(result.getRemoved())));
+                .setRemoved(result.getRemoved());
+
+        if (result.getVersion() != null) {
+            responseBuilder.setTs(result.getVersion().getTimestamp())
+                    .setCommitId(result.getVersion().getId())
+                    .setName(result.getVersion().getName())
+                    .setAuthor(result.getVersion().getAuthor());
+        }
+
+        reply(ctx, Optional.empty(), builder -> builder.setCommitResponse(responseBuilder));
     }
 
     private void reply(VersionControlRequestCtx ctx, Optional<Exception> e) {
@@ -495,8 +501,8 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
         producer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), null);
     }
 
-    private EntitiesVersionControlSettings getEntitiesVersionControlSettings(ToVersionControlServiceMsg msg) {
-        Optional<EntitiesVersionControlSettings> settingsOpt = encodingService.decode(msg.getVcSettings().toByteArray());
+    private RepositorySettings getEntitiesVersionControlSettings(ToVersionControlServiceMsg msg) {
+        Optional<RepositorySettings> settingsOpt = encodingService.decode(msg.getVcSettings().toByteArray());
         if (settingsOpt.isPresent()) {
             return settingsOpt.get();
         } else {

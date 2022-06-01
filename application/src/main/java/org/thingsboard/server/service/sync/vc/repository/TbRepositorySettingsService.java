@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.sync.vc;
+package org.thingsboard.server.service.sync.vc.repository;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class EntityVersion {
-    private long timestamp;
-    private String id;
-    private String name;
-    private String author;
+public interface TbRepositorySettingsService {
+
+    RepositorySettings restore(TenantId tenantId, RepositorySettings versionControlSettings);
+
+    RepositorySettings get(TenantId tenantId);
+
+    RepositorySettings save(TenantId tenantId, RepositorySettings versionControlSettings);
+
+    boolean delete(TenantId tenantId);
+
 }

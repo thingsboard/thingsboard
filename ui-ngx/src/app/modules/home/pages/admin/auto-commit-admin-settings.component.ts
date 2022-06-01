@@ -14,54 +14,38 @@
 /// limitations under the License.
 ///
 
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { PageComponent } from '@shared/components/page.component';
+import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { selectHasRepository } from '@core/auth/auth.selectors';
-import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
-import { RepositorySettingsComponent } from '@home/components/vc/repository-settings.component';
 import { FormGroup } from '@angular/forms';
-import { EntityId } from '@shared/models/id/entity-id';
+import { AutoCommitSettingsComponent } from '@home/components/vc/auto-commit-settings.component';
+import { selectHasRepository } from '@core/auth/auth.selectors';
+import { RepositorySettingsComponent } from '@home/components/vc/repository-settings.component';
 
 @Component({
-  selector: 'tb-version-control',
-  templateUrl: './version-control.component.html',
-  styleUrls: ['./version-control.component.scss']
+  selector: 'tb-auto-commit-admin-settings',
+  templateUrl: './auto-commit-admin-settings.component.html',
+  styleUrls: []
 })
-export class VersionControlComponent implements OnInit, HasConfirmForm {
+export class AutoCommitAdminSettingsComponent extends PageComponent implements OnInit, HasConfirmForm {
 
   @ViewChild('repositorySettingsComponent', {static: false}) repositorySettingsComponent: RepositorySettingsComponent;
-
-  @Input()
-  detailsMode = false;
-
-  @Input()
-  active = true;
-
-  @Input()
-  singleEntityMode = false;
-
-  @Input()
-  externalEntityId: EntityId;
-
-  @Input()
-  entityId: EntityId;
-
-  @Output()
-  versionRestored = new EventEmitter<void>();
+  @ViewChild('autoCommitSettingsComponent', {static: false}) autoCommitSettingsComponent: AutoCommitSettingsComponent;
 
   hasRepository$ = this.store.pipe(select(selectHasRepository));
 
-  constructor(private store: Store<AppState>) {
-
+  constructor(protected store: Store<AppState>) {
+    super(store);
   }
 
   ngOnInit() {
-
   }
 
   confirmForm(): FormGroup {
-    return this.repositorySettingsComponent?.repositorySettingsForm;
+    return this.repositorySettingsComponent ?
+      this.repositorySettingsComponent?.repositorySettingsForm :
+      this.autoCommitSettingsComponent?.autoCommitSettingsForm;
   }
-
 }

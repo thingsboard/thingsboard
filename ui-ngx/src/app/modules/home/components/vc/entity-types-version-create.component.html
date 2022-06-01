@@ -17,7 +17,7 @@
 -->
 <section class="entity-types-version-create" [formGroup]="entityTypesVersionCreateFormGroup" fxLayout="column">
   <fieldset class="fields-group">
-    <legend class="group-title" translate>version-control.entity-types</legend>
+    <legend class="group-title" translate>version-control.entities-to-export</legend>
     <div fxLayout="column">
       <div class="tb-control-list">
         <div *ngFor="let entityTypeFormGroup of entityTypesFormGroupArray(); trackBy: trackByEntityType;
@@ -53,7 +53,7 @@
                     [allowedEntityTypes]="allowedEntityTypes(entityTypeFormGroup)">
                   </tb-entity-type-select>
                   <div fxFlex fxLayout="row" fxLayoutGap="16px" fxLayoutAlign="start center" formGroupName="config">
-                    <mat-form-field class="mat-block">
+                    <mat-form-field fxFlex class="mat-block">
                       <mat-label translate>version-control.sync-strategy</mat-label>
                       <mat-select formControlName="syncStrategy">
                         <mat-option [value]="'default'">
@@ -64,9 +64,14 @@
                         </mat-option>
                       </mat-select>
                     </mat-form-field>
-                    <mat-checkbox formControlName="saveRelations">
-                      {{ 'version-control.export-entity-relations' | translate }}
-                    </mat-checkbox>
+                    <div fxFlex fxLayout="column" fxLayoutGap="8px">
+                      <mat-checkbox formControlName="saveRelations">
+                        {{ 'version-control.export-entity-relations' | translate }}
+                      </mat-checkbox>
+                      <mat-checkbox formControlName="saveAttributes">
+                        {{ 'version-control.export-entity-attributes' | translate }}
+                      </mat-checkbox>
+                    </div>
                   </div>
                 </div>
                 <div fxLayout="row" fxLayoutGap="16px" fxLayoutAlign="start center"
@@ -89,7 +94,7 @@
       </div>
       <div *ngIf="!entityTypesFormGroupArray().length">
             <span translate fxLayoutAlign="center center"
-                  class="tb-prompt">version-control.no-entity-types</span>
+                  class="tb-prompt">version-control.no-entities-to-export-prompt</span>
       </div>
       <div style="padding-top: 16px;" fxLayout="row">
         <button mat-raised-button color="primary"

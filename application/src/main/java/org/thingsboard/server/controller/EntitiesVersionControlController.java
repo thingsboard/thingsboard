@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.sync.vc.EntityDataDiff;
+import org.thingsboard.server.common.data.sync.vc.EntityDataInfo;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionLoadResult;
@@ -232,6 +233,18 @@ public class EntitiesVersionControlController extends BaseController {
                                                                               @PathVariable String versionId) throws ThingsboardException {
         try {
             return wrapFuture(versionControlService.listAllEntitiesAtVersion(getTenantId(), branch, versionId));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @GetMapping("/info/{versionId}/{entityType}/{internalEntityUuid}")
+    public DeferredResult<EntityDataInfo> getEntityDataInfo(@PathVariable String versionId,
+                                                            @PathVariable EntityType entityType,
+                                                            @PathVariable UUID internalEntityUuid) throws ThingsboardException {
+        try {
+            EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, internalEntityUuid);
+            return wrapFuture(versionControlService.getEntityDataInfo(getCurrentUser(), entityId, versionId));
         } catch (Exception e) {
             throw handleException(e);
         }

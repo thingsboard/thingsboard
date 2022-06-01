@@ -18,12 +18,13 @@ package org.thingsboard.server.service.sync.vc;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
-import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
+import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
@@ -36,7 +37,7 @@ import java.util.List;
 
 public interface GitVersionControlQueueService {
 
-    ListenableFuture<CommitGitRequest> prepareCommit(TenantId tenantId, VersionCreateRequest request);
+    ListenableFuture<CommitGitRequest> prepareCommit(User user, VersionCreateRequest request);
 
     ListenableFuture<Void> addToCommit(CommitGitRequest commit, EntityExportData<ExportableEntity<EntityId>> entityData);
 
@@ -64,9 +65,9 @@ public interface GitVersionControlQueueService {
 
     ListenableFuture<String> getContentsDiff(TenantId tenantId, String rawEntityData1, String rawEntityData2);
 
-    ListenableFuture<Void> initRepository(TenantId tenantId, EntitiesVersionControlSettings settings);
+    ListenableFuture<Void> initRepository(TenantId tenantId, RepositorySettings settings);
 
-    ListenableFuture<Void> testRepository(TenantId tenantId, EntitiesVersionControlSettings settings);
+    ListenableFuture<Void> testRepository(TenantId tenantId, RepositorySettings settings);
 
     ListenableFuture<Void> clearRepository(TenantId tenantId);
 

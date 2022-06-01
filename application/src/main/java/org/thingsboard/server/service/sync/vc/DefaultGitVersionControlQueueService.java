@@ -27,13 +27,14 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
-import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
+import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
 import org.thingsboard.server.common.data.sync.vc.EntityVersionsDiff;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
@@ -66,10 +67,7 @@ import org.thingsboard.server.service.sync.vc.data.PendingGitRequest;
 import org.thingsboard.server.service.sync.vc.data.VersionsDiffGitRequest;
 import org.thingsboard.server.service.sync.vc.data.VoidGitRequest;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -96,12 +94,12 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     }
 
     @Override
-    public ListenableFuture<CommitGitRequest> prepareCommit(TenantId tenantId, VersionCreateRequest request) {
+    public ListenableFuture<CommitGitRequest> prepareCommit(User user, VersionCreateRequest request) {
         SettableFuture<CommitGitRequest> future = SettableFuture.create();
 
-        CommitGitRequest commit = new CommitGitRequest(tenantId, request);
+        CommitGitRequest commit = new CommitGitRequest(user.getTenantId(), request);
         registerAndSend(commit, builder -> builder.setCommitRequest(
-                buildCommitRequest(commit).setPrepareMsg(getCommitPrepareMsg(request)).build()
+                buildCommitRequest(commit).setPrepareMsg(getCommitPrepareMsg(user, request)).build()
         ).build(), wrap(future, commit));
         return future;
     }
@@ -111,7 +109,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
         SettableFuture<Void> future = SettableFuture.create();
 
         String path = getRelativePath(entityData.getEntityType(), entityData.getEntity().getId());
-        String entityDataJson = JacksonUtil.toPrettyString(entityData);
+        String entityDataJson = JacksonUtil.toPrettyString(entityData.sort());
 
         registerAndSend(commit, builder -> builder.setCommitRequest(
                 buildCommitRequest(commit).setAddMsg(
@@ -132,7 +130,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
                 buildCommitRequest(commit).setDeleteMsg(
                         TransportProtos.DeleteMsg.newBuilder().setRelativePath(path).build()
                 ).build()
-        ).build(), wrap(commit.getFuture(), null));
+        ).build(), wrap(future, null));
 
         return future;
     }
@@ -154,7 +152,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
         return listVersions(tenantId,
                 applyPageLinkParameters(
                         ListVersionsRequestMsg.newBuilder()
-                                        .setBranchName(branch),
+                                .setBranchName(branch),
                         pageLink
                 ).build());
     }
@@ -164,8 +162,8 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
         return listVersions(tenantId,
                 applyPageLinkParameters(
                         ListVersionsRequestMsg.newBuilder()
-                                        .setBranchName(branch)
-                                        .setEntityType(entityType.name()),
+                                .setBranchName(branch)
+                                .setEntityType(entityType.name()),
                         pageLink
                 ).build());
     }
@@ -175,10 +173,10 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
         return listVersions(tenantId,
                 applyPageLinkParameters(
                         ListVersionsRequestMsg.newBuilder()
-                                        .setBranchName(branch)
-                                        .setEntityType(entityId.getEntityType().name())
-                                        .setEntityIdMSB(entityId.getId().getMostSignificantBits())
-                                        .setEntityIdLSB(entityId.getId().getLeastSignificantBits()),
+                                .setBranchName(branch)
+                                .setEntityType(entityId.getEntityType().name())
+                                .setEntityIdMSB(entityId.getId().getMostSignificantBits())
+                                .setEntityIdLSB(entityId.getId().getLeastSignificantBits()),
                         pageLink
                 ).build());
     }
@@ -271,7 +269,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     }
 
     private <T> void registerAndSend(PendingGitRequest<T> request,
-                                     Function<ToVersionControlServiceMsg.Builder, ToVersionControlServiceMsg> enrichFunction, EntitiesVersionControlSettings settings, TbQueueCallback callback) {
+                                     Function<ToVersionControlServiceMsg.Builder, ToVersionControlServiceMsg> enrichFunction, RepositorySettings settings, TbQueueCallback callback) {
         if (!request.getFuture().isDone()) {
             pendingRequestMap.putIfAbsent(request.getRequestId(), request);
             var requestBody = enrichFunction.apply(newRequestProto(request, settings));
@@ -307,7 +305,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     }
 
     @Override
-    public ListenableFuture<Void> initRepository(TenantId tenantId, EntitiesVersionControlSettings settings) {
+    public ListenableFuture<Void> initRepository(TenantId tenantId, RepositorySettings settings) {
         VoidGitRequest request = new VoidGitRequest(tenantId);
 
         registerAndSend(request, builder -> builder.setInitRepositoryRequest(GenericRepositoryRequestMsg.newBuilder().build()).build()
@@ -317,7 +315,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     }
 
     @Override
-    public ListenableFuture<Void> testRepository(TenantId tenantId, EntitiesVersionControlSettings settings) {
+    public ListenableFuture<Void> testRepository(TenantId tenantId, RepositorySettings settings) {
         VoidGitRequest request = new VoidGitRequest(tenantId);
 
         registerAndSend(request, builder -> builder
@@ -356,7 +354,9 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
             } else if (vcResponseMsg.hasCommitResponse()) {
                 var commitResponse = vcResponseMsg.getCommitResponse();
                 var commitResult = new VersionCreationResult();
-                commitResult.setVersion(new EntityVersion(commitResponse.getTs(), commitResponse.getCommitId(), commitResponse.getName()));
+                if (commitResponse.getTs() > 0) {
+                    commitResult.setVersion(new EntityVersion(commitResponse.getTs(), commitResponse.getCommitId(), commitResponse.getName(), commitResponse.getAuthor()));
+                }
                 commitResult.setAdded(commitResponse.getAdded());
                 commitResult.setRemoved(commitResponse.getRemoved());
                 commitResult.setModified(commitResponse.getModified());
@@ -405,7 +405,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     }
 
     private EntityVersion getEntityVersion(TransportProtos.EntityVersionProto proto) {
-        return new EntityVersion(proto.getTs(), proto.getId(), proto.getName());
+        return new EntityVersion(proto.getTs(), proto.getId(), proto.getName(), proto.getAuthor());
     }
 
     private VersionedEntityInfo getVersionedEntityInfo(TransportProtos.VersionedEntityInfoProto proto) {
@@ -453,11 +453,26 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
         return path;
     }
 
-    private static PrepareMsg getCommitPrepareMsg(VersionCreateRequest request) {
-        return PrepareMsg.newBuilder().setCommitMsg(request.getVersionName()).setBranchName(request.getBranch()).build();
+    private static PrepareMsg getCommitPrepareMsg(User user, VersionCreateRequest request) {
+        return PrepareMsg.newBuilder().setCommitMsg(request.getVersionName())
+                .setBranchName(request.getBranch()).setAuthorName(getAuthorName(user)).setAuthorEmail(user.getEmail()).build();
     }
 
-    private ToVersionControlServiceMsg.Builder newRequestProto(PendingGitRequest<?> request, EntitiesVersionControlSettings settings) {
+    private static String getAuthorName(User user) {
+        List<String> parts = new ArrayList<>();
+        if (StringUtils.isNotBlank(user.getFirstName())) {
+            parts.add(user.getFirstName());
+        }
+        if (StringUtils.isNotBlank(user.getLastName())) {
+            parts.add(user.getLastName());
+        }
+        if (parts.isEmpty()) {
+            parts.add(user.getName());
+        }
+        return String.join(" ", parts);
+    }
+
+    private ToVersionControlServiceMsg.Builder newRequestProto(PendingGitRequest<?> request, RepositorySettings settings) {
         var tenantId = request.getTenantId();
         var requestId = request.getRequestId();
         var builder = ToVersionControlServiceMsg.newBuilder()
@@ -466,7 +481,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
                 .setRequestIdMSB(requestId.getMostSignificantBits())
                 .setRequestIdLSB(requestId.getLeastSignificantBits());
-        EntitiesVersionControlSettings vcSettings = settings;
+        RepositorySettings vcSettings = settings;
         if (vcSettings == null && request.requiresSettings()) {
             vcSettings = entitiesVersionControlService.getVersionControlSettings(tenantId);
         }

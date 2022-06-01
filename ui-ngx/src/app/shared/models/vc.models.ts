@@ -32,6 +32,7 @@ export const exportableEntityTypes: Array<EntityType> = [
 
 export interface VersionCreateConfig {
   saveRelations: boolean;
+  saveAttributes: boolean;
 }
 
 export enum VersionCreateRequestType {
@@ -81,6 +82,7 @@ export function createDefaultEntityTypesVersionCreate(): {[entityType: string]: 
     res[entityType] = {
       syncStrategy: null,
       saveRelations: false,
+      saveAttributes: false,
       allEntities: true,
       entityIds: []
     };
@@ -90,6 +92,7 @@ export function createDefaultEntityTypesVersionCreate(): {[entityType: string]: 
 
 export interface VersionLoadConfig {
   loadRelations: boolean;
+  loadAttributes: boolean;
 }
 
 export enum VersionLoadRequestType {
@@ -111,6 +114,7 @@ export interface SingleEntityVersionLoadRequest extends VersionLoadRequest {
 
 export interface EntityTypeVersionLoadConfig extends VersionLoadConfig {
   removeOtherEntities: boolean;
+  findExistingEntityByName: boolean;
 }
 
 export interface EntityTypeVersionLoadRequest extends VersionLoadRequest {
@@ -123,7 +127,9 @@ export function createDefaultEntityTypesVersionLoad(): {[entityType: string]: En
   for (const entityType of exportableEntityTypes) {
     res[entityType] = {
       loadRelations: false,
-      removeOtherEntities: false
+      loadAttributes: false,
+      removeOtherEntities: false,
+      findExistingEntityByName: false
     };
   }
   return res;
@@ -138,6 +144,7 @@ export interface EntityVersion {
   timestamp: number;
   id: string;
   name: string;
+  author: string;
 }
 
 export interface VersionCreationResult {
@@ -175,18 +182,5 @@ export interface EntityDataDiff {
 }
 
 export function entityExportDataToJsonString(data: EntityExportData<any>): string {
-  if (!data.relations) {
-    data.relations = [];
-  }
-  const allKeys = new Set<string>();
-  JSON.stringify(data, (key, value) => (allKeys.add(key), value));
-  return JSON.stringify(data, Array.from(allKeys).sort((key1, key2) => {
-    if (key1 === 'relations') {
-      return 1;
-    } else if (key2 === 'relations') {
-      return -1;
-    } else {
-      return 0;
-    }
-  }), 4);
+  return JSON.stringify(data, null, 4);
 }

@@ -22,9 +22,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class EntityVersion {
-    private long timestamp;
-    private String id;
-    private String name;
-    private String author;
+public class EntityDataInfo {
+    boolean hasRelations;
+    boolean hasAttributes;
 }

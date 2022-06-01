@@ -13,29 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.sync.vc;
+package org.thingsboard.server.service.sync.vc.repository;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.serializer.RedisSerializer;
-import org.springframework.data.redis.serializer.SerializationException;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.CacheSpecsMap;
 import org.thingsboard.server.cache.RedisTbTransactionalCache;
 import org.thingsboard.server.cache.TBRedisCacheConfiguration;
 import org.thingsboard.server.cache.TbRedisSerializer;
 import org.thingsboard.server.common.data.CacheConstants;
-import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
-import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
-@Service("VersionControlCache")
-public class VersionControlSettingsRedisCache extends RedisTbTransactionalCache<TenantId, EntitiesVersionControlSettings> {
+@Service("RepositorySettingsCache")
+public class RepositorySettingsRedisCache extends RedisTbTransactionalCache<TenantId, RepositorySettings> {
 
-    public VersionControlSettingsRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
-        super(CacheConstants.VC_SETTINGS_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbRedisSerializer<>());
+    public RepositorySettingsRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
+        super(CacheConstants.REPOSITORY_SETTINGS_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbRedisSerializer<>());
     }
 }

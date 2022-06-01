@@ -18,8 +18,10 @@ package org.thingsboard.common.util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
@@ -31,8 +33,10 @@ import java.util.Arrays;
 public class JacksonUtil {
 
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    public static final ObjectMapper PRETTY_JSON_MAPPER = new ObjectMapper()
-            .enable(SerializationFeature.INDENT_OUTPUT);
+    public static final ObjectMapper PRETTY_SORTED_JSON_MAPPER = JsonMapper.builder().enable(SerializationFeature.INDENT_OUTPUT)
+            .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
+            .configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)
+            .build();
 
     public static <T> T convertValue(Object fromValue, Class<T> toValueType) {
         try {
@@ -99,7 +103,7 @@ public class JacksonUtil {
 
     public static String toPrettyString(Object o) {
         try {
-            return PRETTY_JSON_MAPPER.writeValueAsString(o);
+            return PRETTY_SORTED_JSON_MAPPER.writeValueAsString(o);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

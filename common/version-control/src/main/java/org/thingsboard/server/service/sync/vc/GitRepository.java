@@ -58,8 +58,8 @@ import org.eclipse.jgit.treewalk.filter.PathFilter;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
-import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
-import org.thingsboard.server.common.data.sync.vc.VersionControlAuthMethod;
+import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
+import org.thingsboard.server.common.data.sync.vc.RepositoryAuthMethod;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -77,14 +77,14 @@ public class GitRepository {
 
     private final Git git;
     @Getter
-    private final EntitiesVersionControlSettings settings;
+    private final RepositorySettings settings;
     private final CredentialsProvider credentialsProvider;
     private final SshdSessionFactory sshSessionFactory;
 
     @Getter
     private final String directory;
 
-    private GitRepository(Git git, EntitiesVersionControlSettings settings, CredentialsProvider credentialsProvider, SshdSessionFactory sshSessionFactory, String directory) {
+    private GitRepository(Git git, RepositorySettings settings, CredentialsProvider credentialsProvider, SshdSessionFactory sshSessionFactory, String directory) {
         this.git = git;
         this.settings = settings;
         this.credentialsProvider = credentialsProvider;
@@ -92,12 +92,12 @@ public class GitRepository {
         this.directory = directory;
     }
 
-    public static GitRepository clone(EntitiesVersionControlSettings settings, File directory) throws GitAPIException {
+    public static GitRepository clone(RepositorySettings settings, File directory) throws GitAPIException {
         CredentialsProvider credentialsProvider = null;
         SshdSessionFactory sshSessionFactory = null;
-        if (VersionControlAuthMethod.USERNAME_PASSWORD.equals(settings.getAuthMethod())) {
+        if (RepositoryAuthMethod.USERNAME_PASSWORD.equals(settings.getAuthMethod())) {
             credentialsProvider = newCredentialsProvider(settings.getUsername(), settings.getPassword());
-        } else if (VersionControlAuthMethod.PRIVATE_KEY.equals(settings.getAuthMethod())) {
+        } else if (RepositoryAuthMethod.PRIVATE_KEY.equals(settings.getAuthMethod())) {
             sshSessionFactory = newSshdSessionFactory(settings.getPrivateKey(), settings.getPrivateKeyPassword(), directory);
         }
         CloneCommand cloneCommand = Git.cloneRepository()
@@ -109,24 +109,24 @@ public class GitRepository {
         return new GitRepository(git, settings, credentialsProvider, sshSessionFactory, directory.getAbsolutePath());
     }
 
-    public static GitRepository open(File directory, EntitiesVersionControlSettings settings) throws IOException {
+    public static GitRepository open(File directory, RepositorySettings settings) throws IOException {
         Git git = Git.open(directory);
         CredentialsProvider credentialsProvider = null;
         SshdSessionFactory sshSessionFactory = null;
-        if (VersionControlAuthMethod.USERNAME_PASSWORD.equals(settings.getAuthMethod())) {
+        if (RepositoryAuthMethod.USERNAME_PASSWORD.equals(settings.getAuthMethod())) {
             credentialsProvider = newCredentialsProvider(settings.getUsername(), settings.getPassword());
-        } else if (VersionControlAuthMethod.PRIVATE_KEY.equals(settings.getAuthMethod())) {
+        } else if (RepositoryAuthMethod.PRIVATE_KEY.equals(settings.getAuthMethod())) {
             sshSessionFactory = newSshdSessionFactory(settings.getPrivateKey(), settings.getPrivateKeyPassword(), directory);
         }
         return new GitRepository(git, settings, credentialsProvider, sshSessionFactory, directory.getAbsolutePath());
     }
 
-    public static void test(EntitiesVersionControlSettings settings, File directory) throws GitAPIException {
+    public static void test(RepositorySettings settings, File directory) throws GitAPIException {
         CredentialsProvider credentialsProvider = null;
         SshdSessionFactory sshSessionFactory = null;
-        if (VersionControlAuthMethod.USERNAME_PASSWORD.equals(settings.getAuthMethod())) {
+        if (RepositoryAuthMethod.USERNAME_PASSWORD.equals(settings.getAuthMethod())) {
             credentialsProvider = newCredentialsProvider(settings.getUsername(), settings.getPassword());
-        } else if (VersionControlAuthMethod.PRIVATE_KEY.equals(settings.getAuthMethod())) {
+        } else if (RepositoryAuthMethod.PRIVATE_KEY.equals(settings.getAuthMethod())) {
             sshSessionFactory = newSshdSessionFactory(settings.getPrivateKey(), settings.getPrivateKeyPassword(), directory);
         }
         LsRemoteCommand lsRemoteCommand = Git.lsRemoteRepository().setRemote(settings.getRepositoryUri());
@@ -255,8 +255,9 @@ public class GitRepository {
         return new Status(status.getAdded(), modified, status.getRemoved());
     }
 
-    public Commit commit(String message) throws GitAPIException {
+    public Commit commit(String message, String authorName, String authorEmail) throws GitAPIException {
         RevCommit revCommit = execute(git.commit()
+                .setAuthor(authorName, authorEmail)
                 .setMessage(message));
         return toCommit(revCommit);
     }
@@ -325,7 +326,8 @@ public class GitRepository {
     }
 
     private Commit toCommit(RevCommit revCommit) {
-        return new Commit(revCommit.getCommitTime() * 1000l, revCommit.getName(), revCommit.getFullMessage(), revCommit.getAuthorIdent().getName());
+        return new Commit(revCommit.getCommitTime() * 1000l, revCommit.getName(),
+                revCommit.getFullMessage(), revCommit.getAuthorIdent().getName(), revCommit.getAuthorIdent().getEmailAddress());
     }
 
     private RevCommit resolveCommit(String id) throws IOException {
@@ -470,6 +472,7 @@ public class GitRepository {
         private final String id;
         private final String message;
         private final String authorName;
+        private final String authorEmail;
     }
 
     @Data

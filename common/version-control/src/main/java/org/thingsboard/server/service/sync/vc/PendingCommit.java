@@ -30,12 +30,18 @@ public class PendingCommit {
     private String branch;
     private String versionName;
 
-    public PendingCommit(TenantId tenantId, String nodeId, UUID txId, String branch, String versionName) {
+    private String authorName;
+
+    private String authorEmail;
+
+    public PendingCommit(TenantId tenantId, String nodeId, UUID txId, String branch, String versionName, String authorName, String authorEmail) {
         this.tenantId = tenantId;
         this.nodeId = nodeId;
         this.txId = txId;
         this.branch = branch;
         this.versionName = versionName;
+        this.authorName = authorName;
+        this.authorEmail = authorEmail;
         this.workingBranch = txId.toString();
     }
 }

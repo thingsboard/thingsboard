@@ -20,16 +20,16 @@ import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormGroup } from '@angular/forms';
-import { VersionControlSettingsComponent } from '@home/components/vc/version-control-settings.component';
+import { RepositorySettingsComponent } from '@home/components/vc/repository-settings.component';
 
 @Component({
-  selector: 'tb-version-control-admin-settings',
-  templateUrl: './version-control-admin-settings.component.html',
+  selector: 'tb-repository-admin-settings',
+  templateUrl: './repository-admin-settings.component.html',
   styleUrls: []
 })
-export class VersionControlAdminSettingsComponent extends PageComponent implements OnInit, HasConfirmForm {
+export class RepositoryAdminSettingsComponent extends PageComponent implements OnInit, HasConfirmForm {
 
-  @ViewChild('versionControlSettingsComponent') versionControlSettingsComponent: VersionControlSettingsComponent;
+  @ViewChild('repositorySettingsComponent') repositorySettingsComponent: RepositorySettingsComponent;
 
   constructor(protected store: Store<AppState>) {
     super(store);
@@ -39,6 +39,6 @@ export class VersionControlAdminSettingsComponent extends PageComponent implemen
   }
 
   confirmForm(): FormGroup {
-    return this.versionControlSettingsComponent?.versionControlSettingsForm;
+    return this.repositorySettingsComponent?.repositorySettingsForm;
   }
 }

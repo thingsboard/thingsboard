@@ -13,24 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  mat-card.vc-settings {
-    margin: 8px;
-  }
-  .fields-group {
-    padding: 0 16px 8px;
-    margin-bottom: 10px;
-    border: 1px groove rgba(0, 0, 0, .25);
-    border-radius: 4px;
+package org.thingsboard.server.service.sync.vc.autocommit;
 
-    legend {
-      color: rgba(0, 0, 0, .7);
-      width: fit-content;
-    }
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.sync.vc.AutoCommitSettings;
+import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 
-    legend + * {
-      display: block;
-      margin-top: 16px;
-    }
-  }
+public interface TbAutoCommitSettingsService {
+
+    AutoCommitSettings get(TenantId tenantId);
+
+    AutoCommitSettings save(TenantId tenantId, AutoCommitSettings settings);
+
+    boolean delete(TenantId tenantId);
+
 }

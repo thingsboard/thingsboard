@@ -62,7 +62,8 @@ export class EntityVersionCreateComponent extends PageComponent implements OnIni
     this.createVersionFormGroup = this.fb.group({
       branch: [this.branch, [Validators.required]],
       versionName: [null, [Validators.required]],
-      saveRelations: [false, []]
+      saveRelations: [false, []],
+      saveAttributes: [false, []]
     });
   }
 
@@ -78,7 +79,8 @@ export class EntityVersionCreateComponent extends PageComponent implements OnIni
       branch: this.createVersionFormGroup.get('branch').value,
       versionName: this.createVersionFormGroup.get('versionName').value,
       config: {
-        saveRelations: this.createVersionFormGroup.get('saveRelations').value
+        saveRelations: this.createVersionFormGroup.get('saveRelations').value,
+        saveAttributes: this.createVersionFormGroup.get('saveAttributes').value,
       },
       type: VersionCreateRequestType.SINGLE_ENTITY
     };

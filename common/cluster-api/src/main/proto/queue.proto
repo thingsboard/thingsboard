@@ -692,14 +692,17 @@ message CommitResponseMsg {
   int64 ts = 1;
   string commitId = 2;
   string name = 3;
-  int32 added = 4;
-  int32 modified = 5;
-  int32 removed = 6;
+  string author = 4;
+  int32 added = 5;
+  int32 modified = 6;
+  int32 removed = 7;
 }
 
 message PrepareMsg {
   string commitMsg = 1;
   string branchName = 2;
+  string authorName = 3;
+  string authorEmail = 4;
 }
 
 message AddMsg {
@@ -733,6 +736,7 @@ message EntityVersionProto {
   int64 ts = 1;
   string id = 2;
   string name = 3;
+  string author = 4;
 }
 
 message ListVersionsResponseMsg {

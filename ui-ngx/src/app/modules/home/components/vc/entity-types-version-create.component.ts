@@ -80,7 +80,7 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
 
   ngOnInit(): void {
     this.entityTypesVersionCreateFormGroup = this.fb.group({
-      entityTypes: [this.fb.array([]), []]
+      entityTypes: this.fb.array([], [])
     });
     this.entityTypesVersionCreateFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
@@ -135,6 +135,7 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
         config: this.fb.group({
           syncStrategy: [config.syncStrategy === null ? 'default' : config.syncStrategy, []],
           saveRelations: [config.saveRelations, []],
+          saveAttributes: [config.saveAttributes, []],
           allEntities: [config.allEntities, []],
           entityIds: [config.entityIds, [Validators.required]]
         })
@@ -183,6 +184,7 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
     const config: EntityTypeVersionCreateConfig = {
       syncStrategy: null,
       saveRelations: false,
+      saveAttributes: false,
       allEntities: true,
       entityIds: []
     };

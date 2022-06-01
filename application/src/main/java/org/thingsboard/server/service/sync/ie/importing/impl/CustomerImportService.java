@@ -42,7 +42,11 @@ public class CustomerImportService extends BaseEntityImportService<CustomerId, C
 
     @Override
     protected Customer prepareAndSave(TenantId tenantId, Customer customer, EntityExportData<Customer> exportData, IdProvider idProvider) {
-        return customerService.saveCustomer(customer);
+        if (customer.isPublic()) {
+            return customerService.findOrCreatePublicCustomer(tenantId);
+        } else {
+            return customerService.saveCustomer(customer);
+        }
     }
 
     @Override

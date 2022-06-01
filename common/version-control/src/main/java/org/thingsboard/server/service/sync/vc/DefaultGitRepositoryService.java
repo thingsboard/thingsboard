@@ -29,7 +29,7 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
+import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
@@ -117,10 +117,11 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
             result.setModified(status.getModified().size());
             result.setRemoved(status.getRemoved().size());
 
-            GitRepository.Commit gitCommit = repository.commit(commit.getVersionName());
-            repository.push(commit.getWorkingBranch(), commit.getBranch());
-
-            result.setVersion(toVersion(gitCommit));
+            if (result.getAdded() > 0 || result.getModified() > 0 || result.getRemoved() > 0) {
+                GitRepository.Commit gitCommit = repository.commit(commit.getVersionName(), commit.getAuthorName(), commit.getAuthorEmail());
+                repository.push(commit.getWorkingBranch(), commit.getBranch());
+                result.setVersion(toVersion(gitCommit));
+            }
             return result;
         } catch (GitAPIException gitAPIException) {
             //TODO: analyze and return meaningful exceptions that we can show to the client;
@@ -216,13 +217,13 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     }
 
     @Override
-    public void testRepository(TenantId tenantId, EntitiesVersionControlSettings settings) throws Exception {
+    public void testRepository(TenantId tenantId, RepositorySettings settings) throws Exception {
         Path repositoryDirectory = Path.of(repositoriesFolder, tenantId.getId().toString());
         GitRepository.test(settings, repositoryDirectory.toFile());
     }
 
     @Override
-    public void initRepository(TenantId tenantId, EntitiesVersionControlSettings settings) throws Exception {
+    public void initRepository(TenantId tenantId, RepositorySettings settings) throws Exception {
         clearRepository(tenantId);
         log.debug("[{}] Init tenant repository started.", tenantId);
         Path repositoryDirectory = Path.of(repositoriesFolder, tenantId.getId().toString());
@@ -238,7 +239,7 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     }
 
     @Override
-    public EntitiesVersionControlSettings getRepositorySettings(TenantId tenantId) throws Exception {
+    public RepositorySettings getRepositorySettings(TenantId tenantId) throws Exception {
         var gitRepository = repositories.get(tenantId);
         return gitRepository != null ? gitRepository.getSettings() : null;
     }
@@ -255,7 +256,15 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     }
 
     private EntityVersion toVersion(GitRepository.Commit commit) {
-        return new EntityVersion(commit.getTimestamp(), commit.getId(), commit.getMessage());
+        return new EntityVersion(commit.getTimestamp(), commit.getId(), commit.getMessage(), this.getAuthor(commit));
+    }
+
+    private String getAuthor(GitRepository.Commit commit) {
+        String author = String.format("<%s>", commit.getAuthorEmail());
+        if (StringUtils.isNotBlank(commit.getAuthorName())) {
+            author = String.format("%s %s", commit.getAuthorName(), author);
+        }
+        return author;
     }
 
     public static EntityId fromRelativePath(String path) {

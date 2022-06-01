@@ -24,7 +24,7 @@ export enum AuthActionTypes {
   LOAD_USER = '[Auth] Load User',
   UPDATE_USER_DETAILS = '[Auth] Update User Details',
   UPDATE_LAST_PUBLIC_DASHBOARD_ID = '[Auth] Update Last Public Dashboard Id',
-  UPDATE_HAS_VERSION_CONTROL = '[Auth] Change Has Version Control'
+  UPDATE_HAS_REPOSITORY = '[Auth] Change Has Repository'
 }
 
 export class ActionAuthAuthenticated implements Action {
@@ -55,11 +55,11 @@ export class ActionAuthUpdateLastPublicDashboardId implements Action {
   constructor(readonly payload: { lastPublicDashboardId: string }) {}
 }
 
-export class ActionAuthUpdateHasVersionControl implements Action {
-  readonly type = AuthActionTypes.UPDATE_HAS_VERSION_CONTROL;
+export class ActionAuthUpdateHasRepository implements Action {
+  readonly type = AuthActionTypes.UPDATE_HAS_REPOSITORY;
 
-  constructor(readonly payload: { hasVersionControl: boolean }) {}
+  constructor(readonly payload: { hasRepository: boolean }) {}
 }
 
 export type AuthActions = ActionAuthAuthenticated | ActionAuthUnauthenticated |
-  ActionAuthLoadUser | ActionAuthUpdateUserDetails | ActionAuthUpdateLastPublicDashboardId | ActionAuthUpdateHasVersionControl;
+  ActionAuthLoadUser | ActionAuthUpdateUserDetails | ActionAuthUpdateLastPublicDashboardId | ActionAuthUpdateHasRepository;

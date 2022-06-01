@@ -19,7 +19,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.sync.vc.EntitiesVersionControlSettings;
+import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
@@ -39,11 +39,11 @@ public interface GitRepositoryService {
 
     List<VersionedEntityInfo> listEntitiesAtVersion(TenantId tenantId, String versionId, String path) throws Exception;
 
-    void testRepository(TenantId tenantId, EntitiesVersionControlSettings settings) throws Exception;
+    void testRepository(TenantId tenantId, RepositorySettings settings) throws Exception;
 
-    void initRepository(TenantId tenantId, EntitiesVersionControlSettings settings) throws Exception;
+    void initRepository(TenantId tenantId, RepositorySettings settings) throws Exception;
 
-    EntitiesVersionControlSettings getRepositorySettings(TenantId tenantId) throws Exception;
+    RepositorySettings getRepositorySettings(TenantId tenantId) throws Exception;
 
     void clearRepository(TenantId tenantId) throws IOException;
 
