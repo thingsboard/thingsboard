@@ -294,12 +294,12 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
                     ruleChain, user, ActionType.UPDATED, false, null, ruleChainMetaData);
 
             if (RuleChainType.EDGE.equals(ruleChain.getType())) {
-                notificationEntityService.notifySendMsgToEdgeService(tenantId, ruleChain, EdgeEventActionType.UPDATED);
+                notificationEntityService.notifySendMsgToEdgeService(tenantId, ruleChain.getId(), EdgeEventActionType.UPDATED);
             }
 
             updatedRuleChains.forEach(updatedRuleChain -> {
                 if (RuleChainType.EDGE.equals(ruleChain.getType())) {
-                    notificationEntityService.notifySendMsgToEdgeService(tenantId, updatedRuleChain, EdgeEventActionType.UPDATED);
+                    notificationEntityService.notifySendMsgToEdgeService(tenantId, updatedRuleChain.getId(),  EdgeEventActionType.UPDATED);
                 } else {
                     try {
                         RuleChainMetaData updatedRuleChainMetaData = checkNotNull(ruleChainService.loadRuleChainMetaData(tenantId, updatedRuleChain.getId()));
