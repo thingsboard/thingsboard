@@ -15,8 +15,11 @@
  */
 package org.thingsboard.server.common.data.sync.ie;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -52,11 +55,15 @@ public class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
     public static final Comparator<AttributeExportData> attrComparator = Comparator
             .comparing(AttributeExportData::getKey).thenComparing(AttributeExportData::getLastUpdateTs);
 
+    @JsonProperty(index = 2)
     @JsonTbEntity
     private E entity;
+    @JsonProperty(index = 1)
     private EntityType entityType;
 
+    @JsonProperty(index = 100)
     private List<EntityRelation> relations;
+    @JsonProperty(index = 101)
     private Map<String, List<AttributeExportData>> attributes;
 
     public EntityExportData<E> sort() {
@@ -67,6 +74,11 @@ public class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
             attributes.values().forEach(list -> list.sort(attrComparator));
         }
         return this;
+    }
+
+    @JsonIgnore
+    public EntityId getExternalId() {
+        return entity.getExternalId() != null ? entity.getExternalId() : entity.getId();
     }
 
 }

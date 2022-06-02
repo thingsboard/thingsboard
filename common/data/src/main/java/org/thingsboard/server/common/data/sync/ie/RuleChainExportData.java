@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.sync.ie;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -26,6 +27,7 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 @Data
 public class RuleChainExportData extends EntityExportData<RuleChain> {
 
+    @JsonProperty(index = 3)
     private RuleChainMetaData metaData;
 
 }

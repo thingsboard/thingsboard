@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -42,7 +43,7 @@ public class AssetImportService extends BaseEntityImportService<AssetId, Asset, 
     }
 
     @Override
-    protected Asset prepareAndSave(TenantId tenantId, Asset asset, EntityExportData<Asset> exportData, IdProvider idProvider) {
+    protected Asset prepareAndSave(TenantId tenantId, Asset asset, EntityExportData<Asset> exportData, IdProvider idProvider, EntityImportSettings importSettings) {
         return assetService.saveAsset(asset);
     }
 

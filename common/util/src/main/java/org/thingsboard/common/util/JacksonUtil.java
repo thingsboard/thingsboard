@@ -33,7 +33,8 @@ import java.util.Arrays;
 public class JacksonUtil {
 
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    public static final ObjectMapper PRETTY_SORTED_JSON_MAPPER = JsonMapper.builder().enable(SerializationFeature.INDENT_OUTPUT)
+    public static final ObjectMapper PRETTY_SORTED_JSON_MAPPER = JsonMapper.builder()
+            .enable(SerializationFeature.INDENT_OUTPUT)
             .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
             .configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)
             .build();

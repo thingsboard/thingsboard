@@ -64,6 +64,13 @@ export const syncStrategyTranslationMap = new Map<SyncStrategy, string>(
   ]
 );
 
+export const syncStrategyHintMap = new Map<SyncStrategy, string>(
+  [
+    [SyncStrategy.MERGE, 'version-control.sync-strategy-merge-hint'],
+    [SyncStrategy.OVERWRITE, 'version-control.sync-strategy-overwrite-hint']
+  ]
+);
+
 export interface EntityTypeVersionCreateConfig extends VersionCreateConfig {
   syncStrategy: SyncStrategy;
   entityIds: string[];
@@ -81,8 +88,8 @@ export function createDefaultEntityTypesVersionCreate(): {[entityType: string]: 
   for (const entityType of exportableEntityTypes) {
     res[entityType] = {
       syncStrategy: null,
-      saveRelations: false,
-      saveAttributes: false,
+      saveAttributes: true,
+      saveRelations: true,
       allEntities: true,
       entityIds: []
     };
@@ -126,10 +133,10 @@ export function createDefaultEntityTypesVersionLoad(): {[entityType: string]: En
   const res: {[entityType: string]: EntityTypeVersionLoadConfig} = {};
   for (const entityType of exportableEntityTypes) {
     res[entityType] = {
-      loadRelations: false,
-      loadAttributes: false,
+      loadAttributes: true,
+      loadRelations: true,
       removeOtherEntities: false,
-      findExistingEntityByName: false
+      findExistingEntityByName: true
     };
   }
   return res;
@@ -183,4 +190,9 @@ export interface EntityDataDiff {
 
 export function entityExportDataToJsonString(data: EntityExportData<any>): string {
   return JSON.stringify(data, null, 4);
+}
+
+export interface EntityDataInfo {
+  hasRelations: boolean;
+  hasAttributes: boolean;
 }

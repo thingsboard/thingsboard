@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.sync.ie;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -26,6 +27,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 @Data
 public class DeviceExportData extends EntityExportData<Device> {
 
+    @JsonProperty(index = 3)
     private DeviceCredentials credentials;
 
 }

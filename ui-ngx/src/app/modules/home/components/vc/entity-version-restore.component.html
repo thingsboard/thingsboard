@@ -15,27 +15,28 @@
     limitations under the License.
 
 -->
-<section style="min-width: 400px;">
-  <mat-toolbar>
+<section [ngStyle]="entityDataInfo ? {minWidth: '400px'} : {}">
+  <mat-toolbar *ngIf="entityDataInfo">
     <h2>{{ 'version-control.restore-entity-from-version' | translate: {versionName} }}</h2>
     <span fxFlex></span>
   </mat-toolbar>
   <mat-progress-bar color="warn" style="z-index: 10; width: 100%; margin-bottom: -4px;" mode="indeterminate"
-                    *ngIf="isLoading$ | async">
+                    *ngIf="entityDataInfo && (isLoading$ | async)">
   </mat-progress-bar>
-  <form [formGroup]="restoreFormGroup" style="padding-top: 16px;">
+  <mat-spinner *ngIf="!entityDataInfo" mode="indeterminate" diameter="80"></mat-spinner>
+  <form *ngIf="entityDataInfo" [formGroup]="restoreFormGroup" style="padding-top: 16px;">
     <fieldset [disabled]="isLoading$ | async">
       <div fxFlex fxLayout="column">
-        <mat-checkbox formControlName="loadRelations" style="margin-bottom: 16px;">
-          {{ 'version-control.load-entity-relations' | translate }}
+        <mat-checkbox *ngIf="entityDataInfo.hasAttributes" formControlName="loadAttributes" style="margin-bottom: 16px;">
+          {{ 'version-control.load-attributes' | translate }}
         </mat-checkbox>
-        <mat-checkbox formControlName="loadAttributes" style="margin-bottom: 16px;">
-          {{ 'version-control.load-entity-attributes' | translate }}
+        <mat-checkbox *ngIf="entityDataInfo.hasRelations" formControlName="loadRelations" style="margin-bottom: 16px;">
+          {{ 'version-control.load-relations' | translate }}
         </mat-checkbox>
       </div>
     </fieldset>
   </form>
-  <div fxLayoutAlign="end center" fxLayoutGap="8px">
+  <div *ngIf="entityDataInfo"  fxLayoutAlign="end center" fxLayoutGap="8px">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

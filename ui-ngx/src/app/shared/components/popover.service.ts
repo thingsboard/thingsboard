@@ -80,9 +80,7 @@ export class TbPopoverService {
     component.tbShowCloseButton = showCloseButton;
     component.tbVisibleChange.subscribe((visible: boolean) => {
       if (!visible) {
-        component.tbAnimationDone.subscribe(() => {
-          componentRef.destroy();
-        });
+        componentRef.destroy();
       }
     });
     component.tbDestroy.subscribe(() => {
@@ -132,9 +130,7 @@ export class TbPopoverService {
       component.tbVisibleChange.subscribe((visible: boolean) => {
         if (!visible) {
           visibleFn(false);
-          component.tbAnimationDone.subscribe(() => {
-            componentRef.destroy();
-          });
+          componentRef.destroy();
         }
       });
       component.tbDestroy.subscribe(() => {

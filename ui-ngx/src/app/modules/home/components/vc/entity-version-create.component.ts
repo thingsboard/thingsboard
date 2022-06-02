@@ -42,6 +42,9 @@ export class EntityVersionCreateComponent extends PageComponent implements OnIni
   entityId: EntityId;
 
   @Input()
+  entityName: string;
+
+  @Input()
   onClose: (result: VersionCreationResult | null, branch: string | null) => void;
 
   @Input()
@@ -61,9 +64,10 @@ export class EntityVersionCreateComponent extends PageComponent implements OnIni
   ngOnInit(): void {
     this.createVersionFormGroup = this.fb.group({
       branch: [this.branch, [Validators.required]],
-      versionName: [null, [Validators.required]],
+      versionName: [this.translate.instant('version-control.default-create-entity-version-name',
+        {entityName: this.entityName}), [Validators.required]],
       saveRelations: [false, []],
-      saveAttributes: [false, []]
+      saveAttributes: [true, []]
     });
   }
 

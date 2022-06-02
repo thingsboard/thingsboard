@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -41,7 +42,7 @@ public class CustomerImportService extends BaseEntityImportService<CustomerId, C
     }
 
     @Override
-    protected Customer prepareAndSave(TenantId tenantId, Customer customer, EntityExportData<Customer> exportData, IdProvider idProvider) {
+    protected Customer prepareAndSave(TenantId tenantId, Customer customer, EntityExportData<Customer> exportData, IdProvider idProvider, EntityImportSettings importSettings) {
         if (customer.isPublic()) {
             return customerService.findOrCreatePublicCustomer(tenantId);
         } else {

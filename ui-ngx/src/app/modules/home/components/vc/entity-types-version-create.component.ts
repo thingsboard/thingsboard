@@ -183,8 +183,8 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
     const entityTypesArray = this.entityTypesVersionCreateFormGroup.get('entityTypes') as FormArray;
     const config: EntityTypeVersionCreateConfig = {
       syncStrategy: null,
-      saveRelations: false,
-      saveAttributes: false,
+      saveAttributes: true,
+      saveRelations: true,
       allEntities: true,
       entityIds: []
     };

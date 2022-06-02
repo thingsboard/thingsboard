@@ -75,11 +75,11 @@
                           </div>
                         </div>
                         <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px" formGroupName="config">
-                          <mat-checkbox formControlName="saveRelations">
-                            {{ 'version-control.export-entity-relations' | translate }}
-                          </mat-checkbox>
                           <mat-checkbox formControlName="saveAttributes">
-                            {{ 'version-control.export-entity-attributes' | translate }}
+                            {{ 'version-control.export-attributes' | translate }}
+                          </mat-checkbox>
+                          <mat-checkbox formControlName="saveRelations">
+                            {{ 'version-control.export-relations' | translate }}
                           </mat-checkbox>
                         </div>
                       </div>

@@ -13,19 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.sync.ie;
+package org.thingsboard.server.common.data.sync.vc;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.EntityType;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class EntityExportSettings {
-    private boolean exportRelations;
-    private boolean exportAttributes;
-    private boolean exportCredentials;
+public class EntityTypeLoadResult {
+    private EntityType entityType;
+    private int created;
+    private int updated;
+    private int deleted;
 }

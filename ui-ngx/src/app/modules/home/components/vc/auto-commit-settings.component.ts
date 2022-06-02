@@ -97,8 +97,8 @@ export class AutoCommitSettingsComponent extends PageComponent implements OnInit
     const entityTypesArray = this.autoCommitSettingsForm.get('entityTypes') as FormArray;
     const config: AutoVersionCreateConfig = {
       branch: null,
-      saveRelations: false,
-      saveAttributes: false
+      saveAttributes: true,
+      saveRelations: false
     };
     const allowed = this.allowedEntityTypes();
     let entityType: EntityType = null;

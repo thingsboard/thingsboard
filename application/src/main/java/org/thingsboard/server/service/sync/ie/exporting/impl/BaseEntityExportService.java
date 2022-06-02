@@ -30,11 +30,11 @@ public abstract class BaseEntityExportService<I extends EntityId, E extends Expo
 
     @Override
     protected void setAdditionalExportData(SecurityUser user, E entity, D exportData, EntityExportSettings exportSettings) throws ThingsboardException {
-        setRelatedEntities(user.getTenantId(), entity, (D) exportData);
+        setRelatedEntities(user.getTenantId(), entity, (D) exportData, exportSettings);
         super.setAdditionalExportData(user, entity, exportData, exportSettings);
     }
 
-    protected void setRelatedEntities(TenantId tenantId, E mainEntity, D exportData) {}
+    protected void setRelatedEntities(TenantId tenantId, E mainEntity, D exportData, EntityExportSettings settings) {}
 
     protected abstract D newExportData();
 

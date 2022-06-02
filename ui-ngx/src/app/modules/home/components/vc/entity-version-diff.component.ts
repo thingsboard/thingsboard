@@ -308,7 +308,7 @@ export class EntityVersionDiffComponent extends PageComponent implements OnInit,
       this.popoverService.hidePopover(trigger);
     } else {
       const restoreVersionPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, EntityVersionRestoreComponent, 'left', true, null,
+        this.viewContainerRef, EntityVersionRestoreComponent, 'leftTop', true, null,
         {
           branch: this.branch,
           versionName: this.versionName,
@@ -322,6 +322,7 @@ export class EntityVersionDiffComponent extends PageComponent implements OnInit,
             }
           }
         }, {}, {}, {}, false);
+      restoreVersionPopover.tbComponentRef.instance.popoverComponent = restoreVersionPopover;
     }
   }
 }

@@ -13,19 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.sync.ie;
+package org.thingsboard.server.service.sync.ie.importing.impl;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
-public class EntityExportSettings {
-    private boolean exportRelations;
-    private boolean exportAttributes;
-    private boolean exportCredentials;
+public class ImportServiceException extends RuntimeException{
+    private static final long serialVersionUID = -4932715239522125041L;
 }

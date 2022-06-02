@@ -14,15 +14,22 @@
 /// limitations under the License.
 ///
 
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { SingleEntityVersionLoadRequest, VersionLoadRequestType, VersionLoadResult } from '@shared/models/vc.models';
+import {
+  EntityDataInfo,
+  SingleEntityVersionLoadRequest,
+  VersionLoadRequestType,
+  VersionLoadResult
+} from '@shared/models/vc.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntitiesVersionControlService } from '@core/http/entities-version-control.service';
 import { EntityId } from '@shared/models/id/entity-id';
 import { TranslateService } from '@ngx-translate/core';
+import { TbPopoverComponent } from '@shared/components/popover.component';
+import { delay } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-entity-version-restore',
@@ -46,10 +53,16 @@ export class EntityVersionRestoreComponent extends PageComponent implements OnIn
   @Input()
   onClose: (result: Array<VersionLoadResult> | null) => void;
 
+  @Input()
+  popoverComponent: TbPopoverComponent;
+
+  entityDataInfo: EntityDataInfo = null;
+
   restoreFormGroup: FormGroup;
 
   constructor(protected store: Store<AppState>,
               private entitiesVersionControlService: EntitiesVersionControlService,
+              private cd: ChangeDetectorRef,
               private translate: TranslateService,
               private fb: FormBuilder) {
     super(store);
@@ -57,8 +70,15 @@ export class EntityVersionRestoreComponent extends PageComponent implements OnIn
 
   ngOnInit(): void {
     this.restoreFormGroup = this.fb.group({
-      loadRelations: [false, []],
-      loadAttributes: [false, []]
+      loadAttributes: [true, []],
+      loadRelations: [true, []]
+    });
+    this.entitiesVersionControlService.getEntityDataInfo(this.externalEntityId, this.versionId).subscribe((data) => {
+      this.entityDataInfo = data;
+      this.cd.detectChanges();
+      if (this.popoverComponent) {
+        this.popoverComponent.updatePosition();
+      }
     });
   }
 
@@ -74,8 +94,8 @@ export class EntityVersionRestoreComponent extends PageComponent implements OnIn
       versionId: this.versionId,
       externalEntityId: this.externalEntityId,
       config: {
-        loadRelations: this.restoreFormGroup.get('loadRelations').value,
-        loadAttributes: this.restoreFormGroup.get('loadAttributes').value
+        loadRelations: this.entityDataInfo.hasRelations ? this.restoreFormGroup.get('loadRelations').value : false,
+        loadAttributes: this.entityDataInfo.hasAttributes ? this.restoreFormGroup.get('loadAttributes').value : false
       },
       type: VersionLoadRequestType.SINGLE_ENTITY
     };

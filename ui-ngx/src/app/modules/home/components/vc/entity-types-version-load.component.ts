@@ -164,10 +164,10 @@ export class EntityTypesVersionLoadComponent extends PageComponent implements On
   public addEntityType() {
     const entityTypesArray = this.entityTypesVersionLoadFormGroup.get('entityTypes') as FormArray;
     const config: EntityTypeVersionLoadConfig = {
-      loadRelations: false,
-      loadAttributes: false,
+      loadAttributes: true,
+      loadRelations: true,
       removeOtherEntities: false,
-      findExistingEntityByName: false
+      findExistingEntityByName: true
     };
     const allowed = this.allowedEntityTypes();
     let entityType: EntityType = null;

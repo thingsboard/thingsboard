@@ -23,16 +23,18 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.sync.vc.EntityDataDiff;
 import org.thingsboard.server.common.data.sync.vc.EntityDataInfo;
+import org.thingsboard.server.common.data.sync.vc.VersionLoadResult;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
-import org.thingsboard.server.common.data.sync.vc.VersionLoadResult;
+import org.thingsboard.server.common.data.sync.vc.EntityTypeLoadResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadRequest;
 import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface EntitiesVersionControlService {
 
@@ -48,7 +50,7 @@ public interface EntitiesVersionControlService {
 
     ListenableFuture<List<VersionedEntityInfo>> listAllEntitiesAtVersion(TenantId tenantId, String branch, String versionId) throws Exception;
 
-    ListenableFuture<List<VersionLoadResult>> loadEntitiesVersion(SecurityUser user, VersionLoadRequest request) throws Exception;
+    ListenableFuture<VersionLoadResult> loadEntitiesVersion(SecurityUser user, VersionLoadRequest request) throws Exception;
 
     ListenableFuture<EntityDataDiff> compareEntityDataToVersion(SecurityUser user, String branch, EntityId entityId, String versionId) throws Exception;
 
@@ -63,6 +65,8 @@ public interface EntitiesVersionControlService {
     ListenableFuture<Void> checkVersionControlAccess(TenantId tenantId, RepositorySettings settings) throws Exception;
 
     ListenableFuture<VersionCreationResult> autoCommit(SecurityUser user, EntityId entityId) throws Exception;
+
+    ListenableFuture<VersionCreationResult> autoCommit(SecurityUser user, EntityType entityType, List<UUID> entityIds) throws Exception;
 
     ListenableFuture<EntityDataInfo> getEntityDataInfo(SecurityUser user, EntityId entityId, String versionId);
 }

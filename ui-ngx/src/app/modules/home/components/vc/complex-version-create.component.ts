@@ -20,7 +20,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
   ComplexVersionCreateRequest,
   createDefaultEntityTypesVersionCreate,
-  SyncStrategy, syncStrategyTranslationMap,
+  SyncStrategy, syncStrategyHintMap, syncStrategyTranslationMap,
   VersionCreateRequestType,
   VersionCreationResult
 } from '@shared/models/vc.models';
@@ -50,6 +50,8 @@ export class ComplexVersionCreateComponent extends PageComponent implements OnIn
   syncStrategies = Object.values(SyncStrategy);
 
   syncStrategyTranslations = syncStrategyTranslationMap;
+
+  syncStrategyHints = syncStrategyHintMap;
 
   resultMessage: string;
 

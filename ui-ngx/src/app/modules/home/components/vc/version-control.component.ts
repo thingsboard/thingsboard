@@ -47,6 +47,9 @@ export class VersionControlComponent implements OnInit, HasConfirmForm {
   @Input()
   entityId: EntityId;
 
+  @Input()
+  entityName: string;
+
   @Output()
   versionRestored = new EventEmitter<void>();
 

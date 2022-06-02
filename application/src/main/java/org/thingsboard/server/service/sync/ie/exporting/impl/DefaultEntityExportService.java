@@ -40,6 +40,7 @@ import org.thingsboard.server.service.sync.ie.exporting.ExportableEntitiesServic
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -111,7 +112,7 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
         } else {
             scopes = Collections.singletonList(DataConstants.SERVER_SCOPE);
         }
-        Map<String, List<AttributeExportData>> attributes = new HashMap<>();
+        Map<String, List<AttributeExportData>> attributes = new LinkedHashMap<>();
         scopes.forEach(scope -> {
             try {
                 attributes.put(scope, attributesService.findAll(user.getTenantId(), entity.getId(), scope).get().stream()

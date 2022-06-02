@@ -64,7 +64,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public abstract class BaseEntityImportService<I extends EntityId, E extends ExportableEntity<I>, D extends EntityExportData<E>> implements EntityImportService<I, E, D> {
 
-    @Autowired @Lazy
+    @Autowired
+    @Lazy
     private ExportableEntitiesService exportableEntitiesService;
     @Autowired
     private RelationService relationService;
@@ -95,7 +96,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
             exportableEntitiesService.checkPermission(user, existingEntity, getEntityType(), Operation.WRITE);
         }
 
-        E savedEntity = prepareAndSave(user.getTenantId(), entity, exportData, idProvider);
+        E savedEntity = prepareAndSave(user.getTenantId(), entity, exportData, idProvider, importSettings);
 
         importResult.setSavedEntity(savedEntity);
         importResult.setOldEntity(existingEntity);
@@ -108,7 +109,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
 
     protected abstract void setOwner(TenantId tenantId, E entity, IdProvider idProvider);
 
-    protected abstract E prepareAndSave(TenantId tenantId, E entity, D exportData, IdProvider idProvider);
+    protected abstract E prepareAndSave(TenantId tenantId, E entity, D exportData, IdProvider idProvider, EntityImportSettings importSettings);
 
 
     protected void processAfterSaved(SecurityUser user, EntityImportResult<E> importResult, D exportData,
@@ -210,7 +211,8 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                 // fixme: attributes are saved outside the transaction
                 tsSubService.saveAndNotify(user.getTenantId(), entity.getId(), scope, attributeKvEntries, new FutureCallback<Void>() {
                     @Override
-                    public void onSuccess(@Nullable Void unused) {}
+                    public void onSuccess(@Nullable Void unused) {
+                    }
 
                     @Override
                     public void onFailure(Throwable thr) {
@@ -246,7 +248,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
     private <ID extends EntityId> HasId<ID> findInternalEntity(TenantId tenantId, ID externalId) {
         return (HasId<ID>) Optional.ofNullable(exportableEntitiesService.findEntityByTenantIdAndExternalId(tenantId, externalId))
                 .or(() -> Optional.ofNullable(exportableEntitiesService.findEntityByTenantIdAndId(tenantId, externalId)))
-                .orElseThrow(() -> new IllegalArgumentException("Cannot find " + externalId.getEntityType() + " by external id " + externalId));
+                .orElseThrow(() -> new MissingEntityException(externalId));
     }
 
 

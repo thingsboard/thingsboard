@@ -83,6 +83,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -253,6 +254,7 @@ public class RuleChainController extends BaseController {
             checkEntity(ruleChain.getId(), ruleChain, Resource.RULE_CHAIN);
 
             RuleChain savedRuleChain = checkNotNull(ruleChainService.saveRuleChain(ruleChain));
+            vcService.autoCommit(getCurrentUser(), savedRuleChain.getId());
 
             if (RuleChainType.CORE.equals(savedRuleChain.getType())) {
                 tbClusterService.broadcastEntityStateChangeEvent(ruleChain.getTenantId(), savedRuleChain.getId(),
@@ -293,6 +295,7 @@ public class RuleChainController extends BaseController {
             checkParameter(request.getName(), "name");
 
             RuleChain savedRuleChain = installScripts.createDefaultRuleChain(getCurrentUser().getTenantId(), request.getName());
+            vcService.autoCommit(getCurrentUser(), savedRuleChain.getId());
 
             tbClusterService.broadcastEntityStateChangeEvent(savedRuleChain.getTenantId(), savedRuleChain.getId(), ComponentLifecycleEvent.CREATED);
 
@@ -380,6 +383,15 @@ public class RuleChainController extends BaseController {
                 updatedRuleChains = tbRuleChainService.updateRelatedRuleChains(tenantId, ruleChainMetaData.getRuleChainId(), result);
             } else {
                 updatedRuleChains = Collections.emptyList();
+            }
+
+            if (updatedRuleChains.isEmpty()) {
+                vcService.autoCommit(getCurrentUser(), ruleChainMetaData.getRuleChainId());
+            } else {
+                List<UUID> uuids = new ArrayList<>(updatedRuleChains.size() + 1);
+                uuids.add(ruleChainMetaData.getRuleChainId().getId());
+                updatedRuleChains.forEach(rc -> uuids.add(rc.getId().getId()));
+                vcService.autoCommit(getCurrentUser(), EntityType.RULE_CHAIN, uuids);
             }
 
             RuleChainMetaData savedRuleChainMetaData = checkNotNull(ruleChainService.loadRuleChainMetaData(tenantId, ruleChainMetaData.getRuleChainId()));
