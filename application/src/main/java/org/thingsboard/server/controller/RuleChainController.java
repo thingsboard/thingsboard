@@ -553,7 +553,7 @@ public class RuleChainController extends BaseController {
         RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
         RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.READ);
 
-        return tbRuleChainService.unassignRuleChainToEdge(getTenantId(), ruleChain, edge, getCurrentUser());
+        return tbRuleChainService.unassignRuleChainFromEdge(getTenantId(), ruleChain, edge, getCurrentUser());
      }
 
     @ApiOperation(value = "Get Edge Rule Chains (getEdgeRuleChains)",

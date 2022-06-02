@@ -47,8 +47,8 @@ public interface TbRuleChainService extends SimpleTbEntityService<RuleChain> {
 
     RuleChain assignRuleChainToEdge(TenantId tenantId, RuleChain ruleChain, Edge edge,
                                     SecurityUser user) throws ThingsboardException;
-    RuleChain unassignRuleChainToEdge(TenantId tenantId, RuleChain ruleChain, Edge edge,
-                                      SecurityUser user) throws ThingsboardException;
+    RuleChain unassignRuleChainFromEdge(TenantId tenantId, RuleChain ruleChain, Edge edge,
+                                        SecurityUser user) throws ThingsboardException;
 
     RuleChain setEdgeTemplateRootRuleChain(TenantId tenantId, RuleChain ruleChain, SecurityUser user) throws ThingsboardException;
 
