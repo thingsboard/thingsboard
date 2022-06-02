@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.data;
 
+import static org.apache.commons.lang3.StringUtils.repeat;
+
 public class StringUtils {
 
     public static final String EMPTY = "";
@@ -74,4 +76,20 @@ public class StringUtils {
         }
         return null;
     }
+
+    public static String obfuscate(String input, int seenMargin, char obfuscationChar,
+                                   int startIndexInclusive, int endIndexExclusive) {
+
+        String part = input.substring(startIndexInclusive, endIndexExclusive);
+        String obfuscatedPart;
+        if (part.length() <= seenMargin * 2) {
+            obfuscatedPart = repeat(obfuscationChar, part.length());
+        } else {
+            obfuscatedPart = part.substring(0, seenMargin)
+                    + repeat(obfuscationChar, part.length() - seenMargin * 2)
+                    + part.substring(part.length() - seenMargin);
+        }
+        return input.substring(0, startIndexInclusive) + obfuscatedPart + input.substring(endIndexExclusive);
+    }
+
 }

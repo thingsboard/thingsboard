@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit, Output, EventEmitter, OnDestroy } from '@angular/core';
+import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -25,9 +25,14 @@ import {
   Validator,
   Validators
 } from '@angular/forms';
-import { MatDialog } from '@angular/material/dialog';
 import { UtilsService } from '@core/services/utils.service';
-import { QueueInfo, QueueProcessingStrategyTypes, QueueSubmitStrategyTypes } from '@shared/models/queue.models';
+import {
+  QueueInfo,
+  QueueProcessingStrategyTypes,
+  QueueProcessingStrategyTypesMap,
+  QueueSubmitStrategyTypes,
+  QueueSubmitStrategyTypesMap
+} from '@shared/models/queue.models';
 import { isDefinedAndNotNull } from '@core/utils';
 import { Subscription } from 'rxjs';
 
@@ -57,30 +62,24 @@ export class QueueFormComponent implements ControlValueAccessor, OnInit, OnDestr
   newQueue = false;
 
   @Input()
-  mainQueue = false;
-
-  @Input()
   systemQueue = false;
 
-  @Input()
-  expanded = false;
-
-  @Output()
-  removeQueue = new EventEmitter();
-
   queueFormGroup: FormGroup;
-  submitStrategies: string[] = [];
-  processingStrategies: string[] = [];
-  queueTitle = '';
   hideBatchSize = false;
+
+  queueSubmitStrategyTypes = QueueSubmitStrategyTypes;
+  queueProcessingStrategyTypes = QueueProcessingStrategyTypes;
+  submitStrategies: string[] = Object.values(this.queueSubmitStrategyTypes);
+  processingStrategies: string[] = Object.values(this.queueProcessingStrategyTypes);
+  queueSubmitStrategyTypesMap = QueueSubmitStrategyTypesMap;
+  queueProcessingStrategyTypesMap = QueueProcessingStrategyTypesMap;
 
   private modelValue: QueueInfo;
   private propagateChange = null;
   private propagateChangePending = false;
   private valueChange$: Subscription = null;
 
-  constructor(private dialog: MatDialog,
-              private utils: UtilsService,
+  constructor(private utils: UtilsService,
               private fb: FormBuilder) {
   }
 
@@ -98,8 +97,6 @@ export class QueueFormComponent implements ControlValueAccessor, OnInit, OnDestr
   }
 
   ngOnInit() {
-    this.submitStrategies = Object.values(QueueSubmitStrategyTypes);
-    this.processingStrategies = Object.values(QueueProcessingStrategyTypes);
     this.queueFormGroup = this.fb.group(
       {
         name: ['', [Validators.required]],
@@ -128,7 +125,6 @@ export class QueueFormComponent implements ControlValueAccessor, OnInit, OnDestr
     });
     this.queueFormGroup.get('name').valueChanges.subscribe((value) => {
       this.queueFormGroup.patchValue({topic: `tb_rule_engine.${value}`});
-      this.queueTitle = this.utils.customTranslation(value, value);
     });
     this.queueFormGroup.get('submitStrategy').get('type').valueChanges.subscribe(() => {
       this.submitStrategyTypeChanged();
@@ -160,14 +156,10 @@ export class QueueFormComponent implements ControlValueAccessor, OnInit, OnDestr
   writeValue(value: QueueInfo): void {
     this.propagateChangePending = false;
     this.modelValue = value;
-    if (!this.modelValue.name) {
-      this.expanded = true;
-    }
-    this.queueTitle = this.utils.customTranslation(value.name, value.name);
     if (isDefinedAndNotNull(this.modelValue)) {
       this.queueFormGroup.patchValue(this.modelValue, {emitEvent: false});
+      this.submitStrategyTypeChanged();
     }
-    this.submitStrategyTypeChanged();
     if (!this.disabled && !this.queueFormGroup.valid) {
       this.updateModel();
     }
@@ -209,13 +201,11 @@ export class QueueFormComponent implements ControlValueAccessor, OnInit, OnDestr
     const type: QueueSubmitStrategyTypes = form.get('type').value;
     const batchSizeField = form.get('batchSize');
     if (type === QueueSubmitStrategyTypes.BATCH) {
-      batchSizeField.enable({emitEvent: false});
       batchSizeField.patchValue(1000, {emitEvent: false});
       batchSizeField.setValidators([Validators.min(1), Validators.required]);
       this.hideBatchSize = true;
     } else {
       batchSizeField.patchValue(null, {emitEvent: false});
-      batchSizeField.disable({emitEvent: false});
       batchSizeField.clearValidators();
       this.hideBatchSize = false;
     }

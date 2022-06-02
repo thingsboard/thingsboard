@@ -71,6 +71,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -135,6 +136,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected String username;
 
     protected TenantId tenantId;
+    protected UserId tenantAdminUserId;
     protected CustomerId customerId;
 
     @SuppressWarnings("rawtypes")
@@ -198,7 +200,8 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         tenantAdmin.setTenantId(tenantId);
         tenantAdmin.setEmail(TENANT_ADMIN_EMAIL);
 
-        createUserAndLogin(tenantAdmin, TENANT_ADMIN_PASSWORD);
+        tenantAdmin = createUserAndLogin(tenantAdmin, TENANT_ADMIN_PASSWORD);
+        tenantAdminUserId = tenantAdmin.getId();
 
         Customer customer = new Customer();
         customer.setTitle("Customer");
@@ -630,6 +633,10 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected <T> T readResponse(ResultActions result, TypeReference<T> type) throws Exception {
         byte[] content = result.andReturn().getResponse().getContentAsByteArray();
         return mapper.readerFor(type).readValue(content);
+    }
+
+    protected String getErrorMessage(ResultActions result) throws Exception {
+        return readResponse(result, JsonNode.class).get("message").asText();
     }
 
     public class IdComparator<D extends HasId> implements Comparator<D> {

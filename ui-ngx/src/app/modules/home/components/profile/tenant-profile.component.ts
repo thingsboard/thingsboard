@@ -109,7 +109,9 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
     this.entityForm.patchValue({name: entity.name}, {emitEvent: false});
     this.entityForm.patchValue({isolatedTbCore: entity.isolatedTbCore}, {emitEvent: false});
     this.entityForm.patchValue({isolatedTbRuleEngine: entity.isolatedTbRuleEngine}, {emitEvent: false});
-    this.entityForm.get('profileData').patchValue({configuration: entity.profileData?.configuration}, {emitEvent: false});
+    this.entityForm.get('profileData').patchValue({
+      configuration: !this.isAdd ? entity.profileData?.configuration : createTenantProfileConfiguration(TenantProfileType.DEFAULT)
+    }, {emitEvent: false});
     this.entityForm.get('profileData').patchValue({queueConfiguration: entity.profileData?.queueConfiguration}, {emitEvent: false});
     this.entityForm.patchValue({description: entity.description}, {emitEvent: false});
   }

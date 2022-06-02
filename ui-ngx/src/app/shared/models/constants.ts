@@ -63,6 +63,7 @@ export const HelpLinks = {
     smsProviderSettings: helpBaseUrl + '/docs/user-guide/ui/sms-provider-settings',
     securitySettings: helpBaseUrl + '/docs/user-guide/ui/security-settings',
     oauth2Settings: helpBaseUrl + '/docs/user-guide/oauth-2-support/',
+    twoFactorAuthSettings: helpBaseUrl + '/docs/',
     ruleEngine: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/overview/',
     ruleNodeCheckRelation: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#check-relation-filter-node',
     ruleNodeCheckExistenceFields: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#check-existence-fields-node',

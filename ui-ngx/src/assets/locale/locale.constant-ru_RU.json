@@ -50,7 +50,8 @@
         "export": "Экспортировать",
         "share-via": "Поделиться в {{provider}}",
         "continue": "Продолжить",
-        "discard-changes": "Отменить изменения"
+        "discard-changes": "Отменить изменения",
+        "done": "Завершено"
     },
     "aggregation": {
         "aggregation": "Агрегация",
@@ -1206,8 +1207,7 @@
             "select-file": "Выберите файл",
             "configuration": "Конфигурация импорта",
             "column-type": "Выберите тип колонок",
-            "creat-entities": "Создание новых объектов",
-            "done": "Завершено"
+            "creat-entities": "Создание новых объектов"
         },
         "message": {
             "create-entities": "{{count}} новый(х) объект(ов) было успешно создано.",

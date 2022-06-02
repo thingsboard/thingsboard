@@ -564,6 +564,13 @@ public class ModelConstants {
     public static final String EXTERNAL_ID_PROPERTY = "external_id";
 
     /**
+     * User auth settings constants.
+     * */
+    public static final String USER_AUTH_SETTINGS_COLUMN_FAMILY_NAME = "user_auth_settings";
+    public static final String USER_AUTH_SETTINGS_USER_ID_PROPERTY = USER_ID_PROPERTY;
+    public static final String USER_AUTH_SETTINGS_TWO_FA_SETTINGS = "two_fa_settings";
+
+    /**
      * Cassandra attributes and timeseries constants.
      */
     public static final String ATTRIBUTES_KV_CF = "attributes_kv_cf";

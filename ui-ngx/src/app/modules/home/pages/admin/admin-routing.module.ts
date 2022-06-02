@@ -35,6 +35,7 @@ import { BreadCrumbConfig } from '@shared/components/breadcrumb';
 import { QueuesTableConfigResolver } from '@home/pages/admin/queue/queues-table-config.resolver';
 import { RepositoryAdminSettingsComponent } from '@home/pages/admin/repository-admin-settings.component';
 import { AutoCommitAdminSettingsComponent } from '@home/pages/admin/auto-commit-admin-settings.component';
+import { TwoFactorAuthSettingsComponent } from '@home/pages/admin/two-factor-auth-settings.component';
 
 @Injectable()
 export class OAuth2LoginProcessingUrlResolver implements Resolve<string> {
@@ -224,6 +225,20 @@ const routes: Routes = [
             }
           }
         ]
+      },
+      {
+        path: '2fa',
+        component: TwoFactorAuthSettingsComponent,
+        canDeactivate: [ConfirmOnExitGuard],
+        data: {
+          auth: [Authority.SYS_ADMIN],
+          title: 'admin.2fa.2fa',
+          breadcrumb: {
+            label: 'admin.2fa.2fa',
+            icon: 'mdi:two-factor-authentication',
+            isMdiIcon: true
+          }
+        }
       },
       {
         path: 'repository',

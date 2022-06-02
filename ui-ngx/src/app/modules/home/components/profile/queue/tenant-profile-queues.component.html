@@ -20,12 +20,26 @@
        *ngFor="let queuesControl of queuesFormArray.controls; trackBy: trackByQueue;
        let $index = index; last as isLast;"
        [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
-    <tb-queue-form [formControl]="queuesControl"
-                   (removeQueue)="removeQueue($index)"
-                   [mainQueue]="$index === 0"
-                   [expanded]="$index === 0"
-                   [newQueue]="newQueue">
-    </tb-queue-form>
+    <mat-expansion-panel fxFlex [expanded]="true">
+      <mat-expansion-panel-header>
+        <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+          <mat-panel-title>
+            {{ getTitle(queuesControl.value.name) }}
+          </mat-panel-title>
+          <span fxFlex></span>
+          <button *ngIf="!($index === 0) && !disabled" mat-icon-button style="min-width: 40px;"
+                  type="button"
+                  (click)="removeQueue($index)"
+                  matTooltip="{{ 'action.remove' | translate }}"
+                  matTooltipPosition="above">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <tb-queue-form [formControl]="queuesControl" [newQueue]="newQueue"></tb-queue-form>
+      </ng-template>
+    </mat-expansion-panel>
   </div>
   <div *ngIf="!queuesFormArray.controls.length">
       <span translate fxLayoutAlign="center center"

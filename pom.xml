@@ -136,6 +136,7 @@
         <zeroturnaround.version>1.12</zeroturnaround.version>
         <opensmpp.version>3.0.0</opensmpp.version>
         <jgit.version>6.1.0.202203080745-r</jgit.version>
+        <aerogear-otp.version>1.0.0</aerogear-otp.version>
     </properties>
 
     <modules>
@@ -1886,6 +1887,11 @@
                 <groupId>org.opensmpp</groupId>
                 <artifactId>opensmpp-core</artifactId>
                 <version>${opensmpp.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.aerogear</groupId>
+                <artifactId>aerogear-otp-java</artifactId>
+                <version>${aerogear-otp.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jgit</groupId>
