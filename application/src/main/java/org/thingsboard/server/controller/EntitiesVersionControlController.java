@@ -43,6 +43,7 @@ import org.thingsboard.server.common.data.sync.vc.EntityDataDiff;
 import org.thingsboard.server.common.data.sync.vc.EntityDataInfo;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
+import org.thingsboard.server.common.data.sync.vc.EntityTypeLoadResult;
 import org.thingsboard.server.common.data.sync.vc.VersionLoadResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
@@ -296,7 +297,7 @@ public class EntitiesVersionControlController extends BaseController {
             "  }\n" +
             "}\n```")
     @PostMapping("/entity")
-    public DeferredResult<List<VersionLoadResult>> loadEntitiesVersion(@RequestBody VersionLoadRequest request) throws ThingsboardException {
+    public DeferredResult<VersionLoadResult> loadEntitiesVersion(@RequestBody VersionLoadRequest request) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         try {
             return wrapFuture(versionControlService.loadEntitiesVersion(user, request));

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.sync.ie;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -73,6 +74,11 @@ public class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
             attributes.values().forEach(list -> list.sort(attrComparator));
         }
         return this;
+    }
+
+    @JsonIgnore
+    public EntityId getExternalId() {
+        return entity.getExternalId() != null ? entity.getExternalId() : entity.getId();
     }
 
 }

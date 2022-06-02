@@ -64,7 +64,7 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
     }
 
     @Override
-    protected Dashboard prepareAndSave(TenantId tenantId, Dashboard dashboard, EntityExportData<Dashboard> exportData, IdProvider idProvider) {
+    protected Dashboard prepareAndSave(TenantId tenantId, Dashboard dashboard, EntityExportData<Dashboard> exportData, IdProvider idProvider, EntityImportSettings importSettings) {
         JsonNode configuration = dashboard.getConfiguration();
         String newConfigurationJson = RegexUtils.replace(configuration.toString(), RegexUtils.UUID_PATTERN, uuid -> {
             return idProvider.getInternalIdByUuid(UUID.fromString(uuid))

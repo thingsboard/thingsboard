@@ -28,4 +28,5 @@ public class EntityImportSettings {
     private boolean findExistingByName;
     private boolean updateRelations;
     private boolean saveAttributes;
+    private boolean saveCredentials;
 }

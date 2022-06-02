@@ -18,27 +18,25 @@ package org.thingsboard.server.common.data.sync.vc;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Data;
+import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.List;
 
 @Data
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class VersionLoadResult {
+public class EntityLoadError {
 
-    private List<EntityTypeLoadResult> result;
-    private EntityLoadError error;
+    private String type;
+    private EntityId source;
+    private EntityId target;
 
-    public static VersionLoadResult success(List<EntityTypeLoadResult> result) {
-        return VersionLoadResult.builder().result(result).build();
+    public static EntityLoadError credentialsError(EntityId sourceId) {
+        return EntityLoadError.builder().type("DEVICE_CREDENTIALS_CONFLICT").source(sourceId).build();
     }
 
-    public static VersionLoadResult success(EntityTypeLoadResult result) {
-        return VersionLoadResult.builder().result(List.of(result)).build();
-    }
-
-    public static VersionLoadResult error(EntityLoadError error) {
-        return VersionLoadResult.builder().error(error).build();
+    public static EntityLoadError referenceEntityError(EntityId sourceId, EntityId targetId) {
+        return EntityLoadError.builder().type("MISSING_REFERENCED_ENTITY").source(sourceId).target(targetId).build();
     }
 
 }

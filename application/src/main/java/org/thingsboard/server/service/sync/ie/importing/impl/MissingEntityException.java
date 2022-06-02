@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.sync.ie;
+package org.thingsboard.server.service.sync.ie.importing.impl;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import org.thingsboard.server.common.data.id.EntityId;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
-public class EntityExportSettings {
-    private boolean exportRelations;
-    private boolean exportAttributes;
-    private boolean exportCredentials;
+public class MissingEntityException extends ImportServiceException {
+
+    private static final long serialVersionUID = 3669135386955906022L;
+    @Getter
+    private final EntityId entityId;
+
+    public MissingEntityException(EntityId entityId) {
+        this.entityId = entityId;
+    }
 }

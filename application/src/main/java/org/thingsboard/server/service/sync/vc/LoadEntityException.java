@@ -13,19 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.sync.ie;
+package org.thingsboard.server.service.sync.vc;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
-public class EntityExportSettings {
-    private boolean exportRelations;
-    private boolean exportAttributes;
-    private boolean exportCredentials;
+@SuppressWarnings("rawtypes")
+public class LoadEntityException extends RuntimeException {
+
+    private static final long serialVersionUID = -1749719992370409504L;
+    @Getter
+    private final EntityExportData data;
+
+    public LoadEntityException(EntityExportData data, Throwable cause) {
+        super(cause);
+        this.data = data;
+    }
 }
