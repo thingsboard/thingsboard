@@ -81,4 +81,18 @@ public class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
         return entity.getExternalId() != null ? entity.getExternalId() : entity.getId();
     }
 
+    @JsonIgnore
+    public boolean hasCredentials() {
+        return false;
+    }
+
+    @JsonIgnore
+    public boolean hasAttributes() {
+        return attributes != null;
+    }
+
+    @JsonIgnore
+    public boolean hasRelations() {
+        return relations != null;
+    }
 }

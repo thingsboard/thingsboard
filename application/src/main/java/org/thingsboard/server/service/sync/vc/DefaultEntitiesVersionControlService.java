@@ -404,8 +404,9 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         return transformAsync(gitServiceQueue.getEntity(user.getTenantId(), versionId, externalId),
                 otherVersion -> {
                     EntityExportData<?> currentVersion = exportImportService.exportEntity(user, entityId, EntityExportSettings.builder()
-                            .exportRelations(otherVersion.getRelations() != null)
-                            .exportAttributes(otherVersion.getAttributes() != null)
+                            .exportRelations(otherVersion.hasRelations())
+                            .exportAttributes(otherVersion.hasAttributes())
+                            .exportCredentials(otherVersion.hasCredentials())
                             .build());
                     return transform(gitServiceQueue.getContentsDiff(user.getTenantId(),
                                     JacksonUtil.toPrettyString(currentVersion.sort()),
@@ -417,7 +418,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     @Override
     public ListenableFuture<EntityDataInfo> getEntityDataInfo(SecurityUser user, EntityId entityId, String versionId) {
         return Futures.transform(gitServiceQueue.getEntity(user.getTenantId(), versionId, entityId),
-                entity -> new EntityDataInfo(entity.getRelations() != null, entity.getAttributes() != null, false), MoreExecutors.directExecutor());
+                entity -> new EntityDataInfo(entity.hasRelations(), entity.hasAttributes(), entity.hasCredentials()), MoreExecutors.directExecutor());
     }
 
 
