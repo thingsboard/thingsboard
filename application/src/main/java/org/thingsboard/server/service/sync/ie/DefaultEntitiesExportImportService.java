@@ -19,13 +19,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.sync.ThrowingRunnable;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
 import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
@@ -39,19 +37,17 @@ import org.thingsboard.server.service.sync.ie.exporting.impl.BaseEntityExportSer
 import org.thingsboard.server.service.sync.ie.exporting.impl.DefaultEntityExportService;
 import org.thingsboard.server.service.sync.ie.importing.EntityImportService;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Service
 @TbCoreComponent
 @RequiredArgsConstructor
 @Slf4j
+@SuppressWarnings("rawtypes")
 public class DefaultEntitiesExportImportService implements EntitiesExportImportService {
 
     private final Map<EntityType, EntityExportService<?, ?, ?>> exportServices = new HashMap<>();
@@ -76,7 +72,6 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
 
         return exportService.getExportData(user, entityId, exportSettings);
     }
-
 
     @Override
     public <E extends ExportableEntity<I>, I extends EntityId> EntityImportResult<E> importEntity(SecurityUser user, EntityExportData<E> exportData, EntityImportSettings importSettings,
@@ -103,44 +98,6 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
         return importResult;
     }
 
-    @Transactional(rollbackFor = Exception.class, timeout = 120)
-    @Override
-    public List<EntityImportResult<?>> importEntities(SecurityUser user, List<EntityExportData<?>> exportDataList, EntityImportSettings importSettings) throws ThingsboardException {
-        exportDataList.sort(getDataComparatorForImport());
-
-        List<EntityImportResult<?>> importResults = new ArrayList<>();
-
-        for (EntityExportData exportData : exportDataList) {
-            EntityImportResult<?> importResult = importEntity(user, exportData, importSettings, false, false);
-            importResults.add(importResult);
-        }
-
-        for (ThrowingRunnable saveReferencesCallback : importResults.stream()
-                .map(EntityImportResult::getSaveReferencesCallback)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList())) {
-            saveReferencesCallback.run();
-        }
-
-        importResults.stream()
-                .map(EntityImportResult::getSendEventsCallback)
-                .filter(Objects::nonNull)
-                .forEach(sendEventsCallback -> {
-                    try {
-                        sendEventsCallback.run();
-                    } catch (Exception e) {
-                        log.error("Failed to send event for entity", e);
-                    }
-                });
-
-        return importResults;
-    }
-
-
-    @Override
-    public Comparator<EntityExportData<?>> getDataComparatorForImport() {
-        return Comparator.comparing(EntityExportData::getEntityType, getEntityTypeComparatorForImport());
-    }
 
     @Override
     public Comparator<EntityType> getEntityTypeComparatorForImport() {

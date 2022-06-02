@@ -83,7 +83,8 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
 
         entity.setExternalId(entity.getId());
 
-        IdProvider idProvider = new IdProvider(user);
+        EntityImportResult<E> importResult = new EntityImportResult<>();
+        IdProvider idProvider = new IdProvider(user, importSettings, importResult);
         setOwner(user.getTenantId(), entity, idProvider);
         if (existingEntity == null) {
             entity.setId(null);
@@ -96,7 +97,6 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
 
         E savedEntity = prepareAndSave(user.getTenantId(), entity, exportData, idProvider);
 
-        EntityImportResult<E> importResult = new EntityImportResult<>();
         importResult.setSavedEntity(savedEntity);
         importResult.setOldEntity(existingEntity);
         importResult.setEntityType(getEntityType());
@@ -253,11 +253,27 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
     @RequiredArgsConstructor
     protected class IdProvider {
         private final SecurityUser user;
+        private final EntityImportSettings importSettings;
+        private final EntityImportResult<E> importResult;
 
         public <ID extends EntityId> ID getInternalId(ID externalId) {
+            return getInternalId(externalId, true);
+          }
+
+        public <ID extends EntityId> ID getInternalId(ID externalId, boolean throwExceptionIfNotFound) {
             if (externalId == null || externalId.isNullUid()) return null;
 
-            HasId<ID> entity = findInternalEntity(user.getTenantId(), externalId);
+            HasId<ID> entity;
+            try {
+                entity = findInternalEntity(user.getTenantId(), externalId);
+            } catch (Exception e) {
+                if (throwExceptionIfNotFound) {
+                    throw e;
+                } else {
+                    importResult.setUpdatedAllExternalIds(false);
+                    return null;
+                }
+            }
             try {
                 exportableEntitiesService.checkPermission(user, entity, entity.getId().getEntityType(), Operation.READ);
             } catch (ThingsboardException e) {
@@ -267,6 +283,8 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
         }
 
         public Optional<EntityId> getInternalIdByUuid(UUID externalUuid) {
+            if (externalUuid.equals(EntityId.NULL_UUID)) return Optional.empty();
+
             for (EntityType entityType : EntityType.values()) {
                 EntityId externalId;
                 try {
@@ -275,16 +293,19 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                     continue;
                 }
 
-                EntityId internalId = null;
-                try {
-                    internalId = getInternalId(externalId);
-                } catch (Exception ignored) {
-                }
-
+                EntityId internalId = getInternalId(externalId, false);
                 if (internalId != null) {
                     return Optional.of(internalId);
+                } else if (importSettings.isResetExternalIdsOfAnotherTenant()) {
+                    try {
+                        if (exportableEntitiesService.findEntityById(externalId) != null) {
+                            return Optional.of(EntityIdFactory.getByTypeAndUuid(entityType, EntityId.NULL_UUID));
+                        }
+                    } catch (Exception ignored) {}
                 }
             }
+
+            importResult.setUpdatedAllExternalIds(false);
             return Optional.empty();
         }
 

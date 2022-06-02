@@ -28,12 +28,11 @@ import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
-import org.thingsboard.server.common.data.rule.RuleChainUpdateResult;
+import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
+import org.thingsboard.server.common.data.sync.ie.RuleChainExportData;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
-import org.thingsboard.server.common.data.sync.ie.RuleChainExportData;
 import org.thingsboard.server.utils.RegexUtils;
 
 import java.util.Collections;
@@ -80,14 +79,13 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
                 });
         Optional.ofNullable(metaData.getRuleChainConnections()).orElse(Collections.emptyList())
                 .forEach(ruleChainConnectionInfo -> {
-                    ruleChainConnectionInfo.setTargetRuleChainId(idProvider.getInternalId(ruleChainConnectionInfo.getTargetRuleChainId()));
+                    ruleChainConnectionInfo.setTargetRuleChainId(idProvider.getInternalId(ruleChainConnectionInfo.getTargetRuleChainId(), false));
                 });
         ruleChain.setFirstRuleNodeId(null);
 
         ruleChain = ruleChainService.saveRuleChain(ruleChain);
         exportData.getMetaData().setRuleChainId(ruleChain.getId());
-        RuleChainUpdateResult updateResult = ruleChainService.saveRuleChainMetaData(tenantId, exportData.getMetaData());
-        // FIXME [viacheslav]: send events for nodes
+        ruleChainService.saveRuleChainMetaData(tenantId, exportData.getMetaData());
         return ruleChainService.findRuleChainById(tenantId, ruleChain.getId());
     }
 
