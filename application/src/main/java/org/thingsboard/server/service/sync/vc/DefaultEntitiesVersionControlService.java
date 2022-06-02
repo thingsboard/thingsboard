@@ -340,7 +340,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                     DaoUtil.processInBatches(pageLink -> {
                         return exportableEntitiesService.findEntitiesByTenantId(user.getTenantId(), entityType, pageLink);
                     }, 100, entity -> {
-                        if (!importedEntities.get(entityType).contains(entity.getId())) {
+                        if (importedEntities.get(entityType) == null || !importedEntities.get(entityType).contains(entity.getId())) {
                             try {
                                 exportableEntitiesService.checkPermission(user, entity, entityType, Operation.DELETE);
                             } catch (ThingsboardException e) {
