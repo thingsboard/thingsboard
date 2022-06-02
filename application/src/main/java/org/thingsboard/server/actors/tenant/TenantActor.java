@@ -57,7 +57,6 @@ import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 public class TenantActor extends RuleChainManagerActor {
@@ -82,24 +81,17 @@ public class TenantActor extends RuleChainManagerActor {
                 cantFindTenant = true;
                 log.info("[{}] Started tenant actor for missing tenant.", tenantId);
             } else {
-                // This Service may be started for specific tenant only.
-                Optional<TenantId> isolatedTenantId = systemContext.getServiceInfoProvider().getIsolatedTenant();
-
                 TenantProfile tenantProfile = systemContext.getTenantProfileCache().get(tenant.getTenantProfileId());
 
                 isCore = systemContext.getServiceInfoProvider().isService(ServiceType.TB_CORE);
                 isRuleEngine = systemContext.getServiceInfoProvider().isService(ServiceType.TB_RULE_ENGINE);
                 if (isRuleEngine) {
                     try {
-                        if (isolatedTenantId.map(id -> id.equals(tenantId)).orElseGet(() -> !tenantProfile.isIsolatedTbRuleEngine())) {
-                            if (getApiUsageState().isReExecEnabled()) {
-                                log.debug("[{}] Going to init rule chains", tenantId);
-                                initRuleChains();
-                            } else {
-                                log.info("[{}] Skip init of the rule chains due to API limits", tenantId);
-                            }
+                        if (getApiUsageState().isReExecEnabled()) {
+                            log.debug("[{}] Going to init rule chains", tenantId);
+                            initRuleChains();
                         } else {
-                            isRuleEngine = false;
+                            log.info("[{}] Skip init of the rule chains due to API limits", tenantId);
                         }
                     } catch (Exception e) {
                         cantFindTenant = true;
@@ -133,7 +125,7 @@ public class TenantActor extends RuleChainManagerActor {
         switch (msg.getMsgType()) {
             case PARTITION_CHANGE_MSG:
                 PartitionChangeMsg partitionChangeMsg = (PartitionChangeMsg) msg;
-                ServiceType serviceType = partitionChangeMsg.getServiceQueueKey().getServiceType();
+                ServiceType serviceType = partitionChangeMsg.getServiceType();
                 if (ServiceType.TB_RULE_ENGINE.equals(serviceType)) {
                     //To Rule Chain Actors
                     broadcast(msg);

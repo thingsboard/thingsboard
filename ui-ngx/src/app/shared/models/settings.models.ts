@@ -141,7 +141,7 @@ export enum TypeOfNumber {
   Abbreviated = 'Abbreviated'
 }
 
-interface TypeDescriptor {
+export interface TypeDescriptor {
   name: string;
   value: number;
 }

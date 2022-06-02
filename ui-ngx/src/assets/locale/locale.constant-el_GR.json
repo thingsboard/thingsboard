@@ -53,7 +53,8 @@
     "share-via": "Διαμοίραση μέσω {{provider}}",
     "move": "Μετακίνηση",
     "select": "Επιλογή",
-    "continue": "Συνέχεια"
+    "continue": "Συνέχεια",
+    "done": "Ολοκληρώθηκε"
   },
   "aggregation": {
     "aggregation": "Συνάθροιση",
@@ -1479,8 +1480,7 @@
       "select-file": "Επιλογή αρχείου",
       "configuration": "Εισαγωγή ρύθμισης",
       "column-type": "Επιλογή τύπου στήλης",
-      "creat-entities": "Δημιουργία νέων οντοτήτων",
-      "done": "Ολοκληρώθηκε"
+      "creat-entities": "Δημιουργία νέων οντοτήτων"
     },
     "message": {
       "create-entities": "{{count}} νέες οντότητες δημιουργήθηκαν με επιτυχία.",

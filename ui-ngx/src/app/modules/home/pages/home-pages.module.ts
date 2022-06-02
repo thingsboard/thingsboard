@@ -19,6 +19,7 @@ import { NgModule } from '@angular/core';
 import { AdminModule } from './admin/admin.module';
 import { HomeLinksModule } from './home-links/home-links.module';
 import { ProfileModule } from './profile/profile.module';
+import { SecurityModule } from '@home/pages/security/security.module';
 import { TenantModule } from '@modules/home/pages/tenant/tenant.module';
 import { CustomerModule } from '@modules/home/pages/customer/customer.module';
 import { AuditLogModule } from '@modules/home/pages/audit-log/audit-log.module';
@@ -42,6 +43,7 @@ import { OtaUpdateModule } from '@home/pages/ota-update/ota-update.module';
     AdminModule,
     HomeLinksModule,
     ProfileModule,
+    SecurityModule,
     TenantProfileModule,
     TenantModule,
     DeviceProfileModule,

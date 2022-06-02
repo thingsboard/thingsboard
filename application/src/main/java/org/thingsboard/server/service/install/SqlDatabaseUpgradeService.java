@@ -15,20 +15,37 @@
  */
 package org.thingsboard.server.service.install;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.id.QueueId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.queue.ProcessingStrategy;
+import org.thingsboard.server.common.data.queue.ProcessingStrategyType;
+import org.thingsboard.server.common.data.queue.Queue;
+import org.thingsboard.server.common.data.queue.SubmitStrategy;
+import org.thingsboard.server.common.data.queue.SubmitStrategyType;
+import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.queue.QueueService;
+import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
+import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
 import org.thingsboard.server.service.install.sql.SqlDbHelper;
 
 import java.nio.charset.Charset;
@@ -42,8 +59,11 @@ import java.sql.SQLException;
 import java.sql.SQLSyntaxErrorException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.service.install.DatabaseHelper.ADDITIONAL_INFO;
 import static org.thingsboard.server.service.install.DatabaseHelper.ASSIGNED_CUSTOMERS;
@@ -101,6 +121,17 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
     @Autowired
     private ApiUsageStateService apiUsageStateService;
 
+    @Autowired
+    private QueueService queueService;
+
+    @Autowired
+    private TbRuleEngineQueueConfigService queueConfig;
+
+    @Autowired
+    private RuleChainService ruleChainService;
+
+    @Autowired
+    private TenantProfileService tenantProfileService;
 
     @Override
     public void upgradeDatabase(String fromVersion) throws Exception {
@@ -534,6 +565,86 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     log.error("Failed updating schema!!!", e);
                 }
                 break;
+            case "3.3.4":
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    log.info("Updating schema ...");
+                    schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.3.4", SCHEMA_UPDATE_SQL);
+                    loadSql(schemaUpdateFile, conn);
+
+                    log.info("Loading queues...");
+                    try {
+                        if (!CollectionUtils.isEmpty(queueConfig.getQueues())) {
+                            queueConfig.getQueues().forEach(queueSettings -> {
+                                queueService.saveQueue(queueConfigToQueue(queueSettings));
+                            });
+                        } else {
+                            systemDataLoaderService.createQueues();
+                        }
+                    } catch (Exception e) {
+                    }
+
+                    log.info("Updating device profiles...");
+                    schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.3.4", "schema_update_device_profile.sql");
+                    loadSql(schemaUpdateFile, conn);
+
+                    log.info("Updating checkpoint rule nodes...");
+                    PageLink pageLink = new PageLink(100);
+                    PageData<Tenant> pageData;
+                    do {
+                        pageData = tenantService.findTenants(pageLink);
+                        for (Tenant tenant : pageData.getData()) {
+                            TenantId tenantId = tenant.getId();
+                            Map<String, QueueId> queues =
+                                    queueService.findQueuesByTenantId(tenantId).stream().collect(Collectors.toMap(Queue::getName, Queue::getId));
+                            try {
+                                List<RuleNode> checkpointNodes =
+                                        ruleChainService.findRuleNodesByTenantIdAndType(tenantId, "org.thingsboard.rule.engine.flow.TbCheckpointNode");
+                                checkpointNodes.forEach(node -> {
+                                    ObjectNode configuration = (ObjectNode) node.getConfiguration();
+                                    JsonNode queueNameNode = configuration.remove("queueName");
+                                    if (queueNameNode != null) {
+                                        String queueName = queueNameNode.asText();
+                                        configuration.put("queueId", queues.get(queueName).toString());
+                                        ruleChainService.saveRuleNode(tenantId, node);
+                                    }
+                                });
+                            } catch (Exception e) {
+                            }
+                        }
+                        pageLink = pageLink.nextPageLink();
+                    } while (pageData.hasNext());
+
+                    log.info("Updating tenant profiles...");
+                    PageLink profilePageLink = new PageLink(100);
+                    PageData<TenantProfile> profilePageData;
+                    do {
+                        profilePageData = tenantProfileService.findTenantProfiles(TenantId.SYS_TENANT_ID, profilePageLink);
+
+                        profilePageData.getData().forEach(profile -> {
+                            try {
+                                List<TenantProfileQueueConfiguration> queueConfiguration = profile.getProfileData().getQueueConfiguration();
+                                if (profile.isIsolatedTbRuleEngine() && (queueConfiguration == null || queueConfiguration.isEmpty())) {
+                                    TenantProfileQueueConfiguration mainQueueConfig = getMainQueueConfiguration();
+                                    profile.getProfileData().setQueueConfiguration(Collections.singletonList((mainQueueConfig)));
+                                    tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, profile);
+                                    List<TenantId> isolatedTenants = tenantService.findTenantIdsByTenantProfileId(profile.getId());
+                                    isolatedTenants.forEach(tenantId -> {
+                                        queueService.saveQueue(new Queue(tenantId, mainQueueConfig));
+                                    });
+                                }
+                            } catch (Exception e) {
+                            }
+
+                        });
+                        profilePageLink = profilePageLink.nextPageLink();
+                    } while (profilePageData.hasNext());
+                    log.info("Updating schema settings...");
+                    conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3004000;");
+                    log.info("Schema updated.");
+                } catch (Exception e) {
+                    log.error("Failed updating schema!!!", e);
+                }
+                break;
             default:
                 throw new RuntimeException("Unable to upgrade SQL database, unsupported fromVersion: " + fromVersion);
         }
@@ -578,5 +689,50 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
             log.info("Failed to check current PostgreSQL schema due to: {}", e.getMessage());
         }
         return isOldSchema;
+    }
+
+    private Queue queueConfigToQueue(TbRuleEngineQueueConfiguration queueSettings) {
+        Queue queue = new Queue();
+        queue.setTenantId(TenantId.SYS_TENANT_ID);
+        queue.setName(queueSettings.getName());
+        queue.setTopic(queueSettings.getTopic());
+        queue.setPollInterval(queueSettings.getPollInterval());
+        queue.setPartitions(queueSettings.getPartitions());
+        queue.setPackProcessingTimeout(queueSettings.getPackProcessingTimeout());
+        SubmitStrategy submitStrategy = new SubmitStrategy();
+        submitStrategy.setBatchSize(queueSettings.getSubmitStrategy().getBatchSize());
+        submitStrategy.setType(SubmitStrategyType.valueOf(queueSettings.getSubmitStrategy().getType()));
+        queue.setSubmitStrategy(submitStrategy);
+        ProcessingStrategy processingStrategy = new ProcessingStrategy();
+        processingStrategy.setType(ProcessingStrategyType.valueOf(queueSettings.getProcessingStrategy().getType()));
+        processingStrategy.setRetries(queueSettings.getProcessingStrategy().getRetries());
+        processingStrategy.setFailurePercentage(queueSettings.getProcessingStrategy().getFailurePercentage());
+        processingStrategy.setPauseBetweenRetries(queueSettings.getProcessingStrategy().getPauseBetweenRetries());
+        processingStrategy.setMaxPauseBetweenRetries(queueSettings.getProcessingStrategy().getMaxPauseBetweenRetries());
+        queue.setProcessingStrategy(processingStrategy);
+        queue.setConsumerPerPartition(queueSettings.isConsumerPerPartition());
+        return queue;
+    }
+
+    private TenantProfileQueueConfiguration getMainQueueConfiguration() {
+        TenantProfileQueueConfiguration mainQueueConfiguration = new TenantProfileQueueConfiguration();
+        mainQueueConfiguration.setName("Main");
+        mainQueueConfiguration.setTopic("tb_rule_engine.main");
+        mainQueueConfiguration.setPollInterval(25);
+        mainQueueConfiguration.setPartitions(10);
+        mainQueueConfiguration.setConsumerPerPartition(true);
+        mainQueueConfiguration.setPackProcessingTimeout(2000);
+        SubmitStrategy mainQueueSubmitStrategy = new SubmitStrategy();
+        mainQueueSubmitStrategy.setType(SubmitStrategyType.BURST);
+        mainQueueSubmitStrategy.setBatchSize(1000);
+        mainQueueConfiguration.setSubmitStrategy(mainQueueSubmitStrategy);
+        ProcessingStrategy mainQueueProcessingStrategy = new ProcessingStrategy();
+        mainQueueProcessingStrategy.setType(ProcessingStrategyType.SKIP_ALL_FAILURES);
+        mainQueueProcessingStrategy.setRetries(3);
+        mainQueueProcessingStrategy.setFailurePercentage(0);
+        mainQueueProcessingStrategy.setPauseBetweenRetries(3);
+        mainQueueProcessingStrategy.setMaxPauseBetweenRetries(3);
+        mainQueueConfiguration.setProcessingStrategy(mainQueueProcessingStrategy);
+        return mainQueueConfiguration;
     }
 }

@@ -57,6 +57,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceLwM2MC
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
 
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -66,6 +67,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public interface TransportService {
 
     GetEntityProfileResponseMsg getEntityProfile(GetEntityProfileRequestMsg msg);
+
+    List<TransportProtos.GetQueueRoutingInfoResponseMsg> getQueueRoutingInfo(TransportProtos.GetAllQueueRoutingInfoRequestMsg msg);
 
     GetResourceResponseMsg getResource(GetResourceRequestMsg msg);
 

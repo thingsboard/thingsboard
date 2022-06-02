@@ -34,4 +34,9 @@ public class CollectionsUtil {
     public static <T> Set<T> diffSets(Set<T> a, Set<T> b) {
         return b.stream().filter(p -> !a.contains(p)).collect(Collectors.toSet());
     }
+
+    public static <T> boolean contains(Collection<T> collection, T element) {
+        return isNotEmpty(collection) && collection.contains(element);
+    }
+
 }
