@@ -52,7 +52,7 @@
                     [filterAllowedEntityTypes]="false"
                     [allowedEntityTypes]="allowedEntityTypes(entityTypeFormGroup)">
                   </tb-entity-type-select>
-                  <div fxFlex fxLayout="row" fxLayoutGap="16px" fxLayoutAlign="start center" formGroupName="config">
+                  <div fxFlex fxLayout="row" fxLayoutGap="16px" formGroupName="config">
                     <mat-form-field fxFlex class="mat-block">
                       <mat-label translate>version-control.sync-strategy</mat-label>
                       <mat-select formControlName="syncStrategy">
@@ -65,6 +65,9 @@
                       </mat-select>
                     </mat-form-field>
                     <div fxFlex fxLayout="column" fxLayoutGap="8px">
+                      <mat-checkbox *ngIf="entityTypeFormGroup.get('entityType').value === entityTypes.DEVICE" formControlName="saveCredentials">
+                        {{ 'version-control.export-credentials' | translate }}
+                      </mat-checkbox>
                       <mat-checkbox formControlName="saveAttributes">
                         {{ 'version-control.export-attributes' | translate }}
                       </mat-checkbox>

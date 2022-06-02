@@ -72,6 +72,8 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
 
   syncStrategyTranslations = syncStrategyTranslationMap;
 
+  entityTypes = EntityType;
+
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
               private fb: FormBuilder) {
@@ -136,6 +138,7 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
           syncStrategy: [config.syncStrategy === null ? 'default' : config.syncStrategy, []],
           saveRelations: [config.saveRelations, []],
           saveAttributes: [config.saveAttributes, []],
+          saveCredentials: [config.saveCredentials, []],
           allEntities: [config.allEntities, []],
           entityIds: [config.entityIds, [Validators.required]]
         })
@@ -185,6 +188,7 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
       syncStrategy: null,
       saveAttributes: true,
       saveRelations: true,
+      saveCredentials: true,
       allEntities: true,
       entityIds: []
     };

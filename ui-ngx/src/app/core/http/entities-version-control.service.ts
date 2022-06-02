@@ -19,7 +19,7 @@ import { HttpClient } from '@angular/common/http';
 import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-utils';
 import { Observable, of } from 'rxjs';
 import {
-  BranchInfo, EntityDataDiff, EntityDataInfo,
+  BranchInfo, EntityDataDiff, EntityDataInfo, EntityLoadError, entityLoadErrorTranslationMap, EntityLoadErrorType,
   EntityVersion,
   VersionCreateRequest,
   VersionCreationResult,
@@ -28,11 +28,13 @@ import {
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
-import { EntityType } from '@shared/models/entity-type.models';
+import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { selectIsUserLoaded } from '@core/auth/auth.selectors';
 import { catchError, tap } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @Injectable({
   providedIn: 'root'
@@ -43,6 +45,8 @@ export class EntitiesVersionControlService {
 
   constructor(
     private http: HttpClient,
+    private translate: TranslateService,
+    private sanitizer: DomSanitizer,
     private store: Store<AppState>
   ) {
 
@@ -109,8 +113,8 @@ export class EntitiesVersionControlService {
       defaultHttpOptionsFromConfig(config));
   }
 
-  public loadEntitiesVersion(request: VersionLoadRequest, config?: RequestConfig): Observable<Array<VersionLoadResult>> {
-    return this.http.post<Array<VersionLoadResult>>('/api/entities/vc/entity', request, defaultHttpOptionsFromConfig(config));
+  public loadEntitiesVersion(request: VersionLoadRequest, config?: RequestConfig): Observable<VersionLoadResult> {
+    return this.http.post<VersionLoadResult>('/api/entities/vc/entity', request, defaultHttpOptionsFromConfig(config));
   }
 
   public compareEntityDataToVersion(branch: string,
@@ -119,5 +123,25 @@ export class EntitiesVersionControlService {
                                     config?: RequestConfig): Observable<EntityDataDiff> {
     return this.http.get<EntityDataDiff>(`/api/entities/vc/diff/${branch}/${entityId.entityType}/${entityId.id}?versionId=${versionId}`,
       defaultHttpOptionsFromConfig(config));
+  }
+
+  public entityLoadErrorToMessage(entityLoadError: EntityLoadError): SafeHtml {
+    const type = entityLoadError.type;
+    const messageId = entityLoadErrorTranslationMap.get(type);
+    const messageArgs = {} as any;
+    switch (type) {
+      case EntityLoadErrorType.DEVICE_CREDENTIALS_CONFLICT:
+        messageArgs.entityId = entityLoadError.source.id;
+        break;
+      case EntityLoadErrorType.MISSING_REFERENCED_ENTITY:
+        messageArgs.sourceEntityTypeName =
+          (this.translate.instant(entityTypeTranslations.get(entityLoadError.source.entityType).type) as string).toLowerCase();
+        messageArgs.sourceEntityId = entityLoadError.source.id;
+        messageArgs.targetEntityTypeName =
+          (this.translate.instant(entityTypeTranslations.get(entityLoadError.target.entityType).type) as string).toLowerCase();
+        messageArgs.targetEntityId = entityLoadError.target.id;
+        break;
+    }
+    return this.sanitizer.bypassSecurityTrustHtml(this.translate.instant(messageId, messageArgs));
   }
 }

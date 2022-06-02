@@ -20,6 +20,13 @@
   height: 100%;
   display: block;
   .tb-entity-table {
+
+    &.tb-popover-mode {
+      position: relative;
+      width: 800px;
+      height: 600px;
+    }
+
     .tb-entity-table-content {
       width: 100%;
       height: 100%;

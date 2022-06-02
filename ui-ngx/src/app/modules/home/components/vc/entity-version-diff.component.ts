@@ -314,9 +314,9 @@ export class EntityVersionDiffComponent extends PageComponent implements OnInit,
           versionName: this.versionName,
           versionId: this.versionId,
           externalEntityId: this.externalEntityId,
-          onClose: (result: Array<VersionLoadResult> | null) => {
+          onClose: (result: VersionLoadResult | null) => {
             restoreVersionPopover.hide();
-            if (result && result.length) {
+            if (result && !result.error && result.result.length) {
               this.close();
               this.versionRestored.emit();
             }

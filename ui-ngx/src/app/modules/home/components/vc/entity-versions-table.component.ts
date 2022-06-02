@@ -49,6 +49,7 @@ import { EntityVersionRestoreComponent } from '@home/components/vc/entity-versio
 import { EntityVersionDiffComponent } from '@home/components/vc/entity-version-diff.component';
 import { ComplexVersionCreateComponent } from '@home/components/vc/complex-version-create.component';
 import { ComplexVersionLoadComponent } from '@home/components/vc/complex-version-load.component';
+import { TbPopoverComponent } from '@shared/components/popover.component';
 
 @Component({
   selector: 'tb-entity-versions-table',
@@ -63,7 +64,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
   singleEntityMode = false;
 
   @Input()
-  popoverMode = false;
+  popoverComponent: TbPopoverComponent;
 
   @Input()
   onBeforeCreateVersion: () => Observable<any>;
@@ -211,14 +212,9 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
                 this.updateData();
               }
             }
-          },
-          onContentUpdated: () => {
-            createVersionPopover.updatePosition();
-            setTimeout(() => {
-              createVersionPopover.updatePosition();
-            });
           }
         }, {}, {}, {}, false);
+      createVersionPopover.tbComponentRef.instance.popoverComponent = createVersionPopover;
     }
   }
 
@@ -243,14 +239,9 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
                 this.updateData();
               }
             }
-          },
-          onContentUpdated: () => {
-            complexCreateVersionPopover.updatePosition();
-            setTimeout(() => {
-              complexCreateVersionPopover.updatePosition();
-            });
           }
         }, {}, {}, {}, false);
+      complexCreateVersionPopover.tbComponentRef.instance.popoverComponent = complexCreateVersionPopover;
     }
   }
 
@@ -293,9 +284,9 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
           versionName: entityVersion.name,
           versionId: entityVersion.id,
           externalEntityId: this.externalEntityIdValue,
-          onClose: (result: Array<VersionLoadResult> | null) => {
+          onClose: (result: VersionLoadResult | null) => {
             restoreVersionPopover.hide();
-            if (result && result.length) {
+            if (result && !result.error && result.result.length) {
               this.versionRestored.emit();
             }
           }
@@ -318,10 +309,11 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
           branch: this.branch,
           versionName: entityVersion.name,
           versionId: entityVersion.id,
-          onClose: (result: Array<VersionLoadResult> | null) => {
+          onClose: (result: VersionLoadResult | null) => {
             restoreEntitiesVersionPopover.hide();
           }
         }, {}, {}, {}, false);
+      restoreEntitiesVersionPopover.tbComponentRef.instance.popoverComponent = restoreEntitiesVersionPopover;
     }
   }
 

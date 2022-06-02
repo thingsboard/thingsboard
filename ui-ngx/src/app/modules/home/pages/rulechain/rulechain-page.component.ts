@@ -1545,7 +1545,6 @@ export class RuleChainPageComponent extends PageComponent
         this.viewContainerRef, VersionControlComponent, 'leftTop', true, null,
         {
           detailsMode: true,
-          popoverMode: true,
           active: true,
           singleEntityMode: true,
           externalEntityId: this.ruleChain.externalId || this.ruleChain.id,
@@ -1558,7 +1557,8 @@ export class RuleChainPageComponent extends PageComponent
               return of(null);
             }
           }
-        }, {width: '800px', height: '600px'}, {}, {}, true);
+        }, {}, {}, {}, true);
+      versionControlPopover.tbComponentRef.instance.popoverComponent = versionControlPopover;
       versionControlPopover.tbComponentRef.instance.versionRestored.subscribe(() => {
         this.reloadRuleChain();
       });

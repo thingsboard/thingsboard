@@ -30,11 +30,12 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { TranslateService } from '@ngx-translate/core';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { delay } from 'rxjs/operators';
+import { SafeHtml } from '@angular/platform-browser';
 
 @Component({
   selector: 'tb-entity-version-restore',
   templateUrl: './entity-version-restore.component.html',
-  styleUrls: []
+  styleUrls: ['./version-control.scss']
 })
 export class EntityVersionRestoreComponent extends PageComponent implements OnInit {
 
@@ -51,7 +52,7 @@ export class EntityVersionRestoreComponent extends PageComponent implements OnIn
   externalEntityId: EntityId;
 
   @Input()
-  onClose: (result: Array<VersionLoadResult> | null) => void;
+  onClose: (result: VersionLoadResult | null) => void;
 
   @Input()
   popoverComponent: TbPopoverComponent;
@@ -59,6 +60,8 @@ export class EntityVersionRestoreComponent extends PageComponent implements OnIn
   entityDataInfo: EntityDataInfo = null;
 
   restoreFormGroup: FormGroup;
+
+  errorMessage: SafeHtml;
 
   constructor(protected store: Store<AppState>,
               private entitiesVersionControlService: EntitiesVersionControlService,
@@ -71,7 +74,8 @@ export class EntityVersionRestoreComponent extends PageComponent implements OnIn
   ngOnInit(): void {
     this.restoreFormGroup = this.fb.group({
       loadAttributes: [true, []],
-      loadRelations: [true, []]
+      loadRelations: [true, []],
+      loadCredentials: [true, []]
     });
     this.entitiesVersionControlService.getEntityDataInfo(this.externalEntityId, this.versionId).subscribe((data) => {
       this.entityDataInfo = data;
@@ -95,13 +99,22 @@ export class EntityVersionRestoreComponent extends PageComponent implements OnIn
       externalEntityId: this.externalEntityId,
       config: {
         loadRelations: this.entityDataInfo.hasRelations ? this.restoreFormGroup.get('loadRelations').value : false,
-        loadAttributes: this.entityDataInfo.hasAttributes ? this.restoreFormGroup.get('loadAttributes').value : false
+        loadAttributes: this.entityDataInfo.hasAttributes ? this.restoreFormGroup.get('loadAttributes').value : false,
+        loadCredentials: this.entityDataInfo.hasCredentials ? this.restoreFormGroup.get('loadCredentials').value : false
       },
       type: VersionLoadRequestType.SINGLE_ENTITY
     };
     this.entitiesVersionControlService.loadEntitiesVersion(request).subscribe((result) => {
-      if (this.onClose) {
-        this.onClose(result);
+      if (result.error) {
+        this.errorMessage = this.entitiesVersionControlService.entityLoadErrorToMessage(result.error);
+        this.cd.detectChanges();
+        if (this.popoverComponent) {
+          this.popoverComponent.updatePosition();
+        }
+      } else {
+        if (this.onClose) {
+          this.onClose(result);
+        }
       }
     });
   }

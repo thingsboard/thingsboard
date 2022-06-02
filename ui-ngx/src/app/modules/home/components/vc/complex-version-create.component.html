@@ -70,7 +70,7 @@
     </div>
   </section>
   <section *ngIf="resultMessage">
-    <div class="mat-title create-result-message">{{ resultMessage }}</div>
+    <div class="mat-title vc-result-message" [innerHtml]="resultMessage"></div>
     <div fxLayoutAlign="end center" fxLayoutGap="8px">
       <button mat-button color="primary"
               type="button"

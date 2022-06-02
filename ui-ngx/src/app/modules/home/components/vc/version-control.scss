@@ -14,8 +14,18 @@
  * limitations under the License.
  */
 :host {
-  .create-result-message {
-    padding: 48px 8px 8px;
+  .vc-result-message {
+    padding: 0 8px;
     text-align: center;
+    &:first-child {
+      padding-top: 48px;
+    }
+    &:nth-last-child(2) {
+      padding-bottom: 8px;
+    }
+    &.error {
+      text-align: start;
+      font-weight: 400;
+    }
   }
 }

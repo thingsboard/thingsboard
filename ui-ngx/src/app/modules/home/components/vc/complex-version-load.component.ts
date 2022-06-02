@@ -14,11 +14,11 @@
 /// limitations under the License.
 ///
 
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import {
-  createDefaultEntityTypesVersionLoad,
+  createDefaultEntityTypesVersionLoad, EntityTypeLoadResult,
   EntityTypeVersionLoadRequest,
   VersionLoadRequestType,
   VersionLoadResult
@@ -28,11 +28,13 @@ import { AppState } from '@core/core.state';
 import { EntitiesVersionControlService } from '@core/http/entities-version-control.service';
 import { TranslateService } from '@ngx-translate/core';
 import { entityTypeTranslations } from '@shared/models/entity-type.models';
+import { SafeHtml } from '@angular/platform-browser';
+import { TbPopoverComponent } from '@shared/components/popover.component';
 
 @Component({
   selector: 'tb-complex-version-load',
   templateUrl: './complex-version-load.component.html',
-  styleUrls: ['./complex-version-load.component.scss']
+  styleUrls: ['./version-control.scss']
 })
 export class ComplexVersionLoadComponent extends PageComponent implements OnInit {
 
@@ -46,17 +48,22 @@ export class ComplexVersionLoadComponent extends PageComponent implements OnInit
   versionId: string;
 
   @Input()
-  onClose: (result: Array<VersionLoadResult> | null) => void;
+  onClose: (result: VersionLoadResult | null) => void;
 
   @Input()
-  onContentUpdated: () => void;
+  popoverComponent: TbPopoverComponent;
 
   loadVersionFormGroup: FormGroup;
 
-  versionLoadResults: Array<VersionLoadResult> = null;
+  versionLoadResult: VersionLoadResult = null;
+
+  entityTypeLoadResults: Array<EntityTypeLoadResult> = null;
+
+  errorMessage: SafeHtml;
 
   constructor(protected store: Store<AppState>,
               private entitiesVersionControlService: EntitiesVersionControlService,
+              private cd: ChangeDetectorRef,
               private translate: TranslateService,
               private fb: FormBuilder) {
     super(store);
@@ -68,7 +75,7 @@ export class ComplexVersionLoadComponent extends PageComponent implements OnInit
     });
   }
 
-  versionLoadResultMessage(result: VersionLoadResult): string {
+  entityTypeLoadResultMessage(result: EntityTypeLoadResult): string {
     const entityType = result.entityType;
     let message = this.translate.instant(entityTypeTranslations.get(entityType).typePlural) + ': ';
     const resultMessages: string[] = [];
@@ -87,7 +94,7 @@ export class ComplexVersionLoadComponent extends PageComponent implements OnInit
 
   cancel(): void {
     if (this.onClose) {
-      this.onClose(this.versionLoadResults);
+      this.onClose(this.versionLoadResult);
     }
   }
 
@@ -99,9 +106,14 @@ export class ComplexVersionLoadComponent extends PageComponent implements OnInit
       type: VersionLoadRequestType.ENTITY_TYPE
     };
     this.entitiesVersionControlService.loadEntitiesVersion(request).subscribe((result) => {
-      this.versionLoadResults = (result || []).filter(res => res.created || res.updated || res.deleted);
-      if (this.onContentUpdated) {
-        this.onContentUpdated();
+      this.versionLoadResult = result;
+      this.entityTypeLoadResults = (result.result || []).filter(res => res.created || res.updated || res.deleted);
+      if (result.error) {
+        this.errorMessage = this.entitiesVersionControlService.entityLoadErrorToMessage(result.error);
+      }
+      this.cd.detectChanges();
+      if (this.popoverComponent) {
+        this.popoverComponent.updatePosition();
       }
     });
   }

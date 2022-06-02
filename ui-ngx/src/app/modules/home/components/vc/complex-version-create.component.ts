@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
@@ -28,11 +28,13 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntitiesVersionControlService } from '@core/http/entities-version-control.service';
 import { TranslateService } from '@ngx-translate/core';
+import { TbPopoverComponent } from '@shared/components/popover.component';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @Component({
   selector: 'tb-complex-version-create',
   templateUrl: './complex-version-create.component.html',
-  styleUrls: ['./complex-version-create.component.scss']
+  styleUrls: ['./version-control.scss']
 })
 export class ComplexVersionCreateComponent extends PageComponent implements OnInit {
 
@@ -43,7 +45,7 @@ export class ComplexVersionCreateComponent extends PageComponent implements OnIn
   onClose: (result: VersionCreationResult | null, branch: string | null) => void;
 
   @Input()
-  onContentUpdated: () => void;
+  popoverComponent: TbPopoverComponent;
 
   createVersionFormGroup: FormGroup;
 
@@ -53,7 +55,7 @@ export class ComplexVersionCreateComponent extends PageComponent implements OnIn
 
   syncStrategyHints = syncStrategyHintMap;
 
-  resultMessage: string;
+  resultMessage: SafeHtml;
 
   versionCreateResult: VersionCreationResult = null;
 
@@ -61,6 +63,8 @@ export class ComplexVersionCreateComponent extends PageComponent implements OnIn
 
   constructor(protected store: Store<AppState>,
               private entitiesVersionControlService: EntitiesVersionControlService,
+              private cd: ChangeDetectorRef,
+              private sanitizer: DomSanitizer,
               private translate: TranslateService,
               private fb: FormBuilder) {
     super(store);
@@ -91,15 +95,16 @@ export class ComplexVersionCreateComponent extends PageComponent implements OnIn
     };
     this.entitiesVersionControlService.saveEntitiesVersion(request).subscribe((result) => {
       if (!result.added && !result.modified && !result.removed) {
-        this.resultMessage = this.translate.instant('version-control.nothing-to-commit');
+        this.resultMessage = this.sanitizer.bypassSecurityTrustHtml(this.translate.instant('version-control.nothing-to-commit'));
       } else {
-        this.resultMessage = this.translate.instant('version-control.version-create-result',
-          {added: result.added, modified: result.modified, removed: result.removed});
+        this.resultMessage = this.sanitizer.bypassSecurityTrustHtml(this.translate.instant('version-control.version-create-result',
+          {added: result.added, modified: result.modified, removed: result.removed}));
       }
       this.versionCreateResult = result;
       this.versionCreateBranch = request.branch;
-      if (this.onContentUpdated) {
-        this.onContentUpdated();
+      this.cd.detectChanges();
+      if (this.popoverComponent) {
+        this.popoverComponent.updatePosition();
       }
     });
   }

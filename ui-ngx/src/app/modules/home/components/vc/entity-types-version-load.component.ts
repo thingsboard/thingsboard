@@ -66,6 +66,8 @@ export class EntityTypesVersionLoadComponent extends PageComponent implements On
 
   public entityTypesVersionLoadFormGroup: FormGroup;
 
+  entityTypes = EntityType;
+
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
               private popoverService: TbPopoverService,
@@ -132,6 +134,7 @@ export class EntityTypesVersionLoadComponent extends PageComponent implements On
         config: this.fb.group({
           loadRelations: [config.loadRelations, []],
           loadAttributes: [config.loadAttributes, []],
+          loadCredentials: [config.loadCredentials, []],
           removeOtherEntities: [config.removeOtherEntities, []],
           findExistingEntityByName: [config.findExistingEntityByName, []]
         })
@@ -166,6 +169,7 @@ export class EntityTypesVersionLoadComponent extends PageComponent implements On
     const config: EntityTypeVersionLoadConfig = {
       loadAttributes: true,
       loadRelations: true,
+      loadCredentials: true,
       removeOtherEntities: false,
       findExistingEntityByName: true
     };

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
@@ -28,11 +28,13 @@ import { EntitiesVersionControlService } from '@core/http/entities-version-contr
 import { EntityId } from '@shared/models/id/entity-id';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
+import { EntityType } from '@shared/models/entity-type.models';
+import { TbPopoverComponent } from '@shared/components/popover.component';
 
 @Component({
   selector: 'tb-entity-version-create',
   templateUrl: './entity-version-create.component.html',
-  styleUrls: ['./entity-version-create.component.scss']
+  styleUrls: ['./version-control.scss']
 })
 export class EntityVersionCreateComponent extends PageComponent implements OnInit {
 
@@ -49,17 +51,20 @@ export class EntityVersionCreateComponent extends PageComponent implements OnIni
   onClose: (result: VersionCreationResult | null, branch: string | null) => void;
 
   @Input()
-  onContentUpdated: () => void;
-
-  @Input()
   onBeforeCreateVersion: () => Observable<any>;
 
+  @Input()
+  popoverComponent: TbPopoverComponent;
+
   createVersionFormGroup: FormGroup;
+
+  entityTypes = EntityType;
 
   resultMessage: string;
 
   constructor(protected store: Store<AppState>,
               private entitiesVersionControlService: EntitiesVersionControlService,
+              private cd: ChangeDetectorRef,
               private translate: TranslateService,
               private fb: FormBuilder) {
     super(store);
@@ -71,7 +76,8 @@ export class EntityVersionCreateComponent extends PageComponent implements OnIni
       versionName: [this.translate.instant('version-control.default-create-entity-version-name',
         {entityName: this.entityName}), [Validators.required]],
       saveRelations: [false, []],
-      saveAttributes: [true, []]
+      saveAttributes: [true, []],
+      saveCredentials: [true, []]
     });
   }
 
@@ -91,14 +97,16 @@ export class EntityVersionCreateComponent extends PageComponent implements OnIni
         config: {
           saveRelations: this.createVersionFormGroup.get('saveRelations').value,
           saveAttributes: this.createVersionFormGroup.get('saveAttributes').value,
+          saveCredentials: this.entityId.entityType === EntityType.DEVICE ? this.createVersionFormGroup.get('saveCredentials').value : false
         },
         type: VersionCreateRequestType.SINGLE_ENTITY
       };
       this.entitiesVersionControlService.saveEntitiesVersion(request).subscribe((result) => {
         if (!result.added && !result.modified) {
           this.resultMessage = this.translate.instant('version-control.nothing-to-commit');
-          if (this.onContentUpdated) {
-            this.onContentUpdated();
+          this.cd.detectChanges();
+          if (this.popoverComponent) {
+            this.popoverComponent.updatePosition();
           }
         } else if (this.onClose) {
           this.onClose(result, request.branch);

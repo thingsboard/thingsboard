@@ -33,6 +33,7 @@ export const exportableEntityTypes: Array<EntityType> = [
 export interface VersionCreateConfig {
   saveRelations: boolean;
   saveAttributes: boolean;
+  saveCredentials: boolean;
 }
 
 export enum VersionCreateRequestType {
@@ -90,6 +91,7 @@ export function createDefaultEntityTypesVersionCreate(): {[entityType: string]: 
       syncStrategy: null,
       saveAttributes: true,
       saveRelations: true,
+      saveCredentials: true,
       allEntities: true,
       entityIds: []
     };
@@ -100,6 +102,7 @@ export function createDefaultEntityTypesVersionCreate(): {[entityType: string]: 
 export interface VersionLoadConfig {
   loadRelations: boolean;
   loadAttributes: boolean;
+  loadCredentials: boolean;
 }
 
 export enum VersionLoadRequestType {
@@ -135,6 +138,7 @@ export function createDefaultEntityTypesVersionLoad(): {[entityType: string]: En
     res[entityType] = {
       loadAttributes: true,
       loadRelations: true,
+      loadCredentials: true,
       removeOtherEntities: false,
       findExistingEntityByName: true
     };
@@ -161,11 +165,34 @@ export interface VersionCreationResult {
   removed: number;
 }
 
-export interface VersionLoadResult {
+export interface EntityTypeLoadResult {
   entityType: EntityType;
   created: number;
   updated: number;
   deleted: number;
+}
+
+export enum EntityLoadErrorType {
+  DEVICE_CREDENTIALS_CONFLICT = 'DEVICE_CREDENTIALS_CONFLICT',
+  MISSING_REFERENCED_ENTITY = 'MISSING_REFERENCED_ENTITY'
+}
+
+export const entityLoadErrorTranslationMap = new Map<EntityLoadErrorType, string>(
+  [
+    [EntityLoadErrorType.DEVICE_CREDENTIALS_CONFLICT, 'version-control.device-credentials-conflict'],
+    [EntityLoadErrorType.MISSING_REFERENCED_ENTITY, 'version-control.missing-referenced-entity']
+  ]
+);
+
+export interface EntityLoadError {
+  type: EntityLoadErrorType;
+  source: EntityId;
+  target: EntityId;
+}
+
+export interface VersionLoadResult {
+  result: Array<EntityTypeLoadResult>;
+  error: EntityLoadError;
 }
 
 export interface EntityExportData<E extends ExportableEntity<EntityId>> {
@@ -195,4 +222,5 @@ export function entityExportDataToJsonString(data: EntityExportData<any>): strin
 export interface EntityDataInfo {
   hasRelations: boolean;
   hasAttributes: boolean;
+  hasCredentials: boolean;
 }

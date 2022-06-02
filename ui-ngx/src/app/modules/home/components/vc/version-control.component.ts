@@ -23,6 +23,7 @@ import { RepositorySettingsComponent } from '@home/components/vc/repository-sett
 import { FormGroup } from '@angular/forms';
 import { EntityId } from '@shared/models/id/entity-id';
 import { Observable } from 'rxjs';
+import { TbPopoverComponent } from '@shared/components/popover.component';
 
 @Component({
   selector: 'tb-version-control',
@@ -37,7 +38,7 @@ export class VersionControlComponent implements OnInit, HasConfirmForm {
   detailsMode = false;
 
   @Input()
-  popoverMode = false;
+  popoverComponent: TbPopoverComponent;
 
   @Input()
   active = true;

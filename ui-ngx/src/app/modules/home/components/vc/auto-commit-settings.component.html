@@ -75,6 +75,9 @@
                           </div>
                         </div>
                         <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px" formGroupName="config">
+                          <mat-checkbox *ngIf="entityTypeFormGroup.get('entityType').value === entityTypes.DEVICE" formControlName="saveCredentials">
+                            {{ 'version-control.export-credentials' | translate }}
+                          </mat-checkbox>
                           <mat-checkbox formControlName="saveAttributes">
                             {{ 'version-control.export-attributes' | translate }}
                           </mat-checkbox>

@@ -38,6 +38,9 @@
               {{ 'version-control.version-name-required' | translate }}
             </mat-error>
           </mat-form-field>
+          <mat-checkbox *ngIf="entityId.entityType === entityTypes.DEVICE" formControlName="saveCredentials" style="margin-bottom: 16px;">
+            {{ 'version-control.export-credentials' | translate }}
+          </mat-checkbox>
           <mat-checkbox formControlName="saveAttributes" style="margin-bottom: 16px;">
             {{ 'version-control.export-attributes' | translate }}
           </mat-checkbox>
@@ -63,7 +66,7 @@
     </div>
   </section>
   <section *ngIf="resultMessage">
-    <div class="mat-title create-result-message">{{ resultMessage }}</div>
+    <div class="mat-title vc-result-message">{{ resultMessage }}</div>
     <div fxLayoutAlign="end center" fxLayoutGap="8px">
       <button mat-button color="primary"
               type="button"

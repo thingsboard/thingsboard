@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<div class="mat-padding tb-entity-table tb-absolute-fill">
-  <div fxFlex fxLayout="column" class="tb-entity-table-content" [ngClass]="{'mat-elevation-z1': !popoverMode}">
+<div class="mat-padding tb-entity-table tb-absolute-fill" [ngClass]="{'tb-popover-mode': popoverComponent}">
+  <div fxFlex fxLayout="column" class="tb-entity-table-content" [ngClass]="{'mat-elevation-z1': !popoverComponent}">
     <mat-toolbar class="mat-table-toolbar" [fxShow]="!textSearchMode">
       <div class="mat-toolbar-tools">
         <div fxLayout="row" fxLayoutAlign="start center" fxLayout.xs="column" fxLayoutAlign.xs="center start" class="title-container">

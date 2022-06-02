@@ -39,6 +39,8 @@ export class AutoCommitSettingsComponent extends PageComponent implements OnInit
   autoCommitSettingsForm: FormGroup;
   settings: AutoCommitSettings = null;
 
+  entityTypes = EntityType;
+
   constructor(protected store: Store<AppState>,
               private adminService: AdminService,
               private dialogService: DialogService,
@@ -98,7 +100,8 @@ export class AutoCommitSettingsComponent extends PageComponent implements OnInit
     const config: AutoVersionCreateConfig = {
       branch: null,
       saveAttributes: true,
-      saveRelations: false
+      saveRelations: false,
+      saveCredentials: true
     };
     const allowed = this.allowedEntityTypes();
     let entityType: EntityType = null;
@@ -199,7 +202,8 @@ export class AutoCommitSettingsComponent extends PageComponent implements OnInit
         config: this.fb.group({
           branch: [config.branch, []],
           saveRelations: [config.saveRelations, []],
-          saveAttributes: [config.saveAttributes, []]
+          saveAttributes: [config.saveAttributes, []],
+          saveCredentials: [config.saveCredentials, []]
         })
       }
     );

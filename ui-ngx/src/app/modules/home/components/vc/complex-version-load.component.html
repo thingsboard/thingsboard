@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<section [ngStyle]="versionLoadResults ? {minWidth: '500px'} : {minWidth: '800px'}">
-  <section *ngIf="!versionLoadResults">
+<section [ngStyle]="versionLoadResult ? {minWidth: '500px'} : {minWidth: '800px'}">
+  <section *ngIf="!versionLoadResult">
     <mat-toolbar>
       <h2>{{ 'version-control.restore-entities-from-version' | translate: {versionName} }}</h2>
       <span fxFlex></span>
@@ -48,11 +48,12 @@
       </button>
     </div>
   </section>
-  <section *ngIf="versionLoadResults">
-    <div *ngIf="!versionLoadResults.length" class="mat-title load-result-message">
+  <section *ngIf="versionLoadResult">
+    <div *ngIf="!entityTypeLoadResults.length && !errorMessage" class="mat-title vc-result-message">
       {{ 'version-control.no-entities-restored' | translate }}
     </div>
-    <div *ngFor="let versionLoadResult of versionLoadResults" class="mat-title load-result-message">{{ versionLoadResultMessage(versionLoadResult) }}</div>
+    <div *ngIf="errorMessage" class="mat-title vc-result-message error" [innerHTML]="errorMessage"></div>
+    <div *ngFor="let entityTypeLoadResult of entityTypeLoadResults" class="mat-title vc-result-message">{{ entityTypeLoadResultMessage(entityTypeLoadResult) }}</div>
     <div fxLayoutAlign="end center" fxLayoutGap="8px">
       <button mat-button color="primary"
               type="button"

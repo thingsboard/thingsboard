@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { FormBuilder, FormGroup, FormGroupDirective, Validators } from '@angular/forms';
 import { select, Store } from '@ngrx/store';
@@ -33,6 +33,7 @@ import { ActionAuthUpdateHasRepository } from '@core/auth/auth.actions';
 import { selectHasRepository } from '@core/auth/auth.selectors';
 import { catchError, mergeMap, take } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { TbPopoverComponent } from '@shared/components/popover.component';
 
 @Component({
   selector: 'tb-repository-settings',
@@ -43,6 +44,9 @@ export class RepositorySettingsComponent extends PageComponent implements OnInit
 
   @Input()
   detailsMode = false;
+
+  @Input()
+  popoverComponent: TbPopoverComponent;
 
   repositorySettingsForm: FormGroup;
   settings: RepositorySettings = null;
@@ -61,6 +65,7 @@ export class RepositorySettingsComponent extends PageComponent implements OnInit
               private adminService: AdminService,
               private dialogService: DialogService,
               private translate: TranslateService,
+              private cd: ChangeDetectorRef,
               public fb: FormBuilder) {
     super(store);
   }

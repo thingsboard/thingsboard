@@ -3127,6 +3127,7 @@
         "author": "Author",
         "export-relations": "Export relations",
         "export-attributes": "Export attributes",
+        "export-credentials": "Export credentials",
         "entity-versions": "Entity versions",
         "versions": "Versions",
         "created-time": "Created time",
@@ -3140,6 +3141,7 @@
         "restore-entity-from-version": "Restore entity from version '{{versionName}}'",
         "load-relations": "Load relations",
         "load-attributes": "Load attributes",
+        "load-credentials": "Load credentials",
         "show-version-diff": "Show version diff",
         "diff-entity-with-version": "Diff with entity version '{{versionName}}'",
         "previous-difference": "Previous Difference",
@@ -3158,7 +3160,7 @@
         "no-entities-to-restore-prompt": "Please specify entities to restore",
         "add-entity-type": "Add entity type",
         "remove-all": "Remove all",
-        "version-create-result": "{ added, plural, 0 {No entities} 1 {1 entity} other {# entities} } added.\n{ modified, plural, 0 {No entities} 1 {1 entity} other {# entities} } modified.\n{ removed, plural, 0 {No entities} 1 {1 entity} other {# entities} } removed.",
+        "version-create-result": "{ added, plural, 0 {No entities} 1 {1 entity} other {# entities} } added.<br/>{ modified, plural, 0 {No entities} 1 {1 entity} other {# entities} } modified.<br/>{ removed, plural, 0 {No entities} 1 {1 entity} other {# entities} } removed.",
         "remove-other-entities": "Remove other entities",
         "find-existing-entity-by-name": "Find existing entity by name",
         "restore-entities-from-version": "Restore entities from version '{{versionName}}'",
@@ -3170,7 +3172,9 @@
         "auto-commit-to-branch": "auto-commit to <b>{{ branch }}</b> branch",
         "default-create-entity-version-name": "{{entityName}} update",
         "sync-strategy-merge-hint": "Sync strategy <b>merge</b> hint",
-        "sync-strategy-overwrite-hint": "Sync strategy <b>overwrite</b> hint"
+        "sync-strategy-overwrite-hint": "Sync strategy <b>overwrite</b> hint",
+        "device-credentials-conflict": "Failed to load the device with external id <b>{{entityId}}</b><br/>due to the same credentials are already present in the database for another device.<br/>Please consider disabling the <b>load credentials</b> setting in the restore form.",
+        "missing-referenced-entity": "Failed to load the <b>{{sourceEntityTypeName}}</b> with external id <b>{{sourceEntityId}}</b><br/>because it references missing <b>{{targetEntityTypeName}}</b> with id <b>{{targetEntityId}}</b>."
     },
     "widget": {
         "widget-library": "Widgets Library",
