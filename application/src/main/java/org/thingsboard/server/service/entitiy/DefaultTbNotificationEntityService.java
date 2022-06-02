@@ -24,6 +24,7 @@ import org.thingsboard.rule.engine.api.msg.DeviceCredentialsUpdateNotificationMs
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.alarm.Alarm;
@@ -37,6 +38,7 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
@@ -202,6 +204,37 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
         sendEntityNotificationMsg(alarm.getTenantId(), alarm.getId(), edgeTypeByActionType(actionType));
     }
 
+    @Override
+    public <E extends HasName, I extends EntityId> void notifyCreateOrUpdateOrDelete(TenantId tenantId, CustomerId customerId,
+                                                                                     I entityId, E entity, SecurityUser user,
+                                                                                     ActionType actionType, Exception e,
+                                                                                     Object... additionalInfo) {
+        notifyEntity(tenantId, entityId, entity, customerId, actionType, user, e, additionalInfo);
+        if (e == null) {
+            sendEntityNotificationMsg(tenantId, entityId, edgeTypeByActionType(actionType));
+        }
+    }
+
+    @Override
+    public void notifyCreateOrUpdateOrDeleteRelation(TenantId tenantId, CustomerId customerId,
+                                                     EntityRelation relation, SecurityUser user,
+                                                     ActionType actionType, Exception e,
+                                                     Object... additionalInfo) {
+        notifyEntity(tenantId, relation.getFrom(), null, customerId, actionType, user, e, additionalInfo);
+        notifyEntity(tenantId, relation.getTo(), null, customerId, actionType, user, e, additionalInfo);
+        if (e == null) {
+            try {
+                if (!relation.getFrom().getEntityType().equals(EntityType.EDGE) &&
+                        !relation.getTo().getEntityType().equals(EntityType.EDGE)) {
+                    sendNotificationMsgToEdgeService(tenantId, null, null, json.writeValueAsString(relation),
+                            EdgeEventType.RELATION, edgeTypeByActionType(actionType));
+                }
+            } catch (Exception e1) {
+                log.warn("Failed to push relation to core: {}", relation, e1);
+            }
+        }
+    }
+
     private <E extends HasName, I extends EntityId> void logEntityAction(TenantId tenantId, I entityId, E entity, CustomerId customerId,
                                                                          ActionType actionType, SecurityUser user, Object... additionalInfo) {
         logEntityAction(tenantId, entityId, entity, customerId, actionType, user, null, additionalInfo);
@@ -297,9 +330,12 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
                 return EdgeEventActionType.ALARM_CLEAR;
             case DELETED:
                 return EdgeEventActionType.DELETED;
+            case RELATION_ADD_OR_UPDATE:
+                return EdgeEventActionType.RELATION_ADD_OR_UPDATE;
+            case RELATION_DELETED:
+                return EdgeEventActionType.RELATION_DELETED;
             default:
                 return null;
         }
     }
-
 }

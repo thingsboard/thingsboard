@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 import org.thingsboard.server.utils.MiscUtils;
 
@@ -35,6 +36,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
+@TbCoreComponent
 @Component(value = "oauth2AuthenticationFailureHandler")
 public class Oauth2AuthenticationFailureHandler extends SimpleUrlAuthenticationFailureHandler {
 

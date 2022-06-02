@@ -13,29 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.config;
+package org.thingsboard.server.service.entitiy.deviceProfile;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.service.entitiy.SimpleTbEntityService;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
-import java.util.HashMap;
-import java.util.Map;
+public interface TbDeviceProfileService extends SimpleTbEntityService<DeviceProfile> {
 
-@Configuration
-@ConfigurationProperties(prefix = "audit-log.logging-level")
-public class AuditLogLevelProperties {
-
-    private Map<String, String> mask = new HashMap<>();
-
-    public AuditLogLevelProperties() {
-        super();
-    }
-
-    public void setMask(Map<String, String> mask) {
-        this.mask = mask;
-    }
-
-    public Map<String, String> getMask() {
-        return this.mask;
-    }
+    DeviceProfile setDefaultDeviceProfile(DeviceProfile deviceProfile, DeviceProfile previousDefaultDeviceProfile, SecurityUser user) throws ThingsboardException;
 }

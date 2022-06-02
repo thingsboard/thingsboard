@@ -27,9 +27,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.cluster.TbClusterService;
@@ -153,6 +155,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_PAGE_SIZE;
 import static org.thingsboard.server.controller.ControllerConstants.INCORRECT_TENANT_ID;
@@ -295,11 +298,37 @@ public abstract class BaseController {
     @Getter
     protected boolean edgesEnabled;
 
+    @ExceptionHandler(Exception.class)
+    public void handleControllerException(Exception e, HttpServletResponse response) {
+        ThingsboardException thingsboardException = handleException(e);
+        if (thingsboardException.getErrorCode() == ThingsboardErrorCode.GENERAL && thingsboardException.getCause() instanceof Exception
+                && StringUtils.equals(thingsboardException.getCause().getMessage(), thingsboardException.getMessage())) {
+            e = (Exception) thingsboardException.getCause();
+        } else {
+            e = thingsboardException;
+        }
+        errorResponseHandler.handle(e, response);
+    }
+
     @ExceptionHandler(ThingsboardException.class)
     public void handleThingsboardException(ThingsboardException ex, HttpServletResponse response) {
         errorResponseHandler.handle(ex, response);
     }
 
+    /**
+     * @deprecated Exceptions that are not of {@link ThingsboardException} type
+     * are now caught and mapped to {@link ThingsboardException} by
+     * {@link ExceptionHandler} {@link BaseController#handleControllerException(Exception, HttpServletResponse)}
+     * which basically acts like the following boilerplate:
+     * {@code
+     *  try {
+     *      someExceptionThrowingMethod();
+     *  } catch (Exception e) {
+     *      throw handleException(e);
+     *  }
+     * }
+     * */
+    @Deprecated
     ThingsboardException handleException(Exception exception) {
         return handleException(exception, true);
     }
@@ -324,6 +353,18 @@ public abstract class BaseController {
         } else {
             return new ThingsboardException(exception.getMessage(), exception, ThingsboardErrorCode.GENERAL);
         }
+    }
+
+    /**
+     * Handles validation error for controller method arguments annotated with @{@link javax.validation.Valid}
+     * */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public void handleValidationError(MethodArgumentNotValidException e, HttpServletResponse response) {
+        String errorMessage = "Validation error: " + e.getBindingResult().getAllErrors().stream()
+                .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                .collect(Collectors.joining(", "));
+        ThingsboardException thingsboardException = new ThingsboardException(errorMessage, ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        handleThingsboardException(thingsboardException, response);
     }
 
     <T> T checkNotNull(T reference) throws ThingsboardException {

@@ -57,7 +57,8 @@
     "download": "Prenesi",
     "next-with-label": "Naslednji: {{label}}",
     "read-more": "Preberi več",
-    "hide": "Skrij"
+    "hide": "Skrij",
+    "done": "Končano"
   },
   "aggregation": {
     "aggregation": "Združevanje",
@@ -1724,8 +1725,7 @@
       "select-file": "Izberi datoteko",
       "configuration": "Uvozi konfiguracijo",
       "column-type": "Izberi vrsto stolpca",
-      "creat-entities": "Ustvarjanje novih entitet",
-      "done": "Končano"
+      "creat-entities": "Ustvarjanje novih entitet"
     },
     "message": {
       "create-entities": "{{count}} novih entitet je bilo uspešno ustvarjenih.",
