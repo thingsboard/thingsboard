@@ -24,7 +24,7 @@
       <mat-expansion-panel-header>
         <div fxFlex fxLayout="row" fxLayoutAlign="start center">
           <mat-panel-title>
-            {{ queuesControl.value.name }}
+            {{ getTitle(queuesControl.value.name) }}
           </mat-panel-title>
           <span fxFlex></span>
           <button *ngIf="!($index === 0) && !disabled" mat-icon-button style="min-width: 40px;"
@@ -37,7 +37,7 @@
         </div>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <tb-queue-form [formControl]="queuesControl"></tb-queue-form>
+        <tb-queue-form [formControl]="queuesControl" [newQueue]="newQueue"></tb-queue-form>
       </ng-template>
     </mat-expansion-panel>
   </div>

@@ -56,6 +56,7 @@ export class TenantProfileQueuesComponent implements ControlValueAccessor, Valid
 
   tenantProfileQueuesFormGroup: FormGroup;
   newQueue = false;
+  idMap = [];
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -116,7 +117,13 @@ export class TenantProfileQueuesComponent implements ControlValueAccessor, Valid
     }
     const queuesControls: Array<AbstractControl> = [];
     if (queues) {
-      queues.forEach((queue) => {
+      queues.forEach((queue, index) => {
+        if (!queue.id) {
+          if (!this.idMap[index]) {
+            this.idMap.push(guid());
+          }
+          queue.id = this.idMap[index];
+        }
         queuesControls.push(this.fb.control(queue, [Validators.required]));
       });
     }
@@ -140,6 +147,7 @@ export class TenantProfileQueuesComponent implements ControlValueAccessor, Valid
 
   public removeQueue(index: number) {
     (this.tenantProfileQueuesFormGroup.get('queues') as FormArray).removeAt(index);
+    this.idMap.splice(index, 1);
   }
 
   public addQueue() {
@@ -166,6 +174,7 @@ export class TenantProfileQueuesComponent implements ControlValueAccessor, Valid
         description: ''
       }
     };
+    this.idMap.push(queue.id);
     this.newQueue = true;
     const queuesArray = this.tenantProfileQueuesFormGroup.get('queues') as FormArray;
     queuesArray.push(this.fb.control(queue, []));
@@ -173,6 +182,10 @@ export class TenantProfileQueuesComponent implements ControlValueAccessor, Valid
     if (!this.tenantProfileQueuesFormGroup.valid) {
       this.updateModel();
     }
+  }
+
+  getTitle(value): string {
+    return this.utils.customTranslation(value, value);
   }
 
   public validate(c: AbstractControl): ValidationErrors | null {

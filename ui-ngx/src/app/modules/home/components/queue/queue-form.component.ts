@@ -159,9 +159,6 @@ export class QueueFormComponent implements ControlValueAccessor, OnInit, OnDestr
     if (isDefinedAndNotNull(this.modelValue)) {
       this.queueFormGroup.patchValue(this.modelValue, {emitEvent: false});
       this.submitStrategyTypeChanged();
-      if (!this.modelValue.name) {
-        this.queueFormGroup.get('name').enable({emitEvent: false});
-      }
     }
     if (!this.disabled && !this.queueFormGroup.valid) {
       this.updateModel();
