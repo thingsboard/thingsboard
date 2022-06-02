@@ -29,6 +29,7 @@ import * as _moment from 'moment';
 import { AbstractControl, ValidationErrors } from '@angular/forms';
 import { OtaPackageId } from '@shared/models/id/ota-package-id';
 import { DashboardId } from '@shared/models/id/dashboard-id';
+import { QueueId } from '@shared/models/id/queue-id';
 import { DataType } from '@shared/models/constants';
 import {
   getDefaultProfileClientLwM2mSettingsConfig,
@@ -571,7 +572,7 @@ export interface DeviceProfile extends BaseData<DeviceProfileId> {
   provisionDeviceKey?: string;
   defaultRuleChainId?: RuleChainId;
   defaultDashboardId?: DashboardId;
-  defaultQueueName?: string;
+  defaultQueueId?: QueueId;
   firmwareId?: OtaPackageId;
   softwareId?: OtaPackageId;
   profileData: DeviceProfileData;

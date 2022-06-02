@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.entitiy;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Getter;
@@ -54,6 +53,7 @@ import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
@@ -76,8 +76,6 @@ import java.util.stream.Collectors;
 public abstract class AbstractTbEntityService {
 
     protected static final int DEFAULT_PAGE_SIZE = 1000;
-
-    private static final ObjectMapper json = new ObjectMapper();
 
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
@@ -114,6 +112,8 @@ public abstract class AbstractTbEntityService {
     protected RuleChainService ruleChainService;
     @Autowired
     protected EdgeNotificationService edgeNotificationService;
+    @Autowired
+    protected QueueService queueService;
     @Autowired
     protected DashboardService dashboardService;
     @Autowired

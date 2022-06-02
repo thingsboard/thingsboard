@@ -62,6 +62,7 @@ import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -168,6 +169,9 @@ public abstract class AbstractServiceTest {
 
     @Autowired
     protected OtaPackageService otaPackageService;
+
+    @Autowired
+    protected QueueService queueService;
 
     public class IdComparator<D extends HasId> implements Comparator<D> {
         @Override

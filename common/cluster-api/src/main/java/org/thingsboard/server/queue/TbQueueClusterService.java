@@ -15,14 +15,10 @@
  */
 package org.thingsboard.server.queue;
 
-import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.data.queue.Queue;
 
-import java.util.Set;
+public interface TbQueueClusterService {
+    void onQueueChange(Queue queue);
 
-public interface QueueService {
-
-    Set<String> getQueuesByServiceType(ServiceType serviceType);
-
-    String resolve(ServiceType serviceType, String queueName);
-
+    void onQueueDelete(Queue queue);
 }

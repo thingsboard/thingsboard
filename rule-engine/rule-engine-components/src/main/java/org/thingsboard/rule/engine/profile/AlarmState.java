@@ -36,9 +36,9 @@ import org.thingsboard.server.common.data.device.profile.AlarmConditionSpecType;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.queue.ServiceQueue;
 import org.thingsboard.server.dao.alarm.AlarmOperationResult;
 
 import java.util.ArrayList;
@@ -60,7 +60,7 @@ class AlarmState {
     private volatile Alarm currentAlarm;
     private volatile boolean initialFetchDone;
     private volatile TbMsgMetaData lastMsgMetaData;
-    private volatile String lastMsgQueueName;
+    private volatile QueueId lastMsgQueueId;
     private volatile DataSnapshot dataSnapshot;
     private final DynamicPredicateValueCtx dynamicPredicateValueCtx;
 
@@ -74,7 +74,7 @@ class AlarmState {
     public boolean process(TbContext ctx, TbMsg msg, DataSnapshot data, SnapshotUpdate update) throws ExecutionException, InterruptedException {
         initCurrentAlarm(ctx);
         lastMsgMetaData = msg.getMetaData();
-        lastMsgQueueName = msg.getQueueName();
+        lastMsgQueueId = msg.getQueueId();
         this.dataSnapshot = data;
         try {
             return createOrClearAlarms(ctx, msg, data, update, AlarmRuleState::eval);
@@ -195,7 +195,7 @@ class AlarmState {
             metaData.putValue(DataConstants.IS_CLEARED_ALARM, Boolean.TRUE.toString());
         }
         setAlarmConditionMetadata(ruleState, metaData);
-        TbMsg newMsg = ctx.newMsg(lastMsgQueueName != null ? lastMsgQueueName : ServiceQueue.MAIN, "ALARM",
+        TbMsg newMsg = ctx.newMsg(lastMsgQueueId != null ? lastMsgQueueId : null, "ALARM",
                 originator, msg != null ? msg.getCustomerId() : null, metaData, data);
         ctx.enqueueForTellNext(newMsg, relationType);
     }

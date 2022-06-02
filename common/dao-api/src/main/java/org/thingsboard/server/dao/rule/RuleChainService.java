@@ -92,5 +92,7 @@ public interface RuleChainService {
 
     List<RuleNode> findRuleNodesByTenantIdAndType(TenantId tenantId, String name, String toString);
 
+    List<RuleNode> findRuleNodesByTenantIdAndType(TenantId tenantId, String type);
+
     RuleNode saveRuleNode(TenantId tenantId, RuleNode ruleNode);
 }
