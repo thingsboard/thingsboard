@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.thingsboard.server.dao.audit.AuditLogLevelFilter;
+import org.thingsboard.server.dao.audit.AuditLogLevelProperties;
 
 import java.util.HashMap;
 
@@ -28,6 +29,8 @@ public class ThingsboardInstallConfiguration {
 
     @Bean
     public AuditLogLevelFilter emptyAuditLogLevelFilter() {
-        return new AuditLogLevelFilter(new HashMap<>());
+        var props = new AuditLogLevelProperties();
+        props.setMask(new HashMap<>());
+        return new AuditLogLevelFilter(props);
     }
 }

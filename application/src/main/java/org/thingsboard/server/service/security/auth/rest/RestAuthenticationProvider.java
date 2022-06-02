@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.MfaAuthenticationToken;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -49,6 +50,7 @@ import java.util.UUID;
 
 @Component
 @Slf4j
+@TbCoreComponent
 public class RestAuthenticationProvider implements AuthenticationProvider {
 
     private final SystemSecurityService systemSecurityService;
