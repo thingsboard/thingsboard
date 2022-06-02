@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.service;
 
+import com.fasterxml.jackson.databind.node.NullNode;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -25,8 +26,13 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.queue.ProcessingStrategy;
+import org.thingsboard.server.common.data.queue.ProcessingStrategyType;
+import org.thingsboard.server.common.data.queue.SubmitStrategy;
+import org.thingsboard.server.common.data.queue.SubmitStrategyType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.ArrayList;
@@ -47,6 +53,30 @@ public abstract class BaseTenantProfileServiceTest extends AbstractServiceTest {
     @Test
     public void testSaveTenantProfile() {
         TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile");
+
+        tenantProfile.setIsolatedTbRuleEngine(true);
+
+        TenantProfileQueueConfiguration mainQueueConfiguration = new TenantProfileQueueConfiguration();
+        mainQueueConfiguration.setName("Main");
+        mainQueueConfiguration.setTopic("tb_rule_engine.main");
+        mainQueueConfiguration.setPollInterval(25);
+        mainQueueConfiguration.setPartitions(10);
+        mainQueueConfiguration.setConsumerPerPartition(true);
+        mainQueueConfiguration.setPackProcessingTimeout(2000);
+        SubmitStrategy mainQueueSubmitStrategy = new SubmitStrategy();
+        mainQueueSubmitStrategy.setType(SubmitStrategyType.BURST);
+        mainQueueSubmitStrategy.setBatchSize(1000);
+        mainQueueConfiguration.setSubmitStrategy(mainQueueSubmitStrategy);
+        ProcessingStrategy mainQueueProcessingStrategy = new ProcessingStrategy();
+        mainQueueProcessingStrategy.setType(ProcessingStrategyType.SKIP_ALL_FAILURES);
+        mainQueueProcessingStrategy.setRetries(3);
+        mainQueueProcessingStrategy.setFailurePercentage(0);
+        mainQueueProcessingStrategy.setPauseBetweenRetries(3);
+        mainQueueProcessingStrategy.setMaxPauseBetweenRetries(3);
+        mainQueueConfiguration.setProcessingStrategy(mainQueueProcessingStrategy);
+        mainQueueConfiguration.setAdditionalInfo(NullNode.getInstance());
+        tenantProfile.getProfileData().setQueueConfiguration(Collections.singletonList(mainQueueConfiguration));
+
         TenantProfile savedTenantProfile = tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
         Assert.assertNotNull(savedTenantProfile);
         Assert.assertNotNull(savedTenantProfile.getId());
@@ -143,6 +173,7 @@ public abstract class BaseTenantProfileServiceTest extends AbstractServiceTest {
         TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile");
         TenantProfile savedTenantProfile = tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
         savedTenantProfile.setIsolatedTbRuleEngine(true);
+        addMainQueueConfig(savedTenantProfile);
         tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, savedTenantProfile);
     }
 
@@ -272,4 +303,27 @@ public abstract class BaseTenantProfileServiceTest extends AbstractServiceTest {
         return tenantProfile;
     }
 
+    private void addMainQueueConfig(TenantProfile tenantProfile) {
+        TenantProfileQueueConfiguration mainQueueConfiguration = new TenantProfileQueueConfiguration();
+        mainQueueConfiguration.setName("Main");
+        mainQueueConfiguration.setTopic("tb_rule_engine.main");
+        mainQueueConfiguration.setPollInterval(25);
+        mainQueueConfiguration.setPartitions(10);
+        mainQueueConfiguration.setConsumerPerPartition(true);
+        mainQueueConfiguration.setPackProcessingTimeout(2000);
+        SubmitStrategy mainQueueSubmitStrategy = new SubmitStrategy();
+        mainQueueSubmitStrategy.setType(SubmitStrategyType.BURST);
+        mainQueueSubmitStrategy.setBatchSize(1000);
+        mainQueueConfiguration.setSubmitStrategy(mainQueueSubmitStrategy);
+        ProcessingStrategy mainQueueProcessingStrategy = new ProcessingStrategy();
+        mainQueueProcessingStrategy.setType(ProcessingStrategyType.SKIP_ALL_FAILURES);
+        mainQueueProcessingStrategy.setRetries(3);
+        mainQueueProcessingStrategy.setFailurePercentage(0);
+        mainQueueProcessingStrategy.setPauseBetweenRetries(3);
+        mainQueueProcessingStrategy.setMaxPauseBetweenRetries(3);
+        mainQueueConfiguration.setProcessingStrategy(mainQueueProcessingStrategy);
+        TenantProfileData profileData = tenantProfile.getProfileData();
+        profileData.setQueueConfiguration(Collections.singletonList(mainQueueConfiguration));
+        tenantProfile.setProfileData(profileData);
+    }
 }

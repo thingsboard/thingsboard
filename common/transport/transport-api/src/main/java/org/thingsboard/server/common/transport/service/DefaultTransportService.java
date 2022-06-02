@@ -22,8 +22,10 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardExecutors;
@@ -42,13 +44,13 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.queue.ServiceQueue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
@@ -85,6 +87,7 @@ import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.AsyncCallbackTemplate;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.discovery.NotificationsTopicService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
@@ -151,17 +154,25 @@ public class DefaultTransportService implements TransportService {
     @Value("${transport.stats.enabled:false}")
     private boolean statsEnabled;
 
+    @Autowired
+    @Lazy
+    private TbApiUsageClient apiUsageClient;
+    @Autowired
+    @Lazy
+    private PartitionService partitionService;
+
     private final Map<String, Number> statsMap = new LinkedHashMap<>();
 
     private final Gson gson = new Gson();
     private final TbTransportQueueFactory queueProvider;
     private final TbQueueProducerProvider producerProvider;
-    private final PartitionService partitionService;
+
+    private final NotificationsTopicService notificationsTopicService;
     private final TbServiceInfoProvider serviceInfoProvider;
     private final StatsFactory statsFactory;
     private final TransportDeviceProfileCache deviceProfileCache;
     private final TransportTenantProfileCache tenantProfileCache;
-    private final TbApiUsageClient apiUsageClient;
+
     private final TransportRateLimitService rateLimitService;
     private final DataDecodingEncodingService dataDecodingEncodingService;
     private final SchedulerComponent scheduler;
@@ -189,21 +200,20 @@ public class DefaultTransportService implements TransportService {
     public DefaultTransportService(TbServiceInfoProvider serviceInfoProvider,
                                    TbTransportQueueFactory queueProvider,
                                    TbQueueProducerProvider producerProvider,
-                                   PartitionService partitionService,
+                                   NotificationsTopicService notificationsTopicService,
                                    StatsFactory statsFactory,
                                    TransportDeviceProfileCache deviceProfileCache,
                                    TransportTenantProfileCache tenantProfileCache,
-                                   TbApiUsageClient apiUsageClient, TransportRateLimitService rateLimitService,
+                                   TransportRateLimitService rateLimitService,
                                    DataDecodingEncodingService dataDecodingEncodingService, SchedulerComponent scheduler, TransportResourceCache transportResourceCache,
                                    ApplicationEventPublisher eventPublisher) {
         this.serviceInfoProvider = serviceInfoProvider;
         this.queueProvider = queueProvider;
         this.producerProvider = producerProvider;
-        this.partitionService = partitionService;
+        this.notificationsTopicService = notificationsTopicService;
         this.statsFactory = statsFactory;
         this.deviceProfileCache = deviceProfileCache;
         this.tenantProfileCache = tenantProfileCache;
-        this.apiUsageClient = apiUsageClient;
         this.rateLimitService = rateLimitService;
         this.dataDecodingEncodingService = dataDecodingEncodingService;
         this.scheduler = scheduler;
@@ -224,7 +234,7 @@ public class DefaultTransportService implements TransportService {
         ruleEngineMsgProducer = producerProvider.getRuleEngineMsgProducer();
         tbCoreMsgProducer = producerProvider.getTbCoreMsgProducer();
         transportNotificationsConsumer = queueProvider.createTransportNotificationsConsumer();
-        TopicPartitionInfo tpi = partitionService.getNotificationsTopic(ServiceType.TB_TRANSPORT, serviceInfoProvider.getServiceId());
+        TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, serviceInfoProvider.getServiceId());
         transportNotificationsConsumer.subscribe(Collections.singleton(tpi));
         transportApiRequestTemplate.init();
         mainConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("transport-consumer"));
@@ -295,6 +305,18 @@ public class DefaultTransportService implements TransportService {
         try {
             TbProtoQueueMsg<TransportApiResponseMsg> response = transportApiRequestTemplate.send(protoMsg).get();
             return response.getValue().getEntityProfileResponseMsg();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public List<TransportProtos.GetQueueRoutingInfoResponseMsg> getQueueRoutingInfo(TransportProtos.GetAllQueueRoutingInfoRequestMsg msg) {
+        TbProtoQueueMsg<TransportProtos.TransportApiRequestMsg> protoMsg =
+                new TbProtoQueueMsg<>(UUID.randomUUID(), TransportProtos.TransportApiRequestMsg.newBuilder().setGetAllQueueRoutingInfoRequestMsg(msg).build());
+        try {
+            TbProtoQueueMsg<TransportApiResponseMsg> response = transportApiRequestTemplate.send(protoMsg).get();
+            return response.getValue().getGetQueueRoutingInfoResponseMsgsList();
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
@@ -889,6 +911,7 @@ public class DefaultTransportService implements TransportService {
                     Optional<Tenant> profileOpt = dataDecodingEncodingService.decode(msg.getData().toByteArray());
                     if (profileOpt.isPresent()) {
                         Tenant tenant = profileOpt.get();
+                        partitionService.removeTenant(tenant.getId());
                         boolean updated = tenantProfileCache.put(tenant.getId(), tenant.getTenantProfileId());
                         if (updated) {
                             rateLimitService.update(tenant.getId());
@@ -943,6 +966,10 @@ public class DefaultTransportService implements TransportService {
                     log.warn("ResourceDelete - [{}] [{}]", id, mdRez);
                     transportCallbackExecutor.submit(() -> mdRez.getListener().onResourceDelete(msg));
                 });
+            } else if (toSessionMsg.hasQueueUpdateMsg()) {
+                partitionService.updateQueue(toSessionMsg.getQueueUpdateMsg());
+            } else if (toSessionMsg.hasQueueDeleteMsg()) {
+                partitionService.removeQueue(toSessionMsg.getQueueDeleteMsg());
             } else {
                 //TODO: should we notify the device actor about missed session?
                 log.debug("[{}] Missing session.", sessionId);
@@ -1062,7 +1089,7 @@ public class DefaultTransportService implements TransportService {
     }
 
     private void sendToRuleEngine(TenantId tenantId, TbMsg tbMsg, TbQueueCallback callback) {
-        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, tbMsg.getQueueName(), tenantId, tbMsg.getOriginator());
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, tbMsg.getQueueId(), tenantId, tbMsg.getOriginator());
         if (log.isTraceEnabled()) {
             log.trace("[{}][{}] Pushing to topic {} message {}", tenantId, tbMsg.getOriginator(), tpi.getFullTopicName(), tbMsg);
         }
@@ -1079,19 +1106,18 @@ public class DefaultTransportService implements TransportService {
         DeviceProfileId deviceProfileId = new DeviceProfileId(new UUID(sessionInfo.getDeviceProfileIdMSB(), sessionInfo.getDeviceProfileIdLSB()));
         DeviceProfile deviceProfile = deviceProfileCache.get(deviceProfileId);
         RuleChainId ruleChainId;
-        String queueName;
+        QueueId queueId;
 
         if (deviceProfile == null) {
             log.warn("[{}] Device profile is null!", deviceProfileId);
             ruleChainId = null;
-            queueName = ServiceQueue.MAIN;
+            queueId = null;
         } else {
             ruleChainId = deviceProfile.getDefaultRuleChainId();
-            String defaultQueueName = deviceProfile.getDefaultQueueName();
-            queueName = defaultQueueName != null ? defaultQueueName : ServiceQueue.MAIN;
+            queueId = deviceProfile.getDefaultQueueId();
         }
 
-        TbMsg tbMsg = TbMsg.newMsg(queueName, sessionMsgType.name(), deviceId, customerId, metaData, gson.toJson(json), ruleChainId, null);
+        TbMsg tbMsg = TbMsg.newMsg(queueId, sessionMsgType.name(), deviceId, customerId, metaData, gson.toJson(json), ruleChainId, null);
         sendToRuleEngine(tenantId, tbMsg, callback);
     }
 

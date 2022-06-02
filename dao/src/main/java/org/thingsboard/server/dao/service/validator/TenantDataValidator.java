@@ -17,24 +17,15 @@ package org.thingsboard.server.dao.service.validator;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantDao;
-import org.thingsboard.server.dao.tenant.TenantProfileService;
 
 @Component
 public class TenantDataValidator extends DataValidator<Tenant> {
-
-    @Value("${zk.enabled}")
-    private Boolean zkEnabled;
-
-    @Autowired
-    private TenantProfileService tenantProfileService;
 
     @Autowired
     private TenantDao tenantDao;
@@ -47,7 +38,6 @@ public class TenantDataValidator extends DataValidator<Tenant> {
         if (!StringUtils.isEmpty(tenant.getEmail())) {
             validateEmail(tenant.getEmail());
         }
-        validateTenantProfile(tenantId, tenant);
     }
 
     @Override
@@ -56,14 +46,7 @@ public class TenantDataValidator extends DataValidator<Tenant> {
         if (old == null) {
             throw new DataValidationException("Can't update non existing tenant!");
         }
-        validateTenantProfile(tenantId, tenant);
         return old;
     }
 
-    private void validateTenantProfile(TenantId tenantId, Tenant tenant) {
-        TenantProfile tenantProfileById = tenantProfileService.findTenantProfileById(tenantId, tenant.getTenantProfileId());
-        if (!zkEnabled && (tenantProfileById.isIsolatedTbCore() || tenantProfileById.isIsolatedTbRuleEngine())) {
-            throw new DataValidationException("Can't use isolated tenant profiles in monolith setup!");
-        }
-    }
 }

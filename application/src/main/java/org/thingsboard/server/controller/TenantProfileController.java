@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -37,6 +38,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.entitiy.tenant_profile.TbTenantProfileService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
@@ -59,9 +61,12 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 @TbCoreComponent
 @RequestMapping("/api")
 @Slf4j
+@RequiredArgsConstructor
 public class TenantProfileController extends BaseController {
 
     private static final String TENANT_PROFILE_INFO_DESCRIPTION = "Tenant Profile Info is a lightweight object that contains only id and name of the profile. ";
+
+    private final TbTenantProfileService tbTenantProfileService;
 
     @ApiOperation(value = "Get Tenant Profile (getTenantProfileById)",
             notes = "Fetch the Tenant Profile object based on the provided Tenant Profile Id. " + SYSTEM_AUTHORITY_PARAGRAPH)
@@ -171,14 +176,16 @@ public class TenantProfileController extends BaseController {
             @RequestBody TenantProfile tenantProfile) throws ThingsboardException {
         try {
             boolean newTenantProfile = tenantProfile.getId() == null;
+            TenantProfile oldProfile;
             if (newTenantProfile) {
                 accessControlService
                         .checkPermission(getCurrentUser(), Resource.TENANT_PROFILE, Operation.CREATE);
+                oldProfile = null;
             } else {
-                checkEntityId(tenantProfile.getId(), Operation.WRITE);
+                oldProfile = checkTenantProfileId(tenantProfile.getId(), Operation.WRITE);
             }
 
-            tenantProfile = checkNotNull(tenantProfileService.saveTenantProfile(getTenantId(), tenantProfile));
+            tenantProfile = checkNotNull(tbTenantProfileService.saveTenantProfile(getTenantId(), tenantProfile, oldProfile));
             tenantProfileCache.put(tenantProfile);
             tbClusterService.onTenantProfileChange(tenantProfile, null);
             tbClusterService.broadcastEntityStateChangeEvent(TenantId.SYS_TENANT_ID, tenantProfile.getId(),

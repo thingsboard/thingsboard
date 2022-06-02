@@ -15,12 +15,14 @@
  */
 package org.thingsboard.server.config;
 
+import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.security.model.JwtToken;
 
-@Configuration
+@Component
 @ConfigurationProperties(prefix = "security.jwt")
+@Data
 public class JwtSettings {
     /**
      * {@link JwtToken} will expire after this time.
@@ -42,34 +44,4 @@ public class JwtSettings {
      */
     private Integer refreshTokenExpTime;
 
-    public Integer getRefreshTokenExpTime() {
-        return refreshTokenExpTime;
-    }
-
-    public void setRefreshTokenExpTime(Integer refreshTokenExpTime) {
-        this.refreshTokenExpTime = refreshTokenExpTime;
-    }
-
-    public Integer getTokenExpirationTime() {
-        return tokenExpirationTime;
-    }
-
-    public void setTokenExpirationTime(Integer tokenExpirationTime) {
-        this.tokenExpirationTime = tokenExpirationTime;
-    }
-
-    public String getTokenIssuer() {
-        return tokenIssuer;
-    }
-    public void setTokenIssuer(String tokenIssuer) {
-        this.tokenIssuer = tokenIssuer;
-    }
-
-    public String getTokenSigningKey() {
-        return tokenSigningKey;
-    }
-
-    public void setTokenSigningKey(String tokenSigningKey) {
-        this.tokenSigningKey = tokenSigningKey;
-    }
 }

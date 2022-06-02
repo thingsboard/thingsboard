@@ -15,31 +15,31 @@
  */
 package org.thingsboard.server.cluster;
 
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
-import org.thingsboard.server.common.data.edge.EdgeEventType;
-import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.queue.TbQueueCallback;
+import org.thingsboard.server.queue.TbQueueClusterService;
 
 import java.util.UUID;
 
-public interface TbClusterService {
+public interface TbClusterService extends TbQueueClusterService {
 
     void pushMsgToCore(TopicPartitionInfo tpi, UUID msgKey, ToCoreMsg msg, TbQueueCallback callback);
 
