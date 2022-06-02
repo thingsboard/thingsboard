@@ -58,6 +58,8 @@ import org.thingsboard.server.dao.service.Validator;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -272,6 +274,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
         ruleChainMetaData.setRuleChainId(ruleChainId);
         List<RuleNode> ruleNodes = getRuleChainNodes(tenantId, ruleChainId);
+        Collections.sort(ruleNodes, Comparator.comparingLong(RuleNode::getCreatedTime).thenComparing(RuleNode::getId, Comparator.comparing(RuleNodeId::getId)));
         Map<RuleNodeId, Integer> ruleNodeIndexMap = new HashMap<>();
         for (RuleNode node : ruleNodes) {
             ruleNodeIndexMap.put(node.getId(), ruleNodes.indexOf(node));

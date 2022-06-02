@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.tenant.profile;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import org.thingsboard.server.common.data.queue.ProcessingStrategy;
 import org.thingsboard.server.common.data.queue.SubmitStrategy;
@@ -29,4 +30,5 @@ public class TenantProfileQueueConfiguration {
     private long packProcessingTimeout;
     private SubmitStrategy submitStrategy;
     private ProcessingStrategy processingStrategy;
+    private JsonNode additionalInfo;
 }

@@ -32,6 +32,8 @@ public interface ExportableEntitiesService {
 
     <E extends HasId<I>, I extends EntityId> E findEntityByTenantIdAndId(TenantId tenantId, I id);
 
+    <E extends HasId<I>, I extends EntityId> E findEntityById(I id);
+
     <E extends ExportableEntity<I>, I extends EntityId> E findEntityByTenantIdAndName(TenantId tenantId, EntityType entityType, String name);
 
     <E extends ExportableEntity<I>, I extends EntityId> PageData<E> findEntitiesByTenantId(TenantId tenantId, EntityType entityType, PageLink pageLink);

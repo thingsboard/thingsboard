@@ -33,6 +33,7 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { Subscription } from 'rxjs';
 import { QueueInfo } from '@shared/models/queue.models';
 import { UtilsService } from '@core/services/utils.service';
+import { guid } from '@core/utils';
 
 @Component({
   selector: 'tb-tenant-profile-queues',
@@ -131,7 +132,10 @@ export class TenantProfileQueuesComponent implements ControlValueAccessor, Valid
   }
 
   public trackByQueue(index: number, queueControl: AbstractControl) {
-    return queueControl;
+    if (queueControl) {
+      return queueControl.value.id;
+    }
+    return null;
   }
 
   public removeQueue(index: number) {
@@ -140,6 +144,7 @@ export class TenantProfileQueuesComponent implements ControlValueAccessor, Valid
 
   public addQueue() {
     const queue = {
+      id: guid(),
       consumerPerPartition: false,
       name: '',
       packProcessingTimeout: 2000,
@@ -156,7 +161,10 @@ export class TenantProfileQueuesComponent implements ControlValueAccessor, Valid
         batchSize: 0,
         type: ''
       },
-      topic: ''
+      topic: '',
+      additionalInfo: {
+        description: ''
+      }
     };
     this.newQueue = true;
     const queuesArray = this.tenantProfileQueuesFormGroup.get('queues') as FormArray;

@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.common.data.tenant.profile;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -45,6 +43,9 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private String transportDeviceMsgRateLimit;
     private String transportDeviceTelemetryMsgRateLimit;
     private String transportDeviceTelemetryDataPointsRateLimit;
+
+    private String tenantEntityExportRateLimit;
+    private String tenantEntityImportRateLimit;
 
     private long maxTransportMessages;
     private long maxTransportDataPoints;

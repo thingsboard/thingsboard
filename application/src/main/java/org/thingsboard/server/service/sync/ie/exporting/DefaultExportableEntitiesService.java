@@ -87,19 +87,23 @@ public class DefaultExportableEntitiesService implements ExportableEntitiesServi
 
     @Override
     public <E extends HasId<I>, I extends EntityId> E findEntityByTenantIdAndId(TenantId tenantId, I id) {
+        E entity = findEntityById(id);
+
+        if (entity == null || !belongsToTenant(entity, tenantId)) {
+            return null;
+        }
+        return entity;
+    }
+
+    @Override
+    public <E extends HasId<I>, I extends EntityId> E findEntityById(I id) {
         EntityType entityType = id.getEntityType();
         Dao<E> dao = getDao(entityType);
         if (dao == null) {
             throw new IllegalArgumentException("Unsupported entity type " + entityType);
         }
 
-        E entity = dao.findById(tenantId, id.getId());
-
-        if (entity == null || !belongsToTenant(entity, tenantId)) {
-            return null;
-        }
-
-        return entity;
+        return dao.findById(TenantId.SYS_TENANT_ID, id.getId());
     }
 
     @Override

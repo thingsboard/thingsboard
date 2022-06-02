@@ -19,41 +19,41 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.sync.ThrowingRunnable;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
 import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
 import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.apiusage.RateLimitService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.ie.exporting.EntityExportService;
 import org.thingsboard.server.service.sync.ie.exporting.impl.BaseEntityExportService;
 import org.thingsboard.server.service.sync.ie.exporting.impl.DefaultEntityExportService;
 import org.thingsboard.server.service.sync.ie.importing.EntityImportService;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Service
 @TbCoreComponent
 @RequiredArgsConstructor
 @Slf4j
+@SuppressWarnings("rawtypes")
 public class DefaultEntitiesExportImportService implements EntitiesExportImportService {
 
     private final Map<EntityType, EntityExportService<?, ?, ?>> exportServices = new HashMap<>();
     private final Map<EntityType, EntityImportService<?, ?, ?>> importServices = new HashMap<>();
+
+    private final RateLimitService rateLimitService;
 
     protected static final List<EntityType> SUPPORTED_ENTITY_TYPES = List.of(
             EntityType.CUSTOMER, EntityType.ASSET, EntityType.RULE_CHAIN,
@@ -63,16 +63,22 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
 
     @Override
     public <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> exportEntity(SecurityUser user, I entityId, EntityExportSettings exportSettings) throws ThingsboardException {
+        if (!rateLimitService.checkEntityExportLimit(user.getTenantId())) {
+            throw new ThingsboardException("Rate limit for entities export is exceeded", ThingsboardErrorCode.TOO_MANY_REQUESTS);
+        }
+
         EntityType entityType = entityId.getEntityType();
         EntityExportService<I, E, EntityExportData<E>> exportService = getExportService(entityType);
 
         return exportService.getExportData(user, entityId, exportSettings);
     }
 
-
     @Override
     public <E extends ExportableEntity<I>, I extends EntityId> EntityImportResult<E> importEntity(SecurityUser user, EntityExportData<E> exportData, EntityImportSettings importSettings,
                                                                                                   boolean saveReferences, boolean sendEvents) throws ThingsboardException {
+        if (!rateLimitService.checkEntityImportLimit(user.getTenantId())) {
+            throw new ThingsboardException("Rate limit for entities import is exceeded", ThingsboardErrorCode.TOO_MANY_REQUESTS);
+        }
         if (exportData.getEntity() == null || exportData.getEntity().getId() == null) {
             throw new DataValidationException("Invalid entity data");
         }
@@ -92,44 +98,6 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
         return importResult;
     }
 
-    @Transactional(rollbackFor = Exception.class, timeout = 120)
-    @Override
-    public List<EntityImportResult<?>> importEntities(SecurityUser user, List<EntityExportData<?>> exportDataList, EntityImportSettings importSettings) throws ThingsboardException {
-        exportDataList.sort(getDataComparatorForImport());
-
-        List<EntityImportResult<?>> importResults = new ArrayList<>();
-
-        for (EntityExportData exportData : exportDataList) {
-            EntityImportResult<?> importResult = importEntity(user, exportData, importSettings, false, false);
-            importResults.add(importResult);
-        }
-
-        for (ThrowingRunnable saveReferencesCallback : importResults.stream()
-                .map(EntityImportResult::getSaveReferencesCallback)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList())) {
-            saveReferencesCallback.run();
-        }
-
-        importResults.stream()
-                .map(EntityImportResult::getSendEventsCallback)
-                .filter(Objects::nonNull)
-                .forEach(sendEventsCallback -> {
-                    try {
-                        sendEventsCallback.run();
-                    } catch (Exception e) {
-                        log.error("Failed to send event for entity", e);
-                    }
-                });
-
-        return importResults;
-    }
-
-
-    @Override
-    public Comparator<EntityExportData<?>> getDataComparatorForImport() {
-        return Comparator.comparing(EntityExportData::getEntityType, getEntityTypeComparatorForImport());
-    }
 
     @Override
     public Comparator<EntityType> getEntityTypeComparatorForImport() {

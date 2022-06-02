@@ -13,23 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.sync.ie;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
-public class EntityImportSettings {
-    private boolean findExistingByName;
-    private boolean updateRelations;
-    private boolean saveAttributes;
-    private boolean saveCredentials;
-
-    // internal
-    private boolean resetExternalIdsOfAnotherTenant;
+::ng-deep {
+  .queue-option {
+    .mat-option-text {
+      display: inline;
+    }
+    .queue-option-description {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
 }
