@@ -16,6 +16,8 @@
 package org.thingsboard.server.service.sync.ie.importing.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.collect.Lists;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
@@ -27,13 +29,14 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.sync.ie.EntityExportData;
+import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
-import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.utils.RegexUtils;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
@@ -66,12 +69,21 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
     @Override
     protected Dashboard prepareAndSave(TenantId tenantId, Dashboard dashboard, EntityExportData<Dashboard> exportData, IdProvider idProvider, EntityImportSettings importSettings) {
         JsonNode configuration = dashboard.getConfiguration();
-        String newConfigurationJson = RegexUtils.replace(configuration.toString(), RegexUtils.UUID_PATTERN, uuid -> {
-            return idProvider.getInternalIdByUuid(UUID.fromString(uuid))
-                    .map(entityId -> entityId.getId().toString()).orElse(uuid);
-        });
-        configuration = JacksonUtil.toJsonNode(newConfigurationJson);
-        dashboard.setConfiguration(configuration);
+        JsonNode entityAliases = configuration.get("entityAliases");
+        if (entityAliases != null && entityAliases.isObject()) {
+            for (JsonNode entityAlias : entityAliases) {
+                ArrayList<String> fields = Lists.newArrayList(entityAlias.fieldNames());
+                for (String field : fields) {
+                    if (field.equals("id")) continue;
+                    JsonNode oldFieldValue = entityAlias.get(field);
+                    JsonNode newFieldValue = JacksonUtil.toJsonNode(RegexUtils.replace(oldFieldValue.toString(), RegexUtils.UUID_PATTERN, uuid -> {
+                        return idProvider.getInternalIdByUuid(UUID.fromString(uuid))
+                                .map(entityId -> entityId.getId().toString()).orElse(uuid);
+                    }));
+                    ((ObjectNode) entityAlias).set(field, newFieldValue);
+                }
+            }
+        }
 
         Set<ShortCustomerInfo> assignedCustomers = Optional.ofNullable(dashboard.getAssignedCustomers()).orElse(Collections.emptySet()).stream()
                 .peek(customerInfo -> customerInfo.setCustomerId(idProvider.getInternalId(customerInfo.getCustomerId())))

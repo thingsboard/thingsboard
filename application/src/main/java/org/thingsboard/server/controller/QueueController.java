@@ -15,10 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -38,14 +35,7 @@ import org.thingsboard.server.service.entitiy.queue.TbQueueService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
-import java.util.Collections;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
-
-import static org.thingsboard.server.controller.ControllerConstants.QUEUE_SERVICE_TYPE_ALLOWABLE_VALUES;
-import static org.thingsboard.server.controller.ControllerConstants.QUEUE_SERVICE_TYPE_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
 
 @RestController
 @TbCoreComponent
@@ -54,27 +44,6 @@ import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHO
 public class QueueController extends BaseController {
 
     private final TbQueueService tbQueueService;
-
-    @ApiOperation(value = "Get queue names (getTenantQueuesByServiceType)",
-            notes = "Returns a set of unique queue names based on service type. " + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/queues", params = {"serviceType"}, produces = MediaType.APPLICATION_JSON_VALUE, method = RequestMethod.GET)
-    @ResponseBody()
-    public Set<String> getTenantQueuesByServiceType(@ApiParam(value = QUEUE_SERVICE_TYPE_DESCRIPTION, allowableValues = QUEUE_SERVICE_TYPE_ALLOWABLE_VALUES)
-                                                    @RequestParam String serviceType) throws ThingsboardException {
-        checkParameter("serviceType", serviceType);
-        try {
-            ServiceType type = ServiceType.valueOf(serviceType);
-            switch (type) {
-                case TB_RULE_ENGINE:
-                    return queueService.findQueuesByTenantId(getTenantId()).stream().map(Queue::getName).collect(Collectors.toSet());
-                default:
-                    return Collections.emptySet();
-            }
-        } catch (Exception e) {
-            throw handleException(e);
-        }
-    }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/queues", params = {"serviceType", "pageSize", "page"}, method = RequestMethod.GET)

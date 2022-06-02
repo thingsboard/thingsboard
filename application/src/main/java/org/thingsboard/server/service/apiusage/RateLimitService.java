@@ -13,23 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.sync.ie;
+package org.thingsboard.server.service.apiusage;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.id.TenantId;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
-public class EntityImportSettings {
-    private boolean findExistingByName;
-    private boolean updateRelations;
-    private boolean saveAttributes;
-    private boolean saveCredentials;
+public interface RateLimitService {
 
-    // internal
-    private boolean resetExternalIdsOfAnotherTenant;
+    boolean checkEntityExportLimit(TenantId tenantId);
+
+    boolean checkEntityImportLimit(TenantId tenantId);
+
 }

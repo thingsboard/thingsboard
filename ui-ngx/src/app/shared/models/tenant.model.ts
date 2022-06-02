@@ -41,6 +41,9 @@ export interface DefaultTenantProfileConfiguration {
   transportDeviceTelemetryMsgRateLimit?: string;
   transportDeviceTelemetryDataPointsRateLimit?: string;
 
+  tenantEntityExportRateLimit?: string;
+  tenantEntityImportRateLimit?: string;
+
   maxTransportMessages: number;
   maxTransportDataPoints: number;
   maxREExecutions: number;
@@ -98,7 +101,7 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
 
 export interface TenantProfileData {
   configuration: TenantProfileConfiguration;
-  queueConfiguration?: QueueInfo;
+  queueConfiguration?: Array<QueueInfo>;
 }
 
 export interface TenantProfile extends BaseData<TenantProfileId> {

@@ -22,7 +22,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionCallback;
@@ -46,13 +45,13 @@ import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
 import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
 import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
+import org.thingsboard.server.common.data.sync.vc.EntityDataDiff;
 import org.thingsboard.server.common.data.sync.vc.EntityDataInfo;
 import org.thingsboard.server.common.data.sync.vc.EntityLoadError;
-import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
-import org.thingsboard.server.common.data.sync.vc.EntityDataDiff;
-import org.thingsboard.server.common.data.sync.vc.EntityVersion;
-import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.EntityTypeLoadResult;
+import org.thingsboard.server.common.data.sync.vc.EntityVersion;
+import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
+import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionLoadResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.common.data.sync.vc.request.create.AutoVersionCreateConfig;
@@ -257,16 +256,17 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         }
     }
 
-    private VersionLoadResult loadMultipleEntities(SecurityUser user, EntityTypeVersionLoadRequest versionLoadRequest) {
+    private VersionLoadResult loadMultipleEntities(SecurityUser user, EntityTypeVersionLoadRequest request) {
         Map<EntityType, EntityTypeLoadResult> results = new HashMap<>();
         Map<EntityType, Set<EntityId>> importedEntities = new HashMap<>();
+        Map<EntityId, EntityImportSettings> toReimport = new HashMap<>();
         List<ThrowingRunnable> saveReferencesCallbacks = new ArrayList<>();
         List<ThrowingRunnable> sendEventsCallbacks = new ArrayList<>();
 
-        List<EntityType> entityTypes = versionLoadRequest.getEntityTypes().keySet().stream()
+        List<EntityType> entityTypes = request.getEntityTypes().keySet().stream()
                 .sorted(exportImportService.getEntityTypeComparatorForImport()).collect(Collectors.toList());
         for (EntityType entityType : entityTypes) {
-            EntityTypeVersionLoadConfig config = versionLoadRequest.getEntityTypes().get(entityType);
+            EntityTypeVersionLoadConfig config = request.getEntityTypes().get(entityType);
             AtomicInteger created = new AtomicInteger();
             AtomicInteger updated = new AtomicInteger();
 
@@ -275,29 +275,37 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
             List<EntityExportData> entityDataList;
             do {
                 try {
-                    entityDataList = gitServiceQueue.getEntities(user.getTenantId(), versionLoadRequest.getVersionId(), entityType, offset, limit).get();
+                    entityDataList = gitServiceQueue.getEntities(user.getTenantId(), request.getVersionId(), entityType, offset, limit).get();
                 } catch (InterruptedException | ExecutionException e) {
                     throw new RuntimeException(e);
                 }
+                EntityImportSettings importSettings = EntityImportSettings.builder()
+                        .updateRelations(config.isLoadRelations())
+                        .saveAttributes(config.isLoadAttributes())
+                        .findExistingByName(config.isFindExistingEntityByName())
+                        .build();
                 for (EntityExportData entityData : entityDataList) {
+                    EntityImportResult<?> importResult;
                     try {
-                        EntityImportResult<?> importResult = exportImportService.importEntity(user, entityData, EntityImportSettings.builder()
-                                .updateRelations(config.isLoadRelations())
-                                .saveAttributes(config.isLoadAttributes())
-                                .findExistingByName(config.isFindExistingEntityByName())
-                                .build(), false, false);
-
-                        if (importResult.getOldEntity() == null) created.incrementAndGet();
-                        else updated.incrementAndGet();
-                        saveReferencesCallbacks.add(importResult.getSaveReferencesCallback());
-                        sendEventsCallbacks.add(importResult.getSendEventsCallback());
+                        importResult = exportImportService.importEntity(user, entityData,
+                                importSettings, false, false);
                     } catch (Exception e) {
                         throw new LoadEntityException(entityData, e);
                     }
+                    if (importResult.getUpdatedAllExternalIds() != null && !importResult.getUpdatedAllExternalIds()) {
+                        toReimport.put(entityData.getEntity().getExternalId(), importSettings);
+                        continue;
+                    }
+
+                    if (importResult.getOldEntity() == null) created.incrementAndGet();
+                    else updated.incrementAndGet();
+                    saveReferencesCallbacks.add(importResult.getSaveReferencesCallback());
+                    sendEventsCallbacks.add(importResult.getSendEventsCallback());
+
+                    importedEntities.computeIfAbsent(entityType, t -> new HashSet<>())
+                            .add(importResult.getSavedEntity().getId());
                 }
                 offset += limit;
-                importedEntities.computeIfAbsent(entityType, t -> new HashSet<>())
-                        .addAll(entityDataList.stream().map(entityData -> entityData.getEntity().getExternalId()).collect(Collectors.toSet()));
             } while (entityDataList.size() == limit);
             results.put(entityType, EntityTypeLoadResult.builder()
                     .entityType(entityType)
@@ -306,14 +314,33 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                     .build());
         }
 
-        versionLoadRequest.getEntityTypes().keySet().stream()
-                .filter(entityType -> versionLoadRequest.getEntityTypes().get(entityType).isRemoveOtherEntities())
+        toReimport.forEach((externalId, importSettings) -> {
+            try {
+                EntityExportData entityData = gitServiceQueue.getEntity(user.getTenantId(), request.getVersionId(), externalId).get();
+                importSettings.setResetExternalIdsOfAnotherTenant(true);
+                EntityImportResult<?> importResult = exportImportService.importEntity(user, entityData,
+                        importSettings, false, false);
+
+                EntityTypeLoadResult stats = results.get(externalId.getEntityType());
+                if (importResult.getOldEntity() == null) stats.setCreated(stats.getCreated() + 1);
+                else stats.setUpdated(stats.getUpdated() + 1);
+                saveReferencesCallbacks.add(importResult.getSaveReferencesCallback());
+                sendEventsCallbacks.add(importResult.getSendEventsCallback());
+                importedEntities.computeIfAbsent(externalId.getEntityType(), t -> new HashSet<>())
+                        .add(importResult.getSavedEntity().getId());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        request.getEntityTypes().keySet().stream()
+                .filter(entityType -> request.getEntityTypes().get(entityType).isRemoveOtherEntities())
                 .sorted(exportImportService.getEntityTypeComparatorForImport().reversed())
                 .forEach(entityType -> {
                     DaoUtil.processInBatches(pageLink -> {
                         return exportableEntitiesService.findEntitiesByTenantId(user.getTenantId(), entityType, pageLink);
                     }, 100, entity -> {
-                        if (entity.getExternalId() == null || !importedEntities.get(entityType).contains(entity.getExternalId())) {
+                        if (!importedEntities.get(entityType).contains(entity.getId())) {
                             try {
                                 exportableEntitiesService.checkPermission(user, entity, entityType, Operation.DELETE);
                             } catch (ThingsboardException e) {
@@ -381,8 +408,8 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                             .exportAttributes(otherVersion.getAttributes() != null)
                             .build());
                     return transform(gitServiceQueue.getContentsDiff(user.getTenantId(),
-                            JacksonUtil.toPrettyString(currentVersion.sort()),
-                            JacksonUtil.toPrettyString(otherVersion.sort())),
+                                    JacksonUtil.toPrettyString(currentVersion.sort()),
+                                    JacksonUtil.toPrettyString(otherVersion.sort())),
                             rawDiff -> new EntityDataDiff(currentVersion, otherVersion, rawDiff), MoreExecutors.directExecutor());
                 }, MoreExecutors.directExecutor());
     }

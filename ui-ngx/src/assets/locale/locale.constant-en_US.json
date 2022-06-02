@@ -2799,6 +2799,7 @@
         "select-name": "Select queue name",
         "name": "Name",
         "name-required": "Queue name is required!",
+        "name-unique": "Queue name is not unique!",
         "queue-required": "Queue is required!",
         "topic-required": "Queue topic is required!",
         "poll-interval-required": "Poll interval is required!",
@@ -2845,7 +2846,8 @@
         "delete": "Delete queue",
         "copyId": "Copy queue Id",
         "idCopiedMessage": "Queue Id has been copied to clipboard",
-        "description": "Description"
+        "description": "Description",
+        "alt-description": "Submit Strategy: {{submitStrategy}}, Processing Strategy: {{processingStrategy}}"
     },
     "tenant": {
         "tenant": "Tenant",
@@ -2947,6 +2949,8 @@
         "transport-device-msg-rate-limit": "Transport device messages rate limit.",
         "transport-device-telemetry-msg-rate-limit": "Transport device telemetry messages rate limit.",
         "transport-device-telemetry-data-points-rate-limit": "Transport device telemetry data points rate limit.",
+        "tenant-entity-export-rate-limit": "Entity version creation rate limit",
+        "tenant-entity-import-rate-limit": "Entity version load rate limit",
         "max-transport-messages": "Maximum number of transport messages (0 - unlimited)",
         "max-transport-messages-required": "Maximum number of transport messages is required.",
         "max-transport-messages-range": "Maximum number of transport messages can't be negative",
