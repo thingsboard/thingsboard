@@ -31,6 +31,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
 import org.thingsboard.server.queue.discovery.event.ClusterTopologyChangeEvent;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.discovery.event.ServiceListChangedEvent;
+import org.thingsboard.server.queue.util.AfterStartUp;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
@@ -93,10 +94,10 @@ public class HashPartitionService implements PartitionService {
     @PostConstruct
     public void init() {
         this.hashFunction = forName(hashFunctionName);
-        partitionsInit();
     }
 
-    private void partitionsInit() {
+    @AfterStartUp(order = AfterStartUp.QUEUE_INFO_INITIALIZATION)
+    public void partitionsInit() {
         QueueKey coreKey = new QueueKey(ServiceType.TB_CORE);
         partitionSizesMap.put(coreKey, corePartitions);
         partitionTopicsMap.put(coreKey, coreTopic);
@@ -109,6 +110,7 @@ public class HashPartitionService implements PartitionService {
 
         String serviceType = serviceInfoProvider.getServiceType();
 
+
         if ("tb-transport".equals(serviceType)) {
             //If transport started earlier than tb-core
             int getQueuesRetries = 10;
@@ -119,7 +121,7 @@ public class HashPartitionService implements PartitionService {
                         queueRoutingInfoList = queueRoutingInfoService.getAllQueuesRoutingInfo();
                         break;
                     } catch (Exception e) {
-                        log.info("Failed to get queues routing info!");
+                        log.info("Failed to get queues routing info: {}!", e.getMessage());
                         getQueuesRetries--;
                     }
                     try {

@@ -13,22 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.rule;
+package org.thingsboard.server.service.entitiy.user;
 
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.rule.RuleNode;
-import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
-import java.util.List;
+import javax.servlet.http.HttpServletRequest;
 
-/**
- * Created by igor on 3/12/18.
- */
-public interface RuleNodeDao extends Dao<RuleNode> {
+public interface TbUserService {
+    User save(TenantId tenantId, CustomerId customerId, User tbUser, boolean sendActivationMail, HttpServletRequest request, SecurityUser user) throws ThingsboardException;
 
-    List<RuleNode> findRuleNodesByTenantIdAndType(TenantId tenantId, String type, String search);
-
-    PageData<RuleNode> findAllRuleNodesByType(String type, PageLink pageLink);
+    void  delete (TenantId tenantId, CustomerId customerId, User tbUser, SecurityUser user) throws ThingsboardException;
 }

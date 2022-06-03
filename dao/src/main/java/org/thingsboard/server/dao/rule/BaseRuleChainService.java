@@ -70,8 +70,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.DataConstants.TENANT;
-import static org.thingsboard.server.dao.service.Validator.validateId;
-import static org.thingsboard.server.dao.service.Validator.validateString;
+import static org.thingsboard.server.dao.service.Validator.*;
 
 /**
  * Created by igor on 3/12/18.
@@ -682,6 +681,14 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateString(type, "Incorrect type of the rule node");
         return ruleNodeDao.findRuleNodesByTenantIdAndType(tenantId, type, "");
+    }
+
+    @Override
+    public PageData<RuleNode> findAllRuleNodesByType(String type, PageLink pageLink) {
+        log.trace("Executing findAllRuleNodesByType, type {}, pageLink {}", type, pageLink);
+        validateString(type, "Incorrect type of the rule node");
+        validatePageLink(pageLink);
+        return ruleNodeDao.findAllRuleNodesByType(type, pageLink);
     }
 
     @Override

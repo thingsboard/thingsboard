@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.dao.sql.rule;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -31,5 +33,10 @@ public interface RuleNodeRepository extends JpaRepository<RuleNodeEntity, UUID> 
     List<RuleNodeEntity> findRuleNodesByTenantIdAndType(@Param("tenantId") UUID tenantId,
                                                     @Param("ruleType") String ruleType,
                                                     @Param("searchText") String searchText);
+
+    @Query("SELECT r FROM RuleNodeEntity r WHERE r.type = :ruleType AND LOWER(r.configuration) LIKE LOWER(CONCAT('%', :searchText, '%')) ")
+    Page<RuleNodeEntity> findAllRuleNodesByType(@Param("ruleType") String ruleType,
+                                                @Param("searchText") String searchText,
+                                                Pageable pageable);
 
 }

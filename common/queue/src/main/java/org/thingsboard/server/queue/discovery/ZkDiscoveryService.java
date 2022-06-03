@@ -39,6 +39,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.discovery.event.ServiceListChangedEvent;
+import org.thingsboard.server.queue.util.AfterStartUp;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -113,8 +115,7 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
                 .collect(Collectors.toList());
     }
 
-    @EventListener(ApplicationReadyEvent.class)
-    @Order(value = 1)
+    @AfterStartUp(order = AfterStartUp.DISCOVERY_SERVICE)
     public void onApplicationEvent(ApplicationReadyEvent event) {
         if (stopped) {
             log.debug("Ignoring application ready event. Service is stopped.");

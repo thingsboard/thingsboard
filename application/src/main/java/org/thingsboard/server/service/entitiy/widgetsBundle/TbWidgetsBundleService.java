@@ -13,22 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.rule;
+package org.thingsboard.server.service.entitiy.widgetsBundle;
 
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.rule.RuleNode;
-import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.service.entitiy.SimpleTbEntityService;
 
-import java.util.List;
-
-/**
- * Created by igor on 3/12/18.
- */
-public interface RuleNodeDao extends Dao<RuleNode> {
-
-    List<RuleNode> findRuleNodesByTenantIdAndType(TenantId tenantId, String type, String search);
-
-    PageData<RuleNode> findAllRuleNodesByType(String type, PageLink pageLink);
+public interface TbWidgetsBundleService  extends SimpleTbEntityService<WidgetsBundle> {
 }
