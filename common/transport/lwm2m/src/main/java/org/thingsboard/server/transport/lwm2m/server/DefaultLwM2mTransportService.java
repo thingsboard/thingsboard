@@ -71,7 +71,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
 
     private LeshanServer server;
 
-    @AfterStartUp(order = AfterStartUp.BEFORE_TRANSPORT_SERVICE)
+    @AfterStartUp(order = AfterStartUp.AFTER_TRANSPORT_SERVICE)
     public void init() {
         this.server = getLhServer();
         /*
