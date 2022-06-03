@@ -81,7 +81,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         try {
             List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(user.getTenantId(), alarm.getOriginator());
             notificationEntityService.notifyDeleteAlarm(user.getTenantId(), alarm, alarm.getOriginator(), user.getCustomerId(),
-                    ActionType.DELETED, relatedEdgeIds, user, JacksonUtil.OBJECT_MAPPER.writeValueAsString(alarm));
+                    relatedEdgeIds, user, JacksonUtil.OBJECT_MAPPER.writeValueAsString(alarm));
             return alarmService.deleteAlarm(user.getTenantId(), alarm.getId()).isSuccessful();
         } catch (Exception e) {
             throw handleException(e);

@@ -613,67 +613,76 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     @Override
     public void createQueues() {
-        Queue mainQueue = new Queue();
-        mainQueue.setTenantId(TenantId.SYS_TENANT_ID);
-        mainQueue.setName("Main");
-        mainQueue.setTopic("tb_rule_engine.main");
-        mainQueue.setPollInterval(25);
-        mainQueue.setPartitions(10);
-        mainQueue.setConsumerPerPartition(true);
-        mainQueue.setPackProcessingTimeout(2000);
-        SubmitStrategy mainQueueSubmitStrategy = new SubmitStrategy();
-        mainQueueSubmitStrategy.setType(SubmitStrategyType.BURST);
-        mainQueueSubmitStrategy.setBatchSize(1000);
-        mainQueue.setSubmitStrategy(mainQueueSubmitStrategy);
-        ProcessingStrategy mainQueueProcessingStrategy = new ProcessingStrategy();
-        mainQueueProcessingStrategy.setType(ProcessingStrategyType.SKIP_ALL_FAILURES);
-        mainQueueProcessingStrategy.setRetries(3);
-        mainQueueProcessingStrategy.setFailurePercentage(0);
-        mainQueueProcessingStrategy.setPauseBetweenRetries(3);
-        mainQueueProcessingStrategy.setMaxPauseBetweenRetries(3);
-        mainQueue.setProcessingStrategy(mainQueueProcessingStrategy);
-        queueService.saveQueue(mainQueue);
+        Queue mainQueue = queueService.findQueueByTenantIdAndName(TenantId.SYS_TENANT_ID, "Main");
+        if (mainQueue == null) {
+            mainQueue = new Queue();
+            mainQueue.setTenantId(TenantId.SYS_TENANT_ID);
+            mainQueue.setName("Main");
+            mainQueue.setTopic("tb_rule_engine.main");
+            mainQueue.setPollInterval(25);
+            mainQueue.setPartitions(10);
+            mainQueue.setConsumerPerPartition(true);
+            mainQueue.setPackProcessingTimeout(2000);
+            SubmitStrategy mainQueueSubmitStrategy = new SubmitStrategy();
+            mainQueueSubmitStrategy.setType(SubmitStrategyType.BURST);
+            mainQueueSubmitStrategy.setBatchSize(1000);
+            mainQueue.setSubmitStrategy(mainQueueSubmitStrategy);
+            ProcessingStrategy mainQueueProcessingStrategy = new ProcessingStrategy();
+            mainQueueProcessingStrategy.setType(ProcessingStrategyType.SKIP_ALL_FAILURES);
+            mainQueueProcessingStrategy.setRetries(3);
+            mainQueueProcessingStrategy.setFailurePercentage(0);
+            mainQueueProcessingStrategy.setPauseBetweenRetries(3);
+            mainQueueProcessingStrategy.setMaxPauseBetweenRetries(3);
+            mainQueue.setProcessingStrategy(mainQueueProcessingStrategy);
+            queueService.saveQueue(mainQueue);
+        }
 
-        Queue highPriorityQueue = new Queue();
-        highPriorityQueue.setTenantId(TenantId.SYS_TENANT_ID);
-        highPriorityQueue.setName("HighPriority");
-        highPriorityQueue.setTopic("tb_rule_engine.hp");
-        highPriorityQueue.setPollInterval(25);
-        highPriorityQueue.setPartitions(10);
-        highPriorityQueue.setConsumerPerPartition(true);
-        highPriorityQueue.setPackProcessingTimeout(2000);
-        SubmitStrategy highPriorityQueueSubmitStrategy = new SubmitStrategy();
-        highPriorityQueueSubmitStrategy.setType(SubmitStrategyType.BURST);
-        highPriorityQueueSubmitStrategy.setBatchSize(100);
-        highPriorityQueue.setSubmitStrategy(highPriorityQueueSubmitStrategy);
-        ProcessingStrategy highPriorityQueueProcessingStrategy = new ProcessingStrategy();
-        highPriorityQueueProcessingStrategy.setType(ProcessingStrategyType.RETRY_FAILED_AND_TIMED_OUT);
-        highPriorityQueueProcessingStrategy.setRetries(0);
-        highPriorityQueueProcessingStrategy.setFailurePercentage(0);
-        highPriorityQueueProcessingStrategy.setPauseBetweenRetries(5);
-        highPriorityQueueProcessingStrategy.setMaxPauseBetweenRetries(5);
-        highPriorityQueue.setProcessingStrategy(highPriorityQueueProcessingStrategy);
-        queueService.saveQueue(highPriorityQueue);
+        Queue highPriorityQueue = queueService.findQueueByTenantIdAndName(TenantId.SYS_TENANT_ID, "HighPriority");
+        if (highPriorityQueue == null) {
+            highPriorityQueue = new Queue();
+            highPriorityQueue.setTenantId(TenantId.SYS_TENANT_ID);
+            highPriorityQueue.setName("HighPriority");
+            highPriorityQueue.setTopic("tb_rule_engine.hp");
+            highPriorityQueue.setPollInterval(25);
+            highPriorityQueue.setPartitions(10);
+            highPriorityQueue.setConsumerPerPartition(true);
+            highPriorityQueue.setPackProcessingTimeout(2000);
+            SubmitStrategy highPriorityQueueSubmitStrategy = new SubmitStrategy();
+            highPriorityQueueSubmitStrategy.setType(SubmitStrategyType.BURST);
+            highPriorityQueueSubmitStrategy.setBatchSize(100);
+            highPriorityQueue.setSubmitStrategy(highPriorityQueueSubmitStrategy);
+            ProcessingStrategy highPriorityQueueProcessingStrategy = new ProcessingStrategy();
+            highPriorityQueueProcessingStrategy.setType(ProcessingStrategyType.RETRY_FAILED_AND_TIMED_OUT);
+            highPriorityQueueProcessingStrategy.setRetries(0);
+            highPriorityQueueProcessingStrategy.setFailurePercentage(0);
+            highPriorityQueueProcessingStrategy.setPauseBetweenRetries(5);
+            highPriorityQueueProcessingStrategy.setMaxPauseBetweenRetries(5);
+            highPriorityQueue.setProcessingStrategy(highPriorityQueueProcessingStrategy);
+            queueService.saveQueue(highPriorityQueue);
+        }
 
-        Queue sequentialByOriginatorQueue = new Queue();
-        sequentialByOriginatorQueue.setTenantId(TenantId.SYS_TENANT_ID);
-        sequentialByOriginatorQueue.setName("SequentialByOriginator");
-        sequentialByOriginatorQueue.setTopic("tb_rule_engine.sq");
-        sequentialByOriginatorQueue.setPollInterval(25);
-        sequentialByOriginatorQueue.setPartitions(10);
-        sequentialByOriginatorQueue.setPackProcessingTimeout(2000);
-        sequentialByOriginatorQueue.setConsumerPerPartition(true);
-        SubmitStrategy sequentialByOriginatorQueueSubmitStrategy = new SubmitStrategy();
-        sequentialByOriginatorQueueSubmitStrategy.setType(SubmitStrategyType.SEQUENTIAL_BY_ORIGINATOR);
-        sequentialByOriginatorQueueSubmitStrategy.setBatchSize(100);
-        sequentialByOriginatorQueue.setSubmitStrategy(sequentialByOriginatorQueueSubmitStrategy);
-        ProcessingStrategy sequentialByOriginatorQueueProcessingStrategy = new ProcessingStrategy();
-        sequentialByOriginatorQueueProcessingStrategy.setType(ProcessingStrategyType.RETRY_FAILED_AND_TIMED_OUT);
-        sequentialByOriginatorQueueProcessingStrategy.setRetries(3);
-        sequentialByOriginatorQueueProcessingStrategy.setFailurePercentage(0);
-        sequentialByOriginatorQueueProcessingStrategy.setPauseBetweenRetries(5);
-        sequentialByOriginatorQueueProcessingStrategy.setMaxPauseBetweenRetries(5);
-        sequentialByOriginatorQueue.setProcessingStrategy(sequentialByOriginatorQueueProcessingStrategy);
-        queueService.saveQueue(sequentialByOriginatorQueue);
+        Queue sequentialByOriginatorQueue = queueService.findQueueByTenantIdAndName(TenantId.SYS_TENANT_ID, "SequentialByOriginator");
+        if (sequentialByOriginatorQueue == null) {
+            sequentialByOriginatorQueue = new Queue();
+            sequentialByOriginatorQueue.setTenantId(TenantId.SYS_TENANT_ID);
+            sequentialByOriginatorQueue.setName("SequentialByOriginator");
+            sequentialByOriginatorQueue.setTopic("tb_rule_engine.sq");
+            sequentialByOriginatorQueue.setPollInterval(25);
+            sequentialByOriginatorQueue.setPartitions(10);
+            sequentialByOriginatorQueue.setPackProcessingTimeout(2000);
+            sequentialByOriginatorQueue.setConsumerPerPartition(true);
+            SubmitStrategy sequentialByOriginatorQueueSubmitStrategy = new SubmitStrategy();
+            sequentialByOriginatorQueueSubmitStrategy.setType(SubmitStrategyType.SEQUENTIAL_BY_ORIGINATOR);
+            sequentialByOriginatorQueueSubmitStrategy.setBatchSize(100);
+            sequentialByOriginatorQueue.setSubmitStrategy(sequentialByOriginatorQueueSubmitStrategy);
+            ProcessingStrategy sequentialByOriginatorQueueProcessingStrategy = new ProcessingStrategy();
+            sequentialByOriginatorQueueProcessingStrategy.setType(ProcessingStrategyType.RETRY_FAILED_AND_TIMED_OUT);
+            sequentialByOriginatorQueueProcessingStrategy.setRetries(3);
+            sequentialByOriginatorQueueProcessingStrategy.setFailurePercentage(0);
+            sequentialByOriginatorQueueProcessingStrategy.setPauseBetweenRetries(5);
+            sequentialByOriginatorQueueProcessingStrategy.setMaxPauseBetweenRetries(5);
+            sequentialByOriginatorQueue.setProcessingStrategy(sequentialByOriginatorQueueProcessingStrategy);
+            queueService.saveQueue(sequentialByOriginatorQueue);
+        }
     }
 }

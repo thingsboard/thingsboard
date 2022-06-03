@@ -96,6 +96,8 @@ public interface RuleChainService {
 
     List<RuleNode> findRuleNodesByTenantIdAndType(TenantId tenantId, String type);
 
+    PageData<RuleNode> findAllRuleNodesByType(String type, PageLink pageLink);
+
     RuleNode saveRuleNode(TenantId tenantId, RuleNode ruleNode);
 
     void deleteRuleNodes(TenantId tenantId, RuleChainId ruleChainId);
