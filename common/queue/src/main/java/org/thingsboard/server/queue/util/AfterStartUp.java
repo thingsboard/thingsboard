@@ -30,6 +30,17 @@ import java.lang.annotation.Target;
 @EventListener(ApplicationReadyEvent.class)
 @Order
 public @interface AfterStartUp {
+
+    int QUEUE_INFO_INITIALIZATION = 1;
+    int DISCOVERY_SERVICE = 2;
+
+    int ACTOR_SYSTEM = 9;
+    int REGULAR_SERVICE = 10;
+
+    int BEFORE_TRANSPORT_SERVICE = Integer.MAX_VALUE - 1001;
+    int TRANSPORT_SERVICE = Integer.MAX_VALUE - 1000;
+    int AFTER_TRANSPORT_SERVICE = Integer.MAX_VALUE - 999;
+
     @AliasFor(annotation = Order.class, attribute = "value")
-    int order() default Integer.MAX_VALUE;
+    int order();
 }
