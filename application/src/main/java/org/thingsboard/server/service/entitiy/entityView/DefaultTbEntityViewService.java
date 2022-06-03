@@ -112,7 +112,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         try {
             List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, entityViewId);
             entityViewService.deleteEntityView(tenantId, entityViewId);
-            notificationEntityService.notifyDeleteEntity(tenantId, entityViewId, entityView, user != null ? user.getCustomerId() : null, ActionType.DELETED,
+            notificationEntityService.notifyDeleteEntity(tenantId, entityViewId, entityView, entityView.getCustomerId(), ActionType.DELETED,
                     relatedEdgeIds, user, entityViewId.toString());
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.ENTITY_VIEW), null, null,
@@ -162,7 +162,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToEdge(tenantId, entityViewId, edgeId));
         try {
             notificationEntityService.notifyAssignOrUnassignEntityToEdge(tenantId, entityViewId, customerId,
-                    edgeId, savedEntityView, actionType, EdgeEventActionType.ASSIGNED_TO_EDGE, user, savedEntityView.getEntityId().toString(),
+                    edgeId, savedEntityView, actionType, user, savedEntityView.getEntityId().toString(),
                     edgeId.toString(), edge.getName());
             return savedEntityView;
         } catch (Exception e) {
@@ -181,7 +181,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         try {
             EntityView savedEntityView = checkNotNull(entityViewService.unassignEntityViewFromEdge(tenantId, entityViewId, edgeId));
             notificationEntityService.notifyAssignOrUnassignEntityToEdge(tenantId, entityViewId, customerId,
-                    edgeId, entityView, actionType, EdgeEventActionType.UNASSIGNED_FROM_EDGE, user, entityViewId.toString(),
+                    edgeId, entityView, actionType, user, entityViewId.toString(),
                     edgeId.toString(), edge.getName());
             return savedEntityView;
         } catch (Exception e) {

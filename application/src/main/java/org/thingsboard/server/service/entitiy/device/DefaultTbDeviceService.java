@@ -248,7 +248,7 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
         try {
             Device savedDevice = checkNotNull(deviceService.assignDeviceToEdge(tenantId, deviceId, edgeId));
             notificationEntityService.notifyAssignOrUnassignEntityToEdge(tenantId, deviceId, savedDevice.getCustomerId(),
-                    edgeId, savedDevice, actionType, EdgeEventActionType.ASSIGNED_TO_EDGE, user, deviceId.toString(), edgeId.toString(), edge.getName());
+                    edgeId, savedDevice, actionType, user, deviceId.toString(), edgeId.toString(), edge.getName());
             return savedDevice;
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.DEVICE), null, null,
@@ -267,7 +267,7 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
             Device savedDevice = checkNotNull(deviceService.unassignDeviceFromEdge(tenantId, deviceId, edgeId));
 
             notificationEntityService.notifyAssignOrUnassignEntityToEdge(tenantId, deviceId, device.getCustomerId(),
-                    edgeId, device, actionType, EdgeEventActionType.UNASSIGNED_FROM_EDGE, user, deviceId.toString(), edgeId.toString(), edge.getName());
+                    edgeId, device, actionType, user, deviceId.toString(), edgeId.toString(), edge.getName());
             return savedDevice;
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.DEVICE), null, null,
