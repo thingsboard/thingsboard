@@ -61,11 +61,10 @@ public class DefaultTbDeviceProfileService extends AbstractTbEntityService imple
 
             otaPackageStateService.update(savedDeviceProfile, isFirmwareChanged, isSoftwareChanged);
 
-            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, savedDeviceProfile.getId(), savedDeviceProfile, user, actionType, null);
+            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, savedDeviceProfile.getId(), savedDeviceProfile, user, actionType, true, null);
             return savedDeviceProfile;
         } catch (Exception e) {
-            notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.DEVICE_PROFILE), deviceProfile, null,
-                    actionType, user, e);
+            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, emptyId(EntityType.DEVICE_PROFILE), deviceProfile, user, actionType, false, e);
             throw handleException(e);
         }
     }
@@ -79,9 +78,9 @@ public class DefaultTbDeviceProfileService extends AbstractTbEntityService imple
 
             tbClusterService.onDeviceProfileDelete(deviceProfile, null);
             tbClusterService.broadcastEntityStateChangeEvent(tenantId, deviceProfileId, ComponentLifecycleEvent.DELETED);
-            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, deviceProfileId, deviceProfile, user, ActionType.DELETED,  null, deviceProfileId.toString());
+            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, deviceProfileId, deviceProfile, user, ActionType.DELETED,  true, null, deviceProfileId.toString());
         } catch (Exception e) {
-            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, emptyId(EntityType.DEVICE_PROFILE), null, user, ActionType.DELETED,  e, deviceProfileId.toString());
+            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, emptyId(EntityType.DEVICE_PROFILE), null, user, ActionType.DELETED,  false, e, deviceProfileId.toString());
             throw handleException(e);
         }
     }

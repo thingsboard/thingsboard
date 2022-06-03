@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.transport.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -33,9 +34,11 @@ import java.util.stream.Collectors;
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport'")
 public class TransportQueueRoutingInfoService implements QueueRoutingInfoService {
 
-    @Lazy
-    @Autowired
-    private TransportService transportService;
+    private final TransportService transportService;
+
+    public TransportQueueRoutingInfoService(@Lazy TransportService transportService) {
+        this.transportService = transportService;
+    }
 
     @Override
     public List<QueueRoutingInfo> getAllQueuesRoutingInfo() {
