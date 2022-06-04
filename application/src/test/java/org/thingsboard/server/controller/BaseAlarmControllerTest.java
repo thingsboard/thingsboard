@@ -19,11 +19,17 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.dao.audit.AuditLogService;
 
+import static org.mockito.Mockito.times;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
@@ -31,6 +37,12 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     public static final String TEST_ALARM_TYPE = "Test";
 
     protected Device customerDevice;
+
+    @SpyBean
+    private TbClusterService tbClusterService;
+
+    @SpyBean
+    private AuditLogService auditLogService;;
 
     @Before
     public void setup() throws Exception {
@@ -57,6 +69,12 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     public void testCreateAlarmViaCustomer() throws Exception {
         loginCustomerUser();
         createAlarm(TEST_ALARM_TYPE);
+
+        Mockito.verify(tbClusterService, times(1)).sendNotificationMsgToEdgeService(Mockito.any(),
+                Mockito.any(), Mockito.any(AlarmId.class), Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.verify(auditLogService, times(1)).logEntityAction(Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(Alarm.class), Mockito.any(), Mockito.any());
+
         logout();
     }
 
@@ -73,6 +91,12 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
         alarm.setSeverity(AlarmSeverity.MAJOR);
         Alarm updatedAlarm = doPost("/api/alarm", alarm, Alarm.class);
+
+        Mockito.verify(tbClusterService, times(2)).sendNotificationMsgToEdgeService(Mockito.any(),
+                Mockito.any(), Mockito.any(AlarmId.class), Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.verify(auditLogService, times(2)).logEntityAction(Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(Alarm.class), Mockito.any(), Mockito.any());
+
         Assert.assertNotNull(updatedAlarm);
         Assert.assertEquals(AlarmSeverity.MAJOR, updatedAlarm.getSeverity());
         logout();
@@ -114,6 +138,12 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         loginCustomerUser();
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
         doDelete("/api/alarm/" + alarm.getId()).andExpect(status().isOk());
+
+        Mockito.verify(tbClusterService, times(1)).sendNotificationMsgToEdgeService(Mockito.any(),
+                Mockito.any(), Mockito.any(AlarmId.class), Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.verify(auditLogService, times(2)).logEntityAction(Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(Alarm.class), Mockito.any(), Mockito.any());
+
         logout();
     }
 
@@ -131,6 +161,12 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
         loginDifferentTenant();
         doDelete("/api/alarm/" + alarm.getId()).andExpect(status().isForbidden());
+
+        Mockito.verify(tbClusterService, times(1)).sendNotificationMsgToEdgeService(Mockito.any(),
+                Mockito.any(), Mockito.any(AlarmId.class), Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.verify(auditLogService, times(1)).logEntityAction(Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(Alarm.class), Mockito.any(), Mockito.any());
+
         logout();
     }
 
@@ -148,6 +184,12 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         loginCustomerUser();
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
         doPost("/api/alarm/" + alarm.getId() + "/clear").andExpect(status().isOk());
+
+        Mockito.verify(tbClusterService, times(2)).sendNotificationMsgToEdgeService(Mockito.any(),
+                Mockito.any(), Mockito.any(AlarmId.class), Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.verify(auditLogService, times(2)).logEntityAction(Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(Alarm.class), Mockito.any(), Mockito.any());
+
         Alarm foundAlarm = doGet("/api/alarm/" + alarm.getId(), Alarm.class);
         Assert.assertNotNull(foundAlarm);
         Assert.assertEquals(AlarmStatus.CLEARED_UNACK, foundAlarm.getStatus());
@@ -170,6 +212,12 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         loginCustomerUser();
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
         doPost("/api/alarm/" + alarm.getId() + "/ack").andExpect(status().isOk());
+
+        Mockito.verify(tbClusterService, times(2)).sendNotificationMsgToEdgeService(Mockito.any(),
+                Mockito.any(), Mockito.any(AlarmId.class), Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.verify(auditLogService, times(2)).logEntityAction(Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(Alarm.class), Mockito.any(), Mockito.any());
+
         Alarm foundAlarm = doGet("/api/alarm/" + alarm.getId(), Alarm.class);
         Assert.assertNotNull(foundAlarm);
         Assert.assertEquals(AlarmStatus.ACTIVE_ACK, foundAlarm.getStatus());
