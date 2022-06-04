@@ -25,7 +25,9 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
@@ -33,6 +35,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.dao.audit.AuditLogService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,6 +53,13 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
 
     private Tenant savedTenant;
     private User tenantAdmin;
+
+
+    @SpyBean
+    private TbClusterService tbClusterService;
+
+    @SpyBean
+    private AuditLogService auditLogService;;
 
     @Before
     public void beforeTest() throws Exception {
