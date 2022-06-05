@@ -25,12 +25,14 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -43,6 +45,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.mockito.Mockito.times;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public abstract class BaseCustomerControllerTest extends AbstractControllerTest {
@@ -104,6 +107,13 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         savedCustomer.setTitle("My new customer");
         doPost("/api/customer", savedCustomer, Customer.class);
 
+        Mockito.verify(tbClusterService, times(1)).sendNotificationMsgToEdgeService(Mockito.any(),
+                Mockito.any(), Mockito.any(CustomerId.class), Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.verify(auditLogService, times(3)).logEntityAction(Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(Customer.class), Mockito.any(), Mockito.any());
+        Mockito.verify(tbClusterService, times(3)).pushMsgToRuleEngine(Mockito.any(),
+                Mockito.any(CustomerId.class), Mockito.any(), Mockito.any());
+
         Customer foundCustomer = doGet("/api/customer/" + savedCustomer.getId().getId().toString(), Customer.class);
         Assert.assertEquals(foundCustomer.getTitle(), savedCustomer.getTitle());
 
@@ -140,6 +150,13 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
         doPost("/api/customer", savedCustomer, Customer.class);
 
+        Mockito.verify(tbClusterService, times(1)).sendNotificationMsgToEdgeService(Mockito.any(),
+                Mockito.any(), Mockito.any(CustomerId.class), Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.verify(auditLogService, times(3)).logEntityAction(Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(Customer.class), Mockito.any(), Mockito.any());
+        Mockito.verify(tbClusterService, times(3)).pushMsgToRuleEngine(Mockito.any(),
+                Mockito.any(CustomerId.class), Mockito.any(), Mockito.any());
+
         loginDifferentTenant();
         doPost("/api/customer", savedCustomer, Customer.class, status().isForbidden());
         deleteDifferentTenant();
@@ -172,6 +189,13 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         doDelete("/api/customer/" + savedCustomer.getId().getId().toString())
                 .andExpect(status().isOk());
 
+        Mockito.verify(auditLogService, times(2)).logEntityAction(Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(Customer.class), Mockito.any(), Mockito.any());
+        Mockito.verify(tbClusterService, times(3)).pushMsgToRuleEngine(Mockito.any(),
+                Mockito.any(CustomerId.class), Mockito.any(), Mockito.any());
+        Mockito.verify(tbClusterService, times(1)).broadcastEntityStateChangeEvent(Mockito.any(),
+                Mockito.any(CustomerId.class), Mockito.any());
+
         doGet("/api/customer/" + savedCustomer.getId().getId().toString())
                 .andExpect(status().isNotFound());
     }
@@ -182,6 +206,11 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         doPost("/api/customer", customer)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("Customer title should be specified")));
+
+        Mockito.verify(auditLogService, times(2)).logEntityAction(Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(Customer.class), Mockito.any(), Mockito.any());
+        Mockito.verify(tbClusterService, times(1)).pushMsgToRuleEngine(Mockito.any(),
+                Mockito.any(CustomerId.class), Mockito.any(), Mockito.any());
     }
 
     @Test
