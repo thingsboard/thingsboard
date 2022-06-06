@@ -192,9 +192,6 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
     }
 
     private void updateStatus(Alarm existingAlarm, Alarm msgAlarm) {
-        if (!existingAlarm.getStatus().isCleared() && msgAlarm.getStatus().isCleared()) {
-            throw new RuntimeException("The 'Alarm Create' node cannot clear the alarm!");
-        }
         if (existingAlarm.getStatus().isAck() && !msgAlarm.getStatus().isAck()) {
             throw new RuntimeException("An already acknowledged alarm cannot be made unacknowledged!");
         }
