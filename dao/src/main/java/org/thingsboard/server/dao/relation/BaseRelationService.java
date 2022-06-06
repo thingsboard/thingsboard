@@ -542,7 +542,6 @@ public class BaseRelationService implements RelationService {
         }
     }
 
-    @SneakyThrows
     private ListenableFuture<Set<EntityRelation>> findRelationsRecursively(
             final TenantId tenantId,
             final EntityId rootId,
@@ -561,34 +560,29 @@ public class BaseRelationService implements RelationService {
             lvl--;
         }
 
+        int finalLvl = lvl;
+        return Futures.transformAsync(findRelations(tenantId, rootId, direction, relationTypeGroup), childrenList -> {
+            Set<EntityRelation> children = new HashSet<>(childrenList);
+            var childrenIdsAndRootRelations =
+                    getChildrenIdsAndTheirRootRelations(children, direction, uniqueMap);
 
-        Set<EntityRelation> children = new HashSet<>(
-                findRelations(tenantId, rootId, direction, relationTypeGroup)
-                        .get() //TODO: try to remove this blocking operation
-        );
+            return Futures.transformAsync(getRelationsOfChildren(
+                    tenantId, direction, relationTypeGroup,
+                    finalLvl, fetchLastLevelOnly,
+                    uniqueMap, childrenIdsAndRootRelations
+            ), relationsPairs -> {
+                var relations = relationsPairs.stream()
+                        .collect(Collectors.toMap(
+                                Pair::getFirst,
+                                Pair::getSecond
+                        ));
 
-        var childrenIdsAndRootRelations =
-                getChildrenIdsAndTheirRootRelations(children, direction, uniqueMap);
+                var result = checkFetching(finalLvl, fetchLastLevelOnly, children, rootRelation, relations);
+                relations.values().forEach(result::addAll);
 
-        var relationsPairs = getRelationsOfChildren(
-                tenantId, direction, relationTypeGroup,
-                lvl, fetchLastLevelOnly,
-                uniqueMap, childrenIdsAndRootRelations
-        ).get(); //TODO: try to remove this blocking operation
-
-
-        var relations = relationsPairs.stream()
-                .collect(Collectors.toMap(
-                        Pair::getFirst,
-                        Pair::getSecond
-                ));
-
-        children = checkFetching(lvl, fetchLastLevelOnly, children, rootRelation, relations);
-
-        relations.values()
-                .forEach(children::addAll);
-
-        return Futures.immediateFuture(children);
+                return Futures.immediateFuture(result);
+            }, MoreExecutors.directExecutor());
+        }, MoreExecutors.directExecutor());
     }
 
     private Set<EntityRelation> checkFetching(
