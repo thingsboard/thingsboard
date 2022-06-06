@@ -22,6 +22,9 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
@@ -29,15 +32,18 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.dao.audit.AuditLogService;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.mockito.Mockito.times;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public abstract class BaseDashboardControllerTest extends AbstractControllerTest {
@@ -46,6 +52,13 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
     
     private Tenant savedTenant;
     private User tenantAdmin;
+
+
+    @SpyBean
+    private TbClusterService tbClusterService;
+
+    @SpyBean
+    private AuditLogService auditLogService;
     
     @Before
     public void beforeTest() throws Exception {
@@ -85,12 +98,23 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         Assert.assertTrue(savedDashboard.getCreatedTime() > 0);
         Assert.assertEquals(savedTenant.getId(), savedDashboard.getTenantId());
         Assert.assertEquals(dashboard.getTitle(), savedDashboard.getTitle());
+
+        Mockito.verify(auditLogService, times(1)).logEntityAction(Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(Dashboard.class), Mockito.any(), Mockito.any());
+        Mockito.verify(tbClusterService, times(1)).pushMsgToRuleEngine(Mockito.any(),
+                Mockito.any(DashboardId.class), Mockito.any(), Mockito.any());
         
         savedDashboard.setTitle("My new dashboard");
         doPost("/api/dashboard", savedDashboard, Dashboard.class);
         
         Dashboard foundDashboard = doGet("/api/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
         Assert.assertEquals(foundDashboard.getTitle(), savedDashboard.getTitle());
+
+        Mockito.verify(auditLogService, times(2)).logEntityAction(Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(Dashboard.class), Mockito.any(), Mockito.any());
+        Mockito.verify(tbClusterService, times(2)).pushMsgToRuleEngine(Mockito.any(),
+                Mockito.any(DashboardId.class), Mockito.any(), Mockito.any());
+
     }
 
     @Test
@@ -130,6 +154,11 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         doDelete("/api/dashboard/"+savedDashboard.getId().getId().toString())
         .andExpect(status().isOk());
 
+        Mockito.verify(auditLogService, times(1)).logEntityAction(Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(Dashboard.class), Mockito.any(), Mockito.any());
+        Mockito.verify(tbClusterService, times(2)).pushMsgToRuleEngine(Mockito.any(),
+                Mockito.any(DashboardId.class), Mockito.any(), Mockito.any());
+
         doGet("/api/dashboard/"+savedDashboard.getId().getId().toString())
         .andExpect(status().isNotFound());
     }
@@ -168,6 +197,13 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         foundDashboard = doGet("/api/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
 
         Assert.assertTrue(foundDashboard.getAssignedCustomers() == null || foundDashboard.getAssignedCustomers().isEmpty());
+
+        Mockito.verify(tbClusterService, times(2)).sendNotificationMsgToEdgeService(Mockito.any(),
+                Mockito.any(), Mockito.any(DashboardId.class), Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.verify(auditLogService, times(1)).logEntityAction(Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(Dashboard.class), Mockito.any(), Mockito.any());
+        Mockito.verify(tbClusterService, times(3)).pushMsgToRuleEngine(Mockito.any(),
+                Mockito.any(DashboardId.class), Mockito.any(), Mockito.any());
     }
     
     @Test
@@ -179,6 +215,11 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         doPost("/api/customer/" + Uuids.timeBased().toString()
                 + "/dashboard/" + savedDashboard.getId().getId().toString())
         .andExpect(status().isNotFound());
+
+        Mockito.verify(auditLogService, times(1)).logEntityAction(Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(Dashboard.class), Mockito.any(), Mockito.any());
+        Mockito.verify(tbClusterService, times(1)).pushMsgToRuleEngine(Mockito.any(),
+                Mockito.any(DashboardId.class), Mockito.any(), Mockito.any());
     }
     
     @Test
@@ -217,6 +258,11 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         
         doDelete("/api/tenant/"+savedTenant2.getId().getId().toString())
         .andExpect(status().isOk());
+
+        Mockito.verify(auditLogService, times(1)).logEntityAction(Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(Dashboard.class), Mockito.any(), Mockito.any());
+        Mockito.verify(tbClusterService, times(1)).pushMsgToRuleEngine(Mockito.any(),
+                Mockito.any(DashboardId.class), Mockito.any(), Mockito.any());
     }
 
     @Test
@@ -382,6 +428,13 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
                 new TypeReference<PageData<Dashboard>>() {}, new PageLink(100));
 
         Assert.assertEquals(0, pageData.getData().size());
+
+        Mockito.verify(tbClusterService, times(2)).sendNotificationMsgToEdgeService(Mockito.any(),
+                Mockito.any(), Mockito.any(DashboardId.class), Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.verify(auditLogService, times(1)).logEntityAction(Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(Dashboard.class), Mockito.any(), Mockito.any());
+        Mockito.verify(tbClusterService, times(3)).pushMsgToRuleEngine(Mockito.any(),
+                Mockito.any(DashboardId.class), Mockito.any(), Mockito.any());
     }
 
 }
