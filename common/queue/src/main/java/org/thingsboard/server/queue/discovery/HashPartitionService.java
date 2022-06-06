@@ -90,20 +90,37 @@ public class HashPartitionService implements PartitionService {
     @PostConstruct
     public void init() {
         this.hashFunction = forName(hashFunctionName);
-    }
-
-    @AfterStartUp(order = AfterStartUp.QUEUE_INFO_INITIALIZATION)
-    public void partitionsInit() {
         QueueKey coreKey = new QueueKey(ServiceType.TB_CORE);
         partitionSizesMap.put(coreKey, corePartitions);
         partitionTopicsMap.put(coreKey, coreTopic);
 
-        List<QueueRoutingInfo> queueRoutingInfoList;
+        if (!isTransport(serviceInfoProvider.getServiceType())) {
+            doInitRuleEnginePartitions();
+        }
+    }
 
+    @AfterStartUp(order = AfterStartUp.QUEUE_INFO_INITIALIZATION)
+    public void partitionsInit() {
+        if (isTransport(serviceInfoProvider.getServiceType())) {
+            doInitRuleEnginePartitions();
+        }
+    }
+
+    private void doInitRuleEnginePartitions() {
+        List<QueueRoutingInfo> queueRoutingInfoList = getQueueRoutingInfos();
+        queueRoutingInfoList.forEach(queue -> {
+            QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, queue);
+            partitionTopicsMap.put(queueKey, queue.getQueueTopic());
+            partitionSizesMap.put(queueKey, queue.getPartitions());
+            queuesById.put(queue.getQueueId(), queue);
+        });
+    }
+
+    private List<QueueRoutingInfo> getQueueRoutingInfos() {
+        List<QueueRoutingInfo> queueRoutingInfoList;
         String serviceType = serviceInfoProvider.getServiceType();
 
-
-        if ("tb-transport".equals(serviceType)) {
+        if (isTransport(serviceType)) {
             //If transport started earlier than tb-core
             int getQueuesRetries = 10;
             while (true) {
@@ -128,13 +145,11 @@ public class HashPartitionService implements PartitionService {
         } else {
             queueRoutingInfoList = queueRoutingInfoService.getAllQueuesRoutingInfo();
         }
+        return queueRoutingInfoList;
+    }
 
-        queueRoutingInfoList.forEach(queue -> {
-            QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, queue);
-            partitionTopicsMap.put(queueKey, queue.getQueueTopic());
-            partitionSizesMap.put(queueKey, queue.getPartitions());
-            queuesById.put(queue.getQueueId(), queue);
-        });
+    private boolean isTransport(String serviceType) {
+        return "tb-transport".equals(serviceType);
     }
 
     @Override
