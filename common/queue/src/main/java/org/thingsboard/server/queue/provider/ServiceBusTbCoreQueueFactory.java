@@ -50,6 +50,7 @@ import org.thingsboard.server.queue.settings.TbQueueRemoteJsInvokeSettings;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.settings.TbQueueTransportApiSettings;
 import org.thingsboard.server.queue.settings.TbQueueTransportNotificationSettings;
+import org.thingsboard.server.queue.settings.TbQueueVersionControlSettings;
 
 import javax.annotation.PreDestroy;
 import java.nio.charset.StandardCharsets;
@@ -66,12 +67,14 @@ public class ServiceBusTbCoreQueueFactory implements TbCoreQueueFactory {
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TbQueueRemoteJsInvokeSettings jsInvokeSettings;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
+    private final TbQueueVersionControlSettings vcSettings;
 
     private final TbQueueAdmin coreAdmin;
     private final TbQueueAdmin ruleEngineAdmin;
     private final TbQueueAdmin jsExecutorAdmin;
     private final TbQueueAdmin transportApiAdmin;
     private final TbQueueAdmin notificationAdmin;
+    private final TbQueueAdmin vcAdmin;
 
     public ServiceBusTbCoreQueueFactory(TbServiceBusSettings serviceBusSettings,
                                         TbQueueCoreSettings coreSettings,
@@ -81,6 +84,7 @@ public class ServiceBusTbCoreQueueFactory implements TbCoreQueueFactory {
                                         TbServiceInfoProvider serviceInfoProvider,
                                         TbQueueRemoteJsInvokeSettings jsInvokeSettings,
                                         TbQueueTransportNotificationSettings transportNotificationSettings,
+                                        TbQueueVersionControlSettings vcSettings,
                                         TbServiceBusQueueConfigs serviceBusQueueConfigs) {
         this.serviceBusSettings = serviceBusSettings;
         this.coreSettings = coreSettings;
@@ -90,12 +94,14 @@ public class ServiceBusTbCoreQueueFactory implements TbCoreQueueFactory {
         this.serviceInfoProvider = serviceInfoProvider;
         this.jsInvokeSettings = jsInvokeSettings;
         this.transportNotificationSettings = transportNotificationSettings;
+        this.vcSettings = vcSettings;
 
         this.coreAdmin = new TbServiceBusAdmin(serviceBusSettings, serviceBusQueueConfigs.getCoreConfigs());
         this.ruleEngineAdmin = new TbServiceBusAdmin(serviceBusSettings, serviceBusQueueConfigs.getRuleEngineConfigs());
         this.jsExecutorAdmin = new TbServiceBusAdmin(serviceBusSettings, serviceBusQueueConfigs.getJsExecutorConfigs());
         this.transportApiAdmin = new TbServiceBusAdmin(serviceBusSettings, serviceBusQueueConfigs.getTransportApiConfigs());
         this.notificationAdmin = new TbServiceBusAdmin(serviceBusSettings, serviceBusQueueConfigs.getNotificationsConfigs());
+        this.vcAdmin = new TbServiceBusAdmin(serviceBusSettings, serviceBusQueueConfigs.getVcConfigs());
     }
 
     @Override
@@ -194,8 +200,7 @@ public class ServiceBusTbCoreQueueFactory implements TbCoreQueueFactory {
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToVersionControlServiceMsg>> createVersionControlMsgProducer() {
-        //TODO: version-control
-        return null;
+        return new TbServiceBusProducerTemplate<>(vcAdmin, serviceBusSettings, vcSettings.getTopic());
     }
 
     @PreDestroy
