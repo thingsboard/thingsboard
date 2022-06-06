@@ -88,9 +88,12 @@ export interface BackupCodeTwoFactorAuthAccountConfig extends GeneralTwoFactorAu
 export type TwoFactorAuthAccountConfig = TotpTwoFactorAuthAccountConfig | SmsTwoFactorAuthAccountConfig |
   EmailTwoFactorAuthAccountConfig | BackupCodeTwoFactorAuthAccountConfig;
 
-
 export interface AccountTwoFaSettings {
-  configs: {TwoFactorAuthProviderType: TwoFactorAuthAccountConfig};
+  configs: AccountTwoFaSettingProviders;
+}
+
+export type AccountTwoFaSettingProviders = {
+ [key in TwoFactorAuthProviderType]?: TwoFactorAuthAccountConfig;
 }
 
 export interface TwoFaProviderInfo {
