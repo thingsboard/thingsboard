@@ -20,11 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-<<<<<<< HEAD
-=======
 import org.springframework.context.annotation.Lazy;
-import org.springframework.scheduling.annotation.Scheduled;
->>>>>>> c5ff1252f59a6e309d6ce2efd494d56ae3b5f5e8
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.msg.DeviceEdgeUpdateMsg;
 import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
