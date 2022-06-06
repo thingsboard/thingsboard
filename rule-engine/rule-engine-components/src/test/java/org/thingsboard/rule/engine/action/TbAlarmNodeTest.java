@@ -768,22 +768,44 @@ public class TbAlarmNodeTest {
                 ruleChainId,
                 ruleNodeId);
         node.onMsg(ctx, msg);
-        verify(ctx, times(1)).tellFailure(any(), any(RuntimeException.class));
 
+        verify(ctx, atMost(2)).enqueue(any(), successCaptor.capture(), failureCaptor.capture());
+        successCaptor.getValue().run();
+        verify(ctx, atMost(2)).tellNext(any(), eq("Updated"));
 
-        actualAlarm.setStatus(ACTIVE_ACK);
-        when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(Futures.immediateFuture(actualAlarm));
-        msg = TbMsg.newMsg(
-                "USER",
-                originator,
-                metaData,
-                TbMsgDataType.JSON,
-                rawJsonUnAckAlarmData,
-                ruleChainId,
-                ruleNodeId);
+        msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        typeCaptor = ArgumentCaptor.forClass(String.class);
+        originatorCaptor = ArgumentCaptor.forClass(EntityId.class);
+        metadataCaptor = ArgumentCaptor.forClass(TbMsgMetaData.class);
+        dataCaptor = ArgumentCaptor.forClass(String.class);
+        verify(ctx, atMost(2)).transformMsg(
+                msgCaptor.capture(),
+                typeCaptor.capture(),
+                originatorCaptor.capture(),
+                metadataCaptor.capture(),
+                dataCaptor.capture()
+        );
 
-        node.onMsg(ctx, msg);
-        verify(ctx, times(2)).tellFailure(any(), any(RuntimeException.class));
+        assertEquals("ALARM", typeCaptor.getValue());
+        assertEquals(originator, originatorCaptor.getValue());
+        assertEquals("value", metadataCaptor.getValue().getValue("key"));
+        assertEquals(Boolean.TRUE.toString(), metadataCaptor.getValue().getValue(IS_EXISTING_ALARM));
+        assertNotSame(metaData, metadataCaptor.getValue());
+
+        actualAlarm = new ObjectMapper().readValue(dataCaptor.getValue().getBytes(), Alarm.class);
+        expectedAlarm = Alarm.builder()
+                .startTs(ts)
+                .endTs(actualAlarm.getEndTs())
+                .ackTs(actualAlarm.getAckTs())
+                .tenantId(tenantId)
+                .originator(originator)
+                .status(CLEARED_UNACK)
+                .severity(CRITICAL)
+                .type("SomeType")
+                .details(null)
+                .build();
+
+        assertEquals(expectedAlarm, actualAlarm);
     }
 
     private void initWithCreateAlarmScript() {
