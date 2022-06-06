@@ -67,7 +67,7 @@ public class RateLimitsTest {
         assertThat(rateLimits.tryConsume()).as("new token is available").isFalse();
 
         int expectedRefillTime = period * 1000;
-        int gap = 300;
+        int gap = 500;
 
         await("tokens refill for rate limit " + rateLimitConfig)
                 .atLeast(expectedRefillTime - gap, TimeUnit.MILLISECONDS)
