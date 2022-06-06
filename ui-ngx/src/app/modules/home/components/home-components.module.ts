@@ -149,6 +149,8 @@ import {
 } from '@home/components/tokens';
 import { DashboardStateComponent } from '@home/components/dashboard-page/dashboard-state.component';
 import { EntityDetailsPageComponent } from '@home/components/entity/entity-details-page.component';
+import { TenantProfileQueuesComponent } from '@home/components/profile/queue/tenant-profile-queues.component';
+import { QueueFormComponent } from '@home/components/queue/queue-form.component';
 import { WidgetSettingsModule } from '@home/components/widget/lib/settings/widget-settings.module';
 import { WidgetSettingsComponent } from '@home/components/widget/widget-settings.component';
 
@@ -272,7 +274,9 @@ import { WidgetSettingsComponent } from '@home/components/widget/widget-settings
       DashboardStateDialogComponent,
       DashboardImageDialogComponent,
       EmbedDashboardDialogComponent,
-      DisplayWidgetTypesPanelComponent
+      DisplayWidgetTypesPanelComponent,
+      TenantProfileQueuesComponent,
+      QueueFormComponent
     ],
   imports: [
     CommonModule,
@@ -388,7 +392,9 @@ import { WidgetSettingsComponent } from '@home/components/widget/widget-settings
     DashboardStateDialogComponent,
     DashboardImageDialogComponent,
     EmbedDashboardDialogComponent,
-    DisplayWidgetTypesPanelComponent
+    DisplayWidgetTypesPanelComponent,
+    TenantProfileQueuesComponent,
+    QueueFormComponent
   ],
   providers: [
     WidgetComponentService,

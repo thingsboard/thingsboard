@@ -38,6 +38,7 @@ import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceStateServiceMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.EdgeNotificationMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.FromDeviceRPCResponseProto;
@@ -57,8 +58,10 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceM
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
+import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.edge.EdgeNotificationService;
@@ -138,8 +141,9 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                         TbApiUsageStateService apiUsageStateService,
                                         EdgeNotificationService edgeNotificationService,
                                         OtaPackageStateService firmwareStateService,
-                                        TbPrintStatsExecutorService tbPrintStatsExecutorService) {
-        super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, apiUsageStateService, tbPrintStatsExecutorService, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer());
+                                        TbPrintStatsExecutorService tbPrintStatsExecutorService,
+                                        PartitionService partitionService) {
+        super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, apiUsageStateService, tbPrintStatsExecutorService, partitionService, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer());
         this.mainConsumer = tbCoreQueueFactory.createToCoreMsgConsumer();
         this.usageStatsConsumer = tbCoreQueueFactory.createToUsageStatsServiceMsgConsumer();
         this.firmwareStatesConsumer = tbCoreQueueFactory.createToOtaPackageStateServiceMsgConsumer();
@@ -174,8 +178,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         }
     }
 
-    @EventListener(ApplicationReadyEvent.class)
-    @Order(value = 2)
+    @AfterStartUp(order = AfterStartUp.REGULAR_SERVICE)
     public void onApplicationEvent(ApplicationReadyEvent event) {
         super.onApplicationEvent(event);
         launchUsageStatsConsumer();
@@ -317,6 +320,14 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                 log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg.get());
                 actorContext.tellWithHighPriority(actorMsg.get());
             }
+            callback.onSuccess();
+        } else if (toCoreNotification.hasQueueUpdateMsg()) {
+            TransportProtos.QueueUpdateMsg queue = toCoreNotification.getQueueUpdateMsg();
+            partitionService.updateQueue(queue);
+            callback.onSuccess();
+        } else if (toCoreNotification.hasQueueDeleteMsg()) {
+            TransportProtos.QueueDeleteMsg queue = toCoreNotification.getQueueDeleteMsg();
+            partitionService.removeQueue(queue);
             callback.onSuccess();
         }
         if (statsEnabled) {

@@ -36,6 +36,7 @@ import { BroadcastService } from '@core/services/broadcast.service';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { OtaPackageService } from '@core/http/ota-package.service';
+import { TwoFactorAuthenticationService } from '@core/http/two-factor-authentication.service';
 
 export const ServicesMap = new Map<string, Type<any>>(
   [
@@ -59,6 +60,7 @@ export const ServicesMap = new Map<string, Type<any>>(
    ['router', Router],
    ['importExport', ImportExportService],
    ['deviceProfileService', DeviceProfileService],
-   ['otaPackageService', OtaPackageService]
+   ['otaPackageService', OtaPackageService],
+   ['twoFactorAuthenticationService', TwoFactorAuthenticationService]
   ]
 );

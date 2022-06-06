@@ -69,7 +69,7 @@ public class LwM2MModelConfigServiceImpl implements LwM2MModelConfigService {
 
     private ConcurrentMap<String, LwM2MModelConfig> currentModelConfigs;
 
-    @AfterStartUp(order = Integer.MAX_VALUE - 1)
+    @AfterStartUp(order = AfterStartUp.BEFORE_TRANSPORT_SERVICE)
     private void init() {
         List<LwM2MModelConfig> models = modelStore.getAll();
         log.debug("Fetched model configs: {}", models);

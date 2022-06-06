@@ -36,9 +36,11 @@ import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
+import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
@@ -71,18 +73,21 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     protected final TbDeviceProfileCache deviceProfileCache;
     protected final TbApiUsageStateService apiUsageStateService;
     protected final TbPrintStatsExecutorService tbPrintStatsExecutorService;
+    protected final PartitionService partitionService;
 
     protected final TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer;
 
     public AbstractConsumerService(ActorSystemContext actorContext, DataDecodingEncodingService encodingService,
                                    TbTenantProfileCache tenantProfileCache, TbDeviceProfileCache deviceProfileCache,
-                                   TbApiUsageStateService apiUsageStateService, TbPrintStatsExecutorService tbPrintStatsExecutorService, TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer) {
+                                   TbApiUsageStateService apiUsageStateService, TbPrintStatsExecutorService tbPrintStatsExecutorService,
+                                   PartitionService partitionService, TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer) {
         this.actorContext = actorContext;
         this.encodingService = encodingService;
         this.tenantProfileCache = tenantProfileCache;
         this.deviceProfileCache = deviceProfileCache;
         this.apiUsageStateService = apiUsageStateService;
         this.tbPrintStatsExecutorService = tbPrintStatsExecutorService;
+        this.partitionService = partitionService;
         this.nfConsumer = nfConsumer;
     }
 
@@ -91,8 +96,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
         this.notificationsConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName(nfConsumerThreadName));
     }
 
-    @EventListener(ApplicationReadyEvent.class)
-    @Order(value = 2)
+    @AfterStartUp(order = AfterStartUp.REGULAR_SERVICE)
     public void onApplicationEvent(ApplicationReadyEvent event) {
         log.info("Subscribing to notifications: {}", nfConsumer.getTopic());
         this.nfConsumer.subscribe();
@@ -169,6 +173,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
                     }
                 } else if (EntityType.TENANT.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
                     tenantProfileCache.evict(componentLifecycleMsg.getTenantId());
+                    partitionService.removeTenant(componentLifecycleMsg.getTenantId());
                     if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.UPDATED)) {
                         apiUsageStateService.onTenantUpdate(componentLifecycleMsg.getTenantId());
                     } else if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.DELETED)) {
