@@ -29,4 +29,6 @@ public interface CoapServerService {
 
     long getTimeout();
 
+    long getPiggybackTimeout();
+
 }
