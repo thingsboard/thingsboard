@@ -85,7 +85,9 @@ public class HashPartitionServiceTest {
                     .addAllServiceTypes(Collections.singletonList(ServiceType.TB_CORE.name()))
                     .build());
         }
+
         clusterRoutingService.init();
+        clusterRoutingService.partitionsInit();
         clusterRoutingService.recalculatePartitions(currentServer, otherServers);
     }
 
