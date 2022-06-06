@@ -39,7 +39,7 @@ public abstract class TbAbstractVersionControlSettingsService<T extends Serializ
 
     public T get(TenantId tenantId) {
         return cache.getAndPutInTransaction(tenantId, () -> {
-            AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey(tenantId, settingsKey);
+            AdminSettings adminSettings = adminSettingsService.findAdminSettingsByTenantIdAndKey(tenantId, settingsKey);
             if (adminSettings != null) {
                 try {
                     return JacksonUtil.convertValue(adminSettings.getJsonValue(), clazz);
@@ -52,7 +52,7 @@ public abstract class TbAbstractVersionControlSettingsService<T extends Serializ
     }
 
     public T save(TenantId tenantId, T settings) {
-        AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey(tenantId, settingsKey);
+        AdminSettings adminSettings = adminSettingsService.findAdminSettingsByTenantIdAndKey(tenantId, settingsKey);
         if (adminSettings == null) {
             adminSettings = new AdminSettings();
             adminSettings.setKey(settingsKey);
