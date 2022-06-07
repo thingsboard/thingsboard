@@ -26,6 +26,8 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.dao.audit.AuditLogService;
 
@@ -68,12 +70,15 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     @Test
     public void testCreateAlarmViaCustomer() throws Exception {
         loginCustomerUser();
-        createAlarm(TEST_ALARM_TYPE);
 
-        Mockito.verify(tbClusterService, times(1)).sendNotificationMsgToEdgeService(Mockito.any(),
-                Mockito.any(), Mockito.any(AlarmId.class), Mockito.any(), Mockito.any(), Mockito.any());
-        Mockito.verify(auditLogService, times(1)).logEntityAction(Mockito.any(), Mockito.any(),
-                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(Alarm.class), Mockito.any(), Mockito.any());
+        Mockito.reset(tbClusterService, auditLogService);
+
+        Alarm alarm = createAlarm(TEST_ALARM_TYPE);
+
+        Mockito.verify(tbClusterService, times(1)).sendNotificationMsgToEdgeService(Mockito.eq(tenantId),
+                Mockito.any(), Mockito.eq(alarm.getId()), Mockito.any(), Mockito.isNull(), Mockito.eq(EdgeEventActionType.ADDED));
+        Mockito.verify(auditLogService, times(1)).logEntityAction(Mockito.eq(tenantId), Mockito.any(),
+                Mockito.eq(customerUserId), Mockito.eq(CUSTOMER_USER_EMAIL), Mockito.eq(alarm.getOriginator()), Mockito.any(Alarm.class), Mockito.eq(ActionType.ADDED), Mockito.any());
 
         logout();
     }
@@ -88,14 +93,24 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     @Test
     public void testUpdateAlarmViaCustomer() throws Exception {
         loginCustomerUser();
+        Mockito.reset(tbClusterService, auditLogService);
+
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
+
+        Mockito.verify(tbClusterService, times(1)).sendNotificationMsgToEdgeService(Mockito.eq(tenantId),
+                Mockito.any(), Mockito.eq(alarm.getId()), Mockito.any(), Mockito.isNull(), Mockito.eq(EdgeEventActionType.ADDED));
+        Mockito.verify(auditLogService, times(1)).logEntityAction(Mockito.eq(tenantId), Mockito.any(),
+                Mockito.eq(customerUserId), Mockito.eq(CUSTOMER_USER_EMAIL), Mockito.eq(alarm.getOriginator()), Mockito.any(Alarm.class), Mockito.eq(ActionType.ADDED), Mockito.any());
+
+        Mockito.reset(tbClusterService, auditLogService);
+
         alarm.setSeverity(AlarmSeverity.MAJOR);
         Alarm updatedAlarm = doPost("/api/alarm", alarm, Alarm.class);
 
-        Mockito.verify(tbClusterService, times(2)).sendNotificationMsgToEdgeService(Mockito.any(),
-                Mockito.any(), Mockito.any(AlarmId.class), Mockito.any(), Mockito.any(), Mockito.any());
-        Mockito.verify(auditLogService, times(2)).logEntityAction(Mockito.any(), Mockito.any(),
-                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(Alarm.class), Mockito.any(), Mockito.any());
+        Mockito.verify(tbClusterService, times(1)).sendNotificationMsgToEdgeService(Mockito.eq(tenantId),
+                Mockito.any(), Mockito.eq(alarm.getId()), Mockito.any(), Mockito.isNull(), Mockito.eq(EdgeEventActionType.UPDATED));
+        Mockito.verify(auditLogService, times(1)).logEntityAction(Mockito.eq(tenantId), Mockito.any(),
+                Mockito.eq(customerUserId), Mockito.eq(CUSTOMER_USER_EMAIL), Mockito.eq(alarm.getOriginator()), Mockito.any(Alarm.class), Mockito.eq(ActionType.UPDATED), Mockito.any());
 
         Assert.assertNotNull(updatedAlarm);
         Assert.assertEquals(AlarmSeverity.MAJOR, updatedAlarm.getSeverity());

@@ -138,6 +138,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected TenantId tenantId;
     protected UserId tenantAdminUserId;
     protected CustomerId customerId;
+    protected UserId customerUserId;
 
     @SuppressWarnings("rawtypes")
     private HttpMessageConverter mappingJackson2HttpMessageConverter;
@@ -215,7 +216,9 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         customerUser.setCustomerId(savedCustomer.getId());
         customerUser.setEmail(CUSTOMER_USER_EMAIL);
 
-        createUserAndLogin(customerUser, CUSTOMER_USER_PASSWORD);
+        customerUser = createUserAndLogin(customerUser, CUSTOMER_USER_PASSWORD);
+        customerUserId = customerUser.getId();
+
 
         logout();
 
