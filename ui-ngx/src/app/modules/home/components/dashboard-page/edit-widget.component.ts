@@ -121,7 +121,10 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
       isDataEnabled,
       settingsSchema,
       dataKeySettingsSchema,
-      latestDataKeySettingsSchema
+      latestDataKeySettingsSchema,
+      settingsDirective: widgetInfo.settingsDirective,
+      dataKeySettingsDirective: widgetInfo.dataKeySettingsDirective,
+      latestDataKeySettingsDirective: widgetInfo.latestDataKeySettingsDirective
     };
     this.widgetFormGroup.reset({widgetConfig: this.widgetConfig});
   }

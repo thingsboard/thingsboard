@@ -17,22 +17,17 @@ package org.thingsboard.server.transport.mqtt.credentials;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttSecurityException;
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
-import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
+import org.thingsboard.server.transport.mqtt.MqttTestClient;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -43,6 +38,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_TELEMETRY_TOPIC;
 
 @DaoSqlTest
 public class BasicMqttCredentialsTest extends AbstractMqttIntegrationTest {
@@ -93,33 +89,51 @@ public class BasicMqttCredentialsTest extends AbstractMqttIntegrationTest {
     @Test
     public void testCorrectCredentials() throws Exception {
         // Check that correct devices receive telemetry
-        testTelemetryIsDelivered(accessTokenDevice, getMqttAsyncClient(null, USER_NAME1, null));
-        testTelemetryIsDelivered(clientIdDevice, getMqttAsyncClient(CLIENT_ID, null, null));
-        testTelemetryIsDelivered(clientIdAndUserNameDevice1, getMqttAsyncClient(CLIENT_ID, USER_NAME1, null));
-        testTelemetryIsDelivered(clientIdAndUserNameAndPasswordDevice2, getMqttAsyncClient(CLIENT_ID, USER_NAME2, PASSWORD));
+        MqttTestClient mqttTestClient1 = new MqttTestClient();
+        mqttTestClient1.connectAndWait(USER_NAME1);
+
+        MqttTestClient mqttTestClient2 = new MqttTestClient(CLIENT_ID);
+        mqttTestClient2.connectAndWait();
+
+        MqttTestClient mqttTestClient3 = new MqttTestClient(CLIENT_ID);
+        mqttTestClient3.connectAndWait(USER_NAME1);
+
+        MqttTestClient mqttTestClient4 = new MqttTestClient(CLIENT_ID);
+        mqttTestClient4.connectAndWait(USER_NAME2, PASSWORD);
 
         // Also correct. Random clientId and password, but matches access token
-        testTelemetryIsDelivered(accessToken2Device, getMqttAsyncClient(RandomStringUtils.randomAlphanumeric(10), USER_NAME2, RandomStringUtils.randomAlphanumeric(10)));
+        MqttTestClient mqttTestClient5 = new MqttTestClient(RandomStringUtils.randomAlphanumeric(10));
+        mqttTestClient5.connectAndWait(USER_NAME2, RandomStringUtils.randomAlphanumeric(10));
+
+        testTelemetryIsDelivered(accessTokenDevice, mqttTestClient1);
+        testTelemetryIsDelivered(clientIdDevice, mqttTestClient2);
+        testTelemetryIsDelivered(clientIdAndUserNameDevice1, mqttTestClient3);
+        testTelemetryIsDelivered(clientIdAndUserNameAndPasswordDevice2, mqttTestClient4);
+
+        // Also correct. Random clientId and password, but matches access token
+        testTelemetryIsDelivered(accessToken2Device, mqttTestClient5);
     }
 
     @Test(expected = MqttSecurityException.class)
     public void testCorrectClientIdAndUserNameButWrongPassword() throws Exception {
         // Not correct. Correct clientId and username, but wrong password
-        testTelemetryIsNotDelivered(clientIdAndUserNameAndPasswordDevice3, getMqttAsyncClient(CLIENT_ID, USER_NAME3, "WRONG PASSWORD"));
+        MqttTestClient mqttTestClient = new MqttTestClient(CLIENT_ID);
+        mqttTestClient.connectAndWait(USER_NAME3, "WRONG PASSWORD");
+        testTelemetryIsNotDelivered(clientIdAndUserNameAndPasswordDevice3, mqttTestClient);
     }
 
-    private void testTelemetryIsDelivered(Device device, MqttAsyncClient client) throws Exception {
+    private void testTelemetryIsDelivered(Device device, MqttTestClient client) throws Exception {
         testTelemetryIsDelivered(device, client, true);
     }
 
-    private void testTelemetryIsNotDelivered(Device device, MqttAsyncClient client) throws Exception {
+    private void testTelemetryIsNotDelivered(Device device, MqttTestClient client) throws Exception {
         testTelemetryIsDelivered(device, client, false);
     }
 
-    private void testTelemetryIsDelivered(Device device, MqttAsyncClient client, boolean ok) throws Exception {
+    private void testTelemetryIsDelivered(Device device, MqttTestClient client, boolean ok) throws Exception {
         String randomKey = RandomStringUtils.randomAlphanumeric(10);
         List<String> expectedKeys = Arrays.asList(randomKey);
-        publishMqttMsg(client, JacksonUtil.toString(JacksonUtil.newObjectNode().put(randomKey, true)).getBytes(), MqttTopics.DEVICE_TELEMETRY_TOPIC);
+        client.publishAndWait(DEVICE_TELEMETRY_TOPIC, JacksonUtil.toString(JacksonUtil.newObjectNode().put(randomKey, true)).getBytes());
 
         String deviceId = device.getId().getId().toString();
 
@@ -146,24 +160,7 @@ public class BasicMqttCredentialsTest extends AbstractMqttIntegrationTest {
         } else {
             assertNull(actualKeys);
         }
-        client.disconnect().waitForCompletion();
-    }
-
-    protected MqttAsyncClient getMqttAsyncClient(String clientId, String username, String password) throws MqttException {
-        if (StringUtils.isEmpty(clientId)) {
-            clientId = MqttAsyncClient.generateClientId();
-        }
-        MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, clientId, new MemoryPersistence());
-
-        MqttConnectOptions options = new MqttConnectOptions();
-        if (StringUtils.isNotEmpty(username)) {
-            options.setUserName(username);
-        }
-        if (StringUtils.isNotEmpty(password)) {
-            options.setPassword(password.toCharArray());
-        }
-        client.connect(options).waitForCompletion();
-        return client;
+        client.disconnect();
     }
 
     private Device createDevice(String deviceName, BasicMqttCredentials clientIdCredValue) throws Exception {

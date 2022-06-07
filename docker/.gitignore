@@ -5,4 +5,5 @@ tb-node/db/**
 tb-node/postgres/**
 tb-node/cassandra/**
 tb-transports/*/log
+docker/tb-vc-executor/log/**
 !.env

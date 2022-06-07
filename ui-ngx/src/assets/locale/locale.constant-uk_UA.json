@@ -52,7 +52,8 @@
         "continue": "Продовжити",
         "discard-changes": "Скасувати зміни",
         "move": "Перемістити",
-        "select": "Вибрати"
+        "select": "Вибрати",
+        "done": "Завершено"
     },
     "aggregation": {
         "aggregation": "Агрегація",
@@ -1458,8 +1459,7 @@
             "select-file": "Виберіть файл",
             "configuration": "Конфігурація імпорту",
             "column-type": "Виберіть тип колонок",
-            "creat-entities": "Створення нових сутностей",
-            "done": "Завершено"
+            "creat-entities": "Створення нових сутностей"
         },
         "message": {
             "create-entities": "{{count}} нову(их) сутність(ей) успішно створено.",

@@ -16,13 +16,16 @@
 package org.thingsboard.server.transport.mqtt.rpc;
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.TransportPayloadType;
-import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.transport.mqtt.MqttTestClient;
 import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
+
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_JSON_TOPIC;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_TOPIC;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC;
 
 @Slf4j
 @DaoSqlTest
@@ -40,32 +43,32 @@ public class MqttServerSideRpcJsonIntegrationTest extends AbstractMqttServerSide
 
     @Test
     public void testServerMqttOneWayRpc() throws Exception {
-        processOneWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC);
+        processOneWayRpcTest(DEVICE_RPC_REQUESTS_SUB_TOPIC);
     }
 
     @Test
     public void testServerMqttOneWayRpcOnShortTopic() throws Exception {
-        processOneWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_TOPIC);
+        processOneWayRpcTest(DEVICE_RPC_REQUESTS_SUB_SHORT_TOPIC);
     }
 
     @Test
     public void testServerMqttOneWayRpcOnShortJsonTopic() throws Exception {
-        processOneWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_JSON_TOPIC);
+        processOneWayRpcTest(DEVICE_RPC_REQUESTS_SUB_SHORT_JSON_TOPIC);
     }
 
     @Test
     public void testServerMqttTwoWayRpc() throws Exception {
-        processJsonTwoWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC);
+        processJsonTwoWayRpcTest(DEVICE_RPC_REQUESTS_SUB_TOPIC);
     }
 
     @Test
     public void testServerMqttTwoWayRpcOnShortTopic() throws Exception {
-        processJsonTwoWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_TOPIC);
+        processJsonTwoWayRpcTest(DEVICE_RPC_REQUESTS_SUB_SHORT_TOPIC);
     }
 
     @Test
     public void testServerMqttTwoWayRpcOnShortJsonTopic() throws Exception {
-        processJsonTwoWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_JSON_TOPIC);
+        processJsonTwoWayRpcTest(DEVICE_RPC_REQUESTS_SUB_SHORT_JSON_TOPIC);
     }
 
     @Test
@@ -79,10 +82,12 @@ public class MqttServerSideRpcJsonIntegrationTest extends AbstractMqttServerSide
     }
 
     protected void processJsonOneWayRpcTestGateway(String deviceName) throws Exception {
-        MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
+        MqttTestClient client = new MqttTestClient();
+        client.connectAndWait(gatewayAccessToken);
         String payload = "{\"device\": \"" + deviceName + "\", \"type\": \"" + TransportPayloadType.JSON.name() + "\"}";
         byte[] payloadBytes = payload.getBytes();
         validateOneWayRpcGatewayResponse(deviceName, client, payloadBytes);
+        client.disconnect();
     }
 
 }

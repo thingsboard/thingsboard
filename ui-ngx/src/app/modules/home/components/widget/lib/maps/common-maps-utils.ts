@@ -28,26 +28,7 @@ import {
 import { Observable, Observer, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { FormattedData } from '@shared/models/widget.models';
-import _ from 'lodash';
-import { mapProviderSchema, providerSets } from '@home/components/widget/lib/maps/schemes';
-import { addCondition, mergeSchemes } from '@core/schema-utils';
 import L from 'leaflet';
-
-export function getProviderSchema(mapProvider: MapProviders, ignoreImageMap = false) {
-  const providerSchema = _.cloneDeep(mapProviderSchema);
-  if (mapProvider) {
-    providerSchema.schema.properties.provider.default = mapProvider;
-  }
-  if (ignoreImageMap) {
-    providerSchema.form[0].items = providerSchema.form[0]?.items.filter(item => item.value !== 'image-map');
-  }
-  return mergeSchemes([providerSchema,
-    ...Object.keys(providerSets)?.map(
-      (key: string) => {
-        const setting = providerSets[key];
-        return addCondition(setting?.schema, `model.provider === '${setting.name}'`);
-      })]);
-}
 
 export function getRatio(firsMoment: number, secondMoment: number, intermediateMoment: number): number {
   return (intermediateMoment - firsMoment) / (secondMoment - firsMoment);
@@ -76,9 +57,12 @@ export function findAngle(startPoint: FormattedData, endPoint: FormattedData, la
 }
 
 
-export function getDefCenterPosition(position) {
+export function getDefCenterPosition(position): [number, number] {
   if (typeof (position) === 'string') {
-    return position.split(',');
+    const parts = position.split(',');
+    if (parts.length === 2) {
+      return [Number(parts[0]), Number(parts[1])];
+    }
   }
   if (typeof (position) === 'object') {
     return position;

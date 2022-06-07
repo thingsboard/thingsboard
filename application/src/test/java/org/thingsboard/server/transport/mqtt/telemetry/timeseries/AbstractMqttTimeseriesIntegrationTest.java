@@ -18,19 +18,13 @@ package org.thingsboard.server.transport.mqtt.telemetry.timeseries;
 import com.fasterxml.jackson.core.type.TypeReference;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
-import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
-import org.eclipse.paho.client.mqttv3.MqttCallback;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.eclipse.paho.client.mqttv3.internal.wire.MqttWireMessage;
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
+import org.thingsboard.server.transport.mqtt.MqttTestCallback;
+import org.thingsboard.server.transport.mqtt.MqttTestClient;
 import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 
 import java.util.Arrays;
@@ -38,12 +32,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_ATTRIBUTES_TOPIC;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_TELEMETRY_SHORT_JSON_TOPIC;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_TELEMETRY_SHORT_TOPIC;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_TELEMETRY_TOPIC;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.GATEWAY_CONNECT_TOPIC;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.GATEWAY_TELEMETRY_TOPIC;
 
 @Slf4j
 public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqttIntegrationTest {
@@ -66,26 +65,26 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
     @Test
     public void testPushTelemetry() throws Exception {
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
-        processJsonPayloadTelemetryTest(MqttTopics.DEVICE_TELEMETRY_TOPIC, expectedKeys, PAYLOAD_VALUES_STR.getBytes(), false);
+        processJsonPayloadTelemetryTest(DEVICE_TELEMETRY_TOPIC, expectedKeys, PAYLOAD_VALUES_STR.getBytes(), false);
     }
 
     @Test
     public void testPushTelemetryWithTs() throws Exception {
         String payloadStr = "{\"ts\": 10000, \"values\": " + PAYLOAD_VALUES_STR + "}";
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
-        processJsonPayloadTelemetryTest(MqttTopics.DEVICE_TELEMETRY_TOPIC, expectedKeys, payloadStr.getBytes(), true);
+        processJsonPayloadTelemetryTest(DEVICE_TELEMETRY_TOPIC, expectedKeys, payloadStr.getBytes(), true);
     }
 
     @Test
     public void testPushTelemetryOnShortTopic() throws Exception {
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
-        processJsonPayloadTelemetryTest(MqttTopics.DEVICE_TELEMETRY_SHORT_TOPIC, expectedKeys, PAYLOAD_VALUES_STR.getBytes(), false);
+        processJsonPayloadTelemetryTest(DEVICE_TELEMETRY_SHORT_TOPIC, expectedKeys, PAYLOAD_VALUES_STR.getBytes(), false);
     }
 
     @Test
     public void testPushTelemetryOnShortJsonTopic() throws Exception {
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
-        processJsonPayloadTelemetryTest(MqttTopics.DEVICE_TELEMETRY_SHORT_JSON_TOPIC, expectedKeys, PAYLOAD_VALUES_STR.getBytes(), false);
+        processJsonPayloadTelemetryTest(DEVICE_TELEMETRY_SHORT_JSON_TOPIC, expectedKeys, PAYLOAD_VALUES_STR.getBytes(), false);
     }
 
     @Test
@@ -94,14 +93,15 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         String deviceName1 = "Device A";
         String deviceName2 = "Device B";
         String payload = getGatewayTelemetryJsonPayload(deviceName1, deviceName2, "10000", "20000");
-        processGatewayTelemetryTest(MqttTopics.GATEWAY_TELEMETRY_TOPIC, expectedKeys, payload.getBytes(), deviceName1, deviceName2);
+        processGatewayTelemetryTest(GATEWAY_TELEMETRY_TOPIC, expectedKeys, payload.getBytes(), deviceName1, deviceName2);
     }
 
     @Test
     public void testGatewayConnect() throws Exception {
         String payload = "{\"device\":\"Device A\"}";
-        MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
-        publishMqttMsg(client, payload.getBytes(), MqttTopics.GATEWAY_CONNECT_TOPIC);
+        MqttTestClient client = new MqttTestClient();
+        client.connectAndWait(gatewayAccessToken);
+        client.publish(GATEWAY_CONNECT_TOPIC, payload.getBytes());
 
         String deviceName = "Device A";
 
@@ -110,6 +110,7 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         100);
 
         assertNotNull(device);
+        client.disconnect();
     }
 
     protected void processJsonPayloadTelemetryTest(String topic, List<String> expectedKeys, byte[] payload, boolean withTs) throws Exception {
@@ -117,23 +118,14 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
     }
 
     protected void processTelemetryTest(String topic, List<String> expectedKeys, byte[] payload, boolean withTs, boolean presenceFieldsTest) throws Exception {
-        MqttAsyncClient client = getMqttAsyncClient(accessToken);
-        publishMqttMsg(client, payload, topic);
+        MqttTestClient client = new MqttTestClient();
+        client.connectAndWait(accessToken);
+        client.publishAndWait(topic, payload);
+        client.disconnect();
 
-        String deviceId = savedDevice.getId().getId().toString();
+        DeviceId deviceId = savedDevice.getId();
 
-        long start = System.currentTimeMillis();
-        long end = System.currentTimeMillis() + 5000;
-
-        List<String> actualKeys = null;
-        while (start <= end) {
-            actualKeys = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + deviceId + "/keys/timeseries", new TypeReference<>() {});
-            if (actualKeys.size() == expectedKeys.size()) {
-                break;
-            }
-            Thread.sleep(100);
-            start += 100;
-        }
+        List<String> actualKeys = getActualKeysList(deviceId, expectedKeys);
         assertNotNull(actualKeys);
 
         Set<String> actualKeySet = new HashSet<>(actualKeys);
@@ -147,8 +139,8 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         } else {
             getTelemetryValuesUrl = "/api/plugins/telemetry/DEVICE/" + deviceId + "/values/timeseries?keys=" + String.join(",", actualKeySet);
         }
-        start = System.currentTimeMillis();
-        end = System.currentTimeMillis() + 5000;
+        long start = System.currentTimeMillis();
+        long end = System.currentTimeMillis() + 5000;
         Map<String, List<Map<String, Object>>> values = null;
         while (start <= end) {
             values = doGetAsyncTyped(getTelemetryValuesUrl, new TypeReference<>() {});
@@ -187,9 +179,10 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
     }
 
     protected void processGatewayTelemetryTest(String topic, List<String> expectedKeys, byte[] payload, String firstDeviceName, String secondDeviceName) throws Exception {
-        MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
-
-        publishMqttMsg(client, payload, topic);
+        MqttTestClient client = new MqttTestClient();
+        client.connectAndWait(gatewayAccessToken);
+        client.publishAndWait(topic, payload);
+        client.disconnect();
 
         Device firstDevice = doExecuteWithRetriesAndInterval(() -> doGet("/api/tenant/devices?deviceName=" + firstDeviceName, Device.class),
                 20,
@@ -203,12 +196,10 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
 
         assertNotNull(secondDevice);
 
-        Thread.sleep(2000);
-
-        List<String> firstDeviceActualKeys = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + firstDevice.getId() + "/keys/timeseries", new TypeReference<>() {});
+        List<String> firstDeviceActualKeys = getActualKeysList(firstDevice.getId(), expectedKeys);
         Set<String> firstDeviceActualKeySet = new HashSet<>(firstDeviceActualKeys);
 
-        List<String> secondDeviceActualKeys = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + secondDevice.getId() + "/keys/timeseries", new TypeReference<>() {});
+        List<String> secondDeviceActualKeys = getActualKeysList(secondDevice.getId(), expectedKeys);
         Set<String> secondDeviceActualKeySet = new HashSet<>(secondDeviceActualKeys);
 
         Set<String> expectedKeySet = new HashSet<>(expectedKeys);
@@ -224,6 +215,22 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
 
         assertGatewayDeviceData(firstDeviceValues, expectedKeys);
         assertGatewayDeviceData(secondDeviceValues, expectedKeys);
+    }
+
+    private List<String> getActualKeysList(DeviceId deviceId, List<String> expectedKeys) throws Exception {
+        long start = System.currentTimeMillis();
+        long end = System.currentTimeMillis() + 3000;
+
+        List<String> actualKeys = null;
+        while (start <= end) {
+            actualKeys = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + deviceId + "/keys/timeseries", new TypeReference<>() {});
+            if (actualKeys.size() == expectedKeys.size()) {
+                break;
+            }
+            Thread.sleep(100);
+            start += 100;
+        }
+        return actualKeys;
     }
 
     protected String getGatewayTelemetryJsonPayload(String deviceA, String deviceB, String firstTsValue, String secondTsValue) {
@@ -312,93 +319,20 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
 
     //    @Test - Unstable
     public void testMqttQoSLevel() throws Exception {
-        String clientId = MqttAsyncClient.generateClientId();
-        MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, clientId, new MemoryPersistence());
-
-        MqttConnectOptions options = new MqttConnectOptions();
-        options.setUserName(accessToken);
-        CountDownLatch latch = new CountDownLatch(1);
-        TestMqttCallback callback = new TestMqttCallback(client, latch);
+        MqttTestClient client = new MqttTestClient();
+        MqttTestCallback callback = new MqttTestCallback();
         client.setCallback(callback);
-        client.connect(options).waitForCompletion(5000);
-        client.subscribe("v1/devices/me/attributes", MqttQoS.AT_MOST_ONCE.value());
+        client.connectAndWait(accessToken);
+        client.subscribe(DEVICE_ATTRIBUTES_TOPIC, MqttQoS.AT_MOST_ONCE);
         String payload = "{\"key\":\"uniqueValue\"}";
 //        TODO 3.1: we need to acknowledge subscription only after it is processed by device actor and not when the message is pushed to queue.
 //        MqttClient -> SUB REQUEST -> Transport -> Kafka -> Device Actor (subscribed)
 //        MqttClient <- SUB_ACK <- Transport
         Thread.sleep(5000);
         doPostAsync("/api/plugins/telemetry/" + savedDevice.getId() + "/SHARED_SCOPE", payload, String.class, status().isOk());
-        latch.await(10, TimeUnit.SECONDS);
-        assertEquals(payload, callback.getPayload());
+        callback.getSubscribeLatch().await(10, TimeUnit.SECONDS);
+        assertEquals(payload.getBytes(), callback.getPayloadBytes());
         assertEquals(MqttQoS.AT_MOST_ONCE.value(), callback.getQoS());
     }
-
-    private static class TestMqttCallback implements MqttCallback {
-
-        private final MqttAsyncClient client;
-        private final CountDownLatch latch;
-        private volatile Integer qoS;
-        private volatile String payload;
-
-        String getPayload() {
-            return payload;
-        }
-
-        TestMqttCallback(MqttAsyncClient client, CountDownLatch latch) {
-            this.client = client;
-            this.latch = latch;
-        }
-
-        int getQoS() {
-            return qoS;
-        }
-
-        @Override
-        public void connectionLost(Throwable throwable) {
-            log.error("Client connection lost", throwable);
-        }
-
-        @Override
-        public void messageArrived(String requestTopic, MqttMessage mqttMessage) {
-            payload = new String(mqttMessage.getPayload());
-            qoS = mqttMessage.getQos();
-            latch.countDown();
-        }
-
-        @Override
-        public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
-
-        }
-    }
-
-    public static class TestMqttPublishCallback implements MqttCallback {
-
-        private final CountDownLatch latch;
-        private boolean pubAckReceived;
-
-        public boolean isPubAckReceived() {
-            return pubAckReceived;
-        }
-
-        public TestMqttPublishCallback(CountDownLatch latch) {
-            this.latch = latch;
-        }
-
-        @Override
-        public void connectionLost(Throwable throwable) {
-            latch.countDown();
-        }
-
-        @Override
-        public void messageArrived(String s, MqttMessage mqttMessage) throws Exception {
-        }
-
-        @Override
-        public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
-            pubAckReceived = iMqttDeliveryToken.getResponse().getType() == MqttWireMessage.MESSAGE_TYPE_PUBACK;
-            latch.countDown();
-        }
-    }
-
 
 }
