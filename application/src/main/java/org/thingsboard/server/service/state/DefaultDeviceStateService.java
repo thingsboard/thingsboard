@@ -184,8 +184,8 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         stateData.getState().setLastConnectTime(ts);
         save(deviceId, LAST_CONNECT_TIME, ts);
         pushRuleEngineMessage(stateData, CONNECT_EVENT);
+        pushRuleEngineMessage(stateData, LAST_CONNECT_TIME, ts);
         checkAndUpdateState(deviceId, stateData);
-
     }
 
     @Override
@@ -204,12 +204,15 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         log.trace("updateActivityState - fetched state {} for device {}, lastReportedActivity {}", stateData, deviceId, lastReportedActivity);
         if (stateData != null) {
             save(deviceId, LAST_ACTIVITY_TIME, lastReportedActivity);
+            pushRuleEngineMessage(stateData, LAST_ACTIVITY_TIME, lastReportedActivity);
+
             DeviceState state = stateData.getState();
             state.setLastActivityTime(lastReportedActivity);
             if (!state.isActive()) {
                 state.setActive(true);
                 save(deviceId, ACTIVITY_STATE, true);
                 pushRuleEngineMessage(stateData, ACTIVITY_EVENT);
+                pushRuleEngineMessage(stateData, ACTIVITY_STATE, true);
             }
         } else {
             log.debug("updateActivityState - fetched state IN NULL for device {}, lastReportedActivity {}", deviceId, lastReportedActivity);
@@ -227,6 +230,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         stateData.getState().setLastDisconnectTime(ts);
         save(deviceId, LAST_DISCONNECT_TIME, ts);
         pushRuleEngineMessage(stateData, DISCONNECT_EVENT);
+        pushRuleEngineMessage(stateData, LAST_DISCONNECT_TIME, ts);
     }
 
     @Override
@@ -403,6 +407,9 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                     save(deviceId, ACTIVITY_STATE, false);
                     save(deviceId, INACTIVITY_ALARM_TIME, ts);
                     pushRuleEngineMessage(stateData, INACTIVITY_EVENT);
+
+                    pushRuleEngineMessage(stateData, ACTIVITY_STATE, false);
+                    pushRuleEngineMessage(stateData, INACTIVITY_ALARM_TIME, ts);
                 } else {
                     cleanupEntity(deviceId);
                 }
@@ -581,6 +588,31 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
             clusterService.pushMsgToRuleEngine(stateData.getTenantId(), stateData.getDeviceId(), tbMsg, null);
         } catch (Exception e) {
             log.warn("[{}] Failed to push inactivity alarm: {}", stateData.getDeviceId(), state, e);
+        }
+    }
+
+    private void pushRuleEngineMessage(DeviceStateData stateData, String key, Object value) {
+        DeviceState state = stateData.getState();
+        try {
+            ObjectNode dataNode = JacksonUtil.newObjectNode();
+            if (value instanceof Boolean) {
+                dataNode.put(key, (Boolean)value);
+            } else if (value instanceof Long) {
+                dataNode.put(key, (Long)value);
+            }
+
+            String msgType;
+            TbMsgMetaData metadata = stateData.getMetaData().copy();
+            if (persistToTelemetry) {
+                msgType = DataConstants.TIMESERIES_UPDATED;
+            } else {
+                msgType = DataConstants.ATTRIBUTES_UPDATED;
+                metadata.putValue(DataConstants.SCOPE, SERVER_SCOPE);
+            }
+            TbMsg tbMsg = TbMsg.newMsg(msgType, stateData.getDeviceId(), stateData.getCustomerId(), metadata, TbMsgDataType.JSON, JacksonUtil.toString(dataNode));
+            clusterService.pushMsgToRuleEngine(stateData.getTenantId(), stateData.getDeviceId(), tbMsg, null);
+        } catch (Exception e) {
+            log.warn("[{}] Failed to push attribute update event: {}", stateData.getDeviceId(), state, e);
         }
     }
 
