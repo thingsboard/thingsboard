@@ -138,41 +138,47 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
             List<ListenableFuture<Void>> gitFutures = new ArrayList<>();
             switch (request.getType()) {
                 case SINGLE_ENTITY: {
-                    SingleEntityVersionCreateRequest versionCreateRequest = (SingleEntityVersionCreateRequest) request;
-                    gitFutures.add(saveEntityData(user, commit, versionCreateRequest.getEntityId(), versionCreateRequest.getConfig()));
+                    handleSingleEntityRequest(user, commit, gitFutures, (SingleEntityVersionCreateRequest) request);
                     break;
                 }
                 case COMPLEX: {
-                    ComplexVersionCreateRequest versionCreateRequest = (ComplexVersionCreateRequest) request;
-                    versionCreateRequest.getEntityTypes().forEach((entityType, config) -> {
-                        if (ObjectUtils.defaultIfNull(config.getSyncStrategy(), versionCreateRequest.getSyncStrategy()) == SyncStrategy.OVERWRITE) {
-                            gitFutures.add(gitServiceQueue.deleteAll(commit, entityType));
-                        }
-
-                        if (config.isAllEntities()) {
-                            DaoUtil.processInBatches(pageLink -> exportableEntitiesService.findEntitiesByTenantId(user.getTenantId(), entityType, pageLink)
-                                    , 100, entity -> {
-                                        try {
-                                            gitFutures.add(saveEntityData(user, commit, entity.getId(), config));
-                                        } catch (Exception e) {
-                                            throw new RuntimeException(e);
-                                        }
-                                    });
-                        } else {
-                            for (UUID entityId : config.getEntityIds()) {
-                                try {
-                                    gitFutures.add(saveEntityData(user, commit, EntityIdFactory.getByTypeAndUuid(entityType, entityId), config));
-                                } catch (Exception e) {
-                                    throw new RuntimeException(e);
-                                }
-                            }
-                        }
-                    });
+                    handleComplexRequest(user, commit, gitFutures, (ComplexVersionCreateRequest) request);
                     break;
                 }
             }
             return transformAsync(Futures.allAsList(gitFutures), success -> gitServiceQueue.push(commit), executor);
         }, executor);
+    }
+
+    private void handleSingleEntityRequest(SecurityUser user, CommitGitRequest commit, List<ListenableFuture<Void>> gitFutures, SingleEntityVersionCreateRequest versionCreateRequest) throws Exception {
+        gitFutures.add(saveEntityData(user, commit, versionCreateRequest.getEntityId(), versionCreateRequest.getConfig()));
+    }
+
+    private void handleComplexRequest(SecurityUser user, CommitGitRequest commit, List<ListenableFuture<Void>> gitFutures, ComplexVersionCreateRequest versionCreateRequest) {
+        versionCreateRequest.getEntityTypes().forEach((entityType, config) -> {
+            if (ObjectUtils.defaultIfNull(config.getSyncStrategy(), versionCreateRequest.getSyncStrategy()) == SyncStrategy.OVERWRITE) {
+                gitFutures.add(gitServiceQueue.deleteAll(commit, entityType));
+            }
+
+            if (config.isAllEntities()) {
+                DaoUtil.processInBatches(pageLink -> exportableEntitiesService.findEntitiesByTenantId(user.getTenantId(), entityType, pageLink)
+                        , 100, entity -> {
+                            try {
+                                gitFutures.add(saveEntityData(user, commit, entity.getId(), config));
+                            } catch (Exception e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+            } else {
+                for (UUID entityId : config.getEntityIds()) {
+                    try {
+                        gitFutures.add(saveEntityData(user, commit, EntityIdFactory.getByTypeAndUuid(entityType, entityId), config));
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        });
     }
 
     private ListenableFuture<Void> saveEntityData(SecurityUser user, CommitGitRequest commit, EntityId entityId, VersionCreateConfig config) throws Exception {
