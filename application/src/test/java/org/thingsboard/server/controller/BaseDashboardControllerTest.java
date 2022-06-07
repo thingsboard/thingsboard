@@ -53,7 +53,6 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
     private Tenant savedTenant;
     private User tenantAdmin;
 
-
     @SpyBean
     private TbClusterService tbClusterService;
 

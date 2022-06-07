@@ -27,7 +27,10 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
@@ -44,7 +47,9 @@ import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,6 +57,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.mockito.Mockito.times;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
@@ -64,6 +70,15 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
 
     List<ListenableFuture<Device>> futures;
     PageData<Device> pageData;
+
+    @SpyBean
+    private TbClusterService tbClusterService;
+
+    @SpyBean
+    private AuditLogService auditLogService;
+
+    @SpyBean
+    private GatewayNotificationsService gatewayNotificationsService;
 
     private Tenant savedTenant;
     private User tenantAdmin;
@@ -129,6 +144,15 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
 
         savedDevice.setName("My new device");
         doPost("/api/device", savedDevice, Device.class);
+
+        Mockito.verify(gatewayNotificationsService, times(1)).onDeviceUpdated(Mockito.any(Device.class), Mockito.any(Device.class));
+        Mockito.verify(tbClusterService, times(1)).onDeviceUpdated(Mockito.any(Device.class), Mockito.any(Device.class), Mockito.anyBoolean());
+        Mockito.verify(tbClusterService, times(1)).sendNotificationMsgToEdgeService(Mockito.any(),
+                Mockito.any(), Mockito.any(DeviceId.class), Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.verify(auditLogService, times(2)).logEntityAction(Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(Device.class), Mockito.any(), Mockito.any());
+        Mockito.verify(tbClusterService, times(2)).pushMsgToRuleEngine(Mockito.any(),
+                Mockito.any(DeviceId.class), Mockito.any(), Mockito.any());
 
         Device foundDevice = doGet("/api/device/" + savedDevice.getId().getId(), Device.class);
         Assert.assertEquals(foundDevice.getName(), savedDevice.getName());
@@ -214,6 +238,13 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         doDelete("/api/device/" + savedDevice.getId().getId())
                 .andExpect(status().isOk());
 
+        Mockito.verify(gatewayNotificationsService, times(1)).onDeviceDeleted(Mockito.any(Device.class));
+        Mockito.verify(tbClusterService, times(1)).onDeviceDeleted(Mockito.any(Device.class), Mockito.any());
+        Mockito.verify(auditLogService, times(1)).logEntityAction(Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(Device.class), Mockito.any(), Mockito.any());
+        Mockito.verify(tbClusterService, times(2)).pushMsgToRuleEngine(Mockito.any(),
+                Mockito.any(DeviceId.class), Mockito.any(), Mockito.any());
+
         doGet("/api/device/" + savedDevice.getId().getId())
                 .andExpect(status().isNotFound());
     }
@@ -256,6 +287,13 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         Device unassignedDevice =
                 doDelete("/api/customer/device/" + savedDevice.getId().getId(), Device.class);
         Assert.assertEquals(ModelConstants.NULL_UUID, unassignedDevice.getCustomerId().getId());
+
+        Mockito.verify(tbClusterService, times(2)).sendNotificationMsgToEdgeService(Mockito.any(),
+                Mockito.any(), Mockito.any(DeviceId.class), Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.verify(auditLogService, times(1)).logEntityAction(Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(Device.class), Mockito.any(), Mockito.any());
+        Mockito.verify(tbClusterService, times(3)).pushMsgToRuleEngine(Mockito.any(),
+                Mockito.any(DeviceId.class), Mockito.any(), Mockito.any());
 
         foundDevice = doGet("/api/device/" + savedDevice.getId().getId(), Device.class);
         Assert.assertEquals(ModelConstants.NULL_UUID, foundDevice.getCustomerId().getId());
@@ -320,6 +358,11 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         DeviceCredentials deviceCredentials =
                 doGet("/api/device/" + savedDevice.getId().getId() + "/credentials", DeviceCredentials.class);
         Assert.assertEquals(savedDevice.getId(), deviceCredentials.getDeviceId());
+
+        Mockito.verify(auditLogService, times(1)).logEntityAction(Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(Device.class), Mockito.any(), Mockito.any());
+        Mockito.verify(tbClusterService, times(1)).pushMsgToRuleEngine(Mockito.any(),
+                Mockito.any(DeviceId.class), Mockito.any(), Mockito.any());
     }
 
     @Test
@@ -335,6 +378,13 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         deviceCredentials.setCredentialsId("access_token");
         doPost("/api/device/credentials", deviceCredentials)
                 .andExpect(status().isOk());
+
+        Mockito.verify(tbClusterService, times(1)).sendNotificationMsgToEdgeService(Mockito.any(),
+                Mockito.any(), Mockito.any(DeviceId.class), Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.verify(auditLogService, times(1)).logEntityAction(Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(Device.class), Mockito.any(), Mockito.any());
+        Mockito.verify(tbClusterService, times(1)).pushMsgToRuleEngine(Mockito.any(),
+                Mockito.any(DeviceId.class), Mockito.any(), Mockito.any());
 
         DeviceCredentials foundDeviceCredentials =
                 doGet("/api/device/" + savedDevice.getId().getId() + "/credentials", DeviceCredentials.class);
@@ -845,6 +895,11 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         login("tenant2@thingsboard.org", "testPassword1");
         Device assignedDevice = doPost("/api/tenant/" + savedDifferentTenant.getId().getId() + "/device/" + savedDevice.getId().getId(), Device.class);
 
+        Mockito.verify(auditLogService, times(2)).logEntityAction(Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(Device.class), Mockito.any(), Mockito.any());
+        Mockito.verify(tbClusterService, times(4)).pushMsgToRuleEngine(Mockito.any(),
+                Mockito.any(DeviceId.class), Mockito.any(), Mockito.any());
+
         doGet("/api/device/" + assignedDevice.getId().getId(), Device.class, status().isNotFound());
 
         login("tenant9@thingsboard.org", "testPassword1");
@@ -879,6 +934,13 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
 
         doDelete("/api/edge/" + savedEdge.getId().getId()
                 + "/device/" + savedDevice.getId().getId(), Device.class);
+
+        Mockito.verify(tbClusterService, times(2)).sendNotificationMsgToEdgeService(Mockito.any(),
+                Mockito.any(), Mockito.any(DeviceId.class), Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.verify(auditLogService, times(1)).logEntityAction(Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(Device.class), Mockito.any(), Mockito.any());
+        Mockito.verify(tbClusterService, times(3)).pushMsgToRuleEngine(Mockito.any(),
+                Mockito.any(DeviceId.class), Mockito.any(), Mockito.any());
 
         pageData = doGetTypedWithPageLink("/api/edge/" + savedEdge.getId().getId() + "/devices?",
                 PAGE_DATA_DEVICE_TYPE_REF, new PageLink(100));
