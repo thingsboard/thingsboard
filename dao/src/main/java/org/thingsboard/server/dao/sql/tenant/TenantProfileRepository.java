@@ -17,15 +17,15 @@ package org.thingsboard.server.dao.sql.tenant;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.dao.model.sql.TenantProfileEntity;
 
 import java.util.UUID;
 
-public interface TenantProfileRepository extends PagingAndSortingRepository<TenantProfileEntity, UUID> {
+public interface TenantProfileRepository extends JpaRepository<TenantProfileEntity, UUID> {
 
     @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(t.id, 'TENANT_PROFILE', t.name) " +
             "FROM TenantProfileEntity t " +

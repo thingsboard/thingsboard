@@ -126,24 +126,29 @@ public class RelationEdgeProcessor extends BaseEdgeProcessor {
                 .build();
     }
 
-    public void processRelationNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) throws JsonProcessingException {
+    public ListenableFuture<Void> processRelationNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) throws JsonProcessingException {
         EntityRelation relation = mapper.readValue(edgeNotificationMsg.getBody(), EntityRelation.class);
-        if (!relation.getFrom().getEntityType().equals(EntityType.EDGE) &&
-                !relation.getTo().getEntityType().equals(EntityType.EDGE)) {
-            Set<EdgeId> uniqueEdgeIds = new HashSet<>();
-            uniqueEdgeIds.addAll(findRelatedEdgeIds(tenantId, relation.getTo()));
-            uniqueEdgeIds.addAll(findRelatedEdgeIds(tenantId, relation.getFrom()));
-            if (!uniqueEdgeIds.isEmpty()) {
-                for (EdgeId edgeId : uniqueEdgeIds) {
-                    saveEdgeEvent(tenantId,
-                            edgeId,
-                            EdgeEventType.RELATION,
-                            EdgeEventActionType.valueOf(edgeNotificationMsg.getAction()),
-                            null,
-                            mapper.valueToTree(relation));
-                }
-            }
+        if (relation.getFrom().getEntityType().equals(EntityType.EDGE) ||
+                relation.getTo().getEntityType().equals(EntityType.EDGE)) {
+            return Futures.immediateFuture(null);
         }
+
+        Set<EdgeId> uniqueEdgeIds = new HashSet<>();
+        uniqueEdgeIds.addAll(findRelatedEdgeIds(tenantId, relation.getTo()));
+        uniqueEdgeIds.addAll(findRelatedEdgeIds(tenantId, relation.getFrom()));
+        if (uniqueEdgeIds.isEmpty()) {
+            return Futures.immediateFuture(null);
+        }
+        List<ListenableFuture<Void>> futures = new ArrayList<>();
+        for (EdgeId edgeId : uniqueEdgeIds) {
+            futures.add(saveEdgeEvent(tenantId,
+                    edgeId,
+                    EdgeEventType.RELATION,
+                    EdgeEventActionType.valueOf(edgeNotificationMsg.getAction()),
+                    null,
+                    mapper.valueToTree(relation)));
+        }
+        return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
     }
 
     private List<EdgeId> findRelatedEdgeIds(TenantId tenantId, EntityId entityId) {

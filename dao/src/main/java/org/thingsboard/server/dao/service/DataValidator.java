@@ -36,7 +36,8 @@ public abstract class DataValidator<D extends BaseData<?>> {
     private static final Pattern EMAIL_PATTERN =
             Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$", Pattern.CASE_INSENSITIVE);
 
-    public void validate(D data, Function<D, TenantId> tenantIdFunction) {
+    // Returns old instance of the same object that is fetched during validation.
+    public D validate(D data, Function<D, TenantId> tenantIdFunction) {
         try {
             if (data == null) {
                 throw new DataValidationException("Data object can't be null!");
@@ -46,11 +47,14 @@ public abstract class DataValidator<D extends BaseData<?>> {
 
             TenantId tenantId = tenantIdFunction.apply(data);
             validateDataImpl(tenantId, data);
+            D old;
             if (data.getId() == null) {
                 validateCreate(tenantId, data);
+                old = null;
             } else {
-                validateUpdate(tenantId, data);
+                old = validateUpdate(tenantId, data);
             }
+            return old;
         } catch (DataValidationException e) {
             log.error("Data object is invalid: [{}]", e.getMessage());
             throw e;
@@ -63,7 +67,8 @@ public abstract class DataValidator<D extends BaseData<?>> {
     protected void validateCreate(TenantId tenantId, D data) {
     }
 
-    protected void validateUpdate(TenantId tenantId, D data) {
+    protected D validateUpdate(TenantId tenantId, D data) {
+        return null;
     }
 
     protected boolean isSameData(D existentData, D actualData) {

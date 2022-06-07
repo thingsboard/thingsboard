@@ -16,7 +16,6 @@
 package org.thingsboard.server.rules.lifecycle.sql;
 
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.rules.flow.AbstractRuleEngineFlowIntegrationTest;
 import org.thingsboard.server.rules.lifecycle.AbstractRuleEngineLifecycleIntegrationTest;
 
 /**

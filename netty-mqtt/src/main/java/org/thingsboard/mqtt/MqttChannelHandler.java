@@ -166,7 +166,7 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
         for (MqttPendingSubscription.MqttPendingHandler handler : pendingSubscription.getHandlers()) {
             MqttSubscription subscription = new MqttSubscription(pendingSubscription.getTopic(), handler.getHandler(), handler.isOnce());
             this.client.getSubscriptions().put(pendingSubscription.getTopic(), subscription);
-            this.client.getHandlerToSubscribtion().put(handler.getHandler(), subscription);
+            this.client.getHandlerToSubscription().put(handler.getHandler(), subscription);
         }
         this.client.getPendingSubscribeTopics().remove(pendingSubscription.getTopic());
 

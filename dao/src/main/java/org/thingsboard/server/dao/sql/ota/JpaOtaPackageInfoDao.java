@@ -17,18 +17,18 @@ package org.thingsboard.server.dao.sql.ota;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.OtaPackageInfo;
-import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.ota.OtaPackageInfoDao;
 import org.thingsboard.server.dao.model.sql.OtaPackageInfoEntity;
+import org.thingsboard.server.dao.ota.OtaPackageInfoDao;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 
 import java.util.Objects;
@@ -47,7 +47,7 @@ public class JpaOtaPackageInfoDao extends JpaAbstractSearchTextDao<OtaPackageInf
     }
 
     @Override
-    protected CrudRepository<OtaPackageInfoEntity, UUID> getCrudRepository() {
+    protected JpaRepository<OtaPackageInfoEntity, UUID> getRepository() {
         return otaPackageInfoRepository;
     }
 

@@ -47,15 +47,15 @@
               <ng-container *ngIf="showTimestamp" [matColumnDef]="'0'">
                 <mat-header-cell *matHeaderCellDef mat-sort-header>Timestamp</mat-header-cell>
                 <mat-cell *matCellDef="let row; let rowIndex = index"
-                          [innerHTML]="cellContent(source, 0, row, row[0], rowIndex)"
-                          [ngStyle]="cellStyle(source, 0, row, row[0], rowIndex)">
+                          [innerHTML]="cellContent(source, null, 0, row, row[0], rowIndex)"
+                          [ngStyle]="cellStyle(source, null, 0, row, row[0], rowIndex)">
                 </mat-cell>
               </ng-container>
               <ng-container [matColumnDef]="h.index + ''" *ngFor="let h of source.header; trackBy: trackByColumnIndex;">
                 <mat-header-cell *matHeaderCellDef mat-sort-header [disabled]="!h.sortable"> {{ h.dataKey.label }} </mat-header-cell>
                 <mat-cell *matCellDef="let row; let rowIndex = index"
-                          [innerHTML]="cellContent(source, h.index, row, row[h.index], rowIndex)"
-                          [ngStyle]="cellStyle(source, h.index, row, row[h.index], rowIndex)">
+                          [innerHTML]="cellContent(source, h, h.index, row, row[h.index], rowIndex)"
+                          [ngStyle]="cellStyle(source, h, h.index, row, row[h.index], rowIndex)">
                 </mat-cell>
               </ng-container>
               <ng-container matColumnDef="actions" [stickyEnd]="enableStickyAction">
