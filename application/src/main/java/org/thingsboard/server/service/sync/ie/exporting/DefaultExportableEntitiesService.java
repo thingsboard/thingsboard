@@ -63,7 +63,6 @@ public class DefaultExportableEntitiesService implements ExportableEntitiesServi
 
     private final Map<EntityType, Dao<?>> daos = new HashMap<>();
 
-    private final EntityService entityService;
     private final AccessControlService accessControlService;
 
 
@@ -140,28 +139,6 @@ public class DefaultExportableEntitiesService implements ExportableEntitiesServi
         return tenantId.equals(((HasTenantId) entity).getTenantId());
     }
 
-
-    private List<EntityId> findEntitiesByFilter(TenantId tenantId, CustomerId customerId, EntityFilter filter, int page, int pageSize) {
-        EntityDataPageLink pageLink = new EntityDataPageLink();
-        pageLink.setPage(page);
-        pageLink.setPageSize(pageSize);
-        EntityKey sortProperty = new EntityKey(EntityKeyType.ENTITY_FIELD, CREATED_TIME);
-        pageLink.setSortOrder(new EntityDataSortOrder(sortProperty, EntityDataSortOrder.Direction.DESC));
-
-        EntityDataQuery query = new EntityDataQuery(filter, pageLink, List.of(sortProperty), Collections.emptyList(), Collections.emptyList());
-        return findEntitiesByQuery(tenantId, customerId, query);
-    }
-
-    private List<EntityId> findEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityDataQuery query) {
-        try {
-            return entityService.findEntityDataByQuery(tenantId, customerId, query).getData().stream()
-                    .map(EntityData::getEntityId)
-                    .collect(Collectors.toList());
-        } catch (DataAccessException e) {
-            log.error("Failed to find entity data by query: {}", e.getMessage());
-            throw new IllegalArgumentException("Entity filter cannot be processed");
-        }
-    }
 
     @Override
     public <I extends EntityId> void deleteByTenantIdAndId(TenantId tenantId, I id) {

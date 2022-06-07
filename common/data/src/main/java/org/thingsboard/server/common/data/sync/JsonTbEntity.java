@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.widget.WidgetsBundle;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -41,7 +42,8 @@ import java.lang.annotation.Target;
         @Type(name = "DEVICE_PROFILE", value = DeviceProfile.class),
         @Type(name = "ASSET", value = Asset.class),
         @Type(name = "DASHBOARD", value = Dashboard.class),
-        @Type(name = "CUSTOMER", value = Customer.class)
+        @Type(name = "CUSTOMER", value = Customer.class),
+        @Type(name = "WIDGETS_BUNDLE", value = WidgetsBundle.class)
 })
 public @interface JsonTbEntity {
 }

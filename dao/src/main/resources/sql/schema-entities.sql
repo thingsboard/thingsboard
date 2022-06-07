@@ -423,7 +423,8 @@ CREATE TABLE IF NOT EXISTS widgets_bundle (
     tenant_id uuid,
     title varchar(255),
     image varchar(1000000),
-    description varchar(255)
+    description varchar(255),
+    external_id uuid
 );
 
 CREATE TABLE IF NOT EXISTS entity_view (
