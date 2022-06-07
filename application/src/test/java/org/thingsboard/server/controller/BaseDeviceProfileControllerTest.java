@@ -26,8 +26,10 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
@@ -41,9 +43,11 @@ import org.thingsboard.server.common.data.device.profile.JsonTransportPayloadCon
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.dao.audit.AuditLogService;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -55,6 +59,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.times;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public abstract class BaseDeviceProfileControllerTest extends AbstractControllerTest {
@@ -64,6 +69,12 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
 
     private Tenant savedTenant;
     private User tenantAdmin;
+
+    @SpyBean
+    private TbClusterService tbClusterService;
+
+    @SpyBean
+    private AuditLogService auditLogService;
 
     @Before
     public void beforeTest() throws Exception {
@@ -107,7 +118,16 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         Assert.assertEquals(DeviceProfileProvisionType.DISABLED, savedDeviceProfile.getProvisionType());
         savedDeviceProfile.setName("New device profile");
         doPost("/api/deviceProfile", savedDeviceProfile, DeviceProfile.class);
-        DeviceProfile foundDeviceProfile = doGet("/api/deviceProfile/"+savedDeviceProfile.getId().getId().toString(), DeviceProfile.class);
+
+        Mockito.verify(tbClusterService, times(2)).onDeviceProfileChange(Mockito.any(DeviceProfile.class), Mockito.any());
+        Mockito.verify(tbClusterService, times(2)).sendNotificationMsgToEdgeService(Mockito.any(),
+                Mockito.any(), Mockito.any(DeviceProfileId.class), Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.verify(auditLogService, times(2)).logEntityAction(Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(DeviceProfile.class), Mockito.any(), Mockito.any());
+        Mockito.verify(tbClusterService, times(2)).pushMsgToRuleEngine(Mockito.any(),
+                Mockito.any(DeviceProfileId.class), Mockito.any(), Mockito.any());
+
+        DeviceProfile foundDeviceProfile = doGet("/api/deviceProfile/" + savedDeviceProfile.getId().getId().toString(), DeviceProfile.class);
         Assert.assertEquals(savedDeviceProfile.getName(), foundDeviceProfile.getName());
     }
 
@@ -121,7 +141,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
     public void testFindDeviceProfileById() throws Exception {
         DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile");
         DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
-        DeviceProfile foundDeviceProfile = doGet("/api/deviceProfile/"+savedDeviceProfile.getId().getId().toString(), DeviceProfile.class);
+        DeviceProfile foundDeviceProfile = doGet("/api/deviceProfile/" + savedDeviceProfile.getId().getId().toString(), DeviceProfile.class);
         Assert.assertNotNull(foundDeviceProfile);
         Assert.assertEquals(savedDeviceProfile, foundDeviceProfile);
     }
@@ -130,7 +150,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
     public void testFindDeviceProfileInfoById() throws Exception {
         DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile");
         DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
-        DeviceProfileInfo foundDeviceProfileInfo = doGet("/api/deviceProfileInfo/"+savedDeviceProfile.getId().getId().toString(), DeviceProfileInfo.class);
+        DeviceProfileInfo foundDeviceProfileInfo = doGet("/api/deviceProfileInfo/" + savedDeviceProfile.getId().getId().toString(), DeviceProfileInfo.class);
         Assert.assertNotNull(foundDeviceProfileInfo);
         Assert.assertEquals(savedDeviceProfile.getId(), foundDeviceProfileInfo.getId());
         Assert.assertEquals(savedDeviceProfile.getName(), foundDeviceProfileInfo.getName());
@@ -152,8 +172,17 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
     public void testSetDefaultDeviceProfile() throws Exception {
         DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile 1");
         DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
-        DeviceProfile defaultDeviceProfile = doPost("/api/deviceProfile/"+savedDeviceProfile.getId().getId().toString()+"/default", DeviceProfile.class);
+        DeviceProfile defaultDeviceProfile = doPost("/api/deviceProfile/" + savedDeviceProfile.getId().getId().toString() + "/default", DeviceProfile.class);
         Assert.assertNotNull(defaultDeviceProfile);
+
+        Mockito.verify(tbClusterService, times(1)).onDeviceProfileChange(Mockito.any(DeviceProfile.class), Mockito.any());
+        Mockito.verify(tbClusterService, times(1)).sendNotificationMsgToEdgeService(Mockito.any(),
+                Mockito.any(), Mockito.any(DeviceProfileId.class), Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.verify(auditLogService, times(3)).logEntityAction(Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(DeviceProfile.class), Mockito.any(), Mockito.any());
+        Mockito.verify(tbClusterService, times(3)).pushMsgToRuleEngine(Mockito.any(),
+                Mockito.any(DeviceProfileId.class), Mockito.any(), Mockito.any());
+
         DeviceProfileInfo foundDefaultDeviceProfile = doGet("/api/deviceProfileInfo/default", DeviceProfileInfo.class);
         Assert.assertNotNull(foundDefaultDeviceProfile);
         Assert.assertEquals(savedDeviceProfile.getName(), foundDefaultDeviceProfile.getName());
@@ -188,20 +217,21 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
                 .andExpect(statusReason(containsString("Device profile with such provision device key already exists")));
     }
 
-    @Ignore
     @Test
-    public void testChangeDeviceProfileTypeWithExistingDevices() throws Exception {
+    public void testChangeDeviceProfileTransportTypeWithoutExistingDevices() throws Exception {
         DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile");
         DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
-        Device device = new Device();
-        device.setName("Test device");
-        device.setType("default");
-        device.setDeviceProfileId(savedDeviceProfile.getId());
-        doPost("/api/device", device, Device.class);
-        //TODO uncomment once we have other device types;
-        //savedDeviceProfile.setType(DeviceProfileType.LWM2M);
-        doPost("/api/deviceProfile", savedDeviceProfile).andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Can't change device profile type because devices referenced it")));
+        savedDeviceProfile.setTransportType(DeviceTransportType.LWM2M);
+        DeviceProfile savedDeviceProfile1 = doPost("/api/deviceProfile", savedDeviceProfile, DeviceProfile.class);
+        Assert.assertEquals(savedDeviceProfile.getTransportType(), savedDeviceProfile1.getTransportType());
+
+        Mockito.verify(tbClusterService, times(2)).onDeviceProfileChange(Mockito.any(DeviceProfile.class), Mockito.any());
+        Mockito.verify(tbClusterService, times(2)).sendNotificationMsgToEdgeService(Mockito.any(),
+                Mockito.any(), Mockito.any(DeviceProfileId.class), Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.verify(auditLogService, times(2)).logEntityAction(Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(DeviceProfile.class), Mockito.any(), Mockito.any());
+        Mockito.verify(tbClusterService, times(2)).pushMsgToRuleEngine(Mockito.any(),
+                Mockito.any(DeviceProfileId.class), Mockito.any(), Mockito.any());
     }
 
     @Test
@@ -216,6 +246,14 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         savedDeviceProfile.setTransportType(DeviceTransportType.MQTT);
         doPost("/api/deviceProfile", savedDeviceProfile).andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("Can't change device profile transport type because devices referenced it")));
+
+        Mockito.verify(tbClusterService, times(1)).onDeviceProfileChange(Mockito.any(DeviceProfile.class), Mockito.any());
+        Mockito.verify(tbClusterService, times(1)).sendNotificationMsgToEdgeService(Mockito.any(),
+                Mockito.any(), Mockito.any(DeviceProfileId.class), Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.verify(auditLogService, times(2)).logEntityAction(Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(DeviceProfile.class), Mockito.any(), Mockito.any());
+        Mockito.verify(tbClusterService, times(1)).pushMsgToRuleEngine(Mockito.any(),
+                Mockito.any(DeviceProfileId.class), Mockito.any(), Mockito.any());
     }
 
     @Test
@@ -243,6 +281,14 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         doDelete("/api/deviceProfile/" + savedDeviceProfile.getId().getId().toString())
                 .andExpect(status().isOk());
 
+            Mockito.verify(tbClusterService, times(1)).onDeviceProfileDelete(Mockito.any(DeviceProfile.class), Mockito.any());
+            Mockito.verify(tbClusterService, times(2)).sendNotificationMsgToEdgeService(Mockito.any(),
+                    Mockito.any(), Mockito.any(DeviceProfileId.class), Mockito.any(), Mockito.any(), Mockito.any());
+            Mockito.verify(auditLogService, times(1)).logEntityAction(Mockito.any(), Mockito.any(),
+                    Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(DeviceProfile.class), Mockito.any(), Mockito.any());
+            Mockito.verify(tbClusterService, times(2)).pushMsgToRuleEngine(Mockito.any(),
+                    Mockito.any(DeviceProfileId.class), Mockito.any(), Mockito.any());
+
         doGet("/api/deviceProfile/" + savedDeviceProfile.getId().getId().toString())
                 .andExpect(status().isNotFound());
     }
@@ -252,13 +298,14 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         List<DeviceProfile> deviceProfiles = new ArrayList<>();
         PageLink pageLink = new PageLink(17);
         PageData<DeviceProfile> pageData = doGetTypedWithPageLink("/api/deviceProfiles?",
-                new TypeReference<PageData<DeviceProfile>>(){}, pageLink);
+                new TypeReference<PageData<DeviceProfile>>() {
+                }, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(1, pageData.getTotalElements());
         deviceProfiles.addAll(pageData.getData());
 
-        for (int i=0;i<28;i++) {
-            DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile"+i);
+        for (int i = 0; i < 28; i++) {
+            DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile" + i);
             deviceProfiles.add(doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class));
         }
 
@@ -266,7 +313,8 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         pageLink = new PageLink(17);
         do {
             pageData = doGetTypedWithPageLink("/api/deviceProfiles?",
-                    new TypeReference<PageData<DeviceProfile>>(){}, pageLink);
+                    new TypeReference<PageData<DeviceProfile>>() {
+                    }, pageLink);
             loadedDeviceProfiles.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -287,7 +335,8 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
 
         pageLink = new PageLink(17);
         pageData = doGetTypedWithPageLink("/api/deviceProfiles?",
-                new TypeReference<PageData<DeviceProfile>>(){}, pageLink);
+                new TypeReference<PageData<DeviceProfile>>() {
+                }, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(1, pageData.getTotalElements());
     }
@@ -297,13 +346,14 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         List<DeviceProfile> deviceProfiles = new ArrayList<>();
         PageLink pageLink = new PageLink(17);
         PageData<DeviceProfile> deviceProfilePageData = doGetTypedWithPageLink("/api/deviceProfiles?",
-                new TypeReference<PageData<DeviceProfile>>(){}, pageLink);
+                new TypeReference<PageData<DeviceProfile>>() {
+                }, pageLink);
         Assert.assertFalse(deviceProfilePageData.hasNext());
         Assert.assertEquals(1, deviceProfilePageData.getTotalElements());
         deviceProfiles.addAll(deviceProfilePageData.getData());
 
-        for (int i=0;i<28;i++) {
-            DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile"+i);
+        for (int i = 0; i < 28; i++) {
+            DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile" + i);
             deviceProfiles.add(doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class));
         }
 
@@ -312,7 +362,8 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         PageData<DeviceProfileInfo> pageData;
         do {
             pageData = doGetTypedWithPageLink("/api/deviceProfileInfos?",
-                    new TypeReference<PageData<DeviceProfileInfo>>(){}, pageLink);
+                    new TypeReference<PageData<DeviceProfileInfo>>() {
+                    }, pageLink);
             loadedDeviceProfileInfos.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -337,7 +388,8 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
 
         pageLink = new PageLink(17);
         pageData = doGetTypedWithPageLink("/api/deviceProfileInfos?",
-                new TypeReference<PageData<DeviceProfileInfo>>(){}, pageLink);
+                new TypeReference<PageData<DeviceProfileInfo>>() {
+                }, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(1, pageData.getTotalElements());
     }
@@ -847,7 +899,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         Assert.assertTrue(savedDeviceProfile.getProfileData().getTransportConfiguration() instanceof MqttDeviceProfileTransportConfiguration);
         MqttDeviceProfileTransportConfiguration transportConfiguration = (MqttDeviceProfileTransportConfiguration) savedDeviceProfile.getProfileData().getTransportConfiguration();
         Assert.assertTrue(transportConfiguration.isSendAckOnValidationException());
-        DeviceProfile foundDeviceProfile = doGet("/api/deviceProfile/"+ savedDeviceProfile.getId().getId().toString(), DeviceProfile.class);
+        DeviceProfile foundDeviceProfile = doGet("/api/deviceProfile/" + savedDeviceProfile.getId().getId().toString(), DeviceProfile.class);
         Assert.assertEquals(savedDeviceProfile, foundDeviceProfile);
     }
 
@@ -857,7 +909,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile", mqttDeviceProfileTransportConfiguration);
         DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
         Assert.assertNotNull(savedDeviceProfile);
-        DeviceProfile foundDeviceProfile = doGet("/api/deviceProfile/"+ savedDeviceProfile.getId().getId().toString(), DeviceProfile.class);
+        DeviceProfile foundDeviceProfile = doGet("/api/deviceProfile/" + savedDeviceProfile.getId().getId().toString(), DeviceProfile.class);
         Assert.assertEquals(savedDeviceProfile, foundDeviceProfile);
         return savedDeviceProfile;
     }
