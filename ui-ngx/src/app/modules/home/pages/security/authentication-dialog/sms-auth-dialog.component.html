@@ -37,20 +37,7 @@
       <form [formGroup]="smsConfigForm" (ngSubmit)="nextStep()">
         <p class="mat-body step-description input" translate>security.2fa.dialog.sms-step-description</p>
         <div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="8px">
-          <mat-form-field  fxFlex class="mat-block input-container" floatLabel="always" hideRequiredMarker>
-            <mat-label></mat-label>
-            <input type="tel" required
-                   [pattern]="phoneNumberPattern"
-                   matInput formControlName="phone"
-                   placeholder="{{ 'security.2fa.dialog.sms-step-label' | translate }}">
-            <mat-error *ngIf="smsConfigForm.get('phone').hasError('required')">
-              {{ 'admin.number-to-required' | translate }}
-            </mat-error>
-            <mat-error *ngIf="smsConfigForm.get('phone').hasError('pattern')">
-              {{ 'admin.phone-number-pattern' | translate }}
-            </mat-error>
-            <mat-hint innerHTML="{{ 'admin.phone-number-hint' | translate }}"></mat-hint>
-          </mat-form-field>
+          <tb-phone-input fxFlex formControlName="phone" [floatLabel]="'never'"></tb-phone-input>
           <button mat-raised-button
                   type="submit"
                   color="primary"

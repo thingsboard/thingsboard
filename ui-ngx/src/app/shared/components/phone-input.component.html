@@ -27,7 +27,7 @@
         </mat-option>
       </mat-select>
     </div>
-    <mat-form-field class="phone-input" [floatLabel]="showLabel">
+    <mat-form-field class="phone-input" [appearance]="appearance" [floatLabel]="floatLabel">
       <mat-label translate>phone-input.phone-input-label</mat-label>
       <input
         formControlName="phoneNumber"
@@ -38,14 +38,12 @@
         (focus)="focus()"
         autocomplete="off"
         [required]="required">
+      <mat-hint innerHTML="{{ 'phone-input.phone-input-hint' | translate: {phoneNumber: phonePlaceholder} }}"></mat-hint>
       <mat-error *ngIf="phoneFormGroup.get('phoneNumber').hasError('required')">
         {{ 'phone-input.phone-input-required' | translate }}
       </mat-error>
       <mat-error *ngIf="phoneFormGroup.get('phoneNumber').hasError('invalidPhoneNumber')">
         {{ 'phone-input.phone-input-validation' | translate }}
-      </mat-error>
-      <mat-error *ngIf="phoneFormGroup.get('phoneNumber').hasError('pattern')">
-        {{ 'phone-input.phone-input-pattern' | translate }}
       </mat-error>
     </mat-form-field>
   </div>

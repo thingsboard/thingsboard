@@ -33,6 +33,7 @@ import examples from 'libphonenumber-js/examples.mobile.json';
 import { CountryCode, getExampleNumber, parsePhoneNumberFromString } from 'libphonenumber-js';
 import { phoneNumberPattern } from '@shared/models/settings.models';
 import { Subscription } from 'rxjs';
+import { FloatLabelType, MatFormFieldAppearance } from '@angular/material/form-field/form-field';
 
 @Component({
   selector: 'tb-phone-input',
@@ -58,15 +59,8 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
   @Input() defaultCountry: CountryCode = 'US';
   @Input() enableFlagsSelect = true;
   @Input() required = true;
-
-  private floatLabel = 'always';
-  get showLabel(): string {
-    return this.floatLabel;
-  }
-  @Input()
-  set showLabel(value) {
-    this.floatLabel = value ? 'always' : 'never';
-  }
+  @Input() floatLabel: FloatLabelType = 'always';
+  @Input() appearance: MatFormFieldAppearance = 'legacy';
 
   allCountries: Array<Country> = [];
   phonePlaceholder: string;
@@ -134,6 +128,8 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
 
   focus() {
     const phoneNumber = this.phoneFormGroup.get('phoneNumber');
+    this.phoneFormGroup.markAsPristine();
+    this.phoneFormGroup.markAsUntouched();
     if (!phoneNumber.value) {
       phoneNumber.patchValue(this.countryCallingCode);
     }
@@ -220,7 +216,7 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
 
   private updateModel() {
     const phoneNumber = this.phoneFormGroup.get('phoneNumber');
-    if (phoneNumber.valid && this.modelValue !== phoneNumber.value) {
+    if (phoneNumber.valid && phoneNumber.value) {
       this.modelValue = phoneNumber.value;
       this.propagateChange(this.modelValue);
     } else {
