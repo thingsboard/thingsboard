@@ -47,7 +47,6 @@ import java.util.Map;
 @TbCoreComponent
 @RequiredArgsConstructor
 @Slf4j
-@SuppressWarnings("rawtypes")
 public class DefaultEntitiesExportImportService implements EntitiesExportImportService {
 
     private final Map<EntityType, EntityExportService<?, ?, ?>> exportServices = new HashMap<>();
