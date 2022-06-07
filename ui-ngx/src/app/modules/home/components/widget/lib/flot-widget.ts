@@ -312,6 +312,7 @@ export class TbFlot {
       if (this.settings.stroke) {
         this.options.series.pie.stroke.color = this.settings.stroke.color || '#fff';
         this.options.series.pie.stroke.width = this.settings.stroke.width || 0;
+        this.scalingPieRadius();
       }
 
       if (this.options.series.pie.label.show) {
@@ -690,6 +691,16 @@ export class TbFlot {
     }
   }
 
+  private scalingPieRadius() {
+    // if (this.options.series.pie.stroke?.color !== '#fff' && this.options.series.pie.stroke?.width !== 0) {
+      let scalingLine;
+      this.ctx.width > this.ctx.height ? scalingLine = this.ctx.height : scalingLine = this.ctx.width;
+      let changeRadius = this.options.series.pie.stroke.width / scalingLine;
+      this.options.series.pie.radius = changeRadius < 1 ? this.settings.radius - changeRadius : 0;
+      console.log(this.options.series.pie.radius);
+    // }
+  }
+
   public resize() {
     if (this.resizeTimeoutHandle) {
       clearTimeout(this.resizeTimeoutHandle);
@@ -698,10 +709,15 @@ export class TbFlot {
     if (this.plot && this.plotInited) {
       const width = this.$element.width();
       const height = this.$element.height();
+      // if (this.chartType === 'pie') {
+      //   this.scalingPieRadius();
+      // }
       if (width && height) {
         this.plot.resize();
         if (this.chartType !== 'pie') {
           this.plot.setupGrid();
+        } else {
+          this.scalingPieRadius();
         }
         this.plot.draw();
       } else {
