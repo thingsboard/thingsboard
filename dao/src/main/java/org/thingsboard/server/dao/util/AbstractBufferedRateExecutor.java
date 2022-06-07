@@ -287,6 +287,10 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
         return queue.size();
     }
 
+    protected void schedulePrintStats() {
+        tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, printInterval, printInterval, TimeUnit.MILLISECONDS);
+    }
+
     public void printStats() {
         int queueSize = getQueueSize();
         int rateLimitedTenantsCount = (int) stats.getRateLimitedTenants().values().stream()

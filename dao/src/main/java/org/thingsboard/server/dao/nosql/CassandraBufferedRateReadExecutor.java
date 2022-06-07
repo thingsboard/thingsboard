@@ -30,7 +30,6 @@ import org.thingsboard.server.dao.util.NoSqlAnyDao;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by ashvayka on 24.10.18.
@@ -63,7 +62,7 @@ public class CassandraBufferedRateReadExecutor extends AbstractBufferedRateExecu
 
     @PostConstruct
     public void init() {
-        tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, printInterval, printInterval, TimeUnit.MILLISECONDS);
+        schedulePrintStats();
     }
 
     @Override
