@@ -355,6 +355,8 @@ public abstract class TwoFactorAuthTest extends AbstractControllerTest {
         emailTwoFaProviderConfig.setVerificationCodeLifetime(60);
 
         platformTwoFaSettings.setProviders(List.of(totpTwoFaProviderConfig, smsTwoFaProviderConfig, emailTwoFaProviderConfig));
+        platformTwoFaSettings.setMinVerificationCodeSendPeriod(5);
+        platformTwoFaSettings.setTotalAllowedTimeForVerification(100);
         twoFaConfigManager.savePlatformTwoFaSettings(TenantId.SYS_TENANT_ID, platformTwoFaSettings);
 
         User twoFaUser = new User();
@@ -409,6 +411,8 @@ public abstract class TwoFactorAuthTest extends AbstractControllerTest {
 
         PlatformTwoFaSettings twoFaSettings = new PlatformTwoFaSettings();
         twoFaSettings.setProviders(Arrays.stream(new TwoFaProviderConfig[]{totpTwoFaProviderConfig}).collect(Collectors.toList()));
+        twoFaSettings.setMinVerificationCodeSendPeriod(5);
+        twoFaSettings.setTotalAllowedTimeForVerification(100);
         Arrays.stream(customizer).forEach(c -> c.accept(twoFaSettings));
         twoFaConfigManager.savePlatformTwoFaSettings(TenantId.SYS_TENANT_ID, twoFaSettings);
 
@@ -425,6 +429,8 @@ public abstract class TwoFactorAuthTest extends AbstractControllerTest {
 
         PlatformTwoFaSettings twoFaSettings = new PlatformTwoFaSettings();
         twoFaSettings.setProviders(Arrays.stream(new TwoFaProviderConfig[]{smsTwoFaProviderConfig}).collect(Collectors.toList()));
+        twoFaSettings.setMinVerificationCodeSendPeriod(5);
+        twoFaSettings.setTotalAllowedTimeForVerification(100);
         twoFaConfigManager.savePlatformTwoFaSettings(TenantId.SYS_TENANT_ID, twoFaSettings);
 
         SmsTwoFaAccountConfig smsTwoFaAccountConfig = new SmsTwoFaAccountConfig();
