@@ -13,21 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy.deviceProfile;
+package org.thingsboard.server.service.entitiy.device.profile;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
-import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.ota.OtaPackageStateService;
 
 import java.util.Objects;
 
@@ -36,8 +38,12 @@ import java.util.Objects;
 @AllArgsConstructor
 @Slf4j
 public class DefaultTbDeviceProfileService extends AbstractTbEntityService implements TbDeviceProfileService {
+
+    private final DeviceProfileService deviceProfileService;
+    private final OtaPackageStateService otaPackageStateService;
+
     @Override
-    public DeviceProfile save(DeviceProfile deviceProfile, SecurityUser user) throws ThingsboardException {
+    public DeviceProfile save(DeviceProfile deviceProfile, User user) throws ThingsboardException {
         ActionType actionType = deviceProfile.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = deviceProfile.getTenantId();
         try {
@@ -70,7 +76,7 @@ public class DefaultTbDeviceProfileService extends AbstractTbEntityService imple
     }
 
     @Override
-    public void delete(DeviceProfile deviceProfile, SecurityUser user) throws ThingsboardException {
+    public void delete(DeviceProfile deviceProfile, User user) throws ThingsboardException {
         DeviceProfileId deviceProfileId = deviceProfile.getId();
         TenantId tenantId = deviceProfile.getTenantId();
         try {
@@ -78,15 +84,15 @@ public class DefaultTbDeviceProfileService extends AbstractTbEntityService imple
 
             tbClusterService.onDeviceProfileDelete(deviceProfile, null);
             tbClusterService.broadcastEntityStateChangeEvent(tenantId, deviceProfileId, ComponentLifecycleEvent.DELETED);
-            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, deviceProfileId, deviceProfile, user, ActionType.DELETED,  true, null, deviceProfileId.toString());
+            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, deviceProfileId, deviceProfile, user, ActionType.DELETED, true, null, deviceProfileId.toString());
         } catch (Exception e) {
-            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, emptyId(EntityType.DEVICE_PROFILE), null, user, ActionType.DELETED,  false, e, deviceProfileId.toString());
+            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, emptyId(EntityType.DEVICE_PROFILE), null, user, ActionType.DELETED, false, e, deviceProfileId.toString());
             throw handleException(e);
         }
     }
 
     @Override
-    public DeviceProfile setDefaultDeviceProfile(DeviceProfile deviceProfile, DeviceProfile previousDefaultDeviceProfile, SecurityUser user) throws ThingsboardException {
+    public DeviceProfile setDefaultDeviceProfile(DeviceProfile deviceProfile, DeviceProfile previousDefaultDeviceProfile, User user) throws ThingsboardException {
         TenantId tenantId = deviceProfile.getTenantId();
         try {
 

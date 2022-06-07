@@ -13,35 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy.widgetsBundle;
+package org.thingsboard.server.service.entitiy.widgets.bundle;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
-import org.thingsboard.server.service.security.model.SecurityUser;
 
 @Service
 @TbCoreComponent
 @AllArgsConstructor
-public class DefaultWidgetsBundleService extends AbstractTbEntityService implements TbWidgetsBundleService{
+public class DefaultWidgetsBundleService extends AbstractTbEntityService implements TbWidgetsBundleService {
+
+    private final WidgetsBundleService widgetsBundleService;
+
     @Override
-    public WidgetsBundle save(WidgetsBundle widgetsBundle, SecurityUser user) throws ThingsboardException {
+    public WidgetsBundle save(WidgetsBundle widgetsBundle) throws ThingsboardException {
         try {
-        WidgetsBundle savedWidgetsBundle = checkNotNull(widgetsBundleService.saveWidgetsBundle(widgetsBundle));
+            WidgetsBundle savedWidgetsBundle = checkNotNull(widgetsBundleService.saveWidgetsBundle(widgetsBundle));
             notificationEntityService.notifySendMsgToEdgeService(widgetsBundle.getTenantId(), savedWidgetsBundle.getId(),
                     widgetsBundle.getId() == null ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
-        return savedWidgetsBundle;
+            return savedWidgetsBundle;
         } catch (Exception e) {
             throw handleException(e);
         }
     }
 
     @Override
-    public void delete(WidgetsBundle widgetsBundle, SecurityUser user) throws ThingsboardException {
+    public void delete(WidgetsBundle widgetsBundle) throws ThingsboardException {
         try {
             widgetsBundleService.deleteWidgetsBundle(widgetsBundle.getTenantId(), widgetsBundle.getId());
             notificationEntityService.notifySendMsgToEdgeService(widgetsBundle.getTenantId(), widgetsBundle.getId(),

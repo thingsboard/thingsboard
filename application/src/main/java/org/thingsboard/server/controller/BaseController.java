@@ -882,16 +882,10 @@ public abstract class BaseController {
         return (I) EntityIdFactory.getByTypeAndUuid(entityType, ModelConstants.NULL_UUID);
     }
 
-    protected <E extends HasName, I extends EntityId> void logEntityAction(I entityId, E entity, CustomerId customerId,
-                                                                           ActionType actionType, Exception e, Object... additionalInfo) throws ThingsboardException {
-        logEntityAction(getCurrentUser(), entityId, entity, customerId, actionType, e, additionalInfo);
-    }
-
     protected <E extends HasName, I extends EntityId> void logEntityAction(User user, I entityId, E entity, CustomerId customerId,
                                                                            ActionType actionType, Exception e, Object... additionalInfo) throws ThingsboardException {
         entityActionService.logEntityAction(user, entityId, entity, customerId, actionType, e, additionalInfo);
     }
-
 
     public static Exception toException(Throwable error) {
         return error != null ? (Exception.class.isInstance(error) ? (Exception) error : new Exception(error)) : null;

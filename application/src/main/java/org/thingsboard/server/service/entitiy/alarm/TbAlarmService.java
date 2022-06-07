@@ -15,17 +15,17 @@
  */
 package org.thingsboard.server.service.entitiy.alarm;
 
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface TbAlarmService {
 
-    Alarm save(Alarm entity, SecurityUser user) throws ThingsboardException;
+    Alarm save(Alarm entity, User user) throws ThingsboardException;
 
-    void ack(Alarm alarm, SecurityUser user) throws ThingsboardException;
+    void ack(Alarm alarm, User user) throws ThingsboardException;
 
-    void clear(Alarm alarm, SecurityUser user) throws ThingsboardException;
+    void clear(Alarm alarm, User user) throws ThingsboardException;
 
-    Boolean delete(Alarm alarm, SecurityUser user) throws ThingsboardException;
+    Boolean delete(Alarm alarm, User user) throws ThingsboardException;
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy.entityView;
+package org.thingsboard.server.service.entitiy.entityview;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -27,9 +27,9 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -40,10 +40,12 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
-import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -61,11 +63,20 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 @Slf4j
 public class DefaultTbEntityViewService extends AbstractTbEntityService implements TbEntityViewService {
 
+    private final EntityViewService entityViewService;
+    private final AttributesService attributesService;
+    private final TelemetrySubscriptionService tsSubService;
     private final TimeseriesService tsService;
 
     @Override
-    public EntityView save(EntityView entityView, EntityView existingEntityView, SecurityUser user) throws ThingsboardException {
+    public EntityView save(EntityView entityView, EntityView existingEntityView) throws ThingsboardException {
+        return save(entityView, existingEntityView, null);
+    }
+
+    @Override
+    public EntityView save(EntityView entityView, EntityView existingEntityView, User user) throws ThingsboardException {
         ActionType actionType = entityView.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
+        TenantId tenantId = entityView.getTenantId();
         try {
             List<ListenableFuture<?>> futures = new ArrayList<>();
             if (existingEntityView != null) {
@@ -85,7 +96,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
                     futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SERVER_SCOPE, savedEntityView.getKeys().getAttributes().getSs(), user));
                     futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SHARED_SCOPE, savedEntityView.getKeys().getAttributes().getSh(), user));
                 }
-                futures.add(copyLatestFromEntityToEntityView(savedEntityView, user));
+                futures.add(copyLatestFromEntityToEntityView(tenantId, savedEntityView));
             }
             for (ListenableFuture<?> future : futures) {
                 try {
@@ -95,18 +106,18 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
                 }
             }
 
-            notificationEntityService.notifyCreateOrUpdateEntity(savedEntityView.getTenantId(), savedEntityView.getId(), savedEntityView,
+            notificationEntityService.notifyCreateOrUpdateEntity(tenantId, savedEntityView.getId(), savedEntityView,
                     null, actionType, user);
 
             return savedEntityView;
         } catch (Exception e) {
-            notificationEntityService.notifyEntity(user.getTenantId(), emptyId(EntityType.ENTITY_VIEW), entityView, null, actionType, user, e);
+            notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.ENTITY_VIEW), entityView, null, actionType, user, e);
             throw handleException(e);
         }
     }
 
     @Override
-    public void delete(EntityView entityView, SecurityUser user) throws ThingsboardException {
+    public void delete(EntityView entityView, User user) throws ThingsboardException {
         TenantId tenantId = entityView.getTenantId();
         EntityViewId entityViewId = entityView.getId();
         try {
@@ -122,13 +133,13 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
     }
 
     @Override
-    public EntityView assignEntityViewToCustomer(TenantId tenantId, EntityViewId entityViewId, Customer customer, SecurityUser user) throws ThingsboardException {
+    public EntityView assignEntityViewToCustomer(TenantId tenantId, EntityViewId entityViewId, Customer customer, User user) throws ThingsboardException {
         ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER;
         CustomerId customerId = customer.getId();
         try {
             EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToCustomer(tenantId, entityViewId, customerId));
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, entityViewId, customerId, savedEntityView,
-                    actionType, EdgeEventActionType.ASSIGNED_TO_CUSTOMER, user, true, customerId.toString(), customer.getName());
+                    actionType, user, true, customerId.toString(), customer.getName());
             return savedEntityView;
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.ENTITY_VIEW), null, null,
@@ -139,13 +150,13 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
 
     @Override
     public EntityView assignEntityViewToPublicCustomer(TenantId tenantId, CustomerId customerId, Customer publicCustomer,
-                                                       EntityViewId entityViewId, SecurityUser user) throws ThingsboardException {
+                                                       EntityViewId entityViewId, User user) throws ThingsboardException {
         ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER;
         try {
             EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToCustomer(tenantId,
                     entityViewId, publicCustomer.getId()));
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, entityViewId, customerId, savedEntityView,
-                    actionType, null, user, false, savedEntityView.getEntityId().toString(),
+                    actionType, user, false, savedEntityView.getEntityId().toString(),
                     publicCustomer.getId().toString(), publicCustomer.getName());
             return savedEntityView;
         } catch (Exception e) {
@@ -156,7 +167,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
     }
 
     @Override
-    public EntityView assignEntityViewToEdge(TenantId tenantId, CustomerId customerId, EntityViewId entityViewId, Edge edge, SecurityUser user) throws ThingsboardException {
+    public EntityView assignEntityViewToEdge(TenantId tenantId, CustomerId customerId, EntityViewId entityViewId, Edge edge, User user) throws ThingsboardException {
         ActionType actionType = ActionType.ASSIGNED_TO_EDGE;
         EdgeId edgeId = edge.getId();
         EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToEdge(tenantId, entityViewId, edgeId));
@@ -174,7 +185,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
 
     @Override
     public EntityView unassignEntityViewFromEdge(TenantId tenantId, CustomerId customerId, EntityView entityView,
-                                                 Edge edge, SecurityUser user) throws ThingsboardException {
+                                                 Edge edge, User user) throws ThingsboardException {
         ActionType actionType = ActionType.UNASSIGNED_FROM_EDGE;
         EntityViewId entityViewId = entityView.getId();
         EdgeId edgeId = edge.getId();
@@ -192,12 +203,12 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
     }
 
     @Override
-    public EntityView unassignEntityViewFromCustomer(TenantId tenantId, EntityViewId entityViewId, Customer customer, SecurityUser user) throws ThingsboardException {
+    public EntityView unassignEntityViewFromCustomer(TenantId tenantId, EntityViewId entityViewId, Customer customer, User user) throws ThingsboardException {
         ActionType actionType = ActionType.UNASSIGNED_FROM_CUSTOMER;
         try {
             EntityView savedEntityView = checkNotNull(entityViewService.unassignEntityViewFromCustomer(tenantId, entityViewId));
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, entityViewId, customer.getId(), savedEntityView,
-                    actionType, EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER, user, true, customer.getId().toString(), customer.getName());
+                    actionType, user, true, customer.getId().toString(), customer.getName());
             return savedEntityView;
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.ENTITY_VIEW), null, null,
@@ -206,7 +217,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         }
     }
 
-    private ListenableFuture<List<Void>> copyAttributesFromEntityToEntityView(EntityView entityView, String scope, Collection<String> keys, SecurityUser user) throws ThingsboardException {
+    private ListenableFuture<List<Void>> copyAttributesFromEntityToEntityView(EntityView entityView, String scope, Collection<String> keys, User user) throws ThingsboardException {
         EntityViewId entityId = entityView.getId();
         if (keys != null && !keys.isEmpty()) {
             ListenableFuture<List<AttributeKvEntry>> getAttrFuture = attributesService.find(entityView.getTenantId(), entityView.getEntityId(), scope, keys);
@@ -251,7 +262,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         }
     }
 
-    private ListenableFuture<List<Void>> copyLatestFromEntityToEntityView(EntityView entityView, SecurityUser user) {
+    private ListenableFuture<List<Void>> copyLatestFromEntityToEntityView(TenantId tenantId, EntityView entityView) {
         EntityViewId entityId = entityView.getId();
         List<String> keys = entityView.getKeys() != null && entityView.getKeys().getTimeseries() != null ?
                 entityView.getKeys().getTimeseries() : Collections.emptyList();
@@ -259,7 +270,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         long endTs = entityView.getEndTimeMs() == 0 ? Long.MAX_VALUE : entityView.getEndTimeMs();
         ListenableFuture<List<String>> keysFuture;
         if (keys.isEmpty()) {
-            keysFuture = Futures.transform(tsService.findAllLatest(user.getTenantId(),
+            keysFuture = Futures.transform(tsService.findAllLatest(tenantId,
                     entityView.getEntityId()), latest -> latest.stream().map(TsKvEntry::getKey).collect(Collectors.toList()), MoreExecutors.directExecutor());
         } else {
             keysFuture = Futures.immediateFuture(keys);
@@ -267,7 +278,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         ListenableFuture<List<TsKvEntry>> latestFuture = Futures.transformAsync(keysFuture, fetchKeys -> {
             List<ReadTsKvQuery> queries = fetchKeys.stream().filter(key -> !isBlank(key)).map(key -> new BaseReadTsKvQuery(key, startTs, endTs, 1, "DESC")).collect(Collectors.toList());
             if (!queries.isEmpty()) {
-                return tsService.findAll(user.getTenantId(), entityView.getEntityId(), queries);
+                return tsService.findAll(tenantId, entityView.getEntityId(), queries);
             } else {
                 return Futures.immediateFuture(null);
             }
@@ -288,7 +299,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         }, MoreExecutors.directExecutor());
     }
 
-    private ListenableFuture<Void> deleteAttributesFromEntityView(EntityView entityView, String scope, List<String> keys, SecurityUser user) {
+    private ListenableFuture<Void> deleteAttributesFromEntityView(EntityView entityView, String scope, List<String> keys, User user) {
         EntityViewId entityId = entityView.getId();
         SettableFuture<Void> resultFuture = SettableFuture.create();
         if (keys != null && !keys.isEmpty()) {
@@ -319,7 +330,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         return resultFuture;
     }
 
-    private ListenableFuture<Void> deleteLatestFromEntityView(EntityView entityView, List<String> keys, SecurityUser user) {
+    private ListenableFuture<Void> deleteLatestFromEntityView(EntityView entityView, List<String> keys, User user) {
         EntityViewId entityId = entityView.getId();
         SettableFuture<Void> resultFuture = SettableFuture.create();
         if (keys != null && !keys.isEmpty()) {
@@ -337,7 +348,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
                 @Override
                 public void onFailure(Throwable t) {
                     try {
-                        logTimeseriesDeleted(entityView.getTenantId(),user, entityId, keys, t);
+                        logTimeseriesDeleted(entityView.getTenantId(), user, entityId, keys, t);
                     } catch (ThingsboardException e) {
                         log.error("Failed to log timeseries delete", e);
                     }
@@ -370,15 +381,15 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         return resultFuture;
     }
 
-    private void logAttributesUpdated(TenantId tenantId, SecurityUser user, EntityId entityId, String scope, List<AttributeKvEntry> attributes, Throwable e) throws ThingsboardException {
+    private void logAttributesUpdated(TenantId tenantId, User user, EntityId entityId, String scope, List<AttributeKvEntry> attributes, Throwable e) throws ThingsboardException {
         notificationEntityService.notifyEntity(tenantId, entityId, null, null, ActionType.ATTRIBUTES_UPDATED, user, toException(e), scope, attributes);
     }
 
-    private void logAttributesDeleted(TenantId tenantId, SecurityUser user, EntityId entityId, String scope, List<String> keys, Throwable e) throws ThingsboardException {
+    private void logAttributesDeleted(TenantId tenantId, User user, EntityId entityId, String scope, List<String> keys, Throwable e) throws ThingsboardException {
         notificationEntityService.notifyEntity(tenantId, entityId, null, null, ActionType.ATTRIBUTES_DELETED, user, toException(e), scope, keys);
     }
 
-    private void logTimeseriesDeleted(TenantId tenantId, SecurityUser user, EntityId entityId, List<String> keys, Throwable e) throws ThingsboardException {
+    private void logTimeseriesDeleted(TenantId tenantId, User user, EntityId entityId, List<String> keys, Throwable e) throws ThingsboardException {
         notificationEntityService.notifyEntity(tenantId, entityId, null, null, ActionType.TIMESERIES_DELETED, user, toException(e), keys);
     }
 

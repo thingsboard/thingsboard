@@ -19,25 +19,23 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
-import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.List;
 
 @Service
-@TbCoreComponent
 @AllArgsConstructor
 public class DefaultTbAlarmService extends AbstractTbEntityService implements TbAlarmService {
 
     @Override
-    public Alarm save(Alarm alarm, SecurityUser user) throws ThingsboardException {
+    public Alarm save(Alarm alarm, User user) throws ThingsboardException {
         ActionType actionType = alarm.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = alarm.getTenantId();
         try {
@@ -51,10 +49,10 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public void ack(Alarm alarm, SecurityUser user) throws ThingsboardException {
+    public void ack(Alarm alarm, User user) throws ThingsboardException {
         try {
             long ackTs = System.currentTimeMillis();
-            alarmService.ackAlarm(user.getTenantId(), alarm.getId(), ackTs).get();
+            alarmService.ackAlarm(alarm.getTenantId(), alarm.getId(), ackTs).get();
             alarm.setAckTs(ackTs);
             alarm.setStatus(alarm.getStatus().isCleared() ? AlarmStatus.CLEARED_ACK : AlarmStatus.ACTIVE_ACK);
             notificationEntityService.notifyCreateOrUpdateAlarm(alarm, ActionType.ALARM_ACK, user);
@@ -64,10 +62,10 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public void clear(Alarm alarm, SecurityUser user) throws ThingsboardException {
+    public void clear(Alarm alarm, User user) throws ThingsboardException {
         try {
             long clearTs = System.currentTimeMillis();
-            alarmService.clearAlarm(user.getTenantId(), alarm.getId(), null, clearTs).get();
+            alarmService.clearAlarm(alarm.getTenantId(), alarm.getId(), null, clearTs).get();
             alarm.setClearTs(clearTs);
             alarm.setStatus(alarm.getStatus().isAck() ? AlarmStatus.CLEARED_ACK : AlarmStatus.CLEARED_UNACK);
             notificationEntityService.notifyCreateOrUpdateAlarm(alarm, ActionType.ALARM_CLEAR, user);
@@ -77,12 +75,13 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public Boolean delete(Alarm alarm, SecurityUser user) throws ThingsboardException {
+    public Boolean delete(Alarm alarm, User user) throws ThingsboardException {
         try {
-            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(user.getTenantId(), alarm.getOriginator());
-            notificationEntityService.notifyDeleteAlarm(user.getTenantId(), alarm, alarm.getOriginator(), user.getCustomerId(),
+            TenantId tenantId = alarm.getTenantId();
+            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, alarm.getOriginator());
+            notificationEntityService.notifyDeleteAlarm(tenantId, alarm, alarm.getOriginator(), alarm.getCustomerId(),
                     relatedEdgeIds, user, JacksonUtil.OBJECT_MAPPER.writeValueAsString(alarm));
-            return alarmService.deleteAlarm(user.getTenantId(), alarm.getId()).isSuccessful();
+            return alarmService.deleteAlarm(tenantId, alarm.getId()).isSuccessful();
         } catch (Exception e) {
             throw handleException(e);
         }

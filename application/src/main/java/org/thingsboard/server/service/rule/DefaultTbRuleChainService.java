@@ -23,6 +23,7 @@ import org.thingsboard.rule.engine.flow.TbRuleChainInputNode;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
 import org.thingsboard.rule.engine.flow.TbRuleChainOutputNode;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -45,7 +46,7 @@ import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
-import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.install.InstallScripts;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -65,6 +66,7 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
 
     private final RuleChainService ruleChainService;
     private final RelationService relationService;
+    private final InstallScripts installScripts;
 
     @Override
     public Set<String> getRuleChainOutputLabels(TenantId tenantId, RuleChainId ruleChainId) {
@@ -164,7 +166,7 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
     }
 
     @Override
-    public RuleChain save(RuleChain ruleChain, SecurityUser user) throws ThingsboardException {
+    public RuleChain save(RuleChain ruleChain, User user) throws ThingsboardException {
         TenantId tenantId = ruleChain.getTenantId();
         ActionType actionType = ruleChain.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         try {
@@ -186,7 +188,7 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
     }
 
     @Override
-    public void delete(RuleChain ruleChain, SecurityUser user) throws ThingsboardException {
+    public void delete(RuleChain ruleChain, User user) throws ThingsboardException {
         TenantId tenantId = ruleChain.getTenantId();
         RuleChainId ruleChainId = ruleChain.getId();
         try {
@@ -219,7 +221,7 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
     }
 
     @Override
-    public RuleChain saveDefaultByName(TenantId tenantId, DefaultRuleChainCreateRequest request, SecurityUser user) throws ThingsboardException {
+    public RuleChain saveDefaultByName(TenantId tenantId, DefaultRuleChainCreateRequest request, User user) throws ThingsboardException {
         try {
             RuleChain savedRuleChain = installScripts.createDefaultRuleChain(tenantId, request.getName());
             tbClusterService.broadcastEntityStateChangeEvent(tenantId, savedRuleChain.getId(), ComponentLifecycleEvent.CREATED);
@@ -236,7 +238,7 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
     }
 
     @Override
-    public RuleChain setRootRuleChain(TenantId tenantId, RuleChain ruleChain, SecurityUser user) throws ThingsboardException {
+    public RuleChain setRootRuleChain(TenantId tenantId, RuleChain ruleChain, User user) throws ThingsboardException {
         RuleChainId ruleChainId = ruleChain.getId();
         try {
             RuleChain previousRootRuleChain = ruleChainService.getRootTenantRuleChain(tenantId);
@@ -267,7 +269,7 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
 
     @Override
     public RuleChainMetaData saveRuleChainMetaData(TenantId tenantId, RuleChain ruleChain, RuleChainMetaData ruleChainMetaData,
-                                                   boolean updateRelated, SecurityUser user) throws ThingsboardException {
+                                                   boolean updateRelated, User user) throws ThingsboardException {
         RuleChainId ruleChainId = ruleChain.getId();
         RuleChainId ruleChainMetaDataId = ruleChainMetaData.getRuleChainId();
         try {
@@ -276,7 +278,7 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
 
             List<RuleChain> updatedRuleChains;
             if (updateRelated && result.isSuccess()) {
-                updatedRuleChains = tbRuleChainService.updateRelatedRuleChains(tenantId, ruleChainMetaDataId, result);
+                updatedRuleChains = updateRelatedRuleChains(tenantId, ruleChainMetaDataId, result);
             } else {
                 updatedRuleChains = Collections.emptyList();
             }
@@ -315,7 +317,7 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
     }
 
     @Override
-    public RuleChain assignRuleChainToEdge(TenantId tenantId, RuleChain ruleChain, Edge edge, SecurityUser user) throws ThingsboardException {
+    public RuleChain assignRuleChainToEdge(TenantId tenantId, RuleChain ruleChain, Edge edge, User user) throws ThingsboardException {
         RuleChainId ruleChainId = ruleChain.getId();
         try {
             RuleChain savedRuleChain = checkNotNull(ruleChainService.assignRuleChainToEdge(tenantId, ruleChainId, edge.getId()));
@@ -332,7 +334,7 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
     }
 
     @Override
-    public RuleChain unassignRuleChainFromEdge(TenantId tenantId, RuleChain ruleChain, Edge edge, SecurityUser user) throws ThingsboardException {
+    public RuleChain unassignRuleChainFromEdge(TenantId tenantId, RuleChain ruleChain, Edge edge, User user) throws ThingsboardException {
         RuleChainId ruleChainId = ruleChain.getId();
         try {
             RuleChain savedRuleChain = checkNotNull(ruleChainService.unassignRuleChainFromEdge(tenantId, ruleChainId, edge.getId(), false));
@@ -349,7 +351,7 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
     }
 
     @Override
-    public RuleChain setEdgeTemplateRootRuleChain(TenantId tenantId, RuleChain ruleChain, SecurityUser user) throws ThingsboardException {
+    public RuleChain setEdgeTemplateRootRuleChain(TenantId tenantId, RuleChain ruleChain, User user) throws ThingsboardException {
         RuleChainId ruleChainId = ruleChain.getId();
         try {
             ruleChainService.setEdgeTemplateRootRuleChain(tenantId, ruleChainId);
@@ -365,7 +367,7 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
     }
 
     @Override
-    public RuleChain setAutoAssignToEdgeRuleChain(TenantId tenantId, RuleChain ruleChain, SecurityUser user) throws ThingsboardException {
+    public RuleChain setAutoAssignToEdgeRuleChain(TenantId tenantId, RuleChain ruleChain, User user) throws ThingsboardException {
         RuleChainId ruleChainId = ruleChain.getId();
         try {
             ruleChainService.setAutoAssignToEdgeRuleChain(tenantId, ruleChainId);
@@ -381,7 +383,7 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
     }
 
     @Override
-    public RuleChain unsetAutoAssignToEdgeRuleChain(TenantId tenantId, RuleChain ruleChain, SecurityUser user) throws ThingsboardException {
+    public RuleChain unsetAutoAssignToEdgeRuleChain(TenantId tenantId, RuleChain ruleChain, User user) throws ThingsboardException {
         RuleChainId ruleChainId = ruleChain.getId();
         try {
             ruleChainService.unsetAutoAssignToEdgeRuleChain(tenantId, ruleChainId);

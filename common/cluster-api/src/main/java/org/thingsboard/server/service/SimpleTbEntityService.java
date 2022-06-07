@@ -13,15 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy;
+package org.thingsboard.server.service;
 
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface SimpleTbEntityService<T> {
 
-   T save(T entity, SecurityUser user) throws ThingsboardException;
+   default T save(T entity) throws ThingsboardException {
+      return save(entity, null);
+   }
 
-   void  delete (T entity, SecurityUser user) throws ThingsboardException;
+   T save(T entity, User user) throws ThingsboardException;
+
+   void  delete (T entity, User user) throws ThingsboardException;
 
 }

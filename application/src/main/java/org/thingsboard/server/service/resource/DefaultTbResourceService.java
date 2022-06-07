@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -40,7 +41,6 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
-import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -218,7 +218,7 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
     }
 
     @Override
-    public TbResource save(TbResource tbResource, SecurityUser user) throws ThingsboardException {
+    public TbResource save(TbResource tbResource, User user) throws ThingsboardException {
         ActionType actionType = tbResource.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = tbResource.getTenantId();
         try {
@@ -236,7 +236,7 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
     }
 
     @Override
-    public void delete(TbResource tbResource, SecurityUser user) throws ThingsboardException {
+    public void delete(TbResource tbResource, User user) throws ThingsboardException {
         TbResourceId resourceId = tbResource.getId();
         TenantId tenantId = tbResource.getTenantId();
         try {
@@ -249,4 +249,5 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
                     false, e, resourceId.toString());
             throw handleException(e);
         }
-    }}
+    }
+}

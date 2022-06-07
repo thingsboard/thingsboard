@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -28,9 +29,10 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.EdgeNotificationService;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
-import org.thingsboard.server.service.security.model.SecurityUser;
 
 @AllArgsConstructor
 @TbCoreComponent
@@ -38,8 +40,16 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 @Slf4j
 public class DefaultTbEdgeService extends AbstractTbEntityService implements TbEdgeService {
 
+    private final EdgeNotificationService edgeNotificationService;
+    private final RuleChainService ruleChainService;
+
     @Override
-    public Edge save(Edge edge, RuleChain edgeTemplateRootRuleChain, SecurityUser user) throws ThingsboardException {
+    public Edge save(Edge edge, RuleChain edgeTemplateRootRuleChain) throws ThingsboardException {
+        return save(edge, edgeTemplateRootRuleChain, null);
+    }
+
+    @Override
+    public Edge save(Edge edge, RuleChain edgeTemplateRootRuleChain, User user) throws ThingsboardException {
         ActionType actionType = edge.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = edge.getTenantId();
         try {
@@ -62,7 +72,7 @@ public class DefaultTbEdgeService extends AbstractTbEntityService implements TbE
     }
 
     @Override
-    public void delete(Edge edge, SecurityUser user) throws ThingsboardException {
+    public void delete(Edge edge, User user) throws ThingsboardException {
         ActionType actionType = ActionType.DELETED;
         EdgeId edgeId = edge.getId();
         TenantId tenantId = edge.getTenantId();
@@ -77,7 +87,7 @@ public class DefaultTbEdgeService extends AbstractTbEntityService implements TbE
     }
 
     @Override
-    public Edge assignEdgeToCustomer(TenantId tenantId, EdgeId edgeId, Customer customer, SecurityUser user) throws ThingsboardException {
+    public Edge assignEdgeToCustomer(TenantId tenantId, EdgeId edgeId, Customer customer, User user) throws ThingsboardException {
         ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER;
         CustomerId customerId = customer.getId();
         try {
@@ -95,7 +105,7 @@ public class DefaultTbEdgeService extends AbstractTbEntityService implements TbE
     }
 
     @Override
-    public Edge unassignEdgeFromCustomer(Edge edge, Customer customer, SecurityUser user) throws ThingsboardException {
+    public Edge unassignEdgeFromCustomer(Edge edge, Customer customer, User user) throws ThingsboardException {
         ActionType actionType = ActionType.UNASSIGNED_FROM_CUSTOMER;
         TenantId tenantId = edge.getTenantId();
         EdgeId edgeId = edge.getId();
@@ -114,7 +124,7 @@ public class DefaultTbEdgeService extends AbstractTbEntityService implements TbE
     }
 
     @Override
-    public Edge assignEdgeToPublicCustomer(TenantId tenantId, EdgeId edgeId, SecurityUser user) throws ThingsboardException {
+    public Edge assignEdgeToPublicCustomer(TenantId tenantId, EdgeId edgeId, User user) throws ThingsboardException {
         ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER;
         try {
             Customer publicCustomer = customerService.findOrCreatePublicCustomer(tenantId);
@@ -133,7 +143,7 @@ public class DefaultTbEdgeService extends AbstractTbEntityService implements TbE
     }
 
     @Override
-    public Edge setEdgeRootRuleChain(Edge edge, RuleChainId ruleChainId, SecurityUser user) throws ThingsboardException {
+    public Edge setEdgeRootRuleChain(Edge edge, RuleChainId ruleChainId, User user) throws ThingsboardException {
         ActionType actionType = ActionType.UPDATED;
         TenantId tenantId = edge.getTenantId();
         EdgeId edgeId = edge.getId();

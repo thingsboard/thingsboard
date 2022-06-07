@@ -22,7 +22,9 @@ import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
+import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.entitiy.queue.TbQueueService;
@@ -35,6 +37,8 @@ import java.util.Collections;
 @RequiredArgsConstructor
 public class DefaultTbTenantService extends AbstractTbEntityService implements TbTenantService {
 
+    private final TenantService tenantService;
+    private final TbTenantProfileCache tenantProfileCache;
     private final InstallScripts installScripts;
     private final TbQueueService tbQueueService;
     private final TenantProfileService tenantProfileService;

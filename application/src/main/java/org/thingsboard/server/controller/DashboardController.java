@@ -219,8 +219,8 @@ public class DashboardController extends BaseController {
         Customer customer = checkCustomerId(customerId, Operation.READ);
 
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
-        checkDashboardId(dashboardId, Operation.ASSIGN_TO_CUSTOMER);
-        return tbDashboardService.assignDashboardToCustomer(dashboardId, customer, getCurrentUser());
+        Dashboard dashboard = checkDashboardId(dashboardId, Operation.ASSIGN_TO_CUSTOMER);
+        return tbDashboardService.assignDashboardToCustomer(dashboard, customer, getCurrentUser());
     }
 
     @ApiOperation(value = "Unassign the Dashboard (unassignDashboardFromCustomer)",
@@ -321,8 +321,8 @@ public class DashboardController extends BaseController {
             @PathVariable(DASHBOARD_ID) String strDashboardId) throws ThingsboardException {
         checkParameter(DASHBOARD_ID, strDashboardId);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
-        checkDashboardId(dashboardId, Operation.ASSIGN_TO_CUSTOMER);
-        return tbDashboardService.assignDashboardToPublicCustomer(dashboardId, getCurrentUser());
+        Dashboard dashboard = checkDashboardId(dashboardId, Operation.ASSIGN_TO_CUSTOMER);
+        return tbDashboardService.assignDashboardToPublicCustomer(dashboard, getCurrentUser());
     }
 
     @ApiOperation(value = "Unassign the Dashboard from Public Customer (unassignDashboardFromPublicCustomer)",
@@ -631,7 +631,7 @@ public class DashboardController extends BaseController {
 
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
         checkDashboardId(dashboardId, Operation.READ);
-        return tbDashboardService.asignDashboardToEdge(dashboardId, edge, getCurrentUser());
+        return tbDashboardService.asignDashboardToEdge(getTenantId(), dashboardId, edge, getCurrentUser());
     }
 
     @ApiOperation(value = "Unassign dashboard from edge (unassignDashboardFromEdge)",

@@ -20,28 +20,28 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
-import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.List;
 
 @Service
-@TbCoreComponent
 @AllArgsConstructor
 public class DefaultTbAssetService extends AbstractTbEntityService implements TbAssetService {
 
+    private final AssetService assetService;
+
     @Override
-    public Asset save(Asset asset, SecurityUser user) throws ThingsboardException {
+    public Asset save(Asset asset, User user) throws ThingsboardException {
         ActionType actionType = asset.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = asset.getTenantId();
         try {
@@ -55,7 +55,7 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public ListenableFuture<Void> delete(Asset asset, SecurityUser user) throws ThingsboardException {
+    public ListenableFuture<Void> delete(Asset asset, User user) throws ThingsboardException {
         TenantId tenantId = asset.getTenantId();
         AssetId assetId = asset.getId();
         try {
@@ -73,13 +73,13 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public Asset assignAssetToCustomer(TenantId tenantId, AssetId assetId, Customer customer, SecurityUser user) throws ThingsboardException {
+    public Asset assignAssetToCustomer(TenantId tenantId, AssetId assetId, Customer customer, User user) throws ThingsboardException {
         ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER;
         CustomerId customerId = customer.getId();
         try {
             Asset savedAsset = checkNotNull(assetService.assignAssetToCustomer(tenantId, assetId, customerId));
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, assetId, customerId, savedAsset,
-                    actionType, EdgeEventActionType.ASSIGNED_TO_CUSTOMER, user, true, customerId.toString(), customer.getName());
+                    actionType, user, true, customerId.toString(), customer.getName());
 
             return savedAsset;
         } catch (Exception e) {
@@ -91,14 +91,14 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public Asset unassignAssetToCustomer(TenantId tenantId, AssetId assetId, Customer customer, SecurityUser user) throws ThingsboardException {
+    public Asset unassignAssetToCustomer(TenantId tenantId, AssetId assetId, Customer customer, User user) throws ThingsboardException {
         ActionType actionType = ActionType.UNASSIGNED_FROM_CUSTOMER;
         try {
             Asset savedAsset = checkNotNull(assetService.unassignAssetFromCustomer(tenantId, assetId));
             CustomerId customerId = customer.getId();
 
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, assetId, customerId, savedAsset,
-                    actionType, EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER, user,
+                    actionType, user,
                     true, customerId.toString(), customer.getName());
 
             return savedAsset;
@@ -110,14 +110,14 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public Asset assignAssetToPublicCustomer(TenantId tenantId, AssetId assetId, SecurityUser user) throws ThingsboardException {
+    public Asset assignAssetToPublicCustomer(TenantId tenantId, AssetId assetId, User user) throws ThingsboardException {
         ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER;
         try {
             Customer publicCustomer = customerService.findOrCreatePublicCustomer(tenantId);
             Asset savedAsset = checkNotNull(assetService.assignAssetToCustomer(tenantId, assetId, publicCustomer.getId()));
 
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, assetId, savedAsset.getCustomerId(), savedAsset,
-                    actionType, null, user, false, actionType.toString(),
+                    actionType, user, false, actionType.toString(),
                     publicCustomer.getId().toString(), publicCustomer.getName());
 
             return savedAsset;
@@ -129,7 +129,7 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public Asset assignAssetToEdge(TenantId tenantId, AssetId assetId, Edge edge, SecurityUser user) throws ThingsboardException {
+    public Asset assignAssetToEdge(TenantId tenantId, AssetId assetId, Edge edge, User user) throws ThingsboardException {
         ActionType actionType = ActionType.ASSIGNED_TO_EDGE;
         EdgeId edgeId = edge.getId();
         try {
@@ -146,7 +146,7 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public Asset unassignAssetFromEdge(TenantId tenantId, Asset asset, Edge edge, SecurityUser user) throws ThingsboardException {
+    public Asset unassignAssetFromEdge(TenantId tenantId, Asset asset, Edge edge, User user) throws ThingsboardException {
         ActionType actionType = ActionType.UNASSIGNED_FROM_EDGE;
         AssetId assetId = asset.getId();
         EdgeId edgeId = edge.getId();

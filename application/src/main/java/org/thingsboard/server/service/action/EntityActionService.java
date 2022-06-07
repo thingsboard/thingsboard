@@ -47,7 +47,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@TbCoreComponent
 @Service
 @RequiredArgsConstructor
 @Slf4j
