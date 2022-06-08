@@ -124,14 +124,16 @@ public class TbNodeUtils {
     }
 
     public static void validateQueueId(TbContext ctx, QueueId queueId) {
-        boolean isRelatedToCurrentTenant = ctx.getEntityService().existsByTenantIdAndId(ctx.getTenantId(), queueId);
-        if (!isRelatedToCurrentTenant) {
-            boolean isDefaultQueue = ctx.getEntityService().existsByTenantIdAndId(TenantId.SYS_TENANT_ID, queueId);
-            boolean isIsolatedProfile = ctx.getTenantProfile().isIsolatedTbRuleEngine();
-            if (!isDefaultQueue || isIsolatedProfile) {
-                throw new RuntimeException(
-                        String.format("Queue [%s] does not belong to the tenant", queueId)
-                );
+        if (queueId != null) {
+            boolean isRelatedToCurrentTenant = ctx.getEntityService().existsByTenantIdAndId(ctx.getTenantId(), queueId);
+            if (!isRelatedToCurrentTenant) {
+                boolean isDefaultQueue = ctx.getEntityService().existsByTenantIdAndId(TenantId.SYS_TENANT_ID, queueId);
+                boolean isIsolatedProfile = ctx.getTenantProfile().isIsolatedTbRuleEngine();
+                if (!isDefaultQueue || isIsolatedProfile) {
+                    throw new RuntimeException(
+                            String.format("Queue [%s] does not belong to the tenant", queueId)
+                    );
+                }
             }
         }
     }
