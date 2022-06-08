@@ -195,10 +195,21 @@ export interface VersionLoadResult {
   error: EntityLoadError;
 }
 
+export interface AttributeExportData {
+  key: string;
+  lastUpdateTs: number;
+  booleanValue: boolean;
+  strValue: string;
+  longValue: number;
+  doubleValue: number;
+  jsonValue: string;
+}
+
 export interface EntityExportData<E extends ExportableEntity<EntityId>> {
   entity: E;
   entityType: EntityType;
   relations: Array<EntityRelation>;
+  attributes: {[key: string]: Array<AttributeExportData>};
 }
 
 export interface DeviceExportData extends EntityExportData<Device> {
