@@ -26,7 +26,7 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.entitiy.asset.TbAssetService;
+import org.thingsboard.server.service.TbAssetService;
 import org.thingsboard.server.service.importing.AbstractBulkImportService;
 import org.thingsboard.server.service.importing.BulkImportColumnType;
 import org.thingsboard.server.service.security.model.SecurityUser;

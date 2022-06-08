@@ -28,13 +28,23 @@ import org.thingsboard.rule.engine.util.EntitiesAlarmOriginatorIdAsyncLoader;
 import org.thingsboard.rule.engine.util.EntitiesCustomerIdAsyncLoader;
 import org.thingsboard.rule.engine.util.EntitiesRelatedEntityIdAsyncLoader;
 import org.thingsboard.rule.engine.util.EntitiesTenantIdAsyncLoader;
+import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 @RuleNode(
@@ -55,6 +65,10 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode {
     protected static final String TENANT_SOURCE = "TENANT";
     protected static final String RELATED_SOURCE = "RELATED";
     protected static final String ALARM_ORIGINATOR_SOURCE = "ALARM_ORIGINATOR";
+    protected static final String DEVICE = "DEVICE";
+    protected static final String ASSET = "ASSET";
+
+    private static final ReentrantLock entityCreationLock = new ReentrantLock();
 
     private TbChangeOriginatorNodeConfiguration config;
 
@@ -67,7 +81,7 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode {
 
     @Override
     protected ListenableFuture<List<TbMsg>> transform(TbContext ctx, TbMsg msg) {
-        ListenableFuture<? extends EntityId> newOriginator = getNewOriginator(ctx, msg.getOriginator());
+        ListenableFuture<? extends EntityId> newOriginator = getNewOriginator(ctx, msg);
         return Futures.transform(newOriginator, n -> {
             if (n == null || n.isNullUid()) {
                 return null;
@@ -76,7 +90,8 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode {
         }, ctx.getDbCallbackExecutor());
     }
 
-    private ListenableFuture<? extends EntityId> getNewOriginator(TbContext ctx, EntityId original) {
+    private ListenableFuture<? extends EntityId> getNewOriginator(TbContext ctx, TbMsg msg) {
+        EntityId original = msg.getOriginator();
         switch (config.getOriginatorSource()) {
             case CUSTOMER_SOURCE:
                 return EntitiesCustomerIdAsyncLoader.findEntityIdAsync(ctx, original);
@@ -86,16 +101,103 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode {
                 return EntitiesRelatedEntityIdAsyncLoader.findEntityAsync(ctx, original, config.getRelationsQuery());
             case ALARM_ORIGINATOR_SOURCE:
                 return EntitiesAlarmOriginatorIdAsyncLoader.findEntityIdAsync(ctx, original);
+            case DEVICE:
+                return getOrCreateDevice(ctx, msg);
+            case ASSET:
+                return getOrCreateAsset(ctx, msg);
             default:
                 return Futures.immediateFailedFuture(new IllegalStateException("Unexpected originator source " + config.getOriginatorSource()));
         }
     }
 
+    private ListenableFuture<DeviceId> getOrCreateDevice(TbContext ctx, TbMsg msg) {
+        String deviceName = TbNodeUtils.processPattern(config.getEntityNamePattern(), msg);
+        Device device = ctx.getDeviceService().findDeviceByTenantIdAndName(ctx.getTenantId(), deviceName);
+        if (device == null) {
+            try {
+                entityCreationLock.lock();
+                TenantId tenantId = ctx.getTenantId();
+                device = ctx.getDeviceService().findDeviceByTenantIdAndName(tenantId, deviceName);
+                if (device == null) {
+                    device = new Device();
+                    device.setName(deviceName);
+                    device.setType(TbNodeUtils.processPattern(config.getEntityTypePattern(), msg));
+                    device.setTenantId(tenantId);
+                    String labelPattern = config.getEntityTypePattern();
+                    if (!StringUtils.isEmpty(labelPattern)) {
+                        device.setLabel(TbNodeUtils.processPattern(labelPattern, msg));
+                    }
+                    String customerNamePattern = config.getCustomerNamePattern();
+                    if (!StringUtils.isEmpty(customerNamePattern)) {
+                        Customer customer = getOrCreateCustomer(ctx, TbNodeUtils.processPattern(customerNamePattern, msg));
+                        device.setCustomerId(customer.getId());
+                    }
+
+                    device = ctx.getTbDeviceService().save(device);
+                }
+            } catch (ThingsboardException e) {
+                return Futures.immediateFailedFuture(e);
+            } finally {
+                entityCreationLock.unlock();
+            }
+        }
+        return Futures.immediateFuture(device.getId());
+    }
+
+    private ListenableFuture<AssetId> getOrCreateAsset(TbContext ctx, TbMsg msg) {
+        String assetName = TbNodeUtils.processPattern(config.getEntityNamePattern(), msg);
+        Asset asset = ctx.getAssetService().findAssetByTenantIdAndName(ctx.getTenantId(), assetName);
+        if (asset == null) {
+            try {
+                entityCreationLock.lock();
+                TenantId tenantId = ctx.getTenantId();
+                asset = ctx.getAssetService().findAssetByTenantIdAndName(tenantId, assetName);
+                if (asset == null) {
+                    asset = new Asset();
+                    asset.setName(assetName);
+                    asset.setType(TbNodeUtils.processPattern(config.getEntityTypePattern(), msg));
+                    asset.setTenantId(tenantId);
+                    String labelPattern = config.getEntityTypePattern();
+                    if (!StringUtils.isEmpty(labelPattern)) {
+                        asset.setLabel(TbNodeUtils.processPattern(labelPattern, msg));
+                    }
+                    String customerNamePattern = config.getCustomerNamePattern();
+                    if (!StringUtils.isEmpty(customerNamePattern)) {
+                        Customer customer = getOrCreateCustomer(ctx, TbNodeUtils.processPattern(customerNamePattern, msg));
+                        asset.setCustomerId(customer.getId());
+                    }
+                    asset = ctx.getTbAssetService().save(asset);
+                }
+            } catch (ThingsboardException e) {
+                return Futures.immediateFailedFuture(e);
+            } finally {
+                entityCreationLock.unlock();
+            }
+        }
+        return Futures.immediateFuture(asset.getId());
+    }
+
+    private Customer getOrCreateCustomer(TbContext ctx, String customerName) throws ThingsboardException {
+        TenantId tenantId = ctx.getTenantId();
+        Customer customer;
+        Optional<Customer> customerOptional = ctx.getCustomerService().findCustomerByTenantIdAndTitle(tenantId, customerName);
+        if (customerOptional.isPresent()) {
+            customer = customerOptional.get();
+        } else {
+            customer = new Customer();
+            customer.setTitle(customerName);
+            customer.setTenantId(tenantId);
+            customer = ctx.getTbCustomerService().save(customer);
+        }
+        return customer;
+    }
+
     private void validateConfig(TbChangeOriginatorNodeConfiguration conf) {
-        HashSet<String> knownSources = Sets.newHashSet(CUSTOMER_SOURCE, TENANT_SOURCE, RELATED_SOURCE, ALARM_ORIGINATOR_SOURCE);
+        HashSet<String> knownSources =
+                Sets.newHashSet(CUSTOMER_SOURCE, TENANT_SOURCE, RELATED_SOURCE, ALARM_ORIGINATOR_SOURCE, DEVICE, ASSET);
         if (!knownSources.contains(conf.getOriginatorSource())) {
             log.error("Unsupported source [{}] for TbChangeOriginatorNode", conf.getOriginatorSource());
-            throw new IllegalArgumentException("Unsupported source TbChangeOriginatorNode" + conf.getOriginatorSource());
+            throw new IllegalArgumentException("Unsupported source TbChangeOriginatorNode " + conf.getOriginatorSource());
         }
 
         if (conf.getOriginatorSource().equals(RELATED_SOURCE)) {

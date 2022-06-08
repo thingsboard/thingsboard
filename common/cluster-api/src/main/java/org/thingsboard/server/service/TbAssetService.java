@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy.asset;
+package org.thingsboard.server.service;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Customer;
@@ -25,6 +25,8 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 public interface TbAssetService {
+
+    Asset save(Asset asset) throws ThingsboardException;
 
     Asset save(Asset asset, User user) throws ThingsboardException;
 

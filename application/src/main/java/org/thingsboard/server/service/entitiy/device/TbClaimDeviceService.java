@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy.alarm;
+package org.thingsboard.server.service.entitiy.device;
 
+import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.dao.device.claim.ClaimResult;
+import org.thingsboard.server.dao.device.claim.ReclaimResult;
 
-public interface TbAlarmService {
+public interface TbClaimDeviceService {
 
-    Alarm save(Alarm entity, User user) throws ThingsboardException;
+    ListenableFuture<ClaimResult> claimDevice(Device device, CustomerId customerId, String secretKey, User user) throws ThingsboardException;
 
-    void ack(Alarm alarm, User user) throws ThingsboardException;
-
-    void clear(Alarm alarm, User user) throws ThingsboardException;
-
-    Boolean delete(Alarm alarm, User user) throws ThingsboardException;
+    ListenableFuture<ReclaimResult> reclaimDevice(Device device, User user) throws ThingsboardException;
 }

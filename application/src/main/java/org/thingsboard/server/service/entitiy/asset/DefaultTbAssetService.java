@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.asset.AssetService;
+import org.thingsboard.server.service.TbAssetService;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
 import java.util.List;
@@ -39,6 +40,11 @@ import java.util.List;
 public class DefaultTbAssetService extends AbstractTbEntityService implements TbAssetService {
 
     private final AssetService assetService;
+
+    @Override
+    public Asset save(Asset asset) throws ThingsboardException {
+        return save(asset, null);
+    }
 
     @Override
     public Asset save(Asset asset, User user) throws ThingsboardException {

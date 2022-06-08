@@ -66,7 +66,8 @@ import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.device.DeviceBulkImportService;
-import org.thingsboard.server.service.entitiy.device.TbDeviceService;
+import org.thingsboard.server.service.entitiy.device.TbClaimDeviceService;
+import org.thingsboard.server.service.TbDeviceService;
 import org.thingsboard.server.service.importing.BulkImportRequest;
 import org.thingsboard.server.service.importing.BulkImportResult;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -121,6 +122,7 @@ public class DeviceController extends BaseController {
     private final DeviceBulkImportService deviceBulkImportService;
 
     private final TbDeviceService tbDeviceService;
+    private final TbClaimDeviceService tbClaimDeviceService;
 
     @ApiOperation(value = "Get Device (getDeviceById)",
             notes = "Fetch the Device object based on the provided Device Id. " +
@@ -173,7 +175,7 @@ public class DeviceController extends BaseController {
         } else {
             checkEntity(null, device, Resource.DEVICE);
         }
-        return tbDeviceService.save(getTenantId(), device, oldDevice, accessToken, getCurrentUser());
+        return tbDeviceService.save(device, oldDevice, accessToken, getCurrentUser());
     }
 
     @ApiOperation(value = "Create Device (saveDevice) with credentials ",
@@ -191,7 +193,7 @@ public class DeviceController extends BaseController {
         DeviceCredentials credentials = checkNotNull(deviceAndCredentials.getCredentials());
         device.setTenantId(getCurrentUser().getTenantId());
         checkEntity(device.getId(), device, Resource.DEVICE);
-        return tbDeviceService.saveDeviceWithCredentials(getTenantId(), device, credentials, getCurrentUser());
+        return tbDeviceService.saveDeviceWithCredentials(device, credentials, getCurrentUser());
     }
 
 
@@ -564,7 +566,7 @@ public class DeviceController extends BaseController {
                 device.getId(), device);
         String secretKey = getSecretKey(claimRequest);
 
-        ListenableFuture<ClaimResult> future = tbDeviceService.claimDevice(tenantId, device, customerId, secretKey, user);
+        ListenableFuture<ClaimResult> future = tbClaimDeviceService.claimDevice(device, customerId, secretKey, user);
 
         Futures.addCallback(future, new FutureCallback<ClaimResult>() {
             @Override
@@ -610,7 +612,7 @@ public class DeviceController extends BaseController {
             accessControlService.checkPermission(user, Resource.DEVICE, Operation.CLAIM_DEVICES,
                     device.getId(), device);
 
-            ListenableFuture<ReclaimResult> result = tbDeviceService.reclaimDevice(tenantId, device, user);
+            ListenableFuture<ReclaimResult> result = tbClaimDeviceService.reclaimDevice(device, user);
             Futures.addCallback(result, new FutureCallback<>() {
                 @Override
                 public void onSuccess(ReclaimResult reclaimResult) {

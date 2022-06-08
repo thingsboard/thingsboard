@@ -58,6 +58,9 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.service.TbAssetService;
+import org.thingsboard.server.service.TbCustomerService;
+import org.thingsboard.server.service.TbDeviceService;
 
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -205,13 +208,19 @@ public interface TbContext {
 
     CustomerService getCustomerService();
 
+    TbCustomerService getTbCustomerService();
+
     TenantService getTenantService();
 
     UserService getUserService();
 
     AssetService getAssetService();
 
+    TbAssetService getTbAssetService();
+
     DeviceService getDeviceService();
+
+    TbDeviceService getTbDeviceService();
 
     TbClusterService getClusterService();
 

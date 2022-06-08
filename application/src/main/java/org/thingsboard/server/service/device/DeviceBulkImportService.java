@@ -49,7 +49,7 @@ import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.entitiy.device.TbDeviceService;
+import org.thingsboard.server.service.TbDeviceService;
 import org.thingsboard.server.service.importing.AbstractBulkImportService;
 import org.thingsboard.server.service.importing.BulkImportColumnType;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -121,7 +121,7 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
         }
         entity.setDeviceProfileId(deviceProfile.getId());
 
-        return tbDeviceService.saveDeviceWithCredentials(user.getTenantId(), entity, deviceCredentials, user);
+        return tbDeviceService.saveDeviceWithCredentials(entity, deviceCredentials, user);
     }
 
     @Override

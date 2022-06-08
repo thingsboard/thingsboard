@@ -82,6 +82,9 @@ import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
+import org.thingsboard.server.service.TbAssetService;
+import org.thingsboard.server.service.TbCustomerService;
+import org.thingsboard.server.service.TbDeviceService;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 
 import java.util.Collections;
@@ -472,6 +475,11 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    public TbCustomerService getTbCustomerService() {
+        return mainCtx.getTbCustomerService();
+    }
+
+    @Override
     public TenantService getTenantService() {
         return mainCtx.getTenantService();
     }
@@ -487,8 +495,18 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    public TbAssetService getTbAssetService() {
+        return mainCtx.getTbAssetService();
+    }
+
+    @Override
     public DeviceService getDeviceService() {
         return mainCtx.getDeviceService();
+    }
+
+    @Override
+    public TbDeviceService getTbDeviceService() {
+        return mainCtx.getTbDeviceService();
     }
 
     @Override

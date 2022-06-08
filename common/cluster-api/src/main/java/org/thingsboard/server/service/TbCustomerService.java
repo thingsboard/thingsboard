@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy.customer;
+package org.thingsboard.server.service;
 
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.service.SimpleTbEntityService;

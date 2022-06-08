@@ -42,6 +42,7 @@ import org.thingsboard.server.dao.device.claim.ClaimResult;
 import org.thingsboard.server.dao.device.claim.ReclaimResult;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.TbDeviceService;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
 import java.util.List;
@@ -50,7 +51,7 @@ import java.util.List;
 @TbCoreComponent
 @Service
 @Slf4j
-public class DefaultTbDeviceService extends AbstractTbEntityService implements TbDeviceService {
+public class DefaultTbDeviceService extends AbstractTbEntityService implements TbDeviceService, TbClaimDeviceService {
 
     private final DeviceService deviceService;
     private final DeviceCredentialsService deviceCredentialsService;
@@ -58,8 +59,14 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
     private final TenantService tenantService;
 
     @Override
-    public Device save(TenantId tenantId, Device device, Device oldDevice, String accessToken, User user) throws ThingsboardException {
+    public Device save(Device device) throws ThingsboardException {
+        return save(device, null, null, null);
+    }
+
+    @Override
+    public Device save(Device device, Device oldDevice, String accessToken, User user) throws ThingsboardException {
         ActionType actionType = device.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
+        TenantId tenantId = device.getTenantId();
         try {
             Device savedDevice = checkNotNull(deviceService.saveDeviceWithAccessToken(device, accessToken));
             notificationEntityService.notifyCreateOrUpdateDevice(tenantId, savedDevice.getId(), savedDevice.getCustomerId(),
@@ -73,8 +80,9 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
     }
 
     @Override
-    public Device saveDeviceWithCredentials(TenantId tenantId, Device device, DeviceCredentials credentials, User user) throws ThingsboardException {
+    public Device saveDeviceWithCredentials(Device device, DeviceCredentials credentials, User user) throws ThingsboardException {
         ActionType actionType = device.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
+        TenantId tenantId = device.getTenantId();
         try {
             Device savedDevice = checkNotNull(deviceService.saveDeviceWithCredentials(device, credentials));
             notificationEntityService.notifyCreateOrUpdateDevice(tenantId, savedDevice.getId(), savedDevice.getCustomerId(),
@@ -195,7 +203,8 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
     }
 
     @Override
-    public ListenableFuture<ClaimResult> claimDevice(TenantId tenantId, Device device, CustomerId customerId, String secretKey, User user) throws ThingsboardException {
+    public ListenableFuture<ClaimResult> claimDevice(Device device, CustomerId customerId, String secretKey, User user) throws ThingsboardException {
+        TenantId tenantId = device.getTenantId();
         try {
             ListenableFuture<ClaimResult> future = claimDevicesService.claimDevice(device, customerId, secretKey);
 
@@ -213,7 +222,8 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
     }
 
     @Override
-    public ListenableFuture<ReclaimResult> reclaimDevice(TenantId tenantId, Device device, User user) throws ThingsboardException {
+    public ListenableFuture<ReclaimResult> reclaimDevice(Device device, User user) throws ThingsboardException {
+        TenantId tenantId = device.getTenantId();
         try {
             ListenableFuture<ReclaimResult> future = claimDevicesService.reClaimDevice(tenantId, device);
 
