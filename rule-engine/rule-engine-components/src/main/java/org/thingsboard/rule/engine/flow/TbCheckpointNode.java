@@ -47,6 +47,7 @@ public class TbCheckpointNode implements TbNode {
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         TbCheckpointNodeConfiguration config = TbNodeUtils.convert(configuration, TbCheckpointNodeConfiguration.class);
         this.queueId = new QueueId(UUID.fromString(config.getQueueId()));
+        TbNodeUtils.validateQueueId(ctx, queueId);
     }
 
     @Override
