@@ -28,7 +28,6 @@ import org.thingsboard.rule.engine.util.EntitiesAlarmOriginatorIdAsyncLoader;
 import org.thingsboard.rule.engine.util.EntitiesCustomerIdAsyncLoader;
 import org.thingsboard.rule.engine.util.EntitiesRelatedEntityIdAsyncLoader;
 import org.thingsboard.rule.engine.util.EntitiesTenantIdAsyncLoader;
-import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -43,7 +42,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
@@ -51,7 +49,7 @@ import java.util.concurrent.locks.ReentrantLock;
         type = ComponentType.TRANSFORMATION,
         name = "change originator",
         configClazz = TbChangeOriginatorNodeConfiguration.class,
-        nodeDescription = "Change Message Originator To Tenant/Customer/Related Entity/Alarm Originator",
+        nodeDescription = "Change Message Originator To Tenant/Customer/Related Entity/Alarm Originator/Device/Asset",
         nodeDetails = "Related Entity found using configured relation direction and Relation Type. " +
                 "If multiple Related Entities are found, only first Entity is used as new Originator, other entities are discarded.<br/>" +
                 "Alarm Originator found only in case original Originator is <code>Alarm</code> entity.",
@@ -123,14 +121,9 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode {
                     device.setName(deviceName);
                     device.setType(TbNodeUtils.processPattern(config.getEntityTypePattern(), msg));
                     device.setTenantId(tenantId);
-                    String labelPattern = config.getEntityTypePattern();
+                    String labelPattern = config.getEntityLabelPattern();
                     if (!StringUtils.isEmpty(labelPattern)) {
                         device.setLabel(TbNodeUtils.processPattern(labelPattern, msg));
-                    }
-                    String customerNamePattern = config.getCustomerNamePattern();
-                    if (!StringUtils.isEmpty(customerNamePattern)) {
-                        Customer customer = getOrCreateCustomer(ctx, TbNodeUtils.processPattern(customerNamePattern, msg));
-                        device.setCustomerId(customer.getId());
                     }
 
                     device = ctx.getTbDeviceService().save(device);
@@ -157,14 +150,9 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode {
                     asset.setName(assetName);
                     asset.setType(TbNodeUtils.processPattern(config.getEntityTypePattern(), msg));
                     asset.setTenantId(tenantId);
-                    String labelPattern = config.getEntityTypePattern();
+                    String labelPattern = config.getEntityLabelPattern();
                     if (!StringUtils.isEmpty(labelPattern)) {
                         asset.setLabel(TbNodeUtils.processPattern(labelPattern, msg));
-                    }
-                    String customerNamePattern = config.getCustomerNamePattern();
-                    if (!StringUtils.isEmpty(customerNamePattern)) {
-                        Customer customer = getOrCreateCustomer(ctx, TbNodeUtils.processPattern(customerNamePattern, msg));
-                        asset.setCustomerId(customer.getId());
                     }
                     asset = ctx.getTbAssetService().save(asset);
                 }
@@ -175,21 +163,6 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode {
             }
         }
         return Futures.immediateFuture(asset.getId());
-    }
-
-    private Customer getOrCreateCustomer(TbContext ctx, String customerName) throws ThingsboardException {
-        TenantId tenantId = ctx.getTenantId();
-        Customer customer;
-        Optional<Customer> customerOptional = ctx.getCustomerService().findCustomerByTenantIdAndTitle(tenantId, customerName);
-        if (customerOptional.isPresent()) {
-            customer = customerOptional.get();
-        } else {
-            customer = new Customer();
-            customer.setTitle(customerName);
-            customer.setTenantId(tenantId);
-            customer = ctx.getTbCustomerService().save(customer);
-        }
-        return customer;
     }
 
     private void validateConfig(TbChangeOriginatorNodeConfiguration conf) {

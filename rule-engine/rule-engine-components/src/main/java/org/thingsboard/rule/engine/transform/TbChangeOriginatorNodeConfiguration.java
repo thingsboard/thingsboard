@@ -18,7 +18,6 @@ package org.thingsboard.rule.engine.transform;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.rule.engine.data.RelationsQuery;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
@@ -35,7 +34,6 @@ public class TbChangeOriginatorNodeConfiguration extends TbTransformNodeConfigur
     private String entityNamePattern;
     private String entityTypePattern;
     private String entityLabelPattern;
-    private String customerNamePattern;
 
     @Override
     public TbChangeOriginatorNodeConfiguration defaultConfiguration() {
@@ -48,11 +46,6 @@ public class TbChangeOriginatorNodeConfiguration extends TbTransformNodeConfigur
         RelationEntityTypeFilter relationEntityTypeFilter = new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.emptyList());
         relationsQuery.setFilters(Collections.singletonList(relationEntityTypeFilter));
         configuration.setRelationsQuery(relationsQuery);
-
-        configuration.setEntityNamePattern("${entityName}");
-        configuration.setEntityTypePattern("${entityType}");
-        configuration.setEntityLabelPattern("${entityLabel}");
-        configuration.setCustomerNamePattern("${customerName}");
         return configuration;
     }
 }
