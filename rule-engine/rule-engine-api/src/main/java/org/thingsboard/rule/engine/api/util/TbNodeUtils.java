@@ -18,6 +18,8 @@ package org.thingsboard.rule.engine.api.util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -29,6 +31,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
+import java.sql.SQLSyntaxErrorException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +42,7 @@ import java.util.stream.Collectors;
 /**
  * Created by ashvayka on 19.01.18.
  */
+@Slf4j
 public class TbNodeUtils {
 
     private static final ObjectMapper mapper = new ObjectMapper();
@@ -110,16 +114,17 @@ public class TbNodeUtils {
     }
 
     public static void validateEntityId(TbContext ctx, EntityId entityId) {
-        if (!ctx.getEntityService().existsByTenantIdAndId(ctx.getTenantId(), entityId)) {
-            throw new RuntimeException(
-                    String.format("Entity %s [%s] does not belong to the tenant", entityId.getEntityType(), entityId)
-            );
-        }
+        validateEntityId(ctx, entityId, String.format("Entity %s [%s] does not belong to the tenant",
+                entityId.getEntityType(), entityId));
     }
 
     public static void validateEntityId(TbContext ctx, EntityId entityId, String msg) {
-        if (!ctx.getEntityService().existsByTenantIdAndId(ctx.getTenantId(), entityId)) {
-            throw new RuntimeException(msg);
+        try {
+            if (!ctx.getEntityService().existsByTenantIdAndId(ctx.getTenantId(), entityId)) {
+                throw new RuntimeException(msg);
+            }
+        } catch (BadSqlGrammarException e) {
+            log.error("Entity {} [{}]", entityId.getEntityType(), entityId, e);
         }
     }
 
