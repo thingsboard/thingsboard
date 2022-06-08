@@ -77,9 +77,7 @@ public class TbMsgGeneratorNode implements TbNode {
         this.currentMsgCount = 0;
         if (!StringUtils.isEmpty(config.getOriginatorId())) {
             originatorId = EntityIdFactory.getByTypeAndUuid(config.getOriginatorType(), config.getOriginatorId());
-            if (!ctx.getEntityService().existsByTenantIdAndId(ctx.getTenantId(), originatorId)) {
-                throw new TbNodeException("Originator entity does not belong to the tenant");
-            }
+            TbNodeUtils.validateEntityId(ctx, originatorId);
         } else {
             originatorId = ctx.getSelfId();
         }
