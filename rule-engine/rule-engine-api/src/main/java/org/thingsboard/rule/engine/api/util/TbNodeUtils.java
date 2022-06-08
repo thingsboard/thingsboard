@@ -20,8 +20,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.QueueId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -104,6 +108,34 @@ public class TbNodeUtils {
         }
         return result;
     }
+
+    public static void validateEntityId(TbContext ctx, EntityId entityId) {
+        if (!ctx.getEntityService().existsByTenantIdAndId(ctx.getTenantId(), entityId)) {
+            throw new RuntimeException(
+                    String.format("Entity %s [%s] does not belong to the tenant", entityId.getEntityType(), entityId)
+            );
+        }
+    }
+
+    public static void validateEntityId(TbContext ctx, EntityId entityId, String msg) {
+        if (!ctx.getEntityService().existsByTenantIdAndId(ctx.getTenantId(), entityId)) {
+            throw new RuntimeException(msg);
+        }
+    }
+
+    public static void validateQueueId(TbContext ctx, QueueId queueId) {
+        boolean isRelatedToCurrentTenant = ctx.getEntityService().existsByTenantIdAndId(ctx.getTenantId(), queueId);
+        if (!isRelatedToCurrentTenant) {
+            boolean isDefaultQueue = ctx.getEntityService().existsByTenantIdAndId(TenantId.SYS_TENANT_ID, queueId);
+            boolean isIsolatedProfile = ctx.getTenantProfile().isIsolatedTbRuleEngine();
+            if (!isDefaultQueue || isIsolatedProfile) {
+                throw new RuntimeException(
+                        String.format("Queue [%s] does not belong to the tenant", queueId)
+                );
+            }
+        }
+    }
+
 
     private static String processVar(String pattern, String key, String val) {
         return pattern.replace(formatMetadataVarTemplate(key), val);
