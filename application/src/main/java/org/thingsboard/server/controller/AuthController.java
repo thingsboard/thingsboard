@@ -259,11 +259,7 @@ public class AuthController extends BaseController {
             String email = user.getEmail();
 
             if (sendActivationMail) {
-                try {
-                    mailService.sendAccountActivatedEmail(loginUrl, email);
-                } catch (Exception e) {
-                    log.info("Unable to send account activation email [{}]", e.getMessage());
-                }
+                mailService.sendAccountActivatedEmailAsync(loginUrl, email);
             }
 
             sendEntityNotificationMsg(user.getTenantId(), user.getId(), EdgeEventActionType.CREDENTIALS_UPDATED);

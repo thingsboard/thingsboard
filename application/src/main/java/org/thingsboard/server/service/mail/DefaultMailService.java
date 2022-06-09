@@ -16,6 +16,8 @@
 package org.thingsboard.server.service.mail;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +27,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.core.io.InputStreamSource;
+import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -47,13 +50,19 @@ import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
 import javax.annotation.PostConstruct;
-import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import java.io.ByteArrayInputStream;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @Service
 @Slf4j
@@ -64,6 +73,7 @@ public class DefaultMailService implements MailService {
     public static final String UTF_8 = "UTF-8";
     public static final int _10K = 10000;
     public static final int _1M = 1000000;
+    private static final String TIMEOUT_ERR_MSG = "Timeout!";
 
     private final MessageSource messages;
     private final Configuration freemarkerConfig;
@@ -77,9 +87,13 @@ public class DefaultMailService implements MailService {
     @Autowired
     private MailExecutorService mailExecutorService;
 
+    private ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
     private JavaMailSenderImpl mailSender;
 
     private String mailFrom;
+
+    private long timeout;
 
     public DefaultMailService(MessageSource messages, Configuration freemarkerConfig, AdminSettingsService adminSettingsService, TbApiUsageClient apiUsageClient) {
         this.messages = messages;
@@ -100,6 +114,8 @@ public class DefaultMailService implements MailService {
             JsonNode jsonConfig = settings.getJsonValue();
             mailSender = createMailSender(jsonConfig);
             mailFrom = jsonConfig.get("mailFrom").asText();
+            timeout = jsonConfig.get("timeout")
+                    .asLong(20000);
         } else {
             throw new IncorrectParameterException("Failed to update mail configuration. Settings not found!");
         }
@@ -173,6 +189,7 @@ public class DefaultMailService implements MailService {
     public void sendTestMail(JsonNode jsonConfig, String email) throws ThingsboardException {
         JavaMailSenderImpl testMailSender = createMailSender(jsonConfig);
         String mailFrom = jsonConfig.get("mailFrom").asText();
+        long timeout = jsonConfig.get("timeout").asLong();
         String subject = messages.getMessage("test.message.subject", null, Locale.US);
 
         Map<String, Object> model = new HashMap<>();
@@ -180,7 +197,7 @@ public class DefaultMailService implements MailService {
 
         String message = mergeTemplateIntoString("test.ftl", model);
 
-        sendMail(testMailSender, mailFrom, email, subject, message);
+        sendMail(testMailSender, mailFrom, email, subject, message, timeout);
     }
 
     @Override
@@ -209,6 +226,17 @@ public class DefaultMailService implements MailService {
         String message = mergeTemplateIntoString("account.activated.ftl", model);
 
         sendMail(mailSender, mailFrom, email, subject, message);
+    }
+
+    @Override
+    public void sendAccountActivatedEmailAsync(String loginLink, String email) {
+        mailExecutorService.execute(() -> {
+            try {
+                this.sendAccountActivatedEmail(loginLink, email);
+            } catch (ThingsboardException e) {
+                log.error("Error occurred: {} ", e.getMessage());
+            }
+        });
     }
 
     @Override
@@ -287,13 +315,40 @@ public class DefaultMailService implements MailService {
                         helper.addInline(imgId, iss, contentType);
                     }
                 }
-                javaMailSender.send(helper.getMimeMessage());
+                sendWithTimeout(javaMailSender, helper, timeout);
                 apiUsageClient.report(tenantId, customerId, ApiUsageRecordKey.EMAIL_EXEC_COUNT, 1);
             } catch (Exception e) {
                 throw handleException(e);
             }
         } else {
             throw new RuntimeException("Email sending is disabled due to API limits!");
+        }
+    }
+
+    private void sendWithTimeout(
+            JavaMailSender javaMailSender,
+            MimeMessageHelper helper,
+            long timeout
+    ) throws Exception {
+
+        ListenableFuture<Void> submittedMail = mailExecutorService.executeAsync(() -> {
+            javaMailSender.send(helper.getMimeMessage());
+            return null;
+        });
+        Futures.withTimeout(submittedMail, timeout, TimeUnit.MILLISECONDS, scheduler);
+
+        try {
+            submittedMail.get();
+        } catch (CancellationException e) {
+            throw new TimeoutException(TIMEOUT_ERR_MSG);
+        } catch (ExecutionException e) {
+            Throwable t = e.getCause();
+
+            while (t.getCause() != null) {
+                t = t.getCause();
+            }
+
+            throw new RuntimeException(t.getMessage());
         }
     }
 
@@ -449,7 +504,16 @@ public class DefaultMailService implements MailService {
 
     private void sendMail(JavaMailSenderImpl mailSender,
                           String mailFrom, String email,
-                          String subject, String message) throws ThingsboardException {
+                          String subject, String message
+    ) throws ThingsboardException {
+        sendMail(mailSender, mailFrom, email, subject, message, timeout);
+    }
+
+    private void sendMail(JavaMailSenderImpl mailSender,
+                          String mailFrom, String email,
+                          String subject, String message,
+                          long timeout
+    ) throws ThingsboardException {
         try {
             MimeMessage mimeMsg = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMsg, UTF_8);
@@ -457,7 +521,8 @@ public class DefaultMailService implements MailService {
             helper.setTo(email);
             helper.setSubject(subject);
             helper.setText(message, true);
-            mailSender.send(helper.getMimeMessage());
+
+            sendWithTimeout(mailSender, helper, timeout);
         } catch (Exception e) {
             throw handleException(e);
         }

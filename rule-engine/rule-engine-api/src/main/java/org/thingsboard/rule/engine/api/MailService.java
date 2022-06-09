@@ -36,6 +36,8 @@ public interface MailService {
 
     void sendAccountActivatedEmail(String loginLink, String email) throws ThingsboardException;
 
+    void sendAccountActivatedEmailAsync(String loginLink, String email);
+
     void sendResetPasswordEmail(String passwordResetLink, String email) throws ThingsboardException;
 
     void sendResetPasswordEmailAsync(String passwordResetLink, String email);
