@@ -123,10 +123,10 @@
             "UNACK": "Non riconosciuto"
         },
         "display-status": {
-            "ACTIVE_UNACK": "Active Unacknowledged",
-            "ACTIVE_ACK": "Active Acknowledged",
-            "CLEARED_UNACK": "Cleared Unacknowledged",
-            "CLEARED_ACK": "Cleared Acknowledged"
+            "ACTIVE_UNACK": "Attivo Non riconosciuto",
+            "ACTIVE_ACK": "Attivo Riconosciuto",
+            "CLEARED_UNACK": "Cancellato Non riconosciuto",
+            "CLEARED_ACK": "Cancellato Riconosciuto"
         },
         "no-alarms-prompt": "Nessun allarme trovato",
         "created-time": "Orario di creazione",
@@ -1066,9 +1066,9 @@
         "modbus-register-address": "Indirizzo registro",
         "modbus-register-address-range": "Indirizzo registro deve essere compreso tra 0 e 65535.",
         "modbus-register-bit-index": "Bit index",
-        "modbus-register-bit-index-range": "Bit index should be in a range from 0 to 15.",
+        "modbus-register-bit-index-range": "Bit index deve essere compreso tra 0 e 15.",
         "modbus-register-count": "Register count",
-        "modbus-register-count-range": "Register count should be a positive value.",
+        "modbus-register-count-range": "Register count dovrebbe essereun valore positivo.",
         "modbus-byte-order": "Byte order",
         "sync": {
             "status": "Stato",
@@ -1307,13 +1307,13 @@
         "type-enrichment": "Enrichment",
         "type-enrichment-details": "Aggiungi informazioni addizionali nei metadati del messaggio",
         "type-transformation": "Trasformazione",
-        "type-transformation-details": "Change Message payload and Metadata",
+        "type-transformation-details": "Modifica payload messaggio e metadati",
         "type-action": "Azioni",
         "type-action-details": "Perform special action",
         "type-external": "External",
         "type-external-details": "Interagisci con un sistema esterno",
         "type-rule-chain": "Rule Chain",
-        "type-rule-chain-details": "Forwards incoming messages to specified Rule Chain",
+        "type-rule-chain-details": "Inoltra i messaggi in arrivo ad una specifica Rule Chain",
         "type-input": "Input",
         "type-input-details": "Logical input of Rule Chain, forwards incoming messages to next related Rule Node",
         "type-unknown": "Sconosciuto",
@@ -1502,7 +1502,7 @@
     "widget-action": {
         "header-button": "Widget header button",
         "open-dashboard-state": "Navigate to new dashboard state",
-        "update-dashboard-state": "Update current dashboard state",
+        "update-dashboard-state": "Aggiorna lo stato della dashboard attuale",
         "open-dashboard": "Navigate to other dashboard",
         "custom": "Custom action",
         "target-dashboard-state": "Target dashboard state",

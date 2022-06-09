@@ -17,6 +17,10 @@
   .queue-strategy {
     padding-bottom: 16px;
 
+    .mat-expansion-panel-header {
+      height: 50px;
+    }
+
     .mat-expansion-panel-body {
       padding-bottom: 0 !important;
     }
