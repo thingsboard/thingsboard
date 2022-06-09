@@ -15,8 +15,7 @@
     limitations under the License.
 
 -->
-<table class="tb-legend" [ngClass]="isRowDirection ? 'tb-legend-row' : 'tb-legend-column'"
-       [ngStyle]="{ marginRight: isRowDirection && !displayHeader ? 'auto' : '20px' }">
+<table class="tb-legend" [ngClass]="isRowDirection ? 'tb-legend-row' : 'tb-legend-column'">
   <thead>
   <tr class="tb-legend-header" *ngIf="!isRowDirection">
     <th colspan="2"></th>

@@ -18,8 +18,6 @@ package org.thingsboard.server.dao.sql;
 import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.stats.MessagesStats;
-import org.thingsboard.server.common.stats.StatsFactory;
 
 @Slf4j
 @Data

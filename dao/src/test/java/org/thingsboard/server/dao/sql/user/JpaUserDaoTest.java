@@ -16,9 +16,11 @@
 package org.thingsboard.server.dao.sql.user;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.springtestdbunit.annotation.DatabaseSetup;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.User;
@@ -32,7 +34,6 @@ import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
 import org.thingsboard.server.dao.user.UserDao;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -45,35 +46,54 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
  */
 public class JpaUserDaoTest extends AbstractJpaDaoTest {
 
+    // it comes from the DefaultSystemDataLoaderService super class
+    final int COUNT_CREATED_USER = 1;
+    final int COUNT_SYSADMIN_USER = 90;
+    UUID tenantId;
+    UUID customerId;
     @Autowired
     private UserDao userDao;
 
+    @Before
+    public void setUp() {
+        tenantId = Uuids.timeBased();
+        customerId = Uuids.timeBased();
+        create30TenantAdminsAnd60CustomerUsers(tenantId, customerId);
+    }
+
+    @After
+    public void tearDown() {
+        delete30TenantAdminsAnd60CustomerUsers(tenantId, customerId);
+    }
+
     @Test
-    @DatabaseSetup("classpath:dbunit/user.xml")
     public void testFindAll() {
         List<User> users = userDao.find(AbstractServiceTest.SYSTEM_TENANT_ID);
-        assertEquals(users.size(), 5);
+        assertEquals(users.size(), COUNT_CREATED_USER + COUNT_SYSADMIN_USER);
     }
 
     @Test
-    @DatabaseSetup("classpath:dbunit/user.xml")
-    public void testFindByEmail() {
-        User user = userDao.findByEmail(AbstractServiceTest.SYSTEM_TENANT_ID,"sysadm@thingsboard.org");
-        assertNotNull("User is expected to be not null", user);
-        assertEquals("9cb58ba0-27c1-11e7-93ae-92361f002671", user.getId().toString());
-        assertEquals("c97ea14e-27c1-11e7-93ae-92361f002671", user.getTenantId().toString());
-        assertEquals("cdf9c79e-27c1-11e7-93ae-92361f002671", user.getCustomerId().toString());
-        assertEquals(Authority.SYS_ADMIN, user.getAuthority());
-        assertEquals("John", user.getFirstName());
-        assertEquals("Doe", user.getLastName());
+    public void testFindByEmail() throws JsonProcessingException {
+        User user = new User();
+        user.setId(new UserId(UUID.randomUUID()));
+        user.setTenantId(TenantId.fromUUID(UUID.randomUUID()));
+        user.setCustomerId(new CustomerId(UUID.randomUUID()));
+        user.setEmail("user@thingsboard.org");
+        user.setFirstName("Jackson");
+        user.setLastName("Roberts");
+        ObjectMapper mapper = new ObjectMapper();
+        String additionalInfo = "{\"key\":\"value-100\"}";
+        JsonNode jsonNode = mapper.readTree(additionalInfo);
+        user.setAdditionalInfo(jsonNode);
+        userDao.save(AbstractServiceTest.SYSTEM_TENANT_ID, user);
+        assertEquals(1 + COUNT_SYSADMIN_USER + COUNT_CREATED_USER, userDao.find(AbstractServiceTest.SYSTEM_TENANT_ID).size());
+        User savedUser = userDao.findByEmail(AbstractServiceTest.SYSTEM_TENANT_ID, "user@thingsboard.org");
+        assertNotNull(savedUser);
+        assertEquals(additionalInfo, savedUser.getAdditionalInfo().toString());
     }
 
     @Test
-    @DatabaseSetup("classpath:dbunit/empty_dataset.xml")
     public void testFindTenantAdmins() {
-        UUID tenantId = Uuids.timeBased();
-        UUID customerId = Uuids.timeBased();
-        create30Adminsand60Users(tenantId, customerId);
         PageLink pageLink = new PageLink(20);
         PageData<User> tenantAdmins1 = userDao.findTenantAdmins(tenantId, pageLink);
         assertEquals(20, tenantAdmins1.getData().size());
@@ -88,11 +108,7 @@ public class JpaUserDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
-    @DatabaseSetup("classpath:dbunit/empty_dataset.xml")
     public void testFindCustomerUsers() {
-        UUID tenantId = Uuids.timeBased();
-        UUID customerId = Uuids.timeBased();
-        create30Adminsand60Users(tenantId, customerId);
         PageLink pageLink = new PageLink(40);
         PageData<User> customerUsers1 = userDao.findCustomerUsers(tenantId, customerId, pageLink);
         assertEquals(40, customerUsers1.getData().size());
@@ -106,28 +122,7 @@ public class JpaUserDaoTest extends AbstractJpaDaoTest {
         assertEquals(0, customerUsers3.getData().size());
     }
 
-    @Test
-    @DatabaseSetup("classpath:dbunit/user.xml")
-    public void testSave() throws IOException {
-        User user = new User();
-        user.setId(new UserId(UUID.fromString("cd481534-27cc-11e7-93ae-92361f002671")));
-        user.setTenantId(TenantId.fromUUID(UUID.fromString("1edcb2c6-27cb-11e7-93ae-92361f002671")));
-        user.setCustomerId(new CustomerId(UUID.fromString("51477cb4-27cb-11e7-93ae-92361f002671")));
-        user.setEmail("user@thingsboard.org");
-        user.setFirstName("Jackson");
-        user.setLastName("Roberts");
-        ObjectMapper mapper = new ObjectMapper();
-        String additionalInfo = "{\"key\":\"value-100\"}";
-        JsonNode jsonNode = mapper.readTree(additionalInfo);
-        user.setAdditionalInfo(jsonNode);
-        userDao.save(AbstractServiceTest.SYSTEM_TENANT_ID,user);
-        assertEquals(6, userDao.find(AbstractServiceTest.SYSTEM_TENANT_ID).size());
-        User savedUser = userDao.findByEmail(AbstractServiceTest.SYSTEM_TENANT_ID,"user@thingsboard.org");
-        assertNotNull(savedUser);
-        assertEquals(additionalInfo, savedUser.getAdditionalInfo().toString());
-    }
-
-    private void create30Adminsand60Users(UUID tenantId, UUID customerId) {
+    private void create30TenantAdminsAnd60CustomerUsers(UUID tenantId, UUID customerId) {
         // Create 30 tenant admins and 60 customer users
         for (int i = 0; i < 30; i++) {
             saveUser(tenantId, NULL_UUID);
@@ -150,6 +145,14 @@ public class JpaUserDaoTest extends AbstractJpaDaoTest {
         String idString = id.toString();
         String email = idString.substring(0, idString.indexOf('-')) + "@thingsboard.org";
         user.setEmail(email);
-        userDao.save(AbstractServiceTest.SYSTEM_TENANT_ID,user);
+        userDao.save(AbstractServiceTest.SYSTEM_TENANT_ID, user);
+    }
+
+    private void delete30TenantAdminsAnd60CustomerUsers(UUID tenantId, UUID customerId) {
+        List<User> data = userDao.findCustomerUsers(tenantId, customerId, new PageLink(60)).getData();
+        data.addAll(userDao.findTenantAdmins(tenantId, new PageLink(30)).getData());
+        for (User user : data) {
+            userDao.removeById(user.getTenantId(), user.getUuidId());
+        }
     }
 }

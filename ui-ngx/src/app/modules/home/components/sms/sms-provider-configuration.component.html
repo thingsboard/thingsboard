@@ -40,5 +40,11 @@
         formControlName="configuration">
       </tb-twilio-sms-provider-configuration>
     </ng-template>
+    <ng-template [ngSwitchCase]="smsProviderType.SMPP">
+      <tb-smpp-sms-provider-configuration
+        [required]="required"
+        formControlName="configuration">
+      </tb-smpp-sms-provider-configuration>
+    </ng-template>
   </div>
 </div>

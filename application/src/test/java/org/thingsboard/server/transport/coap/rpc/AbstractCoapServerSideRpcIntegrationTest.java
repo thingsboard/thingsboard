@@ -26,8 +26,6 @@ import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.eclipse.californium.core.coap.Request;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.CoapDeviceType;
-import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.transport.coap.AbstractCoapIntegrationTest;
 
@@ -45,12 +43,7 @@ public abstract class AbstractCoapServerSideRpcIntegrationTest extends AbstractC
 
     protected static final String DEVICE_RESPONSE = "{\"value1\":\"A\",\"value2\":\"B\"}";
 
-    protected Long asyncContextTimeoutToUseRpcPlugin;
-
-    protected void processBeforeTest(String deviceName, CoapDeviceType coapDeviceType, TransportPayloadType payloadType) throws Exception {
-        super.processBeforeTest(deviceName, coapDeviceType, payloadType);
-        asyncContextTimeoutToUseRpcPlugin = 10000L;
-    }
+    protected static final Long asyncContextTimeoutToUseRpcPlugin = 10000L;
 
     protected void processOneWayRpcTest() throws Exception {
         client = getCoapClient(FeatureType.RPC);

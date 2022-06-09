@@ -17,7 +17,7 @@ package org.thingsboard.server.dao.sql.device;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -46,7 +46,7 @@ public class JpaDeviceProfileDao extends JpaAbstractSearchTextDao<DeviceProfileE
     }
 
     @Override
-    protected CrudRepository<DeviceProfileEntity, UUID> getCrudRepository() {
+    protected JpaRepository<DeviceProfileEntity, UUID> getRepository() {
         return deviceProfileRepository;
     }
 
