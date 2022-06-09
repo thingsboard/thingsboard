@@ -18,7 +18,7 @@ import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@an
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { DataKey } from '@shared/models/widget.models';
+import { DataKey, Widget } from '@shared/models/widget.models';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -41,6 +41,8 @@ import { alarmFields } from '@shared/models/alarm.models';
 import { JsFuncComponent } from '@shared/components/js-func.component';
 import { JsonFormComponentData } from '@shared/components/json-form/json-form-component.models';
 import { WidgetService } from '@core/http/widget.service';
+import { Dashboard } from '@shared/models/dashboard.models';
+import { IAliasController } from '@core/api/widget-api.models';
 
 @Component({
   selector: 'tb-data-key-config',
@@ -70,7 +72,19 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
   callbacks: DataKeysCallbacks;
 
   @Input()
+  dashboard: Dashboard;
+
+  @Input()
+  aliasController: IAliasController;
+
+  @Input()
+  widget: Widget;
+
+  @Input()
   dataKeySettingsSchema: any;
+
+  @Input()
+  dataKeySettingsDirective: string;
 
   @Input()
   showPostProcessing = true;
@@ -121,11 +135,16 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
         type: DataKeyType.alarm
       });
     }
-    if (this.dataKeySettingsSchema && this.dataKeySettingsSchema.schema) {
+    if (this.dataKeySettingsSchema && this.dataKeySettingsSchema.schema ||
+      this.dataKeySettingsDirective && this.dataKeySettingsDirective.length) {
       this.displayAdvanced = true;
       this.dataKeySettingsData = {
-        schema: this.dataKeySettingsSchema.schema,
-        form: this.dataKeySettingsSchema.form || ['*']
+        schema: this.dataKeySettingsSchema?.schema || {
+          type: 'object',
+          properties: {}
+        },
+        form: this.dataKeySettingsSchema?.form || ['*'],
+        settingsDirective: this.dataKeySettingsDirective
       };
       this.dataKeySettingsFormGroup = this.fb.group({
         settings: [null, []]
@@ -273,7 +292,7 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
         }
       };
     }
-    if (this.displayAdvanced && !this.dataKeySettingsFormGroup.valid) {
+    if (this.displayAdvanced && (!this.dataKeySettingsFormGroup.valid || !this.modelValue.settings)) {
       return {
         dataKeySettings: {
           valid: false

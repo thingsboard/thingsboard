@@ -15,6 +15,7 @@
 ///
 
 import {
+  ChangeDetectorRef,
   Component,
   ElementRef,
   forwardRef,
@@ -91,7 +92,8 @@ export class CssComponent implements OnInit, OnDestroy, ControlValueAccessor, Va
               private utils: UtilsService,
               private translate: TranslateService,
               protected store: Store<AppState>,
-              private raf: RafService) {
+              private raf: RafService,
+              private cd: ChangeDetectorRef) {
   }
 
   ngOnInit(): void {
@@ -128,6 +130,7 @@ export class CssComponent implements OnInit, OnDestroy, ControlValueAccessor, Va
           if (this.hasErrors !== hasErrors) {
             this.hasErrors = hasErrors;
             this.propagateChange(this.modelValue);
+            this.cd.markForCheck();
           }
         });
         this.editorResize$ = new ResizeObserver(() => {
@@ -202,6 +205,7 @@ export class CssComponent implements OnInit, OnDestroy, ControlValueAccessor, Va
     if (this.modelValue !== editorValue) {
       this.modelValue = editorValue;
       this.propagateChange(this.modelValue);
+      this.cd.markForCheck();
     }
   }
 }

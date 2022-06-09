@@ -20,9 +20,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.oauth2.MapperType;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 
 @Component
 @Slf4j
+@TbCoreComponent
 public class OAuth2ClientMapperProvider {
 
     @Autowired

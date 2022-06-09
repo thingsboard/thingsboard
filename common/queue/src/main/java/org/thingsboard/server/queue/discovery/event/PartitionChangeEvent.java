@@ -17,9 +17,9 @@ package org.thingsboard.server.queue.discovery.event;
 
 import lombok.Getter;
 import lombok.ToString;
-import org.thingsboard.server.common.msg.queue.ServiceQueueKey;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.queue.discovery.QueueKey;
 
 import java.util.Set;
 
@@ -29,17 +29,17 @@ public class PartitionChangeEvent extends TbApplicationEvent {
     private static final long serialVersionUID = -8731788167026510559L;
 
     @Getter
-    private final ServiceQueueKey serviceQueueKey;
+    private final QueueKey queueKey;
     @Getter
     private final Set<TopicPartitionInfo> partitions;
 
-    public PartitionChangeEvent(Object source, ServiceQueueKey serviceQueueKey, Set<TopicPartitionInfo> partitions) {
+    public PartitionChangeEvent(Object source, QueueKey queueKey, Set<TopicPartitionInfo> partitions) {
         super(source);
-        this.serviceQueueKey = serviceQueueKey;
+        this.queueKey = queueKey;
         this.partitions = partitions;
     }
 
     public ServiceType getServiceType() {
-        return serviceQueueKey.getServiceQueue().getType();
+        return queueKey.getType();
     }
 }

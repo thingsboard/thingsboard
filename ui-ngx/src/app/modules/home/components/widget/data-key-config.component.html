@@ -98,9 +98,12 @@
   </mat-tab>
   <mat-tab [formGroup]="dataKeySettingsFormGroup" label="{{ 'datakey.advanced' | translate }}" *ngIf="displayAdvanced">
     <div class="mat-padding" fxLayout="column">
-      <tb-json-form
+      <tb-widget-settings
+        [dashboard]="dashboard"
+        [aliasController]="aliasController"
+        [widget]="widget"
         formControlName="settings">
-      </tb-json-form>
+      </tb-widget-settings>
     </div>
   </mat-tab>
 </mat-tab-group>

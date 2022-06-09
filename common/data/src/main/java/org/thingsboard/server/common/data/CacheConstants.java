@@ -31,4 +31,5 @@ public class CacheConstants {
     public static final String TOKEN_OUTDATAGE_TIME_CACHE = "tokensOutdatageTime";
     public static final String OTA_PACKAGE_CACHE = "otaPackages";
     public static final String OTA_PACKAGE_DATA_CACHE = "otaPackagesData";
+    public static final String TWO_FA_VERIFICATION_CODES_CACHE = "twoFaVerificationCodes";
 }
