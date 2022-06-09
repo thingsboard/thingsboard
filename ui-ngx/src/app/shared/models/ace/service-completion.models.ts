@@ -100,6 +100,8 @@ export const importEntitiesResultInfoHref = '<a href="https://github.com/thingsb
 
 export const customDialogComponentHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/modules/home/components/widget/dialog/custom-dialog.component.ts#L48">CustomDialogComponent</a>';
 
+export const resourceInfoHref = '<a https://github.com/thingsboard/thingsboard/blob/b033b51712244d08e0f5e0beb8be60c9f8fa4cd2/ui-ngx/src/app/shared/models/resource.models.ts#L51">Resource info</a>';
+
 export const pageLinkArg: FunctionArg = {
   name: 'pageLink',
   type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/page/page-link.ts#L68">PageLink</a>',
@@ -1297,6 +1299,23 @@ export const serviceCompletions: TbEditorCompletions = {
           requestConfigArg
         ],
         return: observableReturnTypeVariable('any')
+      },
+    }
+  },
+  resourceService: {
+    description: 'Resource Service API<br>' +
+      'See <a href="https://github.com/thingsboard/thingsboard/blob/b033b51712244d08e0f5e0beb8be60c9f8fa4cd2/ui-ngx/src/app/core/http/resource.service.ts#L29">ResourceService</a> for API reference.',
+    meta: 'service',
+    type: '<a href="https://github.com/thingsboard/thingsboard/blob/b033b51712244d08e0f5e0beb8be60c9f8fa4cd2/ui-ngx/src/app/core/http/resource.service.ts#L29">ResourceService</a>',
+    children: {
+      getResources: {
+        description: 'Find resources by search text',
+        meta: 'function',
+        args: [
+          pageLinkArg,
+          requestConfigArg
+        ],
+        return: observablePageDataReturnType(resourceInfoHref)
       },
     }
   },
