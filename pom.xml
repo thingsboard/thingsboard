@@ -40,11 +40,11 @@
         <jakarta.xml.bind-api.version>2.3.2</jakarta.xml.bind-api.version>
         <jaxb-runtime.version>2.3.2</jaxb-runtime.version>
         <spring-boot.version>2.5.14</spring-boot.version>
-        <spring-data.version>2.5.10</spring-data.version>
+        <spring-data.version>2.5.11</spring-data.version>
         <spring.version>5.3.20</spring.version>
-        <spring-redis.version>5.5.10</spring-redis.version>
-        <spring-security.version>5.6.2</spring-security.version>
-        <spring-data-redis.version>2.5.10</spring-data-redis.version>
+        <spring-redis.version>5.5.12</spring-redis.version>
+        <spring-security.version>5.6.5</spring-security.version>
+        <spring-data-redis.version>2.5.11</spring-data-redis.version>
         <jedis.version>3.7.1</jedis.version>
         <jjwt.version>0.7.0</jjwt.version>
         <slf4j.version>1.7.32</slf4j.version>
