@@ -29,6 +29,8 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.ArrayList;
@@ -600,6 +602,29 @@ public abstract class BaseEdgeServiceTest extends AbstractServiceTest {
 
         Assert.assertNull("Can't find edge by name in cache if it was renamed", renamedEdge);
         edgeService.deleteEdge(tenantId, savedEdge.getId());
+    }
+
+    @Test
+    public void testFindMissingToRelatedRuleChains() {
+        Edge edge = constructEdge("My edge", "default");
+        Edge savedEdge = edgeService.saveEdge(edge);
+
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setTenantId(tenantId);
+        ruleChain.setName("Rule Chain #1");
+        ruleChain.setType(RuleChainType.EDGE);
+        RuleChain ruleChain1 = ruleChainService.saveRuleChain(ruleChain);
+        ruleChainService.assignRuleChainToEdge(tenantId, ruleChain1.getId(), savedEdge.getId());
+
+        ruleChain = new RuleChain();
+        ruleChain.setTenantId(tenantId);
+        ruleChain.setName("Rule Chain #2");
+        ruleChain.setType(RuleChainType.EDGE);
+        RuleChain ruleChain2 = ruleChainService.saveRuleChain(ruleChain);
+        ruleChainService.assignRuleChainToEdge(tenantId, ruleChain2.getId(), savedEdge.getId());
+
+        String missingToRelatedRuleChains = edgeService.findMissingToRelatedRuleChains(tenantId, savedEdge.getId());
+        Assert.assertEquals("[]", missingToRelatedRuleChains);
     }
 
 }

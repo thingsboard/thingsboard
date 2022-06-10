@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.edge;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Function;
@@ -26,9 +25,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
@@ -79,8 +77,6 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String INCORRECT_CUSTOMER_ID = "Incorrect customerId ";
     public static final String INCORRECT_EDGE_ID = "Incorrect edgeId ";
-
-    private static final ObjectMapper mapper = new ObjectMapper();
 
     private static final int DEFAULT_PAGE_SIZE = 1000;
 
@@ -453,11 +449,17 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     }
 
     @Override
-    public String findMissingToRelatedRuleChains(TenantId tenantId, EdgeId edgeId) {
+    public String findMissingToRelatedRuleChains(TenantId tenantId, EdgeId edgeId, String tbRuleChainInputNodeName) {
         List<RuleChain> edgeRuleChains = findEdgeRuleChains(tenantId, edgeId);
         List<RuleChainId> edgeRuleChainIds = edgeRuleChains.stream().map(IdBased::getId).collect(Collectors.toList());
-        ObjectNode result = mapper.createObjectNode();
+        ObjectNode result = JacksonUtil.OBJECT_MAPPER.createObjectNode();
         for (RuleChain edgeRuleChain : edgeRuleChains) {
+            // ruleChainService.
+            // loadRuleChainMetaData(edgeRuleChain.getTenantId(), edgeRuleChain.getId())
+            // .getNodes()
+            // .get(11)
+            // .getConfiguration()
+            // .get("ruleChainId")
             List<RuleChainConnectionInfo> connectionInfos =
                     ruleChainService.loadRuleChainMetaData(edgeRuleChain.getTenantId(), edgeRuleChain.getId()).getRuleChainConnections();
             if (connectionInfos != null && !connectionInfos.isEmpty()) {
@@ -471,7 +473,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
                     }
                 }
                 if (!missingRuleChains.isEmpty()) {
-                    ArrayNode array = mapper.createArrayNode();
+                    ArrayNode array = JacksonUtil.OBJECT_MAPPER.createArrayNode();
                     for (String missingRuleChain : missingRuleChains) {
                         array.add(missingRuleChain);
                     }
