@@ -2184,7 +2184,6 @@
     "last-login-time": "最后登录",
     "profile": "属性",
     "copy-jwt-token": "复制 JWT 令牌",
-    "valid-till": "有效期至 {{expirationData}}",
     "tokenCopiedSuccessMessage": "JWT 令牌已复制到剪贴板",
     "tokenCopiedWarnMessage": "JWT 令牌已过期！请刷新页面。"
   },
