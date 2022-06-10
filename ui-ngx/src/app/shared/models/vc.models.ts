@@ -27,7 +27,8 @@ export const exportableEntityTypes: Array<EntityType> = [
   EntityType.DASHBOARD,
   EntityType.CUSTOMER,
   EntityType.DEVICE_PROFILE,
-  EntityType.RULE_CHAIN
+  EntityType.RULE_CHAIN,
+  EntityType.WIDGETS_BUNDLE
 ];
 
 export interface VersionCreateConfig {
