@@ -56,12 +56,31 @@ public class DefaultTwoFaConfigManager implements TwoFaConfigManager {
 
     @Override
     public Optional<AccountTwoFaSettings> getAccountTwoFaSettings(TenantId tenantId, UserId userId) {
+        PlatformTwoFaSettings platformTwoFaSettings = getPlatformTwoFaSettings(tenantId, true).orElse(null);
         return Optional.ofNullable(userAuthSettingsDao.findByUserId(userId))
-                .flatMap(userAuthSettings -> Optional.ofNullable(userAuthSettings.getTwoFaSettings()))
-                .map(twoFaSettings -> {
-                    twoFaSettings.getConfigs().keySet().removeIf(providerType -> {
-                        return getTwoFaProviderConfig(tenantId, providerType).isEmpty();
+                .map(userAuthSettings -> {
+                    AccountTwoFaSettings twoFaSettings = userAuthSettings.getTwoFaSettings();
+                    if (twoFaSettings == null) return null;
+                    boolean updateNeeded;
+
+                    Map<TwoFaProviderType, TwoFaAccountConfig> configs = twoFaSettings.getConfigs();
+                    updateNeeded = configs.keySet().removeIf(providerType -> {
+                        return platformTwoFaSettings == null || platformTwoFaSettings.getProviderConfig(providerType).isEmpty();
                     });
+                    if (configs.size() == 1 && configs.containsKey(TwoFaProviderType.BACKUP_CODE)) {
+                        configs.remove(TwoFaProviderType.BACKUP_CODE);
+                        updateNeeded = true;
+                    }
+                    if (!configs.isEmpty() && configs.values().stream().noneMatch(TwoFaAccountConfig::isUseByDefault)) {
+                        configs.values().stream()
+                                .filter(config -> config.getProviderType() != TwoFaProviderType.BACKUP_CODE)
+                                .findFirst().ifPresent(config -> config.setUseByDefault(true));
+                        updateNeeded = true;
+                    }
+
+                    if (updateNeeded) {
+                        twoFaSettings = saveAccountTwoFaSettings(tenantId, userId, twoFaSettings);
+                    }
                     return twoFaSettings;
                 });
     }

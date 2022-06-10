@@ -29,6 +29,7 @@ import { DatePipe } from '@angular/common';
 import { ClipboardService } from 'ngx-clipboard';
 import { TwoFactorAuthenticationService } from '@core/http/two-factor-authentication.service';
 import {
+  AccountTwoFaSettingProviders,
   AccountTwoFaSettings,
   BackupCodeTwoFactorAuthAccountConfig,
   EmailTwoFactorAuthAccountConfig,
@@ -49,7 +50,7 @@ import { isDefinedAndNotNull } from '@core/utils';
 export class SecurityComponent extends PageComponent implements OnInit, OnDestroy {
 
   private readonly destroy$ = new Subject<void>();
-  private accountConfig: AccountTwoFaSettings;
+  private accountConfig: AccountTwoFaSettingProviders;
 
   twoFactorAuth: FormGroup;
   user: User;
@@ -128,12 +129,11 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
   }
 
   private processTwoFactorAuthConfig(setting: AccountTwoFaSettings) {
-    this.accountConfig = setting;
-    const configs = this.accountConfig.configs;
+    this.accountConfig = setting?.configs || {};
     Object.values(TwoFactorAuthProviderType).forEach(provider => {
-      if (configs[provider]) {
+      if (this.accountConfig[provider]) {
         this.twoFactorAuth.get(provider).setValue(true);
-        if (configs[provider].useByDefault) {
+        if (this.accountConfig[provider].useByDefault) {
           this.useByDefault = provider;
         }
       } else {
@@ -216,7 +216,7 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
   }
 
   generateNewBackupCode() {
-    const codeLeft = this.accountConfig.configs[TwoFactorAuthProviderType.BACKUP_CODE].codesLeft;
+    const codeLeft = (this.accountConfig[TwoFactorAuthProviderType.BACKUP_CODE] as BackupCodeTwoFactorAuthAccountConfig).codesLeft;
     let subscription: Observable<boolean>;
     if (codeLeft) {
       subscription = this.dialogService.confirm(
@@ -240,7 +240,7 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
 
   providerDataInfo(provider: TwoFactorAuthProviderType) {
     const info = {info: null};
-    const providerConfig = this.accountConfig.configs[provider];
+    const providerConfig = this.accountConfig[provider];
     if (isDefinedAndNotNull(providerConfig)) {
       switch (provider) {
         case TwoFactorAuthProviderType.EMAIL:
