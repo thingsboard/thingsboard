@@ -2246,6 +2246,7 @@
          "current-device": "Current device",
          "default-value": "Default value",
          "dynamic-source-type": "Dynamic source type",
+         "dynamic-value": "Dynamic value",
          "no-dynamic-value": "No dynamic value",
          "source-attribute": "Source attribute",
          "switch-to-dynamic-value": "Switch to dynamic value",
