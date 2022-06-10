@@ -1393,6 +1393,8 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertTrue(customAttributeOpt.isPresent());
         Map<String, String> customAttribute = customAttributeOpt.get();
         Assert.assertEquals(attributesValue, customAttribute.get("value"));
+
+        doDelete("/api/plugins/telemetry/DEVICE/" + device.getId().getId() + "/SERVER_SCOPE?keys=" + attributesKey, String.class);
     }
 
     private Optional<Map<String, String>> getAttributeByKey(String key, List<Map<String, String>> attributes) {
