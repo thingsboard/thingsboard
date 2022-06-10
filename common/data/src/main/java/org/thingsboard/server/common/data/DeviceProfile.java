@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -78,6 +79,8 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
             "If present, the specified queue will be used to store all unprocessed messages related to device, including telemetry, attribute updates, etc. " +
             "Otherwise, the 'Main' queue will be used to store those messages.")
     private QueueId defaultQueueId;
+
+    private String defaultQueueName;
     @Valid
     private transient DeviceProfileData profileData;
     @JsonIgnore
@@ -168,4 +171,13 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
         }
     }
 
+    @JsonIgnore
+    public String getDefaultQueueName() {
+        return defaultQueueName;
+    }
+
+    @JsonProperty
+    public void setDefaultQueueName(String defaultQueueName) {
+        this.defaultQueueName = defaultQueueName;
+    }
 }
