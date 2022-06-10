@@ -29,7 +29,7 @@ import {
 import { TranslateService } from '@ngx-translate/core';
 import { interval, Subscription } from 'rxjs';
 import { isEqual } from '@core/utils';
-import {ActionNotificationShow} from "@core/notification/notification.actions";
+import { ActionNotificationShow } from '@core/notification/notification.actions';
 
 @Component({
   selector: 'tb-two-factor-auth-login',
@@ -120,13 +120,12 @@ export class TwoFactorAuthLoginComponent extends PageComponent implements OnInit
               this.verificationForm.get('verificationCode').setErrors(errors);
             }, 5000);
           } else {
-            this.store.dispatch(new ActionNotificationShow(
-              {
-                message: error.error.message,
-                type: 'error',
-                verticalPosition: 'top',
-                horizontalPosition: 'left'
-              }));
+            this.store.dispatch(new ActionNotificationShow({
+              message: error.error.message,
+              type: 'error',
+              verticalPosition: 'top',
+              horizontalPosition: 'left'
+            }));
           }
         }
       );

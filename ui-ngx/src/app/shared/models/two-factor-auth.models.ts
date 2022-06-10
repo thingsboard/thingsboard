@@ -93,8 +93,8 @@ export interface AccountTwoFaSettings {
 }
 
 export type AccountTwoFaSettingProviders = {
- [key in TwoFactorAuthProviderType]?: TwoFactorAuthAccountConfig;
-}
+  [key in TwoFactorAuthProviderType]?: TwoFactorAuthAccountConfig;
+};
 
 export interface TwoFaProviderInfo {
   type: TwoFactorAuthProviderType;
