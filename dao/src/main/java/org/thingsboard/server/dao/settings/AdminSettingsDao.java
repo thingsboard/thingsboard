@@ -41,4 +41,6 @@ public interface AdminSettingsDao extends Dao<AdminSettings> {
 
     boolean removeByTenantIdAndKey(UUID tenantId, String key);
 
+    void removeByTenantId(UUID tenantId);
+
 }
