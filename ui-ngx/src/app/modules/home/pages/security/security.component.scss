@@ -23,10 +23,10 @@
   mat-card.profile-card {
     padding: 24px;
     @media #{$mat-gt-sm} {
-      width: 70%;
+      width: 80%;
     }
     @media #{$mat-gt-md} {
-      width: 50%;
+      width: 55%;
     }
     @media #{$mat-gt-xl} {
       width: 45%;
