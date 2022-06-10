@@ -22,6 +22,8 @@ import com.google.common.util.concurrent.MoreExecutors;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 public class DonAsynchron {
@@ -61,6 +63,34 @@ public class DonAsynchron {
 
     public static <T> ListenableFuture<T> submit(Callable<T> task, Consumer<T> onSuccess, Consumer<Throwable> onFailure, Executor executor, Executor callbackExecutor) {
         ListenableFuture<T> future = Futures.submit(task, executor);
+        withCallback(future, onSuccess, onFailure, callbackExecutor);
+        return future;
+    }
+
+    public static <T> ListenableFuture<T> submitWithTimeout(
+            Callable<T> task,
+            long timeout, TimeUnit timeUnit,
+            Executor executor,
+            ScheduledExecutorService timeoutExecutor
+    ) {
+        var future = Futures.submit(task, executor);
+        Futures.withTimeout(future, timeout, timeUnit, timeoutExecutor);
+        return future;
+    }
+
+    public static <T> ListenableFuture<T> submitWithTimeout(
+            Callable<T> task,
+            Consumer<T> onSuccess,
+            Consumer<Throwable> onFailure,
+            long timeout, TimeUnit timeUnit,
+            Executor executor,
+            Executor callbackExecutor,
+            ScheduledExecutorService timeoutExecutor
+    ) {
+        var future = submitWithTimeout(
+                task, timeout, timeUnit,
+                executor, timeoutExecutor
+        );
         withCallback(future, onSuccess, onFailure, callbackExecutor);
         return future;
     }

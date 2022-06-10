@@ -16,23 +16,23 @@
 package org.thingsboard.server.service.mail;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.core.io.InputStreamSource;
-import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
+import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.TbEmail;
 import org.thingsboard.server.common.data.AdminSettings;
@@ -57,7 +57,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -87,7 +86,7 @@ public class DefaultMailService implements MailService {
     @Autowired
     private MailExecutorService mailExecutorService;
 
-    private ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private ScheduledExecutorService timeoutExecutor = Executors.newSingleThreadScheduledExecutor();
 
     private JavaMailSenderImpl mailSender;
 
@@ -331,23 +330,21 @@ public class DefaultMailService implements MailService {
             long timeout
     ) throws Exception {
 
-        ListenableFuture<Void> submittedMail = mailExecutorService.executeAsync(() -> {
-            javaMailSender.send(helper.getMimeMessage());
-            return null;
-        });
-        Futures.withTimeout(submittedMail, timeout, TimeUnit.MILLISECONDS, scheduler);
+        ListenableFuture<Void> submittedMail = DonAsynchron.submitWithTimeout(
+                () -> {
+                    javaMailSender.send(helper.getMimeMessage());
+                    return null;
+                },
+                timeout, TimeUnit.MILLISECONDS,
+                mailExecutorService, timeoutExecutor
+        );
 
         try {
             submittedMail.get();
         } catch (CancellationException e) {
             throw new TimeoutException(TIMEOUT_ERR_MSG);
         } catch (ExecutionException e) {
-            Throwable t = e.getCause();
-
-            while (t.getCause() != null) {
-                t = t.getCause();
-            }
-
+            var t = ExceptionUtils.getRootCause(e);
             throw new RuntimeException(t.getMessage());
         }
     }
