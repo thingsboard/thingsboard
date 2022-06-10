@@ -937,6 +937,8 @@
         "assignedToCustomer": "Assigned to customer",
         "assignedToCustomers": "Assigned to customers",
         "public": "Public",
+        "copyId": "Copy dashboard id",
+        "idCopiedMessage": "Dashboard Id has been copied to clipboard",
         "public-link": "Public link",
         "copy-public-link": "Copy public link",
         "public-link-copied-message": "Dashboard public link has been copied to clipboard",
