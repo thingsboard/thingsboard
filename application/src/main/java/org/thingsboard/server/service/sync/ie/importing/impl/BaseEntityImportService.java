@@ -48,6 +48,7 @@ import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
 import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.service.action.EntityActionService;
+import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.sync.ie.exporting.ExportableEntitiesService;
@@ -75,6 +76,8 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
     protected EntityActionService entityActionService;
     @Autowired
     protected TbClusterService clusterService;
+    @Autowired
+    protected TbNotificationEntityService entityNotificationService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override

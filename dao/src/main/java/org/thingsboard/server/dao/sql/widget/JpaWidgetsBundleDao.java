@@ -93,4 +93,19 @@ public class JpaWidgetsBundleDao extends JpaAbstractSearchTextDao<WidgetsBundleE
         return EntityType.WIDGETS_BUNDLE;
     }
 
+    @Override
+    public WidgetsBundle findByTenantIdAndExternalId(UUID tenantId, UUID externalId) {
+        return DaoUtil.getData(widgetsBundleRepository.findByTenantIdAndExternalId(tenantId, externalId));
+    }
+
+    @Override
+    public WidgetsBundle findByTenantIdAndName(UUID tenantId, String name) {
+        return DaoUtil.getData(widgetsBundleRepository.findFirstByTenantIdAndTitle(tenantId, name));
+    }
+
+    @Override
+    public PageData<WidgetsBundle> findByTenantId(UUID tenantId, PageLink pageLink) {
+        return findTenantWidgetsBundlesByTenantId(tenantId, pageLink);
+    }
+
 }

@@ -310,7 +310,7 @@ public class EntitiesVersionControlController extends BaseController {
     public DeferredResult<VersionLoadResult> loadEntitiesVersion(@RequestBody VersionLoadRequest request) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         try {
-            accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
+            accessControlService.checkPermission(user, Resource.VERSION_CONTROL, Operation.READ);
             return wrapFuture(versionControlService.loadEntitiesVersion(user, request));
         } catch (Exception e) {
             throw handleException(e);
