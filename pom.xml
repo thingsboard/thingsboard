@@ -119,7 +119,7 @@
         <hibernate-validator.version>6.0.20.Final</hibernate-validator.version>
         <javax.el.version>3.0.0</javax.el.version>
         <javax.validation-api.version>2.0.1.Final</javax.validation-api.version>
-        <antisamy.version>1.6.4</antisamy.version>
+        <antisamy.version>1.6.8</antisamy.version>
         <snmp4j.version>2.8.5</snmp4j.version>
         <!--         TEST SCOPE         -->
         <awaitility.version>4.1.0</awaitility.version>
