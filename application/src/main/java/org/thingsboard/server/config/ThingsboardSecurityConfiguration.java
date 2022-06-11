@@ -182,12 +182,17 @@ public class ThingsboardSecurityConfiguration extends WebSecurityConfigurerAdapt
     private OAuth2AuthorizationRequestResolver oAuth2AuthorizationRequestResolver;
 
     @Override
+    public void configure(WebSecurity web) throws Exception {
+        web.ignoring().antMatchers("/*.js","/*.css","/*.ico","/assets/**","/static/**");
+    }
+
+    @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests((authorizeHttpRequests) ->
-                authorizeHttpRequests
-                        .antMatchers("/*.js","/*.css","/*.ico","/assets/**","/static/**")
-                        .permitAll()
-        );
+//        http.authorizeHttpRequests((authorizeHttpRequests) ->
+//                authorizeHttpRequests
+//                        .antMatchers("/*.js","/*.css","/*.ico","/assets/**","/static/**")
+//                        .permitAll()
+//        );
         http.headers().cacheControl().and().frameOptions().disable()
                 .and()
                 .cors()
