@@ -15,17 +15,21 @@
  */
 package org.thingsboard.server.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.audit.ActionType;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Slf4j
 public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
 
     public static final String TEST_ALARM_TYPE = "Test";
@@ -56,36 +60,68 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     @Test
     public void testCreateAlarmViaCustomer() throws Exception {
         loginCustomerUser();
-        createAlarm(TEST_ALARM_TYPE);
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        Alarm alarm = createAlarm(TEST_ALARM_TYPE);
+
+        testNotifyEntityOk(alarm, alarm.getId(), alarm.getOriginator(),
+                tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.ADDED);
         logout();
     }
 
     @Test
     public void testCreateAlarmViaTenant() throws Exception {
         loginTenantAdmin();
-        createAlarm(TEST_ALARM_TYPE);
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        Alarm alarm = createAlarm(TEST_ALARM_TYPE);
+
+        testNotifyEntityOk(alarm, alarm.getId(), alarm.getOriginator(),
+                tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ADDED);
         logout();
     }
 
     @Test
     public void testUpdateAlarmViaCustomer() throws Exception {
         loginCustomerUser();
+
+        Mockito.reset(tbClusterService, auditLogService);
+
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
+
+        testNotifyEntityOk(alarm, alarm.getId(), alarm.getOriginator(),
+                tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.ADDED);
+
         alarm.setSeverity(AlarmSeverity.MAJOR);
         Alarm updatedAlarm = doPost("/api/alarm", alarm, Alarm.class);
         Assert.assertNotNull(updatedAlarm);
         Assert.assertEquals(AlarmSeverity.MAJOR, updatedAlarm.getSeverity());
+
+        testNotifyEntityOk(alarm, alarm.getId(), alarm.getOriginator(),
+                tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.UPDATED);
         logout();
     }
 
     @Test
     public void testUpdateAlarmViaTenant() throws Exception {
         loginTenantAdmin();
+
+        Mockito.reset(tbClusterService, auditLogService);
+
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
+
+        testNotifyEntityOk(alarm, alarm.getId(), alarm.getOriginator(),
+                tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ADDED);
+
         alarm.setSeverity(AlarmSeverity.MAJOR);
         Alarm updatedAlarm = doPost("/api/alarm", alarm, Alarm.class);
         Assert.assertNotNull(updatedAlarm);
         Assert.assertEquals(AlarmSeverity.MAJOR, updatedAlarm.getSeverity());
+
+        testNotifyEntityOk(updatedAlarm, updatedAlarm.getId(), updatedAlarm.getOriginator(),
+                tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.UPDATED);
         logout();
     }
 
@@ -93,9 +129,15 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     public void testUpdateAlarmViaDifferentTenant() throws Exception {
         loginTenantAdmin();
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
+
         alarm.setSeverity(AlarmSeverity.MAJOR);
         loginDifferentTenant();
+
+        Mockito.reset(tbClusterService, auditLogService);
+
         doPost("/api/alarm", alarm).andExpect(status().isForbidden());
+
+        testNotifyEntityNever(alarm.getId(), alarm);
         logout();
     }
 
@@ -103,9 +145,15 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     public void testUpdateAlarmViaDifferentCustomer() throws Exception {
         loginCustomerUser();
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
+
         loginDifferentCustomer();
         alarm.setSeverity(AlarmSeverity.MAJOR);
+
+        Mockito.reset(tbClusterService, auditLogService);
+
         doPost("/api/alarm", alarm).andExpect(status().isForbidden());
+
+        testNotifyEntityNever(alarm.getId(), alarm);
         logout();
     }
 
@@ -113,7 +161,13 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     public void testDeleteAlarmViaCustomer() throws Exception {
         loginCustomerUser();
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
+
+        Mockito.reset(tbClusterService, auditLogService);
+
         doDelete("/api/alarm/" + alarm.getId()).andExpect(status().isOk());
+
+        testNotifyEntityDeleteOk(alarm, alarm.getId(), alarm.getOriginator(),
+                tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.DELETED);
         logout();
     }
 
@@ -121,7 +175,13 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     public void testDeleteAlarmViaTenant() throws Exception {
         loginTenantAdmin();
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
+
+        Mockito.reset(tbClusterService, auditLogService);
+
         doDelete("/api/alarm/" + alarm.getId()).andExpect(status().isOk());
+
+        testNotifyEntityDeleteOk(alarm, alarm.getId(), alarm.getOriginator(),
+                tenantId, tenantAdminCustomerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.DELETED);
         logout();
     }
 
@@ -129,8 +189,15 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     public void testDeleteAlarmViaDifferentTenant() throws Exception {
         loginTenantAdmin();
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
+
         loginDifferentTenant();
+
+        Mockito.reset(tbClusterService, auditLogService);
+
         doDelete("/api/alarm/" + alarm.getId()).andExpect(status().isForbidden());
+
+        testNotifyEntityNever(alarm.getId(), alarm);
+
         logout();
     }
 
@@ -139,7 +206,13 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         loginCustomerUser();
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
         loginDifferentCustomer();
+
+        Mockito.reset(tbClusterService, auditLogService);
+
         doDelete("/api/alarm/" + alarm.getId()).andExpect(status().isForbidden());
+
+        testNotifyEntityNever(alarm.getId(), alarm);
+
         logout();
     }
 
@@ -147,10 +220,17 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     public void testClearAlarmViaCustomer() throws Exception {
         loginCustomerUser();
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
+
+        Mockito.reset(tbClusterService, auditLogService);
+
         doPost("/api/alarm/" + alarm.getId() + "/clear").andExpect(status().isOk());
+
         Alarm foundAlarm = doGet("/api/alarm/" + alarm.getId(), Alarm.class);
         Assert.assertNotNull(foundAlarm);
         Assert.assertEquals(AlarmStatus.CLEARED_UNACK, foundAlarm.getStatus());
+
+        testNotifyEntityOk(foundAlarm, foundAlarm.getId(), foundAlarm.getOriginator(),
+                tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.ALARM_CLEAR);
         logout();
     }
 
@@ -158,10 +238,16 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     public void testClearAlarmViaTenant() throws Exception {
         loginTenantAdmin();
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
+
+        Mockito.reset(tbClusterService, auditLogService);
+
         doPost("/api/alarm/" + alarm.getId() + "/clear").andExpect(status().isOk());
         Alarm foundAlarm = doGet("/api/alarm/" + alarm.getId(), Alarm.class);
         Assert.assertNotNull(foundAlarm);
         Assert.assertEquals(AlarmStatus.CLEARED_UNACK, foundAlarm.getStatus());
+
+        testNotifyEntityOk(foundAlarm, foundAlarm.getId(), foundAlarm.getOriginator(),
+                tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ALARM_CLEAR);
         logout();
     }
 
@@ -169,10 +255,17 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     public void testAcknowledgeAlarmViaCustomer() throws Exception {
         loginCustomerUser();
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
+
+        Mockito.reset(tbClusterService, auditLogService);
+
         doPost("/api/alarm/" + alarm.getId() + "/ack").andExpect(status().isOk());
+
         Alarm foundAlarm = doGet("/api/alarm/" + alarm.getId(), Alarm.class);
         Assert.assertNotNull(foundAlarm);
         Assert.assertEquals(AlarmStatus.ACTIVE_ACK, foundAlarm.getStatus());
+
+        testNotifyEntityOk(foundAlarm, foundAlarm.getId(), foundAlarm.getOriginator(),
+                tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.ALARM_ACK);
         logout();
     }
 
@@ -181,7 +274,12 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         loginCustomerUser();
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
         loginDifferentCustomer();
+
+        Mockito.reset(tbClusterService, auditLogService);
+
         doPost("/api/alarm/" + alarm.getId() + "/clear").andExpect(status().isForbidden());
+
+        testNotifyEntityNever(alarm.getId(), alarm);
         logout();
     }
 
@@ -190,7 +288,12 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         loginTenantAdmin();
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
         loginDifferentTenant();
+
+        Mockito.reset(tbClusterService, auditLogService);
+
         doPost("/api/alarm/" + alarm.getId() + "/clear").andExpect(status().isForbidden());
+
+        testNotifyEntityNever(alarm.getId(), alarm);
         logout();
     }
 
@@ -199,7 +302,12 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         loginCustomerUser();
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
         loginDifferentCustomer();
+
+        Mockito.reset(tbClusterService, auditLogService);
+
         doPost("/api/alarm/" + alarm.getId() + "/ack").andExpect(status().isForbidden());
+
+        testNotifyEntityNever(alarm.getId(), alarm);
         logout();
     }
 
@@ -208,7 +316,12 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         loginTenantAdmin();
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
         loginDifferentTenant();
+
+        Mockito.reset(tbClusterService, auditLogService);
+
         doPost("/api/alarm/" + alarm.getId() + "/ack").andExpect(status().isForbidden());
+
+        testNotifyEntityNever(alarm.getId(), alarm);
         logout();
     }
 
@@ -221,10 +334,8 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
                 .severity(AlarmSeverity.CRITICAL)
                 .type(type)
                 .build();
-
         alarm = doPost("/api/alarm", alarm, Alarm.class);
         Assert.assertNotNull(alarm);
-
         return alarm;
     }
 }
