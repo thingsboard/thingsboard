@@ -355,13 +355,14 @@ public class DefaultTbClusterService implements TbClusterService {
     private void broadcast(ComponentLifecycleMsg msg) {
         byte[] msgBytes = encodingService.encode(msg);
         TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> toRuleEngineProducer = producerProvider.getRuleEngineNotificationsMsgProducer();
-        Set<String> tbRuleEngineServices = new HashSet<>(partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE));
+        Set<String> tbRuleEngineServices = partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE);
         EntityType entityType = msg.getEntityId().getEntityType();
         if (entityType.equals(EntityType.TENANT)
                 || entityType.equals(EntityType.TENANT_PROFILE)
                 || entityType.equals(EntityType.DEVICE_PROFILE)
                 || entityType.equals(EntityType.API_USAGE_STATE)
                 || (entityType.equals(EntityType.DEVICE) && msg.getEvent() == ComponentLifecycleEvent.UPDATED)
+                || entityType.equals(EntityType.ENTITY_VIEW)
                 || entityType.equals(EntityType.EDGE)) {
             TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> toCoreNfProducer = producerProvider.getTbCoreNotificationsMsgProducer();
             Set<String> tbCoreServices = partitionService.getAllServiceIds(ServiceType.TB_CORE);
