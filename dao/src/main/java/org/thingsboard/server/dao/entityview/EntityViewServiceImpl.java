@@ -21,6 +21,8 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
@@ -28,6 +30,8 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ConcurrentReferenceHashMap;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
@@ -41,9 +45,11 @@ import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -55,7 +61,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -86,6 +94,11 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
     @Autowired
     private DataValidator<EntityView> entityViewValidator;
 
+    @Autowired
+    protected TbClusterService tbClusterService;
+
+    Map<Pair<UUID, UUID>, List<EntityView>> localCache = new ConcurrentReferenceHashMap<>();
+
     @Caching(evict = {
             @CacheEvict(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityView.tenantId, #entityView.entityId}"),
             @CacheEvict(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityView.tenantId, #entityView.name}"),
@@ -94,7 +107,10 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
     public EntityView saveEntityView(EntityView entityView) {
         log.trace("Executing save entity view [{}]", entityView);
         entityViewValidator.validate(entityView, EntityView::getTenantId);
-        return entityViewDao.save(entityView.getTenantId(), entityView);
+        EntityView savedEV = entityViewDao.save(entityView.getTenantId(), entityView);
+        tbClusterService.broadcastEntityStateChangeEvent(savedEV.getTenantId(), savedEV.getId(),
+                entityView.getId() == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+        return savedEV;
     }
 
     @CacheEvict(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityViewId}")
@@ -265,6 +281,12 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateId(entityId.getId(), "Incorrect entityId" + entityId);
 
+        ImmutablePair<UUID, UUID> localCacheKey = new ImmutablePair<>(tenantId.getId(), entityId.getId());
+        List<EntityView> fromLocalCache = localCache.get(localCacheKey);
+        if (fromLocalCache != null) {
+            return Futures.immediateFuture(fromLocalCache);
+        }
+
         List<Object> tenantIdAndEntityId = new ArrayList<>();
         tenantIdAndEntityId.add(tenantId);
         tenantIdAndEntityId.add(entityId);
@@ -273,6 +295,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         @SuppressWarnings("unchecked")
         List<EntityView> fromCache = cache.get(tenantIdAndEntityId, List.class);
         if (fromCache != null) {
+            localCache.put(localCacheKey, fromCache);
             return Futures.immediateFuture(fromCache);
         } else {
             ListenableFuture<List<EntityView>> entityViewsFuture = entityViewDao.findEntityViewsByTenantIdAndEntityIdAsync(tenantId.getId(), entityId.getId());
@@ -281,6 +304,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
                         @Override
                         public void onSuccess(@Nullable List<EntityView> result) {
                             cache.putIfAbsent(tenantIdAndEntityId, result);
+                            localCache.put(localCacheKey, result);
                         }
 
                         @Override
@@ -302,6 +326,8 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         cacheManager.getCache(ENTITY_VIEW_CACHE).evict(Arrays.asList(entityView.getTenantId(), entityView.getEntityId()));
         cacheManager.getCache(ENTITY_VIEW_CACHE).evict(Arrays.asList(entityView.getTenantId(), entityView.getName()));
         entityViewDao.removeById(tenantId, entityViewId.getId());
+        localCache.remove(entityView.getEntityId());
+        tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityViewId, ComponentLifecycleEvent.DELETED);
     }
 
     @Override
@@ -388,6 +414,19 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         validateString(type, "Incorrect type " + type);
         validatePageLink(pageLink);
         return entityViewDao.findEntityViewsByTenantIdAndEdgeIdAndType(tenantId.getId(), edgeId.getId(), type, pageLink);
+    }
+
+    @Override
+    public void onComponentLifecycleMsg(ComponentLifecycleMsg componentLifecycleMsg) {
+        if (componentLifecycleMsg.getEvent() == ComponentLifecycleEvent.DELETED) {
+            localCache.clear(); //we don't know which entity was mapped before deletion
+        } else {
+            EntityView entityView = findEntityViewById(componentLifecycleMsg.getTenantId(), new EntityViewId(componentLifecycleMsg.getEntityId().getId()));
+            if (entityView != null) {
+                ImmutablePair<UUID, UUID> localCacheKey = new ImmutablePair<>(componentLifecycleMsg.getTenantId().getId(), componentLifecycleMsg.getTenantId().getId());
+                localCache.remove(localCacheKey);
+            }
+        }
     }
 
     private PaginatedRemover<TenantId, EntityView> tenantEntityViewRemover = new PaginatedRemover<TenantId, EntityView>() {

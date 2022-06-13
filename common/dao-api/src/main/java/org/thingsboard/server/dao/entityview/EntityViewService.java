@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 
 import java.util.List;
 
@@ -85,4 +86,6 @@ public interface EntityViewService {
     PageData<EntityView> findEntityViewsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, PageLink pageLink);
 
     PageData<EntityView> findEntityViewsByTenantIdAndEdgeIdAndType(TenantId tenantId, EdgeId edgeId, String type, PageLink pageLink);
+
+    void onComponentLifecycleMsg(ComponentLifecycleMsg componentLifecycleMsg);
 }
