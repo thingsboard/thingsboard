@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
@@ -40,8 +41,11 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
@@ -50,6 +54,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -57,11 +63,14 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 
 @Service
 @TbCoreComponent
+@TbRuleEngineComponent
 @AllArgsConstructor
 @Slf4j
 public class DefaultTbEntityViewService extends AbstractTbEntityService implements TbEntityViewService {
 
     private final TimeseriesService tsService;
+
+    final Map<TenantId, Map<EntityId, List<EntityView>>> localCache = new ConcurrentHashMap<>();
 
     @Override
     public EntityView save(EntityView entityView, EntityView existingEntityView, SecurityUser user) throws ThingsboardException {
@@ -71,6 +80,9 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
             this.updateEntityViewAttributes(user, savedEntityView, existingEntityView);
             notificationEntityService.notifyCreateOrUpdateEntity(savedEntityView.getTenantId(), savedEntityView.getId(), savedEntityView,
                     null, actionType, user);
+            localCache.computeIfAbsent(savedEntityView.getTenantId(), (k) -> new ConcurrentReferenceHashMap<>()).clear();
+            tbClusterService.broadcastEntityStateChangeEvent(savedEntityView.getTenantId(), savedEntityView.getId(),
+                    entityView.getId() == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
             return savedEntityView;
         } catch (Exception e) {
             notificationEntityService.notifyEntity(user.getTenantId(), emptyId(EntityType.ENTITY_VIEW), entityView, null, actionType, user, e);
@@ -122,6 +134,9 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
             entityViewService.deleteEntityView(tenantId, entityViewId);
             notificationEntityService.notifyDeleteEntity(tenantId, entityViewId, entityView, entityView.getCustomerId(), ActionType.DELETED,
                     relatedEdgeIds, user, entityViewId.toString());
+
+            localCache.computeIfAbsent(tenantId, (k) -> new ConcurrentReferenceHashMap<>()).clear();
+            tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityViewId, ComponentLifecycleEvent.DELETED);
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.ENTITY_VIEW), null, null,
                     ActionType.DELETED, user, e, entityViewId.toString());
@@ -211,6 +226,35 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.ENTITY_VIEW), null, null,
                     actionType, user, e, entityViewId.toString());
             throw handleException(e);
+        }
+    }
+
+    @Override
+    public ListenableFuture<List<EntityView>> findEntityViewsByTenantIdAndEntityIdAsync(TenantId tenantId, EntityId entityId) {
+        Map<EntityId, List<EntityView>> localCacheByTenant = localCache.computeIfAbsent(tenantId, (k) -> new ConcurrentReferenceHashMap<>());
+        List<EntityView> fromLocalCache = localCacheByTenant.get(entityId);
+        if (fromLocalCache != null) {
+            return Futures.immediateFuture(fromLocalCache);
+        }
+
+        ListenableFuture<List<EntityView>> future = entityViewService.findEntityViewsByTenantIdAndEntityIdAsync(tenantId, entityId);
+
+        return Futures.transform(future, (entityViewList) -> {
+            localCacheByTenant.put(entityId, entityViewList);
+            return entityViewList;
+        }, MoreExecutors.directExecutor());
+    }
+
+    @Override
+    public void onComponentLifecycleMsg(ComponentLifecycleMsg componentLifecycleMsg) {
+        Map<EntityId, List<EntityView>> localCacheByTenant = localCache.computeIfAbsent(componentLifecycleMsg.getTenantId(), (k) -> new ConcurrentReferenceHashMap<>());
+        if (componentLifecycleMsg.getEvent() == ComponentLifecycleEvent.DELETED) {
+            localCacheByTenant.clear(); //we don't know which entity was mapped before deletion
+        } else {
+            EntityView entityView = entityViewService.findEntityViewById(componentLifecycleMsg.getTenantId(), new EntityViewId(componentLifecycleMsg.getEntityId().getId()));
+            if (entityView != null) {
+                localCacheByTenant.remove(entityView.getEntityId());
+            }
         }
     }
 
@@ -345,7 +389,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
                 @Override
                 public void onFailure(Throwable t) {
                     try {
-                        logTimeseriesDeleted(entityView.getTenantId(),user, entityId, keys, t);
+                        logTimeseriesDeleted(entityView.getTenantId(), user, entityId, keys, t);
                     } catch (ThingsboardException e) {
                         log.error("Failed to log timeseries delete", e);
                     }
