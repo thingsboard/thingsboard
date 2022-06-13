@@ -71,9 +71,15 @@ public class AdminSettingsServiceImpl implements AdminSettingsService {
     }
 
     @Override
-    public boolean deleteAdminSettings(TenantId tenantId, String key) {
+    public boolean deleteAdminSettingsByTenantIdAndKey(TenantId tenantId, String key) {
         log.trace("Executing deleteAdminSettings, tenantId [{}], key [{}]", tenantId, key);
         Validator.validateString(key, "Incorrect key " + key);
         return adminSettingsDao.removeByTenantIdAndKey(tenantId.getId(), key);
     }
+
+    @Override
+    public void deleteAdminSettingsByTenantId(TenantId tenantId) {
+        adminSettingsDao.removeByTenantId(tenantId.getId());
+    }
+
 }

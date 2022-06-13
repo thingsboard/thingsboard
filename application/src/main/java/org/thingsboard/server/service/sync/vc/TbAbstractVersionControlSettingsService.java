@@ -72,7 +72,7 @@ public abstract class TbAbstractVersionControlSettingsService<T extends Serializ
     }
 
     public boolean delete(TenantId tenantId) {
-        boolean result = adminSettingsService.deleteAdminSettings(tenantId, settingsKey);
+        boolean result = adminSettingsService.deleteAdminSettingsByTenantIdAndKey(tenantId, settingsKey);
         cache.evict(tenantId);
         return result;
     }

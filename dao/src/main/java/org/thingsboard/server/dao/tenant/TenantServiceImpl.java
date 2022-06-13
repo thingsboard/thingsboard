@@ -41,6 +41,7 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
+import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
@@ -107,6 +108,9 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
     @Autowired
     private QueueService queueService;
 
+    @Autowired
+    private AdminSettingsService adminSettingsService;
+
     @Override
     public Tenant findTenantById(TenantId tenantId) {
         log.trace("Executing findTenantById [{}]", tenantId);
@@ -164,6 +168,7 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
         otaPackageService.deleteOtaPackagesByTenantId(tenantId);
         rpcService.deleteAllRpcByTenantId(tenantId);
         queueService.deleteQueuesByTenantId(tenantId);
+        adminSettingsService.deleteAdminSettingsByTenantId(tenantId);
         tenantDao.removeById(tenantId, tenantId.getId());
         deleteEntityRelations(tenantId, tenantId);
     }
