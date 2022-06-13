@@ -21,33 +21,65 @@
   }
 
   mat-card.profile-card {
+    padding: 24px;
     @media #{$mat-gt-sm} {
-      width: 70%;
+      width: 80%;
     }
     @media #{$mat-gt-md} {
-      width: 50%;
+      width: 55%;
     }
     @media #{$mat-gt-xl} {
       width: 45%;
     }
 
-    .mat-subheader {
-      line-height: 24px;
-      color: rgba(0, 0, 0, 0.54);
+    .card-title {
+      font: 500 18px / 24px Roboto, "Helvetica Neue", sans-serif;
+      letter-spacing: 0.15px;
+      margin-top: 0;
+    }
+
+    .mat-h4 {
+      font-weight: 500;
       font-size: 14px;
-      font-weight: 400;
+      letter-spacing: 0.25px;
+      margin: 0 0 4px;
     }
 
-    .profile-last-login-ts {
-      font-size: 16px;
-      font-weight: 400;
+    .change-password {
+      margin: 0;
+
+      .mat-divider.mat-divider-vertical {
+        margin-bottom: 25px;
+      }
+
+      .mat-form-field {
+        margin-bottom: 4px;
+      }
+
+      .password-requirements > p {
+        margin: 0 0 8px;
+        letter-spacing: 0.25px;
+        color: rgba(0, 0, 0, 0.87);
+      }
+
+      .mat-icon[data-mat-icon-name="check"] {
+        color: #24A148;
+      }
     }
 
-    .profile-btn-subtext {
+    .auth-title {
+      font-weight: 500;
+      margin: 0;
+    }
+
+    .token-text {
       font: 400 14px / 16px Roboto, "Helvetica Neue", sans-serif;
       letter-spacing: 0.25px;
-      opacity: 0.6;
       padding: 8px 0;
+
+      > .date {
+        opacity: .7;
+      }
     }
   }
 
@@ -89,5 +121,10 @@
     .mat-stroked-button {
       margin-top: 8px;
     }
+  }
+}
+:host ::ng-deep {
+  .mat-form-field-appearance-fill .mat-form-field-underline::before {
+    background-color: transparent;
   }
 }

@@ -483,6 +483,8 @@
         "add-widget": "Добавить новый виджет",
         "title": "Название",
         "select-widget-title": "Выберите виджет",
+        "copyId": "Копировать идентификатор дашборда",
+        "idCopiedMessage": "Идентификатор дашборда скопирован в буфер обмена",
         "select-widget-subtitle": "Список доступных виджетов",
         "delete": "Удалить дашборд",
         "title-required": "Название обязательно.",
@@ -1289,7 +1291,6 @@
         "change-password": "Изменить пароль",
         "current-password": "Текущий пароль",
         "copy-jwt-token": "Копировать JWT токен",
-        "valid-till": "Действителен до {{expirationData}}",
         "tokenCopiedMessage": "JWT токен скопирован в буфер обмена",
         "tokenCopiedWarnMessage": "JWT токен недействителен! Перезагрузите страницу."
     },
