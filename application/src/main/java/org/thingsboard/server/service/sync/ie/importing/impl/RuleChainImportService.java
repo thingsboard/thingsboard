@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.sync.ie.RuleChainExportData;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 import org.thingsboard.server.utils.RegexUtils;
 
 import java.util.Collections;
@@ -52,16 +53,16 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
     }
 
     @Override
-    protected RuleChain findExistingEntity(TenantId tenantId, RuleChain ruleChain, EntityImportSettings importSettings) {
-        RuleChain existingRuleChain = super.findExistingEntity(tenantId, ruleChain, importSettings);
-        if (existingRuleChain == null && importSettings.isFindExistingByName()) {
-            existingRuleChain = ruleChainService.findTenantRuleChainsByTypeAndName(tenantId, ruleChain.getType(), ruleChain.getName()).stream().findFirst().orElse(null);
+    protected RuleChain findExistingEntity(EntitiesImportCtx ctx, RuleChain ruleChain) {
+        RuleChain existingRuleChain = super.findExistingEntity(ctx, ruleChain);
+        if (existingRuleChain == null && ctx.isFindExistingByName()) {
+            existingRuleChain = ruleChainService.findTenantRuleChainsByTypeAndName(ctx.getTenantId(), ruleChain.getType(), ruleChain.getName()).stream().findFirst().orElse(null);
         }
         return existingRuleChain;
     }
 
     @Override
-    protected RuleChain prepareAndSave(TenantId tenantId, RuleChain ruleChain, RuleChainExportData exportData, IdProvider idProvider, EntityImportSettings importSettings) {
+    protected RuleChain prepareAndSave(EntitiesImportCtx ctx, RuleChain ruleChain, RuleChainExportData exportData, IdProvider idProvider) {
         RuleChainMetaData metaData = exportData.getMetaData();
         Optional.ofNullable(metaData.getNodes()).orElse(Collections.emptyList())
                 .forEach(ruleNode -> {
@@ -85,8 +86,8 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
 
         ruleChain = ruleChainService.saveRuleChain(ruleChain);
         exportData.getMetaData().setRuleChainId(ruleChain.getId());
-        ruleChainService.saveRuleChainMetaData(tenantId, exportData.getMetaData());
-        return ruleChainService.findRuleChainById(tenantId, ruleChain.getId());
+        ruleChainService.saveRuleChainMetaData(ctx.getTenantId(), exportData.getMetaData());
+        return ruleChainService.findRuleChainById(ctx.getTenantId(), ruleChain.getId());
     }
 
     @Override

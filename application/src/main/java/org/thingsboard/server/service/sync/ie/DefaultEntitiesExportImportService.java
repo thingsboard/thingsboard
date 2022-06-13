@@ -36,6 +36,7 @@ import org.thingsboard.server.service.sync.ie.exporting.EntityExportService;
 import org.thingsboard.server.service.sync.ie.exporting.impl.BaseEntityExportService;
 import org.thingsboard.server.service.sync.ie.exporting.impl.DefaultEntityExportService;
 import org.thingsboard.server.service.sync.ie.importing.EntityImportService;
+import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -74,9 +75,9 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
     }
 
     @Override
-    public <E extends ExportableEntity<I>, I extends EntityId> EntityImportResult<E> importEntity(SecurityUser user, EntityExportData<E> exportData, EntityImportSettings importSettings,
+    public <E extends ExportableEntity<I>, I extends EntityId> EntityImportResult<E> importEntity(EntitiesImportCtx ctx, EntityExportData<E> exportData,
                                                                                                   boolean saveReferences, boolean sendEvents) throws ThingsboardException {
-        if (!rateLimitService.checkEntityImportLimit(user.getTenantId())) {
+        if (!rateLimitService.checkEntityImportLimit(ctx.getTenantId())) {
             throw new ThingsboardException("Rate limit for entities import is exceeded", ThingsboardErrorCode.TOO_MANY_REQUESTS);
         }
         if (exportData.getEntity() == null || exportData.getEntity().getId() == null) {
@@ -86,7 +87,7 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
         EntityType entityType = exportData.getEntityType();
         EntityImportService<I, E, EntityExportData<E>> importService = getImportService(entityType);
 
-        EntityImportResult<E> importResult = importService.importEntity(user, exportData, importSettings);
+        EntityImportResult<E> importResult = importService.importEntity(ctx, exportData);
 
         if (saveReferences) {
             importResult.getSaveReferencesCallback().run();

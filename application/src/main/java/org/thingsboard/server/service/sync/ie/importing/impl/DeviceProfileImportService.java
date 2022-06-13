@@ -30,6 +30,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
+import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 
 import java.util.Objects;
 
@@ -47,7 +48,7 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
     }
 
     @Override
-    protected DeviceProfile prepareAndSave(TenantId tenantId, DeviceProfile deviceProfile, EntityExportData<DeviceProfile> exportData, IdProvider idProvider, EntityImportSettings importSettings) {
+    protected DeviceProfile prepareAndSave(EntitiesImportCtx ctx, DeviceProfile deviceProfile, EntityExportData<DeviceProfile> exportData, IdProvider idProvider) {
         deviceProfile.setDefaultRuleChainId(idProvider.getInternalId(deviceProfile.getDefaultRuleChainId()));
         deviceProfile.setDefaultDashboardId(idProvider.getInternalId(deviceProfile.getDefaultDashboardId()));
         deviceProfile.setFirmwareId(idProvider.getInternalId(deviceProfile.getFirmwareId()));

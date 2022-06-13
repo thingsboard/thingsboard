@@ -28,6 +28,7 @@ import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
+import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 
 @Service
 @TbCoreComponent
@@ -43,7 +44,7 @@ public class AssetImportService extends BaseEntityImportService<AssetId, Asset, 
     }
 
     @Override
-    protected Asset prepareAndSave(TenantId tenantId, Asset asset, EntityExportData<Asset> exportData, IdProvider idProvider, EntityImportSettings importSettings) {
+    protected Asset prepareAndSave(EntitiesImportCtx ctx, Asset asset, EntityExportData<Asset> exportData, IdProvider idProvider) {
         return assetService.saveAsset(asset);
     }
 
