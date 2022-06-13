@@ -19,7 +19,15 @@ import { User } from '@shared/models/user.model';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  FormGroup, FormGroupDirective,
+  NgForm,
+  ValidationErrors,
+  ValidatorFn,
+  Validators
+} from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { DialogService } from '@core/services/dialog.service';
@@ -29,6 +37,7 @@ import { DatePipe } from '@angular/common';
 import { ClipboardService } from 'ngx-clipboard';
 import { TwoFactorAuthenticationService } from '@core/http/two-factor-authentication.service';
 import {
+  AccountTwoFaSettingProviders,
   AccountTwoFaSettings,
   BackupCodeTwoFactorAuthAccountConfig,
   EmailTwoFactorAuthAccountConfig,
@@ -39,7 +48,9 @@ import {
 import { authenticationDialogMap } from '@home/pages/security/authentication-dialog/authentication-dialog.map';
 import { takeUntil, tap } from 'rxjs/operators';
 import { Observable, of, Subject } from 'rxjs';
-import { isDefinedAndNotNull } from '@core/utils';
+import { isDefinedAndNotNull, isEqual } from '@core/utils';
+import { AuthService } from '@core/auth/auth.service';
+import { UserPasswordPolicy } from '@shared/models/settings.models';
 
 @Component({
   selector: 'tb-security',
@@ -49,10 +60,14 @@ import { isDefinedAndNotNull } from '@core/utils';
 export class SecurityComponent extends PageComponent implements OnInit, OnDestroy {
 
   private readonly destroy$ = new Subject<void>();
-  private accountConfig: AccountTwoFaSettings;
+  private accountConfig: AccountTwoFaSettingProviders;
 
   twoFactorAuth: FormGroup;
+  changePassword: FormGroup;
+
   user: User;
+  passwordPolicy: UserPasswordPolicy;
+
   allowTwoFactorProviders: TwoFactorAuthProviderType[] = [];
   providersData = twoFactorAuthProvidersData;
   twoFactorAuthProviderType = TwoFactorAuthProviderType;
@@ -80,6 +95,7 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
               public dialogService: DialogService,
               public fb: FormBuilder,
               private datePipe: DatePipe,
+              private authService: AuthService,
               private clipboardService: ClipboardService) {
     super(store);
   }
@@ -88,6 +104,8 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
     this.buildTwoFactorForm();
     this.user = this.route.snapshot.data.user;
     this.twoFactorLoad(this.route.snapshot.data.providers);
+    this.buildChangePasswordForm();
+    this.loadPasswordPolicy();
   }
 
   ngOnDestroy() {
@@ -128,18 +146,86 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
   }
 
   private processTwoFactorAuthConfig(setting: AccountTwoFaSettings) {
-    this.accountConfig = setting;
-    const configs = this.accountConfig.configs;
+    this.accountConfig = setting?.configs || {};
     Object.values(TwoFactorAuthProviderType).forEach(provider => {
-      if (configs[provider]) {
+      if (this.accountConfig[provider]) {
         this.twoFactorAuth.get(provider).setValue(true);
-        if (configs[provider].useByDefault) {
+        if (this.accountConfig[provider].useByDefault) {
           this.useByDefault = provider;
         }
       } else {
         this.twoFactorAuth.get(provider).setValue(false);
       }
     });
+  }
+
+  private buildChangePasswordForm() {
+    this.changePassword = this.fb.group({
+      currentPassword: [''],
+      newPassword: ['', Validators.required],
+      newPassword2: ['', this.samePasswordValidation(false, 'newPassword')]
+    });
+  }
+
+  private loadPasswordPolicy() {
+    this.authService.getUserPasswordPolicy().subscribe(policy => {
+      this.passwordPolicy = policy;
+      this.changePassword.get('newPassword').setValidators([
+        this.passwordStrengthValidator(),
+        this.samePasswordValidation(true, 'currentPassword'),
+        Validators.required
+      ]);
+      this.changePassword.get('newPassword').updateValueAndValidity({emitEvent: false});
+    });
+  }
+
+  private passwordStrengthValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value: string = control.value;
+      const errors: any = {};
+
+      if (this.passwordPolicy.minimumUppercaseLetters > 0 &&
+        !new RegExp(`(?:.*?[A-Z]){${this.passwordPolicy.minimumUppercaseLetters}}`).test(value)) {
+        errors.notUpperCase = true;
+      }
+
+      if (this.passwordPolicy.minimumLowercaseLetters > 0 &&
+        !new RegExp(`(?:.*?[a-z]){${this.passwordPolicy.minimumLowercaseLetters}}`).test(value)) {
+        errors.notLowerCase = true;
+      }
+
+      if (this.passwordPolicy.minimumDigits > 0
+        && !new RegExp(`(?:.*?\\d){${this.passwordPolicy.minimumDigits}}`).test(value)) {
+        errors.notNumeric = true;
+      }
+
+      if (this.passwordPolicy.minimumSpecialCharacters > 0 &&
+        !new RegExp(`(?:.*?[\\W_]){${this.passwordPolicy.minimumSpecialCharacters}}`).test(value)) {
+        errors.notSpecial = true;
+      }
+
+      if (!this.passwordPolicy.allowWhitespaces && /\s/.test(value)) {
+        errors.hasWhitespaces = true;
+      }
+
+      if (this.passwordPolicy.minimumLength > 0 && value.length < this.passwordPolicy.minimumLength) {
+        errors.minLength = true;
+      }
+
+      return isEqual(errors, {}) ? null : errors;
+    };
+  }
+
+  private samePasswordValidation(isSame: boolean, key: string): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value: string = control.value;
+      const keyValue = control.parent?.value[key];
+
+      if (isSame) {
+        return value === keyValue ? {samePassword: true} : null;
+      }
+      return value !== keyValue ? {differencePassword: true} : null;
+    };
   }
 
   trackByProvider(i: number, provider: TwoFactorAuthProviderType) {
@@ -216,7 +302,7 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
   }
 
   generateNewBackupCode() {
-    const codeLeft = this.accountConfig.configs[TwoFactorAuthProviderType.BACKUP_CODE].codesLeft;
+    const codeLeft = (this.accountConfig[TwoFactorAuthProviderType.BACKUP_CODE] as BackupCodeTwoFactorAuthAccountConfig).codesLeft;
     let subscription: Observable<boolean>;
     if (codeLeft) {
       subscription = this.dialogService.confirm(
@@ -240,7 +326,7 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
 
   providerDataInfo(provider: TwoFactorAuthProviderType) {
     const info = {info: null};
-    const providerConfig = this.accountConfig.configs[provider];
+    const providerConfig = this.accountConfig[provider];
     if (isDefinedAndNotNull(providerConfig)) {
       switch (provider) {
         case TwoFactorAuthProviderType.EMAIL:
@@ -255,5 +341,42 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
       }
     }
     return info;
+  }
+
+  onChangePassword(form: FormGroupDirective): void {
+    if (this.changePassword.valid) {
+      this.authService.changePassword(this.changePassword.get('currentPassword').value,
+        this.changePassword.get('newPassword').value, {ignoreErrors: true}).subscribe(() => {
+          this.discardChanges(form);
+        },
+        (error) => {
+          if (error.status === 400 && error.error.message === 'Current password doesn\'t match!') {
+            this.changePassword.get('currentPassword').setErrors({differencePassword: true});
+          } else if (error.status === 400 && error.error.message.startsWith('Password must')) {
+            this.loadPasswordPolicy();
+          } else if (error.status === 400 && error.error.message.startsWith('Password was already used')) {
+            this.changePassword.get('newPassword').setErrors({alreadyUsed: error.error.message});
+          } else {
+            this.store.dispatch(new ActionNotificationShow({
+              message: error.error.message,
+              type: 'error',
+              target: 'changePassword'
+            }));
+          }
+        });
+    } else {
+      this.changePassword.markAllAsTouched();
+    }
+  }
+
+  discardChanges(form: FormGroupDirective, event?: MouseEvent) {
+    if (event) {
+      event.stopPropagation();
+    }
+    form.resetForm({
+      currentPassword: '',
+      newPassword: '',
+      newPassword2: ''
+    });
   }
 }

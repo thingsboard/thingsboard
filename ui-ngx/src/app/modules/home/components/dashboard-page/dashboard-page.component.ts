@@ -1135,6 +1135,13 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   editWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget) {
     $event.stopPropagation();
+
+    if (this.isAddingWidget) {
+      this.onAddWidgetClosed();
+      this.isAddingWidgetClosed = true;
+      this.isEditingWidgetClosed = false;
+    }
+
     if (this.editingWidgetOriginal === widget) {
       this.onEditWidgetClosed();
     } else {
