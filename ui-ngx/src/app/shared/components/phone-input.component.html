@@ -22,8 +22,8 @@
       <span class="flag-container">{{ flagIcon }}</span>
       <mat-select class="country-select" formControlName="country">
         <mat-option *ngFor="let country of allCountries" [value]="country.iso2">
-          <span class="country-flag">{{country.flag}}</span>
-          <span>{{country.name + ' +' + country.dialCode }}</span>
+          <span style="font-size: 20px;">{{country.flag}}</span>
+          <span>{{' ' + country.name + ' +' + country.dialCode }}</span>
         </mat-option>
       </mat-select>
     </div>
