@@ -66,7 +66,6 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
         if (entity == null) {
             throw new IllegalArgumentException(entityId.getEntityType() + " [" + entityId.getId() + "] not found");
         }
-        exportableEntitiesService.checkPermission(user, entity, entity.getId().getEntityType(), Operation.READ);
 
         exportData.setEntity(entity);
         exportData.setEntityType(entityId.getEntityType());
@@ -90,22 +89,14 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
         List<EntityRelation> relations = new ArrayList<>();
 
         List<EntityRelation> inboundRelations = relationService.findByTo(user.getTenantId(), entity.getId(), RelationTypeGroup.COMMON);
-        for (EntityRelation relation : inboundRelations) {
-            exportableEntitiesService.checkPermission(user, relation.getFrom(), Operation.READ);
-        }
         relations.addAll(inboundRelations);
 
         List<EntityRelation> outboundRelations = relationService.findByFrom(user.getTenantId(), entity.getId(), RelationTypeGroup.COMMON);
-        for (EntityRelation relation : outboundRelations) {
-            exportableEntitiesService.checkPermission(user, relation.getTo(), Operation.READ);
-        }
         relations.addAll(outboundRelations);
         return relations;
     }
 
     private Map<String, List<AttributeExportData>> exportAttributes(SecurityUser user, E entity) throws ThingsboardException {
-        exportableEntitiesService.checkPermission(user, entity, entity.getId().getEntityType(), Operation.READ_ATTRIBUTES);
-
         List<String> scopes;
         if (entity.getId().getEntityType() == EntityType.DEVICE) {
             scopes = List.of(DataConstants.SERVER_SCOPE, DataConstants.SHARED_SCOPE);

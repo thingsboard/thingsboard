@@ -29,6 +29,7 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
+import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 
 @Service
 @TbCoreComponent
@@ -44,13 +45,13 @@ public class CustomerImportService extends BaseEntityImportService<CustomerId, C
     }
 
     @Override
-    protected Customer prepareAndSave(TenantId tenantId, Customer customer, EntityExportData<Customer> exportData, IdProvider idProvider, EntityImportSettings importSettings) {
+    protected Customer prepareAndSave(EntitiesImportCtx ctx, Customer customer, EntityExportData<Customer> exportData, IdProvider idProvider) {
         if (!customer.isPublic()) {
             return customerService.saveCustomer(customer);
         } else {
-            Customer publicCustomer = customerService.findOrCreatePublicCustomer(tenantId);
+            Customer publicCustomer = customerService.findOrCreatePublicCustomer(ctx.getTenantId());
             publicCustomer.setExternalId(customer.getExternalId());
-            return customerDao.save(tenantId, publicCustomer);
+            return customerDao.save(ctx.getTenantId(), publicCustomer);
         }
     }
 

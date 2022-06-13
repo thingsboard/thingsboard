@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 import org.thingsboard.server.utils.RegexUtils;
 
 import java.util.ArrayList;
@@ -58,16 +59,17 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
     }
 
     @Override
-    protected Dashboard findExistingEntity(TenantId tenantId, Dashboard dashboard, EntityImportSettings importSettings) {
-        Dashboard existingDashboard = super.findExistingEntity(tenantId, dashboard, importSettings);
-        if (existingDashboard == null && importSettings.isFindExistingByName()) {
-            existingDashboard = dashboardService.findTenantDashboardsByTitle(tenantId, dashboard.getName()).stream().findFirst().orElse(null);
+    protected Dashboard findExistingEntity(EntitiesImportCtx ctx, Dashboard dashboard) {
+        Dashboard existingDashboard = super.findExistingEntity(ctx, dashboard);
+        if (existingDashboard == null && ctx.isFindExistingByName()) {
+            existingDashboard = dashboardService.findTenantDashboardsByTitle(ctx.getTenantId(), dashboard.getName()).stream().findFirst().orElse(null);
         }
         return existingDashboard;
     }
 
     @Override
-    protected Dashboard prepareAndSave(TenantId tenantId, Dashboard dashboard, EntityExportData<Dashboard> exportData, IdProvider idProvider, EntityImportSettings importSettings) {
+    protected Dashboard prepareAndSave(EntitiesImportCtx ctx, Dashboard dashboard, EntityExportData<Dashboard> exportData, IdProvider idProvider) {
+        var tenantId = ctx.getTenantId();
         JsonNode configuration = dashboard.getConfiguration();
         JsonNode entityAliases = configuration.get("entityAliases");
         if (entityAliases != null && entityAliases.isObject()) {

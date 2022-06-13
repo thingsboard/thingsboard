@@ -53,6 +53,7 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.sync.ie.exporting.ExportableEntitiesService;
 import org.thingsboard.server.service.sync.ie.importing.EntityImportService;
+import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.util.ArrayList;
@@ -81,54 +82,53 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public EntityImportResult<E> importEntity(SecurityUser user, D exportData, EntityImportSettings importSettings) throws ThingsboardException {
+    public EntityImportResult<E> importEntity(EntitiesImportCtx ctx, D exportData) throws ThingsboardException {
         E entity = exportData.getEntity();
-        E existingEntity = findExistingEntity(user.getTenantId(), entity, importSettings);
+        E existingEntity = findExistingEntity(ctx, entity);
 
         entity.setExternalId(entity.getId());
 
         EntityImportResult<E> importResult = new EntityImportResult<>();
-        IdProvider idProvider = new IdProvider(user, importSettings, importResult);
-        setOwner(user.getTenantId(), entity, idProvider);
+        IdProvider idProvider = new IdProvider(ctx, importResult);
+        setOwner(ctx.getTenantId(), entity, idProvider);
         if (existingEntity == null) {
             entity.setId(null);
-            exportableEntitiesService.checkPermission(user, entity, getEntityType(), Operation.CREATE);
         } else {
             entity.setId(existingEntity.getId());
             entity.setCreatedTime(existingEntity.getCreatedTime());
-            exportableEntitiesService.checkPermission(user, existingEntity, getEntityType(), Operation.WRITE);
         }
 
-        E savedEntity = prepareAndSave(user.getTenantId(), entity, exportData, idProvider, importSettings);
+        E savedEntity = prepareAndSave(ctx, entity, exportData, idProvider);
 
         importResult.setSavedEntity(savedEntity);
         importResult.setOldEntity(existingEntity);
         importResult.setEntityType(getEntityType());
 
-        processAfterSaved(user, importResult, exportData, idProvider, importSettings);
+        processAfterSaved(ctx, importResult, exportData, idProvider);
+
+        ctx.putInternalId(exportData.getExternalId(), savedEntity.getId());
 
         return importResult;
     }
 
     protected abstract void setOwner(TenantId tenantId, E entity, IdProvider idProvider);
 
-    protected abstract E prepareAndSave(TenantId tenantId, E entity, D exportData, IdProvider idProvider, EntityImportSettings importSettings);
+    protected abstract E prepareAndSave(EntitiesImportCtx ctx, E entity, D exportData, IdProvider idProvider);
 
 
-    protected void processAfterSaved(SecurityUser user, EntityImportResult<E> importResult, D exportData,
-                                     IdProvider idProvider, EntityImportSettings importSettings) throws ThingsboardException {
+    protected void processAfterSaved(EntitiesImportCtx ctx, EntityImportResult<E> importResult, D exportData, IdProvider idProvider) throws ThingsboardException {
         E savedEntity = importResult.getSavedEntity();
         E oldEntity = importResult.getOldEntity();
 
         importResult.addSendEventsCallback(() -> {
-            onEntitySaved(user, savedEntity, oldEntity);
+            onEntitySaved(ctx.getUser(), savedEntity, oldEntity);
         });
 
-        if (importSettings.isUpdateRelations() && exportData.getRelations() != null) {
-            importRelations(user, exportData.getRelations(), importResult);
+        if (ctx.isUpdateRelations() && exportData.getRelations() != null) {
+            importRelations(ctx.getUser(), exportData.getRelations(), importResult);
         }
-        if (importSettings.isSaveAttributes() && exportData.getAttributes() != null) {
-            importAttributes(user, exportData.getAttributes(), importResult);
+        if (ctx.isSaveAttributes() && exportData.getAttributes() != null) {
+            importAttributes(ctx.getUser(), exportData.getAttributes(), importResult);
         }
     }
 
@@ -138,12 +138,10 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
             for (EntityRelation relation : relations) {
                 if (!relation.getTo().equals(entity.getId())) {
                     HasId<EntityId> to = findInternalEntity(user.getTenantId(), relation.getTo());
-                    exportableEntitiesService.checkPermission(user, to, to.getId().getEntityType(), Operation.WRITE);
                     relation.setTo(to.getId());
                 }
                 if (!relation.getFrom().equals(entity.getId())) {
                     HasId<EntityId> from = findInternalEntity(user.getTenantId(), relation.getFrom());
-                    exportableEntitiesService.checkPermission(user, from, from.getId().getEntityType(), Operation.WRITE);
                     relation.setFrom(from.getId());
                 }
             }
@@ -155,15 +153,6 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
 
                 for (EntityRelation existingRelation : existingRelations) {
                     if (!relations.contains(existingRelation)) {
-                        EntityId otherEntity = null;
-                        if (!existingRelation.getTo().equals(entity.getId())) {
-                            otherEntity = existingRelation.getTo();
-                        } else if (!existingRelation.getFrom().equals(entity.getId())) {
-                            otherEntity = existingRelation.getFrom();
-                        }
-                        if (otherEntity != null) {
-                            exportableEntitiesService.checkPermission(user, otherEntity, Operation.WRITE);
-                        }
                         relationService.deleteRelation(user.getTenantId(), existingRelation);
                         importResult.addSendEventsCallback(() -> {
                             entityActionService.logEntityAction(user, existingRelation.getFrom(), null, null,
@@ -234,12 +223,12 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
 
 
     @SuppressWarnings("unchecked")
-    protected E findExistingEntity(TenantId tenantId, E entity, EntityImportSettings importSettings) {
-        return (E) Optional.ofNullable(exportableEntitiesService.findEntityByTenantIdAndExternalId(tenantId, entity.getId()))
-                .or(() -> Optional.ofNullable(exportableEntitiesService.findEntityByTenantIdAndId(tenantId, entity.getId())))
+    protected E findExistingEntity(EntitiesImportCtx ctx, E entity) {
+        return (E) Optional.ofNullable(exportableEntitiesService.findEntityByTenantIdAndExternalId(ctx.getTenantId(), entity.getId()))
+                .or(() -> Optional.ofNullable(exportableEntitiesService.findEntityByTenantIdAndId(ctx.getTenantId(), entity.getId())))
                 .or(() -> {
-                    if (importSettings.isFindExistingByName()) {
-                        return Optional.ofNullable(exportableEntitiesService.findEntityByTenantIdAndName(tenantId, getEntityType(), entity.getName()));
+                    if (ctx.isFindExistingByName()) {
+                        return Optional.ofNullable(exportableEntitiesService.findEntityByTenantIdAndName(ctx.getTenantId(), getEntityType(), entity.getName()));
                     } else {
                         return Optional.empty();
                     }
@@ -255,22 +244,27 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
     }
 
 
+    @SuppressWarnings("unchecked")
     @RequiredArgsConstructor
     protected class IdProvider {
-        private final SecurityUser user;
-        private final EntityImportSettings importSettings;
+        private final EntitiesImportCtx ctx;
         private final EntityImportResult<E> importResult;
 
         public <ID extends EntityId> ID getInternalId(ID externalId) {
             return getInternalId(externalId, true);
-          }
+        }
 
         public <ID extends EntityId> ID getInternalId(ID externalId, boolean throwExceptionIfNotFound) {
             if (externalId == null || externalId.isNullUid()) return null;
 
+            EntityId localId = ctx.getInternalId(externalId);
+            if (localId != null) {
+                return (ID) localId;
+            }
+
             HasId<ID> entity;
             try {
-                entity = findInternalEntity(user.getTenantId(), externalId);
+                entity = findInternalEntity(ctx.getTenantId(), externalId);
             } catch (Exception e) {
                 if (throwExceptionIfNotFound) {
                     throw e;
@@ -279,11 +273,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                     return null;
                 }
             }
-            try {
-                exportableEntitiesService.checkPermission(user, entity, entity.getId().getEntityType(), Operation.READ);
-            } catch (ThingsboardException e) {
-                throw new IllegalArgumentException(e.getMessage(), e);
-            }
+            ctx.putInternalId(externalId, entity.getId());
             return entity.getId();
         }
 
@@ -297,16 +287,30 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                 } catch (Exception e) {
                     continue;
                 }
+                EntityId internalId = ctx.getInternalId(externalId);
+                if (internalId != null) {
+                    return Optional.of(internalId);
+                }
+            }
+
+            for (EntityType entityType : EntityType.values()) {
+                EntityId externalId;
+                try {
+                    externalId = EntityIdFactory.getByTypeAndUuid(entityType, externalUuid);
+                } catch (Exception e) {
+                    continue;
+                }
 
                 EntityId internalId = getInternalId(externalId, false);
                 if (internalId != null) {
                     return Optional.of(internalId);
-                } else if (importSettings.isResetExternalIdsOfAnotherTenant()) {
+                } else if (ctx.isResetExternalIdsOfAnotherTenant()) {
                     try {
                         if (exportableEntitiesService.findEntityById(externalId) != null) {
                             return Optional.of(EntityIdFactory.getByTypeAndUuid(entityType, EntityId.NULL_UUID));
                         }
-                    } catch (Exception ignored) {}
+                    } catch (Exception ignored) {
+                    }
                 }
             }
 

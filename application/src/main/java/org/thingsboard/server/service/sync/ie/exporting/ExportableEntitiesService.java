@@ -40,9 +40,4 @@ public interface ExportableEntitiesService {
 
     <I extends EntityId> void removeById(TenantId tenantId, I id);
 
-
-    void checkPermission(SecurityUser user, HasId<? extends EntityId> entity, EntityType entityType, Operation operation) throws ThingsboardException;
-
-    void checkPermission(SecurityUser user, EntityId entityId, Operation operation) throws ThingsboardException;
-
 }
