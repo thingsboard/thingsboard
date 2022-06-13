@@ -27,7 +27,7 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@TbCoreComponent
+//@TbCoreComponent
 @Component
 //TODO: remove after fixing issue https://github.com/springfox/springfox/issues/3462 or after migration from springfox to springdoc
 public class SpringfoxHandlerProviderBeanPostProcessor implements BeanPostProcessor {
