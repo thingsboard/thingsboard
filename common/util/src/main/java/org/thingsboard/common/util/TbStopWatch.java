@@ -28,10 +28,21 @@ import org.springframework.util.StopWatch;
  * */
 public class TbStopWatch extends StopWatch {
 
-    public static TbStopWatch startNew(){
+    public static TbStopWatch create(){
         TbStopWatch stopWatch = new TbStopWatch();
         stopWatch.start();
         return stopWatch;
+    }
+
+    public static TbStopWatch create(String taskName){
+        TbStopWatch stopWatch = new TbStopWatch();
+        stopWatch.start(taskName);
+        return stopWatch;
+    }
+
+    public void startNew(String taskName){
+        stop();
+        start(taskName);
     }
 
     public long stopAndGetTotalTimeMillis(){

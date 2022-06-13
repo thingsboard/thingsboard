@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.TbStopWatch;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
@@ -246,11 +247,11 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     private VersionLoadResult loadSingleEntity(SecurityUser user, VersionLoadConfig config, EntityExportData entityData) {
         try {
             var ctx = new EntitiesImportCtx(user, EntityImportSettings.builder()
-                            .updateRelations(config.isLoadRelations())
-                            .saveAttributes(config.isLoadAttributes())
-                            .saveCredentials(config.isLoadCredentials())
-                            .findExistingByName(false)
-                            .build());
+                    .updateRelations(config.isLoadRelations())
+                    .saveAttributes(config.isLoadAttributes())
+                    .saveCredentials(config.isLoadCredentials())
+                    .findExistingByName(false)
+                    .build());
             EntityImportResult<?> importResult = exportImportService.importEntity(ctx, entityData, true, true);
             return VersionLoadResult.success(EntityTypeLoadResult.builder()
                     .entityType(importResult.getEntityType())
@@ -271,6 +272,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         List<ThrowingRunnable> sendEventsCallbacks = new ArrayList<>();
 
         EntitiesImportCtx ctx = new EntitiesImportCtx(user);
+        var sw = TbStopWatch.create("before");
 
         List<EntityType> entityTypes = request.getEntityTypes().keySet().stream()
                 .sorted(exportImportService.getEntityTypeComparatorForImport()).collect(Collectors.toList());
@@ -294,6 +296,8 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                         .findExistingByName(config.isFindExistingEntityByName())
                         .build());
                 for (EntityExportData entityData : entityDataList) {
+                    sw.startNew("Entities " + entityType.name());
+                    log.debug("[{}] Loading {} entities", ctx.getTenantId(), entityType);
                     EntityImportResult<?> importResult;
                     try {
                         importResult = exportImportService.importEntity(ctx, entityData, false, false);
@@ -322,6 +326,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                     .build());
         }
 
+        sw.startNew("Reimport");
         toReimport.forEach((externalId, importSettings) -> {
             try {
                 EntityExportData entityData = gitServiceQueue.getEntity(user.getTenantId(), request.getVersionId(), externalId).get();
@@ -341,6 +346,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
             }
         });
 
+        sw.startNew("Remove Others");
         request.getEntityTypes().keySet().stream()
                 .filter(entityType -> request.getEntityTypes().get(entityType).isRemoveOtherEntities())
                 .sorted(exportImportService.getEntityTypeComparatorForImport().reversed())
@@ -361,6 +367,8 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                     });
                 });
 
+        sw.startNew("Callbacks");
+
         for (ThrowingRunnable saveReferencesCallback : saveReferencesCallbacks) {
             try {
                 saveReferencesCallback.run();
@@ -375,6 +383,12 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                 log.error("Failed to send events for entity", e);
             }
         }
+
+        sw.stop();
+        for (var task : sw.getTaskInfo()) {
+            log.debug("[{}] Executed: {} in {}ms", ctx.getTenantId(), task.getTaskName(), task.getTimeMillis());
+        }
+        log.info("[{}] Total time: {}ms", ctx.getTenantId(), sw.getTotalTimeMillis());
         return VersionLoadResult.success(new ArrayList<>(results.values()));
     }
 
@@ -412,8 +426,8 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                             .exportCredentials(otherVersion.hasCredentials())
                             .build());
                     return transform(gitServiceQueue.getContentsDiff(user.getTenantId(),
-                                    JacksonUtil.toPrettyString(currentVersion.sort()),
-                                    JacksonUtil.toPrettyString(otherVersion.sort())),
+                            JacksonUtil.toPrettyString(currentVersion.sort()),
+                            JacksonUtil.toPrettyString(otherVersion.sort())),
                             rawDiff -> new EntityDataDiff(currentVersion, otherVersion, rawDiff), MoreExecutors.directExecutor());
                 }, MoreExecutors.directExecutor());
     }

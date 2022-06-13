@@ -30,7 +30,6 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
-import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -59,8 +58,8 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
     }
 
     @Override
-    protected Dashboard findExistingEntity(EntitiesImportCtx ctx, Dashboard dashboard) {
-        Dashboard existingDashboard = super.findExistingEntity(ctx, dashboard);
+    protected Dashboard findExistingEntity(EntitiesImportCtx ctx, Dashboard dashboard, IdProvider idProvider) {
+        Dashboard existingDashboard = super.findExistingEntity(ctx, dashboard, idProvider);
         if (existingDashboard == null && ctx.isFindExistingByName()) {
             existingDashboard = dashboardService.findTenantDashboardsByTitle(ctx.getTenantId(), dashboard.getName()).stream().findFirst().orElse(null);
         }
