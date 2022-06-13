@@ -49,6 +49,7 @@ import org.thingsboard.server.common.data.device.profile.CustomTimeScheduleItem;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
@@ -1157,7 +1158,7 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(listListenableFutureActiveSchedule);
 
         TbMsg theMsg = TbMsg.newMsg("ALARM", deviceId, new TbMsgMetaData(), "");
-        Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
+        Mockito.when(ctx.newMsg(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
         ObjectNode data = mapper.createObjectNode();
