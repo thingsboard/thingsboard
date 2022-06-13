@@ -28,6 +28,8 @@ ALTER TABLE customer
     ADD COLUMN IF NOT EXISTS external_id UUID;
 ALTER TABLE widgets_bundle
     ADD COLUMN IF NOT EXISTS external_id UUID;
+ALTER TABLE entity_view
+    ADD COLUMN IF NOT EXISTS external_id UUID;
 
 ALTER TABLE admin_settings
     ADD COLUMN IF NOT EXISTS tenant_id uuid NOT NULL DEFAULT '13814000-1dd2-11b2-8080-808080808080';

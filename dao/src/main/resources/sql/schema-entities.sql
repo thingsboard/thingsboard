@@ -440,7 +440,8 @@ CREATE TABLE IF NOT EXISTS entity_view (
     start_ts bigint,
     end_ts bigint,
     search_text varchar(255),
-    additional_info varchar
+    additional_info varchar,
+    external_id uuid
 );
 
 CREATE TABLE IF NOT EXISTS ts_kv_latest
