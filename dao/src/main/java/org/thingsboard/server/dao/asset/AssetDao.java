@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
+import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -34,7 +35,7 @@ import java.util.UUID;
  * The Interface AssetDao.
  *
  */
-public interface AssetDao extends Dao<Asset>, TenantEntityDao, ExportableEntityDao<Asset> {
+public interface AssetDao extends Dao<Asset>, TenantEntityDao, ExportableEntityDao<AssetId, Asset> {
 
     /**
      * Find asset info by id.

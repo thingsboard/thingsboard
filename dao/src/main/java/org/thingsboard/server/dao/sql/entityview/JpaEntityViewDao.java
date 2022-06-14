@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
+import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -209,6 +210,12 @@ public class JpaEntityViewDao extends JpaAbstractSearchTextDao<EntityViewEntity,
     @Override
     public PageData<EntityView> findByTenantId(UUID tenantId, PageLink pageLink) {
         return findEntityViewsByTenantId(tenantId, pageLink);
+    }
+
+    @Override
+    public EntityViewId getExternalIdByInternal(EntityViewId internalId) {
+        return Optional.ofNullable(entityViewRepository.getExternalIdById(internalId.getId()))
+                .map(EntityViewId::new).orElse(null);
     }
 
     @Override

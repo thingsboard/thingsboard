@@ -52,7 +52,7 @@ import java.util.stream.Collectors;
 public class DefaultEntityExportService<I extends EntityId, E extends ExportableEntity<I>, D extends EntityExportData<E>> implements EntityExportService<I, E, D> {
 
     @Autowired @Lazy
-    private ExportableEntitiesService exportableEntitiesService;
+    protected ExportableEntitiesService exportableEntitiesService;
     @Autowired
     private RelationService relationService;
     @Autowired

@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -33,6 +34,7 @@ import org.thingsboard.server.dao.model.sql.DeviceProfileEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 @Component
@@ -124,6 +126,12 @@ public class JpaDeviceProfileDao extends JpaAbstractSearchTextDao<DeviceProfileE
     @Override
     public PageData<DeviceProfile> findByTenantId(UUID tenantId, PageLink pageLink) {
         return findDeviceProfiles(TenantId.fromUUID(tenantId), pageLink);
+    }
+
+    @Override
+    public DeviceProfileId getExternalIdByInternal(DeviceProfileId internalId) {
+        return Optional.ofNullable(deviceProfileRepository.getExternalIdById(internalId.getId()))
+                .map(DeviceProfileId::new).orElse(null);
     }
 
     @Override

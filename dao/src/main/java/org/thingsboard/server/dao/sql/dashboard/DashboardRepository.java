@@ -18,6 +18,8 @@ package org.thingsboard.server.dao.sql.dashboard;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.DashboardEntity;
 
@@ -34,5 +36,8 @@ public interface DashboardRepository extends JpaRepository<DashboardEntity, UUID
     List<DashboardEntity> findByTenantIdAndTitle(UUID tenantId, String title);
 
     Page<DashboardEntity> findByTenantId(UUID tenantId, Pageable pageable);
+
+    @Query("SELECT externalId FROM DashboardEntity WHERE id = :id")
+    UUID getExternalIdById(@Param("id") UUID id);
 
 }

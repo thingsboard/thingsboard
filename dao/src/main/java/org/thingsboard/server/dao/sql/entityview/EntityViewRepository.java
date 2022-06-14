@@ -140,4 +140,7 @@ public interface EntityViewRepository extends JpaRepository<EntityViewEntity, UU
                                                    @Param("type") String type,
                                                    @Param("searchText") String searchText,
                                                    Pageable pageable);
+    @Query("SELECT externalId FROM EntityViewEntity WHERE id = :id")
+    UUID getExternalIdById(@Param("id") UUID id);
+
 }
