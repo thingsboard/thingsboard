@@ -20,14 +20,15 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
-import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 
 @Service
 @TbCoreComponent
@@ -43,15 +44,17 @@ public class EntityViewImportService extends BaseEntityImportService<EntityViewI
     }
 
     @Override
-    protected EntityView prepareAndSave(TenantId tenantId, EntityView entityView, EntityExportData<EntityView> exportData, IdProvider idProvider, EntityImportSettings importSettings) {
+    protected EntityView prepareAndSave(EntitiesImportCtx ctx, EntityView entityView, EntityExportData<EntityView> exportData, IdProvider idProvider) {
         entityView.setEntityId(idProvider.getInternalId(entityView.getEntityId()));
         return entityViewService.saveEntityView(entityView);
     }
 
     @Override
     protected void onEntitySaved(SecurityUser user, EntityView savedEntityView, EntityView oldEntityView) throws ThingsboardException {
-        entityNotificationService.notifyCreateOrUpdateEntity(user.getTenantId(), savedEntityView.getId(), savedEntityView,
-                null, oldEntityView == null ? ActionType.ADDED : ActionType.UPDATED, user);
+        super.onEntitySaved(user, savedEntityView, oldEntityView);
+        if (oldEntityView != null) {
+            entityActionService.sendEntityNotificationMsgToEdgeService(user.getTenantId(), savedEntityView.getId(), EdgeEventActionType.UPDATED);
+        }
     }
 
     @Override

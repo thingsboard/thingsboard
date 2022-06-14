@@ -24,6 +24,7 @@ import { RuleChain, RuleChainMetaData } from '@shared/models/rule-chain.models';
 export const exportableEntityTypes: Array<EntityType> = [
   EntityType.ASSET,
   EntityType.DEVICE,
+  EntityType.ENTITY_VIEW,
   EntityType.DASHBOARD,
   EntityType.CUSTOMER,
   EntityType.DEVICE_PROFILE,
