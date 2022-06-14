@@ -202,8 +202,22 @@ public class JpaEntityViewDao extends JpaAbstractSearchTextDao<EntityViewEntity,
     }
 
     @Override
+    public EntityView findByTenantIdAndExternalId(UUID tenantId, UUID externalId) {
+        return DaoUtil.getData(entityViewRepository.findByTenantIdAndExternalId(tenantId, externalId));
+    }
+
+    @Override
+    public PageData<EntityView> findByTenantId(UUID tenantId, PageLink pageLink) {
+        return findEntityViewsByTenantId(tenantId, pageLink);
+    }
+
+    @Override
+    public EntityView findByTenantIdAndName(UUID tenantId, String name) {
+        return findEntityViewByTenantIdAndName(tenantId, name).orElse(null);
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.ENTITY_VIEW;
     }
-
 }
