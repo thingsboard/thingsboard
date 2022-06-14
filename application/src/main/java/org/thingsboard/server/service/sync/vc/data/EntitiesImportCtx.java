@@ -39,6 +39,7 @@ import java.util.Set;
 public class EntitiesImportCtx {
 
     private final SecurityUser user;
+    private final String versionId;
     private EntityImportSettings settings;
 
     Map<EntityType, EntityTypeLoadResult> results = new HashMap<>();
@@ -51,12 +52,13 @@ public class EntitiesImportCtx {
 
     private final Set<EntityRelation> relations = new LinkedHashSet<>();
 
-    public EntitiesImportCtx(SecurityUser user) {
-        this(user, null);
+    public EntitiesImportCtx(SecurityUser user, String versionId) {
+        this(user, versionId, null);
     }
 
-    public EntitiesImportCtx(SecurityUser user, EntityImportSettings settings) {
+    public EntitiesImportCtx(SecurityUser user, String versionId, EntityImportSettings settings) {
         this.user = user;
+        this.versionId = versionId;
         this.settings = settings;
     }
 
