@@ -28,6 +28,8 @@ ALTER TABLE customer
     ADD COLUMN IF NOT EXISTS external_id UUID;
 ALTER TABLE widgets_bundle
     ADD COLUMN IF NOT EXISTS external_id UUID;
+ALTER TABLE entity_view
+    ADD COLUMN IF NOT EXISTS external_id UUID;
 
 CREATE INDEX IF NOT EXISTS idx_device_external_id ON device(tenant_id, external_id);
 CREATE INDEX IF NOT EXISTS idx_device_profile_external_id ON device_profile(tenant_id, external_id);
