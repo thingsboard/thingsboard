@@ -32,6 +32,13 @@ if [ ! -f ${firstlaunch} ]; then
     do
       sleep 1
     done
+else
+    RETRIES="${PG_ISREADY_RETRIES:-300}"
+    until pg_isready -U ${pkg.user} -d thingsboard --quiet || [ $RETRIES -eq 0 ]
+    do
+        echo "Connecting to Postgres, $((RETRIES--)) attempts left..."
+        sleep 1
+    done
 fi
 
 cassandra_data_dir=${CASSANDRA_DATA}
