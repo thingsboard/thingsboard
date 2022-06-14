@@ -32,6 +32,8 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.model.ModelConstants;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Locale;
 
 import static org.mockito.Mockito.never;
@@ -96,12 +98,14 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
             Mockito.verify(auditLogService, times(1)).logEntityAction(Mockito.eq(tenantId),
                     Mockito.eq(customer_NULL_UUID), Mockito.eq(userId), Mockito.eq(userName),
                     Mockito.eq(entity_NULL_UUID), Mockito.any(entity.getClass()), Mockito.eq(actionType),
-                    Mockito.any(exp.getClass()), Mockito.eq(additionalInfo));
+                    Mockito.argThat(argument ->
+                            argument.getMessage().equals(exp.getMessage())), Mockito.eq(additionalInfo));
         } else {
             Mockito.verify(auditLogService, times(1)).logEntityAction(Mockito.eq(tenantId),
                     Mockito.eq(customer_NULL_UUID), Mockito.eq(userId), Mockito.eq(userName),
                     Mockito.eq(entity_NULL_UUID), Mockito.any(entity.getClass()), Mockito.eq(actionType),
-                    Mockito.any(exp.getClass()));
+                    Mockito.argThat(argument ->
+                        argument.getMessage().equals(exp.getMessage())));
         }
         Mockito.verify(tbClusterService, never()).pushMsgToRuleEngine(Mockito.any(), Mockito.any(entity_NULL_UUID.getClass()),
                 Mockito.any(), Mockito.any());
@@ -169,5 +173,11 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
             }
         }
         return result;
+    }
+
+    private String getFailureStack(Exception e) {
+        StringWriter sw = new StringWriter();
+        e.printStackTrace(new PrintWriter(sw));
+        return sw.toString();
     }
 }
