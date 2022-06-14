@@ -29,7 +29,6 @@ export const exportableEntityTypes: Array<EntityType> = [
   EntityType.CUSTOMER,
   EntityType.DEVICE_PROFILE,
   EntityType.RULE_CHAIN,
-  EntityType.ENTITY_VIEW,
   EntityType.WIDGETS_BUNDLE
 ];
 
