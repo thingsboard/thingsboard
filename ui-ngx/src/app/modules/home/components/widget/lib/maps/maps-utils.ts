@@ -15,20 +15,22 @@
 ///
 
 import L from 'leaflet';
-import { MarkerSettings, PolygonSettings, PolylineSettings } from './map-models';
+import {
+  ShowTooltipAction, WidgetToolipSettings
+} from './map-models';
 import { Datasource } from '@app/shared/models/widget.models';
 
 export function createTooltip(target: L.Layer,
-                              settings: MarkerSettings | PolylineSettings | PolygonSettings,
+                              settings: Partial<WidgetToolipSettings>,
                               datasource: Datasource,
                               autoClose = false,
-                              showTooltipAction = 'click',
+                              showTooltipAction = ShowTooltipAction.click,
                               content?: string | HTMLElement
 ): L.Popup {
     const popup = L.popup();
     popup.setContent(content);
     target.bindPopup(popup, { autoClose, closeOnClick: false });
-    if (showTooltipAction === 'hover') {
+    if (showTooltipAction === ShowTooltipAction.hover) {
         target.off('click');
         target.on('mouseover', () => {
             target.openPopup();
@@ -47,7 +49,7 @@ export function createTooltip(target: L.Layer,
     return popup;
 }
 
-export function bindPopupActions(popup: L.Popup, settings: MarkerSettings | PolylineSettings | PolygonSettings,
+export function bindPopupActions(popup: L.Popup, settings: Partial<WidgetToolipSettings>,
                                  datasource: Datasource) {
   const actions = popup.getElement().getElementsByClassName('tb-custom-action');
   Array.from(actions).forEach(

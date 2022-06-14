@@ -28,7 +28,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.asset.AssetDao;
 import org.thingsboard.server.dao.asset.BaseAssetService;
-import org.thingsboard.server.dao.cache.EntitiesCacheManager;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -53,9 +52,6 @@ public class AssetDataValidator extends DataValidator<Asset> {
     @Lazy
     private TbTenantProfileCache tenantProfileCache;
 
-    @Autowired
-    private EntitiesCacheManager cacheManager;
-
     @Override
     protected void validateCreate(TenantId tenantId, Asset asset) {
         DefaultTenantProfileConfiguration profileConfiguration =
@@ -67,14 +63,12 @@ public class AssetDataValidator extends DataValidator<Asset> {
     }
 
     @Override
-    protected void validateUpdate(TenantId tenantId, Asset asset) {
+    protected Asset validateUpdate(TenantId tenantId, Asset asset) {
         Asset old = assetDao.findById(asset.getTenantId(), asset.getId().getId());
         if (old == null) {
             throw new DataValidationException("Can't update non existing asset!");
         }
-        if (!old.getName().equals(asset.getName())) {
-            cacheManager.removeAssetFromCacheByName(tenantId, old.getName());
-        }
+        return old;
     }
 
     @Override
