@@ -61,6 +61,7 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
   @Input() required = true;
   @Input() floatLabel: FloatLabelType = 'always';
   @Input() appearance: MatFormFieldAppearance = 'legacy';
+  @Input() placeholder = 'phone-input.phone-input-label';
 
   allCountries: Array<Country> = this.countryCodeData.allCountries;
   phonePlaceholder: string;

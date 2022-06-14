@@ -28,12 +28,12 @@
       </mat-select>
     </div>
     <mat-form-field class="phone-input" [appearance]="appearance" [floatLabel]="floatLabel">
-      <mat-label translate>security.2fa.dialog.sms-step-label</mat-label>
+      <mat-label>{{ placeholder | translate }}</mat-label>
       <input
         formControlName="phoneNumber"
         type="tel"
         matInput
-        placeholder="{{ 'security.2fa.dialog.sms-step-label' | translate }}"
+        placeholder="{{ placeholder | translate }}"
         [pattern]="phoneNumberPattern"
         (focus)="focus()"
         autocomplete="off"

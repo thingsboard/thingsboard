@@ -37,7 +37,11 @@
       <form [formGroup]="smsConfigForm" (ngSubmit)="nextStep()">
         <p class="mat-body step-description input" translate>security.2fa.dialog.sms-step-description</p>
         <div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="8px">
-          <tb-phone-input fxFlex formControlName="phone" [floatLabel]="'never'"></tb-phone-input>
+          <tb-phone-input fxFlex
+                          formControlName="phone"
+                          [floatLabel]="'never'"
+                          [placeholder]="'security.2fa.dialog.sms-step-label'">
+          </tb-phone-input>
           <button mat-raised-button
                   type="submit"
                   color="primary"
