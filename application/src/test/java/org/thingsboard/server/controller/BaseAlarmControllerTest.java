@@ -65,7 +65,7 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
 
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
 
-        testNotifyEntityOk(alarm, alarm.getId(), alarm.getOriginator(),
+        testNotifyEntityOne(alarm, alarm.getId(), alarm.getOriginator(),
                 tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.ADDED);
         logout();
     }
@@ -78,7 +78,7 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
 
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
 
-        testNotifyEntityOk(alarm, alarm.getId(), alarm.getOriginator(),
+        testNotifyEntityOne(alarm, alarm.getId(), alarm.getOriginator(),
                 tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ADDED);
         logout();
     }
@@ -91,7 +91,7 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
 
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
 
-        testNotifyEntityOk(alarm, alarm.getId(), alarm.getOriginator(),
+        testNotifyEntityOne(alarm, alarm.getId(), alarm.getOriginator(),
                 tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.ADDED);
 
         alarm.setSeverity(AlarmSeverity.MAJOR);
@@ -99,7 +99,7 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         Assert.assertNotNull(updatedAlarm);
         Assert.assertEquals(AlarmSeverity.MAJOR, updatedAlarm.getSeverity());
 
-        testNotifyEntityOk(alarm, alarm.getId(), alarm.getOriginator(),
+        testNotifyEntityOne(alarm, alarm.getId(), alarm.getOriginator(),
                 tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.UPDATED);
         logout();
     }
@@ -112,7 +112,7 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
 
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
 
-        testNotifyEntityOk(alarm, alarm.getId(), alarm.getOriginator(),
+        testNotifyEntityOne(alarm, alarm.getId(), alarm.getOriginator(),
                 tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ADDED);
 
         alarm.setSeverity(AlarmSeverity.MAJOR);
@@ -120,7 +120,7 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         Assert.assertNotNull(updatedAlarm);
         Assert.assertEquals(AlarmSeverity.MAJOR, updatedAlarm.getSeverity());
 
-        testNotifyEntityOk(updatedAlarm, updatedAlarm.getId(), updatedAlarm.getOriginator(),
+        testNotifyEntityOne(updatedAlarm, updatedAlarm.getId(), updatedAlarm.getOriginator(),
                 tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.UPDATED);
         logout();
     }
@@ -166,7 +166,7 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
 
         doDelete("/api/alarm/" + alarm.getId()).andExpect(status().isOk());
 
-        testNotifyEntityDeleteOk(alarm, alarm.getId(), alarm.getOriginator(),
+        testNotifyEntityOneMsgToEdgeServiceNever(alarm, alarm.getId(), alarm.getOriginator(),
                 tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.DELETED);
         logout();
     }
@@ -180,7 +180,7 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
 
         doDelete("/api/alarm/" + alarm.getId()).andExpect(status().isOk());
 
-        testNotifyEntityDeleteOk(alarm, alarm.getId(), alarm.getOriginator(),
+        testNotifyEntityOneMsgToEdgeServiceNever(alarm, alarm.getId(), alarm.getOriginator(),
                 tenantId, tenantAdminCustomerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.DELETED);
         logout();
     }
@@ -229,7 +229,7 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         Assert.assertNotNull(foundAlarm);
         Assert.assertEquals(AlarmStatus.CLEARED_UNACK, foundAlarm.getStatus());
 
-        testNotifyEntityOk(foundAlarm, foundAlarm.getId(), foundAlarm.getOriginator(),
+        testNotifyEntityOne(foundAlarm, foundAlarm.getId(), foundAlarm.getOriginator(),
                 tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.ALARM_CLEAR);
         logout();
     }
@@ -246,7 +246,7 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         Assert.assertNotNull(foundAlarm);
         Assert.assertEquals(AlarmStatus.CLEARED_UNACK, foundAlarm.getStatus());
 
-        testNotifyEntityOk(foundAlarm, foundAlarm.getId(), foundAlarm.getOriginator(),
+        testNotifyEntityOne(foundAlarm, foundAlarm.getId(), foundAlarm.getOriginator(),
                 tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ALARM_CLEAR);
         logout();
     }
@@ -264,7 +264,7 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         Assert.assertNotNull(foundAlarm);
         Assert.assertEquals(AlarmStatus.ACTIVE_ACK, foundAlarm.getStatus());
 
-        testNotifyEntityOk(foundAlarm, foundAlarm.getId(), foundAlarm.getOriginator(),
+        testNotifyEntityOne(foundAlarm, foundAlarm.getId(), foundAlarm.getOriginator(),
                 tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.ALARM_ACK);
         logout();
     }
