@@ -87,12 +87,9 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     public void testUpdateAlarmViaCustomer() throws Exception {
         loginCustomerUser();
 
-        Mockito.reset(tbClusterService, auditLogService);
-
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
 
-        testNotifyEntityOne(alarm, alarm.getId(), alarm.getOriginator(),
-                tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.ADDED);
+        Mockito.reset(tbClusterService, auditLogService);
 
         alarm.setSeverity(AlarmSeverity.MAJOR);
         Alarm updatedAlarm = doPost("/api/alarm", alarm, Alarm.class);
@@ -108,12 +105,9 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     public void testUpdateAlarmViaTenant() throws Exception {
         loginTenantAdmin();
 
-        Mockito.reset(tbClusterService, auditLogService);
-
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
 
-        testNotifyEntityOne(alarm, alarm.getId(), alarm.getOriginator(),
-                tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ADDED);
+        Mockito.reset(tbClusterService, auditLogService);
 
         alarm.setSeverity(AlarmSeverity.MAJOR);
         Alarm updatedAlarm = doPost("/api/alarm", alarm, Alarm.class);
@@ -129,12 +123,7 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     public void testUpdateAlarmViaDifferentTenant() throws Exception {
         loginTenantAdmin();
 
-        Mockito.reset(tbClusterService, auditLogService);
-
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
-
-        testNotifyEntityOne(alarm, alarm.getId(), alarm.getOriginator(),
-                tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ADDED);
 
         alarm.setSeverity(AlarmSeverity.MAJOR);
         loginDifferentTenant();
@@ -151,12 +140,7 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     public void testUpdateAlarmViaDifferentCustomer() throws Exception {
         loginCustomerUser();
 
-        Mockito.reset(tbClusterService, auditLogService);
-
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
-
-        testNotifyEntityOne(alarm, alarm.getId(), alarm.getOriginator(),
-                tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.ADDED);
 
         loginDifferentCustomer();
         alarm.setSeverity(AlarmSeverity.MAJOR);
@@ -173,12 +157,9 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     public void testDeleteAlarmViaCustomer() throws Exception {
         loginCustomerUser();
 
-        Mockito.reset(tbClusterService, auditLogService);
-
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
 
-        testNotifyEntityOne(alarm, alarm.getId(), alarm.getOriginator(),
-                tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.ADDED);
+        Mockito.reset(tbClusterService, auditLogService);
 
         doDelete("/api/alarm/" + alarm.getId()).andExpect(status().isOk());
 
@@ -191,12 +172,9 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     public void testDeleteAlarmViaTenant() throws Exception {
         loginTenantAdmin();
 
-        Mockito.reset(tbClusterService, auditLogService);
-
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
 
-        testNotifyEntityOne(alarm, alarm.getId(), alarm.getOriginator(),
-                tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ADDED);
+        Mockito.reset(tbClusterService, auditLogService);
 
         doDelete("/api/alarm/" + alarm.getId()).andExpect(status().isOk());
 
@@ -209,12 +187,7 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     public void testDeleteAlarmViaDifferentTenant() throws Exception {
         loginTenantAdmin();
 
-        Mockito.reset(tbClusterService, auditLogService);
-
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
-
-        testNotifyEntityOne(alarm, alarm.getId(), alarm.getOriginator(),
-                tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ADDED);
 
         loginDifferentTenant();
 
@@ -231,12 +204,7 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     public void testDeleteAlarmViaAnotherCustomer() throws Exception {
         loginCustomerUser();
 
-        Mockito.reset(tbClusterService, auditLogService);
-
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
-
-        testNotifyEntityOne(alarm, alarm.getId(), alarm.getOriginator(),
-                tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.ADDED);
 
         loginDifferentCustomer();
 
@@ -253,12 +221,9 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     public void testClearAlarmViaCustomer() throws Exception {
         loginCustomerUser();
 
-        Mockito.reset(tbClusterService, auditLogService);
-
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
 
-        testNotifyEntityOne(alarm, alarm.getId(), alarm.getOriginator(),
-                tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.ADDED);
+        Mockito.reset(tbClusterService, auditLogService);
 
         doPost("/api/alarm/" + alarm.getId() + "/clear").andExpect(status().isOk());
 
@@ -275,12 +240,7 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     public void testClearAlarmViaTenant() throws Exception {
         loginTenantAdmin();
 
-        Mockito.reset(tbClusterService, auditLogService);
-
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
-
-        testNotifyEntityOne(alarm, alarm.getId(), alarm.getOriginator(),
-                tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ADDED);
 
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -298,12 +258,9 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     public void testAcknowledgeAlarmViaCustomer() throws Exception {
         loginCustomerUser();
 
-        Mockito.reset(tbClusterService, auditLogService);
-
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
 
-        testNotifyEntityOne(alarm, alarm.getId(), alarm.getOriginator(),
-                tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.ADDED);
+        Mockito.reset(tbClusterService, auditLogService);
 
         doPost("/api/alarm/" + alarm.getId() + "/ack").andExpect(status().isOk());
 
@@ -320,12 +277,7 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     public void testClearAlarmViaDifferentCustomer() throws Exception {
         loginCustomerUser();
 
-        Mockito.reset(tbClusterService, auditLogService);
-
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
-
-        testNotifyEntityOne(alarm, alarm.getId(), alarm.getOriginator(),
-                tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.ADDED);
 
         loginDifferentCustomer();
 
@@ -341,12 +293,7 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     public void testClearAlarmViaDifferentTenant() throws Exception {
         loginTenantAdmin();
 
-        Mockito.reset(tbClusterService, auditLogService);
-
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
-
-        testNotifyEntityOne(alarm, alarm.getId(), alarm.getOriginator(),
-                tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ADDED);
 
         loginDifferentTenant();
 
@@ -362,12 +309,7 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     public void testAcknowledgeAlarmViaDifferentCustomer() throws Exception {
         loginCustomerUser();
 
-        Mockito.reset(tbClusterService, auditLogService);
-
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
-
-        testNotifyEntityOne(alarm, alarm.getId(), alarm.getOriginator(),
-                tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.ADDED);
 
         loginDifferentCustomer();
 
@@ -383,12 +325,7 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     public void testAcknowledgeAlarmViaDifferentTenant() throws Exception {
         loginTenantAdmin();
 
-        Mockito.reset(tbClusterService, auditLogService);
-
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
-
-        testNotifyEntityOne(alarm, alarm.getId(), alarm.getOriginator(),
-                tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ADDED);
 
         loginDifferentTenant();
 

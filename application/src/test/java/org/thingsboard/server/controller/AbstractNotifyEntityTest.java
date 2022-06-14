@@ -56,7 +56,6 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
         Mockito.reset(tbClusterService, auditLogService);
     }
 
-
     protected void testNotifyEntityDeleteOneMsgToEdgeServiceNever(HasName entity, EntityId entityId, EntityId originatorId,
                                                                   TenantId tenantId, CustomerId customerId, UserId userId, String userName,
                                                                   ActionType actionType, Object... additionalInfo) {
@@ -64,7 +63,6 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
         testLogEntityActionOne(entity, originatorId, tenantId, customerId, userId, userName, actionType, additionalInfo);
         testPushMsgToRuleEngineOne(entityId, tenantId);
         testBroadcastEntityStateChangeEventOne(entityId, tenantId);
-
     }
 
     protected void testNotifyEntityOneMsgToEdgeServiceNever(HasName entity, EntityId entityId, EntityId originatorId,
@@ -172,6 +170,4 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
         }
         return result;
     }
-
-
 }
