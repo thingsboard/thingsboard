@@ -4449,6 +4449,13 @@
         "material-icons": "Material icons",
         "show-all": "Show all icons"
     },
+    "phone-input": {
+        "phone-input-label": "Phone number",
+        "phone-input-required": "Phone number is required",
+        "phone-input-validation": "Phone number is invalid or not possible",
+        "phone-input-pattern": "Invalid phone number. Should be in E.164 format, ex. {{phoneNumber}}",
+        "phone-input-hint": "Phone Number in E.164 format, ex. {{phoneNumber}}"
+    },
     "custom": {
         "widget-action": {
             "action-cell-button": "Action cell button",
