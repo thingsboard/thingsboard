@@ -30,4 +30,8 @@ public class EntityTypeLoadResult {
     private int created;
     private int updated;
     private int deleted;
+
+    public EntityTypeLoadResult(EntityType entityType) {
+        this.entityType = entityType;
+    }
 }

@@ -57,11 +57,9 @@ import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -171,10 +169,8 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                             entityActionService.logEntityAction(ctx.getUser(), existingRelation.getTo(), null, null,
                                     ActionType.RELATION_DELETED, null, existingRelation);
                         });
-                    } else {
-                        if (Objects.equal(relation.getAdditionalInfo(), existingRelation.getAdditionalInfo())) {
-                            relationsMap.remove(relation);
-                        }
+                    } else if (Objects.equal(relation.getAdditionalInfo(), existingRelation.getAdditionalInfo())) {
+                        relationsMap.remove(relation);
                     }
                 }
             }

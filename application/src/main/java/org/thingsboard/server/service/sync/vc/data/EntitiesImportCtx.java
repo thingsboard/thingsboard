@@ -17,16 +17,20 @@ package org.thingsboard.server.service.sync.vc.data;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.sync.ThrowingRunnable;
 import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
+import org.thingsboard.server.common.data.sync.vc.EntityTypeLoadResult;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,7 +41,14 @@ public class EntitiesImportCtx {
     private final SecurityUser user;
     private EntityImportSettings settings;
 
+    Map<EntityType, EntityTypeLoadResult> results = new HashMap<>();
+    Map<EntityType, Set<EntityId>> importedEntities = new HashMap<>();
+    Map<EntityId, EntityImportSettings> toReimport = new HashMap<>();
+    private final List<ThrowingRunnable> referenceCallbacks = new ArrayList<>();
+    private final List<ThrowingRunnable> eventCallbacks = new ArrayList<>();
+
     private final Map<EntityId, EntityId> externalToInternalIdMap = new HashMap<>();
+
     private final Set<EntityRelation> relations = new LinkedHashSet<>();
 
     public EntitiesImportCtx(SecurityUser user) {
@@ -84,8 +95,35 @@ public class EntitiesImportCtx {
         externalToInternalIdMap.put(externalId, internalId);
     }
 
+    public void registerResult(EntityType entityType, boolean created) {
+        EntityTypeLoadResult result = results.computeIfAbsent(entityType, EntityTypeLoadResult::new);
+        if (created) {
+            result.setCreated(result.getCreated() + 1);
+        } else {
+            result.setUpdated(result.getUpdated() + 1);
+        }
+    }
+
+    public void registerDeleted(EntityType entityType) {
+        EntityTypeLoadResult result = results.computeIfAbsent(entityType, EntityTypeLoadResult::new);
+        result.setDeleted(result.getDeleted() + 1);
+    }
+
     public void addRelations(Collection<EntityRelation> values) {
         relations.addAll(values);
     }
+
+    public void addReferenceCallback(ThrowingRunnable tr) {
+        if (tr != null) {
+            referenceCallbacks.add(tr);
+        }
+    }
+
+    public void addEventCallback(ThrowingRunnable tr) {
+        if (tr != null) {
+            eventCallbacks.add(tr);
+        }
+    }
+
 
 }
