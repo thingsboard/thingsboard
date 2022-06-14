@@ -128,50 +128,57 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
     @Test
     public void testSaveCustomerWithViolationOfValidation() throws Exception {
         Customer customer = new Customer();
+        String validationError = "Validation error: ";
         customer.setTitle(RandomStringUtils.randomAlphabetic(300));
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        doPost("/api/customer", customer).andExpect(statusReason(containsString("length of title must be equal or less than 255")));
+        String msgError = "length of title must be equal or less than 255";
+        doPost("/api/customer", customer).andExpect(statusReason(containsString(msgError)));
 
         testNotifyEntityError(customer, savedTenant.getId(),
-                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(""));
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(validationError + msgError));
 
         customer.setTitle("Normal title");
         customer.setCity(RandomStringUtils.randomAlphabetic(300));
-
-        doPost("/api/customer", customer).andExpect(statusReason(containsString("length of city must be equal or less than 255")));
+        msgError = "length of city must be equal or less than 255";
+        doPost("/api/customer", customer).andExpect(statusReason(containsString(msgError)));
 
         testNotifyEntityError(customer, savedTenant.getId(),
-                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(""));
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(validationError + msgError));
 
         customer.setCity("Normal city");
         customer.setCountry(RandomStringUtils.randomAlphabetic(300));
-        doPost("/api/customer", customer).andExpect(statusReason(containsString("length of country must be equal or less than 255")));
+        msgError = "length of country must be equal or less than 255";
+        doPost("/api/customer", customer).andExpect(statusReason(containsString(msgError)));
 
         testNotifyEntityError(customer, savedTenant.getId(),
-                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(""));
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(validationError + msgError));
 
         customer.setCountry("Ukraine");
         customer.setPhone(RandomStringUtils.randomAlphabetic(300));
-        doPost("/api/customer", customer).andExpect(statusReason(containsString("length of phone must be equal or less than 255")));
+        msgError = "length of phone must be equal or less than 255";
+        doPost("/api/customer", customer).andExpect(statusReason(containsString(msgError)));
 
         testNotifyEntityError(customer, savedTenant.getId(),
-                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(""));
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(validationError + msgError));
 
         customer.setPhone("+3892555554512");
         customer.setState(RandomStringUtils.randomAlphabetic(300));
-        doPost("/api/customer", customer).andExpect(statusReason(containsString("length of state must be equal or less than 255")));
+        msgError = "length of state must be equal or less than 255";
+        doPost("/api/customer", customer).andExpect(statusReason(containsString(msgError)));
 
         testNotifyEntityError(customer, savedTenant.getId(),
-                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(""));
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(validationError + msgError));
 
         customer.setState("Normal state");
         customer.setZip(RandomStringUtils.randomAlphabetic(300));
-        doPost("/api/customer", customer).andExpect(statusReason(containsString("length of zip or postal code must be equal or less than 255")));
+        msgError = "length of zip or postal code must be equal or less than 255";
+        doPost("/api/customer", customer).andExpect(statusReason(containsString(msgError)));
 
         testNotifyEntityError(customer, savedTenant.getId(),
-                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(""));
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(validationError + msgError));
+
     }
 
     @Test
@@ -244,14 +251,22 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
     @Test
     public void testSaveCustomerWithEmptyTitle() throws Exception {
         Customer customer = new Customer();
+        String msgError = "Customer title should be specified";
+
+        Mockito.reset(tbClusterService, auditLogService);
+
         doPost("/api/customer", customer)
                 .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Customer title should be specified")));
+                .andExpect(statusReason(containsString(msgError)));
+
+        testNotifyEntityError(customer, savedTenant.getId(),
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError + "!"));
     }
 
     @Test
     public void testSaveCustomerWithInvalidEmail() throws Exception {
         Customer customer = new Customer();
+        String msgError = "Invalid email address format 'invalid@mail'";
         customer.setTitle("My customer");
         customer.setEmail("invalid@mail");
 
@@ -259,10 +274,10 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
 
         doPost("/api/customer", customer)
                 .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Invalid email address format 'invalid@mail'")));
+                .andExpect(statusReason(containsString(msgError)));
 
         testNotifyEntityError(customer, savedTenant.getId(),
-                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(""));
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError + "!"));
     }
 
     @Test
