@@ -55,13 +55,29 @@ import { FloatLabelType, MatFormFieldAppearance } from '@angular/material/form-f
 })
 export class PhoneInputComponent implements OnInit, ControlValueAccessor, Validator {
 
-  @Input() disabled: boolean;
-  @Input() defaultCountry: CountryCode = 'US';
-  @Input() enableFlagsSelect = true;
-  @Input() required = true;
-  @Input() floatLabel: FloatLabelType = 'always';
-  @Input() appearance: MatFormFieldAppearance = 'legacy';
-  @Input() placeholder = 'phone-input.phone-input-label';
+  @Input()
+  disabled: boolean;
+
+  @Input()
+  defaultCountry: CountryCode = 'US';
+
+  @Input()
+  enableFlagsSelect = true;
+
+  @Input()
+  required = true;
+
+  @Input()
+  floatLabel: FloatLabelType = 'auto';
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'legacy';
+
+  @Input()
+  placeholder;
+
+  @Input()
+  label = 'phone-input.phone-input-label';
 
   allCountries: Array<Country> = this.countryCodeData.allCountries;
   phonePlaceholder: string;
