@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.sync.ie.importing.impl;
 
+import com.google.api.client.util.Objects;
 import com.google.common.util.concurrent.FutureCallback;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,9 +56,12 @@ import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -110,6 +114,11 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
         return importResult;
     }
 
+    @Override
+    public EntityType getEntityType() {
+        return null;
+    }
+
     protected abstract void setOwner(TenantId tenantId, E entity, IdProvider idProvider);
 
     protected abstract E prepareAndSave(EntitiesImportCtx ctx, E entity, D exportData, IdProvider idProvider);
@@ -144,13 +153,17 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                 }
             }
 
+            Map<EntityRelation, EntityRelation> relationsMap = new LinkedHashMap<>();
+            relations.forEach(r -> relationsMap.put(r, r));
+
             if (importResult.getOldEntity() != null) {
                 List<EntityRelation> existingRelations = new ArrayList<>();
                 existingRelations.addAll(relationService.findByTo(tenantId, entity.getId(), RelationTypeGroup.COMMON));
                 existingRelations.addAll(relationService.findByFrom(tenantId, entity.getId(), RelationTypeGroup.COMMON));
 
                 for (EntityRelation existingRelation : existingRelations) {
-                    if (!relations.contains(existingRelation)) {
+                    EntityRelation relation = relationsMap.get(existingRelation);
+                    if (relation == null) {
                         relationService.deleteRelation(tenantId, existingRelation);
                         importResult.addSendEventsCallback(() -> {
                             entityActionService.logEntityAction(ctx.getUser(), existingRelation.getFrom(), null, null,
@@ -158,19 +171,15 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                             entityActionService.logEntityAction(ctx.getUser(), existingRelation.getTo(), null, null,
                                     ActionType.RELATION_DELETED, null, existingRelation);
                         });
+                    } else {
+                        if (Objects.equal(relation.getAdditionalInfo(), existingRelation.getAdditionalInfo())) {
+                            relationsMap.remove(relation);
+                        }
                     }
                 }
             }
 
-            for (EntityRelation relation : relations) {
-                relationService.saveRelation(tenantId, relation);
-                importResult.addSendEventsCallback(() -> {
-                    entityActionService.logEntityAction(ctx.getUser(), relation.getFrom(), null, null,
-                            ActionType.RELATION_ADD_OR_UPDATE, null, relation);
-                    entityActionService.logEntityAction(ctx.getUser(), relation.getTo(), null, null,
-                            ActionType.RELATION_ADD_OR_UPDATE, null, relation);
-                });
-            }
+            ctx.addRelations(relationsMap.values());
         });
     }
 

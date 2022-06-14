@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.relation;
 
 import com.google.common.base.Function;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -40,12 +41,14 @@ import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.common.data.rule.RuleChainType;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.ConstraintValidator;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -117,6 +120,20 @@ public class BaseRelationService implements RelationService {
         var result = relationDao.saveRelation(tenantId, relation);
         publishEvictEvent(EntityRelationEvent.from(relation));
         return result;
+    }
+
+    @Override
+    public void saveRelations(TenantId tenantId, List<EntityRelation> relations) {
+        log.trace("Executing saveRelations [{}]", relations);
+        for (EntityRelation relation : relations) {
+            validate(relation);
+        }
+        for (List<EntityRelation> partition : Lists.partition(relations, 1024)) {
+            relationDao.saveRelations(tenantId, partition);
+        }
+        for (EntityRelation relation : relations) {
+            publishEvictEvent(EntityRelationEvent.from(relation));
+        }
     }
 
     @Override
