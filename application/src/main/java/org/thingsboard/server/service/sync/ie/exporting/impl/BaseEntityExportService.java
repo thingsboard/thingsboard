@@ -37,12 +37,6 @@ public abstract class BaseEntityExportService<I extends EntityId, E extends Expo
 
     protected void setRelatedEntities(TenantId tenantId, E mainEntity, D exportData, EntityExportSettings settings) {}
 
-    protected <ID extends EntityId> ID getExternalIdOrElseInternal(ID internalId) {
-        if (internalId == null || internalId.isNullUid()) return internalId;
-        return Optional.ofNullable(exportableEntitiesService.getExternalIdByInternal(internalId))
-                .orElse(internalId);
-    }
-
     protected D newExportData() {
         return (D) new EntityExportData<E>();
     };

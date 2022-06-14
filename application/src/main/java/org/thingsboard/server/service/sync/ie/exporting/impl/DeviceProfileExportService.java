@@ -15,11 +15,10 @@
  */
 package org.thingsboard.server.service.sync.ie.exporting.impl;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
@@ -29,16 +28,17 @@ import java.util.Set;
 
 @Service
 @TbCoreComponent
-public class AssetExportService extends BaseEntityExportService<AssetId, Asset, EntityExportData<Asset>> {
+public class DeviceProfileExportService extends BaseEntityExportService<DeviceProfileId, DeviceProfile, EntityExportData<DeviceProfile>> {
 
     @Override
-    protected void setRelatedEntities(TenantId tenantId, Asset asset, EntityExportData<Asset> exportData, EntityExportSettings settings) {
-        asset.setCustomerId(getExternalIdOrElseInternal(asset.getCustomerId()));
+    protected void setRelatedEntities(TenantId tenantId, DeviceProfile deviceProfile, EntityExportData<DeviceProfile> exportData, EntityExportSettings settings) {
+        deviceProfile.setDefaultDashboardId(getExternalIdOrElseInternal(deviceProfile.getDefaultDashboardId()));
+        deviceProfile.setDefaultRuleChainId(getExternalIdOrElseInternal(deviceProfile.getDefaultRuleChainId()));
     }
 
     @Override
     public Set<EntityType> getSupportedEntityTypes() {
-        return Set.of(EntityType.ASSET);
+        return Set.of(EntityType.DEVICE_PROFILE);
     }
 
 }

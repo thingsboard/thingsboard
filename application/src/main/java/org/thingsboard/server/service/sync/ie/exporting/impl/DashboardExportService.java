@@ -15,11 +15,11 @@
  */
 package org.thingsboard.server.service.sync.ie.exporting.impl;
 
-import lombok.RequiredArgsConstructor;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
@@ -29,16 +29,20 @@ import java.util.Set;
 
 @Service
 @TbCoreComponent
-public class AssetExportService extends BaseEntityExportService<AssetId, Asset, EntityExportData<Asset>> {
+public class DashboardExportService extends BaseEntityExportService<DashboardId, Dashboard, EntityExportData<Dashboard>> {
 
     @Override
-    protected void setRelatedEntities(TenantId tenantId, Asset asset, EntityExportData<Asset> exportData, EntityExportSettings settings) {
-        asset.setCustomerId(getExternalIdOrElseInternal(asset.getCustomerId()));
+    protected void setRelatedEntities(TenantId tenantId, Dashboard dashboard, EntityExportData<Dashboard> exportData, EntityExportSettings settings) {
+        if (CollectionUtils.isNotEmpty(dashboard.getAssignedCustomers())) {
+            dashboard.getAssignedCustomers().forEach(customerInfo -> {
+                customerInfo.setCustomerId(getExternalIdOrElseInternal(customerInfo.getCustomerId()));
+            });
+        }
     }
 
     @Override
     public Set<EntityType> getSupportedEntityTypes() {
-        return Set.of(EntityType.ASSET);
+        return Set.of(EntityType.DASHBOARD);
     }
 
 }

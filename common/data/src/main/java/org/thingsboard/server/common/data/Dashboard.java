@@ -22,7 +22,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.thingsboard.server.common.data.id.DashboardId;
 
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper = true)
 public class Dashboard extends DashboardInfo implements ExportableEntity<DashboardId> {
 
     private static final long serialVersionUID = 872682138346187503L;
