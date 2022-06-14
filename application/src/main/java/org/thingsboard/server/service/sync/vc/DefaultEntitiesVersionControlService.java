@@ -41,6 +41,7 @@ import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.sync.ThrowingRunnable;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
@@ -69,6 +70,7 @@ import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadConfig
 import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadRequest;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
+import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -112,6 +114,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     private final EntitiesExportImportService exportImportService;
     private final ExportableEntitiesService exportableEntitiesService;
     private final TbNotificationEntityService entityNotificationService;
+    private final RelationService relationService;
     private final TransactionTemplate transactionTemplate;
 
     private ListeningExecutorService executor;
@@ -252,7 +255,8 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                     .saveCredentials(config.isLoadCredentials())
                     .findExistingByName(false)
                     .build());
-            EntityImportResult<?> importResult = exportImportService.importEntity(ctx, entityData, true, true);
+            EntityImportResult<?> importResult = exportImportService.importEntity(ctx, entityData, true);
+
             return VersionLoadResult.success(EntityTypeLoadResult.builder()
                     .entityType(importResult.getEntityType())
                     .created(importResult.getOldEntity() == null ? 1 : 0)
@@ -300,7 +304,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                     log.debug("[{}] Loading {} entities", ctx.getTenantId(), entityType);
                     EntityImportResult<?> importResult;
                     try {
-                        importResult = exportImportService.importEntity(ctx, entityData, false, false);
+                        importResult = exportImportService.importEntity(ctx, entityData, false);
                     } catch (Exception e) {
                         throw new LoadEntityException(entityData, e);
                     }
@@ -332,7 +336,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                 EntityExportData entityData = gitServiceQueue.getEntity(user.getTenantId(), request.getVersionId(), externalId).get();
                 importSettings.setResetExternalIdsOfAnotherTenant(true);
                 ctx.setSettings(importSettings);
-                EntityImportResult<?> importResult = exportImportService.importEntity(ctx, entityData, false, false);
+                EntityImportResult<?> importResult = exportImportService.importEntity(ctx, entityData, false);
 
                 EntityTypeLoadResult stats = results.get(externalId.getEntityType());
                 if (importResult.getOldEntity() == null) stats.setCreated(stats.getCreated() + 1);
@@ -369,19 +373,17 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
         sw.startNew("Callbacks");
 
-        for (ThrowingRunnable saveReferencesCallback : saveReferencesCallbacks) {
-            try {
+        try {
+            for (ThrowingRunnable saveReferencesCallback : saveReferencesCallbacks) {
                 saveReferencesCallback.run();
-            } catch (ThingsboardException e) {
-                throw new RuntimeException(e);
             }
-        }
-        for (ThrowingRunnable sendEventsCallback : sendEventsCallbacks) {
-            try {
+            for (ThrowingRunnable sendEventsCallback : sendEventsCallbacks) {
                 sendEventsCallback.run();
-            } catch (Exception e) {
-                log.error("Failed to send events for entity", e);
             }
+            sw.startNew("Relations");
+            exportImportService.saveRelations(ctx);
+        } catch (ThingsboardException e) {
+            throw new RuntimeException(e);
         }
 
         sw.stop();

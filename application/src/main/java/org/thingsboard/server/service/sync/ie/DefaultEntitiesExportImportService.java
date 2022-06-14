@@ -21,15 +21,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
 import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
 import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.apiusage.RateLimitService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.ie.exporting.EntityExportService;
@@ -38,6 +42,7 @@ import org.thingsboard.server.service.sync.ie.exporting.impl.DefaultEntityExport
 import org.thingsboard.server.service.sync.ie.importing.EntityImportService;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -53,6 +58,8 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
     private final Map<EntityType, EntityExportService<?, ?, ?>> exportServices = new HashMap<>();
     private final Map<EntityType, EntityImportService<?, ?, ?>> importServices = new HashMap<>();
 
+    private final EntityActionService entityActionService;
+    private final RelationService relationService;
     private final RateLimitService rateLimitService;
 
     protected static final List<EntityType> SUPPORTED_ENTITY_TYPES = List.of(
@@ -76,7 +83,7 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
 
     @Override
     public <E extends ExportableEntity<I>, I extends EntityId> EntityImportResult<E> importEntity(EntitiesImportCtx ctx, EntityExportData<E> exportData,
-                                                                                                  boolean saveReferences, boolean sendEvents) throws ThingsboardException {
+                                                                                                  boolean saveReferencesAndSendEvents) throws ThingsboardException {
         if (!rateLimitService.checkEntityImportLimit(ctx.getTenantId())) {
             throw new ThingsboardException("Rate limit for entities import is exceeded", ThingsboardErrorCode.TOO_MANY_REQUESTS);
         }
@@ -89,15 +96,26 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
 
         EntityImportResult<E> importResult = importService.importEntity(ctx, exportData);
 
-        if (saveReferences) {
+        if (saveReferencesAndSendEvents) {
             importResult.getSaveReferencesCallback().run();
-        }
-        if (sendEvents) {
             importResult.getSendEventsCallback().run();
+            saveRelations(ctx);
         }
 
         ctx.putInternalId(exportData.getExternalId(), importResult.getSavedEntity().getId());
         return importResult;
+    }
+
+    @Override
+    public void saveRelations(EntitiesImportCtx ctx) throws ThingsboardException {
+        relationService.saveRelations(ctx.getTenantId(), new ArrayList<>(ctx.getRelations()));
+
+        for (EntityRelation relation : ctx.getRelations()) {
+            entityActionService.logEntityAction(ctx.getUser(), relation.getFrom(), null, null,
+                    ActionType.RELATION_ADD_OR_UPDATE, null, relation);
+            entityActionService.logEntityAction(ctx.getUser(), relation.getTo(), null, null,
+                    ActionType.RELATION_ADD_OR_UPDATE, null, relation);
+        }
     }
 
 

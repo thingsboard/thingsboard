@@ -17,13 +17,18 @@ package org.thingsboard.server.service.sync.vc.data;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
 @Slf4j
 @Data
@@ -33,6 +38,7 @@ public class EntitiesImportCtx {
     private EntityImportSettings settings;
 
     private final Map<EntityId, EntityId> externalToInternalIdMap = new HashMap<>();
+    private final Set<EntityRelation> relations = new LinkedHashSet<>();
 
     public EntitiesImportCtx(SecurityUser user) {
         this(user, null);
@@ -77,4 +83,9 @@ public class EntitiesImportCtx {
         log.debug("[{}][{}] Local cache put: {}", externalId.getEntityType(), externalId.getId(), internalId);
         externalToInternalIdMap.put(externalId, internalId);
     }
+
+    public void addRelations(Collection<EntityRelation> values) {
+        relations.addAll(values);
+    }
+
 }
