@@ -13,15 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.util;
+package org.thingsboard.server.dao.sql.attributes;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+@Repository
+@Transactional
+public class SqlAttributesInsertRepository extends AttributeKvInsertRepository {
 
-@Retention(RetentionPolicy.RUNTIME)
-@ConditionalOnExpression("('${database.ts_latest.type}'=='sql' || '${database.ts_latest.type}'=='timescale') " +
-        "&& '${spring.jpa.database-platform}'=='org.hibernate.dialect.PostgreSQL10Dialect'")
-public @interface PsqlTsLatestAnyDao {
 }

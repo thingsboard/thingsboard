@@ -21,7 +21,6 @@ import org.apache.commons.lang3.SystemUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.dao.util.PsqlDao;
 import org.thingsboard.server.dao.util.SqlTsDao;
 
 import java.io.File;
@@ -36,8 +35,7 @@ import java.sql.DriverManager;
 @Profile("install")
 @Slf4j
 @SqlTsDao
-@PsqlDao
-public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeService implements DatabaseTsUpgradeService {
+public class SqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeService implements DatabaseTsUpgradeService {
 
     @Value("${sql.postgres.ts_key_value_partitioning:MONTHS}")
     private String partitionType;

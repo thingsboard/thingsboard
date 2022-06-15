@@ -176,8 +176,6 @@ database:
   ts_latest:
     type: "${DATABASE_TS_LATEST_TYPE:sql}" # cassandra, sql, or timescale (for hybrid mode, DATABASE_TS_TYPE value should be cassandra, or timescale)
 
-# note: timescale works only with postgreSQL database for DATABASE_ENTITIES_TYPE.
-
 # Cassandra driver configuration parameters
 cassandra:
   # Thingsboard cluster name
@@ -535,7 +533,6 @@ spring:
     open-in-view: "false"
     hibernate:
       ddl-auto: "none"
-    database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQL10Dialect}"
   datasource:
     driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}"
     url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"

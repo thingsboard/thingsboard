@@ -18,7 +18,6 @@ package org.thingsboard.server.dao.sql.event;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
-import org.thingsboard.server.dao.util.PsqlDao;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -27,9 +26,8 @@ import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
-@PsqlDao
 @Repository
-public class PsqlEventCleanupRepository extends JpaAbstractDaoListeningExecutorService implements EventCleanupRepository {
+public class SqlEventCleanupRepository extends JpaAbstractDaoListeningExecutorService implements EventCleanupRepository {
 
     @Override
     public void cleanupEvents(long regularEventStartTs, long regularEventEndTs, long debugEventStartTs, long debugEventEndTs) {
