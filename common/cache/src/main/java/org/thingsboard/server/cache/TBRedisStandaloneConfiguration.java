@@ -26,35 +26,35 @@ import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import java.time.Duration;
 
 @Configuration
-@ConditionalOnMissingBean(CaffeineCacheConfiguration.class)
+@ConditionalOnMissingBean(TbCaffeineCacheConfiguration.class)
 @ConditionalOnProperty(prefix = "redis.connection", value = "type", havingValue = "standalone")
 public class TBRedisStandaloneConfiguration extends TBRedisCacheConfiguration {
 
-    @Value("${redis.standalone.host}")
+    @Value("${redis.standalone.host:localhost}")
     private String host;
 
-    @Value("${redis.standalone.port}")
+    @Value("${redis.standalone.port:6379}")
     private Integer port;
 
-    @Value("${redis.standalone.clientName}")
+    @Value("${redis.standalone.clientName:standalone}")
     private String clientName;
 
-    @Value("${redis.standalone.connectTimeout}")
+    @Value("${redis.standalone.connectTimeout:30000}")
     private Long connectTimeout;
 
-    @Value("${redis.standalone.readTimeout}")
+    @Value("${redis.standalone.readTimeout:60000}")
     private Long readTimeout;
 
-    @Value("${redis.standalone.useDefaultClientConfig}")
+    @Value("${redis.standalone.useDefaultClientConfig:true}")
     private boolean useDefaultClientConfig;
 
-    @Value("${redis.standalone.usePoolConfig}")
+    @Value("${redis.standalone.usePoolConfig:false}")
     private boolean usePoolConfig;
 
-    @Value("${redis.db}")
+    @Value("${redis.db:0}")
     private Integer db;
 
-    @Value("${redis.password}")
+    @Value("${redis.password:}")
     private String password;
 
     public JedisConnectionFactory loadFactory() {

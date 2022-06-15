@@ -52,7 +52,8 @@
         "continue": "Продовжити",
         "discard-changes": "Скасувати зміни",
         "move": "Перемістити",
-        "select": "Вибрати"
+        "select": "Вибрати",
+        "done": "Завершено"
     },
     "aggregation": {
         "aggregation": "Агрегація",
@@ -123,7 +124,32 @@
         "general-policy": "Загальна політика",
         "max-failed-login-attempts": "Максимальна кількість невдалих спроб входу, перш ніж обліковий запис заблоковано",
         "minimum-max-failed-login-attempts-range": "Максимальна кількість невдалих спроб входу не може бути негативною",
-        "user-lockout-notification-email": "У разі блокування облікового запису користувача, надішліть сповіщення на електронну пошту"
+        "user-lockout-notification-email": "У разі блокування облікового запису користувача, надішліть сповіщення на електронну пошту",
+        "smpp-provider": {
+          "smpp-version": "SMPP верія",
+          "smpp-host": "SMPP хост",
+          "smpp-host-required": "Хост SMPP обов'язковий.",
+          "smpp-port": "SMPP порт",
+          "smpp-port-required": "Порт SMPP обов'язковий.",
+          "system-id": "Id системи",
+          "system-id-required": "Id системи обязателен.",
+          "password": "Пароль",
+          "password-required": "Пароль обязателен.",
+          "type-settings": "Налаштування типів",
+          "source-settings": "Налаштування джерела",
+          "destination-settings": "Налаштування призначення",
+          "additional-settings": "Додаткові налаштування",
+          "system-type": "Тип системи",
+          "bind-type": "Тип зв'язування",
+          "service-type": "Тип обслуговування",
+          "source-address": "Адреса джерела",
+          "source-ton": "Тип номера джерела",
+          "source-npi": "Идентификация плана нумерации джерела",
+          "destination-ton": "Тип номера призначення",
+          "destination-npi": "Ідентифікація плану нумерації призначення",
+          "address-range": "Діапазон адрес",
+          "coding-scheme": "Схема кодування"
+        }
     },
     "alarm": {
         "alarm": "Сигнал тривоги",
@@ -568,6 +594,8 @@
         "add-widget": "Додати новий віджет",
         "title": "Назва",
         "select-widget-title": "Вибрати віджет",
+        "copyId": "Копіювати ідентифікатор панелі приладів",
+        "idCopiedMessage": "Ідентифікатор панелі приладів скопійовано в буфер обміну",
         "select-widget-subtitle": "Список доступних типів віджетів",
         "delete": "Видалити панель приладів",
         "title-required": "Необхідно задати назву.",
@@ -1433,8 +1461,7 @@
             "select-file": "Виберіть файл",
             "configuration": "Конфігурація імпорту",
             "column-type": "Виберіть тип колонок",
-            "creat-entities": "Створення нових сутностей",
-            "done": "Завершено"
+            "creat-entities": "Створення нових сутностей"
         },
         "message": {
             "create-entities": "{{count}} нову(их) сутність(ей) успішно створено.",
@@ -1679,7 +1706,6 @@
         "change-password": "Змінити пароль",
         "current-password": "Поточний пароль",
         "copy-jwt-token": "Копіювати JWT токен",
-        "valid-till": "Дійсний до {{expirationData}}",
         "tokenCopiedMessage": "JWT токен скопійовано в буфер обміну",
         "tokenCopiedWarnMessage": "JWT токен не є дійсним! Перезавантажте сторінку."
     },

@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -71,6 +72,7 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
     @Autowired
     private DashboardService dashboardService;
 
+    @Lazy
     @Autowired
     private ApiUsageStateService apiUsageStateService;
 

@@ -21,7 +21,6 @@ import {
   AttributeSourceProperty,
   ColorLevelSetting,
   DigitalGaugeSettings,
-  digitalGaugeSettingsSchema,
   FixedLevelColors
 } from '@home/components/widget/lib/digital-gauge.models';
 import * as tinycolor_ from 'tinycolor2';
@@ -44,14 +43,8 @@ import GenericOptions = CanvasGauges.GenericOptions;
 
 const tinycolor = tinycolor_;
 
-const digitalGaugeSettingsSchemaValue = digitalGaugeSettingsSchema;
-
 // @dynamic
 export class TbCanvasDigitalGauge {
-
-  static get settingsSchema(): JsonSettingsSchema {
-    return digitalGaugeSettingsSchemaValue;
-  }
 
   constructor(protected ctx: WidgetContext, canvasId: string) {
     const gaugeElement = $('#' + canvasId, ctx.$container)[0];
@@ -72,6 +65,7 @@ export class TbCanvasDigitalGauge {
       (settings.unitTitle && settings.unitTitle.length > 0 ?
         settings.unitTitle : dataKey.label) : '');
 
+    this.localSettings.showUnitTitle = settings.showUnitTitle === true;
     this.localSettings.showTimestamp = settings.showTimestamp === true;
     this.localSettings.timestampFormat = settings.timestampFormat && settings.timestampFormat.length ?
       settings.timestampFormat : 'yyyy-MM-dd HH:mm:ss';
@@ -188,7 +182,8 @@ export class TbCanvasDigitalGauge {
       roundedLineCap: this.localSettings.roundedLineCap,
 
       symbol: this.localSettings.units,
-      label: this.localSettings.unitTitle,
+      unitTitle: this.localSettings.unitTitle,
+      showUnitTitle: this.localSettings.showUnitTitle,
       showTimestamp: this.localSettings.showTimestamp,
       hideValue: this.localSettings.hideValue,
       hideMinMax: this.localSettings.hideMinMax,
@@ -407,7 +402,7 @@ export class TbCanvasDigitalGauge {
         if (this.localSettings.showTimestamp) {
           timestamp = tvPair[0];
           const filter = this.ctx.$injector.get(DatePipe);
-          (this.gauge.options as CanvasDigitalGaugeOptions).label =
+          (this.gauge.options as CanvasDigitalGaugeOptions).labelTimestamp =
             filter.transform(timestamp, this.localSettings.timestampFormat);
         }
         const value = tvPair[1];

@@ -56,8 +56,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DaoSqlTest
 public class SequentialTimeseriesPersistenceTest extends AbstractControllerTest {
 
-    static final int TIMEOUT = 30;
-
     final String TOTALIZER = "Totalizer";
     final int TTL = 99999;
     final String GENERIC_CUMULATIVE_OBJ = "genericCumulativeObj";

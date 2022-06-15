@@ -35,7 +35,7 @@ import {
 import { MatDialog } from '@angular/material/dialog';
 import { ImportDialogComponent, ImportDialogData } from '@home/components/import-export/import-dialog.component';
 import { forkJoin, Observable, of } from 'rxjs';
-import {catchError, map, mergeMap, switchMap, tap} from 'rxjs/operators';
+import { catchError, map, mergeMap, tap } from 'rxjs/operators';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityService } from '@core/http/entity.service';
 import { Widget, WidgetSize, WidgetType, WidgetTypeDetails } from '@shared/models/widget.models';
@@ -44,7 +44,16 @@ import {
   EntityAliasesDialogData
 } from '@home/components/alias/entity-aliases-dialog.component';
 import { ItemBufferService, WidgetItem } from '@core/services/item-buffer.service';
-import { FileType, ImportWidgetResult, JSON_TYPE, WidgetsBundleItem, ZIP_TYPE, BulkImportRequest, BulkImportResult } from './import-export.models';
+import {
+  BulkImportRequest,
+  BulkImportResult,
+  FileType,
+  ImportWidgetResult,
+  JSON_TYPE,
+  TEXT_TYPE,
+  WidgetsBundleItem,
+  ZIP_TYPE
+} from './import-export.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetService } from '@core/http/widget.service';
@@ -552,6 +561,14 @@ export class ImportExportService {
         return of(null);
       })
     );
+  }
+
+  public exportText(data: string | Array<string>, filename: string) {
+    let content = data;
+    if (Array.isArray(data)) {
+      content = data.join('\n');
+    }
+    this.downloadFile(content, filename, TEXT_TYPE);
   }
 
   public exportJSZip(data: object, filename: string) {

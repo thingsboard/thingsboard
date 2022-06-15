@@ -49,6 +49,7 @@ import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.audit.AuditLogLevelFilter;
 import org.thingsboard.server.dao.audit.AuditLogLevelMask;
+import org.thingsboard.server.dao.audit.AuditLogLevelProperties;
 import org.thingsboard.server.dao.component.ComponentDescriptorService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -61,6 +62,7 @@ import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -168,6 +170,9 @@ public abstract class AbstractServiceTest {
     @Autowired
     protected OtaPackageService otaPackageService;
 
+    @Autowired
+    protected QueueService queueService;
+
     public class IdComparator<D extends HasId> implements Comparator<D> {
         @Override
         public int compare(D o1, D o2) {
@@ -218,7 +223,9 @@ public abstract class AbstractServiceTest {
         for (EntityType entityType : EntityType.values()) {
             mask.put(entityType.name().toLowerCase(), AuditLogLevelMask.RW.name());
         }
-        return new AuditLogLevelFilter(mask);
+        var props = new AuditLogLevelProperties();
+        props.setMask(mask);
+        return new AuditLogLevelFilter(props);
     }
 
     protected DeviceProfile createDeviceProfile(TenantId tenantId, String name) {

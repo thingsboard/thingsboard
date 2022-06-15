@@ -4541,13 +4541,13 @@ flatten@^1.0.2:
   resolved "https://registry.yarnpkg.com/flatten/-/flatten-1.0.3.tgz#c1283ac9f27b368abc1e36d1ff7b04501a30356b"
   integrity sha512-dVsPA/UwQ8+2uoFe5GHtiBMu48dWLTdsuEd7CKGlZlD78r1TTWBvDuFaFGKCo/ZfEr95Uk56vZoX86OsHkUeIg==
 
-"flot.curvedlines@git://github.com/MichaelZinsmaier/CurvedLines.git#master":
+"flot.curvedlines@https://github.com/MichaelZinsmaier/CurvedLines.git#master":
   version "1.1.1"
-  resolved "git://github.com/MichaelZinsmaier/CurvedLines.git#22ed1fc2a6ccafc816c2d07b36027cc123825c4b"
+  resolved "https://github.com/MichaelZinsmaier/CurvedLines.git#22ed1fc2a6ccafc816c2d07b36027cc123825c4b"
 
-"flot@git://github.com/thingsboard/flot.git#0.9-work":
+"flot@https://github.com/thingsboard/flot.git#0.9-work":
   version "0.9.0-alpha"
-  resolved "git://github.com/thingsboard/flot.git#0ff0c775db7c74e705f6c3c2bba92080a202ccd4"
+  resolved "https://github.com/thingsboard/flot.git#0ff0c775db7c74e705f6c3c2bba92080a202ccd4"
 
 follow-redirects@^1.0.0:
   version "1.14.5"
@@ -6027,6 +6027,11 @@ less@4.1.1:
     needle "^2.5.2"
     source-map "~0.6.0"
 
+libphonenumber-js@^1.10.4:
+  version "1.10.4"
+  resolved "https://registry.yarnpkg.com/libphonenumber-js/-/libphonenumber-js-1.10.4.tgz#90397f0ed620262570a32244c9fbc389cc417ce4"
+  integrity sha512-9QWxEk4GW5RDnFzt8UtyRENfFpAN8u7Sbf9wf32tcXY9tdtnz1dKHIBwW2Wnfx8ypXJb9zUnTpK9aQJ/B8AlnA==
+
 license-webpack-plugin@2.3.20:
   version "2.3.20"
   resolved "https://registry.yarnpkg.com/license-webpack-plugin/-/license-webpack-plugin-2.3.20.tgz#f51fb674ca31519dbedbe1c7aabc036e5a7f2858"
@@ -6637,9 +6642,9 @@ ngx-drag-drop@^2.0.0:
   dependencies:
     tslib "^1.9.0"
 
-"ngx-flowchart@git://github.com/thingsboard/ngx-flowchart.git#release/1.0.0":
+"ngx-flowchart@https://github.com/thingsboard/ngx-flowchart.git#release/1.0.0":
   version "0.0.1"
-  resolved "git://github.com/thingsboard/ngx-flowchart.git#aac96f7e0490a386d58864d7819873e7c63cbb48"
+  resolved "https://github.com/thingsboard/ngx-flowchart.git#aac96f7e0490a386d58864d7819873e7c63cbb48"
   dependencies:
     tslib "^2.2.0"
 
@@ -9478,6 +9483,11 @@ ts-node@^10.0.0, ts-node@^10.4.0:
     diff "^4.0.1"
     make-error "^1.1.1"
     yn "3.1.1"
+
+ts-transformer-keys@^0.4.3:
+  version "0.4.3"
+  resolved "https://registry.yarnpkg.com/ts-transformer-keys/-/ts-transformer-keys-0.4.3.tgz#d62389a40f430c00ef98fb9575fb6778a196e3ed"
+  integrity sha512-pOTLlet1SnAvhKNr9tMAFwuv5283OkUNiq1fXTEK+vrSv+kxU3e2Ijr/UkqyX2vuMmvcNHdpXC31hob7ljH//g==
 
 tsconfig-paths@^3.9.0:
   version "3.12.0"

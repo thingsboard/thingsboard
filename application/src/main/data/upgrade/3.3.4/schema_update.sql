@@ -14,6 +14,27 @@
 -- limitations under the License.
 --
 
+CREATE TABLE IF NOT EXISTS queue (
+    id uuid NOT NULL CONSTRAINT queue_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid,
+    name varchar(255),
+    topic varchar(255),
+    poll_interval int,
+    partitions int,
+    consumer_per_partition boolean,
+    pack_processing_timeout bigint,
+    submit_strategy varchar(255),
+    processing_strategy varchar(255),
+    additional_info varchar
+);
+
+CREATE TABLE IF NOT EXISTS user_auth_settings (
+    id uuid NOT NULL CONSTRAINT user_auth_settings_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    user_id uuid UNIQUE NOT NULL CONSTRAINT fk_user_auth_settings_user_id REFERENCES tb_user(id),
+    two_fa_settings varchar
+);
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'customer_title_unq_key') THEN
