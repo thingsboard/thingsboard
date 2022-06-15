@@ -36,7 +36,7 @@ public class DashboardExportService extends BaseEntityExportService<DashboardId,
     protected void setRelatedEntities(EntitiesExportCtx<?> ctx, Dashboard dashboard, EntityExportData<Dashboard> exportData) {
         if (CollectionUtils.isNotEmpty(dashboard.getAssignedCustomers())) {
             dashboard.getAssignedCustomers().forEach(customerInfo -> {
-                customerInfo.setCustomerId(getExternalIdOrElseInternal(customerInfo.getCustomerId()));
+                customerInfo.setCustomerId(getExternalIdOrElseInternal(ctx, customerInfo.getCustomerId()));
             });
         }
     }

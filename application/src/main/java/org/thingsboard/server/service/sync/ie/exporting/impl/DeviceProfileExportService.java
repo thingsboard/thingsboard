@@ -33,8 +33,8 @@ public class DeviceProfileExportService extends BaseEntityExportService<DevicePr
 
     @Override
     protected void setRelatedEntities(EntitiesExportCtx<?> ctx, DeviceProfile deviceProfile, EntityExportData<DeviceProfile> exportData) {
-        deviceProfile.setDefaultDashboardId(getExternalIdOrElseInternal(deviceProfile.getDefaultDashboardId()));
-        deviceProfile.setDefaultRuleChainId(getExternalIdOrElseInternal(deviceProfile.getDefaultRuleChainId()));
+        deviceProfile.setDefaultDashboardId(getExternalIdOrElseInternal(ctx, deviceProfile.getDefaultDashboardId()));
+        deviceProfile.setDefaultRuleChainId(getExternalIdOrElseInternal(ctx, deviceProfile.getDefaultRuleChainId()));
     }
 
     @Override

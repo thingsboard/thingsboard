@@ -33,8 +33,8 @@ public class EntityViewExportService extends BaseEntityExportService<EntityViewI
 
     @Override
     protected void setRelatedEntities(EntitiesExportCtx<?> ctx, EntityView entityView, EntityExportData<EntityView> exportData) {
-        entityView.setEntityId(getExternalIdOrElseInternal(entityView.getEntityId()));
-        entityView.setCustomerId(getExternalIdOrElseInternal(entityView.getCustomerId()));
+        entityView.setEntityId(getExternalIdOrElseInternal(ctx, entityView.getEntityId()));
+        entityView.setCustomerId(getExternalIdOrElseInternal(ctx, entityView.getCustomerId()));
     }
 
     @Override
