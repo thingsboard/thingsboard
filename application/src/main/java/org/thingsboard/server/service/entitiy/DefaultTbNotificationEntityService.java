@@ -52,7 +52,6 @@ import org.thingsboard.server.service.gateway_device.GatewayNotificationsService
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.List;
-import java.util.Locale;
 
 @Slf4j
 @Service
@@ -337,6 +336,27 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
     }
 
     public static EdgeEventActionType edgeTypeByActionType(ActionType actionType) {
-        return EdgeEventActionType.valueOf(actionType.toString().toUpperCase(Locale.ENGLISH));
+        switch (actionType) {
+            case ADDED:
+                return EdgeEventActionType.ADDED;
+            case UPDATED:
+                return EdgeEventActionType.UPDATED;
+            case ALARM_ACK:
+                return EdgeEventActionType.ALARM_ACK;
+            case ALARM_CLEAR:
+                return EdgeEventActionType.ALARM_CLEAR;
+            case DELETED:
+                return EdgeEventActionType.DELETED;
+            case RELATION_ADD_OR_UPDATE:
+                return EdgeEventActionType.RELATION_ADD_OR_UPDATE;
+            case RELATION_DELETED:
+                return EdgeEventActionType.RELATION_DELETED;
+            case ASSIGNED_TO_EDGE:
+                return EdgeEventActionType.ASSIGNED_TO_EDGE;
+            case UNASSIGNED_FROM_EDGE:
+                return EdgeEventActionType.UNASSIGNED_FROM_EDGE;
+            default:
+                return null;
+        }
     }
 }
