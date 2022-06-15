@@ -17,6 +17,7 @@ package org.thingsboard.server.common.data;
 
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
+import org.thingsboard.server.common.data.id.TenantId;
 
 public interface ExportableEntity<I extends EntityId> extends HasId<I>, HasName {
 
@@ -27,5 +28,7 @@ public interface ExportableEntity<I extends EntityId> extends HasId<I>, HasName 
 
     long getCreatedTime();
     void setCreatedTime(long createdTime);
+
+    void setTenantId(TenantId tenantId);
 
 }

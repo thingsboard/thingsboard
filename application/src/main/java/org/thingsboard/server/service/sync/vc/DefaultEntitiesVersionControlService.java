@@ -244,6 +244,9 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
             return result;
         } catch (LoadEntityException e) {
             return onError(e.getData(), e.getCause());
+        } catch (Exception e) {
+            log.info("[{}] Failed to process request [{}] due to: ", user.getTenantId(), request, e);
+            throw e;
         }
     }
 

@@ -41,7 +41,10 @@ public class DeviceExportService extends BaseEntityExportService<DeviceId, Devic
         device.setCustomerId(getExternalIdOrElseInternal(ctx, device.getCustomerId()));
         device.setDeviceProfileId(getExternalIdOrElseInternal(ctx, device.getDeviceProfileId()));
         if (ctx.getSettings().isExportCredentials()) {
-            exportData.setCredentials(deviceCredentialsService.findDeviceCredentialsByDeviceId(ctx.getTenantId(), device.getId()));
+            var credentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(ctx.getTenantId(), device.getId());
+            credentials.setId(null);
+            credentials.setDeviceId(null);
+            exportData.setCredentials(credentials);
         }
     }
 

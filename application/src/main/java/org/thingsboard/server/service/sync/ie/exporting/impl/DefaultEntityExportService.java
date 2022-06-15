@@ -70,10 +70,12 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
             throw new IllegalArgumentException(entityId.getEntityType() + " [" + entityId.getId() + "] not found");
         }
 
-        entity.setId(entity.getExternalId() != null ? entity.getExternalId() : entity.getId());
         exportData.setEntity(entity);
         exportData.setEntityType(entityId.getEntityType());
         setAdditionalExportData(ctx, entity, exportData);
+
+        entity.setId(entity.getExternalId() != null ? entity.getExternalId() : entity.getId());
+        entity.setTenantId(null);
 
         return exportData;
     }
