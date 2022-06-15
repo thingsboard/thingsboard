@@ -94,7 +94,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
 
         Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
 
-        testNotifyEntityOneMsgToEdgeServiceNever(savedCustomer, savedCustomer.getId(), savedCustomer.getId(),
+        testNotifyEntityOneTimeMsgToEdgeServiceNever(savedCustomer, savedCustomer.getId(), savedCustomer.getId(),
                 savedCustomer.getTenantId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.ADDED);
 
@@ -103,14 +103,11 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         Assert.assertTrue(savedCustomer.getCreatedTime() > 0);
         Assert.assertEquals(customer.getTitle(), savedCustomer.getTitle());
 
-
         savedCustomer.setTitle("My new customer");
-
-        Mockito.reset(tbClusterService, auditLogService);
 
         doPost("/api/customer", savedCustomer, Customer.class);
 
-        testNotifyEntityOne(savedCustomer, savedCustomer.getId(), savedCustomer.getId(), savedCustomer.getTenantId(),
+        testNotifyEntityAllOneTime(savedCustomer, savedCustomer.getId(), savedCustomer.getId(), savedCustomer.getTenantId(),
                 savedCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.UPDATED);
 
@@ -119,10 +116,6 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
 
         doDelete("/api/customer/" + savedCustomer.getId().getId().toString())
                 .andExpect(status().isOk());
-
-        testNotifyEntityBroadcastEntityStateChangeEventOneMsgToEdgeServiceNever(savedCustomer, savedCustomer.getId(),
-                savedCustomer.getId(), savedCustomer.getTenantId(), savedCustomer.getId(), tenantAdmin.getId(),
-                tenantAdmin.getEmail(), ActionType.DELETED, savedCustomer.getId().getId().toString());
     }
 
     @Test
@@ -199,14 +192,12 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         deleteDifferentTenant();
         login(tenantAdmin.getName(), "testPassword1");
 
-        Mockito.reset(tbClusterService, auditLogService);
-
         doDelete("/api/customer/" + savedCustomer.getId().getId().toString())
                 .andExpect(status().isOk());
 
-        testNotifyEntityDeleteOneMsgToEdgeServiceNever(savedCustomer, savedCustomer.getId(), savedCustomer.getId(),
-                savedCustomer.getTenantId(), savedCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.DELETED, savedCustomer.getId().getId().toString());
+        testNotifyEntityBroadcastEntityStateChangeEventOneTimeMsgToEdgeServiceNever(savedCustomer, savedCustomer.getId(),
+                savedCustomer.getId(), savedCustomer.getTenantId(), savedCustomer.getId(), tenantAdmin.getId(),
+                tenantAdmin.getEmail(), ActionType.DELETED, savedCustomer.getId().getId().toString());
     }
 
     @Test
@@ -223,10 +214,6 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
 
         doDelete("/api/customer/" + savedCustomer.getId().getId().toString())
                 .andExpect(status().isOk());
-
-        testNotifyEntityBroadcastEntityStateChangeEventOneMsgToEdgeServiceNever(savedCustomer, savedCustomer.getId(),
-                savedCustomer.getId(), savedCustomer.getTenantId(), savedCustomer.getId(), tenantAdmin.getId(),
-                tenantAdmin.getEmail(), ActionType.DELETED, savedCustomer.getId().getId().toString());
     }
 
     @Test
@@ -240,7 +227,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         doDelete("/api/customer/" + savedCustomer.getId().getId().toString())
                 .andExpect(status().isOk());
 
-        testNotifyEntityBroadcastEntityStateChangeEventOneMsgToEdgeServiceNever(savedCustomer, savedCustomer.getId(),
+        testNotifyEntityBroadcastEntityStateChangeEventOneTimeMsgToEdgeServiceNever(savedCustomer, savedCustomer.getId(),
                 savedCustomer.getId(), savedCustomer.getTenantId(), savedCustomer.getId(), tenantAdmin.getId(),
                 tenantAdmin.getEmail(), ActionType.DELETED, savedCustomer.getId().getId().toString());
 

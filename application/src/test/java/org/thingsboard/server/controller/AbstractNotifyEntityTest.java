@@ -32,8 +32,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.model.ModelConstants;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.Locale;
 
 import static org.mockito.Mockito.never;
@@ -49,40 +47,47 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
     @SpyBean
     protected AuditLogService auditLogService;
 
-    protected void testNotifyEntityOne(HasName entity, EntityId entityId, EntityId originatorId,
-                                       TenantId tenantId, CustomerId customerId, UserId userId, String userName,
-                                       ActionType actionType, Object... additionalInfo) {
-        testSendNotificationMsgToEdgeServiceOne(entityId, tenantId, actionType);
-        testLogEntityActionOne(entity, originatorId, tenantId, customerId, userId, userName, actionType, additionalInfo);
-        testPushMsgToRuleEngineOne(originatorId, tenantId);
+    protected void testNotifyEntityAllOneTime(HasName entity, EntityId entityId, EntityId originatorId,
+                                              TenantId tenantId, CustomerId customerId, UserId userId, String userName,
+                                              ActionType actionType, Object... additionalInfo) {
+        testSendNotificationMsgToEdgeServiceOneTime(entityId, tenantId, actionType);
+        testLogEntityActionOneTime(entity, originatorId, tenantId, customerId, userId, userName, actionType, additionalInfo);
+        testPushMsgToRuleEngineOneTime(originatorId, tenantId);
         Mockito.reset(tbClusterService, auditLogService);
     }
 
-    protected void testNotifyEntityDeleteOneMsgToEdgeServiceNever(HasName entity, EntityId entityId, EntityId originatorId,
-                                                                  TenantId tenantId, CustomerId customerId, UserId userId, String userName,
-                                                                  ActionType actionType, Object... additionalInfo) {
+    protected void testNotifyEntityDeleteOneTimeMsgToEdgeServiceNever(HasName entity, EntityId entityId, EntityId originatorId,
+                                                                      TenantId tenantId, CustomerId customerId, UserId userId, String userName,
+                                                                      ActionType actionType, Object... additionalInfo) {
         testNotificationMsgToEdgeServiceNever(entityId);
-        testLogEntityActionOne(entity, originatorId, tenantId, customerId, userId, userName, actionType, additionalInfo);
-        testPushMsgToRuleEngineOne(entityId, tenantId);
-        testBroadcastEntityStateChangeEventOne(entityId, tenantId);
+        testLogEntityActionOneTime(entity, originatorId, tenantId, customerId, userId, userName, actionType, additionalInfo);
+        testPushMsgToRuleEngineOneTime(entityId, tenantId);
+        testBroadcastEntityStateChangeEventOneTime(entityId, tenantId);
+        Mockito.reset(tbClusterService, auditLogService);
     }
-
-    protected void testNotifyEntityOneMsgToEdgeServiceNever(HasName entity, EntityId entityId, EntityId originatorId,
-                                                            TenantId tenantId, CustomerId customerId, UserId userId, String userName,
-                                                            ActionType actionType, Object... additionalInfo) {
-        testNotificationMsgToEdgeServiceNever(entityId);
-        testLogEntityActionOne(entity, originatorId, tenantId, customerId, userId, userName, actionType, additionalInfo);
-        testPushMsgToRuleEngineOne(originatorId, tenantId);
+    protected void testNotifyEntityNeverMsgToEdgeServiceOneTime(HasName entity, EntityId entityId, TenantId tenantId, ActionType actionType) {
+        testSendNotificationMsgToEdgeServiceOneTime(entityId, tenantId, actionType);
+        testLogEntityActionNever(entityId, entity);
+        testPushMsgToRuleEngineNever(entityId);
         Mockito.reset(tbClusterService, auditLogService);
     }
 
-    protected void testNotifyEntityBroadcastEntityStateChangeEventOneMsgToEdgeServiceNever(HasName entity, EntityId entityId, EntityId originatorId,
-                                                                                           TenantId tenantId, CustomerId customerId, UserId userId, String userName,
-                                                                                           ActionType actionType, Object... additionalInfo) {
+    protected void testNotifyEntityOneTimeMsgToEdgeServiceNever(HasName entity, EntityId entityId, EntityId originatorId,
+                                                                TenantId tenantId, CustomerId customerId, UserId userId, String userName,
+                                                                ActionType actionType, Object... additionalInfo) {
         testNotificationMsgToEdgeServiceNever(entityId);
-        testLogEntityActionOne(entity, originatorId, tenantId, customerId, userId, userName, actionType, additionalInfo);
-        testPushMsgToRuleEngineOne(originatorId, tenantId);
-        testBroadcastEntityStateChangeEventOne(entityId, tenantId);
+        testLogEntityActionOneTime(entity, originatorId, tenantId, customerId, userId, userName, actionType, additionalInfo);
+        testPushMsgToRuleEngineOneTime(originatorId, tenantId);
+        Mockito.reset(tbClusterService, auditLogService);
+    }
+
+    protected void testNotifyEntityBroadcastEntityStateChangeEventOneTimeMsgToEdgeServiceNever(HasName entity, EntityId entityId, EntityId originatorId,
+                                                                                               TenantId tenantId, CustomerId customerId, UserId userId, String userName,
+                                                                                               ActionType actionType, Object... additionalInfo) {
+        testNotificationMsgToEdgeServiceNever(entityId);
+        testLogEntityActionOneTime(entity, originatorId, tenantId, customerId, userId, userName, actionType, additionalInfo);
+        testPushMsgToRuleEngineOneTime(originatorId, tenantId);
+        testBroadcastEntityStateChangeEventOneTime(entityId, tenantId);
         Mockito.reset(tbClusterService, auditLogService);
     }
 
@@ -107,8 +112,7 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
                     Mockito.argThat(argument ->
                         argument.getMessage().equals(exp.getMessage())));
         }
-        Mockito.verify(tbClusterService, never()).pushMsgToRuleEngine(Mockito.any(), Mockito.any(entity_NULL_UUID.getClass()),
-                Mockito.any(), Mockito.any());
+        testPushMsgToRuleEngineNever(entity_NULL_UUID);
         Mockito.reset(tbClusterService, auditLogService);
     }
 
@@ -116,26 +120,27 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
         testNotificationMsgToEdgeServiceNever(entityId);
         testLogEntityActionNever(entityId, entity);
         testPushMsgToRuleEngineNever(entityId);
+        Mockito.reset(tbClusterService, auditLogService);
     }
 
-    protected void testNotificationMsgToEdgeServiceNever(EntityId entityId) {
+    private void testNotificationMsgToEdgeServiceNever(EntityId entityId) {
         Mockito.verify(tbClusterService, never()).sendNotificationMsgToEdgeService(Mockito.any(),
                 Mockito.any(), Mockito.any(entityId.getClass()), Mockito.any(), Mockito.any(), Mockito.any());
     }
 
-    protected void testLogEntityActionNever(EntityId entityId, HasName entity) {
+    private void testLogEntityActionNever(EntityId entityId, HasName entity) {
         Mockito.verify(auditLogService, never()).logEntityAction(Mockito.any(), Mockito.any(),
                 Mockito.any(), Mockito.any(), Mockito.any(entityId.getClass()), Mockito.any(entity.getClass()),
                 Mockito.any(), Mockito.any());
     }
 
-    protected void testPushMsgToRuleEngineNever(EntityId entityId) {
+    private void testPushMsgToRuleEngineNever(EntityId entityId) {
         Mockito.verify(tbClusterService, never()).pushMsgToRuleEngine(Mockito.any(),
                 Mockito.any(entityId.getClass()), Mockito.any(), Mockito.any());
     }
 
-    private void testLogEntityActionOne(HasName entity, EntityId originatorId, TenantId tenantId, CustomerId customerId,
-                                        UserId userId, String userName, ActionType actionType, Object... additionalInfo) {
+    private void testLogEntityActionOneTime(HasName entity, EntityId originatorId, TenantId tenantId, CustomerId customerId,
+                                            UserId userId, String userName, ActionType actionType, Object... additionalInfo) {
         if (additionalInfo.length == 0) {
             Mockito.verify(auditLogService, times(1)).logEntityAction(Mockito.eq(tenantId), Mockito.eq(customerId),
                     Mockito.eq(userId), Mockito.eq(userName), Mockito.eq(originatorId),
@@ -148,18 +153,18 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
         }
     }
 
-    private void testPushMsgToRuleEngineOne(EntityId originatorId, TenantId tenantId) {
+    private void testPushMsgToRuleEngineOneTime(EntityId originatorId, TenantId tenantId) {
         Mockito.verify(tbClusterService, times(1)).pushMsgToRuleEngine(Mockito.eq(tenantId),
                 Mockito.eq(originatorId), Mockito.any(TbMsg.class), Mockito.isNull());
     }
 
-    private void testSendNotificationMsgToEdgeServiceOne(EntityId entityId, TenantId tenantId, ActionType actionType) {
+    private void testSendNotificationMsgToEdgeServiceOneTime(EntityId entityId, TenantId tenantId, ActionType actionType) {
         Mockito.verify(tbClusterService, times(1)).sendNotificationMsgToEdgeService(Mockito.eq(tenantId),
                 Mockito.isNull(), Mockito.eq(entityId), Mockito.isNull(), Mockito.isNull(),
                 Mockito.eq(edgeTypeByActionType(actionType)));
     }
 
-    private void testBroadcastEntityStateChangeEventOne(EntityId entityId, TenantId tenantId) {
+    private void testBroadcastEntityStateChangeEventOneTime(EntityId entityId, TenantId tenantId) {
         Mockito.verify(tbClusterService, times(1)).broadcastEntityStateChangeEvent(Mockito.eq(tenantId),
                 Mockito.any(entityId.getClass()), Mockito.any(ComponentLifecycleEvent.class));
     }
@@ -173,11 +178,5 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
             }
         }
         return result;
-    }
-
-    private String getFailureStack(Exception e) {
-        StringWriter sw = new StringWriter();
-        e.printStackTrace(new PrintWriter(sw));
-        return sw.toString();
     }
 }
