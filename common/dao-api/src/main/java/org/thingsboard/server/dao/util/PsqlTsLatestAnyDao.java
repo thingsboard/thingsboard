@@ -22,6 +22,6 @@ import java.lang.annotation.RetentionPolicy;
 
 @Retention(RetentionPolicy.RUNTIME)
 @ConditionalOnExpression("('${database.ts_latest.type}'=='sql' || '${database.ts_latest.type}'=='timescale') " +
-        "&& '${spring.jpa.database-platform}'=='org.hibernate.dialect.PostgreSQLDialect'")
+        "&& '${spring.jpa.database-platform}'=='org.hibernate.dialect.PostgreSQL10Dialect'")
 public @interface PsqlTsLatestAnyDao {
 }
