@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.sync.vc.data.EntitiesExportCtx;
 
 import java.util.List;
 import java.util.Set;
@@ -38,12 +39,12 @@ public class WidgetsBundleExportService extends BaseEntityExportService<WidgetsB
     private final WidgetTypeService widgetTypeService;
 
     @Override
-    protected void setRelatedEntities(TenantId tenantId, WidgetsBundle widgetsBundle, WidgetsBundleExportData exportData, EntityExportSettings settings) {
+    protected void setRelatedEntities(EntitiesExportCtx<?> ctx, WidgetsBundle widgetsBundle, WidgetsBundleExportData exportData) {
         if (widgetsBundle.getTenantId() == null || widgetsBundle.getTenantId().isNullUid()) {
             throw new IllegalArgumentException("Export of system Widget Bundles is not allowed");
         }
 
-        List<WidgetTypeDetails> widgets = widgetTypeService.findWidgetTypesDetailsByTenantIdAndBundleAlias(tenantId, widgetsBundle.getAlias());
+        List<WidgetTypeDetails> widgets = widgetTypeService.findWidgetTypesDetailsByTenantIdAndBundleAlias(ctx.getTenantId(), widgetsBundle.getAlias());
         exportData.setWidgets(widgets);
     }
 

@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.common.data.sync.ie.RuleChainExportData;
+import org.thingsboard.server.service.sync.vc.data.EntitiesExportCtx;
 
 import java.util.Set;
 
@@ -36,8 +37,8 @@ public class RuleChainExportService extends BaseEntityExportService<RuleChainId,
     private final RuleChainService ruleChainService;
 
     @Override
-    protected void setRelatedEntities(TenantId tenantId, RuleChain ruleChain, RuleChainExportData exportData, EntityExportSettings exportSettings) {
-        exportData.setMetaData(ruleChainService.loadRuleChainMetaData(tenantId, ruleChain.getId()));
+    protected void setRelatedEntities(EntitiesExportCtx<?> ctx, RuleChain ruleChain, RuleChainExportData exportData) {
+        exportData.setMetaData(ruleChainService.loadRuleChainMetaData(ctx.getTenantId(), ruleChain.getId()));
     }
 
     @Override

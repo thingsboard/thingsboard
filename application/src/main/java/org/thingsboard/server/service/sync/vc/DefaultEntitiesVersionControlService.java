@@ -182,7 +182,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     }
 
     private ListenableFuture<Void> saveEntityData(EntitiesExportCtx<?> ctx, EntityId entityId) throws Exception {
-        EntityExportData<ExportableEntity<EntityId>> entityData = exportImportService.exportEntity(ctx, entityId, ctx.getSettings());
+        EntityExportData<ExportableEntity<EntityId>> entityData = exportImportService.exportEntity(ctx, entityId);
         return gitServiceQueue.addToCommit(ctx.getCommit(), entityData);
     }
 
@@ -408,12 +408,12 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
         return transformAsync(gitServiceQueue.getEntity(user.getTenantId(), versionId, externalId),
                 otherVersion -> {
-                    SimpleEntitiesExportCtx ctx = new SimpleEntitiesExportCtx(user, null, null);
-                    EntityExportData<?> currentVersion = exportImportService.exportEntity(ctx, entityId, EntityExportSettings.builder()
+                    SimpleEntitiesExportCtx ctx = new SimpleEntitiesExportCtx(user, null, null, EntityExportSettings.builder()
                             .exportRelations(otherVersion.hasRelations())
                             .exportAttributes(otherVersion.hasAttributes())
                             .exportCredentials(otherVersion.hasCredentials())
                             .build());
+                    EntityExportData<?> currentVersion = exportImportService.exportEntity(ctx, entityId);
                     return transform(gitServiceQueue.getContentsDiff(user.getTenantId(),
                             JacksonUtil.toPrettyString(currentVersion.sort()),
                             JacksonUtil.toPrettyString(otherVersion.sort())),

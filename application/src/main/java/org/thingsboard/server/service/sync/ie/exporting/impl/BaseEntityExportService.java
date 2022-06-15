@@ -30,12 +30,12 @@ import java.util.Set;
 public abstract class BaseEntityExportService<I extends EntityId, E extends ExportableEntity<I>, D extends EntityExportData<E>> extends DefaultEntityExportService<I, E, D> {
 
     @Override
-    protected void setAdditionalExportData(EntitiesExportCtx<?> ctx, E entity, D exportData, EntityExportSettings exportSettings) throws ThingsboardException {
-        setRelatedEntities(ctx.getTenantId(), entity, (D) exportData, exportSettings);
-        super.setAdditionalExportData(ctx, entity, exportData, exportSettings);
+    protected void setAdditionalExportData(EntitiesExportCtx<?> ctx, E entity, D exportData) throws ThingsboardException {
+        setRelatedEntities(ctx, entity, (D) exportData);
+        super.setAdditionalExportData(ctx, entity, exportData);
     }
 
-    protected void setRelatedEntities(TenantId tenantId, E mainEntity, D exportData, EntityExportSettings settings) {}
+    protected void setRelatedEntities(EntitiesExportCtx<?> ctx, E mainEntity, D exportData) {}
 
     protected abstract D newExportData();
 
