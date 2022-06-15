@@ -17,42 +17,29 @@ package org.thingsboard.server.service.sync.ie.exporting.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
-import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.common.data.sync.ie.DeviceExportData;
 import org.thingsboard.server.service.sync.vc.data.EntitiesExportCtx;
 
 import java.util.Set;
 
 @Service
 @TbCoreComponent
-@RequiredArgsConstructor
-public class DeviceExportService extends BaseEntityExportService<DeviceId, Device, DeviceExportData> {
-
-    private final DeviceCredentialsService deviceCredentialsService;
+public class AssetExportService extends BaseEntityExportService<AssetId, Asset, EntityExportData<Asset>> {
 
     @Override
-    protected void setRelatedEntities(EntitiesExportCtx<?> ctx, Device device, DeviceExportData exportData) {
-        device.setCustomerId(getExternalIdOrElseInternal(device.getCustomerId()));
-        device.setDeviceProfileId(getExternalIdOrElseInternal(device.getDeviceProfileId()));
-        if (ctx.getSettings().isExportCredentials()) {
-            exportData.setCredentials(deviceCredentialsService.findDeviceCredentialsByDeviceId(ctx.getTenantId(), device.getId()));
-        }
-    }
-
-    @Override
-    protected DeviceExportData newExportData() {
-        return new DeviceExportData();
+    protected void setRelatedEntities(EntitiesExportCtx<?> ctx, Asset asset, EntityExportData<Asset> exportData) {
+        asset.setCustomerId(getExternalIdOrElseInternal(asset.getCustomerId()));
     }
 
     @Override
     public Set<EntityType> getSupportedEntityTypes() {
-        return Set.of(EntityType.DEVICE);
+        return Set.of(EntityType.ASSET);
     }
 
 }

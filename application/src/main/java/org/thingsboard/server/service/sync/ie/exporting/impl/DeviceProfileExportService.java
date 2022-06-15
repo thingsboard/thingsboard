@@ -15,44 +15,31 @@
  */
 package org.thingsboard.server.service.sync.ie.exporting.impl;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
-import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.common.data.sync.ie.DeviceExportData;
 import org.thingsboard.server.service.sync.vc.data.EntitiesExportCtx;
 
 import java.util.Set;
 
 @Service
 @TbCoreComponent
-@RequiredArgsConstructor
-public class DeviceExportService extends BaseEntityExportService<DeviceId, Device, DeviceExportData> {
-
-    private final DeviceCredentialsService deviceCredentialsService;
+public class DeviceProfileExportService extends BaseEntityExportService<DeviceProfileId, DeviceProfile, EntityExportData<DeviceProfile>> {
 
     @Override
-    protected void setRelatedEntities(EntitiesExportCtx<?> ctx, Device device, DeviceExportData exportData) {
-        device.setCustomerId(getExternalIdOrElseInternal(device.getCustomerId()));
-        device.setDeviceProfileId(getExternalIdOrElseInternal(device.getDeviceProfileId()));
-        if (ctx.getSettings().isExportCredentials()) {
-            exportData.setCredentials(deviceCredentialsService.findDeviceCredentialsByDeviceId(ctx.getTenantId(), device.getId()));
-        }
-    }
-
-    @Override
-    protected DeviceExportData newExportData() {
-        return new DeviceExportData();
+    protected void setRelatedEntities(EntitiesExportCtx<?> ctx, DeviceProfile deviceProfile, EntityExportData<DeviceProfile> exportData) {
+        deviceProfile.setDefaultDashboardId(getExternalIdOrElseInternal(deviceProfile.getDefaultDashboardId()));
+        deviceProfile.setDefaultRuleChainId(getExternalIdOrElseInternal(deviceProfile.getDefaultRuleChainId()));
     }
 
     @Override
     public Set<EntityType> getSupportedEntityTypes() {
-        return Set.of(EntityType.DEVICE);
+        return Set.of(EntityType.DEVICE_PROFILE);
     }
 
 }

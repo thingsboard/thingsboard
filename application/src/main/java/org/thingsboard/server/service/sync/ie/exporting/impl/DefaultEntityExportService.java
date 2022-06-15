@@ -44,6 +44,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -53,7 +54,7 @@ import java.util.stream.Collectors;
 public class DefaultEntityExportService<I extends EntityId, E extends ExportableEntity<I>, D extends EntityExportData<E>> implements EntityExportService<I, E, D> {
 
     @Autowired @Lazy
-    private ExportableEntitiesService exportableEntitiesService;
+    protected ExportableEntitiesService exportableEntitiesService;
     @Autowired
     private RelationService relationService;
     @Autowired
@@ -68,6 +69,7 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
             throw new IllegalArgumentException(entityId.getEntityType() + " [" + entityId.getId() + "] not found");
         }
 
+        entity.setId(entity.getExternalId() != null ? entity.getExternalId() : entity.getId());
         exportData.setEntity(entity);
         exportData.setEntityType(entityId.getEntityType());
         setAdditionalExportData(ctx, entity, exportData);
@@ -79,6 +81,10 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
         var exportSettings = ctx.getSettings();
         if (exportSettings.isExportRelations()) {
             List<EntityRelation> relations = exportRelations(ctx, entity);
+            relations.forEach(relation -> {
+                relation.setFrom(getExternalIdOrElseInternal(relation.getFrom()));
+                relation.setTo(getExternalIdOrElseInternal(relation.getTo()));
+            });
             exportData.setRelations(relations);
         }
         if (exportSettings.isExportAttributes()) {
@@ -126,6 +132,12 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
             }
         });
         return attributes;
+    }
+
+    protected <ID extends EntityId> ID getExternalIdOrElseInternal(ID internalId) {
+        if (internalId == null || internalId.isNullUid()) return internalId;
+        return Optional.ofNullable(exportableEntitiesService.getExternalIdByInternal(internalId))
+                .orElse(internalId);
     }
 
     protected D newExportData() {

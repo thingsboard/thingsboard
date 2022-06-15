@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.customer;
 
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -29,7 +30,7 @@ import java.util.UUID;
 /**
  * The Interface CustomerDao.
  */
-public interface CustomerDao extends Dao<Customer>, TenantEntityDao, ExportableEntityDao<Customer> {
+public interface CustomerDao extends Dao<Customer>, TenantEntityDao, ExportableEntityDao<CustomerId, Customer> {
 
     /**
      * Save or update customer object

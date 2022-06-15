@@ -67,4 +67,7 @@ public interface RuleChainRepository extends JpaRepository<RuleChainEntity, UUID
 
     List<RuleChainEntity> findByTenantIdAndTypeAndName(UUID tenantId, RuleChainType type, String name);
 
+    @Query("SELECT externalId FROM RuleChainEntity WHERE id = :id")
+    UUID getExternalIdById(@Param("id") UUID id);
+
 }

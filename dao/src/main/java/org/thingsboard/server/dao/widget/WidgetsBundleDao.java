@@ -28,7 +28,7 @@ import java.util.UUID;
 /**
  * The Interface WidgetsBundleDao.
  */
-public interface WidgetsBundleDao extends Dao<WidgetsBundle>, ExportableEntityDao<WidgetsBundle> {
+public interface WidgetsBundleDao extends Dao<WidgetsBundle>, ExportableEntityDao<WidgetsBundleId, WidgetsBundle> {
 
     /**
      * Save or update widgets bundle object

@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.service.sync.vc.data.EntitiesExportCtx;
 
+import java.util.Optional;
 import java.util.Set;
 
 public abstract class BaseEntityExportService<I extends EntityId, E extends ExportableEntity<I>, D extends EntityExportData<E>> extends DefaultEntityExportService<I, E, D> {
@@ -37,7 +38,9 @@ public abstract class BaseEntityExportService<I extends EntityId, E extends Expo
 
     protected void setRelatedEntities(EntitiesExportCtx<?> ctx, E mainEntity, D exportData) {}
 
-    protected abstract D newExportData();
+    protected D newExportData() {
+        return (D) new EntityExportData<E>();
+    };
 
     public abstract Set<EntityType> getSupportedEntityTypes();
 

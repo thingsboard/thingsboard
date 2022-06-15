@@ -75,7 +75,7 @@ public class DefaultExportableEntitiesService implements ExportableEntitiesServi
         E entity = null;
 
         if (dao instanceof ExportableEntityDao) {
-            ExportableEntityDao<E> exportableEntityDao = (ExportableEntityDao<E>) dao;
+            ExportableEntityDao<I, E> exportableEntityDao = (ExportableEntityDao<I, E>) dao;
             entity = exportableEntityDao.findByTenantIdAndExternalId(tenantId.getId(), externalId.getId());
         }
         if (entity == null || !belongsToTenant(entity, tenantId)) {
@@ -113,7 +113,7 @@ public class DefaultExportableEntitiesService implements ExportableEntitiesServi
         E entity = null;
 
         if (dao instanceof ExportableEntityDao) {
-            ExportableEntityDao<E> exportableEntityDao = (ExportableEntityDao<E>) dao;
+            ExportableEntityDao<I, E> exportableEntityDao = (ExportableEntityDao<I, E>) dao;
             try {
                 entity = exportableEntityDao.findByTenantIdAndName(tenantId.getId(), name);
             } catch (UnsupportedOperationException ignored) {
@@ -128,12 +128,22 @@ public class DefaultExportableEntitiesService implements ExportableEntitiesServi
 
     @Override
     public <E extends ExportableEntity<I>, I extends EntityId> PageData<E> findEntitiesByTenantId(TenantId tenantId, EntityType entityType, PageLink pageLink) {
-        Dao<E> dao = getDao(entityType);
-        if (dao instanceof ExportableEntityDao) {
-            ExportableEntityDao<E> exportableEntityDao = (ExportableEntityDao<E>) dao;
-            return exportableEntityDao.findByTenantId(tenantId.getId(), pageLink);
+        ExportableEntityDao<I, E> dao = getExportableEntityDao(entityType);
+        if (dao != null) {
+            return dao.findByTenantId(tenantId.getId(), pageLink);
+        } else {
+            return new PageData<>();
         }
-        return new PageData<>();
+    }
+
+    @Override
+    public <I extends EntityId> I getExternalIdByInternal(I internalId) {
+        ExportableEntityDao<I, ?> dao = getExportableEntityDao(internalId.getEntityType());
+        if (dao != null) {
+            return dao.getExternalIdByInternal(internalId);
+        } else {
+            return null;
+        }
     }
 
     private boolean belongsToTenant(HasId<? extends EntityId> entity, TenantId tenantId) {
@@ -149,6 +159,15 @@ public class DefaultExportableEntitiesService implements ExportableEntitiesServi
             throw new IllegalArgumentException("Unsupported entity type " + entityType);
         }
         entityRemover.accept(tenantId, id);
+    }
+
+    private <I extends EntityId, E extends ExportableEntity<I>> ExportableEntityDao<I, E> getExportableEntityDao(EntityType entityType) {
+        Dao<E> dao = getDao(entityType);
+        if (dao instanceof ExportableEntityDao) {
+            return (ExportableEntityDao<I, E>) dao;
+        } else {
+            return null;
+        }
     }
 
     @SuppressWarnings("unchecked")

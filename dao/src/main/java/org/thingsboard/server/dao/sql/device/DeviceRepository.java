@@ -245,4 +245,8 @@ public interface DeviceRepository extends JpaRepository<DeviceEntity, UUID>, Exp
             "INNER JOIN DeviceProfileEntity p ON d.deviceProfileId = p.id " +
             "WHERE p.transportType = :transportType")
     Page<UUID> findIdsByDeviceProfileTransportType(@Param("transportType") DeviceTransportType transportType, Pageable pageable);
+
+    @Query("SELECT externalId FROM DeviceEntity WHERE id = :id")
+    UUID getExternalIdById(@Param("id") UUID id);
+
 }

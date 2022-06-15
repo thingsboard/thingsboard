@@ -53,4 +53,7 @@ public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEnti
 
     WidgetsBundleEntity findFirstByTenantIdAndTitle(UUID tenantId, String title);
 
+    @Query("SELECT externalId FROM WidgetsBundleEntity WHERE id = :id")
+    UUID getExternalIdById(@Param("id") UUID id);
+
 }
