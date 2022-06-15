@@ -41,6 +41,7 @@ import org.thingsboard.server.service.sync.ie.exporting.EntityExportService;
 import org.thingsboard.server.service.sync.ie.exporting.impl.BaseEntityExportService;
 import org.thingsboard.server.service.sync.ie.exporting.impl.DefaultEntityExportService;
 import org.thingsboard.server.service.sync.ie.importing.EntityImportService;
+import org.thingsboard.server.service.sync.vc.data.EntitiesExportCtx;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 
 import java.util.ArrayList;
@@ -71,15 +72,15 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
 
 
     @Override
-    public <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> exportEntity(SecurityUser user, I entityId, EntityExportSettings exportSettings) throws ThingsboardException {
-        if (!rateLimitService.checkEntityExportLimit(user.getTenantId())) {
+    public <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> exportEntity(EntitiesExportCtx ctx, I entityId, EntityExportSettings exportSettings) throws ThingsboardException {
+        if (!rateLimitService.checkEntityExportLimit(ctx.getTenantId())) {
             throw new ThingsboardException("Rate limit for entities export is exceeded", ThingsboardErrorCode.TOO_MANY_REQUESTS);
         }
 
         EntityType entityType = entityId.getEntityType();
         EntityExportService<I, E, EntityExportData<E>> exportService = getExportService(entityType);
 
-        return exportService.getExportData(user, entityId, exportSettings);
+        return exportService.getExportData(ctx, entityId, exportSettings);
     }
 
     @Override

@@ -21,9 +21,10 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
+import org.thingsboard.server.service.sync.vc.data.EntitiesExportCtx;
 
 public interface EntityExportService<I extends EntityId, E extends ExportableEntity<I>, D extends EntityExportData<E>> {
 
-    D getExportData(SecurityUser user, I entityId, EntityExportSettings exportSettings) throws ThingsboardException;
+    D getExportData(EntitiesExportCtx ctx, I entityId, EntityExportSettings exportSettings) throws ThingsboardException;
 
 }

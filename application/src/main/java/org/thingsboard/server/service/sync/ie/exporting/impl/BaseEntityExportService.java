@@ -23,15 +23,16 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
+import org.thingsboard.server.service.sync.vc.data.EntitiesExportCtx;
 
 import java.util.Set;
 
 public abstract class BaseEntityExportService<I extends EntityId, E extends ExportableEntity<I>, D extends EntityExportData<E>> extends DefaultEntityExportService<I, E, D> {
 
     @Override
-    protected void setAdditionalExportData(SecurityUser user, E entity, D exportData, EntityExportSettings exportSettings) throws ThingsboardException {
-        setRelatedEntities(user.getTenantId(), entity, (D) exportData, exportSettings);
-        super.setAdditionalExportData(user, entity, exportData, exportSettings);
+    protected void setAdditionalExportData(EntitiesExportCtx ctx, E entity, D exportData, EntityExportSettings exportSettings) throws ThingsboardException {
+        setRelatedEntities(ctx.getTenantId(), entity, (D) exportData, exportSettings);
+        super.setAdditionalExportData(ctx, entity, exportData, exportSettings);
     }
 
     protected void setRelatedEntities(TenantId tenantId, E mainEntity, D exportData, EntityExportSettings settings) {}

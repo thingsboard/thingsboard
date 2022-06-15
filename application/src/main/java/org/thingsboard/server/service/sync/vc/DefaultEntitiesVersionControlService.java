@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -77,7 +77,10 @@ import org.thingsboard.server.service.sync.ie.exporting.ExportableEntitiesServic
 import org.thingsboard.server.service.sync.ie.importing.impl.MissingEntityException;
 import org.thingsboard.server.service.sync.vc.autocommit.TbAutoCommitSettingsService;
 import org.thingsboard.server.service.sync.vc.data.CommitGitRequest;
+import org.thingsboard.server.service.sync.vc.data.ComplexEntitiesExportCtx;
+import org.thingsboard.server.service.sync.vc.data.EntitiesExportCtx;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
+import org.thingsboard.server.service.sync.vc.data.SimpleEntitiesExportCtx;
 import org.thingsboard.server.service.sync.vc.repository.TbRepositorySettingsService;
 
 import javax.annotation.PostConstruct;
@@ -136,11 +139,11 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
             List<ListenableFuture<Void>> gitFutures = new ArrayList<>();
             switch (request.getType()) {
                 case SINGLE_ENTITY: {
-                    handleSingleEntityRequest(user, commit, gitFutures, (SingleEntityVersionCreateRequest) request);
+                    handleSingleEntityRequest(new SimpleEntitiesExportCtx(user, commit, (SingleEntityVersionCreateRequest) request));
                     break;
                 }
                 case COMPLEX: {
-                    handleComplexRequest(user, commit, gitFutures, (ComplexVersionCreateRequest) request);
+                    handleComplexRequest(new ComplexEntitiesExportCtx(user, commit, (ComplexVersionCreateRequest) request));
                     break;
                 }
             }
@@ -148,21 +151,22 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         }, executor);
     }
 
-    private void handleSingleEntityRequest(SecurityUser user, CommitGitRequest commit, List<ListenableFuture<Void>> gitFutures, SingleEntityVersionCreateRequest versionCreateRequest) throws Exception {
-        gitFutures.add(saveEntityData(user, commit, versionCreateRequest.getEntityId(), versionCreateRequest.getConfig()));
+    private void handleSingleEntityRequest(SimpleEntitiesExportCtx ctx) throws Exception {
+        ctx.add(saveEntityData(ctx, ctx.getRequest().getEntityId(), ctx.getSettings()));
     }
 
-    private void handleComplexRequest(SecurityUser user, CommitGitRequest commit, List<ListenableFuture<Void>> gitFutures, ComplexVersionCreateRequest versionCreateRequest) {
-        versionCreateRequest.getEntityTypes().forEach((entityType, config) -> {
-            if (ObjectUtils.defaultIfNull(config.getSyncStrategy(), versionCreateRequest.getSyncStrategy()) == SyncStrategy.OVERWRITE) {
-                gitFutures.add(gitServiceQueue.deleteAll(commit, entityType));
+    private void handleComplexRequest(ComplexEntitiesExportCtx ctx) {
+        ctx.getRequest().getEntityTypes().forEach((entityType, config) -> {
+            if (ObjectUtils.defaultIfNull(config.getSyncStrategy(), ctx.getRequest().getSyncStrategy()) == SyncStrategy.OVERWRITE) {
+                ctx.add(gitServiceQueue.deleteAll(ctx.getCommit(), entityType));
             }
 
+            EntityExportSettings settings = ctx.getSettings(entityType);
             if (config.isAllEntities()) {
-                DaoUtil.processInBatches(pageLink -> exportableEntitiesService.findEntitiesByTenantId(user.getTenantId(), entityType, pageLink)
+                DaoUtil.processInBatches(pageLink -> exportableEntitiesService.findEntitiesByTenantId(ctx.getTenantId(), entityType, pageLink)
                         , 100, entity -> {
                             try {
-                                gitFutures.add(saveEntityData(user, commit, entity.getId(), config));
+                                ctx.add(saveEntityData(ctx, entity.getId(), settings));
                             } catch (Exception e) {
                                 throw new RuntimeException(e);
                             }
@@ -170,7 +174,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
             } else {
                 for (UUID entityId : config.getEntityIds()) {
                     try {
-                        gitFutures.add(saveEntityData(user, commit, EntityIdFactory.getByTypeAndUuid(entityType, entityId), config));
+                        ctx.add(saveEntityData(ctx, EntityIdFactory.getByTypeAndUuid(entityType, entityId), settings));
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
@@ -179,13 +183,9 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         });
     }
 
-    private ListenableFuture<Void> saveEntityData(SecurityUser user, CommitGitRequest commit, EntityId entityId, VersionCreateConfig config) throws Exception {
-        EntityExportData<ExportableEntity<EntityId>> entityData = exportImportService.exportEntity(user, entityId, EntityExportSettings.builder()
-                .exportRelations(config.isSaveRelations())
-                .exportAttributes(config.isSaveAttributes())
-                .exportCredentials(config.isSaveCredentials())
-                .build());
-        return gitServiceQueue.addToCommit(commit, entityData);
+    private ListenableFuture<Void> saveEntityData(EntitiesExportCtx ctx, EntityId entityId, EntityExportSettings settings) throws Exception {
+        EntityExportData<ExportableEntity<EntityId>> entityData = exportImportService.exportEntity(ctx, entityId, settings);
+        return gitServiceQueue.addToCommit(ctx.getCommit(), entityData);
     }
 
     @Override
@@ -410,7 +410,8 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
         return transformAsync(gitServiceQueue.getEntity(user.getTenantId(), versionId, externalId),
                 otherVersion -> {
-                    EntityExportData<?> currentVersion = exportImportService.exportEntity(user, entityId, EntityExportSettings.builder()
+                    SimpleEntitiesExportCtx ctx = new SimpleEntitiesExportCtx(user, null, null);
+                    EntityExportData<?> currentVersion = exportImportService.exportEntity(ctx, entityId, EntityExportSettings.builder()
                             .exportRelations(otherVersion.hasRelations())
                             .exportAttributes(otherVersion.hasAttributes())
                             .exportCredentials(otherVersion.hasCredentials())

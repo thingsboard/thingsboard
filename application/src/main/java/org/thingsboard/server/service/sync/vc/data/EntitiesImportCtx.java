@@ -40,17 +40,18 @@ public class EntitiesImportCtx {
 
     private final SecurityUser user;
     private final String versionId;
-    private EntityImportSettings settings;
 
-    Map<EntityType, EntityTypeLoadResult> results = new HashMap<>();
-    Map<EntityType, Set<EntityId>> importedEntities = new HashMap<>();
-    Map<EntityId, EntityImportSettings> toReimport = new HashMap<>();
+    private final Map<EntityType, EntityTypeLoadResult> results = new HashMap<>();
+    private final Map<EntityType, Set<EntityId>> importedEntities = new HashMap<>();
+    private final Map<EntityId, EntityImportSettings> toReimport = new HashMap<>();
     private final List<ThrowingRunnable> referenceCallbacks = new ArrayList<>();
     private final List<ThrowingRunnable> eventCallbacks = new ArrayList<>();
 
     private final Map<EntityId, EntityId> externalToInternalIdMap = new HashMap<>();
 
     private final Set<EntityRelation> relations = new LinkedHashSet<>();
+
+    private EntityImportSettings settings;
 
     public EntitiesImportCtx(SecurityUser user, String versionId) {
         this(user, versionId, null);

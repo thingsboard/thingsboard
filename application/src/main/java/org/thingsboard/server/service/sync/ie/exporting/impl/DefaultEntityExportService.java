@@ -36,6 +36,7 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.sync.ie.exporting.EntityExportService;
 import org.thingsboard.server.service.sync.ie.exporting.ExportableEntitiesService;
+import org.thingsboard.server.service.sync.vc.data.EntitiesExportCtx;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -59,44 +60,44 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
     private AttributesService attributesService;
 
     @Override
-    public final D getExportData(SecurityUser user, I entityId, EntityExportSettings exportSettings) throws ThingsboardException {
+    public final D getExportData(EntitiesExportCtx ctx, I entityId, EntityExportSettings exportSettings) throws ThingsboardException {
         D exportData = newExportData();
 
-        E entity = exportableEntitiesService.findEntityByTenantIdAndId(user.getTenantId(), entityId);
+        E entity = exportableEntitiesService.findEntityByTenantIdAndId(ctx.getTenantId(), entityId);
         if (entity == null) {
             throw new IllegalArgumentException(entityId.getEntityType() + " [" + entityId.getId() + "] not found");
         }
 
         exportData.setEntity(entity);
         exportData.setEntityType(entityId.getEntityType());
-        setAdditionalExportData(user, entity, exportData, exportSettings);
+        setAdditionalExportData(ctx, entity, exportData, exportSettings);
 
         return exportData;
     }
 
-    protected void setAdditionalExportData(SecurityUser user, E entity, D exportData, EntityExportSettings exportSettings) throws ThingsboardException {
+    protected void setAdditionalExportData(EntitiesExportCtx ctx, E entity, D exportData, EntityExportSettings exportSettings) throws ThingsboardException {
         if (exportSettings.isExportRelations()) {
-            List<EntityRelation> relations = exportRelations(user, entity);
+            List<EntityRelation> relations = exportRelations(ctx, entity);
             exportData.setRelations(relations);
         }
         if (exportSettings.isExportAttributes()) {
-            Map<String, List<AttributeExportData>> attributes = exportAttributes(user, entity);
+            Map<String, List<AttributeExportData>> attributes = exportAttributes(ctx, entity);
             exportData.setAttributes(attributes);
         }
     }
 
-    private List<EntityRelation> exportRelations(SecurityUser user, E entity) throws ThingsboardException {
+    private List<EntityRelation> exportRelations(EntitiesExportCtx ctx, E entity) throws ThingsboardException {
         List<EntityRelation> relations = new ArrayList<>();
 
-        List<EntityRelation> inboundRelations = relationService.findByTo(user.getTenantId(), entity.getId(), RelationTypeGroup.COMMON);
+        List<EntityRelation> inboundRelations = relationService.findByTo(ctx.getTenantId(), entity.getId(), RelationTypeGroup.COMMON);
         relations.addAll(inboundRelations);
 
-        List<EntityRelation> outboundRelations = relationService.findByFrom(user.getTenantId(), entity.getId(), RelationTypeGroup.COMMON);
+        List<EntityRelation> outboundRelations = relationService.findByFrom(ctx.getTenantId(), entity.getId(), RelationTypeGroup.COMMON);
         relations.addAll(outboundRelations);
         return relations;
     }
 
-    private Map<String, List<AttributeExportData>> exportAttributes(SecurityUser user, E entity) throws ThingsboardException {
+    private Map<String, List<AttributeExportData>> exportAttributes(EntitiesExportCtx ctx, E entity) throws ThingsboardException {
         List<String> scopes;
         if (entity.getId().getEntityType() == EntityType.DEVICE) {
             scopes = List.of(DataConstants.SERVER_SCOPE, DataConstants.SHARED_SCOPE);
@@ -106,7 +107,7 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
         Map<String, List<AttributeExportData>> attributes = new LinkedHashMap<>();
         scopes.forEach(scope -> {
             try {
-                attributes.put(scope, attributesService.findAll(user.getTenantId(), entity.getId(), scope).get().stream()
+                attributes.put(scope, attributesService.findAll(ctx.getTenantId(), entity.getId(), scope).get().stream()
                         .map(attribute -> {
                             AttributeExportData attributeExportData = new AttributeExportData();
                             attributeExportData.setKey(attribute.getKey());
