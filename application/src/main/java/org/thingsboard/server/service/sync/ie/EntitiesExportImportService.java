@@ -31,7 +31,7 @@ import java.util.Comparator;
 
 public interface EntitiesExportImportService {
 
-    <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> exportEntity(EntitiesExportCtx ctx, I entityId, EntityExportSettings exportSettings) throws ThingsboardException;
+    <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> exportEntity(EntitiesExportCtx<?> ctx, I entityId, EntityExportSettings exportSettings) throws ThingsboardException;
 
     <E extends ExportableEntity<I>, I extends EntityId> EntityImportResult<E> importEntity(EntitiesImportCtx ctx, EntityExportData<E> exportData) throws ThingsboardException;
 

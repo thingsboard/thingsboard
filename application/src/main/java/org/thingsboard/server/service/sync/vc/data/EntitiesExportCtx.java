@@ -1,3 +1,18 @@
+/**
+ * Copyright © 2016-2022 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.thingsboard.server.service.sync.vc.data;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -12,12 +27,26 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
-public class EntitiesExportCtx<R extends VersionCreateRequest> {
+public abstract class EntitiesExportCtx<R extends VersionCreateRequest> {
 
     protected final SecurityUser user;
     protected final CommitGitRequest commit;
     protected final R request;
-    private final List<ListenableFuture<Void>> futures = new ArrayList<>();
+    private final List<ListenableFuture<Void>> futures;
+
+    public EntitiesExportCtx(SecurityUser user, CommitGitRequest commit, R request) {
+        this.user = user;
+        this.commit = commit;
+        this.request = request;
+        this.futures = new ArrayList<>();
+    }
+
+    public <T extends R> EntitiesExportCtx(EntitiesExportCtx<T> other) {
+        this.user = other.getUser();
+        this.commit = other.getCommit();
+        this.request = other.getRequest();
+        this.futures = other.getFutures();
+    }
 
     public void add(ListenableFuture<Void> future) {
         futures.add(future);
@@ -34,4 +63,6 @@ public class EntitiesExportCtx<R extends VersionCreateRequest> {
                 .exportCredentials(config.isSaveCredentials())
                 .build();
     }
+
+    public abstract EntityExportSettings getSettings();
 }

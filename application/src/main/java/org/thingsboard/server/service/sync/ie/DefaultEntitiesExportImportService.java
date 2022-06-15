@@ -72,7 +72,7 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
 
 
     @Override
-    public <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> exportEntity(EntitiesExportCtx ctx, I entityId, EntityExportSettings exportSettings) throws ThingsboardException {
+    public <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> exportEntity(EntitiesExportCtx<?> ctx, I entityId, EntityExportSettings exportSettings) throws ThingsboardException {
         if (!rateLimitService.checkEntityExportLimit(ctx.getTenantId())) {
             throw new ThingsboardException("Rate limit for entities export is exceeded", ThingsboardErrorCode.TOO_MANY_REQUESTS);
         }

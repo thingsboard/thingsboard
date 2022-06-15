@@ -60,7 +60,7 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
     private AttributesService attributesService;
 
     @Override
-    public final D getExportData(EntitiesExportCtx ctx, I entityId, EntityExportSettings exportSettings) throws ThingsboardException {
+    public final D getExportData(EntitiesExportCtx<?> ctx, I entityId, EntityExportSettings exportSettings) throws ThingsboardException {
         D exportData = newExportData();
 
         E entity = exportableEntitiesService.findEntityByTenantIdAndId(ctx.getTenantId(), entityId);
@@ -75,7 +75,7 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
         return exportData;
     }
 
-    protected void setAdditionalExportData(EntitiesExportCtx ctx, E entity, D exportData, EntityExportSettings exportSettings) throws ThingsboardException {
+    protected void setAdditionalExportData(EntitiesExportCtx<?> ctx, E entity, D exportData, EntityExportSettings exportSettings) throws ThingsboardException {
         if (exportSettings.isExportRelations()) {
             List<EntityRelation> relations = exportRelations(ctx, entity);
             exportData.setRelations(relations);
@@ -86,7 +86,7 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
         }
     }
 
-    private List<EntityRelation> exportRelations(EntitiesExportCtx ctx, E entity) throws ThingsboardException {
+    private List<EntityRelation> exportRelations(EntitiesExportCtx<?> ctx, E entity) throws ThingsboardException {
         List<EntityRelation> relations = new ArrayList<>();
 
         List<EntityRelation> inboundRelations = relationService.findByTo(ctx.getTenantId(), entity.getId(), RelationTypeGroup.COMMON);
@@ -97,7 +97,7 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
         return relations;
     }
 
-    private Map<String, List<AttributeExportData>> exportAttributes(EntitiesExportCtx ctx, E entity) throws ThingsboardException {
+    private Map<String, List<AttributeExportData>> exportAttributes(EntitiesExportCtx<?> ctx, E entity) throws ThingsboardException {
         List<String> scopes;
         if (entity.getId().getEntityType() == EntityType.DEVICE) {
             scopes = List.of(DataConstants.SERVER_SCOPE, DataConstants.SHARED_SCOPE);

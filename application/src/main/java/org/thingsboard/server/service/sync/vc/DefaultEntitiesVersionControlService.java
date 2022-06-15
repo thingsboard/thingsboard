@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,7 +22,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -60,9 +59,7 @@ import org.thingsboard.server.common.data.sync.vc.request.create.ComplexVersionC
 import org.thingsboard.server.common.data.sync.vc.request.create.EntityTypeVersionCreateConfig;
 import org.thingsboard.server.common.data.sync.vc.request.create.SingleEntityVersionCreateRequest;
 import org.thingsboard.server.common.data.sync.vc.request.create.SyncStrategy;
-import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateConfig;
 import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
-import org.thingsboard.server.common.data.sync.vc.request.load.EntityTypeVersionLoadConfig;
 import org.thingsboard.server.common.data.sync.vc.request.load.EntityTypeVersionLoadRequest;
 import org.thingsboard.server.common.data.sync.vc.request.load.SingleEntityVersionLoadRequest;
 import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadConfig;
@@ -76,10 +73,10 @@ import org.thingsboard.server.service.sync.ie.EntitiesExportImportService;
 import org.thingsboard.server.service.sync.ie.exporting.ExportableEntitiesService;
 import org.thingsboard.server.service.sync.ie.importing.impl.MissingEntityException;
 import org.thingsboard.server.service.sync.vc.autocommit.TbAutoCommitSettingsService;
-import org.thingsboard.server.service.sync.vc.data.CommitGitRequest;
 import org.thingsboard.server.service.sync.vc.data.ComplexEntitiesExportCtx;
 import org.thingsboard.server.service.sync.vc.data.EntitiesExportCtx;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
+import org.thingsboard.server.service.sync.vc.data.EntityTypeExportCtx;
 import org.thingsboard.server.service.sync.vc.data.SimpleEntitiesExportCtx;
 import org.thingsboard.server.service.sync.vc.repository.TbRepositorySettingsService;
 
@@ -152,21 +149,22 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     }
 
     private void handleSingleEntityRequest(SimpleEntitiesExportCtx ctx) throws Exception {
-        ctx.add(saveEntityData(ctx, ctx.getRequest().getEntityId(), ctx.getSettings()));
+        ctx.add(saveEntityData(ctx, ctx.getRequest().getEntityId()));
     }
 
-    private void handleComplexRequest(ComplexEntitiesExportCtx ctx) {
-        ctx.getRequest().getEntityTypes().forEach((entityType, config) -> {
-            if (ObjectUtils.defaultIfNull(config.getSyncStrategy(), ctx.getRequest().getSyncStrategy()) == SyncStrategy.OVERWRITE) {
+    private void handleComplexRequest(ComplexEntitiesExportCtx parentCtx) {
+        ComplexVersionCreateRequest request = parentCtx.getRequest();
+        request.getEntityTypes().forEach((entityType, config) -> {
+            EntityTypeExportCtx ctx = new EntityTypeExportCtx(parentCtx, config, request.getSyncStrategy(), entityType);
+            if (ctx.isOverwrite()) {
                 ctx.add(gitServiceQueue.deleteAll(ctx.getCommit(), entityType));
             }
 
-            EntityExportSettings settings = ctx.getSettings(entityType);
             if (config.isAllEntities()) {
                 DaoUtil.processInBatches(pageLink -> exportableEntitiesService.findEntitiesByTenantId(ctx.getTenantId(), entityType, pageLink)
                         , 100, entity -> {
                             try {
-                                ctx.add(saveEntityData(ctx, entity.getId(), settings));
+                                ctx.add(saveEntityData(ctx, entity.getId()));
                             } catch (Exception e) {
                                 throw new RuntimeException(e);
                             }
@@ -174,7 +172,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
             } else {
                 for (UUID entityId : config.getEntityIds()) {
                     try {
-                        ctx.add(saveEntityData(ctx, EntityIdFactory.getByTypeAndUuid(entityType, entityId), settings));
+                        ctx.add(saveEntityData(ctx, EntityIdFactory.getByTypeAndUuid(entityType, entityId)));
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
@@ -183,8 +181,8 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         });
     }
 
-    private ListenableFuture<Void> saveEntityData(EntitiesExportCtx ctx, EntityId entityId, EntityExportSettings settings) throws Exception {
-        EntityExportData<ExportableEntity<EntityId>> entityData = exportImportService.exportEntity(ctx, entityId, settings);
+    private ListenableFuture<Void> saveEntityData(EntitiesExportCtx<?> ctx, EntityId entityId) throws Exception {
+        EntityExportData<ExportableEntity<EntityId>> entityData = exportImportService.exportEntity(ctx, entityId, ctx.getSettings());
         return gitServiceQueue.addToCommit(ctx.getCommit(), entityData);
     }
 
