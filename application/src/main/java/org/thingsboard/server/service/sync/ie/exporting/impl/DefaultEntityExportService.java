@@ -74,7 +74,9 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
         exportData.setEntityType(entityId.getEntityType());
         setAdditionalExportData(ctx, entity, exportData);
 
-        entity.setId(entity.getExternalId() != null ? entity.getExternalId() : entity.getId());
+        var externalId = entity.getExternalId() != null ? entity.getExternalId() : entity.getId();
+        ctx.putExternalId(entityId, externalId);
+        entity.setId(externalId);
         entity.setTenantId(null);
 
         return exportData;
