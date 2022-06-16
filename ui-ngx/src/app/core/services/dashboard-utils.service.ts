@@ -287,10 +287,14 @@ export class DashboardUtilsService {
     let addedCount = 0;
     let removedCount = 0;
     for (const l of Object.keys(state.layouts)) {
-      removedCount++;
+      if (!newLayouts[l]) {
+        removedCount++;
+      }
     }
     for (const l of Object.keys(newLayouts)) {
-      addedCount++;
+      if (!state.layouts[l]) {
+        addedCount++;
+      }
     }
     state.layouts = newLayouts;
     const layoutsCount = Object.keys(state.layouts).length;

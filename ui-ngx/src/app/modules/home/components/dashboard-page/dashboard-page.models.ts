@@ -73,7 +73,7 @@ export interface DashboardPageLayout {
   layoutCtx: DashboardPageLayoutContext;
 }
 
-export declare type DashboardPageLayouts = {[key in DashboardLayoutId ]: DashboardPageLayout };
+export declare type DashboardPageLayouts = {[key in DashboardLayoutId]: DashboardPageLayout};
 
 export class LayoutWidgetsArray implements Iterable<Widget> {
 
