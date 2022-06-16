@@ -39,7 +39,7 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 public class DefaultTbEdgeService extends AbstractTbEntityService implements TbEdgeService {
 
     @Override
-    public Edge saveEdge(Edge edge, RuleChain edgeTemplateRootRuleChain, SecurityUser user) throws ThingsboardException {
+    public Edge save(Edge edge, RuleChain edgeTemplateRootRuleChain, SecurityUser user) throws ThingsboardException {
         ActionType actionType = edge.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = edge.getTenantId();
         try {
@@ -62,16 +62,16 @@ public class DefaultTbEdgeService extends AbstractTbEntityService implements TbE
     }
 
     @Override
-    public void deleteEdge(Edge edge, SecurityUser user) throws ThingsboardException {
+    public void delete(Edge edge, SecurityUser user) throws ThingsboardException {
         ActionType actionType = ActionType.DELETED;
         EdgeId edgeId = edge.getId();
         TenantId tenantId = edge.getTenantId();
         try {
             edgeService.deleteEdge(tenantId, edgeId);
             notificationEntityService.notifyEdge(tenantId, edgeId, edge.getCustomerId(), edge, actionType, user, edgeId.toString());
-
         } catch (Exception e) {
-            notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.EDGE), edge, null, actionType, user, e);
+            notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.EDGE), edge, null, actionType,
+                    user, e, edgeId.toString());
             throw handleException(e);
         }
     }

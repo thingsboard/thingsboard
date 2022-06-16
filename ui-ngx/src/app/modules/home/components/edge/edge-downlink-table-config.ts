@@ -138,7 +138,7 @@ export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePa
   }
 
   private updateEdgeEventStatus(createdTime: number): string {
-    if (this.queueStartTs && createdTime < this.queueStartTs) {
+    if (this.queueStartTs && createdTime <= this.queueStartTs) {
       return this.translate.instant('edge.deployed');
     } else {
       return this.translate.instant('edge.pending');

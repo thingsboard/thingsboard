@@ -50,7 +50,8 @@
         "export": "Экспортировать",
         "share-via": "Поделиться в {{provider}}",
         "continue": "Продолжить",
-        "discard-changes": "Отменить изменения"
+        "discard-changes": "Отменить изменения",
+        "done": "Завершено"
     },
     "aggregation": {
         "aggregation": "Агрегация",
@@ -482,6 +483,8 @@
         "add-widget": "Добавить новый виджет",
         "title": "Название",
         "select-widget-title": "Выберите виджет",
+        "copyId": "Копировать идентификатор дашборда",
+        "idCopiedMessage": "Идентификатор дашборда скопирован в буфер обмена",
         "select-widget-subtitle": "Список доступных виджетов",
         "delete": "Удалить дашборд",
         "title-required": "Название обязательно.",
@@ -1206,8 +1209,7 @@
             "select-file": "Выберите файл",
             "configuration": "Конфигурация импорта",
             "column-type": "Выберите тип колонок",
-            "creat-entities": "Создание новых объектов",
-            "done": "Завершено"
+            "creat-entities": "Создание новых объектов"
         },
         "message": {
             "create-entities": "{{count}} новый(х) объект(ов) было успешно создано.",
@@ -1289,7 +1291,6 @@
         "change-password": "Изменить пароль",
         "current-password": "Текущий пароль",
         "copy-jwt-token": "Копировать JWT токен",
-        "valid-till": "Действителен до {{expirationData}}",
         "tokenCopiedMessage": "JWT токен скопирован в буфер обмена",
         "tokenCopiedWarnMessage": "JWT токен недействителен! Перезагрузите страницу."
     },

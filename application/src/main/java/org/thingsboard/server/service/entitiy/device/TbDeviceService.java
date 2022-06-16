@@ -35,7 +35,7 @@ public interface TbDeviceService {
 
     Device saveDeviceWithCredentials(TenantId tenantId, Device device, DeviceCredentials deviceCredentials, SecurityUser user) throws ThingsboardException;
 
-    ListenableFuture<Void> deleteDevice(Device device, SecurityUser user) throws ThingsboardException;
+    ListenableFuture<Void> delete(Device device, SecurityUser user) throws ThingsboardException;
 
     Device assignDeviceToCustomer(TenantId tenantId, DeviceId deviceId, Customer customer, SecurityUser user) throws ThingsboardException;
 

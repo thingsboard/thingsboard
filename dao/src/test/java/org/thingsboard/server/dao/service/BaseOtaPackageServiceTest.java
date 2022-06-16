@@ -674,7 +674,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmwareInfo.setUrl(URL);
         firmwareInfo.setTenantId(tenantId);
 
-        thrown.expect(ValidationException.class);
+        thrown.expect(DataValidationException.class);
         thrown.expectMessage("length of title must be equal or less than 255");
 
         otaPackageService.saveOtaPackageInfo(firmwareInfo, true);
