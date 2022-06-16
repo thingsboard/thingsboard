@@ -29,6 +29,7 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -43,14 +44,15 @@ public class EntitiesImportCtx {
 
     private final Map<EntityType, EntityTypeLoadResult> results = new HashMap<>();
     private final Map<EntityType, Set<EntityId>> importedEntities = new HashMap<>();
-    private final Map<EntityId, EntityImportSettings> toReimport = new HashMap<>();
+    private final Map<EntityId, ReimportTask> toReimport = new HashMap<>();
     private final List<ThrowingRunnable> referenceCallbacks = new ArrayList<>();
     private final List<ThrowingRunnable> eventCallbacks = new ArrayList<>();
-
     private final Map<EntityId, EntityId> externalToInternalIdMap = new HashMap<>();
+    private final Set<EntityId> notFoundIds = new HashSet<>();
 
     private final Set<EntityRelation> relations = new LinkedHashSet<>();
 
+    private boolean fetchAllUUIDs = false;
     private EntityImportSettings settings;
 
     public EntitiesImportCtx(SecurityUser user, String versionId) {
@@ -81,10 +83,6 @@ public class EntitiesImportCtx {
 
     public boolean isSaveCredentials() {
         return getSettings().isSaveCredentials();
-    }
-
-    public boolean isResetExternalIdsOfAnotherTenant() {
-        return getSettings().isResetExternalIdsOfAnotherTenant();
     }
 
     public EntityId getInternalId(EntityId externalId) {
@@ -128,5 +126,12 @@ public class EntitiesImportCtx {
         }
     }
 
+    public void registerNotFound(EntityId externalId) {
+        notFoundIds.add(externalId);
+    }
+
+    public boolean isNotFound(EntityId externalId) {
+        return notFoundIds.contains(externalId);
+    }
 
 }

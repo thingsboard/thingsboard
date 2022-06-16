@@ -60,6 +60,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -280,45 +281,58 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
             return entity.getId();
         }
 
-        public Optional<EntityId> getInternalIdByUuid(UUID externalUuid) {
+        public Optional<EntityId> getInternalIdByUuid(UUID externalUuid, boolean fetchAllUUIDs, Set<EntityType> hints) {
             if (externalUuid.equals(EntityId.NULL_UUID)) return Optional.empty();
 
             for (EntityType entityType : EntityType.values()) {
-                EntityId externalId;
-                try {
-                    externalId = EntityIdFactory.getByTypeAndUuid(entityType, externalUuid);
-                } catch (Exception e) {
+                Optional<EntityId> externalIdOpt = buildEntityId(entityType, externalUuid);
+                if (!externalIdOpt.isPresent()) {
                     continue;
                 }
-                EntityId internalId = ctx.getInternalId(externalId);
+                EntityId internalId = ctx.getInternalId(externalIdOpt.get());
                 if (internalId != null) {
                     return Optional.of(internalId);
                 }
             }
 
-            for (EntityType entityType : EntityType.values()) {
-                EntityId externalId;
-                try {
-                    externalId = EntityIdFactory.getByTypeAndUuid(entityType, externalUuid);
-                } catch (Exception e) {
-                    continue;
+            if (fetchAllUUIDs) {
+                for (EntityType entityType : hints) {
+                    Optional<EntityId> internalId = lookupInDb(externalUuid, entityType);
+                    if (internalId.isPresent()) return internalId;
                 }
-
-                EntityId internalId = getInternalId(externalId, false);
-                if (internalId != null) {
-                    return Optional.of(internalId);
-                } else if (ctx.isResetExternalIdsOfAnotherTenant()) {
-                    try {
-                        if (exportableEntitiesService.findEntityById(externalId) != null) {
-                            return Optional.of(EntityIdFactory.getByTypeAndUuid(entityType, EntityId.NULL_UUID));
-                        }
-                    } catch (Exception ignored) {
+                for (EntityType entityType : EntityType.values()) {
+                    if (hints.contains(entityType)) {
+                        continue;
                     }
+                    Optional<EntityId> internalId = lookupInDb(externalUuid, entityType);
+                    if (internalId.isPresent()) return internalId;
                 }
             }
 
             importResult.setUpdatedAllExternalIds(false);
             return Optional.empty();
+        }
+
+        private Optional<EntityId> lookupInDb(UUID externalUuid, EntityType entityType) {
+            Optional<EntityId> externalIdOpt = buildEntityId(entityType, externalUuid);
+            if (externalIdOpt.isEmpty() || ctx.isNotFound(externalIdOpt.get())) {
+                return Optional.empty();
+            }
+            EntityId internalId = getInternalId(externalIdOpt.get(), false);
+            if (internalId != null) {
+                return Optional.of(internalId);
+            } else {
+                ctx.registerNotFound(externalIdOpt.get());
+            }
+            return Optional.empty();
+        }
+
+        private Optional<EntityId> buildEntityId(EntityType entityType, UUID externalUuid) {
+            try {
+                return Optional.of(EntityIdFactory.getByTypeAndUuid(entityType, externalUuid));
+            } catch (Exception e) {
+                return Optional.empty();
+            }
         }
 
     }
