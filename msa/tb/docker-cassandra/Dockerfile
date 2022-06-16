@@ -18,7 +18,7 @@ FROM thingsboard/openjdk11
 
 RUN apt-get update
 RUN apt-get install -y curl nmap procps gnupg2
-RUN echo 'deb http://apt.postgresql.org/pub/repos/apt/ buster-pgdg main' | tee --append /etc/apt/sources.list.d/pgdg.list > /dev/null
+RUN echo "deb http://apt.postgresql.org/pub/repos/apt/ $(. /etc/os-release && echo -n $VERSION_CODENAME)-pgdg main" | tee --append /etc/apt/sources.list.d/pgdg.list > /dev/null
 RUN curl -L https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
 RUN echo 'deb http://downloads.apache.org/cassandra/debian 40x main' | tee --append /etc/apt/sources.list.d/cassandra.list > /dev/null
 RUN curl -L https://downloads.apache.org/cassandra/KEYS | apt-key add -
