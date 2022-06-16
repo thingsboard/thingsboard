@@ -96,8 +96,10 @@ public class MqttTestClient {
         return client.publish(topic, message);
     }
 
-    public void subscribeAndWait(String topic, MqttQoS qoS) throws MqttException {
+    public void subscribeAndWait(String topic, MqttQoS qoS) throws MqttException, InterruptedException {
         subscribe(topic, qoS).waitForCompletion(TIMEOUT_MS);
+        //waiting for process subscription command
+        Thread.sleep(100);
     }
 
     public IMqttToken subscribe(String topic, MqttQoS qoS) throws MqttException {
