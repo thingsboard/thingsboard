@@ -17,15 +17,15 @@ package org.thingsboard.server.dao.sql.resource;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.TbResourceEntity;
 
 import java.util.List;
 import java.util.UUID;
 
-public interface TbResourceRepository extends CrudRepository<TbResourceEntity, UUID> {
+public interface TbResourceRepository extends JpaRepository<TbResourceEntity, UUID> {
 
     TbResourceEntity findByTenantIdAndResourceTypeAndResourceKey(UUID tenantId, String resourceType, String resourceKey);
 

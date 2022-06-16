@@ -1,0 +1,63 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-expansion-panel class="label-data-key" fxFlex [formGroup]="labelDataKeyFormGroup" [(expanded)]="expanded">
+  <mat-expansion-panel-header>
+    <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+      <mat-panel-title>
+        <div fxLayout="row" fxFlex fxLayoutAlign="start center">
+          {{ labelDataKeyText() }}
+        </div>
+      </mat-panel-title>
+      <span fxFlex></span>
+      <button *ngIf="!disabled" mat-icon-button style="min-width: 40px;"
+              type="button"
+              (click)="removeLabelDataKey.emit()"
+              matTooltip="{{ 'action.remove' | translate }}"
+              matTooltipPosition="above">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </div>
+  </mat-expansion-panel-header>
+  <ng-template matExpansionPanelContent>
+    <div fxLayout="column" fxLayoutGap="0.5em">
+      <mat-divider></mat-divider>
+      <section class="tb-widget-settings" fxLayout="column">
+        <section fxLayout="column" fxLayout.gt-sm="row" fxLayoutGap="8px">
+          <mat-form-field fxFlex class="mat-block">
+            <mat-label translate>widgets.chart.key-name</mat-label>
+            <input required matInput formControlName="name">
+            <mat-error *ngIf="labelDataKeyFormGroup.get('name').hasError('required')">
+              {{ 'widgets.chart.key-name-required' | translate }}
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field fxFlex class="mat-block">
+            <mat-label translate>widgets.chart.key-type</mat-label>
+            <mat-select formControlName="type">
+              <mat-option [value]="'attribute'">
+                {{ 'widgets.chart.key-type-attribute' | translate }}
+              </mat-option>
+              <mat-option [value]="'timeseries'">
+                {{ 'widgets.chart.key-type-timeseries' | translate }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </section>
+      </section>
+    </div>
+  </ng-template>
+</mat-expansion-panel>

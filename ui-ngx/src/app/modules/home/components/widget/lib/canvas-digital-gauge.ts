@@ -47,7 +47,6 @@ export interface CanvasDigitalGaugeOptions extends GenericOptions {
   gaugeColor?: string;
   levelColors?: levelColors;
   symbol?: string;
-  label?: string;
   hideValue?: boolean;
   hideMinMax?: boolean;
   fontTitle?: string;
@@ -86,6 +85,9 @@ export interface CanvasDigitalGaugeOptions extends GenericOptions {
   colorTicks?: string;
   tickWidth?: number;
 
+  labelTimestamp?: string
+  unitTitle?: string;
+  showUnitTitle?: boolean;
   showTimestamp?: boolean;
 }
 
@@ -100,7 +102,6 @@ const defaultDigitalGaugeOptions: CanvasDigitalGaugeOptions = { ...GenericOption
     levelColors: ['blue'],
 
     symbol: '',
-    label: '',
     hideValue: false,
     hideMinMax: false,
 
@@ -145,6 +146,7 @@ interface DigitalGaugeCanvasRenderingContext2D extends CanvasRenderingContext2D 
 }
 
 interface BarDimensions {
+  timeseriesLabelY?: number;
   baseX: number;
   baseY: number;
   width: number;
@@ -362,7 +364,7 @@ export class CanvasDigitalGauge extends BaseGauge {
       const options = this.options as CanvasDigitalGaugeOptions;
       const elementClone = canvas.elementClone as HTMLCanvasElementClone;
       if (!elementClone.initialized) {
-        const context = canvas.contextClone;
+        const context: DigitalGaugeCanvasRenderingContext2D = canvas.contextClone;
 
         // clear the cache
         context.clearRect(x, y, w, h);
@@ -378,8 +380,8 @@ export class CanvasDigitalGauge extends BaseGauge {
 
         drawDigitalTitle(context, options);
 
-        if (!options.showTimestamp) {
-          drawDigitalLabel(context, options);
+        if (options.showUnitTitle) {
+          drawDigitalLabel(context, options, options.unitTitle, 'labelY');
         }
 
         drawDigitalMinMax(context, options);
@@ -406,7 +408,7 @@ export class CanvasDigitalGauge extends BaseGauge {
         drawDigitalValue(context, options, this.elementValueClone.renderedValue);
 
         if (options.showTimestamp) {
-          drawDigitalLabel(context, options);
+          drawDigitalLabel(context, options, options.labelTimestamp, 'timeseriesLabelY');
           this.elementValueClone.renderedTimestamp = this.timestamp;
         }
 
@@ -564,11 +566,12 @@ function barDimensions(context: DigitalGaugeCanvasRenderingContext2D,
 
   if (options.gaugeType === 'donut') {
     bd.fontValueBaseline = 'middle';
-    if (options.label && options.label.length > 0) {
+    if (options.showUnitTitle || options.showTimestamp) {
       const valueHeight = determineFontHeight(options, 'Value', bd.fontSizeFactor).height;
       const labelHeight = determineFontHeight(options, 'Label', bd.fontSizeFactor).height;
       const total = valueHeight + labelHeight;
       bd.labelY = bd.Cy + total / 2;
+      bd.timeseriesLabelY = determineTimeseriesLabelY(options, bd.labelY, bd.fontSizeFactor)
       bd.valueY = bd.Cy - total / 2 + valueHeight / 2;
     } else {
       bd.valueY = bd.Cy;
@@ -577,6 +580,7 @@ function barDimensions(context: DigitalGaugeCanvasRenderingContext2D,
     bd.titleY = bd.Cy - bd.Ro - 12 * bd.fontSizeFactor;
     bd.valueY = bd.Cy;
     bd.labelY = bd.Cy + (8 + options.fontLabelSize) * bd.fontSizeFactor;
+    bd.timeseriesLabelY = determineTimeseriesLabelY(options, bd.labelY, bd.fontSizeFactor)
     bd.minY = bd.maxY = bd.labelY;
     if (options.roundedLineCap) {
       bd.minY += bd.strokeWidth / 2;
@@ -595,8 +599,9 @@ function barDimensions(context: DigitalGaugeCanvasRenderingContext2D,
     bd.barTop = bd.valueY + 8 * bd.fontSizeFactor;
     bd.barBottom = bd.barTop + bd.strokeWidth;
 
-    if (options.hideMinMax && options.label === '') {
+    if (options.hideMinMax && !options.showUnitTitle && !options.showTimestamp) {
       bd.labelY = bd.barBottom;
+      bd.timeseriesLabelY = determineTimeseriesLabelY(options, bd.labelY, bd.fontSizeFactor)
       bd.barLeft = bd.origBaseX + options.fontMinMaxSize / 3 * bd.fontSizeFactor;
       bd.barRight = bd.origBaseX + w + /*bd.width*/ -options.fontMinMaxSize / 3 * bd.fontSizeFactor;
     } else {
@@ -609,6 +614,7 @@ function barDimensions(context: DigitalGaugeCanvasRenderingContext2D,
       bd.barLeft = bd.minX;
       bd.barRight = bd.maxX;
       bd.labelY = bd.barBottom + (8 + options.fontLabelSize) * bd.fontSizeFactor;
+      bd.timeseriesLabelY = determineTimeseriesLabelY(options, bd.labelY, bd.fontSizeFactor)
       bd.minY = bd.maxY = bd.labelY;
     }
   } else if (options.gaugeType === 'verticalBar') {
@@ -618,14 +624,14 @@ function barDimensions(context: DigitalGaugeCanvasRenderingContext2D,
     bd.valueY = bd.titleBottom + (options.hideValue ? 0 : options.fontValueSize * bd.fontSizeFactor);
     bd.barTop = bd.valueY + 8 * bd.fontSizeFactor;
 
-    bd.labelY = bd.baseY + bd.height - 16;
-    if (options.label === '') {
-      bd.barBottom = bd.labelY;
+    bd.labelY = bd.baseY + bd.height;
+    bd.timeseriesLabelY = determineTimeseriesLabelY(options, bd.labelY, bd.fontSizeFactor)
+    if (options.showUnitTitle || options.showTimestamp) {
+      bd.barBottom = bd.labelY - options.fontLabelSize * bd.fontSizeFactor;
     } else {
-      bd.barBottom = bd.labelY - (8 + options.fontLabelSize) * bd.fontSizeFactor;
+      bd.barBottom = bd.labelY
     }
-    bd.minX = bd.maxX =
-      bd.baseX + bd.width / 2 + bd.strokeWidth / 2 + options.fontMinMaxSize / 3 * bd.fontSizeFactor;
+    bd.minX = bd.maxX = bd.baseX + bd.width / 2 + bd.strokeWidth / 2 + options.fontMinMaxSize / 3 * bd.fontSizeFactor;
     bd.minY = bd.barBottom;
     bd.maxY = bd.barTop;
     bd.fontMinMaxBaseline = 'middle';
@@ -655,6 +661,14 @@ function barDimensions(context: DigitalGaugeCanvasRenderingContext2D,
   }
 
   return bd;
+}
+
+function determineTimeseriesLabelY(options: CanvasDigitalGaugeOptions, labelY: number, fontSizeFactor: number){
+  if (options.showUnitTitle) {
+    return  labelY + options.fontLabelSize * fontSizeFactor * 1.2;
+  } else {
+    return labelY;
+  }
 }
 
 function determineFontHeight(options: CanvasDigitalGaugeOptions, target: string, baseSize: number): FontHeightInfo {
@@ -751,22 +765,22 @@ function drawDigitalTitle(context: DigitalGaugeCanvasRenderingContext2D, options
   context.restore();
 }
 
-function drawDigitalLabel(context: DigitalGaugeCanvasRenderingContext2D, options: CanvasDigitalGaugeOptions) {
-  if (!options.label || options.label === '') {
+function drawDigitalLabel(context: DigitalGaugeCanvasRenderingContext2D, options: CanvasDigitalGaugeOptions, text: string, nameTextY: string) {
+  if (!text || text === '') {
     return;
   }
 
-  const {labelY, baseX, width, fontSizeFactor} =
+  const {baseX, width, fontSizeFactor} =
     context.barDimensions;
 
   const textX = Math.round(baseX + width / 2);
-  const textY = labelY;
+  const textY = context.barDimensions[nameTextY];
 
   context.save();
   context.textAlign = 'center';
   context.font = Drawings.font(options, 'Label', fontSizeFactor);
   context.lineWidth = 0;
-  drawText(context, options, 'Label', options.label, textX, textY);
+  drawText(context, options, 'Label', text, textX, textY);
   context.restore();
 }
 

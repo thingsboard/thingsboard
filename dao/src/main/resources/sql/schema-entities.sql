@@ -213,7 +213,21 @@ CREATE TABLE IF NOT EXISTS ota_package (
     additional_info varchar,
     search_text varchar(255),
     CONSTRAINT ota_package_tenant_title_version_unq_key UNIQUE (tenant_id, title, version)
---     CONSTRAINT fk_device_profile_firmware FOREIGN KEY (device_profile_id) REFERENCES device_profile(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS queue(
+    id uuid NOT NULL CONSTRAINT queue_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid,
+    name varchar(255),
+    topic varchar(255),
+    poll_interval int,
+    partitions int,
+    consumer_per_partition boolean,
+    pack_processing_timeout bigint,
+    submit_strategy varchar(255),
+    processing_strategy varchar(255),
+    additional_info varchar
 );
 
 CREATE TABLE IF NOT EXISTS device_profile (
@@ -233,15 +247,28 @@ CREATE TABLE IF NOT EXISTS device_profile (
     software_id uuid,
     default_rule_chain_id uuid,
     default_dashboard_id uuid,
-    default_queue_name varchar(255),
+    default_queue_id uuid,
     provision_device_key varchar,
     CONSTRAINT device_profile_name_unq_key UNIQUE (tenant_id, name),
     CONSTRAINT device_provision_key_unq_key UNIQUE (provision_device_key),
     CONSTRAINT fk_default_rule_chain_device_profile FOREIGN KEY (default_rule_chain_id) REFERENCES rule_chain(id),
     CONSTRAINT fk_default_dashboard_device_profile FOREIGN KEY (default_dashboard_id) REFERENCES dashboard(id),
+    CONSTRAINT fk_default_queue_device_profile FOREIGN KEY (default_queue_id) REFERENCES queue(id),
     CONSTRAINT fk_firmware_device_profile FOREIGN KEY (firmware_id) REFERENCES ota_package(id),
     CONSTRAINT fk_software_device_profile FOREIGN KEY (software_id) REFERENCES ota_package(id)
 );
+
+DO
+$$
+    BEGIN
+        IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname = 'fk_device_profile_ota_package') THEN
+            ALTER TABLE ota_package
+                ADD CONSTRAINT fk_device_profile_ota_package
+                    FOREIGN KEY (device_profile_id) REFERENCES device_profile (id)
+                        ON DELETE CASCADE;
+        END IF;
+    END;
+$$;
 
 -- We will use one-to-many relation in the first release and extend this feature in case of user requests
 -- CREATE TABLE IF NOT EXISTS device_profile_firmware (
@@ -601,8 +628,6 @@ CREATE TABLE IF NOT EXISTS edge (
     label varchar(255),
     routing_key varchar(255),
     secret varchar(255),
-    edge_license_key varchar(30),
-    cloud_endpoint varchar(255),
     search_text varchar(255),
     tenant_id uuid,
     CONSTRAINT edge_name_unq_key UNIQUE (tenant_id, name),
@@ -634,24 +659,31 @@ CREATE TABLE IF NOT EXISTS rpc (
     status varchar(255) NOT NULL
 );
 
-CREATE OR REPLACE PROCEDURE cleanup_events_by_ttl(IN ttl bigint, IN debug_ttl bigint, INOUT deleted bigint)
+CREATE OR REPLACE PROCEDURE cleanup_events_by_ttl(
+    IN regular_events_start_ts bigint,
+    IN regular_events_end_ts bigint,
+    IN debug_events_start_ts bigint,
+    IN debug_events_end_ts bigint,
+    INOUT deleted bigint)
     LANGUAGE plpgsql AS
 $$
 DECLARE
-    ttl_ts bigint;
-    debug_ttl_ts bigint;
     ttl_deleted_count bigint DEFAULT 0;
     debug_ttl_deleted_count bigint DEFAULT 0;
 BEGIN
-    IF ttl > 0 THEN
-        ttl_ts := (EXTRACT(EPOCH FROM current_timestamp) * 1000 - ttl::bigint * 1000)::bigint;
+    IF regular_events_start_ts > 0 AND regular_events_end_ts > 0 THEN
         EXECUTE format(
-                'WITH deleted AS (DELETE FROM event WHERE ts < %L::bigint AND (event_type != %L::varchar AND event_type != %L::varchar) RETURNING *) SELECT count(*) FROM deleted', ttl_ts, 'DEBUG_RULE_NODE', 'DEBUG_RULE_CHAIN') into ttl_deleted_count;
+                'WITH deleted AS (DELETE FROM event WHERE id in (SELECT id from event WHERE ts > %L::bigint AND ts < %L::bigint AND ' ||
+                '(event_type != %L::varchar AND event_type != %L::varchar)) RETURNING *) ' ||
+                'SELECT count(*) FROM deleted', regular_events_start_ts, regular_events_end_ts,
+                'DEBUG_RULE_NODE', 'DEBUG_RULE_CHAIN') into ttl_deleted_count;
     END IF;
-    IF debug_ttl > 0 THEN
-        debug_ttl_ts := (EXTRACT(EPOCH FROM current_timestamp) * 1000 - debug_ttl::bigint * 1000)::bigint;
+    IF debug_events_start_ts > 0 AND debug_events_end_ts > 0 THEN
         EXECUTE format(
-                'WITH deleted AS (DELETE FROM event WHERE ts < %L::bigint AND (event_type = %L::varchar OR event_type = %L::varchar) RETURNING *) SELECT count(*) FROM deleted', debug_ttl_ts, 'DEBUG_RULE_NODE', 'DEBUG_RULE_CHAIN') into debug_ttl_deleted_count;
+                'WITH deleted AS (DELETE FROM event WHERE id in (SELECT id from event WHERE ts > %L::bigint AND ts < %L::bigint AND ' ||
+                '(event_type = %L::varchar OR event_type = %L::varchar)) RETURNING *) ' ||
+                'SELECT count(*) FROM deleted', debug_events_start_ts, debug_events_end_ts,
+                'DEBUG_RULE_NODE', 'DEBUG_RULE_CHAIN') into debug_ttl_deleted_count;
     END IF;
     RAISE NOTICE 'Events removed by ttl: %', ttl_deleted_count;
     RAISE NOTICE 'Debug Events removed by ttl: %', debug_ttl_deleted_count;
@@ -684,3 +716,11 @@ BEGIN
     deleted := ttl_deleted_count;
 END
 $$;
+
+
+CREATE TABLE IF NOT EXISTS user_auth_settings (
+    id uuid NOT NULL CONSTRAINT user_auth_settings_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    user_id uuid UNIQUE NOT NULL CONSTRAINT fk_user_auth_settings_user_id REFERENCES tb_user(id),
+    two_fa_settings varchar
+);

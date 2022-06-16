@@ -287,11 +287,22 @@ public class LwM2mClient {
     }
 
     public ObjectModel getObjectModel(String pathIdVer, LwM2mModelProvider modelProvider) {
-        LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer));
-        String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
-        String verRez = getVerFromPathIdVerOrId(pathIdVer);
-        return verRez != null && verRez.equals(verSupportedObject) ? modelProvider.getObjectModel(registration)
-                .getObjectModel(pathIds.getObjectId()) : null;
+        try {
+            LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer));
+            String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
+            String verRez = getVerFromPathIdVerOrId(pathIdVer);
+            return verRez != null && verRez.equals(verSupportedObject) ? modelProvider.getObjectModel(registration)
+                    .getObjectModel(pathIds.getObjectId()) : null;
+        } catch (Exception e) {
+            if (registration == null) {
+                log.error("[{}] Failed Registration is null, GetObjectModelRegistration. ", this.endpoint, e);
+            } else if (registration.getSupportedObject() == null) {
+                log.error("[{}] Failed SupportedObject in Registration, GetObjectModelRegistration.", this.endpoint, e);
+            } else {
+                log.error("[{}] Failed ModelProvider.getObjectModel [{}] in Registration. ", this.endpoint, registration.getSupportedObject(), e);
+            }
+            return null;
+        }
     }
 
 

@@ -42,7 +42,6 @@ public class EventsCleanUpServiceTest {
     public void givenInterval_whenRandomDelay_ThenDelayInInterval() {
         log.info("randomDelay {}", randomDelayMs);
         log.info("executionIntervalMs {}", executionIntervalMs);
-        assertThat(executionIntervalMs, is(2220000L));
         assertThat(randomDelayMs, greaterThanOrEqualTo(0L));
         assertThat(randomDelayMs, lessThanOrEqualTo(executionIntervalMs));
     }

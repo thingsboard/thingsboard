@@ -18,7 +18,7 @@ import { ContactBased } from '@shared/models/contact-based.model';
 import { TenantId } from './id/tenant-id';
 import { TenantProfileId } from '@shared/models/id/tenant-profile-id';
 import { BaseData } from '@shared/models/base-data';
-import {Validators} from "@angular/forms";
+import { QueueInfo } from '@shared/models/queue.models';
 
 export enum TenantProfileType {
   DEFAULT = 'DEFAULT'
@@ -98,6 +98,7 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
 
 export interface TenantProfileData {
   configuration: TenantProfileConfiguration;
+  queueConfiguration?: Array<QueueInfo>;
 }
 
 export interface TenantProfile extends BaseData<TenantProfileId> {

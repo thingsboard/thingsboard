@@ -15,11 +15,14 @@
     limitations under the License.
 
 -->
-<div class="tb-js-func" style="background: #fff;" [ngClass]="{'tb-disabled': disabled, 'fill-height': fillHeight}"
+<div class="tb-js-func" style="background: #fff;" [ngClass]="{'tb-disabled': disabled, 'fill-height': fillHeight, 'tb-js-func-title': functionTitle}"
      tb-fullscreen
      [fullscreen]="fullscreen" fxLayout="column">
   <div fxLayout="row" fxLayoutAlign="start center" style="height: 40px;" class="tb-js-func-toolbar">
-    <label class="tb-title no-padding">{{'function ' + (functionName ? functionName : '') + '(' + functionArgsString + ') {'}}</label>
+    <label *ngIf="functionTitle" class="tb-title no-padding"
+           [ngClass]="{'tb-error': !disabled && (hasErrors || !functionValid || required && !modelValue), 'tb-required': !disabled && required}">{{functionTitle + ': f(' + functionArgsString + ')' }}</label>
+    <label *ngIf="!functionTitle" class="tb-title no-padding"
+           [ngClass]="{'tb-error': !disabled && (hasErrors || !functionValid || required && !modelValue), 'tb-required': !disabled && required}">{{'function ' + (functionName ? functionName : '') + '(' + functionArgsString + ') {'}}</label>
     <span fxFlex></span>
     <button type='button' *ngIf="!disabled" mat-button class="tidy" (click)="beautifyJs()">
       {{'js-func.tidy' | translate }}
@@ -37,9 +40,9 @@
     </fieldset>
   </div>
   <div id="tb-javascript-panel" class="tb-js-func-panel" fxLayout="column" tb-toast toastTarget="{{toastTargetId}}">
-    <div #javascriptEditor id="tb-javascript-input" [ngClass]="{'fill-height': fillHeight}"></div>
+    <div #javascriptEditor id="tb-javascript-input" [ngStyle]="fillHeight ? {} : {minHeight: minHeight}" [ngClass]="{'fill-height': fillHeight}"></div>
   </div>
-  <div fxLayout="row" fxLayoutAlign="start center" style="height: 40px;">
-    <label class="tb-title no-padding">}</label>
+  <div *ngIf="!functionTitle" fxLayout="row" fxLayoutAlign="start center" style="height: 40px;">
+    <label class="tb-title no-padding" [ngClass]="{'tb-error': hasErrors || !functionValid || required && !modelValue}">}</label>
   </div>
 </div>

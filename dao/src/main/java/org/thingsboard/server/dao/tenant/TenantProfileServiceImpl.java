@@ -16,13 +16,12 @@
 package org.thingsboard.server.dao.tenant;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -31,21 +30,20 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
-import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
 
-import static org.thingsboard.server.common.data.CacheConstants.TENANT_PROFILE_CACHE;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service
 @Slf4j
-public class TenantProfileServiceImpl extends AbstractEntityService implements TenantProfileService {
+public class TenantProfileServiceImpl extends AbstractCachedEntityService<TenantProfileCacheKey, TenantProfile, TenantProfileEvictEvent> implements TenantProfileService {
 
     private static final String INCORRECT_TENANT_PROFILE_ID = "Incorrect tenantProfileId ";
 
@@ -53,22 +51,34 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
     private TenantProfileDao tenantProfileDao;
 
     @Autowired
-    private CacheManager cacheManager;
+    private DataValidator<TenantProfile> tenantProfileValidator;
 
-    @Cacheable(cacheNames = TENANT_PROFILE_CACHE, key = "{#tenantProfileId.id}")
+    @TransactionalEventListener(classes = TenantProfileEvictEvent.class)
+    @Override
+    public void handleEvictEvent(TenantProfileEvictEvent event) {
+        List<TenantProfileCacheKey> keys = new ArrayList<>(2);
+        if (event.getTenantProfileId() != null) {
+            keys.add(TenantProfileCacheKey.fromId(event.getTenantProfileId()));
+        }
+        if (event.isDefaultProfile()) {
+            keys.add(TenantProfileCacheKey.defaultProfile());
+        }
+        cache.evict(keys);
+    }
+
     @Override
     public TenantProfile findTenantProfileById(TenantId tenantId, TenantProfileId tenantProfileId) {
         log.trace("Executing findTenantProfileById [{}]", tenantProfileId);
         Validator.validateId(tenantProfileId, INCORRECT_TENANT_PROFILE_ID + tenantProfileId);
-        return tenantProfileDao.findById(tenantId, tenantProfileId.getId());
+        return cache.getAndPutInTransaction(TenantProfileCacheKey.fromId(tenantProfileId),
+                () -> tenantProfileDao.findById(tenantId, tenantProfileId.getId()), true);
     }
 
-    @Cacheable(cacheNames = TENANT_PROFILE_CACHE, key = "{'info', #tenantProfileId.id}")
     @Override
     public EntityInfo findTenantProfileInfoById(TenantId tenantId, TenantProfileId tenantProfileId) {
         log.trace("Executing findTenantProfileInfoById [{}]", tenantProfileId);
-        Validator.validateId(tenantProfileId, INCORRECT_TENANT_PROFILE_ID + tenantProfileId);
-        return tenantProfileDao.findTenantProfileInfoById(tenantId, tenantProfileId.getId());
+        TenantProfile profile = findTenantProfileById(tenantId, tenantProfileId);
+        return profile == null ? null : new EntityInfo(profile.getId(), profile.getName());
     }
 
     @Override
@@ -78,20 +88,15 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
         TenantProfile savedTenantProfile;
         try {
             savedTenantProfile = tenantProfileDao.save(tenantId, tenantProfile);
+            publishEvictEvent(new TenantProfileEvictEvent(savedTenantProfile.getId(), savedTenantProfile.isDefault()));
         } catch (Exception t) {
+            handleEvictEvent(new TenantProfileEvictEvent(null, tenantProfile.isDefault()));
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("tenant_profile_name_unq_key")) {
                 throw new DataValidationException("Tenant profile with such name already exists!");
             } else {
                 throw t;
             }
-        }
-        Cache cache = cacheManager.getCache(TENANT_PROFILE_CACHE);
-        cache.evict(Collections.singletonList(savedTenantProfile.getId().getId()));
-        cache.evict(Arrays.asList("info", savedTenantProfile.getId().getId()));
-        if (savedTenantProfile.isDefault()) {
-            cache.evict(Collections.singletonList("default"));
-            cache.evict(Arrays.asList("default", "info"));
         }
         return savedTenantProfile;
     }
@@ -104,10 +109,10 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
         if (tenantProfile != null && tenantProfile.isDefault()) {
             throw new DataValidationException("Deletion of Default Tenant Profile is prohibited!");
         }
-        this.removeTenantProfile(tenantId, tenantProfileId);
+        this.removeTenantProfile(tenantId, tenantProfileId, false);
     }
 
-    private void removeTenantProfile(TenantId tenantId, TenantProfileId tenantProfileId) {
+    private void removeTenantProfile(TenantId tenantId, TenantProfileId tenantProfileId, boolean isDefault) {
         try {
             tenantProfileDao.removeById(tenantId, tenantProfileId.getId());
         } catch (Exception t) {
@@ -119,9 +124,7 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
             }
         }
         deleteEntityRelations(tenantId, tenantProfileId);
-        Cache cache = cacheManager.getCache(TENANT_PROFILE_CACHE);
-        cache.evict(Collections.singletonList(tenantProfileId.getId()));
-        cache.evict(Arrays.asList("info", tenantProfileId.getId()));
+        publishEvictEvent(new TenantProfileEvictEvent(tenantProfileId, isDefault));
     }
 
     @Override
@@ -157,18 +160,19 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
         return defaultTenantProfile;
     }
 
-    @Cacheable(cacheNames = TENANT_PROFILE_CACHE, key = "{'default'}")
     @Override
     public TenantProfile findDefaultTenantProfile(TenantId tenantId) {
         log.trace("Executing findDefaultTenantProfile");
-        return tenantProfileDao.findDefaultTenantProfile(tenantId);
+        return cache.getAndPutInTransaction(TenantProfileCacheKey.defaultProfile(),
+                () -> tenantProfileDao.findDefaultTenantProfile(tenantId), true);
+
     }
 
-    @Cacheable(cacheNames = TENANT_PROFILE_CACHE, key = "{'default', 'info'}")
     @Override
     public EntityInfo findDefaultTenantProfileInfo(TenantId tenantId) {
         log.trace("Executing findDefaultTenantProfileInfo");
-        return tenantProfileDao.findDefaultTenantProfileInfo(tenantId);
+        var tenantProfile = findDefaultTenantProfile(tenantId);
+        return tenantProfile == null ? null : new EntityInfo(tenantProfile.getId(), tenantProfile.getName());
     }
 
     @Override
@@ -177,26 +181,20 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
         validateId(tenantId, INCORRECT_TENANT_PROFILE_ID + tenantProfileId);
         TenantProfile tenantProfile = tenantProfileDao.findById(tenantId, tenantProfileId.getId());
         if (!tenantProfile.isDefault()) {
-            Cache cache = cacheManager.getCache(TENANT_PROFILE_CACHE);
             tenantProfile.setDefault(true);
             TenantProfile previousDefaultTenantProfile = findDefaultTenantProfile(tenantId);
             boolean changed = false;
             if (previousDefaultTenantProfile == null) {
                 tenantProfileDao.save(tenantId, tenantProfile);
+                publishEvictEvent(new TenantProfileEvictEvent(tenantProfileId, true));
                 changed = true;
             } else if (!previousDefaultTenantProfile.getId().equals(tenantProfile.getId())) {
                 previousDefaultTenantProfile.setDefault(false);
                 tenantProfileDao.save(tenantId, previousDefaultTenantProfile);
                 tenantProfileDao.save(tenantId, tenantProfile);
-                cache.evict(Collections.singletonList(previousDefaultTenantProfile.getId().getId()));
-                cache.evict(Arrays.asList("info", previousDefaultTenantProfile.getId().getId()));
+                publishEvictEvent(new TenantProfileEvictEvent(previousDefaultTenantProfile.getId(), false));
+                publishEvictEvent(new TenantProfileEvictEvent(tenantProfileId, true));
                 changed = true;
-            }
-            if (changed) {
-                cache.evict(Collections.singletonList(tenantProfile.getId().getId()));
-                cache.evict(Arrays.asList("info", tenantProfile.getId().getId()));
-                cache.evict(Collections.singletonList("default"));
-                cache.evict(Arrays.asList("default", "info"));
             }
             return changed;
         }
@@ -209,42 +207,8 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
         tenantProfilesRemover.removeEntities(tenantId, null);
     }
 
-    private DataValidator<TenantProfile> tenantProfileValidator =
-            new DataValidator<TenantProfile>() {
-                @Override
-                protected void validateDataImpl(TenantId tenantId, TenantProfile tenantProfile) {
-                    if (StringUtils.isEmpty(tenantProfile.getName())) {
-                        throw new DataValidationException("Tenant profile name should be specified!");
-                    }
-                    if (tenantProfile.getProfileData() == null) {
-                        throw new DataValidationException("Tenant profile data should be specified!");
-                    }
-                    if (tenantProfile.getProfileData().getConfiguration() == null) {
-                        throw new DataValidationException("Tenant profile data configuration should be specified!");
-                    }
-                    if (tenantProfile.isDefault()) {
-                        TenantProfile defaultTenantProfile = findDefaultTenantProfile(tenantId);
-                        if (defaultTenantProfile != null && !defaultTenantProfile.getId().equals(tenantProfile.getId())) {
-                            throw new DataValidationException("Another default tenant profile is present!");
-                        }
-                    }
-                }
-
-                @Override
-                protected void validateUpdate(TenantId tenantId, TenantProfile tenantProfile) {
-                    TenantProfile old = tenantProfileDao.findById(TenantId.SYS_TENANT_ID, tenantProfile.getId().getId());
-                    if (old == null) {
-                        throw new DataValidationException("Can't update non existing tenant profile!");
-                    } else if (old.isIsolatedTbRuleEngine() != tenantProfile.isIsolatedTbRuleEngine()) {
-                        throw new DataValidationException("Can't update isolatedTbRuleEngine property!");
-                    } else if (old.isIsolatedTbCore() != tenantProfile.isIsolatedTbCore()) {
-                        throw new DataValidationException("Can't update isolatedTbCore property!");
-                    }
-                }
-            };
-
-    private PaginatedRemover<String, TenantProfile> tenantProfilesRemover =
-            new PaginatedRemover<String, TenantProfile>() {
+    private final PaginatedRemover<String, TenantProfile> tenantProfilesRemover =
+            new PaginatedRemover<>() {
 
                 @Override
                 protected PageData<TenantProfile> findEntities(TenantId tenantId, String id, PageLink pageLink) {
@@ -253,7 +217,7 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
 
                 @Override
                 protected void removeEntity(TenantId tenantId, TenantProfile entity) {
-                    removeTenantProfile(tenantId, entity.getId());
+                    removeTenantProfile(tenantId, entity.getId(), entity.isDefault());
                 }
             };
 

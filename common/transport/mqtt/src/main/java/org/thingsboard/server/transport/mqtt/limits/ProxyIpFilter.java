@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.mqtt.limits;
 
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.haproxy.HAProxyMessage;
@@ -60,7 +61,15 @@ public class ProxyIpFilter extends ChannelInboundHandlerAdapter {
 
     private void closeChannel(ChannelHandlerContext ctx) {
         while (ctx.pipeline().last() != this) {
-            ctx.pipeline().removeLast();
+            ChannelHandler handler = ctx.pipeline().removeLast();
+            if (handler instanceof ChannelInboundHandlerAdapter) {
+                try {
+                    ((ChannelInboundHandlerAdapter) handler).channelUnregistered(ctx);
+                } catch (Exception e) {
+                    log.error("Failed to unregister channel: [{}]", ctx, e);
+                }
+            }
+
         }
         ctx.pipeline().remove(this);
         ctx.close();

@@ -40,6 +40,7 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbActorMsg;
@@ -63,6 +64,7 @@ import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.nosql.CassandraBufferedRateReadExecutor;
 import org.thingsboard.server.dao.nosql.CassandraBufferedRateWriteExecutor;
 import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -330,6 +332,11 @@ public class ActorSystemContext {
     @Getter
     private TbRpcService tbRpcService;
 
+    @Lazy
+    @Autowired(required = false)
+    @Getter
+    private QueueService queueService;
+
     @Value("${actors.session.max_concurrent_sessions_per_device:1}")
     @Getter
     private long maxConcurrentSessionsPerDevice;
@@ -467,7 +474,7 @@ public class ActorSystemContext {
     }
 
     private void persistEvent(Event event) {
-        eventService.save(event);
+        eventService.saveAsync(event);
     }
 
     private String toString(Throwable e) {
@@ -495,8 +502,13 @@ public class ActorSystemContext {
         return partitionService.resolve(serviceType, tenantId, entityId);
     }
 
+    public TopicPartitionInfo resolve(ServiceType serviceType, QueueId queueId, TenantId tenantId, EntityId entityId) {
+        return partitionService.resolve(serviceType, queueId, tenantId, entityId);
+    }
+
+    @Deprecated
     public TopicPartitionInfo resolve(ServiceType serviceType, String queueName, TenantId tenantId, EntityId entityId) {
-        return partitionService.resolve(serviceType, queueName, tenantId, entityId);
+        return partitionService.resolve(serviceType, tenantId, entityId, queueName);
     }
 
     public String getServiceId() {
@@ -552,10 +564,10 @@ public class ActorSystemContext {
                 }
 
                 event.setBody(node);
-                ListenableFuture<Event> future = eventService.saveAsync(event);
-                Futures.addCallback(future, new FutureCallback<Event>() {
+                ListenableFuture<Void> future = eventService.saveAsync(event);
+                Futures.addCallback(future, new FutureCallback<Void>() {
                     @Override
-                    public void onSuccess(@Nullable Event event) {
+                    public void onSuccess(@Nullable Void event) {
 
                     }
 
@@ -605,10 +617,10 @@ public class ActorSystemContext {
         }
 
         event.setBody(node);
-        ListenableFuture<Event> future = eventService.saveAsync(event);
-        Futures.addCallback(future, new FutureCallback<Event>() {
+        ListenableFuture<Void> future = eventService.saveAsync(event);
+        Futures.addCallback(future, new FutureCallback<Void>() {
             @Override
-            public void onSuccess(@Nullable Event event) {
+            public void onSuccess(@Nullable Void event) {
 
             }
 

@@ -71,7 +71,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
 
     private LeshanServer server;
 
-    @AfterStartUp(order = Integer.MAX_VALUE - 1)
+    @AfterStartUp(order = AfterStartUp.AFTER_TRANSPORT_SERVICE)
     public void init() {
         this.server = getLhServer();
         /*
@@ -94,14 +94,19 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
         this.server.getRegistrationService().addListener(lhServerCertListener.registrationListener);
         this.server.getPresenceService().addListener(lhServerCertListener.presenceListener);
         this.server.getObservationService().addListener(lhServerCertListener.observationListener);
+        this.server.getSendService().addListener(lhServerCertListener.sendListener);
         log.info("Started LwM2M transport server.");
     }
 
     @PreDestroy
     public void shutdown() {
-        log.info("Stopping LwM2M transport server!");
-        server.destroy();
-        log.info("LwM2M transport server stopped!");
+        try {
+            log.info("Stopping LwM2M transport server!");
+            server.destroy();
+            log.info("LwM2M transport server stopped!");
+        } catch (Exception e) {
+            log.error("Failed to gracefully stop the LwM2M transport server!", e);
+        }
     }
 
     private LeshanServer getLhServer() {

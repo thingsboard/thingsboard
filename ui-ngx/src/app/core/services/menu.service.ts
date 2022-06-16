@@ -108,7 +108,7 @@ export class MenuService {
         name: 'admin.system-settings',
         type: 'toggle',
         path: '/settings',
-        height: '240px',
+        height: '320px',
         icon: 'settings',
         pages: [
           {
@@ -148,11 +148,26 @@ export class MenuService {
           },
           {
             id: guid(),
+            name: 'admin.2fa.2fa',
+            type: 'link',
+            path: '/settings/2fa',
+            icon: 'mdi:two-factor-authentication',
+            isMdiIcon: true
+          },
+          {
+            id: guid(),
             name: 'resource.resources-library',
             type: 'link',
             path: '/settings/resources-library',
             icon: 'folder'
-          }
+          },
+          {
+            id: guid(),
+            name: 'admin.queues',
+            type: 'link',
+            path: '/settings/queues',
+            icon: 'swap_calls'
+          },
         ]
       }
     );
@@ -217,10 +232,21 @@ export class MenuService {
             path: '/settings/oauth2'
           },
           {
+            name: 'admin.2fa.2fa',
+            icon: 'mdi:two-factor-authentication',
+            isMdiIcon: true,
+            path: '/settings/2fa'
+          },
+          {
             name: 'resource.resources-library',
             icon: 'folder',
             path: '/settings/resources-library'
-          }
+          },
+          {
+            name: 'admin.queues',
+            icon: 'swap_calls',
+            path: '/settings/queues'
+          },
         ]
       }
     );

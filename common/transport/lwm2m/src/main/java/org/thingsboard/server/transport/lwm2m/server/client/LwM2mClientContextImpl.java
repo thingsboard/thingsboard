@@ -84,7 +84,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     private final Map<String, LwM2mClient> lwM2mClientsByRegistrationId = new ConcurrentHashMap<>();
     private final Map<UUID, Lwm2mDeviceProfileTransportConfiguration> profiles = new ConcurrentHashMap<>();
 
-    @AfterStartUp(order = Integer.MAX_VALUE - 1)
+    @AfterStartUp(order = AfterStartUp.BEFORE_TRANSPORT_SERVICE)
     public void init() {
         String nodeId = context.getNodeId();
         Set<LwM2mClient> fetchedClients = clientStore.getAll();
@@ -369,6 +369,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     }
 
     private Lwm2mDeviceProfileTransportConfiguration doGetAndCache(UUID profileId) {
+
         Lwm2mDeviceProfileTransportConfiguration result = profiles.get(profileId);
         if (result == null) {
             log.debug("Fetching profile [{}]", profileId);
@@ -376,7 +377,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
             if (deviceProfile != null) {
                 result = profileUpdate(deviceProfile);
             } else {
-                log.info("Device profile was not found! Most probably device profile [{}] has been removed from the database.", profileId);
+                log.warn("Device profile was not found! Most probably device profile [{}] has been removed from the database.", profileId);
             }
         }
         return result;

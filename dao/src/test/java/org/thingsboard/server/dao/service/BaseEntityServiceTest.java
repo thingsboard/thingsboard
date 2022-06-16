@@ -21,8 +21,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.hamcrest.Matchers;
 import org.apache.commons.lang3.StringUtils;
+import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -91,8 +91,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.Assert.assertEquals;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
 
 @Slf4j
 public abstract class BaseEntityServiceTest extends AbstractServiceTest {
@@ -241,7 +241,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         List<Edge> edges = new ArrayList<>();
         for (int i = 0; i < 97; i++) {
             Edge edge = createEdge(i, "default");
-            edges.add(edgeService.saveEdge(edge, true));
+            edges.add(edgeService.saveEdge(edge));
         }
 
         EdgeTypeFilter filter = new EdgeTypeFilter();
@@ -279,7 +279,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
     public void testCountHierarchicalEntitiesByEdgeSearchQuery() throws InterruptedException {
         for (int i = 0; i < 5; i++) {
             Edge edge = createEdge(i, "type" + i);
-            edge = edgeService.saveEdge(edge, true);
+            edge = edgeService.saveEdge(edge);
             //TO make sure devices have different created time
             Thread.sleep(1);
 
@@ -314,8 +314,6 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         edge.setLabel("EdgeLabel" + i);
         edge.setSecret(RandomStringUtils.randomAlphanumeric(20));
         edge.setRoutingKey(RandomStringUtils.randomAlphanumeric(20));
-        edge.setEdgeLicenseKey(RandomStringUtils.randomAlphanumeric(20));
-        edge.setCloudEndpoint("http://localhost:8080");
         return edge;
     }
 
@@ -341,12 +339,12 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         List<Long> highTemperatures = new ArrayList<>();
         createTestHierarchy(tenantId, assets, devices, new ArrayList<>(), new ArrayList<>(), temperatures, highTemperatures);
 
-        List<ListenableFuture<List<Void>>> attributeFutures = new ArrayList<>();
+        List<ListenableFuture<List<String>>> attributeFutures = new ArrayList<>();
         for (int i = 0; i < devices.size(); i++) {
             Device device = devices.get(i);
             attributeFutures.add(saveLongAttribute(device.getId(), "temperature", temperatures.get(i), DataConstants.CLIENT_SCOPE));
         }
-        Futures.successfulAsList(attributeFutures).get();
+        Futures.allAsList(attributeFutures).get();
 
         RelationsQueryFilter filter = new RelationsQueryFilter();
         filter.setRootEntity(tenantId);
@@ -520,12 +518,12 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         List<Long> highTemperatures = new ArrayList<>();
         createTestHierarchy(tenantId, assets, devices, new ArrayList<>(), new ArrayList<>(), temperatures, highTemperatures);
 
-        List<ListenableFuture<List<Void>>> attributeFutures = new ArrayList<>();
+        List<ListenableFuture<List<String>>> attributeFutures = new ArrayList<>();
         for (int i = 0; i < devices.size(); i++) {
             Device device = devices.get(i);
             attributeFutures.add(saveLongAttribute(device.getId(), "temperature", temperatures.get(i), DataConstants.CLIENT_SCOPE));
         }
-        Futures.successfulAsList(attributeFutures).get();
+        Futures.allAsList(attributeFutures).get();
 
         DeviceSearchQueryFilter filter = new DeviceSearchQueryFilter();
         filter.setRootEntity(tenantId);
@@ -595,12 +593,12 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         List<Long> highConsumptions = new ArrayList<>();
         createTestHierarchy(tenantId, assets, devices, consumptions, highConsumptions, new ArrayList<>(), new ArrayList<>());
 
-        List<ListenableFuture<List<Void>>> attributeFutures = new ArrayList<>();
+        List<ListenableFuture<List<String>>> attributeFutures = new ArrayList<>();
         for (int i = 0; i < assets.size(); i++) {
             Asset asset = assets.get(i);
             attributeFutures.add(saveLongAttribute(asset.getId(), "consumption", consumptions.get(i), DataConstants.SERVER_SCOPE));
         }
-        Futures.successfulAsList(attributeFutures).get();
+        Futures.allAsList(attributeFutures).get();
 
         AssetSearchQueryFilter filter = new AssetSearchQueryFilter();
         filter.setRootEntity(tenantId);
@@ -1050,14 +1048,14 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
             }
         }
 
-        List<ListenableFuture<List<Void>>> attributeFutures = new ArrayList<>();
+        List<ListenableFuture<List<String>>> attributeFutures = new ArrayList<>();
         for (int i = 0; i < devices.size(); i++) {
             Device device = devices.get(i);
             for (String currentScope : DataConstants.allScopes()) {
                 attributeFutures.add(saveLongAttribute(device.getId(), "temperature", temperatures.get(i), currentScope));
             }
         }
-        Futures.successfulAsList(attributeFutures).get();
+        Futures.allAsList(attributeFutures).get();
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
         filter.setDeviceType("default");
@@ -1152,12 +1150,12 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
             }
         }
 
-        List<ListenableFuture<List<Void>>> attributeFutures = new ArrayList<>();
+        List<ListenableFuture<List<String>>> attributeFutures = new ArrayList<>();
         for (int i = 0; i < devices.size(); i++) {
             Device device = devices.get(i);
             attributeFutures.add(saveLongAttribute(device.getId(), "temperature", temperatures.get(i), DataConstants.CLIENT_SCOPE));
         }
-        Futures.successfulAsList(attributeFutures).get();
+        Futures.allAsList(attributeFutures).get();
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
         filter.setDeviceType("default");
@@ -1303,7 +1301,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
             Device device = devices.get(i);
             timeseriesFutures.add(saveLongTimeseries(device.getId(), "temperature", temperatures.get(i)));
         }
-        Futures.successfulAsList(timeseriesFutures).get();
+        Futures.allAsList(timeseriesFutures).get();
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
         filter.setDeviceType("default");
@@ -1430,12 +1428,12 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
             }
         }
 
-        List<ListenableFuture<List<Void>>> attributeFutures = new ArrayList<>();
+        List<ListenableFuture<List<String>>> attributeFutures = new ArrayList<>();
         for (int i = 0; i < devices.size(); i++) {
             Device device = devices.get(i);
             attributeFutures.add(saveStringAttribute(device.getId(), "attributeString", attributeStrings.get(i), DataConstants.CLIENT_SCOPE));
         }
-        Futures.successfulAsList(attributeFutures).get();
+        Futures.allAsList(attributeFutures).get();
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
         filter.setDeviceType("default");
@@ -1766,13 +1764,13 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         return filter;
     }
 
-    private ListenableFuture<List<Void>> saveLongAttribute(EntityId entityId, String key, long value, String scope) {
+    private ListenableFuture<List<String>> saveLongAttribute(EntityId entityId, String key, long value, String scope) {
         KvEntry attrValue = new LongDataEntry(key, value);
         AttributeKvEntry attr = new BaseAttributeKvEntry(attrValue, 42L);
         return attributesService.save(SYSTEM_TENANT_ID, entityId, scope, Collections.singletonList(attr));
     }
 
-    private ListenableFuture<List<Void>> saveStringAttribute(EntityId entityId, String key, String value, String scope) {
+    private ListenableFuture<List<String>> saveStringAttribute(EntityId entityId, String key, String value, String scope) {
         KvEntry attrValue = new StringDataEntry(key, value);
         AttributeKvEntry attr = new BaseAttributeKvEntry(attrValue, 42L);
         return attributesService.save(SYSTEM_TENANT_ID, entityId, scope, Collections.singletonList(attr));

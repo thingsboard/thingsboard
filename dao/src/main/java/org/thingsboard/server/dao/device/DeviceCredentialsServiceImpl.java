@@ -15,51 +15,58 @@
  */
 package org.thingsboard.server.dao.device;
 
-
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.core.util.SecurityUtil;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapClientCredential;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapClientCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredential;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapClientCredential;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKClientCredential;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKBootstrapClientCredential;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKClientCredential;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKClientCredential;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKBootstrapClientCredential;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.X509ClientCredential;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKClientCredential;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.X509BootstrapClientCredential;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.X509ClientCredential;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.msg.EncryptionUtil;
-import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
-import static org.thingsboard.server.common.data.CacheConstants.DEVICE_CREDENTIALS_CACHE;
+
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateString;
 
 @Service
 @Slf4j
-public class DeviceCredentialsServiceImpl extends AbstractEntityService implements DeviceCredentialsService {
+public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<String, DeviceCredentials, DeviceCredentialsEvictEvent> implements DeviceCredentialsService {
 
     @Autowired
     private DeviceCredentialsDao deviceCredentialsDao;
 
     @Autowired
-    private DeviceService deviceService;
+    private DataValidator<DeviceCredentials> credentialsValidator;
+
+    @TransactionalEventListener(classes = DeviceCredentialsEvictEvent.class)
+    @Override
+    public void handleEvictEvent(DeviceCredentialsEvictEvent event) {
+        cache.evict(event.getNewCedentialsId());
+        if (StringUtils.isNotEmpty(event.getOldCredentialsId()) && !event.getNewCedentialsId().equals(event.getOldCredentialsId())) {
+            cache.evict(event.getOldCredentialsId());
+        }
+    }
 
     @Override
     public DeviceCredentials findDeviceCredentialsByDeviceId(TenantId tenantId, DeviceId deviceId) {
@@ -69,15 +76,15 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
     }
 
     @Override
-    @Cacheable(cacheNames = DEVICE_CREDENTIALS_CACHE, key = "'deviceCredentials_' + #credentialsId", unless = "#result == null")
     public DeviceCredentials findDeviceCredentialsByCredentialsId(String credentialsId) {
         log.trace("Executing findDeviceCredentialsByCredentialsId [{}]", credentialsId);
         validateString(credentialsId, "Incorrect credentialsId " + credentialsId);
-        return deviceCredentialsDao.findByCredentialsId(TenantId.SYS_TENANT_ID, credentialsId);
+        return cache.getAndPutInTransaction(credentialsId,
+                () -> deviceCredentialsDao.findByCredentialsId(TenantId.SYS_TENANT_ID, credentialsId),
+                false);
     }
 
     @Override
-    @CacheEvict(cacheNames = DEVICE_CREDENTIALS_CACHE, keyGenerator = "previousDeviceCredentialsId", beforeInvocation = true)
     public DeviceCredentials updateDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials) {
         return saveOrUpdate(tenantId, deviceCredentials);
     }
@@ -94,9 +101,16 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
         formatCredentials(deviceCredentials);
         log.trace("Executing updateDeviceCredentials [{}]", deviceCredentials);
         credentialsValidator.validate(deviceCredentials, id -> tenantId);
+        DeviceCredentials oldDeviceCredentials = null;
+        if (deviceCredentials.getDeviceId() != null) {
+            oldDeviceCredentials = deviceCredentialsDao.findByDeviceId(tenantId, deviceCredentials.getDeviceId().getId());
+        }
         try {
-            return deviceCredentialsDao.saveAndFlush(tenantId, deviceCredentials);
+            var value = deviceCredentialsDao.saveAndFlush(tenantId, deviceCredentials);
+            publishEvictEvent(new DeviceCredentialsEvictEvent(value.getCredentialsId(), oldDeviceCredentials != null ? oldDeviceCredentials.getCredentialsId() : null));
+            return value;
         } catch (Exception t) {
+            handleEvictEvent(new DeviceCredentialsEvictEvent(deviceCredentials.getCredentialsId(), oldDeviceCredentials != null ? oldDeviceCredentials.getCredentialsId() : null));
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null
                     && (e.getConstraintName().equalsIgnoreCase("device_credentials_id_unq_key") || e.getConstraintName().equalsIgnoreCase("device_credentials_device_id_unq_key"))) {
@@ -184,8 +198,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                 deviceCredentials.setCredentialsValue(JacksonUtil.toString(lwM2MCredentials));
                 X509ClientCredential x509ClientConfig = (X509ClientCredential) clientCredentials;
                 if ((StringUtils.isNotBlank(x509ClientConfig.getCert()))) {
-                    String sha3Hash = EncryptionUtil.getSha3Hash(x509ClientConfig.getCert());
-                    credentialsId = sha3Hash;
+                    credentialsId = EncryptionUtil.getSha3Hash(x509ClientConfig.getCert());
                 } else {
                     credentialsId = x509ClientConfig.getEndpoint();
                 }
@@ -253,7 +266,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                     throw new DeviceCredentialsValidationException("LwM2M client PSK key must be random sequence in hex encoding!");
                 }
 
-                if (pskKey.length()% 32 != 0 || pskKey.length() > 128) {
+                if (pskKey.length() % 32 != 0 || pskKey.length() > 128) {
                     throw new DeviceCredentialsValidationException("LwM2M client PSK key length = " + pskKey.length() + ". Key must be HexDec format: 32, 64, 128 characters!");
                 }
 
@@ -369,52 +382,10 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
     }
 
     @Override
-    @CacheEvict(cacheNames = DEVICE_CREDENTIALS_CACHE, key = "'deviceCredentials_' + #deviceCredentials.credentialsId")
     public void deleteDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials) {
         log.trace("Executing deleteDeviceCredentials [{}]", deviceCredentials);
         deviceCredentialsDao.removeById(tenantId, deviceCredentials.getUuidId());
+        publishEvictEvent(new DeviceCredentialsEvictEvent(deviceCredentials.getCredentialsId(), null));
     }
-
-    private DataValidator<DeviceCredentials> credentialsValidator =
-            new DataValidator<DeviceCredentials>() {
-
-                @Override
-                protected void validateCreate(TenantId tenantId, DeviceCredentials deviceCredentials) {
-                    if (deviceCredentialsDao.findByDeviceId(tenantId, deviceCredentials.getDeviceId().getId()) != null) {
-                        throw new DeviceCredentialsValidationException("Credentials for this device are already specified!");
-                    }
-                    if (deviceCredentialsDao.findByCredentialsId(tenantId, deviceCredentials.getCredentialsId()) != null) {
-                        throw new DeviceCredentialsValidationException("Device credentials are already assigned to another device!");
-                    }
-                }
-
-                @Override
-                protected void validateUpdate(TenantId tenantId, DeviceCredentials deviceCredentials) {
-                    if (deviceCredentialsDao.findById(tenantId, deviceCredentials.getUuidId()) == null) {
-                        throw new DeviceCredentialsValidationException("Unable to update non-existent device credentials!");
-                    }
-                    DeviceCredentials existingCredentials = deviceCredentialsDao.findByCredentialsId(tenantId, deviceCredentials.getCredentialsId());
-                    if (existingCredentials != null && !existingCredentials.getId().equals(deviceCredentials.getId())) {
-                        throw new DeviceCredentialsValidationException("Device credentials are already assigned to another device!");
-                    }
-                }
-
-                @Override
-                protected void validateDataImpl(TenantId tenantId, DeviceCredentials deviceCredentials) {
-                    if (deviceCredentials.getDeviceId() == null) {
-                        throw new DeviceCredentialsValidationException("Device credentials should be assigned to device!");
-                    }
-                    if (deviceCredentials.getCredentialsType() == null) {
-                        throw new DeviceCredentialsValidationException("Device credentials type should be specified!");
-                    }
-                    if (StringUtils.isEmpty(deviceCredentials.getCredentialsId())) {
-                        throw new DeviceCredentialsValidationException("Device credentials id should be specified!");
-                    }
-                    Device device = deviceService.findDeviceById(tenantId, deviceCredentials.getDeviceId());
-                    if (device == null) {
-                        throw new DeviceCredentialsValidationException("Can't assign device credentials to non-existent device!");
-                    }
-                }
-            };
 
 }
