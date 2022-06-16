@@ -20,18 +20,16 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import org.thingsboard.server.dao.util.HsqlDao;
-import org.thingsboard.server.dao.util.SqlTsLatestDao;
+import org.thingsboard.server.dao.util.SqlTsDao;
 import org.thingsboard.server.dao.util.TbAutoConfiguration;
 
 @Configuration
 @TbAutoConfiguration
-@ComponentScan({"org.thingsboard.server.dao.sqlts.hsql"})
-@EnableJpaRepositories({"org.thingsboard.server.dao.sqlts.insert.latest.hsql", "org.thingsboard.server.dao.sqlts.latest"})
-@EntityScan({"org.thingsboard.server.dao.model.sqlts.latest"})
+@ComponentScan({"org.thingsboard.server.dao.sqlts.sql", "org.thingsboard.server.dao.sqlts.insert.sql"})
+@EnableJpaRepositories({"org.thingsboard.server.dao.sqlts.ts", "org.thingsboard.server.dao.sqlts.insert.sql"})
+@EntityScan({"org.thingsboard.server.dao.model.sqlts.ts"})
 @EnableTransactionManagement
-@SqlTsLatestDao
-@HsqlDao
-public class HsqlTsLatestDaoConfig {
+@SqlTsDao
+public class SqlTsDaoConfig {
 
 }

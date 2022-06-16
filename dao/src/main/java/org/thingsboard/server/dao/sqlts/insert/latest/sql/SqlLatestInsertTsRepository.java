@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sqlts.insert.latest.psql;
+package org.thingsboard.server.dao.sqlts.insert.latest.sql;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
@@ -24,7 +24,7 @@ import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
 import org.thingsboard.server.dao.sqlts.insert.AbstractInsertRepository;
 import org.thingsboard.server.dao.sqlts.insert.latest.InsertLatestTsRepository;
-import org.thingsboard.server.dao.util.PsqlTsLatestAnyDao;
+import org.thingsboard.server.dao.util.SqlTsLatestAnyDao;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -33,10 +33,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-@PsqlTsLatestAnyDao
+@SqlTsLatestAnyDao
 @Repository
 @Transactional
-public class PsqlLatestInsertTsRepository extends AbstractInsertRepository implements InsertLatestTsRepository {
+public class SqlLatestInsertTsRepository extends AbstractInsertRepository implements InsertLatestTsRepository {
 
     @Value("${sql.ts_latest.update_by_latest_ts:true}")
     private Boolean updateByLatestTs;

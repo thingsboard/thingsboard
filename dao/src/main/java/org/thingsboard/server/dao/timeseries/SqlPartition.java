@@ -18,7 +18,7 @@ package org.thingsboard.server.dao.timeseries;
 import lombok.Data;
 
 @Data
-public class PsqlPartition {
+public class SqlPartition {
 
     private static final String TABLE_REGEX = "ts_kv_";
 
@@ -27,7 +27,7 @@ public class PsqlPartition {
     private String partitionDate;
     private String query;
 
-    public PsqlPartition(long start, long end, String partitionDate) {
+    public SqlPartition(long start, long end, String partitionDate) {
         this.start = start;
         this.end = end;
         this.partitionDate = partitionDate;

@@ -17,11 +17,9 @@ package org.thingsboard.server.dao.sql.component;
 
 import org.springframework.stereotype.Repository;
 import org.thingsboard.server.dao.model.sql.ComponentDescriptorEntity;
-import org.thingsboard.server.dao.util.PsqlDao;
 
-@PsqlDao
 @Repository
-public class PsqlComponentDescriptorInsertRepository extends AbstractComponentDescriptorInsertRepository {
+public class SqlComponentDescriptorInsertRepository extends AbstractComponentDescriptorInsertRepository {
 
     private static final String ID = "id = :id";
     private static final String CLAZZ_CLAZZ = "clazz = :clazz";
