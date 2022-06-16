@@ -16,11 +16,16 @@
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -29,17 +34,22 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
+    static final int TIMEOUT = 30;
 
-    private IdComparator<Customer> idComparator = new IdComparator<>();
+    ListeningExecutorService executor;
 
     private TenantId tenantId;
 
     @Before
     public void before() {
+        executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(8, getClass()));
+
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
         Tenant savedTenant = tenantService.saveTenant(tenant);
@@ -49,6 +59,8 @@ public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
 
     @After
     public void after() {
+        executor.shutdownNow();
+
         tenantService.deleteTenant(tenantId);
     }
 
@@ -130,22 +142,24 @@ public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testFindCustomersByTenantId() {
+    public void testFindCustomersByTenantId() throws Exception {
         Tenant tenant = new Tenant();
         tenant.setTitle("Test tenant");
         tenant = tenantService.saveTenant(tenant);
 
         TenantId tenantId = tenant.getId();
 
-        List<Customer> customers = new ArrayList<>();
+        List<ListenableFuture<Customer>> futures = new ArrayList<>(135);
         for (int i = 0; i < 135; i++) {
             Customer customer = new Customer();
             customer.setTenantId(tenantId);
             customer.setTitle("Customer" + i);
-            customers.add(customerService.saveCustomer(customer));
+            futures.add(executor.submit(() ->
+                    customerService.saveCustomer(customer)));
         }
+        List<Customer> customers = Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS);
 
-        List<Customer> loadedCustomers = new ArrayList<>();
+        List<Customer> loadedCustomers = new ArrayList<>(135);
         PageLink pageLink = new PageLink(23);
         PageData<Customer> pageData = null;
         do {
@@ -156,10 +170,7 @@ public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(customers, idComparator);
-        Collections.sort(loadedCustomers, idComparator);
-
-        Assert.assertEquals(customers, loadedCustomers);
+        assertThat(customers).containsExactlyInAnyOrderElementsOf(loadedCustomers);
 
         customerService.deleteCustomersByTenantId(tenantId);
 
@@ -172,31 +183,34 @@ public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testFindCustomersByTenantIdAndTitle() {
+    public void testFindCustomersByTenantIdAndTitle() throws Exception {
         String title1 = "Customer title 1";
-        List<Customer> customersTitle1 = new ArrayList<>();
+        List<ListenableFuture<Customer>> futures = new ArrayList<>(143);
         for (int i = 0; i < 143; i++) {
             Customer customer = new Customer();
             customer.setTenantId(tenantId);
-            String suffix = RandomStringUtils.randomAlphanumeric((int)(5 + Math.random()*10));
+            String suffix = RandomStringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
             String title = title1 + suffix;
             title = i % 2 == 0 ? title.toLowerCase() : title.toUpperCase();
             customer.setTitle(title);
-            customersTitle1.add(customerService.saveCustomer(customer));
+            futures.add(executor.submit(() -> customerService.saveCustomer(customer)));
         }
+        List<Customer> customersTitle1 = Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS);
+
         String title2 = "Customer title 2";
-        List<Customer> customersTitle2 = new ArrayList<>();
+        futures = new ArrayList<>(175);
         for (int i = 0; i < 175; i++) {
             Customer customer = new Customer();
             customer.setTenantId(tenantId);
-            String suffix = RandomStringUtils.randomAlphanumeric((int)(5 + Math.random()*10));
+            String suffix = RandomStringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
             String title = title2 + suffix;
             title = i % 2 == 0 ? title.toLowerCase() : title.toUpperCase();
             customer.setTitle(title);
-            customersTitle2.add(customerService.saveCustomer(customer));
+            futures.add(executor.submit(() -> customerService.saveCustomer(customer)));
         }
+        List<Customer> customersTitle2 = Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS);
 
-        List<Customer> loadedCustomersTitle1 = new ArrayList<>();
+        List<Customer> loadedCustomersTitle1 = new ArrayList<>(143);
         PageLink pageLink = new PageLink(15, 0, title1);
         PageData<Customer> pageData = null;
         do {
@@ -207,12 +221,9 @@ public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(customersTitle1, idComparator);
-        Collections.sort(loadedCustomersTitle1, idComparator);
+        assertThat(customersTitle1).as(title1).containsExactlyInAnyOrderElementsOf(loadedCustomersTitle1);
 
-        Assert.assertEquals(customersTitle1, loadedCustomersTitle1);
-
-        List<Customer> loadedCustomersTitle2 = new ArrayList<>();
+        List<Customer> loadedCustomersTitle2 = new ArrayList<>(175);
         pageLink = new PageLink(4, 0, title2);
         do {
             pageData = customerService.findCustomersByTenantId(tenantId, pageLink);
@@ -222,23 +233,30 @@ public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(customersTitle2, idComparator);
-        Collections.sort(loadedCustomersTitle2, idComparator);
+        assertThat(customersTitle2).as(title2).containsExactlyInAnyOrderElementsOf(loadedCustomersTitle2);
 
-        Assert.assertEquals(customersTitle2, loadedCustomersTitle2);
-
+        List<ListenableFuture<Void>> deleteFutures = new ArrayList<>(143);
         for (Customer customer : loadedCustomersTitle1) {
-            customerService.deleteCustomer(tenantId, customer.getId());
+            deleteFutures.add(executor.submit(() -> {
+                customerService.deleteCustomer(tenantId, customer.getId());
+                return null;
+            }));
         }
+        Futures.allAsList(deleteFutures).get(TIMEOUT, TimeUnit.SECONDS);
 
         pageLink = new PageLink(4, 0, title1);
         pageData = customerService.findCustomersByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
+        deleteFutures = new ArrayList<>(175);
         for (Customer customer : loadedCustomersTitle2) {
-            customerService.deleteCustomer(tenantId, customer.getId());
+            deleteFutures.add(executor.submit(() -> {
+                customerService.deleteCustomer(tenantId, customer.getId());
+                return null;
+            }));
         }
+        Futures.allAsList(deleteFutures).get(TIMEOUT, TimeUnit.SECONDS);
 
         pageLink = new PageLink(4, 0, title2);
         pageData = customerService.findCustomersByTenantId(tenantId, pageLink);

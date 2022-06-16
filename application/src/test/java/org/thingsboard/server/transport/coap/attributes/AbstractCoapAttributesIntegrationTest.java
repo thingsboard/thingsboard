@@ -16,10 +16,8 @@
 package org.thingsboard.server.transport.coap.attributes;
 
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.transport.coap.AbstractCoapIntegrationTest;
-import org.thingsboard.server.common.data.CoapDeviceType;
-import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.transport.coap.AbstractCoapIntegrationTest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,14 +27,6 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
 
     protected static final String POST_ATTRIBUTES_PAYLOAD = "{\"attribute1\":\"value1\",\"attribute2\":true,\"attribute3\":42.0,\"attribute4\":73," +
             "\"attribute5\":{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}}";
-
-    protected void processBeforeTest(String deviceName, CoapDeviceType coapDeviceType, TransportPayloadType payloadType) throws Exception {
-        super.processBeforeTest(deviceName, coapDeviceType, payloadType);
-    }
-
-    protected void processAfterTest() throws Exception {
-        super.processAfterTest();
-    }
 
     protected List<TransportProtos.TsKvProto> getTsKvProtoList() {
         TransportProtos.TsKvProto tsKvProtoAttribute1 = getTsKvProto("attribute1", "value1", TransportProtos.KeyValueType.STRING_V);

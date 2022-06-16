@@ -19,7 +19,7 @@
      tb-fullscreen
      [fullscreen]="fullscreen" fxLayout="column">
   <div fxLayout="row" fxLayoutAlign="start center" style="height: 40px;" class="tb-css-toolbar">
-    <label class="tb-title no-padding" [ngClass]="{'tb-error': hasErrors}">{{ label }}</label>
+    <label class="tb-title no-padding" [ngClass]="{'tb-error': !disabled && (hasErrors || required && !modelValue), 'tb-required': !disabled && required}">{{ label }}</label>
     <span fxFlex></span>
     <button type='button' *ngIf="!disabled" mat-button class="tidy" (click)="beautifyCss()">
       {{'js-func.tidy' | translate }}

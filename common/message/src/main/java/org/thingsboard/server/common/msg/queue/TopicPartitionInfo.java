@@ -41,7 +41,7 @@ public class TopicPartitionInfo {
         this.partition = partition;
         this.myPartition = myPartition;
         String tmp = topic;
-        if (tenantId != null) {
+        if (tenantId != null && !tenantId.isNullUid()) {
             tmp += "." + tenantId.getId().toString();
         }
         if (partition != null) {

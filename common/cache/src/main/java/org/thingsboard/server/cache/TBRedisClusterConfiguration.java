@@ -29,23 +29,23 @@ import java.util.Collections;
 import java.util.List;
 
 @Configuration
-@ConditionalOnMissingBean(CaffeineCacheConfiguration.class)
+@ConditionalOnMissingBean(TbCaffeineCacheConfiguration.class)
 @ConditionalOnProperty(prefix = "redis.connection", value = "type", havingValue = "cluster")
 public class TBRedisClusterConfiguration extends TBRedisCacheConfiguration {
 
     private static final String COMMA = ",";
     private static final String COLON = ":";
 
-    @Value("${redis.cluster.nodes}")
+    @Value("${redis.cluster.nodes:}")
     private String clusterNodes;
 
-    @Value("${redis.cluster.max-redirects}")
+    @Value("${redis.cluster.max-redirects:12}")
     private Integer maxRedirects;
 
-    @Value("${redis.cluster.useDefaultPoolConfig}")
+    @Value("${redis.cluster.useDefaultPoolConfig:true}")
     private boolean useDefaultPoolConfig;
 
-    @Value("${redis.password}")
+    @Value("${redis.password:}")
     private String password;
 
     public JedisConnectionFactory loadFactory() {

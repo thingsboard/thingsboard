@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.queue.processing;
 
 import lombok.Getter;
+import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
@@ -28,7 +29,7 @@ import java.util.concurrent.ConcurrentMap;
 public class TbRuleEngineProcessingResult {
 
     @Getter
-    private final String queueName;
+    private final QueueId queueId;
     @Getter
     private final boolean success;
     @Getter
@@ -36,8 +37,8 @@ public class TbRuleEngineProcessingResult {
     @Getter
     private final TbMsgPackProcessingContext ctx;
 
-    public TbRuleEngineProcessingResult(String queueName, boolean timeout, TbMsgPackProcessingContext ctx) {
-        this.queueName = queueName;
+    public TbRuleEngineProcessingResult(QueueId queueId, boolean timeout, TbMsgPackProcessingContext ctx) {
+        this.queueId = queueId;
         this.timeout = timeout;
         this.ctx = ctx;
         this.success = !timeout && ctx.getPendingMap().isEmpty() && ctx.getFailedMap().isEmpty();

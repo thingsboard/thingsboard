@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.device.profile.AlarmRule;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.device.profile.DurationAlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.RepeatingAlarmConditionSpec;
+import org.thingsboard.server.common.data.device.profile.AlarmSchedule;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
 import org.thingsboard.server.common.data.query.DynamicValue;
@@ -77,6 +78,10 @@ class ProfileState {
                         addDynamicValuesRecursively(keyFilter.getPredicate(), entityKeys, ruleKeys);
                     }
                     addEntityKeysFromAlarmConditionSpec(alarmRule);
+                    AlarmSchedule schedule = alarmRule.getSchedule();
+                    if (schedule != null) {
+                        addScheduleDynamicValues(schedule);
+                    }
                 }));
                 if (alarm.getClearRule() != null) {
                     var clearAlarmKeys = alarmClearKeys.computeIfAbsent(alarm.getId(), id -> new HashSet<>());
@@ -88,6 +93,16 @@ class ProfileState {
                     addEntityKeysFromAlarmConditionSpec(alarm.getClearRule());
                 }
             }
+        }
+    }
+
+    private void addScheduleDynamicValues(AlarmSchedule schedule) {
+        DynamicValue<String> dynamicValue = schedule.getDynamicValue();
+        if (dynamicValue != null) {
+            entityKeys.add(
+                    new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE,
+                            dynamicValue.getSourceAttribute())
+            );
         }
     }
 

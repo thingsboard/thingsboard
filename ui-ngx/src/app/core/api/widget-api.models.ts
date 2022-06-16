@@ -119,7 +119,7 @@ export interface IAliasController {
   getEntityAliasId(aliasName: string): string;
   getInstantAliasInfo(aliasId: string): AliasInfo;
   resolveSingleEntityInfo(aliasId: string): Observable<EntityInfo>;
-  resolveDatasources(datasources: Array<Datasource>, singleEntity?: boolean): Observable<Array<Datasource>>;
+  resolveDatasources(datasources: Array<Datasource>, singleEntity?: boolean, pageSize?: number): Observable<Array<Datasource>>;
   resolveAlarmSource(alarmSource: Datasource): Observable<Datasource>;
   getEntityAliases(): EntityAliases;
   getFilters(): Filters;
@@ -184,6 +184,7 @@ export interface SubscriptionInfo {
   deviceName?: string;
   deviceNamePrefix?: string;
   deviceIds?: Array<string>;
+  pageSize?: number;
 }
 
 export class WidgetSubscriptionContext {
@@ -219,7 +220,9 @@ export interface SubscriptionMessage {
 
 export interface WidgetSubscriptionCallbacks {
   onDataUpdated?: (subscription: IWidgetSubscription, detectChanges: boolean) => void;
+  onLatestDataUpdated?: (subscription: IWidgetSubscription, detectChanges: boolean) => void;
   onDataUpdateError?: (subscription: IWidgetSubscription, e: any) => void;
+  onLatestDataUpdateError?: (subscription: IWidgetSubscription, e: any) => void;
   onSubscriptionMessage?: (subscription: IWidgetSubscription, message: SubscriptionMessage) => void;
   onInitialPageDataChanged?: (subscription: IWidgetSubscription, nextPageData: PageData<EntityData>) => void;
   forceReInit?: () => void;
@@ -240,6 +243,7 @@ export interface WidgetSubscriptionOptions {
   datasourcesOptional?: boolean;
   hasDataPageLink?: boolean;
   singleEntity?: boolean;
+  pageSize?: number;
   warnOnPageDataOverflow?: boolean;
   ignoreDataUpdateOnIntervalTick?: boolean;
   targetDeviceAliasIds?: Array<string>;
@@ -282,6 +286,7 @@ export interface IWidgetSubscription {
   dataPages?: PageData<Array<DatasourceData>>[];
   datasources?: Array<Datasource>;
   data?: Array<DatasourceData>;
+  latestData?: Array<DatasourceData>;
   hiddenData?: Array<{data: DataSet}>;
   timeWindowConfig?: Timewindow;
   timeWindow?: WidgetTimewindow;

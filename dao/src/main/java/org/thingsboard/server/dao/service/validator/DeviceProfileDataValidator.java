@@ -45,9 +45,9 @@ import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.RPKLwM2
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.X509LwM2MBootstrapServerCredential;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
+import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.msg.EncryptionUtil;
-import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceDao;
 import org.thingsboard.server.dao.device.DeviceProfileDao;
@@ -55,10 +55,10 @@ import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantDao;
-import org.thingsboard.server.queue.QueueService;
 
 import java.util.HashSet;
 import java.util.List;
@@ -118,8 +118,9 @@ public class DeviceProfileDataValidator extends DataValidator<DeviceProfile> {
                 throw new DataValidationException("Another default device profile is present in scope of current tenant!");
             }
         }
-        if (!StringUtils.isEmpty(deviceProfile.getDefaultQueueName()) && queueService != null) {
-            if (!queueService.getQueuesByServiceType(ServiceType.TB_RULE_ENGINE).contains(deviceProfile.getDefaultQueueName())) {
+        if (deviceProfile.getDefaultQueueId() != null) {
+            Queue queue = queueService.findQueueById(tenantId, deviceProfile.getDefaultQueueId());
+            if (queue == null) {
                 throw new DataValidationException("Device profile is referencing to non-existent queue!");
             }
         }
@@ -224,7 +225,7 @@ public class DeviceProfileDataValidator extends DataValidator<DeviceProfile> {
     }
 
     @Override
-    protected void validateUpdate(TenantId tenantId, DeviceProfile deviceProfile) {
+    protected DeviceProfile validateUpdate(TenantId tenantId, DeviceProfile deviceProfile) {
         DeviceProfile old = deviceProfileDao.findById(deviceProfile.getTenantId(), deviceProfile.getId().getId());
         if (old == null) {
             throw new DataValidationException("Can't update non existing device profile!");
@@ -243,6 +244,7 @@ public class DeviceProfileDataValidator extends DataValidator<DeviceProfile> {
                 throw new DataValidationException(message);
             }
         }
+        return old;
     }
 
     private void validateProtoSchemas(ProtoTransportPayloadConfiguration protoTransportPayloadTypeConfiguration) {
@@ -352,8 +354,7 @@ public class DeviceProfileDataValidator extends DataValidator<DeviceProfile> {
                 port = serverConfig.isBootstrapServerIs() ? 5688 : 5686;
             }
             if (serverConfig.getPort() == null || serverConfig.getPort().intValue() != port) {
-                String errMsg = server + " \"Port\" value = " + serverConfig.getPort() + ". This value for security " + serverConfig.getSecurityMode().name() + " must be " + port + "!";
-                throw new DeviceCredentialsValidationException(errMsg);
+                throw new DeviceCredentialsValidationException(server + " \"Port\" value = " + serverConfig.getPort() + ". This value for security " + serverConfig.getSecurityMode().name() + " must be " + port + "!");
             }
         }
     }

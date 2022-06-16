@@ -71,7 +71,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
 
     private LeshanServer server;
 
-    @AfterStartUp(order = Integer.MAX_VALUE - 1)
+    @AfterStartUp(order = AfterStartUp.AFTER_TRANSPORT_SERVICE)
     public void init() {
         this.server = getLhServer();
         /*
@@ -94,6 +94,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
         this.server.getRegistrationService().addListener(lhServerCertListener.registrationListener);
         this.server.getPresenceService().addListener(lhServerCertListener.presenceListener);
         this.server.getObservationService().addListener(lhServerCertListener.observationListener);
+        this.server.getSendService().addListener(lhServerCertListener.sendListener);
         log.info("Started LwM2M transport server.");
     }
 
