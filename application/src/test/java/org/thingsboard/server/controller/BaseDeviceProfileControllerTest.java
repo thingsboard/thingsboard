@@ -694,8 +694,6 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
                 "}", "[Transport Configuration] invalid rpc request proto schema provided! Failed to get field descriptor for field: params!");
     }
 
-<<<<<<< HEAD
-=======
     @Test
     public void testSaveDeviceProfileWithSendAckOnValidationException() throws Exception {
         JsonTransportPayloadConfiguration jsonTransportPayloadConfiguration = new JsonTransportPayloadConfiguration();
@@ -722,7 +720,6 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         return savedDeviceProfile;
     }
 
->>>>>>> develop/3.4
     private void testSaveDeviceProfileWithInvalidProtoSchema(String schema, String errorMsg) throws Exception {
         ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = this.createProtoTransportPayloadConfiguration(schema, schema, null, null);
         MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration = this.createMqttDeviceProfileTransportConfiguration(protoTransportPayloadConfiguration, false);
