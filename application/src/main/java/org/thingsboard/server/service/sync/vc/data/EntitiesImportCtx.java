@@ -83,10 +83,6 @@ public class EntitiesImportCtx {
         return getSettings().isSaveCredentials();
     }
 
-    public boolean isResetExternalIdsOfAnotherTenant() {
-        return getSettings().isResetExternalIdsOfAnotherTenant();
-    }
-
     public EntityId getInternalId(EntityId externalId) {
         var result = externalToInternalIdMap.get(externalId);
         log.debug("[{}][{}] Local cache {} for id", externalId.getEntityType(), externalId.getId(), result != null ? "hit" : "miss");

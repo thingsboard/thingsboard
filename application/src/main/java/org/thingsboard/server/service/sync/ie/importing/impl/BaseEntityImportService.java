@@ -307,13 +307,6 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                 EntityId internalId = getInternalId(externalId, false);
                 if (internalId != null) {
                     return Optional.of(internalId);
-                } else if (ctx.isResetExternalIdsOfAnotherTenant()) {
-                    try {
-                        if (exportableEntitiesService.findEntityById(externalId) != null) {
-                            return Optional.of(EntityIdFactory.getByTypeAndUuid(entityType, EntityId.NULL_UUID));
-                        }
-                    } catch (Exception ignored) {
-                    }
                 }
             }
 

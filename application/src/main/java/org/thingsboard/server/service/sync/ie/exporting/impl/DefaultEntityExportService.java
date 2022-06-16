@@ -24,27 +24,25 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.sync.ie.AttributeExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
-import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.sync.ie.exporting.EntityExportService;
 import org.thingsboard.server.service.sync.ie.exporting.ExportableEntitiesService;
 import org.thingsboard.server.service.sync.vc.data.EntitiesExportCtx;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -148,6 +146,35 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
             ctx.putExternalId(internalId, result);
         }
         return result;
+    }
+
+    protected UUID getExternalIdOrElseInternalByUuid(EntitiesExportCtx<?> ctx, UUID internalUuid) {
+        for (EntityType entityType : EntityType.values()) {
+            EntityId internalId;
+            try {
+                internalId = EntityIdFactory.getByTypeAndUuid(entityType, internalUuid);
+            } catch (Exception e) {
+                continue;
+            }
+            EntityId externalId = ctx.getExternalId(internalId);
+            if (externalId != null) {
+                return externalId.getId();
+            }
+        }
+        for (EntityType entityType : EntityType.values()) {
+            EntityId internalId;
+            try {
+                internalId = EntityIdFactory.getByTypeAndUuid(entityType, internalUuid);
+            } catch (Exception e) {
+                continue;
+            }
+            EntityId externalId = exportableEntitiesService.getExternalIdByInternal(internalId);
+            if (externalId != null) {
+                ctx.putExternalId(internalId, externalId);
+                return externalId.getId();
+            }
+        }
+        return internalUuid;
     }
 
     protected D newExportData() {

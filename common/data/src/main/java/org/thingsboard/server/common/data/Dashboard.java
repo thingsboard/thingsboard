@@ -15,12 +15,16 @@
  */
 package org.thingsboard.server.common.data;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.thingsboard.server.common.data.id.DashboardId;
+
+import java.util.Optional;
 
 @EqualsAndHashCode(callSuper = true)
 public class Dashboard extends DashboardInfo implements ExportableEntity<DashboardId> {
@@ -60,6 +64,13 @@ public class Dashboard extends DashboardInfo implements ExportableEntity<Dashboa
 
     public void setConfiguration(JsonNode configuration) {
         this.configuration = configuration;
+    }
+
+    @JsonIgnore
+    public ObjectNode getEntityAliasesConfig() {
+        return (ObjectNode) Optional.ofNullable(getConfiguration())
+                .map(config -> config.get("entityAliases"))
+                .filter(JsonNode::isObject).orElse(null);
     }
 
     @Override

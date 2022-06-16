@@ -354,7 +354,6 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         ctx.getToReimport().forEach((externalId, importSettings) -> {
             try {
                 EntityExportData entityData = gitServiceQueue.getEntity(ctx.getTenantId(), ctx.getVersionId(), externalId).get();
-                importSettings.setResetExternalIdsOfAnotherTenant(true);
                 ctx.setSettings(importSettings);
                 EntityImportResult<?> importResult = exportImportService.importEntity(ctx, entityData);
 
