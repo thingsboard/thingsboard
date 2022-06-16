@@ -86,12 +86,7 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
                                          UserId userId, String userName, ActionType actionType, Exception exp,
                                          Object... additionalInfo) {
         CustomerId customer_NULL_UUID = (CustomerId) EntityIdFactory.getByTypeAndUuid(EntityType.CUSTOMER, ModelConstants.NULL_UUID);
-        EntityId entity_NULL_UUID = EntityIdFactory.getByTypeAndUuid(
-                EntityType
-                        .valueOf(entity.getClass()
-                        .toString()
-                        .substring(entity.getClass().toString().lastIndexOf(".") + 1).toUpperCase(Locale.ENGLISH)),
-                ModelConstants.NULL_UUID);
+        EntityId entity_NULL_UUID = createEntityId_NULL_UUID (entity);
         testNotificationMsgToEdgeServiceNever(entity_NULL_UUID);
         if (additionalInfo.length > 0) {
             Mockito.verify(auditLogService, times(1))
@@ -114,6 +109,7 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
     }
 
     protected void testNotifyEntityNever(EntityId entityId, HasName entity) {
+        entityId = entityId == null ? createEntityId_NULL_UUID (entity) : entityId;
         testNotificationMsgToEdgeServiceNever(entityId);
         testLogEntityActionNever(entityId, entity);
         testPushMsgToRuleEngineNever(entityId);
@@ -175,5 +171,11 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
             }
         }
         return result;
+    }
+
+    private EntityId createEntityId_NULL_UUID (HasName entity) {
+        return EntityIdFactory.getByTypeAndUuid(EntityType.valueOf(entity.getClass().toString()
+                        .substring(entity.getClass().toString().lastIndexOf(".") + 1).toUpperCase(Locale.ENGLISH)),
+                ModelConstants.NULL_UUID);
     }
 }
