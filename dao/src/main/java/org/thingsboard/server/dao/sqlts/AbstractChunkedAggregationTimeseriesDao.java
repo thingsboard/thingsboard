@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -42,7 +41,11 @@ import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -140,8 +143,7 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
                 query.getStartTs(),
                 query.getEndTs(),
                 PageRequest.of(0, query.getLimit(),
-                        Sort.by(Sort.Direction.fromString(
-                                query.getOrder()), "ts")));
+                        Sort.by(new Sort.Order(Sort.Direction.fromString(query.getOrder()),  "ts").nullsNative())));
         tsKvEntities.forEach(tsKvEntity -> tsKvEntity.setStrKey(query.getKey()));
         return Futures.immediateFuture(DaoUtil.convertDataList(tsKvEntities));
     }

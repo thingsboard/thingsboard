@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { Resolve } from '@angular/router';
+import { Resolve, Router } from '@angular/router';
 import { TenantProfile } from '@shared/models/tenant.model';
 import {
   checkBoxCell,
@@ -33,6 +33,8 @@ import { TenantProfileComponent } from '../../components/profile/tenant-profile.
 import { TenantProfileTabsComponent } from './tenant-profile-tabs.component';
 import { DialogService } from '@core/services/dialog.service';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { map } from 'rxjs/operators';
+import { guid } from '@core/utils';
 
 @Injectable()
 export class TenantProfilesTableConfigResolver implements Resolve<EntityTableConfig<TenantProfile>> {
@@ -43,6 +45,7 @@ export class TenantProfilesTableConfigResolver implements Resolve<EntityTableCon
               private importExport: ImportExportService,
               private translate: TranslateService,
               private datePipe: DatePipe,
+              private router: Router,
               private dialogService: DialogService) {
 
     this.config.entityType = EntityType.TENANT_PROFILE;
@@ -105,7 +108,7 @@ export class TenantProfilesTableConfigResolver implements Resolve<EntityTableCon
         name: this.translate.instant('tenant-profile.create-tenant-profile'),
         icon: 'insert_drive_file',
         isEnabled: () => true,
-        onAction: ($event) => this.config.table.addEntity($event)
+        onAction: ($event) => this.config.getTable().addEntity($event)
       },
       {
         name: this.translate.instant('tenant-profile.import'),
@@ -115,6 +118,14 @@ export class TenantProfilesTableConfigResolver implements Resolve<EntityTableCon
       }
     );
     return actions;
+  }
+
+  private openTenantProfile($event: Event, tenantProfile: TenantProfile) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const url = this.router.createUrlTree(['tenantProfiles', tenantProfile.id.id]);
+    this.router.navigateByUrl(url);
   }
 
   setDefaultTenantProfile($event: Event, tenantProfile: TenantProfile) {
@@ -131,7 +142,7 @@ export class TenantProfilesTableConfigResolver implements Resolve<EntityTableCon
         if (res) {
           this.tenantProfileService.setDefaultTenantProfile(tenantProfile.id.id).subscribe(
             () => {
-              this.config.table.updateData();
+              this.config.updateData();
             }
           );
         }
@@ -143,7 +154,7 @@ export class TenantProfilesTableConfigResolver implements Resolve<EntityTableCon
     this.importExport.importTenantProfile().subscribe(
       (deviceProfile) => {
         if (deviceProfile) {
-          this.config.table.updateData();
+          this.config.updateData();
         }
       }
     );
@@ -158,6 +169,9 @@ export class TenantProfilesTableConfigResolver implements Resolve<EntityTableCon
 
   onTenantProfileAction(action: EntityAction<TenantProfile>): boolean {
     switch (action.action) {
+      case 'open':
+        this.openTenantProfile(action.event, action.entity);
+        return true;
       case 'setDefault':
         this.setDefaultTenantProfile(action.event, action.entity);
         return true;

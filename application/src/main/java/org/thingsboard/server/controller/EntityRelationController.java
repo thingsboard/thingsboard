@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -27,9 +28,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -38,6 +36,7 @@ import org.thingsboard.server.common.data.relation.EntityRelationInfo;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.entitiy.entityRelation.TbEntityRelationService;
 import org.thingsboard.server.service.security.permission.Operation;
 
 import java.util.List;
@@ -52,7 +51,10 @@ import static org.thingsboard.server.controller.ControllerConstants.RELATION_TYP
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
+@RequiredArgsConstructor
 public class EntityRelationController extends BaseController {
+
+    private  final TbEntityRelationService tbEntityRelationService;
 
     public static final String TO_TYPE = "toType";
     public static final String FROM_ID = "fromId";
@@ -77,28 +79,14 @@ public class EntityRelationController extends BaseController {
     @ResponseStatus(value = HttpStatus.OK)
     public void saveRelation(@ApiParam(value = "A JSON value representing the relation.", required = true)
                              @RequestBody EntityRelation relation) throws ThingsboardException {
-        try {
-            checkNotNull(relation);
-            checkEntityId(relation.getFrom(), Operation.WRITE);
-            checkEntityId(relation.getTo(), Operation.WRITE);
-            if (relation.getTypeGroup() == null) {
-                relation.setTypeGroup(RelationTypeGroup.COMMON);
-            }
-            relationService.saveRelation(getTenantId(), relation);
-
-            logEntityAction(relation.getFrom(), null, getCurrentUser().getCustomerId(),
-                    ActionType.RELATION_ADD_OR_UPDATE, null, relation);
-            logEntityAction(relation.getTo(), null, getCurrentUser().getCustomerId(),
-                    ActionType.RELATION_ADD_OR_UPDATE, null, relation);
-
-            sendRelationNotificationMsg(getTenantId(), relation, EdgeEventActionType.RELATION_ADD_OR_UPDATE);
-        } catch (Exception e) {
-            logEntityAction(relation.getFrom(), null, getCurrentUser().getCustomerId(),
-                    ActionType.RELATION_ADD_OR_UPDATE, e, relation);
-            logEntityAction(relation.getTo(), null, getCurrentUser().getCustomerId(),
-                    ActionType.RELATION_ADD_OR_UPDATE, e, relation);
-            throw handleException(e);
+        checkNotNull(relation);
+        checkEntityId(relation.getFrom(), Operation.WRITE);
+        checkEntityId(relation.getTo(), Operation.WRITE);
+        if (relation.getTypeGroup() == null) {
+            relation.setTypeGroup(RelationTypeGroup.COMMON);
         }
+
+       tbEntityRelationService.save(getTenantId(), getCurrentUser().getCustomerId(), relation, getCurrentUser());
     }
 
     @ApiOperation(value = "Delete Relation (deleteRelation)",
@@ -123,24 +111,8 @@ public class EntityRelationController extends BaseController {
         checkEntityId(toId, Operation.WRITE);
         RelationTypeGroup relationTypeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
         EntityRelation relation = new EntityRelation(fromId, toId, strRelationType, relationTypeGroup);
-        try {
-            Boolean found = relationService.deleteRelation(getTenantId(), fromId, toId, strRelationType, relationTypeGroup);
-            if (!found) {
-                throw new ThingsboardException("Requested item wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND);
-            }
-            logEntityAction(relation.getFrom(), null, getCurrentUser().getCustomerId(),
-                    ActionType.RELATION_DELETED, null, relation);
-            logEntityAction(relation.getTo(), null, getCurrentUser().getCustomerId(),
-                    ActionType.RELATION_DELETED, null, relation);
 
-            sendRelationNotificationMsg(getTenantId(), relation, EdgeEventActionType.RELATION_DELETED);
-        } catch (Exception e) {
-            logEntityAction(relation.getFrom(), null, getCurrentUser().getCustomerId(),
-                    ActionType.RELATION_DELETED, e, relation);
-            logEntityAction(relation.getTo(), null, getCurrentUser().getCustomerId(),
-                    ActionType.RELATION_DELETED, e, relation);
-            throw handleException(e);
-        }
+        tbEntityRelationService.delete(getTenantId(), getCurrentUser().getCustomerId(), relation, getCurrentUser());
     }
 
     @ApiOperation(value = "Delete Relations (deleteRelations)",
@@ -155,13 +127,7 @@ public class EntityRelationController extends BaseController {
         checkParameter("entityType", strType);
         EntityId entityId = EntityIdFactory.getByTypeAndId(strType, strId);
         checkEntityId(entityId, Operation.WRITE);
-        try {
-            relationService.deleteEntityRelations(getTenantId(), entityId);
-            logEntityAction(entityId, null, getCurrentUser().getCustomerId(), ActionType.RELATIONS_DELETED, null);
-        } catch (Exception e) {
-            logEntityAction(entityId, null, getCurrentUser().getCustomerId(), ActionType.RELATIONS_DELETED, e);
-            throw handleException(e);
-        }
+        tbEntityRelationService.deleteRelations (getTenantId(), getCurrentUser().getCustomerId(), entityId, getCurrentUser());
     }
 
     @ApiOperation(value = "Get Relation (getRelation)",

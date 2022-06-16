@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,32 +16,14 @@
 package org.thingsboard.server.queue.settings;
 
 import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
-import java.util.List;
-
-@Slf4j
 @Data
-@EnableAutoConfiguration
-@Configuration
-@ConfigurationProperties(prefix = "queue.rule-engine")
+@Component
 public class TbQueueRuleEngineSettings {
 
+    @Value("${queue.rule-engine.topic}")
     private String topic;
-    private List<TbRuleEngineQueueConfiguration> queues;
-
-    @PostConstruct
-    public void validate() {
-        queues.stream().filter(queue -> queue.getName().equals("Main")).findFirst().orElseThrow(() -> {
-            log.error("Main queue is not configured in thingsboard.yml");
-            return new RuntimeException("No \"Main\" queue configured!");
-        });
-    }
 
 }

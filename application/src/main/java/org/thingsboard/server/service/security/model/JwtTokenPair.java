@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,24 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.security.Authority;
 
 @ApiModel(value = "JWT Token Pair")
 @Data
-@AllArgsConstructor
+@NoArgsConstructor
 public class JwtTokenPair {
 
     @ApiModelProperty(position = 1, value = "The JWT Access Token. Used to perform API calls.", example = "AAB254FF67D..")
     private String token;
     @ApiModelProperty(position = 1, value = "The JWT Refresh Token. Used to get new JWT Access Token if old one has expired.", example = "AAB254FF67D..")
     private String refreshToken;
+
+    private Authority scope;
+
+    public JwtTokenPair(String token, String refreshToken) {
+        this.token = token;
+        this.refreshToken = refreshToken;
+    }
+
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,6 +79,31 @@ public class TbServiceBusAdmin implements TbQueueAdmin {
             } else {
                 log.error("Failed to create queue: [{}]", topic, e);
             }
+        }
+    }
+
+    @Override
+    public void deleteTopic(String topic) {
+        if (queues.contains(topic)) {
+            doDelete(topic);
+        } else {
+            try {
+                if (client.getQueue(topic) != null) {
+                    doDelete(topic);
+                } else {
+                    log.warn("Azure Service Bus Queue [{}] is not exist.", topic);
+                }
+            } catch (ServiceBusException | InterruptedException e) {
+                log.error("Failed to delete Azure Service Bus queue [{}]", topic, e);
+            }
+        }
+    }
+
+    private void doDelete(String topic) {
+        try {
+            client.deleteTopic(topic);
+        } catch (ServiceBusException | InterruptedException e) {
+            log.error("Failed to delete Azure Service Bus queue [{}]", topic, e);
         }
     }
 

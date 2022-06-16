@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,8 +19,7 @@ import { JsonSettingsSchema } from '@shared/models/widget.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { TbAnalogueGauge } from '@home/components/widget/lib/analogue-gauge.models';
 import {
-  AnalogueLinearGaugeSettings,
-  getAnalogueLinearGaugeSettingsSchema
+  AnalogueLinearGaugeSettings
 } from '@home/components/widget/lib/analogue-linear-gauge.models';
 import { isDefined } from '@core/utils';
 import * as tinycolor_ from 'tinycolor2';
@@ -30,14 +29,8 @@ import BaseGauge = CanvasGauges.BaseGauge;
 
 const tinycolor = tinycolor_;
 
-const analogueLinearGaugeSettingsSchemaValue = getAnalogueLinearGaugeSettingsSchema();
-
 // @dynamic
 export class TbAnalogueLinearGauge extends TbAnalogueGauge<AnalogueLinearGaugeSettings, LinearGaugeOptions>{
-
-  static get settingsSchema(): JsonSettingsSchema {
-    return analogueLinearGaugeSettingsSchemaValue;
-  }
 
   constructor(ctx: WidgetContext, canvasId: string) {
     super(ctx, canvasId);

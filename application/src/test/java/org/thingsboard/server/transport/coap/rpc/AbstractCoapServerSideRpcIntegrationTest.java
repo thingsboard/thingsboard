@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,18 +26,15 @@ import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.eclipse.californium.core.coap.Request;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.CoapDeviceType;
-import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.transport.coap.AbstractCoapIntegrationTest;
 
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -46,12 +43,7 @@ public abstract class AbstractCoapServerSideRpcIntegrationTest extends AbstractC
 
     protected static final String DEVICE_RESPONSE = "{\"value1\":\"A\",\"value2\":\"B\"}";
 
-    protected Long asyncContextTimeoutToUseRpcPlugin;
-
-    protected void processBeforeTest(String deviceName, CoapDeviceType coapDeviceType, TransportPayloadType payloadType) throws Exception {
-        super.processBeforeTest(deviceName, coapDeviceType, payloadType);
-        asyncContextTimeoutToUseRpcPlugin = 10000L;
-    }
+    protected static final Long asyncContextTimeoutToUseRpcPlugin = 10000L;
 
     protected void processOneWayRpcTest() throws Exception {
         client = getCoapClient(FeatureType.RPC);
@@ -186,7 +178,7 @@ public abstract class AbstractCoapServerSideRpcIntegrationTest extends AbstractC
     }
 
     private void validateCurrentStateNotification(TestCoapCallback callback) {
-        assertNull(callback.getPayloadBytes());
+        assertArrayEquals(EMPTY_PAYLOAD, callback.getPayloadBytes());
         assertNotNull(callback.getObserve());
         assertEquals(callback.getResponseCode(), CoAP.ResponseCode.VALID);
         assertEquals(0, callback.getObserve().intValue());

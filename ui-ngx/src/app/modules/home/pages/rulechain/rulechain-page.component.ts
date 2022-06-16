@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -87,6 +87,10 @@ export class RuleChainPageComponent extends PageComponent
 
   get isDirty(): boolean {
     return this.isDirtyValue || this.isImport;
+  }
+
+  set isDirty(value: boolean) {
+    this.isDirtyValue = value;
   }
 
   @HostBinding('style.width') width = '100%';

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,5 +19,6 @@ export enum Authority {
   TENANT_ADMIN = 'TENANT_ADMIN',
   CUSTOMER_USER = 'CUSTOMER_USER',
   REFRESH_TOKEN = 'REFRESH_TOKEN',
-  ANONYMOUS = 'ANONYMOUS'
+  ANONYMOUS = 'ANONYMOUS',
+  PRE_VERIFICATION_TOKEN = 'PRE_VERIFICATION_TOKEN'
 }

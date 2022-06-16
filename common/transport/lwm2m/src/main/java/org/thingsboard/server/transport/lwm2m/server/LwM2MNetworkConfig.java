@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,29 +15,22 @@
  */
 package org.thingsboard.server.transport.lwm2m.server;
 
-import org.eclipse.californium.core.network.config.NetworkConfig;
-import org.eclipse.californium.core.network.config.NetworkConfigDefaults;
+import org.eclipse.californium.core.config.CoapConfig;
+import org.eclipse.californium.elements.config.Configuration;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 
-import static org.eclipse.californium.core.network.config.NetworkConfigDefaults.DEFAULT_BLOCKWISE_STATUS_LIFETIME;
+import java.util.Properties;
+import java.util.concurrent.TimeUnit;
+
+import static org.eclipse.californium.core.config.CoapConfig.DEFAULT_BLOCKWISE_STATUS_LIFETIME_IN_SECONDS;
 
 public class LwM2MNetworkConfig {
 
-    public static NetworkConfig getCoapConfig(Integer serverPortNoSec, Integer serverSecurePort, LwM2MTransportServerConfig config) {
-        NetworkConfig coapConfig = new NetworkConfig();
-        coapConfig.setInt(NetworkConfig.Keys.COAP_PORT, serverPortNoSec);
-        coapConfig.setInt(NetworkConfig.Keys.COAP_SECURE_PORT, serverSecurePort);
-        /**
-         Example:Property for large packet:
-         #NetworkConfig config = new NetworkConfig();
-         #config.setInt(NetworkConfig.Keys.MAX_MESSAGE_SIZE,32);
-         #config.setInt(NetworkConfig.Keys.PREFERRED_BLOCK_SIZE,32);
-         #config.setInt(NetworkConfig.Keys.MAX_RESOURCE_BODY_SIZE,2048);
-         #config.setInt(NetworkConfig.Keys.MAX_RETRANSMIT,3);
-         #config.setInt(NetworkConfig.Keys.MAX_TRANSMIT_WAIT,120000);
-         */
-
+    public static Configuration getCoapConfig(Integer serverPortNoSec, Integer serverSecurePort, LwM2MTransportServerConfig config) {
+        Configuration coapConfig = new Configuration();
+        coapConfig.set(CoapConfig.COAP_PORT, serverPortNoSec);
+        coapConfig.set(CoapConfig.COAP_SECURE_PORT, serverSecurePort);
         /**
          Property to indicate if the response should always include the Block2 option \
          when client request early blockwise negociation but the response can be sent on one packet.
@@ -46,14 +39,14 @@ public class LwM2MNetworkConfig {
          CoAP client will try to use block mode
          or adapt the block size when receiving a 4.13 Entity too large response code
          */
-        coapConfig.setBoolean(NetworkConfig.Keys.BLOCKWISE_STRICT_BLOCK2_OPTION, true);
+        coapConfig.set(CoapConfig.BLOCKWISE_STRICT_BLOCK2_OPTION, true);
         /**
          Property to indicate if the response should always include the Block2 option \
          when client request early blockwise negociation but the response can be sent on one packet.
          - value of false indicate that the server will respond without block2 option if no further blocks are required.
          - value of true indicate that the server will response with block2 option event if no further blocks are required.
          */
-        coapConfig.setBoolean(NetworkConfig.Keys.BLOCKWISE_ENTITY_TOO_LARGE_AUTO_FAILOVER, true);
+        coapConfig.set(CoapConfig.BLOCKWISE_ENTITY_TOO_LARGE_AUTO_FAILOVER, true);
         /**
          * The maximum amount of time (in milliseconds) allowed between
          * transfers of individual blocks in a blockwise transfer before the
@@ -62,7 +55,7 @@ public class LwM2MNetworkConfig {
          * The default value of this property is
          * {@link NetworkConfigDefaults#DEFAULT_BLOCKWISE_STATUS_LIFETIME} = 5 * 60 * 1000; // 5 mins [ms].
          */
-        coapConfig.setLong(NetworkConfig.Keys.BLOCKWISE_STATUS_LIFETIME, DEFAULT_BLOCKWISE_STATUS_LIFETIME);
+        coapConfig.set(CoapConfig.BLOCKWISE_STATUS_LIFETIME, DEFAULT_BLOCKWISE_STATUS_LIFETIME_IN_SECONDS, TimeUnit.SECONDS);
         /**
          !!! REQUEST_ENTITY_TOO_LARGE CODE=4.13
          The maximum size of a resource body (in bytes) that will be accepted
@@ -77,7 +70,7 @@ public class LwM2MNetworkConfig {
          The default value of this property is DEFAULT_MAX_RESOURCE_BODY_SIZE = 8192
          A value of {@code 0} turns off transparent handling of blockwise transfers altogether.
          */
-        coapConfig.setInt(NetworkConfig.Keys.MAX_RESOURCE_BODY_SIZE, 256 * 1024 * 1024);
+        coapConfig.set(CoapConfig.MAX_RESOURCE_BODY_SIZE, 256 * 1024 * 1024);
         /**
          The default DTLS response matcher.
          Supported values are STRICT, RELAXED, or PRINCIPAL.
@@ -88,13 +81,13 @@ public class LwM2MNetworkConfig {
          – true with address check, (STRICT, UDP) - if port Registration of client is changed - it is bad
          - false, without
          */
-        coapConfig.setString(NetworkConfig.Keys.RESPONSE_MATCHING, "RELAXED");
+        coapConfig.set(CoapConfig.RESPONSE_MATCHING, CoapConfig.MatcherMode.RELAXED);
         /**
          https://tools.ietf.org/html/rfc7959#section-2.9.3
          The block size (number of bytes) to use when doing a blockwise transfer. \
          This value serves as the upper limit for block size in blockwise transfers
          */
-        coapConfig.setInt(NetworkConfig.Keys.PREFERRED_BLOCK_SIZE, 1024);
+        coapConfig.set(CoapConfig.PREFERRED_BLOCK_SIZE, 1024);
         /**
          The maximum payload size (in bytes) that can be transferred in a
          single message, i.e. without requiring a blockwise transfer.
@@ -102,12 +95,14 @@ public class LwM2MNetworkConfig {
          In particular, this value cannot exceed the network's MTU if UDP is used as the transport protocol
          DEFAULT_VALUE = 1024
          */
-        coapConfig.setInt(NetworkConfig.Keys.MAX_MESSAGE_SIZE, 1024);
+        coapConfig.set(CoapConfig.MAX_MESSAGE_SIZE, 1024);
 
-        coapConfig.setInt(NetworkConfig.Keys.MAX_RETRANSMIT, 10);
+        coapConfig.set(CoapConfig.MAX_RETRANSMIT, 10);
 
         if (!CollectionUtils.isEmpty(config.getNetworkConfig())) {
-            config.getNetworkConfig().forEach(p -> coapConfig.setString(p.getKey(), p.getValue()));
+            Properties networkProps = new Properties();
+            config.getNetworkConfig().forEach(p -> networkProps.put(p.getKey(), p.getValue()));
+            coapConfig.add(networkProps);
         }
 
         return coapConfig;

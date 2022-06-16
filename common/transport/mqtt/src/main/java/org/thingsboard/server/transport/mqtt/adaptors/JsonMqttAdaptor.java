@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
         try {
             return JsonConverter.convertToTelemetryProto(new JsonParser().parse(payload));
         } catch (IllegalStateException | JsonSyntaxException ex) {
-            log.warn("Failed to decode post telemetry request", ex);
+            log.debug("Failed to decode post telemetry request", ex);
             throw new AdaptorException(ex);
         }
     }
@@ -72,7 +72,7 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
         try {
             return JsonConverter.convertToAttributesProto(new JsonParser().parse(payload));
         } catch (IllegalStateException | JsonSyntaxException ex) {
-            log.warn("Failed to decode post attributes request", ex);
+            log.debug("Failed to decode post attributes request", ex);
             throw new AdaptorException(ex);
         }
     }
@@ -83,7 +83,7 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
         try {
             return JsonConverter.convertToClaimDeviceProto(ctx.getDeviceId(), payload);
         } catch (IllegalStateException | JsonSyntaxException ex) {
-            log.warn("Failed to decode claim device request", ex);
+            log.debug("Failed to decode claim device request", ex);
             throw new AdaptorException(ex);
         }
     }
@@ -122,7 +122,7 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
     public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.GetAttributeResponseMsg responseMsg) throws AdaptorException {
         return processConvertFromGatewayAttributeResponseMsg(ctx, deviceName, responseMsg);
     }
-
+    
     @Override
     public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.AttributeUpdateNotificationMsg notificationMsg, String topic) {
         return Optional.of(createMqttPublishMsg(ctx, topic, JsonConverter.toJson(notificationMsg)));
@@ -164,7 +164,7 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
         try {
             return new JsonParser().parse(payload);
         } catch (JsonSyntaxException ex) {
-            log.warn("Payload is in incorrect format: {}", payload);
+            log.debug("Payload is in incorrect format: {}", payload);
             throw new AdaptorException(ex);
         }
     }
@@ -186,7 +186,7 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
             }
             return result.build();
         } catch (RuntimeException e) {
-            log.warn("Failed to decode get attributes request", e);
+            log.debug("Failed to decode get attributes request", e);
             throw new AdaptorException(e);
         }
     }
@@ -198,7 +198,7 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
             String payload = inbound.payload().toString(UTF8);
             return TransportProtos.ToDeviceRpcResponseMsg.newBuilder().setRequestId(requestId).setPayload(payload).build();
         } catch (RuntimeException e) {
-            log.warn("Failed to decode rpc response", e);
+            log.debug("Failed to decode rpc response", e);
             throw new AdaptorException(e);
         }
     }
@@ -210,7 +210,7 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
             int requestId = getRequestId(topicName, topicBase);
             return JsonConverter.convertToServerRpcRequest(new JsonParser().parse(payload), requestId);
         } catch (IllegalStateException | JsonSyntaxException ex) {
-            log.warn("Failed to decode to server rpc request", ex);
+            log.debug("Failed to decode to server rpc request", ex);
             throw new AdaptorException(ex);
         }
     }
@@ -259,7 +259,7 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
     private static String validatePayload(UUID sessionId, ByteBuf payloadData, boolean isEmptyPayloadAllowed) throws AdaptorException {
         String payload = payloadData.toString(UTF8);
         if (payload == null) {
-            log.warn("[{}] Payload is empty!", sessionId);
+            log.debug("[{}] Payload is empty!", sessionId);
             if (!isEmptyPayloadAllowed) {
                 throw new AdaptorException(new IllegalArgumentException("Payload is empty!"));
             }

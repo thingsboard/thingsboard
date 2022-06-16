@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import {
   Validator
 } from '@angular/forms';
 import { ErrorStateMatcher } from '@angular/material/core';
+import { isObject } from "@core/utils";
 
 @Directive({
   selector: '[tb-json-to-string]',
@@ -53,7 +54,11 @@ export class TbJsonToStringDirective implements ControlValueAccessor, Validator,
   @HostListener('input', ['$event.target.value']) input(newValue: any): void {
     try {
       this.data = JSON.parse(newValue);
-      this.parseError = false;
+      if (isObject(this.data)) {
+        this.parseError = false;
+      } else {
+        this.parseError = true;
+      }
     } catch (e) {
       this.parseError = true;
     }

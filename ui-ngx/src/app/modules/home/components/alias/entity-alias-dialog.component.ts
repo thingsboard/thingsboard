@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -141,21 +141,23 @@ export class EntityAliasDialogComponent extends DialogComponent<EntityAliasDialo
     this.alias.alias = this.entityAliasFormGroup.get('alias').value.trim();
     this.alias.filter = this.entityAliasFormGroup.get('filter').value;
     this.alias.filter.resolveMultiple = this.entityAliasFormGroup.get('resolveMultiple').value;
-    this.validate().subscribe(() => {
-        if (this.isAdd) {
-          this.alias.id = this.utils.guid();
+    if (this.alias.filter.type) {
+      this.validate().subscribe(() => {
+          if (this.isAdd) {
+            this.alias.id = this.utils.guid();
+          }
+          this.dialogRef.close(this.alias);
+        },
+        () => {
+          this.entityAliasFormGroup.setErrors({
+            noEntityMatched: true
+          });
+          const changesSubscriptuion = this.entityAliasFormGroup.valueChanges.subscribe(() => {
+            this.entityAliasFormGroup.setErrors(null);
+            changesSubscriptuion.unsubscribe();
+          });
         }
-        this.dialogRef.close(this.alias);
-      },
-      () => {
-        this.entityAliasFormGroup.setErrors({
-          noEntityMatched: true
-        });
-        const changesSubscriptuion = this.entityAliasFormGroup.valueChanges.subscribe(() => {
-          this.entityAliasFormGroup.setErrors(null);
-          changesSubscriptuion.unsubscribe();
-        });
-      }
-    );
+      );
+    }
   }
 }

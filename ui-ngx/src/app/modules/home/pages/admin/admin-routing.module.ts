@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -29,6 +29,11 @@ import { SmsProviderComponent } from '@home/pages/admin/sms-provider.component';
 import { HomeSettingsComponent } from '@home/pages/admin/home-settings.component';
 import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
 import { ResourcesLibraryTableConfigResolver } from '@home/pages/admin/resource/resources-library-table-config.resolve';
+import { EntityDetailsPageComponent } from '@home/components/entity/entity-details-page.component';
+import { entityDetailsPageBreadcrumbLabelFunction } from '@home/pages/home-pages.models';
+import { BreadCrumbConfig } from '@shared/components/breadcrumb';
+import { QueuesTableConfigResolver } from '@home/pages/admin/queue/queues-table-config.resolver';
+import { TwoFactorAuthSettingsComponent } from '@home/pages/admin/two-factor-auth-settings.component';
 
 @Injectable()
 export class OAuth2LoginProcessingUrlResolver implements Resolve<string> {
@@ -145,17 +150,92 @@ const routes: Routes = [
       },
       {
         path: 'resources-library',
-        component: EntitiesTableComponent,
         data: {
-          auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
-          title: 'resource.resources-library',
           breadcrumb: {
             label: 'resource.resources-library',
             icon: 'folder'
           }
         },
-        resolve: {
-          entitiesTableConfig: ResourcesLibraryTableConfigResolver
+        children: [
+          {
+            path: '',
+            component: EntitiesTableComponent,
+            data: {
+              auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
+              title: 'resource.resources-library',
+            },
+            resolve: {
+              entitiesTableConfig: ResourcesLibraryTableConfigResolver
+            }
+          },
+          {
+            path: ':entityId',
+            component: EntityDetailsPageComponent,
+            canDeactivate: [ConfirmOnExitGuard],
+            data: {
+              breadcrumb: {
+                labelFunction: entityDetailsPageBreadcrumbLabelFunction,
+                icon: 'folder'
+              } as BreadCrumbConfig<EntityDetailsPageComponent>,
+              auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
+              title: 'resource.resources-library'
+            },
+            resolve: {
+              entitiesTableConfig: ResourcesLibraryTableConfigResolver
+            }
+          }
+        ]
+      },
+      {
+        path: 'queues',
+        data: {
+          breadcrumb: {
+            label: 'admin.queues',
+            icon: 'swap_calls'
+          }
+        },
+        children: [
+          {
+            path: '',
+            component: EntitiesTableComponent,
+            data: {
+              auth: [Authority.SYS_ADMIN],
+              title: 'admin.queues'
+            },
+            resolve: {
+              entitiesTableConfig: QueuesTableConfigResolver
+            }
+          },
+          {
+            path: ':entityId',
+            component: EntityDetailsPageComponent,
+            canDeactivate: [ConfirmOnExitGuard],
+            data: {
+              breadcrumb: {
+                labelFunction: entityDetailsPageBreadcrumbLabelFunction,
+                icon: 'swap_calls'
+              } as BreadCrumbConfig<EntityDetailsPageComponent>,
+              auth: [Authority.SYS_ADMIN],
+              title: 'admin.queues'
+            },
+            resolve: {
+              entitiesTableConfig: QueuesTableConfigResolver
+            }
+          }
+        ]
+      },
+      {
+        path: '2fa',
+        component: TwoFactorAuthSettingsComponent,
+        canDeactivate: [ConfirmOnExitGuard],
+        data: {
+          auth: [Authority.SYS_ADMIN],
+          title: 'admin.2fa.2fa',
+          breadcrumb: {
+            label: 'admin.2fa.2fa',
+            icon: 'mdi:two-factor-authentication',
+            isMdiIcon: true
+          }
         }
       }
     ]
@@ -167,7 +247,8 @@ const routes: Routes = [
   exports: [RouterModule],
   providers: [
     OAuth2LoginProcessingUrlResolver,
-    ResourcesLibraryTableConfigResolver
+    ResourcesLibraryTableConfigResolver,
+    QueuesTableConfigResolver
   ]
 })
 export class AdminRoutingModule { }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
-import org.eclipse.leshan.core.node.ObjectLink;
 import org.eclipse.leshan.core.node.codec.CodecException;
 import org.eclipse.leshan.core.request.SimpleDownlinkRequest;
 import org.eclipse.leshan.core.request.WriteAttributesRequest;
@@ -44,7 +43,7 @@ import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportC
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.ota.OtaPackageKey;
 import org.thingsboard.server.common.transport.util.JsonUtils;
-import org.thingsboard.server.transport.lwm2m.config.LwM2mVersion;
+import org.thingsboard.server.transport.lwm2m.config.TbLwM2mVersion;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mOtaConvert;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.ResourceValue;
@@ -93,6 +92,7 @@ public class LwM2MTransportUtil {
     public static final String LOG_LWM2M_INFO = "info";
     public static final String LOG_LWM2M_ERROR = "error";
     public static final String LOG_LWM2M_WARN = "warn";
+    public static final int BOOTSTRAP_DEFAULT_SHORT_ID = 0;
 
     public enum LwM2MClientStrategy {
         CLIENT_STRATEGY_1(1, "Read only resources marked as observation"),
@@ -236,7 +236,7 @@ public class LwM2MTransportUtil {
 
     public static String convertObjectIdToVersionedId(String path, Registration registration) {
         String ver = registration.getSupportedObject().get(new LwM2mPath(path).getObjectId());
-        ver = ver != null ? ver : LwM2mVersion.VERSION_1_0.getVersion().toString();
+        ver = ver != null ? ver : TbLwM2mVersion.VERSION_1_0.getVersion().toString();
         try {
             String[] keyArray = path.split(LWM2M_SEPARATOR_PATH);
             if (keyArray.length > 1) {

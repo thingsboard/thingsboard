@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,27 +46,14 @@ public class BaseEventService implements EventService {
     @Autowired
     public EventDao eventDao;
 
-    @Override
-    public Event save(Event event) {
-        eventValidator.validate(event, Event::getTenantId);
-        return eventDao.save(event.getTenantId(), event);
-    }
+    @Autowired
+    private DataValidator<Event> eventValidator;
 
     @Override
-    public ListenableFuture<Event> saveAsync(Event event) {
+    public ListenableFuture<Void> saveAsync(Event event) {
         eventValidator.validate(event, Event::getTenantId);
         checkAndTruncateDebugEvent(event);
         return eventDao.saveAsync(event);
-    }
-
-    @Override
-    public Optional<Event> saveIfNotExists(Event event) {
-        eventValidator.validate(event, Event::getTenantId);
-        if (StringUtils.isEmpty(event.getUid())) {
-            throw new DataValidationException("Event uid should be specified!.");
-        }
-        checkAndTruncateDebugEvent(event);
-        return eventDao.saveIfNotExists(event);
     }
 
     private void checkAndTruncateDebugEvent(Event event) {
@@ -137,31 +124,11 @@ public class BaseEventService implements EventService {
             eventDao.removeAllByIds(eventsPageData.getData().stream()
                     .map(IdBased::getUuidId)
                     .collect(Collectors.toList()));
-
-            if (eventsPageData.hasNext()) {
-                eventsPageLink = eventsPageLink.nextPageLink();
-            }
         } while (eventsPageData.hasNext());
     }
 
     @Override
-    public void cleanupEvents(long ttl, long debugTtl) {
-        eventDao.cleanupEvents(ttl, debugTtl);
+    public void cleanupEvents(long regularEventStartTs, long regularEventEndTs, long debugEventStartTs, long debugEventEndTs) {
+        eventDao.cleanupEvents(regularEventStartTs, regularEventEndTs, debugEventStartTs, debugEventEndTs);
     }
-
-    private DataValidator<Event> eventValidator =
-            new DataValidator<Event>() {
-                @Override
-                protected void validateDataImpl(TenantId tenantId, Event event) {
-                    if (event.getEntityId() == null) {
-                        throw new DataValidationException("Entity id should be specified!.");
-                    }
-                    if (StringUtils.isEmpty(event.getType())) {
-                        throw new DataValidationException("Event type should be specified!.");
-                    }
-                    if (event.getBody() == null) {
-                        throw new DataValidationException("Event body should be specified!.");
-                    }
-                }
-            };
 }

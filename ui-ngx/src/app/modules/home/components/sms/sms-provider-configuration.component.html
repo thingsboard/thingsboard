@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2021 The Thingsboard Authors
+    Copyright © 2016-2022 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -39,6 +39,12 @@
         [required]="required"
         formControlName="configuration">
       </tb-twilio-sms-provider-configuration>
+    </ng-template>
+    <ng-template [ngSwitchCase]="smsProviderType.SMPP">
+      <tb-smpp-sms-provider-configuration
+        [required]="required"
+        formControlName="configuration">
+      </tb-smpp-sms-provider-configuration>
     </ng-template>
   </div>
 </div>

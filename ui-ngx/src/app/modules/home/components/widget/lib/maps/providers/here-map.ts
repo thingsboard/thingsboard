@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,18 +16,18 @@
 
 import L from 'leaflet';
 import LeafletMap from '../leaflet-map';
-import { DEFAULT_ZOOM_LEVEL, UnitedMapSettings } from '../map-models';
+import { DEFAULT_ZOOM_LEVEL, WidgetUnitedMapSettings } from '../map-models';
 import { WidgetContext } from '@home/models/widget-component.models';
 
 export class HEREMap extends LeafletMap {
-    constructor(ctx: WidgetContext, $container, options: UnitedMapSettings) {
+    constructor(ctx: WidgetContext, $container, options: WidgetUnitedMapSettings) {
         super(ctx, $container, options);
         const map = L.map($container, {
-          tap: L.Browser.safari && L.Browser.mobile
-        }).setView(options?.defaultCenterPosition, options?.defaultZoomLevel || DEFAULT_ZOOM_LEVEL);
+          tap: L.Browser.safari && L.Browser.mobile,
+          zoomControl: !this.options.disableZoomControl
+        }).setView(options?.parsedDefaultCenterPosition, options?.defaultZoomLevel || DEFAULT_ZOOM_LEVEL);
         const tileLayer = (L.tileLayer as any).provider(options.mapProviderHere || 'HERE.normalDay', options.credentials);
         tileLayer.addTo(map);
-        super.initSettings(options);
         super.setMap(map);
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,14 @@
  */
 package org.thingsboard.server.common.data;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -62,5 +68,23 @@ public final class EdgeUtils {
 
     public static int nextPositiveInt() {
         return ThreadLocalRandom.current().nextInt(0, Integer.MAX_VALUE);
+    }
+
+    public static EdgeEvent constructEdgeEvent(TenantId tenantId,
+                                               EdgeId edgeId,
+                                               EdgeEventType type,
+                                               EdgeEventActionType action,
+                                               EntityId entityId,
+                                               JsonNode body) {
+        EdgeEvent edgeEvent = new EdgeEvent();
+        edgeEvent.setTenantId(tenantId);
+        edgeEvent.setEdgeId(edgeId);
+        edgeEvent.setType(type);
+        edgeEvent.setAction(action);
+        if (entityId != null) {
+            edgeEvent.setEntityId(entityId.getId());
+        }
+        edgeEvent.setBody(body);
+        return edgeEvent;
     }
 }

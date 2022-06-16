@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package org.thingsboard.server.dao.sql.entityview;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
@@ -57,7 +57,7 @@ public class JpaEntityViewDao extends JpaAbstractSearchTextDao<EntityViewEntity,
     }
 
     @Override
-    protected CrudRepository<EntityViewEntity, UUID> getCrudRepository() {
+    protected JpaRepository<EntityViewEntity, UUID> getRepository() {
         return entityViewRepository;
     }
 
@@ -157,9 +157,9 @@ public class JpaEntityViewDao extends JpaAbstractSearchTextDao<EntityViewEntity,
     }
 
     @Override
-    public ListenableFuture<List<EntityView>> findEntityViewsByTenantIdAndEntityIdAsync(UUID tenantId, UUID entityId) {
-        return service.submit(() -> DaoUtil.convertDataList(
-                entityViewRepository.findAllByTenantIdAndEntityId(tenantId, entityId)));
+    public List<EntityView> findEntityViewsByTenantIdAndEntityId(UUID tenantId, UUID entityId) {
+        return DaoUtil.convertDataList(
+                entityViewRepository.findAllByTenantIdAndEntityId(tenantId, entityId));
     }
 
     @Override
@@ -172,7 +172,7 @@ public class JpaEntityViewDao extends JpaAbstractSearchTextDao<EntityViewEntity,
         if (types != null && !types.isEmpty()) {
             list = new ArrayList<>();
             for (String type : types) {
-                list.add(new EntitySubtype(new TenantId(tenantId), EntityType.ENTITY_VIEW, type));
+                list.add(new EntitySubtype(TenantId.fromUUID(tenantId), EntityType.ENTITY_VIEW, type));
             }
         }
         return list;
@@ -201,11 +201,4 @@ public class JpaEntityViewDao extends JpaAbstractSearchTextDao<EntityViewEntity,
                         DaoUtil.toPageable(pageLink)));
     }
 
-    @Override
-    public List<EntityView> findEntityViewsByTenantIdAndEntityId(UUID tenantId, UUID entityId) {
-        return DaoUtil.convertDataList(
-                entityViewRepository.findAllByTenantIdAndEntityId(
-                        tenantId, entityId)
-        );
-    }
 }

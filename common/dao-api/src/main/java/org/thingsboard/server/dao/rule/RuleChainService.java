@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,6 +91,10 @@ public interface RuleChainService {
     PageData<RuleChain> findAutoAssignToEdgeRuleChainsByTenantId(TenantId tenantId, PageLink pageLink);
 
     List<RuleNode> findRuleNodesByTenantIdAndType(TenantId tenantId, String name, String toString);
+
+    List<RuleNode> findRuleNodesByTenantIdAndType(TenantId tenantId, String type);
+
+    PageData<RuleNode> findAllRuleNodesByType(String type, PageLink pageLink);
 
     RuleNode saveRuleNode(TenantId tenantId, RuleNode ruleNode);
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sqlts.timescale.ts.TimescaleTsKvEntity;
 import org.thingsboard.server.dao.sqlts.insert.AbstractInsertRepository;
 import org.thingsboard.server.dao.sqlts.insert.InsertTsRepository;
-import org.thingsboard.server.dao.util.PsqlDao;
 import org.thingsboard.server.dao.util.TimescaleDBTsDao;
 
 import java.sql.PreparedStatement;
@@ -30,7 +29,6 @@ import java.sql.Types;
 import java.util.List;
 
 @TimescaleDBTsDao
-@PsqlDao
 @Repository
 @Transactional
 public class TimescaleInsertTsRepository extends AbstractInsertRepository implements InsertTsRepository<TimescaleTsKvEntity> {

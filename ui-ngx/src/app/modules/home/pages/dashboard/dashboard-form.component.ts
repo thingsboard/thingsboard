@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -112,6 +112,17 @@ export class DashboardFormComponent extends EntityComponent<Dashboard> {
     this.store.dispatch(new ActionNotificationShow(
      {
         message: this.translate.instant('dashboard.public-link-copied-message'),
+        type: 'success',
+        duration: 750,
+        verticalPosition: 'bottom',
+        horizontalPosition: 'right'
+      }));
+  }
+
+  onDashboardIdCopied($event) {
+    this.store.dispatch(new ActionNotificationShow(
+      {
+        message: this.translate.instant('dashboard.idCopiedMessage'),
         type: 'success',
         duration: 750,
         verticalPosition: 'bottom',

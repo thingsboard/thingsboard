@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ import { ContactBased } from '@shared/models/contact-based.model';
 import { TenantId } from './id/tenant-id';
 import { TenantProfileId } from '@shared/models/id/tenant-profile-id';
 import { BaseData } from '@shared/models/base-data';
-import {Validators} from "@angular/forms";
+import { QueueInfo } from '@shared/models/queue.models';
 
 export enum TenantProfileType {
   DEFAULT = 'DEFAULT'
@@ -98,6 +98,7 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
 
 export interface TenantProfileData {
   configuration: TenantProfileConfiguration;
+  queueConfiguration?: Array<QueueInfo>;
 }
 
 export interface TenantProfile extends BaseData<TenantProfileId> {

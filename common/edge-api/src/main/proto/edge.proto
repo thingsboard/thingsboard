@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,11 @@ service EdgeRpcService {
 
   rpc handleMsgs(stream RequestMsg) returns (stream ResponseMsg) {}
 
+}
+
+enum EdgeVersion {
+  V_3_3_0 = 0;
+  V_3_3_3 = 1;
 }
 
 /**
@@ -61,6 +66,7 @@ message EdgeUpdateMsg {
 message ConnectRequestMsg {
   string edgeRoutingKey = 1;
   string edgeSecret = 2;
+  EdgeVersion edgeVersion = 3;
 }
 
 enum ConnectResponseCode {
@@ -93,10 +99,8 @@ message EdgeConfiguration {
   string type = 8;
   string routingKey = 9;
   string secret = 10;
-  string edgeLicenseKey = 11;
-  string cloudEndpoint = 12;
-  string additionalInfo = 13;
-  string cloudType = 14;
+  string additionalInfo = 11;
+  string cloudType = 12;
 }
 
 enum UpdateMsgType {
@@ -263,6 +267,8 @@ message AlarmUpdateMsg {
   int64 clearTs = 13;
   string details = 14;
   bool propagate = 15;
+  bool propagateToOwner = 16;
+  bool propagateToTenant = 17;
 }
 
 message CustomerUpdateMsg {
@@ -327,6 +333,8 @@ message WidgetTypeUpdateMsg {
   optional string name = 6;
   optional string descriptorJson = 7;
   bool isSystem = 8;
+  optional string image = 9;
+  optional string description = 10;
 }
 
 message AdminSettingsUpdateMsg {

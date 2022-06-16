@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -166,7 +166,7 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
         for (MqttPendingSubscription.MqttPendingHandler handler : pendingSubscription.getHandlers()) {
             MqttSubscription subscription = new MqttSubscription(pendingSubscription.getTopic(), handler.getHandler(), handler.isOnce());
             this.client.getSubscriptions().put(pendingSubscription.getTopic(), subscription);
-            this.client.getHandlerToSubscribtion().put(handler.getHandler(), subscription);
+            this.client.getHandlerToSubscription().put(handler.getHandler(), subscription);
         }
         this.client.getPendingSubscribeTopics().remove(pendingSubscription.getTopic());
 

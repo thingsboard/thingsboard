@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,10 @@ public class TbCreateAlarmNodeConfiguration extends TbAbstractAlarmNodeConfigura
 
     private String severity;
     private boolean propagate;
+    private boolean propagateToOwner;
+    private boolean propagateToTenant;
     private boolean useMessageAlarmData;
+    private boolean overwriteAlarmDetails = true;
     private boolean dynamicSeverity;
 
     private List<String> relationTypes;
@@ -39,9 +42,13 @@ public class TbCreateAlarmNodeConfiguration extends TbAbstractAlarmNodeConfigura
         configuration.setAlarmType("General Alarm");
         configuration.setSeverity(AlarmSeverity.CRITICAL.name());
         configuration.setPropagate(false);
+        configuration.setPropagateToOwner(false);
+        configuration.setPropagateToTenant(false);
         configuration.setUseMessageAlarmData(false);
+        configuration.setOverwriteAlarmDetails(false);
         configuration.setRelationTypes(Collections.emptyList());
         configuration.setDynamicSeverity(false);
         return configuration;
     }
+
 }

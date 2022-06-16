@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ public class AlarmInfo extends Alarm {
 
     private static final long serialVersionUID = 2807343093519543363L;
 
-    @ApiModelProperty(position = 17, value = "Alarm originator name", example = "Thermostat")
+    @ApiModelProperty(position = 19, value = "Alarm originator name", example = "Thermostat")
     private String originatorName;
 
     public AlarmInfo() {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,19 @@ package org.thingsboard.server.dao.oauth2;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.id.OAuth2ParamsId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.oauth2.*;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
+import org.thingsboard.server.common.data.oauth2.OAuth2Domain;
+import org.thingsboard.server.common.data.oauth2.OAuth2DomainInfo;
+import org.thingsboard.server.common.data.oauth2.OAuth2Info;
+import org.thingsboard.server.common.data.oauth2.OAuth2Mobile;
+import org.thingsboard.server.common.data.oauth2.OAuth2MobileInfo;
+import org.thingsboard.server.common.data.oauth2.OAuth2Params;
+import org.thingsboard.server.common.data.oauth2.OAuth2ParamsInfo;
+import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
+import org.thingsboard.server.common.data.oauth2.OAuth2RegistrationInfo;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class OAuth2Utils {

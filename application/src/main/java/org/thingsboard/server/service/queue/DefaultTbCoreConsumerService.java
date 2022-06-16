@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceStateServiceMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.EdgeNotificationMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.FromDeviceRPCResponseProto;
@@ -57,8 +58,10 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceM
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
+import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.edge.EdgeNotificationService;
@@ -135,8 +138,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                         TbTenantProfileCache tenantProfileCache,
                                         TbApiUsageStateService apiUsageStateService,
                                         EdgeNotificationService edgeNotificationService,
-                                        OtaPackageStateService firmwareStateService) {
-        super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, apiUsageStateService, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer());
+                                        OtaPackageStateService firmwareStateService, PartitionService partitionService) {
+        super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, apiUsageStateService, partitionService, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer());
         this.mainConsumer = tbCoreQueueFactory.createToCoreMsgConsumer();
         this.usageStatsConsumer = tbCoreQueueFactory.createToUsageStatsServiceMsgConsumer();
         this.firmwareStatesConsumer = tbCoreQueueFactory.createToOtaPackageStateServiceMsgConsumer();
@@ -168,8 +171,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         }
     }
 
-    @EventListener(ApplicationReadyEvent.class)
-    @Order(value = 2)
+    @AfterStartUp(order = AfterStartUp.REGULAR_SERVICE)
     public void onApplicationEvent(ApplicationReadyEvent event) {
         super.onApplicationEvent(event);
         launchUsageStatsConsumer();
@@ -312,6 +314,14 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                 actorContext.tellWithHighPriority(actorMsg.get());
             }
             callback.onSuccess();
+        } else if (toCoreNotification.hasQueueUpdateMsg()) {
+            TransportProtos.QueueUpdateMsg queue = toCoreNotification.getQueueUpdateMsg();
+            partitionService.updateQueue(queue);
+            callback.onSuccess();
+        } else if (toCoreNotification.hasQueueDeleteMsg()) {
+            TransportProtos.QueueDeleteMsg queue = toCoreNotification.getQueueDeleteMsg();
+            partitionService.removeQueue(queue);
+            callback.onSuccess();
         }
         if (statsEnabled) {
             stats.log(toCoreNotification);
@@ -453,37 +463,37 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         } else if (msg.hasTsUpdate()) {
             TbTimeSeriesUpdateProto proto = msg.getTsUpdate();
             subscriptionManagerService.onTimeSeriesUpdate(
-                    new TenantId(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
+                    TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
                     TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
                     TbSubscriptionUtils.toTsKvEntityList(proto.getDataList()), callback);
         } else if (msg.hasAttrUpdate()) {
             TbAttributeUpdateProto proto = msg.getAttrUpdate();
             subscriptionManagerService.onAttributesUpdate(
-                    new TenantId(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
+                    TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
                     TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
                     proto.getScope(), TbSubscriptionUtils.toAttributeKvList(proto.getDataList()), callback);
         } else if (msg.hasAttrDelete()) {
             TbAttributeDeleteProto proto = msg.getAttrDelete();
             subscriptionManagerService.onAttributesDelete(
-                    new TenantId(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
+                    TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
                     TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
                     proto.getScope(), proto.getKeysList(), callback);
         } else if (msg.hasTsDelete()) {
             TbTimeSeriesDeleteProto proto = msg.getTsDelete();
             subscriptionManagerService.onTimeSeriesDelete(
-                    new TenantId(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
+                    TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
                     TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
                     proto.getKeysList(), callback);
         } else if (msg.hasAlarmUpdate()) {
             TbAlarmUpdateProto proto = msg.getAlarmUpdate();
             subscriptionManagerService.onAlarmUpdate(
-                    new TenantId(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
+                    TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
                     TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
                     JacksonUtil.fromString(proto.getAlarm(), Alarm.class), callback);
         } else if (msg.hasAlarmDelete()) {
             TbAlarmDeleteProto proto = msg.getAlarmDelete();
             subscriptionManagerService.onAlarmDeleted(
-                    new TenantId(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
+                    TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
                     TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
                     JacksonUtil.fromString(proto.getAlarm(), Alarm.class), callback);
         } else {

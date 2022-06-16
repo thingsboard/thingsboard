@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,15 @@ public class TbRabbitMqAdmin implements TbQueueAdmin {
             channel.queueDeclare(topic, false, false, false, arguments);
         } catch (IOException e) {
             log.error("Failed to bind queue: [{}]", topic, e);
+        }
+    }
+
+    @Override
+    public void deleteTopic(String topic) {
+        try {
+            channel.queueDelete(topic);
+        } catch (IOException e) {
+            log.error("Failed to delete RabbitMq queue [{}].", topic);
         }
     }
 

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -92,6 +92,7 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
     this.mqttDeviceProfileTransportConfigurationFormGroup = this.fb.group({
         deviceAttributesTopic: [null, [Validators.required, this.validationMQTTTopic()]],
         deviceTelemetryTopic: [null, [Validators.required, this.validationMQTTTopic()]],
+        sendAckOnValidationException: [false, Validators.required],
         transportPayloadTypeConfiguration: this.fb.group({
           transportPayloadType: [TransportPayloadType.JSON, Validators.required],
           deviceTelemetryProtoSchema: [defaultTelemetrySchema, Validators.required],

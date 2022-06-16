@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,17 @@
  */
 package org.thingsboard.server.dao.sql.rule;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.RuleNodeEntity;
 
 import java.util.List;
 import java.util.UUID;
 
-public interface RuleNodeRepository extends CrudRepository<RuleNodeEntity, UUID> {
+public interface RuleNodeRepository extends JpaRepository<RuleNodeEntity, UUID> {
 
     @Query("SELECT r FROM RuleNodeEntity r WHERE r.ruleChainId in " +
             "(select id from RuleChainEntity rc WHERE rc.tenantId = :tenantId) " +
@@ -31,5 +33,10 @@ public interface RuleNodeRepository extends CrudRepository<RuleNodeEntity, UUID>
     List<RuleNodeEntity> findRuleNodesByTenantIdAndType(@Param("tenantId") UUID tenantId,
                                                     @Param("ruleType") String ruleType,
                                                     @Param("searchText") String searchText);
+
+    @Query("SELECT r FROM RuleNodeEntity r WHERE r.type = :ruleType AND LOWER(r.configuration) LIKE LOWER(CONCAT('%', :searchText, '%')) ")
+    Page<RuleNodeEntity> findAllRuleNodesByType(@Param("ruleType") String ruleType,
+                                                @Param("searchText") String searchText,
+                                                Pageable pageable);
 
 }

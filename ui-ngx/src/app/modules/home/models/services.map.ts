@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -36,6 +36,8 @@ import { BroadcastService } from '@core/services/broadcast.service';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { OtaPackageService } from '@core/http/ota-package.service';
+import { ResourceService } from '@core/http/resource.service';
+import { TwoFactorAuthenticationService } from '@core/http/two-factor-authentication.service';
 
 export const ServicesMap = new Map<string, Type<any>>(
   [
@@ -59,6 +61,8 @@ export const ServicesMap = new Map<string, Type<any>>(
    ['router', Router],
    ['importExport', ImportExportService],
    ['deviceProfileService', DeviceProfileService],
-   ['otaPackageService', OtaPackageService]
+   ['otaPackageService', OtaPackageService],
+   ['resourceService', ResourceService],
+   ['twoFactorAuthenticationService', TwoFactorAuthenticationService]
   ]
 );

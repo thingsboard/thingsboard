@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.thingsboard.server.dao.audit.AuditLogLevelFilter;
+import org.thingsboard.server.dao.audit.AuditLogLevelProperties;
 
 import java.util.HashMap;
 
@@ -28,6 +29,8 @@ public class ThingsboardInstallConfiguration {
 
     @Bean
     public AuditLogLevelFilter emptyAuditLogLevelFilter() {
-        return new AuditLogLevelFilter(new HashMap<>());
+        var props = new AuditLogLevelProperties();
+        props.setMask(new HashMap<>());
+        return new AuditLogLevelFilter(props);
     }
 }

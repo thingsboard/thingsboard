@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -99,6 +99,8 @@ export const importEntityDataHref = '<a href="https://github.com/thingsboard/thi
 export const importEntitiesResultInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/entity.models.ts#L42">Import entities result info</a>';
 
 export const customDialogComponentHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/modules/home/components/widget/dialog/custom-dialog.component.ts#L48">CustomDialogComponent</a>';
+
+export const resourceInfoHref = '<a https://github.com/thingsboard/thingsboard/blob/b033b51712244d08e0f5e0beb8be60c9f8fa4cd2/ui-ngx/src/app/shared/models/resource.models.ts#L51">Resource info</a>';
 
 export const pageLinkArg: FunctionArg = {
   name: 'pageLink',
@@ -1297,6 +1299,23 @@ export const serviceCompletions: TbEditorCompletions = {
           requestConfigArg
         ],
         return: observableReturnTypeVariable('any')
+      },
+    }
+  },
+  resourceService: {
+    description: 'Resource Service API<br>' +
+      'See <a href="https://github.com/thingsboard/thingsboard/blob/b033b51712244d08e0f5e0beb8be60c9f8fa4cd2/ui-ngx/src/app/core/http/resource.service.ts#L29">ResourceService</a> for API reference.',
+    meta: 'service',
+    type: '<a href="https://github.com/thingsboard/thingsboard/blob/b033b51712244d08e0f5e0beb8be60c9f8fa4cd2/ui-ngx/src/app/core/http/resource.service.ts#L29">ResourceService</a>',
+    children: {
+      getResources: {
+        description: 'Find resources by search text',
+        meta: 'function',
+        args: [
+          pageLinkArg,
+          requestConfigArg
+        ],
+        return: observablePageDataReturnType(resourceInfoHref)
       },
     }
   },

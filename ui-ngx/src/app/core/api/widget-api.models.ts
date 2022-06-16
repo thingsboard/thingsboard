@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AlarmDataService } from '@core/api/alarm-data.service';
 import { IDashboardController } from '@home/components/dashboard-page/dashboard-page.models';
 import { PopoverPlacement } from '@shared/components/popover.models';
+import { PersistentRpc } from '@shared/models/rpc.models';
 
 export interface TimewindowFunctions {
   onUpdateTimewindow: (startTimeMs: number, endTimeMs: number, interval?: number) => void;
@@ -71,9 +72,9 @@ export interface WidgetSubscriptionApi {
 
 export interface RpcApi {
   sendOneWayCommand: (method: string, params?: any, timeout?: number, persistent?: boolean,
-                      persistentPollingInterval?: number, requestUUID?: string) => Observable<any>;
+                      persistentPollingInterval?: number, retries?: number, additionalInfo?: any, requestUUID?: string) => Observable<any>;
   sendTwoWayCommand: (method: string, params?: any, timeout?: number, persistent?: boolean,
-                      persistentPollingInterval?: number, requestUUID?: string) => Observable<any>;
+                      persistentPollingInterval?: number, retries?: number, additionalInfo?: any, requestUUID?: string) => Observable<any>;
   completedCommand: () => void;
 }
 
@@ -118,7 +119,7 @@ export interface IAliasController {
   getEntityAliasId(aliasName: string): string;
   getInstantAliasInfo(aliasId: string): AliasInfo;
   resolveSingleEntityInfo(aliasId: string): Observable<EntityInfo>;
-  resolveDatasources(datasources: Array<Datasource>, singleEntity?: boolean): Observable<Array<Datasource>>;
+  resolveDatasources(datasources: Array<Datasource>, singleEntity?: boolean, pageSize?: number): Observable<Array<Datasource>>;
   resolveAlarmSource(alarmSource: Datasource): Observable<Datasource>;
   getEntityAliases(): EntityAliases;
   getFilters(): Filters;
@@ -183,6 +184,7 @@ export interface SubscriptionInfo {
   deviceName?: string;
   deviceNamePrefix?: string;
   deviceIds?: Array<string>;
+  pageSize?: number;
 }
 
 export class WidgetSubscriptionContext {
@@ -218,7 +220,9 @@ export interface SubscriptionMessage {
 
 export interface WidgetSubscriptionCallbacks {
   onDataUpdated?: (subscription: IWidgetSubscription, detectChanges: boolean) => void;
+  onLatestDataUpdated?: (subscription: IWidgetSubscription, detectChanges: boolean) => void;
   onDataUpdateError?: (subscription: IWidgetSubscription, e: any) => void;
+  onLatestDataUpdateError?: (subscription: IWidgetSubscription, e: any) => void;
   onSubscriptionMessage?: (subscription: IWidgetSubscription, message: SubscriptionMessage) => void;
   onInitialPageDataChanged?: (subscription: IWidgetSubscription, nextPageData: PageData<EntityData>) => void;
   forceReInit?: () => void;
@@ -239,6 +243,7 @@ export interface WidgetSubscriptionOptions {
   datasourcesOptional?: boolean;
   hasDataPageLink?: boolean;
   singleEntity?: boolean;
+  pageSize?: number;
   warnOnPageDataOverflow?: boolean;
   ignoreDataUpdateOnIntervalTick?: boolean;
   targetDeviceAliasIds?: Array<string>;
@@ -281,12 +286,15 @@ export interface IWidgetSubscription {
   dataPages?: PageData<Array<DatasourceData>>[];
   datasources?: Array<Datasource>;
   data?: Array<DatasourceData>;
+  latestData?: Array<DatasourceData>;
   hiddenData?: Array<{data: DataSet}>;
   timeWindowConfig?: Timewindow;
   timeWindow?: WidgetTimewindow;
   widgetTimewindowChanged$: Observable<WidgetTimewindow>;
   comparisonEnabled?: boolean;
   comparisonTimeWindow?: WidgetTimewindow;
+
+  persistentRequests?: PageData<PersistentRpc>;
 
   alarms?: PageData<AlarmData>;
   alarmSource?: Datasource;
@@ -314,9 +322,9 @@ export interface IWidgetSubscription {
   updateTimewindowConfig(newTimewindow: Timewindow): void;
 
   sendOneWayCommand(method: string, params?: any, timeout?: number, persistent?: boolean,
-                    persistentPollingInterval?: number, requestUUID?: string): Observable<any>;
+                    persistentPollingInterval?: number, retries?: number, additionalInfo?: any, requestUUID?: string): Observable<any>;
   sendTwoWayCommand(method: string, params?: any, timeout?: number, persistent?: boolean,
-                    persistentPollingInterval?: number, requestUUID?: string): Observable<any>;
+                    persistentPollingInterval?: number, retries?: number, additionalInfo?: any, requestUUID?: string): Observable<any>;
   clearRpcError(): void;
 
   subscribe(): void;

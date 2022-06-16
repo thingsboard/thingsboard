@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ public class ModelConstants {
     }
 
     public static final UUID NULL_UUID = Uuids.startOf(0);
-    public static final TenantId SYSTEM_TENANT = new TenantId(ModelConstants.NULL_UUID);
+    public static final TenantId SYSTEM_TENANT = TenantId.fromUUID(ModelConstants.NULL_UUID);
 
     // this is the difference between midnight October 15, 1582 UTC and midnight January 1, 1970 UTC as 100 nanosecond units
     public static final long EPOCH_DIFF = 122192928000000000L;
@@ -178,7 +178,7 @@ public class ModelConstants {
     public static final String DEVICE_PROFILE_IS_DEFAULT_PROPERTY = "is_default";
     public static final String DEVICE_PROFILE_DEFAULT_RULE_CHAIN_ID_PROPERTY = "default_rule_chain_id";
     public static final String DEVICE_PROFILE_DEFAULT_DASHBOARD_ID_PROPERTY = "default_dashboard_id";
-    public static final String DEVICE_PROFILE_DEFAULT_QUEUE_NAME_PROPERTY = "default_queue_name";
+    public static final String DEVICE_PROFILE_DEFAULT_QUEUE_ID_PROPERTY = "default_queue_id";
     public static final String DEVICE_PROFILE_PROVISION_DEVICE_KEY = "provision_device_key";
     public static final String DEVICE_PROFILE_FIRMWARE_ID_PROPERTY = "firmware_id";
     public static final String DEVICE_PROFILE_SOFTWARE_ID_PROPERTY = "software_id";
@@ -273,6 +273,8 @@ public class ModelConstants {
     public static final String ALARM_ACK_TS_PROPERTY = "ack_ts";
     public static final String ALARM_CLEAR_TS_PROPERTY = "clear_ts";
     public static final String ALARM_PROPAGATE_PROPERTY = "propagate";
+    public static final String ALARM_PROPAGATE_TO_OWNER_PROPERTY = "propagate_to_owner";
+    public static final String ALARM_PROPAGATE_TO_TENANT_PROPERTY = "propagate_to_tenant";
     public static final String ALARM_PROPAGATE_RELATION_TYPES = "propagate_relation_types";
 
     public static final String ALARM_BY_ID_VIEW_NAME = "alarm_by_id";
@@ -542,8 +544,6 @@ public class ModelConstants {
 
     public static final String EDGE_ROUTING_KEY_PROPERTY = "routing_key";
     public static final String EDGE_SECRET_PROPERTY = "secret";
-    public static final String EDGE_LICENSE_KEY_PROPERTY = "edge_license_key";
-    public static final String EDGE_CLOUD_ENDPOINT_KEY_PROPERTY = "cloud_endpoint";
 
     /**
      * Edge queue constants.
@@ -558,6 +558,13 @@ public class ModelConstants {
     public static final String EDGE_EVENT_BODY_PROPERTY = "body";
 
     public static final String EDGE_EVENT_BY_ID_VIEW_NAME = "edge_event_by_id";
+
+    /**
+     * User auth settings constants.
+     * */
+    public static final String USER_AUTH_SETTINGS_COLUMN_FAMILY_NAME = "user_auth_settings";
+    public static final String USER_AUTH_SETTINGS_USER_ID_PROPERTY = USER_ID_PROPERTY;
+    public static final String USER_AUTH_SETTINGS_TWO_FA_SETTINGS = "two_fa_settings";
 
     /**
      * Cassandra attributes and timeseries constants.
@@ -580,6 +587,23 @@ public class ModelConstants {
     public static final String LONG_VALUE_COLUMN = "long_v";
     public static final String DOUBLE_VALUE_COLUMN = "dbl_v";
     public static final String JSON_VALUE_COLUMN = "json_v";
+
+    /**
+     * Queue constants.
+     */
+
+    public static final String QUEUE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String QUEUE_NAME_PROPERTY = "name";
+    public static final String QUEUE_TOPIC_PROPERTY = "topic";
+    public static final String QUEUE_POLL_INTERVAL_PROPERTY = "poll_interval";
+    public static final String QUEUE_PARTITIONS_PROPERTY = "partitions";
+    public static final String QUEUE_CONSUMER_PER_PARTITION = "consumer_per_partition";
+    public static final String QUEUE_PACK_PROCESSING_TIMEOUT_PROPERTY = "pack_processing_timeout";
+    public static final String QUEUE_SUBMIT_STRATEGY_PROPERTY = "submit_strategy";
+    public static final String QUEUE_PROCESSING_STRATEGY_PROPERTY = "processing_strategy";
+    public static final String QUEUE_COLUMN_FAMILY_NAME = "queue";
+    public static final String QUEUE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+
 
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 

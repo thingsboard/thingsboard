@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
     public void testSaveRuleChainWithInvalidTenant() {
         RuleChain ruleChain = new RuleChain();
         ruleChain.setName("My RuleChain");
-        ruleChain.setTenantId(new TenantId(Uuids.timeBased()));
+        ruleChain.setTenantId(TenantId.fromUUID(Uuids.timeBased()));
         ruleChainService.saveRuleChain(ruleChain);
     }
 
@@ -495,7 +495,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
     @Test
     public void testFindEdgeRuleChainsByTenantIdAndName() {
         Edge edge = constructEdge(tenantId, "My edge", "default");
-        Edge savedEdge = edgeService.saveEdge(edge, true);
+        Edge savedEdge = edgeService.saveEdge(edge);
 
         String name1 = "Edge RuleChain name 1";
         List<RuleChain> ruleChainsName1 = new ArrayList<>();

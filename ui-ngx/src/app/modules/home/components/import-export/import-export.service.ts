@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -44,7 +44,16 @@ import {
   EntityAliasesDialogData
 } from '@home/components/alias/entity-aliases-dialog.component';
 import { ItemBufferService, WidgetItem } from '@core/services/item-buffer.service';
-import { FileType, ImportWidgetResult, JSON_TYPE, WidgetsBundleItem, ZIP_TYPE, BulkImportRequest, BulkImportResult } from './import-export.models';
+import {
+  BulkImportRequest,
+  BulkImportResult,
+  FileType,
+  ImportWidgetResult,
+  JSON_TYPE,
+  TEXT_TYPE,
+  WidgetsBundleItem,
+  ZIP_TYPE
+} from './import-export.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetService } from '@core/http/widget.service';
@@ -62,6 +71,7 @@ import { TenantProfileService } from '@core/http/tenant-profile.service';
 import { DeviceService } from '@core/http/device.service';
 import { AssetService } from '@core/http/asset.service';
 import { EdgeService } from '@core/http/edge.service';
+import { RuleNode } from '@shared/models/rule-node.models';
 
 // @dynamic
 @Injectable()
@@ -423,7 +433,7 @@ export class ImportExportService {
 
   public importRuleChain(expectedRuleChainType: RuleChainType): Observable<RuleChainImport> {
     return this.openImportDialog('rulechain.import', 'rulechain.rulechain-file').pipe(
-      map((ruleChainImport: RuleChainImport) => {
+      mergeMap((ruleChainImport: RuleChainImport) => {
         if (!this.validateImportedRuleChain(ruleChainImport)) {
           this.store.dispatch(new ActionNotificationShow(
             {message: this.translate.instant('rulechain.invalid-rulechain-file-error'),
@@ -435,13 +445,60 @@ export class ImportExportService {
               type: 'error'}));
           throw new Error('Invalid rule chain type');
         } else {
-          return ruleChainImport;
+          return this.processOldRuleChainConnections(ruleChainImport);
         }
       }),
       catchError((err) => {
         return of(null);
       })
     );
+  }
+
+  private processOldRuleChainConnections(ruleChainImport: RuleChainImport): Observable<RuleChainImport> {
+    const metadata = ruleChainImport.metadata;
+    if ((metadata as any).ruleChainConnections) {
+      const ruleChainNameResolveObservables: Observable<void>[] = [];
+      for (const ruleChainConnection of (metadata as any).ruleChainConnections) {
+        if (ruleChainConnection.targetRuleChainId && ruleChainConnection.targetRuleChainId.id) {
+          const ruleChainNode: RuleNode = {
+            name: '',
+            debugMode: false,
+            type: 'org.thingsboard.rule.engine.flow.TbRuleChainInputNode',
+            configuration: {
+              ruleChainId: ruleChainConnection.targetRuleChainId.id
+            },
+            additionalInfo: ruleChainConnection.additionalInfo
+          };
+          ruleChainNameResolveObservables.push(this.ruleChainService.getRuleChain(ruleChainNode.configuration.ruleChainId,
+            {ignoreErrors: true, ignoreLoading: true}).pipe(
+              catchError(err => {
+                return of({name: 'Rule Chain Input'} as RuleChain);
+              }),
+              map((ruleChain => {
+                ruleChainNode.name = ruleChain.name;
+                return null;
+              })
+            )
+          ));
+          const toIndex = metadata.nodes.length;
+          metadata.nodes.push(ruleChainNode);
+          metadata.connections.push({
+            toIndex,
+            fromIndex: ruleChainConnection.fromIndex,
+            type: ruleChainConnection.type
+          });
+        }
+      }
+      if (ruleChainNameResolveObservables.length) {
+        return forkJoin(ruleChainNameResolveObservables).pipe(
+           map(() => ruleChainImport)
+        );
+      } else {
+        return of(ruleChainImport);
+      }
+    } else {
+      return of(ruleChainImport);
+    }
   }
 
   public exportDeviceProfile(deviceProfileId: string) {
@@ -504,6 +561,14 @@ export class ImportExportService {
         return of(null);
       })
     );
+  }
+
+  public exportText(data: string | Array<string>, filename: string) {
+    let content = data;
+    if (Array.isArray(data)) {
+      content = data.join('\n');
+    }
+    this.downloadFile(content, filename, TEXT_TYPE);
   }
 
   public exportJSZip(data: object, filename: string) {

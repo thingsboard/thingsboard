@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
 ///
 
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { DataKey } from '@shared/models/widget.models';
+import { DataKey, JsonSettingsSchema } from '@shared/models/widget.models';
 import { Observable } from 'rxjs';
 
 export interface DataKeysCallbacks {
-  generateDataKey: (chip: any, type: DataKeyType) => DataKey;
+  generateDataKey: (chip: any, type: DataKeyType, datakeySettingsSchema: JsonSettingsSchema) => DataKey;
   fetchEntityKeys: (entityAliasId: string, types: Array<DataKeyType>) => Observable<Array<DataKey>>;
 }

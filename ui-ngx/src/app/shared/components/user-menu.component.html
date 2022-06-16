@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2021 The Thingsboard Authors
+    Copyright © 2016-2022 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -31,6 +31,10 @@
       <button mat-menu-item (click)="openProfile()">
         <mat-icon class="material-icons">account_circle</mat-icon>
         <span translate>home.profile</span>
+      </button>
+      <button mat-menu-item (click)="openSecurity()">
+        <mat-icon class="material-icons">lock</mat-icon>
+        <span translate>security.security</span>
       </button>
       <button mat-menu-item (click)="logout()">
         <mat-icon class="material-icons">exit_to_app</mat-icon>

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         property = "type")
 @JsonSubTypes({
         @JsonSubTypes.Type(value = AwsSnsSmsProviderConfiguration.class, name = "AWS_SNS"),
-        @JsonSubTypes.Type(value = TwilioSmsProviderConfiguration.class, name = "TWILIO")})
+        @JsonSubTypes.Type(value = TwilioSmsProviderConfiguration.class, name = "TWILIO"),
+        @JsonSubTypes.Type(value = SmppSmsProviderConfiguration.class, name = "SMPP")
+})
 public interface SmsProviderConfiguration {
 
     @JsonIgnore

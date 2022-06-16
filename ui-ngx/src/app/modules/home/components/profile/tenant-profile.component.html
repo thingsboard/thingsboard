@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2021 The Thingsboard Authors
+    Copyright © 2016-2022 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,6 +16,12 @@
 
 -->
 <div class="tb-details-buttons" fxLayout.xs="column" *ngIf="!standalone">
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'open')"
+          [fxShow]="!isEdit && !isDetailsPage">
+    {{'common.open-details-page' | translate }}
+  </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'setDefault')"
@@ -62,10 +68,37 @@
           <div class="tb-hint">{{'tenant.isolated-tb-rule-engine-details' | translate}}</div>
         </mat-checkbox>
       </div>
-      <tb-tenant-profile-data
-        formControlName="profileData"
-        required>
-      </tb-tenant-profile-data>
+      <div class="expansion-panel-block">
+        <mat-accordion formGroupName="profileData" multi>
+          <mat-expansion-panel [expanded]="true" *ngIf="entityForm.get('isolatedTbRuleEngine').value">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                {{'tenant-profile.queues-with-count' | translate:
+                  {count: entityForm.get('profileData').get('queueConfiguration').value ?
+                      entityForm.get('profileData').get('queueConfiguration').value.length : 0} }}
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <ng-template matExpansionPanelContent>
+              <tb-tenant-profile-queues
+                formControlName="queueConfiguration"
+              ></tb-tenant-profile-queues>
+            </ng-template>
+          </mat-expansion-panel>
+          <mat-expansion-panel [expanded]="true">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <div translate>tenant-profile.profile-configuration</div>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <ng-template matExpansionPanelContent>
+              <tb-tenant-profile-data
+                formControlName="configuration"
+                required>
+              </tb-tenant-profile-data>
+            </ng-template>
+          </mat-expansion-panel>
+        </mat-accordion>
+      </div>
       <mat-form-field class="mat-block">
         <mat-label translate>tenant-profile.description</mat-label>
         <textarea matInput formControlName="description" rows="2"></textarea>

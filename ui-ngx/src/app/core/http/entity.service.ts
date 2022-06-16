@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -83,15 +83,11 @@ import {
 import { alarmFields } from '@shared/models/alarm.models';
 import { OtaPackageService } from '@core/http/ota-package.service';
 import { EdgeService } from '@core/http/edge.service';
-import {
-  Edge,
-  EdgeEvent,
-  EdgeEventType,
-  bodyContentEdgeEventActionTypes
-} from '@shared/models/edge.models';
+import { bodyContentEdgeEventActionTypes, Edge, EdgeEvent, EdgeEventType } from '@shared/models/edge.models';
 import { RuleChainMetaData, RuleChainType } from '@shared/models/rule-chain.models';
 import { WidgetService } from '@core/http/widget.service';
 import { DeviceProfileService } from '@core/http/device-profile.service';
+import { QueueService } from '@core/http/queue.service';
 
 @Injectable({
   providedIn: 'root'
@@ -115,7 +111,8 @@ export class EntityService {
     private otaPackageService: OtaPackageService,
     private widgetService: WidgetService,
     private deviceProfileService: DeviceProfileService,
-    private utils: UtilsService
+    private utils: UtilsService,
+    private queueService: QueueService
   ) { }
 
   private getEntityObservable(entityType: EntityType, entityId: string,
@@ -155,6 +152,9 @@ export class EntityService {
         break;
       case EntityType.OTA_PACKAGE:
         observable = this.otaPackageService.getOtaPackageInfo(entityId, config);
+        break;
+      case EntityType.QUEUE:
+        observable = this.queueService.getQueueById(entityId, config);
         break;
     }
     return observable;
@@ -1050,8 +1050,6 @@ export class EntityService {
           additionalInfo: {
             description: edgeEntityData.description
           },
-          edgeLicenseKey: edgeEntityData.edgeLicenseKey,
-          cloudEndpoint: edgeEntityData.cloudEndpoint !== '' ? edgeEntityData.cloudEndpoint : window.location.origin,
           routingKey: edgeEntityData.routingKey !== '' ? edgeEntityData.routingKey : guid(),
           secret: edgeEntityData.secret !== '' ? edgeEntityData.secret : generateSecret(20)
         };
@@ -1099,8 +1097,6 @@ export class EntityService {
         const edgeEntityData: EdgeImportEntityData = entityData as EdgeImportEntityData;
         if (result.label !== edgeEntityData.label ||
           result.type !== edgeEntityData.type ||
-          (edgeEntityData.cloudEndpoint !== '' && result.cloudEndpoint !== edgeEntityData.cloudEndpoint) ||
-          (edgeEntityData.edgeLicenseKey !== '' && result.edgeLicenseKey !== edgeEntityData.edgeLicenseKey) ||
           (edgeEntityData.routingKey !== '' && result.routingKey !== edgeEntityData.routingKey) ||
           (edgeEntityData.secret !== '' && result.secret !== edgeEntityData.secret) ||
           additionalInfo.description !== edgeEntityData.description) {
@@ -1108,12 +1104,6 @@ export class EntityService {
           result.type = edgeEntityData.type;
           result.additionalInfo = additionalInfo;
           result.additionalInfo.description = edgeEntityData.description;
-          if (edgeEntityData.cloudEndpoint !== '') {
-            result.cloudEndpoint = edgeEntityData.cloudEndpoint;
-          }
-          if (edgeEntityData.edgeLicenseKey !== '') {
-            result.edgeLicenseKey = edgeEntityData.edgeLicenseKey;
-          }
           if (edgeEntityData.routingKey !== '') {
             result.routingKey = edgeEntityData.routingKey;
           }
@@ -1329,7 +1319,8 @@ export class EntityService {
         pageLink = deepClone(singleEntityDataPageLink);
       } else {
         nameFilter = subscriptionInfo.entityNamePrefix;
-        pageLink = deepClone(defaultEntityDataPageLink);
+        const pageSize = isDefinedAndNotNull(subscriptionInfo.pageSize) && subscriptionInfo.pageSize > 0 ? subscriptionInfo.pageSize : 1024;
+        pageLink = createDefaultEntityDataPageLink(pageSize);
       }
       datasource.entityFilter = {
         type: AliasFilterType.entityName,
@@ -1343,7 +1334,8 @@ export class EntityService {
         entityType: subscriptionInfo.entityType,
         entityList: subscriptionInfo.entityIds
       };
-      datasource.pageLink = deepClone(defaultEntityDataPageLink);
+      const pageSize = isDefinedAndNotNull(subscriptionInfo.pageSize) && subscriptionInfo.pageSize > 0 ? subscriptionInfo.pageSize : 1024;
+      datasource.pageLink = createDefaultEntityDataPageLink(pageSize);
     }
   }
 

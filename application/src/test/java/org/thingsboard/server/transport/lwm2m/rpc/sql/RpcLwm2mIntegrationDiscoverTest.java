@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,8 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectInstanceId_0;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resourceId_2;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_0;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_2;
 
 
 public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegrationTest {
@@ -52,8 +52,8 @@ public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegration
         Set actualObjects = ConcurrentHashMap.newKeySet();
         Set actualInstances = ConcurrentHashMap.newKeySet();
         rpcActualValue.forEach(node -> {
-            if (!node.get("url").asText().equals("/")) {
-                LwM2mPath path = new LwM2mPath(node.get("url").asText());
+            if (!node.get("uriReference").asText().equals("/")) {
+                LwM2mPath path = new LwM2mPath(node.get("uriReference").asText());
                 actualObjects.add("/" + path.getObjectId());
                 if (path.isObjectInstance()) {
                     actualInstances.add("/" + path.getObjectId() + "/" + path.getObjectInstanceId());
@@ -124,7 +124,7 @@ public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegration
         String expectedInstance = (String) expectedInstances.stream().findFirst().get();
         String expectedObjectInstanceId = pathIdVerToObjectId(expectedInstance);
         LwM2mPath expectedPath = new LwM2mPath(expectedObjectInstanceId);
-        int expectedResource = client.getClient().getObjectTree().getObjectEnablers().get(expectedPath.getObjectId()).getObjectModel().resources.entrySet().stream().findAny().get().getKey();
+        int expectedResource = lwM2MTestClient.getLeshanClient().getObjectTree().getObjectEnablers().get(expectedPath.getObjectId()).getObjectModel().resources.entrySet().stream().findAny().get().getKey();
         String expected = expectedInstance + "/" + expectedResource;
         String actualResult = sendDiscover(expected);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
@@ -141,7 +141,7 @@ public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegration
      */
     @Test
     public void testDiscoverObjectInstanceAbsentInObject_Return_NOT_FOUND() throws Exception {
-        String expected = objectIdVer_2 + "/" + objectInstanceId_0;
+        String expected = objectIdVer_2 + "/" + OBJECT_INSTANCE_ID_0;
         String actualResult = sendDiscover(expected);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.NOT_FOUND.getName(), rpcActualResult.get("result").asText());
@@ -152,7 +152,7 @@ public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegration
      */
     @Test
     public void testDiscoverResourceAbsentInObject_Return_NOT_FOUND() throws Exception {
-         String expected = objectIdVer_2 + "/" + objectInstanceId_0 + "/" + resourceId_2;
+         String expected = objectIdVer_2 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_2;
         String actualResult = sendDiscover(expected);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.NOT_FOUND.getName(), rpcActualResult.get("result").asText());

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1364,6 +1364,11 @@ mat-label {
         &::after {
           transition: none;
         }
+        &.dragging {
+          .mat-chip-ripple {
+            display: none !important;
+          }
+        }
         &.dropping {
           //border: dashed 2px;
           //opacity: .5;
@@ -1438,5 +1443,26 @@ mat-label {
 
   .tb-toast-panel {
     pointer-events: none !important;
+  }
+
+  .tb-draggable {
+    &.cdk-drag-animating {
+      transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+    }
+  }
+
+  .tb-drop-list {
+    &.cdk-drop-list-dragging {
+      .tb-draggable {
+        transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+      }
+    }
+  }
+
+  .tb-drag-handle {
+    cursor: move;
+    mat-icon {
+      pointer-events: none;
+    }
   }
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -79,6 +79,7 @@ import { EnumToArrayPipe } from '@shared/pipe/enum-to-array.pipe';
 import { ClipboardModule } from 'ngx-clipboard';
 import { ValueInputComponent } from '@shared/components/value-input.component';
 import { MarkdownModule, MarkedOptions } from 'ngx-markdown';
+import { MarkdownEditorComponent } from '@shared/components/markdown-editor.component';
 import { FullscreenDirective } from '@shared/components/fullscreen.directive';
 import { HighlightPipe } from '@shared/pipe/highlight.pipe';
 import { DashboardAutocompleteComponent } from '@shared/components/dashboard-autocomplete.component';
@@ -94,6 +95,7 @@ import { SocialSharePanelComponent } from '@shared/components/socialshare-panel.
 import { RelationTypeAutocompleteComponent } from '@shared/components/relation/relation-type-autocomplete.component';
 import { EntityListSelectComponent } from '@shared/components/entity/entity-list-select.component';
 import { JsonObjectEditComponent } from '@shared/components/json-object-edit.component';
+import { JsonObjectViewComponent, } from '@shared/components/json-object-view.component';
 import { FooterFabButtonsComponent } from '@shared/components/footer-fab-buttons.component';
 import { CircularProgressDirective } from '@shared/components/circular-progress.directive';
 import {
@@ -135,7 +137,7 @@ import { JsonObjectEditDialogComponent } from '@shared/components/dialog/json-ob
 import { HistorySelectorComponent } from '@shared/components/time/history-selector/history-selector.component';
 import { EntityGatewaySelectComponent } from '@shared/components/entity/entity-gateway-select.component';
 import { DndModule } from 'ngx-drag-drop';
-import { QueueTypeListComponent } from '@shared/components/queue/queue-type-list.component';
+import { QueueAutocompleteComponent } from '@shared/components/queue/queue-autocomplete.component';
 import { ContactComponent } from '@shared/components/contact.component';
 import { TimezoneSelectComponent } from '@shared/components/time/timezone-select.component';
 import { FileSizePipe } from '@shared/pipe/file-size.pipe';
@@ -149,7 +151,7 @@ import { TogglePasswordComponent } from '@shared/components/button/toggle-passwo
 import { HelpPopupComponent } from '@shared/components/help-popup.component';
 import { TbPopoverComponent, TbPopoverDirective } from '@shared/components/popover.component';
 import { TbStringTemplateOutletDirective } from '@shared/components/directives/sring-template-outlet.directive';
-import { TbComponentOutletDirective} from '@shared/components/directives/component-outlet.directive';
+import { TbComponentOutletDirective } from '@shared/components/directives/component-outlet.directive';
 import { HelpMarkdownComponent } from '@shared/components/help-markdown.component';
 import { MarkedOptionsService } from '@shared/components/marked-options.service';
 import { TbPopoverService } from '@shared/components/popover.service';
@@ -157,6 +159,11 @@ import { HELP_MARKDOWN_COMPONENT_TOKEN, SHARED_MODULE_TOKEN } from '@shared/comp
 import { TbMarkdownComponent } from '@shared/components/markdown.component';
 import { ProtobufContentComponent } from '@shared/components/protobuf-content.component';
 import { CssComponent } from '@shared/components/css.component';
+import { HtmlComponent } from '@shared/components/html.component';
+import { SafePipe } from '@shared/pipe/safe.pipe';
+import { DragDropModule } from '@angular/cdk/drag-drop';
+import { MultipleImageInputComponent } from '@shared/components/multiple-image-input.component';
+import { PhoneInputComponent } from '@shared/components/phone-input.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -171,6 +178,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TruncatePipe,
     TbJsonPipe,
     FileSizePipe,
+    SafePipe,
     {
       provide: FlowInjectionToken,
       useValue: Flow
@@ -228,13 +236,15 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     EntityKeysListComponent,
     EntityListSelectComponent,
     EntityTypeListComponent,
-    QueueTypeListComponent,
+    QueueAutocompleteComponent,
     RelationTypeAutocompleteComponent,
     SocialSharePanelComponent,
     JsonObjectEditComponent,
+    JsonObjectViewComponent,
     JsonContentComponent,
     JsFuncComponent,
     CssComponent,
+    HtmlComponent,
     FabTriggerDirective,
     FabActionsDirective,
     FabToolbarComponent,
@@ -249,11 +259,13 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     NodeScriptTestDialogComponent,
     JsonFormComponent,
     ImageInputComponent,
+    MultipleImageInputComponent,
     FileInputComponent,
     MessageTypeAutocompleteComponent,
     KeyValMapComponent,
     NavTreeComponent,
     LedLightComponent,
+    MarkdownEditorComponent,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
@@ -261,6 +273,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TruncatePipe,
     TbJsonPipe,
     FileSizePipe,
+    SafePipe,
     SelectableColumnsPipe,
     KeyboardShortcutPipe,
     TbJsonToStringDirective,
@@ -272,7 +285,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     WidgetsBundleSearchComponent,
     CopyButtonComponent,
     TogglePasswordComponent,
-    ProtobufContentComponent
+    ProtobufContentComponent,
+    PhoneInputComponent
   ],
   imports: [
     CommonModule,
@@ -310,6 +324,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     MatAutocompleteModule,
     MatChipsModule,
     MatListModule,
+    DragDropModule,
     GridsterModule,
     ClipboardModule,
     FlexLayoutModule.withConfig({addFlexToParent: false}),
@@ -374,13 +389,15 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     EntityKeysListComponent,
     EntityListSelectComponent,
     EntityTypeListComponent,
-    QueueTypeListComponent,
+    QueueAutocompleteComponent,
     RelationTypeAutocompleteComponent,
     SocialSharePanelComponent,
     JsonObjectEditComponent,
+    JsonObjectViewComponent,
     JsonContentComponent,
     JsFuncComponent,
     CssComponent,
+    HtmlComponent,
     FabTriggerDirective,
     FabActionsDirective,
     FabToolbarComponent,
@@ -418,6 +435,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     MatAutocompleteModule,
     MatChipsModule,
     MatListModule,
+    DragDropModule,
     GridsterModule,
     ClipboardModule,
     FlexLayoutModule,
@@ -441,11 +459,13 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     NodeScriptTestDialogComponent,
     JsonFormComponent,
     ImageInputComponent,
+    MultipleImageInputComponent,
     FileInputComponent,
     MessageTypeAutocompleteComponent,
     KeyValMapComponent,
     NavTreeComponent,
     LedLightComponent,
+    MarkdownEditorComponent,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
@@ -454,7 +474,9 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TbJsonPipe,
     KeyboardShortcutPipe,
     FileSizePipe,
+    SafePipe,
     SelectableColumnsPipe,
+    RouterModule,
     TranslateModule,
     JsonObjectEditDialogComponent,
     HistorySelectorComponent,
@@ -464,7 +486,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     WidgetsBundleSearchComponent,
     CopyButtonComponent,
     TogglePasswordComponent,
-    ProtobufContentComponent
+    ProtobufContentComponent,
+    PhoneInputComponent
   ]
 })
 export class SharedModule { }

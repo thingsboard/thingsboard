@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,23 +17,23 @@
 
 import L from 'leaflet';
 import LeafletMap from '../leaflet-map';
-import { DEFAULT_ZOOM_LEVEL, UnitedMapSettings } from '../map-models';
+import { DEFAULT_ZOOM_LEVEL, WidgetUnitedMapSettings } from '../map-models';
 import { WidgetContext } from '@home/models/widget-component.models';
 
 export class TencentMap extends LeafletMap {
-  constructor(ctx: WidgetContext, $container, options: UnitedMapSettings) {
+  constructor(ctx: WidgetContext, $container, options: WidgetUnitedMapSettings) {
     super(ctx, $container, options);
     const txUrl = 'http://rt{s}.map.gtimg.com/realtimerender?z={z}&x={x}&y={y}&type=vector&style=0';
     const map = L.map($container, {
+      zoomControl: !this.options.disableZoomControl,
       tap: L.Browser.safari && L.Browser.mobile
-    }).setView(options?.defaultCenterPosition, options?.defaultZoomLevel || DEFAULT_ZOOM_LEVEL);
+    }).setView(options?.parsedDefaultCenterPosition, options?.defaultZoomLevel || DEFAULT_ZOOM_LEVEL);
     const txLayer = L.tileLayer(txUrl, {
       subdomains: '0123',
       tms: true,
       attribution: '&copy;2021 Tencent - GS(2020)2236号- Data&copy; NavInfo'
     }).addTo(map);
     txLayer.addTo(map);
-    super.initSettings(options);
     super.setMap(map);
   }
 }

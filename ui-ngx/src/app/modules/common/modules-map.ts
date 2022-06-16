@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -135,10 +135,11 @@ import * as EntitySelectComponent from '@shared/components/entity/entity-select.
 import * as EntityKeysListComponent from '@shared/components/entity/entity-keys-list.component';
 import * as EntityListSelectComponent from '@shared/components/entity/entity-list-select.component';
 import * as EntityTypeListComponent from '@shared/components/entity/entity-type-list.component';
-import * as QueueTypeListComponent from '@shared/components/queue/queue-type-list.component';
+import * as QueueAutocompleteComponent from '@shared/components/queue/queue-autocomplete.component';
 import * as RelationTypeAutocompleteComponent from '@shared/components/relation/relation-type-autocomplete.component';
 import * as SocialSharePanelComponent from '@shared/components/socialshare-panel.component';
 import * as JsonObjectEditComponent from '@shared/components/json-object-edit.component';
+import * as JsonObjectViewComponent from '@shared/components/json-object-view.component';
 import * as JsonContentComponent from '@shared/components/json-content.component';
 import * as JsFuncComponent from '@shared/components/js-func.component';
 import * as FabToolbarComponent from '@shared/components/fab-toolbar.component';
@@ -156,6 +157,7 @@ import * as ImageInputComponent from '@shared/components/image-input.component';
 import * as FileInputComponent from '@shared/components/file-input.component';
 import * as MessageTypeAutocompleteComponent from '@shared/components/message-type-autocomplete.component';
 import * as KeyValMapComponent from '@shared/components/kv-map.component';
+import * as MultipleImageInputComponent from '@shared/components/multiple-image-input.component';
 import * as NavTreeComponent from '@shared/components/nav-tree.component';
 import * as LedLightComponent from '@shared/components/led-light.component';
 import * as TbJsonToStringDirective from '@shared/components/directives/tb-json-to-string.directive';
@@ -286,6 +288,8 @@ import * as DisplayWidgetTypesPanelComponent from '@home/components/dashboard-pa
 import * as AlarmDurationPredicateValueComponent from '@home/components/profile/alarm/alarm-duration-predicate-value.component';
 import * as DashboardImageDialogComponent from '@home/components/dashboard-page/dashboard-image-dialog.component';
 import * as WidgetContainerComponent from '@home/components/widget/widget-container.component';
+import * as TenantProfileQueuesComponent from '@home/components/profile/queue/tenant-profile-queues.component';
+import * as QueueFormComponent from '@home/components/queue/queue-form.component';
 
 import { IModulesMap } from '@modules/common/modules-map.models';
 
@@ -416,10 +420,11 @@ class ModulesMap implements IModulesMap {
     '@shared/components/entity/entity-keys-list.component': EntityKeysListComponent,
     '@shared/components/entity/entity-list-select.component': EntityListSelectComponent,
     '@shared/components/entity/entity-type-list.component': EntityTypeListComponent,
-    '@shared/components/queue/queue-type-list.component': QueueTypeListComponent,
+    '@shared/components/queue/queue-autocomplete.component': QueueAutocompleteComponent,
     '@shared/components/relation/relation-type-autocomplete.component': RelationTypeAutocompleteComponent,
     '@shared/components/socialshare-panel.component': SocialSharePanelComponent,
     '@shared/components/json-object-edit.component': JsonObjectEditComponent,
+    '@shared/components/json-object-view.component': JsonObjectViewComponent,
     '@shared/components/json-content.component': JsonContentComponent,
     '@shared/components/js-func.component': JsFuncComponent,
     '@shared/components/fab-toolbar.component': FabToolbarComponent,
@@ -437,6 +442,7 @@ class ModulesMap implements IModulesMap {
     '@shared/components/file-input.component': FileInputComponent,
     '@shared/components/message-type-autocomplete.component': MessageTypeAutocompleteComponent,
     '@shared/components/kv-map.component': KeyValMapComponent,
+    '@shared/components/multiple-image-input.component': MultipleImageInputComponent,
     '@shared/components/nav-tree.component': NavTreeComponent,
     '@shared/components/led-light.component': LedLightComponent,
     '@shared/components/directives/tb-json-to-string.directive': TbJsonToStringDirective,
@@ -568,6 +574,8 @@ class ModulesMap implements IModulesMap {
     '@home/components/profile/alarm/alarm-duration-predicate-value.component': AlarmDurationPredicateValueComponent,
     '@home/components/dashboard-page/dashboard-image-dialog.component': DashboardImageDialogComponent,
     '@home/components/widget/widget-container.component': WidgetContainerComponent,
+    '@home/components/profile/queue/tenant-profile-queues.component': TenantProfileQueuesComponent,
+    '@home/components/queue/queue-form.component': QueueFormComponent
   };
 
   init() {

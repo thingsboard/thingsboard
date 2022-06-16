@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -221,6 +221,7 @@ $tb-dark-theme: get-tb-dark-theme(
 
 @mixin tb-components-theme($theme) {
   $primary: map-get($theme, primary);
+  $warn: map-get($theme, warn);
 
   mat-toolbar{
     &.mat-hue-3 {
@@ -232,6 +233,12 @@ $tb-dark-theme: get-tb-dark-theme(
 
   div.tb-dashboard-page.mobile-app {
     @include mat-fab-toolbar-inverse-theme($tb-theme);
+  }
+
+  .same-color.mat-form-field-invalid {
+    .mat-form-field-suffix {
+      color: mat.get-color-from-palette($warn, text);
+    }
   }
 }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
@@ -48,6 +47,7 @@ import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
 import javax.annotation.PostConstruct;
+import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import java.io.ByteArrayInputStream;
 import java.util.HashMap;
@@ -95,13 +95,13 @@ public class DefaultMailService implements MailService {
 
     @Override
     public void updateMailConfiguration() {
-        AdminSettings settings = adminSettingsService.findAdminSettingsByKey(new TenantId(EntityId.NULL_UUID), "mail");
+        AdminSettings settings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
         if (settings != null) {
             JsonNode jsonConfig = settings.getJsonValue();
             mailSender = createMailSender(jsonConfig);
             mailFrom = jsonConfig.get("mailFrom").asText();
         } else {
-            throw new IncorrectParameterException("Failed to date mail configuration. Settings not found!");
+            throw new IncorrectParameterException("Failed to update mail configuration. Settings not found!");
         }
     }
 
@@ -312,6 +312,18 @@ public class DefaultMailService implements MailService {
     }
 
     @Override
+    public void sendTwoFaVerificationEmail(String email, String verificationCode, int expirationTimeSeconds) throws ThingsboardException {
+        String subject = messages.getMessage("2fa.verification.code.subject", null, Locale.US);
+        String message = mergeTemplateIntoString("2fa.verification.code.ftl", Map.of(
+                TARGET_EMAIL, email,
+                "code", verificationCode,
+                "expirationTimeSeconds", expirationTimeSeconds
+        ));
+
+        sendMail(mailSender, mailFrom, email, subject, message);
+    }
+
+    @Override
     public void sendApiFeatureStateEmail(ApiFeature apiFeature, ApiUsageStateValue stateValue, String email, ApiUsageStateMailMessage msg) throws ThingsboardException {
         String subject = messages.getMessage("api.usage.state", null, Locale.US);
 
@@ -336,6 +348,11 @@ public class DefaultMailService implements MailService {
                 break;
         }
         sendMail(mailSender, mailFrom, email, subject, message);
+    }
+
+    @Override
+    public void testConnection(TenantId tenantId) throws Exception {
+        mailSender.testConnection();
     }
 
     private String toEnabledValueLabel(ApiFeature apiFeature) {

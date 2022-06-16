@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2021 The Thingsboard Authors
+    Copyright © 2016-2022 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,6 +16,12 @@
 
 -->
 <div class="tb-details-buttons" fxLayout.xs="column">
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'open')"
+          [fxShow]="!isEdit && !isDetailsPage">
+    {{'common.open-details-page' | translate }}
+  </button>
   <button mat-raised-button color="primary" fxFlex.xs
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'downloadResource')"
@@ -68,7 +74,7 @@
         [contentConvertFunction]="convertToBase64File"
         [accept]="getAcceptType()"
         [multipleFile]="entityForm.get('resourceType').value === resourceType.LWM2M_MODEL"
-        dropLabel="{{'resource.drop-file' | translate}}"
+        dropLabel="{{'resource.drop-resource-file-or' | translate}}"
         [existingFileName]="entityForm.get('fileName')?.value"
         (fileNameChanged)="entityForm?.get('fileName').patchValue($event)">
       </tb-file-input>

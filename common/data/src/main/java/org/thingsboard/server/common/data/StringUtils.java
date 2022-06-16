@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package org.thingsboard.server.common.data;
+
+import static org.apache.commons.lang3.StringUtils.repeat;
 
 public class StringUtils {
 
@@ -32,4 +34,20 @@ public class StringUtils {
     public static boolean isNotBlank(String source) {
         return source != null && !source.isEmpty() && !source.trim().isEmpty();
     }
+
+    public static String obfuscate(String input, int seenMargin, char obfuscationChar,
+                                   int startIndexInclusive, int endIndexExclusive) {
+
+        String part = input.substring(startIndexInclusive, endIndexExclusive);
+        String obfuscatedPart;
+        if (part.length() <= seenMargin * 2) {
+            obfuscatedPart = repeat(obfuscationChar, part.length());
+        } else {
+            obfuscatedPart = part.substring(0, seenMargin)
+                    + repeat(obfuscationChar, part.length() - seenMargin * 2)
+                    + part.substring(part.length() - seenMargin);
+        }
+        return input.substring(0, startIndexInclusive) + obfuscatedPart + input.substring(endIndexExclusive);
+    }
+
 }

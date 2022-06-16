@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.edge;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -23,9 +24,13 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 
 public interface EdgeEventService {
 
-    EdgeEvent save(EdgeEvent edgeEvent);
+    ListenableFuture<Void> saveAsync(EdgeEvent edgeEvent);
 
     PageData<EdgeEvent> findEdgeEvents(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink, boolean withTsUpdate);
 
+    /**
+     * Executes stored procedure to cleanup old edge events.
+     * @param ttl the ttl for edge events in seconds
+     */
     void cleanupEvents(long ttl);
 }

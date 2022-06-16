@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -108,7 +108,7 @@ export class MenuService {
         name: 'admin.system-settings',
         type: 'toggle',
         path: '/settings',
-        height: '240px',
+        height: '320px',
         icon: 'settings',
         pages: [
           {
@@ -148,11 +148,26 @@ export class MenuService {
           },
           {
             id: guid(),
+            name: 'admin.2fa.2fa',
+            type: 'link',
+            path: '/settings/2fa',
+            icon: 'mdi:two-factor-authentication',
+            isMdiIcon: true
+          },
+          {
+            id: guid(),
             name: 'resource.resources-library',
             type: 'link',
             path: '/settings/resources-library',
             icon: 'folder'
-          }
+          },
+          {
+            id: guid(),
+            name: 'admin.queues',
+            type: 'link',
+            path: '/settings/queues',
+            icon: 'swap_calls'
+          },
         ]
       }
     );
@@ -217,10 +232,21 @@ export class MenuService {
             path: '/settings/oauth2'
           },
           {
+            name: 'admin.2fa.2fa',
+            icon: 'mdi:two-factor-authentication',
+            isMdiIcon: true,
+            path: '/settings/2fa'
+          },
+          {
             name: 'resource.resources-library',
             icon: 'folder',
             path: '/settings/resources-library'
-          }
+          },
+          {
+            name: 'admin.queues',
+            icon: 'swap_calls',
+            path: '/settings/queues'
+          },
         ]
       }
     );
@@ -235,7 +261,6 @@ export class MenuService {
         name: 'home.home',
         type: 'link',
         path: '/home',
-        notExact: true,
         icon: 'home'
       },
       {
@@ -344,8 +369,7 @@ export class MenuService {
         name: 'api-usage.api-usage',
         type: 'link',
         path: '/usage',
-        icon: 'insert_chart',
-        notExact: true
+        icon: 'insert_chart'
       },
       {
         id: guid(),
@@ -517,7 +541,6 @@ export class MenuService {
         name: 'home.home',
         type: 'link',
         path: '/home',
-        notExact: true,
         icon: 'home'
       },
       {

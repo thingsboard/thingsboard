@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import org.eclipse.californium.scandium.dtls.CertificateMessage;
 import org.eclipse.californium.scandium.dtls.CertificateType;
 import org.eclipse.californium.scandium.dtls.CertificateVerificationResult;
 import org.eclipse.californium.scandium.dtls.ConnectionId;
-import org.eclipse.californium.scandium.dtls.DTLSSession;
 import org.eclipse.californium.scandium.dtls.HandshakeException;
 import org.eclipse.californium.scandium.dtls.HandshakeResultHandler;
 import org.eclipse.californium.scandium.dtls.x509.NewAdvancedCertificateVerifier;
@@ -34,13 +33,13 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
-import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.common.transport.util.SslUtil;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 
 import javax.security.auth.x500.X500Principal;
+import java.net.InetSocketAddress;
 import java.security.cert.CertPath;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateExpiredException;
@@ -48,7 +47,6 @@ import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -71,12 +69,12 @@ public class TbCoapDtlsCertificateVerifier implements NewAdvancedCertificateVeri
     }
 
     @Override
-    public List<CertificateType> getSupportedCertificateType() {
+    public List<CertificateType> getSupportedCertificateTypes() {
         return Collections.singletonList(CertificateType.X_509);
     }
 
     @Override
-    public CertificateVerificationResult verifyCertificate(ConnectionId cid, ServerNames serverName, Boolean clientUsage, boolean truncateCertificatePath, CertificateMessage message, DTLSSession session) {
+    public CertificateVerificationResult verifyCertificate(ConnectionId cid, ServerNames serverName, InetSocketAddress remotePeer, boolean clientUsage, boolean verifySubject, boolean truncateCertificatePath, CertificateMessage message) {
         try {
             CertPath certpath = message.getCertificateChain();
             X509Certificate[] chain = certpath.getCertificates().toArray(new X509Certificate[0]);
@@ -111,7 +109,7 @@ public class TbCoapDtlsCertificateVerifier implements NewAdvancedCertificateVeri
                     if (msg != null && strCert.equals(msg.getCredentials())) {
                         DeviceProfile deviceProfile = msg.getDeviceProfile();
                         if (msg.hasDeviceInfo() && deviceProfile != null) {
-                            tbCoapDtlsSessionInMemoryStorage.put(session.getSessionIdentifier().toString(), new TbCoapDtlsSessionInfo(msg, deviceProfile));
+                            tbCoapDtlsSessionInMemoryStorage.put(remotePeer, new TbCoapDtlsSessionInfo(msg, deviceProfile));
                         }
                         break;
                     }
@@ -120,8 +118,7 @@ public class TbCoapDtlsCertificateVerifier implements NewAdvancedCertificateVeri
                         CertificateExpiredException |
                         CertificateNotYetValidException e) {
                     log.error(e.getMessage(), e);
-                    AlertMessage alert = new AlertMessage(AlertMessage.AlertLevel.FATAL, AlertMessage.AlertDescription.BAD_CERTIFICATE,
-                            session.getPeer());
+                    AlertMessage alert = new AlertMessage(AlertMessage.AlertLevel.FATAL, AlertMessage.AlertDescription.BAD_CERTIFICATE);
                     throw new HandshakeException("Certificate chain could not be validated", alert);
                 }
             }
@@ -141,8 +138,8 @@ public class TbCoapDtlsCertificateVerifier implements NewAdvancedCertificateVeri
     public void setResultHandler(HandshakeResultHandler resultHandler) {
     }
 
-    public ConcurrentMap<String, TbCoapDtlsSessionInfo> getTbCoapDtlsSessionIdsMap() {
-        return tbCoapDtlsSessionInMemoryStorage.getDtlsSessionIdMap();
+    public ConcurrentMap<InetSocketAddress, TbCoapDtlsSessionInfo> getTbCoapDtlsSessionsMap() {
+        return tbCoapDtlsSessionInMemoryStorage.getDtlsSessionsMap();
     }
 
     public void evictTimeoutSessions() {

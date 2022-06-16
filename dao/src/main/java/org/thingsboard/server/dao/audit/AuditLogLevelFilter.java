@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,26 @@
  */
 package org.thingsboard.server.dao.audit;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
+@Component
+@ConditionalOnProperty(prefix = "audit-log", value = "enabled", havingValue = "true")
 public class AuditLogLevelFilter {
 
     private Map<EntityType, AuditLogLevelMask> entityTypeMask = new HashMap<>();
 
-    public AuditLogLevelFilter(Map<String, String> mask) {
+    public AuditLogLevelFilter(AuditLogLevelProperties auditLogLevelProperties) {
+        Map<String, String> mask = auditLogLevelProperties.getMask();
         entityTypeMask.clear();
         mask.forEach((entityTypeStr, logLevelMaskStr) -> {
-            EntityType entityType = EntityType.valueOf(entityTypeStr.toUpperCase());
+            EntityType entityType = EntityType.valueOf(entityTypeStr.toUpperCase(Locale.ENGLISH));
             AuditLogLevelMask logLevelMask = AuditLogLevelMask.valueOf(logLevelMaskStr.toUpperCase());
             entityTypeMask.put(entityType, logLevelMask);
         });

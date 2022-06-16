@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ public class LwM2MModelConfigServiceImpl implements LwM2MModelConfigService {
 
     private ConcurrentMap<String, LwM2MModelConfig> currentModelConfigs;
 
-    @AfterStartUp(order = Integer.MAX_VALUE - 1)
+    @AfterStartUp(order = AfterStartUp.BEFORE_TRANSPORT_SERVICE)
     private void init() {
         List<LwM2MModelConfig> models = modelStore.getAll();
         log.debug("Fetched model configs: {}", models);

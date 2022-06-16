@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,11 @@ import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.OtaPackage;
-import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
-import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
@@ -151,7 +151,7 @@ public class OtaPackageEntity extends BaseSqlEntity<OtaPackage> implements Searc
     public OtaPackage toData() {
         OtaPackage otaPackage = new OtaPackage(new OtaPackageId(id));
         otaPackage.setCreatedTime(createdTime);
-        otaPackage.setTenantId(new TenantId(tenantId));
+        otaPackage.setTenantId(TenantId.fromUUID(tenantId));
         if (deviceProfileId != null) {
             otaPackage.setDeviceProfileId(new DeviceProfileId(deviceProfileId));
         }

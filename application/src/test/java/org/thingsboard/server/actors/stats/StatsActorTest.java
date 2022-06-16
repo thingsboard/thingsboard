@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,11 +59,11 @@ class StatsActorTest {
     @Test
     void givenNonEmptyStatMessage_whenOnStatsPersistMsg_thenNoAction() {
         statsActor.onStatsPersistMsg(new StatsPersistMsg(0, 1, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID));
-        verify(eventService, times(1)).save(any(Event.class));
+        verify(eventService, times(1)).saveAsync(any(Event.class));
         statsActor.onStatsPersistMsg(new StatsPersistMsg(1, 0, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID));
-        verify(eventService, times(2)).save(any(Event.class));
+        verify(eventService, times(2)).saveAsync(any(Event.class));
         statsActor.onStatsPersistMsg(new StatsPersistMsg(1, 1, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID));
-        verify(eventService, times(3)).save(any(Event.class));
+        verify(eventService, times(3)).saveAsync(any(Event.class));
     }
 
 }

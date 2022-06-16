@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import { ActionNotificationHide, ActionNotificationShow } from '@core/notificati
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
-import { guid, isDefinedAndNotNull, isLiteralObject, isUndefined } from '@core/utils';
+import { guid, isDefinedAndNotNull, isObject, isUndefined } from '@core/utils';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { getAce } from '@shared/models/ace/ace.models';
 
@@ -259,7 +259,7 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
       if (this.contentValue && this.contentValue.length > 0) {
         try {
           data = JSON.parse(this.contentValue);
-          if (!isLiteralObject(data)) {
+          if (!isObject(data)) {
             throw new TypeError(`Value is not a valid JSON`);
           }
           this.objectValid = true;

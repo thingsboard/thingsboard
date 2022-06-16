@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2021 The Thingsboard Authors
+    Copyright © 2016-2022 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,6 +16,12 @@
 
 -->
 <div class="tb-details-buttons" fxLayout.xs="column" *ngIf="!standalone">
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'open')"
+          [fxShow]="!isEdit && !isDetailsPage">
+    {{'common.open-details-page' | translate }}
+  </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'export')"
@@ -67,18 +73,20 @@
         formControlName="defaultDashboardId">
         <div tb-hint>{{'device-profile.mobile-dashboard-hint' | translate}}</div>
       </tb-dashboard-autocomplete>
-      <tb-queue-type-list
+      <tb-queue-autocomplete
         [queueType]="serviceType"
-        formControlName="defaultQueueName">
-      </tb-queue-type-list>
+        formControlName="defaultQueueId">
+      </tb-queue-autocomplete>
       <tb-ota-package-autocomplete
         [useFullEntityId]="true"
+        [showDetailsPageLink]="true"
         [type]="otaUpdateType.FIRMWARE"
         [deviceProfileId]="deviceProfileId?.id"
         formControlName="firmwareId">
       </tb-ota-package-autocomplete>
       <tb-ota-package-autocomplete
         [useFullEntityId]="true"
+        [showDetailsPageLink]="true"
         [type]="otaUpdateType.SOFTWARE"
         [deviceProfileId]="deviceProfileId?.id"
         formControlName="softwareId">

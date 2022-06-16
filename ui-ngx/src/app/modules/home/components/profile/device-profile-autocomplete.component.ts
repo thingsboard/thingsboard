@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -47,11 +47,12 @@ import { DeviceProfileDialogComponent, DeviceProfileDialogData } from './device-
 import { MatAutocomplete } from '@angular/material/autocomplete';
 import { AddDeviceProfileDialogComponent, AddDeviceProfileDialogData } from './add-device-profile-dialog.component';
 import { emptyPageData } from '@shared/models/page/page-data';
+import { getEntityDetailsPageURL } from '@core/utils';
 
 @Component({
   selector: 'tb-device-profile-autocomplete',
   templateUrl: './device-profile-autocomplete.component.html',
-  styleUrls: [],
+  styleUrls: ['./device-profile-autocomplete.component.scss'],
   providers: [{
     provide: NG_VALUE_ACCESSOR,
     useExisting: forwardRef(() => DeviceProfileAutocompleteComponent),
@@ -78,6 +79,9 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
 
   @Input()
   addNewProfile = true;
+
+  @Input()
+  showDetailsPageLink = false;
 
   @Input()
   transportType: DeviceTransportType = null;
@@ -110,6 +114,7 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
   filteredDeviceProfiles: Observable<Array<DeviceProfileInfo>>;
 
   searchText = '';
+  deviceProfileURL: string;
 
   private dirty = false;
 
@@ -228,9 +233,9 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (this.disabled) {
-      this.selectDeviceProfileFormGroup.disable();
+      this.selectDeviceProfileFormGroup.disable({emitEvent: false});
     } else {
-      this.selectDeviceProfileFormGroup.enable();
+      this.selectDeviceProfileFormGroup.enable({emitEvent: false});
     }
   }
 
@@ -240,6 +245,7 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
       this.deviceProfileService.getDeviceProfileInfo(value.id).subscribe(
         (profile) => {
           this.modelValue = new DeviceProfileId(profile.id.id);
+          this.deviceProfileURL = getEntityDetailsPageURL(this.modelValue.id, this.modelValue.entityType);
           this.selectDeviceProfileFormGroup.get('deviceProfile').patchValue(profile, {emitEvent: false});
           this.deviceProfileChanged.emit(profile);
         }

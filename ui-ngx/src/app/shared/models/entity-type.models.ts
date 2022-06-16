@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -36,7 +36,8 @@ export enum EntityType {
   API_USAGE_STATE = 'API_USAGE_STATE',
   TB_RESOURCE = 'TB_RESOURCE',
   OTA_PACKAGE = 'OTA_PACKAGE',
-  RPC = 'RPC'
+  RPC = 'RPC',
+  QUEUE = 'QUEUE'
 }
 
 export enum AliasEntityType {
@@ -306,6 +307,15 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
         search: 'ota-update.search',
         selectedEntities: 'ota-update.selected-package'
       }
+    ],
+    [
+      EntityType.QUEUE,
+      {
+        add: 'queue.add',
+        search: 'queue.search',
+        details: 'queue.details',
+        selectedEntities: 'queue.selected-queues'
+      }
     ]
   ]
 );
@@ -395,9 +405,32 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource<BaseDa
       {
         helpLinkId: 'otaUpdates'
       }
+    ],
+    [
+      EntityType.QUEUE,
+      {
+        helpLinkId: 'queue'
+      }
     ]
   ]
 );
+
+export const baseDetailsPageByEntityType = new Map<EntityType, string>([
+  [EntityType.TENANT, '/tenants'],
+  [EntityType.TENANT_PROFILE, '/tenantProfiles'],
+  [EntityType.CUSTOMER, '/customers'],
+  [EntityType.USER, '/users'],
+  [EntityType.DASHBOARD, '/dashboards'],
+  [EntityType.ASSET, '/assets'],
+  [EntityType.DEVICE, '/devices'],
+  [EntityType.DEVICE_PROFILE, '/deviceProfiles'],
+  [EntityType.RULE_CHAIN, '/ruleChains'],
+  [EntityType.EDGE, '/edgeInstances'],
+  [EntityType.ENTITY_VIEW, '/entityViews'],
+  [EntityType.TB_RESOURCE, '/settings/resources-library'],
+  [EntityType.OTA_PACKAGE, '/otaUpdates'],
+  [EntityType.QUEUE, '/settings/queues']
+]);
 
 export interface EntitySubtype {
   tenantId: TenantId;

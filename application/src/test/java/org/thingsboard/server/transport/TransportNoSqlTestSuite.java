@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,10 +39,5 @@ public class TransportNoSqlTestSuite {
                             new ClassPathCQLDataSet("cassandra/schema-ts-latest.cql", false, false)
                     ),
                     "cassandra-test.yaml", 30000l);
-
-    @BeforeClass
-    public static void cleanupInMemStorage() {
-        InMemoryStorage.getInstance().cleanup();
-    }
 
 }

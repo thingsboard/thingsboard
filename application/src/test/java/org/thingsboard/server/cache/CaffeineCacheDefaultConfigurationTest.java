@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,15 +36,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class CaffeineCacheDefaultConfigurationTest {
 
     @Autowired
-    CaffeineCacheConfiguration caffeineCacheConfiguration;
+    CacheSpecsMap cacheSpecsMap;
 
     @Test
     public void verifyTransactionAwareCacheManagerProxy() {
-        assertThat(caffeineCacheConfiguration.getSpecs()).as("specs").isNotNull();
-        caffeineCacheConfiguration.getSpecs().forEach((name, cacheSpecs)->assertThat(cacheSpecs).as("cache %s specs", name).isNotNull());
+        assertThat(cacheSpecsMap.getSpecs()).as("specs").isNotNull();
+        cacheSpecsMap.getSpecs().forEach((name, cacheSpecs)->assertThat(cacheSpecs).as("cache %s specs", name).isNotNull());
 
         SoftAssertions softly = new SoftAssertions();
-        caffeineCacheConfiguration.getSpecs().forEach((name, cacheSpecs)->{
+        cacheSpecsMap.getSpecs().forEach((name, cacheSpecs)->{
             softly.assertThat(name).as("cache name").isNotEmpty();
             softly.assertThat(cacheSpecs.getTimeToLiveInMinutes()).as("cache %s time to live", name).isGreaterThan(0);
             softly.assertThat(cacheSpecs.getMaxSize()).as("cache %s max size", name).isGreaterThan(0);

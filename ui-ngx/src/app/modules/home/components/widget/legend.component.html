@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2021 The Thingsboard Authors
+    Copyright © 2016-2022 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
     limitations under the License.
 
 -->
-<table class="tb-legend" [ngClass]="isRowDirection ? 'tb-legend-row' : 'tb-legend-column'"
-       [ngStyle]="{ marginRight: isRowDirection && !displayHeader ? 'auto' : '20px' }">
+<table class="tb-legend" [ngClass]="isRowDirection ? 'tb-legend-row' : 'tb-legend-column'">
   <thead>
   <tr class="tb-legend-header" *ngIf="!isRowDirection">
     <th colspan="2"></th>

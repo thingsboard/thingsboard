@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -134,6 +134,8 @@ class DraggableChip {
       dataTransfer.effectAllowed = 'copyMove';
       dataTransfer.dropEffect = 'move';
       dataTransfer.setData('text', this.index() + '');
+      const offset = this.calculateDragImageOffset(event, this.chipElement) || {x: 0, y: 0};
+      (event.dataTransfer as any).setDragImage( this.chipElement, offset.x, offset.y );
     }
   }
 
@@ -250,6 +252,20 @@ class DraggableChip {
 
   private index(): number {
     return this.chipsList.chips.toArray().indexOf(this.chip);
+  }
+
+  private calculateDragImageOffset(event: DragEvent, dragImage: Element): { x: number, y: number } {
+
+    const dragImageComputedStyle = window.getComputedStyle( dragImage );
+    const paddingTop = parseFloat( dragImageComputedStyle.paddingTop ) || 0;
+    const paddingLeft = parseFloat( dragImageComputedStyle.paddingLeft ) || 0;
+    const borderTop = parseFloat( dragImageComputedStyle.borderTopWidth ) || 0;
+    const borderLeft = parseFloat( dragImageComputedStyle.borderLeftWidth ) || 0;
+
+    return {
+      x: event.offsetX + paddingLeft + borderLeft,
+      y: event.offsetY + paddingTop + borderTop
+    };
   }
 
 }

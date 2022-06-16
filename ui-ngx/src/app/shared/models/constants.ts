@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -63,6 +63,7 @@ export const HelpLinks = {
     smsProviderSettings: helpBaseUrl + '/docs/user-guide/ui/sms-provider-settings',
     securitySettings: helpBaseUrl + '/docs/user-guide/ui/security-settings',
     oauth2Settings: helpBaseUrl + '/docs/user-guide/oauth-2-support/',
+    twoFactorAuthSettings: helpBaseUrl + '/docs/',
     ruleEngine: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/overview/',
     ruleNodeCheckRelation: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#check-relation-filter-node',
     ruleNodeCheckExistenceFields: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#check-existence-fields-node',
@@ -124,7 +125,7 @@ export const HelpLinks = {
     rulechains: helpBaseUrl + '/docs/user-guide/ui/rule-chains',
     resources: helpBaseUrl + '/docs/user-guide/ui/resources',
     dashboards: helpBaseUrl + '/docs/user-guide/ui/dashboards',
-    otaUpdates: helpBaseUrl + '/docs/user-guide/ui/ota-updates',
+    otaUpdates: helpBaseUrl + '/docs/user-guide/ota-updates',
     widgetsBundles: helpBaseUrl + '/docs/user-guide/ui/widget-library#bundles',
     widgetsConfig:  helpBaseUrl + '/docs/user-guide/ui/dashboards#widget-configuration',
     widgetsConfigTimeseries:  helpBaseUrl + '/docs/user-guide/ui/dashboards#timeseries',
@@ -133,7 +134,8 @@ export const HelpLinks = {
     widgetsConfigAlarm: helpBaseUrl +  '/docs/user-guide/ui/dashboards#alarm',
     widgetsConfigStatic: helpBaseUrl +  '/docs/user-guide/ui/dashboards#static',
     ruleNodePushToCloud: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#push-to-cloud',
-    ruleNodePushToEdge: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#push-to-edge'
+    ruleNodePushToEdge: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#push-to-edge',
+    queue: helpBaseUrl + '/docs/user-guide/queue'
   }
 };
 
@@ -200,7 +202,7 @@ export const valueTypesMap = new Map<ValueType, ValueTypeData>(
       ValueType.JSON,
       {
         name: 'value.json',
-        icon: 'mdi:json'
+        icon: 'mdi:code-json'
       }
     ]
   ]
@@ -243,6 +245,7 @@ export const contentTypesMap = new Map<ContentType, ContentTypeData>(
   ]
 );
 
+export const hidePageSizePixelValue = 550;
 export const customTranslationsPrefix = 'custom.';
 export const i18nPrefix = 'i18n';
 

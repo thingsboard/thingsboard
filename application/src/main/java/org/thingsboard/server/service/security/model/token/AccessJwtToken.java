@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,17 @@
  */
 package org.thingsboard.server.service.security.model.token;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.jsonwebtoken.Claims;
 import org.thingsboard.server.common.data.security.model.JwtToken;
 
 public final class AccessJwtToken implements JwtToken {
     private final String rawToken;
-    @JsonIgnore
-    private transient Claims claims;
 
-    protected AccessJwtToken(final String token, Claims claims) {
-        this.rawToken = token;
-        this.claims = claims;
+    public AccessJwtToken(String rawToken) {
+        this.rawToken = rawToken;
     }
 
     public String getToken() {
         return this.rawToken;
     }
 
-    public Claims getClaims() {
-        return claims;
-    }
 }

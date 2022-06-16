@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 import org.thingsboard.server.utils.MiscUtils;
 
@@ -35,6 +36,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
+@TbCoreComponent
 @Component(value = "oauth2AuthenticationFailureHandler")
 public class Oauth2AuthenticationFailureHandler extends SimpleUrlAuthenticationFailureHandler {
 
@@ -54,8 +56,11 @@ public class Oauth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
             throws IOException, ServletException {
         String baseUrl;
         String errorPrefix;
+        String callbackUrlScheme = null;
         OAuth2AuthorizationRequest authorizationRequest = httpCookieOAuth2AuthorizationRequestRepository.loadAuthorizationRequest(request);
-        String callbackUrlScheme = authorizationRequest.getAttribute(TbOAuth2ParameterNames.CALLBACK_URL_SCHEME);
+        if (authorizationRequest != null) {
+            callbackUrlScheme = authorizationRequest.getAttribute(TbOAuth2ParameterNames.CALLBACK_URL_SCHEME);
+        }
         if (!StringUtils.isEmpty(callbackUrlScheme)) {
             baseUrl = callbackUrlScheme + ":";
             errorPrefix = "/?error=";

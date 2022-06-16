@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,14 +15,13 @@
 ///
 
 import { EntityId } from '@shared/models/id/entity-id';
-import { DataKey, WidgetActionDescriptor, WidgetConfig } from '@shared/models/widget.models';
+import { DataKey, FormattedData, WidgetActionDescriptor, WidgetConfig } from '@shared/models/widget.models';
 import { getDescendantProp, isDefined, isNotEmptyStr } from '@core/utils';
 import { AlarmDataInfo, alarmFields } from '@shared/models/alarm.models';
 import * as tinycolor_ from 'tinycolor2';
 import { Direction, EntityDataSortOrder, EntityKey } from '@shared/models/query/query.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { FormattedData } from '@home/components/widget/lib/maps/map-models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -73,6 +72,7 @@ export interface EntityData {
 export interface EntityColumn extends DataKey {
   def: string;
   title: string;
+  sortable: boolean;
   entityKey?: EntityKey;
 }
 

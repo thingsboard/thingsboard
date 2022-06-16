@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,55 +24,39 @@ import org.eclipse.leshan.core.node.LwM2mResourceInstance;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.request.WriteRequest.Mode;
 
-import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Data
-public class ResourceValue implements Serializable {
+public class ResourceValue {
 
-    private static final long serialVersionUID = -228268906779089402L;
-
-    private TbLwM2MResource lwM2mResource;
-    private TbResourceModel resourceModel;
+    private LwM2mResource lwM2mResource;
+    private ResourceModel resourceModel;
 
     public ResourceValue(LwM2mResource lwM2mResource, ResourceModel resourceModel) {
-        this.resourceModel = toTbResourceModel(resourceModel);
+        this.resourceModel = resourceModel;
         updateLwM2mResource(lwM2mResource, Mode.UPDATE);
     }
 
     public void updateLwM2mResource(LwM2mResource lwM2mResource, Mode mode) {
         if (lwM2mResource instanceof LwM2mSingleResource) {
-            this.lwM2mResource = new TbLwM2MSingleResource(lwM2mResource.getId(), lwM2mResource.getValue(), lwM2mResource.getType());
+            this.lwM2mResource = LwM2mSingleResource.newResource(lwM2mResource.getId(), lwM2mResource.getValue(), lwM2mResource.getType());
         } else if (lwM2mResource instanceof LwM2mMultipleResource) {
             if (lwM2mResource.getInstances().values().size() > 0) {
-                Set <TbLwM2MResourceInstance> instancesSet = lwM2mResource.getInstances().values().stream().map(ResourceValue::toTbLwM2MResourceInstance).collect(Collectors.toSet());
+                Set<LwM2mResourceInstance> instancesSet = new HashSet<>(lwM2mResource.getInstances().values());
                 if (Mode.REPLACE.equals(mode) && this.lwM2mResource != null) {
                     Map<Integer, LwM2mResourceInstance> oldInstances = this.lwM2mResource.getInstances();
                     oldInstances.values().forEach(v -> {
-                       if (instancesSet.stream().noneMatch(vIns -> v.getId() == vIns.getId())){
-                           instancesSet.add(toTbLwM2MResourceInstance(v));
-                       }
+                        if (instancesSet.stream().noneMatch(vIns -> v.getId() == vIns.getId())) {
+                            instancesSet.add(v);
+                        }
                     });
                 }
-                TbLwM2MResourceInstance[] instances = instancesSet.toArray(new TbLwM2MResourceInstance[0]);
-                this.lwM2mResource = new TbLwM2mMultipleResource(lwM2mResource.getId(), lwM2mResource.getType(), instances);
+                LwM2mResourceInstance[] instances = instancesSet.toArray(new LwM2mResourceInstance[0]);
+                this.lwM2mResource = new LwM2mMultipleResource(lwM2mResource.getId(), lwM2mResource.getType(), instances);
             }
         }
-    }
-
-    public void setResourceModel(ResourceModel resourceModel) {
-        this.resourceModel = toTbResourceModel(resourceModel);
-    }
-
-    private static TbLwM2MResourceInstance toTbLwM2MResourceInstance(LwM2mResourceInstance instance) {
-        return new TbLwM2MResourceInstance(instance.getId(), instance.getValue(), instance.getType());
-    }
-
-    private static TbResourceModel toTbResourceModel(ResourceModel resourceModel) {
-        return new TbResourceModel(resourceModel.id, resourceModel.name, resourceModel.operations, resourceModel.multiple,
-                resourceModel.mandatory, resourceModel.type, resourceModel.rangeEnumeration, resourceModel.units, resourceModel.description);
     }
 }

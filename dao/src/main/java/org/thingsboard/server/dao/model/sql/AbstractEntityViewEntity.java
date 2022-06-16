@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -158,7 +157,7 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
             entityView.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType.name(), entityId));
         }
         if (tenantId != null) {
-            entityView.setTenantId(new TenantId(tenantId));
+            entityView.setTenantId(TenantId.fromUUID(tenantId));
         }
         if (customerId != null) {
             entityView.setCustomerId(new CustomerId(customerId));

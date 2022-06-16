@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,9 @@ import org.eclipse.californium.elements.exception.ConnectorException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.thingsboard.server.transport.coap.AbstractCoapIntegrationTest;
 import org.thingsboard.server.common.msg.session.FeatureType;
+import org.thingsboard.server.transport.coap.AbstractCoapIntegrationTest;
+import org.thingsboard.server.transport.coap.CoapTestConfigProperties;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -46,7 +47,10 @@ public abstract class AbstractCoapTimeseriesIntegrationTest extends AbstractCoap
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest("Test Post Telemetry device", null, null);
+        CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
+                .deviceName("Test Post Telemetry device")
+                .build();
+        processBeforeTest(configProperties);
     }
 
     @After

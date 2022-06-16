@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data.device.profile;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import org.thingsboard.server.common.data.query.DynamicValue;
 
 import java.io.Serializable;
 
@@ -33,5 +34,7 @@ import java.io.Serializable;
 public interface AlarmSchedule extends Serializable {
 
     AlarmScheduleType getType();
+
+    DynamicValue<String> getDynamicValue();
 
 }

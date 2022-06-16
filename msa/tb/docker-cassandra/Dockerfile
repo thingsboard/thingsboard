@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2021 The Thingsboard Authors
+# Copyright © 2016-2022 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -54,7 +54,6 @@ ENV DATABASE_TS_TYPE=cassandra
 ENV PGDATA=/data/db
 ENV CASSANDRA_DATA=/data/cassandra
 
-ENV SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
 ENV SPRING_DRIVER_CLASS_NAME=org.postgresql.Driver
 ENV SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/thingsboard
 ENV SPRING_DATASOURCE_USERNAME=${pkg.user}

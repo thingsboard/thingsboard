@@ -50,7 +50,8 @@
         "export": "Экспортировать",
         "share-via": "Поделиться в {{provider}}",
         "continue": "Продолжить",
-        "discard-changes": "Отменить изменения"
+        "discard-changes": "Отменить изменения",
+        "done": "Завершено"
     },
     "aggregation": {
         "aggregation": "Агрегация",
@@ -107,8 +108,33 @@
         "general-policy": "Общая политика",
         "max-failed-login-attempts": "Максимальное количество неудачных попыток входа в систему, прежде чем учетная запись заблокирована",
         "minimum-max-failed-login-attempts-range": "Максимальное количество неудачных попыток входа в систему не может быть отрицательным",
-        "user-lockout-notification-email": "В случае блокировки учетной записи пользователя отправьте уведомление на электронную почту"
-    },
+        "user-lockout-notification-email": "В случае блокировки учетной записи пользователя отправьте уведомление на электронную почту",
+        "smpp-provider": {
+          "smpp-version": "SMPP версия",
+          "smpp-host": "SMPP хост",
+          "smpp-host-required": "SMPP хост обязателен.",
+          "smpp-port": "SMPP порт",
+          "smpp-port-required": "SMPP порт обязателен.",
+          "system-id": "ИД системи",
+          "system-id-required": "ИД системи обязателен.",
+          "password": "Пароль",
+          "password-required": "Пароль обязателен.",
+          "type-settings": "Настройки типов",
+          "source-settings": "Настройки источника",
+          "destination-settings": "Настройки назначения",
+          "additional-settings": "Дополнительные настройки",
+          "system-type": "Тип системы",
+          "bind-type": "Тип привязки",
+          "service-type": "Тип обслуживания",
+          "source-address": "Адрес источника",
+          "source-ton": "Тип номера источника",
+          "source-npi": "Идентификация плана нумерации источника",
+          "destination-ton": "Тип номера назничения",
+          "destination-npi": "Идентификация плана нумерации назначения",
+          "address-range": "Диапазон адресов",
+          "coding-scheme": "Схема кодирования"
+        }
+      },
     "alarm": {
         "alarm": "Оповещение",
         "alarms": "Оповещения",
@@ -457,6 +483,8 @@
         "add-widget": "Добавить новый виджет",
         "title": "Название",
         "select-widget-title": "Выберите виджет",
+        "copyId": "Копировать идентификатор дашборда",
+        "idCopiedMessage": "Идентификатор дашборда скопирован в буфер обмена",
         "select-widget-subtitle": "Список доступных виджетов",
         "delete": "Удалить дашборд",
         "title-required": "Название обязательно.",
@@ -959,7 +987,9 @@
         "messages-processed": "Сообщения обработаны",
         "errors-occurred": "Возникли ошибки",
         "all-events": "Все",
-        "entity-type": "Тип объекта"
+        "entity-type": "Тип объекта",
+        "clear-request-title": "Удалить все события",
+        "clear-request-text": "Вы точно хотите удалить все события?"
     },
     "extension": {
         "extensions": "Расширение",
@@ -1179,8 +1209,7 @@
             "select-file": "Выберите файл",
             "configuration": "Конфигурация импорта",
             "column-type": "Выберите тип колонок",
-            "creat-entities": "Создание новых объектов",
-            "done": "Завершено"
+            "creat-entities": "Создание новых объектов"
         },
         "message": {
             "create-entities": "{{count}} новый(х) объект(ов) было успешно создано.",
@@ -1262,7 +1291,6 @@
         "change-password": "Изменить пароль",
         "current-password": "Текущий пароль",
         "copy-jwt-token": "Копировать JWT токен",
-        "valid-till": "Действителен до {{expirationData}}",
         "tokenCopiedMessage": "JWT токен скопирован в буфер обмена",
         "tokenCopiedWarnMessage": "JWT токен недействителен! Перезагрузите страницу."
     },
@@ -1785,6 +1813,47 @@
             "update-attribute": "Обновить атрибут",
             "update-timeseries": "Обновить телеметрию",
             "value": "Значение"
+        },
+        "persistent-table": {
+            "rpc-id": "RPC ID",
+            "message-type": "Тип сообщения",
+            "method": "Метод",
+            "params": "Параметры",
+            "created-time": "Время создания",
+            "expiration-time": "Время жизни",
+            "retries": "Повторные попытки",
+            "status": "Статус",
+            "filter": "Фильтр",
+            "refresh": "Обновить",
+            "add": "Добавить RPC запрос",
+            "details": "Детали",
+            "delete": "Удалить",
+            "delete-request-title": "Удалить RPC запрос",
+            "delete-request-text": "Вы точно хотите удалить RPC запрос?",
+            "details-title": "Детали RPC ID: ",
+            "additional-info": "Дополнительная информация",
+            "response": "Ответ",
+            "any-status": "Любой статус",
+            "rpc-status-list": "Список RPC статусов",
+            "no-request-prompt": "Запросы не найдены",
+            "send-request": "Отправить запрос",
+            "add-title": "Добавить новый RPC запрос",
+            "method-error": "Метод обязателен.",
+            "white-space-error": "Пробелы не допускаются.",
+            "rpc-status": {
+                "QUEUED": "В ОЧЕРЕДИ",
+                "SENT": "ОТПРАВЛЕННО",
+                "DELIVERED": "ДОСТАВЛЕННО",
+                "SUCCESSFUL": "УСПЕШНО",
+                "TIMEOUT": "ВРЕМЯ ИСТЕКЛО",
+                "EXPIRED": "ПРОСРОЧЕНО",
+                "FAILED": "НЕУДАЧНО"
+            },
+            "rpc-search-status-all": "ВСЕ",
+            "message-types": {
+                "false": "Двусторонний",
+                "true": "Односторонний"
+            }
         }
     },
     "icon": {

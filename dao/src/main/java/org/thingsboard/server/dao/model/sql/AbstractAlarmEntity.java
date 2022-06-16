@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,8 @@ import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ORIGINATOR_I
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ORIGINATOR_TYPE_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_PROPAGATE_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_PROPAGATE_RELATION_TYPES;
+import static org.thingsboard.server.dao.model.ModelConstants.ALARM_PROPAGATE_TO_OWNER_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ALARM_PROPAGATE_TO_TENANT_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_SEVERITY_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_START_TS_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_STATUS_PROPERTY;
@@ -105,6 +107,12 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
     @Column(name = ALARM_PROPAGATE_PROPERTY)
     private Boolean propagate;
 
+    @Column(name = ALARM_PROPAGATE_TO_OWNER_PROPERTY)
+    private Boolean propagateToOwner;
+
+    @Column(name = ALARM_PROPAGATE_TO_TENANT_PROPERTY)
+    private Boolean propagateToTenant;
+
     @Column(name = ALARM_PROPAGATE_RELATION_TYPES)
     private String propagateRelationTypes;
 
@@ -130,6 +138,8 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
         this.severity = alarm.getSeverity();
         this.status = alarm.getStatus();
         this.propagate = alarm.isPropagate();
+        this.propagateToOwner = alarm.isPropagateToOwner();
+        this.propagateToTenant = alarm.isPropagateToTenant();
         this.startTs = alarm.getStartTs();
         this.endTs = alarm.getEndTs();
         this.ackTs = alarm.getAckTs();
@@ -154,6 +164,8 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
         this.severity = alarmEntity.getSeverity();
         this.status = alarmEntity.getStatus();
         this.propagate = alarmEntity.getPropagate();
+        this.propagateToOwner = alarmEntity.getPropagateToOwner();
+        this.propagateToTenant = alarmEntity.getPropagateToTenant();
         this.startTs = alarmEntity.getStartTs();
         this.endTs = alarmEntity.getEndTs();
         this.ackTs = alarmEntity.getAckTs();
@@ -166,7 +178,7 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
         Alarm alarm = new Alarm(new AlarmId(id));
         alarm.setCreatedTime(createdTime);
         if (tenantId != null) {
-            alarm.setTenantId(new TenantId(tenantId));
+            alarm.setTenantId(TenantId.fromUUID(tenantId));
         }
         if (customerId != null) {
             alarm.setCustomerId(new CustomerId(customerId));
@@ -176,6 +188,8 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
         alarm.setSeverity(severity);
         alarm.setStatus(status);
         alarm.setPropagate(propagate);
+        alarm.setPropagateToOwner(propagateToOwner);
+        alarm.setPropagateToTenant(propagateToTenant);
         alarm.setStartTs(startTs);
         alarm.setEndTs(endTs);
         alarm.setAckTs(ackTs);

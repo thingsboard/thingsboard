@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public interface EdgeService {
 
     Optional<Edge> findEdgeByRoutingKey(TenantId tenantId, String routingKey);
 
-    Edge saveEdge(Edge edge, boolean doValidate);
+    Edge saveEdge(Edge edge);
 
     Edge assignEdgeToCustomer(TenantId tenantId, EdgeId edgeId, CustomerId customerId);
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package org.thingsboard.server.controller;
 
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -28,14 +28,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
-import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
@@ -44,11 +43,12 @@ import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.entitiy.otaPackageController.TbOtaPackageService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
-import java.nio.ByteBuffer;
-
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFILE_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.OTA_PACKAGE_CHECKSUM_ALGORITHM_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.OTA_PACKAGE_DESCRIPTION;
@@ -70,7 +70,10 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
+@RequiredArgsConstructor
 public class OtaPackageController extends BaseController {
+
+    private final TbOtaPackageService tbOtaPackageService;
 
     public static final String OTA_PACKAGE_ID = "otaPackageId";
     public static final String CHECKSUM_ALGORITHM = "checksumAlgorithm";
@@ -105,7 +108,7 @@ public class OtaPackageController extends BaseController {
     @ApiOperation(value = "Get OTA Package Info (getOtaPackageInfoById)",
             notes = "Fetch the OTA Package Info object based on the provided OTA Package Id. " +
                     OTA_PACKAGE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
-            produces = "application/json")
+            produces = APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/otaPackage/info/{otaPackageId}", method = RequestMethod.GET)
     @ResponseBody
@@ -123,7 +126,7 @@ public class OtaPackageController extends BaseController {
     @ApiOperation(value = "Get OTA Package (getOtaPackageById)",
             notes = "Fetch the OTA Package object based on the provided OTA Package Id. " +
                     "The server checks that the OTA Package is owned by the same tenant. " + OTA_PACKAGE_DESCRIPTION + TENANT_AUTHORITY_PARAGRAPH,
-            produces = "application/json")
+            produces = APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/otaPackage/{otaPackageId}", method = RequestMethod.GET)
     @ResponseBody
@@ -144,33 +147,27 @@ public class OtaPackageController extends BaseController {
                     "Specify existing OTA Package id to update the OTA Package Info. " +
                     "Referencing non-existing OTA Package Id will cause 'Not Found' error. " +
                     "\n\nOTA Package combination of the title with the version is unique in the scope of tenant. " + TENANT_AUTHORITY_PARAGRAPH,
-            produces = "application/json",
-            consumes = "application/json")
+            produces = APPLICATION_JSON_VALUE,
+            consumes = APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/otaPackage", method = RequestMethod.POST)
     @ResponseBody
     public OtaPackageInfo saveOtaPackageInfo(@ApiParam(value = "A JSON value representing the OTA Package.")
                                              @RequestBody SaveOtaPackageInfoRequest otaPackageInfo) throws ThingsboardException {
-        boolean created = otaPackageInfo.getId() == null;
-        try {
-            otaPackageInfo.setTenantId(getTenantId());
-            checkEntity(otaPackageInfo.getId(), otaPackageInfo, Resource.OTA_PACKAGE);
-            OtaPackageInfo savedOtaPackageInfo = otaPackageService.saveOtaPackageInfo(new OtaPackageInfo(otaPackageInfo), otaPackageInfo.isUsesUrl());
-            logEntityAction(savedOtaPackageInfo.getId(), savedOtaPackageInfo,
-                    null, created ? ActionType.ADDED : ActionType.UPDATED, null);
-            return savedOtaPackageInfo;
-        } catch (Exception e) {
-            logEntityAction(emptyId(EntityType.OTA_PACKAGE), otaPackageInfo,
-                    null, created ? ActionType.ADDED : ActionType.UPDATED, e);
-            throw handleException(e);
-        }
+        otaPackageInfo.setTenantId(getTenantId());
+        checkEntity(otaPackageInfo.getId(), otaPackageInfo, Resource.OTA_PACKAGE);
+
+        return tbOtaPackageService.save(otaPackageInfo, getCurrentUser());
+
+
     }
 
     @ApiOperation(value = "Save OTA Package data (saveOtaPackageData)",
             notes = "Update the OTA Package. Adds the date to the existing OTA Package Info" + TENANT_AUTHORITY_PARAGRAPH,
-            produces = "application/json")
+            produces = APPLICATION_JSON_VALUE,
+            consumes = MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/otaPackage/{otaPackageId}", method = RequestMethod.POST)
+    @RequestMapping(value = "/otaPackage/{otaPackageId}", method = RequestMethod.POST, consumes = MULTIPART_FORM_DATA_VALUE)
     @ResponseBody
     public OtaPackageInfo saveOtaPackageData(@ApiParam(value = OTA_PACKAGE_ID_PARAM_DESCRIPTION)
                                              @PathVariable(OTA_PACKAGE_ID) String strOtaPackageId,
@@ -179,41 +176,17 @@ public class OtaPackageController extends BaseController {
                                              @ApiParam(value = "OTA Package checksum algorithm.", allowableValues = OTA_PACKAGE_CHECKSUM_ALGORITHM_ALLOWABLE_VALUES)
                                              @RequestParam(CHECKSUM_ALGORITHM) String checksumAlgorithmStr,
                                              @ApiParam(value = "OTA Package data.")
-                                             @RequestBody MultipartFile file) throws ThingsboardException {
+                                             @RequestPart MultipartFile file) throws ThingsboardException {
         checkParameter(OTA_PACKAGE_ID, strOtaPackageId);
         checkParameter(CHECKSUM_ALGORITHM, checksumAlgorithmStr);
+        OtaPackageId otaPackageId = new OtaPackageId(toUUID(strOtaPackageId));
+        OtaPackageInfo otaPackageInfo = checkOtaPackageInfoId(otaPackageId, Operation.READ);
         try {
-            OtaPackageId otaPackageId = new OtaPackageId(toUUID(strOtaPackageId));
-            OtaPackageInfo info = checkOtaPackageInfoId(otaPackageId, Operation.READ);
-
-            OtaPackage otaPackage = new OtaPackage(otaPackageId);
-            otaPackage.setCreatedTime(info.getCreatedTime());
-            otaPackage.setTenantId(getTenantId());
-            otaPackage.setDeviceProfileId(info.getDeviceProfileId());
-            otaPackage.setType(info.getType());
-            otaPackage.setTitle(info.getTitle());
-            otaPackage.setVersion(info.getVersion());
-            otaPackage.setTag(info.getTag());
-            otaPackage.setAdditionalInfo(info.getAdditionalInfo());
-
             ChecksumAlgorithm checksumAlgorithm = ChecksumAlgorithm.valueOf(checksumAlgorithmStr.toUpperCase());
-
-            byte[] bytes = file.getBytes();
-            if (StringUtils.isEmpty(checksum)) {
-                checksum = otaPackageService.generateChecksum(checksumAlgorithm, ByteBuffer.wrap(bytes));
-            }
-
-            otaPackage.setChecksumAlgorithm(checksumAlgorithm);
-            otaPackage.setChecksum(checksum);
-            otaPackage.setFileName(file.getOriginalFilename());
-            otaPackage.setContentType(file.getContentType());
-            otaPackage.setData(ByteBuffer.wrap(bytes));
-            otaPackage.setDataSize((long) bytes.length);
-            OtaPackageInfo savedOtaPackage = otaPackageService.saveOtaPackage(otaPackage);
-            logEntityAction(savedOtaPackage.getId(), savedOtaPackage, null, ActionType.UPDATED, null);
-            return savedOtaPackage;
+            byte[] data = file.getBytes();
+            return tbOtaPackageService.saveOtaPackageData(otaPackageInfo, checksum, checksumAlgorithm,
+            data, file.getOriginalFilename(), file.getContentType(), getCurrentUser());
         } catch (Exception e) {
-            logEntityAction(emptyId(EntityType.OTA_PACKAGE), null, null, ActionType.UPDATED, e, strOtaPackageId);
             throw handleException(e);
         }
     }
@@ -221,7 +194,7 @@ public class OtaPackageController extends BaseController {
     @ApiOperation(value = "Get OTA Package Infos (getOtaPackages)",
             notes = "Returns a page of OTA Package Info objects owned by tenant. " +
                     PAGE_DATA_PARAMETERS + OTA_PACKAGE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
-            produces = "application/json")
+            produces = APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/otaPackages", method = RequestMethod.GET)
     @ResponseBody
@@ -246,7 +219,7 @@ public class OtaPackageController extends BaseController {
     @ApiOperation(value = "Get OTA Package Infos (getOtaPackages)",
             notes = "Returns a page of OTA Package Info objects owned by tenant. " +
                     PAGE_DATA_PARAMETERS + OTA_PACKAGE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
-            produces = "application/json")
+            produces = APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/otaPackages/{deviceProfileId}/{type}", method = RequestMethod.GET)
     @ResponseBody
@@ -278,22 +251,17 @@ public class OtaPackageController extends BaseController {
     @ApiOperation(value = "Delete OTA Package (deleteOtaPackage)",
             notes = "Deletes the OTA Package. Referencing non-existing OTA Package Id will cause an error. " +
                     "Can't delete the OTA Package if it is referenced by existing devices or device profile." + TENANT_AUTHORITY_PARAGRAPH,
-            produces = "application/json")
+            produces = APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/otaPackage/{otaPackageId}", method = RequestMethod.DELETE)
     @ResponseBody
     public void deleteOtaPackage(@ApiParam(value = OTA_PACKAGE_ID_PARAM_DESCRIPTION)
                                  @PathVariable("otaPackageId") String strOtaPackageId) throws ThingsboardException {
         checkParameter(OTA_PACKAGE_ID, strOtaPackageId);
-        try {
-            OtaPackageId otaPackageId = new OtaPackageId(toUUID(strOtaPackageId));
-            OtaPackageInfo info = checkOtaPackageInfoId(otaPackageId, Operation.DELETE);
-            otaPackageService.deleteOtaPackage(getTenantId(), otaPackageId);
-            logEntityAction(otaPackageId, info, null, ActionType.DELETED, null, strOtaPackageId);
-        } catch (Exception e) {
-            logEntityAction(emptyId(EntityType.OTA_PACKAGE), null, null, ActionType.DELETED, e, strOtaPackageId);
-            throw handleException(e);
-        }
+        OtaPackageId otaPackageId = new OtaPackageId(toUUID(strOtaPackageId));
+        OtaPackageInfo otaPackageInfo = checkOtaPackageInfoId(otaPackageId, Operation.DELETE);
+
+        tbOtaPackageService.delete(otaPackageInfo, getCurrentUser());
     }
 
 }

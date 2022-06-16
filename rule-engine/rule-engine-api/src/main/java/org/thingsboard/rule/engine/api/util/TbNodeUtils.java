@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,9 +94,13 @@ public class TbNodeUtils {
     }
 
     public static String processPattern(String pattern, TbMsgMetaData metaData) {
-        String result = pattern;
-        for (Map.Entry<String, String> keyVal : metaData.values().entrySet()) {
-            result = processVar(result, keyVal.getKey(), keyVal.getValue());
+        return processTemplate(pattern, metaData.values());
+    }
+
+    public static String processTemplate(String template, Map<String, String> data) {
+        String result = template;
+        for (Map.Entry<String, String> kv : data.entrySet()) {
+            result = processVar(result, kv.getKey(), kv.getValue());
         }
         return result;
     }

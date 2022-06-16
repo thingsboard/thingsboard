@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 import {
   AfterViewInit,
+  ChangeDetectorRef,
   Component,
   ElementRef,
   EventEmitter,
@@ -123,6 +124,8 @@ import {
 } from '@home/components/widget/lib/alarm-filter-panel.component';
 import { entityFields } from '@shared/models/entity.models';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { ResizeObserver } from '@juggle/resize-observer';
+import { hidePageSizePixelValue } from '@shared/models/constants';
 
 interface AlarmsTableWidgetSettings extends TableWidgetSettings {
   alarmsTitle: string;
@@ -164,6 +167,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   public pageLink: AlarmDataPageLink;
   public sortOrderProperty: string;
   public textSearchMode = false;
+  public hidePageSize = false;
   public columns: Array<EntityColumn> = [];
   public displayedColumns: string[] = [];
   public alarmsDatasource: AlarmsDatasource;
@@ -177,6 +181,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   private settings: AlarmsTableWidgetSettings;
   private widgetConfig: WidgetConfig;
   private subscription: IWidgetSubscription;
+  private widgetResize$: ResizeObserver;
 
   private alarmsTitlePattern: string;
 
@@ -235,7 +240,8 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
               private datePipe: DatePipe,
               private dialog: MatDialog,
               private dialogService: DialogService,
-              private alarmService: AlarmService) {
+              private alarmService: AlarmService,
+              private cd: ChangeDetectorRef) {
     super(store);
     this.pageLink = {
       page: 0,
@@ -257,6 +263,14 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       this.widgetTimewindowChanged$ = this.ctx.defaultSubscription.widgetTimewindowChanged$.subscribe(
         () => this.pageLink.page = 0
       );
+      this.widgetResize$ = new ResizeObserver(() => {
+        const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+        if (showHidePageSize !== this.hidePageSize) {
+          this.hidePageSize = showHidePageSize;
+          this.cd.markForCheck();
+        }
+      });
+      this.widgetResize$.observe(this.elementRef.nativeElement);
     }
   }
 
@@ -264,6 +278,9 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     if (this.widgetTimewindowChanged$) {
       this.widgetTimewindowChanged$.unsubscribe();
       this.widgetTimewindowChanged$ = null;
+    }
+    if (this.widgetResize$) {
+      this.widgetResize$.disconnect();
     }
   }
 
@@ -273,9 +290,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
         debounceTime(150),
         distinctUntilChanged(),
         tap(() => {
-          if (this.displayPagination) {
-            this.paginator.pageIndex = 0;
-          }
+          this.resetPageIndex();
           this.updateData();
         })
       )
@@ -539,6 +554,12 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.ctx.detectChanges();
   }
 
+  private resetPageIndex(): void {
+    if (this.displayPagination) {
+      this.paginator.pageIndex = 0;
+    }
+  }
+
   private editAlarmFilter($event: Event) {
     if ($event) {
       $event.stopPropagation();
@@ -583,6 +604,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
         this.pageLink.statusList = result.statusList;
         this.pageLink.severityList = result.severityList;
         this.pageLink.typeList = result.typeList;
+        this.resetPageIndex();
         this.updateData();
       }
     });
@@ -603,9 +625,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   exitFilterMode() {
     this.textSearchMode = false;
     this.pageLink.textSearch = null;
-    if (this.displayPagination) {
-      this.paginator.pageIndex = 0;
-    }
+    this.resetPageIndex();
     this.updateData();
     this.ctx.hideTitlePanel = false;
     this.ctx.detectChanges(true);
@@ -942,7 +962,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
         } else if (alarmField.value === alarmFields.severity.value) {
           return this.translate.instant(alarmSeverityTranslations.get(value));
         } else if (alarmField.value === alarmFields.status.value) {
-          return this.translate.instant(alarmStatusTranslations.get(value));
+          return alarmStatusTranslations.get(value) ? this.translate.instant(alarmStatusTranslations.get(value)) : value;
         } else if (alarmField.value === alarmFields.originatorType.value) {
           return this.translate.instant(entityTypeTranslations.get(value).type);
         } else {

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -28,6 +28,8 @@ import { SmsProviderComponent } from '@home/pages/admin/sms-provider.component';
 import { SendTestSmsDialogComponent } from '@home/pages/admin/send-test-sms-dialog.component';
 import { HomeSettingsComponent } from '@home/pages/admin/home-settings.component';
 import { ResourcesLibraryComponent } from '@home/pages/admin/resource/resources-library.component';
+import { QueueComponent} from '@home/pages/admin/queue/queue.component';
+import { TwoFactorAuthSettingsComponent } from '@home/pages/admin/two-factor-auth-settings.component';
 
 @NgModule({
   declarations:
@@ -39,7 +41,9 @@ import { ResourcesLibraryComponent } from '@home/pages/admin/resource/resources-
       SecuritySettingsComponent,
       OAuth2SettingsComponent,
       HomeSettingsComponent,
-      ResourcesLibraryComponent
+      ResourcesLibraryComponent,
+      QueueComponent,
+      TwoFactorAuthSettingsComponent
     ],
   imports: [
     CommonModule,

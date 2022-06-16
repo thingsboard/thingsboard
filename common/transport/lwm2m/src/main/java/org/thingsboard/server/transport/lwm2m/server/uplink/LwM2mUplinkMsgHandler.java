@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.lwm2m.server.uplink;
 
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.request.CreateRequest;
+import org.eclipse.leshan.core.request.SendRequest;
 import org.eclipse.leshan.core.request.WriteCompositeRequest;
 import org.eclipse.leshan.core.request.WriteRequest;
 import org.eclipse.leshan.core.response.ReadCompositeResponse;
@@ -45,6 +46,8 @@ public interface LwM2mUplinkMsgHandler {
     void onUpdateValueAfterReadResponse(Registration registration, String path, ReadResponse response);
 
     void onUpdateValueAfterReadCompositeResponse(Registration registration, ReadCompositeResponse response);
+
+    void onUpdateValueWithSendRequest(Registration registration, SendRequest sendRequest);
 
     void onDeviceProfileUpdate(TransportProtos.SessionInfoProto sessionInfo, DeviceProfile deviceProfile);
 
