@@ -70,7 +70,6 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
 
     @Override
     protected RuleChain prepareAndSave(EntitiesImportCtx ctx, RuleChain ruleChain, RuleChain old, RuleChainExportData exportData, IdProvider idProvider) {
-        TbStopWatch sw = TbStopWatch.create("prepare");
         RuleChainMetaData metaData = exportData.getMetaData();
         Optional.ofNullable(metaData.getNodes()).orElse(Collections.emptyList())
                 .forEach(ruleNode -> {
@@ -92,19 +91,10 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
                 });
         ruleChain.setFirstRuleNodeId(null);
 
-        sw.startNew("save");
         ruleChain = ruleChainService.saveRuleChain(ruleChain);
         exportData.getMetaData().setRuleChainId(ruleChain.getId());
-        sw.startNew("save metadata");
         ruleChainService.saveRuleChainMetaData(ctx.getTenantId(), exportData.getMetaData());
-        sw.startNew("find");
-        var result = ruleChainService.findRuleChainById(ctx.getTenantId(), ruleChain.getId());
-        sw.stop();
-        for (var task : sw.getTaskInfo()) {
-            log.info("[{}] Executed: {} in {}ms", ctx.getTenantId(), task.getTaskName(), task.getTimeMillis());
-        }
-        log.info("[{}] Total time: {}ms", ctx.getTenantId(), sw.getTotalTimeMillis());
-        return result;
+        return ruleChainService.findRuleChainById(ctx.getTenantId(), ruleChain.getId());
     }
 
     @Override
