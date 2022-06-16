@@ -38,6 +38,7 @@ CREATE INDEX IF NOT EXISTS idx_rule_chain_external_id ON rule_chain(tenant_id, e
 CREATE INDEX IF NOT EXISTS idx_dashboard_external_id ON dashboard(tenant_id, external_id);
 CREATE INDEX IF NOT EXISTS idx_customer_external_id ON customer(tenant_id, external_id);
 CREATE INDEX IF NOT EXISTS idx_widgets_bundle_external_id ON widgets_bundle(tenant_id, external_id);
+CREATE INDEX IF NOT EXISTS idx_entity_view_external_id ON entity_view(tenant_id, external_id);
 
 ALTER TABLE admin_settings
     ADD COLUMN IF NOT EXISTS tenant_id uuid NOT NULL DEFAULT '13814000-1dd2-11b2-8080-808080808080';

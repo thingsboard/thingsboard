@@ -23,9 +23,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StopWatch;
-import org.thingsboard.common.util.TbStopWatch;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasCustomerId;
@@ -89,12 +88,14 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
     public EntityImportResult<E> importEntity(EntitiesImportCtx ctx, D exportData) throws ThingsboardException {
 //        TbStopWatch sw = TbStopWatch.create("find");
         EntityImportResult<E> importResult = new EntityImportResult<>();
+        importResult.setEntityType(getEntityType());
         IdProvider idProvider = new IdProvider(ctx, importResult);
 
         E entity = exportData.getEntity();
-        E existingEntity = findExistingEntity(ctx, entity, idProvider);
-
         entity.setExternalId(entity.getId());
+
+        E existingEntity = findExistingEntity(ctx, entity, idProvider);
+        importResult.setOldEntity(existingEntity);
 
         setOwner(ctx.getTenantId(), entity, idProvider);
         if (existingEntity == null) {
@@ -104,17 +105,27 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
             entity.setCreatedTime(existingEntity.getCreatedTime());
         }
 
-//        sw.startNew("prepareAndSave");
-        E savedEntity = prepareAndSave(ctx, entity, existingEntity, exportData, idProvider);
+        E prepared = prepare(ctx, entity, existingEntity, exportData, idProvider);
 
-        importResult.setSavedEntity(savedEntity);
-        importResult.setOldEntity(existingEntity);
-        importResult.setEntityType(getEntityType());
+        boolean saveOrUpdate = existingEntity == null || compare(prepared, existingEntity);
+
+        if (saveOrUpdate) {
+//        sw.startNew("prepareAndSave");
+            E savedEntity = saveOrUpdate(ctx, prepared, exportData, idProvider);
+            boolean created = existingEntity == null;
+            importResult.setCreated(created);
+            importResult.setUpdated(!created);
+            importResult.setSavedEntity(savedEntity);
+            ctx.putInternalId(exportData.getExternalId(), savedEntity.getId());
+        } else {
+            importResult.setSavedEntity(existingEntity);
+            ctx.putInternalId(exportData.getExternalId(), existingEntity.getId());
+            importResult.setUpdatedRelatedEntities(updateRelatedEntitiesIfUnmodified(ctx, prepared, exportData, idProvider));
+        }
 
 //        sw.startNew("afterSaved");
         processAfterSaved(ctx, importResult, exportData, idProvider);
 
-        ctx.putInternalId(exportData.getExternalId(), savedEntity.getId());
 //        sw.stop();
 //        for (var task : sw.getTaskInfo()) {
 //            log.info("[{}][{}] Executed: {} in {}ms", exportData.getEntityType(), exportData.getEntity().getId(), task.getTaskName(), task.getTimeMillis());
@@ -123,28 +134,56 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
         return importResult;
     }
 
-    @Override
-    public EntityType getEntityType() {
-        return null;
+    protected boolean updateRelatedEntitiesIfUnmodified(EntitiesImportCtx ctx, E prepared, D exportData, IdProvider idProvider) {
+        return false;
     }
+
+    @Override
+    public abstract EntityType getEntityType();
 
     protected abstract void setOwner(TenantId tenantId, E entity, IdProvider idProvider);
 
-    protected abstract E prepareAndSave(EntitiesImportCtx ctx, E entity, E oldEntity, D exportData, IdProvider idProvider);
+    protected abstract E prepare(EntitiesImportCtx ctx, E entity, E oldEntity, D exportData, IdProvider idProvider);
+
+    protected boolean compare(E prepared, E existing) {
+        var newCopy = deepCopy(prepared);
+        var existingCopy = deepCopy(existing);
+        cleanupForComparison(newCopy);
+        cleanupForComparison(existingCopy);
+        var result = !newCopy.equals(existingCopy);
+        if (result) {
+            log.info("[{}] Found update.", prepared.getId());
+            log.info("[{}] From: {}", prepared.getId(), newCopy);
+            log.info("[{}] To: {}", prepared.getId(), existingCopy);
+        }
+        return result;
+    }
+
+    protected abstract E deepCopy(E e);
+
+    protected void cleanupForComparison(E e) {
+        e.setTenantId(null);
+        e.setCreatedTime(0);
+    }
+
+    protected abstract E saveOrUpdate(EntitiesImportCtx ctx, E entity, D exportData, IdProvider idProvider);
 
 
     protected void processAfterSaved(EntitiesImportCtx ctx, EntityImportResult<E> importResult, D exportData, IdProvider idProvider) throws ThingsboardException {
         E savedEntity = importResult.getSavedEntity();
         E oldEntity = importResult.getOldEntity();
 
-        importResult.addSendEventsCallback(() -> {
-            onEntitySaved(ctx.getUser(), savedEntity, oldEntity);
-        });
+        if (importResult.isCreated() || importResult.isUpdated()) {
+            importResult.addSendEventsCallback(() -> onEntitySaved(ctx.getUser(), savedEntity, oldEntity));
+        }
 
         if (ctx.isUpdateRelations() && exportData.getRelations() != null) {
             importRelations(ctx, exportData.getRelations(), importResult, idProvider);
         }
         if (ctx.isSaveAttributes() && exportData.getAttributes() != null) {
+            if (exportData.getAttributes().values().stream().anyMatch(d -> !d.isEmpty())) {
+                importResult.setUpdatedRelatedEntities(true);
+            }
             importAttributes(ctx.getUser(), exportData.getAttributes(), importResult);
         }
     }
@@ -173,6 +212,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                 for (EntityRelation existingRelation : existingRelations) {
                     EntityRelation relation = relationsMap.get(existingRelation);
                     if (relation == null) {
+                        importResult.setUpdatedRelatedEntities(true);
                         relationService.deleteRelation(tenantId, existingRelation);
                         importResult.addSendEventsCallback(() -> {
                             entityActionService.logEntityAction(ctx.getUser(), existingRelation.getFrom(), null, null,
@@ -185,8 +225,10 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                     }
                 }
             }
-
-            ctx.addRelations(relationsMap.values());
+            if (!relationsMap.isEmpty()) {
+                importResult.setUpdatedRelatedEntities(true);
+                ctx.addRelations(relationsMap.values());
+            }
         });
     }
 
@@ -347,7 +389,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
 
     }
 
-    protected <T extends EntityId, O> T getOldEntityField(O oldEntity, Function<O,T> getter){
+    protected <T extends EntityId, O> T getOldEntityField(O oldEntity, Function<O, T> getter) {
         return oldEntity == null ? null : getter.apply(oldEntity);
     }
 

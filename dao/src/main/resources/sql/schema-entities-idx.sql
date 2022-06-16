@@ -58,6 +58,8 @@ CREATE INDEX IF NOT EXISTS idx_device_profile_external_id ON device_profile(tena
 
 CREATE INDEX IF NOT EXISTS idx_asset_external_id ON asset(tenant_id, external_id);
 
+CREATE INDEX IF NOT EXISTS idx_entity_view_external_id ON entity_view(tenant_id, external_id);
+
 CREATE INDEX IF NOT EXISTS idx_rule_chain_external_id ON rule_chain(tenant_id, external_id);
 
 CREATE INDEX IF NOT EXISTS idx_dashboard_external_id ON dashboard(tenant_id, external_id);

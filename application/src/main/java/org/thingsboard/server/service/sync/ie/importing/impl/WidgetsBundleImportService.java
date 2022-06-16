@@ -18,12 +18,10 @@ package org.thingsboard.server.service.sync.ie.importing.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
-import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
 import org.thingsboard.server.common.data.sync.ie.WidgetsBundleExportData;
 import org.thingsboard.server.common.data.widget.BaseWidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
@@ -52,7 +50,12 @@ public class WidgetsBundleImportService extends BaseEntityImportService<WidgetsB
     }
 
     @Override
-    protected WidgetsBundle prepareAndSave(EntitiesImportCtx ctx, WidgetsBundle widgetsBundle, WidgetsBundle old, WidgetsBundleExportData exportData, IdProvider idProvider) {
+    protected WidgetsBundle prepare(EntitiesImportCtx ctx, WidgetsBundle widgetsBundle, WidgetsBundle old, WidgetsBundleExportData exportData, IdProvider idProvider) {
+        return widgetsBundle;
+    }
+
+    @Override
+    protected WidgetsBundle saveOrUpdate(EntitiesImportCtx ctx, WidgetsBundle widgetsBundle, WidgetsBundleExportData exportData, IdProvider idProvider) {
         WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
         if (widgetsBundle.getId() == null) {
             for (WidgetTypeDetails widget : exportData.getWidgets()) {
@@ -88,6 +91,11 @@ public class WidgetsBundleImportService extends BaseEntityImportService<WidgetsB
         super.onEntitySaved(user, savedWidgetsBundle, oldWidgetsBundle);
         entityNotificationService.notifySendMsgToEdgeService(user.getTenantId(), savedWidgetsBundle.getId(),
                 oldWidgetsBundle == null ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
+    }
+
+    @Override
+    protected WidgetsBundle deepCopy(WidgetsBundle widgetsBundle) {
+        return new WidgetsBundle(widgetsBundle);
     }
 
     @Override

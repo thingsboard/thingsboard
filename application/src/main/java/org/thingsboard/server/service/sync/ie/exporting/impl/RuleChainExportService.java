@@ -19,12 +19,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.RuleChainId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
-import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
+import org.thingsboard.server.common.data.sync.ie.RuleChainExportData;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.common.data.sync.ie.RuleChainExportData;
 import org.thingsboard.server.service.sync.vc.data.EntitiesExportCtx;
 
 import java.util.Set;

@@ -302,7 +302,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
         sw.stop();
         for (var task : sw.getTaskInfo()) {
-            log.debug("[{}] Executed: {} in {}ms", ctx.getTenantId(), task.getTaskName(), task.getTimeMillis());
+            log.info("[{}] Executed: {} in {}ms", ctx.getTenantId(), task.getTaskName(), task.getTimeMillis());
         }
         log.info("[{}] Total time: {}ms", ctx.getTenantId(), sw.getTotalTimeMillis());
         return VersionLoadResult.success(new ArrayList<>(ctx.getResults().values()));
@@ -341,7 +341,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                     continue;
                 }
 
-                ctx.registerResult(entityType, importResult.getOldEntity() == null);
+                registerResult(ctx, entityType, importResult);
                 ctx.getImportedEntities().computeIfAbsent(entityType, t -> new HashSet<>())
                         .add(importResult.getSavedEntity().getId());
             }
@@ -359,7 +359,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                 ctx.setSettings(settings);
                 EntityImportResult<?> importResult = exportImportService.importEntity(ctx, entityData);
 
-                ctx.registerResult(externalId.getEntityType(), importResult.getOldEntity() == null);
+                registerResult(ctx, externalId.getEntityType(), importResult);
                 ctx.getImportedEntities().computeIfAbsent(externalId.getEntityType(), t -> new HashSet<>())
                         .add(importResult.getSavedEntity().getId());
             } catch (Exception e) {
@@ -539,5 +539,14 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         }
         return message;
     }
+
+    private void registerResult(EntitiesImportCtx ctx, EntityType entityType, EntityImportResult<?> importResult) {
+        if (importResult.isCreated()) {
+            ctx.registerResult(entityType, true);
+        } else if (importResult.isUpdated() || importResult.isUpdatedRelatedEntities()) {
+            ctx.registerResult(entityType, false);
+        }
+    }
+
 
 }

@@ -23,11 +23,10 @@ import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
+import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 
 @Service
@@ -44,7 +43,12 @@ public class AssetImportService extends BaseEntityImportService<AssetId, Asset, 
     }
 
     @Override
-    protected Asset prepareAndSave(EntitiesImportCtx ctx, Asset asset, Asset old, EntityExportData<Asset> exportData, IdProvider idProvider) {
+    protected Asset prepare(EntitiesImportCtx ctx, Asset asset, Asset old, EntityExportData<Asset> exportData, IdProvider idProvider) {
+        return asset;
+    }
+
+    @Override
+    protected Asset saveOrUpdate(EntitiesImportCtx ctx, Asset asset, EntityExportData<Asset> exportData, IdProvider idProvider) {
         return assetService.saveAsset(asset);
     }
 
@@ -53,6 +57,19 @@ public class AssetImportService extends BaseEntityImportService<AssetId, Asset, 
         super.onEntitySaved(user, savedAsset, oldAsset);
         if (oldAsset != null) {
             entityActionService.sendEntityNotificationMsgToEdgeService(user.getTenantId(), savedAsset.getId(), EdgeEventActionType.UPDATED);
+        }
+    }
+
+    @Override
+    protected Asset deepCopy(Asset asset) {
+        return new Asset(asset);
+    }
+
+    @Override
+    protected void cleanupForComparison(Asset e) {
+        super.cleanupForComparison(e);
+        if (e.getCustomerId() != null && e.getCustomerId().isNullUid()) {
+            e.setCustomerId(null);
         }
     }
 

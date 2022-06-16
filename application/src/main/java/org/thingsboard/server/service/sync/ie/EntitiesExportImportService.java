@@ -20,10 +20,7 @@ import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
-import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
 import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
-import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
-import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.vc.data.EntitiesExportCtx;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 

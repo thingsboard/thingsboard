@@ -20,9 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.common.util.TbStopWatch;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -69,7 +67,7 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
     }
 
     @Override
-    protected RuleChain prepareAndSave(EntitiesImportCtx ctx, RuleChain ruleChain, RuleChain old, RuleChainExportData exportData, IdProvider idProvider) {
+    protected RuleChain prepare(EntitiesImportCtx ctx, RuleChain ruleChain, RuleChain old, RuleChainExportData exportData, IdProvider idProvider) {
         RuleChainMetaData metaData = exportData.getMetaData();
         Optional.ofNullable(metaData.getNodes()).orElse(Collections.emptyList())
                 .forEach(ruleNode -> {
@@ -90,11 +88,22 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
                     ruleChainConnectionInfo.setTargetRuleChainId(idProvider.getInternalId(ruleChainConnectionInfo.getTargetRuleChainId(), false));
                 });
         ruleChain.setFirstRuleNodeId(null);
+        return ruleChain;
+    }
 
+    @Override
+    protected RuleChain saveOrUpdate(EntitiesImportCtx ctx, RuleChain ruleChain, RuleChainExportData exportData, IdProvider idProvider) {
         ruleChain = ruleChainService.saveRuleChain(ruleChain);
         exportData.getMetaData().setRuleChainId(ruleChain.getId());
         ruleChainService.saveRuleChainMetaData(ctx.getTenantId(), exportData.getMetaData());
         return ruleChainService.findRuleChainById(ctx.getTenantId(), ruleChain.getId());
+    }
+
+    @Override
+    protected boolean compare(RuleChain prepared, RuleChain existing) {
+        //Always update, since we don't fetch the metadata.
+        //TODO: improve and fetch the metadata of existing entity.
+        return true;
     }
 
     @Override
@@ -106,6 +115,11 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
         } else if (savedRuleChain.getType() == RuleChainType.EDGE && oldRuleChain != null) {
             entityActionService.sendEntityNotificationMsgToEdgeService(user.getTenantId(), savedRuleChain.getId(), EdgeEventActionType.UPDATED);
         }
+    }
+
+    @Override
+    protected RuleChain deepCopy(RuleChain ruleChain) {
+        return new RuleChain(ruleChain);
     }
 
     @Override

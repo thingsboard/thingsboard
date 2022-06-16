@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityViewId;
@@ -52,8 +51,13 @@ public class EntityViewImportService extends BaseEntityImportService<EntityViewI
     }
 
     @Override
-    protected EntityView prepareAndSave(EntitiesImportCtx ctx, EntityView entityView, EntityView old, EntityExportData<EntityView> exportData, IdProvider idProvider) {
+    protected EntityView prepare(EntitiesImportCtx ctx, EntityView entityView, EntityView old, EntityExportData<EntityView> exportData, IdProvider idProvider) {
         entityView.setEntityId(idProvider.getInternalId(entityView.getEntityId()));
+        return entityView;
+    }
+
+    @Override
+    protected EntityView saveOrUpdate(EntitiesImportCtx ctx, EntityView entityView, EntityExportData<EntityView> exportData, IdProvider idProvider) {
         return entityViewService.saveEntityView(entityView);
     }
 
@@ -63,6 +67,19 @@ public class EntityViewImportService extends BaseEntityImportService<EntityViewI
         super.onEntitySaved(user, savedEntityView, oldEntityView);
         if (oldEntityView != null) {
             entityActionService.sendEntityNotificationMsgToEdgeService(user.getTenantId(), savedEntityView.getId(), EdgeEventActionType.UPDATED);
+        }
+    }
+
+    @Override
+    protected EntityView deepCopy(EntityView entityView) {
+        return new EntityView(entityView);
+    }
+
+    @Override
+    protected void cleanupForComparison(EntityView e) {
+        super.cleanupForComparison(e);
+        if (e.getCustomerId() != null && e.getCustomerId().isNullUid()) {
+            e.setCustomerId(null);
         }
     }
 

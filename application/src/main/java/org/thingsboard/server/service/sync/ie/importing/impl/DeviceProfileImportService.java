@@ -19,23 +19,19 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
-import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
+import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 
 import java.util.Objects;
-import java.util.function.Function;
 
 @Service
 @TbCoreComponent
@@ -51,11 +47,16 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
     }
 
     @Override
-    protected DeviceProfile prepareAndSave(EntitiesImportCtx ctx, DeviceProfile deviceProfile, DeviceProfile old, EntityExportData<DeviceProfile> exportData, IdProvider idProvider) {
+    protected DeviceProfile prepare(EntitiesImportCtx ctx, DeviceProfile deviceProfile, DeviceProfile old, EntityExportData<DeviceProfile> exportData, IdProvider idProvider) {
         deviceProfile.setDefaultRuleChainId(idProvider.getInternalId(deviceProfile.getDefaultRuleChainId()));
         deviceProfile.setDefaultDashboardId(idProvider.getInternalId(deviceProfile.getDefaultDashboardId()));
         deviceProfile.setFirmwareId(getOldEntityField(old, DeviceProfile::getFirmwareId));
         deviceProfile.setSoftwareId(getOldEntityField(old, DeviceProfile::getSoftwareId));
+        return deviceProfile;
+    }
+
+    @Override
+    protected DeviceProfile saveOrUpdate(EntitiesImportCtx ctx, DeviceProfile deviceProfile, EntityExportData<DeviceProfile> exportData, IdProvider idProvider) {
         return deviceProfileService.saveDeviceProfile(deviceProfile);
     }
 
@@ -70,6 +71,11 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
         otaPackageStateService.update(savedDeviceProfile,
                 oldDeviceProfile != null && !Objects.equals(oldDeviceProfile.getFirmwareId(), savedDeviceProfile.getFirmwareId()),
                 oldDeviceProfile != null && !Objects.equals(oldDeviceProfile.getSoftwareId(), savedDeviceProfile.getSoftwareId()));
+    }
+
+    @Override
+    protected DeviceProfile deepCopy(DeviceProfile deviceProfile) {
+        return new DeviceProfile(deviceProfile);
     }
 
     @Override

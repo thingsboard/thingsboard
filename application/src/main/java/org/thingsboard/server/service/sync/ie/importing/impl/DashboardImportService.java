@@ -24,7 +24,6 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
-import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -72,8 +71,7 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
     }
 
     @Override
-    protected Dashboard prepareAndSave(EntitiesImportCtx ctx, Dashboard dashboard, Dashboard old, EntityExportData<Dashboard> exportData, IdProvider idProvider) {
-        var tenantId = ctx.getTenantId();
+    protected Dashboard prepare(EntitiesImportCtx ctx, Dashboard dashboard, Dashboard old, EntityExportData<Dashboard> exportData, IdProvider idProvider) {
         JsonNode configuration = dashboard.getConfiguration();
         JsonNode entityAliases = configuration.get("entityAliases");
         if (entityAliases != null && entityAliases.isObject()) {
@@ -90,6 +88,12 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
                 }
             }
         }
+        return dashboard;
+    }
+
+    @Override
+    protected Dashboard saveOrUpdate(EntitiesImportCtx ctx, Dashboard dashboard, EntityExportData<Dashboard> exportData, IdProvider idProvider) {
+        var tenantId = ctx.getTenantId();
 
         Set<ShortCustomerInfo> assignedCustomers = Optional.ofNullable(dashboard.getAssignedCustomers()).orElse(Collections.emptySet()).stream()
                 .peek(customerInfo -> customerInfo.setCustomerId(idProvider.getInternalId(customerInfo.getCustomerId())))
@@ -122,6 +126,11 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
             dashboard = dashboardService.saveDashboard(dashboard);
         }
         return dashboard;
+    }
+
+    @Override
+    protected Dashboard deepCopy(Dashboard dashboard) {
+        return new Dashboard(dashboard);
     }
 
     @Override
