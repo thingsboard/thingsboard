@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,8 +25,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.thingsboard.server.cache.TbTransactionalCache;
@@ -41,14 +39,12 @@ import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.common.data.rule.RuleChainType;
-import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.ConstraintValidator;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -188,26 +184,28 @@ public class BaseRelationService implements RelationService {
     public void deleteEntityRelations(TenantId tenantId, EntityId entityId) {
         log.trace("Executing deleteEntityRelations [{}]", entityId);
         validate(entityId);
-        List<EntityRelation> inboundRelations = new ArrayList<>();
-        for (RelationTypeGroup typeGroup : RelationTypeGroup.values()) {
-            inboundRelations.addAll(relationDao.findAllByTo(tenantId, entityId, typeGroup));
+        List<EntityRelation> inboundRelations = new ArrayList<>(relationDao.findAllByTo(tenantId, entityId));
+        List<EntityRelation> outboundRelations = new ArrayList<>(relationDao.findAllByFrom(tenantId, entityId));
+
+        if (!inboundRelations.isEmpty()) {
+            try {
+                relationDao.deleteInboundRelations(tenantId, entityId);
+            } catch (ConcurrencyFailureException e) {
+                log.debug("Concurrency exception while deleting relations [{}]", inboundRelations, e);
+            }
+
+            for (EntityRelation relation : inboundRelations) {
+                eventPublisher.publishEvent(EntityRelationEvent.from(relation));
+            }
         }
 
-        List<EntityRelation> outboundRelations = new ArrayList<>();
-        for (RelationTypeGroup typeGroup : RelationTypeGroup.values()) {
-            outboundRelations.addAll(relationDao.findAllByFrom(tenantId, entityId, typeGroup));
+        if (!outboundRelations.isEmpty()) {
+            relationDao.deleteOutboundRelations(tenantId, entityId);
+
+            for (EntityRelation relation : outboundRelations) {
+                eventPublisher.publishEvent(EntityRelationEvent.from(relation));
+            }
         }
-
-        for (EntityRelation relation : inboundRelations) {
-            delete(tenantId, relation, true);
-        }
-
-        for (EntityRelation relation : outboundRelations) {
-            delete(tenantId, relation, false);
-        }
-
-        relationDao.deleteOutboundRelations(tenantId, entityId);
-
     }
 
     @Override
@@ -267,18 +265,6 @@ public class BaseRelationService implements RelationService {
             handleEvictEvent(EntityRelationEvent.from(relation));
             return Futures.immediateFuture(false);
         }
-    }
-
-    boolean delete(TenantId tenantId, EntityRelation relation, boolean deleteFromDb) {
-        eventPublisher.publishEvent(EntityRelationEvent.from(relation));
-        if (deleteFromDb) {
-            try {
-                return relationDao.deleteRelation(tenantId, relation);
-            } catch (ConcurrencyFailureException e) {
-                log.debug("Concurrency exception while deleting relations [{}]", relation, e);
-            }
-        }
-        return false;
     }
 
     @Override

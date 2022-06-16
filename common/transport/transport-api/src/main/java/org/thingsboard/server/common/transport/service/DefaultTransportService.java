@@ -901,7 +901,7 @@ public class DefaultTransportService implements TransportService {
                 if (EntityType.DEVICE_PROFILE.equals(entityType)) {
                     DeviceProfile deviceProfile = deviceProfileCache.put(msg.getData());
                     if (deviceProfile != null) {
-                        log.info("On device profile update: {}", deviceProfile);
+                        log.debug("On device profile update: {}", deviceProfile);
                         onProfileUpdate(deviceProfile);
                     }
                 } else if (EntityType.TENANT_PROFILE.equals(entityType)) {
