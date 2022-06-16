@@ -919,14 +919,14 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     }
     for (const l of Object.keys(this.layouts)) {
       const layout: DashboardPageLayout = this.layouts[l];
-        if (layoutsData[l]) {
-          layout.show = true;
-          const layoutInfo: DashboardLayoutInfo = layoutsData[l];
-          this.updateLayout(layout, layoutInfo);
-        } else {
-          layout.show = false;
-          this.updateLayout(layout, {widgetIds: [], widgetLayouts: {}, gridSettings: null});
-        }
+      if (layoutsData[l]) {
+        layout.show = true;
+        const layoutInfo: DashboardLayoutInfo = layoutsData[l];
+        this.updateLayout(layout, layoutInfo);
+      } else {
+        layout.show = false;
+        this.updateLayout(layout, {widgetIds: [], widgetLayouts: {}, gridSettings: null});
+      }
     }
   }
 
