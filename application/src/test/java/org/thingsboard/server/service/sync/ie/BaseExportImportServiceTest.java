@@ -357,6 +357,7 @@ public abstract class BaseExportImportServiceTest extends AbstractControllerTest
 
     protected <E extends ExportableEntity<I>, I extends EntityId> EntityImportResult<E> importEntity(User user, EntityExportData<E> exportData, EntityImportSettings importSettings) throws Exception {
         EntitiesImportCtx ctx = new EntitiesImportCtx(getSecurityUser(user), null, importSettings);
+        ctx.setFetchAllUUIDs(true);
         exportData = JacksonUtil.treeToValue(JacksonUtil.valueToTree(exportData), EntityExportData.class);
         EntityImportResult<E> importResult = exportImportService.importEntity(ctx, exportData);
         exportImportService.saveReferencesAndRelations(ctx);

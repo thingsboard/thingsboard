@@ -23,7 +23,6 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
@@ -72,8 +71,6 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
     private DeviceCredentialsService deviceCredentialsService;
     @SpyBean
     private EntityActionService entityActionService;
-    @SpyBean
-    private TbClusterService clusterService;
     @SpyBean
     private OtaPackageStateService otaPackageStateService;
 
@@ -449,7 +446,7 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
         importEntity(tenantAdmin2, entitiesExportData.get(EntityType.CUSTOMER));
         verify(entityActionService).logEntityAction(any(), eq(importedCustomer.getId()), eq(importedCustomer),
                 any(), eq(ActionType.UPDATED), isNull());
-        verify(clusterService).sendNotificationMsgToEdgeService(any(), any(), eq(importedCustomer.getId()), any(), any(), eq(EdgeEventActionType.UPDATED));
+        verify(tbClusterService).sendNotificationMsgToEdgeService(any(), any(), eq(importedCustomer.getId()), any(), any(), eq(EdgeEventActionType.UPDATED));
 
         Asset importedAsset = (Asset) importEntity(tenantAdmin2, entitiesExportData.get(EntityType.ASSET)).getSavedEntity();
         verify(entityActionService).logEntityAction(any(), eq(importedAsset.getId()), eq(importedAsset),
@@ -457,12 +454,12 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
         importEntity(tenantAdmin2, entitiesExportData.get(EntityType.ASSET));
         verify(entityActionService).logEntityAction(any(), eq(importedAsset.getId()), eq(importedAsset),
                 any(), eq(ActionType.UPDATED), isNull());
-        verify(clusterService).sendNotificationMsgToEdgeService(any(), any(), eq(importedAsset.getId()), any(), any(), eq(EdgeEventActionType.UPDATED));
+        verify(tbClusterService).sendNotificationMsgToEdgeService(any(), any(), eq(importedAsset.getId()), any(), any(), eq(EdgeEventActionType.UPDATED));
 
         RuleChain importedRuleChain = (RuleChain) importEntity(tenantAdmin2, entitiesExportData.get(EntityType.RULE_CHAIN)).getSavedEntity();
         verify(entityActionService).logEntityAction(any(), eq(importedRuleChain.getId()), eq(importedRuleChain),
                 any(), eq(ActionType.ADDED), isNull());
-        verify(clusterService).broadcastEntityStateChangeEvent(any(), eq(importedRuleChain.getId()), eq(ComponentLifecycleEvent.CREATED));
+        verify(tbClusterService).broadcastEntityStateChangeEvent(any(), eq(importedRuleChain.getId()), eq(ComponentLifecycleEvent.CREATED));
 
         Dashboard importedDashboard = (Dashboard) importEntity(tenantAdmin2, entitiesExportData.get(EntityType.DASHBOARD)).getSavedEntity();
         verify(entityActionService).logEntityAction(any(), eq(importedDashboard.getId()), eq(importedDashboard),
@@ -471,17 +468,17 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
         DeviceProfile importedDeviceProfile = (DeviceProfile) importEntity(tenantAdmin2, entitiesExportData.get(EntityType.DEVICE_PROFILE)).getSavedEntity();
         verify(entityActionService).logEntityAction(any(), eq(importedDeviceProfile.getId()), eq(importedDeviceProfile),
                 any(), eq(ActionType.ADDED), isNull());
-        verify(clusterService).onDeviceProfileChange(eq(importedDeviceProfile), any());
-        verify(clusterService).broadcastEntityStateChangeEvent(any(), eq(importedDeviceProfile.getId()), eq(ComponentLifecycleEvent.CREATED));
-        verify(clusterService).sendNotificationMsgToEdgeService(any(), any(), eq(importedDeviceProfile.getId()), any(), any(), eq(EdgeEventActionType.ADDED));
+        verify(tbClusterService).onDeviceProfileChange(eq(importedDeviceProfile), any());
+        verify(tbClusterService).broadcastEntityStateChangeEvent(any(), eq(importedDeviceProfile.getId()), eq(ComponentLifecycleEvent.CREATED));
+        verify(tbClusterService).sendNotificationMsgToEdgeService(any(), any(), eq(importedDeviceProfile.getId()), any(), any(), eq(EdgeEventActionType.ADDED));
         verify(otaPackageStateService).update(eq(importedDeviceProfile), eq(false), eq(false));
 
         Device importedDevice = (Device) importEntity(tenantAdmin2, entitiesExportData.get(EntityType.DEVICE)).getSavedEntity();
         verify(entityActionService).logEntityAction(any(), eq(importedDevice.getId()), eq(importedDevice),
                 any(), eq(ActionType.ADDED), isNull());
-        verify(clusterService).onDeviceUpdated(eq(importedDevice), isNull());
+        verify(tbClusterService).onDeviceUpdated(eq(importedDevice), isNull());
         importEntity(tenantAdmin2, entitiesExportData.get(EntityType.DEVICE));
-        verify(clusterService).onDeviceUpdated(eq(importedDevice), eq(importedDevice));
+        verify(tbClusterService).onDeviceUpdated(eq(importedDevice), eq(importedDevice));
     }
 
 }
