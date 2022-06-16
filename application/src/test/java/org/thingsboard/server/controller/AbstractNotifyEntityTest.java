@@ -56,15 +56,6 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
         Mockito.reset(tbClusterService, auditLogService);
     }
 
-    protected void testNotifyEntityDeleteOneTimeMsgToEdgeServiceNever(HasName entity, EntityId entityId, EntityId originatorId,
-                                                                      TenantId tenantId, CustomerId customerId, UserId userId, String userName,
-                                                                      ActionType actionType, Object... additionalInfo) {
-        testNotificationMsgToEdgeServiceNever(entityId);
-        testLogEntityActionOneTime(entity, originatorId, tenantId, customerId, userId, userName, actionType, additionalInfo);
-        testPushMsgToRuleEngineOneTime(entityId, tenantId);
-        testBroadcastEntityStateChangeEventOneTime(entityId, tenantId);
-        Mockito.reset(tbClusterService, auditLogService);
-    }
     protected void testNotifyEntityNeverMsgToEdgeServiceOneTime(HasName entity, EntityId entityId, TenantId tenantId, ActionType actionType) {
         testSendNotificationMsgToEdgeServiceOneTime(entityId, tenantId, actionType);
         testLogEntityActionNever(entityId, entity);
@@ -95,25 +86,31 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
                                          UserId userId, String userName, ActionType actionType, Exception exp,
                                          Object... additionalInfo) {
         CustomerId customer_NULL_UUID = (CustomerId) EntityIdFactory.getByTypeAndUuid(EntityType.CUSTOMER, ModelConstants.NULL_UUID);
-        EntityId entity_NULL_UUID = EntityIdFactory.getByTypeAndUuid(EntityType.valueOf(entity.getClass().toString()
+        EntityId entity_NULL_UUID = EntityIdFactory.getByTypeAndUuid(
+                EntityType
+                        .valueOf(entity.getClass()
+                        .toString()
                         .substring(entity.getClass().toString().lastIndexOf(".") + 1).toUpperCase(Locale.ENGLISH)),
                 ModelConstants.NULL_UUID);
         testNotificationMsgToEdgeServiceNever(entity_NULL_UUID);
         if (additionalInfo.length > 0) {
-            Mockito.verify(auditLogService, times(1)).logEntityAction(Mockito.eq(tenantId),
-                    Mockito.eq(customer_NULL_UUID), Mockito.eq(userId), Mockito.eq(userName),
-                    Mockito.eq(entity_NULL_UUID), Mockito.any(entity.getClass()), Mockito.eq(actionType),
-                    Mockito.argThat(argument ->
-                            argument.getMessage().equals(exp.getMessage())), Mockito.eq(additionalInfo));
+            Mockito.verify(auditLogService, times(1))
+                    .logEntityAction(Mockito.eq(tenantId),
+                            Mockito.eq(customer_NULL_UUID), Mockito.eq(userId), Mockito.eq(userName),
+                            Mockito.eq(entity_NULL_UUID), Mockito.any(entity.getClass()), Mockito.eq(actionType),
+                            Mockito.argThat(argument ->
+                                    argument.getMessage().contains(exp.getMessage())),
+                            Mockito.eq(additionalInfo)
+                    );
         } else {
-            Mockito.verify(auditLogService, times(1)).logEntityAction(Mockito.eq(tenantId),
-                    Mockito.eq(customer_NULL_UUID), Mockito.eq(userId), Mockito.eq(userName),
-                    Mockito.eq(entity_NULL_UUID), Mockito.any(entity.getClass()), Mockito.eq(actionType),
-                    Mockito.argThat(argument ->
-                        argument.getMessage().equals(exp.getMessage())));
+            Mockito.verify(auditLogService, times(1))
+                    .logEntityAction(Mockito.eq(tenantId),
+                            Mockito.eq(customer_NULL_UUID), Mockito.eq(userId), Mockito.eq(userName),
+                            Mockito.eq(entity_NULL_UUID), Mockito.any(entity.getClass()), Mockito.eq(actionType),
+                            Mockito.argThat((argument -> argument.getMessage().contains(exp.getMessage()) & argument.getClass().equals(exp.getClass())))
+                    );
         }
         testPushMsgToRuleEngineNever(entity_NULL_UUID);
-        Mockito.reset(tbClusterService, auditLogService);
     }
 
     protected void testNotifyEntityNever(EntityId entityId, HasName entity) {

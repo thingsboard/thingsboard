@@ -121,7 +121,6 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
     @Test
     public void testSaveCustomerWithViolationOfValidation() throws Exception {
         Customer customer = new Customer();
-        String validationError = "Validation error: ";
         customer.setTitle(RandomStringUtils.randomAlphabetic(300));
 
         Mockito.reset(tbClusterService, auditLogService);
@@ -130,7 +129,8 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         doPost("/api/customer", customer).andExpect(statusReason(containsString(msgError)));
 
         testNotifyEntityError(customer, savedTenant.getId(),
-                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(validationError + msgError));
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+        Mockito.reset(tbClusterService, auditLogService);
 
         customer.setTitle("Normal title");
         customer.setCity(RandomStringUtils.randomAlphabetic(300));
@@ -138,7 +138,8 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         doPost("/api/customer", customer).andExpect(statusReason(containsString(msgError)));
 
         testNotifyEntityError(customer, savedTenant.getId(),
-                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(validationError + msgError));
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+        Mockito.reset(tbClusterService, auditLogService);
 
         customer.setCity("Normal city");
         customer.setCountry(RandomStringUtils.randomAlphabetic(300));
@@ -146,7 +147,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         doPost("/api/customer", customer).andExpect(statusReason(containsString(msgError)));
 
         testNotifyEntityError(customer, savedTenant.getId(),
-                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(validationError + msgError));
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
 
         customer.setCountry("Ukraine");
         customer.setPhone(RandomStringUtils.randomAlphabetic(300));
@@ -154,7 +155,8 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         doPost("/api/customer", customer).andExpect(statusReason(containsString(msgError)));
 
         testNotifyEntityError(customer, savedTenant.getId(),
-                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(validationError + msgError));
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+        Mockito.reset(tbClusterService, auditLogService);
 
         customer.setPhone("+3892555554512");
         customer.setState(RandomStringUtils.randomAlphabetic(300));
@@ -162,7 +164,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         doPost("/api/customer", customer).andExpect(statusReason(containsString(msgError)));
 
         testNotifyEntityError(customer, savedTenant.getId(),
-                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(validationError + msgError));
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
 
         customer.setState("Normal state");
         customer.setZip(RandomStringUtils.randomAlphabetic(300));
@@ -170,7 +172,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         doPost("/api/customer", customer).andExpect(statusReason(containsString(msgError)));
 
         testNotifyEntityError(customer, savedTenant.getId(),
-                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(validationError + msgError));
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
 
     }
 
@@ -247,7 +249,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
                 .andExpect(statusReason(containsString(msgError)));
 
         testNotifyEntityError(customer, savedTenant.getId(),
-                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError + "!"));
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
     }
 
     @Test
@@ -264,7 +266,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
                 .andExpect(statusReason(containsString(msgError)));
 
         testNotifyEntityError(customer, savedTenant.getId(),
-                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError + "!"));
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
     }
 
     @Test
