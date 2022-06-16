@@ -160,6 +160,7 @@
                             <verbose>true</verbose>
                             <googleContainerRegistryEnabled>false</googleContainerRegistryEnabled>
                             <contextDirectory>${project.build.directory}/docker-postgres</contextDirectory>
+                            <noCache>true</noCache>
                         </configuration>
                     </execution>
                     <execution>
@@ -186,6 +187,7 @@
                             <verbose>true</verbose>
                             <googleContainerRegistryEnabled>false</googleContainerRegistryEnabled>
                             <contextDirectory>${project.build.directory}/docker-cassandra</contextDirectory>
+                            <noCache>true</noCache>
                         </configuration>
                     </execution>
                     <execution>
