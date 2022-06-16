@@ -17,7 +17,7 @@ package org.thingsboard.server.transport.mqtt.credentials;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.eclipse.paho.mqttv5.client.MqttSecurityException;
+import org.eclipse.paho.mqttv5.common.MqttException;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
@@ -114,7 +114,7 @@ public class BasicMqttCredentialsTest extends AbstractMqttIntegrationTest {
         testTelemetryIsDelivered(accessToken2Device, mqttTestClient5);
     }
 
-    @Test(expected = MqttSecurityException.class)
+    @Test(expected = MqttException.class)
     public void testCorrectClientIdAndUserNameButWrongPassword() throws Exception {
         // Not correct. Correct clientId and username, but wrong password
         MqttTestClient mqttTestClient = new MqttTestClient(CLIENT_ID);

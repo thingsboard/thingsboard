@@ -17,10 +17,14 @@ package org.thingsboard.server.transport.mqtt;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
-import org.eclipse.paho.client.mqttv3.MqttCallback;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.eclipse.paho.client.mqttv3.internal.wire.MqttWireMessage;
+import org.eclipse.paho.mqttv5.client.IMqttDeliveryToken;
+import org.eclipse.paho.mqttv5.client.IMqttToken;
+import org.eclipse.paho.mqttv5.client.MqttCallback;
+import org.eclipse.paho.mqttv5.client.MqttDisconnectResponse;
+import org.eclipse.paho.mqttv5.common.MqttException;
+import org.eclipse.paho.mqttv5.common.MqttMessage;
+import org.eclipse.paho.mqttv5.common.packet.MqttProperties;
+import org.eclipse.paho.mqttv5.common.packet.MqttWireMessage;
 
 import java.util.concurrent.CountDownLatch;
 
@@ -52,9 +56,14 @@ public class MqttTestCallback implements MqttCallback {
     }
 
     @Override
-    public void connectionLost(Throwable throwable) {
-        log.warn("connectionLost: ", throwable);
+    public void disconnected(MqttDisconnectResponse disconnectResponse) {
+        log.warn("disconnected: ", disconnectResponse.getException());
         deliveryLatch.countDown();
+    }
+
+    @Override
+    public void mqttErrorOccurred(MqttException exception) {
+        log.warn("mqttErrorOccurred: ", exception);
     }
 
     @Override
@@ -69,6 +78,23 @@ public class MqttTestCallback implements MqttCallback {
         }
     }
 
+    @Override
+    public void deliveryComplete(IMqttToken token) {
+        log.warn("deliveryComplete: {}", token.getResponse());
+        pubAckReceived = token.getResponse().getType() == MqttWireMessage.MESSAGE_TYPE_PUBACK;
+        deliveryLatch.countDown();
+    }
+
+    @Override
+    public void connectComplete(boolean reconnect, String serverURI) {
+        log.warn("connectComplete: reconnect[{}], server uri[{}]", reconnect, serverURI);
+    }
+
+    @Override
+    public void authPacketArrived(int reasonCode, MqttProperties properties) {
+        log.warn("authPacketArrived: reason code[{}], mqtt properties[{}]", reasonCode, properties);
+    }
+
     protected void messageArrivedOnAwaitSubTopic(String requestTopic, MqttMessage mqttMessage) {
         log.warn("messageArrived on topic: {}, awaitSubTopic: {}", requestTopic, awaitSubTopic);
         if (awaitSubTopic.equals(requestTopic)) {
@@ -76,13 +102,5 @@ public class MqttTestCallback implements MqttCallback {
             payloadBytes = mqttMessage.getPayload();
             subscribeLatch.countDown();
         }
-    }
-
-    @Override
-    public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
-        log.warn("delivery complete: {}", iMqttDeliveryToken.getResponse());
-        pubAckReceived = iMqttDeliveryToken.getResponse().getType() == MqttWireMessage.MESSAGE_TYPE_PUBACK;
-        deliveryLatch.countDown();
-
     }
 }

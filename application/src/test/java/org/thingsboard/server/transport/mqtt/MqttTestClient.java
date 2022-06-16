@@ -16,15 +16,16 @@
 package org.thingsboard.server.transport.mqtt;
 
 import io.netty.handler.codec.mqtt.MqttQoS;
-import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
-import org.eclipse.paho.client.mqttv3.IMqttToken;
-import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+import org.eclipse.paho.mqttv5.client.IMqttToken;
+import org.eclipse.paho.mqttv5.client.MqttAsyncClient;
+import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
+import org.eclipse.paho.mqttv5.common.MqttException;
+import org.eclipse.paho.mqttv5.common.MqttMessage;
+import org.eclipse.paho.mqttv5.client.persist.MemoryPersistence;
 import org.thingsboard.server.common.data.StringUtils;
 
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class MqttTestClient {
@@ -64,12 +65,12 @@ public class MqttTestClient {
         if (client == null) {
             throw new RuntimeException("Failed to connect! MqttAsyncClient is not initialized!");
         }
-        MqttConnectOptions options = new MqttConnectOptions();
+        MqttConnectionOptions options = new MqttConnectionOptions();
         if (StringUtils.isNotEmpty(userName)) {
             options.setUserName(userName);
         }
         if (StringUtils.isNotEmpty(password)) {
-            options.setPassword(password.toCharArray());
+            options.setPassword(password.getBytes(StandardCharsets.UTF_8));
         }
         return client.connect(options);
     }
@@ -90,7 +91,7 @@ public class MqttTestClient {
         publish(topic, payload).waitForCompletion(TIMEOUT_MS);
     }
 
-    public IMqttDeliveryToken publish(String topic, byte[] payload) throws MqttException {
+    public IMqttToken publish(String topic, byte[] payload) throws MqttException {
         MqttMessage message = new MqttMessage();
         message.setPayload(payload);
         return client.publish(topic, message);
@@ -114,7 +115,7 @@ public class MqttTestClient {
 
     private MqttAsyncClient createClient(String clientId) throws MqttException {
         if (StringUtils.isEmpty(clientId)) {
-            clientId = MqttAsyncClient.generateClientId();
+            clientId = UUID.randomUUID().toString();
         }
         return new MqttAsyncClient(MQTT_URL, clientId, new MemoryPersistence());
     }

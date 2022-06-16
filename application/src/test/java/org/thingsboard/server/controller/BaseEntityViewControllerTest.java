@@ -23,7 +23,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.eclipse.paho.mqttv5.client.IMqttDeliveryToken;
+import org.eclipse.paho.mqttv5.client.IMqttToken;
 import org.eclipse.paho.mqttv5.client.MqttAsyncClient;
 import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
 import org.eclipse.paho.mqttv5.common.MqttMessage;
@@ -59,6 +59,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -215,7 +216,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
     @Test
     public void testAssignEntityViewToNonExistentCustomer() throws Exception {
         EntityView savedView = getNewSavedEntityView("Test entity view");
-        doPost("/api/customer/" + Uuids.timeBased().toString() + "/device/" + savedView.getId().getId().toString())
+        doPost("/api/customer/" + Uuids.timeBased() + "/device/" + savedView.getId().getId().toString())
                 .andExpect(status().isNotFound());
     }
 
@@ -336,7 +337,6 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
         String name2 = "Entity view name2";
         List<EntityView> namesOfView2 = Futures.allAsList(fillListOf(15, name2)).get(TIMEOUT, SECONDS);
-        ;
         List<EntityView> loadedNamesOfView2 = loadListOf(new PageLink(4, 0, name2), "/api/tenant/entityViews?");
         assertThat(namesOfView2).as(name2).containsExactlyInAnyOrderElementsOf(loadedNamesOfView2);
 
@@ -392,9 +392,6 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
     public void testTheCopyOfAttrsOutOfTSForTheView() throws Exception {
         long now = System.currentTimeMillis();
         Set<String> expectedActualAttributesSet = Set.of("caKey1", "caKey2", "caKey3", "caKey4");
-        Set<String> actualAttributesSet =
-                putAttributesAndWait("{\"caKey1\":\"value1\", \"caKey2\":true, \"caKey3\":42.0, \"caKey4\":73}", expectedActualAttributesSet);
-
         List<Map<String, Object>> values = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + testDevice.getId() +
                 "/values/attributes?keys=" + String.join(",", expectedActualAttributesSet), new TypeReference<>() {
         });
@@ -480,23 +477,21 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
     }
 
     private void uploadTelemetry(String strKvs, String accessToken) throws Exception {
-        String viewDeviceId = testDevice.getId().getId().toString();
-
-        String clientId = MqttAsyncClient.generateClientId();
+        String clientId = UUID.randomUUID().toString();
         MqttAsyncClient client = new MqttAsyncClient("tcp://localhost:1883", clientId, new MemoryPersistence());
 
         MqttConnectionOptions options = new MqttConnectionOptions();
         options.setUserName(accessToken);
         client.connect(options);
-        awaitConnected(client, SECONDS.toMillis(30));
+        awaitConnected(client);
         MqttMessage message = new MqttMessage();
         message.setPayload(strKvs.getBytes());
-        IMqttDeliveryToken token = client.publish("v1/devices/me/telemetry", message);
+        IMqttToken token = client.publish("v1/devices/me/telemetry", message);
         await("mqtt ack").pollInterval(5, MILLISECONDS).atMost(TIMEOUT, SECONDS).until(() -> token.getMessage() == null);
         client.disconnect();
     }
 
-    private void awaitConnected(MqttAsyncClient client, long ms) throws InterruptedException {
+    private void awaitConnected(MqttAsyncClient client) {
         await("awaitConnected").pollInterval(5, MILLISECONDS).atMost(TIMEOUT, SECONDS)
                 .until(client::isConnected);
     }
@@ -535,18 +530,18 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         assertNotNull(accessToken);
 
         log.debug("creating mqtt client...");
-        String clientId = MqttAsyncClient.generateClientId();
+        String clientId = UUID.randomUUID().toString();
         MqttAsyncClient client = new MqttAsyncClient("tcp://localhost:1883", clientId, new MemoryPersistence());
 
         MqttConnectionOptions options = new MqttConnectionOptions();
         options.setUserName(accessToken);
         client.connect(options);
-        awaitConnected(client, SECONDS.toMillis(30));
+        awaitConnected(client);
         log.debug("mqtt connected...");
         MqttMessage message = new MqttMessage();
         message.setPayload((stringKV).getBytes());
         getWsClient().registerWaitForUpdate();
-        IMqttDeliveryToken token = client.publish("v1/devices/me/attributes", message);
+        IMqttToken token = client.publish("v1/devices/me/attributes", message);
         log.debug("publish token.message {}", token.getMessage());
         await("mqtt ack").pollInterval(5, MILLISECONDS).atMost(TIMEOUT, SECONDS).until(() -> token.getMessage() == null);
         log.debug("token.message delivered {}", token.getMessage());
