@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM thingsboard/openjdk11
+FROM thingsboard/openjdk11:bullseye-slim
 
 COPY start-tb-snmp-transport.sh ${pkg.name}.deb /tmp/
 
