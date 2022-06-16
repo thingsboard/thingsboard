@@ -77,6 +77,7 @@ import org.thingsboard.server.service.sync.vc.data.ComplexEntitiesExportCtx;
 import org.thingsboard.server.service.sync.vc.data.EntitiesExportCtx;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 import org.thingsboard.server.service.sync.vc.data.EntityTypeExportCtx;
+import org.thingsboard.server.service.sync.vc.data.ReimportTask;
 import org.thingsboard.server.service.sync.vc.data.SimpleEntitiesExportCtx;
 import org.thingsboard.server.service.sync.vc.repository.TbRepositorySettingsService;
 
@@ -282,8 +283,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         for (EntityType entityType : entityTypes) {
             log.debug("[{}] Loading {} entities", ctx.getTenantId(), entityType);
             sw.startNew("Entities " + entityType.name());
-            EntityImportSettings settings = getEntityImportSettings(request, entityType);
-            ctx.setSettings(settings);
+            ctx.setSettings(getEntityImportSettings(request, entityType));
             importEntities(ctx, entityType);
         }
 
@@ -337,7 +337,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                     throw new LoadEntityException(entityData, e);
                 }
                 if (importResult.getUpdatedAllExternalIds() != null && !importResult.getUpdatedAllExternalIds()) {
-                    ctx.getToReimport().put(entityData.getEntity().getExternalId(), ctx.getSettings());
+                    ctx.getToReimport().put(entityData.getEntity().getExternalId(), new ReimportTask(entityData, ctx.getSettings()));
                     continue;
                 }
 
@@ -351,10 +351,12 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     private void reimport(EntitiesImportCtx ctx) {
-        ctx.getToReimport().forEach((externalId, importSettings) -> {
+        ctx.setFetchAllUUIDs(true);
+        ctx.getToReimport().forEach((externalId, task) -> {
             try {
-                EntityExportData entityData = gitServiceQueue.getEntity(ctx.getTenantId(), ctx.getVersionId(), externalId).get();
-                ctx.setSettings(importSettings);
+                EntityExportData entityData = task.getData();
+                var settings = task.getSettings();
+                ctx.setSettings(settings);
                 EntityImportResult<?> importResult = exportImportService.importEntity(ctx, entityData);
 
                 ctx.registerResult(externalId.getEntityType(), importResult.getOldEntity() == null);

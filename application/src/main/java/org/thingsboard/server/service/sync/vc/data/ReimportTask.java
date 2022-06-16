@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.util;
+package org.thingsboard.server.service.sync.vc.data;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import lombok.Data;
+import org.thingsboard.server.common.data.sync.ie.EntityExportData;
+import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+@Data
+public class ReimportTask {
 
-@Retention(RetentionPolicy.RUNTIME)
-@ConditionalOnProperty(prefix = "spring.jpa", value = "database-platform", havingValue = "org.hibernate.dialect.PostgreSQLDialect")
-public @interface PsqlDao {
+    private final EntityExportData data;
+    private final EntityImportSettings settings;
+
 }

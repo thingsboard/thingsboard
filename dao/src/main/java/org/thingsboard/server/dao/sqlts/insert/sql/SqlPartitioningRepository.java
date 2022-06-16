@@ -13,15 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.attributes;
+package org.thingsboard.server.dao.sqlts.insert.sql;
 
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-import org.thingsboard.server.dao.util.PsqlDao;
+import org.thingsboard.server.dao.timeseries.SqlPartition;
+import org.thingsboard.server.dao.util.SqlTsDao;
 
-@PsqlDao
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
+@SqlTsDao
 @Repository
 @Transactional
-public class PsqlAttributesInsertRepository extends AttributeKvInsertRepository {
+public class SqlPartitioningRepository {
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    public void save(SqlPartition partition) {
+        entityManager.createNativeQuery(partition.getQuery())
+                .executeUpdate();
+    }
 
 }

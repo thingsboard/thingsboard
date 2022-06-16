@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sqlts.psql;
+package org.thingsboard.server.dao.sqlts.sql;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -29,10 +29,9 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.sqlts.ts.TsKvEntity;
 import org.thingsboard.server.dao.sqlts.AbstractChunkedAggregationTimeseriesDao;
-import org.thingsboard.server.dao.sqlts.insert.psql.PsqlPartitioningRepository;
-import org.thingsboard.server.dao.timeseries.PsqlPartition;
+import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
+import org.thingsboard.server.dao.timeseries.SqlPartition;
 import org.thingsboard.server.dao.timeseries.SqlTsPartitionDate;
-import org.thingsboard.server.dao.util.PsqlDao;
 import org.thingsboard.server.dao.util.SqlTsDao;
 
 import java.sql.Connection;
@@ -52,15 +51,14 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Component
 @Slf4j
-@PsqlDao
 @SqlTsDao
-public class JpaPsqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDao {
+public class JpaSqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDao {
 
-    private final Map<Long, PsqlPartition> partitions = new ConcurrentHashMap<>();
+    private final Map<Long, SqlPartition> partitions = new ConcurrentHashMap<>();
     private static final ReentrantLock partitionCreationLock = new ReentrantLock();
 
     @Autowired
-    private PsqlPartitioningRepository partitioningRepository;
+    private SqlPartitioningRepository partitioningRepository;
 
     private SqlTsPartitionDate tsFormat;
 
@@ -134,24 +132,24 @@ public class JpaPsqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDa
                 long partitionEndTs = toMills(localDateTimeEnd);
                 ZonedDateTime zonedDateTime = localDateTimeStart.atZone(ZoneOffset.UTC);
                 String partitionDate = zonedDateTime.format(DateTimeFormatter.ofPattern(tsFormat.getPattern()));
-                savePartition(new PsqlPartition(partitionStartTs, partitionEndTs, partitionDate));
+                savePartition(new SqlPartition(partitionStartTs, partitionEndTs, partitionDate));
             }
         }
     }
 
-    private void savePartition(PsqlPartition psqlPartition) {
-        if (!partitions.containsKey(psqlPartition.getStart())) {
+    private void savePartition(SqlPartition sqlPartition) {
+        if (!partitions.containsKey(sqlPartition.getStart())) {
             partitionCreationLock.lock();
             try {
-                log.trace("Saving partition: {}", psqlPartition);
-                partitioningRepository.save(psqlPartition);
-                log.trace("Adding partition to Set: {}", psqlPartition);
-                partitions.put(psqlPartition.getStart(), psqlPartition);
+                log.trace("Saving partition: {}", sqlPartition);
+                partitioningRepository.save(sqlPartition);
+                log.trace("Adding partition to Set: {}", sqlPartition);
+                partitions.put(sqlPartition.getStart(), sqlPartition);
             } catch (DataIntegrityViolationException ex) {
                 log.trace("Error occurred during partition save:", ex);
                 if (ex.getCause() instanceof ConstraintViolationException) {
-                    log.warn("Saving partition [{}] rejected. Timeseries data will save to the ts_kv_indefinite (DEFAULT) partition.", psqlPartition.getPartitionDate());
-                    partitions.put(psqlPartition.getStart(), psqlPartition);
+                    log.warn("Saving partition [{}] rejected. Timeseries data will save to the ts_kv_indefinite (DEFAULT) partition.", sqlPartition.getPartitionDate());
+                    partitions.put(sqlPartition.getStart(), sqlPartition);
                 } else {
                     throw new RuntimeException(ex);
                 }

@@ -23,6 +23,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StopWatch;
+import org.thingsboard.common.util.TbStopWatch;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
@@ -60,6 +62,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -83,6 +86,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
     @Transactional(rollbackFor = Exception.class)
     @Override
     public EntityImportResult<E> importEntity(EntitiesImportCtx ctx, D exportData) throws ThingsboardException {
+//        TbStopWatch sw = TbStopWatch.create("find");
         EntityImportResult<E> importResult = new EntityImportResult<>();
         IdProvider idProvider = new IdProvider(ctx, importResult);
 
@@ -99,16 +103,22 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
             entity.setCreatedTime(existingEntity.getCreatedTime());
         }
 
+//        sw.startNew("prepareAndSave");
         E savedEntity = prepareAndSave(ctx, entity, exportData, idProvider);
 
         importResult.setSavedEntity(savedEntity);
         importResult.setOldEntity(existingEntity);
         importResult.setEntityType(getEntityType());
 
+//        sw.startNew("afterSaved");
         processAfterSaved(ctx, importResult, exportData, idProvider);
 
         ctx.putInternalId(exportData.getExternalId(), savedEntity.getId());
-
+//        sw.stop();
+//        for (var task : sw.getTaskInfo()) {
+//            log.info("[{}][{}] Executed: {} in {}ms", exportData.getEntityType(), exportData.getEntity().getId(), task.getTaskName(), task.getTimeMillis());
+//        }
+//        log.info("[{}][{}] Total time: {}ms", exportData.getEntityType(), exportData.getEntity().getId(), sw.getTotalTimeMillis());
         return importResult;
     }
 
@@ -280,38 +290,58 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
             return entity.getId();
         }
 
-        public Optional<EntityId> getInternalIdByUuid(UUID externalUuid) {
+        public Optional<EntityId> getInternalIdByUuid(UUID externalUuid, boolean fetchAllUUIDs, Set<EntityType> hints) {
             if (externalUuid.equals(EntityId.NULL_UUID)) return Optional.empty();
 
             for (EntityType entityType : EntityType.values()) {
-                EntityId externalId;
-                try {
-                    externalId = EntityIdFactory.getByTypeAndUuid(entityType, externalUuid);
-                } catch (Exception e) {
+                Optional<EntityId> externalIdOpt = buildEntityId(entityType, externalUuid);
+                if (!externalIdOpt.isPresent()) {
                     continue;
                 }
-                EntityId internalId = ctx.getInternalId(externalId);
+                EntityId internalId = ctx.getInternalId(externalIdOpt.get());
                 if (internalId != null) {
                     return Optional.of(internalId);
                 }
             }
 
-            for (EntityType entityType : EntityType.values()) {
-                EntityId externalId;
-                try {
-                    externalId = EntityIdFactory.getByTypeAndUuid(entityType, externalUuid);
-                } catch (Exception e) {
-                    continue;
+            if (fetchAllUUIDs) {
+                for (EntityType entityType : hints) {
+                    Optional<EntityId> internalId = lookupInDb(externalUuid, entityType);
+                    if (internalId.isPresent()) return internalId;
                 }
-
-                EntityId internalId = getInternalId(externalId, false);
-                if (internalId != null) {
-                    return Optional.of(internalId);
+                for (EntityType entityType : EntityType.values()) {
+                    if (hints.contains(entityType)) {
+                        continue;
+                    }
+                    Optional<EntityId> internalId = lookupInDb(externalUuid, entityType);
+                    if (internalId.isPresent()) return internalId;
                 }
             }
 
             importResult.setUpdatedAllExternalIds(false);
             return Optional.empty();
+        }
+
+        private Optional<EntityId> lookupInDb(UUID externalUuid, EntityType entityType) {
+            Optional<EntityId> externalIdOpt = buildEntityId(entityType, externalUuid);
+            if (externalIdOpt.isEmpty() || ctx.isNotFound(externalIdOpt.get())) {
+                return Optional.empty();
+            }
+            EntityId internalId = getInternalId(externalIdOpt.get(), false);
+            if (internalId != null) {
+                return Optional.of(internalId);
+            } else {
+                ctx.registerNotFound(externalIdOpt.get());
+            }
+            return Optional.empty();
+        }
+
+        private Optional<EntityId> buildEntityId(EntityType entityType, UUID externalUuid) {
+            try {
+                return Optional.of(EntityIdFactory.getByTypeAndUuid(entityType, externalUuid));
+            } catch (Exception e) {
+                return Optional.empty();
+            }
         }
 
     }

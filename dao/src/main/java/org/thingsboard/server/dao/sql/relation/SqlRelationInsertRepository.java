@@ -19,23 +19,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionCallbackWithoutResult;
-import org.springframework.transaction.support.TransactionTemplate;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.dao.model.sql.RelationEntity;
-import org.thingsboard.server.dao.util.PsqlDao;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Types;
 import java.util.List;
 
-@PsqlDao
 @Repository
 @Transactional
 public class SqlRelationInsertRepository implements RelationInsertRepository {
@@ -54,9 +48,6 @@ public class SqlRelationInsertRepository implements RelationInsertRepository {
 
     @Autowired
     protected JdbcTemplate jdbcTemplate;
-
-    @Autowired
-    private TransactionTemplate transactionTemplate;
 
     protected Query getQuery(RelationEntity entity, String query) {
         Query nativeQuery = entityManager.createNativeQuery(query, RelationEntity.class);
@@ -81,36 +72,31 @@ public class SqlRelationInsertRepository implements RelationInsertRepository {
 
     @Override
     public void saveOrUpdate(List<RelationEntity> entities) {
-        transactionTemplate.execute(new TransactionCallbackWithoutResult() {
+        jdbcTemplate.batchUpdate(INSERT_ON_CONFLICT_DO_UPDATE_JDBC, new BatchPreparedStatementSetter() {
             @Override
-            protected void doInTransactionWithoutResult(TransactionStatus status) {
-                jdbcTemplate.batchUpdate(INSERT_ON_CONFLICT_DO_UPDATE_JDBC, new BatchPreparedStatementSetter() {
-                    @Override
-                    public void setValues(PreparedStatement ps, int i) throws SQLException {
-                        RelationEntity relation = entities.get(i);
-                        ps.setObject(1, relation.getFromId());
-                        ps.setString(2, relation.getFromType());
-                        ps.setObject(3, relation.getToId());
-                        ps.setString(4, relation.getToType());
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                RelationEntity relation = entities.get(i);
+                ps.setObject(1, relation.getFromId());
+                ps.setString(2, relation.getFromType());
+                ps.setObject(3, relation.getToId());
+                ps.setString(4, relation.getToType());
 
-                        ps.setString(5, relation.getRelationTypeGroup());
-                        ps.setString(6, relation.getRelationType());
+                ps.setString(5, relation.getRelationTypeGroup());
+                ps.setString(6, relation.getRelationType());
 
-                        if (relation.getAdditionalInfo() == null) {
-                            ps.setString(7, null);
-                            ps.setString(8, null);
-                        } else {
-                            String json = JacksonUtil.toString(relation.getAdditionalInfo());
-                            ps.setString(7, json);
-                            ps.setString(8, json);
-                        }
-                    }
+                if (relation.getAdditionalInfo() == null) {
+                    ps.setString(7, null);
+                    ps.setString(8, null);
+                } else {
+                    String json = JacksonUtil.toString(relation.getAdditionalInfo());
+                    ps.setString(7, json);
+                    ps.setString(8, json);
+                }
+            }
 
-                    @Override
-                    public int getBatchSize() {
-                        return entities.size();
-                    }
-                });
+            @Override
+            public int getBatchSize() {
+                return entities.size();
             }
         });
     }

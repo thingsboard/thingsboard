@@ -35,6 +35,10 @@ public interface RelationRepository
                                                                         String fromType,
                                                                         String relationTypeGroup);
 
+    List<RelationEntity> findAllByFromIdAndFromTypeAndRelationTypeGroupIn(UUID fromId,
+                                                                        String fromType,
+                                                                        List<String> relationTypeGroups);
+
     List<RelationEntity> findAllByFromIdAndFromTypeAndRelationTypeAndRelationTypeGroup(UUID fromId,
                                                                                        String fromType,
                                                                                        String relationType,
@@ -43,6 +47,10 @@ public interface RelationRepository
     List<RelationEntity> findAllByToIdAndToTypeAndRelationTypeGroup(UUID toId,
                                                                     String toType,
                                                                     String relationTypeGroup);
+
+    List<RelationEntity> findAllByToIdAndToTypeAndRelationTypeGroupIn(UUID toId,
+                                                                    String toType,
+                                                                    List<String> relationTypeGroups);
 
     List<RelationEntity> findAllByToIdAndToTypeAndRelationTypeAndRelationTypeGroup(UUID toId,
                                                                                    String toType,
@@ -65,5 +73,8 @@ public interface RelationRepository
 
     @Transactional
     void deleteByFromIdAndFromType(UUID fromId, String fromType);
+
+    @Transactional
+    void deleteByToIdAndToTypeAndRelationTypeGroupIn(UUID fromId, String fromType, List<String> relationTypeGroups);
 
 }

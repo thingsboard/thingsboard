@@ -141,6 +141,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         List<RuleNode> nodes = ruleChainMetaData.getNodes();
         List<RuleNode> toAddOrUpdate = new ArrayList<>();
         List<RuleNode> toDelete = new ArrayList<>();
+        List<EntityRelation> relations = new ArrayList<>();
 
         Map<RuleNodeId, Integer> ruleNodeIndexMap = new HashMap<>();
         if (nodes != null) {
@@ -171,15 +172,15 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             for (RuleNode node : toAddOrUpdate) {
                 node.setRuleChainId(ruleChain.getId());
                 RuleNode savedNode = ruleNodeDao.save(tenantId, node);
-                createRelation(tenantId, new EntityRelation(ruleChainMetaData.getRuleChainId(), savedNode.getId(),
+                relations.add(new EntityRelation(ruleChainMetaData.getRuleChainId(), savedNode.getId(),
                         EntityRelation.CONTAINS_TYPE, RelationTypeGroup.RULE_CHAIN));
                 int index = nodes.indexOf(node);
                 nodes.set(index, savedNode);
                 ruleNodeIndexMap.put(savedNode.getId(), index);
             }
         }
-        for (RuleNode node : toDelete) {
-            deleteRuleNode(tenantId, node.getId());
+        if (!toDelete.isEmpty()) {
+            deleteRuleNodes(tenantId, toDelete);
         }
         RuleNodeId firstRuleNodeId = null;
         if (nodes != null) {
@@ -196,7 +197,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                     EntityId from = nodes.get(nodeConnection.getFromIndex()).getId();
                     EntityId to = nodes.get(nodeConnection.getToIndex()).getId();
                     String type = nodeConnection.getType();
-                    createRelation(tenantId, new EntityRelation(from, to, type, RelationTypeGroup.RULE_NODE));
+                    relations.add(new EntityRelation(from, to, type, RelationTypeGroup.RULE_NODE));
                 }
             }
             if (ruleChainMetaData.getRuleChainConnections() != null) {
@@ -222,7 +223,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                     sourceRuleChainToRuleNode.setTo(targetNode.getId());
                     sourceRuleChainToRuleNode.setType(EntityRelation.CONTAINS_TYPE);
                     sourceRuleChainToRuleNode.setTypeGroup(RelationTypeGroup.RULE_CHAIN);
-                    relationService.saveRelation(tenantId, sourceRuleChainToRuleNode);
+                    relations.add(sourceRuleChainToRuleNode);
 
                     EntityRelation sourceRuleNodeToTargetRuleNode = new EntityRelation();
                     EntityId from = nodes.get(nodeToRuleChainConnection.getFromIndex()).getId();
@@ -230,9 +231,13 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                     sourceRuleNodeToTargetRuleNode.setTo(targetNode.getId());
                     sourceRuleNodeToTargetRuleNode.setType(nodeToRuleChainConnection.getType());
                     sourceRuleNodeToTargetRuleNode.setTypeGroup(RelationTypeGroup.RULE_NODE);
-                    relationService.saveRelation(tenantId, sourceRuleNodeToTargetRuleNode);
-                 }
+                    relations.add(sourceRuleNodeToTargetRuleNode);
+                }
             }
+        }
+
+        if (!relations.isEmpty()) {
+            relationService.saveRelations(tenantId, relations);
         }
 
         return RuleChainUpdateResult.successful(updatedRuleNodes);
@@ -708,6 +713,14 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             }
         }
         deleteRuleNodes(tenantId, ruleChainId);
+    }
+
+    private void deleteRuleNodes(TenantId tenantId, List<RuleNode> ruleNodes) {
+        List<RuleNodeId> ruleNodeIds = ruleNodes.stream().map(RuleNode::getId).collect(Collectors.toList());
+        for (var node : ruleNodes) {
+            deleteEntityRelations(tenantId, node.getId());
+        }
+        ruleNodeDao.deleteByIdIn(ruleNodeIds);
     }
 
     @Override

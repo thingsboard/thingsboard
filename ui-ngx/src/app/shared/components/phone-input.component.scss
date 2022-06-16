@@ -13,14 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.util;
+:host ::ng-deep {
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+  .phone-input-container {
+    display: flex;
+    align-items: center;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+    .phone-input {
+      width: 100%;
+    }
+  }
 
-@Retention(RetentionPolicy.RUNTIME)
-@ConditionalOnProperty(prefix = "spring.jpa", value = "database-platform", havingValue = "org.hibernate.dialect.HSQLDialect")
-public @interface HsqlDao {
+  .flags-select-container {
+    display: inline-block;
+    position: relative;
+    width: 50px;
+    height: 100%;
+    margin-right: 5px;
+  }
+
+  .flag-container {
+    position: absolute;
+    font-size: 20px;
+    top: 50%;
+    left: 0;
+    transform: translate(0, -50%);
+  }
+  .country-select {
+    width: 45px;
+    height: 30px;
+
+    .mat-select-trigger {
+      height: 100%;
+      width: 100%;
+    }
+
+    .mat-select-value {
+      visibility: hidden;
+    }
+  }
 }

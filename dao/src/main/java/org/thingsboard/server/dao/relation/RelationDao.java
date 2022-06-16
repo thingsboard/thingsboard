@@ -32,9 +32,13 @@ public interface RelationDao {
 
     List<EntityRelation> findAllByFrom(TenantId tenantId, EntityId from, RelationTypeGroup typeGroup);
 
+    List<EntityRelation> findAllByFrom(TenantId tenantId, EntityId from);
+
     List<EntityRelation> findAllByFromAndType(TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup);
 
     List<EntityRelation> findAllByTo(TenantId tenantId, EntityId to, RelationTypeGroup typeGroup);
+
+    List<EntityRelation> findAllByTo(TenantId tenantId, EntityId to);
 
     List<EntityRelation> findAllByToAndType(TenantId tenantId, EntityId to, String relationType, RelationTypeGroup typeGroup);
 
@@ -56,7 +60,9 @@ public interface RelationDao {
 
     ListenableFuture<Boolean> deleteRelationAsync(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup);
 
-    boolean deleteOutboundRelations(TenantId tenantId, EntityId entity);
+    void deleteOutboundRelations(TenantId tenantId, EntityId entity);
+
+    void deleteInboundRelations(TenantId tenantId, EntityId entity);
 
     ListenableFuture<Boolean> deleteOutboundRelationsAsync(TenantId tenantId, EntityId entity);
 
