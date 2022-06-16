@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -43,10 +44,10 @@ public class DeviceImportService extends BaseEntityImportService<DeviceId, Devic
     }
 
     @Override
-    protected Device prepareAndSave(EntitiesImportCtx ctx, Device device, DeviceExportData exportData, IdProvider idProvider) {
+    protected Device prepareAndSave(EntitiesImportCtx ctx, Device device, Device old, DeviceExportData exportData, IdProvider idProvider) {
         device.setDeviceProfileId(idProvider.getInternalId(device.getDeviceProfileId()));
-        device.setFirmwareId(idProvider.getInternalId(device.getFirmwareId()));
-        device.setSoftwareId(idProvider.getInternalId(device.getSoftwareId()));
+        device.setFirmwareId(getOldEntityField(old, Device::getFirmwareId));
+        device.setSoftwareId(getOldEntityField(old, Device::getSoftwareId));
         if (exportData.getCredentials() != null && ctx.isSaveCredentials()) {
             exportData.getCredentials().setId(null);
             exportData.getCredentials().setDeviceId(null);

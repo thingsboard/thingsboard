@@ -64,6 +64,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -104,7 +105,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
         }
 
 //        sw.startNew("prepareAndSave");
-        E savedEntity = prepareAndSave(ctx, entity, exportData, idProvider);
+        E savedEntity = prepareAndSave(ctx, entity, existingEntity, exportData, idProvider);
 
         importResult.setSavedEntity(savedEntity);
         importResult.setOldEntity(existingEntity);
@@ -129,7 +130,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
 
     protected abstract void setOwner(TenantId tenantId, E entity, IdProvider idProvider);
 
-    protected abstract E prepareAndSave(EntitiesImportCtx ctx, E entity, D exportData, IdProvider idProvider);
+    protected abstract E prepareAndSave(EntitiesImportCtx ctx, E entity, E oldEntity, D exportData, IdProvider idProvider);
 
 
     protected void processAfterSaved(EntitiesImportCtx ctx, EntityImportResult<E> importResult, D exportData, IdProvider idProvider) throws ThingsboardException {
@@ -344,6 +345,10 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
             }
         }
 
+    }
+
+    protected <T extends EntityId, O> T getOldEntityField(O oldEntity, Function<O,T> getter){
+        return oldEntity == null ? null : getter.apply(oldEntity);
     }
 
 }
