@@ -25,6 +25,8 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.cache.TbCacheValueWrapper;
+import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -59,6 +61,7 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.tenant.TenantCacheKey;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.ArrayList;
@@ -80,14 +83,10 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
     protected TenantDao tenantDao;
 
     @Autowired
-    CacheManager cacheManager;
+    protected TbTransactionalCache<TenantCacheKey, Tenant> cache;
 
-    private Cache tenantCache;
-
-    @Before
-    public void setup() {
-        tenantCache = cacheManager.getCache(CacheConstants.TENANTS_CACHE);
-    }
+    @Autowired
+    protected TbTransactionalCache<TenantCacheKey, Boolean> existsTenantCache;
 
     @Test
     public void testSaveTenant() {
@@ -155,7 +154,6 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
     
     @Test
     public void testFindTenants() {
-        
         List<Tenant> tenants = new ArrayList<>();
         PageLink pageLink = new PageLink(17);
         PageData<Tenant> pageData = tenantService.findTenants(pageLink);
@@ -335,15 +333,14 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         Tenant savedTenant = tenantService.saveTenant(tenant);
 
         Mockito.reset(tenantDao);
-        Objects.requireNonNull(tenantCache, "Tenant cache manager is null").evict(List.of(savedTenant.getId(), "TENANT"));
 
         verify(tenantDao, Mockito.times(0)).findById(any(), any());
         tenantService.findTenantById(savedTenant.getId());
         verify(tenantDao, Mockito.times(1)).findById(eq(savedTenant.getId()), eq(savedTenant.getId().getId()));
 
-        Cache.ValueWrapper cachedTenant =
-                Objects.requireNonNull(tenantCache, "Cache manager is null!").get(List.of(savedTenant.getId(), "TENANT"));
+        var cachedTenant = cache.get(TenantCacheKey.fromId(savedTenant.getId()));
         Assert.assertNotNull("Getting an existing Tenant doesn't add it to the cache!", cachedTenant);
+        Assert.assertEquals(savedTenant, cachedTenant.get());
 
         for (int i = 0; i < 100; i++) {
             tenantService.findTenantById(savedTenant.getId());
@@ -360,15 +357,15 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         Tenant savedTenant = tenantService.saveTenant(tenant);
 
         Mockito.reset(tenantDao);
-        tenantCache.clear();
+        //fromIdExists invoked from device profile validator
+        existsTenantCache.evict(TenantCacheKey.fromIdExists(savedTenant.getTenantId()));
 
         verify(tenantDao, Mockito.times(0)).existsById(any(), any());
         tenantService.tenantExists(savedTenant.getId());
         verify(tenantDao, Mockito.times(1)).existsById(eq(savedTenant.getId()), eq(savedTenant.getId().getId()));
 
-        Cache.ValueWrapper cachedExists =
-                Objects.requireNonNull(tenantCache, "Cache manager is null!").get(List.of(savedTenant.getId(), "EXISTS"));
-        Assert.assertNotNull("Getting an existing Tenant doesn't add it to the cache!", cachedExists);
+        var isExists = existsTenantCache.get(TenantCacheKey.fromIdExists(savedTenant.getId()));
+        Assert.assertNotNull("Getting an existing Tenant doesn't add it to the cache!", isExists);
 
         for (int i = 0; i < 100; i++) {
             tenantService.tenantExists(savedTenant.getId());
@@ -384,16 +381,18 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         tenant.setTitle("My tenant");
         Tenant savedTenant = tenantService.saveTenant(tenant);
 
-        Cache.ValueWrapper cachedTenant =
-                Objects.requireNonNull(tenantCache, "Cache manager is null!").get(List.of(savedTenant.getId(), "TENANT"));
+        tenantService.findTenantById(savedTenant.getId());
+
+        var cachedTenant = cache.get(TenantCacheKey.fromId(savedTenant.getId()));
         Assert.assertNotNull("Saving a Tenant doesn't add it to the cache!", cachedTenant);
+        Assert.assertEquals(savedTenant, cachedTenant.get());
 
         savedTenant.setTitle("My new tenant");
         savedTenant = tenantService.saveTenant(savedTenant);
 
         Mockito.reset(tenantDao);
 
-        cachedTenant = Objects.requireNonNull(tenantCache, "Cache manager is null!").get(List.of(savedTenant.getId(), "TENANT"));
+        cachedTenant = cache.get(TenantCacheKey.fromId(savedTenant.getId()));
         Assert.assertNull("Updating a Tenant doesn't evict the cache!", cachedTenant);
 
         verify(tenantDao, Mockito.times(0)).findById(any(), any());
@@ -409,20 +408,21 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         tenant.setTitle("My tenant");
         Tenant savedTenant = tenantService.saveTenant(tenant);
 
+        tenantService.findTenantById(savedTenant.getId());
         tenantService.tenantExists(savedTenant.getId());
 
-        Cache.ValueWrapper cachedTenant =
-                Objects.requireNonNull(tenantCache, "Cache manager is null!").get(List.of(savedTenant.getId(), "TENANT"));
-        Cache.ValueWrapper cachedExists =
-                Objects.requireNonNull(tenantCache, "Cache manager is null!").get(List.of(savedTenant.getId(), "EXISTS"));
+       var cachedTenant =
+                cache.get(TenantCacheKey.fromId(savedTenant.getId()));
+        var cachedExists =
+               existsTenantCache.get(TenantCacheKey.fromIdExists(savedTenant.getId()));
         Assert.assertNotNull("Saving a Tenant doesn't add it to the cache!", cachedTenant);
         Assert.assertNotNull("Saving a Tenant doesn't add it to the cache!", cachedExists);
 
         tenantService.deleteTenant(savedTenant.getId());
         cachedTenant =
-                Objects.requireNonNull(tenantCache, "Cache manager is null!").get(List.of(savedTenant.getId(), "TENANT"));
+                cache.get(TenantCacheKey.fromId(savedTenant.getId()));
         cachedExists =
-                Objects.requireNonNull(tenantCache, "Cache manager is null!").get(List.of(savedTenant.getId(), "EXISTS"));
+                existsTenantCache.get(TenantCacheKey.fromIdExists(savedTenant.getId()));
 
 
         Assert.assertNull("Removing a Tenant doesn't evict the cache!", cachedTenant);

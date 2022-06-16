@@ -15,7 +15,8 @@
  */
 package org.thingsboard.server.dao.service.validator;
 
-import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.EntityType;
@@ -25,10 +26,11 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantService;
 
 @Component
-@AllArgsConstructor
 public class ApiUsageDataValidator extends DataValidator<ApiUsageState> {
 
-    private final TenantService tenantService;
+    @Lazy
+    @Autowired
+    private TenantService tenantService;
 
     @Override
     protected void validateDataImpl(TenantId requestTenantId, ApiUsageState apiUsageState) {
