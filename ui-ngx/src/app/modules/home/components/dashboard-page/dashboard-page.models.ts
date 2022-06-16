@@ -18,7 +18,6 @@ import {
   Dashboard,
   DashboardLayoutId,
   GridSettings,
-  LayoutDimension,
   WidgetLayouts
 } from '@app/shared/models/dashboard.models';
 import { Widget, WidgetPosition } from '@app/shared/models/widget.models';
@@ -74,7 +73,7 @@ export interface DashboardPageLayout {
   layoutCtx: DashboardPageLayoutContext;
 }
 
-export declare type DashboardPageLayouts = {[key in DashboardLayoutId | 'layoutDimension']: DashboardPageLayout & LayoutDimension};
+export declare type DashboardPageLayouts = {[key in DashboardLayoutId ]: DashboardPageLayout };
 
 export class LayoutWidgetsArray implements Iterable<Widget> {
 

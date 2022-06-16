@@ -43,7 +43,7 @@ import {
   DashboardLayoutsInfo,
   DashboardState,
   DashboardStateLayouts,
-  GridSettings,
+  GridSettings, LayoutDimension,
   WidgetLayout
 } from '@app/shared/models/dashboard.models';
 import { WINDOW } from '@core/services/window.service';
@@ -135,7 +135,7 @@ import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import cssjs from '@core/css/css';
 import { DOCUMENT } from '@angular/common';
 import { IAliasController } from '@core/api/widget-api.models';
-import { LaouytType, LayoutWidthType } from "@home/components/dashboard-page/layout/layout.models";
+import { LayoutType, LayoutWidthType } from "@home/components/dashboard-page/layout/layout.models";
 
 // @dynamic
 @Component({
@@ -267,8 +267,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         ctrl: null,
         dashboardCtrl: this
       }
-    },
-    layoutDimension: null
+    }
   };
 
   addWidgetFabButtons: FooterFabButtons = {
@@ -653,15 +652,15 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   public mainLayoutWidth(): string {
-    if (this.isEditingWidget && this.editingLayoutCtx.id === LaouytType.MAIN) {
+    if (this.isEditingWidget && this.editingLayoutCtx.id === LayoutType.MAIN) {
       return '100%';
     } else {
-      return this.layouts.right.show && !this.isMobile ? this.calculateWidth(LaouytType.MAIN) : '100%';
+      return this.layouts.right.show && !this.isMobile ? this.calculateWidth(LayoutType.MAIN) : '100%';
     }
   }
 
   public mainLayoutHeight(): string {
-    if (!this.isEditingWidget || this.editingLayoutCtx.id === LaouytType.MAIN) {
+    if (!this.isEditingWidget || this.editingLayoutCtx.id === LayoutType.MAIN) {
       return '100%';
     } else {
       return '0px';
@@ -669,18 +668,27 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   public rightLayoutWidth(): string {
-    if (this.isEditingWidget && this.editingLayoutCtx.id === LaouytType.RIGHT) {
+    if (this.isEditingWidget && this.editingLayoutCtx.id === LayoutType.RIGHT) {
       return '100%';
     } else {
-      return this.isMobile ? '100%' : this.calculateWidth(LaouytType.RIGHT);
+      return this.isMobile ? '100%' : this.calculateWidth(LayoutType.RIGHT);
     }
   }
 
   private calculateWidth(layout: DashboardLayoutId): string {
-      const layoutDimension = this.dashboard.configuration.states[this.dashboardCtx.state].layouts.layoutDimension;
+      let layoutDimension: LayoutDimension;
+      const mainLayout = this.dashboard.configuration.states[this.dashboardCtx.state].layouts.main;
+      const rightLayout = this.dashboard.configuration.states[this.dashboardCtx.state].layouts.right;
+      if (rightLayout) {
+        if (mainLayout.gridSettings.layoutDimension) {
+          layoutDimension = mainLayout.gridSettings.layoutDimension;
+        } else {
+          layoutDimension = rightLayout.gridSettings.layoutDimension;
+        }
+      }
       if (layoutDimension) {
         if (layoutDimension.type === LayoutWidthType.PERCENTAGE) {
-          if (layout === LaouytType.RIGHT) {
+          if (layout === LayoutType.RIGHT) {
             return (100 - layoutDimension.leftWidthPercentage) + '%';
           } else {
             return layoutDimension.leftWidthPercentage + '%';
@@ -911,7 +919,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     }
     for (const l of Object.keys(this.layouts)) {
       const layout: DashboardPageLayout = this.layouts[l];
-      if(l !== 'layoutDimension') {
         if (layoutsData[l]) {
           layout.show = true;
           const layoutInfo: DashboardLayoutInfo = layoutsData[l];
@@ -920,7 +927,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
           layout.show = false;
           this.updateLayout(layout, {widgetIds: [], widgetLayouts: {}, gridSettings: null});
         }
-      }
     }
   }
 
@@ -968,11 +974,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   private resetHighlight() {
     for (const l of Object.keys(this.layouts)) {
-      if(l !== 'layoutDimension' ) {
-        if (this.layouts[l].layoutCtx) {
-          if (this.layouts[l].layoutCtx.ctrl) {
-            this.layouts[l].layoutCtx.ctrl.resetHighlight();
-          }
+      if (this.layouts[l].layoutCtx) {
+        if (this.layouts[l].layoutCtx.ctrl) {
+          this.layouts[l].layoutCtx.ctrl.resetHighlight();
         }
       }
     }

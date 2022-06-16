@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, OnInit, SkipSelf} from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -24,14 +24,14 @@ import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { DashboardLayoutId, DashboardStateLayouts } from '@app/shared/models/dashboard.models';
+import { DashboardLayoutId, DashboardStateLayouts, LayoutDimension } from '@app/shared/models/dashboard.models';
 import { deepClone, isDefined } from '@core/utils';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import {
   DashboardSettingsDialogComponent,
   DashboardSettingsDialogData
 } from '@home/components/dashboard-page/dashboard-settings-dialog.component';
-import { LaouytType, LayoutWidthType } from "@home/components/dashboard-page/layout/layout.models";
+import { LayoutType, LayoutWidthType } from "@home/components/dashboard-page/layout/layout.models";
 
 export interface ManageDashboardLayoutsDialogData {
   layouts: DashboardStateLayouts;
@@ -50,6 +50,10 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
 
   layouts: DashboardStateLayouts;
 
+  LayoutWidthType = LayoutWidthType;
+
+  LayoutType = LayoutType;
+
   submitted = false;
 
   constructor(protected store: Store<AppState>,
@@ -61,7 +65,8 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
               private utils: UtilsService,
               private dashboardUtils: DashboardUtilsService,
               private translate: TranslateService,
-              private dialog: MatDialog) {
+              private dialog: MatDialog,
+              private cd: ChangeDetectorRef) {
     super(store, router, dialogRef);
 
     this.layouts = this.data.layouts;
@@ -72,26 +77,33 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
         rightWidthPercentage: [50, [Validators.min(10), Validators.max(90)]],
         type: [LayoutWidthType.PERCENTAGE, []],
         fixedWidth: [150, [Validators.min(150), Validators.max(1700)]],
-        fixedLayout: [LaouytType.MAIN, []]
+        fixedLayout: [LayoutType.MAIN, []]
       }
     );
 
-    if (this.layouts.layoutDimension) {
-      this.layoutsFormGroup.get('type').setValue(this.layouts.layoutDimension.type);
-      if (this.layouts.layoutDimension.type === LayoutWidthType.FIXED) {
-        this.layoutsFormGroup.get('fixedWidth').setValue(this.layouts.layoutDimension.fixedWidth);
-        this.layoutsFormGroup.get('fixedLayout').setValue(this.layouts.layoutDimension.fixedLayout);
-      } else {
-        this.layoutsFormGroup.get('leftWidthPercentage').setValue(this.layouts.layoutDimension.leftWidthPercentage);
-        this.layoutsFormGroup.get('rightWidthPercentage').setValue(100 - Number(this.layouts.layoutDimension.leftWidthPercentage));
+    if (this.layouts.right) {
+      if (this.layouts.right.gridSettings.layoutDimension) {
+        this.layoutsFormGroup.get('fixedLayout').setValue(this.layouts.right.gridSettings.layoutDimension.fixedLayout);
+        this.layoutsFormGroup.get('type').setValue(LayoutWidthType.FIXED);
+        this.layoutsFormGroup.get('fixedWidth').setValue(this.layouts.right.gridSettings.layoutDimension.fixedWidth);
+      } else if (this.layouts.main.gridSettings.layoutDimension) {
+        if (this.layouts.main.gridSettings.layoutDimension.type === LayoutWidthType.FIXED) {
+          this.layoutsFormGroup.get('fixedLayout').setValue(this.layouts.main.gridSettings.layoutDimension.fixedLayout);
+          this.layoutsFormGroup.get('type').setValue(LayoutWidthType.FIXED);
+          this.layoutsFormGroup.get('fixedWidth').setValue(this.layouts.main.gridSettings.layoutDimension.fixedWidth);
+        } else {
+          const leftWidthPercentage: number = Number(this.layouts.main.gridSettings.layoutDimension.leftWidthPercentage);
+          this.layoutsFormGroup.get('leftWidthPercentage').setValue(leftWidthPercentage);
+          this.layoutsFormGroup.get('rightWidthPercentage').setValue(100 - Number(leftWidthPercentage));
+        }
       }
     }
 
-    if (!this.layouts[LaouytType.MAIN]) {
-      this.layouts[LaouytType.MAIN] = this.dashboardUtils.createDefaultLayoutData();
+    if (!this.layouts[LayoutType.MAIN]) {
+      this.layouts[LayoutType.MAIN] = this.dashboardUtils.createDefaultLayoutData();
     }
-    if (!this.layouts[LaouytType.RIGHT]) {
-      this.layouts[LaouytType.RIGHT] = this.dashboardUtils.createDefaultLayoutData();
+    if (!this.layouts[LayoutType.RIGHT]) {
+      this.layouts[LayoutType.RIGHT] = this.dashboardUtils.createDefaultLayoutData();
     }
 
     this.layoutsFormGroup.get('leftWidthPercentage').valueChanges.subscribe((value) => this.layoutControlChange('rightWidthPercentage', value));
@@ -134,36 +146,38 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
     for (const l of Object.keys(this.layoutsFormGroup.controls)) {
       const control = this.layoutsFormGroup.controls[l];
       if (!control.value) {
-        delete this.layouts[l];
+        if (this.layouts[l]) {
+          delete this.layouts[l];
+        }
       }
     }
+    delete this.layouts.main.gridSettings.layoutDimension;
+    delete this.layouts.right.gridSettings.layoutDimension;
     if (this.layoutsFormGroup.value.right) {
       const formValues = this.layoutsFormGroup.value;
       const widthType = formValues.type;
-      (this.layouts.layoutDimension as any) = {
+      const layoutDimension: LayoutDimension = {
         type: widthType
-      }
+      };
       if (widthType === LayoutWidthType.PERCENTAGE) {
-        this.layouts.layoutDimension.leftWidthPercentage = formValues.leftWidthPercentage;
+        layoutDimension.leftWidthPercentage = formValues.leftWidthPercentage;
+        this.layouts.main.gridSettings.layoutDimension = layoutDimension;
       } else {
-        this.layouts.layoutDimension.fixedWidth = formValues.fixedWidth;
-        this.layouts.layoutDimension.fixedLayout = formValues.fixedLayout;
+        layoutDimension.fixedWidth = formValues.fixedWidth;
+        layoutDimension.fixedLayout = formValues.fixedLayout;
+        if (formValues.fixedLayout === LayoutType.MAIN) {
+          this.layouts.main.gridSettings.layoutDimension = layoutDimension;
+        } else {
+          this.layouts.right.gridSettings.layoutDimension = layoutDimension;
+        }
       }
     }
     this.dialogRef.close(this.layouts);
   }
 
-  buttonStyle(layout: DashboardLayoutId): { maxWidth: string } {
-    if (this.layoutsFormGroup.value.type && this.layoutsFormGroup.value.right) {
-      if (this.layoutsFormGroup.value.type !== LayoutWidthType.FIXED) {
-        if (layout === LaouytType.MAIN) {
-          return { maxWidth: this.layoutsFormGroup.value.leftWidthPercentage + "%" };
-        } else {
-          return { maxWidth: (100 - this.layoutsFormGroup.value.leftWidthPercentage) + "%" };
-        }
-      } else {
-        return { maxWidth: '100%' };
-      }
+  buttonFlexValue(): number {
+    if (this.layoutsFormGroup.get('right').value && this.layoutsFormGroup.value.type !== LayoutWidthType.FIXED) {
+      return this.layoutsFormGroup.get('leftWidthPercentage').value;
     }
   }
 

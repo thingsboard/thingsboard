@@ -55,6 +55,7 @@ export interface GridSettings {
   autoFillHeight?: boolean;
   mobileAutoFillHeight?: boolean;
   mobileRowHeight?: number;
+  layoutDimension?: LayoutDimension;
   [key: string]: any;
 }
 
@@ -80,7 +81,8 @@ export declare type DashboardLayoutId = 'main' | 'right';
 
 export declare type LayoutType = 'percentage' | 'fixed';
 
-export declare type DashboardStateLayouts = {[key in DashboardLayoutId | 'layoutDimension']?: DashboardLayout & LayoutDimension };
+// export declare type DashboardStateLayouts = {[key in DashboardLayoutId | 'layoutDimension']?: DashboardLayout & LayoutDimension };
+export declare type DashboardStateLayouts = {[key in DashboardLayoutId]?: DashboardLayout };
 
 export declare type DashboardLayoutsInfo = {[key in DashboardLayoutId]?: DashboardLayoutInfo};
 
