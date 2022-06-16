@@ -50,7 +50,6 @@ import { WidgetTypeId } from '@shared/models/id/widget-type-id';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { WidgetLayout } from '@shared/models/dashboard.models';
 import { formatValue, isDefined } from '@core/utils';
-import { forkJoin, of } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
@@ -78,7 +77,8 @@ import { PageLink } from '@shared/models/page/page-link';
 import { SortOrder } from '@shared/models/page/sort-order';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
-import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
+import * as RxJS from 'rxjs';
+import * as RxJSOperators from 'rxjs/operators';
 import { FormattedData } from '@home/components/widget/lib/maps/map-models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { EntityId } from '@shared/models/id/entity-id';
@@ -202,7 +202,7 @@ export class WidgetContext {
       if (this.defaultSubscription) {
         return this.defaultSubscription.sendOneWayCommand(method, params, timeout, persistent, retries, additionalInfo, requestUUID);
       } else {
-        return of(null);
+        return RxJS.of(null);
       }
     },
     sendTwoWayCommand: (method, params, timeout, persistent,
@@ -210,14 +210,14 @@ export class WidgetContext {
       if (this.defaultSubscription) {
         return this.defaultSubscription.sendTwoWayCommand(method, params, timeout, persistent, retries, additionalInfo, requestUUID);
       } else {
-        return of(null);
+        return RxJS.of(null);
       }
     },
     completedCommand: () => {
       if (this.defaultSubscription) {
         return this.defaultSubscription.completedCommand();
       } else {
-        return of(null);
+        return RxJS.of(null);
       }
     }
   };
@@ -264,12 +264,9 @@ export class WidgetContext {
   private popoverComponents: TbPopoverComponent[] = [];
 
   rxjs = {
-    forkJoin,
-    of,
-    map,
-    mergeMap,
-    switchMap,
-    catchError
+
+    ...RxJS,
+    ...RxJSOperators
   };
 
   registerPopoverComponent(popoverComponent: TbPopoverComponent) {
