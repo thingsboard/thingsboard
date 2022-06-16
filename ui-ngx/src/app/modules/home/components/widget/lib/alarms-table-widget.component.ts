@@ -290,9 +290,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
         debounceTime(150),
         distinctUntilChanged(),
         tap(() => {
-          if (this.displayPagination) {
-            this.paginator.pageIndex = 0;
-          }
+          this.resetPageIndex();
           this.updateData();
         })
       )
@@ -556,6 +554,12 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.ctx.detectChanges();
   }
 
+  private resetPageIndex(): void {
+    if (this.displayPagination) {
+      this.paginator.pageIndex = 0;
+    }
+  }
+
   private editAlarmFilter($event: Event) {
     if ($event) {
       $event.stopPropagation();
@@ -600,6 +604,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
         this.pageLink.statusList = result.statusList;
         this.pageLink.severityList = result.severityList;
         this.pageLink.typeList = result.typeList;
+        this.resetPageIndex();
         this.updateData();
       }
     });
@@ -620,9 +625,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   exitFilterMode() {
     this.textSearchMode = false;
     this.pageLink.textSearch = null;
-    if (this.displayPagination) {
-      this.paginator.pageIndex = 0;
-    }
+    this.resetPageIndex();
     this.updateData();
     this.ctx.hideTitlePanel = false;
     this.ctx.detectChanges(true);
@@ -959,7 +962,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
         } else if (alarmField.value === alarmFields.severity.value) {
           return this.translate.instant(alarmSeverityTranslations.get(value));
         } else if (alarmField.value === alarmFields.status.value) {
-          return this.translate.instant(alarmStatusTranslations.get(value));
+          return alarmStatusTranslations.get(value) ? this.translate.instant(alarmStatusTranslations.get(value)) : value;
         } else if (alarmField.value === alarmFields.originatorType.value) {
           return this.translate.instant(entityTypeTranslations.get(value).type);
         } else {

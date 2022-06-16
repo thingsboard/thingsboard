@@ -45,7 +45,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @EnableWebSocket
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Slf4j
-public abstract class AbstractControllerTest extends AbstractWebTest {
+public abstract class AbstractControllerTest extends AbstractNotifyEntityTest {
 
     public static final String WS_URL = "ws://localhost:";
 

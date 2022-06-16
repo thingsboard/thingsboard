@@ -17,7 +17,12 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
 import { EntityTableColumn, EntityTableConfig } from '@home/models/entity/entities-table-config.models';
-import { QueueInfo, ServiceType } from '@shared/models/queue.models';
+import {
+  QueueInfo,
+  QueueProcessingStrategyTypesMap,
+  QueueSubmitStrategyTypesMap,
+  ServiceType
+} from '@shared/models/queue.models';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { BroadcastService } from '@core/services/broadcast.service';
@@ -83,14 +88,14 @@ export class QueuesTableConfigResolver implements Resolve<EntityTableConfig<Queu
       new EntityTableColumn<QueueInfo>('partitions', 'admin.queue-partitions', '25%'),
       new EntityTableColumn<QueueInfo>('submitStrategy', 'admin.queue-submit-strategy', '25%',
         (entity: QueueInfo) => {
-          return entity.submitStrategy.type;
+          return this.translate.instant(QueueSubmitStrategyTypesMap.get(entity.submitStrategy.type).label);
         },
         () => ({}),
         false
       ),
       new EntityTableColumn<QueueInfo>('processingStrategy', 'admin.queue-processing-strategy', '25%',
         (entity: QueueInfo) => {
-          return entity.processingStrategy.type;
+          return this.translate.instant(QueueProcessingStrategyTypesMap.get(entity.processingStrategy.type).label);
         },
         () => ({}),
         false
