@@ -87,6 +87,7 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
                 .forEach(ruleChainConnectionInfo -> {
                     ruleChainConnectionInfo.setTargetRuleChainId(idProvider.getInternalId(ruleChainConnectionInfo.getTargetRuleChainId(), false));
                 });
+        //TODO: lookup rule node id based on external rule node id.
         ruleChain.setFirstRuleNodeId(null);
         return ruleChain;
     }
@@ -100,10 +101,14 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
     }
 
     @Override
-    protected boolean compare(RuleChain prepared, RuleChain existing) {
-        //Always update, since we don't fetch the metadata.
-        //TODO: improve and fetch the metadata of existing entity.
-        return true;
+    protected boolean compare(EntitiesImportCtx ctx, RuleChainExportData exportData, RuleChain prepared, RuleChain existing) {
+        boolean different = super.compare(ctx, exportData, prepared, existing);
+        if (!different) {
+            RuleChainMetaData newMD = exportData.getMetaData();
+            RuleChainMetaData existingMD = ruleChainService.loadRuleChainMetaData(ctx.getTenantId(), prepared.getId());
+            different = newMD.equals(existingMD);
+        }
+        return different;
     }
 
     @Override

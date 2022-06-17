@@ -86,7 +86,6 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
     @Transactional(rollbackFor = Exception.class)
     @Override
     public EntityImportResult<E> importEntity(EntitiesImportCtx ctx, D exportData) throws ThingsboardException {
-//        TbStopWatch sw = TbStopWatch.create("find");
         EntityImportResult<E> importResult = new EntityImportResult<>();
         importResult.setEntityType(getEntityType());
         IdProvider idProvider = new IdProvider(ctx, importResult);
@@ -107,10 +106,9 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
 
         E prepared = prepare(ctx, entity, existingEntity, exportData, idProvider);
 
-        boolean saveOrUpdate = existingEntity == null || compare(prepared, existingEntity);
+        boolean saveOrUpdate = existingEntity == null || compare(ctx, exportData, prepared, existingEntity);
 
         if (saveOrUpdate) {
-//        sw.startNew("prepareAndSave");
             E savedEntity = saveOrUpdate(ctx, prepared, exportData, idProvider);
             boolean created = existingEntity == null;
             importResult.setCreated(created);
@@ -123,14 +121,8 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
             importResult.setUpdatedRelatedEntities(updateRelatedEntitiesIfUnmodified(ctx, prepared, exportData, idProvider));
         }
 
-//        sw.startNew("afterSaved");
         processAfterSaved(ctx, importResult, exportData, idProvider);
 
-//        sw.stop();
-//        for (var task : sw.getTaskInfo()) {
-//            log.info("[{}][{}] Executed: {} in {}ms", exportData.getEntityType(), exportData.getEntity().getId(), task.getTaskName(), task.getTimeMillis());
-//        }
-//        log.info("[{}][{}] Total time: {}ms", exportData.getEntityType(), exportData.getEntity().getId(), sw.getTotalTimeMillis());
         return importResult;
     }
 
@@ -145,16 +137,16 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
 
     protected abstract E prepare(EntitiesImportCtx ctx, E entity, E oldEntity, D exportData, IdProvider idProvider);
 
-    protected boolean compare(E prepared, E existing) {
+    protected boolean compare(EntitiesImportCtx ctx, D exportData, E prepared, E existing) {
         var newCopy = deepCopy(prepared);
         var existingCopy = deepCopy(existing);
         cleanupForComparison(newCopy);
         cleanupForComparison(existingCopy);
         var result = !newCopy.equals(existingCopy);
         if (result) {
-            log.info("[{}] Found update.", prepared.getId());
-            log.info("[{}] From: {}", prepared.getId(), newCopy);
-            log.info("[{}] To: {}", prepared.getId(), existingCopy);
+            log.debug("[{}] Found update.", prepared.getId());
+            log.debug("[{}] From: {}", prepared.getId(), newCopy);
+            log.debug("[{}] To: {}", prepared.getId(), existingCopy);
         }
         return result;
     }
