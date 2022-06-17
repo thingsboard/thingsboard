@@ -17,6 +17,7 @@ package org.thingsboard.server.config;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -47,6 +48,7 @@ public class RateLimitProcessingFilter extends GenericFilterBean {
     private ThingsboardErrorResponseHandler errorResponseHandler;
 
     @Autowired
+    @Lazy
     private TbTenantProfileCache tenantProfileCache;
 
     private final ConcurrentMap<TenantId, TbRateLimits> perTenantLimits = new ConcurrentHashMap<>();
