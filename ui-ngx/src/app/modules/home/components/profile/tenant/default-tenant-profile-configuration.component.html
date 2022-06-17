@@ -256,21 +256,34 @@
       {{ 'tenant-profile.max-created-alarms-range' | translate}}
     </mat-error>
   </mat-form-field>
+
   <mat-form-field class="mat-block">
     <mat-label translate>tenant-profile.transport-tenant-msg-rate-limit</mat-label>
     <input matInput formControlName="transportTenantMsgRateLimit">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('transportTenantMsgRateLimit').hasError('pattern')">
+      {{ 'tenant-profile.incorrect-pattern-for-rate-limits' | translate}}
+    </mat-error>
   </mat-form-field>
   <mat-form-field class="mat-block">
     <mat-label translate>tenant-profile.transport-tenant-telemetry-msg-rate-limit</mat-label>
     <input matInput formControlName="transportTenantTelemetryMsgRateLimit">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('transportTenantTelemetryMsgRateLimit').hasError('pattern')">
+      {{ 'tenant-profile.incorrect-pattern-for-rate-limits' | translate}}
+    </mat-error>
   </mat-form-field>
   <mat-form-field class="mat-block">
     <mat-label translate>tenant-profile.transport-tenant-telemetry-data-points-rate-limit</mat-label>
     <input matInput formControlName="transportTenantTelemetryDataPointsRateLimit">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('transportTenantTelemetryDataPointsRateLimit').hasError('pattern')">
+      {{ 'tenant-profile.incorrect-pattern-for-rate-limits' | translate}}
+    </mat-error>
   </mat-form-field>
   <mat-form-field class="mat-block">
     <mat-label translate>tenant-profile.transport-device-msg-rate-limit</mat-label>
     <input matInput formControlName="transportDeviceMsgRateLimit">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('transportDeviceMsgRateLimit').hasError('pattern')">
+      {{ 'tenant-profile.incorrect-pattern-for-rate-limits' | translate}}
+    </mat-error>
   </mat-form-field>
   <mat-form-field class="mat-block">
     <mat-label translate>tenant-profile.transport-device-telemetry-msg-rate-limit</mat-label>
@@ -279,5 +292,103 @@
   <mat-form-field class="mat-block">
     <mat-label translate>tenant-profile.transport-device-telemetry-data-points-rate-limit</mat-label>
     <input matInput formControlName="transportDeviceTelemetryDataPointsRateLimit">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('transportDeviceTelemetryDataPointsRateLimit').hasError('pattern')">
+      {{ 'tenant-profile.incorrect-pattern-for-rate-limits' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.tenant-rest-limits</mat-label>
+    <input matInput
+           formControlName="tenantServerRestLimitsConfiguration"
+           type="text">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('tenantServerRestLimitsConfiguration').hasError('pattern')">
+      {{ 'tenant-profile.incorrect-pattern-for-rate-limits' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.customer-rest-limits</mat-label>
+    <input matInput
+           formControlName="customerServerRestLimitsConfiguration"
+           type="text">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('customerServerRestLimitsConfiguration').hasError('pattern')">
+      {{ 'tenant-profile.incorrect-pattern-for-rate-limits' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.ws-limit-max-sessions-per-tenant</mat-label>
+    <input matInput type="number" formControlName="maxWsSessionsPerTenant">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxWsSessionsPerTenant').hasError('min')">
+      {{ 'tenant-profile.too-small-value-zero' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.ws-limit-max-sessions-per-customer</mat-label>
+    <input matInput type="number" formControlName="maxWsSessionsPerCustomer">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxWsSessionsPerCustomer').hasError('min')">
+      {{ 'tenant-profile.too-small-value-zero' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.ws-limit-max-sessions-per-public-user</mat-label>
+    <input matInput type="number" formControlName="maxWsSessionsPerRegularUser">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxWsSessionsPerRegularUser').hasError('min')">
+      {{ 'tenant-profile.too-small-value-zero' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.ws-limit-max-sessions-per-public-user</mat-label>
+    <input matInput type="number" formControlName="maxWsSessionsPerPublicUser">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxWsSessionsPerPublicUser').hasError('min')">
+      {{ 'tenant-profile.too-small-value-zero' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.ws-limit-queue-per-session</mat-label>
+    <input matInput type="number" formControlName="wsMsgQueueLimitPerSession">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('wsMsgQueueLimitPerSession').hasError('min')">
+      {{ 'tenant-profile.too-small-value-one' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.ws-limit-max-subscriptions-per-tenant</mat-label>
+    <input matInput type="number" formControlName="maxWsSubscriptionsPerTenant">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxWsSubscriptionsPerTenant').hasError('min')">
+      {{ 'tenant-profile.too-small-value-zero' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.ws-limit-max-subscriptions-per-customer</mat-label>
+    <input matInput type="number" formControlName="maxWsSubscriptionsPerCustomer">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxWsSubscriptionsPerCustomer').hasError('min')">
+      {{ 'tenant-profile.too-small-value-zero' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.ws-limit-max-subscriptions-per-regular-user</mat-label>
+    <input matInput type="number" formControlName="maxWsSubscriptionsPerRegularUser">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxWsSubscriptionsPerRegularUser').hasError('min')">
+      {{ 'tenant-profile.too-small-value-zero' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.ws-limit-max-subscriptions-per-public-user</mat-label>
+    <input matInput type="number" formControlName="maxWsSubscriptionsPerPublicUser">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxWsSubscriptionsPerPublicUser').hasError('min')">
+      {{ 'tenant-profile.too-small-value-zero' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.ws-limit-updates-per-session</mat-label>
+    <input matInput type="text" formControlName="wsUpdatesPerSessionRateLimit">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('wsUpdatesPerSessionRateLimit').hasError('pattern')">
+      {{ 'tenant-profile.incorrect-pattern-for-rate-limits' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.cassandra-tenant-limits-configuration</mat-label>
+    <input matInput type="text" formControlName="cassandraQueryTenantRateLimitsConfiguration">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('cassandraQueryTenantRateLimitsConfiguration').hasError('pattern')">
+      {{ 'tenant-profile.incorrect-pattern-for-rate-limits' | translate}}
+    </mat-error>
   </mat-form-field>
 </section>
