@@ -73,9 +73,9 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
         Mockito.reset(tbClusterService, auditLogService);
     }
 
-    protected void testNotifyEntityOneManyTimeMsgToEdgeServiceNever(HasName entity, HasName originator,
-                                                                    TenantId tenantId, CustomerId customerId, UserId userId, String userName,
-                                                                    ActionType actionType, int cntTime, Object... additionalInfo) {
+    protected void testNotifyEntityManyTimeMsgToEdgeServiceNever(HasName entity, HasName originator,
+                                                                 TenantId tenantId, CustomerId customerId, UserId userId, String userName,
+                                                                 ActionType actionType, int cntTime, Object... additionalInfo) {
         EntityId entityId = createEntityId_NULL_UUID(entity);
         EntityId originatorId = createEntityId_NULL_UUID(originator);
         testNotificationMsgToEdgeServiceNever(entityId);

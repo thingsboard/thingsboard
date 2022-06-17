@@ -213,8 +213,6 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         Assert.assertNotNull(foundCustomer);
         Assert.assertEquals(savedCustomer, foundCustomer);
 
-        Mockito.reset(tbClusterService, auditLogService);
-
         doDelete("/api/customer/" + savedCustomer.getId().getId().toString())
                 .andExpect(status().isOk());
     }
@@ -275,6 +273,9 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         TenantId tenantId = savedTenant.getId();
 
         int cntTime = 135;
+
+        Mockito.reset(tbClusterService, auditLogService);
+
         List<ListenableFuture<Customer>> futures = new ArrayList<>(cntTime);
         for (int i = 0; i < cntTime; i++) {
             Customer customer = new Customer();
@@ -285,7 +286,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         }
         List<Customer> customers = Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS);
 
-        testNotifyEntityOneManyTimeMsgToEdgeServiceNever(new Customer(), new Customer(),
+        testNotifyEntityManyTimeMsgToEdgeServiceNever(new Customer(), new Customer(),
                 tenantId, tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.ADDED, cntTime);
 
