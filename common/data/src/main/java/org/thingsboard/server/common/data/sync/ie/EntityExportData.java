@@ -55,6 +55,7 @@ public class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
             .comparing(AttributeExportData::getKey).thenComparing(AttributeExportData::getLastUpdateTs);
 
     @JsonProperty(index = 2)
+    @JsonIgnoreProperties({"tenantId", "createdTime"})
     @JsonTbEntity
     private E entity;
     @JsonProperty(index = 1)

@@ -15,17 +15,24 @@
  */
 package org.thingsboard.server.service.sync.ie.exporting.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.sync.ie.RuleChainExportData;
+import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.vc.data.EntitiesExportCtx;
+import org.thingsboard.server.utils.RegexUtils;
 
+import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 @Service
 @TbCoreComponent
@@ -36,7 +43,22 @@ public class RuleChainExportService extends BaseEntityExportService<RuleChainId,
 
     @Override
     protected void setRelatedEntities(EntitiesExportCtx<?> ctx, RuleChain ruleChain, RuleChainExportData exportData) {
-        exportData.setMetaData(ruleChainService.loadRuleChainMetaData(ctx.getTenantId(), ruleChain.getId()));
+        RuleChainMetaData metaData = ruleChainService.loadRuleChainMetaData(ctx.getTenantId(), ruleChain.getId());
+        Optional.ofNullable(metaData.getNodes()).orElse(Collections.emptyList())
+                .forEach(ruleNode -> {
+                    ruleNode.setRuleChainId(null);
+                    JsonNode ruleNodeConfig = ruleNode.getConfiguration();
+                    String newRuleNodeConfigJson = RegexUtils.replace(ruleNodeConfig.toString(), RegexUtils.UUID_PATTERN, uuid -> {
+                        return getExternalIdOrElseInternalByUuid(ctx, UUID.fromString(uuid)).toString();
+                    });
+                    ruleNodeConfig = JacksonUtil.toJsonNode(newRuleNodeConfigJson);
+                    ruleNode.setConfiguration(ruleNodeConfig);
+                });
+        Optional.ofNullable(metaData.getRuleChainConnections()).orElse(Collections.emptyList())
+                .forEach(ruleChainConnectionInfo -> {
+                    ruleChainConnectionInfo.setTargetRuleChainId(getExternalIdOrElseInternal(ctx, ruleChainConnectionInfo.getTargetRuleChainId()));
+                });
+        exportData.setMetaData(metaData);
     }
 
     @Override

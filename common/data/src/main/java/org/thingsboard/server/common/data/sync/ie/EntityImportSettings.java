@@ -29,5 +29,4 @@ public class EntityImportSettings {
     private boolean updateRelations;
     private boolean saveAttributes;
     private boolean saveCredentials;
-
 }
