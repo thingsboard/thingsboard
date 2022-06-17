@@ -79,6 +79,13 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
     }
 
     @Override
+    protected void cleanupForComparison(DeviceProfile deviceProfile) {
+        super.cleanupForComparison(deviceProfile);
+        deviceProfile.setFirmwareId(null);
+        deviceProfile.setSoftwareId(null);
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.DEVICE_PROFILE;
     }

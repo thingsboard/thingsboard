@@ -100,7 +100,7 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
                 .collect(Collectors.toSet());
 
         if (dashboard.getId() == null) {
-            dashboard.setAssignedCustomers(null);
+            dashboard.setAssignedCustomers(assignedCustomers);
             dashboard = dashboardService.saveDashboard(dashboard);
             for (ShortCustomerInfo customerInfo : assignedCustomers) {
                 dashboard = dashboardService.assignDashboardToCustomer(tenantId, dashboard.getId(), customerInfo.getCustomerId());
@@ -121,7 +121,6 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
             for (CustomerId customerId : toAssign) {
                 assignedCustomers = dashboardService.assignDashboardToCustomer(tenantId, dashboard.getId(), customerId).getAssignedCustomers();
             }
-
             dashboard.setAssignedCustomers(assignedCustomers);
             dashboard = dashboardService.saveDashboard(dashboard);
         }

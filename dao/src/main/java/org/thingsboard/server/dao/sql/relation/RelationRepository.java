@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.sql.relation;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,8 +37,8 @@ public interface RelationRepository
                                                                         String relationTypeGroup);
 
     List<RelationEntity> findAllByFromIdAndFromTypeAndRelationTypeGroupIn(UUID fromId,
-                                                                        String fromType,
-                                                                        List<String> relationTypeGroups);
+                                                                          String fromType,
+                                                                          List<String> relationTypeGroups);
 
     List<RelationEntity> findAllByFromIdAndFromTypeAndRelationTypeAndRelationTypeGroup(UUID fromId,
                                                                                        String fromType,
@@ -49,8 +50,8 @@ public interface RelationRepository
                                                                     String relationTypeGroup);
 
     List<RelationEntity> findAllByToIdAndToTypeAndRelationTypeGroupIn(UUID toId,
-                                                                    String toType,
-                                                                    List<String> relationTypeGroups);
+                                                                      String toType,
+                                                                      List<String> relationTypeGroups);
 
     List<RelationEntity> findAllByToIdAndToTypeAndRelationTypeAndRelationTypeGroup(UUID toId,
                                                                                    String toType,
@@ -72,9 +73,13 @@ public interface RelationRepository
     void deleteById(RelationCompositeKey id);
 
     @Transactional
-    void deleteByFromIdAndFromType(UUID fromId, String fromType);
+    @Modifying
+    @Query("DELETE FROM RelationEntity r where r.fromId = :fromId and r.fromType = :fromType")
+    void deleteByFromIdAndFromType(@Param("fromId") UUID fromId, @Param("fromType") String fromType);
 
     @Transactional
-    void deleteByToIdAndToTypeAndRelationTypeGroupIn(UUID fromId, String fromType, List<String> relationTypeGroups);
+    @Modifying
+    @Query("DELETE FROM RelationEntity r where r.toId = :toId and r.toType = :toType and r.relationTypeGroup in :relationTypeGroups")
+    void deleteByToIdAndToTypeAndRelationTypeGroupIn(@Param("toId") UUID toId, @Param("toType") String toType, @Param("relationTypeGroups") List<String> relationTypeGroups);
 
 }

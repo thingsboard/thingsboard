@@ -22,8 +22,8 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.rule.RuleChain;
-import org.thingsboard.server.common.data.sync.ie.RuleChainExportData;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
+import org.thingsboard.server.common.data.sync.ie.RuleChainExportData;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.vc.data.EntitiesExportCtx;
@@ -47,6 +47,10 @@ public class RuleChainExportService extends BaseEntityExportService<RuleChainId,
         Optional.ofNullable(metaData.getNodes()).orElse(Collections.emptyList())
                 .forEach(ruleNode -> {
                     ruleNode.setRuleChainId(null);
+                    ctx.putExternalId(ruleNode.getId(), ruleNode.getExternalId());
+                    ruleNode.setId(ctx.getExternalId(ruleNode.getId()));
+                    ruleNode.setCreatedTime(0);
+                    ruleNode.setExternalId(null);
                     JsonNode ruleNodeConfig = ruleNode.getConfiguration();
                     String newRuleNodeConfigJson = RegexUtils.replace(ruleNodeConfig.toString(), RegexUtils.UUID_PATTERN, uuid -> {
                         return getExternalIdOrElseInternalByUuid(ctx, UUID.fromString(uuid)).toString();
@@ -59,6 +63,9 @@ public class RuleChainExportService extends BaseEntityExportService<RuleChainId,
                     ruleChainConnectionInfo.setTargetRuleChainId(getExternalIdOrElseInternal(ctx, ruleChainConnectionInfo.getTargetRuleChainId()));
                 });
         exportData.setMetaData(metaData);
+        if (ruleChain.getFirstRuleNodeId() != null) {
+            ruleChain.setFirstRuleNodeId(ctx.getExternalId(ruleChain.getFirstRuleNodeId()));
+        }
     }
 
     @Override

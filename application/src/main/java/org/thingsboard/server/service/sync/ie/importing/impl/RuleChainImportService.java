@@ -24,13 +24,16 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
+import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.sync.ie.RuleChainExportData;
 import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.rule.RuleNodeDao;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
@@ -39,8 +42,10 @@ import org.thingsboard.server.utils.RegexUtils;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -51,6 +56,7 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
     private static final LinkedHashSet<EntityType> HINTS = new LinkedHashSet<>(Arrays.asList(EntityType.RULE_CHAIN, EntityType.DEVICE, EntityType.ASSET));
 
     private final RuleChainService ruleChainService;
+    private final RuleNodeDao ruleNodeDao;
 
     @Override
     protected void setOwner(TenantId tenantId, RuleChain ruleChain, IdProvider idProvider) {
@@ -69,26 +75,44 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
     @Override
     protected RuleChain prepare(EntitiesImportCtx ctx, RuleChain ruleChain, RuleChain old, RuleChainExportData exportData, IdProvider idProvider) {
         RuleChainMetaData metaData = exportData.getMetaData();
-        Optional.ofNullable(metaData.getNodes()).orElse(Collections.emptyList())
-                .forEach(ruleNode -> {
-                    ruleNode.setId(null);
-                    ruleNode.setRuleChainId(null);
+        List<RuleNode> ruleNodes = Optional.ofNullable(metaData.getNodes()).orElse(Collections.emptyList());
+        if (old != null) {
+//            boolean original = old.getId().equals(old.getExternalId());
+            List<RuleNodeId> nodeIds = ruleNodes.stream().map(RuleNode::getId).collect(Collectors.toList());
+            List<RuleNode> existing = ruleNodeDao.findByExternalIds(old.getId(), nodeIds);
+            existing.forEach(node -> ctx.putInternalId(node.getExternalId(), node.getId()));
+            ruleNodes.forEach(node -> {
+                node.setRuleChainId(old.getId());
+//                if (!original) {
+                node.setExternalId(node.getId());
+//                }
+                node.setId((RuleNodeId) ctx.getInternalId(node.getId()));
+            });
+        } else {
+            ruleNodes.forEach(node -> {
+                node.setRuleChainId(null);
+                node.setExternalId(node.getId());
+                node.setId(null);
+            });
+        }
 
-                    JsonNode ruleNodeConfig = ruleNode.getConfiguration();
-                    String newRuleNodeConfigJson = RegexUtils.replace(ruleNodeConfig.toString(), RegexUtils.UUID_PATTERN, uuid -> {
-                        return idProvider.getInternalIdByUuid(UUID.fromString(uuid), ctx.isFetchAllUUIDs(), HINTS)
-                                .map(entityId -> entityId.getId().toString())
-                                .orElse(uuid);
-                    });
-                    ruleNodeConfig = JacksonUtil.toJsonNode(newRuleNodeConfigJson);
-                    ruleNode.setConfiguration(ruleNodeConfig);
-                });
+        ruleNodes.forEach(ruleNode -> {
+            JsonNode ruleNodeConfig = ruleNode.getConfiguration();
+            String newRuleNodeConfigJson = RegexUtils.replace(ruleNodeConfig.toString(), RegexUtils.UUID_PATTERN, uuid -> {
+                return idProvider.getInternalIdByUuid(UUID.fromString(uuid), ctx.isFetchAllUUIDs(), HINTS)
+                        .map(entityId -> entityId.getId().toString())
+                        .orElse(uuid);
+            });
+            ruleNodeConfig = JacksonUtil.toJsonNode(newRuleNodeConfigJson);
+            ruleNode.setConfiguration(ruleNodeConfig);
+        });
         Optional.ofNullable(metaData.getRuleChainConnections()).orElse(Collections.emptyList())
                 .forEach(ruleChainConnectionInfo -> {
                     ruleChainConnectionInfo.setTargetRuleChainId(idProvider.getInternalId(ruleChainConnectionInfo.getTargetRuleChainId(), false));
                 });
-        //TODO: lookup rule node id based on external rule node id.
-        ruleChain.setFirstRuleNodeId(null);
+        if (ruleChain.getFirstRuleNodeId() != null) {
+            ruleChain.setFirstRuleNodeId((RuleNodeId) ctx.getInternalId(ruleChain.getFirstRuleNodeId()));
+        }
         return ruleChain;
     }
 
@@ -106,6 +130,7 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
         if (!different) {
             RuleChainMetaData newMD = exportData.getMetaData();
             RuleChainMetaData existingMD = ruleChainService.loadRuleChainMetaData(ctx.getTenantId(), prepared.getId());
+            existingMD.setRuleChainId(null);
             different = newMD.equals(existingMD);
         }
         return different;

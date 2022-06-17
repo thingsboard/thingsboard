@@ -55,8 +55,6 @@ public interface RelationService {
 
     void deleteEntityRelations(TenantId tenantId, EntityId entity);
 
-    ListenableFuture<Void> deleteEntityRelationsAsync(TenantId tenantId, EntityId entity);
-
     List<EntityRelation> findByFrom(TenantId tenantId, EntityId from, RelationTypeGroup typeGroup);
 
     ListenableFuture<List<EntityRelation>> findByFromAsync(TenantId tenantId, EntityId from, RelationTypeGroup typeGroup);

@@ -62,6 +62,7 @@ public class JpaAdminSettingsDao extends JpaAbstractDao<AdminSettingsEntity, Adm
     }
 
     @Override
+    @Transactional
     public void removeByTenantId(UUID tenantId) {
         adminSettingsRepository.deleteByTenantId(tenantId);
     }

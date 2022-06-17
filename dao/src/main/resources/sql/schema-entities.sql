@@ -185,7 +185,8 @@ CREATE TABLE IF NOT EXISTS rule_node (
     type varchar(255),
     name varchar(255),
     debug_mode boolean,
-    search_text varchar(255)
+    search_text varchar(255),
+    external_id uuid
 );
 
 CREATE TABLE IF NOT EXISTS rule_node_state (

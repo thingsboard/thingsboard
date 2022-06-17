@@ -25,6 +25,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.thingsboard.server.cache.TbTransactionalCache;
@@ -180,6 +181,7 @@ public class BaseRelationService implements RelationService {
         return future;
     }
 
+    @Transactional
     @Override
     public void deleteEntityRelations(TenantId tenantId, EntityId entityId) {
         log.trace("Executing deleteEntityRelations [{}]", entityId);
@@ -206,44 +208,6 @@ public class BaseRelationService implements RelationService {
                 eventPublisher.publishEvent(EntityRelationEvent.from(relation));
             }
         }
-    }
-
-    @Override
-    public ListenableFuture<Void> deleteEntityRelationsAsync(TenantId tenantId, EntityId entityId) {
-        log.trace("Executing deleteEntityRelationsAsync [{}]", entityId);
-        validate(entityId);
-        List<ListenableFuture<List<EntityRelation>>> inboundRelationsList = new ArrayList<>();
-        for (RelationTypeGroup typeGroup : RelationTypeGroup.values()) {
-            inboundRelationsList.add(executor.submit(() -> relationDao.findAllByTo(tenantId, entityId, typeGroup)));
-        }
-
-        ListenableFuture<List<List<EntityRelation>>> inboundRelations = Futures.allAsList(inboundRelationsList);
-
-        List<ListenableFuture<List<EntityRelation>>> outboundRelationsList = new ArrayList<>();
-        for (RelationTypeGroup typeGroup : RelationTypeGroup.values()) {
-            outboundRelationsList.add(executor.submit(() -> relationDao.findAllByFrom(tenantId, entityId, typeGroup)));
-        }
-
-        ListenableFuture<List<List<EntityRelation>>> outboundRelations = Futures.allAsList(outboundRelationsList);
-
-        ListenableFuture<List<Boolean>> inboundDeletions = Futures.transformAsync(inboundRelations,
-                relations -> {
-                    List<ListenableFuture<Boolean>> results = deleteRelationGroupsAsync(tenantId, relations, true);
-                    return Futures.allAsList(results);
-                }, MoreExecutors.directExecutor());
-
-        ListenableFuture<List<Boolean>> outboundDeletions = Futures.transformAsync(outboundRelations,
-                relations -> {
-                    List<ListenableFuture<Boolean>> results = deleteRelationGroupsAsync(tenantId, relations, false);
-                    return Futures.allAsList(results);
-                }, MoreExecutors.directExecutor());
-
-        ListenableFuture<List<List<Boolean>>> deletionsFuture = Futures.allAsList(inboundDeletions, outboundDeletions);
-
-        return Futures.transform(Futures.transformAsync(deletionsFuture,
-                (deletions) -> relationDao.deleteOutboundRelationsAsync(tenantId, entityId),
-                MoreExecutors.directExecutor()),
-                result -> null, MoreExecutors.directExecutor());
     }
 
     private List<ListenableFuture<Boolean>> deleteRelationGroupsAsync(TenantId tenantId, List<List<EntityRelation>> relations, boolean deleteFromDb) {

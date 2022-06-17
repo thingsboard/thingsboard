@@ -83,6 +83,6 @@ public abstract class EntitiesExportCtx<R extends VersionCreateRequest> {
 
     public void putExternalId(EntityId internalId, EntityId externalId) {
         log.debug("[{}][{}] Local cache put: {}", internalId.getEntityType(), internalId.getId(), externalId);
-        externalIdMap.put(internalId, externalId);
+        externalIdMap.put(internalId, externalId != null ? externalId : internalId);
     }
 }

@@ -67,3 +67,7 @@ CREATE INDEX IF NOT EXISTS idx_dashboard_external_id ON dashboard(tenant_id, ext
 CREATE INDEX IF NOT EXISTS idx_customer_external_id ON customer(tenant_id, external_id);
 
 CREATE INDEX IF NOT EXISTS idx_widgets_bundle_external_id ON widgets_bundle(tenant_id, external_id);
+
+CREATE INDEX IF NOT EXISTS idx_rule_node_external_id ON rule_node(rule_chain_id, external_id);
+
+CREATE INDEX IF NOT EXISTS idx_rule_node_type ON rule_node(type);
