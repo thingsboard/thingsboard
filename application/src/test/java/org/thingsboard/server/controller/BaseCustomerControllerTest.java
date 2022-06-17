@@ -148,6 +148,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
 
         testNotifyEntityOneTimeError(customer, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+        Mockito.reset(tbClusterService, auditLogService);
 
         customer.setCountry("Ukraine");
         customer.setPhone(RandomStringUtils.randomAlphabetic(300));
@@ -165,6 +166,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
 
         testNotifyEntityOneTimeError(customer, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+        Mockito.reset(tbClusterService, auditLogService);
 
         customer.setState("Normal state");
         customer.setZip(RandomStringUtils.randomAlphabetic(300));
@@ -173,7 +175,6 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
 
         testNotifyEntityOneTimeError(customer, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
-
     }
 
     @Test
@@ -376,5 +377,4 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
     }
-
 }
