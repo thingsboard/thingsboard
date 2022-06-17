@@ -20,6 +20,7 @@ import io.github.bucket4j.Bucket4j;
 import io.github.bucket4j.Refill;
 import io.github.bucket4j.local.LocalBucket;
 import io.github.bucket4j.local.LocalBucketBuilder;
+import lombok.Getter;
 
 import java.time.Duration;
 
@@ -28,6 +29,8 @@ import java.time.Duration;
  */
 public class TbRateLimits {
     private final LocalBucket bucket;
+
+    @Getter
     private final String configuration;
 
     public TbRateLimits(String limitsConfiguration) {
@@ -58,10 +61,6 @@ public class TbRateLimits {
 
     public boolean tryConsume(long number) {
         return bucket.tryConsume(number);
-    }
-
-    public String getConfiguration() {
-        return configuration;
     }
 
 }
