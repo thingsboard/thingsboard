@@ -529,6 +529,9 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
         assertThat(exportedDashboard.getAssignedCustomers()).hasOnlyOneElementSatisfying(shortCustomerInfo -> {
             assertThat(shortCustomerInfo.getCustomerId()).isEqualTo(customer.getId());
         });
+        String exportedEntityAliasAssetId = exportedDashboard.getConfiguration().get("entityAliases").elements().next()
+                .get("filter").get("entityList").elements().next().asText();
+        assertThat(exportedEntityAliasAssetId).isEqualTo(asset.getId().toString());
 
         DeviceProfile exportedDeviceProfile = (DeviceProfile) exportEntity(tenantAdmin2, (DeviceProfileId) ids.get(deviceProfile.getId())).getEntity();
         assertThat(exportedDeviceProfile.getDefaultRuleChainId()).isEqualTo(ruleChain.getId());
@@ -541,6 +544,12 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
         EntityView exportedEntityView = (EntityView) exportEntity(tenantAdmin2, (EntityViewId) ids.get(entityView.getId())).getEntity();
         assertThat(exportedEntityView.getCustomerId()).isEqualTo(customer.getId());
         assertThat(exportedEntityView.getEntityId()).isEqualTo(device.getId());
+
+        deviceProfile.setDefaultDashboardId(null);
+        deviceProfileService.saveDeviceProfile(deviceProfile);
+        DeviceProfile importedDeviceProfile = deviceProfileService.findDeviceProfileById(tenantId2, (DeviceProfileId) ids.get(deviceProfile.getId()));
+        importedDeviceProfile.setDefaultDashboardId(null);
+        deviceProfileService.saveDeviceProfile(importedDeviceProfile);
     }
 
 }
