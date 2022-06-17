@@ -42,6 +42,8 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.OtaPackageInfo;
+import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
@@ -107,6 +109,7 @@ import org.thingsboard.server.gen.edge.v1.EdgeConfiguration;
 import org.thingsboard.server.gen.edge.v1.EntityDataProto;
 import org.thingsboard.server.gen.edge.v1.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.EntityViewsRequestMsg;
+import org.thingsboard.server.gen.edge.v1.OtaPackageUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RelationRequestMsg;
 import org.thingsboard.server.gen.edge.v1.RelationUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RpcResponseMsg;
@@ -133,17 +136,20 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 
 @TestPropertySource(properties = {
         "edges.enabled=true",
 })
 abstract public class BaseEdgeTest extends AbstractControllerTest {
 
-    private static final String CUSTOM_DEVICE_PROFILE_NAME = "Thermostat";
+    private static final String THERMOSTAT_DEVICE_PROFILE_NAME = "Thermostat";
 
     private Tenant savedTenant;
     private TenantId tenantId;
     private User tenantAdmin;
+
+    private DeviceProfile thermostatDeviceProfile;
 
     private EdgeImitator edgeImitator;
     private Edge edge;
@@ -204,12 +210,12 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         MqttDeviceProfileTransportConfiguration transportConfiguration = new MqttDeviceProfileTransportConfiguration();
         transportConfiguration.setTransportPayloadTypeConfiguration(new JsonTransportPayloadConfiguration());
 
-        DeviceProfile deviceProfile = this.createDeviceProfile(CUSTOM_DEVICE_PROFILE_NAME, transportConfiguration);
+        thermostatDeviceProfile = this.createDeviceProfile(THERMOSTAT_DEVICE_PROFILE_NAME, transportConfiguration);
 
-        extendDeviceProfileData(deviceProfile);
-        doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+        extendDeviceProfileData(thermostatDeviceProfile);
+        doPost("/api/deviceProfile", thermostatDeviceProfile, DeviceProfile.class);
 
-        Device savedDevice = saveDevice("Edge Device 1", CUSTOM_DEVICE_PROFILE_NAME);
+        Device savedDevice = saveDevice("Edge Device 1", THERMOSTAT_DEVICE_PROFILE_NAME);
         doPost("/api/edge/" + edge.getUuidId()
                 + "/device/" + savedDevice.getUuidId(), Device.class);
 
@@ -269,7 +275,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         List<DeviceProfileUpdateMsg> deviceProfileUpdateMsgList = edgeImitator.findAllMessagesByType(DeviceProfileUpdateMsg.class);
         Assert.assertEquals(3, deviceProfileUpdateMsgList.size());
         Optional<DeviceProfileUpdateMsg> deviceProfileUpdateMsgOpt =
-                deviceProfileUpdateMsgList.stream().filter(dfum -> CUSTOM_DEVICE_PROFILE_NAME.equals(dfum.getName())).findAny();
+                deviceProfileUpdateMsgList.stream().filter(dfum -> THERMOSTAT_DEVICE_PROFILE_NAME.equals(dfum.getName())).findAny();
         Assert.assertTrue(deviceProfileUpdateMsgOpt.isPresent());
         DeviceProfileUpdateMsg deviceProfileUpdateMsg = deviceProfileUpdateMsgOpt.get();
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, deviceProfileUpdateMsg.getMsgType());
@@ -1641,6 +1647,44 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
             }
         }
         Assert.assertTrue("Expected key and value must be found", found);
+    }
+
+    @Test
+    public void testOtaPackages() throws Exception {
+        // 1
+        SaveOtaPackageInfoRequest firmwareInfo = new SaveOtaPackageInfoRequest();
+        firmwareInfo.setDeviceProfileId(thermostatDeviceProfile.getId());
+        firmwareInfo.setType(FIRMWARE);
+        firmwareInfo.setTitle("My firmware");
+        firmwareInfo.setVersion("v1.0");
+        firmwareInfo.setUsesUrl(true);
+        firmwareInfo.setUrl("http://thingsboard.io/v1");
+        firmwareInfo.setAdditionalInfo(JacksonUtil.newObjectNode());
+
+        edgeImitator.expectMessageAmount(1);
+        OtaPackageInfo savedFirmwareInfo = doPost("/api/otaPackage", firmwareInfo, OtaPackageInfo.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof OtaPackageUpdateMsg);
+        OtaPackageUpdateMsg otaPackageUpdateMsg = (OtaPackageUpdateMsg) latestMessage;
+        Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, otaPackageUpdateMsg.getMsgType());
+        Assert.assertEquals(otaPackageUpdateMsg.getIdMSB(), savedFirmwareInfo.getUuidId().getMostSignificantBits());
+        Assert.assertEquals(otaPackageUpdateMsg.getIdLSB(), savedFirmwareInfo.getUuidId().getLeastSignificantBits());
+
+        // TODO - add check of content - constructor fix
+
+        // 2
+        edgeImitator.expectMessageAmount(1);
+        doDelete("/api/otaPackage/" + savedFirmwareInfo.getUuidId())
+                .andExpect(status().isOk());
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof OtaPackageUpdateMsg);
+        otaPackageUpdateMsg = (OtaPackageUpdateMsg) latestMessage;
+        Assert.assertEquals(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, otaPackageUpdateMsg.getMsgType());
+        Assert.assertEquals(otaPackageUpdateMsg.getIdMSB(), savedFirmwareInfo.getUuidId().getMostSignificantBits());
+        Assert.assertEquals(otaPackageUpdateMsg.getIdLSB(), savedFirmwareInfo.getUuidId().getLeastSignificantBits());
     }
 
     // Utility methods
