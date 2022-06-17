@@ -44,8 +44,6 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
@@ -62,8 +60,6 @@ import java.util.stream.Collectors;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 @Service
-@TbCoreComponent
-@TbRuleEngineComponent
 @AllArgsConstructor
 @Slf4j
 public class DefaultTbEntityViewService extends AbstractTbEntityService implements TbEntityViewService {
