@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.awaitility.Awaitility;
 import org.eclipse.paho.mqttv5.client.IMqttToken;
 import org.eclipse.paho.mqttv5.client.MqttAsyncClient;
 import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
@@ -392,9 +393,13 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
     public void testTheCopyOfAttrsOutOfTSForTheView() throws Exception {
         long now = System.currentTimeMillis();
         Set<String> expectedActualAttributesSet = Set.of("caKey1", "caKey2", "caKey3", "caKey4");
-        List<Map<String, Object>> values = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + testDevice.getId() +
-                "/values/attributes?keys=" + String.join(",", expectedActualAttributesSet), new TypeReference<>() {
-        });
+        putAttributesAndWait("{\"caKey1\":\"value1\", \"caKey2\":true, \"caKey3\":42.0, \"caKey4\":73}", expectedActualAttributesSet);
+        List<Map<String, Object>> values = Awaitility.await()
+                .atMost(TIMEOUT, SECONDS)
+                .until(() -> doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + testDevice.getId() +
+                        "/values/attributes?keys=" + String.join(",", expectedActualAttributesSet), new TypeReference<>() {
+                }), x -> x.size() == expectedActualAttributesSet.size());
+
         assertEquals(expectedActualAttributesSet.size(), values.size());
 
         EntityView view = new EntityView();
