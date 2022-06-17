@@ -15,11 +15,14 @@
  */
 package org.thingsboard.server.service.sync.ie;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import org.junit.After;
 import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.debug.TbMsgGeneratorNode;
+import org.thingsboard.rule.engine.debug.TbMsgGeneratorNodeConfiguration;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -27,6 +30,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.OtaPackage;
@@ -38,6 +42,7 @@ import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
+import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -64,6 +69,7 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -101,6 +107,8 @@ public abstract class BaseExportImportServiceTest extends AbstractControllerTest
     protected RelationService relationService;
     @Autowired
     protected TenantService tenantService;
+    @Autowired
+    protected EntityViewService entityViewService;
 
     protected TenantId tenantId1;
     protected User tenantAdmin1;
@@ -248,6 +256,29 @@ public abstract class BaseExportImportServiceTest extends AbstractControllerTest
         return dashboard;
     }
 
+    protected Dashboard createDashboard(TenantId tenantId, CustomerId customerId, String name, AssetId assetForEntityAlias) {
+        Dashboard dashboard = createDashboard(tenantId, customerId, name);
+        String entityAliases = "{\n" +
+                "\t\"23c4185d-1497-9457-30b2-6d91e69a5b2c\": {\n" +
+                "\t\t\"alias\": \"assets\",\n" +
+                "\t\t\"filter\": {\n" +
+                "\t\t\t\"entityList\": [\n" +
+                "\t\t\t\t\"" + assetForEntityAlias.getId().toString() + "\"\n" +
+                "\t\t\t],\n" +
+                "\t\t\t\"entityType\": \"ASSET\",\n" +
+                "\t\t\t\"resolveMultiple\": true,\n" +
+                "\t\t\t\"type\": \"entityList\"\n" +
+                "\t\t},\n" +
+                "\t\t\"id\": \"23c4185d-1497-9457-30b2-6d91e69a5b2c\"\n" +
+                "\t}\n" +
+                "}";
+        ObjectNode dashboardConfiguration = JacksonUtil.newObjectNode();
+        dashboardConfiguration.set("entityAliases", JacksonUtil.toJsonNode(entityAliases));
+        dashboardConfiguration.set("description", new TextNode("hallo"));
+        dashboard.setConfiguration(dashboardConfiguration);
+        return dashboardService.saveDashboard(dashboard);
+    }
+
     protected void checkImportedDashboardData(Dashboard initialDashboard, Dashboard importedDashboard) {
         assertThat(importedDashboard.getTitle()).isEqualTo(initialDashboard.getTitle());
         assertThat(importedDashboard.getConfiguration()).isEqualTo(initialDashboard.getConfiguration());
@@ -256,6 +287,42 @@ public abstract class BaseExportImportServiceTest extends AbstractControllerTest
         if (initialDashboard.getAssignedCustomers() != null) {
             assertThat(importedDashboard.getAssignedCustomers()).containsAll(initialDashboard.getAssignedCustomers());
         }
+    }
+    protected RuleChain createRuleChain(TenantId tenantId, String name, EntityId originatorId) {
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setTenantId(tenantId);
+        ruleChain.setName(name);
+        ruleChain.setType(RuleChainType.CORE);
+        ruleChain.setDebugMode(true);
+        ruleChain.setConfiguration(JacksonUtil.newObjectNode().set("a", new TextNode("b")));
+        ruleChain = ruleChainService.saveRuleChain(ruleChain);
+
+        RuleChainMetaData metaData = new RuleChainMetaData();
+        metaData.setRuleChainId(ruleChain.getId());
+
+        RuleNode ruleNode1 = new RuleNode();
+        ruleNode1.setName("Generator 1");
+        ruleNode1.setType(TbMsgGeneratorNode.class.getName());
+        ruleNode1.setDebugMode(true);
+        TbMsgGeneratorNodeConfiguration configuration1 = new TbMsgGeneratorNodeConfiguration();
+        configuration1.setOriginatorType(originatorId.getEntityType());
+        configuration1.setOriginatorId(originatorId.getId().toString());
+        ruleNode1.setConfiguration(mapper.valueToTree(configuration1));
+
+        RuleNode ruleNode2 = new RuleNode();
+        ruleNode2.setName("Simple Rule Node 2");
+        ruleNode2.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
+        ruleNode2.setDebugMode(true);
+        TbGetAttributesNodeConfiguration configuration2 = new TbGetAttributesNodeConfiguration();
+        configuration2.setServerAttributeNames(Collections.singletonList("serverAttributeKey2"));
+        ruleNode2.setConfiguration(mapper.valueToTree(configuration2));
+
+        metaData.setNodes(Arrays.asList(ruleNode1, ruleNode2));
+        metaData.setFirstNodeIndex(0);
+        metaData.addConnectionInfo(0, 1, "Success");
+        ruleChainService.saveRuleChainMetaData(tenantId, metaData);
+
+        return ruleChainService.findRuleChainById(tenantId, ruleChain.getId());
     }
 
     protected RuleChain createRuleChain(TenantId tenantId, String name) {
@@ -311,6 +378,16 @@ public abstract class BaseExportImportServiceTest extends AbstractControllerTest
             assertThat(importedNode.getConfiguration()).isEqualTo(initialNode.getConfiguration());
             assertThat(importedNode.getAdditionalInfo()).isEqualTo(initialNode.getAdditionalInfo());
         }
+    }
+
+    protected EntityView createEntityView(TenantId tenantId, CustomerId customerId, EntityId entityId, String name) {
+        EntityView entityView = new EntityView();
+        entityView.setTenantId(tenantId);
+        entityView.setEntityId(entityId);
+        entityView.setCustomerId(customerId);
+        entityView.setName(name);
+        entityView.setType("A");
+        return entityViewService.saveEntityView(entityView);
     }
 
     protected EntityRelation createRelation(EntityId from, EntityId to) {
