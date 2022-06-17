@@ -49,7 +49,6 @@ import org.thingsboard.server.dao.device.claim.ClaimResponse;
 import org.thingsboard.server.dao.device.claim.ClaimResult;
 import org.thingsboard.server.dao.device.claim.ReclaimResult;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -63,7 +62,6 @@ import static org.thingsboard.server.common.data.CacheConstants.CLAIM_DEVICES_CA
 
 @Service
 @Slf4j
-@TbCoreComponent
 public class ClaimDevicesServiceImpl implements ClaimDevicesService {
 
     private static final String CLAIM_ATTRIBUTE_NAME = "claimingAllowed";

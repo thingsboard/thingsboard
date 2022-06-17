@@ -41,14 +41,12 @@ import org.thingsboard.server.dao.device.claim.ClaimResponse;
 import org.thingsboard.server.dao.device.claim.ClaimResult;
 import org.thingsboard.server.dao.device.claim.ReclaimResult;
 import org.thingsboard.server.dao.tenant.TenantService;
-import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.TbDeviceService;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
 import java.util.List;
 
 @AllArgsConstructor
-@TbCoreComponent
 @Service
 @Slf4j
 public class DefaultTbDeviceService extends AbstractTbEntityService implements TbDeviceService, TbClaimDeviceService {
