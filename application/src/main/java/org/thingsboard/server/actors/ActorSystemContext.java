@@ -221,7 +221,8 @@ public class ActorSystemContext {
     @Getter
     private EntityViewService entityViewService;
 
-    @Autowired
+    @Lazy
+    @Autowired(required = false)
     @Getter
     private TbEntityViewService tbEntityViewService;
 
