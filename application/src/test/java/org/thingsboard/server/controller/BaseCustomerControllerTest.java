@@ -128,7 +128,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         String msgError = "length of title must be equal or less than 255";
         doPost("/api/customer", customer).andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityError(customer, savedTenant.getId(),
+        testNotifyEntityOneTimeError(customer, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -137,7 +137,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         msgError = "length of city must be equal or less than 255";
         doPost("/api/customer", customer).andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityError(customer, savedTenant.getId(),
+        testNotifyEntityOneTimeError(customer, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -146,7 +146,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         msgError = "length of country must be equal or less than 255";
         doPost("/api/customer", customer).andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityError(customer, savedTenant.getId(),
+        testNotifyEntityOneTimeError(customer, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
 
         customer.setCountry("Ukraine");
@@ -154,7 +154,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         msgError = "length of phone must be equal or less than 255";
         doPost("/api/customer", customer).andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityError(customer, savedTenant.getId(),
+        testNotifyEntityOneTimeError(customer, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -163,7 +163,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         msgError = "length of state must be equal or less than 255";
         doPost("/api/customer", customer).andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityError(customer, savedTenant.getId(),
+        testNotifyEntityOneTimeError(customer, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
 
         customer.setState("Normal state");
@@ -171,7 +171,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         msgError = "length of zip or postal code must be equal or less than 255";
         doPost("/api/customer", customer).andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityError(customer, savedTenant.getId(),
+        testNotifyEntityOneTimeError(customer, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
 
     }
@@ -248,7 +248,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityError(customer, savedTenant.getId(),
+        testNotifyEntityOneTimeError(customer, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
     }
 
@@ -265,7 +265,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityError(customer, savedTenant.getId(),
+        testNotifyEntityOneTimeError(customer, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
     }
 
@@ -273,8 +273,9 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
     public void testFindCustomers() throws Exception {
         TenantId tenantId = savedTenant.getId();
 
-        List<ListenableFuture<Customer>> futures = new ArrayList<>(135);
-        for (int i = 0; i < 135; i++) {
+        int cntTime = 135;
+        List<ListenableFuture<Customer>> futures = new ArrayList<>(cntTime);
+        for (int i = 0; i < cntTime; i++) {
             Customer customer = new Customer();
             customer.setTenantId(tenantId);
             customer.setTitle("Customer" + i);
@@ -282,6 +283,10 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
                     doPost("/api/customer", customer, Customer.class)));
         }
         List<Customer> customers = Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS);
+
+        testNotifyEntityOneManyTimeMsgToEdgeServiceNever(new Customer(), new Customer(),
+                tenantId, tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, cntTime);
 
         List<Customer> loadedCustomers = new ArrayList<>(135);
         PageLink pageLink = new PageLink(23);
