@@ -81,7 +81,7 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
                     if (field.equals("id")) continue;
                     JsonNode oldFieldValue = entityAlias.get(field);
                     JsonNode newFieldValue = JacksonUtil.toJsonNode(RegexUtils.replace(oldFieldValue.toString(), RegexUtils.UUID_PATTERN, uuid -> {
-                        return idProvider.getInternalIdByUuid(UUID.fromString(uuid), ctx.isFetchAllUUIDs(), HINTS)
+                        return idProvider.getInternalIdByUuid(UUID.fromString(uuid), ctx.isFinalImportAttempt(), HINTS)
                                 .map(entityId -> entityId.getId().toString()).orElse(uuid);
                     }));
                     ((ObjectNode) entityAlias).set(field, newFieldValue);

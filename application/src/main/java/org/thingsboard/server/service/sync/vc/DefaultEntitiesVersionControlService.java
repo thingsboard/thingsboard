@@ -259,6 +259,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                     .saveCredentials(config.isLoadCredentials())
                     .findExistingByName(false)
                     .build());
+            ctx.setFinalImportAttempt(true);
             EntityImportResult<?> importResult = exportImportService.importEntity(ctx, entityData);
 
             exportImportService.saveReferencesAndRelations(ctx);
@@ -329,6 +330,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                 throw new RuntimeException(e);
             }
             for (EntityExportData entityData : entityDataList) {
+                EntityExportData reimportBackup = JacksonUtil.clone(entityData);
                 log.debug("[{}] Loading {} entities", ctx.getTenantId(), entityType);
                 EntityImportResult<?> importResult;
                 try {
@@ -336,8 +338,8 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                 } catch (Exception e) {
                     throw new LoadEntityException(entityData, e);
                 }
-                if (importResult.getUpdatedAllExternalIds() != null && !importResult.getUpdatedAllExternalIds()) {
-                    ctx.getToReimport().put(entityData.getEntity().getExternalId(), new ReimportTask(entityData, ctx.getSettings()));
+                if (!importResult.isUpdatedAllExternalIds()) {
+                    ctx.getToReimport().put(entityData.getEntity().getExternalId(), new ReimportTask(reimportBackup, ctx.getSettings()));
                     continue;
                 }
 
@@ -351,7 +353,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     private void reimport(EntitiesImportCtx ctx) {
-        ctx.setFetchAllUUIDs(true);
+        ctx.setFinalImportAttempt(true);
         ctx.getToReimport().forEach((externalId, task) -> {
             try {
                 EntityExportData entityData = task.getData();

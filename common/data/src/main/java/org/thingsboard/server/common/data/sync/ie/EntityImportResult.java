@@ -31,7 +31,7 @@ public class EntityImportResult<E extends ExportableEntity<? extends EntityId>> 
     private ThrowingRunnable saveReferencesCallback = () -> {};
     private ThrowingRunnable sendEventsCallback = () -> {};
 
-    private Boolean updatedAllExternalIds;
+    private boolean updatedAllExternalIds = true;
 
     private boolean created;
     private boolean updated;

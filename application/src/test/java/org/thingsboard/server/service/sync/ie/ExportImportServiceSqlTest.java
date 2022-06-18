@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.collect.Streams;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.thingsboard.common.util.JacksonUtil;
@@ -271,7 +272,7 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
         Dashboard importedDashboard = importEntity(tenantAdmin2, dashboardExportData).getSavedEntity();
 
         Set<String> entityAliasEntitiesIds = Streams.stream(importedDashboard.getConfiguration()
-                        .get("entityAliases").elements().next().get("filter").get("entityList").elements())
+                .get("entityAliases").elements().next().get("filter").get("entityList").elements())
                 .map(JsonNode::asText).collect(Collectors.toSet());
         assertThat(entityAliasEntitiesIds).doesNotContain(asset1.getId().toString(), asset2.getId().toString());
         assertThat(entityAliasEntitiesIds).contains(importedAsset1.getId().toString(), importedAsset2.getId().toString());
@@ -433,6 +434,12 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
     }
 
 
+    @SuppressWarnings("rawTypes")
+    private static EntityExportData getAndClone(Map<EntityType, EntityExportData> map, EntityType entityType) {
+        return JacksonUtil.clone(map.get(entityType));
+    }
+
+    @SuppressWarnings({"rawTypes", "unchecked"})
     @Test
     public void testEntityEventsOnImport() throws Exception {
         Customer customer = createCustomer(tenantId1, "Customer 1");
@@ -443,7 +450,7 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
         Device device = createDevice(tenantId1, null, deviceProfile.getId(), "Device 1");
 
         Map<EntityType, EntityExportData> entitiesExportData = Stream.of(customer.getId(), asset.getId(), device.getId(),
-                        ruleChain.getId(), dashboard.getId(), deviceProfile.getId())
+                ruleChain.getId(), dashboard.getId(), deviceProfile.getId())
                 .map(entityId -> {
                     try {
                         return exportEntity(tenantAdmin1, entityId, EntityExportSettings.builder()
@@ -455,32 +462,50 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
                 })
                 .collect(Collectors.toMap(EntityExportData::getEntityType, d -> d));
 
-        Customer importedCustomer = (Customer) importEntity(tenantAdmin2, entitiesExportData.get(EntityType.CUSTOMER)).getSavedEntity();
+        Mockito.reset(entityActionService);
+        Customer importedCustomer = (Customer) importEntity(tenantAdmin2, getAndClone(entitiesExportData, EntityType.CUSTOMER)).getSavedEntity();
         verify(entityActionService).logEntityAction(any(), eq(importedCustomer.getId()), eq(importedCustomer),
                 any(), eq(ActionType.ADDED), isNull());
-        importEntity(tenantAdmin2, entitiesExportData.get(EntityType.CUSTOMER));
-        verify(entityActionService).logEntityAction(any(), eq(importedCustomer.getId()), eq(importedCustomer),
+        Mockito.reset(entityActionService);
+        importEntity(tenantAdmin2, getAndClone(entitiesExportData, EntityType.CUSTOMER));
+        verify(entityActionService, Mockito.never()).logEntityAction(any(), eq(importedCustomer.getId()), eq(importedCustomer),
+                any(), eq(ActionType.UPDATED), isNull());
+
+        EntityExportData<Customer> updatedCustomerEntity = getAndClone(entitiesExportData, EntityType.CUSTOMER);
+        updatedCustomerEntity.getEntity().setEmail("t" + updatedCustomerEntity.getEntity().getEmail());
+        Customer updatedCustomer = importEntity(tenantAdmin2, updatedCustomerEntity).getSavedEntity();
+        verify(entityActionService).logEntityAction(any(), eq(importedCustomer.getId()), eq(updatedCustomer),
                 any(), eq(ActionType.UPDATED), isNull());
         verify(tbClusterService).sendNotificationMsgToEdgeService(any(), any(), eq(importedCustomer.getId()), any(), any(), eq(EdgeEventActionType.UPDATED));
 
-        Asset importedAsset = (Asset) importEntity(tenantAdmin2, entitiesExportData.get(EntityType.ASSET)).getSavedEntity();
+        Mockito.reset(entityActionService);
+
+        Asset importedAsset = (Asset) importEntity(tenantAdmin2, getAndClone(entitiesExportData, EntityType.ASSET)).getSavedEntity();
         verify(entityActionService).logEntityAction(any(), eq(importedAsset.getId()), eq(importedAsset),
                 any(), eq(ActionType.ADDED), isNull());
         importEntity(tenantAdmin2, entitiesExportData.get(EntityType.ASSET));
-        verify(entityActionService).logEntityAction(any(), eq(importedAsset.getId()), eq(importedAsset),
+        verify(entityActionService, Mockito.never()).logEntityAction(any(), eq(importedAsset.getId()), eq(importedAsset),
+                any(), eq(ActionType.UPDATED), isNull());
+
+
+        EntityExportData<Asset> updatedAssetEntity = getAndClone(entitiesExportData, EntityType.ASSET);
+        updatedAssetEntity.getEntity().setLabel("t" + updatedAssetEntity.getEntity().getLabel());
+        Asset updatedAsset = importEntity(tenantAdmin2, updatedAssetEntity).getSavedEntity();
+
+        verify(entityActionService).logEntityAction(any(), eq(importedAsset.getId()), eq(updatedAsset),
                 any(), eq(ActionType.UPDATED), isNull());
         verify(tbClusterService).sendNotificationMsgToEdgeService(any(), any(), eq(importedAsset.getId()), any(), any(), eq(EdgeEventActionType.UPDATED));
 
-        RuleChain importedRuleChain = (RuleChain) importEntity(tenantAdmin2, entitiesExportData.get(EntityType.RULE_CHAIN)).getSavedEntity();
+        RuleChain importedRuleChain = (RuleChain) importEntity(tenantAdmin2, getAndClone(entitiesExportData, EntityType.RULE_CHAIN)).getSavedEntity();
         verify(entityActionService).logEntityAction(any(), eq(importedRuleChain.getId()), eq(importedRuleChain),
                 any(), eq(ActionType.ADDED), isNull());
         verify(tbClusterService).broadcastEntityStateChangeEvent(any(), eq(importedRuleChain.getId()), eq(ComponentLifecycleEvent.CREATED));
 
-        Dashboard importedDashboard = (Dashboard) importEntity(tenantAdmin2, entitiesExportData.get(EntityType.DASHBOARD)).getSavedEntity();
+        Dashboard importedDashboard = (Dashboard) importEntity(tenantAdmin2, getAndClone(entitiesExportData, EntityType.DASHBOARD)).getSavedEntity();
         verify(entityActionService).logEntityAction(any(), eq(importedDashboard.getId()), eq(importedDashboard),
                 any(), eq(ActionType.ADDED), isNull());
 
-        DeviceProfile importedDeviceProfile = (DeviceProfile) importEntity(tenantAdmin2, entitiesExportData.get(EntityType.DEVICE_PROFILE)).getSavedEntity();
+        DeviceProfile importedDeviceProfile = (DeviceProfile) importEntity(tenantAdmin2, getAndClone(entitiesExportData, EntityType.DEVICE_PROFILE)).getSavedEntity();
         verify(entityActionService).logEntityAction(any(), eq(importedDeviceProfile.getId()), eq(importedDeviceProfile),
                 any(), eq(ActionType.ADDED), isNull());
         verify(tbClusterService).onDeviceProfileChange(eq(importedDeviceProfile), any());
@@ -488,12 +513,17 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
         verify(tbClusterService).sendNotificationMsgToEdgeService(any(), any(), eq(importedDeviceProfile.getId()), any(), any(), eq(EdgeEventActionType.ADDED));
         verify(otaPackageStateService).update(eq(importedDeviceProfile), eq(false), eq(false));
 
-        Device importedDevice = (Device) importEntity(tenantAdmin2, entitiesExportData.get(EntityType.DEVICE)).getSavedEntity();
+        Device importedDevice = (Device) importEntity(tenantAdmin2, getAndClone(entitiesExportData, EntityType.DEVICE)).getSavedEntity();
         verify(entityActionService).logEntityAction(any(), eq(importedDevice.getId()), eq(importedDevice),
                 any(), eq(ActionType.ADDED), isNull());
         verify(tbClusterService).onDeviceUpdated(eq(importedDevice), isNull());
-        importEntity(tenantAdmin2, entitiesExportData.get(EntityType.DEVICE));
-        verify(tbClusterService).onDeviceUpdated(eq(importedDevice), eq(importedDevice));
+        importEntity(tenantAdmin2, getAndClone(entitiesExportData, EntityType.DEVICE));
+        verify(tbClusterService, Mockito.never()).onDeviceUpdated(eq(importedDevice), eq(importedDevice));
+
+        EntityExportData<Device> updatedDeviceEntity = getAndClone(entitiesExportData, EntityType.DEVICE);
+        updatedDeviceEntity.getEntity().setLabel("t" + updatedDeviceEntity.getEntity().getLabel());
+        Device updatedDevice = importEntity(tenantAdmin2, updatedDeviceEntity).getSavedEntity();
+        verify(tbClusterService).onDeviceUpdated(eq(updatedDevice), eq(importedDevice));
     }
 
     @Test

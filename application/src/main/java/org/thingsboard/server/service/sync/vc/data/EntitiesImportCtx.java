@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.sync.ThrowingRunnable;
+import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
 import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
 import org.thingsboard.server.common.data.sync.vc.EntityTypeLoadResult;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -52,8 +53,9 @@ public class EntitiesImportCtx {
 
     private final Set<EntityRelation> relations = new LinkedHashSet<>();
 
-    private boolean fetchAllUUIDs = false;
+    private boolean finalImportAttempt = false;
     private EntityImportSettings settings;
+    private EntityImportResult<?> currentImportResult;
 
     public EntitiesImportCtx(SecurityUser user, String versionId) {
         this(user, versionId, null);
@@ -133,5 +135,7 @@ public class EntitiesImportCtx {
     public boolean isNotFound(EntityId externalId) {
         return notFoundIds.contains(externalId);
     }
+
+
 
 }

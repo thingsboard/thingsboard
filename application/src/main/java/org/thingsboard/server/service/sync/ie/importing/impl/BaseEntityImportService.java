@@ -87,6 +87,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
     @Override
     public EntityImportResult<E> importEntity(EntitiesImportCtx ctx, D exportData) throws ThingsboardException {
         EntityImportResult<E> importResult = new EntityImportResult<>();
+        ctx.setCurrentImportResult(importResult);
         importResult.setEntityType(getEntityType());
         IdProvider idProvider = new IdProvider(ctx, importResult);
 

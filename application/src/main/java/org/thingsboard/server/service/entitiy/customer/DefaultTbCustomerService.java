@@ -43,7 +43,7 @@ public class DefaultTbCustomerService extends AbstractTbEntityService implements
         try {
             Customer savedCustomer = checkNotNull(customerService.saveCustomer(customer));
             vcService.autoCommit(user, savedCustomer.getId());
-            notificationEntityService.notifyCreateOrUpdateEntity(tenantId, savedCustomer.getId(), savedCustomer, savedCustomer.getId(), actionType, user);
+            notificationEntityService.notifyCreateOrUpdateEntity(tenantId, savedCustomer.getId(), savedCustomer, null, actionType, user);
             return savedCustomer;
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.CUSTOMER), customer, null, actionType, user, e);
