@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.cluster.TbClusterService;
@@ -83,7 +84,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
 
     public DefaultTelemetrySubscriptionService(AttributesService attrService,
                                                TimeseriesService tsService,
-                                               TbEntityViewService tbEntityViewService,
+                                               @Lazy TbEntityViewService tbEntityViewService,
                                                TbClusterService clusterService,
                                                PartitionService partitionService,
                                                TbApiUsageClient apiUsageClient,
