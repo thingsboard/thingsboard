@@ -34,7 +34,7 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
-import org.thingsboard.server.utils.RegexUtils;
+import org.thingsboard.common.util.RegexUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;

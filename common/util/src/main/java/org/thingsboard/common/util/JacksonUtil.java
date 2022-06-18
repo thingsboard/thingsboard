@@ -22,10 +22,16 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.UnaryOperator;
 
 /**
  * Created by Valerii Sosliuk on 5/12/2017.
@@ -149,6 +155,61 @@ public class JacksonUtil {
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("The given Json object value: "
                     + value + " cannot be transformed to a String", e);
+        }
+    }
+
+
+    public static JsonNode getSafely(JsonNode node, String... path) {
+        if (node == null) {
+            return null;
+        }
+        for (String p : path) {
+            if (!node.has(p)) {
+                return null;
+            } else {
+                node = node.get(p);
+            }
+        }
+        return node;
+    }
+
+    public static void replaceUuidsRecursively(JsonNode node, Set<String> skipFieldsSet, UnaryOperator<UUID> replacer) {
+        if (node == null) {
+            return;
+        }
+        if (node.isObject()) {
+            ObjectNode objectNode = (ObjectNode) node;
+            List<String> fieldNames = new ArrayList<>(objectNode.size());
+            objectNode.fieldNames().forEachRemaining(fieldNames::add);
+            for (String fieldName : fieldNames) {
+                if (skipFieldsSet.contains(fieldName)) {
+                    continue;
+                }
+                var child = objectNode.get(fieldName);
+                if (child.isObject() || child.isArray()) {
+                    replaceUuidsRecursively(child, skipFieldsSet, replacer);
+                } else if (child.isTextual()) {
+                    String text = child.asText();
+                    String newText = RegexUtils.replace(text, RegexUtils.UUID_PATTERN, uuid -> replacer.apply(UUID.fromString(uuid)).toString());
+                    if (!text.equals(newText)) {
+                        objectNode.put(fieldName, newText);
+                    }
+                }
+            }
+        } else if (node.isArray()) {
+            ArrayNode array = (ArrayNode) node;
+            for (int i = 0; i < array.size(); i++) {
+                JsonNode arrayElement = array.get(i);
+                if (arrayElement.isObject() || arrayElement.isArray()) {
+                    replaceUuidsRecursively(arrayElement, skipFieldsSet, replacer);
+                } else if (arrayElement.isTextual()) {
+                    String text = arrayElement.asText();
+                    String newText = RegexUtils.replace(text, RegexUtils.UUID_PATTERN, uuid -> replacer.apply(UUID.fromString(uuid)).toString());
+                    if (!text.equals(newText)) {
+                        array.set(i, newText);
+                    }
+                }
+            }
         }
     }
 }

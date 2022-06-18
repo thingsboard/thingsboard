@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.service.sync.ie.exporting.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -32,12 +34,19 @@ public abstract class BaseEntityExportService<I extends EntityId, E extends Expo
         super.setAdditionalExportData(ctx, entity, exportData);
     }
 
-    protected void setRelatedEntities(EntitiesExportCtx<?> ctx, E mainEntity, D exportData) {}
+    protected void setRelatedEntities(EntitiesExportCtx<?> ctx, E mainEntity, D exportData) {
+    }
 
     protected D newExportData() {
         return (D) new EntityExportData<E>();
-    };
+    }
+
+    ;
 
     public abstract Set<EntityType> getSupportedEntityTypes();
+
+    protected void replaceUuidsRecursively(EntitiesExportCtx<?> ctx, JsonNode node, Set<String> skipFieldsSet) {
+        JacksonUtil.replaceUuidsRecursively(node, skipFieldsSet, uuid -> getExternalIdOrElseInternalByUuid(ctx, uuid));
+    }
 
 }

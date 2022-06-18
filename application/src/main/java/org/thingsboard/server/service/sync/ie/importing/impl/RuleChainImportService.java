@@ -37,7 +37,7 @@ import org.thingsboard.server.dao.rule.RuleNodeDao;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
-import org.thingsboard.server.utils.RegexUtils;
+import org.thingsboard.common.util.RegexUtils;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -95,7 +95,7 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
 
         ruleNodes.forEach(ruleNode -> {
             JsonNode ruleNodeConfig = ruleNode.getConfiguration();
-            String newRuleNodeConfigJson = RegexUtils.replace(ruleNodeConfig.toString(), RegexUtils.UUID_PATTERN, uuid -> {
+            String newRuleNodeConfigJson = RegexUtils.replace(JacksonUtil.toString(ruleNodeConfig), RegexUtils.UUID_PATTERN, uuid -> {
                 return idProvider.getInternalIdByUuid(UUID.fromString(uuid), ctx.isFinalImportAttempt(), HINTS)
                         .map(entityId -> entityId.getId().toString())
                         .orElse(uuid);

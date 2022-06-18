@@ -17,6 +17,7 @@ package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.EqualsAndHashCode;
@@ -24,7 +25,11 @@ import lombok.Getter;
 import lombok.Setter;
 import org.thingsboard.server.common.data.id.DashboardId;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.StreamSupport;
 
 @EqualsAndHashCode(callSuper = true)
 public class Dashboard extends DashboardInfo implements ExportableEntity<DashboardId> {
@@ -33,7 +38,8 @@ public class Dashboard extends DashboardInfo implements ExportableEntity<Dashboa
 
     private transient JsonNode configuration;
 
-    @Getter @Setter
+    @Getter
+    @Setter
     private DashboardId externalId;
 
     public Dashboard() {
@@ -68,9 +74,27 @@ public class Dashboard extends DashboardInfo implements ExportableEntity<Dashboa
 
     @JsonIgnore
     public ObjectNode getEntityAliasesConfig() {
-        return (ObjectNode) Optional.ofNullable(getConfiguration())
+        return (ObjectNode) Optional.ofNullable(configuration)
                 .map(config -> config.get("entityAliases"))
                 .filter(JsonNode::isObject).orElse(null);
+    }
+
+    @JsonIgnore
+    public List<ObjectNode> getWidgetsConfig() {
+        return Optional.ofNullable(configuration)
+                .map(config -> config.get("widgets"))
+                .filter(node -> !node.isEmpty())
+                .map(node -> (ObjectNode) node)
+                .map(object -> {
+                    List<ObjectNode> widgets = new ArrayList<>(object.size());
+                    object.forEach(child -> {
+                        if (child.isObject()) {
+                            widgets.add((ObjectNode) child);
+                        }
+                    });
+                    return widgets;
+                })
+                .orElse(Collections.emptyList());
     }
 
     @Override

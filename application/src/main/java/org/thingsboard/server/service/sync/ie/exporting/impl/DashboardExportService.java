@@ -27,9 +27,10 @@ import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.vc.data.EntitiesExportCtx;
-import org.thingsboard.server.utils.RegexUtils;
+import org.thingsboard.common.util.RegexUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 
@@ -46,16 +47,11 @@ public class DashboardExportService extends BaseEntityExportService<DashboardId,
         }
         if (dashboard.getEntityAliasesConfig() != null) {
             for (JsonNode entityAlias : dashboard.getEntityAliasesConfig()) {
-                ArrayList<String> fields = Lists.newArrayList(entityAlias.fieldNames());
-                for (String field : fields) {
-                    if (field.equals("id")) continue;
-                    JsonNode oldFieldValue = entityAlias.get(field);
-                    JsonNode newFieldValue = JacksonUtil.toJsonNode(RegexUtils.replace(oldFieldValue.toString(), RegexUtils.UUID_PATTERN, uuid -> {
-                        return getExternalIdOrElseInternalByUuid(ctx, UUID.fromString(uuid)).toString();
-                    }));
-                    ((ObjectNode) entityAlias).set(field, newFieldValue);
-                }
+                replaceUuidsRecursively(ctx, entityAlias, Collections.singleton("id"));
             }
+        }
+        for (JsonNode widgetConfig : dashboard.getWidgetsConfig()) {
+            replaceUuidsRecursively(ctx, JacksonUtil.getSafely(widgetConfig, "config", "actions"), Collections.singleton("id"));
         }
     }
 
