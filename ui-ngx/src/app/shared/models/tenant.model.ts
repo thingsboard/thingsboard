@@ -51,6 +51,22 @@ export interface DefaultTenantProfileConfiguration {
   maxSms: number;
   maxCreatedAlarms: number;
 
+  tenantServerRestLimitsConfiguration: string;
+  customerServerRestLimitsConfiguration: string;
+
+  maxWsSessionsPerTenant: number;
+  maxWsSessionsPerCustomer: number;
+  maxWsSessionsPerRegularUser: number;
+  maxWsSessionsPerPublicUser: number;
+  wsMsgQueueLimitPerSession: number;
+  maxWsSubscriptionsPerTenant: number;
+  maxWsSubscriptionsPerCustomer: number;
+  maxWsSubscriptionsPerRegularUser: number;
+  maxWsSubscriptionsPerPublicUser: number;
+  wsUpdatesPerSessionRateLimit: string;
+
+  cassandraQueryTenantRateLimitsConfiguration: string;
+
   defaultStorageTtlDays: number;
   alarmsTtlDays: number;
   rpcTtlDays: number;
@@ -85,9 +101,22 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
           maxEmails: 0,
           maxSms: 0,
           maxCreatedAlarms: 0,
+          tenantServerRestLimitsConfiguration: '',
+          customerServerRestLimitsConfiguration: '',
+          maxWsSessionsPerTenant: 0,
+          maxWsSessionsPerCustomer: 0,
+          maxWsSessionsPerRegularUser: 0,
+          maxWsSessionsPerPublicUser: 0,
+          wsMsgQueueLimitPerSession: 0,
+          maxWsSubscriptionsPerTenant: 0,
+          maxWsSubscriptionsPerCustomer: 0,
+          maxWsSubscriptionsPerRegularUser: 0,
+          maxWsSubscriptionsPerPublicUser: 0,
+          wsUpdatesPerSessionRateLimit: '',
+          cassandraQueryTenantRateLimitsConfiguration: '',
           defaultStorageTtlDays: 0,
           alarmsTtlDays: 0,
-          rpcTtlDays: 0
+          rpcTtlDays: 0,
         };
         configuration = {...defaultConfiguration, type: TenantProfileType.DEFAULT};
         break;

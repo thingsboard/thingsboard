@@ -56,6 +56,22 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxSms;
     private long maxCreatedAlarms;
 
+    private String tenantServerRestLimitsConfiguration;
+    private String customerServerRestLimitsConfiguration;
+
+    private int maxWsSessionsPerTenant;
+    private int maxWsSessionsPerCustomer;
+    private int maxWsSessionsPerRegularUser;
+    private int maxWsSessionsPerPublicUser;
+    private int wsMsgQueueLimitPerSession;
+    private long maxWsSubscriptionsPerTenant;
+    private long maxWsSubscriptionsPerCustomer;
+    private long maxWsSubscriptionsPerRegularUser;
+    private long maxWsSubscriptionsPerPublicUser;
+    private String wsUpdatesPerSessionRateLimit;
+
+    private String cassandraQueryTenantRateLimitsConfiguration;
+
     private int defaultStorageTtlDays;
     private int alarmsTtlDays;
     private int rpcTtlDays;
