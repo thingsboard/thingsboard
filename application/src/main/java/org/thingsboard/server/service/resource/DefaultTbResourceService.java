@@ -22,10 +22,10 @@ import org.eclipse.leshan.core.model.DefaultDDFFileValidator;
 import org.eclipse.leshan.core.model.InvalidDDFFileException;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -40,7 +40,6 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
-import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -218,35 +217,22 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
     }
 
     @Override
-    public TbResource save(TbResource tbResource, SecurityUser user) throws ThingsboardException {
+    public TbResource save(TbResource tbResource, User user) throws ThingsboardException {
         ActionType actionType = tbResource.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = tbResource.getTenantId();
-        try {
 
-            TbResource savedResource = checkNotNull(saveResourceInternal(tbResource));
-            tbClusterService.onResourceChange(savedResource, null);
-            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, savedResource.getId(),
-                    savedResource, user, actionType, false, null);
-            return savedResource;
-        } catch (Exception e) {
-            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, emptyId(EntityType.TB_RESOURCE),
-                    tbResource, user, actionType, false, e);
-            throw handleException(e);
-        }
+        TbResource savedResource = checkNotNull(saveResourceInternal(tbResource));
+        tbClusterService.onResourceChange(savedResource, null);
+        notificationEntityService.logEntityAction(tenantId, savedResource.getId(), savedResource, actionType, user);
+        return savedResource;
     }
 
     @Override
-    public void delete(TbResource tbResource, SecurityUser user) throws ThingsboardException {
+    public void delete(TbResource tbResource, User user) {
         TbResourceId resourceId = tbResource.getId();
         TenantId tenantId = tbResource.getTenantId();
-        try {
-            resourceService.deleteResource(tenantId, resourceId);
-            tbClusterService.onResourceDeleted(tbResource, null);
-            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, resourceId, tbResource, user, ActionType.DELETED,
-                    false, null, resourceId.toString());
-        } catch (Exception e) {
-            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, emptyId(EntityType.TB_RESOURCE), null, user, ActionType.DELETED,
-                    false, e, resourceId.toString());
-            throw handleException(e);
-        }
-    }}
+        resourceService.deleteResource(tenantId, resourceId);
+        tbClusterService.onResourceDeleted(tbResource, null);
+        notificationEntityService.logEntityAction(tenantId, resourceId, tbResource, ActionType.DELETED, user, resourceId.toString());
+    }
+}

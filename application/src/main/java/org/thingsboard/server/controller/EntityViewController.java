@@ -33,8 +33,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -48,7 +50,7 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.entitiy.entityView.TbEntityViewService;
+import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
@@ -140,15 +142,22 @@ public class EntityViewController extends BaseController {
     public EntityView saveEntityView(
             @ApiParam(value = "A JSON object representing the entity view.")
             @RequestBody EntityView entityView) throws ThingsboardException {
-        entityView.setTenantId(getCurrentUser().getTenantId());
-        EntityView existingEntityView = null;
-        if (entityView.getId() == null) {
-            accessControlService
-                    .checkPermission(getCurrentUser(), Resource.ENTITY_VIEW, Operation.CREATE, null, entityView);
-        } else {
-            existingEntityView = checkEntityViewId(entityView.getId(), Operation.WRITE);
+        try {
+            entityView.setTenantId(getCurrentUser().getTenantId());
+            EntityView existingEntityView = null;
+            if (entityView.getId() == null) {
+                accessControlService
+                        .checkPermission(getCurrentUser(), Resource.ENTITY_VIEW, Operation.CREATE, null, entityView);
+            } else {
+                existingEntityView = checkEntityViewId(entityView.getId(), Operation.WRITE);
+            }
+            return tbEntityViewService.save(entityView, existingEntityView, getCurrentUser());
+        } catch (Exception e) {
+            ActionType actionType = entityView.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
+            notificationEntityService.logEntityAction(getTenantId(), emptyId(EntityType.ENTITY_VIEW), entityView,
+                    actionType, getCurrentUser(), e);
+            throw handleException(e);
         }
-        return tbEntityViewService.save(entityView, existingEntityView, getCurrentUser());
     }
 
     @ApiOperation(value = "Delete entity view (deleteEntityView)",
@@ -161,9 +170,15 @@ public class EntityViewController extends BaseController {
             @ApiParam(value = ENTITY_VIEW_ID_PARAM_DESCRIPTION)
             @PathVariable(ENTITY_VIEW_ID) String strEntityViewId) throws ThingsboardException {
         checkParameter(ENTITY_VIEW_ID, strEntityViewId);
-        EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
-        EntityView entityView = checkEntityViewId(entityViewId, Operation.DELETE);
-        tbEntityViewService.delete(entityView, getCurrentUser());
+        try {
+            EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
+            EntityView entityView = checkEntityViewId(entityViewId, Operation.DELETE);
+            tbEntityViewService.delete(entityView, getCurrentUser());
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(getTenantId(), emptyId(EntityType.ENTITY_VIEW),
+                    ActionType.DELETED, getCurrentUser(), e, strEntityViewId);
+            throw handleException(e);
+        }
     }
 
     @ApiOperation(value = "Get Entity View by name (getTenantEntityView)",
@@ -193,16 +208,22 @@ public class EntityViewController extends BaseController {
             @PathVariable(CUSTOMER_ID) String strCustomerId,
             @ApiParam(value = ENTITY_VIEW_ID_PARAM_DESCRIPTION)
             @PathVariable(ENTITY_VIEW_ID) String strEntityViewId) throws ThingsboardException {
-        checkParameter(CUSTOMER_ID, strCustomerId);
-        checkParameter(ENTITY_VIEW_ID, strEntityViewId);
+        try {
+            checkParameter(CUSTOMER_ID, strCustomerId);
+            checkParameter(ENTITY_VIEW_ID, strEntityViewId);
 
-        CustomerId customerId = new CustomerId(toUUID(strCustomerId));
-        Customer customer = checkCustomerId(customerId, Operation.READ);
+            CustomerId customerId = new CustomerId(toUUID(strCustomerId));
+            Customer customer = checkCustomerId(customerId, Operation.READ);
 
-        EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
-        checkEntityViewId(entityViewId, Operation.ASSIGN_TO_CUSTOMER);
+            EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
+            checkEntityViewId(entityViewId, Operation.ASSIGN_TO_CUSTOMER);
 
-        return tbEntityViewService.assignEntityViewToCustomer(getTenantId(), entityViewId, customer, getCurrentUser());
+            return tbEntityViewService.assignEntityViewToCustomer(getTenantId(), entityViewId, customer, getCurrentUser());
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(getTenantId(), emptyId(EntityType.ENTITY_VIEW),
+                    ActionType.ASSIGNED_TO_CUSTOMER, getCurrentUser(), e, strEntityViewId, strCustomerId);
+            throw handleException(e);
+        }
     }
 
     @ApiOperation(value = "Unassign Entity View from customer (unassignEntityViewFromCustomer)",
@@ -213,16 +234,22 @@ public class EntityViewController extends BaseController {
     public EntityView unassignEntityViewFromCustomer(
             @ApiParam(value = ENTITY_VIEW_ID_PARAM_DESCRIPTION)
             @PathVariable(ENTITY_VIEW_ID) String strEntityViewId) throws ThingsboardException {
-        checkParameter(ENTITY_VIEW_ID, strEntityViewId);
-        EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
-        EntityView entityView = checkEntityViewId(entityViewId, Operation.UNASSIGN_FROM_CUSTOMER);
-        if (entityView.getCustomerId() == null || entityView.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
-            throw new IncorrectParameterException("Entity View isn't assigned to any customer!");
+        try {
+            checkParameter(ENTITY_VIEW_ID, strEntityViewId);
+            EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
+            EntityView entityView = checkEntityViewId(entityViewId, Operation.UNASSIGN_FROM_CUSTOMER);
+            if (entityView.getCustomerId() == null || entityView.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
+                throw new IncorrectParameterException("Entity View isn't assigned to any customer!");
+            }
+
+            Customer customer = checkCustomerId(entityView.getCustomerId(), Operation.READ);
+
+            return tbEntityViewService.unassignEntityViewFromCustomer(getTenantId(), entityViewId, customer, getCurrentUser());
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(getTenantId(), emptyId(EntityType.ENTITY_VIEW),
+                    ActionType.UNASSIGNED_FROM_CUSTOMER, getCurrentUser(), e, strEntityViewId);
+            throw handleException(e);
         }
-
-        Customer customer = checkCustomerId(entityView.getCustomerId(), Operation.READ);
-
-        return tbEntityViewService.unassignEntityViewFromCustomer(getTenantId(), entityViewId, customer, getCurrentUser());
     }
 
     @ApiOperation(value = "Get Customer Entity Views (getCustomerEntityViews)",
@@ -421,14 +448,20 @@ public class EntityViewController extends BaseController {
     public EntityView assignEntityViewToPublicCustomer(
             @ApiParam(value = ENTITY_VIEW_ID_PARAM_DESCRIPTION)
             @PathVariable(ENTITY_VIEW_ID) String strEntityViewId) throws ThingsboardException {
-        checkParameter(ENTITY_VIEW_ID, strEntityViewId);
-        EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
-        checkEntityViewId(entityViewId, Operation.ASSIGN_TO_CUSTOMER);
+        try {
+            checkParameter(ENTITY_VIEW_ID, strEntityViewId);
+            EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
+            checkEntityViewId(entityViewId, Operation.ASSIGN_TO_CUSTOMER);
 
-        Customer publicCustomer = customerService.findOrCreatePublicCustomer(getTenantId());
+            Customer publicCustomer = customerService.findOrCreatePublicCustomer(getTenantId());
 
-        return tbEntityViewService.assignEntityViewToPublicCustomer(getTenantId(), getCurrentUser().getCustomerId(),
-                publicCustomer, entityViewId, getCurrentUser());
+            return tbEntityViewService.assignEntityViewToPublicCustomer(getTenantId(), getCurrentUser().getCustomerId(),
+                    publicCustomer, entityViewId, getCurrentUser());
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(getTenantId(), emptyId(EntityType.ENTITY_VIEW),
+                    ActionType.ASSIGNED_TO_CUSTOMER, getCurrentUser(), e, strEntityViewId);
+            throw handleException(e);
+        }
     }
 
     @ApiOperation(value = "Assign entity view to edge (assignEntityViewToEdge)",
@@ -443,16 +476,23 @@ public class EntityViewController extends BaseController {
     @ResponseBody
     public EntityView assignEntityViewToEdge(@PathVariable(EDGE_ID) String strEdgeId,
                                              @PathVariable(ENTITY_VIEW_ID) String strEntityViewId) throws ThingsboardException {
-        checkParameter(EDGE_ID, strEdgeId);
-        checkParameter(ENTITY_VIEW_ID, strEntityViewId);
+        try {
+            checkParameter(EDGE_ID, strEdgeId);
+            checkParameter(ENTITY_VIEW_ID, strEntityViewId);
 
-        EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-        Edge edge = checkEdgeId(edgeId, Operation.READ);
+            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+            Edge edge = checkEdgeId(edgeId, Operation.READ);
 
-        EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
-        checkEntityViewId(entityViewId, Operation.READ);
+            EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
+            checkEntityViewId(entityViewId, Operation.READ);
 
-        return tbEntityViewService.assignEntityViewToEdge(getTenantId(), getCurrentUser().getCustomerId(), entityViewId, edge, getCurrentUser());
+            return tbEntityViewService.assignEntityViewToEdge(getTenantId(), getCurrentUser().getCustomerId(),
+                    entityViewId, edge, getCurrentUser());
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(getTenantId(), emptyId(EntityType.ENTITY_VIEW),
+                    ActionType.ASSIGNED_TO_EDGE, getCurrentUser(), e, strEntityViewId, strEdgeId);
+            throw handleException(e);
+        }
     }
 
     @ApiOperation(value = "Unassign entity view from edge (unassignEntityViewFromEdge)",
@@ -467,16 +507,23 @@ public class EntityViewController extends BaseController {
     @ResponseBody
     public EntityView unassignEntityViewFromEdge(@PathVariable(EDGE_ID) String strEdgeId,
                                                  @PathVariable(ENTITY_VIEW_ID) String strEntityViewId) throws ThingsboardException {
-        checkParameter(EDGE_ID, strEdgeId);
-        checkParameter(ENTITY_VIEW_ID, strEntityViewId);
+        try {
+            checkParameter(EDGE_ID, strEdgeId);
+            checkParameter(ENTITY_VIEW_ID, strEntityViewId);
 
-        EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-        Edge edge = checkEdgeId(edgeId, Operation.READ);
+            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+            Edge edge = checkEdgeId(edgeId, Operation.READ);
 
-        EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
-        EntityView entityView = checkEntityViewId(entityViewId, Operation.READ);
+            EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
+            EntityView entityView = checkEntityViewId(entityViewId, Operation.READ);
 
-        return tbEntityViewService.unassignEntityViewFromEdge(getTenantId(), entityView.getCustomerId(), entityView, edge, getCurrentUser());
+            return tbEntityViewService.unassignEntityViewFromEdge(getTenantId(), entityView.getCustomerId(), entityView,
+                    edge, getCurrentUser());
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(getTenantId(), emptyId(EntityType.ENTITY_VIEW),
+                    ActionType.UNASSIGNED_FROM_EDGE, getCurrentUser(), e, strEntityViewId, strEdgeId);
+            throw handleException(e);
+        }
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")

@@ -19,7 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -28,9 +28,10 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.EdgeNotificationService;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
-import org.thingsboard.server.service.security.model.SecurityUser;
 
 @AllArgsConstructor
 @TbCoreComponent
@@ -38,113 +39,80 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 @Slf4j
 public class DefaultTbEdgeService extends AbstractTbEntityService implements TbEdgeService {
 
+    private final EdgeNotificationService edgeNotificationService;
+    private final RuleChainService ruleChainService;
+
     @Override
-    public Edge save(Edge edge, RuleChain edgeTemplateRootRuleChain, SecurityUser user) throws ThingsboardException {
+    public Edge save(Edge edge, RuleChain edgeTemplateRootRuleChain) throws Exception {
+        return save(edge, edgeTemplateRootRuleChain, null);
+    }
+
+    @Override
+    public Edge save(Edge edge, RuleChain edgeTemplateRootRuleChain, User user) throws Exception {
         ActionType actionType = edge.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = edge.getTenantId();
-        try {
-            Edge savedEdge = checkNotNull(edgeService.saveEdge(edge));
-            EdgeId edgeId = savedEdge.getId();
+        Edge savedEdge = checkNotNull(edgeService.saveEdge(edge));
+        EdgeId edgeId = savedEdge.getId();
 
-            if (actionType == ActionType.ADDED) {
-                ruleChainService.assignRuleChainToEdge(tenantId, edgeTemplateRootRuleChain.getId(), edgeId);
-                edgeNotificationService.setEdgeRootRuleChain(tenantId, savedEdge, edgeTemplateRootRuleChain.getId());
-                edgeService.assignDefaultRuleChainsToEdge(tenantId, edgeId);
-            }
-
-            notificationEntityService.notifyEdge(tenantId, edgeId, savedEdge.getCustomerId(), savedEdge, actionType, user);
-
-            return savedEdge;
-        } catch (Exception e) {
-            notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.EDGE), edge, null, actionType, user, e);
-            throw handleException(e);
+        if (actionType == ActionType.ADDED) {
+            ruleChainService.assignRuleChainToEdge(tenantId, edgeTemplateRootRuleChain.getId(), edgeId);
+            edgeNotificationService.setEdgeRootRuleChain(tenantId, savedEdge, edgeTemplateRootRuleChain.getId());
+            edgeService.assignDefaultRuleChainsToEdge(tenantId, edgeId);
         }
+
+        notificationEntityService.notifyEdge(tenantId, edgeId, savedEdge.getCustomerId(), savedEdge, actionType, user);
+
+        return savedEdge;
     }
 
     @Override
-    public void delete(Edge edge, SecurityUser user) throws ThingsboardException {
-        ActionType actionType = ActionType.DELETED;
+    public void delete(Edge edge, User user) {
         EdgeId edgeId = edge.getId();
         TenantId tenantId = edge.getTenantId();
-        try {
-            edgeService.deleteEdge(tenantId, edgeId);
-            notificationEntityService.notifyEdge(tenantId, edgeId, edge.getCustomerId(), edge, actionType, user, edgeId.toString());
-        } catch (Exception e) {
-            notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.EDGE), edge, null, actionType,
-                    user, e, edgeId.toString());
-            throw handleException(e);
-        }
+        edgeService.deleteEdge(tenantId, edgeId);
+        notificationEntityService.notifyEdge(tenantId, edgeId, edge.getCustomerId(), edge, ActionType.DELETED, user, edgeId.toString());
     }
 
     @Override
-    public Edge assignEdgeToCustomer(TenantId tenantId, EdgeId edgeId, Customer customer, SecurityUser user) throws ThingsboardException {
-        ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER;
+    public Edge assignEdgeToCustomer(TenantId tenantId, EdgeId edgeId, Customer customer, User user) throws ThingsboardException {
         CustomerId customerId = customer.getId();
-        try {
-            Edge savedEdge = checkNotNull(edgeService.assignEdgeToCustomer(tenantId, edgeId, customerId));
+        Edge savedEdge = checkNotNull(edgeService.assignEdgeToCustomer(tenantId, edgeId, customerId));
+        notificationEntityService.notifyEdge(tenantId, edgeId, customerId, savedEdge, ActionType.ASSIGNED_TO_CUSTOMER, user,
+                edgeId.toString(), customerId.toString(), customer.getName());
 
-            notificationEntityService.notifyEdge(tenantId, edgeId, customerId, savedEdge, actionType, user,
-                    edgeId.toString(), customerId.toString(), customer.getName());
-
-            return savedEdge;
-        } catch (Exception e) {
-            notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.EDGE), null, null,
-                    actionType, user, e, edgeId.toString(), customerId.toString());
-            throw handleException(e);
-        }
+        return savedEdge;
     }
 
     @Override
-    public Edge unassignEdgeFromCustomer(Edge edge, Customer customer, SecurityUser user) throws ThingsboardException {
-        ActionType actionType = ActionType.UNASSIGNED_FROM_CUSTOMER;
+    public Edge unassignEdgeFromCustomer(Edge edge, Customer customer, User user) throws ThingsboardException {
         TenantId tenantId = edge.getTenantId();
         EdgeId edgeId = edge.getId();
         CustomerId customerId = customer.getId();
-        try {
-            Edge savedEdge = checkNotNull(edgeService.unassignEdgeFromCustomer(tenantId, edgeId));
+        Edge savedEdge = checkNotNull(edgeService.unassignEdgeFromCustomer(tenantId, edgeId));
 
-            notificationEntityService.notifyEdge(tenantId, edgeId, customerId, savedEdge, actionType, user,
-                    edgeId.toString(), customerId.toString(), customer.getName());
-            return savedEdge;
-        } catch (Exception e) {
-            notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.EDGE), null, null,
-                    actionType, user, e, edgeId.toString());
-            throw handleException(e);
-        }
+        notificationEntityService.notifyEdge(tenantId, edgeId, customerId, savedEdge, ActionType.UNASSIGNED_FROM_CUSTOMER, user,
+                edgeId.toString(), customerId.toString(), customer.getName());
+        return savedEdge;
     }
 
     @Override
-    public Edge assignEdgeToPublicCustomer(TenantId tenantId, EdgeId edgeId, SecurityUser user) throws ThingsboardException {
-        ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER;
-        try {
-            Customer publicCustomer = customerService.findOrCreatePublicCustomer(tenantId);
-            CustomerId customerId = publicCustomer.getId();
-            Edge savedEdge = checkNotNull(edgeService.assignEdgeToCustomer(tenantId, edgeId, customerId));
+    public Edge assignEdgeToPublicCustomer(TenantId tenantId, EdgeId edgeId, User user) throws ThingsboardException {
+        Customer publicCustomer = customerService.findOrCreatePublicCustomer(tenantId);
+        CustomerId customerId = publicCustomer.getId();
+        Edge savedEdge = checkNotNull(edgeService.assignEdgeToCustomer(tenantId, edgeId, customerId));
 
-            notificationEntityService.notifyEdge(tenantId, edgeId, customerId, savedEdge, actionType, user,
-                    edgeId.toString(), customerId.toString(), publicCustomer.getName());
+        notificationEntityService.notifyEdge(tenantId, edgeId, customerId, savedEdge, ActionType.ASSIGNED_TO_CUSTOMER, user,
+                edgeId.toString(), customerId.toString(), publicCustomer.getName());
 
-            return savedEdge;
-        } catch (Exception e) {
-            notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.EDGE), null, null,
-                    actionType, user, e, edgeId.toString());
-            throw handleException(e);
-        }
+        return savedEdge;
     }
 
     @Override
-    public Edge setEdgeRootRuleChain(Edge edge, RuleChainId ruleChainId, SecurityUser user) throws ThingsboardException {
-        ActionType actionType = ActionType.UPDATED;
+    public Edge setEdgeRootRuleChain(Edge edge, RuleChainId ruleChainId, User user) throws Exception {
         TenantId tenantId = edge.getTenantId();
         EdgeId edgeId = edge.getId();
-        try {
-            Edge updatedEdge = edgeNotificationService.setEdgeRootRuleChain(tenantId, edge, ruleChainId);
-            notificationEntityService.notifyEdge(tenantId, edgeId, null, updatedEdge, actionType, user);
-            return updatedEdge;
-        } catch (Exception e) {
-            notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.EDGE), null, null,
-                    actionType, user, e, edgeId.toString());
-            throw handleException(e);
-        }
+        Edge updatedEdge = edgeNotificationService.setEdgeRootRuleChain(tenantId, edge, ruleChainId);
+        notificationEntityService.notifyEdge(tenantId, edgeId, null, updatedEdge, ActionType.UPDATED, user);
+        return updatedEdge;
     }
 }
