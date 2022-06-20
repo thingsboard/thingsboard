@@ -90,6 +90,8 @@ public class ModelConstants {
      * Cassandra admin_settings constants.
      */
     public static final String ADMIN_SETTINGS_COLUMN_FAMILY_NAME = "admin_settings";
+
+    public static final String ADMIN_SETTINGS_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String ADMIN_SETTINGS_KEY_PROPERTY = "key";
     public static final String ADMIN_SETTINGS_JSON_VALUE_PROPERTY = "json_value";
 
@@ -558,6 +560,8 @@ public class ModelConstants {
     public static final String EDGE_EVENT_BODY_PROPERTY = "body";
 
     public static final String EDGE_EVENT_BY_ID_VIEW_NAME = "edge_event_by_id";
+
+    public static final String EXTERNAL_ID_PROPERTY = "external_id";
 
     /**
      * User auth settings constants.

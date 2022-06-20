@@ -251,6 +251,9 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
     [
       EntityType.WIDGETS_BUNDLE,
       {
+        type: 'entity.type-widgets-bundle',
+        typePlural: 'entity.type-widgets-bundles',
+        list: 'entity.list-of-widgets-bundles',
         details: 'widgets-bundle.widgets-bundle-details',
         add: 'widgets-bundle.add',
         noEntities: 'widgets-bundle.no-widgets-bundles-text',

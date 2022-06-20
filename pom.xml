@@ -134,6 +134,7 @@
         <testcontainers.version>1.16.0</testcontainers.version>
         <zeroturnaround.version>1.12</zeroturnaround.version>
         <opensmpp.version>3.0.0</opensmpp.version>
+        <jgit.version>6.1.0.202203080745-r</jgit.version>
         <aerogear-otp.version>1.0.0</aerogear-otp.version>
     </properties>
 
@@ -863,6 +864,11 @@
             <dependency>
                 <groupId>org.thingsboard.common</groupId>
                 <artifactId>util</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.common</groupId>
+                <artifactId>version-control</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -1880,6 +1886,16 @@
                 <groupId>org.jboss.aerogear</groupId>
                 <artifactId>aerogear-otp-java</artifactId>
                 <version>${aerogear-otp.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jgit</groupId>
+                <artifactId>org.eclipse.jgit</artifactId>
+                <version>${jgit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jgit</groupId>
+                <artifactId>org.eclipse.jgit.ssh.apache</artifactId>
+                <version>${jgit.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -38,6 +38,8 @@ public class TbAwsSqsQueueAttributes {
     private String notificationsProperties;
     @Value("${queue.aws-sqs.queue-properties.js-executor}")
     private String jsExecutorProperties;
+    @Value("${queue.aws-sqs.queue-properties.version-control:}")
+    private String vcProperties;
 
     @Getter
     private Map<String, String> coreAttributes;
@@ -49,6 +51,8 @@ public class TbAwsSqsQueueAttributes {
     private Map<String, String> notificationsAttributes;
     @Getter
     private Map<String, String> jsExecutorAttributes;
+    @Getter
+    private Map<String, String> vcAttributes;
 
     private final Map<String, String> defaultAttributes = new HashMap<>();
 
@@ -61,6 +65,7 @@ public class TbAwsSqsQueueAttributes {
         transportApiAttributes = getConfigs(transportApiProperties);
         notificationsAttributes = getConfigs(notificationsProperties);
         jsExecutorAttributes = getConfigs(jsExecutorProperties);
+        vcAttributes = getConfigs(vcProperties);
     }
 
     private Map<String, String> getConfigs(String properties) {

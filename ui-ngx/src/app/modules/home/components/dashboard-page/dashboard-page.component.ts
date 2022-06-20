@@ -17,13 +17,13 @@
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
-  Component, ElementRef, HostBinding,
+  Component, ElementRef, EventEmitter, HostBinding,
   Inject,
   Injector,
   Input,
   NgZone,
   OnDestroy,
-  OnInit, Optional,
+  OnInit, Optional, Renderer2,
   StaticProvider,
   ViewChild,
   ViewContainerRef,
@@ -135,6 +135,10 @@ import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import cssjs from '@core/css/css';
 import { DOCUMENT } from '@angular/common';
 import { IAliasController } from '@core/api/widget-api.models';
+import { MatButton } from '@angular/material/button';
+import { VersionControlComponent } from '@home/components/vc/version-control.component';
+import { TbPopoverService } from '@shared/components/popover.service';
+import { tap } from 'rxjs/operators';
 
 // @dynamic
 @Component({
@@ -290,6 +294,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     ]
   };
 
+  updateBreadcrumbs = new EventEmitter();
+
   private rxSubscriptions = new Array<Subscription>();
 
   get toolbarOpened(): boolean {
@@ -329,6 +335,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
               private fb: FormBuilder,
               private dialog: MatDialog,
               private translate: TranslateService,
+              private popoverService: TbPopoverService,
+              private renderer: Renderer2,
               private ngZone: NgZone,
               @Optional() @Inject('embeddedValue') private embeddedValue,
               private overlay: Overlay,
@@ -1398,5 +1406,53 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         this.dashboard.image = result.image;
       }
     });
+  }
+
+  toggleVersionControl($event: Event, versionControlButton: MatButton) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const trigger = versionControlButton._elementRef.nativeElement;
+    if (this.popoverService.hasPopover(trigger)) {
+      this.popoverService.hidePopover(trigger);
+    } else {
+      const versionControlPopover = this.popoverService.displayPopover(trigger, this.renderer,
+        this.viewContainerRef, VersionControlComponent, 'leftTop', true, null,
+        {
+          detailsMode: true,
+          active: true,
+          singleEntityMode: true,
+          externalEntityId: this.dashboard.externalId || this.dashboard.id,
+          entityId: this.dashboard.id,
+          entityName: this.dashboard.name,
+          onBeforeCreateVersion: () => {
+            return this.dashboardService.saveDashboard(this.dashboard).pipe(
+              tap((dashboard) => {
+                this.dashboard = this.dashboardUtils.validateAndUpdateDashboard(dashboard);
+                this.prevDashboard = deepClone(this.dashboard);
+              })
+            );
+          }
+        }, {}, {}, {}, true);
+      versionControlPopover.tbComponentRef.instance.popoverComponent = versionControlPopover;
+      versionControlPopover.tbComponentRef.instance.versionRestored.subscribe(() => {
+        this.dashboardService.getDashboard(this.currentDashboardId).subscribe((dashboard) => {
+          dashboard = this.dashboardUtils.validateAndUpdateDashboard(dashboard);
+          const data = {
+            dashboard,
+            widgetEditMode: false,
+            currentDashboardId: this.currentDashboardId
+          } as any;
+          this.init(data);
+          this.dashboardCtx.stateController.cleanupPreservedStates();
+          this.dashboardCtx.stateController.resetState();
+          this.setEditMode(true, false);
+          this.updateBreadcrumbs.emit();
+          this.ngZone.run(() => {
+            this.cd.detectChanges();
+          });
+        });
+      });
+    }
   }
 }

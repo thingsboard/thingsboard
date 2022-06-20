@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { BaseData } from '@shared/models/base-data';
+import { BaseData, ExportableEntity } from '@shared/models/base-data';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { CustomerId } from '@shared/models/id/customer-id';
 import { EntityViewId } from '@shared/models/id/entity-view-id';
@@ -32,7 +32,7 @@ export interface TelemetryEntityView {
   attributes: AttributesEntityView;
 }
 
-export interface EntityView extends BaseData<EntityViewId> {
+export interface EntityView extends BaseData<EntityViewId>, ExportableEntity<EntityViewId> {
   tenantId: TenantId;
   customerId: CustomerId;
   entityId: EntityId;

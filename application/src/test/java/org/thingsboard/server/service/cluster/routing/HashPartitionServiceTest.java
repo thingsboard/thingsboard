@@ -71,6 +71,8 @@ public class HashPartitionServiceTest {
                 queueRoutingInfoService);
         ReflectionTestUtils.setField(clusterRoutingService, "coreTopic", "tb.core");
         ReflectionTestUtils.setField(clusterRoutingService, "corePartitions", 10);
+        ReflectionTestUtils.setField(clusterRoutingService, "vcTopic", "tb.vc");
+        ReflectionTestUtils.setField(clusterRoutingService, "vcPartitions", 10);
         ReflectionTestUtils.setField(clusterRoutingService, "hashFunctionName", hashFunctionName);
         TransportProtos.ServiceInfo currentServer = TransportProtos.ServiceInfo.newBuilder()
                 .setServiceId("tb-core-0")
