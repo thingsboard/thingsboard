@@ -165,6 +165,8 @@ export interface VersionCreationResult {
   added: number;
   modified: number;
   removed: number;
+  error: string;
+  done: boolean;
 }
 
 export interface EntityTypeLoadResult {

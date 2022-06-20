@@ -3306,6 +3306,7 @@
         "no-versions-text": "No versions found",
         "copy-full-version-id": "Copy full version id",
         "create-version": "Create version",
+        "creating-version": "Creating version... Please wait",
         "nothing-to-commit": "No changes to commit",
         "restore-version": "Restore version",
         "restore-entity-from-version": "Restore entity from version '{{versionName}}'",
