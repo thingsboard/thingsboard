@@ -34,11 +34,11 @@ public class VersionLoadResult implements Serializable {
     private boolean done;
 
     public static VersionLoadResult success(List<EntityTypeLoadResult> result) {
-        return VersionLoadResult.builder().result(result).done(true).build();
+        return VersionLoadResult.builder().result(result).build();
     }
 
     public static VersionLoadResult success(EntityTypeLoadResult result) {
-        return VersionLoadResult.builder().result(List.of(result)).done(true).build();
+        return VersionLoadResult.builder().result(List.of(result)).build();
     }
 
     public static VersionLoadResult error(EntityLoadError error) {
