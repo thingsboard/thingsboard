@@ -3109,7 +3109,22 @@
         "max-created-alarms-range": "Maximum number of alarms created can't be negative",
         "no-queue": "No Queue configured",
         "add-queue": "Add Queue",
-        "queues-with-count": "Queues ({{count}})"
+        "queues-with-count": "Queues ({{count}})",
+        "tenant-rest-limits": "Rate limit for REST requests for tenant",
+        "customer-rest-limits": "Rate limit for REST requests for customer",
+        "incorrect-pattern-for-rate-limits": "The format is comma separated pairs of capacity and period (in seconds) with a colon between, e.g. 100:1,2000:60",
+        "too-small-value-zero": "The value must be bigger than 0",
+        "too-small-value-one": "The value must be bigger than 1",
+        "cassandra-tenant-limits-configuration": "Cassandra query rate limit for tenant",
+        "ws-limit-max-sessions-per-tenant": "Maximum number of WS sessions per tenant",
+        "ws-limit-max-sessions-per-customer": "Maximum number of WS sessions per customer",
+        "ws-limit-max-sessions-per-public-user": "Maximum number of WS sessions per public user",
+        "ws-limit-queue-per-session": "Maximum size of WS message queue per session",
+        "ws-limit-max-subscriptions-per-tenant": "Maximum number of WS subscriptions per tenant",
+        "ws-limit-max-subscriptions-per-customer": "Maximum number of WS subscriptions per customer",
+        "ws-limit-max-subscriptions-per-regular-user": "Maximum number of WS subscriptions per regular user",
+        "ws-limit-max-subscriptions-per-public-user": "Maximum number of WS subscriptions per public user",
+        "ws-limit-updates-per-session": "Rate limit for WS updates per session"
     },
     "timeinterval": {
         "seconds-interval": "{ seconds, plural, 1 {1 second} other {# seconds} }",
