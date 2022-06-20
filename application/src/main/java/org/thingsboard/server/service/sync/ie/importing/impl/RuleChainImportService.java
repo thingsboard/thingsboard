@@ -15,11 +15,9 @@
  */
 package org.thingsboard.server.service.sync.ie.importing.impl;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -37,14 +35,12 @@ import org.thingsboard.server.dao.rule.RuleNodeDao;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
-import org.thingsboard.common.util.RegexUtils;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -135,7 +131,7 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
             clusterService.broadcastEntityStateChangeEvent(user.getTenantId(), savedRuleChain.getId(),
                     oldRuleChain == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
         } else if (savedRuleChain.getType() == RuleChainType.EDGE && oldRuleChain != null) {
-            entityActionService.sendEntityNotificationMsgToEdgeService(user.getTenantId(), savedRuleChain.getId(), EdgeEventActionType.UPDATED);
+            entityActionService.sendEntityNotificationMsgToEdge(user.getTenantId(), savedRuleChain.getId(), EdgeEventActionType.UPDATED);
         }
     }
 
