@@ -95,7 +95,7 @@ export class TenantProfileDataComponent implements ControlValueAccessor, OnInit,
     if (this.tenantProfileDataFormGroup.valid) {
       tenantProfileData = this.tenantProfileDataFormGroup.getRawValue();
     }
-    this.propagateChange(tenantProfileData.configuration);
+    this.propagateChange(tenantProfileData?.configuration);
   }
 
 }

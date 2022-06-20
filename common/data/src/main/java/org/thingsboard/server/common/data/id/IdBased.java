@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.id;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSetter;
 
 import java.io.Serializable;
 import java.util.UUID;
@@ -33,6 +34,7 @@ public abstract class IdBased<I extends UUIDBased> implements HasId<I> {
 		this.id = id;
 	}
 
+    @JsonSetter
 	public void setId(I id) {
 		this.id = id;
 	}

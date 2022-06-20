@@ -75,7 +75,7 @@ export const QueueProcessingStrategyTypesMap = new Map<QueueProcessingStrategyTy
   [
     [QueueProcessingStrategyTypes.RETRY_FAILED_AND_TIMED_OUT, {
       label: 'queue.strategies.retry-failed-and-timeout-label',
-      hint: 'queue.strategies.retry-failed-and-timout-hint',
+      hint: 'queue.strategies.retry-failed-and-timeout-hint',
     }],
     [QueueProcessingStrategyTypes.SKIP_ALL_FAILURES, {
       label: 'queue.strategies.skip-all-failures-label',

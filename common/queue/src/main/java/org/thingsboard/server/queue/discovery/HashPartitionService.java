@@ -55,6 +55,10 @@ public class HashPartitionService implements PartitionService {
     private String coreTopic;
     @Value("${queue.core.partitions:100}")
     private Integer corePartitions;
+    @Value("${queue.vc.topic:tb_version_control}")
+    private String vcTopic;
+    @Value("${queue.vc.partitions:10}")
+    private Integer vcPartitions;
     @Value("${queue.partitions.hash_function_name:murmur3_128}")
     private String hashFunctionName;
 
@@ -90,20 +94,41 @@ public class HashPartitionService implements PartitionService {
     @PostConstruct
     public void init() {
         this.hashFunction = forName(hashFunctionName);
-    }
-
-    @AfterStartUp(order = AfterStartUp.QUEUE_INFO_INITIALIZATION)
-    public void partitionsInit() {
         QueueKey coreKey = new QueueKey(ServiceType.TB_CORE);
         partitionSizesMap.put(coreKey, corePartitions);
         partitionTopicsMap.put(coreKey, coreTopic);
 
-        List<QueueRoutingInfo> queueRoutingInfoList;
+        QueueKey vcKey = new QueueKey(ServiceType.TB_VC_EXECUTOR);
+        partitionSizesMap.put(vcKey, vcPartitions);
+        partitionTopicsMap.put(vcKey, vcTopic);
 
+        if (!isTransport(serviceInfoProvider.getServiceType())) {
+            doInitRuleEnginePartitions();
+        }
+    }
+
+    @AfterStartUp(order = AfterStartUp.QUEUE_INFO_INITIALIZATION)
+    public void partitionsInit() {
+        if (isTransport(serviceInfoProvider.getServiceType())) {
+            doInitRuleEnginePartitions();
+        }
+    }
+
+    private void doInitRuleEnginePartitions() {
+        List<QueueRoutingInfo> queueRoutingInfoList = getQueueRoutingInfos();
+        queueRoutingInfoList.forEach(queue -> {
+            QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, queue);
+            partitionTopicsMap.put(queueKey, queue.getQueueTopic());
+            partitionSizesMap.put(queueKey, queue.getPartitions());
+            queuesById.put(queue.getQueueId(), queue);
+        });
+    }
+
+    private List<QueueRoutingInfo> getQueueRoutingInfos() {
+        List<QueueRoutingInfo> queueRoutingInfoList;
         String serviceType = serviceInfoProvider.getServiceType();
 
-
-        if ("tb-transport".equals(serviceType)) {
+        if (isTransport(serviceType)) {
             //If transport started earlier than tb-core
             int getQueuesRetries = 10;
             while (true) {
@@ -128,13 +153,11 @@ public class HashPartitionService implements PartitionService {
         } else {
             queueRoutingInfoList = queueRoutingInfoService.getAllQueuesRoutingInfo();
         }
+        return queueRoutingInfoList;
+    }
 
-        queueRoutingInfoList.forEach(queue -> {
-            QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, queue);
-            partitionTopicsMap.put(queueKey, queue.getQueueTopic());
-            partitionSizesMap.put(queueKey, queue.getPartitions());
-            queuesById.put(queue.getQueueId(), queue);
-        });
+    private boolean isTransport(String serviceType) {
+        return "tb-transport".equals(serviceType);
     }
 
     @Override
@@ -401,7 +424,7 @@ public class HashPartitionService implements PartitionService {
                         queueServiceList.computeIfAbsent(key, k -> new ArrayList<>()).add(instance);
                     }
                 });
-            } else if (ServiceType.TB_CORE.equals(serviceType)) {
+            } else if (ServiceType.TB_CORE.equals(serviceType) || ServiceType.TB_VC_EXECUTOR.equals(serviceType)) {
                 queueServiceList.computeIfAbsent(new QueueKey(serviceType), key -> new ArrayList<>()).add(instance);
             }
         }

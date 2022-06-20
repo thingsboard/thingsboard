@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.common.data.tenant.profile;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -46,6 +44,9 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private String transportDeviceTelemetryMsgRateLimit;
     private String transportDeviceTelemetryDataPointsRateLimit;
 
+    private String tenantEntityExportRateLimit;
+    private String tenantEntityImportRateLimit;
+
     private long maxTransportMessages;
     private long maxTransportDataPoints;
     private long maxREExecutions;
@@ -55,6 +56,22 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxEmails;
     private long maxSms;
     private long maxCreatedAlarms;
+
+    private String tenantServerRestLimitsConfiguration;
+    private String customerServerRestLimitsConfiguration;
+
+    private int maxWsSessionsPerTenant;
+    private int maxWsSessionsPerCustomer;
+    private int maxWsSessionsPerRegularUser;
+    private int maxWsSessionsPerPublicUser;
+    private int wsMsgQueueLimitPerSession;
+    private long maxWsSubscriptionsPerTenant;
+    private long maxWsSubscriptionsPerCustomer;
+    private long maxWsSubscriptionsPerRegularUser;
+    private long maxWsSubscriptionsPerPublicUser;
+    private String wsUpdatesPerSessionRateLimit;
+
+    private String cassandraQueryTenantRateLimitsConfiguration;
 
     private int defaultStorageTtlDays;
     private int alarmsTtlDays;

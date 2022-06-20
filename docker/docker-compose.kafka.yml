@@ -90,3 +90,13 @@ services:
       - queue-kafka.env
     depends_on:
       - kafka
+  tb-vc-executor1:
+    env_file:
+      - queue-kafka.env
+    depends_on:
+      - kafka
+  tb-vc-executor2:
+    env_file:
+      - queue-kafka.env
+    depends_on:
+      - kafka
