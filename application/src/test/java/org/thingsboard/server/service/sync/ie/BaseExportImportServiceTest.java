@@ -82,6 +82,7 @@ import org.thingsboard.server.service.sync.vc.data.SimpleEntitiesExportCtx;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -433,7 +434,7 @@ public abstract class BaseExportImportServiceTest extends AbstractControllerTest
     }
 
     protected <E extends ExportableEntity<I>, I extends EntityId> EntityImportResult<E> importEntity(User user, EntityExportData<E> exportData, EntityImportSettings importSettings) throws Exception {
-        EntitiesImportCtx ctx = new EntitiesImportCtx(getSecurityUser(user), null, importSettings);
+        EntitiesImportCtx ctx = new EntitiesImportCtx(UUID.randomUUID(), getSecurityUser(user), null, importSettings);
         ctx.setFinalImportAttempt(true);
         exportData = JacksonUtil.treeToValue(JacksonUtil.valueToTree(exportData), EntityExportData.class);
         EntityImportResult<E> importResult = exportImportService.importEntity(ctx, exportData);

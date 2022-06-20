@@ -126,8 +126,7 @@ public class EntitiesVersionControlController extends BaseController {
     @ApiOperation(value = "", notes = "")
     @GetMapping(value = "/version/{requestId}/status")
     public VersionCreationResult getVersionCreateRequestStatus(@ApiParam(value = VC_REQUEST_ID_PARAM_DESCRIPTION, required = true)
-                                                               @PathVariable UUID requestId
-    ) throws Exception {
+                                                               @PathVariable UUID requestId) throws Exception {
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
         return versionControlService.getVersionCreateStatus(getCurrentUser(), requestId);
     }
@@ -288,6 +287,14 @@ public class EntitiesVersionControlController extends BaseController {
         SecurityUser user = getCurrentUser();
         accessControlService.checkPermission(user, Resource.VERSION_CONTROL, Operation.WRITE);
         return versionControlService.loadEntitiesVersion(user, request);
+    }
+
+    @ApiOperation(value = "", notes = "")
+    @GetMapping(value = "/entity/{requestId}/status")
+    public VersionLoadResult getVersionLoadRequestStatus(@ApiParam(value = VC_REQUEST_ID_PARAM_DESCRIPTION, required = true)
+                                                               @PathVariable UUID requestId) throws Exception {
+        accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
+        return versionControlService.getVersionLoadStatus(getCurrentUser(), requestId);
     }
 
 

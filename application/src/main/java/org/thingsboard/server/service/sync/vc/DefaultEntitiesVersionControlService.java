@@ -259,7 +259,8 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                 SingleEntityVersionLoadRequest versionLoadRequest = (SingleEntityVersionLoadRequest) request;
                 VersionLoadConfig config = versionLoadRequest.getConfig();
                 ListenableFuture<EntityExportData> future = gitServiceQueue.getEntity(user.getTenantId(), request.getVersionId(), versionLoadRequest.getExternalEntityId());
-                DonAsynchron.withCallback(future, entityData -> doInTemplate(ctx, request, c -> loadSingleEntity(c, config, entityData)),
+                DonAsynchron.withCallback(future,
+                        entityData -> doInTemplate(ctx, request, c -> loadSingleEntity(c, config, entityData)),
                         e -> processLoadError(ctx, e), executor);
                 break;
             }
@@ -278,19 +279,16 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     private <R> VersionLoadResult doInTemplate(EntitiesImportCtx ctx, VersionLoadRequest request, Function<EntitiesImportCtx, VersionLoadResult> function) {
         try {
             VersionLoadResult result = transactionTemplate.execute(status -> function.apply(ctx));
-            try {
-                for (ThrowingRunnable throwingRunnable : ctx.getEventCallbacks()) {
-                    throwingRunnable.run();
-                }
-            } catch (ThingsboardException e) {
-                throw new RuntimeException(e);
+            for (ThrowingRunnable throwingRunnable : ctx.getEventCallbacks()) {
+                throwingRunnable.run();
             }
-            return result;
+            result.setDone(true);
+            return cachePut(ctx.getRequestId(), result);
         } catch (LoadEntityException e) {
-            return onError(e.getData(), e.getCause());
+            return cachePut(ctx.getRequestId(), onError(e.getData(), e.getCause()));
         } catch (Exception e) {
             log.info("[{}] Failed to process request [{}] due to: ", ctx.getTenantId(), request, e);
-            throw e;
+            return cachePut(ctx.getRequestId(), VersionLoadResult.error(EntityLoadError.runtimeError(e.getMessage())));
         }
     }
 
@@ -329,19 +327,21 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
             sw.startNew("Entities " + entityType.name());
             ctx.setSettings(getEntityImportSettings(request, entityType));
             importEntities(ctx, entityType);
+            persistToCache(ctx);
         }
 
         sw.startNew("Reimport");
         reimport(ctx);
+        persistToCache(ctx);
 
         sw.startNew("Remove Others");
         request.getEntityTypes().keySet().stream()
                 .filter(entityType -> request.getEntityTypes().get(entityType).isRemoveOtherEntities())
                 .sorted(exportImportService.getEntityTypeComparatorForImport().reversed())
                 .forEach(entityType -> removeOtherEntities(ctx, entityType));
+        persistToCache(ctx);
 
         sw.startNew("References and Relations");
-
         exportImportService.saveReferencesAndRelations(ctx);
 
         sw.stop();
@@ -430,7 +430,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     }
 
     private VersionLoadResult onError(EntityExportData<?> entityData, Throwable e) {
-        return analyze(e, entityData).orElseThrow(() -> new RuntimeException(e));
+        return analyze(e, entityData).orElse(VersionLoadResult.error(EntityLoadError.runtimeError(e.getMessage())));
     }
 
     private Optional<VersionLoadResult> analyze(Throwable e, EntityExportData<?> entityData) {
@@ -607,7 +607,14 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         taskCache.put(requestId, VersionControlTaskCacheEntry.newForExport(result));
     }
 
-    private void cachePut(UUID requestId, VersionLoadResult result) {
+    private VersionLoadResult cachePut(UUID requestId, VersionLoadResult result) {
+        log.debug("[{}] Cache put: {}", requestId, result);
         taskCache.put(requestId, VersionControlTaskCacheEntry.newForImport(result));
+        return result;
     }
+
+    private void persistToCache(EntitiesImportCtx ctx) {
+        cachePut(ctx.getRequestId(), VersionLoadResult.success(new ArrayList<>(ctx.getResults().values())));
+    }
+
 }
