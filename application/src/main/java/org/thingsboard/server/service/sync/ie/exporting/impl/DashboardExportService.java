@@ -45,10 +45,8 @@ public class DashboardExportService extends BaseEntityExportService<DashboardId,
                 customerInfo.setCustomerId(getExternalIdOrElseInternal(ctx, customerInfo.getCustomerId()));
             });
         }
-        if (dashboard.getEntityAliasesConfig() != null) {
-            for (JsonNode entityAlias : dashboard.getEntityAliasesConfig()) {
-                replaceUuidsRecursively(ctx, entityAlias, Collections.singleton("id"));
-            }
+        for (JsonNode entityAlias : dashboard.getEntityAliasesConfig()) {
+            replaceUuidsRecursively(ctx, entityAlias, Collections.emptySet());
         }
         for (JsonNode widgetConfig : dashboard.getWidgetsConfig()) {
             replaceUuidsRecursively(ctx, JacksonUtil.getSafely(widgetConfig, "config", "actions"), Collections.singleton("id"));

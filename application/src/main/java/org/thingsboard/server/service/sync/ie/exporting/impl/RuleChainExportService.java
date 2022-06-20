@@ -51,12 +51,7 @@ public class RuleChainExportService extends BaseEntityExportService<RuleChainId,
                     ruleNode.setId(ctx.getExternalId(ruleNode.getId()));
                     ruleNode.setCreatedTime(0);
                     ruleNode.setExternalId(null);
-                    JsonNode ruleNodeConfig = ruleNode.getConfiguration();
-                    String newRuleNodeConfigJson = RegexUtils.replace(JacksonUtil.toString(ruleNodeConfig), RegexUtils.UUID_PATTERN, uuid -> {
-                        return getExternalIdOrElseInternalByUuid(ctx, UUID.fromString(uuid)).toString();
-                    });
-                    ruleNodeConfig = JacksonUtil.toJsonNode(newRuleNodeConfigJson);
-                    ruleNode.setConfiguration(ruleNodeConfig);
+                    replaceUuidsRecursively(ctx, ruleNode.getConfiguration(), Collections.emptySet());
                 });
         Optional.ofNullable(metaData.getRuleChainConnections()).orElse(Collections.emptyList())
                 .forEach(ruleChainConnectionInfo -> {

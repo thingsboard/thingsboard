@@ -73,16 +73,19 @@ public class Dashboard extends DashboardInfo implements ExportableEntity<Dashboa
     }
 
     @JsonIgnore
-    public ObjectNode getEntityAliasesConfig() {
-        return (ObjectNode) Optional.ofNullable(configuration)
-                .map(config -> config.get("entityAliases"))
-                .filter(JsonNode::isObject).orElse(null);
+    public List<ObjectNode> getEntityAliasesConfig() {
+        return getChildObjects("entityAliases");
     }
 
     @JsonIgnore
     public List<ObjectNode> getWidgetsConfig() {
+        return getChildObjects("widgets");
+    }
+
+    @JsonIgnore
+    private List<ObjectNode> getChildObjects(String propertyName) {
         return Optional.ofNullable(configuration)
-                .map(config -> config.get("widgets"))
+                .map(config -> config.get(propertyName))
                 .filter(node -> !node.isEmpty())
                 .map(node -> (ObjectNode) node)
                 .map(object -> {

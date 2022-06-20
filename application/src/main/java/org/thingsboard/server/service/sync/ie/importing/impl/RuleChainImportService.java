@@ -93,16 +93,7 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
             });
         }
 
-        ruleNodes.forEach(ruleNode -> {
-            JsonNode ruleNodeConfig = ruleNode.getConfiguration();
-            String newRuleNodeConfigJson = RegexUtils.replace(JacksonUtil.toString(ruleNodeConfig), RegexUtils.UUID_PATTERN, uuid -> {
-                return idProvider.getInternalIdByUuid(UUID.fromString(uuid), ctx.isFinalImportAttempt(), HINTS)
-                        .map(entityId -> entityId.getId().toString())
-                        .orElse(uuid);
-            });
-            ruleNodeConfig = JacksonUtil.toJsonNode(newRuleNodeConfigJson);
-            ruleNode.setConfiguration(ruleNodeConfig);
-        });
+        ruleNodes.forEach(ruleNode -> replaceIdsRecursively(ctx, idProvider, ruleNode.getConfiguration(), Collections.emptySet(), HINTS));
         Optional.ofNullable(metaData.getRuleChainConnections()).orElse(Collections.emptyList())
                 .forEach(ruleChainConnectionInfo -> {
                     ruleChainConnectionInfo.setTargetRuleChainId(idProvider.getInternalId(ruleChainConnectionInfo.getTargetRuleChainId(), false));

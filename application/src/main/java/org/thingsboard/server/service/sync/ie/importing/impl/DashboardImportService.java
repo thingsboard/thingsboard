@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -72,21 +73,11 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
 
     @Override
     protected Dashboard prepare(EntitiesImportCtx ctx, Dashboard dashboard, Dashboard old, EntityExportData<Dashboard> exportData, IdProvider idProvider) {
-        JsonNode configuration = dashboard.getConfiguration();
-        JsonNode entityAliases = configuration.get("entityAliases");
-        if (entityAliases != null && entityAliases.isObject()) {
-            for (JsonNode entityAlias : entityAliases) {
-                ArrayList<String> fields = Lists.newArrayList(entityAlias.fieldNames());
-                for (String field : fields) {
-                    if (field.equals("id")) continue;
-                    JsonNode oldFieldValue = entityAlias.get(field);
-                    JsonNode newFieldValue = JacksonUtil.toJsonNode(RegexUtils.replace(oldFieldValue.toString(), RegexUtils.UUID_PATTERN, uuid -> {
-                        return idProvider.getInternalIdByUuid(UUID.fromString(uuid), ctx.isFinalImportAttempt(), HINTS)
-                                .map(entityId -> entityId.getId().toString()).orElse(uuid);
-                    }));
-                    ((ObjectNode) entityAlias).set(field, newFieldValue);
-                }
-            }
+        for (JsonNode entityAlias : dashboard.getEntityAliasesConfig()) {
+            replaceIdsRecursively(ctx, idProvider, entityAlias, Collections.emptySet(), HINTS);
+        }
+        for (JsonNode widgetConfig : dashboard.getWidgetsConfig()) {
+            replaceIdsRecursively(ctx, idProvider, JacksonUtil.getSafely(widgetConfig, "config", "actions"), Collections.singleton("id"), HINTS);
         }
         return dashboard;
     }
