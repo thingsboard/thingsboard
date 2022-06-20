@@ -707,7 +707,10 @@ message PrepareMsg {
 
 message AddMsg {
   string relativePath = 1;
-  string entityDataJson = 2;
+  string entityDataJsonChunk = 2;
+  string chunkedMsgId = 3;
+  int32 chunkIndex = 4;
+  int32 chunksCount = 5;
 }
 
 message DeleteMsg {
@@ -747,9 +750,10 @@ message ListVersionsResponseMsg {
 }
 
 message ListEntitiesRequestMsg {
-  string branchName = 1;
-  string versionId = 2;
-  string entityType = 3;
+  string versionId = 1;
+  string entityType = 2;
+  int32 limit = 3;
+  int32 offset = 4;
 }
 
 message VersionedEntityInfoProto {
@@ -778,6 +782,9 @@ message EntityContentRequestMsg {
 
 message EntityContentResponseMsg {
   string data = 1;
+  string chunkedMsgId = 2;
+  int32 chunkIndex = 3;
+  int32 chunksCount = 4;
 }
 
 message EntitiesContentRequestMsg {
