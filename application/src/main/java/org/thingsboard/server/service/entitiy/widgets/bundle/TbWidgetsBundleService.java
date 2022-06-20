@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy.tenant_profile;
+package org.thingsboard.server.service.entitiy.widgets.bundle;
 
-import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.widget.WidgetsBundle;
 
-public interface TbTenantProfileService {
-    TenantProfile saveTenantProfile(TenantId tenantId, TenantProfile tenantProfile, TenantProfile oldTenantProfile);
+public interface TbWidgetsBundleService {
+    WidgetsBundle save(WidgetsBundle entity) throws ThingsboardException;
+
+    void delete(WidgetsBundle entity) throws ThingsboardException;
 }

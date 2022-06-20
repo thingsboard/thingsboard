@@ -31,8 +31,10 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
@@ -71,7 +73,7 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 @RequiredArgsConstructor
 public class TbResourceController extends BaseController {
 
-    private  final TbResourceService tbResourceService;
+    private final TbResourceService tbResourceService;
 
     public static final String RESOURCE_ID = "resourceId";
 
@@ -147,9 +149,16 @@ public class TbResourceController extends BaseController {
     @ResponseBody
     public TbResource saveResource(@ApiParam(value = "A JSON value representing the Resource.")
                                    @RequestBody TbResource resource) throws ThingsboardException {
-        resource.setTenantId(getTenantId());
-        checkEntity(resource.getId(), resource, Resource.TB_RESOURCE);
-        return tbResourceService.save(resource, getCurrentUser());
+        try {
+            resource.setTenantId(getTenantId());
+            checkEntity(resource.getId(), resource, Resource.TB_RESOURCE);
+            return tbResourceService.save(resource, getCurrentUser());
+        } catch (Exception e) {
+            ActionType actionType = resource.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
+            notificationEntityService.logEntityAction(getTenantId(), emptyId(EntityType.TB_RESOURCE),
+                    resource, actionType, getCurrentUser(), e);
+            throw handleException(e);
+        }
     }
 
     @ApiOperation(value = "Get Resource Infos (getResources)",
@@ -233,9 +242,15 @@ public class TbResourceController extends BaseController {
     @ResponseBody
     public void deleteResource(@ApiParam(value = RESOURCE_ID_PARAM_DESCRIPTION)
                                @PathVariable("resourceId") String strResourceId) throws ThingsboardException {
-        checkParameter(RESOURCE_ID, strResourceId);
-        TbResourceId resourceId = new TbResourceId(toUUID(strResourceId));
-        TbResource tbResource = checkResourceId(resourceId, Operation.DELETE);
-        tbResourceService.delete(tbResource, getCurrentUser());
+        try {
+            checkParameter(RESOURCE_ID, strResourceId);
+            TbResourceId resourceId = new TbResourceId(toUUID(strResourceId));
+            TbResource tbResource = checkResourceId(resourceId, Operation.DELETE);
+            tbResourceService.delete(tbResource, getCurrentUser());
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(getTenantId(), emptyId(EntityType.TB_RESOURCE),
+                    ActionType.DELETED, getCurrentUser(), e, strResourceId);
+            throw handleException(e);
+        }
     }
 }

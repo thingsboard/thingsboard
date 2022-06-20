@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy.deviceProfile;
+package org.thingsboard.server.service.entitiy.device.profile;
 
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.service.entitiy.SimpleTbEntityService;
-import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface TbDeviceProfileService extends SimpleTbEntityService<DeviceProfile> {
 
-    DeviceProfile setDefaultDeviceProfile(DeviceProfile deviceProfile, DeviceProfile previousDefaultDeviceProfile, SecurityUser user) throws ThingsboardException;
+    DeviceProfile setDefaultDeviceProfile(DeviceProfile deviceProfile, DeviceProfile previousDefaultDeviceProfile, User user) throws ThingsboardException;
 }

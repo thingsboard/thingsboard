@@ -28,6 +28,7 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
@@ -52,12 +53,10 @@ import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 
 import static org.thingsboard.server.common.data.CacheConstants.CLAIM_DEVICES_CACHE;
 
@@ -122,55 +121,57 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
         }, MoreExecutors.directExecutor());
     }
 
-    private ClaimDataInfo getClaimData(Cache cache, Device device) throws ExecutionException, InterruptedException {
+    private ListenableFuture<ClaimDataInfo> getClaimData(Cache cache, Device device) {
         List<Object> key = constructCacheKey(device.getId());
         ClaimData claimDataFromCache = cache.get(key, ClaimData.class);
         if (claimDataFromCache != null) {
-            return new ClaimDataInfo(true, key, claimDataFromCache);
+            return Futures.immediateFuture(new ClaimDataInfo(true, key, claimDataFromCache));
         } else {
-            Optional<AttributeKvEntry> claimDataAttr = attributesService.find(device.getTenantId(), device.getId(),
-                    DataConstants.SERVER_SCOPE, CLAIM_DATA_ATTRIBUTE_NAME).get();
-            if (claimDataAttr.isPresent()) {
-                try {
-                    ClaimData claimDataFromAttribute = mapper.readValue(claimDataAttr.get().getValueAsString(), ClaimData.class);
+            ListenableFuture<Optional<AttributeKvEntry>> claimDataAttrFuture = attributesService.find(device.getTenantId(), device.getId(),
+                    DataConstants.SERVER_SCOPE, CLAIM_DATA_ATTRIBUTE_NAME);
+
+            return Futures.transform(claimDataAttrFuture, claimDataAttr -> {
+                if (claimDataAttr.isPresent()) {
+                    ClaimData claimDataFromAttribute = JacksonUtil.fromString(claimDataAttr.get().getValueAsString(), ClaimData.class);
                     return new ClaimDataInfo(false, key, claimDataFromAttribute);
-                } catch (IOException e) {
-                    log.warn("Failed to read Claim Data [{}] from attribute!", claimDataAttr, e);
                 }
-            }
+                return null;
+            }, MoreExecutors.directExecutor());
         }
-        return null;
     }
 
     @Override
-    public ListenableFuture<ClaimResult> claimDevice(Device device, CustomerId customerId, String secretKey) throws ExecutionException, InterruptedException {
+    public ListenableFuture<ClaimResult> claimDevice(Device device, CustomerId customerId, String secretKey) {
         Cache cache = cacheManager.getCache(CLAIM_DEVICES_CACHE);
-        ClaimDataInfo claimData = getClaimData(cache, device);
-        if (claimData != null) {
-            long currTs = System.currentTimeMillis();
-            if (currTs > claimData.getData().getExpirationTime() || !secretKeyIsEmptyOrEqual(secretKey, claimData.getData().getSecretKey())) {
-                log.warn("The claiming timeout occurred or wrong 'secretKey' provided for the device [{}]", device.getName());
-                if (claimData.isFromCache()) {
-                    cache.evict(claimData.getKey());
+        ListenableFuture<ClaimDataInfo> claimDataFuture = getClaimData(cache, device);
+
+        return Futures.transformAsync(claimDataFuture, claimData -> {
+            if (claimData != null) {
+                long currTs = System.currentTimeMillis();
+                if (currTs > claimData.getData().getExpirationTime() || !secretKeyIsEmptyOrEqual(secretKey, claimData.getData().getSecretKey())) {
+                    log.warn("The claiming timeout occurred or wrong 'secretKey' provided for the device [{}]", device.getName());
+                    if (claimData.isFromCache()) {
+                        cache.evict(claimData.getKey());
+                    }
+                    return Futures.immediateFuture(new ClaimResult(null, ClaimResponse.FAILURE));
+                } else {
+                    if (device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
+                        device.setCustomerId(customerId);
+                        Device savedDevice = deviceService.saveDevice(device);
+                        clusterService.onDeviceUpdated(savedDevice, device);
+                        return Futures.transform(removeClaimingSavedData(cache, claimData, device), result -> new ClaimResult(savedDevice, ClaimResponse.SUCCESS), MoreExecutors.directExecutor());
+                    }
+                    return Futures.transform(removeClaimingSavedData(cache, claimData, device), result -> new ClaimResult(null, ClaimResponse.CLAIMED), MoreExecutors.directExecutor());
                 }
-                return Futures.immediateFuture(new ClaimResult(null, ClaimResponse.FAILURE));
             } else {
+                log.warn("Failed to find the device's claiming message![{}]", device.getName());
                 if (device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
-                    device.setCustomerId(customerId);
-                    Device savedDevice = deviceService.saveDevice(device);
-                    clusterService.onDeviceUpdated(savedDevice, device);
-                    return Futures.transform(removeClaimingSavedData(cache, claimData, device), result -> new ClaimResult(savedDevice, ClaimResponse.SUCCESS), MoreExecutors.directExecutor());
+                    return Futures.immediateFuture(new ClaimResult(null, ClaimResponse.FAILURE));
+                } else {
+                    return Futures.immediateFuture(new ClaimResult(null, ClaimResponse.CLAIMED));
                 }
-                return Futures.transform(removeClaimingSavedData(cache, claimData, device), result -> new ClaimResult(null, ClaimResponse.CLAIMED), MoreExecutors.directExecutor());
             }
-        } else {
-            log.warn("Failed to find the device's claiming message![{}]", device.getName());
-            if (device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
-                return Futures.immediateFuture(new ClaimResult(null, ClaimResponse.FAILURE));
-            } else {
-                return Futures.immediateFuture(new ClaimResult(null, ClaimResponse.CLAIMED));
-            }
-        }
+        }, MoreExecutors.directExecutor());
     }
 
     private boolean secretKeyIsEmptyOrEqual(String secretKeyA, String secretKeyB) {
