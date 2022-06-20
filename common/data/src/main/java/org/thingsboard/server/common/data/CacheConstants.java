@@ -34,4 +34,5 @@ public class CacheConstants {
     public static final String REPOSITORY_SETTINGS_CACHE = "repositorySettings";
     public static final String AUTO_COMMIT_SETTINGS_CACHE = "autoCommitSettings";
     public static final String TWO_FA_VERIFICATION_CODES_CACHE = "twoFaVerificationCodes";
+    public static final String VERSION_CONTROL_TASK_CACHE = "versionControlTask";
 }

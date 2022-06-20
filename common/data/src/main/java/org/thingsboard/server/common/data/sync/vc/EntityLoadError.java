@@ -30,6 +30,7 @@ public class EntityLoadError {
     private String type;
     private EntityId source;
     private EntityId target;
+    private String message;
 
     public static EntityLoadError credentialsError(EntityId sourceId) {
         return EntityLoadError.builder().type("DEVICE_CREDENTIALS_CONFLICT").source(sourceId).build();
@@ -37,6 +38,10 @@ public class EntityLoadError {
 
     public static EntityLoadError referenceEntityError(EntityId sourceId, EntityId targetId) {
         return EntityLoadError.builder().type("MISSING_REFERENCED_ENTITY").source(sourceId).target(targetId).build();
+    }
+
+    public static EntityLoadError runtimeError(String msg) {
+        return EntityLoadError.builder().type("RUNTIME").message(msg).build();
     }
 
 }
