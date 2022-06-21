@@ -32,11 +32,9 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
-import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
@@ -48,6 +46,8 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.ota.TbOtaPackageService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
+
+import java.io.IOException;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
@@ -156,17 +156,10 @@ public class OtaPackageController extends BaseController {
     @ResponseBody
     public OtaPackageInfo saveOtaPackageInfo(@ApiParam(value = "A JSON value representing the OTA Package.")
                                              @RequestBody SaveOtaPackageInfoRequest otaPackageInfo) throws ThingsboardException {
-        try {
-            otaPackageInfo.setTenantId(getTenantId());
-            checkEntity(otaPackageInfo.getId(), otaPackageInfo, Resource.OTA_PACKAGE);
+        otaPackageInfo.setTenantId(getTenantId());
+        checkEntity(otaPackageInfo.getId(), otaPackageInfo, Resource.OTA_PACKAGE);
 
-            return tbOtaPackageService.save(otaPackageInfo, getCurrentUser());
-        } catch (Exception e) {
-            ActionType actionType = otaPackageInfo.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
-            notificationEntityService.logEntityAction(getTenantId(), emptyId(EntityType.OTA_PACKAGE), otaPackageInfo,
-                    actionType, getCurrentUser(), e);
-            throw handleException(e);
-        }
+        return tbOtaPackageService.save(otaPackageInfo, getCurrentUser());
     }
 
     @ApiOperation(value = "Save OTA Package data (saveOtaPackageData)",
@@ -183,21 +176,15 @@ public class OtaPackageController extends BaseController {
                                              @ApiParam(value = "OTA Package checksum algorithm.", allowableValues = OTA_PACKAGE_CHECKSUM_ALGORITHM_ALLOWABLE_VALUES)
                                              @RequestParam(CHECKSUM_ALGORITHM) String checksumAlgorithmStr,
                                              @ApiParam(value = "OTA Package data.")
-                                             @RequestPart MultipartFile file) throws ThingsboardException {
-        try {
-            checkParameter(OTA_PACKAGE_ID, strOtaPackageId);
-            checkParameter(CHECKSUM_ALGORITHM, checksumAlgorithmStr);
-            OtaPackageId otaPackageId = new OtaPackageId(toUUID(strOtaPackageId));
-            OtaPackageInfo otaPackageInfo = checkOtaPackageInfoId(otaPackageId, Operation.READ);
-            ChecksumAlgorithm checksumAlgorithm = ChecksumAlgorithm.valueOf(checksumAlgorithmStr.toUpperCase());
-            byte[] data = file.getBytes();
-            return tbOtaPackageService.saveOtaPackageData(otaPackageInfo, checksum, checksumAlgorithm,
-                    data, file.getOriginalFilename(), file.getContentType(), getCurrentUser());
-        } catch (Exception e) {
-            notificationEntityService.logEntityAction(getTenantId(), emptyId(EntityType.OTA_PACKAGE), ActionType.UPDATED,
-                    getCurrentUser(), e, strOtaPackageId);
-            throw handleException(e);
-        }
+                                             @RequestPart MultipartFile file) throws ThingsboardException, IOException {
+        checkParameter(OTA_PACKAGE_ID, strOtaPackageId);
+        checkParameter(CHECKSUM_ALGORITHM, checksumAlgorithmStr);
+        OtaPackageId otaPackageId = new OtaPackageId(toUUID(strOtaPackageId));
+        OtaPackageInfo otaPackageInfo = checkOtaPackageInfoId(otaPackageId, Operation.READ);
+        ChecksumAlgorithm checksumAlgorithm = ChecksumAlgorithm.valueOf(checksumAlgorithmStr.toUpperCase());
+        byte[] data = file.getBytes();
+        return tbOtaPackageService.saveOtaPackageData(otaPackageInfo, checksum, checksumAlgorithm,
+                data, file.getOriginalFilename(), file.getContentType(), getCurrentUser());
     }
 
     @ApiOperation(value = "Get OTA Package Infos (getOtaPackages)",
@@ -266,17 +253,10 @@ public class OtaPackageController extends BaseController {
     @ResponseBody
     public void deleteOtaPackage(@ApiParam(value = OTA_PACKAGE_ID_PARAM_DESCRIPTION)
                                  @PathVariable("otaPackageId") String strOtaPackageId) throws ThingsboardException {
-        try {
-            checkParameter(OTA_PACKAGE_ID, strOtaPackageId);
-            OtaPackageId otaPackageId = new OtaPackageId(toUUID(strOtaPackageId));
-            OtaPackageInfo otaPackageInfo = checkOtaPackageInfoId(otaPackageId, Operation.DELETE);
-
-            tbOtaPackageService.delete(otaPackageInfo, getCurrentUser());
-        } catch (Exception e) {
-            notificationEntityService.logEntityAction(getTenantId(), emptyId(EntityType.OTA_PACKAGE),
-                    ActionType.DELETED, getCurrentUser(), e, strOtaPackageId);
-            throw handleException(e);
-        }
+        checkParameter(OTA_PACKAGE_ID, strOtaPackageId);
+        OtaPackageId otaPackageId = new OtaPackageId(toUUID(strOtaPackageId));
+        OtaPackageInfo otaPackageInfo = checkOtaPackageInfoId(otaPackageId, Operation.DELETE);
+        tbOtaPackageService.delete(otaPackageInfo, getCurrentUser());
     }
 
 }

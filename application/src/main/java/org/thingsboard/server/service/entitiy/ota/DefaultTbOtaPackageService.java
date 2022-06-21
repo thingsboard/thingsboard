@@ -18,6 +18,7 @@ package org.thingsboard.server.service.entitiy.ota;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
@@ -44,12 +45,18 @@ public class DefaultTbOtaPackageService extends AbstractTbEntityService implemen
 
     @Override
     public OtaPackageInfo save(SaveOtaPackageInfoRequest saveOtaPackageInfoRequest, User user) throws ThingsboardException {
-        TenantId tenantId = saveOtaPackageInfoRequest.getTenantId();
         ActionType actionType = saveOtaPackageInfoRequest.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
-        OtaPackageInfo savedOtaPackageInfo = checkNotNull(otaPackageService.saveOtaPackageInfo(
-                new OtaPackageInfo(saveOtaPackageInfoRequest), saveOtaPackageInfoRequest.isUsesUrl()));
-        notificationEntityService.logEntityAction(tenantId, savedOtaPackageInfo.getId(), savedOtaPackageInfo, actionType, user);
-        return savedOtaPackageInfo;
+        TenantId tenantId = saveOtaPackageInfoRequest.getTenantId();
+        try {
+            OtaPackageInfo savedOtaPackageInfo = checkNotNull(otaPackageService.saveOtaPackageInfo(
+                    new OtaPackageInfo(saveOtaPackageInfoRequest), saveOtaPackageInfoRequest.isUsesUrl()));
+            notificationEntityService.logEntityAction(tenantId, savedOtaPackageInfo.getId(), savedOtaPackageInfo, actionType, user);
+            return savedOtaPackageInfo;
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.OTA_PACKAGE), saveOtaPackageInfoRequest,
+                    actionType, user, e);
+            throw e;
+        }
     }
 
     @Override
@@ -57,35 +64,47 @@ public class DefaultTbOtaPackageService extends AbstractTbEntityService implemen
                                              byte[] data, String filename, String contentType, User user) throws ThingsboardException {
         TenantId tenantId = otaPackageInfo.getTenantId();
         OtaPackageId otaPackageId = otaPackageInfo.getId();
-        if (StringUtils.isEmpty(checksum)) {
-            checksum = otaPackageService.generateChecksum(checksumAlgorithm, ByteBuffer.wrap(data));
+        try {
+            if (StringUtils.isEmpty(checksum)) {
+                checksum = otaPackageService.generateChecksum(checksumAlgorithm, ByteBuffer.wrap(data));
+            }
+            OtaPackage otaPackage = new OtaPackage(otaPackageId);
+            otaPackage.setCreatedTime(otaPackageInfo.getCreatedTime());
+            otaPackage.setTenantId(tenantId);
+            otaPackage.setDeviceProfileId(otaPackageInfo.getDeviceProfileId());
+            otaPackage.setType(otaPackageInfo.getType());
+            otaPackage.setTitle(otaPackageInfo.getTitle());
+            otaPackage.setVersion(otaPackageInfo.getVersion());
+            otaPackage.setTag(otaPackageInfo.getTag());
+            otaPackage.setAdditionalInfo(otaPackageInfo.getAdditionalInfo());
+            otaPackage.setChecksumAlgorithm(checksumAlgorithm);
+            otaPackage.setChecksum(checksum);
+            otaPackage.setFileName(filename);
+            otaPackage.setContentType(contentType);
+            otaPackage.setData(ByteBuffer.wrap(data));
+            otaPackage.setDataSize((long) data.length);
+            OtaPackageInfo savedOtaPackage = otaPackageService.saveOtaPackage(otaPackage);
+            notificationEntityService.logEntityAction(tenantId, savedOtaPackage.getId(), savedOtaPackage, ActionType.UPDATED, user);
+            return savedOtaPackage;
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.OTA_PACKAGE), ActionType.UPDATED,
+                    user, e, otaPackageId.toString());
+            throw e;
         }
-        OtaPackage otaPackage = new OtaPackage(otaPackageId);
-        otaPackage.setCreatedTime(otaPackageInfo.getCreatedTime());
-        otaPackage.setTenantId(tenantId);
-        otaPackage.setDeviceProfileId(otaPackageInfo.getDeviceProfileId());
-        otaPackage.setType(otaPackageInfo.getType());
-        otaPackage.setTitle(otaPackageInfo.getTitle());
-        otaPackage.setVersion(otaPackageInfo.getVersion());
-        otaPackage.setTag(otaPackageInfo.getTag());
-        otaPackage.setAdditionalInfo(otaPackageInfo.getAdditionalInfo());
-        otaPackage.setChecksumAlgorithm(checksumAlgorithm);
-        otaPackage.setChecksum(checksum);
-        otaPackage.setFileName(filename);
-        otaPackage.setContentType(contentType);
-        otaPackage.setData(ByteBuffer.wrap(data));
-        otaPackage.setDataSize((long) data.length);
-        OtaPackageInfo savedOtaPackage = otaPackageService.saveOtaPackage(otaPackage);
-        notificationEntityService.logEntityAction(tenantId, savedOtaPackage.getId(), savedOtaPackage, ActionType.UPDATED, user);
-        return savedOtaPackage;
     }
 
     @Override
     public void delete(OtaPackageInfo otaPackageInfo, User user) throws ThingsboardException {
         TenantId tenantId = otaPackageInfo.getTenantId();
         OtaPackageId otaPackageId = otaPackageInfo.getId();
-        otaPackageService.deleteOtaPackage(tenantId, otaPackageId);
-        notificationEntityService.logEntityAction(tenantId, otaPackageId, otaPackageInfo, ActionType.DELETED, user,
-                otaPackageInfo.getId().toString());
+        try {
+            otaPackageService.deleteOtaPackage(tenantId, otaPackageId);
+            notificationEntityService.logEntityAction(tenantId, otaPackageId, otaPackageInfo, ActionType.DELETED, user,
+                    otaPackageInfo.getId().toString());
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.OTA_PACKAGE),
+                    ActionType.DELETED, user, e, otaPackageId.toString());
+            throw e;
+        }
     }
 }

@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
@@ -40,9 +41,15 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     @Override
     public Alarm save(Alarm alarm, User user) throws ThingsboardException {
         ActionType actionType = alarm.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
-        Alarm savedAlarm = checkNotNull(alarmService.createOrUpdateAlarm(alarm).getAlarm());
-        notificationEntityService.notifyCreateOrUpdateAlarm(savedAlarm, actionType, user);
-        return savedAlarm;
+        TenantId tenantId = alarm.getTenantId();
+        try {
+            Alarm savedAlarm = checkNotNull(alarmService.createOrUpdateAlarm(alarm).getAlarm());
+            notificationEntityService.notifyCreateOrUpdateAlarm(savedAlarm, actionType, user);
+            return savedAlarm;
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ALARM), alarm, actionType, user, e);
+            throw e;
+        }
     }
 
     @Override

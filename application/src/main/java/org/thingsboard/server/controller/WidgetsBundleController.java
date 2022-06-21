@@ -97,19 +97,15 @@ public class WidgetsBundleController extends BaseController {
     public WidgetsBundle saveWidgetsBundle(
             @ApiParam(value = "A JSON value representing the Widget Bundle.", required = true)
             @RequestBody WidgetsBundle widgetsBundle) throws ThingsboardException {
-        try {
-            if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
-                widgetsBundle.setTenantId(TenantId.SYS_TENANT_ID);
-            } else {
-                widgetsBundle.setTenantId(getCurrentUser().getTenantId());
-            }
-
-            checkEntity(widgetsBundle.getId(), widgetsBundle, Resource.WIDGETS_BUNDLE);
-
-            return tbWidgetsBundleService.save(widgetsBundle);
-        } catch (Exception e) {
-            throw handleException(e);
+        if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
+            widgetsBundle.setTenantId(TenantId.SYS_TENANT_ID);
+        } else {
+            widgetsBundle.setTenantId(getCurrentUser().getTenantId());
         }
+
+        checkEntity(widgetsBundle.getId(), widgetsBundle, Resource.WIDGETS_BUNDLE);
+
+        return tbWidgetsBundleService.save(widgetsBundle);
     }
 
     @ApiOperation(value = "Delete widgets bundle (deleteWidgetsBundle)",
@@ -120,14 +116,10 @@ public class WidgetsBundleController extends BaseController {
     public void deleteWidgetsBundle(
             @ApiParam(value = WIDGET_BUNDLE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable("widgetsBundleId") String strWidgetsBundleId) throws ThingsboardException {
-        try {
-            checkParameter("widgetsBundleId", strWidgetsBundleId);
-            WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
-            WidgetsBundle widgetsBundle = checkWidgetsBundleId(widgetsBundleId, Operation.DELETE);
-            tbWidgetsBundleService.delete(widgetsBundle);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        checkParameter("widgetsBundleId", strWidgetsBundleId);
+        WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
+        WidgetsBundle widgetsBundle = checkWidgetsBundleId(widgetsBundleId, Operation.DELETE);
+        tbWidgetsBundleService.delete(widgetsBundle);
     }
 
     @ApiOperation(value = "Get Widget Bundles (getWidgetsBundles)",

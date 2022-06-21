@@ -33,8 +33,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -202,16 +200,9 @@ public class DeviceProfileController extends BaseController {
     public DeviceProfile saveDeviceProfile(
             @ApiParam(value = "A JSON value representing the device profile.")
             @RequestBody DeviceProfile deviceProfile) throws ThingsboardException {
-        try {
-            deviceProfile.setTenantId(getTenantId());
-            checkEntity(deviceProfile.getId(), deviceProfile, Resource.DEVICE_PROFILE);
-            return tbDeviceProfileService.save(deviceProfile, getCurrentUser());
-        } catch (Exception e) {
-            ActionType actionType = deviceProfile.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
-            notificationEntityService.logEntityAction(getTenantId(), emptyId(EntityType.DEVICE_PROFILE), deviceProfile,
-                    actionType, getCurrentUser(), e);
-            throw handleException(e);
-        }
+        deviceProfile.setTenantId(getTenantId());
+        checkEntity(deviceProfile.getId(), deviceProfile, Resource.DEVICE_PROFILE);
+        return tbDeviceProfileService.save(deviceProfile, getCurrentUser());
     }
 
     @ApiOperation(value = "Delete device profile (deleteDeviceProfile)",
@@ -224,16 +215,10 @@ public class DeviceProfileController extends BaseController {
     public void deleteDeviceProfile(
             @ApiParam(value = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
             @PathVariable(DEVICE_PROFILE_ID) String strDeviceProfileId) throws ThingsboardException {
-        try {
-            checkParameter(DEVICE_PROFILE_ID, strDeviceProfileId);
-            DeviceProfileId deviceProfileId = new DeviceProfileId(toUUID(strDeviceProfileId));
-            DeviceProfile deviceProfile = checkDeviceProfileId(deviceProfileId, Operation.DELETE);
-            tbDeviceProfileService.delete(deviceProfile, getCurrentUser());
-        } catch (Exception e) {
-            notificationEntityService.logEntityAction(getTenantId(), emptyId(EntityType.DEVICE_PROFILE), ActionType.DELETED,
-                    getCurrentUser(), e, strDeviceProfileId);
-            throw handleException(e);
-        }
+        checkParameter(DEVICE_PROFILE_ID, strDeviceProfileId);
+        DeviceProfileId deviceProfileId = new DeviceProfileId(toUUID(strDeviceProfileId));
+        DeviceProfile deviceProfile = checkDeviceProfileId(deviceProfileId, Operation.DELETE);
+        tbDeviceProfileService.delete(deviceProfile, getCurrentUser());
     }
 
     @ApiOperation(value = "Make Device Profile Default (setDefaultDeviceProfile)",
@@ -245,17 +230,11 @@ public class DeviceProfileController extends BaseController {
     public DeviceProfile setDefaultDeviceProfile(
             @ApiParam(value = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
             @PathVariable(DEVICE_PROFILE_ID) String strDeviceProfileId) throws ThingsboardException {
-        try {
-            checkParameter(DEVICE_PROFILE_ID, strDeviceProfileId);
-            DeviceProfileId deviceProfileId = new DeviceProfileId(toUUID(strDeviceProfileId));
-            DeviceProfile deviceProfile = checkDeviceProfileId(deviceProfileId, Operation.WRITE);
-            DeviceProfile previousDefaultDeviceProfile = deviceProfileService.findDefaultDeviceProfile(getTenantId());
-            return tbDeviceProfileService.setDefaultDeviceProfile(deviceProfile, previousDefaultDeviceProfile, getCurrentUser());
-        } catch (Exception e) {
-            notificationEntityService.logEntityAction(getTenantId(), emptyId(EntityType.DEVICE_PROFILE), ActionType.UPDATED,
-                    getCurrentUser(), e, strDeviceProfileId);
-            throw handleException(e);
-        }
+        checkParameter(DEVICE_PROFILE_ID, strDeviceProfileId);
+        DeviceProfileId deviceProfileId = new DeviceProfileId(toUUID(strDeviceProfileId));
+        DeviceProfile deviceProfile = checkDeviceProfileId(deviceProfileId, Operation.WRITE);
+        DeviceProfile previousDefaultDeviceProfile = deviceProfileService.findDefaultDeviceProfile(getTenantId());
+        return tbDeviceProfileService.setDefaultDeviceProfile(deviceProfile, previousDefaultDeviceProfile, getCurrentUser());
     }
 
     @ApiOperation(value = "Get Device Profiles (getDeviceProfiles)",

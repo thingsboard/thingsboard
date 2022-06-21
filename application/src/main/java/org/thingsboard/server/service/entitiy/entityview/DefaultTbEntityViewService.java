@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -71,78 +72,108 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
     public EntityView save(EntityView entityView, EntityView existingEntityView, User user) throws ThingsboardException {
         ActionType actionType = entityView.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = entityView.getTenantId();
-        List<ListenableFuture<?>> futures = new ArrayList<>();
-        if (existingEntityView != null) {
-            if (existingEntityView.getKeys() != null && existingEntityView.getKeys().getAttributes() != null) {
-                futures.add(deleteAttributesFromEntityView(existingEntityView, DataConstants.CLIENT_SCOPE, existingEntityView.getKeys().getAttributes().getCs(), user));
-                futures.add(deleteAttributesFromEntityView(existingEntityView, DataConstants.SERVER_SCOPE, existingEntityView.getKeys().getAttributes().getCs(), user));
-                futures.add(deleteAttributesFromEntityView(existingEntityView, DataConstants.SHARED_SCOPE, existingEntityView.getKeys().getAttributes().getCs(), user));
+        try {
+            List<ListenableFuture<?>> futures = new ArrayList<>();
+            if (existingEntityView != null) {
+                if (existingEntityView.getKeys() != null && existingEntityView.getKeys().getAttributes() != null) {
+                    futures.add(deleteAttributesFromEntityView(existingEntityView, DataConstants.CLIENT_SCOPE, existingEntityView.getKeys().getAttributes().getCs(), user));
+                    futures.add(deleteAttributesFromEntityView(existingEntityView, DataConstants.SERVER_SCOPE, existingEntityView.getKeys().getAttributes().getCs(), user));
+                    futures.add(deleteAttributesFromEntityView(existingEntityView, DataConstants.SHARED_SCOPE, existingEntityView.getKeys().getAttributes().getCs(), user));
+                }
+                List<String> tsKeys = existingEntityView.getKeys() != null && existingEntityView.getKeys().getTimeseries() != null ?
+                        existingEntityView.getKeys().getTimeseries() : Collections.emptyList();
+                futures.add(deleteLatestFromEntityView(existingEntityView, tsKeys, user));
             }
-            List<String> tsKeys = existingEntityView.getKeys() != null && existingEntityView.getKeys().getTimeseries() != null ?
-                    existingEntityView.getKeys().getTimeseries() : Collections.emptyList();
-            futures.add(deleteLatestFromEntityView(existingEntityView, tsKeys, user));
-        }
-        EntityView savedEntityView = checkNotNull(entityViewService.saveEntityView(entityView));
-        if (savedEntityView.getKeys() != null) {
-            if (savedEntityView.getKeys().getAttributes() != null) {
-                futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.CLIENT_SCOPE, savedEntityView.getKeys().getAttributes().getCs(), user));
-                futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SERVER_SCOPE, savedEntityView.getKeys().getAttributes().getSs(), user));
-                futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SHARED_SCOPE, savedEntityView.getKeys().getAttributes().getSh(), user));
+            EntityView savedEntityView = checkNotNull(entityViewService.saveEntityView(entityView));
+            if (savedEntityView.getKeys() != null) {
+                if (savedEntityView.getKeys().getAttributes() != null) {
+                    futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.CLIENT_SCOPE, savedEntityView.getKeys().getAttributes().getCs(), user));
+                    futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SERVER_SCOPE, savedEntityView.getKeys().getAttributes().getSs(), user));
+                    futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SHARED_SCOPE, savedEntityView.getKeys().getAttributes().getSh(), user));
+                }
+                futures.add(copyLatestFromEntityToEntityView(tenantId, savedEntityView));
             }
-            futures.add(copyLatestFromEntityToEntityView(tenantId, savedEntityView));
-        }
-        for (ListenableFuture<?> future : futures) {
-            try {
-                future.get();
-            } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException("Failed to copy attributes to entity view", e);
+            for (ListenableFuture<?> future : futures) {
+                try {
+                    future.get();
+                } catch (InterruptedException | ExecutionException e) {
+                    throw new RuntimeException("Failed to copy attributes to entity view", e);
+                }
             }
-        }
 
-        notificationEntityService.notifyCreateOrUpdateEntity(tenantId, savedEntityView.getId(), savedEntityView,
-                null, actionType, user);
+            notificationEntityService.notifyCreateOrUpdateEntity(tenantId, savedEntityView.getId(), savedEntityView,
+                    null, actionType, user);
 
-        return savedEntityView;
+            return savedEntityView;
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ENTITY_VIEW), entityView,
+                    actionType, user, e);
+            throw e;
+        }
     }
 
     @Override
     public void delete(EntityView entityView, User user) throws ThingsboardException {
         TenantId tenantId = entityView.getTenantId();
         EntityViewId entityViewId = entityView.getId();
-        List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, entityViewId);
-        entityViewService.deleteEntityView(tenantId, entityViewId);
-        notificationEntityService.notifyDeleteEntity(tenantId, entityViewId, entityView, entityView.getCustomerId(), ActionType.DELETED,
-                relatedEdgeIds, user, entityViewId.toString());
+        try {
+            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, entityViewId);
+            entityViewService.deleteEntityView(tenantId, entityViewId);
+            notificationEntityService.notifyDeleteEntity(tenantId, entityViewId, entityView, entityView.getCustomerId(), ActionType.DELETED,
+                    relatedEdgeIds, user, entityViewId.toString());
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ENTITY_VIEW),
+                    ActionType.DELETED, user, e, entityViewId.toString());
+            throw e;
+        }
     }
 
     @Override
     public EntityView assignEntityViewToCustomer(TenantId tenantId, EntityViewId entityViewId, Customer customer, User user) throws ThingsboardException {
         CustomerId customerId = customer.getId();
-        EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToCustomer(tenantId, entityViewId, customerId));
-        notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, entityViewId, customerId, savedEntityView,
-                ActionType.ASSIGNED_TO_CUSTOMER, user, true, customerId.toString(), customer.getName());
-        return savedEntityView;
+        try {
+            EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToCustomer(tenantId, entityViewId, customerId));
+            notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, entityViewId, customerId, savedEntityView,
+                    ActionType.ASSIGNED_TO_CUSTOMER, user, true, customerId.toString(), customer.getName());
+            return savedEntityView;
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ENTITY_VIEW),
+                    ActionType.ASSIGNED_TO_CUSTOMER, user, e, entityViewId.toString(), customerId.toString());
+            throw e;
+        }
     }
 
     @Override
     public EntityView assignEntityViewToPublicCustomer(TenantId tenantId, CustomerId customerId, Customer publicCustomer,
                                                        EntityViewId entityViewId, User user) throws ThingsboardException {
-        EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToCustomer(tenantId,
-                entityViewId, publicCustomer.getId()));
-        notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, entityViewId, customerId, savedEntityView,
-                ActionType.ASSIGNED_TO_CUSTOMER, user, false, savedEntityView.getEntityId().toString(),
-                publicCustomer.getId().toString(), publicCustomer.getName());
-        return savedEntityView;
+        try {
+            EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToCustomer(tenantId,
+                    entityViewId, publicCustomer.getId()));
+            notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, entityViewId, customerId, savedEntityView,
+                    ActionType.ASSIGNED_TO_CUSTOMER, user, false, savedEntityView.getEntityId().toString(),
+                    publicCustomer.getId().toString(), publicCustomer.getName());
+            return savedEntityView;
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ENTITY_VIEW),
+                    ActionType.ASSIGNED_TO_CUSTOMER, user, e, entityViewId.toString());
+            throw e;
+        }
     }
 
     @Override
     public EntityView assignEntityViewToEdge(TenantId tenantId, CustomerId customerId, EntityViewId entityViewId, Edge edge, User user) throws ThingsboardException {
         EdgeId edgeId = edge.getId();
-        EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToEdge(tenantId, entityViewId, edgeId));
-        notificationEntityService.notifyAssignOrUnassignEntityToEdge(tenantId, entityViewId, customerId,
-                edgeId, savedEntityView, ActionType.ASSIGNED_TO_EDGE, user, savedEntityView.getEntityId().toString(),
-                edgeId.toString(), edge.getName());
-        return savedEntityView;
+        try {
+            EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToEdge(tenantId, entityViewId, edgeId));
+            notificationEntityService.notifyAssignOrUnassignEntityToEdge(tenantId, entityViewId, customerId,
+                    edgeId, savedEntityView, ActionType.ASSIGNED_TO_EDGE, user, savedEntityView.getEntityId().toString(),
+                    edgeId.toString(), edge.getName());
+            return savedEntityView;
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ENTITY_VIEW),
+                    ActionType.ASSIGNED_TO_EDGE, user, e, entityViewId.toString(), edgeId.toString());
+            throw e;
+        }
     }
 
     @Override
@@ -150,19 +181,31 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
                                                  Edge edge, User user) throws ThingsboardException {
         EntityViewId entityViewId = entityView.getId();
         EdgeId edgeId = edge.getId();
-        EntityView savedEntityView = checkNotNull(entityViewService.unassignEntityViewFromEdge(tenantId, entityViewId, edgeId));
-        notificationEntityService.notifyAssignOrUnassignEntityToEdge(tenantId, entityViewId, customerId,
-                edgeId, entityView, ActionType.UNASSIGNED_FROM_EDGE, user, entityViewId.toString(),
-                edgeId.toString(), edge.getName());
-        return savedEntityView;
+        try {
+            EntityView savedEntityView = checkNotNull(entityViewService.unassignEntityViewFromEdge(tenantId, entityViewId, edgeId));
+            notificationEntityService.notifyAssignOrUnassignEntityToEdge(tenantId, entityViewId, customerId,
+                    edgeId, entityView, ActionType.UNASSIGNED_FROM_EDGE, user, entityViewId.toString(),
+                    edgeId.toString(), edge.getName());
+            return savedEntityView;
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ENTITY_VIEW),
+                    ActionType.UNASSIGNED_FROM_EDGE, user, e, entityViewId.toString(), edgeId.toString());
+            throw e;
+        }
     }
 
     @Override
     public EntityView unassignEntityViewFromCustomer(TenantId tenantId, EntityViewId entityViewId, Customer customer, User user) throws ThingsboardException {
-        EntityView savedEntityView = checkNotNull(entityViewService.unassignEntityViewFromCustomer(tenantId, entityViewId));
-        notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, entityViewId, customer.getId(), savedEntityView,
-                ActionType.UNASSIGNED_FROM_CUSTOMER, user, true, customer.getId().toString(), customer.getName());
-        return savedEntityView;
+        try {
+            EntityView savedEntityView = checkNotNull(entityViewService.unassignEntityViewFromCustomer(tenantId, entityViewId));
+            notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, entityViewId, customer.getId(), savedEntityView,
+                    ActionType.UNASSIGNED_FROM_CUSTOMER, user, true, customer.getId().toString(), customer.getName());
+            return savedEntityView;
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ENTITY_VIEW),
+                    ActionType.UNASSIGNED_FROM_CUSTOMER, user, e, entityViewId.toString());
+            throw e;
+        }
     }
 
     private ListenableFuture<List<Void>> copyAttributesFromEntityToEntityView(EntityView entityView, String scope, Collection<String> keys, User user) throws ThingsboardException {

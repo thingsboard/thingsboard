@@ -22,6 +22,7 @@ import org.eclipse.leshan.core.model.DefaultDDFFileValidator;
 import org.eclipse.leshan.core.model.InvalidDDFFileException;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
@@ -220,19 +221,30 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
     public TbResource save(TbResource tbResource, User user) throws ThingsboardException {
         ActionType actionType = tbResource.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = tbResource.getTenantId();
-
-        TbResource savedResource = checkNotNull(saveResourceInternal(tbResource));
-        tbClusterService.onResourceChange(savedResource, null);
-        notificationEntityService.logEntityAction(tenantId, savedResource.getId(), savedResource, actionType, user);
-        return savedResource;
+        try {
+            TbResource savedResource = checkNotNull(saveResourceInternal(tbResource));
+            tbClusterService.onResourceChange(savedResource, null);
+            notificationEntityService.logEntityAction(tenantId, savedResource.getId(), savedResource, actionType, user);
+            return savedResource;
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE),
+                    tbResource, actionType, user, e);
+            throw e;
+        }
     }
 
     @Override
     public void delete(TbResource tbResource, User user) {
         TbResourceId resourceId = tbResource.getId();
         TenantId tenantId = tbResource.getTenantId();
-        resourceService.deleteResource(tenantId, resourceId);
-        tbClusterService.onResourceDeleted(tbResource, null);
-        notificationEntityService.logEntityAction(tenantId, resourceId, tbResource, ActionType.DELETED, user, resourceId.toString());
+        try {
+            resourceService.deleteResource(tenantId, resourceId);
+            tbClusterService.onResourceDeleted(tbResource, null);
+            notificationEntityService.logEntityAction(tenantId, resourceId, tbResource, ActionType.DELETED, user, resourceId.toString());
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE),
+                    ActionType.DELETED, user, e, resourceId.toString());
+            throw e;
+        }
     }
 }

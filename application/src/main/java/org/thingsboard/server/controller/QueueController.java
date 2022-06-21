@@ -55,17 +55,13 @@ public class QueueController extends BaseController {
                                                         @RequestParam(required = false) String sortProperty,
                                                         @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         checkParameter("serviceType", serviceType);
-        try {
-            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-            ServiceType type = ServiceType.valueOf(serviceType);
-            switch (type) {
-                case TB_RULE_ENGINE:
-                    return queueService.findQueuesByTenantId(getTenantId(), pageLink);
-                default:
-                    return new PageData<>();
-            }
-        } catch (Exception e) {
-            throw handleException(e);
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        ServiceType type = ServiceType.valueOf(serviceType);
+        switch (type) {
+            case TB_RULE_ENGINE:
+                return queueService.findQueuesByTenantId(getTenantId(), pageLink);
+            default:
+                return new PageData<>();
         }
     }
 
@@ -74,14 +70,9 @@ public class QueueController extends BaseController {
     @ResponseBody
     public Queue getQueueById(@PathVariable("queueId") String queueIdStr) throws ThingsboardException {
         checkParameter("queueId", queueIdStr);
-        try {
-            QueueId queueId = new QueueId(UUID.fromString(queueIdStr));
-            checkQueueId(queueId, Operation.READ);
-            return checkNotNull(queueService.findQueueById(getTenantId(), queueId));
-        } catch (
-                Exception e) {
-            throw handleException(e);
-        }
+        QueueId queueId = new QueueId(UUID.fromString(queueIdStr));
+        checkQueueId(queueId, Operation.READ);
+        return checkNotNull(queueService.findQueueById(getTenantId(), queueId));
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
@@ -90,23 +81,19 @@ public class QueueController extends BaseController {
     public Queue saveQueue(@RequestBody Queue queue,
                            @RequestParam String serviceType) throws ThingsboardException {
         checkParameter("serviceType", serviceType);
-        try {
-            queue.setTenantId(getCurrentUser().getTenantId());
+        queue.setTenantId(getCurrentUser().getTenantId());
 
-            checkEntity(queue.getId(), queue, Resource.QUEUE);
+        checkEntity(queue.getId(), queue, Resource.QUEUE);
 
-            ServiceType type = ServiceType.valueOf(serviceType);
-            switch (type) {
-                case TB_RULE_ENGINE:
-                    queue.setTenantId(getTenantId());
-                    Queue savedQueue = tbQueueService.saveQueue(queue);
-                    checkNotNull(savedQueue);
-                    return savedQueue;
-                default:
-                    return null;
-            }
-        } catch (Exception e) {
-            throw handleException(e);
+        ServiceType type = ServiceType.valueOf(serviceType);
+        switch (type) {
+            case TB_RULE_ENGINE:
+                queue.setTenantId(getTenantId());
+                Queue savedQueue = tbQueueService.saveQueue(queue);
+                checkNotNull(savedQueue);
+                return savedQueue;
+            default:
+                return null;
         }
     }
 
@@ -115,12 +102,8 @@ public class QueueController extends BaseController {
     @ResponseBody
     public void deleteQueue(@PathVariable("queueId") String queueIdStr) throws ThingsboardException {
         checkParameter("queueId", queueIdStr);
-        try {
-            QueueId queueId = new QueueId(toUUID(queueIdStr));
-            checkQueueId(queueId, Operation.DELETE);
-            tbQueueService.deleteQueue(getTenantId(), queueId);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        QueueId queueId = new QueueId(toUUID(queueIdStr));
+        checkQueueId(queueId, Operation.DELETE);
+        tbQueueService.deleteQueue(getTenantId(), queueId);
     }
 }

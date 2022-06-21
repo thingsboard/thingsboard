@@ -120,13 +120,9 @@ public class TenantController extends BaseController {
     @RequestMapping(value = "/tenant", method = RequestMethod.POST)
     @ResponseBody
     public Tenant saveTenant(@ApiParam(value = "A JSON value representing the tenant.")
-                             @RequestBody Tenant tenant) throws ThingsboardException {
+                             @RequestBody Tenant tenant) throws Exception {
         checkEntity(tenant.getId(), tenant, Resource.TENANT);
-        try {
-            return tbTenantService.save(tenant);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        return tbTenantService.save(tenant);
     }
 
     @ApiOperation(value = "Delete Tenant (deleteTenant)",
@@ -139,11 +135,7 @@ public class TenantController extends BaseController {
         checkParameter(TENANT_ID, strTenantId);
         TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
         Tenant tenant = checkTenantId(tenantId, Operation.DELETE);
-        try {
-            tbTenantService.delete(tenant);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        tbTenantService.delete(tenant);
     }
 
     @ApiOperation(value = "Get Tenants (getTenants)", notes = "Returns a page of tenants registered in the platform. " + PAGE_DATA_PARAMETERS + SYSTEM_AUTHORITY_PARAGRAPH)

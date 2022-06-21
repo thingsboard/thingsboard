@@ -18,6 +18,7 @@ package org.thingsboard.server.service.entitiy.customer;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -38,19 +39,31 @@ public class DefaultTbCustomerService extends AbstractTbEntityService implements
         ActionType actionType = customer.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = customer.getTenantId();
         CustomerId customerId = customer.getId();
-        Customer savedCustomer = checkNotNull(customerService.saveCustomer(customer));
-        notificationEntityService.notifyCreateOrUpdateEntity(tenantId, savedCustomer.getId(), savedCustomer, customerId, actionType, user);
-        return savedCustomer;
+        try {
+            Customer savedCustomer = checkNotNull(customerService.saveCustomer(customer));
+            notificationEntityService.notifyCreateOrUpdateEntity(tenantId, savedCustomer.getId(), savedCustomer, customerId, actionType, user);
+
+            return savedCustomer;
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.CUSTOMER), customer, actionType, user, e);
+            throw e;
+        }
     }
 
     @Override
     public void delete(Customer customer, User user) {
         TenantId tenantId = customer.getTenantId();
         CustomerId customerId = customer.getId();
-        List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, customer.getId());
-        customerService.deleteCustomer(tenantId, customerId);
-        notificationEntityService.notifyDeleteEntity(tenantId, customer.getId(), customer, customerId,
-                ActionType.DELETED, relatedEdgeIds, user, customerId.toString());
-        tbClusterService.broadcastEntityStateChangeEvent(tenantId, customer.getId(), ComponentLifecycleEvent.DELETED);
+        try {
+            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, customer.getId());
+            customerService.deleteCustomer(tenantId, customerId);
+            notificationEntityService.notifyDeleteEntity(tenantId, customer.getId(), customer, customerId,
+                    ActionType.DELETED, relatedEdgeIds, user, customerId.toString());
+            tbClusterService.broadcastEntityStateChangeEvent(tenantId, customer.getId(), ComponentLifecycleEvent.DELETED);
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.CUSTOMER), ActionType.DELETED,
+                    user, e, customerId.toString());
+            throw e;
+        }
     }
 }

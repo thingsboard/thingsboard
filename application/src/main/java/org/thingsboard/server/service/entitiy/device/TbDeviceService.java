@@ -31,9 +31,9 @@ import org.thingsboard.server.dao.device.claim.ReclaimResult;
 
 public interface TbDeviceService {
 
-    Device save(TenantId tenantId, Device device, Device oldDevice, String accessToken, User user) throws ThingsboardException;
+    Device save(Device device, Device oldDevice, String accessToken, User user) throws ThingsboardException;
 
-    Device saveDeviceWithCredentials(TenantId tenantId, Device device, DeviceCredentials deviceCredentials, User user) throws ThingsboardException;
+    Device saveDeviceWithCredentials(Device device, DeviceCredentials deviceCredentials, User user) throws ThingsboardException;
 
     ListenableFuture<Void> delete(Device device, User user);
 

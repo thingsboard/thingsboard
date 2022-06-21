@@ -32,8 +32,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -145,16 +143,9 @@ public class CustomerController extends BaseController {
     @RequestMapping(value = "/customer", method = RequestMethod.POST)
     @ResponseBody
     public Customer saveCustomer(@ApiParam(value = "A JSON value representing the customer.") @RequestBody Customer customer) throws ThingsboardException {
-        try {
-            customer.setTenantId(getTenantId());
-            checkEntity(customer.getId(), customer, Resource.CUSTOMER);
-            return tbCustomerService.save(customer, getCurrentUser());
-        } catch (Exception e) {
-            ActionType actionType = customer.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
-            notificationEntityService.logEntityAction(getTenantId(), emptyId(EntityType.CUSTOMER), customer,
-                    actionType, getCurrentUser(), e);
-            throw handleException(e);
-        }
+        customer.setTenantId(getTenantId());
+        checkEntity(customer.getId(), customer, Resource.CUSTOMER);
+        return tbCustomerService.save(customer, getCurrentUser());
     }
 
     @ApiOperation(value = "Delete Customer (deleteCustomer)",
@@ -166,16 +157,10 @@ public class CustomerController extends BaseController {
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteCustomer(@ApiParam(value = CUSTOMER_ID_PARAM_DESCRIPTION)
                                @PathVariable(CUSTOMER_ID) String strCustomerId) throws ThingsboardException {
-        try {
-            checkParameter(CUSTOMER_ID, strCustomerId);
-            CustomerId customerId = new CustomerId(toUUID(strCustomerId));
-            Customer customer = checkCustomerId(customerId, Operation.DELETE);
-            tbCustomerService.delete(customer, getCurrentUser());
-        } catch (Exception e) {
-            notificationEntityService.logEntityAction(getTenantId(), emptyId(EntityType.CUSTOMER), ActionType.DELETED,
-                    getCurrentUser(), e, strCustomerId);
-            throw handleException(e);
-        }
+        checkParameter(CUSTOMER_ID, strCustomerId);
+        CustomerId customerId = new CustomerId(toUUID(strCustomerId));
+        Customer customer = checkCustomerId(customerId, Operation.DELETE);
+        tbCustomerService.delete(customer, getCurrentUser());
     }
 
     @ApiOperation(value = "Get Tenant Customers (getCustomers)",

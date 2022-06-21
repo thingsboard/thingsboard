@@ -34,11 +34,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.asset.AssetSearchQuery;
-import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -146,18 +144,12 @@ public class AssetController extends BaseController {
     @RequestMapping(value = "/asset", method = RequestMethod.POST)
     @ResponseBody
     public Asset saveAsset(@ApiParam(value = "A JSON value representing the asset.") @RequestBody Asset asset) throws ThingsboardException {
-        try {
-            if (TB_SERVICE_QUEUE.equals(asset.getType())) {
-                throw new ThingsboardException("Unable to save asset with type " + TB_SERVICE_QUEUE, ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-            }
-            asset.setTenantId(getTenantId());
-            checkEntity(asset.getId(), asset, Resource.ASSET);
-            return tbAssetService.save(asset, getCurrentUser());
-        } catch (Exception e) {
-            ActionType actionType = asset.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
-            notificationEntityService.logEntityAction(getTenantId(), emptyId(EntityType.ASSET), asset, actionType, getCurrentUser(), e);
-            throw handleException(e);
+        if (TB_SERVICE_QUEUE.equals(asset.getType())) {
+            throw new ThingsboardException("Unable to save asset with type " + TB_SERVICE_QUEUE, ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
+        asset.setTenantId(getTenantId());
+        checkEntity(asset.getId(), asset, Resource.ASSET);
+        return tbAssetService.save(asset, getCurrentUser());
     }
 
     @ApiOperation(value = "Delete asset (deleteAsset)",
@@ -165,17 +157,11 @@ public class AssetController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/asset/{assetId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
-    public void deleteAsset(@ApiParam(value = ASSET_ID_PARAM_DESCRIPTION) @PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
+    public void deleteAsset(@ApiParam(value = ASSET_ID_PARAM_DESCRIPTION) @PathVariable(ASSET_ID) String strAssetId) throws Exception {
         checkParameter(ASSET_ID, strAssetId);
-        try {
-            AssetId assetId = new AssetId(toUUID(strAssetId));
-            Asset asset = checkAssetId(assetId, Operation.DELETE);
-            tbAssetService.delete(asset, getCurrentUser()).get();
-        } catch (Exception e) {
-            notificationEntityService.logEntityAction(getTenantId(), emptyId(EntityType.ASSET), ActionType.DELETED,
-                    getCurrentUser(), e, strAssetId);
-            throw handleException(e);
-        }
+        AssetId assetId = new AssetId(toUUID(strAssetId));
+        Asset asset = checkAssetId(assetId, Operation.DELETE);
+        tbAssetService.delete(asset, getCurrentUser()).get();
     }
 
     @ApiOperation(value = "Assign asset to customer (assignAssetToCustomer)",
@@ -185,21 +171,13 @@ public class AssetController extends BaseController {
     @ResponseBody
     public Asset assignAssetToCustomer(@ApiParam(value = CUSTOMER_ID_PARAM_DESCRIPTION) @PathVariable("customerId") String strCustomerId,
                                        @ApiParam(value = ASSET_ID_PARAM_DESCRIPTION) @PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
-        try {
-            checkParameter("customerId", strCustomerId);
-            checkParameter(ASSET_ID, strAssetId);
-            CustomerId customerId = new CustomerId(toUUID(strCustomerId));
-            Customer customer = checkCustomerId(customerId, Operation.READ);
-            AssetId assetId = new AssetId(toUUID(strAssetId));
-            checkAssetId(assetId, Operation.ASSIGN_TO_CUSTOMER);
-            return tbAssetService.assignAssetToCustomer(getTenantId(), assetId, customer, getCurrentUser());
-        } catch (Exception e) {
-            ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER;
-            notificationEntityService.logEntityAction(getTenantId(), emptyId(EntityType.ASSET), actionType,
-                    getCurrentUser(), e, strAssetId, strCustomerId);
-
-            throw handleException(e);
-        }
+        checkParameter("customerId", strCustomerId);
+        checkParameter(ASSET_ID, strAssetId);
+        CustomerId customerId = new CustomerId(toUUID(strCustomerId));
+        Customer customer = checkCustomerId(customerId, Operation.READ);
+        AssetId assetId = new AssetId(toUUID(strAssetId));
+        checkAssetId(assetId, Operation.ASSIGN_TO_CUSTOMER);
+        return tbAssetService.assignAssetToCustomer(getTenantId(), assetId, customer, getCurrentUser());
     }
 
     @ApiOperation(value = "Unassign asset from customer (unassignAssetFromCustomer)",
@@ -208,21 +186,14 @@ public class AssetController extends BaseController {
     @RequestMapping(value = "/customer/asset/{assetId}", method = RequestMethod.DELETE)
     @ResponseBody
     public Asset unassignAssetFromCustomer(@ApiParam(value = ASSET_ID_PARAM_DESCRIPTION) @PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
-        try {
-            checkParameter(ASSET_ID, strAssetId);
-            AssetId assetId = new AssetId(toUUID(strAssetId));
-            Asset asset = checkAssetId(assetId, Operation.UNASSIGN_FROM_CUSTOMER);
-            if (asset.getCustomerId() == null || asset.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
-                throw new IncorrectParameterException("Asset isn't assigned to any customer!");
-            }
-            Customer customer = checkCustomerId(asset.getCustomerId(), Operation.READ);
-            return tbAssetService.unassignAssetToCustomer(getTenantId(), assetId, customer, getCurrentUser());
-        } catch (Exception e) {
-            ActionType actionType = ActionType.UNASSIGNED_FROM_CUSTOMER;
-            notificationEntityService.logEntityAction(getTenantId(), emptyId(EntityType.ASSET), actionType,
-                    getCurrentUser(), e, strAssetId);
-            throw handleException(e);
+        checkParameter(ASSET_ID, strAssetId);
+        AssetId assetId = new AssetId(toUUID(strAssetId));
+        Asset asset = checkAssetId(assetId, Operation.UNASSIGN_FROM_CUSTOMER);
+        if (asset.getCustomerId() == null || asset.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
+            throw new IncorrectParameterException("Asset isn't assigned to any customer!");
         }
+        Customer customer = checkCustomerId(asset.getCustomerId(), Operation.READ);
+        return tbAssetService.unassignAssetToCustomer(getTenantId(), assetId, customer, getCurrentUser());
     }
 
     @ApiOperation(value = "Make asset publicly available (assignAssetToPublicCustomer)",
@@ -233,16 +204,10 @@ public class AssetController extends BaseController {
     @RequestMapping(value = "/customer/public/asset/{assetId}", method = RequestMethod.POST)
     @ResponseBody
     public Asset assignAssetToPublicCustomer(@ApiParam(value = ASSET_ID_PARAM_DESCRIPTION) @PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
-        try {
-            checkParameter(ASSET_ID, strAssetId);
-            AssetId assetId = new AssetId(toUUID(strAssetId));
-            checkAssetId(assetId, Operation.ASSIGN_TO_CUSTOMER);
-            return tbAssetService.assignAssetToPublicCustomer(getTenantId(), assetId, getCurrentUser());
-        } catch (Exception e) {
-            ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER;
-            notificationEntityService.logEntityAction(getTenantId(), emptyId(EntityType.ASSET), actionType, getCurrentUser(), e, strAssetId);
-            throw handleException(e);
-        }
+        checkParameter(ASSET_ID, strAssetId);
+        AssetId assetId = new AssetId(toUUID(strAssetId));
+        checkAssetId(assetId, Operation.ASSIGN_TO_CUSTOMER);
+        return tbAssetService.assignAssetToPublicCustomer(getTenantId(), assetId, getCurrentUser());
     }
 
     @ApiOperation(value = "Get Tenant Assets (getTenantAssets)",
@@ -485,23 +450,16 @@ public class AssetController extends BaseController {
     @ResponseBody
     public Asset assignAssetToEdge(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION) @PathVariable(EDGE_ID) String strEdgeId,
                                    @ApiParam(value = ASSET_ID_PARAM_DESCRIPTION) @PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
-        try {
-            checkParameter(EDGE_ID, strEdgeId);
-            checkParameter(ASSET_ID, strAssetId);
+        checkParameter(EDGE_ID, strEdgeId);
+        checkParameter(ASSET_ID, strAssetId);
 
-            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-            Edge edge = checkEdgeId(edgeId, Operation.READ);
+        EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+        Edge edge = checkEdgeId(edgeId, Operation.READ);
 
-            AssetId assetId = new AssetId(toUUID(strAssetId));
-            checkAssetId(assetId, Operation.READ);
+        AssetId assetId = new AssetId(toUUID(strAssetId));
+        checkAssetId(assetId, Operation.READ);
 
-            return tbAssetService.assignAssetToEdge(getTenantId(), assetId, edge, getCurrentUser());
-        } catch (Exception e) {
-            ActionType actionType = ActionType.ASSIGNED_TO_EDGE;
-            notificationEntityService.logEntityAction(getTenantId(), emptyId(EntityType.ASSET), actionType,
-                    getCurrentUser(), e, strAssetId, strEdgeId);
-            throw handleException(e);
-        }
+        return tbAssetService.assignAssetToEdge(getTenantId(), assetId, edge, getCurrentUser());
     }
 
     @ApiOperation(value = "Unassign asset from edge (unassignAssetFromEdge)",
@@ -516,22 +474,15 @@ public class AssetController extends BaseController {
     @ResponseBody
     public Asset unassignAssetFromEdge(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION) @PathVariable(EDGE_ID) String strEdgeId,
                                        @ApiParam(value = ASSET_ID_PARAM_DESCRIPTION) @PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
-        try {
-            checkParameter(EDGE_ID, strEdgeId);
-            checkParameter(ASSET_ID, strAssetId);
-            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-            Edge edge = checkEdgeId(edgeId, Operation.READ);
+        checkParameter(EDGE_ID, strEdgeId);
+        checkParameter(ASSET_ID, strAssetId);
+        EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+        Edge edge = checkEdgeId(edgeId, Operation.READ);
 
-            AssetId assetId = new AssetId(toUUID(strAssetId));
-            Asset asset = checkAssetId(assetId, Operation.READ);
+        AssetId assetId = new AssetId(toUUID(strAssetId));
+        Asset asset = checkAssetId(assetId, Operation.READ);
 
-            return tbAssetService.unassignAssetFromEdge(getTenantId(), asset, edge, getCurrentUser());
-        } catch (Exception e) {
-            ActionType actionType = ActionType.UNASSIGNED_FROM_EDGE;
-            notificationEntityService.logEntityAction(getTenantId(), emptyId(EntityType.ASSET), actionType,
-                    getCurrentUser(), e, strAssetId, strEdgeId);
-            throw handleException(e);
-        }
+        return tbAssetService.unassignAssetFromEdge(getTenantId(), asset, edge, getCurrentUser());
     }
 
     @ApiOperation(value = "Get assets assigned to edge (getEdgeAssets)",

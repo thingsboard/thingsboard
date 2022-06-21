@@ -19,6 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.MailService;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -51,33 +52,44 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
     public User save(TenantId tenantId, CustomerId customerId, User tbUser, boolean sendActivationMail,
                      HttpServletRequest request, User user) throws ThingsboardException {
         ActionType actionType = tbUser.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
-        boolean sendEmail = tbUser.getId() == null && sendActivationMail;
-        User savedUser = checkNotNull(userService.saveUser(tbUser));
-        if (sendEmail) {
-            UserCredentials userCredentials = userService.findUserCredentialsByUserId(tenantId, savedUser.getId());
-            String baseUrl = systemSecurityService.getBaseUrl(tenantId, customerId, request);
-            String activateUrl = String.format(ACTIVATE_URL_PATTERN, baseUrl,
-                    userCredentials.getActivateToken());
-            String email = savedUser.getEmail();
-            try {
-                mailService.sendActivationEmail(activateUrl, email);
-            } catch (ThingsboardException e) {
-                userService.deleteUser(tenantId, savedUser.getId());
-                throw e;
+        try {
+            boolean sendEmail = tbUser.getId() == null && sendActivationMail;
+            User savedUser = checkNotNull(userService.saveUser(tbUser));
+            if (sendEmail) {
+                UserCredentials userCredentials = userService.findUserCredentialsByUserId(tenantId, savedUser.getId());
+                String baseUrl = systemSecurityService.getBaseUrl(tenantId, customerId, request);
+                String activateUrl = String.format(ACTIVATE_URL_PATTERN, baseUrl,
+                        userCredentials.getActivateToken());
+                String email = savedUser.getEmail();
+                try {
+                    mailService.sendActivationEmail(activateUrl, email);
+                } catch (ThingsboardException e) {
+                    userService.deleteUser(tenantId, savedUser.getId());
+                    throw e;
+                }
             }
+            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, customerId, savedUser.getId(),
+                    savedUser, user, actionType, true, null);
+            return savedUser;
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.USER), user, actionType, user, e);
+            throw e;
         }
-        notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, customerId, savedUser.getId(),
-                savedUser, user, actionType, true, null);
-        return savedUser;
     }
 
     @Override
     public void delete(TenantId tenantId, CustomerId customerId, User tbUser, User user) throws ThingsboardException {
         UserId userId = tbUser.getId();
-        List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, userId);
 
-        userService.deleteUser(tenantId, userId);
-        notificationEntityService.notifyDeleteEntity(tenantId, userId, tbUser, customerId,
-                ActionType.DELETED, relatedEdgeIds, user, userId.toString());
+        try {
+            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, userId);
+            userService.deleteUser(tenantId, userId);
+            notificationEntityService.notifyDeleteEntity(tenantId, userId, tbUser, customerId,
+                    ActionType.DELETED, relatedEdgeIds, user, userId.toString());
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.USER),
+                    ActionType.DELETED, user, e, userId.toString());
+            throw e;
+        }
     }
 }

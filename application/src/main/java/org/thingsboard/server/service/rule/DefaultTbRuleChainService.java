@@ -22,6 +22,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNode;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
 import org.thingsboard.rule.engine.flow.TbRuleChainOutputNode;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -170,73 +171,97 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
         TenantId tenantId = ruleChain.getTenantId();
         ActionType actionType = ruleChain.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         RuleChain savedRuleChain = checkNotNull(ruleChainService.saveRuleChain(ruleChain));
-
-        if (RuleChainType.CORE.equals(savedRuleChain.getType())) {
-            tbClusterService.broadcastEntityStateChangeEvent(tenantId, savedRuleChain.getId(),
-                    actionType.equals(ActionType.ADDED) ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+        try {
+            if (RuleChainType.CORE.equals(savedRuleChain.getType())) {
+                tbClusterService.broadcastEntityStateChangeEvent(tenantId, savedRuleChain.getId(),
+                        actionType.equals(ActionType.ADDED) ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+            }
+            boolean sendMsgToEdge = RuleChainType.EDGE.equals(savedRuleChain.getType()) && actionType.equals(ActionType.UPDATED);
+            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, savedRuleChain.getId(),
+                    savedRuleChain, user, actionType, sendMsgToEdge, null);
+            return savedRuleChain;
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.RULE_CHAIN), ruleChain, actionType, user, e);
+            throw e;
         }
-        boolean sendMsgToEdge = RuleChainType.EDGE.equals(savedRuleChain.getType()) && actionType.equals(ActionType.UPDATED);
-        notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, savedRuleChain.getId(),
-                savedRuleChain, user, actionType, sendMsgToEdge, null);
-        return savedRuleChain;
     }
 
     @Override
     public void delete(RuleChain ruleChain, User user) {
         TenantId tenantId = ruleChain.getTenantId();
         RuleChainId ruleChainId = ruleChain.getId();
-        List<RuleNode> referencingRuleNodes = ruleChainService.getReferencingRuleChainNodes(tenantId, ruleChainId);
+        try {
+            List<RuleNode> referencingRuleNodes = ruleChainService.getReferencingRuleChainNodes(tenantId, ruleChainId);
 
-        Set<RuleChainId> referencingRuleChainIds = referencingRuleNodes.stream().map(RuleNode::getRuleChainId).collect(Collectors.toSet());
+            Set<RuleChainId> referencingRuleChainIds = referencingRuleNodes.stream().map(RuleNode::getRuleChainId).collect(Collectors.toSet());
 
-        List<EdgeId> relatedEdgeIds = null;
-        if (RuleChainType.EDGE.equals(ruleChain.getType())) {
-            relatedEdgeIds = findRelatedEdgeIds(tenantId, ruleChainId);
+            List<EdgeId> relatedEdgeIds = null;
+            if (RuleChainType.EDGE.equals(ruleChain.getType())) {
+                relatedEdgeIds = findRelatedEdgeIds(tenantId, ruleChainId);
+            }
+
+            ruleChainService.deleteRuleChainById(tenantId, ruleChainId);
+
+            referencingRuleChainIds.remove(ruleChain.getId());
+
+            if (RuleChainType.CORE.equals(ruleChain.getType())) {
+                referencingRuleChainIds.forEach(referencingRuleChainId ->
+                        tbClusterService.broadcastEntityStateChangeEvent(tenantId, referencingRuleChainId, ComponentLifecycleEvent.UPDATED));
+
+                tbClusterService.broadcastEntityStateChangeEvent(tenantId, ruleChain.getId(), ComponentLifecycleEvent.DELETED);
+            }
+
+            notificationEntityService.notifyDeleteRuleChain(tenantId, ruleChain, relatedEdgeIds, user);
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.RULE_CHAIN), ActionType.DELETED,
+                    user, e, ruleChainId.toString());
+            throw e;
         }
-
-        ruleChainService.deleteRuleChainById(tenantId, ruleChainId);
-
-        referencingRuleChainIds.remove(ruleChain.getId());
-
-        if (RuleChainType.CORE.equals(ruleChain.getType())) {
-            referencingRuleChainIds.forEach(referencingRuleChainId ->
-                    tbClusterService.broadcastEntityStateChangeEvent(tenantId, referencingRuleChainId, ComponentLifecycleEvent.UPDATED));
-
-            tbClusterService.broadcastEntityStateChangeEvent(tenantId, ruleChain.getId(), ComponentLifecycleEvent.DELETED);
-        }
-
-        notificationEntityService.notifyDeleteRuleChain(tenantId, ruleChain, relatedEdgeIds, user);
     }
 
     @Override
     public RuleChain saveDefaultByName(TenantId tenantId, DefaultRuleChainCreateRequest request, User user) throws IOException {
-        RuleChain savedRuleChain = installScripts.createDefaultRuleChain(tenantId, request.getName());
-        tbClusterService.broadcastEntityStateChangeEvent(tenantId, savedRuleChain.getId(), ComponentLifecycleEvent.CREATED);
-        notificationEntityService.logEntityAction(tenantId, savedRuleChain.getId(), savedRuleChain, ActionType.ADDED, user);
-        return savedRuleChain;
+        try {
+            RuleChain savedRuleChain = installScripts.createDefaultRuleChain(tenantId, request.getName());
+            tbClusterService.broadcastEntityStateChangeEvent(tenantId, savedRuleChain.getId(), ComponentLifecycleEvent.CREATED);
+            notificationEntityService.logEntityAction(tenantId, savedRuleChain.getId(), savedRuleChain, ActionType.ADDED, user);
+            return savedRuleChain;
+        } catch (Exception e) {
+            RuleChain ruleChain = new RuleChain();
+            ruleChain.setName(request.getName());
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.RULE_CHAIN), ruleChain,
+                    ActionType.ADDED, user, e);
+            throw e;
+        }
     }
 
     @Override
     public RuleChain setRootRuleChain(TenantId tenantId, RuleChain ruleChain, User user) throws ThingsboardException {
         RuleChainId ruleChainId = ruleChain.getId();
-        RuleChain previousRootRuleChain = ruleChainService.getRootTenantRuleChain(tenantId);
-        if (ruleChainService.setRootRuleChain(tenantId, ruleChainId)) {
-            if (previousRootRuleChain != null) {
-                RuleChainId previousRootRuleChainId = previousRootRuleChain.getId();
-                previousRootRuleChain = ruleChainService.findRuleChainById(tenantId, previousRootRuleChainId);
+        try {
+            RuleChain previousRootRuleChain = ruleChainService.getRootTenantRuleChain(tenantId);
+            if (ruleChainService.setRootRuleChain(tenantId, ruleChainId)) {
+                if (previousRootRuleChain != null) {
+                    RuleChainId previousRootRuleChainId = previousRootRuleChain.getId();
+                    previousRootRuleChain = ruleChainService.findRuleChainById(tenantId, previousRootRuleChainId);
 
-                tbClusterService.broadcastEntityStateChangeEvent(tenantId, previousRootRuleChainId,
+                    tbClusterService.broadcastEntityStateChangeEvent(tenantId, previousRootRuleChainId,
+                            ComponentLifecycleEvent.UPDATED);
+                    notificationEntityService.logEntityAction(tenantId, previousRootRuleChainId, previousRootRuleChain,
+                            ActionType.UPDATED, user);
+                }
+                ruleChain = ruleChainService.findRuleChainById(tenantId, ruleChainId);
+
+                tbClusterService.broadcastEntityStateChangeEvent(tenantId, ruleChainId,
                         ComponentLifecycleEvent.UPDATED);
-                notificationEntityService.logEntityAction(tenantId, previousRootRuleChainId, previousRootRuleChain,
-                        ActionType.UPDATED, user);
+                notificationEntityService.logEntityAction(tenantId, ruleChainId, ruleChain, ActionType.UPDATED, user);
             }
-            ruleChain = ruleChainService.findRuleChainById(tenantId, ruleChainId);
-
-            tbClusterService.broadcastEntityStateChangeEvent(tenantId, ruleChainId,
-                    ComponentLifecycleEvent.UPDATED);
-            notificationEntityService.logEntityAction(tenantId, ruleChainId, ruleChain, ActionType.UPDATED, user);
+            return ruleChain;
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.RULE_CHAIN), ActionType.UPDATED,
+                    user, e, ruleChainId.toString());
+            throw e;
         }
-        return ruleChain;
     }
 
     @Override
@@ -244,85 +269,123 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
                                                    boolean updateRelated, User user) throws ThingsboardException {
         RuleChainId ruleChainId = ruleChain.getId();
         RuleChainId ruleChainMetaDataId = ruleChainMetaData.getRuleChainId();
-        RuleChainUpdateResult result = ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData);
-        checkNotNull(result.isSuccess() ? true : null);
+        try {
+            RuleChainUpdateResult result = ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData);
+            checkNotNull(result.isSuccess() ? true : null);
 
-        List<RuleChain> updatedRuleChains;
-        if (updateRelated && result.isSuccess()) {
-            updatedRuleChains = updateRelatedRuleChains(tenantId, ruleChainMetaDataId, result);
-        } else {
-            updatedRuleChains = Collections.emptyList();
-        }
-
-        RuleChainMetaData savedRuleChainMetaData = checkNotNull(ruleChainService.loadRuleChainMetaData(tenantId, ruleChainMetaDataId));
-
-        if (RuleChainType.CORE.equals(ruleChain.getType())) {
-            tbClusterService.broadcastEntityStateChangeEvent(tenantId, ruleChainId, ComponentLifecycleEvent.UPDATED);
-            updatedRuleChains.forEach(updatedRuleChain -> {
-                tbClusterService.broadcastEntityStateChangeEvent(tenantId, updatedRuleChain.getId(), ComponentLifecycleEvent.UPDATED);
-            });
-        }
-
-        notificationEntityService.logEntityAction(tenantId, ruleChainId, ruleChain, ActionType.UPDATED, user, ruleChainMetaData);
-
-        if (RuleChainType.EDGE.equals(ruleChain.getType())) {
-            notificationEntityService.notifySendMsgToEdgeService(tenantId, ruleChain.getId(), EdgeEventActionType.UPDATED);
-        }
-
-        for (RuleChain updatedRuleChain : updatedRuleChains) {
-            if (RuleChainType.EDGE.equals(ruleChain.getType())) {
-                notificationEntityService.notifySendMsgToEdgeService(tenantId, updatedRuleChain.getId(), EdgeEventActionType.UPDATED);
+            List<RuleChain> updatedRuleChains;
+            if (updateRelated && result.isSuccess()) {
+                updatedRuleChains = updateRelatedRuleChains(tenantId, ruleChainMetaDataId, result);
             } else {
-                RuleChainMetaData updatedRuleChainMetaData = checkNotNull(ruleChainService.loadRuleChainMetaData(tenantId, updatedRuleChain.getId()));
-                notificationEntityService.logEntityAction(tenantId, updatedRuleChain.getId(), updatedRuleChain,
-                        ActionType.UPDATED, user, updatedRuleChainMetaData);
+                updatedRuleChains = Collections.emptyList();
             }
+
+            RuleChainMetaData savedRuleChainMetaData = checkNotNull(ruleChainService.loadRuleChainMetaData(tenantId, ruleChainMetaDataId));
+
+            if (RuleChainType.CORE.equals(ruleChain.getType())) {
+                tbClusterService.broadcastEntityStateChangeEvent(tenantId, ruleChainId, ComponentLifecycleEvent.UPDATED);
+                updatedRuleChains.forEach(updatedRuleChain -> {
+                    tbClusterService.broadcastEntityStateChangeEvent(tenantId, updatedRuleChain.getId(), ComponentLifecycleEvent.UPDATED);
+                });
+            }
+
+            notificationEntityService.logEntityAction(tenantId, ruleChainId, ruleChain, ActionType.UPDATED, user, ruleChainMetaData);
+
+            if (RuleChainType.EDGE.equals(ruleChain.getType())) {
+                notificationEntityService.notifySendMsgToEdgeService(tenantId, ruleChain.getId(), EdgeEventActionType.UPDATED);
+            }
+
+            for (RuleChain updatedRuleChain : updatedRuleChains) {
+                if (RuleChainType.EDGE.equals(ruleChain.getType())) {
+                    notificationEntityService.notifySendMsgToEdgeService(tenantId, updatedRuleChain.getId(), EdgeEventActionType.UPDATED);
+                } else {
+                    RuleChainMetaData updatedRuleChainMetaData = checkNotNull(ruleChainService.loadRuleChainMetaData(tenantId, updatedRuleChain.getId()));
+                    notificationEntityService.logEntityAction(tenantId, updatedRuleChain.getId(), updatedRuleChain,
+                            ActionType.UPDATED, user, updatedRuleChainMetaData);
+                }
+            }
+            return savedRuleChainMetaData;
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.RULE_CHAIN), ActionType.ADDED,
+                    user, e, ruleChainMetaData);
+            throw e;
         }
-        return savedRuleChainMetaData;
     }
 
     @Override
     public RuleChain assignRuleChainToEdge(TenantId tenantId, RuleChain ruleChain, Edge edge, User user) throws ThingsboardException {
         RuleChainId ruleChainId = ruleChain.getId();
-        RuleChain savedRuleChain = checkNotNull(ruleChainService.assignRuleChainToEdge(tenantId, ruleChainId, edge.getId()));
-        notificationEntityService.notifyAssignOrUnassignEntityToEdge(tenantId, ruleChainId,
-                null, edge.getId(), savedRuleChain, ActionType.ASSIGNED_TO_EDGE,
-                user, ruleChainId.toString(), edge.getId().toString(), edge.getName());
-        return savedRuleChain;
+        EdgeId edgeId = edge.getId();
+        try {
+            RuleChain savedRuleChain = checkNotNull(ruleChainService.assignRuleChainToEdge(tenantId, ruleChainId, edgeId));
+            notificationEntityService.notifyAssignOrUnassignEntityToEdge(tenantId, ruleChainId,
+                    null, edgeId, savedRuleChain, ActionType.ASSIGNED_TO_EDGE,
+                    user, ruleChainId.toString(), edgeId.toString(), edge.getName());
+            return savedRuleChain;
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.RULE_CHAIN),
+                    ActionType.ASSIGNED_TO_EDGE, user, e, ruleChainId.toString(), edgeId.toString());
+            throw e;
+        }
     }
 
     @Override
     public RuleChain unassignRuleChainFromEdge(TenantId tenantId, RuleChain ruleChain, Edge edge, User user) throws ThingsboardException {
         RuleChainId ruleChainId = ruleChain.getId();
-        RuleChain savedRuleChain = checkNotNull(ruleChainService.unassignRuleChainFromEdge(tenantId, ruleChainId, edge.getId(), false));
-        notificationEntityService.notifyAssignOrUnassignEntityToEdge(tenantId, ruleChainId,
-                null, edge.getId(), savedRuleChain, ActionType.UNASSIGNED_FROM_EDGE,
-                user, ruleChainId.toString(), edge.getId().toString(), edge.getName());
-        return savedRuleChain;
+        EdgeId edgeId = edge.getId();
+        try {
+            RuleChain savedRuleChain = checkNotNull(ruleChainService.unassignRuleChainFromEdge(tenantId, ruleChainId, edgeId, false));
+            notificationEntityService.notifyAssignOrUnassignEntityToEdge(tenantId, ruleChainId,
+                    null, edgeId, savedRuleChain, ActionType.UNASSIGNED_FROM_EDGE,
+                    user, ruleChainId.toString(), edgeId.toString(), edge.getName());
+            return savedRuleChain;
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.RULE_CHAIN),
+                    ActionType.UNASSIGNED_FROM_EDGE, user, e, ruleChainId, edgeId);
+            throw e;
+        }
     }
 
     @Override
     public RuleChain setEdgeTemplateRootRuleChain(TenantId tenantId, RuleChain ruleChain, User user) throws ThingsboardException {
         RuleChainId ruleChainId = ruleChain.getId();
-        ruleChainService.setEdgeTemplateRootRuleChain(tenantId, ruleChainId);
-        notificationEntityService.logEntityAction(tenantId, ruleChainId, ruleChain, ActionType.UPDATED, user);
-        return ruleChain;
+        try {
+            ruleChainService.setEdgeTemplateRootRuleChain(tenantId, ruleChainId);
+            notificationEntityService.logEntityAction(tenantId, ruleChainId, ruleChain, ActionType.UPDATED, user);
+            return ruleChain;
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.RULE_CHAIN), ActionType.UPDATED,
+                    user, e, ruleChainId.toString());
+            throw e;
+        }
     }
 
     @Override
     public RuleChain setAutoAssignToEdgeRuleChain(TenantId tenantId, RuleChain ruleChain, User user) throws ThingsboardException {
         RuleChainId ruleChainId = ruleChain.getId();
-        ruleChainService.setAutoAssignToEdgeRuleChain(tenantId, ruleChainId);
-        notificationEntityService.logEntityAction(tenantId, ruleChainId, ruleChain, ActionType.UPDATED, user);
-        return ruleChain;
+        try {
+            ruleChainService.setAutoAssignToEdgeRuleChain(tenantId, ruleChainId);
+            notificationEntityService.logEntityAction(tenantId, ruleChainId, ruleChain, ActionType.UPDATED, user);
+            return ruleChain;
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.RULE_CHAIN), ActionType.UPDATED,
+                    user, e, ruleChainId.toString());
+            throw e;
+        }
     }
 
     @Override
     public RuleChain unsetAutoAssignToEdgeRuleChain(TenantId tenantId, RuleChain ruleChain, User user) throws ThingsboardException {
         RuleChainId ruleChainId = ruleChain.getId();
-        ruleChainService.unsetAutoAssignToEdgeRuleChain(tenantId, ruleChainId);
-        notificationEntityService.logEntityAction(tenantId, ruleChainId, ruleChain, ActionType.UPDATED, user);
-        return ruleChain;
+        try {
+            ruleChainService.unsetAutoAssignToEdgeRuleChain(tenantId, ruleChainId);
+            notificationEntityService.logEntityAction(tenantId, ruleChainId, ruleChain, ActionType.UPDATED, user);
+            return ruleChain;
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.RULE_CHAIN), ActionType.UPDATED,
+                    user, e, ruleChainId.toString());
+            throw e;
+        }
     }
 
     private Set<RuleChainId> updateRelatedRuleChains(TenantId tenantId, RuleChainId ruleChainId, Map<String, String> labelsMap) {
