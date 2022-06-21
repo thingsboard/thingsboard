@@ -64,6 +64,7 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.edge.EdgeNotificationService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
+import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 import org.thingsboard.server.service.install.InstallScripts;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.resource.TbResourceService;
@@ -124,6 +125,8 @@ public abstract class AbstractTbEntityService {
     protected QueueService queueService;
     @Autowired
     protected DashboardService dashboardService;
+    @Autowired
+    protected EntitiesVersionControlService vcService;
     @Autowired
     protected EntityViewService entityViewService;
     @Autowired

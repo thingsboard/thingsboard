@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, forwardRef, Input, OnInit } from '@angular/core';
+import { AfterViewInit, Component, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
@@ -33,7 +33,7 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
     multi: true
   }]
 })
-export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, AfterViewInit {
+export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, AfterViewInit, OnChanges {
 
   entityTypeFormGroup: FormGroup;
 
@@ -44,6 +44,9 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
 
   @Input()
   useAliasEntityTypes: boolean;
+
+  @Input()
+  filterAllowedEntityTypes = true;
 
   private showLabelValue: boolean;
   get showLabel(): boolean {
@@ -87,7 +90,8 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
   }
 
   ngOnInit() {
-    this.entityTypes = this.entityService.prepareAllowedEntityTypesList(this.allowedEntityTypes, this.useAliasEntityTypes);
+    this.entityTypes = this.filterAllowedEntityTypes ?
+      this.entityService.prepareAllowedEntityTypesList(this.allowedEntityTypes, this.useAliasEntityTypes) : this.allowedEntityTypes;
     this.entityTypeFormGroup.get('entityType').valueChanges.subscribe(
       (value) => {
         let modelValue;
@@ -99,6 +103,22 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
         this.updateView(modelValue);
       }
     );
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    for (const propName of Object.keys(changes)) {
+      const change = changes[propName];
+      if (!change.firstChange && change.currentValue !== change.previousValue) {
+        if (propName === 'allowedEntityTypes') {
+          this.entityTypes = this.filterAllowedEntityTypes ?
+            this.entityService.prepareAllowedEntityTypesList(this.allowedEntityTypes, this.useAliasEntityTypes) : this.allowedEntityTypes;
+          const currentEntityType: EntityType | AliasEntityType = this.entityTypeFormGroup.get('entityType').value;
+          if (currentEntityType && !this.entityTypes.includes(currentEntityType)) {
+            this.entityTypeFormGroup.get('entityType').patchValue(null, {emitEvent: true});
+          }
+        }
+      }
+    }
   }
 
   ngAfterViewInit(): void {

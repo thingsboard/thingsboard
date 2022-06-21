@@ -54,6 +54,7 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
         ActionType actionType = device.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         try {
             Device savedDevice = checkNotNull(deviceService.saveDeviceWithAccessToken(device, accessToken));
+            vcService.autoCommit(user, savedDevice.getId());
             notificationEntityService.notifyCreateOrUpdateDevice(tenantId, savedDevice.getId(), savedDevice.getCustomerId(),
                     savedDevice, oldDevice, actionType, user);
 

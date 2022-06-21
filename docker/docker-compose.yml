@@ -257,6 +257,38 @@ services:
       - "8080"
     env_file:
       - tb-web-ui.env
+  tb-vc-executor1:
+    restart: always
+    image: "${DOCKER_REPO}/${TB_VC_EXECUTOR_DOCKER_NAME}:${TB_VERSION}"
+    ports:
+      - "8081"
+    environment:
+      TB_SERVICE_ID: tb-vc-executor1
+    env_file:
+      - tb-vc-executor.env
+    volumes:
+      - ./tb-vc-executor/conf:/config
+      - ./tb-vc-executor/log:/var/log/tb-vc-executor
+    depends_on:
+      - zookeeper
+      - tb-core1
+      - tb-core2
+  tb-vc-executor2:
+    restart: always
+    image: "${DOCKER_REPO}/${TB_VC_EXECUTOR_DOCKER_NAME}:${TB_VERSION}"
+    ports:
+      - "8081"
+    environment:
+      TB_SERVICE_ID: tb-vc-executor2
+    env_file:
+      - tb-vc-executor.env
+    volumes:
+      - ./tb-vc-executor/conf:/config
+      - ./tb-vc-executor/log:/var/log/tb-vc-executor
+    depends_on:
+      - zookeeper
+      - tb-core1
+      - tb-core2
   haproxy:
     restart: always
     container_name: "${LOAD_BALANCER_NAME}"

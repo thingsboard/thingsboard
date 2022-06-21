@@ -116,7 +116,7 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
         saveRelation(relationA);
         saveRelation(relationB);
 
-        Assert.assertNull(relationService.deleteEntityRelationsAsync(SYSTEM_TENANT_ID, childId).get());
+        relationService.deleteEntityRelations(SYSTEM_TENANT_ID, childId);
 
         Assert.assertFalse(relationService.checkRelation(SYSTEM_TENANT_ID, parentId, childId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
 

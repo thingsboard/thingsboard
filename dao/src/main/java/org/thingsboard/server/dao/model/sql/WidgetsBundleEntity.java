@@ -54,6 +54,9 @@ public final class WidgetsBundleEntity extends BaseSqlEntity<WidgetsBundle> impl
     @Column(name = ModelConstants.WIDGETS_BUNDLE_DESCRIPTION)
     private String description;
 
+    @Column(name = ModelConstants.EXTERNAL_ID_PROPERTY)
+    private UUID externalId;
+
     public WidgetsBundleEntity() {
         super();
     }
@@ -70,6 +73,9 @@ public final class WidgetsBundleEntity extends BaseSqlEntity<WidgetsBundle> impl
         this.title = widgetsBundle.getTitle();
         this.image = widgetsBundle.getImage();
         this.description = widgetsBundle.getDescription();
+        if (widgetsBundle.getExternalId() != null) {
+            this.externalId = widgetsBundle.getExternalId().getId();
+        }
     }
 
     @Override
@@ -93,6 +99,9 @@ public final class WidgetsBundleEntity extends BaseSqlEntity<WidgetsBundle> impl
         widgetsBundle.setTitle(title);
         widgetsBundle.setImage(image);
         widgetsBundle.setDescription(description);
+        if (externalId != null) {
+            widgetsBundle.setExternalId(new WidgetsBundleId(externalId));
+        }
         return widgetsBundle;
     }
 }
