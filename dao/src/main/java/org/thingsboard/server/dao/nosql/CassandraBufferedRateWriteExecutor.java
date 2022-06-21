@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2022 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 import org.thingsboard.server.dao.entity.EntityService;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.util.AbstractBufferedRateExecutor;
 import org.thingsboard.server.dao.util.AsyncTaskContext;
 import org.thingsboard.server.dao.util.NoSqlAnyDao;
@@ -48,16 +49,15 @@ public class CassandraBufferedRateWriteExecutor extends AbstractBufferedRateExec
             @Value("${cassandra.query.dispatcher_threads:2}") int dispatcherThreads,
             @Value("${cassandra.query.callback_threads:4}") int callbackThreads,
             @Value("${cassandra.query.poll_ms:50}") long pollMs,
-            @Value("${cassandra.query.tenant_rate_limits.enabled}") boolean tenantRateLimitsEnabled,
-            @Value("${cassandra.query.tenant_rate_limits.configuration}") String tenantRateLimitsConfiguration,
             @Value("${cassandra.query.tenant_rate_limits.print_tenant_names}") boolean printTenantNames,
             @Value("${cassandra.query.print_queries_freq:0}") int printQueriesFreq,
             @Value("${cassandra.query.rate_limit_print_interval_ms}") long printInterval,
             @Autowired StatsFactory statsFactory,
             @Autowired EntityService entityService,
-            @Autowired TbPrintStatsExecutorService tbPrintStatsExecutorService) {
-        super(printInterval, queueLimit, concurrencyLimit, maxWaitTime, dispatcherThreads, callbackThreads, pollMs, tenantRateLimitsEnabled, tenantRateLimitsConfiguration, printQueriesFreq, statsFactory,
-                tbPrintStatsExecutorService, entityService, printTenantNames);
+            @Autowired TbPrintStatsExecutorService tbPrintStatsExecutorService,
+            @Autowired TbTenantProfileCache tenantProfileCache) {
+        super(printInterval, queueLimit, concurrencyLimit, maxWaitTime, dispatcherThreads, callbackThreads, pollMs,
+                printQueriesFreq, statsFactory, tbPrintStatsExecutorService, entityService, tenantProfileCache, printTenantNames);
     }
 
     @PostConstruct

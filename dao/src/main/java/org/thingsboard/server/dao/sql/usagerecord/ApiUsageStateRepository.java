@@ -42,5 +42,6 @@ public interface ApiUsageStateRepository extends JpaRepository<ApiUsageStateEnti
 
     @Transactional
     @Modifying
-    void deleteByEntityIdAndEntityType(UUID entityId, String entityType);
+    @Query("DELETE FROM ApiUsageStateEntity e WHERE e.entityId = :entityId and e.entityType = :entityType")
+    void deleteByEntityIdAndEntityType(@Param("entityId") UUID entityId, @Param("entityType") String entityType);
 }
