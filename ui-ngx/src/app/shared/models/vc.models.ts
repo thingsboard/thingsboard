@@ -197,6 +197,7 @@ export interface EntityLoadError {
 export interface VersionLoadResult {
   result: Array<EntityTypeLoadResult>;
   error: EntityLoadError;
+  done: boolean;
 }
 
 export interface AttributeExportData {

@@ -31,6 +31,7 @@ import { Observable, of, Subscription } from 'rxjs';
 import { EntityType } from '@shared/models/entity-type.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { share } from 'rxjs/operators';
+import { parseHttpErrorMessage } from '@core/utils';
 
 @Component({
   selector: 'tb-entity-version-create',
@@ -113,7 +114,7 @@ export class EntityVersionCreateComponent extends PageComponent implements OnIni
         },
         type: VersionCreateRequestType.SINGLE_ENTITY
       };
-      this.versionCreateResult$ = this.entitiesVersionControlService.saveEntitiesVersion(request).pipe(
+      this.versionCreateResult$ = this.entitiesVersionControlService.saveEntitiesVersion(request, {ignoreErrors: true}).pipe(
         share()
       );
       this.cd.detectChanges();
@@ -132,6 +133,13 @@ export class EntityVersionCreateComponent extends PageComponent implements OnIni
           } else if (this.onClose) {
             this.onClose(result, request.branch);
           }
+        }
+      },
+      (error) => {
+        this.resultMessage = parseHttpErrorMessage(error, this.translate).message;
+        this.cd.detectChanges();
+        if (this.popoverComponent) {
+          this.popoverComponent.updatePosition();
         }
       });
     });

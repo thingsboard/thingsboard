@@ -14,12 +14,12 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit, Sanitizer } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import {
   EntityDataInfo,
-  SingleEntityVersionLoadRequest,
+  SingleEntityVersionLoadRequest, VersionCreationResult,
   VersionLoadRequestType,
   VersionLoadResult
 } from '@shared/models/vc.models';
@@ -29,15 +29,17 @@ import { EntitiesVersionControlService } from '@core/http/entities-version-contr
 import { EntityId } from '@shared/models/id/entity-id';
 import { TranslateService } from '@ngx-translate/core';
 import { TbPopoverComponent } from '@shared/components/popover.component';
-import { delay } from 'rxjs/operators';
-import { SafeHtml } from '@angular/platform-browser';
+import { delay, share } from 'rxjs/operators';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { Observable, Subscription } from 'rxjs';
+import { parseHttpErrorMessage } from '@core/utils';
 
 @Component({
   selector: 'tb-entity-version-restore',
   templateUrl: './entity-version-restore.component.html',
   styleUrls: ['./version-control.scss']
 })
-export class EntityVersionRestoreComponent extends PageComponent implements OnInit {
+export class EntityVersionRestoreComponent extends PageComponent implements OnInit, OnDestroy {
 
   @Input()
   branch: string;
@@ -63,10 +65,15 @@ export class EntityVersionRestoreComponent extends PageComponent implements OnIn
 
   errorMessage: SafeHtml;
 
+  versionLoadResult$: Observable<VersionLoadResult>;
+
+  private versionLoadResultSubscription: Subscription;
+
   constructor(protected store: Store<AppState>,
               private entitiesVersionControlService: EntitiesVersionControlService,
               private cd: ChangeDetectorRef,
               private translate: TranslateService,
+              private sanitizer: DomSanitizer,
               private fb: FormBuilder) {
     super(store);
   }
@@ -84,6 +91,13 @@ export class EntityVersionRestoreComponent extends PageComponent implements OnIn
         this.popoverComponent.updatePosition();
       }
     });
+  }
+
+  ngOnDestroy() {
+    super.ngOnDestroy();
+    if (this.versionLoadResultSubscription) {
+      this.versionLoadResultSubscription.unsubscribe();
+    }
   }
 
   cancel(): void {
@@ -104,17 +118,33 @@ export class EntityVersionRestoreComponent extends PageComponent implements OnIn
       },
       type: VersionLoadRequestType.SINGLE_ENTITY
     };
-    this.entitiesVersionControlService.loadEntitiesVersion(request).subscribe((result) => {
-      if (result.error) {
-        this.errorMessage = this.entitiesVersionControlService.entityLoadErrorToMessage(result.error);
-        this.cd.detectChanges();
-        if (this.popoverComponent) {
-          this.popoverComponent.updatePosition();
+    this.versionLoadResult$ = this.entitiesVersionControlService.loadEntitiesVersion(request, {ignoreErrors: true}).pipe(
+      share()
+    );
+    this.cd.detectChanges();
+    if (this.popoverComponent) {
+      this.popoverComponent.updatePosition();
+    }
+    this.versionLoadResultSubscription = this.versionLoadResult$.subscribe((result) => {
+      if (result.done) {
+        if (result.error) {
+          this.errorMessage = this.entitiesVersionControlService.entityLoadErrorToMessage(result.error);
+          this.cd.detectChanges();
+          if (this.popoverComponent) {
+            this.popoverComponent.updatePosition();
+          }
+        } else {
+          if (this.onClose) {
+            this.onClose(result);
+          }
         }
-      } else {
-        if (this.onClose) {
-          this.onClose(result);
-        }
+      }
+    },
+    (error) => {
+      this.errorMessage = this.sanitizer.bypassSecurityTrustHtml(parseHttpErrorMessage(error, this.translate).message);
+      this.cd.detectChanges();
+      if (this.popoverComponent) {
+        this.popoverComponent.updatePosition();
       }
     });
   }

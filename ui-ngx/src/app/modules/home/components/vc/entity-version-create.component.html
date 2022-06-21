@@ -66,7 +66,7 @@
     </div>
   </section>
   <section *ngIf="versionCreateResult$">
-    <section *ngIf="(versionCreateResult$ | async)?.done; else progress">
+    <section *ngIf="(versionCreateResult$ | async)?.done || resultMessage; else progress">
       <section *ngIf="resultMessage">
         <div class="mat-title vc-result-message">{{ resultMessage }}</div>
         <div fxLayoutAlign="end center" fxLayoutGap="8px">

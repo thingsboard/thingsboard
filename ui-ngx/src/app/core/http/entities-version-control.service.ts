@@ -38,10 +38,11 @@ import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.m
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { selectIsUserLoaded } from '@core/auth/auth.selectors';
-import { catchError, finalize, switchMap, takeWhile, tap } from 'rxjs/operators';
+import { catchError, finalize, map, switchMap, takeWhile, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActionLoadFinish, ActionLoadStart } from '@core/interceptors/load.actions';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
 
 @Injectable({
   providedIn: 'root'
@@ -135,7 +136,24 @@ export class EntitiesVersionControlService {
   }
 
   public loadEntitiesVersion(request: VersionLoadRequest, config?: RequestConfig): Observable<VersionLoadResult> {
-    return this.http.post<VersionLoadResult>('/api/entities/vc/entity', request, defaultHttpOptionsFromConfig(config));
+    this.store.dispatch(new ActionLoadStart());
+    return this.http.post<string>('/api/entities/vc/entity', request,
+      defaultHttpOptionsFromConfig({...config, ...{ignoreLoading: true}})).pipe(
+      switchMap((requestId) => {
+        return timer(0, 2000).pipe(
+          switchMap(() => this.getVersionLoadRequestStatus(requestId, config)),
+          takeWhile((res) => !res.done, true),
+        );
+      }),
+      finalize(() => {
+        this.store.dispatch(new ActionLoadFinish());
+      }),
+    );
+  }
+
+  private getVersionLoadRequestStatus(requestId: string, config?: RequestConfig): Observable<VersionLoadResult> {
+    return this.http.get<VersionLoadResult>(`/api/entities/vc/entity/${requestId}/status`,
+      defaultHttpOptionsFromConfig({...config, ...{ignoreLoading: true}}));
   }
 
   public compareEntityDataToVersion(branch: string,

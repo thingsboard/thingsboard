@@ -16,7 +16,7 @@
 
 -->
 <section [ngStyle]="entityDataInfo ? {minWidth: '400px'} : {}">
-  <section *ngIf="!errorMessage">
+  <section *ngIf="!versionLoadResult$">
     <mat-toolbar *ngIf="entityDataInfo">
       <h2>{{ 'version-control.restore-entity-from-version' | translate: {versionName} }}</h2>
       <span fxFlex></span>
@@ -55,15 +55,27 @@
       </button>
     </div>
   </section>
-  <section *ngIf="errorMessage">
-    <div class="mat-title vc-result-message error" [innerHTML]="errorMessage"></div>
-    <div fxLayoutAlign="end center" fxLayoutGap="8px">
-      <button mat-button color="primary"
-              type="button"
-              [disabled]="(isLoading$ | async)"
-              (click)="cancel()" cdkFocusInitial>
-        {{ 'action.close' | translate }}
-      </button>
-    </div>
+  <section *ngIf="versionLoadResult$">
+    <section *ngIf="(versionLoadResult$ | async)?.done || errorMessage; else progress">
+      <section *ngIf="errorMessage">
+        <div class="mat-title vc-result-message error" [innerHTML]="errorMessage"></div>
+        <div fxLayoutAlign="end center" fxLayoutGap="8px">
+          <button mat-button color="primary"
+                  type="button"
+                  [disabled]="(isLoading$ | async)"
+                  (click)="cancel()" cdkFocusInitial>
+            {{ 'action.close' | translate }}
+          </button>
+        </div>
+      </section>
+    </section>
+    <ng-template #progress>
+      <section fxLayout="column" fxLayoutAlign="center center">
+        <div class="mat-title vc-result-message progress">
+          <span translate>version-control.restoring-entity-version</span>
+          <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+        </div>
+      </section>
+    </ng-template>
   </section>
 </section>
