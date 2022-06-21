@@ -104,6 +104,9 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
     @Column(name = ModelConstants.DEVICE_PROFILE_SOFTWARE_ID_PROPERTY)
     private UUID softwareId;
 
+    @Column(name = ModelConstants.EXTERNAL_ID_PROPERTY)
+    private UUID externalId;
+
     public DeviceProfileEntity() {
         super();
     }
@@ -139,6 +142,9 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
         }
         if (deviceProfile.getSoftwareId() != null) {
             this.softwareId = deviceProfile.getSoftwareId().getId();
+        }
+        if (deviceProfile.getExternalId() != null) {
+            this.externalId = deviceProfile.getExternalId().getId();
         }
     }
 
@@ -188,6 +194,9 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
 
         if (softwareId != null) {
             deviceProfile.setSoftwareId(new OtaPackageId(softwareId));
+        }
+        if (externalId != null) {
+            deviceProfile.setExternalId(new DeviceProfileId(externalId));
         }
 
         return deviceProfile;

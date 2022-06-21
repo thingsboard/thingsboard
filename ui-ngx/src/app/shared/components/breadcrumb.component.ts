@@ -15,7 +15,7 @@
 ///
 
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { BehaviorSubject, Subject } from 'rxjs';
+import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { BreadCrumb, BreadCrumbConfig } from './breadcrumb';
 import { ActivatedRoute, ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
@@ -32,10 +32,20 @@ import { BroadcastService } from '@core/services/broadcast.service';
 export class BreadcrumbComponent implements OnInit, OnDestroy {
 
   activeComponentValue: any;
+  updateBreadcrumbsSubscription: Subscription = null;
 
   @Input()
   set activeComponent(activeComponent: any) {
+    if (this.updateBreadcrumbsSubscription) {
+      this.updateBreadcrumbsSubscription.unsubscribe();
+      this.updateBreadcrumbsSubscription = null;
+    }
     this.activeComponentValue = activeComponent;
+    if (this.activeComponentValue && this.activeComponentValue.updateBreadcrumbs) {
+      this.updateBreadcrumbsSubscription = this.activeComponentValue.updateBreadcrumbs.subscribe(() => {
+        this.breadcrumbs$.next(this.buildBreadCrumbs(this.activatedRoute.snapshot));
+      });
+    }
   }
 
   breadcrumbs$: Subject<Array<BreadCrumb>> = new BehaviorSubject<Array<BreadCrumb>>(this.buildBreadCrumbs(this.activatedRoute.snapshot));

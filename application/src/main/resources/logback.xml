@@ -26,6 +26,9 @@
     </appender>
 
     <logger name="org.thingsboard.server" level="INFO" />
+<!--    <logger name="org.springframework.jdbc.core" level="TRACE" />-->
+<!--    <logger name="org.hibernate.SQL" level="DEBUG" />-->
+<!--    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE" />-->
 
 <!--    <logger name="org.thingsboard.server.service.queue" level="TRACE" />-->
 <!--    <logger name="org.thingsboard.server.service.transport" level="TRACE" />-->

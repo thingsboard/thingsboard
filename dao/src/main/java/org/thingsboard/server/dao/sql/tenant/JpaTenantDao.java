@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.sql.tenant;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -79,6 +80,11 @@ public class JpaTenantDao extends JpaAbstractSearchTextDao<TenantEntity, Tenant>
     @Override
     public PageData<TenantId> findTenantsIds(PageLink pageLink) {
         return DaoUtil.pageToPageData(tenantRepository.findTenantsIds(DaoUtil.toPageable(pageLink))).mapData(TenantId::fromUUID);
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.TENANT;
     }
 
     @Override
