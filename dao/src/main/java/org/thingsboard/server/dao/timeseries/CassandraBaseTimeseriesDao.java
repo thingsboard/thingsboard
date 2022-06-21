@@ -82,7 +82,7 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
 
     protected static final List<Long> FIXED_PARTITION = List.of(0L);
 
-    private CassandraTsPartitionsCache cassandraTsPartitionsCache;
+    CassandraTsPartitionsCache cassandraTsPartitionsCache;
 
     @Autowired
     private Environment environment;
@@ -93,9 +93,11 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     @Value("${cassandra.query.ts_key_value_partitioning}")
     private String partitioning;
 
-    @Getter
     @Value("${cassandra.query.ts_key_value_partitioning_always_exist_in_reading:false}")
     private boolean partitioningAlwaysExistInReading;
+
+    @Value("${cassandra.query.ts_key_value_partitioning_write_partition_table:true}")
+    private boolean partitioningWritePartitionTable;
 
     @Value("${cassandra.query.ts_key_value_partitions_max_cache_size:100000}")
     private long partitionsCacheSize;
@@ -131,7 +133,7 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         Optional<NoSqlTsPartitionDate> partition = NoSqlTsPartitionDate.parse(partitioning);
         if (partition.isPresent()) {
             tsFormat = partition.get();
-            if (!isFixedPartitioning() && partitionsCacheSize > 0) {
+            if (partitioningWritePartitionTable && !isFixedPartitioning() && partitionsCacheSize > 0) {
                 cassandraTsPartitionsCache = new CassandraTsPartitionsCache(partitionsCacheSize);
             }
         } else {
@@ -203,7 +205,7 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
 
     @Override
     public ListenableFuture<Integer> savePartition(TenantId tenantId, EntityId entityId, long tsKvEntryTs, String key) {
-        if (isFixedPartitioning()) {
+        if (!partitioningWritePartitionTable || isFixedPartitioning()) {
             return Futures.immediateFuture(null);
         }
         // DO NOT apply custom TTL to partition, otherwise, short TTL will remove partition too early
@@ -419,7 +421,7 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         if (isFixedPartitioning()) { //no need to fetch partitions from DB
             return Futures.immediateFuture(FIXED_PARTITION);
         }
-        if (isPartitioningAlwaysExistInReading()) {
+        if (!partitioningWritePartitionTable || partitioningAlwaysExistInReading) {
             return Futures.immediateFuture(calculatePartitions(minPartition, maxPartition));
         }
         TbResultSetFuture partitionsFuture = fetchPartitions(tenantId, entityId, query.getKey(), minPartition, maxPartition);
@@ -522,7 +524,7 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         return getFuture(executeAsyncWrite(tenantId, stmt), rs -> null);
     }
 
-    private ListenableFuture<Integer> doSavePartition(TenantId tenantId, EntityId entityId, String key, long ttl, long partition) {
+    ListenableFuture<Integer> doSavePartition(TenantId tenantId, EntityId entityId, String key, long ttl, long partition) {
         log.debug("Saving partition {} for the entity [{}-{}] and key {}", partition, entityId.getEntityType(), entityId.getId(), key);
         PreparedStatement preparedStatement = ttl == 0 ? getPartitionInsertStmt() : getPartitionInsertTtlStmt();
         BoundStatement stmt = preparedStatement.bind();

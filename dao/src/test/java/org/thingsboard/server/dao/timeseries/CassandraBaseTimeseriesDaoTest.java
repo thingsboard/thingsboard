@@ -1,45 +1,34 @@
 /**
- * ThingsBoard, Inc. ("COMPANY") CONFIDENTIAL
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
- * Copyright © 2016-2021 ThingsBoard, Inc. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * NOTICE: All information contained herein is, and remains
- * the property of ThingsBoard, Inc. and its suppliers,
- * if any.  The intellectual and technical concepts contained
- * herein are proprietary to ThingsBoard, Inc.
- * and its suppliers and may be covered by U.S. and Foreign Patents,
- * patents in process, and are protected by trade secret or copyright law.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Dissemination of this information or reproduction of this material is strictly forbidden
- * unless prior written permission is obtained from COMPANY.
- *
- * Access to the source code contained herein is hereby forbidden to anyone except current COMPANY employees,
- * managers or contractors who have executed Confidentiality and Non-disclosure agreements
- * explicitly covering such access.
- *
- * The copyright notice above does not evidence any actual or intended publication
- * or disclosure  of  this source code, which includes
- * information that is confidential and/or proprietary, and is a trade secret, of  COMPANY.
- * ANY REPRODUCTION, MODIFICATION, DISTRIBUTION, PUBLIC  PERFORMANCE,
- * OR PUBLIC DISPLAY OF OR THROUGH USE  OF THIS  SOURCE CODE  WITHOUT
- * THE EXPRESS WRITTEN CONSENT OF COMPANY IS STRICTLY PROHIBITED,
- * AND IN VIOLATION OF APPLICABLE LAWS AND INTERNATIONAL TREATIES.
- * THE RECEIPT OR POSSESSION OF THIS SOURCE CODE AND/OR RELATED INFORMATION
- * DOES NOT CONVEY OR IMPLY ANY RIGHTS TO REPRODUCE, DISCLOSE OR DISTRIBUTE ITS CONTENTS,
- * OR TO MANUFACTURE, USE, OR SELL ANYTHING THAT IT  MAY DESCRIBE, IN WHOLE OR IN PART.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.thingsboard.server.dao.timeseries;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Answers;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.nosql.CassandraBufferedRateReadExecutor;
 import org.thingsboard.server.dao.nosql.CassandraBufferedRateWriteExecutor;
@@ -49,6 +38,10 @@ import java.util.List;
 
 import static org.apache.commons.lang3.time.DateFormatUtils.ISO_DATETIME_TIME_ZONE_FORMAT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.BDDMockito.willReturn;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = CassandraBaseTimeseriesDao.class)
@@ -56,6 +49,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         "database.ts.type=cassandra",
         "cassandra.query.ts_key_value_partitioning=MONTHS",
         "cassandra.query.ts_key_value_partitioning_always_exist_in_reading=true",
+        "cassandra.query.ts_key_value_partitioning_write_partition_table=true",
         "cassandra.query.ts_key_value_partitions_max_cache_size=100000",
         "cassandra.query.ts_key_value_partitions_cache_stats_enabled=true",
         "cassandra.query.ts_key_value_partitions_cache_stats_interval=60",
@@ -65,7 +59,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Slf4j
 public class CassandraBaseTimeseriesDaoTest {
 
-    @Autowired
+    @SpyBean
     CassandraBaseTimeseriesDao tsDao;
 
     @MockBean(answer = Answers.RETURNS_MOCKS)
@@ -75,6 +69,18 @@ public class CassandraBaseTimeseriesDaoTest {
     CassandraBufferedRateReadExecutor cassandraBufferedRateReadExecutor;
     @MockBean
     CassandraBufferedRateWriteExecutor cassandraBufferedRateWriteExecutor;
+
+    @Test
+    public void testPartitionCache() {
+        assertThat(tsDao.cassandraTsPartitionsCache).isNotNull();
+    }
+
+    @Test
+    public void testSavePartition() {
+        ListenableFuture<Integer> future = Futures.submit(() -> 0, MoreExecutors.directExecutor());
+        willReturn(future).given(tsDao).doSavePartition(any(), any(), anyString(), anyLong(), anyLong());
+        assertThat(tsDao.savePartition(TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID, 0L, "key")).isSameAs(future);
+    }
 
     @Test
     public void testToPartitionsMonths() throws ParseException {
@@ -93,7 +99,7 @@ public class CassandraBaseTimeseriesDaoTest {
         long leapTs = tsDao.toPartitionTs(ISO_DATETIME_TIME_ZONE_FORMAT.parse("2020-02-29T23:59:59Z").getTime());
         long endTs = tsDao.toPartitionTs(ISO_DATETIME_TIME_ZONE_FORMAT.parse("2021-01-31T23:59:59Z").getTime());
 
-        log.warn("startTs {}, nextTs {}, leapTs {}, endTs {}", startTs, nextTs, leapTs, endTs);
+        log.debug("startTs {}, nextTs {}, leapTs {}, endTs {}", startTs, nextTs, leapTs, endTs);
 
         assertThat(tsDao.calculatePartitions(0, 0)).isEqualTo(List.of(0L));
         assertThat(tsDao.calculatePartitions(0, 1)).isEqualTo(List.of(0L, 1L));
