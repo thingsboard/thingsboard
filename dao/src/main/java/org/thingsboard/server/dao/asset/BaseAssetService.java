@@ -122,7 +122,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
         Asset savedAsset;
         AssetCacheEvictEvent evictEvent = new AssetCacheEvictEvent(asset.getTenantId(), asset.getName(), oldAsset != null ? oldAsset.getName() : null);
         try {
-            savedAsset = assetDao.save(asset.getTenantId(), asset);
+            savedAsset = assetDao.saveAndFlush(asset.getTenantId(), asset);
             publishEvictEvent(evictEvent);
         } catch (Exception t) {
             handleEvictEvent(evictEvent);

@@ -23,59 +23,39 @@ services:
   tb-core1:
     env_file:
       - queue-rabbitmq.env
-    depends_on:
-      - zookeeper
-      - redis
   tb-core2:
     env_file:
       - queue-rabbitmq.env
-    depends_on:
-      - zookeeper
-      - redis
   tb-rule-engine1:
     env_file:
       - queue-rabbitmq.env
-    depends_on:
-      - zookeeper
-      - redis
   tb-rule-engine2:
     env_file:
       - queue-rabbitmq.env
-    depends_on:
-      - zookeeper
-      - redis
   tb-mqtt-transport1:
     env_file:
       - queue-rabbitmq.env
-    depends_on:
-      - zookeeper
   tb-mqtt-transport2:
     env_file:
       - queue-rabbitmq.env
-    depends_on:
-      - zookeeper
   tb-http-transport1:
     env_file:
       - queue-rabbitmq.env
-    depends_on:
-      - zookeeper
   tb-http-transport2:
     env_file:
       - queue-rabbitmq.env
-    depends_on:
-      - zookeeper
   tb-coap-transport:
     env_file:
       - queue-rabbitmq.env
-    depends_on:
-      - zookeeper
   tb-lwm2m-transport:
     env_file:
       - queue-rabbitmq.env
-    depends_on:
-      - zookeeper
   tb-snmp-transport:
     env_file:
       - queue-rabbitmq.env
-    depends_on:
-      - zookeeper
+  tb-vc-executor1:
+    env_file:
+      - queue-rabbitmq.env
+  tb-vc-executor2:
+    env_file:
+      - queue-rabbitmq.env

@@ -119,6 +119,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
         AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey(tenantId, "securitySettings");
         if (adminSettings == null) {
             adminSettings = new AdminSettings();
+            adminSettings.setTenantId(tenantId);
             adminSettings.setKey("securitySettings");
         }
         adminSettings.setJsonValue(JacksonUtil.valueToTree(securitySettings));

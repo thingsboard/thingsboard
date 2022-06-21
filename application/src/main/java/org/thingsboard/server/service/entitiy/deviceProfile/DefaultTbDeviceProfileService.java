@@ -54,7 +54,7 @@ public class DefaultTbDeviceProfileService extends AbstractTbEntityService imple
                 }
             }
             DeviceProfile savedDeviceProfile = checkNotNull(deviceProfileService.saveDeviceProfile(deviceProfile));
-
+            vcService.autoCommit(user, savedDeviceProfile.getId());
             tbClusterService.onDeviceProfileChange(savedDeviceProfile, null);
             tbClusterService.broadcastEntityStateChangeEvent(tenantId, savedDeviceProfile.getId(),
                     actionType.equals(ActionType.ADDED) ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);

@@ -40,6 +40,8 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 
+import java.util.List;
+
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service
@@ -277,6 +279,11 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     @Override
     public DashboardInfo findFirstDashboardInfoByTenantIdAndName(TenantId tenantId, String name) {
         return dashboardInfoDao.findFirstByTenantIdAndName(tenantId.getId(), name);
+    }
+
+    @Override
+    public List<Dashboard> findTenantDashboardsByTitle(TenantId tenantId, String title) {
+        return dashboardDao.findByTenantIdAndTitle(tenantId.getId(), title);
     }
 
     private PaginatedRemover<TenantId, DashboardInfo> tenantDashboardsRemover =

@@ -34,6 +34,7 @@ import { CustomerTabsComponent } from '@home/pages/customer/customer-tabs.compon
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
+import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
 
 @Injectable()
 export class CustomersTableConfigResolver implements Resolve<EntityTableConfig<Customer>> {
@@ -41,6 +42,7 @@ export class CustomersTableConfigResolver implements Resolve<EntityTableConfig<C
   private readonly config: EntityTableConfig<Customer> = new EntityTableConfig<Customer>();
 
   constructor(private customerService: CustomerService,
+              private homeDialogs: HomeDialogsService,
               private translate: TranslateService,
               private datePipe: DatePipe,
               private router: Router,

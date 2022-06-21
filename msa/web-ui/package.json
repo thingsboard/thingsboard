@@ -6,7 +6,7 @@
   "main": "server.js",
   "bin": "server.js",
   "scripts": {
-    "pkg": "pkg -t node12-linux-x64,node12-win-x64 --out-path ./target . && node install.js",
+    "pkg": "pkg -t node16-linux-x64,node16-win-x64 --out-path ./target . && node install.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "WEB_FOLDER=./target/web nodemon server.js",
     "start-prod": "NODE_ENV=production nodemon server.js"
