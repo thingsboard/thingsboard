@@ -39,6 +39,12 @@ public interface TbTransactionalCache<K extends Serializable, V extends Serializ
 
     TbCacheTransaction<K, V> newTransactionForKey(K key);
 
+    /**
+     * Note that all keys should be in the same cache slot for redis. You may control the cache slot using '{}' bracers.
+     * See CLUSTER KEYSLOT command for more details.
+     * @param keys - list of keys to use
+     * @return transaction object
+     */
     TbCacheTransaction<K, V> newTransactionForKeys(List<K> keys);
 
     default V getAndPutInTransaction(K key, Supplier<V> dbCall, boolean cacheNullValue) {

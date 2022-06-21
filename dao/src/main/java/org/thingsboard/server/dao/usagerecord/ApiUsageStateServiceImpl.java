@@ -35,8 +35,8 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileConfiguration;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.service.DataValidator;
-import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.dao.tenant.TenantProfileDao;
+import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
 import java.util.ArrayList;
@@ -52,16 +52,16 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
 
     private final ApiUsageStateDao apiUsageStateDao;
     private final TenantProfileDao tenantProfileDao;
-    private final TenantDao tenantDao;
+    private final TenantService tenantService;
     private final TimeseriesService tsService;
     private final DataValidator<ApiUsageState> apiUsageStateValidator;
 
     public ApiUsageStateServiceImpl(ApiUsageStateDao apiUsageStateDao, TenantProfileDao tenantProfileDao,
-                                    TenantDao tenantDao, @Lazy TimeseriesService tsService,
+                                    TenantService tenantService, @Lazy TimeseriesService tsService,
                                     DataValidator<ApiUsageState> apiUsageStateValidator) {
         this.apiUsageStateDao = apiUsageStateDao;
         this.tenantProfileDao = tenantProfileDao;
-        this.tenantDao = tenantDao;
+        this.tenantService = tenantService;
         this.tsService = tsService;
         this.apiUsageStateValidator = apiUsageStateValidator;
     }
@@ -118,7 +118,7 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
 
         if (entityId.getEntityType() == EntityType.TENANT && !entityId.equals(TenantId.SYS_TENANT_ID)) {
             tenantId = (TenantId) entityId;
-            Tenant tenant = tenantDao.findById(tenantId, tenantId.getId());
+            Tenant tenant = tenantService.findTenantById(tenantId);
             TenantProfile tenantProfile = tenantProfileDao.findById(tenantId, tenant.getTenantProfileId().getId());
             TenantProfileConfiguration configuration = tenantProfile.getProfileData().getConfiguration();
 

@@ -16,7 +16,7 @@
 
 -->
 <section style="min-width: 800px;">
-  <section *ngIf="!resultMessage">
+  <section *ngIf="!versionCreateResult$">
     <mat-toolbar>
       <h2>{{ 'version-control.create-entities-version' | translate }}</h2>
       <span fxFlex></span>
@@ -69,9 +69,11 @@
       </button>
     </div>
   </section>
-  <section *ngIf="resultMessage">
-    <div class="mat-title vc-result-message" [innerHtml]="resultMessage"></div>
-    <div fxLayoutAlign="end center" fxLayoutGap="8px">
+  <section *ngIf="versionCreateResult$">
+    <section *ngIf="resultMessage">
+      <div class="mat-title vc-result-message" [innerHtml]="resultMessage"></div>
+    </section>
+    <div *ngIf="(versionCreateResult$ | async)?.done || hasError; else progress" fxLayoutAlign="end center" fxLayoutGap="8px">
       <button mat-button color="primary"
               type="button"
               [disabled]="(isLoading$ | async)"
@@ -79,5 +81,13 @@
         {{ 'action.close' | translate }}
       </button>
     </div>
+    <ng-template #progress>
+      <section fxLayout="column" fxLayoutAlign="center center">
+        <div class="mat-title vc-result-message progress">
+          <span translate>version-control.creating-version</span>
+          <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+        </div>
+      </section>
+    </ng-template>
   </section>
 </section>

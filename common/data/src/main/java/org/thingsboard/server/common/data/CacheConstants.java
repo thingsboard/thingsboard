@@ -26,6 +26,7 @@ public class CacheConstants {
     public static final String CLAIM_DEVICES_CACHE = "claimDevices";
     public static final String SECURITY_SETTINGS_CACHE = "securitySettings";
     public static final String TENANT_PROFILE_CACHE = "tenantProfiles";
+    public static final String TENANTS_CACHE = "tenants";
     public static final String DEVICE_PROFILE_CACHE = "deviceProfiles";
     public static final String ATTRIBUTES_CACHE = "attributes";
     public static final String TOKEN_OUTDATAGE_TIME_CACHE = "tokensOutdatageTime";
@@ -34,4 +35,5 @@ public class CacheConstants {
     public static final String REPOSITORY_SETTINGS_CACHE = "repositorySettings";
     public static final String AUTO_COMMIT_SETTINGS_CACHE = "autoCommitSettings";
     public static final String TWO_FA_VERIFICATION_CODES_CACHE = "twoFaVerificationCodes";
+    public static final String VERSION_CONTROL_TASK_CACHE = "versionControlTask";
 }

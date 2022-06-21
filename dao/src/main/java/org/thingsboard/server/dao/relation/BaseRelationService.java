@@ -28,8 +28,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.util.StringUtils;
 import org.thingsboard.server.cache.TbTransactionalCache;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -90,7 +90,14 @@ public class BaseRelationService implements RelationService {
     }
 
     @Override
-    public ListenableFuture<Boolean> checkRelation(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
+    public ListenableFuture<Boolean> checkRelationAsync(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
+        log.trace("Executing checkRelationAsync [{}][{}][{}][{}]", from, to, relationType, typeGroup);
+        validate(from, to, relationType, typeGroup);
+        return relationDao.checkRelationAsync(tenantId, from, to, relationType, typeGroup);
+    }
+
+    @Override
+    public boolean checkRelation(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
         log.trace("Executing checkRelation [{}][{}][{}][{}]", from, to, relationType, typeGroup);
         validate(from, to, relationType, typeGroup);
         return relationDao.checkRelation(tenantId, from, to, relationType, typeGroup);

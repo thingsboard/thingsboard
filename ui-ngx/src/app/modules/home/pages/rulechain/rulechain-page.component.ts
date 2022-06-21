@@ -1733,7 +1733,7 @@ export interface AddRuleNodeDialogData {
   selector: 'tb-add-rule-node-dialog',
   templateUrl: './add-rule-node-dialog.component.html',
   providers: [{provide: ErrorStateMatcher, useExisting: AddRuleNodeDialogComponent}],
-  styleUrls: []
+  styleUrls: ['./add-rule-node-dialog.component.scss']
 })
 export class AddRuleNodeDialogComponent extends DialogComponent<AddRuleNodeDialogComponent, FcRuleNode>
   implements OnInit, ErrorStateMatcher {

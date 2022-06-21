@@ -3000,6 +3000,19 @@
             "retry-failed-and-timeout-hint": "Retry all failed and timed-out messages from processing pack"
         }
     },
+    "server-error": {
+        "general": "General server error",
+        "authentication": "Authentication error",
+        "jwt-token-expired": "JWT token expired",
+        "tenant-trial-expired": "Tenant trial expired",
+        "credentials-expired": "Credentials expired",
+        "permission-denied": "Permission denied",
+        "invalid-arguments": "Invalid arguments",
+        "bad-request-params": "Bad request params",
+        "item-not-found": "Item not found",
+        "too-many-requests": "Too many requests",
+        "too-many-updates": "Too many updates"
+    },
     "tenant": {
         "tenant": "Tenant",
         "tenants": "Tenants",
@@ -3149,6 +3162,7 @@
         "cassandra-tenant-limits-configuration": "Cassandra query rate limit for tenant",
         "ws-limit-max-sessions-per-tenant": "Maximum number of WS sessions per tenant",
         "ws-limit-max-sessions-per-customer": "Maximum number of WS sessions per customer",
+        "ws-limit-max-sessions-per-regular-user": "Maximum number of WS sessions per regular user",
         "ws-limit-max-sessions-per-public-user": "Maximum number of WS sessions per public user",
         "ws-limit-queue-per-session": "Maximum size of WS message queue per session",
         "ws-limit-max-subscriptions-per-tenant": "Maximum number of WS subscriptions per tenant",
@@ -3306,9 +3320,11 @@
         "no-versions-text": "No versions found",
         "copy-full-version-id": "Copy full version id",
         "create-version": "Create version",
+        "creating-version": "Creating version... Please wait",
         "nothing-to-commit": "No changes to commit",
         "restore-version": "Restore version",
         "restore-entity-from-version": "Restore entity from version '{{versionName}}'",
+        "restoring-entity-version": "Restoring entity version... Please wait",
         "load-relations": "Load relations",
         "load-attributes": "Load attributes",
         "load-credentials": "Load credentials",
@@ -3334,6 +3350,7 @@
         "remove-other-entities": "Remove other entities",
         "find-existing-entity-by-name": "Find existing entity by name",
         "restore-entities-from-version": "Restore entities from version '{{versionName}}'",
+        "restoring-entities-from-version": "Restoring entities... Please wait",
         "no-entities-restored": "No entities restored",
         "created": "{{created}} created",
         "updated": "{{updated}} updated",

@@ -17,13 +17,19 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-utils';
-import { Observable, of } from 'rxjs';
+import { Observable, of, timer } from 'rxjs';
 import {
-  BranchInfo, EntityDataDiff, EntityDataInfo, EntityLoadError, entityLoadErrorTranslationMap, EntityLoadErrorType,
+  BranchInfo,
+  EntityDataDiff,
+  EntityDataInfo,
+  EntityLoadError,
+  entityLoadErrorTranslationMap,
+  EntityLoadErrorType,
   EntityVersion,
   VersionCreateRequest,
   VersionCreationResult,
-  VersionLoadRequest, VersionLoadResult
+  VersionLoadRequest,
+  VersionLoadResult
 } from '@shared/models/vc.models';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
@@ -32,9 +38,11 @@ import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.m
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { selectIsUserLoaded } from '@core/auth/auth.selectors';
-import { catchError, tap } from 'rxjs/operators';
+import { catchError, finalize, map, switchMap, takeWhile, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { ActionLoadFinish, ActionLoadStart } from '@core/interceptors/load.actions';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
 
 @Injectable({
   providedIn: 'root'
@@ -83,14 +91,28 @@ export class EntitiesVersionControlService {
   }
 
   public saveEntitiesVersion(request: VersionCreateRequest, config?: RequestConfig): Observable<VersionCreationResult> {
-    return this.http.post<VersionCreationResult>('/api/entities/vc/version', request, defaultHttpOptionsFromConfig(config)).pipe(
-      tap(() => {
+    this.store.dispatch(new ActionLoadStart());
+    return this.http.post<string>('/api/entities/vc/version', request,
+      defaultHttpOptionsFromConfig({...config, ...{ignoreLoading: true}})).pipe(
+      switchMap((requestId) => {
+        return timer(0, 2000).pipe(
+          switchMap(() => this.getVersionCreateRequestStatus(requestId, config)),
+          takeWhile((res) => !res.done, true)
+        );
+      }),
+      finalize(() => {
         const branch = request.branch;
         if (this.branchList && !this.branchList.find(b => b.name === branch)) {
           this.branchList = null;
         }
-      })
+        this.store.dispatch(new ActionLoadFinish());
+      }),
     );
+  }
+
+  private getVersionCreateRequestStatus(requestId: string, config?: RequestConfig): Observable<VersionCreationResult> {
+    return this.http.get<VersionCreationResult>(`/api/entities/vc/version/${requestId}/status`,
+      defaultHttpOptionsFromConfig({...config, ...{ignoreLoading: true}}));
   }
 
   public listEntityVersions(pageLink: PageLink, branch: string,
@@ -114,7 +136,24 @@ export class EntitiesVersionControlService {
   }
 
   public loadEntitiesVersion(request: VersionLoadRequest, config?: RequestConfig): Observable<VersionLoadResult> {
-    return this.http.post<VersionLoadResult>('/api/entities/vc/entity', request, defaultHttpOptionsFromConfig(config));
+    this.store.dispatch(new ActionLoadStart());
+    return this.http.post<string>('/api/entities/vc/entity', request,
+      defaultHttpOptionsFromConfig({...config, ...{ignoreLoading: true}})).pipe(
+      switchMap((requestId) => {
+        return timer(0, 2000).pipe(
+          switchMap(() => this.getVersionLoadRequestStatus(requestId, config)),
+          takeWhile((res) => !res.done, true),
+        );
+      }),
+      finalize(() => {
+        this.store.dispatch(new ActionLoadFinish());
+      }),
+    );
+  }
+
+  private getVersionLoadRequestStatus(requestId: string, config?: RequestConfig): Observable<VersionLoadResult> {
+    return this.http.get<VersionLoadResult>(`/api/entities/vc/entity/${requestId}/status`,
+      defaultHttpOptionsFromConfig({...config, ...{ignoreLoading: true}}));
   }
 
   public compareEntityDataToVersion(branch: string,

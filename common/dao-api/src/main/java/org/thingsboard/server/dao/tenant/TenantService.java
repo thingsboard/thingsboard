@@ -35,6 +35,8 @@ public interface TenantService {
 
     Tenant saveTenant(Tenant tenant);
 
+    boolean tenantExists(TenantId tenantId);
+
     void deleteTenant(TenantId tenantId);
 
     PageData<Tenant> findTenants(PageLink pageLink);
@@ -44,4 +46,6 @@ public interface TenantService {
     List<TenantId> findTenantIdsByTenantProfileId(TenantProfileId tenantProfileId);
 
     void deleteTenants();
+
+    PageData<TenantId> findTenantsIds(PageLink pageLink);
 }
