@@ -138,7 +138,7 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
     }
 
     RedisConnection getConnection(byte[] rawKey) {
-        RedisConnection connection = connectionFactory.getClusterConnection();
+        RedisConnection connection = connectionFactory.getConnection();
         if (!(connection instanceof JedisClusterConnection)) {
             return connection;
         }
