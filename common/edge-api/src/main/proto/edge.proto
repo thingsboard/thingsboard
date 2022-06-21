@@ -432,13 +432,13 @@ message OtaPackageUpdateMsg {
   string version = 8;
   string tag = 9;
   optional string url = 10;
-  bool hasData = 11;
-  optional string fileName = 12;
-  optional string contentType = 13;
-  optional string checksumAlgorithm = 14;
-  optional string checksum = 15;
-  optional int64 dataSize = 16;
-  optional bytes data = 17;
+  optional string fileName = 11;
+  optional string contentType = 12;
+  optional string checksumAlgorithm = 13;
+  optional string checksum = 14;
+  optional int64 dataSize = 15;
+  optional bytes data = 16;
+  optional string additionalInfo = 17;
 }
 
 /**

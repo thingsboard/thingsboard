@@ -16,59 +16,54 @@
 package org.thingsboard.server.service.edge.rpc.constructor;
 
 import com.google.protobuf.ByteString;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.OtaPackage;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
-import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
-import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.OtaPackageUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-
-import java.nio.charset.StandardCharsets;
 
 @Component
 @TbCoreComponent
 public class OtaPackageMsgConstructor {
 
-    @Autowired
-    private DataDecodingEncodingService dataDecodingEncodingService;
-
     public OtaPackageUpdateMsg constructOtaPackageUpdatedMsg(UpdateMsgType msgType, OtaPackage otaPackage) {
         OtaPackageUpdateMsg.Builder builder = OtaPackageUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(otaPackage.getId().getId().getMostSignificantBits())
-                .setIdLSB(otaPackage.getId().getId().getLeastSignificantBits());
-//                .setName(deviceProfile.getName())
-//                .setDefault(deviceProfile.isDefault())
-//                .setType(deviceProfile.getType().name())
-//                .setProfileDataBytes(ByteString.copyFrom(dataDecodingEncodingService.encode(deviceProfile.getProfileData())));
-        // TODO: @voba - add possibility to setup edge rule chain as device profile default
-//        if (deviceProfile.getDefaultRuleChainId() != null) {
-//            builder.setDefaultRuleChainIdMSB(deviceProfile.getDefaultRuleChainId().getId().getMostSignificantBits())
-//                    .setDefaultRuleChainIdLSB(deviceProfile.getDefaultRuleChainId().getId().getLeastSignificantBits());
-//        }
-//        if (deviceProfile.getDefaultQueueName() != null) {
-//            builder.setDefaultQueueName(deviceProfile.getDefaultQueueName());
-//        }
-//        if (deviceProfile.getDescription() != null) {
-//            builder.setDescription(deviceProfile.getDescription());
-//        }
-//        if (deviceProfile.getTransportType() != null) {
-//            builder.setTransportType(deviceProfile.getTransportType().name());
-//        }
-//        if (deviceProfile.getProvisionType() != null) {
-//            builder.setProvisionType(deviceProfile.getProvisionType().name());
-//        }
-//        if (deviceProfile.getProvisionDeviceKey() != null) {
-//            builder.setProvisionDeviceKey(deviceProfile.getProvisionDeviceKey());
-//        }
-//        if (deviceProfile.getImage() != null) {
-//            builder.setImage(ByteString.copyFrom(deviceProfile.getImage().getBytes(StandardCharsets.UTF_8)));
-//        }
+                .setIdLSB(otaPackage.getId().getId().getLeastSignificantBits())
+                .setDeviceProfileIdMSB(otaPackage.getDeviceProfileId().getId().getMostSignificantBits())
+                .setDeviceProfileIdLSB(otaPackage.getDeviceProfileId().getId().getLeastSignificantBits())
+                .setType(otaPackage.getType().name())
+                .setTitle(otaPackage.getTitle())
+                .setVersion(otaPackage.getVersion())
+                .setTag(otaPackage.getTag());
+
+        if (otaPackage.getUrl() != null) {
+            builder.setUrl(otaPackage.getUrl());
+        }
+        if (otaPackage.getAdditionalInfo() != null) {
+            builder.setAdditionalInfo(JacksonUtil.toString(otaPackage.getAdditionalInfo()));
+        }
+        if (otaPackage.getFileName() != null) {
+            builder.setFileName(otaPackage.getFileName());
+        }
+        if (otaPackage.getContentType() != null) {
+            builder.setContentType(otaPackage.getContentType());
+        }
+        if (otaPackage.getChecksumAlgorithm() != null) {
+            builder.setChecksumAlgorithm(otaPackage.getChecksumAlgorithm().name());
+        }
+        if (otaPackage.getChecksum() != null) {
+            builder.setChecksum(otaPackage.getChecksum());
+        }
+        if (otaPackage.getDataSize() != null) {
+            builder.setDataSize(otaPackage.getDataSize());
+        }
+        if (otaPackage.getData() != null) {
+            builder.setData(ByteString.copyFrom(otaPackage.getData().array()));
+        }
         return builder.build();
     }
 
