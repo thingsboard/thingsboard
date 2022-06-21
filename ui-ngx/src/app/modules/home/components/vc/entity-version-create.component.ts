@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
@@ -27,16 +27,18 @@ import { AppState } from '@core/core.state';
 import { EntitiesVersionControlService } from '@core/http/entities-version-control.service';
 import { EntityId } from '@shared/models/id/entity-id';
 import { TranslateService } from '@ngx-translate/core';
-import { Observable, of } from 'rxjs';
+import { Observable, of, Subscription } from 'rxjs';
 import { EntityType } from '@shared/models/entity-type.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
+import { share } from 'rxjs/operators';
+import { parseHttpErrorMessage } from '@core/utils';
 
 @Component({
   selector: 'tb-entity-version-create',
   templateUrl: './entity-version-create.component.html',
   styleUrls: ['./version-control.scss']
 })
-export class EntityVersionCreateComponent extends PageComponent implements OnInit {
+export class EntityVersionCreateComponent extends PageComponent implements OnInit, OnDestroy {
 
   @Input()
   branch: string;
@@ -62,6 +64,10 @@ export class EntityVersionCreateComponent extends PageComponent implements OnIni
 
   resultMessage: string;
 
+  versionCreateResult$: Observable<VersionCreationResult>;
+
+  private versionCreateResultSubscription: Subscription;
+
   constructor(protected store: Store<AppState>,
               private entitiesVersionControlService: EntitiesVersionControlService,
               private cd: ChangeDetectorRef,
@@ -79,6 +85,13 @@ export class EntityVersionCreateComponent extends PageComponent implements OnIni
       saveAttributes: [true, []],
       saveCredentials: [true, []]
     });
+  }
+
+  ngOnDestroy() {
+    super.ngOnDestroy();
+    if (this.versionCreateResultSubscription) {
+      this.versionCreateResultSubscription.unsubscribe();
+    }
   }
 
   cancel(): void {
@@ -101,18 +114,34 @@ export class EntityVersionCreateComponent extends PageComponent implements OnIni
         },
         type: VersionCreateRequestType.SINGLE_ENTITY
       };
-      this.entitiesVersionControlService.saveEntitiesVersion(request).subscribe((result) => {
-        if (!result.added && !result.modified) {
-          this.resultMessage = this.translate.instant('version-control.nothing-to-commit');
-          this.cd.detectChanges();
-          if (this.popoverComponent) {
-            this.popoverComponent.updatePosition();
+      this.versionCreateResult$ = this.entitiesVersionControlService.saveEntitiesVersion(request, {ignoreErrors: true}).pipe(
+        share()
+      );
+      this.cd.detectChanges();
+      if (this.popoverComponent) {
+        this.popoverComponent.updatePosition();
+      }
+
+      this.versionCreateResultSubscription = this.versionCreateResult$.subscribe((result) => {
+        if (result.done) {
+          if (!result.added && !result.modified || result.error) {
+            this.resultMessage = result.error ? result.error : this.translate.instant('version-control.nothing-to-commit');
+            this.cd.detectChanges();
+            if (this.popoverComponent) {
+              this.popoverComponent.updatePosition();
+            }
+          } else if (this.onClose) {
+            this.onClose(result, request.branch);
           }
-        } else if (this.onClose) {
-          this.onClose(result, request.branch);
+        }
+      },
+      (error) => {
+        this.resultMessage = parseHttpErrorMessage(error, this.translate).message;
+        this.cd.detectChanges();
+        if (this.popoverComponent) {
+          this.popoverComponent.updatePosition();
         }
       });
     });
   }
 }
-

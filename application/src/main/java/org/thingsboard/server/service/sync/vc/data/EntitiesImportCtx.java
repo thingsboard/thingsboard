@@ -35,11 +35,13 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 @Slf4j
 @Data
 public class EntitiesImportCtx {
 
+    private final UUID requestId;
     private final SecurityUser user;
     private final String versionId;
 
@@ -57,11 +59,12 @@ public class EntitiesImportCtx {
     private EntityImportSettings settings;
     private EntityImportResult<?> currentImportResult;
 
-    public EntitiesImportCtx(SecurityUser user, String versionId) {
-        this(user, versionId, null);
+    public EntitiesImportCtx(UUID requestId, SecurityUser user, String versionId) {
+        this(requestId, user, versionId, null);
     }
 
-    public EntitiesImportCtx(SecurityUser user, String versionId, EntityImportSettings settings) {
+    public EntitiesImportCtx(UUID requestId, SecurityUser user, String versionId, EntityImportSettings settings) {
+        this.requestId = requestId;
         this.user = user;
         this.versionId = versionId;
         this.settings = settings;

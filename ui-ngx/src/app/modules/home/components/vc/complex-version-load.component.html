@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<section [ngStyle]="versionLoadResult ? {minWidth: '500px'} : {minWidth: '800px'}">
-  <section *ngIf="!versionLoadResult">
+<section [ngStyle]="versionLoadResult$ ? {minWidth: '500px'} : {minWidth: '800px'}">
+  <section *ngIf="!versionLoadResult$">
     <mat-toolbar>
       <h2>{{ 'version-control.restore-entities-from-version' | translate: {versionName} }}</h2>
       <span fxFlex></span>
@@ -48,13 +48,13 @@
       </button>
     </div>
   </section>
-  <section *ngIf="versionLoadResult">
-    <div *ngIf="!entityTypeLoadResults.length && !errorMessage" class="mat-title vc-result-message">
+  <section *ngIf="versionLoadResult$">
+    <div *ngIf="(versionLoadResult$ | async)?.done && !entityTypeLoadResults?.length && !errorMessage" class="mat-title vc-result-message">
       {{ 'version-control.no-entities-restored' | translate }}
     </div>
     <div *ngIf="errorMessage" class="mat-title vc-result-message error" [innerHTML]="errorMessage"></div>
     <div *ngFor="let entityTypeLoadResult of entityTypeLoadResults" class="mat-title vc-result-message">{{ entityTypeLoadResultMessage(entityTypeLoadResult) }}</div>
-    <div fxLayoutAlign="end center" fxLayoutGap="8px">
+    <div *ngIf="(versionLoadResult$ | async)?.done || hasError; else progress"  fxLayoutAlign="end center" fxLayoutGap="8px">
       <button mat-button color="primary"
               type="button"
               [disabled]="(isLoading$ | async)"
@@ -62,5 +62,13 @@
         {{ 'action.close' | translate }}
       </button>
     </div>
+    <ng-template #progress>
+      <section fxLayout="column" fxLayoutAlign="center center">
+        <div class="mat-title vc-result-message progress">
+          <span translate>version-control.restoring-entities-from-version</span>
+          <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+        </div>
+      </section>
+    </ng-template>
   </section>
 </section>

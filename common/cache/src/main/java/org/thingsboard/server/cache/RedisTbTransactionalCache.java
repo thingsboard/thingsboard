@@ -47,7 +47,7 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
     @Getter
     private final String cacheName;
     private final JedisConnectionFactory connectionFactory;
-    private final RedisSerializer<String> keySerializer = new StringRedisSerializer();
+    private final RedisSerializer<String> keySerializer = StringRedisSerializer.UTF_8;
     private final RedisSerializer<V> valueSerializer;
     private final Expiration evictExpiration;
     private final Expiration cacheTtl;
