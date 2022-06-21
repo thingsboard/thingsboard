@@ -116,12 +116,11 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
 
     @Override
     public ListenableFuture<Boolean> checkRelationAsync(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
-        RelationCompositeKey key = getRelationCompositeKey(from, to, relationType, typeGroup);
-        return service.submit(() -> relationRepository.existsById(key));
+        return service.submit(() -> checkRelation(tenantId, from, to, relationType, typeGroup));
     }
 
     @Override
-    public Boolean checkRelation(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
+    public boolean checkRelation(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
         RelationCompositeKey key = getRelationCompositeKey(from, to, relationType, typeGroup);
         return relationRepository.existsById(key);
     }

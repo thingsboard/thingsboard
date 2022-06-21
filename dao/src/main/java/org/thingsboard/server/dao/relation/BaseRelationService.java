@@ -97,7 +97,7 @@ public class BaseRelationService implements RelationService {
     }
 
     @Override
-    public Boolean checkRelation(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
+    public boolean checkRelation(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
         log.trace("Executing checkRelation [{}][{}][{}][{}]", from, to, relationType, typeGroup);
         validate(from, to, relationType, typeGroup);
         return relationDao.checkRelation(tenantId, from, to, relationType, typeGroup);
