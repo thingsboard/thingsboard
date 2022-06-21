@@ -149,7 +149,7 @@ public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
             ConcurrentMap<TwoFaProviderType, TbRateLimits> providersRateLimits = rateLimits.computeIfAbsent(userId, i -> new ConcurrentHashMap<>());
 
             TbRateLimits rateLimit = providersRateLimits.get(providerType);
-            if (rateLimit == null || !rateLimit.getConfig().equals(rateLimitConfig)) {
+            if (rateLimit == null || !rateLimit.getConfiguration().equals(rateLimitConfig)) {
                 rateLimit = new TbRateLimits(rateLimitConfig, true);
                 providersRateLimits.put(providerType, rateLimit);
             }

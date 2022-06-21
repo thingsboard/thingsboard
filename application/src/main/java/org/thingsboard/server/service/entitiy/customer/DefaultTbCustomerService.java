@@ -40,10 +40,10 @@ public class DefaultTbCustomerService extends AbstractTbEntityService implements
     public Customer save(Customer customer, SecurityUser user) throws ThingsboardException {
         ActionType actionType = customer.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = customer.getTenantId();
-        CustomerId customerId = customer.getId();
         try {
             Customer savedCustomer = checkNotNull(customerService.saveCustomer(customer));
-            notificationEntityService.notifyCreateOrUpdateEntity(tenantId, savedCustomer.getId(), savedCustomer, customerId, actionType, user);
+            vcService.autoCommit(user, savedCustomer.getId());
+            notificationEntityService.notifyCreateOrUpdateEntity(tenantId, savedCustomer.getId(), savedCustomer, null, actionType, user);
             return savedCustomer;
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.CUSTOMER), customer, null, actionType, user, e);

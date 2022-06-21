@@ -37,7 +37,7 @@ import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
-import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
+import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
@@ -160,7 +160,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
             TbActorMsg actorMsg = actorMsgOpt.get();
             if (actorMsg instanceof ComponentLifecycleMsg) {
                 ComponentLifecycleMsg componentLifecycleMsg = (ComponentLifecycleMsg) actorMsg;
-                log.info("[{}][{}][{}] Received Lifecycle event: {}", componentLifecycleMsg.getTenantId(), componentLifecycleMsg.getEntityId().getEntityType(),
+                log.debug("[{}][{}][{}] Received Lifecycle event: {}", componentLifecycleMsg.getTenantId(), componentLifecycleMsg.getEntityId().getEntityType(),
                         componentLifecycleMsg.getEntityId(), componentLifecycleMsg.getEvent());
                 if (EntityType.TENANT_PROFILE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
                     TenantProfileId tenantProfileId = new TenantProfileId(componentLifecycleMsg.getEntityId().getId());

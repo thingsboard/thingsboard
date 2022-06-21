@@ -52,7 +52,7 @@ RUN apt-get update \
     && mv /tmp/stop-db.sh /usr/bin \
     && dpkg -i /tmp/${pkg.name}.deb \
     && rm /tmp/${pkg.name}.deb \
-    && systemctl --no-reload disable --now ${pkg.name}.service > /dev/null 2>&1 || : \
+    && (systemctl --no-reload disable --now ${pkg.name}.service > /dev/null 2>&1 || :) \
     && mv /tmp/logback.xml ${pkg.installFolder}/conf \
     && mv /tmp/${pkg.name}.conf ${pkg.installFolder}/conf \
     && mkdir -p $PGLOG \

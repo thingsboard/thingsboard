@@ -22,6 +22,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToVersionControlServiceMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -39,6 +40,7 @@ public class TbCoreQueueProducerProvider implements TbQueueProducerProvider {
     private TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> toRuleEngineNotifications;
     private TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> toTbCoreNotifications;
     private TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> toUsageStats;
+    private TbQueueProducer<TbProtoQueueMsg<ToVersionControlServiceMsg>> toVersionControl;
 
     public TbCoreQueueProducerProvider(TbCoreQueueFactory tbQueueProvider) {
         this.tbQueueProvider = tbQueueProvider;
@@ -52,6 +54,7 @@ public class TbCoreQueueProducerProvider implements TbQueueProducerProvider {
         this.toRuleEngineNotifications = tbQueueProvider.createRuleEngineNotificationsMsgProducer();
         this.toTbCoreNotifications = tbQueueProvider.createTbCoreNotificationsMsgProducer();
         this.toUsageStats = tbQueueProvider.createToUsageStatsServiceMsgProducer();
+        this.toVersionControl = tbQueueProvider.createVersionControlMsgProducer();
     }
 
     @Override
@@ -82,5 +85,10 @@ public class TbCoreQueueProducerProvider implements TbQueueProducerProvider {
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> getTbUsageStatsMsgProducer() {
         return toUsageStats;
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToVersionControlServiceMsg>> getTbVersionControlMsgProducer() {
+        return toVersionControl;
     }
 }

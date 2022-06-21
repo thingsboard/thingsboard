@@ -656,7 +656,6 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected <T> T readResponse(ResultActions result, TypeReference<T> type) throws Exception {
         byte[] content = result.andReturn().getResponse().getContentAsByteArray();
-        ObjectMapper mapper = new ObjectMapper();
         return mapper.readerFor(type).readValue(content);
     }
 
