@@ -98,7 +98,7 @@ public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteR
 
     private ListenableFuture<Boolean> processSingle(TbContext ctx, TbMsg msg, EntityContainer entityContainer, String relationType) {
         SearchDirectionIds sdId = processSingleSearchDirection(msg, entityContainer);
-        return Futures.transformAsync(ctx.getRelationService().checkRelation(ctx.getTenantId(), sdId.getFromId(), sdId.getToId(), relationType, RelationTypeGroup.COMMON),
+        return Futures.transformAsync(ctx.getRelationService().checkRelationAsync(ctx.getTenantId(), sdId.getFromId(), sdId.getToId(), relationType, RelationTypeGroup.COMMON),
                 result -> {
                     if (result) {
                         return processSingleDeleteRelation(ctx, sdId, relationType);
