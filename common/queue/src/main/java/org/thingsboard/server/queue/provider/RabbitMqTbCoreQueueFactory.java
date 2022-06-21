@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToOtaPackageStateServiceMsg;
@@ -167,6 +168,12 @@ public class RabbitMqTbCoreQueueFactory implements TbCoreQueueFactory {
         builder.maxRequestTimeout(jsInvokeSettings.getMaxRequestsTimeout());
         builder.pollInterval(jsInvokeSettings.getResponsePollInterval());
         return builder.build();
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToVersionControlServiceMsg>> createVersionControlMsgProducer() {
+        //TODO: version-control
+        return null;
     }
 
     @Override

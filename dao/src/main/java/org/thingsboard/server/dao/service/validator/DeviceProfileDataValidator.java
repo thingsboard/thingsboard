@@ -37,7 +37,6 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceTypeConfiguration;
@@ -67,7 +66,7 @@ import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DataValidator;
-import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.util.HashSet;
 import java.util.List;
@@ -90,7 +89,7 @@ public class DeviceProfileDataValidator extends DataValidator<DeviceProfile> {
     @Autowired
     private DeviceDao deviceDao;
     @Autowired
-    private TenantDao tenantDao;
+    private TenantService tenantService;
     @Autowired
     @Lazy
     private QueueService queueService;
@@ -119,8 +118,7 @@ public class DeviceProfileDataValidator extends DataValidator<DeviceProfile> {
         if (deviceProfile.getTenantId() == null) {
             throw new DataValidationException("Device profile should be assigned to tenant!");
         } else {
-            Tenant tenant = tenantDao.findById(deviceProfile.getTenantId(), deviceProfile.getTenantId().getId());
-            if (tenant == null) {
+            if (!tenantService.tenantExists(deviceProfile.getTenantId())) {
                 throw new DataValidationException("Device profile is referencing to non-existent tenant!");
             }
         }

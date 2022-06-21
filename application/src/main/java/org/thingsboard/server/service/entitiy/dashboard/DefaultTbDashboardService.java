@@ -48,6 +48,7 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
         TenantId tenantId = dashboard.getTenantId();
         try {
             Dashboard savedDashboard = checkNotNull(dashboardService.saveDashboard(dashboard));
+            vcService.autoCommit(user, savedDashboard.getId());
             notificationEntityService.notifyCreateOrUpdateEntity(tenantId, savedDashboard.getId(), savedDashboard,
                     null, actionType, user);
             return savedDashboard;
@@ -219,7 +220,7 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
     }
 
     @Override
-    public Dashboard asignDashboardToEdge(DashboardId dashboardId, Edge edge, SecurityUser user) throws ThingsboardException {
+    public Dashboard assignDashboardToEdge(DashboardId dashboardId, Edge edge, SecurityUser user) throws ThingsboardException {
         ActionType actionType = ActionType.ASSIGNED_TO_EDGE;
         TenantId tenantId = user.getTenantId();
         EdgeId edgeId = edge.getId();

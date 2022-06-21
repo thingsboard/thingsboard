@@ -233,7 +233,6 @@ public class RuleChainController extends BaseController {
     public RuleChain saveRuleChain(
             @ApiParam(value = "A JSON value representing the rule chain.")
             @RequestBody RuleChain ruleChain) throws ThingsboardException {
-
         ruleChain.setTenantId(getCurrentUser().getTenantId());
         checkEntity(ruleChain.getId(), ruleChain, Resource.RULE_CHAIN);
         return tbRuleChainService.save(ruleChain, getCurrentUser());
