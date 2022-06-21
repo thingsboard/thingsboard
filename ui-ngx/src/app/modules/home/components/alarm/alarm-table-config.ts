@@ -109,7 +109,7 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
       {
         name: this.translate.instant('alarm.details'),
         icon: 'more_horiz',
-        isEnabled: (entity) => this.authUser.authority !== Authority.CUSTOMER_USER || entity.customerId.id === this.authUser.customerId,
+        isEnabled: () => true,
         onAction: ($event, entity) => this.showAlarmDetails(entity)
       }
     );
@@ -121,6 +121,7 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
   }
 
   showAlarmDetails(entity: AlarmInfo) {
+    const isPermissionWrite = this.authUser.authority !== Authority.CUSTOMER_USER || entity.customerId.id === this.authUser.customerId;
     this.dialog.open<AlarmDetailsDialogComponent, AlarmDetailsDialogData, boolean>
     (AlarmDetailsDialogComponent,
       {
@@ -128,8 +129,9 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         data: {
           alarmId: entity.id.id,
-          allowAcknowledgment: true,
-          allowClear: true,
+          alarm: entity,
+          allowAcknowledgment: isPermissionWrite,
+          allowClear: isPermissionWrite,
           displayDetails: true
         }
       }).afterClosed().subscribe(
