@@ -235,6 +235,7 @@
                   [opened]="isEditingWidget || isAddingWidget"
                   (openedStart)="detailsDrawerOpenedStart()"
                   (closed)="detailsDrawerClosed()"
+                  disableClose
                   mode="over"
                   position="end">
         <tb-details-panel *ngIf="!isEditingWidgetClosed" fxFlex

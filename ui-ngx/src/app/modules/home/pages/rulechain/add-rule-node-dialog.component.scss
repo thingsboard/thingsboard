@@ -13,27 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.attributes;
+@import './../scss/constants';
 
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import org.thingsboard.server.common.data.id.EntityId;
+:host {
+  .dialog-container {
+    min-width: 650px !important;
 
-import java.io.Serializable;
-
-@EqualsAndHashCode
-@Getter
-@AllArgsConstructor
-public class AttributeCacheKey implements Serializable {
-    private static final long serialVersionUID = 2013369077925351881L;
-
-    private final String scope;
-    private final EntityId entityId;
-    private final String key;
-
-    @Override
-    public String toString() {
-        return "{" + entityId + "}" + scope + "_" + key;
+    @media #{$mat-lt-md} {
+      min-width: 100% !important;
     }
+  }
 }

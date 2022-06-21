@@ -329,7 +329,7 @@
     </mat-error>
   </mat-form-field>
   <mat-form-field class="mat-block">
-    <mat-label translate>tenant-profile.ws-limit-max-sessions-per-public-user</mat-label>
+    <mat-label translate>tenant-profile.ws-limit-max-sessions-per-regular-user</mat-label>
     <input matInput type="number" formControlName="maxWsSessionsPerRegularUser">
     <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxWsSessionsPerRegularUser').hasError('min')">
       {{ 'tenant-profile.too-small-value-zero' | translate}}
