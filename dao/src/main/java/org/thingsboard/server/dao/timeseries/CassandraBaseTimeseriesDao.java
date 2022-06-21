@@ -28,6 +28,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -57,7 +58,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -80,13 +80,16 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     public static final String ASC_ORDER = "ASC";
     public static final long SECONDS_IN_DAY = TimeUnit.DAYS.toSeconds(1);
 
-    protected static List<Long> FIXED_PARTITION = Arrays.asList(new Long[]{0L});
+    protected static final List<Long> FIXED_PARTITION = List.of(0L);
 
     private CassandraTsPartitionsCache cassandraTsPartitionsCache;
 
     @Autowired
     private Environment environment;
 
+    long partition_max_ms = 0;
+
+    @Getter
     @Value("${cassandra.query.ts_key_value_partitioning}")
     private String partitioning;
 
@@ -134,6 +137,20 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         } else {
             log.warn("Incorrect configuration of partitioning {}", partitioning);
             throw new RuntimeException("Failed to parse partitioning property: " + partitioning + "!");
+        }
+
+        partition_max_ms = calculatePartitionMaxMs(partitioning);
+    }
+
+    long calculatePartitionMaxMs(String partitioning) {
+        switch (partitioning) {
+            case "MINUTES": return TimeUnit.MINUTES.toMillis(1);
+            case "HOURS": return TimeUnit.HOURS.toMillis(1);
+            case "DAYS": return TimeUnit.DAYS.toMillis(1);
+            case "MONTHS": return TimeUnit.DAYS.toMillis(31);
+            case "YEARS": return TimeUnit.DAYS.toMillis(366);
+            case "INDEFINITE": return 0;
+            default: throw new UnsupportedOperationException("Partitioning [" + partitioning + "] not supported");
         }
     }
 
@@ -322,7 +339,7 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         return resultFuture;
     }
 
-    private long toPartitionTs(long ts) {
+    long toPartitionTs(long ts) {
         LocalDateTime time = LocalDateTime.ofInstant(Instant.ofEpochMilli(ts), ZoneOffset.UTC);
         return tsFormat.truncatedTo(time).toInstant(ZoneOffset.UTC).toEpochMilli();
     }
@@ -413,13 +430,15 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         if (minPartition == maxPartition) {
             return Collections.singletonList(minPartition);
         }
+        List<Long> partitions = new ArrayList<>();
+        partitions.add(minPartition);
 
-        List<Long> partitions = Arrays.asList(minPartition, maxPartition);
         long currentPartition = minPartition;
-        while (maxPartition > (currentPartition = toPartitionTs(currentPartition + TimeUnit.DAYS.toMillis(32)))){
+        while (maxPartition > (currentPartition = toPartitionTs(currentPartition + partition_max_ms))){
             partitions.add(currentPartition);
         }
 
+        partitions.add(maxPartition);
         return partitions;
     }
 
