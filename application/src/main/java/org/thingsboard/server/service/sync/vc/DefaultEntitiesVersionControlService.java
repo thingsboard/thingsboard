@@ -254,6 +254,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     @Override
     public UUID loadEntitiesVersion(SecurityUser user, VersionLoadRequest request) throws Exception {
         EntitiesImportCtx ctx = new EntitiesImportCtx(UUID.randomUUID(), user, request.getVersionId());
+        cachePut(ctx.getRequestId(), VersionLoadResult.empty());
         switch (request.getType()) {
             case SINGLE_ENTITY: {
                 SingleEntityVersionLoadRequest versionLoadRequest = (SingleEntityVersionLoadRequest) request;
