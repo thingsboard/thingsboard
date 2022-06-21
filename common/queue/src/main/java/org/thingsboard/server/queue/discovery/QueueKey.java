@@ -53,4 +53,11 @@ public class QueueKey {
         this.queueName = MAIN;
         this.tenantId = TenantId.SYS_TENANT_ID;
     }
+
+    @Override
+    public String toString() {
+        return "QK(" + queueName + "," + type + "," +
+                (TenantId.SYS_TENANT_ID.equals(tenantId) ? "system" : tenantId) +
+                ')';
+    }
 }
