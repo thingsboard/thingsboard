@@ -96,7 +96,7 @@ export function isEmptyStr(value: any): boolean {
 }
 
 export function isNotEmptyStr(value: any): boolean {
-  return value !== null && typeof value === 'string' && value.trim().length > 0;
+  return typeof value === 'string' && value.trim().length > 0;
 }
 
 export function isFunction(value: any): boolean {
