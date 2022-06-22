@@ -68,6 +68,8 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       transportDeviceMsgRateLimit: [null, [Validators.pattern(this.rateLimitsPattern)]],
       transportDeviceTelemetryMsgRateLimit: [null, [Validators.pattern(this.rateLimitsPattern)]],
       transportDeviceTelemetryDataPointsRateLimit: [null, [Validators.pattern(this.rateLimitsPattern)]],
+      tenantEntityExportRateLimit: [null, []],
+      tenantEntityImportRateLimit: [null, []],
       maxTransportMessages: [null, [Validators.required, Validators.min(0)]],
       maxTransportDataPoints: [null, [Validators.required, Validators.min(0)]],
       maxREExecutions: [null, [Validators.required, Validators.min(0)]],

@@ -67,9 +67,6 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
     private DeviceService deviceService;
 
     @Autowired
-    private EntityViewService entityViewService;
-
-    @Autowired
     private DashboardService dashboardService;
 
     @Lazy

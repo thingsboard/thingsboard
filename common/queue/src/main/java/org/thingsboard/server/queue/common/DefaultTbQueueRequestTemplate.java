@@ -96,7 +96,7 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
 
     void mainLoop() {
         while (!stopped) {
-            TbStopWatch sw = TbStopWatch.startNew();
+            TbStopWatch sw = TbStopWatch.create();
             try {
                 fetchAndProcessResponses();
             } catch (Throwable e) {
