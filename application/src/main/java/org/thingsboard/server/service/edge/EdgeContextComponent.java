@@ -26,6 +26,7 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.user.UserService;
@@ -41,6 +42,7 @@ import org.thingsboard.server.service.edge.rpc.processor.DeviceEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.DeviceProfileEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.EntityEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.EntityViewEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.OtaPackageEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.RelationEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.RuleChainEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.TelemetryEdgeProcessor;
@@ -94,6 +96,9 @@ public class EdgeContextComponent {
     private EdgeRequestsService edgeRequestsService;
 
     @Autowired
+    private OtaPackageService otaPackageService;
+
+    @Autowired
     private AlarmEdgeProcessor alarmProcessor;
 
     @Autowired
@@ -137,6 +142,9 @@ public class EdgeContextComponent {
 
     @Autowired
     private AdminSettingsEdgeProcessor adminSettingsProcessor;
+
+    @Autowired
+    private OtaPackageEdgeProcessor otaPackageEdgeProcessor;
 
     @Autowired
     private EdgeEventStorageSettings edgeEventStorageSettings;
