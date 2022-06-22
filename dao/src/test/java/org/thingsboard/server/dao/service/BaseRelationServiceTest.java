@@ -35,8 +35,10 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class BaseRelationServiceTest extends AbstractServiceTest {
 
@@ -544,6 +546,59 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
         Assert.assertTrue(relations.contains(relationD));
         Assert.assertTrue(relations.contains(relationE));
         Assert.assertTrue(relations.contains(relationF));
+    }
+
+    @Test
+    public void testFindByQueryLargeHierarchyFetchAllWithUnlimLvl() throws Exception {
+        AssetId rootAsset = new AssetId(Uuids.timeBased());
+        final int hierarchyLvl = 10;
+        List<EntityRelation> expectedRelations = new LinkedList<>();
+
+        createAssetRelationsRecursively(rootAsset, hierarchyLvl, expectedRelations, false);
+
+        EntityRelationsQuery query = new EntityRelationsQuery();
+        query.setParameters(new RelationsSearchParameters(rootAsset, EntitySearchDirection.FROM, -1, false));
+        query.setFilters(Collections.singletonList(new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.singletonList(EntityType.ASSET))));
+        List<EntityRelation> relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        Assert.assertEquals(expectedRelations.size(), relations.size());
+        Assert.assertTrue(relations.containsAll(expectedRelations));
+    }
+
+    @Test
+    public void testFindByQueryLargeHierarchyFetchLastOnlyWithUnlimLvl() throws Exception {
+        AssetId rootAsset = new AssetId(Uuids.timeBased());
+        final int hierarchyLvl = 10;
+        List<EntityRelation> expectedRelations = new LinkedList<>();
+
+        createAssetRelationsRecursively(rootAsset, hierarchyLvl, expectedRelations, true);
+
+        EntityRelationsQuery query = new EntityRelationsQuery();
+        query.setParameters(new RelationsSearchParameters(rootAsset, EntitySearchDirection.FROM, -1, true));
+        query.setFilters(Collections.singletonList(new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.singletonList(EntityType.ASSET))));
+        List<EntityRelation> relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        Assert.assertEquals(expectedRelations.size(), relations.size());
+        Assert.assertTrue(relations.containsAll(expectedRelations));
+    }
+
+    private void createAssetRelationsRecursively(AssetId rootAsset, int lvl, List<EntityRelation> entityRelations, boolean lastLvlOnly) throws Exception {
+        if (lvl == 0) return;
+
+        AssetId firstAsset = new AssetId(Uuids.timeBased());
+        AssetId secondAsset = new AssetId(Uuids.timeBased());
+
+        EntityRelation firstRelation = new EntityRelation(rootAsset, firstAsset, EntityRelation.CONTAINS_TYPE);
+        EntityRelation secondRelation = new EntityRelation(rootAsset, secondAsset, EntityRelation.CONTAINS_TYPE);
+
+        saveRelation(firstRelation);
+        saveRelation(secondRelation);
+
+        if (!lastLvlOnly || lvl == 1) {
+            entityRelations.add(firstRelation);
+            entityRelations.add(secondRelation);
+        }
+
+        createAssetRelationsRecursively(firstAsset, lvl - 1, entityRelations, lastLvlOnly);
+        createAssetRelationsRecursively(secondAsset, lvl - 1, entityRelations, lastLvlOnly);
     }
 
 }
