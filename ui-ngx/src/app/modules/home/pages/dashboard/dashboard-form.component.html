@@ -66,6 +66,16 @@
     {{'dashboard.delete' | translate }}
   </button>
 </div>
+<div fxLayout="row">
+  <button mat-raised-button
+          ngxClipboard
+          (cbOnSuccess)="onDashboardIdCopied($event)"
+          [cbContent]="entity?.id?.id"
+          [fxShow]="!isEdit">
+    <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+    <span translate>dashboard.copyId</span>
+  </button>
+</div>
 <div class="mat-padding" fxLayout="column">
   <mat-form-field class="mat-block"
                   [fxShow]="!isEdit && assignedCustomersText?.length

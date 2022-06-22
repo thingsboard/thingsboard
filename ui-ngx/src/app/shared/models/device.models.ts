@@ -480,6 +480,10 @@ export const AlarmScheduleTypeTranslationMap = new Map<AlarmScheduleType, string
 );
 
 export interface AlarmSchedule{
+  dynamicValue?: {
+    sourceAttribute: string,
+    sourceType: string;
+  };
   type: AlarmScheduleType;
   timezone?: string;
   daysOfWeek?: number[];

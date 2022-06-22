@@ -96,6 +96,7 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
         PlatformTwoFaSettings twoFaSettings = new PlatformTwoFaSettings();
         twoFaSettings.setProviders(List.of(totpTwoFaProviderConfig, smsTwoFaProviderConfig));
+        twoFaSettings.setMinVerificationCodeSendPeriod(5);
         twoFaSettings.setVerificationCodeCheckRateLimit("3:900");
         twoFaSettings.setMaxVerificationFailuresBeforeUserLockout(10);
         twoFaSettings.setTotalAllowedTimeForVerification(3600);
@@ -117,6 +118,7 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
         twoFaSettings.setVerificationCodeCheckRateLimit("0:12");
         twoFaSettings.setMaxVerificationFailuresBeforeUserLockout(-1);
         twoFaSettings.setTotalAllowedTimeForVerification(0);
+        twoFaSettings.setMinVerificationCodeSendPeriod(5);
 
         String errorMessage = getErrorMessage(doPost("/api/2fa/settings", twoFaSettings)
                 .andExpect(status().isBadRequest()));
@@ -156,6 +158,8 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
     private String savePlatformTwoFaSettingsAndGetError(TwoFaProviderConfig invalidTwoFaProviderConfig) throws Exception {
         PlatformTwoFaSettings twoFaSettings = new PlatformTwoFaSettings();
         twoFaSettings.setProviders(Collections.singletonList(invalidTwoFaProviderConfig));
+        twoFaSettings.setMinVerificationCodeSendPeriod(5);
+        twoFaSettings.setTotalAllowedTimeForVerification(100);
 
         return getErrorMessage(doPost("/api/2fa/settings", twoFaSettings)
                 .andExpect(status().isBadRequest()));
@@ -432,8 +436,9 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
     private void saveProvidersConfigs(TwoFaProviderConfig... providerConfigs) throws Exception {
         PlatformTwoFaSettings twoFaSettings = new PlatformTwoFaSettings();
-
         twoFaSettings.setProviders(Arrays.stream(providerConfigs).collect(Collectors.toList()));
+        twoFaSettings.setMinVerificationCodeSendPeriod(5);
+        twoFaSettings.setTotalAllowedTimeForVerification(100);
         doPost("/api/2fa/settings", twoFaSettings).andExpect(status().isOk());
     }
 

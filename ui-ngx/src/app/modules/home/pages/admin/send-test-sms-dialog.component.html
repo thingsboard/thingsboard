@@ -30,17 +30,11 @@
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <div mat-dialog-content tb-toast toastTarget="sendTestSmsDialogContent">
     <fieldset [disabled]="(isLoading$ | async)">
-      <mat-form-field class="mat-block">
-        <mat-label translate>admin.number-to</mat-label>
-        <input type="tel" required [pattern]="phoneNumberPattern" matInput formControlName="numberTo">
-        <mat-error *ngIf="sendTestSmsFormGroup.get('numberTo').hasError('required')">
-          {{ 'admin.number-to-required' | translate }}
-        </mat-error>
-        <mat-error *ngIf="sendTestSmsFormGroup.get('numberTo').hasError('pattern')">
-          {{ 'admin.phone-number-pattern' | translate }}
-        </mat-error>
-        <mat-hint innerHTML="{{ 'admin.phone-number-hint' | translate }}"></mat-hint>
-      </mat-form-field>
+      <tb-phone-input required
+                      formControlName="numberTo"
+                      [enableFlagsSelect]="false"
+                      [label]="'admin.number-to'">
+      </tb-phone-input>
       <mat-form-field class="mat-block">
         <mat-label translate>admin.sms-message</mat-label>
         <textarea required matInput rows="3" [maxLength]="1600" formControlName="message"></textarea>

@@ -89,6 +89,10 @@ export class RuleChainPageComponent extends PageComponent
     return this.isDirtyValue || this.isImport;
   }
 
+  set isDirty(value: boolean) {
+    this.isDirtyValue = value;
+  }
+
   @HostBinding('style.width') width = '100%';
   @HostBinding('style.height') height = '100%';
 

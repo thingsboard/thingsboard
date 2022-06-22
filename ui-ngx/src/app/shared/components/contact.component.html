@@ -55,13 +55,11 @@
     <mat-label translate>contact.address2</mat-label>
     <input matInput formControlName="address2">
   </mat-form-field>
-  <mat-form-field class="mat-block">
-    <mat-label translate>contact.phone</mat-label>
-    <input matInput formControlName="phone">
-    <mat-error *ngIf="parentForm.get('phone').hasError('maxlength')">
-      {{ 'contact.phone-max-length' | translate }}
-    </mat-error>
-  </mat-form-field>
+  <tb-phone-input [required]="false"
+                  [label]="'contact.phone'"
+                  [enableFlagsSelect]="false"
+                  formControlName="phone">
+  </tb-phone-input>
   <mat-form-field class="mat-block">
     <mat-label translate>contact.email</mat-label>
     <input matInput formControlName="email">

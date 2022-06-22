@@ -62,6 +62,7 @@
     "leaflet-providers": "^1.13.0",
     "leaflet.gridlayer.googlemutant": "^0.13.4",
     "leaflet.markercluster": "^1.5.3",
+    "libphonenumber-js": "^1.10.4",
     "messageformat": "^2.3.0",
     "moment": "^2.29.1",
     "moment-timezone": "^0.5.34",

@@ -38,12 +38,6 @@
       font-size: 16px;
       font-weight: 400;
     }
-    .profile-btn-subtext {
-      font: 400 14px / 16px Roboto, "Helvetica Neue", sans-serif;
-      letter-spacing: 0.25px;
-      opacity: 0.6;
-      padding: 8px 0;
-    }
     .tb-home-dashboard {
       tb-dashboard-autocomplete {
         @media #{$mat-gt-sm} {

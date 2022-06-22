@@ -28,7 +28,7 @@
   </mat-toolbar>
   <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
   </mat-progress-bar>
-  <div mat-dialog-content>
+  <div mat-dialog-content style="padding: 0;">
     <fieldset [disabled]="isLoading$ | async" style="position: relative; height: 600px;">
       <tb-widget-config
         [aliasController]="aliasController"
