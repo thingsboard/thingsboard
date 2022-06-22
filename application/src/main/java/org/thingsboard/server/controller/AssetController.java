@@ -392,7 +392,8 @@ public class AssetController extends BaseController {
             } else {
                 assets = assetService.findAssetsByTenantIdCustomerIdAndIdsAsync(tenantId, customerId, assetIds);
             }
-            return checkNotNull(assets.get());
+            List<Asset> foundAssets = checkNotNull(assets.get());
+            return checkNotEmpty(foundAssets);
         } catch (Exception e) {
             throw handleException(e);
         }

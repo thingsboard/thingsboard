@@ -150,6 +150,7 @@ import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -365,6 +366,17 @@ public abstract class BaseController {
                 .collect(Collectors.joining(", "));
         ThingsboardException thingsboardException = new ThingsboardException(errorMessage, ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         handleThingsboardException(thingsboardException, response);
+    }
+
+    <T extends Collection<E>, E> T checkNotEmpty(T collection, String notFoundMessage) throws ThingsboardException {
+        if (collection.isEmpty()) {
+            throw new ThingsboardException(notFoundMessage, ThingsboardErrorCode.ITEM_NOT_FOUND);
+        }
+        return collection;
+    }
+
+    <T extends Collection<E>, E> T checkNotEmpty(T collection) throws ThingsboardException {
+        return checkNotEmpty(collection, "Requested items weren't found!");
     }
 
     <T> T checkNotNull(T reference) throws ThingsboardException {
