@@ -40,7 +40,7 @@ public class TenantCustomersTitleUpdaterComponent {
         boolean hasNext = true;
         List<Customer> customers = new ArrayList<>();
         while (hasNext) {
-            PageData<Customer> entities = customerDao.findCustomersByTenantId(entity.getUuidId(), pageLink);
+            PageData<Customer> entities = customerDao.findCustomerWithEqualTitle(entity.getUuidId(), pageLink);
             customers.addAll(entities.getData());
 
             hasNext = entities.hasNext();

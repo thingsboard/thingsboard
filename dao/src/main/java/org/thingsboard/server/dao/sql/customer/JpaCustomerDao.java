@@ -68,4 +68,12 @@ public class JpaCustomerDao extends JpaAbstractSearchTextDao<CustomerEntity, Cus
     public Long countByTenantId(TenantId tenantId) {
         return customerRepository.countByTenantId(tenantId.getId());
     }
+
+    @Override
+    public PageData<Customer> findCustomerWithEqualTitle(UUID tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(
+                customerRepository.findCustomerWithEqualTitle(tenantId, DaoUtil.toPageable(pageLink))
+        );
+    }
+
 }

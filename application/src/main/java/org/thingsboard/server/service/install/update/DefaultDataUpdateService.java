@@ -56,7 +56,6 @@ import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfi
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.alarm.AlarmDao;
 import org.thingsboard.server.dao.alarm.AlarmService;
-import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.model.sql.DeviceProfileEntity;
@@ -107,9 +106,6 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
     @Autowired
     private EntityService entityService;
-
-    @Autowired
-    private CustomerDao customerDao;
 
     @Autowired
     private AlarmDao alarmDao;

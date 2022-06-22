@@ -224,6 +224,7 @@ public class ThingsboardInstallService {
                             log.info("Updating system data...");
                             systemDataLoaderService.updateSystemWidgets();
                             break;
+
                         //TODO update CacheCleanupService on the next version upgrade
 
                         default:
