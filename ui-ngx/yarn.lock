@@ -1751,6 +1751,11 @@
     "@turf/helpers" "^6.5.0"
     "@turf/meta" "^6.5.0"
 
+"@types/ace-diff@^2.1.1":
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/@types/ace-diff/-/ace-diff-2.1.1.tgz#1c08919aae8f9c429fcb139dc564c89dd093cbee"
+  integrity sha512-O27fCo2Y0njNslOFSewyRhTyXfLhVhleEU5aTI6ZqFTKENJ8L/LA+Y+ZfcHsHTtwrTWjBXqORmqEHH6Qytqw1w==
+
 "@types/canvas-gauges@^2.1.4":
   version "2.1.4"
   resolved "https://registry.yarnpkg.com/@types/canvas-gauges/-/canvas-gauges-2.1.4.tgz#063881264597d098e78cf5ad921e8ed20ae2ad16"
@@ -2189,6 +2194,13 @@ ace-builds@^1.4.13:
   version "1.4.13"
   resolved "https://registry.yarnpkg.com/ace-builds/-/ace-builds-1.4.13.tgz#186f42d3849ebcc6a48b93088a058489897514c1"
   integrity sha512-SOLzdaQkY6ecPKYRDDg+MY1WoGgXA34cIvYJNNoBMGGUswHmlauU2Hy0UL96vW0Fs/LgFbMUjD+6vqzWTldIYQ==
+
+ace-diff@^3.0.3:
+  version "3.0.3"
+  resolved "https://registry.yarnpkg.com/ace-diff/-/ace-diff-3.0.3.tgz#84f685ff3d0b1910539fc39259ac73d8b6581e28"
+  integrity sha512-CJaV9Oi6BWLWGL2Kj//h5BNXlRCRu1GYHPOT7o+ZSAuJv9PaL9FWr/cCf16IuSVDo7oj6VriO+qgoHR8G9McLA==
+  dependencies:
+    diff-match-patch "^1.0.5"
 
 acorn-import-assertions@^1.7.6:
   version "1.8.0"
@@ -6027,6 +6039,11 @@ less@4.1.1:
     needle "^2.5.2"
     source-map "~0.6.0"
 
+libphonenumber-js@^1.10.4:
+  version "1.10.4"
+  resolved "https://registry.yarnpkg.com/libphonenumber-js/-/libphonenumber-js-1.10.4.tgz#90397f0ed620262570a32244c9fbc389cc417ce4"
+  integrity sha512-9QWxEk4GW5RDnFzt8UtyRENfFpAN8u7Sbf9wf32tcXY9tdtnz1dKHIBwW2Wnfx8ypXJb9zUnTpK9aQJ/B8AlnA==
+
 license-webpack-plugin@2.3.20:
   version "2.3.20"
   resolved "https://registry.yarnpkg.com/license-webpack-plugin/-/license-webpack-plugin-2.3.20.tgz#f51fb674ca31519dbedbe1c7aabc036e5a7f2858"
@@ -9478,6 +9495,11 @@ ts-node@^10.0.0, ts-node@^10.4.0:
     diff "^4.0.1"
     make-error "^1.1.1"
     yn "3.1.1"
+
+ts-transformer-keys@^0.4.3:
+  version "0.4.3"
+  resolved "https://registry.yarnpkg.com/ts-transformer-keys/-/ts-transformer-keys-0.4.3.tgz#d62389a40f430c00ef98fb9575fb6778a196e3ed"
+  integrity sha512-pOTLlet1SnAvhKNr9tMAFwuv5283OkUNiq1fXTEK+vrSv+kxU3e2Ijr/UkqyX2vuMmvcNHdpXC31hob7ljH//g==
 
 tsconfig-paths@^3.9.0:
   version "3.12.0"

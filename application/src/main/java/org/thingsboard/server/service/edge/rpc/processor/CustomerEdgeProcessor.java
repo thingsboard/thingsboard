@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.service.edge.rpc.processor;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Customer;
@@ -35,6 +37,8 @@ import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -70,7 +74,7 @@ public class CustomerEdgeProcessor extends BaseEdgeProcessor {
         return downlinkMsg;
     }
 
-    public void processCustomerNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
+    public ListenableFuture<Void> processCustomerNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
         EdgeEventActionType actionType = EdgeEventActionType.valueOf(edgeNotificationMsg.getAction());
         EdgeEventType type = EdgeEventType.valueOf(edgeNotificationMsg.getType());
         UUID uuid = new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB());
@@ -79,22 +83,24 @@ public class CustomerEdgeProcessor extends BaseEdgeProcessor {
             case UPDATED:
                 PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
                 PageData<Edge> pageData;
+                List<ListenableFuture<Void>> futures = new ArrayList<>();
                 do {
                     pageData = edgeService.findEdgesByTenantIdAndCustomerId(tenantId, customerId, pageLink);
                     if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
                         for (Edge edge : pageData.getData()) {
-                            saveEdgeEvent(tenantId, edge.getId(), type, actionType, customerId, null);
+                            futures.add(saveEdgeEvent(tenantId, edge.getId(), type, actionType, customerId, null));
                         }
                         if (pageData.hasNext()) {
                             pageLink = pageLink.nextPageLink();
                         }
                     }
                 } while (pageData != null && pageData.hasNext());
-                break;
+                return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
             case DELETED:
                 EdgeId edgeId = new EdgeId(new UUID(edgeNotificationMsg.getEdgeIdMSB(), edgeNotificationMsg.getEdgeIdLSB()));
-                saveEdgeEvent(tenantId, edgeId, type, actionType, customerId, null);
-                break;
+                return saveEdgeEvent(tenantId, edgeId, type, actionType, customerId, null);
+            default:
+                return Futures.immediateFuture(null);
         }
     }
 

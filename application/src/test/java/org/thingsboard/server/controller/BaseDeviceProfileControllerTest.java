@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.JsonTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
@@ -93,7 +94,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
 
     @Test
     public void testSaveDeviceProfile() throws Exception {
-        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile", null);
+        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile");
         DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
         Assert.assertNotNull(savedDeviceProfile);
         Assert.assertNotNull(savedDeviceProfile.getId());
@@ -112,13 +113,13 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
 
     @Test
     public void saveDeviceProfileWithViolationOfValidation() throws Exception {
-        doPost("/api/deviceProfile", this.createDeviceProfile(RandomStringUtils.randomAlphabetic(300), null))
+        doPost("/api/deviceProfile", this.createDeviceProfile(RandomStringUtils.randomAlphabetic(300)))
                 .andExpect(statusReason(containsString("length of name must be equal or less than 255")));
     }
 
     @Test
     public void testFindDeviceProfileById() throws Exception {
-        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile", null);
+        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile");
         DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
         DeviceProfile foundDeviceProfile = doGet("/api/deviceProfile/"+savedDeviceProfile.getId().getId().toString(), DeviceProfile.class);
         Assert.assertNotNull(foundDeviceProfile);
@@ -126,14 +127,34 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
     }
 
     @Test
+    public void whenGetDeviceProfileById_thenPermissionsAreChecked() throws Exception {
+        DeviceProfile deviceProfile = createDeviceProfile("Device profile 1", null);
+        deviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+
+        loginDifferentTenant();
+        doGet("/api/deviceProfile/" + deviceProfile.getId())
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     public void testFindDeviceProfileInfoById() throws Exception {
-        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile", null);
+        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile");
         DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
         DeviceProfileInfo foundDeviceProfileInfo = doGet("/api/deviceProfileInfo/"+savedDeviceProfile.getId().getId().toString(), DeviceProfileInfo.class);
         Assert.assertNotNull(foundDeviceProfileInfo);
         Assert.assertEquals(savedDeviceProfile.getId(), foundDeviceProfileInfo.getId());
         Assert.assertEquals(savedDeviceProfile.getName(), foundDeviceProfileInfo.getName());
         Assert.assertEquals(savedDeviceProfile.getType(), foundDeviceProfileInfo.getType());
+    }
+
+    @Test
+    public void whenGetDeviceProfileInfoById_thenPermissionsAreChecked() throws Exception {
+        DeviceProfile deviceProfile = createDeviceProfile("Device profile 1", null);
+        deviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+
+        loginDifferentTenant();
+        doGet("/api/deviceProfileInfo/" + deviceProfile.getId())
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -149,9 +170,9 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
 
     @Test
     public void testSetDefaultDeviceProfile() throws Exception {
-        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile 1", null);
+        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile 1");
         DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
-        DeviceProfile defaultDeviceProfile = doPost("/api/deviceProfile/"+savedDeviceProfile.getId().getId().toString()+"/default", null, DeviceProfile.class);
+        DeviceProfile defaultDeviceProfile = doPost("/api/deviceProfile/"+savedDeviceProfile.getId().getId().toString()+"/default", DeviceProfile.class);
         Assert.assertNotNull(defaultDeviceProfile);
         DeviceProfileInfo foundDefaultDeviceProfile = doGet("/api/deviceProfileInfo/default", DeviceProfileInfo.class);
         Assert.assertNotNull(foundDefaultDeviceProfile);
@@ -169,19 +190,19 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
 
     @Test
     public void testSaveDeviceProfileWithSameName() throws Exception {
-        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile", null);
+        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile");
         doPost("/api/deviceProfile", deviceProfile).andExpect(status().isOk());
-        DeviceProfile deviceProfile2 = this.createDeviceProfile("Device Profile", null);
+        DeviceProfile deviceProfile2 = this.createDeviceProfile("Device Profile");
         doPost("/api/deviceProfile", deviceProfile2).andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("Device profile with such name already exists")));
     }
 
     @Test
     public void testSaveDeviceProfileWithSameProvisionDeviceKey() throws Exception {
-        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile", null);
+        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile");
         deviceProfile.setProvisionDeviceKey("testProvisionDeviceKey");
         doPost("/api/deviceProfile", deviceProfile).andExpect(status().isOk());
-        DeviceProfile deviceProfile2 = this.createDeviceProfile("Device Profile 2", null);
+        DeviceProfile deviceProfile2 = this.createDeviceProfile("Device Profile 2");
         deviceProfile2.setProvisionDeviceKey("testProvisionDeviceKey");
         doPost("/api/deviceProfile", deviceProfile2).andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("Device profile with such provision device key already exists")));
@@ -190,7 +211,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
     @Ignore
     @Test
     public void testChangeDeviceProfileTypeWithExistingDevices() throws Exception {
-        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile", null);
+        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile");
         DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
         Device device = new Device();
         device.setName("Test device");
@@ -205,7 +226,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
 
     @Test
     public void testChangeDeviceProfileTransportTypeWithExistingDevices() throws Exception {
-        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile", null);
+        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile");
         DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
         Device device = new Device();
         device.setName("Test device");
@@ -219,7 +240,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
 
     @Test
     public void testDeleteDeviceProfileWithExistingDevice() throws Exception {
-        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile", null);
+        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile");
         DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
 
         Device device = new Device();
@@ -236,7 +257,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
 
     @Test
     public void testDeleteDeviceProfile() throws Exception {
-        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile", null);
+        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile");
         DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
 
         doDelete("/api/deviceProfile/" + savedDeviceProfile.getId().getId().toString())
@@ -257,7 +278,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         deviceProfiles.addAll(pageData.getData());
 
         for (int i=0;i<28;i++) {
-            DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile"+i, null);
+            DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile"+i);
             deviceProfiles.add(doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class));
         }
 
@@ -302,7 +323,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         deviceProfiles.addAll(deviceProfilePageData.getData());
 
         for (int i=0;i<28;i++) {
-            DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile"+i, null);
+            DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile"+i);
             deviceProfiles.add(doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class));
         }
 
@@ -835,19 +856,35 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
                 "}", "[Transport Configuration] invalid rpc request proto schema provided! Failed to get field descriptor for field: params!");
     }
 
-    private DeviceProfile testSaveDeviceProfileWithProtoPayloadType(String schema) throws Exception {
-        ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = this.createProtoTransportPayloadConfiguration(schema, schema, null, null);
-        MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration = this.createMqttDeviceProfileTransportConfiguration(protoTransportPayloadConfiguration);
+    @Test
+    public void testSaveDeviceProfileWithSendAckOnValidationException() throws Exception {
+        JsonTransportPayloadConfiguration jsonTransportPayloadConfiguration = new JsonTransportPayloadConfiguration();
+        MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration = this.createMqttDeviceProfileTransportConfiguration(jsonTransportPayloadConfiguration, true);
         DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile", mqttDeviceProfileTransportConfiguration);
         DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
-        DeviceProfile foundDeviceProfile = doGet("/api/deviceProfile/"+savedDeviceProfile.getId().getId().toString(), DeviceProfile.class);
-        Assert.assertEquals(savedDeviceProfile.getName(), foundDeviceProfile.getName());
+        Assert.assertNotNull(savedDeviceProfile);
+        Assert.assertEquals(savedDeviceProfile.getTransportType(), DeviceTransportType.MQTT);
+        Assert.assertTrue(savedDeviceProfile.getProfileData().getTransportConfiguration() instanceof MqttDeviceProfileTransportConfiguration);
+        MqttDeviceProfileTransportConfiguration transportConfiguration = (MqttDeviceProfileTransportConfiguration) savedDeviceProfile.getProfileData().getTransportConfiguration();
+        Assert.assertTrue(transportConfiguration.isSendAckOnValidationException());
+        DeviceProfile foundDeviceProfile = doGet("/api/deviceProfile/"+ savedDeviceProfile.getId().getId().toString(), DeviceProfile.class);
+        Assert.assertEquals(savedDeviceProfile, foundDeviceProfile);
+    }
+
+    private DeviceProfile testSaveDeviceProfileWithProtoPayloadType(String schema) throws Exception {
+        ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = this.createProtoTransportPayloadConfiguration(schema, schema, null, null);
+        MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration = this.createMqttDeviceProfileTransportConfiguration(protoTransportPayloadConfiguration, false);
+        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile", mqttDeviceProfileTransportConfiguration);
+        DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+        Assert.assertNotNull(savedDeviceProfile);
+        DeviceProfile foundDeviceProfile = doGet("/api/deviceProfile/"+ savedDeviceProfile.getId().getId().toString(), DeviceProfile.class);
+        Assert.assertEquals(savedDeviceProfile, foundDeviceProfile);
         return savedDeviceProfile;
     }
 
     private void testSaveDeviceProfileWithInvalidProtoSchema(String schema, String errorMsg) throws Exception {
         ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = this.createProtoTransportPayloadConfiguration(schema, schema, null, null);
-        MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration = this.createMqttDeviceProfileTransportConfiguration(protoTransportPayloadConfiguration);
+        MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration = this.createMqttDeviceProfileTransportConfiguration(protoTransportPayloadConfiguration, false);
         DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile", mqttDeviceProfileTransportConfiguration);
         doPost("/api/deviceProfile", deviceProfile).andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(errorMsg)));
@@ -855,7 +892,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
 
     private void testSaveDeviceProfileWithInvalidRpcRequestProtoSchema(String schema, String errorMsg) throws Exception {
         ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = this.createProtoTransportPayloadConfiguration(schema, schema, schema, null);
-        MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration = this.createMqttDeviceProfileTransportConfiguration(protoTransportPayloadConfiguration);
+        MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration = this.createMqttDeviceProfileTransportConfiguration(protoTransportPayloadConfiguration, false);
         DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile", mqttDeviceProfileTransportConfiguration);
         doPost("/api/deviceProfile", deviceProfile).andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(errorMsg)));

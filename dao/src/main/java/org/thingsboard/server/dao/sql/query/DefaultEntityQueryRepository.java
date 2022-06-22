@@ -238,6 +238,8 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         entityTableMap.put(EntityType.TENANT, "tenant");
         entityTableMap.put(EntityType.API_USAGE_STATE, SELECT_API_USAGE_STATE);
         entityTableMap.put(EntityType.EDGE, "edge");
+        entityTableMap.put(EntityType.RULE_CHAIN, "rule_chain");
+        entityTableMap.put(EntityType.DEVICE_PROFILE, "device_profile");
     }
 
     public static EntityType[] RELATION_QUERY_ENTITY_TYPES = new EntityType[]{
@@ -369,7 +371,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                 try {
                     return jdbcTemplate.queryForObject(countQuery, ctx, Long.class);
                 } finally {
-                    queryLog.logQuery(ctx, ctx.getQuery(), System.currentTimeMillis() - startTs);
+                    queryLog.logQuery(ctx, countQuery, System.currentTimeMillis() - startTs);
                 }
             });
         }
@@ -481,7 +483,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             try {
                 rows = jdbcTemplate.queryForList(dataQuery, ctx);
             } finally {
-                queryLog.logQuery(ctx, countQuery, System.currentTimeMillis() - startTs);
+                queryLog.logQuery(ctx, dataQuery, System.currentTimeMillis() - startTs);
             }
             return EntityDataAdapter.createEntityData(pageLink, selectionMapping, rows, totalElements);
         });
@@ -819,7 +821,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         return "e.type = :entity_filter_type_query_type and lower(e.search_text) like lower(concat(:entity_filter_type_query_name, '%%'))";
     }
 
-    private EntityType resolveEntityType(EntityFilter entityFilter) {
+    public static EntityType resolveEntityType(EntityFilter entityFilter) {
         switch (entityFilter.getType()) {
             case SINGLE_ENTITY:
                 return ((SingleEntityFilter) entityFilter).getSingleEntity().getEntityType();

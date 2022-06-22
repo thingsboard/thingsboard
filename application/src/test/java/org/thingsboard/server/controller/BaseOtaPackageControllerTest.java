@@ -79,7 +79,7 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
 
         tenantAdmin = createUserAndLogin(tenantAdmin, "testPassword1");
 
-        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile", null);
+        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile");
         DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
         Assert.assertNotNull(savedDeviceProfile);
         deviceProfileId = savedDeviceProfile.getId();

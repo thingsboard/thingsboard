@@ -421,6 +421,26 @@ enum EdgeEntityType {
   ASSET = 1;
 }
 
+message OtaPackageUpdateMsg {
+  UpdateMsgType msgType = 1;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  int64 deviceProfileIdMSB = 4;
+  int64 deviceProfileIdLSB = 5;
+  string type = 6;
+  string title = 7;
+  string version = 8;
+  string tag = 9;
+  optional string url = 10;
+  optional string fileName = 11;
+  optional string contentType = 12;
+  optional string checksumAlgorithm = 13;
+  optional string checksum = 14;
+  optional int64 dataSize = 15;
+  optional bytes data = 16;
+  optional string additionalInfo = 17;
+}
+
 /**
  * Main Messages;
  */
@@ -477,5 +497,6 @@ message DownlinkMsg {
   repeated WidgetTypeUpdateMsg widgetTypeUpdateMsg = 19;
   repeated AdminSettingsUpdateMsg adminSettingsUpdateMsg = 20;
   repeated DeviceRpcCallMsg deviceRpcCallMsg = 21;
+  repeated OtaPackageUpdateMsg otaPackageUpdateMsg = 22;
 }
 

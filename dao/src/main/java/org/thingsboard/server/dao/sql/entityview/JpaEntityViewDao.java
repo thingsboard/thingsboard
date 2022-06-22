@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
+import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -157,9 +158,9 @@ public class JpaEntityViewDao extends JpaAbstractSearchTextDao<EntityViewEntity,
     }
 
     @Override
-    public ListenableFuture<List<EntityView>> findEntityViewsByTenantIdAndEntityIdAsync(UUID tenantId, UUID entityId) {
-        return service.submit(() -> DaoUtil.convertDataList(
-                entityViewRepository.findAllByTenantIdAndEntityId(tenantId, entityId)));
+    public List<EntityView> findEntityViewsByTenantIdAndEntityId(UUID tenantId, UUID entityId) {
+        return DaoUtil.convertDataList(
+                entityViewRepository.findAllByTenantIdAndEntityId(tenantId, entityId));
     }
 
     @Override
@@ -199,5 +200,31 @@ public class JpaEntityViewDao extends JpaAbstractSearchTextDao<EntityViewEntity,
                         type,
                         Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public EntityView findByTenantIdAndExternalId(UUID tenantId, UUID externalId) {
+        return DaoUtil.getData(entityViewRepository.findByTenantIdAndExternalId(tenantId, externalId));
+    }
+
+    @Override
+    public PageData<EntityView> findByTenantId(UUID tenantId, PageLink pageLink) {
+        return findEntityViewsByTenantId(tenantId, pageLink);
+    }
+
+    @Override
+    public EntityViewId getExternalIdByInternal(EntityViewId internalId) {
+        return Optional.ofNullable(entityViewRepository.getExternalIdById(internalId.getId()))
+                .map(EntityViewId::new).orElse(null);
+    }
+
+    @Override
+    public EntityView findByTenantIdAndName(UUID tenantId, String name) {
+        return findEntityViewByTenantIdAndName(tenantId, name).orElse(null);
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.ENTITY_VIEW;
     }
 }

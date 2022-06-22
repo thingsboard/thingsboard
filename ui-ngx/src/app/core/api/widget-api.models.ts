@@ -119,7 +119,7 @@ export interface IAliasController {
   getEntityAliasId(aliasName: string): string;
   getInstantAliasInfo(aliasId: string): AliasInfo;
   resolveSingleEntityInfo(aliasId: string): Observable<EntityInfo>;
-  resolveDatasources(datasources: Array<Datasource>, singleEntity?: boolean): Observable<Array<Datasource>>;
+  resolveDatasources(datasources: Array<Datasource>, singleEntity?: boolean, pageSize?: number): Observable<Array<Datasource>>;
   resolveAlarmSource(alarmSource: Datasource): Observable<Datasource>;
   getEntityAliases(): EntityAliases;
   getFilters(): Filters;
@@ -184,6 +184,7 @@ export interface SubscriptionInfo {
   deviceName?: string;
   deviceNamePrefix?: string;
   deviceIds?: Array<string>;
+  pageSize?: number;
 }
 
 export class WidgetSubscriptionContext {
@@ -242,6 +243,7 @@ export interface WidgetSubscriptionOptions {
   datasourcesOptional?: boolean;
   hasDataPageLink?: boolean;
   singleEntity?: boolean;
+  pageSize?: number;
   warnOnPageDataOverflow?: boolean;
   ignoreDataUpdateOnIntervalTick?: boolean;
   targetDeviceAliasIds?: Array<string>;

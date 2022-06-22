@@ -14,12 +14,13 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { TenantProfileData } from '@shared/models/tenant.model';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'tb-tenant-profile-data',
@@ -31,7 +32,7 @@ import { TenantProfileData } from '@shared/models/tenant.model';
     multi: true
   }]
 })
-export class TenantProfileDataComponent implements ControlValueAccessor, OnInit {
+export class TenantProfileDataComponent implements ControlValueAccessor, OnInit, OnDestroy {
 
   tenantProfileDataFormGroup: FormGroup;
 
@@ -47,6 +48,7 @@ export class TenantProfileDataComponent implements ControlValueAccessor, OnInit 
   @Input()
   disabled: boolean;
 
+  private valueChange$: Subscription = null;
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
@@ -64,9 +66,15 @@ export class TenantProfileDataComponent implements ControlValueAccessor, OnInit 
     this.tenantProfileDataFormGroup = this.fb.group({
       configuration: [null, Validators.required]
     });
-    this.tenantProfileDataFormGroup.valueChanges.subscribe(() => {
+    this.valueChange$ = this.tenantProfileDataFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
     });
+  }
+
+  ngOnDestroy() {
+    if (this.valueChange$) {
+      this.valueChange$.unsubscribe();
+    }
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -79,7 +87,7 @@ export class TenantProfileDataComponent implements ControlValueAccessor, OnInit 
   }
 
   writeValue(value: TenantProfileData | null): void {
-    this.tenantProfileDataFormGroup.patchValue({configuration: value?.configuration}, {emitEvent: false});
+    this.tenantProfileDataFormGroup.patchValue({configuration: value}, {emitEvent: false});
   }
 
   private updateModel() {
@@ -87,7 +95,7 @@ export class TenantProfileDataComponent implements ControlValueAccessor, OnInit 
     if (this.tenantProfileDataFormGroup.valid) {
       tenantProfileData = this.tenantProfileDataFormGroup.getRawValue();
     }
-    this.propagateChange(tenantProfileData);
+    this.propagateChange(tenantProfileData?.configuration);
   }
 
 }

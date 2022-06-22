@@ -52,8 +52,6 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfil
 @Slf4j
 public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
 
-    public static final int TIMEOUT = 30;
-
     protected final String OBSERVE_ATTRIBUTES_WITH_PARAMS_OTA =
 
             "    {\n" +

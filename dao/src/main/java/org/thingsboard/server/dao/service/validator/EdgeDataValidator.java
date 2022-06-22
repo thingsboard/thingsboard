@@ -19,16 +19,14 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.cache.EntitiesCacheManager;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.edge.EdgeDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
-import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.tenant.TenantService;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
@@ -37,20 +35,16 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 public class EdgeDataValidator extends DataValidator<Edge> {
 
     private final EdgeDao edgeDao;
-    private final TenantDao tenantDao;
+    private final TenantService tenantService;
     private final CustomerDao customerDao;
-    private final EntitiesCacheManager cacheManager;
 
     @Override
     protected void validateCreate(TenantId tenantId, Edge edge) {
     }
 
     @Override
-    protected void validateUpdate(TenantId tenantId, Edge edge) {
-        Edge old = edgeDao.findById(edge.getTenantId(), edge.getId().getId());
-        if (!old.getName().equals(edge.getName())) {
-            cacheManager.removeEdgeFromCacheByName(tenantId, old.getName());
-        }
+    protected Edge validateUpdate(TenantId tenantId, Edge edge) {
+        return edgeDao.findById(edge.getTenantId(), edge.getId().getId());
     }
 
     @Override
@@ -70,8 +64,7 @@ public class EdgeDataValidator extends DataValidator<Edge> {
         if (edge.getTenantId() == null) {
             throw new DataValidationException("Edge should be assigned to tenant!");
         } else {
-            Tenant tenant = tenantDao.findById(edge.getTenantId(), edge.getTenantId().getId());
-            if (tenant == null) {
+            if (!tenantService.tenantExists(edge.getTenantId())) {
                 throw new DataValidationException("Edge is referencing to non-existent tenant!");
             }
         }

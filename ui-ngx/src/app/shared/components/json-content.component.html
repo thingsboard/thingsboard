@@ -15,11 +15,11 @@
     limitations under the License.
 
 -->
-<div style="background: #fff;" [ngClass]="{'fill-height': fillHeight}"
+<div class="tb-json-content" style="background: #fff;" [ngClass]="{'fill-height': fillHeight}"
      tb-fullscreen
      [fullscreen]="fullscreen" (fullscreenChanged)="onFullscreen()" fxLayout="column">
   <div fxLayout="row" fxLayoutAlign="start center" style="height: 40px;" class="tb-json-content-toolbar">
-    <label class="tb-title no-padding" [ngClass]="{'tb-error': !contentValid}">{{ label }}</label>
+    <label class="tb-title no-padding" [ngClass]="{'tb-error': !disabled && (!contentValid || required && !contentBody), 'tb-required': !disabled && required}">{{ label }}</label>
     <span fxFlex></span>
     <button type="button"
             mat-button *ngIf="!readonly && !disabled" class="tidy" (click)="beautifyJSON()">

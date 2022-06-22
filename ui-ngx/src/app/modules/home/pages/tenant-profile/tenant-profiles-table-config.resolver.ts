@@ -33,6 +33,8 @@ import { TenantProfileComponent } from '../../components/profile/tenant-profile.
 import { TenantProfileTabsComponent } from './tenant-profile-tabs.component';
 import { DialogService } from '@core/services/dialog.service';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { map } from 'rxjs/operators';
+import { guid } from '@core/utils';
 
 @Injectable()
 export class TenantProfilesTableConfigResolver implements Resolve<EntityTableConfig<TenantProfile>> {

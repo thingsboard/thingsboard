@@ -28,6 +28,7 @@ public class TenantAdminPermissions extends AbstractPermissions {
 
     public TenantAdminPermissions() {
         super();
+        put(Resource.ADMIN_SETTINGS, PermissionChecker.allowAllPermissionChecker);
         put(Resource.ALARM, tenantEntityPermissionChecker);
         put(Resource.ASSET, tenantEntityPermissionChecker);
         put(Resource.DEVICE, tenantEntityPermissionChecker);
@@ -45,6 +46,8 @@ public class TenantAdminPermissions extends AbstractPermissions {
         put(Resource.OTA_PACKAGE, tenantEntityPermissionChecker);
         put(Resource.EDGE, tenantEntityPermissionChecker);
         put(Resource.RPC, tenantEntityPermissionChecker);
+        put(Resource.QUEUE, queuePermissionChecker);
+        put(Resource.VERSION_CONTROL, PermissionChecker.allowAllPermissionChecker);
     }
 
     public static final PermissionChecker tenantEntityPermissionChecker = new PermissionChecker() {
@@ -120,4 +123,20 @@ public class TenantAdminPermissions extends AbstractPermissions {
         }
 
     };
+
+    private static final PermissionChecker queuePermissionChecker = new PermissionChecker() {
+
+        @Override
+        public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, HasTenantId entity) {
+            if (entity.getTenantId() == null || entity.getTenantId().isNullUid()) {
+                return operation == Operation.READ;
+            }
+            if (!user.getTenantId().equals(entity.getTenantId())) {
+                return false;
+            }
+            return true;
+        }
+
+    };
+
 }

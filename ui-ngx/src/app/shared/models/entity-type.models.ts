@@ -36,7 +36,8 @@ export enum EntityType {
   API_USAGE_STATE = 'API_USAGE_STATE',
   TB_RESOURCE = 'TB_RESOURCE',
   OTA_PACKAGE = 'OTA_PACKAGE',
-  RPC = 'RPC'
+  RPC = 'RPC',
+  QUEUE = 'QUEUE'
 }
 
 export enum AliasEntityType {
@@ -250,6 +251,9 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
     [
       EntityType.WIDGETS_BUNDLE,
       {
+        type: 'entity.type-widgets-bundle',
+        typePlural: 'entity.type-widgets-bundles',
+        list: 'entity.list-of-widgets-bundles',
         details: 'widgets-bundle.widgets-bundle-details',
         add: 'widgets-bundle.add',
         noEntities: 'widgets-bundle.no-widgets-bundles-text',
@@ -305,6 +309,15 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
         noEntities: 'ota-update.no-packages-text',
         search: 'ota-update.search',
         selectedEntities: 'ota-update.selected-package'
+      }
+    ],
+    [
+      EntityType.QUEUE,
+      {
+        add: 'queue.add',
+        search: 'queue.search',
+        details: 'queue.details',
+        selectedEntities: 'queue.selected-queues'
       }
     ]
   ]
@@ -395,6 +408,12 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource<BaseDa
       {
         helpLinkId: 'otaUpdates'
       }
+    ],
+    [
+      EntityType.QUEUE,
+      {
+        helpLinkId: 'queue'
+      }
     ]
   ]
 );
@@ -412,7 +431,8 @@ export const baseDetailsPageByEntityType = new Map<EntityType, string>([
   [EntityType.EDGE, '/edgeInstances'],
   [EntityType.ENTITY_VIEW, '/entityViews'],
   [EntityType.TB_RESOURCE, '/settings/resources-library'],
-  [EntityType.OTA_PACKAGE, '/otaUpdates']
+  [EntityType.OTA_PACKAGE, '/otaUpdates'],
+  [EntityType.QUEUE, '/settings/queues']
 ]);
 
 export interface EntitySubtype {

@@ -1263,8 +1263,8 @@ mat-label {
     }
   }
 
-  .tb-fullscreen-dialog-gt-sm {
-    @media #{$mat-gt-sm} {
+  .tb-fullscreen-dialog-gt-xs {
+    @media #{$mat-gt-xs} {
       min-height: 100%;
       min-width: 100%;
       max-width: none !important;
@@ -1364,6 +1364,11 @@ mat-label {
         &::after {
           transition: none;
         }
+        &.dragging {
+          .mat-chip-ripple {
+            display: none !important;
+          }
+        }
         &.dropping {
           //border: dashed 2px;
           //opacity: .5;
@@ -1438,5 +1443,26 @@ mat-label {
 
   .tb-toast-panel {
     pointer-events: none !important;
+  }
+
+  .tb-draggable {
+    &.cdk-drag-animating {
+      transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+    }
+  }
+
+  .tb-drop-list {
+    &.cdk-drop-list-dragging {
+      .tb-draggable {
+        transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+      }
+    }
+  }
+
+  .tb-drag-handle {
+    cursor: move;
+    mat-icon {
+      pointer-events: none;
+    }
   }
 }

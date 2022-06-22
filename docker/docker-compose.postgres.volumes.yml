@@ -53,6 +53,13 @@ services:
   tb-snmp-transport:
     volumes:
       - tb-snmp-transport-log-volume:/var/log/tb-snmp-transport
+  tb-vc-executor1:
+    volumes:
+      - tb-vc-executor-log-volume:/var/log/tb-vc-executor
+  tb-vc-executor2:
+    volumes:
+      - tb-vc-executor-log-volume:/var/log/tb-vc-executor
+
 
 volumes:
   postgres-db-volume:
@@ -76,3 +83,6 @@ volumes:
   tb-snmp-transport-log-volume:
     external: true
     name: ${TB_SNMP_TRANSPORT_LOG_VOLUME}
+  tb-vc-executor-log-volume:
+    external: true
+    name: ${TB_VC_EXECUTOR_LOG_VOLUME}
