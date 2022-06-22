@@ -38,7 +38,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class BaseRelationServiceTest extends AbstractServiceTest {
 
