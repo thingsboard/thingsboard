@@ -240,6 +240,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         entityTableMap.put(EntityType.EDGE, "edge");
         entityTableMap.put(EntityType.RULE_CHAIN, "rule_chain");
         entityTableMap.put(EntityType.QUEUE, "queue");
+        entityTableMap.put(EntityType.DEVICE_PROFILE, "device_profile");
     }
 
     public static EntityType[] RELATION_QUERY_ENTITY_TYPES = new EntityType[]{
@@ -821,7 +822,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         return "e.type = :entity_filter_type_query_type and lower(e.search_text) like lower(concat(:entity_filter_type_query_name, '%%'))";
     }
 
-    private EntityType resolveEntityType(EntityFilter entityFilter) {
+    public static EntityType resolveEntityType(EntityFilter entityFilter) {
         switch (entityFilter.getType()) {
             case SINGLE_ENTITY:
                 return ((SingleEntityFilter) entityFilter).getSingleEntity().getEntityType();

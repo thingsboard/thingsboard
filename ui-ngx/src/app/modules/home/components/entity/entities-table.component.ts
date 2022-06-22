@@ -549,6 +549,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
   }
 
   resetSortAndFilter(update: boolean = true, preserveTimewindow: boolean = false) {
+    this.textSearchMode = false;
     this.pageLink.textSearch = null;
     if (this.entitiesTableConfig.useTimePageLink && !preserveTimewindow) {
       this.timewindow = this.entitiesTableConfig.defaultTimewindowInterval;

@@ -63,4 +63,9 @@ public class DeviceProfileInfo extends EntityInfo {
         this.transportType = transportType;
     }
 
+    public DeviceProfileInfo(DeviceProfile profile) {
+        this(profile.getId(), profile.getName(), profile.getImage(), profile.getDefaultDashboardId(),
+                profile.getType(), profile.getTransportType());
+    }
+
 }

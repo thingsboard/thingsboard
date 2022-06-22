@@ -22,8 +22,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.common.data.OtaPackage;
@@ -42,8 +40,6 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 
 import java.nio.ByteBuffer;
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -246,10 +242,6 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
         } else {
             return Optional.empty();
         }
-    }
-
-    private static List<OtaPackageId> toOtaPackageInfoKey(OtaPackageId otaPackageId) {
-        return Collections.singletonList(otaPackageId);
     }
 
 }

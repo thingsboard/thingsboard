@@ -15,20 +15,27 @@
  */
 package org.thingsboard.server.service.entitiy.entityView;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.plugin.ComponentLifecycleListener;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-public interface TbEntityViewService {
+import java.util.List;
+
+public interface TbEntityViewService extends ComponentLifecycleListener {
 
     EntityView save(EntityView entityView, EntityView existingEntityView, SecurityUser user) throws ThingsboardException;
 
-    void  delete (EntityView entity, SecurityUser user) throws ThingsboardException;
+    void updateEntityViewAttributes(SecurityUser user, EntityView savedEntityView, EntityView oldEntityView) throws ThingsboardException;
+
+    void delete (EntityView entity, SecurityUser user) throws ThingsboardException;
 
     EntityView assignEntityViewToCustomer(TenantId tenantId, EntityViewId entityViewId, Customer customer,
                                           SecurityUser user) throws ThingsboardException;
@@ -44,4 +51,6 @@ public interface TbEntityViewService {
 
     EntityView unassignEntityViewFromCustomer(TenantId tenantId, EntityViewId entityViewId, Customer customer,
                                               SecurityUser user) throws ThingsboardException;
+
+    ListenableFuture<List<EntityView>> findEntityViewsByTenantIdAndEntityIdAsync(TenantId tenantId, EntityId entityId);
 }

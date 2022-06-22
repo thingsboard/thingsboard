@@ -81,6 +81,13 @@
                   (click)="isFullscreen = !isFullscreen">
             <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
           </button>
+          <button [fxShow]="currentDashboardId && isEdit && isTenantAdmin()" mat-icon-button
+                  #versionControlButton
+                  matTooltip="{{'version-control.version-control' | translate}}"
+                  matTooltipPosition="below"
+                  (click)="toggleVersionControl($event, versionControlButton)">
+            <mat-icon>history</mat-icon>
+          </button>
           <button [fxShow]="currentDashboardId && !isEdit && !isMobileApp && isTenantAdmin() && displayUpdateDashboardImage()" mat-icon-button
                   matTooltip="{{'dashboard.update-image' | translate}}"
                   matTooltipPosition="below"
@@ -228,6 +235,7 @@
                   [opened]="isEditingWidget || isAddingWidget"
                   (openedStart)="detailsDrawerOpenedStart()"
                   (closed)="detailsDrawerClosed()"
+                  disableClose
                   mode="over"
                   position="end">
         <tb-details-panel *ngIf="!isEditingWidgetClosed" fxFlex

@@ -164,6 +164,17 @@
           </tb-details-panel>
         </mat-drawer>
         <mat-drawer-content class="tb-rulechain-graph-content">
+          <button #versionControlButton
+                  *ngIf="!isImport"
+                  mat-button
+                  color="primary"
+                  type="button"
+                  mat-icon-button class="mat-fab version-control-button"
+                  (click)="toggleVersionControl($event, versionControlButton)"
+                  matTooltip="{{'version-control.version-control' | translate}}"
+                  matTooltipPosition="above">
+            <mat-icon>history</mat-icon>
+          </button>
           <button mat-button
                   type="button"
                   mat-icon-button class="tb-fullscreen-button"
