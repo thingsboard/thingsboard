@@ -244,12 +244,28 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
     @Override
     public void onComponentLifecycleMsg(ComponentLifecycleMsg componentLifecycleMsg) {
         Map<EntityId, List<EntityView>> localCacheByTenant = localCache.computeIfAbsent(componentLifecycleMsg.getTenantId(), (k) -> new ConcurrentReferenceHashMap<>());
-        if (componentLifecycleMsg.getEvent() == ComponentLifecycleEvent.DELETED) {
-            localCacheByTenant.clear(); //we don't know which entity was mapped before deletion
-        } else {
-            EntityView entityView = entityViewService.findEntityViewById(componentLifecycleMsg.getTenantId(), new EntityViewId(componentLifecycleMsg.getEntityId().getId()));
+        EntityViewId entityViewId = new EntityViewId(componentLifecycleMsg.getEntityId().getId());
+        deleteOldCacheValue(localCacheByTenant, entityViewId);
+        if (componentLifecycleMsg.getEvent() != ComponentLifecycleEvent.DELETED) {
+            EntityView entityView = entityViewService.findEntityViewById(componentLifecycleMsg.getTenantId(), entityViewId);
             if (entityView != null) {
                 localCacheByTenant.remove(entityView.getEntityId());
+            }
+        }
+    }
+
+    private void deleteOldCacheValue(Map<EntityId, List<EntityView>> localCacheByTenant, EntityViewId entityViewId) {
+        for (var entry : localCacheByTenant.entrySet()) {
+            EntityView toDelete = null;
+            for (EntityView view : entry.getValue()) {
+                if (entityViewId.equals(view.getId())) {
+                    toDelete = view;
+                    break;
+                }
+            }
+            if (toDelete != null) {
+                entry.getValue().remove(toDelete);
+                break;
             }
         }
     }
@@ -269,8 +285,8 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
                                         long lastUpdateTs = attributeKvEntry.getLastUpdateTs();
                                         return startTime == 0 && endTime == 0 ||
                                                 (endTime == 0 && startTime < lastUpdateTs) ||
-                                                (startTime == 0 && endTime > lastUpdateTs)
-                                                ? true : startTime < lastUpdateTs && endTime > lastUpdateTs;
+                                                (startTime == 0 && endTime > lastUpdateTs) ||
+                                                (startTime < lastUpdateTs && endTime > lastUpdateTs);
                                     }).collect(Collectors.toList());
                     tsSubService.saveAndNotify(entityView.getTenantId(), entityId, scope, attributes, new FutureCallback<Void>() {
                         @Override
