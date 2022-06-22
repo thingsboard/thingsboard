@@ -54,7 +54,7 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
                                               ActionType actionType, Object... additionalInfo) {
         int cntTime = 1;
         testSendNotificationMsgToEdgeServiceTime(entityId, tenantId, actionType, cntTime);
-        logEntityAction(entity, originatorId, tenantId, customerId, userId, userName, actionType, cntTime, additionalInfo);
+        testLogEntityAction(entity, originatorId, tenantId, customerId, userId, userName, actionType, cntTime, additionalInfo);
         testPushMsgToRuleEngineTime(originatorId, tenantId, cntTime);
         Mockito.reset(tbClusterService, auditLogService);
     }
@@ -72,7 +72,7 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
                                                                 String userName, ActionType actionType, Object... additionalInfo) {
         int cntTime = 1;
         testNotificationMsgToEdgeServiceNever(entityId);
-        logEntityAction(entity, originatorId, tenantId, customerId, userId, userName, actionType, cntTime, additionalInfo);
+        testLogEntityAction(entity, originatorId, tenantId, customerId, userId, userName, actionType, cntTime, additionalInfo);
         testPushMsgToRuleEngineTime(originatorId, tenantId, cntTime);
         Mockito.reset(tbClusterService, auditLogService);
     }
@@ -96,7 +96,7 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
                                                                                                ActionType actionType, Object... additionalInfo) {
         int cntTime = 1;
         testNotificationMsgToEdgeServiceNever(entityId);
-        logEntityAction(entity, originatorId, tenantId, customerId, userId, userName, actionType, cntTime, additionalInfo);
+        testLogEntityAction(entity, originatorId, tenantId, customerId, userId, userName, actionType, cntTime, additionalInfo);
         testPushMsgToRuleEngineTime(originatorId, tenantId, cntTime);
         testBroadcastEntityStateChangeEventTime(entityId, tenantId, cntTime);
         Mockito.reset(tbClusterService, auditLogService);
@@ -172,9 +172,9 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
                 Mockito.any(entityId.getClass()), Mockito.any(ComponentLifecycleEvent.class));
     }
 
-    private void logEntityAction(HasName entity, EntityId originatorId, TenantId tenantId,
-                                 CustomerId customerId, UserId userId, String userName,
-                                 ActionType actionType, int cntTime, Object... additionalInfo) {
+    private void testLogEntityAction(HasName entity, EntityId originatorId, TenantId tenantId,
+                                     CustomerId customerId, UserId userId, String userName,
+                                     ActionType actionType, int cntTime, Object... additionalInfo) {
         ArgumentMatcher<HasName> matcherEntityEquals = argument -> argument.equals(entity);
         ArgumentMatcher<EntityId> matcherOriginatorId = argument -> argument.equals(originatorId);
         logEntityActionAdditionalInfo(matcherEntityEquals, matcherOriginatorId, tenantId, customerId, userId, userName,
