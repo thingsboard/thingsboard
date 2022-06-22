@@ -17,6 +17,13 @@ In order to set database type change the value of `DATABASE` variable in `.env` 
 
 **NOTE**: According to the database type corresponding docker service will be deployed (see `docker-compose.postgres.yml`, `docker-compose.hybrid.yml` for details).
 
+In order to set cache type change the value of `CACHE` variable in `.env` file to one of the following:
+
+- `redis` - use Redis standalone cache (1 node - 1 master);
+- `redis-cluster` - use Redis cluster cache (6 nodes - 3 masters, 3 slaves);
+
+**NOTE**: According to the cache type corresponding docker service will be deployed (see `docker-compose.redis.yml`, `docker-compose.redis-cluster.yml` for details).
+
 Execute the following command to create log folders for the services and chown of these folders to the docker container users. 
 To be able to change user, **chown** command is used, which requires sudo permissions (script will request password for a sudo access): 
 

@@ -73,19 +73,51 @@ function additionalComposeMonitoringArgs() {
     fi
 }
 
+function additionalComposeCacheArgs() {
+    source .env
+    CACHE_COMPOSE_ARGS=""
+    CACHE="${CACHE:-redis}"
+    case $CACHE in
+        redis)
+        CACHE_COMPOSE_ARGS="-f docker-compose.redis.yml"
+        ;;
+        redis-cluster)
+        CACHE_COMPOSE_ARGS="-f docker-compose.redis-cluster.yml"
+        ;;
+        *)
+        echo "Unknown CACHE value specified: '${CACHE}'. Should be either redis or redis-cluster." >&2
+        exit 1
+    esac
+    echo $CACHE_COMPOSE_ARGS
+}
+
 function additionalStartupServices() {
     source .env
     ADDITIONAL_STARTUP_SERVICES=""
     case $DATABASE in
         postgres)
-        ADDITIONAL_STARTUP_SERVICES=postgres
+        ADDITIONAL_STARTUP_SERVICES="$ADDITIONAL_STARTUP_SERVICES postgres"
         ;;
         hybrid)
-        ADDITIONAL_STARTUP_SERVICES="postgres cassandra"
+        ADDITIONAL_STARTUP_SERVICES="$ADDITIONAL_STARTUP_SERVICES postgres cassandra"
         ;;
         *)
         echo "Unknown DATABASE value specified: '${DATABASE}'. Should be either postgres or hybrid." >&2
         exit 1
     esac
+
+    CACHE="${CACHE:-redis}"
+    case $CACHE in
+        redis)
+        ADDITIONAL_STARTUP_SERVICES="$ADDITIONAL_STARTUP_SERVICES redis"
+        ;;
+        redis-cluster)
+        ADDITIONAL_STARTUP_SERVICES="$ADDITIONAL_STARTUP_SERVICES redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5"
+        ;;
+        *)
+        echo "Unknown CACHE value specified: '${CACHE}'. Should be either redis or redis-cluster." >&2
+        exit 1
+    esac
+
     echo $ADDITIONAL_STARTUP_SERVICES
 }
