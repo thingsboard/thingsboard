@@ -21,6 +21,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
@@ -93,13 +94,13 @@ public abstract class AbstractTbEntityService {
 
     @Autowired
     protected DbCallbackExecutorService dbExecutor;
-    @Autowired
+    @Autowired(required = false)
     protected TbNotificationEntityService notificationEntityService;
     @Autowired(required = false)
     protected EdgeService edgeService;
     @Autowired
     protected AlarmService alarmService;
-    @Autowired
+    @Autowired(required = false)
     protected EntityActionService entityActionService;
     @Autowired
     protected DeviceService deviceService;
@@ -111,24 +112,27 @@ public abstract class AbstractTbEntityService {
     protected TenantService tenantService;
     @Autowired
     protected CustomerService customerService;
-    @Autowired
+    @Lazy
+    @Autowired(required = false)
     protected ClaimDevicesService claimDevicesService;
     @Autowired
     protected TbTenantProfileCache tenantProfileCache;
     @Autowired
     protected RuleChainService ruleChainService;
-    @Autowired
+    @Autowired(required = false)
     protected TbRuleChainService tbRuleChainService;
-    @Autowired
+    @Autowired(required = false)
     protected EdgeNotificationService edgeNotificationService;
     @Autowired
     protected QueueService queueService;
     @Autowired
     protected DashboardService dashboardService;
+
     @Autowired
     protected EntitiesVersionControlService vcService;
     @Autowired
     protected EntityViewService entityViewService;
+    @Lazy
     @Autowired
     protected TelemetrySubscriptionService tsSubService;
     @Autowired
@@ -149,7 +153,7 @@ public abstract class AbstractTbEntityService {
     protected InstallScripts installScripts;
     @Autowired
     protected UserService userService;
-    @Autowired
+    @Autowired(required = false)
     protected TbResourceService resourceService;
     @Autowired
     protected WidgetsBundleService widgetsBundleService;
