@@ -68,8 +68,8 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
     }
 
     protected void testNotifyEntityOneTimeMsgToEdgeServiceNever(HasName entity, EntityId entityId, EntityId originatorId,
-                                                                TenantId tenantId, CustomerId customerId, UserId userId, String userName,
-                                                                ActionType actionType, Object... additionalInfo) {
+                                                                TenantId tenantId, CustomerId customerId, UserId userId,
+                                                                String userName, ActionType actionType, Object... additionalInfo) {
         int cntTime = 1;
         testNotificationMsgToEdgeServiceNever(entityId);
         logEntityAction(entity, originatorId, tenantId, customerId, userId, userName, actionType, cntTime, additionalInfo);
