@@ -67,7 +67,6 @@ import {
   AlarmData,
   AlarmDataQuery,
   createDefaultEntityDataPageLink,
-  defaultEntityDataPageLink,
   EntityData,
   EntityDataQuery,
   entityDataToEntityInfo,
@@ -83,15 +82,11 @@ import {
 import { alarmFields } from '@shared/models/alarm.models';
 import { OtaPackageService } from '@core/http/ota-package.service';
 import { EdgeService } from '@core/http/edge.service';
-import {
-  Edge,
-  EdgeEvent,
-  EdgeEventType,
-  bodyContentEdgeEventActionTypes
-} from '@shared/models/edge.models';
+import { bodyContentEdgeEventActionTypes, Edge, EdgeEvent, EdgeEventType } from '@shared/models/edge.models';
 import { RuleChainMetaData, RuleChainType } from '@shared/models/rule-chain.models';
 import { WidgetService } from '@core/http/widget.service';
 import { DeviceProfileService } from '@core/http/device-profile.service';
+import { QueueService } from '@core/http/queue.service';
 
 @Injectable({
   providedIn: 'root'
@@ -115,7 +110,8 @@ export class EntityService {
     private otaPackageService: OtaPackageService,
     private widgetService: WidgetService,
     private deviceProfileService: DeviceProfileService,
-    private utils: UtilsService
+    private utils: UtilsService,
+    private queueService: QueueService
   ) { }
 
   private getEntityObservable(entityType: EntityType, entityId: string,
@@ -155,6 +151,9 @@ export class EntityService {
         break;
       case EntityType.OTA_PACKAGE:
         observable = this.otaPackageService.getOtaPackageInfo(entityId, config);
+        break;
+      case EntityType.QUEUE:
+        observable = this.queueService.getQueueById(entityId, config);
         break;
     }
     return observable;
@@ -232,6 +231,11 @@ export class EntityService {
         break;
       case EntityType.ALARM:
         console.error('Get Alarm Entity is not implemented!');
+        break;
+      case EntityType.DEVICE_PROFILE:
+        observable = this.getEntitiesByIdsObservable(
+          (id) => this.deviceProfileService.getDeviceProfileInfo(id, config),
+          entityIds);
         break;
     }
     return observable;
@@ -373,6 +377,10 @@ export class EntityService {
       case EntityType.OTA_PACKAGE:
         pageLink.sortOrder.property = 'title';
         entitiesObservable = this.otaPackageService.getOtaPackages(pageLink, config);
+        break;
+      case EntityType.DEVICE_PROFILE:
+        pageLink.sortOrder.property = 'name';
+        entitiesObservable = this.deviceProfileService.getDeviceProfileInfos(pageLink, null, config);
         break;
     }
     return entitiesObservable;
@@ -1319,7 +1327,8 @@ export class EntityService {
         pageLink = deepClone(singleEntityDataPageLink);
       } else {
         nameFilter = subscriptionInfo.entityNamePrefix;
-        pageLink = deepClone(defaultEntityDataPageLink);
+        const pageSize = isDefinedAndNotNull(subscriptionInfo.pageSize) && subscriptionInfo.pageSize > 0 ? subscriptionInfo.pageSize : 1024;
+        pageLink = createDefaultEntityDataPageLink(pageSize);
       }
       datasource.entityFilter = {
         type: AliasFilterType.entityName,
@@ -1333,7 +1342,8 @@ export class EntityService {
         entityType: subscriptionInfo.entityType,
         entityList: subscriptionInfo.entityIds
       };
-      datasource.pageLink = deepClone(defaultEntityDataPageLink);
+      const pageSize = isDefinedAndNotNull(subscriptionInfo.pageSize) && subscriptionInfo.pageSize > 0 ? subscriptionInfo.pageSize : 1024;
+      datasource.pageLink = createDefaultEntityDataPageLink(pageSize);
     }
   }
 

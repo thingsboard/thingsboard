@@ -19,9 +19,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.TransportPayloadType;
-import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
+
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_PROTO_TOPIC;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_TOPIC;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC;
 
 @Slf4j
 @DaoSqlTest
@@ -40,32 +43,32 @@ public class MqttServerSideRpcProtoIntegrationTest extends AbstractMqttServerSid
 
     @Test
     public void testServerMqttOneWayRpc() throws Exception {
-        processOneWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC);
+        processOneWayRpcTest(DEVICE_RPC_REQUESTS_SUB_TOPIC);
     }
 
     @Test
     public void testServerMqttOneWayRpcOnShortTopic() throws Exception {
-        processOneWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_TOPIC);
+        processOneWayRpcTest(DEVICE_RPC_REQUESTS_SUB_SHORT_TOPIC);
     }
 
     @Test
     public void testServerMqttOneWayRpcOnShortProtoTopic() throws Exception {
-        processOneWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_PROTO_TOPIC);
+        processOneWayRpcTest(DEVICE_RPC_REQUESTS_SUB_SHORT_PROTO_TOPIC);
     }
 
     @Test
     public void testServerMqttTwoWayRpc() throws Exception {
-        processProtoTwoWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC);
+        processProtoTwoWayRpcTest(DEVICE_RPC_REQUESTS_SUB_TOPIC);
     }
 
     @Test
     public void testServerMqttTwoWayRpcOnShortTopic() throws Exception {
-        processProtoTwoWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_TOPIC);
+        processProtoTwoWayRpcTest(DEVICE_RPC_REQUESTS_SUB_SHORT_TOPIC);
     }
 
     @Test
     public void testServerMqttTwoWayRpcOnShortProtoTopic() throws Exception {
-        processProtoTwoWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_PROTO_TOPIC);
+        processProtoTwoWayRpcTest(DEVICE_RPC_REQUESTS_SUB_SHORT_PROTO_TOPIC);
     }
 
     @Test

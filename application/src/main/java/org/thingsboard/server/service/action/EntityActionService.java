@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -60,7 +61,6 @@ public class EntityActionService {
 
     private static final ObjectMapper json = new ObjectMapper();
 
-    @SuppressWarnings("unchecked")
     public void pushEntityActionToRuleEngine(EntityId entityId, HasName entity, TenantId tenantId, CustomerId customerId,
                                              ActionType actionType, User user, Object... additionalInfo) {
         String msgType = null;
@@ -271,6 +271,9 @@ public class EntityActionService {
         auditLogService.logEntityAction(user.getTenantId(), customerId, user.getId(), user.getName(), entityId, entity, actionType, e, additionalInfo);
     }
 
+    public void sendEntityNotificationMsgToEdge(TenantId tenantId, EntityId entityId, EdgeEventActionType action) {
+        tbClusterService.sendNotificationMsgToEdge(tenantId, null, entityId, null, null, action);
+    }
 
     private <T> T extractParameter(Class<T> clazz, int index, Object... additionalInfo) {
         T result = null;
@@ -315,4 +318,5 @@ public class EntityActionService {
             entityNode.put(kvEntry.getKey(), kvEntry.getValueAsString());
         }
     }
+
 }

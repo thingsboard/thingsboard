@@ -70,6 +70,10 @@
             <artifactId>cluster-api</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.thingsboard.common</groupId>
+            <artifactId>version-control</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.thingsboard.rule-engine</groupId>
             <artifactId>rule-engine-components</artifactId>
         </dependency>
@@ -340,6 +344,10 @@
             <groupId>org.java-websocket</groupId>
             <artifactId>Java-WebSocket</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.aerogear</groupId>
+            <artifactId>aerogear-otp-java</artifactId>
         </dependency>
     </dependencies>
 

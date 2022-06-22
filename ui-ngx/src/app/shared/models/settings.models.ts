@@ -16,6 +16,7 @@
 
 import { ValidatorFn } from '@angular/forms';
 import { isNotEmptyStr, isNumber } from '@core/utils';
+import { VersionCreateConfig } from '@shared/models/vc.models';
 
 export const smtpPortPattern: RegExp = /^([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$/;
 
@@ -141,7 +142,7 @@ export enum TypeOfNumber {
   Abbreviated = 'Abbreviated'
 }
 
-interface TypeDescriptor {
+export interface TypeDescriptor {
   name: string;
   value: number;
 }
@@ -396,3 +397,30 @@ export function createSmsProviderConfiguration(type: SmsProviderType): SmsProvid
   }
   return smsProviderConfiguration;
 }
+
+export enum RepositoryAuthMethod {
+  USERNAME_PASSWORD = 'USERNAME_PASSWORD',
+  PRIVATE_KEY = 'PRIVATE_KEY'
+}
+
+export const repositoryAuthMethodTranslationMap = new Map<RepositoryAuthMethod, string>([
+  [RepositoryAuthMethod.USERNAME_PASSWORD, 'admin.auth-method-username-password'],
+  [RepositoryAuthMethod.PRIVATE_KEY, 'admin.auth-method-private-key']
+]);
+
+export interface RepositorySettings {
+  repositoryUri: string;
+  defaultBranch: string;
+  authMethod: RepositoryAuthMethod;
+  username: string;
+  password: string;
+  privateKeyFileName: string;
+  privateKey: string;
+  privateKeyPassword: string;
+}
+
+export interface AutoVersionCreateConfig extends VersionCreateConfig {
+  branch: string;
+}
+
+export type AutoCommitSettings = {[entityType: string]: AutoVersionCreateConfig};

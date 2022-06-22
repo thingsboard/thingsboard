@@ -18,9 +18,11 @@ package org.thingsboard.server.dao.sql.tenant;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
@@ -29,8 +31,10 @@ import org.thingsboard.server.dao.model.sql.TenantInfoEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 
 /**
@@ -78,4 +82,15 @@ public class JpaTenantDao extends JpaAbstractSearchTextDao<TenantEntity, Tenant>
         return DaoUtil.pageToPageData(tenantRepository.findTenantsIds(DaoUtil.toPageable(pageLink))).mapData(TenantId::fromUUID);
     }
 
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.TENANT;
+    }
+
+    @Override
+    public List<TenantId> findTenantIdsByTenantProfileId(TenantProfileId tenantProfileId) {
+        return tenantRepository.findTenantIdsByTenantProfileId(tenantProfileId.getId()).stream()
+                .map(TenantId::fromUUID)
+                .collect(Collectors.toList());
+    }
 }

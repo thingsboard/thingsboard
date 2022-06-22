@@ -37,22 +37,30 @@ import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
+import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.user.UserServiceImpl;
-import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettings;
+import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
 import org.thingsboard.server.service.security.exception.UserPasswordExpiredException;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.utils.MiscUtils;
+import ua_parser.Client;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -65,6 +73,7 @@ import static org.thingsboard.server.common.data.CacheConstants.SECURITY_SETTING
 
 @Service
 @Slf4j
+@TbCoreComponent
 public class DefaultSystemSecurityService implements SystemSecurityService {
 
     @Autowired
@@ -78,6 +87,9 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
 
     @Autowired
     private MailService mailService;
+
+    @Autowired
+    private AuditLogService auditLogService;
 
     @Resource
     private SystemSecurityService self;
@@ -107,6 +119,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
         AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey(tenantId, "securitySettings");
         if (adminSettings == null) {
             adminSettings = new AdminSettings();
+            adminSettings.setTenantId(tenantId);
             adminSettings.setKey("securitySettings");
         }
         adminSettings.setJsonValue(JacksonUtil.valueToTree(securitySettings));
@@ -121,18 +134,11 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
     @Override
     public void validateUserCredentials(TenantId tenantId, UserCredentials userCredentials, String username, String password) throws AuthenticationException {
         if (!encoder.matches(password, userCredentials.getPassword())) {
-            int failedLoginAttempts = userService.onUserLoginIncorrectCredentials(tenantId, userCredentials.getUserId());
-            SecuritySettings securitySettings = getSecuritySettings(tenantId);
+            int failedLoginAttempts = userService.increaseFailedLoginAttempts(tenantId, userCredentials.getUserId());
+            SecuritySettings securitySettings = self.getSecuritySettings(tenantId);
             if (securitySettings.getMaxFailedLoginAttempts() != null && securitySettings.getMaxFailedLoginAttempts() > 0) {
                 if (failedLoginAttempts > securitySettings.getMaxFailedLoginAttempts() && userCredentials.isEnabled()) {
-                    userService.setUserCredentialsEnabled(TenantId.SYS_TENANT_ID, userCredentials.getUserId(), false);
-                    if (StringUtils.isNoneBlank(securitySettings.getUserLockoutNotificationEmail())) {
-                        try {
-                            mailService.sendAccountLockoutEmail(username, securitySettings.getUserLockoutNotificationEmail(), securitySettings.getMaxFailedLoginAttempts());
-                        } catch (ThingsboardException e) {
-                            log.warn("Can't send email regarding user account [{}] lockout to provided email [{}]", username, securitySettings.getUserLockoutNotificationEmail(), e);
-                        }
-                    }
+                    lockAccount(userCredentials.getUserId(), username, securitySettings.getUserLockoutNotificationEmail(), securitySettings.getMaxFailedLoginAttempts());
                     throw new LockedException("Authentication Failed. Username was locked due to security policy.");
                 }
             }
@@ -143,7 +149,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
             throw new DisabledException("User is not active");
         }
 
-        userService.onUserLoginSuccessful(tenantId, userCredentials.getUserId());
+        userService.resetFailedLoginAttempts(tenantId, userCredentials.getUserId());
 
         SecuritySettings securitySettings = self.getSecuritySettings(tenantId);
         if (isPositiveInteger(securitySettings.getPasswordPolicy().getPasswordExpirationPeriodDays())) {
@@ -152,6 +158,40 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
                     < System.currentTimeMillis()) {
                 userCredentials = userService.requestExpiredPasswordReset(tenantId, userCredentials.getId());
                 throw new UserPasswordExpiredException("User password expired!", userCredentials.getResetToken());
+            }
+        }
+    }
+
+    @Override
+    public void validateTwoFaVerification(SecurityUser securityUser, boolean verificationSuccess, PlatformTwoFaSettings twoFaSettings) {
+        TenantId tenantId = securityUser.getTenantId();
+        UserId userId = securityUser.getId();
+
+        int failedVerificationAttempts;
+        if (!verificationSuccess) {
+            failedVerificationAttempts = userService.increaseFailedLoginAttempts(tenantId, userId);
+        } else {
+            userService.resetFailedLoginAttempts(tenantId, userId);
+            return;
+        }
+
+        Integer maxVerificationFailures = twoFaSettings.getMaxVerificationFailuresBeforeUserLockout();
+        if (maxVerificationFailures != null && maxVerificationFailures > 0
+                && failedVerificationAttempts >= maxVerificationFailures) {
+            userService.setUserCredentialsEnabled(TenantId.SYS_TENANT_ID, userId, false);
+            SecuritySettings securitySettings = self.getSecuritySettings(tenantId);
+            lockAccount(userId, securityUser.getEmail(), securitySettings.getUserLockoutNotificationEmail(), maxVerificationFailures);
+            throw new LockedException("User account was locked due to exceeded 2FA verification attempts");
+        }
+    }
+
+    private void lockAccount(UserId userId, String username, String userLockoutNotificationEmail, Integer maxFailedLoginAttempts) {
+        userService.setUserCredentialsEnabled(TenantId.SYS_TENANT_ID, userId, false);
+        if (StringUtils.isNotBlank(userLockoutNotificationEmail)) {
+            try {
+                mailService.sendAccountLockoutEmail(username, userLockoutNotificationEmail, maxFailedLoginAttempts);
+            } catch (ThingsboardException e) {
+                log.warn("Can't send email regarding user account [{}] lockout to provided email [{}]", username, userLockoutNotificationEmail, e);
             }
         }
     }
@@ -219,6 +259,57 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
         }
 
         return baseUrl;
+    }
+
+    @Override
+    public void logLoginAction(User user, Object authenticationDetails, ActionType actionType, Exception e) {
+        String clientAddress = "Unknown";
+        String browser = "Unknown";
+        String os = "Unknown";
+        String device = "Unknown";
+        if (authenticationDetails instanceof RestAuthenticationDetails) {
+            RestAuthenticationDetails details = (RestAuthenticationDetails) authenticationDetails;
+            clientAddress = details.getClientAddress();
+            if (details.getUserAgent() != null) {
+                Client userAgent = details.getUserAgent();
+                if (userAgent.userAgent != null) {
+                    browser = userAgent.userAgent.family;
+                    if (userAgent.userAgent.major != null) {
+                        browser += " " + userAgent.userAgent.major;
+                        if (userAgent.userAgent.minor != null) {
+                            browser += "." + userAgent.userAgent.minor;
+                                if (userAgent.userAgent.patch != null) {
+                                    browser += "." + userAgent.userAgent.patch;
+                                }
+                            }
+                        }
+                    }
+                    if (userAgent.os != null) {
+                        os = userAgent.os.family;
+                        if (userAgent.os.major != null) {
+                            os += " " + userAgent.os.major;
+                            if (userAgent.os.minor != null) {
+                                os += "." + userAgent.os.minor;
+                                if (userAgent.os.patch != null) {
+                                    os += "." + userAgent.os.patch;
+                                    if (userAgent.os.patchMinor != null) {
+                                        os += "." + userAgent.os.patchMinor;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (userAgent.device != null) {
+                        device = userAgent.device.family;
+                    }
+                }
+            }
+        if (actionType == ActionType.LOGIN && e == null) {
+            userService.setLastLoginTs(user.getTenantId(), user.getId());
+        }
+        auditLogService.logEntityAction(
+                user.getTenantId(), user.getCustomerId(), user.getId(),
+                user.getName(), user.getId(), null, actionType, e, clientAddress, browser, os, device);
     }
 
     private static boolean isPositiveInteger(Integer val) {

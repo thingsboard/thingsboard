@@ -17,15 +17,15 @@
 import {
   AfterViewInit,
   Component,
-  ElementRef,
+  ElementRef, EventEmitter,
   HostBinding,
   Inject,
   OnDestroy,
   OnInit,
-  QueryList,
+  QueryList, Renderer2,
   SkipSelf,
   ViewChild,
-  ViewChildren,
+  ViewChildren, ViewContainerRef,
   ViewEncapsulation
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
@@ -63,7 +63,7 @@ import {
 } from '@shared/models/rule-node.models';
 import { FcRuleNodeModel, FcRuleNodeTypeModel, RuleChainMenuContextInfo } from './rulechain-page.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
-import { fromEvent, NEVER, Observable, of, Subscription } from 'rxjs';
+import { fromEvent, NEVER, Observable, of, ReplaySubject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged, mergeMap, tap } from 'rxjs/operators';
 import { ISearchableComponent } from '../../models/searchable-component.models';
 import { deepClone } from '@core/utils';
@@ -75,6 +75,11 @@ import { ItemBufferService, RuleNodeConnection } from '@core/services/item-buffe
 import { Hotkey } from 'angular2-hotkeys';
 import { DebugEventType, EventType } from '@shared/models/event.models';
 import Timeout = NodeJS.Timeout;
+import { MatButton } from '@angular/material/button';
+import { TbPopoverService } from '@shared/components/popover.service';
+import { EntityVersionCreateComponent } from '@home/components/vc/entity-version-create.component';
+import { VersionCreationResult } from '@shared/models/vc.models';
+import { VersionControlComponent } from '@home/components/vc/version-control.component';
 
 @Component({
   selector: 'tb-rulechain-page',
@@ -87,6 +92,10 @@ export class RuleChainPageComponent extends PageComponent
 
   get isDirty(): boolean {
     return this.isDirtyValue || this.isImport;
+  }
+
+  set isDirty(value: boolean) {
+    this.isDirtyValue = value;
   }
 
   @HostBinding('style.width') width = '100%';
@@ -231,6 +240,8 @@ export class RuleChainPageComponent extends PageComponent
 
   flowchartConstants = FlowchartConstants;
 
+  updateBreadcrumbs = new EventEmitter();
+
   private rxSubscription: Subscription;
 
   private tooltipTimeout: Timeout;
@@ -242,11 +253,13 @@ export class RuleChainPageComponent extends PageComponent
               private authService: AuthService,
               private translate: TranslateService,
               private itembuffer: ItemBufferService,
+              private popoverService: TbPopoverService,
+              private renderer: Renderer2,
+              private viewContainerRef: ViewContainerRef,
               public dialog: MatDialog,
               public dialogService: DialogService,
               public fb: FormBuilder) {
     super(store);
-
     this.rxSubscription = this.route.data.subscribe(
       () => {
         this.reset();
@@ -1376,7 +1389,8 @@ export class RuleChainPageComponent extends PageComponent
     }, 0);
   }
 
-  saveRuleChain() {
+  saveRuleChain(): Observable<any> {
+    const saveResult = new ReplaySubject();
     let saveRuleChainObservable: Observable<RuleChain>;
     if (this.isImport) {
       saveRuleChainObservable = this.ruleChainService.saveRuleChain(this.ruleChain);
@@ -1442,6 +1456,20 @@ export class RuleChainPageComponent extends PageComponent
         } else {
           this.createRuleChainModel();
         }
+        saveResult.next();
+      });
+    });
+    return saveResult;
+  }
+
+  reloadRuleChain() {
+    this.ruleChainService.getRuleChain(this.ruleChain.id.id).subscribe((ruleChain) => {
+      this.ruleChain = ruleChain;
+      this.updateBreadcrumbs.emit();
+      this.ruleChainService.getRuleChainMetadata(this.ruleChain.id.id).subscribe((ruleChainMetaData) => {
+        this.ruleChainMetaData = ruleChainMetaData;
+        this.isDirtyValue = false;
+        this.createRuleChainModel();
       });
     });
   }
@@ -1507,6 +1535,38 @@ export class RuleChainPageComponent extends PageComponent
         sourceRuleChainId
       }
     }).afterClosed();
+  }
+
+  toggleVersionControl($event: Event, versionControlButton: MatButton) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const trigger = versionControlButton._elementRef.nativeElement;
+    if (this.popoverService.hasPopover(trigger)) {
+      this.popoverService.hidePopover(trigger);
+    } else {
+      const versionControlPopover = this.popoverService.displayPopover(trigger, this.renderer,
+        this.viewContainerRef, VersionControlComponent, 'leftTop', true, null,
+        {
+          detailsMode: true,
+          active: true,
+          singleEntityMode: true,
+          externalEntityId: this.ruleChain.externalId || this.ruleChain.id,
+          entityId: this.ruleChain.id,
+          entityName: this.ruleChain.name,
+          onBeforeCreateVersion: () => {
+            if (this.isDirty) {
+              return this.saveRuleChain();
+            } else {
+              return of(null);
+            }
+          }
+        }, {}, {}, {}, true);
+      versionControlPopover.tbComponentRef.instance.popoverComponent = versionControlPopover;
+      versionControlPopover.tbComponentRef.instance.versionRestored.subscribe(() => {
+        this.reloadRuleChain();
+      });
+    }
   }
 
   private updateNodeErrorTooltip(node: FcRuleNode) {
@@ -1673,7 +1733,7 @@ export interface AddRuleNodeDialogData {
   selector: 'tb-add-rule-node-dialog',
   templateUrl: './add-rule-node-dialog.component.html',
   providers: [{provide: ErrorStateMatcher, useExisting: AddRuleNodeDialogComponent}],
-  styleUrls: []
+  styleUrls: ['./add-rule-node-dialog.component.scss']
 })
 export class AddRuleNodeDialogComponent extends DialogComponent<AddRuleNodeDialogComponent, FcRuleNode>
   implements OnInit, ErrorStateMatcher {

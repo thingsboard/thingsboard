@@ -17,10 +17,6 @@ package org.thingsboard.server.transport.mqtt.provision;
 
 import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
-import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
-import org.eclipse.paho.client.mqttv3.MqttCallback;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +25,6 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
-import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.msg.EncryptionUtil;
@@ -46,10 +41,14 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateBasicMqttCre
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
 import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
+import org.thingsboard.server.transport.mqtt.MqttTestCallback;
+import org.thingsboard.server.transport.mqtt.MqttTestClient;
 import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_PROVISION_REQUEST_TOPIC;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_PROVISION_RESPONSE_TOPIC;
 
 @Slf4j
 @DaoSqlTest
@@ -104,9 +103,9 @@ public class MqttProvisionProtoDeviceTest extends AbstractMqttIntegrationTest {
                 .provisionType(DeviceProfileProvisionType.DISABLED)
                 .build();
         processBeforeTest(configProperties);
-        ProvisionDeviceResponseMsg result = ProvisionDeviceResponseMsg.parseFrom(createMqttClientAndPublish().getPayloadBytes());
+        ProvisionDeviceResponseMsg result = ProvisionDeviceResponseMsg.parseFrom(createMqttClientAndPublish());
         Assert.assertNotNull(result);
-        Assert.assertEquals(ProvisionResponseStatus.NOT_FOUND.name(), result.getStatus().toString());
+        Assert.assertEquals(ProvisionResponseStatus.NOT_FOUND.name(), result.getStatus().name());
     }
 
     protected void processTestProvisioningCreateNewDeviceWithoutCredentials() throws Exception {
@@ -118,7 +117,7 @@ public class MqttProvisionProtoDeviceTest extends AbstractMqttIntegrationTest {
                 .provisionSecret("testProvisionSecret")
                 .build();
         processBeforeTest(configProperties);
-        ProvisionDeviceResponseMsg response = ProvisionDeviceResponseMsg.parseFrom(createMqttClientAndPublish().getPayloadBytes());
+        ProvisionDeviceResponseMsg response = ProvisionDeviceResponseMsg.parseFrom(createMqttClientAndPublish());
 
         Device createdDevice = deviceService.findDeviceByTenantIdAndName(tenantId, "Test Provision device");
 
@@ -126,8 +125,8 @@ public class MqttProvisionProtoDeviceTest extends AbstractMqttIntegrationTest {
 
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, createdDevice.getId());
 
-        Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.getCredentialsType().toString());
-        Assert.assertEquals(ProvisionResponseStatus.SUCCESS.name(), response.getStatus().toString());
+        Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.getCredentialsType().name());
+        Assert.assertEquals(ProvisionResponseStatus.SUCCESS.name(), response.getStatus().name());
     }
 
     protected void processTestProvisioningCreateNewDeviceWithAccessToken() throws Exception {
@@ -139,9 +138,12 @@ public class MqttProvisionProtoDeviceTest extends AbstractMqttIntegrationTest {
                 .provisionSecret("testProvisionSecret")
                 .build();
         processBeforeTest(configProperties);
-        CredentialsDataProto requestCredentials = CredentialsDataProto.newBuilder().setValidateDeviceTokenRequestMsg(ValidateDeviceTokenRequestMsg.newBuilder().setToken("test_token").build()).build();
+        CredentialsDataProto requestCredentials = CredentialsDataProto.newBuilder()
+                .setValidateDeviceTokenRequestMsg(ValidateDeviceTokenRequestMsg.newBuilder().setToken("test_token").build())
+                .build();
 
-        ProvisionDeviceResponseMsg response = ProvisionDeviceResponseMsg.parseFrom(createMqttClientAndPublish(createTestsProvisionMessage(CredentialsType.ACCESS_TOKEN, requestCredentials)).getPayloadBytes());
+        ProvisionDeviceResponseMsg response = ProvisionDeviceResponseMsg.parseFrom(
+                createMqttClientAndPublish(createTestsProvisionMessage(CredentialsType.ACCESS_TOKEN, requestCredentials)));
 
         Device createdDevice = deviceService.findDeviceByTenantIdAndName(tenantId, "Test Provision device");
 
@@ -164,9 +166,13 @@ public class MqttProvisionProtoDeviceTest extends AbstractMqttIntegrationTest {
                 .provisionSecret("testProvisionSecret")
                 .build();
         processBeforeTest(configProperties);
-        CredentialsDataProto requestCredentials = CredentialsDataProto.newBuilder().setValidateDeviceX509CertRequestMsg(ValidateDeviceX509CertRequestMsg.newBuilder().setHash("testHash").build()).build();
+        CredentialsDataProto requestCredentials = CredentialsDataProto.newBuilder()
+                .setValidateDeviceX509CertRequestMsg(
+                        ValidateDeviceX509CertRequestMsg.newBuilder().setHash("testHash").build())
+                .build();
 
-        ProvisionDeviceResponseMsg response = ProvisionDeviceResponseMsg.parseFrom(createMqttClientAndPublish(createTestsProvisionMessage(CredentialsType.X509_CERTIFICATE, requestCredentials)).getPayloadBytes());
+        ProvisionDeviceResponseMsg response = ProvisionDeviceResponseMsg.parseFrom(
+                createMqttClientAndPublish(createTestsProvisionMessage(CredentialsType.X509_CERTIFICATE, requestCredentials)));
 
         Device createdDevice = deviceService.findDeviceByTenantIdAndName(tenantId, "Test Provision device");
 
@@ -203,7 +209,8 @@ public class MqttProvisionProtoDeviceTest extends AbstractMqttIntegrationTest {
                     .build()
         ).build();
 
-        ProvisionDeviceResponseMsg response = ProvisionDeviceResponseMsg.parseFrom(createMqttClientAndPublish(createTestsProvisionMessage(CredentialsType.MQTT_BASIC, requestCredentials)).getPayloadBytes());
+        ProvisionDeviceResponseMsg response = ProvisionDeviceResponseMsg.parseFrom(
+                createMqttClientAndPublish(createTestsProvisionMessage(CredentialsType.MQTT_BASIC, requestCredentials)));
 
         Device createdDevice = deviceService.findDeviceByTenantIdAndName(tenantId, "Test Provision device");
 
@@ -233,12 +240,12 @@ public class MqttProvisionProtoDeviceTest extends AbstractMqttIntegrationTest {
                 .provisionSecret("testProvisionSecret")
                 .build();
         processBeforeTest(configProperties);
-        ProvisionDeviceResponseMsg response = ProvisionDeviceResponseMsg.parseFrom(createMqttClientAndPublish().getPayloadBytes());
+        ProvisionDeviceResponseMsg response = ProvisionDeviceResponseMsg.parseFrom(createMqttClientAndPublish());
 
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, savedDevice.getId());
 
-        Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.getCredentialsType().toString());
-        Assert.assertEquals(ProvisionResponseStatus.SUCCESS.name(), response.getStatus().toString());
+        Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.getCredentialsType().name());
+        Assert.assertEquals(ProvisionResponseStatus.SUCCESS.name(), response.getStatus().name());
     }
 
     protected void processTestProvisioningWithBadKeyDevice() throws Exception {
@@ -250,70 +257,25 @@ public class MqttProvisionProtoDeviceTest extends AbstractMqttIntegrationTest {
                 .provisionSecret("testProvisionSecret")
                 .build();
         processBeforeTest(configProperties);
-        ProvisionDeviceResponseMsg response = ProvisionDeviceResponseMsg.parseFrom(createMqttClientAndPublish().getPayloadBytes());
-        Assert.assertEquals(ProvisionResponseStatus.NOT_FOUND.name(), response.getStatus().toString());
+        ProvisionDeviceResponseMsg response = ProvisionDeviceResponseMsg.parseFrom(createMqttClientAndPublish());
+        Assert.assertEquals(ProvisionResponseStatus.NOT_FOUND.name(), response.getStatus().name());
     }
 
-    protected TestMqttCallback createMqttClientAndPublish() throws Exception {
+    protected byte[] createMqttClientAndPublish() throws Exception {
         byte[] provisionRequestMsg = createTestProvisionMessage();
         return createMqttClientAndPublish(provisionRequestMsg);
     }
 
-    protected TestMqttCallback createMqttClientAndPublish(byte[] provisionRequestMsg) throws Exception {
-        MqttAsyncClient client = getMqttAsyncClient("provision");
-        TestMqttCallback onProvisionCallback = getTestMqttCallback();
+    protected byte[] createMqttClientAndPublish(byte[] provisionRequestMsg) throws Exception {
+        MqttTestClient client = new MqttTestClient();
+        client.connectAndWait("provision");
+        MqttTestCallback onProvisionCallback = new MqttTestCallback(DEVICE_PROVISION_RESPONSE_TOPIC);
         client.setCallback(onProvisionCallback);
-        client.subscribe(MqttTopics.DEVICE_PROVISION_RESPONSE_TOPIC, MqttQoS.AT_MOST_ONCE.value());
-        Thread.sleep(2000);
-        client.publish(MqttTopics.DEVICE_PROVISION_REQUEST_TOPIC, new MqttMessage(provisionRequestMsg));
-        onProvisionCallback.getLatch().await(3, TimeUnit.SECONDS);
-        return onProvisionCallback;
-    }
-
-
-    protected TestMqttCallback getTestMqttCallback() {
-        CountDownLatch latch = new CountDownLatch(1);
-        return new TestMqttCallback(latch);
-    }
-
-
-    protected static class TestMqttCallback implements MqttCallback {
-
-        private final CountDownLatch latch;
-        private Integer qoS;
-        private byte[] payloadBytes;
-
-        TestMqttCallback(CountDownLatch latch) {
-            this.latch = latch;
-        }
-
-        public int getQoS() {
-            return qoS;
-        }
-
-        public byte[] getPayloadBytes() {
-            return payloadBytes;
-        }
-
-        public CountDownLatch getLatch() {
-            return latch;
-        }
-
-        @Override
-        public void connectionLost(Throwable throwable) {
-        }
-
-        @Override
-        public void messageArrived(String requestTopic, MqttMessage mqttMessage) throws Exception {
-            qoS = mqttMessage.getQos();
-            payloadBytes = mqttMessage.getPayload();
-            latch.countDown();
-        }
-
-        @Override
-        public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
-
-        }
+        client.subscribe(DEVICE_PROVISION_RESPONSE_TOPIC, MqttQoS.AT_MOST_ONCE);
+        client.publishAndWait(DEVICE_PROVISION_REQUEST_TOPIC, provisionRequestMsg);
+        onProvisionCallback.getSubscribeLatch().await(3, TimeUnit.SECONDS);
+        client.disconnect();
+        return onProvisionCallback.getPayloadBytes();
     }
 
     protected byte[] createTestsProvisionMessage(CredentialsType credentialsType, CredentialsDataProto credentialsData) throws Exception {

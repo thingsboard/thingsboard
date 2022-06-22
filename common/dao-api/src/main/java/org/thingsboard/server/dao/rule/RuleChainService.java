@@ -28,11 +28,11 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainData;
 import org.thingsboard.server.common.data.rule.RuleChainImportResult;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
-import org.thingsboard.server.common.data.rule.RuleChainOutputLabelsUsage;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleChainUpdateResult;
 import org.thingsboard.server.common.data.rule.RuleNode;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -66,6 +66,8 @@ public interface RuleChainService {
 
     PageData<RuleChain> findTenantRuleChainsByType(TenantId tenantId, RuleChainType type, PageLink pageLink);
 
+    Collection<RuleChain> findTenantRuleChainsByTypeAndName(TenantId tenantId, RuleChainType type, String name);
+
     void deleteRuleChainById(TenantId tenantId, RuleChainId ruleChainId);
 
     void deleteRuleChainsByTenantId(TenantId tenantId);
@@ -92,5 +94,12 @@ public interface RuleChainService {
 
     List<RuleNode> findRuleNodesByTenantIdAndType(TenantId tenantId, String name, String toString);
 
+    List<RuleNode> findRuleNodesByTenantIdAndType(TenantId tenantId, String type);
+
+    PageData<RuleNode> findAllRuleNodesByType(String type, PageLink pageLink);
+
     RuleNode saveRuleNode(TenantId tenantId, RuleNode ruleNode);
+
+    void deleteRuleNodes(TenantId tenantId, RuleChainId ruleChainId);
+
 }

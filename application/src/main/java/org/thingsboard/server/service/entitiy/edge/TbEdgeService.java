@@ -25,9 +25,9 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface TbEdgeService {
-    Edge saveEdge(Edge edge, RuleChain edgeTemplateRootRuleChain, SecurityUser user) throws ThingsboardException;
+    Edge save(Edge edge, RuleChain edgeTemplateRootRuleChain, SecurityUser user) throws ThingsboardException;
 
-    void deleteEdge(Edge edge, SecurityUser user) throws ThingsboardException;
+    void delete(Edge edge, SecurityUser user) throws ThingsboardException;
 
     Edge assignEdgeToCustomer(TenantId tenantId, EdgeId edgeId, Customer customer, SecurityUser user) throws ThingsboardException;
 

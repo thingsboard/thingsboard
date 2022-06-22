@@ -38,6 +38,8 @@ public class TbRabbitMqQueueArguments {
     private String notificationsProperties;
     @Value("${queue.rabbitmq.queue-properties.js-executor}")
     private String jsExecutorProperties;
+    @Value("${queue.rabbitmq.queue-properties.version-control:}")
+    private String vcProperties;
 
     @Getter
     private Map<String, Object> coreArgs;
@@ -49,6 +51,8 @@ public class TbRabbitMqQueueArguments {
     private Map<String, Object> notificationsArgs;
     @Getter
     private Map<String, Object> jsExecutorArgs;
+    @Getter
+    private Map<String, Object> vcArgs;
 
     @PostConstruct
     private void init() {
@@ -57,6 +61,7 @@ public class TbRabbitMqQueueArguments {
         transportApiArgs = getArgs(transportApiProperties);
         notificationsArgs = getArgs(notificationsProperties);
         jsExecutorArgs = getArgs(jsExecutorProperties);
+        vcArgs = getArgs(vcProperties);
     }
 
     private Map<String, Object> getArgs(String properties) {

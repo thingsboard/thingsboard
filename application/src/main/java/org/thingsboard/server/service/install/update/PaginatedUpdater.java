@@ -49,6 +49,10 @@ public abstract class PaginatedUpdater<I, D> {
         }
     }
 
+    public void updateEntities() {
+        updateEntities(null);
+    }
+
     protected boolean forceReportTotal() {
         return false;
     }

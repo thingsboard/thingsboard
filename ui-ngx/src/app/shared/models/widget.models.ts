@@ -554,6 +554,7 @@ export interface WidgetConfig {
   units?: string;
   decimals?: number;
   noDataDisplayMessage?: string;
+  pageSize?: number;
   actions?: {[actionSourceId: string]: Array<WidgetActionDescriptor>};
   settings?: WidgetSettings;
   alarmSource?: Datasource;

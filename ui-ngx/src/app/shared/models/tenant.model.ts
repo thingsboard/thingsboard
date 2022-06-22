@@ -18,7 +18,7 @@ import { ContactBased } from '@shared/models/contact-based.model';
 import { TenantId } from './id/tenant-id';
 import { TenantProfileId } from '@shared/models/id/tenant-profile-id';
 import { BaseData } from '@shared/models/base-data';
-import {Validators} from "@angular/forms";
+import { QueueInfo } from '@shared/models/queue.models';
 
 export enum TenantProfileType {
   DEFAULT = 'DEFAULT'
@@ -41,6 +41,9 @@ export interface DefaultTenantProfileConfiguration {
   transportDeviceTelemetryMsgRateLimit?: string;
   transportDeviceTelemetryDataPointsRateLimit?: string;
 
+  tenantEntityExportRateLimit?: string;
+  tenantEntityImportRateLimit?: string;
+
   maxTransportMessages: number;
   maxTransportDataPoints: number;
   maxREExecutions: number;
@@ -50,6 +53,22 @@ export interface DefaultTenantProfileConfiguration {
   maxEmails: number;
   maxSms: number;
   maxCreatedAlarms: number;
+
+  tenantServerRestLimitsConfiguration: string;
+  customerServerRestLimitsConfiguration: string;
+
+  maxWsSessionsPerTenant: number;
+  maxWsSessionsPerCustomer: number;
+  maxWsSessionsPerRegularUser: number;
+  maxWsSessionsPerPublicUser: number;
+  wsMsgQueueLimitPerSession: number;
+  maxWsSubscriptionsPerTenant: number;
+  maxWsSubscriptionsPerCustomer: number;
+  maxWsSubscriptionsPerRegularUser: number;
+  maxWsSubscriptionsPerPublicUser: number;
+  wsUpdatesPerSessionRateLimit: string;
+
+  cassandraQueryTenantRateLimitsConfiguration: string;
 
   defaultStorageTtlDays: number;
   alarmsTtlDays: number;
@@ -85,9 +104,22 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
           maxEmails: 0,
           maxSms: 0,
           maxCreatedAlarms: 0,
+          tenantServerRestLimitsConfiguration: '',
+          customerServerRestLimitsConfiguration: '',
+          maxWsSessionsPerTenant: 0,
+          maxWsSessionsPerCustomer: 0,
+          maxWsSessionsPerRegularUser: 0,
+          maxWsSessionsPerPublicUser: 0,
+          wsMsgQueueLimitPerSession: 0,
+          maxWsSubscriptionsPerTenant: 0,
+          maxWsSubscriptionsPerCustomer: 0,
+          maxWsSubscriptionsPerRegularUser: 0,
+          maxWsSubscriptionsPerPublicUser: 0,
+          wsUpdatesPerSessionRateLimit: '',
+          cassandraQueryTenantRateLimitsConfiguration: '',
           defaultStorageTtlDays: 0,
           alarmsTtlDays: 0,
-          rpcTtlDays: 0
+          rpcTtlDays: 0,
         };
         configuration = {...defaultConfiguration, type: TenantProfileType.DEFAULT};
         break;
@@ -98,6 +130,7 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
 
 export interface TenantProfileData {
   configuration: TenantProfileConfiguration;
+  queueConfiguration?: Array<QueueInfo>;
 }
 
 export interface TenantProfile extends BaseData<TenantProfileId> {

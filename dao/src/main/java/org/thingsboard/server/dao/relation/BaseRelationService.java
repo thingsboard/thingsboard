@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.relation;
 
 import com.google.common.base.Function;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -24,12 +25,11 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.util.StringUtils;
 import org.thingsboard.server.cache.TbTransactionalCache;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -90,7 +90,14 @@ public class BaseRelationService implements RelationService {
     }
 
     @Override
-    public ListenableFuture<Boolean> checkRelation(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
+    public ListenableFuture<Boolean> checkRelationAsync(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
+        log.trace("Executing checkRelationAsync [{}][{}][{}][{}]", from, to, relationType, typeGroup);
+        validate(from, to, relationType, typeGroup);
+        return relationDao.checkRelationAsync(tenantId, from, to, relationType, typeGroup);
+    }
+
+    @Override
+    public boolean checkRelation(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
         log.trace("Executing checkRelation [{}][{}][{}][{}]", from, to, relationType, typeGroup);
         validate(from, to, relationType, typeGroup);
         return relationDao.checkRelation(tenantId, from, to, relationType, typeGroup);
@@ -117,6 +124,20 @@ public class BaseRelationService implements RelationService {
         var result = relationDao.saveRelation(tenantId, relation);
         publishEvictEvent(EntityRelationEvent.from(relation));
         return result;
+    }
+
+    @Override
+    public void saveRelations(TenantId tenantId, List<EntityRelation> relations) {
+        log.trace("Executing saveRelations [{}]", relations);
+        for (EntityRelation relation : relations) {
+            validate(relation);
+        }
+        for (List<EntityRelation> partition : Lists.partition(relations, 1024)) {
+            relationDao.saveRelations(tenantId, partition);
+        }
+        for (EntityRelation relation : relations) {
+            publishEvictEvent(EntityRelationEvent.from(relation));
+        }
     }
 
     @Override
@@ -167,68 +188,33 @@ public class BaseRelationService implements RelationService {
         return future;
     }
 
+    @Transactional
     @Override
     public void deleteEntityRelations(TenantId tenantId, EntityId entityId) {
         log.trace("Executing deleteEntityRelations [{}]", entityId);
         validate(entityId);
-        List<EntityRelation> inboundRelations = new ArrayList<>();
-        for (RelationTypeGroup typeGroup : RelationTypeGroup.values()) {
-            inboundRelations.addAll(relationDao.findAllByTo(tenantId, entityId, typeGroup));
+        List<EntityRelation> inboundRelations = new ArrayList<>(relationDao.findAllByTo(tenantId, entityId));
+        List<EntityRelation> outboundRelations = new ArrayList<>(relationDao.findAllByFrom(tenantId, entityId));
+
+        if (!inboundRelations.isEmpty()) {
+            try {
+                relationDao.deleteInboundRelations(tenantId, entityId);
+            } catch (ConcurrencyFailureException e) {
+                log.debug("Concurrency exception while deleting relations [{}]", inboundRelations, e);
+            }
+
+            for (EntityRelation relation : inboundRelations) {
+                eventPublisher.publishEvent(EntityRelationEvent.from(relation));
+            }
         }
 
-        List<EntityRelation> outboundRelations = new ArrayList<>();
-        for (RelationTypeGroup typeGroup : RelationTypeGroup.values()) {
-            outboundRelations.addAll(relationDao.findAllByFrom(tenantId, entityId, typeGroup));
+        if (!outboundRelations.isEmpty()) {
+            relationDao.deleteOutboundRelations(tenantId, entityId);
+
+            for (EntityRelation relation : outboundRelations) {
+                eventPublisher.publishEvent(EntityRelationEvent.from(relation));
+            }
         }
-
-        for (EntityRelation relation : inboundRelations) {
-            delete(tenantId, relation, true);
-        }
-
-        for (EntityRelation relation : outboundRelations) {
-            delete(tenantId, relation, false);
-        }
-
-        relationDao.deleteOutboundRelations(tenantId, entityId);
-
-    }
-
-    @Override
-    public ListenableFuture<Void> deleteEntityRelationsAsync(TenantId tenantId, EntityId entityId) {
-        log.trace("Executing deleteEntityRelationsAsync [{}]", entityId);
-        validate(entityId);
-        List<ListenableFuture<List<EntityRelation>>> inboundRelationsList = new ArrayList<>();
-        for (RelationTypeGroup typeGroup : RelationTypeGroup.values()) {
-            inboundRelationsList.add(executor.submit(() -> relationDao.findAllByTo(tenantId, entityId, typeGroup)));
-        }
-
-        ListenableFuture<List<List<EntityRelation>>> inboundRelations = Futures.allAsList(inboundRelationsList);
-
-        List<ListenableFuture<List<EntityRelation>>> outboundRelationsList = new ArrayList<>();
-        for (RelationTypeGroup typeGroup : RelationTypeGroup.values()) {
-            outboundRelationsList.add(executor.submit(() -> relationDao.findAllByFrom(tenantId, entityId, typeGroup)));
-        }
-
-        ListenableFuture<List<List<EntityRelation>>> outboundRelations = Futures.allAsList(outboundRelationsList);
-
-        ListenableFuture<List<Boolean>> inboundDeletions = Futures.transformAsync(inboundRelations,
-                relations -> {
-                    List<ListenableFuture<Boolean>> results = deleteRelationGroupsAsync(tenantId, relations, true);
-                    return Futures.allAsList(results);
-                }, MoreExecutors.directExecutor());
-
-        ListenableFuture<List<Boolean>> outboundDeletions = Futures.transformAsync(outboundRelations,
-                relations -> {
-                    List<ListenableFuture<Boolean>> results = deleteRelationGroupsAsync(tenantId, relations, false);
-                    return Futures.allAsList(results);
-                }, MoreExecutors.directExecutor());
-
-        ListenableFuture<List<List<Boolean>>> deletionsFuture = Futures.allAsList(inboundDeletions, outboundDeletions);
-
-        return Futures.transform(Futures.transformAsync(deletionsFuture,
-                (deletions) -> relationDao.deleteOutboundRelationsAsync(tenantId, entityId),
-                MoreExecutors.directExecutor()),
-                result -> null, MoreExecutors.directExecutor());
     }
 
     private List<ListenableFuture<Boolean>> deleteRelationGroupsAsync(TenantId tenantId, List<List<EntityRelation>> relations, boolean deleteFromDb) {
@@ -250,18 +236,6 @@ public class BaseRelationService implements RelationService {
             handleEvictEvent(EntityRelationEvent.from(relation));
             return Futures.immediateFuture(false);
         }
-    }
-
-    boolean delete(TenantId tenantId, EntityRelation relation, boolean deleteFromDb) {
-        eventPublisher.publishEvent(EntityRelationEvent.from(relation));
-        if (deleteFromDb) {
-            try {
-                return relationDao.deleteRelation(tenantId, relation);
-            } catch (ConcurrencyFailureException e) {
-                log.debug("Concurrency exception while deleting relations [{}]", relation, e);
-            }
-        }
-        return false;
     }
 
     @Override

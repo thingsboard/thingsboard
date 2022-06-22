@@ -295,8 +295,10 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
 
     if (this.pageMode) {
       this.route.queryParams.pipe(skip(1)).subscribe((params: PageQueryParam) => {
-        this.paginator.pageIndex = Number(params.page) || 0;
-        this.paginator.pageSize = Number(params.pageSize) || this.defaultPageSize;
+        if (this.displayPagination) {
+          this.paginator.pageIndex = Number(params.page) || 0;
+          this.paginator.pageSize = Number(params.pageSize) || this.defaultPageSize;
+        }
         this.sort.active = params.property || this.entitiesTableConfig.defaultSortOrder.property;
         this.sort.direction = (params.direction || this.entitiesTableConfig.defaultSortOrder.direction).toLowerCase() as SortDirection;
         if (params.hasOwnProperty('textSearch') && !isEmptyStr(params.textSearch)) {
@@ -547,6 +549,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
   }
 
   resetSortAndFilter(update: boolean = true, preserveTimewindow: boolean = false) {
+    this.textSearchMode = false;
     this.pageLink.textSearch = null;
     if (this.entitiesTableConfig.useTimePageLink && !preserveTimewindow) {
       this.timewindow = this.entitiesTableConfig.defaultTimewindowInterval;

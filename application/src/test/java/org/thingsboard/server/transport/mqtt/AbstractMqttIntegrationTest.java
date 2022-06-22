@@ -52,6 +52,7 @@ import static org.junit.Assert.assertNotNull;
 
 @TestPropertySource(properties = {
         "transport.mqtt.enabled=true",
+        "js.evaluator=mock",
 })
 @Slf4j
 public abstract class AbstractMqttIntegrationTest extends AbstractTransportIntegrationTest {
@@ -81,22 +82,6 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
             gatewayAccessToken = gatewayCredentials.getCredentialsId();
             assertNotNull(gatewayAccessToken);
         }
-    }
-
-    protected MqttAsyncClient getMqttAsyncClient(String accessToken) throws MqttException {
-        String clientId = MqttAsyncClient.generateClientId();
-        MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, clientId, new MemoryPersistence());
-
-        MqttConnectOptions options = new MqttConnectOptions();
-        options.setUserName(accessToken);
-        client.connect(options).waitForCompletion();
-        return client;
-    }
-
-    protected void publishMqttMsg(MqttAsyncClient client, byte[] payload, String topic) throws MqttException {
-        MqttMessage message = new MqttMessage();
-        message.setPayload(payload);
-        client.publish(topic, message);
     }
 
     protected DeviceProfile createMqttDeviceProfile(MqttTestConfigProperties config) throws Exception {

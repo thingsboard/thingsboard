@@ -53,12 +53,14 @@ import { forkJoin, Observable, of, ReplaySubject, Subject, throwError, timer } f
 import { CancelAnimationFrame } from '@core/services/raf.service';
 import { EntityType } from '@shared/models/entity-type.models';
 import {
-  createLabelFromDatasource, createLabelFromPattern,
-  deepClone, flatFormattedData,
+  createLabelFromPattern,
+  deepClone,
+  flatFormattedData,
   formattedDataFormDatasourceData,
   isDefined,
   isDefinedAndNotNull,
-  isEqual
+  isEqual,
+  parseHttpErrorMessage
 } from '@core/utils';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import * as moment_ from 'moment';
@@ -97,6 +99,7 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   hasDataPageLink: boolean;
   singleEntity: boolean;
+  pageSize: number;
   warnOnPageDataOverflow: boolean;
   ignoreDataUpdateOnIntervalTick: boolean;
 
@@ -229,6 +232,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.entityDataListeners = [];
       this.hasDataPageLink = options.hasDataPageLink;
       this.singleEntity = options.singleEntity;
+      this.pageSize = options.pageSize;
       this.warnOnPageDataOverflow = options.warnOnPageDataOverflow;
       this.ignoreDataUpdateOnIntervalTick = options.ignoreDataUpdateOnIntervalTick;
       this.datasourcePages = [];
@@ -387,7 +391,7 @@ export class WidgetSubscription implements IWidgetSubscription {
           }
         );
       } else {
-        this.ctx.aliasController.resolveDatasources(this.configuredDatasources, this.singleEntity).subscribe(
+        this.ctx.aliasController.resolveDatasources(this.configuredDatasources, this.singleEntity, this.pageSize).subscribe(
           (datasources) => {
             this.configuredDatasources = datasources;
             this.prepareDataSubscriptions().subscribe(
@@ -799,10 +803,10 @@ export class WidgetSubscription implements IWidgetSubscription {
               this.rpcErrorText = 'Request Timeout.';
             } else {
               this.rpcErrorText =  'Error : ' + rejection.status + ' - ' + rejection.statusText;
-              const error = this.extractRejectionErrorText(rejection);
+              const error = parseHttpErrorMessage(rejection, this.ctx.translate);
               if (error) {
                 this.rpcErrorText += '</br>';
-                this.rpcErrorText += error;
+                this.rpcErrorText += error.message;
               }
             }
             this.callbacks.onRpcFailed(this);
@@ -811,40 +815,6 @@ export class WidgetSubscription implements IWidgetSubscription {
         });
       }
       return rpcSubject.asObservable();
-    }
-  }
-
-  private extractRejectionErrorText(rejection: HttpErrorResponse) {
-    let error = null;
-    if (rejection.error) {
-      error = rejection.error;
-      try {
-        error = rejection.error ? JSON.parse(rejection.error) : null;
-      } catch (e) {}
-    }
-    if (error && !error.message) {
-      error = this.prepareMessageFromData(error);
-    } else if (error && error.message) {
-      error = error.message;
-    }
-    return error;
-  }
-
-  private prepareMessageFromData(data) {
-    if (typeof data === 'object' && data.constructor === ArrayBuffer) {
-      const msg = String.fromCharCode.apply(null, new Uint8Array(data));
-      try {
-        const msgObj = JSON.parse(msg);
-        if (msgObj.message) {
-          return msgObj.message;
-        } else {
-          return msg;
-        }
-      } catch (e) {
-        return msg;
-      }
-    } else {
-      return data;
     }
   }
 
@@ -1132,7 +1102,7 @@ export class WidgetSubscription implements IWidgetSubscription {
         }
       );
     } else {
-      this.ctx.aliasController.resolveDatasources(this.configuredDatasources, this.singleEntity).subscribe(
+      this.ctx.aliasController.resolveDatasources(this.configuredDatasources, this.singleEntity, this.pageSize).subscribe(
         (datasources) => {
           this.configuredDatasources = datasources;
           this.prepareDataSubscriptions().subscribe(
@@ -1271,7 +1241,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       totalPages: pageData.totalPages
     };
     if (datasource.type === DatasourceType.entity &&
-        pageData.hasNext && pageLink.pageSize > 1) {
+        pageData.hasNext && !this.singleEntity) {
       if (this.warnOnPageDataOverflow) {
         const message = this.ctx.translate.instant('widget.data-overflow',
           {count: pageData.data.length, total: pageData.totalElements});

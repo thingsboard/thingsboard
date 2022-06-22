@@ -42,6 +42,7 @@ import { ServiceType } from '@shared/models/queue.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { OtaUpdateType } from '@shared/models/ota-package.models';
 import { DashboardId } from '@shared/models/id/dashboard-id';
+import { QueueId } from '@shared/models/id/queue-id';
 
 @Component({
   selector: 'tb-device-profile',
@@ -117,7 +118,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
         }),
         defaultRuleChainId: [entity && entity.defaultRuleChainId ? entity.defaultRuleChainId.id : null, []],
         defaultDashboardId: [entity && entity.defaultDashboardId ? entity.defaultDashboardId.id : null, []],
-        defaultQueueName: [entity ? entity.defaultQueueName : '', []],
+        defaultQueueId: [entity && entity.defaultQueueId ? entity.defaultQueueId.id : null, []],
         firmwareId: [entity ? entity.firmwareId : null],
         softwareId: [entity ? entity.softwareId : null],
         description: [entity ? entity.description : '', []],
@@ -197,7 +198,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     }}, {emitEvent: false});
     this.entityForm.patchValue({defaultRuleChainId: entity.defaultRuleChainId ? entity.defaultRuleChainId.id : null}, {emitEvent: false});
     this.entityForm.patchValue({defaultDashboardId: entity.defaultDashboardId ? entity.defaultDashboardId.id : null}, {emitEvent: false});
-    this.entityForm.patchValue({defaultQueueName: entity.defaultQueueName}, {emitEvent: false});
+    this.entityForm.patchValue({defaultQueueId: entity.defaultQueueId ? entity.defaultQueueId.id : null}, {emitEvent: false});
     this.entityForm.patchValue({firmwareId: entity.firmwareId}, {emitEvent: false});
     this.entityForm.patchValue({softwareId: entity.softwareId}, {emitEvent: false});
     this.entityForm.patchValue({description: entity.description}, {emitEvent: false});
@@ -209,6 +210,9 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     }
     if (formValue.defaultDashboardId) {
       formValue.defaultDashboardId = new DashboardId(formValue.defaultDashboardId);
+    }
+    if (formValue.defaultQueueId) {
+      formValue.defaultQueueId = new QueueId(formValue.defaultQueueId);
     }
     const deviceProvisionConfiguration: DeviceProvisionConfiguration = formValue.profileData.provisionConfiguration;
     formValue.provisionType = deviceProvisionConfiguration.type;
