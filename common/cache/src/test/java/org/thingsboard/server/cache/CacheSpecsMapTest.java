@@ -45,12 +45,14 @@ public class CacheSpecsMapTest {
     CacheManager cacheManager;
 
     @Test
-    public void verifyTransactionAwareCacheManagerProxy() {
+    public void verifyNotTransactionAwareCacheManagerProxy() {
+        // We no longer use built-in transaction support for the caches, because we have our own cache cleanup and transaction logic that implements CAS.
         assertThat(cacheManager).isInstanceOf(SimpleCacheManager.class);
     }
 
     @Test
-    public void givenCacheConfig_whenCacheManagerReady_thenVerifyExistedCachesWithTransactionAwareCacheDecorator() {
+    public void givenCacheConfig_whenCacheManagerReady_thenVerifyExistedCachesWithNoTransactionAwareCacheDecorator() {
+        // We no longer use built-in transaction support for the caches, because we have our own cache cleanup and transaction logic that implements CAS.
         assertThat(cacheManager.getCache("relations")).isInstanceOf(CaffeineCache.class);
         assertThat(cacheManager.getCache("devices")).isInstanceOf(CaffeineCache.class);
     }
