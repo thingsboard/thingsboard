@@ -2501,11 +2501,13 @@
         "show-min": "Show min value",
         "show-avg": "Show average value",
         "show-total": "Show total value",
+        "show-latest": "Show latest value",
         "settings": "Legend settings",
         "min": "min",
         "max": "max",
         "avg": "avg",
         "total": "total",
+        "latest": "latest",
         "comparison-time-ago": {
             "previousInterval": "(previous interval)",
             "customInterval": "(custom interval)",
