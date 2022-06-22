@@ -21,7 +21,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityViewId;
@@ -66,7 +65,7 @@ public class EntityViewImportService extends BaseEntityImportService<EntityViewI
         tbEntityViewService.updateEntityViewAttributes(user, savedEntityView, oldEntityView);
         super.onEntitySaved(user, savedEntityView, oldEntityView);
         if (oldEntityView != null) {
-            entityActionService.sendEntityNotificationMsgToEdgeService(user.getTenantId(), savedEntityView.getId(), EdgeEventActionType.UPDATED);
+            entityActionService.sendEntityNotificationMsgToEdge(user.getTenantId(), savedEntityView.getId(), EdgeEventActionType.UPDATED);
         }
     }
 

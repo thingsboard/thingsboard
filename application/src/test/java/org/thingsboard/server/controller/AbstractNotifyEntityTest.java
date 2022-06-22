@@ -124,7 +124,7 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
     }
 
     private void testNotificationMsgToEdgeServiceNever(EntityId entityId) {
-        Mockito.verify(tbClusterService, never()).sendNotificationMsgToEdgeService(Mockito.any(),
+        Mockito.verify(tbClusterService, never()).sendNotificationMsgToEdge(Mockito.any(),
                 Mockito.any(), Mockito.any(entityId.getClass()), Mockito.any(), Mockito.any(), Mockito.any());
     }
 
@@ -159,7 +159,7 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
     }
 
     private void testSendNotificationMsgToEdgeServiceOneTime(EntityId entityId, TenantId tenantId, ActionType actionType) {
-        Mockito.verify(tbClusterService, times(1)).sendNotificationMsgToEdgeService(Mockito.eq(tenantId),
+        Mockito.verify(tbClusterService, times(1)).sendNotificationMsgToEdge(Mockito.eq(tenantId),
                 Mockito.isNull(), Mockito.eq(entityId), Mockito.isNull(), Mockito.isNull(),
                 Mockito.eq(edgeTypeByActionType(actionType)));
     }

@@ -56,7 +56,7 @@ public class AssetImportService extends BaseEntityImportService<AssetId, Asset, 
     protected void onEntitySaved(SecurityUser user, Asset savedAsset, Asset oldAsset) throws ThingsboardException {
         super.onEntitySaved(user, savedAsset, oldAsset);
         if (oldAsset != null) {
-            entityActionService.sendEntityNotificationMsgToEdgeService(user.getTenantId(), savedAsset.getId(), EdgeEventActionType.UPDATED);
+            entityActionService.sendEntityNotificationMsgToEdge(user.getTenantId(), savedAsset.getId(), EdgeEventActionType.UPDATED);
         }
     }
 

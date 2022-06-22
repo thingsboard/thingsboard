@@ -66,7 +66,7 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
         clusterService.onDeviceProfileChange(savedDeviceProfile, null);
         clusterService.broadcastEntityStateChangeEvent(user.getTenantId(), savedDeviceProfile.getId(),
                 oldDeviceProfile == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
-        entityActionService.sendEntityNotificationMsgToEdgeService(user.getTenantId(), savedDeviceProfile.getId(),
+        entityActionService.sendEntityNotificationMsgToEdge(user.getTenantId(), savedDeviceProfile.getId(),
                 oldDeviceProfile == null ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
         otaPackageStateService.update(savedDeviceProfile,
                 oldDeviceProfile != null && !Objects.equals(oldDeviceProfile.getFirmwareId(), savedDeviceProfile.getFirmwareId()),
