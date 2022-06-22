@@ -454,6 +454,10 @@ message GetOtaPackageResponseMsg {
   string fileName = 8;
 }
 
+message DeviceActivityProto {
+  int64 lastActivityTime = 1;
+}
+
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.
 message SubscriptionInfoProto {
   int64 lastActivityTime = 1;
@@ -483,6 +487,7 @@ message TransportToDeviceActorMsg {
   ToDeviceRpcResponseStatusMsg rpcResponseStatusMsg = 10;
   SendPendingRPCMsg sendPendingRPC = 11;
   UplinkNotificationMsg uplinkNotificationMsg = 12;
+  DeviceActivityProto deviceActivity = 13;
 }
 
 message TransportToRuleEngineMsg {

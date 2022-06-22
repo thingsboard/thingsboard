@@ -418,6 +418,9 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         if (msg.hasUplinkNotificationMsg()) {
             processUplinkNotificationMsg(context, sessionInfo, msg.getUplinkNotificationMsg());
         }
+        if (msg.hasDeviceActivity()) {
+            handleDeviceActivity(context, msg.getDeviceActivity());
+        }
         callback.onSuccess();
     }
 
@@ -727,6 +730,10 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         if (sessionMD != null) {
             dumpSessions();
         }
+    }
+
+    private void handleDeviceActivity(TbActorCtx context, TransportProtos.DeviceActivityProto deviceActivityProto) {
+        systemContext.getDeviceStateService().onDeviceActivity(tenantId, deviceId, deviceActivityProto.getLastActivityTime());
     }
 
     void processCredentialsUpdate(TbActorMsg msg) {
