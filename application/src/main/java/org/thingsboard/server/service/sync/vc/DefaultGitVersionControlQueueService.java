@@ -15,7 +15,10 @@
  */
 package org.thingsboard.server.service.sync.vc;
 
+import com.google.common.collect.Iterables;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
 import lombok.SneakyThrows;
@@ -23,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.CollectionsUtil;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
@@ -70,12 +74,15 @@ import org.thingsboard.server.service.sync.vc.data.VersionsDiffGitRequest;
 import org.thingsboard.server.service.sync.vc.data.VoidGitRequest;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -92,9 +99,12 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     private final SchedulerComponent scheduler;
 
     private final Map<UUID, PendingGitRequest<?>> pendingRequestMap = new HashMap<>();
+    private final Map<UUID, Map<String, String[]>> chunkedMsgs = new ConcurrentHashMap<>();
 
     @Value("${queue.vc.request-timeout:60000}")
     private int requestTimeout;
+    @Value("${queue.vc.msg-chunk-size:500000}")
+    private int msgChunkSize;
 
     public DefaultGitVersionControlQueueService(TbServiceInfoProvider serviceInfoProvider, TbClusterService clusterService,
                                                 DataDecodingEncodingService encodingService,
@@ -114,24 +124,39 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
         CommitGitRequest commit = new CommitGitRequest(user.getTenantId(), request);
         registerAndSend(commit, builder -> builder.setCommitRequest(
                 buildCommitRequest(commit).setPrepareMsg(getCommitPrepareMsg(user, request)).build()
-        ).build(), wrap(future, commit));
+        ).build(), wrap(future, commit, commit.getRequestId()));
         return future;
     }
 
+    @SuppressWarnings("UnstableApiUsage")
     @Override
     public ListenableFuture<Void> addToCommit(CommitGitRequest commit, EntityExportData<ExportableEntity<EntityId>> entityData) {
-        SettableFuture<Void> future = SettableFuture.create();
-
         String path = getRelativePath(entityData.getEntityType(), entityData.getExternalId());
         String entityDataJson = JacksonUtil.toPrettyString(entityData.sort());
 
-        registerAndSend(commit, builder -> builder.setCommitRequest(
-                buildCommitRequest(commit).setAddMsg(
-                        TransportProtos.AddMsg.newBuilder()
-                                .setRelativePath(path).setEntityDataJson(entityDataJson).build()
-                ).build()
-        ).build(), wrap(future, null));
-        return future;
+        Iterable<String> entityDataChunks = StringUtils.split(entityDataJson, msgChunkSize);
+        String chunkedMsgId = UUID.randomUUID().toString();
+        int chunksCount = Iterables.size(entityDataChunks);
+
+        AtomicInteger chunkIndex = new AtomicInteger();
+        List<ListenableFuture<Void>> futures = new ArrayList<>();
+        entityDataChunks.forEach(chunk -> {
+            SettableFuture<Void> chunkFuture = SettableFuture.create();
+            log.trace("[{}] sending chunk {} for 'addToCommit'", chunkedMsgId, chunkIndex.get());
+            registerAndSend(commit, builder -> builder.setCommitRequest(
+                    buildCommitRequest(commit).setAddMsg(
+                            TransportProtos.AddMsg.newBuilder()
+                                    .setRelativePath(path).setEntityDataJsonChunk(chunk)
+                                    .setChunkedMsgId(chunkedMsgId).setChunkIndex(chunkIndex.getAndIncrement())
+                                    .setChunksCount(chunksCount).build()
+                    ).build()
+            ).build(), wrap(chunkFuture, null, commit.getRequestId()));
+            futures.add(chunkFuture);
+        });
+        return Futures.transform(Futures.allAsList(futures), r -> {
+            log.trace("[{}] sent all chunks for 'addToCommit'", chunkedMsgId);
+            return null;
+        }, MoreExecutors.directExecutor());
     }
 
     @Override
@@ -144,7 +169,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
                 buildCommitRequest(commit).setDeleteMsg(
                         TransportProtos.DeleteMsg.newBuilder().setRelativePath(path).build()
                 ).build()
-        ).build(), wrap(future, null));
+        ).build(), wrap(future, null, commit.getRequestId()));
 
         return future;
     }
@@ -220,7 +245,6 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     @Override
     public ListenableFuture<List<VersionedEntityInfo>> listEntitiesAtVersion(TenantId tenantId, String branch, String versionId, EntityType entityType) {
         return listEntitiesAtVersion(tenantId, ListEntitiesRequestMsg.newBuilder()
-                .setBranchName(branch)
                 .setVersionId(versionId)
                 .setEntityType(entityType.name())
                 .build());
@@ -229,7 +253,6 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     @Override
     public ListenableFuture<List<VersionedEntityInfo>> listEntitiesAtVersion(TenantId tenantId, String branch, String versionId) {
         return listEntitiesAtVersion(tenantId, ListEntitiesRequestMsg.newBuilder()
-                .setBranchName(branch)
                 .setVersionId(versionId)
                 .build());
     }
@@ -289,9 +312,11 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
             var requestBody = enrichFunction.apply(newRequestProto(request, settings));
             log.trace("[{}][{}] PUSHING request: {}", request.getTenantId(), request.getRequestId(), requestBody);
             clusterService.pushMsgToVersionControl(request.getTenantId(), requestBody, callback);
-            request.setTimeoutTask(scheduler.schedule(() -> {
-                processTimeout(request.getRequestId());
-            }, requestTimeout, TimeUnit.MILLISECONDS));
+            if (request.getTimeoutTask() == null) {
+                request.setTimeoutTask(scheduler.schedule(() -> {
+                    processTimeout(request.getRequestId());
+                }, requestTimeout, TimeUnit.MILLISECONDS));
+            }
         } else {
             throw new RuntimeException("Future is already done!");
         }
@@ -355,15 +380,15 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     @Override
     public void processResponse(VersionControlResponseMsg vcResponseMsg) {
         UUID requestId = new UUID(vcResponseMsg.getRequestIdMSB(), vcResponseMsg.getRequestIdLSB());
-        PendingGitRequest<?> request = pendingRequestMap.remove(requestId);
+        PendingGitRequest<?> request = pendingRequestMap.get(requestId);
         if (request == null) {
             log.debug("[{}] received stale response: {}", requestId, vcResponseMsg);
             return;
         } else {
             log.debug("[{}] processing response: {}", requestId, vcResponseMsg);
-            request.getTimeoutTask().cancel(true);
         }
         var future = request.getFuture();
+        boolean completed = true;
         if (!StringUtils.isEmpty(vcResponseMsg.getError())) {
             future.setException(new RuntimeException(vcResponseMsg.getError()));
         } else {
@@ -391,12 +416,39 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
                 var listVersionsResponse = vcResponseMsg.getListVersionsResponse();
                 ((ListVersionsGitRequest) request).getFuture().set(toPageData(listVersionsResponse));
             } else if (vcResponseMsg.hasEntityContentResponse()) {
-                var data = vcResponseMsg.getEntityContentResponse().getData();
-                ((EntityContentGitRequest) request).getFuture().set(toData(data));
+                TransportProtos.EntityContentResponseMsg responseMsg = vcResponseMsg.getEntityContentResponse();
+                String[] msgChunks = chunkedMsgs.computeIfAbsent(requestId, id -> new HashMap<>())
+                        .computeIfAbsent(responseMsg.getChunkedMsgId(), id -> new String[responseMsg.getChunksCount()]);
+                msgChunks[responseMsg.getChunkIndex()] = responseMsg.getData();
+                log.trace("[{}] received chunk {} for 'getEntity'", responseMsg.getChunkedMsgId(), responseMsg.getChunkIndex());
+                if (CollectionsUtil.countNonNull(msgChunks) == responseMsg.getChunksCount()) {
+                    log.trace("[{}] collected all chunks for 'getEntity'", responseMsg.getChunkedMsgId());
+                    String data = String.join("", msgChunks);
+                    ((EntityContentGitRequest) request).getFuture().set(toData(data));
+                } else {
+                    completed = false;
+                }
             } else if (vcResponseMsg.hasEntitiesContentResponse()) {
-                var dataList = vcResponseMsg.getEntitiesContentResponse().getDataList();
-                ((EntitiesContentGitRequest) request).getFuture()
-                        .set(dataList.stream().map(this::toData).collect(Collectors.toList()));
+                TransportProtos.EntitiesContentResponseMsg responseMsg = vcResponseMsg.getEntitiesContentResponse();
+                TransportProtos.EntityContentResponseMsg item = responseMsg.getItem();
+                if (responseMsg.getItemsCount() > 0) {
+                    Map<String, String[]> chunkedItems = chunkedMsgs.computeIfAbsent(requestId, id -> new HashMap<>());
+                    String[] itemChunks = chunkedItems.computeIfAbsent(item.getChunkedMsgId(), id -> {
+                        return new String[item.getChunksCount()];
+                    });
+                    itemChunks[item.getChunkIndex()] = item.getData();
+                    if (chunkedItems.size() == responseMsg.getItemsCount() && chunkedItems.values().stream()
+                            .allMatch(chunks -> CollectionsUtil.countNonNull(chunks) == chunks.length)) {
+                        ((EntitiesContentGitRequest) request).getFuture().set(chunkedItems.values().stream()
+                                .map(chunks -> String.join("", chunks))
+                                .map(this::toData)
+                                .collect(Collectors.toList()));
+                    } else {
+                        completed = false;
+                    }
+                } else {
+                    ((EntitiesContentGitRequest) request).getFuture().set(Collections.emptyList());
+                }
             } else if (vcResponseMsg.hasVersionsDiffResponse()) {
                 TransportProtos.VersionsDiffResponseMsg diffResponse = vcResponseMsg.getVersionsDiffResponse();
                 List<EntityVersionsDiff> entityVersionsDiffList = diffResponse.getDiffList().stream()
@@ -416,14 +468,27 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
                 ((ContentsDiffGitRequest) request).getFuture().set(diff);
             }
         }
+        if (completed) {
+            removePendingRequest(requestId);
+        }
     }
 
     private void processTimeout(UUID requestId) {
-        PendingGitRequest<?> pendingRequest = pendingRequestMap.remove(requestId);
+        PendingGitRequest<?> pendingRequest = removePendingRequest(requestId);
         if (pendingRequest != null) {
             log.debug("[{}] request timed out ({} ms}", requestId, requestTimeout);
             pendingRequest.getFuture().setException(new TimeoutException("Request timed out"));
         }
+    }
+
+    private PendingGitRequest<?> removePendingRequest(UUID requestId) {
+        PendingGitRequest<?> pendingRequest = pendingRequestMap.remove(requestId);
+        if (pendingRequest != null && pendingRequest.getTimeoutTask() != null) {
+            pendingRequest.getTimeoutTask().cancel(true);
+            pendingRequest.setTimeoutTask(null);
+        }
+        chunkedMsgs.remove(requestId);
+        return pendingRequest;
     }
 
     private PageData<EntityVersion> toPageData(TransportProtos.ListVersionsResponseMsg listVersionsResponse) {
@@ -458,16 +523,18 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
         };
     }
 
-    private static <T> TbQueueCallback wrap(SettableFuture<T> future, T value) {
+    private <T> TbQueueCallback wrap(SettableFuture<T> future, T value, UUID requestId) {
         return new TbQueueCallback() {
             @Override
             public void onSuccess(TbQueueMsgMetadata metadata) {
                 future.set(value);
+                removePendingRequest(requestId);
             }
 
             @Override
             public void onFailure(Throwable t) {
                 future.setException(t);
+                removePendingRequest(requestId);
             }
         };
     }

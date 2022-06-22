@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.sync.vc;
 
+import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -28,6 +29,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.CollectionsUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
@@ -88,6 +90,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
@@ -122,6 +125,8 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
     private long packProcessingTimeout;
     @Value("${vc.git.io_pool_size:3}")
     private int ioPoolSize;
+    @Value("${queue.vc.msg-chunk-size:500000}")
+    private int msgChunkSize;
 
     //We need to manually manage the threads since tasks for particular tenant need to be processed sequentially.
     private final List<ListeningExecutorService> ioThreads = new ArrayList<>();
@@ -269,19 +274,49 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
         String path = getRelativePath(entityType, null);
         var ids = vcService.listEntitiesAtVersion(ctx.getTenantId(), request.getVersionId(), path)
                 .stream().skip(request.getOffset()).limit(request.getLimit()).collect(Collectors.toList());
-        var response = EntitiesContentResponseMsg.newBuilder();
-        for (VersionedEntityInfo info : ids) {
-            var data = vcService.getFileContentAtCommit(ctx.getTenantId(),
-                    getRelativePath(info.getExternalId().getEntityType(), info.getExternalId().getId().toString()), request.getVersionId());
-            response.addData(data);
+        if (!ids.isEmpty()) {
+            for (VersionedEntityInfo info : ids) {
+                var data = vcService.getFileContentAtCommit(ctx.getTenantId(),
+                        getRelativePath(info.getExternalId().getEntityType(), info.getExternalId().getId().toString()), request.getVersionId());
+
+                Iterable<String> dataChunks = StringUtils.split(data, msgChunkSize);
+                String chunkedMsgId = UUID.randomUUID().toString();
+                int chunksCount = Iterables.size(dataChunks);
+                AtomicInteger chunkIndex = new AtomicInteger();
+                dataChunks.forEach(chunk -> {
+                    EntitiesContentResponseMsg.Builder response = EntitiesContentResponseMsg.newBuilder()
+                            .setItemsCount(ids.size())
+                            .setItem(EntityContentResponseMsg.newBuilder()
+                                    .setData(chunk)
+                                    .setChunkedMsgId(chunkedMsgId)
+                                    .setChunksCount(chunksCount)
+                                    .setChunkIndex(chunkIndex.getAndIncrement())
+                                    .build());
+                    reply(ctx, Optional.empty(), builder -> builder.setEntitiesContentResponse(response));
+                });
+            }
+        } else {
+            reply(ctx, Optional.empty(), builder -> builder.setEntitiesContentResponse(
+                    EntitiesContentResponseMsg.newBuilder()
+                            .setItemsCount(0)));
         }
-        reply(ctx, Optional.empty(), builder -> builder.setEntitiesContentResponse(response));
     }
 
     private void handleEntityContentRequest(VersionControlRequestCtx ctx, EntityContentRequestMsg request) throws IOException {
         String path = getRelativePath(EntityType.valueOf(request.getEntityType()), new UUID(request.getEntityIdMSB(), request.getEntityIdLSB()).toString());
         String data = vcService.getFileContentAtCommit(ctx.getTenantId(), path, request.getVersionId());
-        reply(ctx, Optional.empty(), builder -> builder.setEntityContentResponse(EntityContentResponseMsg.newBuilder().setData(data)));
+
+        Iterable<String> dataChunks = StringUtils.split(data, msgChunkSize);
+        String chunkedMsgId = UUID.randomUUID().toString();
+        int chunksCount = Iterables.size(dataChunks);
+
+        AtomicInteger chunkIndex = new AtomicInteger();
+        dataChunks.forEach(chunk -> {
+            log.trace("[{}] sending chunk {} for 'getEntity'", chunkedMsgId, chunkIndex.get());
+            reply(ctx, Optional.empty(), builder -> builder.setEntityContentResponse(EntityContentResponseMsg.newBuilder()
+                    .setData(chunk).setChunkedMsgId(chunkedMsgId).setChunksCount(chunksCount)
+                    .setChunkIndex(chunkIndex.getAndIncrement())));
+        });
     }
 
     private void handleListVersions(VersionControlRequestCtx ctx, ListVersionsRequestMsg request) throws Exception {
@@ -412,7 +447,16 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
     }
 
     private void addToCommit(VersionControlRequestCtx ctx, PendingCommit commit, AddMsg addMsg) throws IOException {
-        vcService.add(commit, addMsg.getRelativePath(), addMsg.getEntityDataJson());
+        log.trace("[{}] received chunk {} for 'addToCommit'", addMsg.getChunkedMsgId(), addMsg.getChunkIndex());
+        Map<String, String[]> chunkedMsgs = commit.getChunkedMsgs();
+        String[] msgChunks = chunkedMsgs.computeIfAbsent(addMsg.getChunkedMsgId(), id -> new String[addMsg.getChunksCount()]);
+        msgChunks[addMsg.getChunkIndex()] = addMsg.getEntityDataJsonChunk();
+        if (CollectionsUtil.countNonNull(msgChunks) == msgChunks.length) {
+            log.trace("[{}] collected all chunks for 'addToCommit'", addMsg.getChunkedMsgId());
+            String entityDataJson = String.join("", msgChunks);
+            chunkedMsgs.remove(addMsg.getChunkedMsgId());
+            vcService.add(commit, addMsg.getRelativePath(), entityDataJson);
+        }
     }
 
     private void doAbortCurrentCommit(TenantId tenantId, PendingCommit current) {
