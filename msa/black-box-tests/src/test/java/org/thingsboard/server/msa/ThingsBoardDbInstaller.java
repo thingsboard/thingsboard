@@ -60,12 +60,17 @@ public class ThingsBoardDbInstaller extends ExternalResource {
 
     public ThingsBoardDbInstaller() {
         log.info("System property of blackBoxTests.redisCluster is {}", IS_REDIS_CLUSTER);
-        List<File> composeFiles = Arrays.asList(new File("./../../docker/docker-compose.yml"),
+        List<File> composeFiles = Arrays.asList(
+                new File("./../../docker/docker-compose.yml"),
+                new File("./../../docker/docker-compose.volumes.yml"),
                 new File("./../../docker/docker-compose.postgres.yml"),
                 new File("./../../docker/docker-compose.postgres.volumes.yml"),
                 IS_REDIS_CLUSTER
                         ? new File("./../../docker/docker-compose.redis-cluster.yml")
-                        : new File("./../../docker/docker-compose.redis.yml")
+                        : new File("./../../docker/docker-compose.redis.yml"),
+                IS_REDIS_CLUSTER
+                        ? new File("./../../docker/docker-compose.redis-cluster.volumes.yml")
+                        : new File("./../../docker/docker-compose.redis.volumes.yml")
         );
 
         String identifier = Base58.randomString(6).toLowerCase();

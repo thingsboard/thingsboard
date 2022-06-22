@@ -27,7 +27,7 @@ services:
     ports:
       - '6379:6379'
     volumes:
-      - 'redis_data:/bitnami/redis/data'
+      - ./tb-node/redis-data:/bitnami/redis/data
 
 # ThingsBoard setup to use redis-standalone
   tb-core1:
@@ -95,8 +95,3 @@ services:
       - cache-redis.env
     depends_on:
       - redis
-
-volumes:
-  redis_data:
-    external: true
-    name: ${REDIS_DATA_VOLUME}

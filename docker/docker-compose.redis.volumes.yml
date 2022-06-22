@@ -17,11 +17,11 @@
 version: '2.2'
 
 services:
-  postgres:
+  redis:
     volumes:
-      - postgres-db-volume:/var/lib/postgresql/data
+      - redis-data:/bitnami/redis/data
 
 volumes:
-  postgres-db-volume:
+  redis-data:
     external: true
-    name: ${POSTGRES_DATA_VOLUME}
+    name: ${REDIS_DATA_VOLUME}
