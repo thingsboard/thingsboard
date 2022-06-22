@@ -441,12 +441,12 @@ public class DefaultTbClusterService implements TbClusterService {
         sendDeviceStateServiceEvent(device.getTenantId(), device.getId(), created, !created, false);
         otaPackageStateService.update(device, old);
         if (!created && notifyEdge) {
-            sendNotificationMsgToEdgeService(device.getTenantId(), null, device.getId(), null, null, EdgeEventActionType.UPDATED);
+            sendNotificationMsgToEdge(device.getTenantId(), null, device.getId(), null, null, EdgeEventActionType.UPDATED);
         }
     }
 
     @Override
-    public void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, EdgeEventActionType action) {
+    public void sendNotificationMsgToEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, EdgeEventActionType action) {
         if (!edgesEnabled) {
             return;
         }

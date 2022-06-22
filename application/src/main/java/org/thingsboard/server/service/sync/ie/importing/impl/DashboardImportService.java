@@ -16,8 +16,6 @@
 package org.thingsboard.server.service.sync.ie.importing.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.collect.Lists;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
@@ -28,23 +26,19 @@ import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
-import org.thingsboard.common.util.RegexUtils;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -127,7 +121,7 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
     protected void onEntitySaved(SecurityUser user, Dashboard savedDashboard, Dashboard oldDashboard) throws ThingsboardException {
         super.onEntitySaved(user, savedDashboard, oldDashboard);
         if (oldDashboard != null) {
-            entityActionService.sendEntityNotificationMsgToEdgeService(user.getTenantId(), savedDashboard.getId(), EdgeEventActionType.UPDATED);
+            entityActionService.sendEntityNotificationMsgToEdge(user.getTenantId(), savedDashboard.getId(), EdgeEventActionType.UPDATED);
         }
     }
 

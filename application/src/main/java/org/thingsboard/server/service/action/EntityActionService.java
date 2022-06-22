@@ -223,8 +223,8 @@ public class EntityActionService {
         auditLogService.logEntityAction(user.getTenantId(), customerId, user.getId(), user.getName(), entityId, entity, actionType, e, additionalInfo);
     }
 
-    public void sendEntityNotificationMsgToEdgeService(TenantId tenantId, EntityId entityId, EdgeEventActionType action) {
-        tbClusterService.sendNotificationMsgToEdgeService(tenantId, null, entityId, null, null, action);
+    public void sendEntityNotificationMsgToEdge(TenantId tenantId, EntityId entityId, EdgeEventActionType action) {
+        tbClusterService.sendNotificationMsgToEdge(tenantId, null, entityId, null, null, action);
     }
 
     private <T> T extractParameter(Class<T> clazz, int index, Object... additionalInfo) {
