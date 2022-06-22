@@ -140,10 +140,7 @@ public class TbHttpClientTest {
         var httpClient = new TbHttpClient(config, eventLoop);
         httpClient.setHttpClient(asyncRestTemplate);
 
-        var msg = TbMsg.newMsg(
-                "Main", "GET", new DeviceId(EntityId.NULL_UUID),
-                TbMsgMetaData.EMPTY, "{}"
-        );
+        var msg = TbMsg.newMsg("GET", new DeviceId(EntityId.NULL_UUID), TbMsgMetaData.EMPTY, "{}");
         var successMsg = TbMsg.newMsg(
                 "SUCCESS", msg.getOriginator(),
                 msg.getMetaData(), msg.getData()
