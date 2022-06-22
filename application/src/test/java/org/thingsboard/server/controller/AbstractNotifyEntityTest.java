@@ -142,13 +142,13 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
     private void testLogEntityActionOneTime(HasName entity, EntityId originatorId, TenantId tenantId, CustomerId customerId,
                                             UserId userId, String userName, ActionType actionType, Object... additionalInfo) {
         if (additionalInfo.length == 0) {
-            Mockito.verify(auditLogService, times(1)).logEntityAction(Mockito.eq(tenantId), Mockito.eq(customerId),
-                    Mockito.eq(userId), Mockito.eq(userName), Mockito.eq(originatorId),
+            Mockito.verify(auditLogService, times(1)).logEntityAction(Mockito.eq(tenantId),
+                    Mockito.eq(customerId), Mockito.eq(userId), Mockito.eq(userName), Mockito.eq(originatorId),
                     Mockito.eq(entity), Mockito.eq(actionType), Mockito.isNull());
         } else {
             String additionalInfoStr = extractParameter(String.class, 0, additionalInfo);
-            Mockito.verify(auditLogService, times(1)).logEntityAction(Mockito.eq(tenantId), Mockito.eq(customerId),
-                    Mockito.eq(userId), Mockito.eq(userName), Mockito.eq(originatorId),
+            Mockito.verify(auditLogService, times(1)).logEntityAction(Mockito.eq(tenantId),
+                    Mockito.eq(customerId), Mockito.eq(userId), Mockito.eq(userName), Mockito.eq(originatorId),
                     Mockito.eq(entity), Mockito.eq(actionType), Mockito.isNull(), Mockito.eq(additionalInfoStr));
         }
     }
