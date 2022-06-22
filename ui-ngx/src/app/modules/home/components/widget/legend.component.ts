@@ -43,7 +43,8 @@ export class LegendComponent implements OnInit {
     this.displayHeader = this.legendConfig.showMin === true ||
       this.legendConfig.showMax === true ||
       this.legendConfig.showAvg === true ||
-      this.legendConfig.showTotal === true;
+      this.legendConfig.showTotal === true ||
+      this.legendConfig.showLatest === true;
 
     this.isHorizontal = this.legendConfig.position === LegendPosition.bottom ||
       this.legendConfig.position === LegendPosition.top;
