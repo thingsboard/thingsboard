@@ -22,17 +22,20 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.service.stats.DefaultRuleEngineStatisticsService;
 
@@ -83,7 +86,13 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         Asset asset = new Asset();
         asset.setName("My asset");
         asset.setType("default");
+
+        Mockito.reset(tbClusterService, auditLogService);
+
         Asset savedAsset = doPost("/api/asset", asset, Asset.class);
+
+        testNotifyEntityOneTimeMsgToEdgeServiceNever(savedAsset, savedAsset.getId(), savedAsset.getId(),
+                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED);
 
         Assert.assertNotNull(savedAsset);
         Assert.assertNotNull(savedAsset.getId());
@@ -93,8 +102,13 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         Assert.assertEquals(NULL_UUID, savedAsset.getCustomerId().getId());
         Assert.assertEquals(asset.getName(), savedAsset.getName());
 
+        Mockito.reset(tbClusterService, auditLogService);
+
         savedAsset.setName("My new asset");
         doPost("/api/asset", savedAsset, Asset.class);
+
+        testNotifyEntityAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(),
+                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UPDATED);
 
         Asset foundAsset = doGet("/api/asset/" + savedAsset.getId().getId().toString(), Asset.class);
         Assert.assertEquals(foundAsset.getName(), savedAsset.getName());
@@ -105,13 +119,33 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         Asset asset = new Asset();
         asset.setName(RandomStringUtils.randomAlphabetic(300));
         asset.setType("default");
-        doPost("/api/asset", asset).andExpect(statusReason(containsString("length of name must be equal or less than 255")));
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        String msgError = "length of name must be equal or less than 255";
+        doPost("/api/asset", asset).andExpect(statusReason(containsString(msgError)));
+
+
+        testNotifyEntityEqualsOneTimeError(asset, savedTenant.getId(),
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+        Mockito.reset(tbClusterService, auditLogService);
+
         asset.setName("Normal name");
         asset.setType(RandomStringUtils.randomAlphabetic(300));
-        doPost("/api/asset", asset).andExpect(statusReason(containsString("length of type must be equal or less than 255")));
+        msgError = "length of type must be equal or less than 255";
+        doPost("/api/asset", asset).andExpect(statusReason(containsString(msgError)));
+
+        testNotifyEntityEqualsOneTimeError(asset, savedTenant.getId(),
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+        Mockito.reset(tbClusterService, auditLogService);
+
         asset.setType("default");
         asset.setLabel(RandomStringUtils.randomAlphabetic(300));
-        doPost("/api/asset", asset).andExpect(statusReason(containsString("length of label must be equal or less than 255")));
+        msgError = "length of label must be equal or less than 255";
+        doPost("/api/asset", asset).andExpect(statusReason(containsString(msgError)));
+
+        testNotifyEntityEqualsOneTimeError(asset, savedTenant.getId(),
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
     }
 
     @Test
@@ -122,7 +156,13 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         Asset savedAsset = doPost("/api/asset", asset, Asset.class);
 
         loginDifferentTenant();
+
+        Mockito.reset(tbClusterService, auditLogService);
+
         doPost("/api/asset", savedAsset, Asset.class, status().isForbidden());
+
+        testNotifyEntityNever(savedAsset.getId(), savedAsset);
+
         deleteDifferentTenant();
     }
 
@@ -140,12 +180,21 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
     @Test
     public void testFindAssetTypesByTenantId() throws Exception {
         List<Asset> assets = new ArrayList<>();
-        for (int i = 0; i < 3; i++) {
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        int cntTime = 3;
+        for (int i = 0; i < cntTime; i++) {
             Asset asset = new Asset();
             asset.setName("My asset B" + i);
             asset.setType("typeB");
             assets.add(doPost("/api/asset", asset, Asset.class));
         }
+
+        testNotifyManyEntityManyTimeMsgToEdgeServiceNever(new Asset(), new Asset(),
+                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, cntTime);
+
         for (int i = 0; i < 7; i++) {
             Asset asset = new Asset();
             asset.setName("My asset C" + i);
@@ -176,8 +225,14 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         asset.setType("default");
         Asset savedAsset = doPost("/api/asset", asset, Asset.class);
 
+        Mockito.reset(tbClusterService, auditLogService);
+
         doDelete("/api/asset/" + savedAsset.getId().getId().toString())
                 .andExpect(status().isOk());
+
+        testNotifyEntityOneTimeMsgToEdgeServiceNever(savedAsset, savedAsset.getId(), savedAsset.getId(),
+                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.DELETED, savedAsset.getId().getId().toString());
 
         doGet("/api/asset/" + savedAsset.getId().getId().toString())
                 .andExpect(status().isNotFound());
@@ -202,8 +257,15 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         view.setType("default");
         EntityView savedView = doPost("/api/entityView", view, EntityView.class);
 
+        Mockito.reset(tbClusterService, auditLogService);
+
         doDelete("/api/asset/" + savedAsset1.getId().getId().toString())
                 .andExpect(status().isBadRequest());
+
+        String msgError = "Can't delete asset that has entity views";
+
+        testNotifyEntityIsNullOneTimeError(savedAsset1,  savedTenant.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.DELETED, new DataValidationException(msgError), savedAsset1.getId().getId().toString());
 
         savedView.setEntityId(savedAsset2.getId());
 
@@ -220,18 +282,32 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
     public void testSaveAssetWithEmptyType() throws Exception {
         Asset asset = new Asset();
         asset.setName("My asset");
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        String msgError = "Asset type should be specified";
         doPost("/api/asset", asset)
                 .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Asset type should be specified")));
+                .andExpect(statusReason(containsString(msgError)));
+
+        testNotifyEntityEqualsOneTimeError(asset, savedTenant.getId(),
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
     }
 
     @Test
     public void testSaveAssetWithEmptyName() throws Exception {
         Asset asset = new Asset();
         asset.setType("default");
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        String msgError = "Asset name should be specified";
         doPost("/api/asset", asset)
                 .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Asset name should be specified")));
+                .andExpect(statusReason(containsString(msgError)));
+
+        testNotifyEntityEqualsOneTimeError(asset, savedTenant.getId(),
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
     }
 
     @Test
@@ -245,16 +321,28 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         customer.setTitle("My customer");
         Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
 
+        Mockito.reset(tbClusterService, auditLogService);
+
         Asset assignedAsset = doPost("/api/customer/" + savedCustomer.getId().getId().toString()
                 + "/asset/" + savedAsset.getId().getId().toString(), Asset.class);
         Assert.assertEquals(savedCustomer.getId(), assignedAsset.getCustomerId());
 
+        testNotifyEntityAllOneTime(assignedAsset, assignedAsset.getId(), assignedAsset.getId(),
+                savedTenant.getId(), savedCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ASSIGNED_TO_CUSTOMER, savedCustomer.getId().toString(), savedCustomer.getTitle());
+
         Asset foundAsset = doGet("/api/asset/" + savedAsset.getId().getId().toString(), Asset.class);
         Assert.assertEquals(savedCustomer.getId(), foundAsset.getCustomerId());
+
+        Mockito.reset(tbClusterService, auditLogService);
 
         Asset unassignedAsset =
                 doDelete("/api/customer/asset/" + savedAsset.getId().getId().toString(), Asset.class);
         Assert.assertEquals(ModelConstants.NULL_UUID, unassignedAsset.getCustomerId().getId());
+
+        testNotifyEntityAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(),
+                savedTenant.getId(), savedCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.UNASSIGNED_FROM_CUSTOMER, savedCustomer.getId().toString(), savedCustomer.getTitle());
 
         foundAsset = doGet("/api/asset/" + savedAsset.getId().getId().toString(), Asset.class);
         Assert.assertEquals(ModelConstants.NULL_UUID, foundAsset.getCustomerId().getId());
@@ -267,9 +355,14 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         asset.setType("default");
         Asset savedAsset = doPost("/api/asset", asset, Asset.class);
 
+        Mockito.reset(tbClusterService, auditLogService);
+
+        String msgError = "Asset name should be specified";
         doPost("/api/customer/" + Uuids.timeBased().toString()
                 + "/asset/" + savedAsset.getId().getId().toString())
                 .andExpect(status().isNotFound());
+
+        testNotifyEntityNever(asset.getId(), asset);
     }
 
     @Test
@@ -301,9 +394,13 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         asset.setType("default");
         Asset savedAsset = doPost("/api/asset", asset, Asset.class);
 
+        Mockito.reset(tbClusterService, auditLogService);
+
         doPost("/api/customer/" + savedCustomer.getId().getId().toString()
                 + "/asset/" + savedAsset.getId().getId().toString())
                 .andExpect(status().isForbidden());
+
+        testNotifyEntityNever(savedAsset.getId(), savedAsset);
 
         loginSysAdmin();
 
@@ -314,7 +411,11 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
     @Test
     public void testFindTenantAssets() throws Exception {
         List<Asset> assets = new ArrayList<>();
-        for (int i = 0; i < 178; i++) {
+        int cntEntity = 178;
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        for (int i = 0; i < cntEntity; i++) {
             Asset asset = new Asset();
             asset.setName("Asset" + i);
             asset.setType("default");
@@ -331,6 +432,10 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
                 pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
+
+        testNotifyManyEntityManyTimeMsgToEdgeServiceNever(new Asset(), new Asset(),
+                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, cntEntity);
 
         loadedAssets.removeIf(asset -> asset.getType().equals(DefaultRuleEngineStatisticsService.TB_SERVICE_QUEUE));
 
@@ -731,16 +836,30 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         asset.setType("default");
         Asset savedAsset = doPost("/api/asset", asset, Asset.class);
 
+        Mockito.reset(tbClusterService, auditLogService);
+
         doPost("/api/edge/" + savedEdge.getId().getId().toString()
                 + "/asset/" + savedAsset.getId().getId().toString(), Asset.class);
+
+        testNotifyEntityAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(),
+                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ASSIGNED_TO_EDGE,
+                savedAsset.getId().getId().toString(), savedEdge.getId().getId().toString(), edge.getName());
+
 
         PageData<Asset> pageData = doGetTypedWithPageLink("/api/edge/" + savedEdge.getId().getId().toString() + "/assets?",
                 new TypeReference<PageData<Asset>>() {}, new PageLink(100));
 
         Assert.assertEquals(1, pageData.getData().size());
 
+        Mockito.reset(tbClusterService, auditLogService);
+
         doDelete("/api/edge/" + savedEdge.getId().getId().toString()
                 + "/asset/" + savedAsset.getId().getId().toString(), Asset.class);
+
+
+        testNotifyEntityAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(),
+                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.UNASSIGNED_FROM_EDGE, savedAsset.getId().getId().toString(), savedEdge.getId().getId().toString(), savedEdge.getName());
 
         pageData = doGetTypedWithPageLink("/api/edge/" + savedEdge.getId().getId().toString() + "/assets?",
                 new TypeReference<PageData<Asset>>() {}, new PageLink(100));
