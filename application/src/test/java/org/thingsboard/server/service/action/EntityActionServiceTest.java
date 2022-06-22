@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -53,7 +54,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -136,7 +136,7 @@ public class EntityActionServiceTest {
                 relation);
 
         verifyMetadataTbMsg(relation, actionType);
-        verify(partitionService, times(WANTED_NUMBER_OF_INVOCATIONS)).resolve(any(), anyString(), any(), any());
+        verify(partitionService, times(WANTED_NUMBER_OF_INVOCATIONS)).resolve(any(), any(QueueId.class), any(), any());
     }
 
     private void verifyMetadataTbMsg(EntityRelation relation, ActionType actionType) {
