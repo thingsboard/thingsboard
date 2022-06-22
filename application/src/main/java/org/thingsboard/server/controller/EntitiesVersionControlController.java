@@ -490,15 +490,20 @@ public class EntitiesVersionControlController extends BaseController {
             List<BranchInfo> infos = new ArrayList<>();
 
             String defaultBranch = versionControlService.getVersionControlSettings(tenantId).getDefaultBranch();
-            if (StringUtils.isNotEmpty(defaultBranch)) {
-                infos.add(new BranchInfo(defaultBranch, true));
+            if (StringUtils.isEmpty(defaultBranch)) {
+                if (remoteBranches.contains("main")) {
+                    defaultBranch = "main";
+                } else {
+                    defaultBranch = "master";
+                }
             }
+            infos.add(new BranchInfo(defaultBranch, true));
 
-            remoteBranches.forEach(branch -> {
+            for (String branch : remoteBranches) {
                 if (!branch.equals(defaultBranch)) {
                     infos.add(new BranchInfo(branch, false));
                 }
-            });
+            }
             return infos;
         }, MoreExecutors.directExecutor()));
     }
