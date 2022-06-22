@@ -367,17 +367,17 @@ class DefaultTbContext implements TbContext {
     }
 
     private void createAndPushRelationEventMsg(EntityRelation relation, String relationEventType, EntityId entityId, EntitySearchDirection direction) {
-        String queueName = null;
+        QueueId queueId = null;
         RuleChainId ruleChainId = null;
 
         if (entityId.getEntityType() == EntityType.DEVICE) {
             DeviceProfile deviceProfile = getDeviceProfileByDeviceId(new DeviceId(entityId.getId()));
-            queueName = deviceProfile.getDefaultQueueName();
+            queueId = deviceProfile.getDefaultQueueId();
             ruleChainId = deviceProfile.getDefaultRuleChainId();
         }
 
         TbMsgMetaData metaData = createRelationEventMetadata(direction);
-        TbMsg tbMsg = TbMsg.newMsg(queueName, relationEventType, entityId, metaData, JacksonUtil.toString(relation), ruleChainId, null);
+        TbMsg tbMsg = TbMsg.newMsg(queueId, relationEventType, entityId, metaData, JacksonUtil.toString(relation), ruleChainId, null);
         processEnqueue(tbMsg, relation, relationEventType);
     }
 
