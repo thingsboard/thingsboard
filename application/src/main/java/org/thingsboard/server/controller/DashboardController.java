@@ -631,7 +631,7 @@ public class DashboardController extends BaseController {
 
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
         checkDashboardId(dashboardId, Operation.READ);
-        return tbDashboardService.asignDashboardToEdge(dashboardId, edge, getCurrentUser());
+        return tbDashboardService.assignDashboardToEdge(dashboardId, edge, getCurrentUser());
     }
 
     @ApiOperation(value = "Unassign dashboard from edge (unassignDashboardFromEdge)",

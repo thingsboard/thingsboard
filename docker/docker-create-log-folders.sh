@@ -26,3 +26,5 @@ mkdir -p tb-transports/http/log && sudo chown -R 799:799 tb-transports/http/log
 mkdir -p tb-transports/mqtt/log && sudo chown -R 799:799 tb-transports/mqtt/log
 
 mkdir -p tb-transports/snmp/log && sudo chown -R 799:799 tb-transports/snmp/log
+
+mkdir -p tb-vc-executor/log && sudo chown -R 799:799 tb-vc-executor/log

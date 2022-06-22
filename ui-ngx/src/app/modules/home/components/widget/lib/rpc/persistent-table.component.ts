@@ -42,7 +42,7 @@ import {
 import cssjs from '@core/css/css';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { hashCode, isDefined, isNumber } from '@core/utils';
+import { hashCode, isDefined, isNumber, parseHttpErrorMessage } from '@core/utils';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import {
@@ -520,7 +520,7 @@ class PersistentDatasource implements DataSource<PersistentRpcData> {
             this.subscription.rpcErrorText = 'Request Timeout.';
           } else {
             this.subscription.rpcErrorText =  'Error : ' + rejection.status + ' - ' + rejection.statusText;
-            const error = this.extractRejectionErrorText(rejection);
+            const error = parseHttpErrorMessage(rejection, this.translate);
             if (error) {
               this.subscription.rpcErrorText += '</br>';
               this.subscription.rpcErrorText += error.message || '';
@@ -532,40 +532,6 @@ class PersistentDatasource implements DataSource<PersistentRpcData> {
       }
     );
     return rpcSubject.asObservable();
-  }
-
-  extractRejectionErrorText(rejection: HttpErrorResponse) {
-    let error = null;
-    if (rejection.error) {
-      error = rejection.error;
-      try {
-        error = rejection.error ? JSON.parse(rejection.error) : null;
-      } catch (e) {}
-    }
-    if (error && !error.message) {
-      error = this.prepareMessageFromData(error);
-    } else if (error && error.message) {
-      error = error.message;
-    }
-    return error;
-  }
-
-  prepareMessageFromData(data) {
-    if (typeof data === 'object' && data.constructor === ArrayBuffer) {
-      const msg = String.fromCharCode.apply(null, new Uint8Array(data));
-      try {
-        const msgObj = JSON.parse(msg);
-        if (msgObj.message) {
-          return msgObj.message;
-        } else {
-          return msg;
-        }
-      } catch (e) {
-        return msg;
-      }
-    } else {
-      return data;
-    }
   }
 
   isEmpty(): Observable<boolean> {

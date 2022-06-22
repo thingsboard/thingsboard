@@ -22,13 +22,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -41,7 +42,6 @@ import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.cluster.TbClusterService;
 
 import java.util.List;
 import java.util.Map;
@@ -212,7 +212,7 @@ public class EntityActionService {
         }
     }
 
-    public  <E extends HasName, I extends EntityId> void logEntityAction(User user, I entityId, E entity, CustomerId customerId,
+    public <E extends HasName, I extends EntityId> void logEntityAction(User user, I entityId, E entity, CustomerId customerId,
                                                                            ActionType actionType, Exception e, Object... additionalInfo) {
         if (customerId == null || customerId.isNullUid()) {
             customerId = user.getCustomerId();
@@ -223,6 +223,9 @@ public class EntityActionService {
         auditLogService.logEntityAction(user.getTenantId(), customerId, user.getId(), user.getName(), entityId, entity, actionType, e, additionalInfo);
     }
 
+    public void sendEntityNotificationMsgToEdge(TenantId tenantId, EntityId entityId, EdgeEventActionType action) {
+        tbClusterService.sendNotificationMsgToEdge(tenantId, null, entityId, null, null, action);
+    }
 
     private <T> T extractParameter(Class<T> clazz, int index, Object... additionalInfo) {
         T result = null;
@@ -267,4 +270,5 @@ public class EntityActionService {
             entityNode.put(kvEntry.getKey(), kvEntry.getValueAsString());
         }
     }
+
 }

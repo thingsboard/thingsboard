@@ -28,6 +28,8 @@ public interface TbEntityViewService {
 
     EntityView save(EntityView entityView, EntityView existingEntityView, SecurityUser user) throws ThingsboardException;
 
+    void updateEntityViewAttributes(SecurityUser user, EntityView savedEntityView, EntityView oldEntityView) throws ThingsboardException;
+
     void  delete (EntityView entity, SecurityUser user) throws ThingsboardException;
 
     EntityView assignEntityViewToCustomer(TenantId tenantId, EntityViewId entityViewId, Customer customer,

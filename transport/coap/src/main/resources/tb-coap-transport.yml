@@ -19,6 +19,8 @@ spring.main.web-environment: "${WEB_APPLICATION_ENABLE:false}"
 # If you enabled process metrics you should set 'web-application-type' to 'servlet' value.
 spring.main.web-application-type: "${WEB_APPLICATION_TYPE:none}"
 
+spring.main.allow-circular-references: "true"
+
 server:
   # Server bind address (has no effect if web-environment is disabled).
   address: "${HTTP_BIND_ADDRESS:0.0.0.0}"

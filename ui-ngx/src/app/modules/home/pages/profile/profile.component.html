@@ -78,24 +78,6 @@
               {{ 'dashboard.home-dashboard-hide-toolbar' | translate }}
             </mat-checkbox>
           </section>
-          <div fxLayout="row" fxLayoutGap="16px" style="padding-bottom: 16px; margin-top: 20px;">
-            <div>
-              <button mat-button mat-raised-button color="primary"
-                      type="button"
-                      [disabled]="(isLoading$ | async)" (click)="changePassword()">
-                {{'profile.change-password' | translate}}
-              </button>
-            </div>
-            <div>
-              <button mat-raised-button
-                      type="button"
-                      (click)="copyToken()">
-                <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
-                <span>{{ 'profile.copy-jwt-token' | translate }}</span>
-              </button>
-              <div class="profile-btn-subtext">{{ expirationJwtData }}</div>
-            </div>
-          </div>
           <div fxLayout="row" fxLayoutAlign="end start">
             <button mat-button mat-raised-button color="primary"
                     type="submit"

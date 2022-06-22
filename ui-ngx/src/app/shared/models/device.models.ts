@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { BaseData } from '@shared/models/base-data';
+import { BaseData, ExportableEntity } from '@shared/models/base-data';
 import { DeviceId } from './id/device-id';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { CustomerId } from '@shared/models/id/customer-id';
@@ -480,6 +480,10 @@ export const AlarmScheduleTypeTranslationMap = new Map<AlarmScheduleType, string
 );
 
 export interface AlarmSchedule{
+  dynamicValue?: {
+    sourceAttribute: string,
+    sourceType: string;
+  };
   type: AlarmScheduleType;
   timezone?: string;
   daysOfWeek?: number[];
@@ -560,7 +564,7 @@ export interface DeviceProfileData {
   provisionConfiguration?: DeviceProvisionConfiguration;
 }
 
-export interface DeviceProfile extends BaseData<DeviceProfileId> {
+export interface DeviceProfile extends BaseData<DeviceProfileId>, ExportableEntity<DeviceProfileId> {
   tenantId?: TenantId;
   name: string;
   description?: string;
@@ -685,7 +689,7 @@ export interface DeviceData {
   transportConfiguration: DeviceTransportConfiguration;
 }
 
-export interface Device extends BaseData<DeviceId> {
+export interface Device extends BaseData<DeviceId>, ExportableEntity<DeviceId> {
   tenantId?: TenantId;
   customerId?: CustomerId;
   name: string;
