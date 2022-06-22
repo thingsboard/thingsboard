@@ -26,6 +26,7 @@ import org.springframework.data.domain.Sort;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.Aggregation;
+import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -118,12 +119,28 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
     }
 
     @Override
-    public long getTsForReadTsKvQuery(long startTs, long endTs) {
-        return startTs + (endTs - startTs) / 2;
+    public ListenableFuture<List<TsKvEntry>> findAllAsync(TenantId tenantId, EntityId entityId, ReadTsKvQuery query) {
+        if (query.getAggregation() == Aggregation.NONE) {
+            return findAllAsyncWithLimit(entityId, query);
+        } else {
+            List<ListenableFuture<Optional<TsKvEntry>>> futures = new ArrayList<>();
+            long endPeriod = query.getEndTs();
+            long startPeriod = query.getStartTs();
+            long step = query.getInterval();
+            while (startPeriod <= endPeriod) {
+                long startTs = startPeriod;
+                long endTs = Math.min(startPeriod + step, endPeriod + 1);
+                long ts = startTs + (endTs - startTs) / 2;
+                ReadTsKvQuery subQuery = new BaseReadTsKvQuery(query.getKey(), startTs, endTs, ts, 1, query.getAggregation(), query.getOrder());
+                ListenableFuture<Optional<TsKvEntry>> aggregateTsKvEntry = findAndAggregateAsync(entityId, subQuery.getKey(), startTs, endTs, ts,  query.getAggregation());
+                futures.add(aggregateTsKvEntry);
+                startPeriod = endTs;
+            }
+            return getTskvEntriesFuture(Futures.allAsList(futures));
+        }
     }
 
-    @Override
-    public ListenableFuture<List<TsKvEntry>> findAllAsyncWithLimit(TenantId tenantId, EntityId entityId, ReadTsKvQuery query) {
+    private ListenableFuture<List<TsKvEntry>> findAllAsyncWithLimit(EntityId entityId, ReadTsKvQuery query) {
         Integer keyId = getOrSaveKeyId(query.getKey());
         List<TsKvEntity> tsKvEntities = tsKvRepository.findAllWithLimit(
                 entityId.getId(),
@@ -134,17 +151,6 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
                         Sort.by(new Sort.Order(Sort.Direction.fromString(query.getOrder()),  "ts").nullsNative())));
         tsKvEntities.forEach(tsKvEntity -> tsKvEntity.setStrKey(query.getKey()));
         return Futures.immediateFuture(DaoUtil.convertDataList(tsKvEntities));
-    }
-
-    @Override
-    public ListenableFuture<Optional<TsKvEntry>> findAndAggregateAsync(TenantId tenantId, EntityId entityId, ReadTsKvQuery query, long startTs, long endTs, Aggregation aggregation) {
-        return findAndAggregateAsync(entityId,
-                    query.getKey(),
-                    startTs,
-                    endTs,
-                    getTsForReadTsKvQuery(startTs, endTs),
-                    aggregation);
-
     }
 
     ListenableFuture<Optional<TsKvEntry>> findAndAggregateAsync(EntityId entityId, String key, long startTs, long endTs, long ts, Aggregation aggregation) {

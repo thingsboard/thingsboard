@@ -27,7 +27,6 @@ import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
-import org.thingsboard.server.dao.timeseries.AggregationTimeseriesDao;
 
 import javax.annotation.Nullable;
 import java.sql.Connection;
@@ -36,7 +35,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -121,15 +119,5 @@ public abstract class AbstractSqlTimeseriesDao extends BaseAbstractSqlTimeseries
 
     protected int getDataPointDays(TsKvEntry tsKvEntry, long ttl) {
         return tsKvEntry.getDataPoints() * Math.max(1, (int) (ttl / SECONDS_IN_DAY));
-    }
-
-    @Override
-    public Executor getExecutor() {
-        return service;
-    }
-
-    @Override
-    public long getIntervalGreaterOrEqualsMinAggregationStep(long interval) {
-        return interval;
     }
 }
