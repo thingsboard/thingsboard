@@ -45,7 +45,7 @@ import java.util.List;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
-public class BaseEntityRelationControllerTest extends AbstractControllerTest {
+public abstract class BaseEntityRelationControllerTest extends AbstractControllerTest {
 
     public static final String BASE_DEVICE_NAME = "Test dummy device";
 

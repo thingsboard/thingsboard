@@ -15,8 +15,11 @@
  */
 package org.thingsboard.server.common.msg.tools;
 
+import org.awaitility.pollinterval.FixedPollInterval;
+import org.awaitility.pollinterval.PollInterval;
 import org.junit.Test;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,10 +42,11 @@ public class RateLimitsTest {
         assertThat(rateLimits.tryConsume()).as("new token is available").isFalse();
 
         int expectedRefillTime = (int) (((double) period / capacity) * 1000);
-        int gap = 100;
+        int gap = 500;
 
         for (int i = 0; i < capacity; i++) {
             await("token refill for rate limit " + rateLimitConfig)
+                    .pollInterval(new FixedPollInterval(10, TimeUnit.MILLISECONDS))
                     .atLeast(expectedRefillTime - gap, TimeUnit.MILLISECONDS)
                     .atMost(expectedRefillTime + gap, TimeUnit.MILLISECONDS)
                     .untilAsserted(() -> {
@@ -70,6 +74,7 @@ public class RateLimitsTest {
         int gap = 500;
 
         await("tokens refill for rate limit " + rateLimitConfig)
+                .pollInterval(new FixedPollInterval(10, TimeUnit.MILLISECONDS))
                 .atLeast(expectedRefillTime - gap, TimeUnit.MILLISECONDS)
                 .atMost(expectedRefillTime + gap, TimeUnit.MILLISECONDS)
                 .untilAsserted(() -> {
