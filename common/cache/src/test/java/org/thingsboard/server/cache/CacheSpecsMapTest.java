@@ -22,7 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.caffeine.CaffeineCache;
-import org.springframework.cache.transaction.TransactionAwareCacheManagerProxy;
+import org.springframework.cache.support.SimpleCacheManager;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -46,7 +46,7 @@ public class CacheSpecsMapTest {
 
     @Test
     public void verifyTransactionAwareCacheManagerProxy() {
-        assertThat(cacheManager).isInstanceOf(TransactionAwareCacheManagerProxy.class);
+        assertThat(cacheManager).isInstanceOf(SimpleCacheManager.class);
     }
 
     @Test
