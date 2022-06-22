@@ -109,21 +109,16 @@ public class TelemetryEdgeProcessor extends BaseEdgeProcessor {
             if (EntityType.DEVICE.equals(entityId.getEntityType())) {
                 DeviceId deviceId = new DeviceId(entityId.getId());
 
-                TransportProtos.SessionInfoProto sessionInfo = TransportProtos.SessionInfoProto.newBuilder()
+                TransportProtos.DeviceActivityProto deviceActivityMsg = TransportProtos.DeviceActivityProto.newBuilder()
                         .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                         .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
                         .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
-                        .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits()).build();
-
-                TransportProtos.DeviceActivityProto deviceActivityProto = TransportProtos.DeviceActivityProto.newBuilder()
+                        .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
                         .setLastActivityTime(System.currentTimeMillis()).build();
-
-                TransportProtos.TransportToDeviceActorMsg msg = TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
-                        .setDeviceActivity(deviceActivityProto).build();
 
                 TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, deviceId);
                 tbCoreMsgProducer.send(tpi, new TbProtoQueueMsg<>(deviceId.getId(),
-                        TransportProtos.ToCoreMsg.newBuilder().setToDeviceActorMsg(msg).build()), null);
+                        TransportProtos.ToCoreMsg.newBuilder().setDeviceActivityMsg(deviceActivityMsg).build()), null);
             }
         }
         if (entityData.hasAttributeDeleteMsg()) {

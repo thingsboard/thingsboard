@@ -455,7 +455,11 @@ message GetOtaPackageResponseMsg {
 }
 
 message DeviceActivityProto {
-  int64 lastActivityTime = 1;
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  int64 lastActivityTime = 5;
 }
 
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.
@@ -487,7 +491,6 @@ message TransportToDeviceActorMsg {
   ToDeviceRpcResponseStatusMsg rpcResponseStatusMsg = 10;
   SendPendingRPCMsg sendPendingRPC = 11;
   UplinkNotificationMsg uplinkNotificationMsg = 12;
-  DeviceActivityProto deviceActivity = 13;
 }
 
 message TransportToRuleEngineMsg {
@@ -907,6 +910,7 @@ message ToCoreMsg {
   SubscriptionMgrMsgProto toSubscriptionMgrMsg = 3;
   bytes toDeviceActorNotificationMsg = 4;
   EdgeNotificationMsgProto edgeNotificationMsg = 5;
+  DeviceActivityProto deviceActivityMsg = 6;
 }
 
 /* High priority messages with low latency are handled by ThingsBoard Core Service separately */
