@@ -39,9 +39,7 @@ import java.util.stream.Collectors;
 public abstract class BaseAbstractSqlTimeseriesDao extends JpaAbstractDaoListeningExecutorService {
 
     private final ConcurrentMap<String, Integer> tsKvDictionaryMap = new ConcurrentHashMap<>();
-
     protected static final ReentrantLock tsCreationLock = new ReentrantLock();
-
     @Autowired
     protected TsKvDictionaryRepository dictionaryRepository;
 
@@ -96,4 +94,5 @@ public abstract class BaseAbstractSqlTimeseriesDao extends JpaAbstractDaoListeni
             }
         }, service);
     }
+
 }
