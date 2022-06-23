@@ -31,7 +31,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
-import java.sql.SQLSyntaxErrorException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -120,7 +119,7 @@ public class TbNodeUtils {
 
     public static void validateEntityId(TbContext ctx, EntityId entityId, String msg) {
         try {
-            if (!ctx.getEntityService().existsByTenantIdAndId(ctx.getTenantId(), entityId)) {
+            if (!ctx.entityExistsByTenantIdAndId(ctx.getTenantId(), entityId)) {
                 throw new RuntimeException(msg);
             }
         } catch (BadSqlGrammarException e) {
@@ -130,14 +129,16 @@ public class TbNodeUtils {
 
     public static void validateQueueId(TbContext ctx, QueueId queueId) {
         if (queueId != null) {
-            boolean isRelatedToCurrentTenant = ctx.getEntityService().existsByTenantIdAndId(ctx.getTenantId(), queueId);
+            boolean isRelatedToCurrentTenant = ctx.entityExistsByTenantIdAndId(ctx.getTenantId(), queueId);
             if (!isRelatedToCurrentTenant) {
-                boolean isDefaultQueue = ctx.getEntityService().existsByTenantIdAndId(TenantId.SYS_TENANT_ID, queueId);
                 boolean isIsolatedProfile = ctx.getTenantProfile().isIsolatedTbRuleEngine();
-                if (!isDefaultQueue || isIsolatedProfile) {
-                    throw new RuntimeException(
-                            String.format("Queue [%s] does not belong to the tenant", queueId)
-                    );
+                if (isIsolatedProfile) {
+                    throw new RuntimeException(String.format("Queue [%s] does not belong to the tenant", queueId));
+                }
+
+                boolean isDefaultQueue = ctx.entityExistsByTenantIdAndId(TenantId.SYS_TENANT_ID, queueId);
+                if (!isDefaultQueue) {
+                    throw new RuntimeException(String.format("Queue [%s] does not belong to the tenant", queueId));
                 }
             }
         }

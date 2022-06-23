@@ -295,4 +295,6 @@ public interface TbContext {
     void removeListeners();
 
     TenantProfile getTenantProfile();
+
+    boolean entityExistsByTenantIdAndId(TenantId tenantId, EntityId entityId);
 }

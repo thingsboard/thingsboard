@@ -84,6 +84,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
+import org.thingsboard.server.service.sync.ie.exporting.ExportableEntitiesService;
 
 import java.util.Collections;
 import java.util.Set;
@@ -101,11 +102,13 @@ class DefaultTbContext implements TbContext {
     private final ActorSystemContext mainCtx;
     private final String ruleChainName;
     private final RuleNodeCtx nodeCtx;
+    private final ExportableEntitiesService exportableEntitiesService;
 
-    public DefaultTbContext(ActorSystemContext mainCtx, String ruleChainName, RuleNodeCtx nodeCtx) {
+    public DefaultTbContext(ActorSystemContext mainCtx, String ruleChainName, RuleNodeCtx nodeCtx, ExportableEntitiesService exportableEntitiesService) {
         this.mainCtx = mainCtx;
         this.ruleChainName = ruleChainName;
         this.nodeCtx = nodeCtx;
+        this.exportableEntitiesService = exportableEntitiesService;
     }
 
     @Override
@@ -675,6 +678,11 @@ class DefaultTbContext implements TbContext {
     @Override
     public TenantProfile getTenantProfile() {
         return mainCtx.getTenantProfileCache().get(getTenantId());
+    }
+
+    @Override
+    public boolean entityExistsByTenantIdAndId(TenantId tenantId, EntityId entityId) {
+        return exportableEntitiesService.findEntityByTenantIdAndId(tenantId, entityId) != null;
     }
 
     private TbMsgMetaData getActionMetaData(RuleNodeId ruleNodeId) {

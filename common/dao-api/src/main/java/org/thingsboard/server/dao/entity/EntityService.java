@@ -36,8 +36,4 @@ public interface EntityService {
 
     PageData<EntityData> findEntityDataByQuery(TenantId tenantId, CustomerId customerId, EntityDataQuery query);
 
-    EntityData findEntityByTenantIdAndId(TenantId tenantId, EntityId entityId, List<String> entityFields);
-
-    boolean existsByTenantIdAndId(TenantId tenantId, EntityId entityId);
-
 }
