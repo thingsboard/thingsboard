@@ -60,6 +60,7 @@ services:
       - ./tb-node/redis-cluster-data-4:/bitnami/redis/data
     environment:
       - 'REDIS_PASSWORD=thingsboard'
+      - 'REDISCLI_AUTH=thingsboard'
       - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
 
   redis-node-5:
