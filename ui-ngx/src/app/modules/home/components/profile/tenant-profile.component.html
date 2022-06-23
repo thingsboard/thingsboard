@@ -47,7 +47,7 @@
 </div>
 <div class="mat-padding" fxLayout="column">
   <form [formGroup]="entityForm">
-    <fieldset [disabled]="(isLoading$ | async) || !isEdit" style="min-inline-size: 100%;">
+    <fieldset [disabled]="(isLoading$ | async) || !isEdit">
       <mat-form-field class="mat-block" appearance="fill">
         <mat-label translate>tenant-profile.name</mat-label>
         <input matInput formControlName="name" required/>

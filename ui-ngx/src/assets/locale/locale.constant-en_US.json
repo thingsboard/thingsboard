@@ -3097,6 +3097,7 @@
         "alarms-and-notifications": "Alarms and notifications",
         "ota-files-in-bytes": "OTA files in bytes",
         "ws-title": "WS",
+        "unlimited": "(0 - unlimited)",
         "maximum-devices": "Devices maximum number",
         "maximum-devices-required": "Devices maximum number is required.",
         "maximum-devices-range": "Devices maximum number can't be negative",

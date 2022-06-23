@@ -17,7 +17,9 @@
 -->
 <section [formGroup]="defaultTenantProfileConfigurationFormGroup" fxLayout="column">
   <fieldset class="fields-group">
-    <legend class="group-title">{{ 'tenant-profile.entities' | translate }} <span>(0 - unlimited)</span></legend>
+    <legend class="group-title">
+      {{ 'tenant-profile.entities' | translate }} <span translate>tenant-profile.unlimited</span>
+    </legend>
     <div class="fields-element" fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
       <mat-form-field fxFlex class="mat-block" appearance="fill">
         <mat-label translate>tenant-profile.maximum-devices</mat-label>
@@ -108,7 +110,9 @@
   </fieldset>
 
   <fieldset class="fields-group">
-    <legend class="group-title">{{ 'tenant-profile.rule-engine' | translate }} <span>(0 - unlimited)</span></legend>
+    <legend class="group-title">
+      {{ 'tenant-profile.rule-engine' | translate }} <span translate>tenant-profile.unlimited</span>
+    </legend>
     <div class="fields-element" fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
       <mat-form-field fxFlex class="mat-block" appearance="fill">
         <mat-label translate>tenant-profile.max-r-e-executions</mat-label>
@@ -188,7 +192,9 @@
   </fieldset>
 
   <fieldset class="fields-group">
-    <legend class="group-title">{{ 'tenant-profile.time-to-live' | translate }} <span>(0 - unlimited)</span></legend>
+    <legend class="group-title">
+      {{ 'tenant-profile.time-to-live' | translate }} <span translate>tenant-profile.unlimited</span>
+    </legend>
     <div class="fields-element" fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
       <mat-form-field fxFlex class="mat-block" appearance="fill">
         <mat-label translate>tenant-profile.max-d-p-storage-days</mat-label>
@@ -244,7 +250,9 @@
   </fieldset>
 
   <fieldset class="fields-group">
-    <legend class="group-title">{{ 'tenant-profile.alarms-and-notifications' | translate }} <span>(0 - unlimited)</span></legend>
+    <legend class="group-title">
+      {{ 'tenant-profile.alarms-and-notifications' | translate }} <span translate>tenant-profile.unlimited</span>
+    </legend>
     <div class="fields-element" fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
       <mat-form-field fxFlex class="mat-block" appearance="fill">
         <mat-label translate>tenant-profile.max-emails</mat-label>
@@ -289,7 +297,9 @@
   </fieldset>
 
   <fieldset class="fields-group">
-    <legend class="group-title">{{ 'tenant-profile.ota-files-in-bytes' | translate }} <span>(0 - unlimited)</span></legend>
+    <legend class="group-title">
+      {{ 'tenant-profile.ota-files-in-bytes' | translate }} <span translate>tenant-profile.unlimited</span>
+    </legend>
     <div class="fields-element" fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
       <mat-form-field fxFlex class="mat-block" appearance="fill">
         <mat-label translate>tenant-profile.maximum-resources-sum-data-size</mat-label>
@@ -319,7 +329,9 @@
   </fieldset>
 
   <fieldset class="fields-group">
-    <legend class="group-title">{{ 'tenant-profile.ws-title' | translate }} <span>(0 - unlimited)</span></legend>
+    <legend class="group-title">
+      {{ 'tenant-profile.ws-title' | translate }} <span translate>tenant-profile.unlimited</span>
+    </legend>
     <div class="fields-element" fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
       <mat-form-field fxFlex class="mat-block" appearance="fill">
         <mat-label translate>tenant-profile.ws-limit-max-sessions-per-tenant</mat-label>
