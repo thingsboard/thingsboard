@@ -15,9 +15,13 @@
  */
 package org.thingsboard.server.service.security.auth.oauth2;
 
+import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.text.StrSubstitutor;
 import org.springframework.util.StringUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
 import org.thingsboard.server.dao.oauth2.OAuth2User;
 
@@ -69,7 +73,12 @@ public class BasicMapperUtils {
     public static String getStringAttributeByKey(Map<String, Object> attributes, String key) {
         String result = null;
         try {
-            result = (String) attributes.get(key);
+            if (key.startsWith("$")) {
+                Object json = Configuration.defaultConfiguration().jsonProvider().parse(JacksonUtil.toString(attributes));
+                result = JsonPath.read(json, key);
+            } else {
+                result = (String) attributes.get(key);
+            }
         } catch (Exception e) {
             log.warn("Can't convert attribute to String by key " + key);
         }
