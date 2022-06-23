@@ -20,12 +20,13 @@ version: '2.2'
 services:
   zookeeper:
     restart: always
-    image: "zookeeper:3.5"
+    image: "zookeeper:3.8.0"
     ports:
       - "2181"
     environment:
       ZOO_MY_ID: 1
       ZOO_SERVERS: server.1=zookeeper:2888:3888;zookeeper:2181
+      ZOO_ADMINSERVER_ENABLED: "false"
   tb-js-executor:
     restart: always
     image: "${DOCKER_REPO}/${JS_EXECUTOR_DOCKER_NAME}:${TB_VERSION}"
