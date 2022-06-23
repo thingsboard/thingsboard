@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
+import org.thingsboard.server.common.data.sync.vc.BranchInfo;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
 import org.thingsboard.server.common.data.sync.vc.EntityVersionsDiff;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
@@ -240,7 +241,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     }
 
     @Override
-    public ListenableFuture<List<String>> listBranches(TenantId tenantId) {
+    public ListenableFuture<List<BranchInfo>> listBranches(TenantId tenantId) {
         ListBranchesGitRequest request = new ListBranchesGitRequest(tenantId);
         return sendRequest(request, builder -> builder.setListBranchesRequest(TransportProtos.ListBranchesRequestMsg.newBuilder().build()));
     }
@@ -382,7 +383,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
                 ((CommitGitRequest) request).getFuture().set(commitResult);
             } else if (vcResponseMsg.hasListBranchesResponse()) {
                 var listBranchesResponse = vcResponseMsg.getListBranchesResponse();
-                ((ListBranchesGitRequest) request).getFuture().set(listBranchesResponse.getBranchesList());
+                ((ListBranchesGitRequest) request).getFuture().set(listBranchesResponse.getBranchesList().stream().map(this::getBranchInfo).collect(Collectors.toList()));
             } else if (vcResponseMsg.hasListEntitiesResponse()) {
                 var listEntitiesResponse = vcResponseMsg.getListEntitiesResponse();
                 ((ListEntitiesGitRequest) request).getFuture().set(
@@ -437,6 +438,10 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
 
     private VersionedEntityInfo getVersionedEntityInfo(TransportProtos.VersionedEntityInfoProto proto) {
         return new VersionedEntityInfo(EntityIdFactory.getByTypeAndUuid(proto.getEntityType(), new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB())));
+    }
+
+    private BranchInfo getBranchInfo(TransportProtos.BranchInfoProto proto) {
+        return new BranchInfo(proto.getName(), proto.getIsDefault());
     }
 
     @SuppressWarnings("rawtypes")

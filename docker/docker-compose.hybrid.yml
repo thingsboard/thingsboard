@@ -39,7 +39,6 @@ services:
       - tb-node.hybrid.env
     depends_on:
       - zookeeper
-      - redis
       - postgres
       - cassandra
   tb-core2:
@@ -47,7 +46,6 @@ services:
       - tb-node.hybrid.env
     depends_on:
       - zookeeper
-      - redis
       - postgres
       - cassandra
   tb-rule-engine1:
@@ -55,7 +53,6 @@ services:
       - tb-node.hybrid.env
     depends_on:
       - zookeeper
-      - redis
       - postgres
       - cassandra
   tb-rule-engine2:
@@ -63,6 +60,5 @@ services:
       - tb-node.hybrid.env
     depends_on:
       - zookeeper
-      - redis
       - postgres
       - cassandra

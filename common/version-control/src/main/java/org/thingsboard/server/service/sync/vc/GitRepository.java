@@ -41,10 +41,12 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.ObjectReader;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.FetchResult;
 import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.SshTransport;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
@@ -58,6 +60,7 @@ import org.eclipse.jgit.treewalk.filter.PathFilter;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
+import org.thingsboard.server.common.data.sync.vc.BranchInfo;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.RepositoryAuthMethod;
 
@@ -69,7 +72,12 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.PublicKey;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -83,6 +91,8 @@ public class GitRepository {
 
     @Getter
     private final String directory;
+
+    private ObjectId headId;
 
     private GitRepository(Git git, RepositorySettings settings, CredentialsProvider credentialsProvider, SshdSessionFactory sshSessionFactory, String directory) {
         this.git = git;
@@ -135,8 +145,12 @@ public class GitRepository {
     }
 
     public void fetch() throws GitAPIException {
-        execute(git.fetch()
+        FetchResult result = execute(git.fetch()
                 .setRemoveDeletedRefs(true));
+        Ref head = result.getAdvertisedRef(Constants.HEAD);
+        if (head != null) {
+            this.headId = head.getObjectId();
+        }
     }
 
     public void deleteLocalBranchIfExists(String branch) throws GitAPIException {
@@ -162,13 +176,11 @@ public class GitRepository {
                 .include(branchId));
     }
 
-
-    public List<String> listRemoteBranches() throws GitAPIException {
+    public List<BranchInfo> listRemoteBranches() throws GitAPIException {
         return execute(git.branchList()
                 .setListMode(ListBranchCommand.ListMode.REMOTE)).stream()
                 .filter(ref -> !ref.getName().equals(Constants.HEAD))
-                .map(ref -> org.eclipse.jgit.lib.Repository.shortenRefName(ref.getName()))
-                .map(name -> StringUtils.removeStart(name, "origin/"))
+                .map(this::toBranchInfo)
                 .distinct().collect(Collectors.toList());
     }
 
@@ -323,6 +335,13 @@ public class GitRepository {
                     }
                 })
                 .collect(Collectors.toList());
+    }
+
+    private BranchInfo toBranchInfo(Ref ref) {
+        String name = org.eclipse.jgit.lib.Repository.shortenRefName(ref.getName());
+        String branchName = StringUtils.removeStart(name, "origin/");
+        boolean isDefault = this.headId != null && this.headId.equals(ref.getObjectId());
+        return new BranchInfo(branchName, isDefault);
     }
 
     private Commit toCommit(RevCommit revCommit) {

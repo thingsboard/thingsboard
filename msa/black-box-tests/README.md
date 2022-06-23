@@ -18,8 +18,13 @@ As result, in REPOSITORY column, next images should be present:
         thingsboard/tb-web-ui
         thingsboard/tb-js-executor
 
-- Run the black box tests in the [msa/black-box-tests](../black-box-tests) directory:
+- Run the black box tests in the [msa/black-box-tests](../black-box-tests) directory with Redis standalone:
 
         mvn clean install -DblackBoxTests.skip=false
+
+- Run the black box tests in the [msa/black-box-tests](../black-box-tests) directory with Redis cluster:
+
+        mvn clean install -DblackBoxTests.skip=false -DblackBoxTests.redisCluster=true
+
 
 
