@@ -53,3 +53,9 @@ services:
   tb-snmp-transport:
     env_file:
       - queue-aws-sqs.env
+  tb-vc-executor1:
+    env_file:
+      - queue-aws-sqs.env
+  tb-vc-executor2:
+    env_file:
+      - queue-aws-sqs.env
