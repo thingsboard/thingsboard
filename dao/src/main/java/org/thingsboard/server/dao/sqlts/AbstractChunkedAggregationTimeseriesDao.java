@@ -131,8 +131,7 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
                 long startTs = startPeriod;
                 long endTs = Math.min(startPeriod + step, endPeriod + 1);
                 long ts = startTs + (endTs - startTs) / 2;
-                ReadTsKvQuery subQuery = new BaseReadTsKvQuery(query.getKey(), startTs, endTs, ts, 1, query.getAggregation(), query.getOrder());
-                ListenableFuture<Optional<TsKvEntry>> aggregateTsKvEntry = findAndAggregateAsync(entityId, subQuery.getKey(), startTs, endTs, ts,  query.getAggregation());
+                ListenableFuture<Optional<TsKvEntry>> aggregateTsKvEntry = findAndAggregateAsync(entityId, query.getKey(), startTs, endTs, ts,  query.getAggregation());
                 futures.add(aggregateTsKvEntry);
                 startPeriod = endTs;
             }
