@@ -51,7 +51,8 @@ ADDITIONAL_STARTUP_SERVICES=$(additionalStartupServices) || exit $?
 
 if [ ! -z "${ADDITIONAL_STARTUP_SERVICES// }" ]; then
     docker-compose \
-      -f docker-compose.yml $ADDITIONAL_CACHE_ARGS $ADDITIONAL_COMPOSE_ARGS $ADDITIONAL_COMPOSE_QUEUE_ARGS up -d $ADDITIONAL_STARTUP_SERVICES
+      -f docker-compose.yml $ADDITIONAL_CACHE_ARGS $ADDITIONAL_COMPOSE_ARGS $ADDITIONAL_COMPOSE_QUEUE_ARGS \
+      up -d $ADDITIONAL_STARTUP_SERVICES
 fi
 
 docker-compose \
