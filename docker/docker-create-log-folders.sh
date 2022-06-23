@@ -31,6 +31,8 @@ mkdir -p tb-vc-executor/log && sudo chown -R 799:799 tb-vc-executor/log
 
 mkdir -p tb-node/postgres && sudo chown -R 999:999 tb-node/postgres
 
+mkdir -p tb-node/cassandra && sudo chown -R 999:999 tb-node/cassandra
+
 source .env
 CACHE="${CACHE:-redis}"
 case $CACHE in
