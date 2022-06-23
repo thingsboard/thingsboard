@@ -163,6 +163,11 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         testNotifyEntityNever(savedAsset.getId(), savedAsset);
 
+        doDelete("/api/asset" + savedAsset.getId().getId().toString())
+                .andExpect(status().isNotFound());
+
+        testNotifyEntityNever(savedAsset.getId(), savedAsset);
+
         deleteDifferentTenant();
     }
 
@@ -329,7 +334,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         testNotifyEntityAllOneTime(assignedAsset, assignedAsset.getId(), assignedAsset.getId(),
                 savedTenant.getId(), savedCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ASSIGNED_TO_CUSTOMER, savedCustomer.getId().toString(), savedCustomer.getTitle());
+                ActionType.ASSIGNED_TO_CUSTOMER, assignedAsset.getId().toString(), savedCustomer.getId().toString(), savedCustomer.getTitle());
 
         Asset foundAsset = doGet("/api/asset/" + savedAsset.getId().getId().toString(), Asset.class);
         Assert.assertEquals(savedCustomer.getId(), foundAsset.getCustomerId());
@@ -342,7 +347,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         testNotifyEntityAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(),
                 savedTenant.getId(), savedCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.UNASSIGNED_FROM_CUSTOMER, savedCustomer.getId().toString(), savedCustomer.getTitle());
+                ActionType.UNASSIGNED_FROM_CUSTOMER, savedAsset.getId().toString(), savedCustomer.getId().toString(), savedCustomer.getTitle());
 
         foundAsset = doGet("/api/asset/" + savedAsset.getId().getId().toString(), Asset.class);
         Assert.assertEquals(ModelConstants.NULL_UUID, foundAsset.getCustomerId().getId());
@@ -381,7 +386,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         tenantAdmin2.setFirstName("Joe");
         tenantAdmin2.setLastName("Downs");
 
-        tenantAdmin2 = createUserAndLogin(tenantAdmin2, "testPassword1");
+        createUserAndLogin(tenantAdmin2, "testPassword1");
 
         Customer customer = new Customer();
         customer.setTitle("Different customer");
