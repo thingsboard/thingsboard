@@ -358,6 +358,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         return EntityImportSettings.builder()
                 .updateRelations(config.isLoadRelations())
                 .saveAttributes(config.isLoadAttributes())
+                .saveCredentials(config.isLoadCredentials())
                 .findExistingByName(config.isFindExistingEntityByName())
                 .build();
     }
