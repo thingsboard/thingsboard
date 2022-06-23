@@ -43,6 +43,8 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.List;
 
+import static org.thingsboard.server.service.entitiy.DefaultTbNotificationEntityService.edgeTypeByActionType;
+
 @AllArgsConstructor
 @TbCoreComponent
 @Service
@@ -105,7 +107,7 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
         try {
             Device savedDevice = checkNotNull(deviceService.assignDeviceToCustomer(user.getTenantId(), deviceId, customerId));
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, deviceId, customerId, savedDevice,
-                    actionType, EdgeEventActionType.ASSIGNED_TO_CUSTOMER, user, true, customerId.toString(), customer.getName());
+                    actionType, EdgeEventActionType.ASSIGNED_TO_CUSTOMER, user, true, deviceId.toString(), customerId.toString(), customer.getName());
 
             return savedDevice;
         } catch (Exception e) {
@@ -125,8 +127,8 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
             CustomerId customerId = customer.getId();
 
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, deviceId, customerId, savedDevice,
-                    actionType, EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER, user,
-                    true, customerId.toString(), customer.getName());
+                    actionType, edgeTypeByActionType(actionType), user,
+                    true, deviceId.toString(), customerId.toString(), customer.getName());
 
             return savedDevice;
         } catch (Exception e) {
