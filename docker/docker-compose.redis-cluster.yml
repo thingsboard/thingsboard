@@ -23,7 +23,8 @@ services:
     volumes:
       - ./tb-node/redis-cluster-data-0:/bitnami/redis/data
     environment:
-      - 'REDIS_PASSWORD=bitnami'
+      - 'REDIS_PASSWORD=thingsboard'
+      - 'REDISCLI_AUTH=thingsboard'
       - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
 
   redis-node-1:
@@ -31,7 +32,8 @@ services:
     volumes:
       - ./tb-node/redis-cluster-data-1:/bitnami/redis/data
     environment:
-      - 'REDIS_PASSWORD=bitnami'
+      - 'REDIS_PASSWORD=thingsboard'
+      - 'REDISCLI_AUTH=thingsboard'
       - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
 
   redis-node-2:
@@ -39,7 +41,8 @@ services:
     volumes:
       - ./tb-node/redis-cluster-data-2:/bitnami/redis/data
     environment:
-      - 'REDIS_PASSWORD=bitnami'
+      - 'REDIS_PASSWORD=thingsboard'
+      - 'REDISCLI_AUTH=thingsboard'
       - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
 
   redis-node-3:
@@ -47,7 +50,8 @@ services:
     volumes:
       - ./tb-node/redis-cluster-data-3:/bitnami/redis/data
     environment:
-      - 'REDIS_PASSWORD=bitnami'
+      - 'REDIS_PASSWORD=thingsboard'
+      - 'REDISCLI_AUTH=thingsboard'
       - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
 
   redis-node-4:
@@ -55,7 +59,7 @@ services:
     volumes:
       - ./tb-node/redis-cluster-data-4:/bitnami/redis/data
     environment:
-      - 'REDIS_PASSWORD=bitnami'
+      - 'REDIS_PASSWORD=thingsboard'
       - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
 
   redis-node-5:
@@ -69,9 +73,9 @@ services:
       - redis-node-3
       - redis-node-4
     environment:
-      - 'REDIS_PASSWORD=bitnami'
+      - 'REDIS_PASSWORD=thingsboard'
+      - 'REDISCLI_AUTH=thingsboard'
       - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
-      - 'REDISCLI_AUTH=bitnami'
       - 'REDIS_CLUSTER_REPLICAS=1'
       - 'REDIS_CLUSTER_CREATOR=yes'
 
