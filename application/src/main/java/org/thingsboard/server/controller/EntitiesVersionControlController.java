@@ -484,29 +484,25 @@ public class EntitiesVersionControlController extends BaseController {
             MARKDOWN_CODE_BLOCK_END)
     @GetMapping("/branches")
     public DeferredResult<List<BranchInfo>> listBranches() throws Exception {
-        try {
-            accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
-            final TenantId tenantId = getTenantId();
-            ListenableFuture<List<BranchInfo>> branches = versionControlService.listBranches(tenantId);
-            return wrapFuture(Futures.transform(branches, remoteBranches -> {
-                List<BranchInfo> infos = new ArrayList<>();
-                BranchInfo defaultBranch;
-                String defaultBranchName = versionControlService.getVersionControlSettings(tenantId).getDefaultBranch();
-                if (StringUtils.isNotEmpty(defaultBranchName)) {
-                    defaultBranch = new BranchInfo(defaultBranchName, true);
-                } else {
-                    defaultBranch = remoteBranches.stream().filter(BranchInfo::isDefault).findFirst().orElse(null);
-                }
-                if (defaultBranch != null) {
-                    infos.add(defaultBranch);
-                }
-                infos.addAll(remoteBranches.stream().filter(b -> !b.equals(defaultBranch))
-                        .map(b -> new BranchInfo(b.getName(), false)).collect(Collectors.toList()));
-                return infos;
-            }, MoreExecutors.directExecutor()));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
+        final TenantId tenantId = getTenantId();
+        ListenableFuture<List<BranchInfo>> branches = versionControlService.listBranches(tenantId);
+        return wrapFuture(Futures.transform(branches, remoteBranches -> {
+            List<BranchInfo> infos = new ArrayList<>();
+            BranchInfo defaultBranch;
+            String defaultBranchName = versionControlService.getVersionControlSettings(tenantId).getDefaultBranch();
+            if (StringUtils.isNotEmpty(defaultBranchName)) {
+                defaultBranch = new BranchInfo(defaultBranchName, true);
+            } else {
+                defaultBranch = remoteBranches.stream().filter(BranchInfo::isDefault).findFirst().orElse(null);
+            }
+            if (defaultBranch != null) {
+                infos.add(defaultBranch);
+            }
+            infos.addAll(remoteBranches.stream().filter(b -> !b.equals(defaultBranch))
+                    .map(b -> new BranchInfo(b.getName(), false)).collect(Collectors.toList()));
+            return infos;
+        }, MoreExecutors.directExecutor()));
     }
 
 }
