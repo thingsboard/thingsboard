@@ -20,7 +20,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,6 +38,7 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.sync.vc.BranchInfo;
 import org.thingsboard.server.common.data.sync.vc.EntityDataDiff;
 import org.thingsboard.server.common.data.sync.vc.EntityDataInfo;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
@@ -56,6 +56,7 @@ import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
@@ -138,10 +139,10 @@ public class EntitiesVersionControlController extends BaseController {
             "    \"name\": \"Device profile 1 version 1.0\"\n" +
             "  }\n" +
             "]\n```")
-    @GetMapping(value = "/version/{branch}/{entityType}/{externalEntityUuid}", params = {"pageSize", "page"})
-    public DeferredResult<PageData<EntityVersion>> listEntityVersions(@PathVariable String branch,
-                                                                      @PathVariable EntityType entityType,
+    @GetMapping(value = "/version/{entityType}/{externalEntityUuid}", params = {"branch", "pageSize", "page"})
+    public DeferredResult<PageData<EntityVersion>> listEntityVersions(@PathVariable EntityType entityType,
                                                                       @PathVariable UUID externalEntityUuid,
+                                                                      @RequestParam String branch,
                                                                       @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
                                                                       @RequestParam int pageSize,
                                                                       @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
@@ -165,9 +166,9 @@ public class EntitiesVersionControlController extends BaseController {
             "    \"name\": \"Device profiles from dev\"\n" +
             "  }\n" +
             "]\n```")
-    @GetMapping(value = "/version/{branch}/{entityType}", params = {"pageSize", "page"})
-    public DeferredResult<PageData<EntityVersion>> listEntityTypeVersions(@PathVariable String branch,
-                                                                          @PathVariable EntityType entityType,
+    @GetMapping(value = "/version/{entityType}", params = {"branch", "pageSize", "page"})
+    public DeferredResult<PageData<EntityVersion>> listEntityTypeVersions(@PathVariable EntityType entityType,
+                                                                          @RequestParam String branch,
                                                                           @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
                                                                           @RequestParam int pageSize,
                                                                           @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
@@ -198,8 +199,8 @@ public class EntitiesVersionControlController extends BaseController {
             "    \"name\": \"Devices added\"\n" +
             "  }\n" +
             "]\n```")
-    @GetMapping(value = "/version/{branch}", params = {"pageSize", "page"})
-    public DeferredResult<PageData<EntityVersion>> listVersions(@PathVariable String branch,
+    @GetMapping(value = "/version", params = {"branch", "pageSize", "page"})
+    public DeferredResult<PageData<EntityVersion>> listVersions(@RequestParam String branch,
                                                                 @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
                                                                 @RequestParam int pageSize,
                                                                 @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
@@ -216,17 +217,17 @@ public class EntitiesVersionControlController extends BaseController {
     }
 
 
-    @GetMapping("/entity/{branch}/{entityType}/{versionId}")
-    public DeferredResult<List<VersionedEntityInfo>> listEntitiesAtVersion(@PathVariable String branch,
-                                                                           @PathVariable EntityType entityType,
-                                                                           @PathVariable String versionId) throws Exception {
+    @GetMapping(value = "/entity/{entityType}/{versionId}", params = {"branch"})
+    public DeferredResult<List<VersionedEntityInfo>> listEntitiesAtVersion(@PathVariable EntityType entityType,
+                                                                           @PathVariable String versionId,
+                                                                           @RequestParam String branch) throws Exception {
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
         return wrapFuture(versionControlService.listEntitiesAtVersion(getTenantId(), branch, versionId, entityType));
     }
 
-    @GetMapping("/entity/{branch}/{versionId}")
-    public DeferredResult<List<VersionedEntityInfo>> listAllEntitiesAtVersion(@PathVariable String branch,
-                                                                              @PathVariable String versionId) throws Exception {
+    @GetMapping(value = "/entity/{versionId}", params = {"branch"})
+    public DeferredResult<List<VersionedEntityInfo>> listAllEntitiesAtVersion(@PathVariable String versionId,
+                                                                              @RequestParam String branch) throws Exception {
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
         return wrapFuture(versionControlService.listAllEntitiesAtVersion(getTenantId(), branch, versionId));
     }
@@ -240,10 +241,10 @@ public class EntitiesVersionControlController extends BaseController {
         return wrapFuture(versionControlService.getEntityDataInfo(getCurrentUser(), entityId, versionId));
     }
 
-    @GetMapping("/diff/{branch}/{entityType}/{internalEntityUuid}")
-    public DeferredResult<EntityDataDiff> compareEntityDataToVersion(@PathVariable String branch,
-                                                                     @PathVariable EntityType entityType,
+    @GetMapping(value = "/diff/{entityType}/{internalEntityUuid}", params = {"branch", "versionId"})
+    public DeferredResult<EntityDataDiff> compareEntityDataToVersion(@PathVariable EntityType entityType,
                                                                      @PathVariable UUID internalEntityUuid,
+                                                                     @RequestParam String branch,
                                                                      @RequestParam String versionId) throws Exception {
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, internalEntityUuid);
@@ -318,31 +319,26 @@ public class EntitiesVersionControlController extends BaseController {
         try {
             accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
             final TenantId tenantId = getTenantId();
-            ListenableFuture<List<String>> branches = versionControlService.listBranches(tenantId);
+            ListenableFuture<List<BranchInfo>> branches = versionControlService.listBranches(tenantId);
             return wrapFuture(Futures.transform(branches, remoteBranches -> {
                 List<BranchInfo> infos = new ArrayList<>();
-
-                String defaultBranch = versionControlService.getVersionControlSettings(tenantId).getDefaultBranch();
-                if (StringUtils.isNotEmpty(defaultBranch)) {
-                    infos.add(new BranchInfo(defaultBranch, true));
+                BranchInfo defaultBranch;
+                String defaultBranchName = versionControlService.getVersionControlSettings(tenantId).getDefaultBranch();
+                if (StringUtils.isNotEmpty(defaultBranchName)) {
+                    defaultBranch = new BranchInfo(defaultBranchName, true);
+                } else {
+                    defaultBranch = remoteBranches.stream().filter(BranchInfo::isDefault).findFirst().orElse(null);
                 }
-
-                remoteBranches.forEach(branch -> {
-                    if (!branch.equals(defaultBranch)) {
-                        infos.add(new BranchInfo(branch, false));
-                    }
-                });
+                if (defaultBranch != null) {
+                    infos.add(defaultBranch);
+                }
+                infos.addAll(remoteBranches.stream().filter(b -> !b.equals(defaultBranch))
+                        .map(b -> new BranchInfo(b.getName(), false)).collect(Collectors.toList()));
                 return infos;
             }, MoreExecutors.directExecutor()));
         } catch (Exception e) {
             throw handleException(e);
         }
-    }
-
-    @Data
-    public static class BranchInfo {
-        private final String name;
-        private final boolean isDefault;
     }
 
 }

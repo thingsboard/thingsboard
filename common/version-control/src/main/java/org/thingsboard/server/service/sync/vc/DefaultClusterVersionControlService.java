@@ -42,6 +42,7 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AddMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.BranchInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CommitRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.CommitResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.DeleteMsg;
@@ -332,7 +333,10 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
     }
 
     private void handleListBranches(VersionControlRequestCtx ctx, ListBranchesRequestMsg request) {
-        var branches = vcService.listBranches(ctx.getTenantId());
+        var branches = vcService.listBranches(ctx.getTenantId()).stream()
+                .map(branchInfo -> BranchInfoProto.newBuilder()
+                        .setName(branchInfo.getName())
+                        .setIsDefault(branchInfo.isDefault()).build()).collect(Collectors.toList());
         reply(ctx, Optional.empty(), builder -> builder.setListBranchesResponse(ListBranchesResponseMsg.newBuilder().addAllBranches(branches)));
     }
 

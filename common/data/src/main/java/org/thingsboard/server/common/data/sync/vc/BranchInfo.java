@@ -13,17 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.sync.vc.data;
+package org.thingsboard.server.common.data.sync.vc;
 
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.sync.vc.BranchInfo;
+import lombok.Data;
 
-import java.util.List;
+import java.util.Objects;
 
-public class ListBranchesGitRequest extends PendingGitRequest<List<BranchInfo>> {
+@Data
+public class BranchInfo {
+    private final String name;
+    private final boolean isDefault;
 
-    public ListBranchesGitRequest(TenantId tenantId) {
-        super(tenantId);
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        BranchInfo that = (BranchInfo) o;
+        return Objects.equals(name, that.name);
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(name);
+    }
 }

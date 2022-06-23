@@ -765,8 +765,13 @@ message ListEntitiesResponseMsg {
 message ListBranchesRequestMsg {
 }
 
+message BranchInfoProto {
+  string name = 1;
+  bool isDefault = 2;
+}
+
 message ListBranchesResponseMsg {
-  repeated string branches = 1;
+  repeated BranchInfoProto branches = 1;
 }
 
 message EntityContentRequestMsg {
