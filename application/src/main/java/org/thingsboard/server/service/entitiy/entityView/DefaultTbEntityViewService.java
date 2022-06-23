@@ -147,7 +147,8 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         try {
             EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToCustomer(tenantId, entityViewId, customerId));
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, entityViewId, customerId, savedEntityView,
-                    actionType, edgeTypeByActionType(actionType), user, true, customerId.toString(), customer.getName());
+                    actionType, edgeTypeByActionType(actionType), user, true, entityViewId.toString(), customerId.toString(),
+                    customer.getName());
             return savedEntityView;
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.ENTITY_VIEW), null, null,
