@@ -144,7 +144,7 @@ JsInvokeMessageProcessor.prototype.processInvokeRequest = function (requestId, r
                 },
                 (err) => {
                     var errorCode;
-                    if (err.message.includes('Script execution timed out')) {
+                    if (err && isString(err.message) && err.message.includes('Script execution timed out')) {
                         errorCode = TIMEOUT_ERROR;
                     } else {
                         errorCode = RUNTIME_ERROR;
@@ -319,6 +319,10 @@ function deleteMinUsedScript() {
     this.executedScriptIdsCounter.splice(minIndex, 1)
     logger.info('Removing active script with id [%s]', prevScriptId);
     this.scriptMap.delete(prevScriptId);
+}
+
+function isString(value) {
+    return typeof value === 'string';
 }
 
 module.exports = JsInvokeMessageProcessor;
