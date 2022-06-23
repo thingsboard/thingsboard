@@ -65,6 +65,7 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.edge.EdgeNotificationService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 import org.thingsboard.server.service.install.InstallScripts;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
@@ -78,6 +79,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -128,8 +130,8 @@ public abstract class AbstractTbEntityService {
     @Autowired
     protected DashboardService dashboardService;
 
-    @Autowired
-    protected EntitiesVersionControlService vcService;
+    @Autowired(required = false)
+    private EntitiesVersionControlService vcService;
     @Autowired
     protected EntityViewService entityViewService;
     @Lazy
@@ -248,5 +250,14 @@ public abstract class AbstractTbEntityService {
             result.add(edgeId);
         }
         return result;
+    }
+
+    protected ListenableFuture<UUID> autoCommit(SecurityUser user, EntityId entityId) throws Exception {
+        if (vcService != null) {
+            return vcService.autoCommit(user, entityId);
+        } else {
+            // We do not support auto-commit for rule engine
+            return Futures.immediateFailedFuture(new RuntimeException("Operation not supported!"));
+        }
     }
 }
