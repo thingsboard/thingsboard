@@ -118,6 +118,11 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
     }
 
     @Override
+    protected boolean compare(EntitiesImportCtx ctx, EntityExportData<Dashboard> exportData, Dashboard prepared, Dashboard existing) {
+        return super.compare(ctx, exportData, prepared, existing) || !prepared.getConfiguration().equals(existing.getConfiguration());
+    }
+
+    @Override
     protected void onEntitySaved(SecurityUser user, Dashboard savedDashboard, Dashboard oldDashboard) throws ThingsboardException {
         super.onEntitySaved(user, savedDashboard, oldDashboard);
         if (oldDashboard != null) {
