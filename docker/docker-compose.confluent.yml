@@ -23,23 +23,15 @@ services:
   tb-core1:
     env_file:
       - queue-confluent.env
-    depends_on:
-      - redis
   tb-core2:
     env_file:
       - queue-confluent.env
-    depends_on:
-      - redis
   tb-rule-engine1:
     env_file:
       - queue-confluent.env
-    depends_on:
-      - redis
   tb-rule-engine2:
     env_file:
       - queue-confluent.env
-    depends_on:
-      - redis
   tb-mqtt-transport1:
     env_file:
       - queue-confluent.env
