@@ -119,7 +119,7 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
             RuleChainMetaData newMD = exportData.getMetaData();
             RuleChainMetaData existingMD = ruleChainService.loadRuleChainMetaData(ctx.getTenantId(), prepared.getId());
             existingMD.setRuleChainId(null);
-            different = newMD.equals(existingMD);
+            different = !newMD.equals(existingMD);
         }
         return different;
     }
