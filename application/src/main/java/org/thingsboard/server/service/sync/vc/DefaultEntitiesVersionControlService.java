@@ -25,12 +25,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.TbStopWatch;
 import org.thingsboard.common.util.ThingsBoardExecutors;
-import org.thingsboard.server.cache.CaffeineTbTransactionalCache;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
@@ -49,6 +47,7 @@ import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
 import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
 import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
+import org.thingsboard.server.common.data.sync.vc.BranchInfo;
 import org.thingsboard.server.common.data.sync.vc.EntityDataDiff;
 import org.thingsboard.server.common.data.sync.vc.EntityDataInfo;
 import org.thingsboard.server.common.data.sync.vc.EntityLoadError;
@@ -358,6 +357,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         return EntityImportSettings.builder()
                 .updateRelations(config.isLoadRelations())
                 .saveAttributes(config.isLoadAttributes())
+                .saveCredentials(config.isLoadCredentials())
                 .findExistingByName(config.isFindExistingEntityByName())
                 .build();
     }
@@ -479,7 +479,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
 
     @Override
-    public ListenableFuture<List<String>> listBranches(TenantId tenantId) throws Exception {
+    public ListenableFuture<List<BranchInfo>> listBranches(TenantId tenantId) throws Exception {
         return gitServiceQueue.listBranches(tenantId);
     }
 

@@ -91,7 +91,7 @@ public abstract class AbstractSqlTimeseriesDao extends BaseAbstractSqlTimeseries
                 .stream()
                 .map(query -> findAllAsync(tenantId, entityId, query))
                 .collect(Collectors.toList());
-        return Futures.transform(Futures.allAsList(futures), new Function<List<List<TsKvEntry>>, List<TsKvEntry>>() {
+        return Futures.transform(Futures.allAsList(futures), new Function<>() {
             @Nullable
             @Override
             public List<TsKvEntry> apply(@Nullable List<List<TsKvEntry>> results) {

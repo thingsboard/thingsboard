@@ -19,8 +19,9 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
+import org.thingsboard.server.common.data.sync.vc.BranchInfo;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
+import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.service.sync.vc.GitRepository.Diff;
@@ -57,7 +58,7 @@ public interface GitRepositoryService {
 
     void abort(PendingCommit commit);
 
-    List<String> listBranches(TenantId tenantId);
+    List<BranchInfo> listBranches(TenantId tenantId);
 
     String getFileContentAtCommit(TenantId tenantId, String relativePath, String versionId) throws IOException;
 

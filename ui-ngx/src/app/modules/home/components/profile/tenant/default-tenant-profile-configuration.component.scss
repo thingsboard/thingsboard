@@ -13,37 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 :host {
-  .queue-strategy {
-    padding-bottom: 16px;
+  .fields-element {
+    padding-top: 15px;
+  }
 
-    .group-label {
-      display: block;
-      padding-bottom: 10px;
-    }
-
-    .panel-title {
-      font-weight: 500;
-    }
-
-    .hint-icon {
-      width: 15px;
-      height: 15px;
-      vertical-align: top;
-    }
+  .group-title > span {
+    color: rgba(0, 0, 0, 0.54);
   }
 
   ::ng-deep {
-    .mat-form-field-infix {
-      width: 100% !important;
-    }
-    .queue-strategy {
-      .mat-expansion-panel-header {
-        height: 50px;
-      }
+    .mat-expansion-panel {
+      &.configuration-panel {
+        box-shadow: none;
 
-      .mat-expansion-panel-body {
-        padding-bottom: 0 !important;
+        .mat-expansion-panel-header {
+          padding: 0;
+
+          &:hover {
+            background: none !important;
+          }
+
+          .mat-expansion-indicator {
+            padding: 2px;
+          }
+        }
+
+        > .mat-expansion-panel-content {
+          > .mat-expansion-panel-body {
+            padding: 0;
+          }
+        }
+
+        .mat-expansion-panel-header-description {
+          align-items: center;
+        }
       }
     }
   }
