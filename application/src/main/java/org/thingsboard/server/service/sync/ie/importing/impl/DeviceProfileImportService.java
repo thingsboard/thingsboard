@@ -63,15 +63,13 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
 
     @Override
     protected void onEntitySaved(SecurityUser user, DeviceProfile savedDeviceProfile, DeviceProfile oldDeviceProfile) throws ThingsboardException {
-        super.onEntitySaved(user, savedDeviceProfile, oldDeviceProfile);
         clusterService.onDeviceProfileChange(savedDeviceProfile, null);
         clusterService.broadcastEntityStateChangeEvent(user.getTenantId(), savedDeviceProfile.getId(),
                 oldDeviceProfile == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
-        entityActionService.sendEntityNotificationMsgToEdge(user.getTenantId(), savedDeviceProfile.getId(),
-                oldDeviceProfile == null ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
         otaPackageStateService.update(savedDeviceProfile,
                 oldDeviceProfile != null && !Objects.equals(oldDeviceProfile.getFirmwareId(), savedDeviceProfile.getFirmwareId()),
                 oldDeviceProfile != null && !Objects.equals(oldDeviceProfile.getSoftwareId(), savedDeviceProfile.getSoftwareId()));
+        super.onEntitySaved(user, savedDeviceProfile, oldDeviceProfile);
     }
 
     @Override

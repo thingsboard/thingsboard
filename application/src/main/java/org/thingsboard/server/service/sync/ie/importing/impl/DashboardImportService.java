@@ -123,14 +123,6 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
     }
 
     @Override
-    protected void onEntitySaved(SecurityUser user, Dashboard savedDashboard, Dashboard oldDashboard) throws ThingsboardException {
-        super.onEntitySaved(user, savedDashboard, oldDashboard);
-        if (oldDashboard != null) {
-            entityActionService.sendEntityNotificationMsgToEdge(user.getTenantId(), savedDashboard.getId(), EdgeEventActionType.UPDATED);
-        }
-    }
-
-    @Override
     public EntityType getEntityType() {
         return EntityType.DASHBOARD;
     }

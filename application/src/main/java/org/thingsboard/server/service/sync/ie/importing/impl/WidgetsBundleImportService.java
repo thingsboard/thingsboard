@@ -93,7 +93,6 @@ public class WidgetsBundleImportService extends BaseEntityImportService<WidgetsB
 
     @Override
     protected void onEntitySaved(SecurityUser user, WidgetsBundle savedWidgetsBundle, WidgetsBundle oldWidgetsBundle) throws ThingsboardException {
-        super.onEntitySaved(user, savedWidgetsBundle, oldWidgetsBundle);
         entityNotificationService.notifySendMsgToEdgeService(user.getTenantId(), savedWidgetsBundle.getId(),
                 oldWidgetsBundle == null ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
     }
