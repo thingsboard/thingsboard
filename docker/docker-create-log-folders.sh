@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-mkdir -p tb-node/log/ && sudo chown -R 799:799 tb-node/log/
+mkdir -p tb-node/log && sudo chown -R 799:799 tb-node/log
 
 mkdir -p tb-transports/coap/log && sudo chown -R 799:799 tb-transports/coap/log
 
@@ -29,23 +29,25 @@ mkdir -p tb-transports/snmp/log && sudo chown -R 799:799 tb-transports/snmp/log
 
 mkdir -p tb-vc-executor/log && sudo chown -R 799:799 tb-vc-executor/log
 
-mkdir -p tb-node/postgres/ && sudo chown -R 999:999 tb-node/postgres/
+mkdir -p tb-node/postgres && sudo chown -R 999:999 tb-node/postgres
+
+mkdir -p tb-node/cassandra && sudo chown -R 999:999 tb-node/cassandra
 
 source .env
 CACHE="${CACHE:-redis}"
 case $CACHE in
     redis)
-    mkdir -p tb-node/redis-data/ && sudo chown -R 1001:0 tb-node/redis-data/
+    mkdir -p tb-node/redis-data && sudo chown -R 1001:1001 tb-node/redis-data
     ;;
     redis-cluster)
-    mkdir -p tb-node/redis-cluster-data-0/ && sudo chown -R 1001:0 tb-node/redis-cluster-data-0/
-    mkdir -p tb-node/redis-cluster-data-1/ && sudo chown -R 1001:0 tb-node/redis-cluster-data-1/
-    mkdir -p tb-node/redis-cluster-data-2/ && sudo chown -R 1001:0 tb-node/redis-cluster-data-2/
-    mkdir -p tb-node/redis-cluster-data-3/ && sudo chown -R 1001:0 tb-node/redis-cluster-data-3/
-    mkdir -p tb-node/redis-cluster-data-4/ && sudo chown -R 1001:0 tb-node/redis-cluster-data-4/
-    mkdir -p tb-node/redis-cluster-data-5/ && sudo chown -R 1001:0 tb-node/redis-cluster-data-5/
+    mkdir -p tb-node/redis-cluster-data-0 && sudo chown -R 1001:1001 tb-node/redis-cluster-data-0
+    mkdir -p tb-node/redis-cluster-data-1 && sudo chown -R 1001:1001 tb-node/redis-cluster-data-1
+    mkdir -p tb-node/redis-cluster-data-2 && sudo chown -R 1001:1001 tb-node/redis-cluster-data-2
+    mkdir -p tb-node/redis-cluster-data-3 && sudo chown -R 1001:1001 tb-node/redis-cluster-data-3
+    mkdir -p tb-node/redis-cluster-data-4 && sudo chown -R 1001:1001 tb-node/redis-cluster-data-4
+    mkdir -p tb-node/redis-cluster-data-5 && sudo chown -R 1001:1001 tb-node/redis-cluster-data-5
     ;;
     *)
-    echo "Unknown CACHE value specified: '${CACHE}'. Should be either redis or redis-cluster." >&2
+    echo "Unknown CACHE value specified in the .env file: '${CACHE}'. Should be either 'redis' or 'redis-cluster'." >&2
     exit 1
 esac
