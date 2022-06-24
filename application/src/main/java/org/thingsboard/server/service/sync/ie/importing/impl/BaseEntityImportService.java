@@ -212,10 +212,8 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                         importResult.setUpdatedRelatedEntities(true);
                         relationService.deleteRelation(tenantId, existingRelation);
                         importResult.addSendEventsCallback(() -> {
-                            entityActionService.logEntityAction(ctx.getUser(), existingRelation.getFrom(), null, null,
-                                    ActionType.RELATION_DELETED, null, existingRelation);
-                            entityActionService.logEntityAction(ctx.getUser(), existingRelation.getTo(), null, null,
-                                    ActionType.RELATION_DELETED, null, existingRelation);
+                            entityNotificationService.notifyCreateOrUpdateOrDeleteRelation(tenantId, null,
+                                    existingRelation, ctx.getUser(), ActionType.RELATION_DELETED, null, existingRelation);
                         });
                     } else if (Objects.equal(relation.getAdditionalInfo(), existingRelation.getAdditionalInfo())) {
                         relationsMap.remove(relation);
