@@ -21,6 +21,7 @@ import org.junit.rules.ExternalResource;
 import org.testcontainers.utility.Base58;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +33,10 @@ import java.util.stream.IntStream;
 public class ThingsBoardDbInstaller extends ExternalResource {
 
     final static boolean IS_REDIS_CLUSTER = Boolean.parseBoolean(System.getProperty("blackBoxTests.redisCluster"));
+    final static boolean IS_HYBRID_MODE = Boolean.parseBoolean(System.getProperty("blackBoxTests.hybridMode"));
     private final static String POSTGRES_DATA_VOLUME = "tb-postgres-test-data-volume";
+
+    private final static String CASSANDRA_DATA_VOLUME = "tb-cassandra-test-data-volume";
     private final static String REDIS_DATA_VOLUME = "tb-redis-data-volume";
     private final static String REDIS_CLUSTER_DATA_VOLUME = "tb-redis-cluster-data-volume";
     private final static String TB_LOG_VOLUME = "tb-log-test-volume";
@@ -46,6 +50,7 @@ public class ThingsBoardDbInstaller extends ExternalResource {
     private final DockerComposeExecutor dockerCompose;
 
     private final String postgresDataVolume;
+    private final String cassandraDataVolume;
 
     private final String redisDataVolume;
     private final String redisClusterDataVolume;
@@ -60,10 +65,13 @@ public class ThingsBoardDbInstaller extends ExternalResource {
 
     public ThingsBoardDbInstaller() {
         log.info("System property of blackBoxTests.redisCluster is {}", IS_REDIS_CLUSTER);
-        List<File> composeFiles = Arrays.asList(
+        log.info("System property of blackBoxTests.hybridMode is {}", IS_HYBRID_MODE);
+        List<File> composeFiles = new ArrayList<>(Arrays.asList(
                 new File("./../../docker/docker-compose.yml"),
                 new File("./../../docker/docker-compose.volumes.yml"),
-                new File("./../../docker/docker-compose.postgres.yml"),
+                IS_HYBRID_MODE
+                       ? new File("./../../docker/docker-compose.hybrid.yml")
+                       : new File("./../../docker/docker-compose.postgres.yml"),
                 new File("./../../docker/docker-compose.postgres.volumes.yml"),
                 IS_REDIS_CLUSTER
                         ? new File("./../../docker/docker-compose.redis-cluster.yml")
@@ -71,12 +79,16 @@ public class ThingsBoardDbInstaller extends ExternalResource {
                 IS_REDIS_CLUSTER
                         ? new File("./../../docker/docker-compose.redis-cluster.volumes.yml")
                         : new File("./../../docker/docker-compose.redis.volumes.yml")
-        );
+        ));
+        if (IS_HYBRID_MODE) {
+            composeFiles.add(new File("./../../docker/docker-compose.cassandra.volumes.yml"));
+        }
 
         String identifier = Base58.randomString(6).toLowerCase();
         String project = identifier + Base58.randomString(6).toLowerCase();
 
         postgresDataVolume = project + "_" + POSTGRES_DATA_VOLUME;
+        cassandraDataVolume = project + "_" + CASSANDRA_DATA_VOLUME;
         redisDataVolume = project + "_" + REDIS_DATA_VOLUME;
         redisClusterDataVolume = project + "_" + REDIS_CLUSTER_DATA_VOLUME;
         tbLogVolume = project + "_" + TB_LOG_VOLUME;
@@ -91,6 +103,9 @@ public class ThingsBoardDbInstaller extends ExternalResource {
 
         env = new HashMap<>();
         env.put("POSTGRES_DATA_VOLUME", postgresDataVolume);
+        if (IS_HYBRID_MODE) {
+            env.put("CASSANDRA_DATA_VOLUME", cassandraDataVolume);
+        }
         env.put("TB_LOG_VOLUME", tbLogVolume);
         env.put("TB_COAP_TRANSPORT_LOG_VOLUME", tbCoapTransportLogVolume);
         env.put("TB_LWM2M_TRANSPORT_LOG_VOLUME", tbLwm2mTransportLogVolume);
@@ -119,6 +134,11 @@ public class ThingsBoardDbInstaller extends ExternalResource {
             dockerCompose.withCommand("volume create " + postgresDataVolume);
             dockerCompose.invokeDocker();
 
+            if (IS_HYBRID_MODE) {
+                dockerCompose.withCommand("volume create " + cassandraDataVolume);
+                dockerCompose.invokeDocker();
+            }
+
             dockerCompose.withCommand("volume create " + tbLogVolume);
             dockerCompose.invokeDocker();
 
@@ -140,20 +160,23 @@ public class ThingsBoardDbInstaller extends ExternalResource {
             dockerCompose.withCommand("volume create " + tbVcExecutorLogVolume);
             dockerCompose.invokeDocker();
 
-            String redisService = "";
+            String additionalServices = "";
+            if (IS_HYBRID_MODE) {
+                additionalServices += " cassandra";
+            }
             if (IS_REDIS_CLUSTER) {
                 for (int i = 0; i < 6; i++) {
-                    redisService = redisService + " redis-node-" + i;
+                    additionalServices = additionalServices + " redis-node-" + i;
                     dockerCompose.withCommand("volume create " + redisClusterDataVolume + '-' + i);
                     dockerCompose.invokeDocker();
                 }
             } else {
-                redisService = "redis";
+                additionalServices += " redis";
                 dockerCompose.withCommand("volume create " + redisDataVolume);
                 dockerCompose.invokeDocker();
             }
 
-            dockerCompose.withCommand("up -d postgres " + redisService);
+            dockerCompose.withCommand("up -d postgres" + additionalServices);
             dockerCompose.invokeCompose();
 
             dockerCompose.withCommand("run --no-deps --rm -e INSTALL_TB=true -e LOAD_DEMO=true tb-core1");

@@ -428,6 +428,9 @@ cache:
       timeToLiveInMinutes: "${CACHE_SPECS_VERSION_CONTROL_TASK_TTL:5}"
       maxSize: "${CACHE_SPECS_VERSION_CONTROL_TASK_MAX_SIZE:100000}"
 
+#Disable this because it is not required.
+spring.data.redis.repositories.enabled: false
+
 redis:
   # standalone or cluster
   connection:

@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Device;
@@ -101,6 +102,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
     @Autowired
     private DeviceService deviceService;
 
+    @Lazy
     @Autowired
     private TbEntityViewService entityViewService;
 
