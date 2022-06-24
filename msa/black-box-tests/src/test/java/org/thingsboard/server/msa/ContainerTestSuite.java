@@ -77,7 +77,8 @@ public class ContainerTestSuite {
                     }
                 }
 
-                List<File> composeFiles = new ArrayList<>(Arrays.asList(new File(targetDir + "docker-compose.yml"),
+                List<File> composeFiles = new ArrayList<>(Arrays.asList(
+                        new File(targetDir + "docker-compose.yml"),
                         new File(targetDir + "docker-compose.volumes.yml"),
                         IS_HYBRID_MODE
                                 ? new File(targetDir + "docker-compose.hybrid.yml")
@@ -85,11 +86,11 @@ public class ContainerTestSuite {
                         new File(targetDir + "docker-compose.postgres.volumes.yml"),
                         new File(targetDir + "docker-compose.kafka.yml"),
                         IS_REDIS_CLUSTER
-                                ? new File("./../../docker/docker-compose.redis-cluster.yml")
-                                : new File("./../../docker/docker-compose.redis.yml"),
+                                ? new File(targetDir + "docker-compose.redis-cluster.yml")
+                                : new File(targetDir + "docker-compose.redis.yml"),
                         IS_REDIS_CLUSTER
-                                ? new File("./../../docker/docker-compose.redis-cluster.volumes.yml")
-                                : new File("./../../docker/docker-compose.redis.volumes.yml")));
+                                ? new File(targetDir + "docker-compose.redis-cluster.volumes.yml")
+                                : new File(targetDir + "docker-compose.redis.volumes.yml")));
 
                 if (IS_HYBRID_MODE) {
                     composeFiles.add(new File(targetDir + "docker-compose.cassandra.volumes.yml"));
