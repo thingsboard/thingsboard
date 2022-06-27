@@ -829,15 +829,6 @@ message EntityVersionsDiff {
   string rawDiff = 6;
 }
 
-message ContentsDiffRequestMsg {
-  string content1 = 1;
-  string content2 = 2;
-}
-
-message ContentsDiffResponseMsg {
-  string diff = 1;
-}
-
 message GenericRepositoryRequestMsg {}
 
 message GenericRepositoryResponseMsg {}
@@ -859,7 +850,6 @@ message ToVersionControlServiceMsg {
   EntityContentRequestMsg entityContentRequest = 14;
   EntitiesContentRequestMsg entitiesContentRequest = 15;
   VersionsDiffRequestMsg versionsDiffRequest = 16;
-  ContentsDiffRequestMsg contentsDiffRequest = 17;
 }
 
 message VersionControlResponseMsg {
@@ -874,7 +864,6 @@ message VersionControlResponseMsg {
   EntityContentResponseMsg entityContentResponse = 9;
   EntitiesContentResponseMsg entitiesContentResponse = 10;
   VersionsDiffResponseMsg versionsDiffResponse = 11;
-  ContentsDiffResponseMsg contentsDiffResponse = 12;
 }
 
 /**

@@ -257,8 +257,6 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
                         handleEntitiesContentRequest(ctx, msg.getEntitiesContentRequest());
                     } else if (msg.hasVersionsDiffRequest()) {
                         handleVersionsDiffRequest(ctx, msg.getVersionsDiffRequest());
-                    } else if (msg.hasContentsDiffRequest()) {
-                        handleContentsDiffRequest(ctx, msg.getContentsDiffRequest());
                     }
                 }
             }
@@ -392,12 +390,6 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
 
         reply(ctx, builder -> builder.setVersionsDiffResponse(TransportProtos.VersionsDiffResponseMsg.newBuilder()
                 .addAllDiff(diffList)));
-    }
-
-    private void handleContentsDiffRequest(VersionControlRequestCtx ctx, TransportProtos.ContentsDiffRequestMsg request) throws IOException {
-        String diff = vcService.getContentsDiff(ctx.getTenantId(), request.getContent1(), request.getContent2());
-        reply(ctx, builder -> builder.setContentsDiffResponse(TransportProtos.ContentsDiffResponseMsg.newBuilder()
-                .setDiff(diff)));
     }
 
     private void handleCommitRequest(VersionControlRequestCtx ctx, CommitRequestMsg request) throws Exception {
