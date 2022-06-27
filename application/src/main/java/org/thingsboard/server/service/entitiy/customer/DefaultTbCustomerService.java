@@ -64,7 +64,7 @@ public class DefaultTbCustomerService extends AbstractTbEntityService implements
             tbClusterService.broadcastEntityStateChangeEvent(tenantId, customer.getId(), ComponentLifecycleEvent.DELETED);
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.CUSTOMER), null, null,
-                    ActionType.DELETED, user, e, customer.getId().toString());
+                    ActionType.DELETED, user, e, customerId.toString());
             throw handleException(e);
         }
     }

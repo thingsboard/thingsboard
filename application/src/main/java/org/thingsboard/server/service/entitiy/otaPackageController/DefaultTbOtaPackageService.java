@@ -63,8 +63,6 @@ public class DefaultTbOtaPackageService extends AbstractTbEntityService implemen
         OtaPackageId otaPackageId = otaPackageInfo.getId();
         try {
             otaPackageService.deleteOtaPackage(tenantId, otaPackageId);
-//            notificationEntityService.notifyEntity(tenantId, otaPackageId, otaPackageInfo, null,
-//                    ActionType.DELETED, user, null, otaPackageInfo.getId().toString());
 
             notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, otaPackageId, otaPackageInfo,
                     user, ActionType.DELETED, true, null, otaPackageInfo.getId().toString());
