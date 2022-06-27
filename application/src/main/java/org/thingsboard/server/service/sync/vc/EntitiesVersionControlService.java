@@ -16,22 +16,21 @@
 package org.thingsboard.server.service.sync.vc;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.sync.vc.BranchInfo;
 import org.thingsboard.server.common.data.sync.vc.EntityDataDiff;
 import org.thingsboard.server.common.data.sync.vc.EntityDataInfo;
-import org.thingsboard.server.common.data.sync.vc.VersionLoadResult;
-import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
+import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
-import org.thingsboard.server.common.data.sync.vc.EntityTypeLoadResult;
+import org.thingsboard.server.common.data.sync.vc.VersionLoadResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadRequest;
 import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
 
@@ -60,7 +59,7 @@ public interface EntitiesVersionControlService {
 
     ListenableFuture<EntityDataDiff> compareEntityDataToVersion(SecurityUser user, String branch, EntityId entityId, String versionId) throws Exception;
 
-    ListenableFuture<List<String>> listBranches(TenantId tenantId) throws Exception;
+    ListenableFuture<List<BranchInfo>> listBranches(TenantId tenantId) throws Exception;
 
     RepositorySettings getVersionControlSettings(TenantId tenantId);
 

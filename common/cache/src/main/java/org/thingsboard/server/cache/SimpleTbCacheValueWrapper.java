@@ -17,8 +17,10 @@ package org.thingsboard.server.cache;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import org.springframework.cache.Cache;
 
+@ToString
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class SimpleTbCacheValueWrapper<T> implements TbCacheValueWrapper<T> {
 

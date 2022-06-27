@@ -228,7 +228,6 @@ export interface RuleChainExportData extends EntityExportData<RuleChain> {
 export interface EntityDataDiff {
   currentVersion: EntityExportData<any>;
   otherVersion: EntityExportData<any>;
-  rawDiff: string;
 }
 
 export function entityExportDataToJsonString(data: EntityExportData<any>): string {

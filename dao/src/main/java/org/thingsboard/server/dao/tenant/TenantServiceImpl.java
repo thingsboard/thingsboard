@@ -107,6 +107,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantCacheKe
     @Autowired
     private DataValidator<Tenant> tenantValidator;
 
+    @Lazy
     @Autowired
     private QueueService queueService;
 

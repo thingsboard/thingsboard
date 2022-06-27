@@ -161,20 +161,20 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
             configurationDescriptor.set("nodeDefinition", node);
             scannedComponent.setConfigurationDescriptor(configurationDescriptor);
             scannedComponent.setClazz(clazzName);
-            log.info("Processing scanned component: {}", scannedComponent);
+            log.debug("Processing scanned component: {}", scannedComponent);
         } catch (Exception e) {
             log.error("Can't initialize component {}, due to {}", def.getBeanClassName(), e.getMessage(), e);
             throw new RuntimeException(e);
         }
         ComponentDescriptor persistedComponent = componentDescriptorService.findByClazz(TenantId.SYS_TENANT_ID, clazzName);
         if (persistedComponent == null) {
-            log.info("Persisting new component: {}", scannedComponent);
+            log.debug("Persisting new component: {}", scannedComponent);
             scannedComponent = componentDescriptorService.saveComponent(TenantId.SYS_TENANT_ID, scannedComponent);
         } else if (scannedComponent.equals(persistedComponent)) {
-            log.info("Component is already persisted: {}", persistedComponent);
+            log.debug("Component is already persisted: {}", persistedComponent);
             scannedComponent = persistedComponent;
         } else {
-            log.info("Component {} will be updated to {}", persistedComponent, scannedComponent);
+            log.debug("Component {} will be updated to {}", persistedComponent, scannedComponent);
             componentDescriptorService.deleteByClazz(TenantId.SYS_TENANT_ID, persistedComponent.getClazz());
             scannedComponent.setId(persistedComponent.getId());
             scannedComponent = componentDescriptorService.saveComponent(TenantId.SYS_TENANT_ID, scannedComponent);
@@ -224,7 +224,7 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
     @Override
     public void discoverComponents() {
         registerRuleNodeComponents();
-        log.info("Found following definitions: {}", components.values());
+        log.debug("Found following definitions: {}", components.values());
     }
 
     @Override

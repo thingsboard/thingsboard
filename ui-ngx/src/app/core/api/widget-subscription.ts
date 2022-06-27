@@ -285,7 +285,8 @@ export class WidgetSubscription implements IWidgetSubscription {
         (this.legendConfig.showMin === true ||
           this.legendConfig.showMax === true ||
           this.legendConfig.showAvg === true ||
-          this.legendConfig.showTotal === true);
+          this.legendConfig.showTotal === true ||
+          this.legendConfig.showLatest === true);
       this.initDataSubscription().subscribe(() => {
           subscriptionSubject.next(this);
           subscriptionSubject.complete();
@@ -1295,6 +1296,7 @@ export class WidgetSubscription implements IWidgetSubscription {
                   max: null,
                   avg: null,
                   total: null,
+                  latest: null,
                   hidden: false
                 };
                 this.legendData.data.push(legendKeyData);
@@ -1526,6 +1528,9 @@ export class WidgetSubscription implements IWidgetSubscription {
     if (this.legendConfig.showTotal) {
       legendKeyData.total = this.ctx.widgetUtils.formatValue(calculateTotal(data), decimals, units);
     }
+    if (this.legendConfig.showLatest) {
+      legendKeyData.latest = this.ctx.widgetUtils.formatValue(calculateLatest(data), decimals, units);
+    }
     this.callbacks.legendDataUpdated(this, detectChanges !== false);
   }
 
@@ -1594,6 +1599,14 @@ function calculateTotal(data: DataSet): number {
       result += Number(dataRow[1]);
     });
     return result;
+  } else {
+    return null;
+  }
+}
+
+function calculateLatest(data: DataSet): number {
+  if (data.length > 0) {
+    return Number(data[data.length - 1][1]);
   } else {
     return null;
   }

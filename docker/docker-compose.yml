@@ -20,21 +20,17 @@ version: '2.2'
 services:
   zookeeper:
     restart: always
-    image: "zookeeper:3.5"
+    image: "zookeeper:3.8.0"
     ports:
       - "2181"
     environment:
       ZOO_MY_ID: 1
       ZOO_SERVERS: server.1=zookeeper:2888:3888;zookeeper:2181
-  redis:
-    restart: always
-    image: redis:4.0
-    ports:
-      - "6379"
+      ZOO_ADMINSERVER_ENABLED: "false"
   tb-js-executor:
     restart: always
     image: "${DOCKER_REPO}/${JS_EXECUTOR_DOCKER_NAME}:${TB_VERSION}"
-    scale: 20
+    scale: 10
     env_file:
       - tb-js-executor.env
   tb-core1:
@@ -59,7 +55,6 @@ services:
       - ./tb-node/log:/var/log/thingsboard
     depends_on:
       - zookeeper
-      - redis
       - tb-js-executor
       - tb-rule-engine1
       - tb-rule-engine2
@@ -85,7 +80,6 @@ services:
       - ./tb-node/log:/var/log/thingsboard
     depends_on:
       - zookeeper
-      - redis
       - tb-js-executor
       - tb-rule-engine1
       - tb-rule-engine2
@@ -109,7 +103,6 @@ services:
       - ./tb-node/log:/var/log/thingsboard
     depends_on:
       - zookeeper
-      - redis
       - tb-js-executor
   tb-rule-engine2:
     restart: always
@@ -131,7 +124,6 @@ services:
       - ./tb-node/log:/var/log/thingsboard
     depends_on:
       - zookeeper
-      - redis
       - tb-js-executor
   tb-mqtt-transport1:
     restart: always
