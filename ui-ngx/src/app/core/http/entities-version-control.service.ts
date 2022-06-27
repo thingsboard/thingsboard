@@ -184,7 +184,7 @@ export class EntitiesVersionControlService {
         messageArgs.targetEntityId = entityLoadError.target.id;
         break;
       case EntityLoadErrorType.RUNTIME:
-        messageArgs.message = entityLoadError.message.toLowerCase();
+        messageArgs.message = entityLoadError.message;
         break;
     }
     return this.sanitizer.bypassSecurityTrustHtml(this.translate.instant(messageId, messageArgs));
