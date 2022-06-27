@@ -19,6 +19,7 @@
 .entity-version-diff-view {
   position: relative;
   &:not(.tb-fullscreen) {
+    max-height: 95vh;
     &.content-ready {
       width: 600px;
       @media #{$mat-gt-sm} {

@@ -32,64 +32,63 @@
         <fieldset class="fields-group" [disabled]="isLoading$ | async">
           <legend class="group-title" translate>admin.auto-commit-entities</legend>
           <div fxLayout="column">
-            <div class="tb-control-list">
-              <div *ngFor="let entityTypeFormGroup of entityTypesFormGroupArray(); trackBy: trackByEntityType;
-                 let $index = index; last as isLast;"
-                   fxLayout="row" fxLayoutAlign="start center" [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
-                <mat-expansion-panel class="entity-type-config" fxFlex [formGroup]="entityTypeFormGroup" [expanded]="entityTypesFormGroupExpanded(entityTypeFormGroup)">
-                  <mat-expansion-panel-header>
-                    <div fxFlex fxLayout="row" fxLayoutAlign="start center">
-                      <mat-panel-title>
-                        <div fxLayout="row" fxFlex fxLayoutAlign="start center">
-                          <div [innerHTML]="entityTypeText(entityTypeFormGroup)"></div>
-                        </div>
-                      </mat-panel-title>
-                      <span fxFlex></span>
-                      <button mat-icon-button style="min-width: 40px;"
-                              type="button"
-                              (click)="removeEntityType($index)"
-                              matTooltip="{{ 'action.remove' | translate }}"
-                              matTooltipPosition="above">
-                        <mat-icon>delete</mat-icon>
-                      </button>
-                    </div>
-                  </mat-expansion-panel-header>
-                  <ng-template matExpansionPanelContent>
-                    <div class="entity-type-config-content" fxLayout="column" fxLayoutGap="0.5em">
-                      <mat-divider></mat-divider>
-                      <div fxLayout="column" fxLayout.gt-lg="row" fxLayoutGap.gt-lg="16px">
-                        <div fxLayout="row" fxLayoutGap="16px">
-                          <tb-entity-type-select
-                            showLabel
-                            formControlName="entityType"
-                            required
-                            [filterAllowedEntityTypes]="false"
-                            [allowedEntityTypes]="allowedEntityTypes(entityTypeFormGroup)">
-                          </tb-entity-type-select>
-                          <div formGroupName="config">
-                            <tb-branch-autocomplete
-                              emptyPlaceholder="{{ 'version-control.default' | translate }}"
-                              [selectDefaultBranch]="false"
-                              formControlName="branch">
-                            </tb-branch-autocomplete>
-                          </div>
-                        </div>
-                        <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px" formGroupName="config">
-                          <mat-checkbox *ngIf="entityTypeFormGroup.get('entityType').value === entityTypes.DEVICE" formControlName="saveCredentials">
-                            {{ 'version-control.export-credentials' | translate }}
-                          </mat-checkbox>
-                          <mat-checkbox formControlName="saveAttributes">
-                            {{ 'version-control.export-attributes' | translate }}
-                          </mat-checkbox>
-                          <mat-checkbox formControlName="saveRelations">
-                            {{ 'version-control.export-relations' | translate }}
-                          </mat-checkbox>
+            <div *ngFor="let entityTypeFormGroup of entityTypesFormGroupArray(); trackBy: trackByEntityType;
+               let $index = index; last as isLast;"
+                 fxLayout="row" fxLayoutAlign="start center" [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
+              <mat-expansion-panel class="entity-type-config" fxFlex [formGroup]="entityTypeFormGroup" [expanded]="entityTypesFormGroupExpanded(entityTypeFormGroup)">
+                <mat-expansion-panel-header>
+                  <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+                    <mat-panel-title>
+                      <div fxLayout="row" fxFlex fxLayoutAlign="start center">
+                        <div [innerHTML]="entityTypeText(entityTypeFormGroup)"></div>
+                      </div>
+                    </mat-panel-title>
+                    <span fxFlex></span>
+                    <button mat-icon-button style="min-width: 40px;"
+                            type="button"
+                            (click)="removeEntityType($index)"
+                            matTooltip="{{ 'action.remove' | translate }}"
+                            matTooltipPosition="above">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </mat-expansion-panel-header>
+                <ng-template matExpansionPanelContent>
+                  <div class="entity-type-config-content" fxLayout="column" fxLayoutGap="0.5em">
+                    <mat-divider></mat-divider>
+                    <div fxLayout="column" fxLayout.gt-lg="row" fxLayoutGap.gt-lg="16px">
+                      <div fxLayout="row" fxLayoutGap="16px" fxLayout.xs="column" fxLayoutGap.xs="0px">
+                        <tb-entity-type-select
+                          showLabel
+                          formControlName="entityType"
+                          required
+                          [filterAllowedEntityTypes]="false"
+                          [allowedEntityTypes]="allowedEntityTypes(entityTypeFormGroup)">
+                        </tb-entity-type-select>
+                        <div formGroupName="config">
+                          <tb-branch-autocomplete
+                            emptyPlaceholder="{{ 'version-control.default' | translate }}"
+                            [selectDefaultBranch]="false"
+                            formControlName="branch">
+                          </tb-branch-autocomplete>
                         </div>
                       </div>
+                      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px"
+                           fxLayout.xs="column" fxLayoutAlign.xs="start start" fxLayoutGap.xs="0px"  formGroupName="config">
+                        <mat-checkbox *ngIf="entityTypeFormGroup.get('entityType').value === entityTypes.DEVICE" formControlName="saveCredentials">
+                          {{ 'version-control.export-credentials' | translate }}
+                        </mat-checkbox>
+                        <mat-checkbox formControlName="saveAttributes">
+                          {{ 'version-control.export-attributes' | translate }}
+                        </mat-checkbox>
+                        <mat-checkbox formControlName="saveRelations">
+                          {{ 'version-control.export-relations' | translate }}
+                        </mat-checkbox>
+                      </div>
                     </div>
-                  </ng-template>
-                </mat-expansion-panel>
-              </div>
+                  </div>
+                </ng-template>
+              </mat-expansion-panel>
             </div>
             <div *ngIf="!entityTypesFormGroupArray().length">
               <span translate fxLayoutAlign="center center"
