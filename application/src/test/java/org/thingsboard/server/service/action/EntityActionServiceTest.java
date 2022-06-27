@@ -24,7 +24,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -33,7 +33,6 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -45,7 +44,6 @@ import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.DefaultTbClusterService;
@@ -59,11 +57,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(SpringJUnit4ClassRunner.class)
 public class EntityActionServiceTest {
 
     public static final String CUSTOMER_ID = "customerId";
-    public static final int WANTED_NUMBER_OF_INVOCATIONS = 2;
     public static final String DEFAULT_QUEUE_NAME = "Main";
 
     EntityActionService actionService;
@@ -72,8 +69,6 @@ public class EntityActionServiceTest {
     AuditLogService auditLogService;
     @Mock
     TbQueueProducerProvider producerProvider;
-    @Mock
-    PartitionService partitionService;
     @Mock
     TbDeviceProfileCache deviceProfileCache;
     @Mock
@@ -98,6 +93,7 @@ public class EntityActionServiceTest {
         when(deviceProfileCache.get(any(TenantId.class), any(DeviceId.class))).thenReturn(deviceProfile);
         when(producerProvider.getRuleEngineMsgProducer()).thenReturn(queueProducer);
         doNothing().when(queueProducer).send(any(), any(), any());
+        doNothing().when(clusterService).pushMsgToRuleEngine(any(TenantId.class), any(), any(), any());
     }
 
     @Test
@@ -136,7 +132,6 @@ public class EntityActionServiceTest {
                 relation);
 
         verifyMetadataTbMsg(relation, actionType);
-        verify(partitionService, times(WANTED_NUMBER_OF_INVOCATIONS)).resolve(any(), any(QueueId.class), any(), any());
     }
 
     private void verifyMetadataTbMsg(EntityRelation relation, ActionType actionType) {
