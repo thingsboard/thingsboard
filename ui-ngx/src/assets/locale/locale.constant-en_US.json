@@ -3318,6 +3318,7 @@
     "version-control": {
         "version-control": "Version control",
         "management": "Version control management",
+        "search": "Search versions",
         "branch": "Branch",
         "default": "Default",
         "select-branch": "Select branch",
@@ -3378,7 +3379,8 @@
         "sync-strategy-merge-hint": "Creates or updates selected entities in the repository. All other repository entities are <b>not modified</b>.",
         "sync-strategy-overwrite-hint": "Creates or updates selected entities in the repository. All other repository entities are <b>deleted</b>.",
         "device-credentials-conflict": "Failed to load the device with external id <b>{{entityId}}</b><br/>due to the same credentials are already present in the database for another device.<br/>Please consider disabling the <b>load credentials</b> setting in the restore form.",
-        "missing-referenced-entity": "Failed to load the <b>{{sourceEntityTypeName}}</b> with external id <b>{{sourceEntityId}}</b><br/>because it references missing <b>{{targetEntityTypeName}}</b> with id <b>{{targetEntityId}}</b>."
+        "missing-referenced-entity": "Failed to load the <b>{{sourceEntityTypeName}}</b> with external id <b>{{sourceEntityId}}</b><br/>because it references missing <b>{{targetEntityTypeName}}</b> with id <b>{{targetEntityId}}</b>.",
+        "runtime-failed": "<b>Failed:</b> {{message}}"
     },
     "widget": {
         "widget-library": "Widgets Library",
