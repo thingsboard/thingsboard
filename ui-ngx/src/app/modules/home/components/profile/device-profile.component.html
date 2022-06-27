@@ -73,10 +73,10 @@
         formControlName="defaultDashboardId">
         <div tb-hint>{{'device-profile.mobile-dashboard-hint' | translate}}</div>
       </tb-dashboard-autocomplete>
-      <tb-queue-type-list
+      <tb-queue-autocomplete
         [queueType]="serviceType"
-        formControlName="defaultQueueName">
-      </tb-queue-type-list>
+        formControlName="defaultQueueId">
+      </tb-queue-autocomplete>
       <tb-ota-package-autocomplete
         [useFullEntityId]="true"
         [showDetailsPageLink]="true"

@@ -285,6 +285,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
       this.attributeScopeSelectionReadonly = true;
     }
     this.mode = 'default';
+    this.textSearchMode = false;
     this.selectedWidgetsBundleAlias = null;
     this.attributeScope = this.defaultAttributeScope;
     this.pageLink.textSearch = null;

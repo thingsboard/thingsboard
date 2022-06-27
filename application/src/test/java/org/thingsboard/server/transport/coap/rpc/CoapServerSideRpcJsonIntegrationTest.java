@@ -45,12 +45,12 @@ public class CoapServerSideRpcJsonIntegrationTest extends AbstractCoapServerSide
 
     @Test
     public void testServerCoapOneWayRpc() throws Exception {
-        processOneWayRpcTest();
+        processOneWayRpcTest(false);
     }
 
     @Test
     public void testServerCoapTwoWayRpc() throws Exception {
-        processTwoWayRpcTest("{\"value1\":\"A\",\"value2\":\"B\"}");
+        processTwoWayRpcTest("{\"value1\":\"A\",\"value2\":\"B\"}", false);
     }
 
 }

@@ -21,9 +21,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.thingsboard.server.common.data.CoapDeviceType;
-import org.thingsboard.server.common.data.DeviceProfileProvisionType;
-import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.transport.coap.CoapTestConfigProperties;
@@ -87,12 +84,12 @@ public class CoapServerSideRpcDefaultIntegrationTest extends AbstractCoapServerS
 
     @Test
     public void testServerCoapOneWayRpc() throws Exception {
-        processOneWayRpcTest();
+        processOneWayRpcTest(false);
     }
 
     @Test
     public void testServerCoapTwoWayRpc() throws Exception {
-        processTwoWayRpcTest("{\"value1\":\"A\",\"value2\":\"B\"}");
+        processTwoWayRpcTest("{\"value1\":\"A\",\"value2\":\"B\"}", false);
     }
 
 }

@@ -21,7 +21,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.flow.TbRuleChainInputNode;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
+import org.thingsboard.rule.engine.flow.TbRuleChainOutputNode;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -49,9 +51,8 @@ import java.util.stream.Collectors;
 @TbCoreComponent
 public class RuleChainMsgConstructor {
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-    private static final String RULE_CHAIN_INPUT_NODE = "org.thingsboard.rule.engine.flow.TbRuleChainInputNode";
-    private static final String TB_RULE_CHAIN_OUTPUT_NODE = "org.thingsboard.rule.engine.flow.TbRuleChainOutputNode";
+    private static final String RULE_CHAIN_INPUT_NODE = TbRuleChainInputNode.class.getName();
+    private static final String TB_RULE_CHAIN_OUTPUT_NODE = TbRuleChainOutputNode.class.getName();
 
     public RuleChainUpdateMsg constructRuleChainUpdatedMsg(RuleChainId edgeRootRuleChainId, UpdateMsgType msgType, RuleChain ruleChain) {
         RuleChainUpdateMsg.Builder builder = RuleChainUpdateMsg.newBuilder()
@@ -210,13 +211,11 @@ public class RuleChainMsgConstructor {
     private List<RuleNode> filterNodes_V_3_3_0(List<RuleNode> nodes) {
         List<RuleNode> result = new ArrayList<>();
         for (RuleNode node : nodes) {
-            switch (node.getType()) {
-                case RULE_CHAIN_INPUT_NODE:
-                case TB_RULE_CHAIN_OUTPUT_NODE:
-                    log.trace("Skipping not supported rule node {}", node);
-                    break;
-                default:
-                    result.add(node);
+            if (RULE_CHAIN_INPUT_NODE.equals(node.getType())
+                    || TB_RULE_CHAIN_OUTPUT_NODE.equals(node.getType())) {
+                log.trace("Skipping not supported rule node {}", node);
+            } else {
+                result.add(node);
             }
         }
         return result;
@@ -280,7 +279,7 @@ public class RuleChainMsgConstructor {
                 .setTargetRuleChainIdMSB(ruleChainConnectionInfo.getTargetRuleChainId().getId().getMostSignificantBits())
                 .setTargetRuleChainIdLSB(ruleChainConnectionInfo.getTargetRuleChainId().getId().getLeastSignificantBits())
                 .setType(ruleChainConnectionInfo.getType())
-                .setAdditionalInfo(objectMapper.writeValueAsString(additionalInfo))
+                .setAdditionalInfo(JacksonUtil.OBJECT_MAPPER.writeValueAsString(additionalInfo))
                 .build();
     }
 
@@ -291,8 +290,8 @@ public class RuleChainMsgConstructor {
                 .setType(node.getType())
                 .setName(node.getName())
                 .setDebugMode(node.isDebugMode())
-                .setConfiguration(objectMapper.writeValueAsString(node.getConfiguration()))
-                .setAdditionalInfo(objectMapper.writeValueAsString(node.getAdditionalInfo()))
+                .setConfiguration(JacksonUtil.OBJECT_MAPPER.writeValueAsString(node.getConfiguration()))
+                .setAdditionalInfo(JacksonUtil.OBJECT_MAPPER.writeValueAsString(node.getAdditionalInfo()))
                 .build();
     }
 

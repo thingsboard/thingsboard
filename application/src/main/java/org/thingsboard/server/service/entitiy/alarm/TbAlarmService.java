@@ -17,6 +17,7 @@ package org.thingsboard.server.service.entitiy.alarm;
 
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface TbAlarmService {
@@ -28,4 +29,6 @@ public interface TbAlarmService {
     void clear(Alarm alarm, SecurityUser user) throws ThingsboardException;
 
     Boolean delete(Alarm alarm, SecurityUser user) throws ThingsboardException;
+
+    Boolean delete(Alarm alarm, CustomerId customerId) throws ThingsboardException;
 }

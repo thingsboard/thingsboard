@@ -21,20 +21,18 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.queue.QueueService;
-import org.thingsboard.server.queue.discovery.HashPartitionService;
 import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.discovery.HashPartitionService;
+import org.thingsboard.server.queue.discovery.QueueRoutingInfoService;
+import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.discovery.TenantRoutingInfoService;
-import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,7 +43,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 @Slf4j
 @RunWith(MockitoJUnitRunner.class)
@@ -58,33 +55,27 @@ public class HashPartitionServiceTest {
     private TbServiceInfoProvider discoveryService;
     private TenantRoutingInfoService routingInfoService;
     private ApplicationEventPublisher applicationEventPublisher;
-    private TbQueueRuleEngineSettings ruleEngineSettings;
-    private QueueService queueService;
+    private QueueRoutingInfoService queueRoutingInfoService;
 
     private String hashFunctionName = "sha256";
-
 
     @Before
     public void setup() throws Exception {
         discoveryService = mock(TbServiceInfoProvider.class);
         applicationEventPublisher = mock(ApplicationEventPublisher.class);
         routingInfoService = mock(TenantRoutingInfoService.class);
-        ruleEngineSettings = mock(TbQueueRuleEngineSettings.class);
-        queueService = mock(QueueService.class);
+        queueRoutingInfoService = mock(QueueRoutingInfoService.class);
         clusterRoutingService = new HashPartitionService(discoveryService,
                 routingInfoService,
                 applicationEventPublisher,
-                ruleEngineSettings,
-                queueService
-        );
-        when(ruleEngineSettings.getQueues()).thenReturn(Collections.emptyList());
+                queueRoutingInfoService);
         ReflectionTestUtils.setField(clusterRoutingService, "coreTopic", "tb.core");
         ReflectionTestUtils.setField(clusterRoutingService, "corePartitions", 10);
+        ReflectionTestUtils.setField(clusterRoutingService, "vcTopic", "tb.vc");
+        ReflectionTestUtils.setField(clusterRoutingService, "vcPartitions", 10);
         ReflectionTestUtils.setField(clusterRoutingService, "hashFunctionName", hashFunctionName);
         TransportProtos.ServiceInfo currentServer = TransportProtos.ServiceInfo.newBuilder()
                 .setServiceId("tb-core-0")
-                .setTenantIdMSB(TenantId.NULL_UUID.getMostSignificantBits())
-                .setTenantIdLSB(TenantId.NULL_UUID.getLeastSignificantBits())
                 .addAllServiceTypes(Collections.singletonList(ServiceType.TB_CORE.name()))
                 .build();
 //        when(queueService.resolve(Mockito.any(), Mockito.anyString())).thenAnswer(i -> i.getArguments()[1]);
@@ -93,12 +84,12 @@ public class HashPartitionServiceTest {
         for (int i = 1; i < SERVER_COUNT; i++) {
             otherServers.add(TransportProtos.ServiceInfo.newBuilder()
                     .setServiceId("tb-rule-" + i)
-                    .setTenantIdMSB(TenantId.NULL_UUID.getMostSignificantBits())
-                    .setTenantIdLSB(TenantId.NULL_UUID.getLeastSignificantBits())
                     .addAllServiceTypes(Collections.singletonList(ServiceType.TB_CORE.name()))
                     .build());
         }
+
         clusterRoutingService.init();
+        clusterRoutingService.partitionsInit();
         clusterRoutingService.recalculatePartitions(currentServer, otherServers);
     }
 

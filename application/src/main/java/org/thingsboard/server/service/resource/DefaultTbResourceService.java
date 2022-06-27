@@ -22,9 +22,11 @@ import org.eclipse.leshan.core.model.DefaultDDFFileValidator;
 import org.eclipse.leshan.core.model.InvalidDDFFileException;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TbResourceId;
@@ -36,6 +38,9 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.resource.ResourceService;
+import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -53,7 +58,8 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Slf4j
 @Service
-public class DefaultTbResourceService implements TbResourceService {
+@TbCoreComponent
+public class DefaultTbResourceService extends AbstractTbEntityService implements TbResourceService {
 
     private final ResourceService resourceService;
     private final DDFFileParser ddfFileParser;
@@ -64,7 +70,7 @@ public class DefaultTbResourceService implements TbResourceService {
     }
 
     @Override
-    public TbResource saveResource(TbResource resource) throws ThingsboardException {
+    public TbResource saveResourceInternal(TbResource resource) throws ThingsboardException {
         log.trace("Executing saveResource [{}]", resource);
         if (StringUtils.isEmpty(resource.getData())) {
             throw new DataValidationException("Resource data should be specified!");
@@ -151,11 +157,6 @@ public class DefaultTbResourceService implements TbResourceService {
     }
 
     @Override
-    public void deleteResource(TenantId tenantId, TbResourceId resourceId) {
-        resourceService.deleteResource(tenantId, resourceId);
-    }
-
-    @Override
     public void deleteResourcesByTenantId(TenantId tenantId) {
         resourceService.deleteResourcesByTenantId(tenantId);
     }
@@ -215,4 +216,37 @@ public class DefaultTbResourceService implements TbResourceService {
             return null;
         }
     }
-}
+
+    @Override
+    public TbResource save(TbResource tbResource, SecurityUser user) throws ThingsboardException {
+        ActionType actionType = tbResource.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
+        TenantId tenantId = tbResource.getTenantId();
+        try {
+
+            TbResource savedResource = checkNotNull(saveResourceInternal(tbResource));
+            tbClusterService.onResourceChange(savedResource, null);
+            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, savedResource.getId(),
+                    savedResource, user, actionType, false, null);
+            return savedResource;
+        } catch (Exception e) {
+            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, emptyId(EntityType.TB_RESOURCE),
+                    tbResource, user, actionType, false, e);
+            throw handleException(e);
+        }
+    }
+
+    @Override
+    public void delete(TbResource tbResource, SecurityUser user) throws ThingsboardException {
+        TbResourceId resourceId = tbResource.getId();
+        TenantId tenantId = tbResource.getTenantId();
+        try {
+            resourceService.deleteResource(tenantId, resourceId);
+            tbClusterService.onResourceDeleted(tbResource, null);
+            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, resourceId, tbResource, user, ActionType.DELETED,
+                    false, null, resourceId.toString());
+        } catch (Exception e) {
+            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, emptyId(EntityType.TB_RESOURCE), null, user, ActionType.DELETED,
+                    false, e, resourceId.toString());
+            throw handleException(e);
+        }
+    }}

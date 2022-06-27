@@ -79,7 +79,8 @@
               "node_modules/leaflet.markercluster/dist/MarkerCluster.Default.css",
               "node_modules/@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css",
               "node_modules/prismjs/themes/prism.css",
-              "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.css"
+              "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.css",
+              "node_modules/ace-diff/dist/ace-diff.min.css"
             ],
             "stylePreprocessorOptions": {
               "includePaths": [
@@ -130,7 +131,8 @@
               "jstree",
               "qrcode",
               "wcwidth",
-              "leaflet-polylinedecorator"
+              "leaflet-polylinedecorator",
+              "ace-diff"
             ]
           },
           "configurations": {

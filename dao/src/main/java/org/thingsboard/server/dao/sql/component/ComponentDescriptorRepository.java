@@ -18,8 +18,10 @@ package org.thingsboard.server.dao.sql.component;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.plugin.ComponentScope;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.dao.model.sql.ComponentDescriptorEntity;
@@ -46,5 +48,8 @@ public interface ComponentDescriptorRepository extends JpaRepository<ComponentDe
                                                        @Param("textSearch") String textSearch,
                                                        Pageable pageable);
 
-    void deleteByClazz(String clazz);
+    @Transactional
+    @Modifying
+    @Query("DELETE FROM ComponentDescriptorEntity cd where cd.clazz = :clazz")
+    void deleteByClazz(@Param("clazz") String clazz);
 }

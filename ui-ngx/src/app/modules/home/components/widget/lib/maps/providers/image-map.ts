@@ -27,7 +27,7 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import { DataSet, DatasourceType, widgetType } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetSubscriptionOptions } from '@core/api/widget-api.models';
-import { isDefinedAndNotNull, isEmptyStr, parseFunction } from '@core/utils';
+import { isDefinedAndNotNull, isEmptyStr, isNotEmptyStr, parseFunction } from '@core/utils';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
 
 const maxZoom = 4; // ?
@@ -93,10 +93,12 @@ export class ImageMap extends LeafletMap {
         type: widgetType.latest,
         callbacks: {
           onDataUpdated: (subscription) => {
-            if (subscription.data[0]?.data[0]?.length > 0) {
+            if (isNotEmptyStr(subscription.data[0]?.data[0]?.[1])) {
               result.next([subscription.data[0].data, isUpdate]);
-              isUpdate = true;
+            } else {
+              result.next([[[0, options.mapImageUrl]], isUpdate]);
             }
+            isUpdate = true;
           }
         }
       };
@@ -222,6 +224,7 @@ export class ImageMap extends LeafletMap {
           maxZoom,
           scrollWheelZoom: !this.options.disableScrollZooming,
           center,
+          doubleClickZoom: !this.options.disableZoomControl,
           zoomControl: !this.options.disableZoomControl,
           zoom: 1,
           crs: L.CRS.Simple,

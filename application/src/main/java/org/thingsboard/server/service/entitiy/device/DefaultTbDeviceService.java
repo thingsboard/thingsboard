@@ -54,6 +54,7 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
         ActionType actionType = device.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         try {
             Device savedDevice = checkNotNull(deviceService.saveDeviceWithAccessToken(device, accessToken));
+            autoCommit(user, savedDevice.getId());
             notificationEntityService.notifyCreateOrUpdateDevice(tenantId, savedDevice.getId(), savedDevice.getCustomerId(),
                     savedDevice, oldDevice, actionType, user);
 
@@ -248,7 +249,7 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
         try {
             Device savedDevice = checkNotNull(deviceService.assignDeviceToEdge(tenantId, deviceId, edgeId));
             notificationEntityService.notifyAssignOrUnassignEntityToEdge(tenantId, deviceId, savedDevice.getCustomerId(),
-                    edgeId, savedDevice, actionType, EdgeEventActionType.ASSIGNED_TO_EDGE, user, deviceId.toString(), edgeId.toString(), edge.getName());
+                    edgeId, savedDevice, actionType, user, deviceId.toString(), edgeId.toString(), edge.getName());
             return savedDevice;
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.DEVICE), null, null,
@@ -267,7 +268,7 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
             Device savedDevice = checkNotNull(deviceService.unassignDeviceFromEdge(tenantId, deviceId, edgeId));
 
             notificationEntityService.notifyAssignOrUnassignEntityToEdge(tenantId, deviceId, device.getCustomerId(),
-                    edgeId, device, actionType, EdgeEventActionType.UNASSIGNED_FROM_EDGE, user, deviceId.toString(), edgeId.toString(), edge.getName());
+                    edgeId, device, actionType, user, deviceId.toString(), edgeId.toString(), edge.getName());
             return savedDevice;
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.DEVICE), null, null,

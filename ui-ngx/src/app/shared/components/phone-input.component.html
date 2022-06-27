@@ -1,0 +1,50 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+
+<form [formGroup]="phoneFormGroup">
+  <div class="phone-input-container">
+    <div class="flags-select-container" *ngIf="enableFlagsSelect">
+      <span class="flag-container">{{ flagIcon }}</span>
+      <mat-select class="country-select" formControlName="country">
+        <mat-option *ngFor="let country of allCountries" [value]="country.iso2">
+          <span style="font-size: 20px;">{{country.flag}}</span>
+          <span>{{' ' + country.name + ' +' + country.dialCode }}</span>
+        </mat-option>
+      </mat-select>
+    </div>
+    <mat-form-field class="phone-input" [appearance]="appearance" [floatLabel]="floatLabel">
+      <mat-label>{{ label | translate }}</mat-label>
+      <input
+        formControlName="phoneNumber"
+        type="tel"
+        matInput
+        placeholder="{{ placeholder | translate }}"
+        [pattern]="phoneNumberPattern"
+        (focus)="focus()"
+        autocomplete="off"
+        [required]="required">
+      <mat-hint innerHTML="{{ 'phone-input.phone-input-hint' | translate: {phoneNumber: phonePlaceholder} }}"></mat-hint>
+      <mat-error *ngIf="phoneFormGroup.get('phoneNumber').hasError('required')">
+        {{ 'phone-input.phone-input-required' | translate }}
+      </mat-error>
+      <mat-error *ngIf="phoneFormGroup.get('phoneNumber').hasError('invalidPhoneNumber')">
+        {{ 'phone-input.phone-input-validation' | translate }}
+      </mat-error>
+    </mat-form-field>
+  </div>
+</form>

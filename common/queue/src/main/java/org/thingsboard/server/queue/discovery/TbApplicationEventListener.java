@@ -40,7 +40,7 @@ public abstract class TbApplicationEventListener<T extends TbApplicationEvent> i
         } finally {
             seqNumberLock.unlock();
         }
-        if (validUpdate) {
+        if (validUpdate && filterTbApplicationEvent(event)) {
             onTbApplicationEvent(event);
         } else {
             log.info("Application event ignored due to invalid sequence number ({} > {}). Event: {}", lastProcessedSequenceNumber, event.getSequenceNumber(), event);
@@ -49,5 +49,8 @@ public abstract class TbApplicationEventListener<T extends TbApplicationEvent> i
 
     protected abstract void onTbApplicationEvent(T event);
 
+    protected boolean filterTbApplicationEvent(T event) {
+        return true;
+    }
 
 }

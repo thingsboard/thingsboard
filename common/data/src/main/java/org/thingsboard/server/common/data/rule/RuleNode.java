@@ -53,6 +53,8 @@ public class RuleNode extends SearchTextBasedWithAdditionalInfo<RuleNodeId> impl
     @JsonIgnore
     private byte[] configurationBytes;
 
+    private RuleNodeId externalId;
+
     public RuleNode() {
         super();
     }
@@ -68,6 +70,7 @@ public class RuleNode extends SearchTextBasedWithAdditionalInfo<RuleNodeId> impl
         this.name = ruleNode.getName();
         this.debugMode = ruleNode.isDebugMode();
         this.setConfiguration(ruleNode.getConfiguration());
+        this.externalId = ruleNode.getExternalId();
     }
 
     @Override

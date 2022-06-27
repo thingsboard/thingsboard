@@ -15,13 +15,14 @@
  */
 package org.thingsboard.server.service.entitiy;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.User;
@@ -46,18 +47,30 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.ClaimDevicesService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
+import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.dao.queue.QueueService;
+import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.edge.EdgeNotificationService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
+import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
+import org.thingsboard.server.service.install.InstallScripts;
+import org.thingsboard.server.service.ota.OtaPackageStateService;
+import org.thingsboard.server.service.resource.TbResourceService;
+import org.thingsboard.server.service.rule.TbRuleChainService;
 import org.thingsboard.server.service.security.permission.AccessControlService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
@@ -66,14 +79,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
 public abstract class AbstractTbEntityService {
 
     protected static final int DEFAULT_PAGE_SIZE = 1000;
-
-    private static final ObjectMapper json = new ObjectMapper();
 
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
@@ -84,13 +96,13 @@ public abstract class AbstractTbEntityService {
 
     @Autowired
     protected DbCallbackExecutorService dbExecutor;
-    @Autowired
+    @Autowired(required = false)
     protected TbNotificationEntityService notificationEntityService;
     @Autowired(required = false)
     protected EdgeService edgeService;
     @Autowired
     protected AlarmService alarmService;
-    @Autowired
+    @Autowired(required = false)
     protected EntityActionService entityActionService;
     @Autowired
     protected DeviceService deviceService;
@@ -102,24 +114,51 @@ public abstract class AbstractTbEntityService {
     protected TenantService tenantService;
     @Autowired
     protected CustomerService customerService;
-    @Autowired
+    @Lazy
+    @Autowired(required = false)
     protected ClaimDevicesService claimDevicesService;
     @Autowired
     protected TbTenantProfileCache tenantProfileCache;
     @Autowired
     protected RuleChainService ruleChainService;
-    @Autowired
+    @Autowired(required = false)
+    protected TbRuleChainService tbRuleChainService;
+    @Autowired(required = false)
     protected EdgeNotificationService edgeNotificationService;
     @Autowired
+    protected QueueService queueService;
+    @Autowired
     protected DashboardService dashboardService;
+
+    @Autowired(required = false)
+    private EntitiesVersionControlService vcService;
     @Autowired
     protected EntityViewService entityViewService;
+    @Lazy
     @Autowired
     protected TelemetrySubscriptionService tsSubService;
     @Autowired
     protected AttributesService attributesService;
     @Autowired
     protected AccessControlService accessControlService;
+    @Autowired
+    protected DeviceProfileService deviceProfileService;
+    @Autowired
+    protected TbClusterService tbClusterService;
+    @Autowired
+    protected OtaPackageStateService otaPackageStateService;
+    @Autowired
+    protected RelationService relationService;
+    @Autowired
+    protected OtaPackageService otaPackageService;
+    @Autowired
+    protected InstallScripts installScripts;
+    @Autowired
+    protected UserService userService;
+    @Autowired(required = false)
+    protected TbResourceService resourceService;
+    @Autowired
+    protected WidgetsBundleService widgetsBundleService;
 
     protected ListenableFuture<Void> removeAlarmsByEntityId(TenantId tenantId, EntityId entityId) {
         ListenableFuture<PageData<AlarmInfo>> alarmsFuture =
@@ -211,5 +250,14 @@ public abstract class AbstractTbEntityService {
             result.add(edgeId);
         }
         return result;
+    }
+
+    protected ListenableFuture<UUID> autoCommit(SecurityUser user, EntityId entityId) throws Exception {
+        if (vcService != null) {
+            return vcService.autoCommit(user, entityId);
+        } else {
+            // We do not support auto-commit for rule engine
+            return Futures.immediateFailedFuture(new RuntimeException("Operation not supported!"));
+        }
     }
 }

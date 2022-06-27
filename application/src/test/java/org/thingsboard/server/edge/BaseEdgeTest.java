@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.JsonObject;
 import com.google.protobuf.AbstractMessage;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.MessageLite;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -32,7 +33,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
@@ -42,6 +46,8 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.OtaPackageInfo;
+import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
@@ -58,6 +64,8 @@ import org.thingsboard.server.common.data.device.profile.AlarmRule;
 import org.thingsboard.server.common.data.device.profile.AllowCreateNewDevicesDeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
+import org.thingsboard.server.common.data.device.profile.JsonTransportPayloadConfiguration;
+import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionSpec;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
@@ -68,6 +76,8 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.EntityKeyValueType;
@@ -105,6 +115,7 @@ import org.thingsboard.server.gen.edge.v1.EdgeConfiguration;
 import org.thingsboard.server.gen.edge.v1.EntityDataProto;
 import org.thingsboard.server.gen.edge.v1.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.EntityViewsRequestMsg;
+import org.thingsboard.server.gen.edge.v1.OtaPackageUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RelationRequestMsg;
 import org.thingsboard.server.gen.edge.v1.RelationUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RpcResponseMsg;
@@ -121,6 +132,7 @@ import org.thingsboard.server.gen.edge.v1.WidgetTypeUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetsBundleUpdateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -131,17 +143,20 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 
 @TestPropertySource(properties = {
         "edges.enabled=true",
 })
 abstract public class BaseEdgeTest extends AbstractControllerTest {
 
-    private static final String CUSTOM_DEVICE_PROFILE_NAME = "Thermostat";
+    private static final String THERMOSTAT_DEVICE_PROFILE_NAME = "Thermostat";
 
     private Tenant savedTenant;
     private TenantId tenantId;
     private User tenantAdmin;
+
+    private DeviceProfile thermostatDeviceProfile;
 
     private EdgeImitator edgeImitator;
     private Edge edge;
@@ -199,11 +214,15 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
     private void installation() throws Exception {
         edge = doPost("/api/edge", constructEdge("Test Edge", "test"), Edge.class);
 
-        DeviceProfile deviceProfile = this.createDeviceProfile(CUSTOM_DEVICE_PROFILE_NAME);
-        extendDeviceProfileData(deviceProfile);
-        doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+        MqttDeviceProfileTransportConfiguration transportConfiguration = new MqttDeviceProfileTransportConfiguration();
+        transportConfiguration.setTransportPayloadTypeConfiguration(new JsonTransportPayloadConfiguration());
 
-        Device savedDevice = saveDevice("Edge Device 1", CUSTOM_DEVICE_PROFILE_NAME);
+        thermostatDeviceProfile = this.createDeviceProfile(THERMOSTAT_DEVICE_PROFILE_NAME, transportConfiguration);
+
+        extendDeviceProfileData(thermostatDeviceProfile);
+        thermostatDeviceProfile = doPost("/api/deviceProfile", thermostatDeviceProfile, DeviceProfile.class);
+
+        Device savedDevice = saveDevice("Edge Device 1", THERMOSTAT_DEVICE_PROFILE_NAME);
         doPost("/api/edge/" + edge.getUuidId()
                 + "/device/" + savedDevice.getUuidId(), Device.class);
 
@@ -263,7 +282,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         List<DeviceProfileUpdateMsg> deviceProfileUpdateMsgList = edgeImitator.findAllMessagesByType(DeviceProfileUpdateMsg.class);
         Assert.assertEquals(3, deviceProfileUpdateMsgList.size());
         Optional<DeviceProfileUpdateMsg> deviceProfileUpdateMsgOpt =
-                deviceProfileUpdateMsgList.stream().filter(dfum -> CUSTOM_DEVICE_PROFILE_NAME.equals(dfum.getName())).findAny();
+                deviceProfileUpdateMsgList.stream().filter(dfum -> THERMOSTAT_DEVICE_PROFILE_NAME.equals(dfum.getName())).findAny();
         Assert.assertTrue(deviceProfileUpdateMsgOpt.isPresent());
         DeviceProfileUpdateMsg deviceProfileUpdateMsg = deviceProfileUpdateMsgOpt.get();
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, deviceProfileUpdateMsg.getMsgType());
@@ -1333,17 +1352,17 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         String timeseriesKey = "key";
         String timeseriesValue = "25";
         data.addProperty(timeseriesKey, timeseriesValue);
-        UplinkMsg.Builder uplinkMsgBuilder1 = UplinkMsg.newBuilder();
+        UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
         EntityDataProto.Builder entityDataBuilder = EntityDataProto.newBuilder();
         entityDataBuilder.setPostTelemetryMsg(JsonConverter.convertToTelemetryProto(data, System.currentTimeMillis()));
         entityDataBuilder.setEntityType(device.getId().getEntityType().name());
         entityDataBuilder.setEntityIdMSB(device.getUuidId().getMostSignificantBits());
         entityDataBuilder.setEntityIdLSB(device.getUuidId().getLeastSignificantBits());
         testAutoGeneratedCodeByProtobuf(entityDataBuilder);
-        uplinkMsgBuilder1.addEntityData(entityDataBuilder.build());
+        uplinkMsgBuilder.addEntityData(entityDataBuilder.build());
 
-        testAutoGeneratedCodeByProtobuf(uplinkMsgBuilder1);
-        edgeImitator.sendUplinkMsg(uplinkMsgBuilder1.build());
+        testAutoGeneratedCodeByProtobuf(uplinkMsgBuilder);
+        edgeImitator.sendUplinkMsg(uplinkMsgBuilder.build());
 
         JsonObject attributesData = new JsonObject();
         String attributesKey = "test_attr";
@@ -1375,9 +1394,24 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
 
         String attributeValuesUrl = "/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/attributes/" + DataConstants.SERVER_SCOPE;
         List<Map<String, String>> attributes = doGetAsyncTyped(attributeValuesUrl, new TypeReference<>() {});
-        Assert.assertEquals(2, attributes.size());
-        var result = attributes.stream().filter(kv -> kv.get("key").equals(attributesKey)).filter(kv -> kv.get("value").equals(attributesValue)).findFirst();
-        Assert.assertTrue(result.isPresent());
+
+        Assert.assertEquals(3, attributes.size());
+
+        Optional<Map<String, String>> activeAttributeOpt = getAttributeByKey("active", attributes);
+        Assert.assertTrue(activeAttributeOpt.isPresent());
+        Map<String, String> activeAttribute = activeAttributeOpt.get();
+        Assert.assertEquals("true", activeAttribute.get("value"));
+
+        Optional<Map<String, String>> customAttributeOpt = getAttributeByKey(attributesKey, attributes);
+        Assert.assertTrue(customAttributeOpt.isPresent());
+        Map<String, String> customAttribute = customAttributeOpt.get();
+        Assert.assertEquals(attributesValue, customAttribute.get("value"));
+
+        doDelete("/api/plugins/telemetry/DEVICE/" + device.getId().getId() + "/SERVER_SCOPE?keys=" + attributesKey, String.class);
+    }
+
+    private Optional<Map<String, String>> getAttributeByKey(String key, List<Map<String, String>> attributes) {
+        return attributes.stream().filter(kv -> kv.get("key").equals(key)).findFirst();
     }
 
     private Map<String, List<Map<String, String>>> loadDeviceTimeseries(Device device, String timeseriesKey) throws Exception {
@@ -1637,6 +1671,110 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertTrue("Expected key and value must be found", found);
     }
 
+    @Test
+    public void testOtaPackages_usesUrl() throws Exception {
+        // 1
+        SaveOtaPackageInfoRequest firmwareInfo = new SaveOtaPackageInfoRequest();
+        firmwareInfo.setDeviceProfileId(thermostatDeviceProfile.getId());
+        firmwareInfo.setType(FIRMWARE);
+        firmwareInfo.setTitle("My firmware #1");
+        firmwareInfo.setVersion("v1.0");
+        firmwareInfo.setTag("My firmware #1 v1.0");
+        firmwareInfo.setUsesUrl(true);
+        firmwareInfo.setUrl("http://localhost:8080/v1/package");
+        firmwareInfo.setAdditionalInfo(JacksonUtil.newObjectNode());
+
+        edgeImitator.expectMessageAmount(1);
+        OtaPackageInfo savedFirmwareInfo = doPost("/api/otaPackage", firmwareInfo, OtaPackageInfo.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof OtaPackageUpdateMsg);
+        OtaPackageUpdateMsg otaPackageUpdateMsg = (OtaPackageUpdateMsg) latestMessage;
+        Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, otaPackageUpdateMsg.getMsgType());
+        Assert.assertEquals(savedFirmwareInfo.getUuidId().getMostSignificantBits(), otaPackageUpdateMsg.getIdMSB());
+        Assert.assertEquals(savedFirmwareInfo.getUuidId().getLeastSignificantBits(), otaPackageUpdateMsg.getIdLSB());
+        Assert.assertEquals(thermostatDeviceProfile.getUuidId().getMostSignificantBits(), otaPackageUpdateMsg.getDeviceProfileIdMSB());
+        Assert.assertEquals(thermostatDeviceProfile.getUuidId().getLeastSignificantBits(), otaPackageUpdateMsg.getDeviceProfileIdLSB());
+        Assert.assertEquals(FIRMWARE, OtaPackageType.valueOf(otaPackageUpdateMsg.getType()));
+        Assert.assertEquals("My firmware #1", otaPackageUpdateMsg.getTitle());
+        Assert.assertEquals("v1.0", otaPackageUpdateMsg.getVersion());
+        Assert.assertEquals("My firmware #1 v1.0", otaPackageUpdateMsg.getTag());
+        Assert.assertEquals("http://localhost:8080/v1/package", otaPackageUpdateMsg.getUrl());
+        Assert.assertFalse(otaPackageUpdateMsg.hasData());
+        Assert.assertFalse(otaPackageUpdateMsg.hasFileName());
+        Assert.assertFalse(otaPackageUpdateMsg.hasContentType());
+        Assert.assertFalse(otaPackageUpdateMsg.hasChecksumAlgorithm());
+        Assert.assertFalse(otaPackageUpdateMsg.hasChecksum());
+        Assert.assertFalse(otaPackageUpdateMsg.hasDataSize());
+
+        // 2
+        edgeImitator.expectMessageAmount(1);
+        doDelete("/api/otaPackage/" + savedFirmwareInfo.getUuidId())
+                .andExpect(status().isOk());
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof OtaPackageUpdateMsg);
+        otaPackageUpdateMsg = (OtaPackageUpdateMsg) latestMessage;
+        Assert.assertEquals(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, otaPackageUpdateMsg.getMsgType());
+        Assert.assertEquals(otaPackageUpdateMsg.getIdMSB(), savedFirmwareInfo.getUuidId().getMostSignificantBits());
+        Assert.assertEquals(otaPackageUpdateMsg.getIdLSB(), savedFirmwareInfo.getUuidId().getLeastSignificantBits());
+    }
+
+    @Test
+    public void testOtaPackages_hasData() throws Exception {
+        // 1
+        SaveOtaPackageInfoRequest firmwareInfo = new SaveOtaPackageInfoRequest();
+        firmwareInfo.setDeviceProfileId(thermostatDeviceProfile.getId());
+        firmwareInfo.setType(FIRMWARE);
+        firmwareInfo.setTitle("My firmware #2");
+        firmwareInfo.setVersion("v2.0");
+        firmwareInfo.setTag("My firmware #2 v2.0");
+        firmwareInfo.setUsesUrl(false);
+        firmwareInfo.setHasData(false);
+        firmwareInfo.setAdditionalInfo(JacksonUtil.newObjectNode());
+
+        edgeImitator.expectMessageAmount(1);
+
+        OtaPackageInfo savedFirmwareInfo = doPost("/api/otaPackage", firmwareInfo, OtaPackageInfo.class);
+        MockMultipartFile testData = new MockMultipartFile("file", "firmware.bin", "image/png", ByteBuffer.wrap(new byte[]{1, 3, 5}).array());
+        savedFirmwareInfo = saveData("/api/otaPackage/" + savedFirmwareInfo.getId().getId().toString() + "?checksumAlgorithm={checksumAlgorithm}", testData, ChecksumAlgorithm.SHA256.name());
+
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof OtaPackageUpdateMsg);
+        OtaPackageUpdateMsg otaPackageUpdateMsg = (OtaPackageUpdateMsg) latestMessage;
+        Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, otaPackageUpdateMsg.getMsgType());
+        Assert.assertEquals(savedFirmwareInfo.getUuidId().getMostSignificantBits(), otaPackageUpdateMsg.getIdMSB());
+        Assert.assertEquals(savedFirmwareInfo.getUuidId().getLeastSignificantBits(), otaPackageUpdateMsg.getIdLSB());
+        Assert.assertEquals(thermostatDeviceProfile.getUuidId().getMostSignificantBits(), otaPackageUpdateMsg.getDeviceProfileIdMSB());
+        Assert.assertEquals(thermostatDeviceProfile.getUuidId().getLeastSignificantBits(), otaPackageUpdateMsg.getDeviceProfileIdLSB());
+        Assert.assertEquals(FIRMWARE, OtaPackageType.valueOf(otaPackageUpdateMsg.getType()));
+        Assert.assertEquals("My firmware #2", otaPackageUpdateMsg.getTitle());
+        Assert.assertEquals("v2.0", otaPackageUpdateMsg.getVersion());
+        Assert.assertEquals("My firmware #2 v2.0", otaPackageUpdateMsg.getTag());
+        Assert.assertFalse(otaPackageUpdateMsg.hasUrl());
+        Assert.assertEquals("firmware.bin", otaPackageUpdateMsg.getFileName());
+        Assert.assertEquals("image/png", otaPackageUpdateMsg.getContentType());
+        Assert.assertEquals(ChecksumAlgorithm.SHA256.name(), otaPackageUpdateMsg.getChecksumAlgorithm());
+        Assert.assertEquals("62467691cf583d4fa78b18fafaf9801f505e0ef03baf0603fd4b0cd004cd1e75", otaPackageUpdateMsg.getChecksum());
+        Assert.assertEquals(3L, otaPackageUpdateMsg.getDataSize());
+        Assert.assertEquals(ByteString.copyFrom(new byte[]{1, 3, 5}), otaPackageUpdateMsg.getData());
+
+        // 2
+        edgeImitator.expectMessageAmount(1);
+        doDelete("/api/otaPackage/" + savedFirmwareInfo.getUuidId())
+                .andExpect(status().isOk());
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof OtaPackageUpdateMsg);
+        otaPackageUpdateMsg = (OtaPackageUpdateMsg) latestMessage;
+        Assert.assertEquals(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, otaPackageUpdateMsg.getMsgType());
+        Assert.assertEquals(otaPackageUpdateMsg.getIdMSB(), savedFirmwareInfo.getUuidId().getMostSignificantBits());
+        Assert.assertEquals(otaPackageUpdateMsg.getIdLSB(), savedFirmwareInfo.getUuidId().getLeastSignificantBits());
+    }
+
     // Utility methods
 
     private Device saveDeviceOnCloudAndVerifyDeliveryToEdge() throws Exception {
@@ -1717,4 +1855,12 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(source, target);
         Assert.assertEquals(source.hashCode(), target.hashCode());
     }
+
+    private OtaPackageInfo saveData(String urlTemplate, MockMultipartFile content, String... params) throws Exception {
+        MockMultipartHttpServletRequestBuilder postRequest = MockMvcRequestBuilders.multipart(urlTemplate, params);
+        postRequest.file(content);
+        setJwtToken(postRequest);
+        return readResponse(mockMvc.perform(postRequest).andExpect(status().isOk()), OtaPackageInfo.class);
+    }
+
 }

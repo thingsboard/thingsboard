@@ -1,0 +1,105 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section class="entity-types-version-load" [formGroup]="entityTypesVersionLoadFormGroup" fxLayout="column">
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>version-control.entities-to-restore</legend>
+    <div fxLayout="column">
+      <div class="tb-control-list">
+        <div *ngFor="let entityTypeFormGroup of entityTypesFormGroupArray(); trackBy: trackByEntityType;
+                 let $index = index; last as isLast;"
+             fxLayout="row" fxLayoutAlign="start center" [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
+          <mat-expansion-panel class="entity-type-config" fxFlex [formGroup]="entityTypeFormGroup" [expanded]="entityTypesFormGroupExpanded(entityTypeFormGroup)">
+            <mat-expansion-panel-header>
+              <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+                <mat-panel-title>
+                  <div fxLayout="row" fxFlex fxLayoutAlign="start center">
+                    <div>{{ entityTypeText(entityTypeFormGroup) }}</div>
+                  </div>
+                </mat-panel-title>
+                <span fxFlex></span>
+                <button *ngIf="!disabled" mat-icon-button style="min-width: 40px;"
+                        type="button"
+                        (click)="removeEntityType($index)"
+                        matTooltip="{{ 'action.remove' | translate }}"
+                        matTooltipPosition="above">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </mat-expansion-panel-header>
+            <ng-template matExpansionPanelContent>
+              <div class="entity-type-config-content" fxLayout="column" fxLayoutGap="0.5em">
+                <mat-divider></mat-divider>
+                <div fxLayout="row" fxLayoutGap="32px">
+                  <tb-entity-type-select
+                    showLabel
+                    formControlName="entityType"
+                    required
+                    [filterAllowedEntityTypes]="false"
+                    [allowedEntityTypes]="allowedEntityTypes(entityTypeFormGroup)">
+                  </tb-entity-type-select>
+                  <div fxFlex fxLayout="row" fxLayoutGap="16px" formGroupName="config">
+                    <div fxFlex fxLayout="column" fxLayoutGap="8px">
+                      <mat-checkbox #removeOtherEntitiesCheckbox
+                                    formControlName="removeOtherEntities"
+                                    (click)="onRemoveOtherEntities(removeOtherEntitiesCheckbox, entityTypeFormGroup, $event)">
+                        {{ 'version-control.remove-other-entities' | translate }}
+                      </mat-checkbox>
+                      <mat-checkbox formControlName="findExistingEntityByName">
+                        {{ 'version-control.find-existing-entity-by-name' | translate }}
+                      </mat-checkbox>
+                    </div>
+                    <div fxFlex fxLayout="column" fxLayoutGap="8px">
+                      <mat-checkbox *ngIf="entityTypeFormGroup.get('entityType').value === entityTypes.DEVICE" formControlName="loadCredentials">
+                        {{ 'version-control.load-credentials' | translate }}
+                      </mat-checkbox>
+                      <mat-checkbox formControlName="loadAttributes">
+                        {{ 'version-control.load-attributes' | translate }}
+                      </mat-checkbox>
+                      <mat-checkbox formControlName="loadRelations">
+                        {{ 'version-control.load-relations' | translate }}
+                      </mat-checkbox>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ng-template>
+          </mat-expansion-panel>
+        </div>
+      </div>
+      <div *ngIf="!entityTypesFormGroupArray().length">
+            <span translate fxLayoutAlign="center center"
+                  class="tb-prompt">version-control.no-entities-to-restore-prompt</span>
+      </div>
+      <div style="padding-top: 16px;" fxLayout="row">
+        <button mat-raised-button color="primary"
+                type="button"
+                [disabled]="!addEnabled()"
+                (click)="addEntityType()">
+          <span translate>version-control.add-entity-type</span>
+        </button>
+        <span fxFlex></span>
+        <button mat-raised-button color="primary"
+                type="button"
+                [disabled]="!entityTypesFormGroupArray().length"
+                (click)="removeAll()">
+          <span translate>version-control.remove-all</span>
+        </button>
+      </div>
+    </div>
+  </fieldset>
+</section>

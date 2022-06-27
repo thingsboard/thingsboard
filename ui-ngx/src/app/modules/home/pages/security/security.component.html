@@ -1,0 +1,173 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="profile-container" fxLayout="column" fxLayoutGap="8px">
+  <mat-card class="profile-card" fxLayout="column">
+    <mat-card-title style="margin-bottom: 8px;">
+      <span class="mat-headline card-title" translate>profile.jwt-token</span>
+    </mat-card-title>
+    <mat-card-content>
+      <div fxLayout="row" fxLayoutAlign="space-between center">
+        <div class="token-text">{{ 'profile.token-valid-till' | translate }} <span class="date">{{ jwtTokenExpiration | date: 'yyyy-MM-dd HH:mm:ss' }}</span></div>
+        <button mat-raised-button
+                color="primary"
+                type="button"
+                (click)="copyToken()">
+          <span>{{ 'profile.copy-jwt-token' | translate }}</span>
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+  <mat-card class="profile-card" fxLayout="column">
+    <mat-card-content class="change-password" tb-toast toastTarget="changePassword">
+      <form #changePasswordForm="ngForm" [formGroup]="changePassword" (ngSubmit)="onChangePassword(changePasswordForm)">
+        <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="25px" fxLayoutGap.xs="0">
+          <div fxFlex="290px" fxFlex.sm="250px"  fxFlex.xs="100">
+            <h3 class="card-title" translate>profile.change-password</h3>
+            <mat-form-field class="mat-block same-color" hideRequiredMarker appearance="fill" color="primary">
+              <mat-label translate>profile.current-password</mat-label>
+              <input matInput type="password" name="current-password" formControlName="currentPassword" autocomplete="current-password" required/>
+              <tb-toggle-password [fxShow]="changePassword.get('currentPassword').dirty || changePassword.get('currentPassword').touched" matSuffix></tb-toggle-password>
+              <mat-error *ngIf="changePassword.get('currentPassword').hasError('differencePassword')">
+                {{ 'security.password-requirement.incorrect-password-try-again' | translate }}
+              </mat-error>
+            </mat-form-field>
+            <mat-form-field class="mat-block same-color" hideRequiredMarker appearance="fill" color="primary">
+              <mat-label translate>login.new-password</mat-label>
+              <input matInput type="password" name="new-password" formControlName="newPassword" autocomplete="new-password" required/>
+              <tb-toggle-password [fxShow]="changePassword.get('newPassword').dirty || changePassword.get('newPassword').touched" matSuffix></tb-toggle-password>
+              <mat-error *ngIf="changePassword.get('newPassword').errors
+                              && !changePassword.get('newPassword').hasError('alreadyUsed')
+                              && !changePassword.get('newPassword').hasError('hasWhitespaces')
+                              && !changePassword.get('newPassword').hasError('samePassword')">
+                {{ 'security.password-requirement.password-not-meet-requirements' | translate }}
+              </mat-error>
+              <mat-error *ngIf="changePassword.get('newPassword').hasError('alreadyUsed')">
+                {{ changePassword.get('newPassword').getError('alreadyUsed') }}
+              </mat-error>
+              <mat-error *ngIf="changePassword.get('newPassword').hasError('samePassword')">
+                {{ 'security.password-requirement.password-should-difference' | translate }}
+              </mat-error>
+              <mat-error *ngIf="changePassword.get('newPassword').hasError('hasWhitespaces')">
+                {{ 'security.password-requirement.password-should-not-contain-spaces' | translate }}
+              </mat-error>
+            </mat-form-field>
+            <div fxFlex fxHide fxShow.xs fxLayoutAlign="start center">
+              <ng-container *ngTemplateOutlet="passwordRequirements"></ng-container>
+            </div>
+            <mat-form-field class="mat-block same-color" hideRequiredMarker appearance="fill" color="primary">
+              <mat-label translate>login.new-password-again</mat-label>
+              <input matInput type="password" name="new-password" formControlName="newPassword2" autocomplete="new-password" required/>
+              <tb-toggle-password [fxShow]="changePassword.get('newPassword2').dirty || changePassword.get('newPassword2').touched" matSuffix></tb-toggle-password>
+              <mat-error *ngIf="changePassword.get('newPassword2').hasError('differencePassword')">
+                {{ 'security.password-requirement.new-passwords-not-match' | translate }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+          <mat-divider [vertical]="true"></mat-divider>
+          <div fxFlex fxHide.xs fxLayoutAlign="start start">
+            <ng-container *ngTemplateOutlet="passwordRequirements"></ng-container>
+          </div>
+        </div>
+        <ng-template #passwordRequirements>
+          <div class="password-requirements" *ngIf="passwordPolicy">
+            <h3 class="card-title" translate>security.password-requirement.password-requirements</h3>
+            <h4 class="mat-h4" translate>security.password-requirement.at-least</h4>
+            <p class="mat-body" *ngIf="passwordPolicy.minimumUppercaseLetters > 0">
+              <mat-icon class="tb-mat-20" [svgIcon]="changePassword.get('newPassword').hasError('notUpperCase') ? 'mdi:circle-small' : 'mdi:check'"></mat-icon>
+              {{ 'security.password-requirement.uppercase-letter' | translate : {count: passwordPolicy.minimumUppercaseLetters} }}
+            </p>
+            <p class="mat-body" *ngIf="passwordPolicy.minimumLowercaseLetters > 0">
+              <mat-icon class="tb-mat-20" [svgIcon]="changePassword.get('newPassword').hasError('notLowerCase') ? 'mdi:circle-small' : 'mdi:check'"></mat-icon>
+              {{ 'security.password-requirement.lowercase-letter' | translate : {count: passwordPolicy.minimumLowercaseLetters} }}
+            </p>
+            <p class="mat-body" *ngIf="passwordPolicy.minimumDigits > 0">
+              <mat-icon class="tb-mat-20" [svgIcon]="changePassword.get('newPassword').hasError('notNumeric') ? 'mdi:circle-small' : 'mdi:check'"></mat-icon>
+              {{ 'security.password-requirement.digit' | translate : {count: passwordPolicy.minimumDigits} }}
+            </p>
+            <p class="mat-body" *ngIf="passwordPolicy.minimumSpecialCharacters > 0">
+              <mat-icon class="tb-mat-20" [svgIcon]="changePassword.get('newPassword').hasError('notSpecial') ? 'mdi:circle-small' : 'mdi:check'"></mat-icon>
+              {{ 'security.password-requirement.special-character' | translate : {count: passwordPolicy.minimumSpecialCharacters} }}
+            </p>
+            <p class="mat-body" *ngIf="passwordPolicy.minimumLength > 0">
+              <mat-icon class="tb-mat-20" [svgIcon]="changePassword.get('newPassword').hasError('minLength') ? 'mdi:circle-small' : 'mdi:check'"></mat-icon>
+              {{ 'security.password-requirement.character' | translate : {count: passwordPolicy.minimumLength} }}
+            </p>
+          </div>
+        </ng-template>
+        <div fxLayout="row" fxLayoutGap="8px" style="margin-top: 18px;" [fxShow]="changePassword.dirty || changePassword.touched">
+          <button mat-button color="primary"
+                  type="button"
+                  (click)="discardChanges(changePasswordForm, $event)"
+                  [disabled]="(isLoading$ | async)">
+            {{ 'action.discard-changes' | translate }}
+          </button>
+          <button mat-raised-button color="primary"
+                  type="submit"
+                  [disabled]="(isLoading$ | async)">
+            {{ 'profile.change-password' | translate }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+  <mat-card class="profile-card" *ngIf="allowTwoFactorProviders.length">
+    <mat-card-title style="margin-bottom: 20px;">
+      <span class="mat-headline card-title" translate>admin.2fa.2fa</span>
+    </mat-card-title>
+    <mat-card-subtitle style="margin-bottom: 40px;">
+      <div class="mat-body-1 description" translate>security.2fa.2fa-description</div>
+    </mat-card-subtitle>
+    <mat-card-content>
+      <h3 class="mat-h3 auth-title" translate>security.2fa.authenticate-with</h3>
+      <form [formGroup]="twoFactorAuth">
+        <ng-container *ngFor="let provider of allowTwoFactorProviders; let $last = last; trackBy: trackByProvider">
+          <div class="provider">
+            <h4 class="provider-title">{{ providersData.get(provider).name | translate }}</h4>
+            <div fxLayout="row" fxLayoutAlign="space-between start">
+              <div class="mat-body-1 description" *ngIf="!twoFactorAuth.get(provider).value; else providerInfo">
+                {{ providersData.get(provider).description | translate }}
+              </div>
+              <ng-template #providerInfo>
+                <div class="mat-body-1 description">
+                  {{ providersData.get(provider).activatedHint | translate: providerDataInfo(provider) }}
+                </div>
+              </ng-template>
+              <mat-slide-toggle [formControlName]="provider"
+                                (click)="confirm2FAChange($event, provider)">
+              </mat-slide-toggle>
+            </div>
+            <mat-checkbox [value]="provider"
+                          [checked]="useByDefault === provider"
+                          (click)="changeDefaultProvider($event, provider)"
+                          [disabled]="(isLoading$ | async)"
+                           *ngIf="twoFactorAuth.get(provider).value && provider !== twoFactorAuthProviderType.BACKUP_CODE && !activeSingleProvider">
+              <span class="checkbox-label" translate>security.2fa.main-2fa-method</span>
+            </mat-checkbox>
+            <button type="button"
+             mat-stroked-button color="primary"
+             (click)="generateNewBackupCode()"
+             *ngIf="twoFactorAuth.get(provider).value && provider === twoFactorAuthProviderType.BACKUP_CODE">
+              {{ 'security.2fa.get-new-code' | translate }}
+            </button>
+          </div>
+          <mat-divider *ngIf="!$last"></mat-divider>
+        </ng-container>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

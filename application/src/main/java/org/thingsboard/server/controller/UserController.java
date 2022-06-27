@@ -33,14 +33,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.rule.engine.api.MailService;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -50,6 +46,7 @@ import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.event.UserAuthDataChangedEvent;
 import org.thingsboard.server.common.data.security.model.JwtToken;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.entitiy.user.TbUserService;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
 import org.thingsboard.server.service.security.model.JwtTokenPair;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -60,7 +57,6 @@ import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.List;
 
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID_PARAM_DESCRIPTION;
@@ -102,6 +98,7 @@ public class UserController extends BaseController {
     private final RefreshTokenRepository refreshTokenRepository;
     private final SystemSecurityService systemSecurityService;
     private final ApplicationEventPublisher eventPublisher;
+    private final TbUserService tbUserService;
 
     @ApiOperation(value = "Get User (getUserById)",
             notes = "Fetch the User object based on the provided User Id. " +
@@ -188,47 +185,12 @@ public class UserController extends BaseController {
             @RequestBody User user,
             @ApiParam(value = "Send activation email (or use activation link)", defaultValue = "true")
             @RequestParam(required = false, defaultValue = "true") boolean sendActivationMail, HttpServletRequest request) throws ThingsboardException {
-        try {
-
-            if (Authority.TENANT_ADMIN.equals(getCurrentUser().getAuthority())) {
-                user.setTenantId(getCurrentUser().getTenantId());
-            }
-
-            checkEntity(user.getId(), user, Resource.USER);
-
-            boolean sendEmail = user.getId() == null && sendActivationMail;
-            User savedUser = checkNotNull(userService.saveUser(user));
-            if (sendEmail) {
-                SecurityUser authUser = getCurrentUser();
-                UserCredentials userCredentials = userService.findUserCredentialsByUserId(authUser.getTenantId(), savedUser.getId());
-                String baseUrl = systemSecurityService.getBaseUrl(getTenantId(), getCurrentUser().getCustomerId(), request);
-                String activateUrl = String.format(ACTIVATE_URL_PATTERN, baseUrl,
-                        userCredentials.getActivateToken());
-                String email = savedUser.getEmail();
-                try {
-                    mailService.sendActivationEmail(activateUrl, email);
-                } catch (ThingsboardException e) {
-                    userService.deleteUser(authUser.getTenantId(), savedUser.getId());
-                    throw e;
-                }
-            }
-
-            logEntityAction(savedUser.getId(), savedUser,
-                    savedUser.getCustomerId(),
-                    user.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
-
-            sendEntityNotificationMsg(getTenantId(), savedUser.getId(),
-                    user.getId() == null ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
-
-            return savedUser;
-        } catch (Exception e) {
-
-            logEntityAction(emptyId(EntityType.USER), user,
-                    null, user.getId() == null ? ActionType.ADDED : ActionType.UPDATED, e);
-
-            throw handleException(e);
+        if (Authority.TENANT_ADMIN.equals(getCurrentUser().getAuthority())) {
+            user.setTenantId(getCurrentUser().getTenantId());
         }
-    }
+        checkEntity(user.getId(), user, Resource.USER);
+        return tbUserService.save(getTenantId(), getCurrentUser().getCustomerId(), user, sendActivationMail, request, getCurrentUser());
+     }
 
     @ApiOperation(value = "Send or re-send the activation email",
             notes = "Force send the activation email to the user. Useful to resend the email if user has accidentally deleted it. " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
@@ -298,31 +260,12 @@ public class UserController extends BaseController {
             @ApiParam(value = USER_ID_PARAM_DESCRIPTION)
             @PathVariable(USER_ID) String strUserId) throws ThingsboardException {
         checkParameter(USER_ID, strUserId);
-        try {
-            UserId userId = new UserId(toUUID(strUserId));
-            User user = checkUserId(userId, Operation.DELETE);
-
-            if (user.getAuthority() == Authority.SYS_ADMIN && getCurrentUser().getId().equals(userId)) {
-                throw new ThingsboardException("Sysadmin is not allowed to delete himself", ThingsboardErrorCode.PERMISSION_DENIED);
-            }
-
-            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(getTenantId(), userId);
-
-            userService.deleteUser(getCurrentUser().getTenantId(), userId);
-
-            logEntityAction(userId, user,
-                    user.getCustomerId(),
-                    ActionType.DELETED, null, strUserId);
-
-            sendDeleteNotificationMsg(getTenantId(), userId, relatedEdgeIds);
-
-        } catch (Exception e) {
-            logEntityAction(emptyId(EntityType.USER),
-                    null,
-                    null,
-                    ActionType.DELETED, e, strUserId);
-            throw handleException(e);
+        UserId userId = new UserId(toUUID(strUserId));
+        User user = checkUserId(userId, Operation.DELETE);
+        if (user.getAuthority() == Authority.SYS_ADMIN && getCurrentUser().getId().equals(userId)) {
+            throw new ThingsboardException("Sysadmin is not allowed to delete himself", ThingsboardErrorCode.PERMISSION_DENIED);
         }
+        tbUserService.delete(getTenantId(), getCurrentUser().getCustomerId(), user, getCurrentUser());
     }
 
     @ApiOperation(value = "Get Users (getUsers)",

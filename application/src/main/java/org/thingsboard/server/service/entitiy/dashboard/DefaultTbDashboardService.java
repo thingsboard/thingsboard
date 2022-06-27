@@ -48,6 +48,7 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
         TenantId tenantId = dashboard.getTenantId();
         try {
             Dashboard savedDashboard = checkNotNull(dashboardService.saveDashboard(dashboard));
+            autoCommit(user, savedDashboard.getId());
             notificationEntityService.notifyCreateOrUpdateEntity(tenantId, savedDashboard.getId(), savedDashboard,
                     null, actionType, user);
             return savedDashboard;
@@ -59,12 +60,12 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
 
     @Override
     public void delete(Dashboard dashboard, SecurityUser user) throws ThingsboardException {
-        TenantId tenantId = dashboard.getTenantId();
         DashboardId dashboardId = dashboard.getId();
+        TenantId tenantId = dashboard.getTenantId();
         try {
             List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, dashboardId);
             dashboardService.deleteDashboard(tenantId, dashboardId);
-            notificationEntityService.notifyDeleteEntity(tenantId, dashboardId, dashboard, user.getCustomerId(),
+            notificationEntityService.notifyDeleteEntity(tenantId, dashboardId, dashboard, null,
                     ActionType.DELETED, relatedEdgeIds, user, dashboardId.toString());
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.DASHBOARD), null, null,
@@ -219,14 +220,14 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
     }
 
     @Override
-    public Dashboard asignDashboardToEdge(DashboardId dashboardId, Edge edge, SecurityUser user) throws ThingsboardException {
+    public Dashboard assignDashboardToEdge(DashboardId dashboardId, Edge edge, SecurityUser user) throws ThingsboardException {
         ActionType actionType = ActionType.ASSIGNED_TO_EDGE;
         TenantId tenantId = user.getTenantId();
         EdgeId edgeId = edge.getId();
         try {
             Dashboard savedDashboard = checkNotNull(dashboardService.assignDashboardToEdge(tenantId, dashboardId, edgeId));
             notificationEntityService.notifyAssignOrUnassignEntityToEdge(tenantId, dashboardId, user.getCustomerId(),
-                    edgeId, savedDashboard, actionType, EdgeEventActionType.ASSIGNED_TO_EDGE, user, dashboardId.toString(),
+                    edgeId, savedDashboard, actionType, user, dashboardId.toString(),
                     edgeId.toString(), edge.getName());
             return savedDashboard;
         } catch (Exception e) {
@@ -246,7 +247,7 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
             Dashboard savedDevice = checkNotNull(dashboardService.unassignDashboardFromEdge(tenantId, dashboardId, edgeId));
 
             notificationEntityService.notifyAssignOrUnassignEntityToEdge(tenantId, dashboardId, user.getCustomerId(),
-                    edgeId, dashboard, actionType, EdgeEventActionType.UNASSIGNED_FROM_EDGE, user, dashboardId.toString(),
+                    edgeId, dashboard, actionType, user, dashboardId.toString(),
                     edgeId.toString(), edge.getName());
             return savedDevice;
         } catch (Exception e) {

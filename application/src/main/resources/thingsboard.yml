@@ -19,6 +19,8 @@ server:
   address: "${HTTP_BIND_ADDRESS:0.0.0.0}"
   # Server bind port
   port: "${HTTP_BIND_PORT:8080}"
+  # Server forward headers strategy
+  forward_headers_strategy: "${HTTP_FORWARD_HEADERS_STRATEGY:NONE}"
   # Server SSL configuration
   ssl:
     # Enable/disable SSL support
@@ -56,18 +58,6 @@ server:
     send_timeout: "${TB_SERVER_WS_SEND_TIMEOUT:5000}"
     # recommended timeout >= 30 seconds. Platform will attempt to send 'ping' request 3 times within the timeout
     ping_timeout: "${TB_SERVER_WS_PING_TIMEOUT:30000}"
-    limits:
-      # Limit the amount of sessions and subscriptions available on each server. Put values to zero to disable particular limitation
-      max_sessions_per_tenant: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SESSIONS_PER_TENANT:0}"
-      max_sessions_per_customer: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SESSIONS_PER_CUSTOMER:0}"
-      max_sessions_per_regular_user: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SESSIONS_PER_REGULAR_USER:0}"
-      max_sessions_per_public_user: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SESSIONS_PER_PUBLIC_USER:0}"
-      max_queue_per_ws_session: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_QUEUE_PER_WS_SESSION:500}"
-      max_subscriptions_per_tenant: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SUBSCRIPTIONS_PER_TENANT:0}"
-      max_subscriptions_per_customer: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SUBSCRIPTIONS_PER_CUSTOMER:0}"
-      max_subscriptions_per_regular_user: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SUBSCRIPTIONS_PER_REGULAR_USER:0}"
-      max_subscriptions_per_public_user: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SUBSCRIPTIONS_PER_PUBLIC_USER:0}"
-      max_updates_per_session: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_UPDATES_PER_SESSION:300:1,3000:60}"
     dynamic_page_link:
       refresh_interval: "${TB_SERVER_WS_DYNAMIC_PAGE_LINK_REFRESH_INTERVAL_SEC:60}"
       refresh_pool_size: "${TB_SERVER_WS_DYNAMIC_PAGE_LINK_REFRESH_POOL_SIZE:1}"
@@ -76,13 +66,6 @@ server:
     max_entities_per_data_subscription: "${TB_SERVER_WS_MAX_ENTITIES_PER_DATA_SUBSCRIPTION:10000}"
     max_entities_per_alarm_subscription: "${TB_SERVER_WS_MAX_ENTITIES_PER_ALARM_SUBSCRIPTION:10000}"
   rest:
-    limits:
-      tenant:
-        enabled: "${TB_SERVER_REST_LIMITS_TENANT_ENABLED:false}"
-        configuration: "${TB_SERVER_REST_LIMITS_TENANT_CONFIGURATION:100:1,2000:60}"
-      customer:
-        enabled: "${TB_SERVER_REST_LIMITS_CUSTOMER_ENABLED:false}"
-        configuration: "${TB_SERVER_REST_LIMITS_CUSTOMER_CONFIGURATION:50:1,1000:60}"
     server_side_rpc:
       # Minimum value of the server side RPC timeout. May override value provided in the REST API call.
       # Since 2.5 migration to queues, the RPC delay depends on the size of the pending messages in the queue,
@@ -174,8 +157,6 @@ database:
   ts_latest:
     type: "${DATABASE_TS_LATEST_TYPE:sql}" # cassandra, sql, or timescale (for hybrid mode, DATABASE_TS_TYPE value should be cassandra, or timescale)
 
-# note: timescale works only with postgreSQL database for DATABASE_ENTITIES_TYPE.
-
 # Cassandra driver configuration parameters
 cassandra:
   # Thingsboard cluster name
@@ -255,8 +236,6 @@ cassandra:
     # log one of cassandra queries with specified frequency (0 - logging is disabled)
     print_queries_freq: "${CASSANDRA_QUERY_PRINT_FREQ:0}"
     tenant_rate_limits:
-      enabled: "${CASSANDRA_QUERY_TENANT_RATE_LIMITS_ENABLED:false}"
-      configuration: "${CASSANDRA_QUERY_TENANT_RATE_LIMITS_CONFIGURATION:1000:1,30000:60}"
       print_tenant_names: "${CASSANDRA_QUERY_TENANT_RATE_LIMITS_PRINT_TENANT_NAMES:false}"
 
 # SQL configuration parameters
@@ -415,6 +394,9 @@ cache:
     tenantProfiles:
       timeToLiveInMinutes: "${CACHE_SPECS_TENANT_PROFILES_TTL:1440}"
       maxSize: "${CACHE_SPECS_TENANT_PROFILES_MAX_SIZE:10000}"
+    tenants:
+      timeToLiveInMinutes: "${CACHE_SPECS_TENANTS_TTL:1440}"
+      maxSize: "${CACHE_SPECS_TENANTS_MAX_SIZE:10000}"
     deviceProfiles:
       timeToLiveInMinutes: "${CACHE_SPECS_DEVICE_PROFILES_TTL:1440}"
       maxSize: "${CACHE_SPECS_DEVICE_PROFILES_MAX_SIZE:10000}"
@@ -433,6 +415,21 @@ cache:
     edges:
       timeToLiveInMinutes: "${CACHE_SPECS_EDGES_TTL:1440}"
       maxSize: "${CACHE_SPECS_EDGES_MAX_SIZE:10000}"
+    repositorySettings:
+      timeToLiveInMinutes: "${CACHE_SPECS_REPOSITORY_SETTINGS_TTL:1440}"
+      maxSize: "${CACHE_SPECS_REPOSITORY_SETTINGS_MAX_SIZE:10000}"
+    autoCommitSettings:
+      timeToLiveInMinutes: "${CACHE_SPECS_AUTO_COMMIT_SETTINGS_TTL:1440}"
+      maxSize: "${CACHE_SPECS_AUTO_COMMIT_SETTINGS_MAX_SIZE:10000}"
+    twoFaVerificationCodes:
+      timeToLiveInMinutes: "${CACHE_SPECS_TWO_FA_VERIFICATION_CODES_TTL:60}"
+      maxSize: "${CACHE_SPECS_TWO_FA_VERIFICATION_CODES_MAX_SIZE:100000}"
+    versionControlTask:
+      timeToLiveInMinutes: "${CACHE_SPECS_VERSION_CONTROL_TASK_TTL:5}"
+      maxSize: "${CACHE_SPECS_VERSION_CONTROL_TASK_MAX_SIZE:100000}"
+
+#Disable this because it is not required.
+spring.data.redis.repositories.enabled: false
 
 redis:
   # standalone or cluster
@@ -530,7 +527,6 @@ spring:
     open-in-view: "false"
     hibernate:
       ddl-auto: "none"
-    database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}"
   datasource:
     driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}"
     url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
@@ -703,6 +699,7 @@ transport:
     bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
     bind_port: "${COAP_BIND_PORT:5683}"
     timeout: "${COAP_TIMEOUT:10000}"
+    piggyback_timeout: "${COAP_PIGGYBACK_TIMEOUT:500}"
     psm_activity_timer: "${COAP_PSM_ACTIVITY_TIMER:10000}"
     paging_transmission_window: "${COAP_PAGING_TRANSMISSION_WINDOW:10000}"
     dtls:
@@ -928,6 +925,9 @@ queue:
       tb_ota_package:
         - key: max.poll.records
           value: "${TB_QUEUE_KAFKA_OTA_MAX_POLL_RECORDS:10}"
+      tb_version_control:
+        - key: max.poll.interval.ms
+          value: "${TB_QUEUE_KAFKA_VC_MAX_POLL_INTERVAL_MS:600000}"
 #      tb_rule_engine.sq:
 #        - key: max.poll.records
 #          value: "${TB_QUEUE_KAFKA_SQ_MAX_POLL_RECORDS:1024}"
@@ -1021,6 +1021,13 @@ queue:
     stats:
       enabled: "${TB_QUEUE_CORE_STATS_ENABLED:true}"
       print-interval-ms: "${TB_QUEUE_CORE_STATS_PRINT_INTERVAL_MS:60000}"
+  vc:
+    topic: "${TB_QUEUE_VC_TOPIC:tb_version_control}"
+    partitions: "${TB_QUEUE_VC_PARTITIONS:10}"
+    poll-interval: "${TB_QUEUE_VC_INTERVAL_MS:25}"
+    pack-processing-timeout: "${TB_QUEUE_VC_PACK_PROCESSING_TIMEOUT_MS:60000}"
+    request-timeout: "${TB_QUEUE_VC_REQUEST_TIMEOUT:60000}"
+    msg-chunk-size: "${TB_QUEUE_VC_MSG_CHUNK_SIZE:500000}"
   js:
     # JS Eval request topic
     request_topic: "${REMOTE_JS_EVAL_REQUEST_TOPIC:js_eval.requests}"
@@ -1106,7 +1113,6 @@ service:
   type: "${TB_SERVICE_TYPE:monolith}" # monolith or tb-core or tb-rule-engine
   # Unique id for this service (autogenerated if empty)
   id: "${TB_SERVICE_ID:}"
-  tenant_id: "${TB_SERVICE_TENANT_ID:}" # empty or specific tenant id.
 
 metrics:
   # Enable/disable actuator metrics.
@@ -1114,6 +1120,14 @@ metrics:
   timer:
     # Metrics percentiles returned by actuator for timer metrics. List of double values (divided by ,).
     percentiles: "${METRICS_TIMER_PERCENTILES:0.5}"
+
+vc:
+  # Pool size for handling export tasks
+  thread_pool_size: "${TB_VC_POOL_SIZE:2}"
+  git:
+    # Pool size for handling the git IO operations
+    io_pool_size: "${TB_VC_GIT_POOL_SIZE:3}"
+    repositories-folder: "${TB_VC_GIT_REPOSITORIES_FOLDER:${java.io.tmpdir}/repositories}"
 
 management:
   endpoints:

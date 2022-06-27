@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
+import org.thingsboard.server.transport.coap.CoapTestClient;
 import org.thingsboard.server.transport.coap.CoapTestConfigProperties;
 
 @Slf4j
@@ -56,7 +57,7 @@ public class CoapClaimProtoDeviceTest extends CoapClaimDeviceTest {
 
     @Override
     protected void processTestClaimingDevice(boolean emptyPayload) throws Exception {
-        client = getCoapClient(FeatureType.CLAIM);
+        client = new CoapTestClient(accessToken, FeatureType.CLAIM);
         byte[] payloadBytes;
         if (emptyPayload) {
             TransportApiProtos.ClaimDevice claimDevice = getClaimDevice(0, emptyPayload);

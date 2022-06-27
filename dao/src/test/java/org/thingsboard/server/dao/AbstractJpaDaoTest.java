@@ -30,7 +30,7 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
  * Created by Valerii Sosliuk on 4/22/2017.
  */
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {JpaDaoConfig.class, PsqlTsDaoConfig.class, PsqlTsLatestDaoConfig.class, SqlTimeseriesDaoConfig.class})
+@ContextConfiguration(classes = {JpaDaoConfig.class, SqlTsDaoConfig.class, SqlTsLatestDaoConfig.class, SqlTimeseriesDaoConfig.class})
 @DaoSqlTest
 @TestExecutionListeners({
         DependencyInjectionTestExecutionListener.class,

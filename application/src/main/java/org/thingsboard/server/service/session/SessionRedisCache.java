@@ -33,7 +33,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 public class SessionRedisCache extends RedisTbTransactionalCache<DeviceId, TransportProtos.DeviceSessionsCacheEntry> {
 
     public SessionRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
-        super(CacheConstants.ASSET_CACHE, cacheSpecsMap, connectionFactory, configuration, new RedisSerializer<>() {
+        super(CacheConstants.SESSIONS_CACHE, cacheSpecsMap, connectionFactory, configuration, new RedisSerializer<>() {
             @Override
             public byte[] serialize(TransportProtos.DeviceSessionsCacheEntry deviceSessionsCacheEntry) throws SerializationException {
                 return deviceSessionsCacheEntry.toByteArray();

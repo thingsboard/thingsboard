@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Device;
@@ -72,6 +73,7 @@ import org.thingsboard.server.gen.edge.v1.RelationRequestMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataRequestMsg;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetBundleTypesRequestMsg;
+import org.thingsboard.server.service.entitiy.entityView.TbEntityViewService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 
 import java.util.ArrayList;
@@ -100,8 +102,9 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
     @Autowired
     private DeviceService deviceService;
 
+    @Lazy
     @Autowired
-    private EntityViewService entityViewService;
+    private TbEntityViewService entityViewService;
 
     @Autowired
     private DeviceProfileService deviceProfileService;
@@ -378,7 +381,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                 }
                 List<ListenableFuture<Void>> futures = new ArrayList<>();
                 for (EntityView entityView : entityViews) {
-                    ListenableFuture<Boolean> future = relationService.checkRelation(tenantId, edge.getId(), entityView.getId(),
+                    ListenableFuture<Boolean> future = relationService.checkRelationAsync(tenantId, edge.getId(), entityView.getId(),
                             EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE);
                     futures.add(Futures.transformAsync(future, result -> {
                         if (Boolean.TRUE.equals(result)) {
@@ -413,11 +416,11 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
     }
 
     private ListenableFuture<Void> saveEdgeEvent(TenantId tenantId,
-                               EdgeId edgeId,
-                               EdgeEventType type,
-                               EdgeEventActionType action,
-                               EntityId entityId,
-                               JsonNode body) {
+                                                 EdgeId edgeId,
+                                                 EdgeEventType type,
+                                                 EdgeEventActionType action,
+                                                 EntityId entityId,
+                                                 JsonNode body) {
         log.trace("Pushing edge event to edge queue. tenantId [{}], edgeId [{}], type [{}], action[{}], entityId [{}], body [{}]",
                 tenantId, edgeId, type, action, entityId, body);
 

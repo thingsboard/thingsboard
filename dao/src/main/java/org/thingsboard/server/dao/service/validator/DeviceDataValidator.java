@@ -23,7 +23,6 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.OtaPackage;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.data.DeviceTransportConfiguration;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -35,7 +34,7 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
-import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.util.Optional;
 
@@ -48,7 +47,7 @@ public class DeviceDataValidator extends DataValidator<Device> {
     private DeviceDao deviceDao;
 
     @Autowired
-    private TenantDao tenantDao;
+    private TenantService tenantService;
 
     @Autowired
     private CustomerDao customerDao;
@@ -85,8 +84,7 @@ public class DeviceDataValidator extends DataValidator<Device> {
         if (device.getTenantId() == null) {
             throw new DataValidationException("Device should be assigned to tenant!");
         } else {
-            Tenant tenant = tenantDao.findById(device.getTenantId(), device.getTenantId().getId());
-            if (tenant == null) {
+            if (!tenantService.tenantExists(device.getTenantId())) {
                 throw new DataValidationException("Device is referencing to non-existent tenant!");
             }
         }

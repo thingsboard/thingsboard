@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.AssetEntity;
 import org.thingsboard.server.dao.model.sql.AssetInfoEntity;
 
@@ -29,7 +30,7 @@ import java.util.UUID;
 /**
  * Created by Valerii Sosliuk on 5/21/2017.
  */
-public interface AssetRepository extends JpaRepository<AssetEntity, UUID> {
+public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, ExportableEntityRepository<AssetEntity> {
 
     @Query("SELECT new org.thingsboard.server.dao.model.sql.AssetInfoEntity(a, c.title, c.additionalInfo) " +
             "FROM AssetEntity a " +
@@ -143,4 +144,8 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID> {
                                               Pageable pageable);
 
     Long countByTenantIdAndTypeIsNot(UUID tenantId, String type);
+
+    @Query("SELECT externalId FROM AssetEntity WHERE id = :id")
+    UUID getExternalIdById(@Param("id") UUID id);
+
 }

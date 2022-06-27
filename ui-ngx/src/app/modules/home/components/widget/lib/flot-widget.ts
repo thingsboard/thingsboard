@@ -312,6 +312,9 @@ export class TbFlot {
       if (this.settings.stroke) {
         this.options.series.pie.stroke.color = this.settings.stroke.color || '#fff';
         this.options.series.pie.stroke.width = this.settings.stroke.width || 0;
+        if (this.options.series.pie.stroke.width) {
+          this.scalingPieRadius();
+        }
       }
 
       if (this.options.series.pie.label.show) {
@@ -690,22 +693,34 @@ export class TbFlot {
     }
   }
 
+  private scalingPieRadius() {
+      let scalingLine;
+      this.ctx.width > this.ctx.height ? scalingLine = this.ctx.height : scalingLine = this.ctx.width;
+      let changeRadius = this.options.series.pie.stroke.width / scalingLine;
+      this.options.series.pie.radius = changeRadius < 1 ? this.settings.radius - changeRadius : 0;
+  }
+
   public resize() {
     if (this.resizeTimeoutHandle) {
       clearTimeout(this.resizeTimeoutHandle);
       this.resizeTimeoutHandle = null;
     }
     if (this.plot && this.plotInited) {
-      const width = this.$element.width();
-      const height = this.$element.height();
-      if (width && height) {
-        this.plot.resize();
-        if (this.chartType !== 'pie') {
-          this.plot.setupGrid();
-        }
-        this.plot.draw();
+      if (this.chartType === 'pie' && this.settings.stroke?.width) {
+          this.scalingPieRadius();
+          this.redrawPlot();
       } else {
-        this.resizeTimeoutHandle = setTimeout(this.resize.bind(this), 30);
+        const width = this.$element.width();
+        const height = this.$element.height();
+        if (width && height) {
+          this.plot.resize();
+          if (this.chartType !== 'pie') {
+            this.plot.setupGrid();
+          }
+          this.plot.draw();
+        } else {
+          this.resizeTimeoutHandle = setTimeout(this.resize.bind(this), 30);
+        }
       }
     }
   }

@@ -20,12 +20,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
-public class Customer extends ContactBased<CustomerId> implements HasTenantId {
+@EqualsAndHashCode(callSuper = true)
+public class Customer extends ContactBased<CustomerId> implements HasTenantId, ExportableEntity<CustomerId> {
 
     private static final long serialVersionUID = -1599722990298929275L;
 
@@ -35,6 +39,9 @@ public class Customer extends ContactBased<CustomerId> implements HasTenantId {
     private String title;
     @ApiModelProperty(position = 5, required = true, value = "JSON object with Tenant Id")
     private TenantId tenantId;
+
+    @Getter @Setter
+    private CustomerId externalId;
 
     public Customer() {
         super();
@@ -48,6 +55,7 @@ public class Customer extends ContactBased<CustomerId> implements HasTenantId {
         super(customer);
         this.tenantId = customer.getTenantId();
         this.title = customer.getTitle();
+        this.externalId = customer.getExternalId();
     }
 
     public TenantId getTenantId() {
@@ -159,37 +167,6 @@ public class Customer extends ContactBased<CustomerId> implements HasTenantId {
     @Override
     public String getSearchText() {
         return getTitle();
-    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result + ((tenantId == null) ? 0 : tenantId.hashCode());
-        result = prime * result + ((title == null) ? 0 : title.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (!super.equals(obj))
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        Customer other = (Customer) obj;
-        if (tenantId == null) {
-            if (other.tenantId != null)
-                return false;
-        } else if (!tenantId.equals(other.tenantId))
-            return false;
-        if (title == null) {
-            if (other.title != null)
-                return false;
-        } else if (!title.equals(other.title))
-            return false;
-        return true;
     }
 
     @Override

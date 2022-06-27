@@ -16,6 +16,7 @@
 package org.thingsboard.server.queue.discovery;
 
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -31,9 +32,12 @@ import java.util.UUID;
  */
 public interface PartitionService {
 
+    @Deprecated
+    TopicPartitionInfo resolve(ServiceType serviceType, TenantId tenantId, EntityId entityId, String queueName);
+
     TopicPartitionInfo resolve(ServiceType serviceType, TenantId tenantId, EntityId entityId);
 
-    TopicPartitionInfo resolve(ServiceType serviceType, String queueName, TenantId tenantId, EntityId entityId);
+    TopicPartitionInfo resolve(ServiceType serviceType, QueueId queueId, TenantId tenantId, EntityId entityId);
 
     /**
      * Received from the Discovery service when network topology is changed.
@@ -49,16 +53,17 @@ public interface PartitionService {
      */
     Set<String> getAllServiceIds(ServiceType serviceType);
 
-    /**
-     * Each Service should start a consumer for messages that target individual service instance based on serviceId.
-     * This topic is likely to have single partition, and is always assigned to the service.
-     * @param serviceType
-     * @param serviceId
-     * @return
-     */
-    TopicPartitionInfo getNotificationsTopic(ServiceType serviceType, String serviceId);
+    Set<TransportProtos.ServiceInfo> getAllServices(ServiceType serviceType);
+
+    Set<TransportProtos.ServiceInfo> getOtherServices(ServiceType serviceType);
 
     int resolvePartitionIndex(UUID entityId, int partitions);
 
+    void removeTenant(TenantId tenantId);
+
     int countTransportsByType(String type);
+
+    void updateQueue(TransportProtos.QueueUpdateMsg queueUpdateMsg);
+
+    void removeQueue(TransportProtos.QueueDeleteMsg queueDeleteMsg);
 }

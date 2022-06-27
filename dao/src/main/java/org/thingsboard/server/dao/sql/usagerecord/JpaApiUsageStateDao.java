@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.sql.usagerecord;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.DaoUtil;
@@ -68,4 +69,10 @@ public class JpaApiUsageStateDao extends JpaAbstractDao<ApiUsageStateEntity, Api
     public void deleteApiUsageStateByEntityId(EntityId entityId) {
         apiUsageStateRepository.deleteByEntityIdAndEntityType(entityId.getId(), entityId.getEntityType().name());
     }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.API_USAGE_STATE;
+    }
+
 }

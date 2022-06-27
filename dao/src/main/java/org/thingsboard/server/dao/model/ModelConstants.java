@@ -90,6 +90,8 @@ public class ModelConstants {
      * Cassandra admin_settings constants.
      */
     public static final String ADMIN_SETTINGS_COLUMN_FAMILY_NAME = "admin_settings";
+
+    public static final String ADMIN_SETTINGS_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String ADMIN_SETTINGS_KEY_PROPERTY = "key";
     public static final String ADMIN_SETTINGS_JSON_VALUE_PROPERTY = "json_value";
 
@@ -178,7 +180,7 @@ public class ModelConstants {
     public static final String DEVICE_PROFILE_IS_DEFAULT_PROPERTY = "is_default";
     public static final String DEVICE_PROFILE_DEFAULT_RULE_CHAIN_ID_PROPERTY = "default_rule_chain_id";
     public static final String DEVICE_PROFILE_DEFAULT_DASHBOARD_ID_PROPERTY = "default_dashboard_id";
-    public static final String DEVICE_PROFILE_DEFAULT_QUEUE_NAME_PROPERTY = "default_queue_name";
+    public static final String DEVICE_PROFILE_DEFAULT_QUEUE_ID_PROPERTY = "default_queue_id";
     public static final String DEVICE_PROFILE_PROVISION_DEVICE_KEY = "provision_device_key";
     public static final String DEVICE_PROFILE_FIRMWARE_ID_PROPERTY = "firmware_id";
     public static final String DEVICE_PROFILE_SOFTWARE_ID_PROPERTY = "software_id";
@@ -559,6 +561,15 @@ public class ModelConstants {
 
     public static final String EDGE_EVENT_BY_ID_VIEW_NAME = "edge_event_by_id";
 
+    public static final String EXTERNAL_ID_PROPERTY = "external_id";
+
+    /**
+     * User auth settings constants.
+     * */
+    public static final String USER_AUTH_SETTINGS_COLUMN_FAMILY_NAME = "user_auth_settings";
+    public static final String USER_AUTH_SETTINGS_USER_ID_PROPERTY = USER_ID_PROPERTY;
+    public static final String USER_AUTH_SETTINGS_TWO_FA_SETTINGS = "two_fa_settings";
+
     /**
      * Cassandra attributes and timeseries constants.
      */
@@ -580,6 +591,23 @@ public class ModelConstants {
     public static final String LONG_VALUE_COLUMN = "long_v";
     public static final String DOUBLE_VALUE_COLUMN = "dbl_v";
     public static final String JSON_VALUE_COLUMN = "json_v";
+
+    /**
+     * Queue constants.
+     */
+
+    public static final String QUEUE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String QUEUE_NAME_PROPERTY = "name";
+    public static final String QUEUE_TOPIC_PROPERTY = "topic";
+    public static final String QUEUE_POLL_INTERVAL_PROPERTY = "poll_interval";
+    public static final String QUEUE_PARTITIONS_PROPERTY = "partitions";
+    public static final String QUEUE_CONSUMER_PER_PARTITION = "consumer_per_partition";
+    public static final String QUEUE_PACK_PROCESSING_TIMEOUT_PROPERTY = "pack_processing_timeout";
+    public static final String QUEUE_SUBMIT_STRATEGY_PROPERTY = "submit_strategy";
+    public static final String QUEUE_PROCESSING_STRATEGY_PROPERTY = "processing_strategy";
+    public static final String QUEUE_COLUMN_FAMILY_NAME = "queue";
+    public static final String QUEUE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+
 
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 

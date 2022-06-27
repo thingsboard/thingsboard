@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
+import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -208,4 +209,31 @@ public class JpaAssetDao extends JpaAbstractSearchTextDao<AssetEntity, Asset> im
     public Long countByTenantId(TenantId tenantId) {
         return assetRepository.countByTenantIdAndTypeIsNot(tenantId.getId(), TB_SERVICE_QUEUE);
     }
+
+    @Override
+    public Asset findByTenantIdAndExternalId(UUID tenantId, UUID externalId) {
+        return DaoUtil.getData(assetRepository.findByTenantIdAndExternalId(tenantId, externalId));
+    }
+
+    @Override
+    public Asset findByTenantIdAndName(UUID tenantId, String name) {
+        return findAssetsByTenantIdAndName(tenantId, name).orElse(null);
+    }
+
+    @Override
+    public PageData<Asset> findByTenantId(UUID tenantId, PageLink pageLink) {
+        return findAssetsByTenantId(tenantId, pageLink);
+    }
+
+    @Override
+    public AssetId getExternalIdByInternal(AssetId internalId) {
+        return Optional.ofNullable(assetRepository.getExternalIdById(internalId.getId()))
+                .map(AssetId::new).orElse(null);
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.ASSET;
+    }
+
 }

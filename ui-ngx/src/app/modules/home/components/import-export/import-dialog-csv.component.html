@@ -117,7 +117,7 @@
         </mat-progress-bar>
       </mat-step>
       <mat-step>
-        <ng-template matStepLabel>{{ 'import.stepper-text.done' | translate }}</ng-template>
+        <ng-template matStepLabel>{{ 'action.done' | translate }}</ng-template>
         <div fxLayout="column">
           <p class="mat-body-1" *ngIf="this.statistical?.created">
             {{ translate.instant('import.message.create-entities', {count: this.statistical.created}) }}
