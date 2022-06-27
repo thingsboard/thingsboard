@@ -13,36 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.util;
+package org.thingsboard.server.common.data;
 
 import lombok.extern.slf4j.Slf4j;
 import org.nustaq.serialization.FSTConfiguration;
-import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.FSTUtils;
-
-import java.util.Optional;
 
 @Slf4j
-@Service
-public class ProtoWithFSTService implements DataDecodingEncodingService {
+public class FSTUtils {
 
     public static final FSTConfiguration CONFIG = FSTConfiguration.createDefaultConfiguration();
 
-    @Override
-    public <T> Optional<T> decode(byte[] byteArray) {
-        try {
-            return Optional.ofNullable(FSTUtils.decode(byteArray));
-        } catch (IllegalArgumentException e) {
-            log.error("Error during deserialization message, [{}]", e.getMessage());
-            return Optional.empty();
-        }
+    @SuppressWarnings("unchecked")
+    public static <T> T decode(byte[] byteArray) {
+        return byteArray != null && byteArray.length > 0 ? (T) CONFIG.asObject(byteArray) : null;
     }
 
-
-    @Override
-    public <T> byte[] encode(T msq) {
-        return FSTUtils.encode(msq);
+    public static <T> byte[] encode(T msq) {
+        return CONFIG.asByteArray(msq);
     }
-
 
 }
