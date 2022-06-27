@@ -161,7 +161,7 @@ export class EntityVersionDiffComponent extends PageComponent implements OnInit,
           setTimeout(() => {
             this.diffCount = this.differ.getNumDiffs();
             this.updateHasNextAndPrevious();
-          }, 1);
+          }, 2);
         });
       });
     });
