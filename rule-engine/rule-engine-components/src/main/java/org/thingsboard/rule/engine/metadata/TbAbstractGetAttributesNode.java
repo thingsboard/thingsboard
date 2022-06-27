@@ -23,7 +23,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.JsonParseException;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -50,7 +49,6 @@ import static org.thingsboard.server.common.data.DataConstants.LATEST_TS;
 import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
 
-@Slf4j
 public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeConfiguration, T extends EntityId> implements TbNode {
 
     private static ObjectMapper mapper = new ObjectMapper();
@@ -113,7 +111,6 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         }
         ListenableFuture<List<AttributeKvEntry>> attributeKvEntryListFuture = ctx.getAttributesService().find(ctx.getTenantId(), entityId, scope, keys);
         return Futures.transform(attributeKvEntryListFuture, attributeKvEntryList -> {
-            log.warn("[{}][{}][{}][{}] Lookup attribute result: {}", ctx.getTenantId(), entityId, scope, keys, attributeKvEntryList);
             if (!CollectionUtils.isEmpty(attributeKvEntryList)) {
                 List<AttributeKvEntry> existingAttributesKvEntry = attributeKvEntryList.stream().filter(attributeKvEntry -> keys.contains(attributeKvEntry.getKey())).collect(Collectors.toList());
                 existingAttributesKvEntry.forEach(kvEntry -> msg.getMetaData().putValue(prefix + kvEntry.getKey(), kvEntry.getValueAsString()));
