@@ -20,7 +20,9 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
   ComplexVersionCreateRequest,
   createDefaultEntityTypesVersionCreate,
-  SyncStrategy, syncStrategyHintMap, syncStrategyTranslationMap,
+  SyncStrategy,
+  syncStrategyHintMap,
+  syncStrategyTranslationMap,
   VersionCreateRequestType,
   VersionCreationResult
 } from '@shared/models/vc.models';
@@ -82,7 +84,7 @@ export class ComplexVersionCreateComponent extends PageComponent implements OnIn
   ngOnInit(): void {
     this.createVersionFormGroup = this.fb.group({
       branch: [this.branch, [Validators.required]],
-      versionName: [null, [Validators.required]],
+      versionName: [null, [Validators.required, Validators.pattern(/(?:.|\s)*\S(&:.|\s)*/)]],
       syncStrategy: [SyncStrategy.MERGE, Validators.required],
       entityTypes: [createDefaultEntityTypesVersionCreate(), []],
     });

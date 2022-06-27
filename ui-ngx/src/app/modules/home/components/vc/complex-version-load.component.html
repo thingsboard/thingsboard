@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<section [ngStyle]="versionLoadResult$ ? {minWidth: '500px'} : {minWidth: '800px'}">
+<section [ngStyle]="versionLoadResult$ ? {minWidth: '500px'} : {minWidth: '600px'}">
   <section *ngIf="!versionLoadResult$">
     <mat-toolbar>
       <h2>{{ 'version-control.restore-entities-from-version' | translate: {versionName} }}</h2>
