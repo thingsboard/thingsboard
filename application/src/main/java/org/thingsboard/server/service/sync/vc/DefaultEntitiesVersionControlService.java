@@ -174,9 +174,11 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     private <T> T getStatus(SecurityUser user, UUID requestId, Function<VersionControlTaskCacheEntry, T> getter) throws ThingsboardException {
         var cacheEntry = taskCache.get(requestId);
         if (cacheEntry == null || cacheEntry.get() == null) {
+            log.debug("[{}] No cache record: {}", requestId, cacheEntry);
             throw new ThingsboardException(ThingsboardErrorCode.ITEM_NOT_FOUND);
         } else {
             var entry = cacheEntry.get();
+            log.debug("[{}] Cache get: {}", requestId, entry);
             var result = getter.apply(entry);
             if (result == null) {
                 throw new ThingsboardException(ThingsboardErrorCode.BAD_REQUEST_PARAMS);
