@@ -27,7 +27,6 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -107,7 +106,7 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
         try {
             Device savedDevice = checkNotNull(deviceService.assignDeviceToCustomer(user.getTenantId(), deviceId, customerId));
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, deviceId, customerId, savedDevice,
-                    actionType, EdgeEventActionType.ASSIGNED_TO_CUSTOMER, user, true, deviceId.toString(), customerId.toString(), customer.getName());
+                    actionType, edgeTypeByActionType(actionType), user, true, deviceId.toString(), customerId.toString(), customer.getName());
 
             return savedDevice;
         } catch (Exception e) {
@@ -178,13 +177,14 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
     public DeviceCredentials updateDeviceCredentials(Device device, DeviceCredentials deviceCredentials, SecurityUser user) throws ThingsboardException {
         TenantId tenantId = device.getTenantId();
         DeviceId deviceId = device.getId();
+        ActionType actionType = ActionType.CREDENTIALS_UPDATED;
         try {
             DeviceCredentials result = checkNotNull(deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials));
-            notificationEntityService.notifyUpdateDeviceCredentials(tenantId, deviceId, device.getCustomerId(), device, result, user);
+            notificationEntityService.notifyUpdateDeviceCredentials(tenantId, deviceId, device.getCustomerId(), device, result, actionType, user);
             return result;
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.DEVICE), null, null,
-                    ActionType.CREDENTIALS_UPDATED, user, e, deviceCredentials);
+                    actionType, user, e, deviceCredentials);
             throw handleException(e);
         }
     }
@@ -229,17 +229,18 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
     public Device assignDeviceToTenant(Device device, Tenant newTenant, SecurityUser user) throws ThingsboardException {
         TenantId tenantId = device.getTenantId();
         TenantId newTenantId = newTenant.getId();
+        ActionType actionType = ActionType.ASSIGNED_TO_TENANT;
         try {
             Tenant tenant = tenantService.findTenantById(tenantId);
             Device assignedDevice = deviceService.assignDeviceToTenant(newTenantId, device);
 
             notificationEntityService.notifyAssignDeviceToTenant(tenantId, newTenantId, device.getId(),
-                    assignedDevice.getCustomerId(), assignedDevice, tenant, user, newTenantId.toString(), newTenant.getName());
+                    assignedDevice.getCustomerId(), assignedDevice, tenant, actionType, user, newTenantId.toString(), newTenant.getName());
 
             return assignedDevice;
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.DEVICE), null, null,
-                    ActionType.ASSIGNED_TO_TENANT, user, e, newTenantId.toString());
+                    actionType, user, e, newTenantId.toString());
             throw handleException(e);
         }
     }

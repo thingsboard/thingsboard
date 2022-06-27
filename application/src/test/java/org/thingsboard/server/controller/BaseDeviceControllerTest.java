@@ -27,12 +27,14 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceCredentialsId;
@@ -44,6 +46,8 @@ import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.ArrayList;
@@ -99,7 +103,6 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
 
         doDelete("/api/tenant/" + savedTenant.getId().getId())
                 .andExpect(status().isOk());
-        log.debug("afterTest done");
     }
 
     @Test
@@ -107,7 +110,16 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         Device device = new Device();
         device.setName("My device");
         device.setType("default");
+
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
         Device savedDevice = doPost("/api/device", device, Device.class);
+
+        Device oldDevice = new Device(savedDevice);
+        testNotifyEntityOneTimeMsgToEdgeServiceNever(savedDevice, savedDevice.getId(), savedDevice.getId(),
+                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED);
+        testNotificationUpdateGatewayNever();
 
         Assert.assertNotNull(savedDevice);
         Assert.assertNotNull(savedDevice.getId());
@@ -127,8 +139,14 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         Assert.assertNotNull(deviceCredentials.getCredentialsId());
         Assert.assertEquals(20, deviceCredentials.getCredentialsId().length());
 
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
         savedDevice.setName("My new device");
         doPost("/api/device", savedDevice, Device.class);
+
+        testNotifyEntityAllOneTime(savedDevice, savedDevice.getId(), savedDevice.getId(), savedTenant.getId(),
+                tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UPDATED);
+        testNotificationUpdateGatewayOneTime(savedDevice, oldDevice);
 
         Device foundDevice = doGet("/api/device/" + savedDevice.getId().getId(), Device.class);
         Assert.assertEquals(foundDevice.getName(), savedDevice.getName());
@@ -139,13 +157,35 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         Device device = new Device();
         device.setName(RandomStringUtils.randomAlphabetic(300));
         device.setType("default");
-        doPost("/api/device", device).andExpect(statusReason(containsString("length of name must be equal or less than 255")));
-        device.setName("Normal Name");
+
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
+        String msgError = "length of name must be equal or less than 255";
+        doPost("/api/device", device).andExpect(statusReason(containsString(msgError)));
+
+        testNotifyEntityEqualsOneTimeError(device, savedTenant.getId(),
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+        testNotificationUpdateGatewayNever();
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
+        device.setTenantId(savedTenant.getId());
+        msgError = "length of type must be equal or less than 255";
         device.setType(RandomStringUtils.randomAlphabetic(300));
-        doPost("/api/device", device).andExpect(statusReason(containsString("length of type must be equal or less than 255")));
+        doPost("/api/device", device).andExpect(statusReason(containsString(msgError)));
+
+        testNotifyEntityEqualsOneTimeError(device, savedTenant.getId(),
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+        testNotificationUpdateGatewayNever();
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
+        msgError = "length of label must be equal or less than 255";
         device.setType("Normal type");
         device.setLabel(RandomStringUtils.randomAlphabetic(300));
-        doPost("/api/device", device).andExpect(statusReason(containsString("length of label must be equal or less than 255")));
+        doPost("/api/device", device).andExpect(statusReason(containsString(msgError)));
+
+        testNotifyEntityEqualsOneTimeError(device, savedTenant.getId(),
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+        testNotificationUpdateGatewayNever();
     }
 
     @Test
@@ -155,7 +195,22 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
         loginDifferentTenant();
+
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
         doPost("/api/device", savedDevice, Device.class, status().isNotFound());
+
+        testNotifyEntityNever(savedDevice.getId(), savedDevice);
+        testNotificationUpdateGatewayNever();
+
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
+        doDelete("/api/device/" + savedDevice.getId().getId().toString())
+                .andExpect(status().isNotFound());
+
+        testNotifyEntityNever(savedDevice.getId(), savedDevice);
+        testNotificationUpdateGatewayNever();
+
         deleteDifferentTenant();
     }
 
@@ -173,12 +228,24 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
     @Test
     public void testFindDeviceTypesByTenantId() throws Exception {
         List<Device> devices = new ArrayList<>();
-        for (int i = 0; i < 3; i++) {
+
+        int cntEntity = 3;
+
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
+        for (int i = 0; i < cntEntity; i++) {
             Device device = new Device();
             device.setName("My device B" + i);
             device.setType("typeB");
             devices.add(doPost("/api/device", device, Device.class));
         }
+
+        testNotifyManyEntityManyTimeMsgToEdgeServiceNever(new Device(), new Device(),
+                savedTenant.getId(),
+                tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, cntEntity);
+        testNotificationUpdateGatewayNever();
+
         for (int i = 0; i < 7; i++) {
             Device device = new Device();
             device.setName("My device C" + i);
@@ -192,7 +259,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
             devices.add(doPost("/api/device", device, Device.class));
         }
         List<EntitySubtype> deviceTypes = doGetTyped("/api/device/types",
-                new TypeReference<List<EntitySubtype>>() {
+                new TypeReference<>() {
                 });
 
         Assert.assertNotNull(deviceTypes);
@@ -211,10 +278,14 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
 
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
         doDelete("/api/device/" + savedDevice.getId().getId())
                 .andExpect(status().isOk());
 
-//        gatewayNotificationsService.onDeviceDeleted(device);
+        testNotifyEntityOneTimeMsgToEdgeServiceNever(savedDevice, savedDevice.getId(), savedDevice.getId(), savedTenant.getId(),
+                tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.DELETED, savedDevice.getId().getId().toString());
+        testNotificationDeleteGatewayOneTime(savedDevice);
 
         doGet("/api/device/" + savedDevice.getId().getId())
                 .andExpect(status().isNotFound());
@@ -224,17 +295,33 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
     public void testSaveDeviceWithEmptyType() throws Exception {
         Device device = new Device();
         device.setName("My device");
+
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
         Device savedDevice = doPost("/api/device", device, Device.class);
         Assert.assertEquals("default", savedDevice.getType());
+
+        testNotifyEntityOneTimeMsgToEdgeServiceNever(savedDevice, savedDevice.getId(), savedDevice.getId(),
+                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED);
+        testNotificationUpdateGatewayNever();
     }
 
     @Test
     public void testSaveDeviceWithEmptyName() throws Exception {
         Device device = new Device();
         device.setType("default");
+
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
+        String msgError = "Device name should be specified";
         doPost("/api/device", device)
                 .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Device name should be specified")));
+                .andExpect(statusReason(containsString(msgError)));
+
+        testNotifyEntityEqualsOneTimeError(device, savedTenant.getId(),
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+        testNotificationUpdateGatewayNever();
     }
 
     @Test
@@ -248,16 +335,32 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         customer.setTitle("My customer");
         Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
 
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
         Device assignedDevice = doPost("/api/customer/" + savedCustomer.getId().getId()
                 + "/device/" + savedDevice.getId().getId(), Device.class);
         Assert.assertEquals(savedCustomer.getId(), assignedDevice.getCustomerId());
 
+        testNotifyEntityAllOneTime(assignedDevice, assignedDevice.getId(), assignedDevice.getId(), savedTenant.getId(),
+                savedCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ASSIGNED_TO_CUSTOMER,
+                assignedDevice.getId().getId().toString(), savedCustomer.getId().getId().toString(),
+                savedCustomer.getTitle());
+        testNotificationUpdateGatewayNever();
+
         Device foundDevice = doGet("/api/device/" + savedDevice.getId().getId(), Device.class);
         Assert.assertEquals(savedCustomer.getId(), foundDevice.getCustomerId());
+
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
 
         Device unassignedDevice =
                 doDelete("/api/customer/device/" + savedDevice.getId().getId(), Device.class);
         Assert.assertEquals(ModelConstants.NULL_UUID, unassignedDevice.getCustomerId().getId());
+
+        testNotifyEntityAllOneTime(unassignedDevice, unassignedDevice.getId(), unassignedDevice.getId(), savedTenant.getId(),
+                savedCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UNASSIGNED_FROM_CUSTOMER,
+                unassignedDevice.getId().getId().toString(), savedCustomer.getId().getId().toString(),
+                savedCustomer.getTitle());
+        testNotificationDeleteGatewayNever();
 
         foundDevice = doGet("/api/device/" + savedDevice.getId().getId(), Device.class);
         Assert.assertEquals(ModelConstants.NULL_UUID, foundDevice.getCustomerId().getId());
@@ -269,9 +372,15 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         device.setName("My device");
         device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
+
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
         doPost("/api/customer/" + Uuids.timeBased().toString()
                 + "/device/" + savedDevice.getId().getId())
                 .andExpect(status().isNotFound());
+
+        testNotifyEntityNever(savedDevice.getId(), savedDevice);
+        testNotificationUpdateGatewayNever();
     }
 
     @Test
@@ -290,7 +399,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         tenantAdmin2.setFirstName("Joe");
         tenantAdmin2.setLastName("Downs");
 
-        tenantAdmin2 = createUserAndLogin(tenantAdmin2, "testPassword1");
+        createUserAndLogin(tenantAdmin2, "testPassword1");
 
         Customer customer = new Customer();
         customer.setTitle("Different customer");
@@ -303,9 +412,14 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
 
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
         doPost("/api/customer/" + savedCustomer.getId().getId()
                 + "/device/" + savedDevice.getId().getId())
                 .andExpect(status().isForbidden());
+
+        testNotifyEntityNever(savedDevice.getId(), savedDevice);
+        testNotificationUpdateGatewayNever();
 
         loginSysAdmin();
 
@@ -335,8 +449,15 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         Assert.assertEquals(savedDevice.getId(), deviceCredentials.getDeviceId());
         deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
         deviceCredentials.setCredentialsId("access_token");
+
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
         doPost("/api/device/credentials", deviceCredentials)
                 .andExpect(status().isOk());
+
+        testNotifyEntityMsgToEdgePushMsgToCoreOneTime(savedDevice, savedDevice.getId(), savedDevice.getId(), savedTenant.getId(),
+                tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.CREDENTIALS_UPDATED, deviceCredentials);
+        testNotificationUpdateGatewayNever();
 
         DeviceCredentials foundDeviceCredentials =
                 doGet("/api/device/" + savedDevice.getId().getId() + "/credentials", DeviceCredentials.class);
@@ -347,8 +468,14 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
     @Test
     public void testSaveDeviceCredentialsWithEmptyDevice() throws Exception {
         DeviceCredentials deviceCredentials = new DeviceCredentials();
+
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
         doPost("/api/device/credentials", deviceCredentials)
                 .andExpect(status().isBadRequest());
+
+        testNotifyEntityNever(deviceCredentials.getDeviceId(), new Device());
+        testNotificationUpdateGatewayNever();
     }
 
     @Test
@@ -360,9 +487,18 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         DeviceCredentials deviceCredentials =
                 doGet("/api/device/" + savedDevice.getId().getId() + "/credentials", DeviceCredentials.class);
         deviceCredentials.setCredentialsType(null);
+
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
+        String msgError = "Device credentials type should be specified";
         doPost("/api/device/credentials", deviceCredentials)
                 .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Device credentials type should be specified")));
+                .andExpect(statusReason(containsString(msgError)));
+
+        testNotifyEntityIsNullOneTimeError(device, savedTenant.getId(),
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.CREDENTIALS_UPDATED,
+                new DataValidationException(msgError), deviceCredentials);
+        testNotificationUpdateGatewayNever();
     }
 
     @Test
@@ -374,9 +510,18 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         DeviceCredentials deviceCredentials =
                 doGet("/api/device/" + savedDevice.getId().getId() + "/credentials", DeviceCredentials.class);
         deviceCredentials.setCredentialsId(null);
+
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
+        String msgError = "Device credentials id should be specified";
         doPost("/api/device/credentials", deviceCredentials)
                 .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Device credentials id should be specified")));
+                .andExpect(statusReason(containsString(msgError)));
+
+        testNotifyEntityIsNullOneTimeError(device, savedTenant.getId(),
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.CREDENTIALS_UPDATED,
+                new DeviceCredentialsValidationException(msgError), deviceCredentials);
+        testNotificationUpdateGatewayNever();
     }
 
     @Test
@@ -392,9 +537,18 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         newDeviceCredentials.setDeviceId(deviceCredentials.getDeviceId());
         newDeviceCredentials.setCredentialsType(deviceCredentials.getCredentialsType());
         newDeviceCredentials.setCredentialsId(deviceCredentials.getCredentialsId());
+
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
+        String msgError = "Unable to update non-existent device credentials";
         doPost("/api/device/credentials", newDeviceCredentials)
                 .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Unable to update non-existent device credentials")));
+                .andExpect(statusReason(containsString(msgError)));
+
+        testNotifyEntityIsNullOneTimeError(device, savedTenant.getId(),
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.CREDENTIALS_UPDATED,
+                new DeviceCredentialsValidationException(msgError), newDeviceCredentials);
+        testNotificationUpdateGatewayNever();
     }
 
     @Test
@@ -406,26 +560,40 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         DeviceCredentials deviceCredentials =
                 doGet("/api/device/" + savedDevice.getId().getId() + "/credentials", DeviceCredentials.class);
         deviceCredentials.setDeviceId(new DeviceId(Uuids.timeBased()));
+
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
         doPost("/api/device/credentials", deviceCredentials)
                 .andExpect(status().isNotFound());
+
+        testNotifyEntityNever(savedDevice.getId(), savedDevice);
+        testNotificationUpdateGatewayNever();
     }
 
     @Test
     public void testFindTenantDevices() throws Exception {
         log.debug("testFindTenantDevices");
-        futures = new ArrayList<>(178);
-        for (int i = 0; i < 178; i++) {
+        int cntEntity = 178;
+
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
+        futures = new ArrayList<>(cntEntity);
+        for (int i = 0; i < cntEntity; i++) {
             Device device = new Device();
             device.setName("Device" + i);
             device.setType("default");
             futures.add(executor.submit(() ->
                     doPost("/api/device", device, Device.class)));
         }
-        log.debug("await create devices");
+
         List<Device> devices = Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS);
 
-        log.debug("start reading");
-        List<Device> loadedDevices = new ArrayList<>(178);
+        testNotifyManyEntityManyTimeMsgToEdgeServiceNever(new Device(), new Device(),
+                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, cntEntity);
+        testNotificationUpdateGatewayNever();
+
+        List<Device> loadedDevices = new ArrayList<>(cntEntity);
         PageLink pageLink = new PageLink(23);
         do {
             pageData = doGetTypedWithPageLink("/api/tenant/devices?",
@@ -437,11 +605,16 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        log.debug("asserting");
         assertThat(devices).containsExactlyInAnyOrderElementsOf(loadedDevices);
-        log.debug("delete devices async");
+
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
         deleteEntitiesAsync("/api/device/", loadedDevices, executor).get(TIMEOUT, TimeUnit.SECONDS);
-        log.debug("done");
+
+        testNotifyManyEntityManyTimeMsgToEdgeServiceNeverAdditionalInfoAny(new Device(), new Device(),
+                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.DELETED, cntEntity, 1);
+        testNotificationUpdateGatewayNever();
     }
 
     @Test
@@ -606,9 +779,12 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         customer.setTitle("Test customer");
         customer = doPost("/api/customer", customer, Customer.class);
         CustomerId customerId = customer.getId();
+        int cntEntity = 128;
 
-        futures = new ArrayList<>(128);
-        for (int i = 0; i < 128; i++) {
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
+        futures = new ArrayList<>(cntEntity);
+        for (int i = 0; i < cntEntity; i++) {
             Device device = new Device();
             device.setName("Device" + i);
             device.setType("default");
@@ -620,7 +796,12 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
 
         List<Device> devices = Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS);
 
-        List<Device> loadedDevices = new ArrayList<>(128);
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new Device(), new Device(),
+                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, ActionType.ASSIGNED_TO_CUSTOMER, cntEntity, cntEntity * 2);
+        testNotificationUpdateGatewayNever();
+
+        List<Device> loadedDevices = new ArrayList<>(cntEntity);
         PageLink pageLink = new PageLink(23);
         do {
             pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId() + "/devices?",
@@ -633,9 +814,14 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
 
         assertThat(devices).containsExactlyInAnyOrderElementsOf(loadedDevices);
 
-        log.debug("delete devices async");
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
         deleteEntitiesAsync("/api/customer/device/", loadedDevices, executor).get(TIMEOUT, TimeUnit.SECONDS);
-        log.debug("done");
+
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAnyAdditionalInfoAny(new Device(), new Device(),
+                savedTenant.getId(), customerId, tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.UNASSIGNED_FROM_CUSTOMER, ActionType.UNASSIGNED_FROM_CUSTOMER, cntEntity, cntEntity, 3);
+        testNotificationUpdateGatewayNever();
     }
 
     @Test
@@ -845,9 +1031,17 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         createUserAndLogin(user, "testPassword1");
 
         login("tenant2@thingsboard.org", "testPassword1");
+
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
         Device assignedDevice = doPost("/api/tenant/" + savedDifferentTenant.getId().getId() + "/device/" + savedDevice.getId().getId(), Device.class);
 
         doGet("/api/device/" + assignedDevice.getId().getId(), Device.class, status().isNotFound());
+
+        testNotifyEntityOneTimeMsgToEdgeServiceNever(assignedDevice, assignedDevice.getId(), assignedDevice.getId(),
+                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ASSIGNED_TO_TENANT, savedDifferentTenant.getId().getId().toString(), savedDifferentTenant.getTitle());
+        testNotificationUpdateGatewayNever();
 
         login("tenant9@thingsboard.org", "testPassword1");
 
@@ -871,16 +1065,31 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
 
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
         doPost("/api/edge/" + savedEdge.getId().getId()
                 + "/device/" + savedDevice.getId().getId(), Device.class);
+
+         testNotifyEntityAllOneTime(savedDevice, savedDevice.getId(), savedDevice.getId(),
+                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ASSIGNED_TO_EDGE,
+                savedDevice.getId().getId().toString(), savedEdge.getId().getId().toString(), savedEdge.getName());
+        testNotificationUpdateGatewayNever();
 
         pageData = doGetTypedWithPageLink("/api/edge/" + savedEdge.getId().getId() + "/devices?",
                 PAGE_DATA_DEVICE_TYPE_REF, new PageLink(100));
 
         Assert.assertEquals(1, pageData.getData().size());
 
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
         doDelete("/api/edge/" + savedEdge.getId().getId()
                 + "/device/" + savedDevice.getId().getId(), Device.class);
+
+        testNotifyEntityAllOneTime(savedDevice, savedDevice.getId(), savedDevice.getId(),
+                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.UNASSIGNED_FROM_EDGE, savedDevice.getId().getId().toString(), savedEdge.getId().getId().toString(), savedEdge.getName());
+        testNotificationUpdateGatewayNever();
 
         pageData = doGetTypedWithPageLink("/api/edge/" + savedEdge.getId().getId() + "/devices?",
                 PAGE_DATA_DEVICE_TYPE_REF, new PageLink(100));

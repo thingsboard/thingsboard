@@ -158,16 +158,16 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
 
     @Override
     public void notifyUpdateDeviceCredentials(TenantId tenantId, DeviceId deviceId, CustomerId customerId, Device device,
-                                              DeviceCredentials deviceCredentials, SecurityUser user) {
+                                              DeviceCredentials deviceCredentials, ActionType actionType, SecurityUser user) {
         tbClusterService.pushMsgToCore(new DeviceCredentialsUpdateNotificationMsg(tenantId, deviceCredentials.getDeviceId(), deviceCredentials), null);
-        sendEntityNotificationMsg(tenantId, deviceId, EdgeEventActionType.CREDENTIALS_UPDATED);
-        logEntityAction(tenantId, deviceId, device, customerId, ActionType.CREDENTIALS_UPDATED, user, deviceCredentials);
+        sendEntityNotificationMsg(tenantId, deviceId, edgeTypeByActionType(actionType));
+        logEntityAction(tenantId, deviceId, device, customerId, actionType, user, deviceCredentials);
     }
 
     @Override
     public void notifyAssignDeviceToTenant(TenantId tenantId, TenantId newTenantId, DeviceId deviceId, CustomerId customerId,
-                                           Device device, Tenant tenant, SecurityUser user, Object... additionalInfo) {
-        logEntityAction(tenantId, deviceId, device, customerId, ActionType.ASSIGNED_TO_TENANT, user, additionalInfo);
+                                           Device device, Tenant tenant, ActionType actionType, SecurityUser user, Object... additionalInfo) {
+        logEntityAction(tenantId, deviceId, device, customerId, actionType, user, additionalInfo);
         pushAssignedFromNotification(tenant, newTenantId, device);
     }
 
@@ -358,6 +358,8 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
                 return EdgeEventActionType.ASSIGNED_TO_EDGE;
             case UNASSIGNED_FROM_EDGE:
                 return EdgeEventActionType.UNASSIGNED_FROM_EDGE;
+            case CREDENTIALS_UPDATED:
+                return EdgeEventActionType.CREDENTIALS_UPDATED;
             default:
                 return null;
         }
