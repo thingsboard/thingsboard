@@ -382,12 +382,12 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                 } catch (Exception e) {
                     throw new LoadEntityException(entityData, e);
                 }
+                registerResult(ctx, entityType, importResult);
+
                 if (!importResult.isUpdatedAllExternalIds()) {
                     ctx.getToReimport().put(entityData.getEntity().getExternalId(), new ReimportTask(reimportBackup, ctx.getSettings()));
                     continue;
                 }
-
-                registerResult(ctx, entityType, importResult);
                 ctx.getImportedEntities().computeIfAbsent(entityType, t -> new HashSet<>())
                         .add(importResult.getSavedEntity().getId());
             }
@@ -405,7 +405,6 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                 ctx.setSettings(settings);
                 EntityImportResult<?> importResult = exportImportService.importEntity(ctx, entityData);
 
-                registerResult(ctx, externalId.getEntityType(), importResult);
                 ctx.getImportedEntities().computeIfAbsent(externalId.getEntityType(), t -> new HashSet<>())
                         .add(importResult.getSavedEntity().getId());
             } catch (Exception e) {
