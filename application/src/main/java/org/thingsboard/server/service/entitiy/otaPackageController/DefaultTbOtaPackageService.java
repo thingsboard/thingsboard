@@ -45,8 +45,10 @@ public class DefaultTbOtaPackageService extends AbstractTbEntityService implemen
         ActionType actionType = saveOtaPackageInfoRequest.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         try {
             OtaPackageInfo savedOtaPackageInfo = otaPackageService.saveOtaPackageInfo(new OtaPackageInfo(saveOtaPackageInfoRequest), saveOtaPackageInfoRequest.isUsesUrl());
-            notificationEntityService.notifyEntity(tenantId, savedOtaPackageInfo.getId(), savedOtaPackageInfo, null,
-                    actionType, user, null);
+
+            boolean sendToEdge = savedOtaPackageInfo.hasUrl() || savedOtaPackageInfo.isHasData();
+            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, savedOtaPackageInfo.getId(), savedOtaPackageInfo, user, actionType, sendToEdge, null);
+
             return savedOtaPackageInfo;
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.OTA_PACKAGE), saveOtaPackageInfoRequest, null,
@@ -61,8 +63,11 @@ public class DefaultTbOtaPackageService extends AbstractTbEntityService implemen
         OtaPackageId otaPackageId = otaPackageInfo.getId();
         try {
             otaPackageService.deleteOtaPackage(tenantId, otaPackageId);
-            notificationEntityService.notifyEntity(tenantId, otaPackageId, otaPackageInfo, null,
-                    ActionType.DELETED, user, null, otaPackageInfo.getId().toString());
+//            notificationEntityService.notifyEntity(tenantId, otaPackageId, otaPackageInfo, null,
+//                    ActionType.DELETED, user, null, otaPackageInfo.getId().toString());
+
+            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, otaPackageId, otaPackageInfo,
+                    user, ActionType.DELETED, true, null, otaPackageInfo.getId().toString());
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.OTA_PACKAGE), null, null,
                     ActionType.DELETED, user, e, otaPackageInfo.getId().toString());
@@ -95,8 +100,8 @@ public class DefaultTbOtaPackageService extends AbstractTbEntityService implemen
             otaPackage.setData(ByteBuffer.wrap(data));
             otaPackage.setDataSize((long) data.length);
             OtaPackageInfo savedOtaPackage = otaPackageService.saveOtaPackage(otaPackage);
-            notificationEntityService.notifyEntity(tenantId, savedOtaPackage.getId(), savedOtaPackage, null,
-                    ActionType.UPDATED, user, null);
+
+            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, savedOtaPackage.getId(), savedOtaPackage, user, ActionType.UPDATED, true, null);
             return savedOtaPackage;
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.OTA_PACKAGE), null, null,

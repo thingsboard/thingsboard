@@ -216,6 +216,7 @@ queue:
     bootstrap.servers: "${TB_KAFKA_SERVERS:localhost:9092}"
     acks: "${TB_KAFKA_ACKS:all}"
     retries: "${TB_KAFKA_RETRIES:1}"
+    compression.type: "${TB_KAFKA_COMPRESSION_TYPE:none}" # none or gzip
     batch.size: "${TB_KAFKA_BATCH_SIZE:16384}"
     linger.ms: "${TB_KAFKA_LINGER_MS:1}"
     max.request.size: "${TB_KAFKA_MAX_REQUEST_SIZE:1048576}"

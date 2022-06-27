@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const {logLevel, Kafka, CompressionTypes} = require('kafkajs');
+const {logLevel, Kafka, CompressionTypes, Partitioners} = require('kafkajs');
 
 const config = require('config'),
     JsInvokeMessageProcessor = require('../api/jsInvokeMessageProcessor'),
@@ -159,7 +159,7 @@ async function sendMessagesAsBatch(isImmediately) {
         }
 
         consumer = kafkaClient.consumer({groupId: 'js-executor-group'});
-        producer = kafkaClient.producer();
+        producer = kafkaClient.producer({ createPartitioner: Partitioners.DefaultPartitioner });
 
 /*
         //producer event instrumentation to debug

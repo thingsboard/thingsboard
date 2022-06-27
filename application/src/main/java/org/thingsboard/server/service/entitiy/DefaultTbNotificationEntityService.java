@@ -350,6 +350,10 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
                 return EdgeEventActionType.RELATION_ADD_OR_UPDATE;
             case RELATION_DELETED:
                 return EdgeEventActionType.RELATION_DELETED;
+            case ASSIGNED_TO_CUSTOMER:
+                return EdgeEventActionType.ASSIGNED_TO_CUSTOMER;
+            case UNASSIGNED_FROM_CUSTOMER:
+                return EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER;
             case ASSIGNED_TO_EDGE:
                 return EdgeEventActionType.ASSIGNED_TO_EDGE;
             case UNASSIGNED_FROM_EDGE:

@@ -23,7 +23,6 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -34,6 +33,8 @@ import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.List;
+
+import static org.thingsboard.server.service.entitiy.DefaultTbNotificationEntityService.edgeTypeByActionType;
 
 @Service
 @TbCoreComponent
@@ -47,7 +48,7 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
         try {
             Asset savedAsset = checkNotNull(assetService.saveAsset(asset));
             vcService.autoCommit(user, savedAsset.getId());
-            notificationEntityService.notifyCreateOrUpdateEntity(tenantId, savedAsset.getId(), asset, savedAsset.getCustomerId(), actionType, user);
+            notificationEntityService.notifyCreateOrUpdateEntity(tenantId, savedAsset.getId(), savedAsset, savedAsset.getCustomerId(), actionType, user);
             return savedAsset;
         } catch (Exception e) {
             notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.ASSET), asset, null, actionType, user, e);
@@ -80,7 +81,7 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
         try {
             Asset savedAsset = checkNotNull(assetService.assignAssetToCustomer(tenantId, assetId, customerId));
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, assetId, customerId, savedAsset,
-                    actionType, EdgeEventActionType.ASSIGNED_TO_CUSTOMER, user, true, customerId.toString(), customer.getName());
+                    actionType, edgeTypeByActionType(actionType), user, true, customerId.toString(), customer.getName());
 
             return savedAsset;
         } catch (Exception e) {
@@ -99,7 +100,7 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
             CustomerId customerId = customer.getId();
 
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, assetId, customerId, savedAsset,
-                    actionType, EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER, user,
+                    actionType, edgeTypeByActionType(actionType), user,
                     true, customerId.toString(), customer.getName());
 
             return savedAsset;

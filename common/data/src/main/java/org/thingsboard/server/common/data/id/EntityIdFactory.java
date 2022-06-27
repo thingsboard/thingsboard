@@ -107,6 +107,8 @@ public class EntityIdFactory {
                 return new WidgetsBundleId(uuid);
             case WIDGET_TYPE:
                 return new WidgetTypeId(uuid);
+            case OTA_PACKAGE:
+                return new OtaPackageId(uuid);
             case EDGE:
                 return new EdgeId(uuid);
         }

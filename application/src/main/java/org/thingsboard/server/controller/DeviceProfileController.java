@@ -108,7 +108,7 @@ public class DeviceProfileController extends BaseController {
         checkParameter(DEVICE_PROFILE_ID, strDeviceProfileId);
         try {
             DeviceProfileId deviceProfileId = new DeviceProfileId(toUUID(strDeviceProfileId));
-            return checkNotNull(deviceProfileService.findDeviceProfileInfoById(getTenantId(), deviceProfileId));
+            return new DeviceProfileInfo(checkDeviceProfileId(deviceProfileId, Operation.READ));
         } catch (Exception e) {
             throw handleException(e);
         }
