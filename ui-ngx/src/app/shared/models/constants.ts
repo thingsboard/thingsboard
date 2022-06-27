@@ -16,6 +16,7 @@
 
 import { InjectionToken } from '@angular/core';
 import { IModulesMap } from '@modules/common/modules-map.models';
+import { EntityType } from '@shared/models/entity-type.models';
 
 export const Constants = {
   serverErrorCode: {
@@ -37,6 +38,20 @@ export const Constants = {
     nonTokenBased: '/api/noauth'
   }
 };
+
+export const serverErrorCodesTranslations = new Map<number, string>([
+  [Constants.serverErrorCode.general, 'server-error.general'],
+  [Constants.serverErrorCode.authentication, 'server-error.authentication'],
+  [Constants.serverErrorCode.jwtTokenExpired, 'server-error.jwt-token-expired'],
+  [Constants.serverErrorCode.tenantTrialExpired, 'server-error.tenant-trial-expired'],
+  [Constants.serverErrorCode.credentialsExpired, 'server-error.credentials-expired'],
+  [Constants.serverErrorCode.permissionDenied, 'server-error.permission-denied'],
+  [Constants.serverErrorCode.invalidArguments, 'server-error.invalid-arguments'],
+  [Constants.serverErrorCode.badRequestParams, 'server-error.bad-request-params'],
+  [Constants.serverErrorCode.itemNotFound, 'server-error.item-not-found'],
+  [Constants.serverErrorCode.tooManyRequests, 'server-error.too-many-requests'],
+  [Constants.serverErrorCode.tooManyUpdates, 'server-error.too-many-updates'],
+]);
 
 export const MediaBreakpoints = {
   xs: 'screen and (max-width: 599px)',
@@ -135,7 +150,9 @@ export const HelpLinks = {
     widgetsConfigStatic: helpBaseUrl +  '/docs/user-guide/ui/dashboards#static',
     ruleNodePushToCloud: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#push-to-cloud',
     ruleNodePushToEdge: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#push-to-edge',
-    queue: helpBaseUrl + '/docs/user-guide/queue'
+    queue: helpBaseUrl + '/docs/user-guide/queue',
+    repositorySettings: helpBaseUrl + '/docs/user-guide/ui/repository-settings',
+    autoCommitSettings: helpBaseUrl + '/docs/user-guide/ui/auto-commit-settings',
   }
 };
 

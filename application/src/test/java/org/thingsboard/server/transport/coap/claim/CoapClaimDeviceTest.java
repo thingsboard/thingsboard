@@ -16,10 +16,8 @@
 package org.thingsboard.server.transport.coap.claim;
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.CoAP;
-import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.eclipse.californium.elements.exception.ConnectorException;
 import org.junit.After;
 import org.junit.Before;
@@ -34,6 +32,7 @@ import org.thingsboard.server.dao.device.claim.ClaimResponse;
 import org.thingsboard.server.dao.device.claim.ClaimResult;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.coap.AbstractCoapIntegrationTest;
+import org.thingsboard.server.transport.coap.CoapTestClient;
 import org.thingsboard.server.transport.coap.CoapTestConfigProperties;
 
 import java.io.IOException;
@@ -96,7 +95,7 @@ public class CoapClaimDeviceTest extends AbstractCoapIntegrationTest {
 
     protected void processTestClaimingDevice(boolean emptyPayload) throws Exception {
         log.warn("[testClaimingDevice] Device: {}, Transport type: {}", savedDevice.getName(), savedDevice.getType());
-        client = getCoapClient(FeatureType.CLAIM);
+        client = new CoapTestClient(accessToken, FeatureType.CLAIM);
         byte[] payloadBytes;
         byte[] failurePayloadBytes;
         if (emptyPayload) {
@@ -109,7 +108,7 @@ public class CoapClaimDeviceTest extends AbstractCoapIntegrationTest {
         validateClaimResponse(emptyPayload, client, payloadBytes, failurePayloadBytes);
     }
 
-    protected void validateClaimResponse(boolean emptyPayload, CoapClient client, byte[] payloadBytes, byte[] failurePayloadBytes) throws Exception {
+    protected void validateClaimResponse(boolean emptyPayload, CoapTestClient client, byte[] payloadBytes, byte[] failurePayloadBytes) throws Exception {
         postClaimRequest(client, failurePayloadBytes);
 
         loginUser(customerAdmin.getName(), CUSTOMER_USER_PASSWORD);
@@ -145,8 +144,8 @@ public class CoapClaimDeviceTest extends AbstractCoapIntegrationTest {
         assertEquals(claimResponse, ClaimResponse.CLAIMED);
     }
 
-    private void postClaimRequest(CoapClient client, byte[] payload) throws IOException, ConnectorException {
-        CoapResponse coapResponse = client.setTimeout((long) 60000).post(payload, MediaTypeRegistry.APPLICATION_JSON);
+    private void postClaimRequest(CoapTestClient client, byte[] payload) throws IOException, ConnectorException {
+        CoapResponse coapResponse = client.postMethod(payload);
         assertEquals(CoAP.ResponseCode.CREATED, coapResponse.getCode());
     }
 

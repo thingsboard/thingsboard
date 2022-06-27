@@ -25,7 +25,7 @@ import { isDefinedAndNotNull } from '@core/utils';
 @Component({
   selector: 'tb-default-tenant-profile-configuration',
   templateUrl: './default-tenant-profile-configuration.component.html',
-  styleUrls: [],
+  styleUrls: ['./default-tenant-profile-configuration.component.scss'],
   providers: [{
     provide: NG_VALUE_ACCESSOR,
     useExisting: forwardRef(() => DefaultTenantProfileConfigurationComponent),
@@ -35,7 +35,7 @@ import { isDefinedAndNotNull } from '@core/utils';
 export class DefaultTenantProfileConfigurationComponent implements ControlValueAccessor, OnInit {
 
   defaultTenantProfileConfigurationFormGroup: FormGroup;
-  rateLimitsPattern = '^(((\\d+):(\\d+)),)*((\\d+):(\\d+))$';
+  rateLimitsPattern = '([1-9]\\d*:[1-9]\\d*)(,[1-9]\\d*:[1-9]\\d*)*';
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -68,6 +68,8 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       transportDeviceMsgRateLimit: [null, [Validators.pattern(this.rateLimitsPattern)]],
       transportDeviceTelemetryMsgRateLimit: [null, [Validators.pattern(this.rateLimitsPattern)]],
       transportDeviceTelemetryDataPointsRateLimit: [null, [Validators.pattern(this.rateLimitsPattern)]],
+      tenantEntityExportRateLimit: [null, []],
+      tenantEntityImportRateLimit: [null, []],
       maxTransportMessages: [null, [Validators.required, Validators.min(0)]],
       maxTransportDataPoints: [null, [Validators.required, Validators.min(0)]],
       maxREExecutions: [null, [Validators.required, Validators.min(0)]],

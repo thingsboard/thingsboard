@@ -108,7 +108,7 @@ public class DeviceProfileController extends BaseController {
         checkParameter(DEVICE_PROFILE_ID, strDeviceProfileId);
         try {
             DeviceProfileId deviceProfileId = new DeviceProfileId(toUUID(strDeviceProfileId));
-            return checkNotNull(deviceProfileService.findDeviceProfileInfoById(getTenantId(), deviceProfileId));
+            return new DeviceProfileInfo(checkDeviceProfileId(deviceProfileId, Operation.READ));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -199,7 +199,7 @@ public class DeviceProfileController extends BaseController {
     @ResponseBody
     public DeviceProfile saveDeviceProfile(
             @ApiParam(value = "A JSON value representing the device profile.")
-            @RequestBody DeviceProfile deviceProfile) throws ThingsboardException {
+            @RequestBody DeviceProfile deviceProfile) throws Exception {
         deviceProfile.setTenantId(getTenantId());
         checkEntity(deviceProfile.getId(), deviceProfile, Resource.DEVICE_PROFILE);
         return tbDeviceProfileService.save(deviceProfile, getCurrentUser());

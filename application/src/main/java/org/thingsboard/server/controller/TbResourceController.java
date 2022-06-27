@@ -146,7 +146,7 @@ public class TbResourceController extends BaseController {
     @RequestMapping(value = "/resource", method = RequestMethod.POST)
     @ResponseBody
     public TbResource saveResource(@ApiParam(value = "A JSON value representing the Resource.")
-                                   @RequestBody TbResource resource) throws ThingsboardException {
+                                   @RequestBody TbResource resource) throws Exception {
         resource.setTenantId(getTenantId());
         checkEntity(resource.getId(), resource, Resource.TB_RESOURCE);
         return tbResourceService.save(resource, getCurrentUser());

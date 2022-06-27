@@ -41,7 +41,8 @@ public enum Resource {
     OTA_PACKAGE(EntityType.OTA_PACKAGE),
     EDGE(EntityType.EDGE),
     RPC(EntityType.RPC),
-    QUEUE(EntityType.QUEUE);
+    QUEUE(EntityType.QUEUE),
+    VERSION_CONTROL;
 
     private final EntityType entityType;
 

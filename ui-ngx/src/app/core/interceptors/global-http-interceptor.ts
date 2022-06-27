@@ -29,6 +29,7 @@ import { ActionLoadFinish, ActionLoadStart } from './load.actions';
 import { ActionNotificationShow } from '@app/core/notification/notification.actions';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
+import { parseHttpErrorMessage } from '@core/utils';
 
 let tmpHeaders = {};
 
@@ -131,41 +132,10 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
     }
 
     if (unhandled && !ignoreErrors) {
-      let error = null;
-      if (req.responseType === 'text') {
-        try {
-          error = errorResponse.error ? JSON.parse(errorResponse.error) : null;
-        } catch (e) {}
-      } else {
-        error = errorResponse.error;
-      }
-      if (error && !error.message) {
-        this.showError(this.prepareMessageFromData(error));
-      } else if (error && error.message) {
-        this.showError(error.message, error.timeout ? error.timeout : 0);
-      } else {
-        this.showError('Unhandled error code ' + (error ? error.status : '\'Unknown\''));
-      }
+      const errorMessageWithTimeout = parseHttpErrorMessage(errorResponse, this.translate, req.responseType);
+      this.showError(errorMessageWithTimeout.message, errorMessageWithTimeout.timeout);
     }
     return throwError(errorResponse);
-  }
-
-  private prepareMessageFromData(data) {
-    if (typeof data === 'object' && data.constructor === ArrayBuffer) {
-      const msg = String.fromCharCode.apply(null, new Uint8Array(data));
-      try {
-        const msgObj = JSON.parse(msg);
-        if (msgObj.message) {
-          return msgObj.message;
-        } else {
-          return msg;
-        }
-      } catch (e) {
-        return msg;
-      }
-    } else {
-      return data;
-    }
   }
 
   private retryRequest(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {

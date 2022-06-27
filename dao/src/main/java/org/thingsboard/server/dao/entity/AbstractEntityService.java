@@ -84,20 +84,16 @@ public abstract class AbstractEntityService {
     }
 
     protected void checkAssignedEntityViewsToEdge(TenantId tenantId, EntityId entityId, EdgeId edgeId) {
-        try {
-            List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityIdAsync(tenantId, entityId).get();
-            if (entityViews != null && !entityViews.isEmpty()) {
-                EntityView entityView = entityViews.get(0);
-                // TODO: @voba - refactor this blocking operation
-                Boolean relationExists = relationService.checkRelation(tenantId, edgeId, entityView.getId(),
-                        EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE).get();
-                if (relationExists) {
-                    throw new DataValidationException("Can't unassign device/asset from edge that is related to entity view and entity view is assigned to edge!");
-                }
+        List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityId(tenantId, entityId);
+        if (entityViews != null && !entityViews.isEmpty()) {
+            EntityView entityView = entityViews.get(0);
+            Boolean relationExists = relationService.checkRelation(
+                    tenantId, edgeId, entityView.getId(),
+                    EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE
+            );
+            if (relationExists) {
+                throw new DataValidationException("Can't unassign device/asset from edge that is related to entity view and entity view is assigned to edge!");
             }
-        } catch (Exception e) {
-            log.error("[{}] Exception while finding entity views for entityId [{}]", tenantId, entityId, e);
-            throw new RuntimeException("Exception while finding entity views for entityId [" + entityId + "]", e);
         }
     }
 

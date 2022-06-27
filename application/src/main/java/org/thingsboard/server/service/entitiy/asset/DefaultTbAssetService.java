@@ -41,11 +41,12 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
     private final AssetService assetService;
 
     @Override
-    public Asset save(Asset asset, User user) throws ThingsboardException {
+    public Asset save(Asset asset, User user) throws Exception {
         ActionType actionType = asset.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = asset.getTenantId();
         try {
             Asset savedAsset = checkNotNull(assetService.saveAsset(asset));
+            autoCommit(user, savedAsset.getId());
             notificationEntityService.notifyCreateOrUpdateEntity(tenantId, savedAsset.getId(), savedAsset,
                     asset.getCustomerId(), actionType, user);
             return savedAsset;

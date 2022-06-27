@@ -58,11 +58,12 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
     private final TenantService tenantService;
 
     @Override
-    public Device save(Device device, Device oldDevice, String accessToken, User user) throws ThingsboardException {
+    public Device save(Device device, Device oldDevice, String accessToken, User user) throws Exception {
         ActionType actionType = device.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = device.getTenantId();
         try {
             Device savedDevice = checkNotNull(deviceService.saveDeviceWithAccessToken(device, accessToken));
+            autoCommit(user, savedDevice.getId());
             notificationEntityService.notifyCreateOrUpdateDevice(tenantId, savedDevice.getId(), savedDevice.getCustomerId(),
                     savedDevice, oldDevice, actionType, user);
 

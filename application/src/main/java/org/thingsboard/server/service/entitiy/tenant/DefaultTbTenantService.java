@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
@@ -29,8 +28,10 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.entitiy.queue.TbQueueService;
 import org.thingsboard.server.service.install.InstallScripts;
+import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @TbCoreComponent
@@ -42,6 +43,7 @@ public class DefaultTbTenantService extends AbstractTbEntityService implements T
     private final InstallScripts installScripts;
     private final TbQueueService tbQueueService;
     private final TenantProfileService tenantProfileService;
+    private final EntitiesVersionControlService versionControlService;
 
     @Override
     public Tenant save(Tenant tenant) throws Exception {
@@ -64,10 +66,15 @@ public class DefaultTbTenantService extends AbstractTbEntityService implements T
     }
 
     @Override
-    public void delete(Tenant tenant) throws ThingsboardException {
-        TenantId tenantId = tenant.getId();
-        tenantService.deleteTenant(tenantId);
-        tenantProfileCache.evict(tenantId);
-        notificationEntityService.notifyDeleteTenant(tenant);
+    public void delete(Tenant tenant) throws Exception {
+        try {
+            TenantId tenantId = tenant.getId();
+            tenantService.deleteTenant(tenantId);
+            tenantProfileCache.evict(tenantId);
+            notificationEntityService.notifyDeleteTenant(tenant);
+            versionControlService.deleteVersionControlSettings(tenantId).get(1, TimeUnit.MINUTES);
+        } catch (Exception e) {
+            throw e;
+        }
     }
 }

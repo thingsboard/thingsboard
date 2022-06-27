@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
@@ -40,11 +41,13 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
+import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -61,7 +64,7 @@ public abstract class AbstractTbEntityService {
 
     @Autowired
     protected DbCallbackExecutorService dbExecutor;
-    @Autowired
+    @Autowired(required = false)
     protected TbNotificationEntityService notificationEntityService;
     @Autowired(required = false)
     protected EdgeService edgeService;
@@ -71,6 +74,8 @@ public abstract class AbstractTbEntityService {
     protected CustomerService customerService;
     @Autowired
     protected TbClusterService tbClusterService;
+    @Autowired(required = false)
+    private EntitiesVersionControlService vcService;
 
     protected ListenableFuture<Void> removeAlarmsByEntityId(TenantId tenantId, EntityId entityId) {
         ListenableFuture<PageData<AlarmInfo>> alarmsFuture =
@@ -126,5 +131,14 @@ public abstract class AbstractTbEntityService {
 
     protected <I extends EntityId> I emptyId(EntityType entityType) {
         return (I) EntityIdFactory.getByTypeAndUuid(entityType, ModelConstants.NULL_UUID);
+    }
+
+    protected ListenableFuture<UUID> autoCommit(User user, EntityId entityId) throws Exception {
+        if (vcService != null) {
+            return vcService.autoCommit(user, entityId);
+        } else {
+            // We do not support auto-commit for rule engine
+            return Futures.immediateFailedFuture(new RuntimeException("Operation not supported!"));
+        }
     }
 }

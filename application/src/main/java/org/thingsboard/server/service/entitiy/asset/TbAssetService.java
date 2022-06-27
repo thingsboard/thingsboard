@@ -26,7 +26,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 
 public interface TbAssetService {
 
-    Asset save(Asset asset, User user) throws ThingsboardException;
+    Asset save(Asset asset, User user) throws Exception;
 
     ListenableFuture<Void> delete(Asset asset, User user);
 

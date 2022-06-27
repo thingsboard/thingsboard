@@ -21,7 +21,6 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -35,14 +34,13 @@ import java.util.List;
 public class DefaultTbCustomerService extends AbstractTbEntityService implements TbCustomerService {
 
     @Override
-    public Customer save(Customer customer, User user) throws ThingsboardException {
+    public Customer save(Customer customer, User user) throws Exception {
         ActionType actionType = customer.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = customer.getTenantId();
-        CustomerId customerId = customer.getId();
         try {
             Customer savedCustomer = checkNotNull(customerService.saveCustomer(customer));
-            notificationEntityService.notifyCreateOrUpdateEntity(tenantId, savedCustomer.getId(), savedCustomer, customerId, actionType, user);
-
+            autoCommit(user, savedCustomer.getId());
+            notificationEntityService.notifyCreateOrUpdateEntity(tenantId, savedCustomer.getId(), savedCustomer, null, actionType, user);
             return savedCustomer;
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.CUSTOMER), customer, actionType, user, e);

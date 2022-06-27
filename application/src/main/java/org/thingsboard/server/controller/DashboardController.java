@@ -180,7 +180,7 @@ public class DashboardController extends BaseController {
     @ResponseBody
     public Dashboard saveDashboard(
             @ApiParam(value = "A JSON value representing the dashboard.")
-            @RequestBody Dashboard dashboard) throws ThingsboardException {
+            @RequestBody Dashboard dashboard) throws Exception {
         dashboard.setTenantId(getTenantId());
         checkEntity(dashboard.getId(), dashboard, Resource.DASHBOARD);
         return tbDashboardService.save(dashboard, getCurrentUser());

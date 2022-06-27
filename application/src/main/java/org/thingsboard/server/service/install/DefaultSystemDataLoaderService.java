@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -162,6 +163,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     @Getter
     private boolean persistActivityToTelemetry;
 
+    @Lazy
     @Autowired
     private QueueService queueService;
 
@@ -265,6 +267,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     @Override
     public void createAdminSettings() throws Exception {
         AdminSettings generalSettings = new AdminSettings();
+        generalSettings.setTenantId(TenantId.SYS_TENANT_ID);
         generalSettings.setKey("general");
         ObjectNode node = objectMapper.createObjectNode();
         node.put("baseUrl", "http://localhost:8080");
@@ -273,6 +276,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, generalSettings);
 
         AdminSettings mailSettings = new AdminSettings();
+        mailSettings.setTenantId(TenantId.SYS_TENANT_ID);
         mailSettings.setKey("mail");
         node = objectMapper.createObjectNode();
         node.put("mailFrom", "ThingsBoard <sysadmin@localhost.localdomain>");

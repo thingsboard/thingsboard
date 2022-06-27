@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EdgeUtils;
@@ -46,12 +47,15 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
+import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.service.edge.rpc.constructor.AdminSettingsMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.AlarmMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.AssetMsgConstructor;
@@ -61,6 +65,7 @@ import org.thingsboard.server.service.edge.rpc.constructor.DeviceMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.DeviceProfileMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.EntityDataMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.EntityViewMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.OtaPackageMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.RelationMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.RuleChainMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.UserMsgConstructor;
@@ -138,6 +143,16 @@ public abstract class BaseEdgeProcessor {
     protected WidgetTypeService widgetTypeService;
 
     @Autowired
+    protected OtaPackageService otaPackageService;
+
+    @Autowired
+    protected PartitionService partitionService;
+
+    @Autowired
+    @Lazy
+    protected TbQueueProducerProvider producerProvider;
+
+    @Autowired
     protected DataValidator<Device> deviceValidator;
 
     @Autowired
@@ -181,6 +196,9 @@ public abstract class BaseEdgeProcessor {
 
     @Autowired
     protected AdminSettingsMsgConstructor adminSettingsMsgConstructor;
+
+    @Autowired
+    protected OtaPackageMsgConstructor otaPackageMsgConstructor;
 
     @Autowired
     protected DbCallbackExecutorService dbCallbackExecutorService;

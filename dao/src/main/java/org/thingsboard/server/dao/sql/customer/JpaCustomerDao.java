@@ -19,6 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -68,4 +70,31 @@ public class JpaCustomerDao extends JpaAbstractSearchTextDao<CustomerEntity, Cus
     public Long countByTenantId(TenantId tenantId) {
         return customerRepository.countByTenantId(tenantId.getId());
     }
+
+    @Override
+    public Customer findByTenantIdAndExternalId(UUID tenantId, UUID externalId) {
+        return DaoUtil.getData(customerRepository.findByTenantIdAndExternalId(tenantId, externalId));
+    }
+
+    @Override
+    public Customer findByTenantIdAndName(UUID tenantId, String name) {
+        return findCustomersByTenantIdAndTitle(tenantId, name).orElse(null);
+    }
+
+    @Override
+    public PageData<Customer> findByTenantId(UUID tenantId, PageLink pageLink) {
+        return findCustomersByTenantId(tenantId, pageLink);
+    }
+
+    @Override
+    public CustomerId getExternalIdByInternal(CustomerId internalId) {
+        return Optional.ofNullable(customerRepository.getExternalIdById(internalId.getId()))
+                .map(CustomerId::new).orElse(null);
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.CUSTOMER;
+    }
+
 }

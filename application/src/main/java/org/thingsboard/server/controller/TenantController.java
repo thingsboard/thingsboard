@@ -131,7 +131,7 @@ public class TenantController extends BaseController {
     @RequestMapping(value = "/tenant/{tenantId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteTenant(@ApiParam(value = TENANT_ID_PARAM_DESCRIPTION)
-                             @PathVariable(TENANT_ID) String strTenantId) throws ThingsboardException {
+                             @PathVariable(TENANT_ID) String strTenantId) throws Exception {
         checkParameter(TENANT_ID, strTenantId);
         TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
         Tenant tenant = checkTenantId(tenantId, Operation.DELETE);
