@@ -69,14 +69,6 @@ public class CustomerImportService extends BaseEntityImportService<CustomerId, C
     }
 
     @Override
-    protected void onEntitySaved(SecurityUser user, Customer savedCustomer, Customer oldCustomer) throws ThingsboardException {
-        super.onEntitySaved(user, savedCustomer, oldCustomer);
-        if (oldCustomer != null) {
-            entityActionService.sendEntityNotificationMsgToEdge(user.getTenantId(), savedCustomer.getId(), EdgeEventActionType.UPDATED);
-        }
-    }
-
-    @Override
     public EntityType getEntityType() {
         return EntityType.CUSTOMER;
     }

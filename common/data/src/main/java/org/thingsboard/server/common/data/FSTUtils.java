@@ -13,29 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  mat-card.repository-settings {
-    margin: 8px;
-  }
-  .fields-group {
-    padding: 0 16px 8px;
-    margin-bottom: 10px;
-    border: 1px groove rgba(0, 0, 0, .25);
-    border-radius: 4px;
+package org.thingsboard.server.common.data;
 
-    legend {
-      color: rgba(0, 0, 0, .7);
-      width: fit-content;
+import lombok.extern.slf4j.Slf4j;
+import org.nustaq.serialization.FSTConfiguration;
+
+@Slf4j
+public class FSTUtils {
+
+    public static final FSTConfiguration CONFIG = FSTConfiguration.createDefaultConfiguration();
+
+    @SuppressWarnings("unchecked")
+    public static <T> T decode(byte[] byteArray) {
+        return byteArray != null && byteArray.length > 0 ? (T) CONFIG.asObject(byteArray) : null;
     }
 
-    legend + * {
-      display: block;
-      margin-top: 16px;
+    public static <T> byte[] encode(T msq) {
+        return CONFIG.asByteArray(msq);
     }
-  }
-}
-:host ::ng-deep {
-  .mat-checkbox-layout {
-    white-space: normal !important;
-  }
+
 }

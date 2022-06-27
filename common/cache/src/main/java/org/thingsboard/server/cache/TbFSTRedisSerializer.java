@@ -13,29 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  mat-card.repository-settings {
-    margin: 8px;
-  }
-  .fields-group {
-    padding: 0 16px 8px;
-    margin-bottom: 10px;
-    border: 1px groove rgba(0, 0, 0, .25);
-    border-radius: 4px;
+package org.thingsboard.server.cache;
 
-    legend {
-      color: rgba(0, 0, 0, .7);
-      width: fit-content;
+import org.springframework.data.redis.serializer.SerializationException;
+import org.thingsboard.server.common.data.FSTUtils;
+
+public class TbFSTRedisSerializer<K, V> implements TbRedisSerializer<K, V> {
+
+    @Override
+    public byte[] serialize(V value) throws SerializationException {
+        return FSTUtils.encode(value);
     }
 
-    legend + * {
-      display: block;
-      margin-top: 16px;
+    @Override
+    public V deserialize(K key, byte[] bytes) throws SerializationException {
+        return FSTUtils.decode(bytes);
     }
-  }
-}
-:host ::ng-deep {
-  .mat-checkbox-layout {
-    white-space: normal !important;
-  }
 }

@@ -34,6 +34,7 @@ import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.apiusage.RateLimitService;
+import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
 import org.thingsboard.server.service.sync.ie.exporting.EntityExportService;
 import org.thingsboard.server.service.sync.ie.exporting.impl.BaseEntityExportService;
 import org.thingsboard.server.service.sync.ie.exporting.impl.DefaultEntityExportService;
@@ -57,9 +58,9 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
     private final Map<EntityType, EntityExportService<?, ?, ?>> exportServices = new HashMap<>();
     private final Map<EntityType, EntityImportService<?, ?, ?>> importServices = new HashMap<>();
 
-    private final EntityActionService entityActionService;
     private final RelationService relationService;
     private final RateLimitService rateLimitService;
+    private final TbNotificationEntityService entityNotificationService;
 
     protected static final List<EntityType> SUPPORTED_ENTITY_TYPES = List.of(
             EntityType.CUSTOMER, EntityType.ASSET, EntityType.RULE_CHAIN,
@@ -109,10 +110,8 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
         relationService.saveRelations(ctx.getTenantId(), new ArrayList<>(ctx.getRelations()));
 
         for (EntityRelation relation : ctx.getRelations()) {
-            entityActionService.logEntityAction(ctx.getUser(), relation.getFrom(), null, null,
-                    ActionType.RELATION_ADD_OR_UPDATE, null, relation);
-            entityActionService.logEntityAction(ctx.getUser(), relation.getTo(), null, null,
-                    ActionType.RELATION_ADD_OR_UPDATE, null, relation);
+            entityNotificationService.notifyCreateOrUpdateOrDeleteRelation(ctx.getTenantId(), null,
+                    relation, ctx.getUser(), ActionType.RELATION_ADD_OR_UPDATE, null, relation);
         }
     }
 

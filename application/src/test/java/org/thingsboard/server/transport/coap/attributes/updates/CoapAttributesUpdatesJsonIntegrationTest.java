@@ -23,10 +23,11 @@ import org.thingsboard.server.common.data.CoapDeviceType;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.coap.CoapTestConfigProperties;
+import org.thingsboard.server.transport.coap.attributes.AbstractCoapAttributesIntegrationTest;
 
 @Slf4j
 @DaoSqlTest
-public class CoapAttributesUpdatesJsonIntegrationTest extends CoapAttributesUpdatesIntegrationTest {
+public class CoapAttributesUpdatesJsonIntegrationTest extends AbstractCoapAttributesIntegrationTest {
 
     @Before
     public void beforeTest() throws Exception {
@@ -45,11 +46,11 @@ public class CoapAttributesUpdatesJsonIntegrationTest extends CoapAttributesUpda
 
     @Test
     public void testSubscribeToAttributesUpdatesFromTheServer() throws Exception {
-        super.testSubscribeToAttributesUpdatesFromTheServer();
+        processJsonTestSubscribeToAttributesUpdates(false);
     }
 
     @Test
     public void testSubscribeToAttributesUpdatesFromTheServerWithEmptyCurrentStateNotification() throws Exception {
-        super.testSubscribeToAttributesUpdatesFromTheServerWithEmptyCurrentStateNotification();
+        processJsonTestSubscribeToAttributesUpdates(true);
     }
 }

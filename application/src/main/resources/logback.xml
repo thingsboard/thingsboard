@@ -25,26 +25,31 @@
         </encoder>
     </appender>
 
-    <logger name="org.thingsboard.server" level="INFO" />
-<!--    <logger name="org.springframework.jdbc.core" level="TRACE" />-->
-<!--    <logger name="org.hibernate.SQL" level="DEBUG" />-->
-<!--    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE" />-->
+    <logger name="org.thingsboard.server" level="INFO"/>
+    <logger name="org.apache.kafka.common.utils.AppInfoParser" level="WARN"/>
+    <logger name="org.apache.kafka.clients.consumer.ConsumerConfig" level="WARN"/>
+    <!-- To enable the logging of scanned rule engine components-->
+    <!--    <logger name="org.thingsboard.server.service.component.AnnotationComponentDiscoveryService" level="DEBUG" />-->
+    <!-- Other useful logs -->
+    <!--    <logger name="org.springframework.jdbc.core" level="TRACE" />-->
+    <!--    <logger name="org.hibernate.SQL" level="DEBUG" />-->
+    <!--    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE" />-->
 
-<!--    <logger name="org.thingsboard.server.service.queue" level="TRACE" />-->
-<!--    <logger name="org.thingsboard.server.service.transport" level="TRACE" />-->
-<!--    <logger name="org.thingsboard.server.queue.memory.InMemoryStorage" level="DEBUG" />-->
-<!--    <logger name="org.thingsboard.server.service.ttl.AbstractCleanUpService" level="DEBUG" />-->
+    <!--    <logger name="org.thingsboard.server.service.queue" level="TRACE" />-->
+    <!--    <logger name="org.thingsboard.server.service.transport" level="TRACE" />-->
+    <!--    <logger name="org.thingsboard.server.queue.memory.InMemoryStorage" level="DEBUG" />-->
+    <!--    <logger name="org.thingsboard.server.service.ttl.AbstractCleanUpService" level="DEBUG" />-->
 
-<!--    <logger name="org.thingsboard.server.service.subscription" level="TRACE"/>-->
-<!--    <logger name="org.thingsboard.server.service.telemetry" level="TRACE"/>-->
-<!--    <logger name="org.eclipse.californium.scandium.DTLSConnector" level="TRACE" />-->
-<!--    <logger name="org.eclipse.californium.scandium.dtls.Handshaker" level="DEBUG" />-->
+    <!--    <logger name="org.thingsboard.server.service.subscription" level="TRACE"/>-->
+    <!--    <logger name="org.thingsboard.server.service.telemetry" level="TRACE"/>-->
+    <!--    <logger name="org.eclipse.californium.scandium.DTLSConnector" level="TRACE" />-->
+    <!--    <logger name="org.eclipse.californium.scandium.dtls.Handshaker" level="DEBUG" />-->
 
     <!-- Top Rule Nodes by max execution time -->
-<!--    <logger name="org.thingsboard.server.service.queue.TbMsgPackProcessingContext" level="DEBUG" /> -->
+    <!--    <logger name="org.thingsboard.server.service.queue.TbMsgPackProcessingContext" level="DEBUG" /> -->
 
-<!-- MQTT transport debug -->
-<!--    <logger name="org.thingsboard.server.transport.mqtt.MqttTransportHandler" level="DEBUG" /> -->
+    <!-- MQTT transport debug -->
+    <!--    <logger name="org.thingsboard.server.transport.mqtt.MqttTransportHandler" level="DEBUG" /> -->
 
     <logger name="com.microsoft.azure.servicebus.primitives.CoreMessageReceiver" level="OFF" />
 

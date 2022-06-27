@@ -20,12 +20,15 @@ import lombok.Builder;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.EntityId;
 
+import java.io.Serializable;
 import java.util.List;
 
 @Data
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class EntityLoadError {
+public class EntityLoadError implements Serializable {
+
+    private static final long serialVersionUID = 7538450180582109391L;
 
     private String type;
     private EntityId source;

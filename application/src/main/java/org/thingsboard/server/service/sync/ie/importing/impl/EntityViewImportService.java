@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -64,9 +65,8 @@ public class EntityViewImportService extends BaseEntityImportService<EntityViewI
     protected void onEntitySaved(SecurityUser user, EntityView savedEntityView, EntityView oldEntityView) throws ThingsboardException {
         tbEntityViewService.updateEntityViewAttributes(user, savedEntityView, oldEntityView);
         super.onEntitySaved(user, savedEntityView, oldEntityView);
-        if (oldEntityView != null) {
-            entityActionService.sendEntityNotificationMsgToEdge(user.getTenantId(), savedEntityView.getId(), EdgeEventActionType.UPDATED);
-        }
+        clusterService.broadcastEntityStateChangeEvent(savedEntityView.getTenantId(), savedEntityView.getId(),
+                oldEntityView == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
     }
 
     @Override

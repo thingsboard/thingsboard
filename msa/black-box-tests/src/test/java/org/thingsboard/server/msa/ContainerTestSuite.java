@@ -47,6 +47,7 @@ public class ContainerTestSuite {
     private static final String SOURCE_DIR = "./../../docker/";
     private static final String TB_CORE_LOG_REGEXP = ".*Starting polling for events.*";
     private static final String TRANSPORTS_LOG_REGEXP = ".*Going to recalculate partitions.*";
+    private static final String TB_VC_LOG_REGEXP = TRANSPORTS_LOG_REGEXP;
 
     private static DockerComposeContainer<?> testContainer;
 
@@ -77,7 +78,8 @@ public class ContainerTestSuite {
                     }
                 }
 
-                List<File> composeFiles = new ArrayList<>(Arrays.asList(new File(targetDir + "docker-compose.yml"),
+                List<File> composeFiles = new ArrayList<>(Arrays.asList(
+                        new File(targetDir + "docker-compose.yml"),
                         new File(targetDir + "docker-compose.volumes.yml"),
                         IS_HYBRID_MODE
                                 ? new File(targetDir + "docker-compose.hybrid.yml")
@@ -85,11 +87,11 @@ public class ContainerTestSuite {
                         new File(targetDir + "docker-compose.postgres.volumes.yml"),
                         new File(targetDir + "docker-compose.kafka.yml"),
                         IS_REDIS_CLUSTER
-                                ? new File("./../../docker/docker-compose.redis-cluster.yml")
-                                : new File("./../../docker/docker-compose.redis.yml"),
+                                ? new File(targetDir + "docker-compose.redis-cluster.yml")
+                                : new File(targetDir + "docker-compose.redis.yml"),
                         IS_REDIS_CLUSTER
-                                ? new File("./../../docker/docker-compose.redis-cluster.volumes.yml")
-                                : new File("./../../docker/docker-compose.redis.volumes.yml")));
+                                ? new File(targetDir + "docker-compose.redis-cluster.volumes.yml")
+                                : new File(targetDir + "docker-compose.redis.volumes.yml")));
 
                 if (IS_HYBRID_MODE) {
                     composeFiles.add(new File(targetDir + "docker-compose.cassandra.volumes.yml"));
@@ -107,7 +109,9 @@ public class ContainerTestSuite {
                         .waitingFor("tb-http-transport1", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(Duration.ofSeconds(400)))
                         .waitingFor("tb-http-transport2", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(Duration.ofSeconds(400)))
                         .waitingFor("tb-mqtt-transport1", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(Duration.ofSeconds(400)))
-                        .waitingFor("tb-mqtt-transport2", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(Duration.ofSeconds(400)));
+                        .waitingFor("tb-mqtt-transport2", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(Duration.ofSeconds(400)))
+                        .waitingFor("tb-vc-executor1", Wait.forLogMessage(TB_VC_LOG_REGEXP, 1).withStartupTimeout(Duration.ofSeconds(400)))
+                        .waitingFor("tb-vc-executor2", Wait.forLogMessage(TB_VC_LOG_REGEXP, 1).withStartupTimeout(Duration.ofSeconds(400)));
             } catch (Exception e) {
                 log.error("Failed to create test container", e);
                 fail("Failed to create test container");

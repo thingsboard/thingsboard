@@ -178,13 +178,15 @@ export interface EntityTypeLoadResult {
 
 export enum EntityLoadErrorType {
   DEVICE_CREDENTIALS_CONFLICT = 'DEVICE_CREDENTIALS_CONFLICT',
-  MISSING_REFERENCED_ENTITY = 'MISSING_REFERENCED_ENTITY'
+  MISSING_REFERENCED_ENTITY = 'MISSING_REFERENCED_ENTITY',
+  RUNTIME = 'RUNTIME'
 }
 
 export const entityLoadErrorTranslationMap = new Map<EntityLoadErrorType, string>(
   [
     [EntityLoadErrorType.DEVICE_CREDENTIALS_CONFLICT, 'version-control.device-credentials-conflict'],
-    [EntityLoadErrorType.MISSING_REFERENCED_ENTITY, 'version-control.missing-referenced-entity']
+    [EntityLoadErrorType.MISSING_REFERENCED_ENTITY, 'version-control.missing-referenced-entity'],
+    [EntityLoadErrorType.RUNTIME, 'version-control.runtime-failed']
   ]
 );
 
@@ -192,6 +194,7 @@ export interface EntityLoadError {
   type: EntityLoadErrorType;
   source: EntityId;
   target: EntityId;
+  message?: string;
 }
 
 export interface VersionLoadResult {
@@ -228,7 +231,6 @@ export interface RuleChainExportData extends EntityExportData<RuleChain> {
 export interface EntityDataDiff {
   currentVersion: EntityExportData<any>;
   otherVersion: EntityExportData<any>;
-  rawDiff: string;
 }
 
 export function entityExportDataToJsonString(data: EntityExportData<any>): string {

@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<section style="min-width: 800px;">
+<section style="min-width: 600px;">
   <section *ngIf="!versionCreateResult$">
     <mat-toolbar>
       <h2>{{ 'version-control.create-entities-version' | translate }}</h2>
@@ -35,7 +35,8 @@
           <mat-form-field class="mat-block" fxFlex>
             <mat-label translate>version-control.version-name</mat-label>
             <input required matInput formControlName="versionName">
-            <mat-error *ngIf="createVersionFormGroup.get('versionName').hasError('required')">
+            <mat-error *ngIf="createVersionFormGroup.get('versionName').hasError('required') ||
+                              createVersionFormGroup.get('versionName').hasError('pattern')">
               {{ 'version-control.version-name-required' | translate }}
             </mat-error>
           </mat-form-field>

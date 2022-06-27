@@ -174,9 +174,11 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     private <T> T getStatus(SecurityUser user, UUID requestId, Function<VersionControlTaskCacheEntry, T> getter) throws ThingsboardException {
         var cacheEntry = taskCache.get(requestId);
         if (cacheEntry == null || cacheEntry.get() == null) {
+            log.debug("[{}] No cache record: {}", requestId, cacheEntry);
             throw new ThingsboardException(ThingsboardErrorCode.ITEM_NOT_FOUND);
         } else {
             var entry = cacheEntry.get();
+            log.debug("[{}] Cache get: {}", requestId, entry);
             var result = getter.apply(entry);
             if (result == null) {
                 throw new ThingsboardException(ThingsboardErrorCode.BAD_REQUEST_PARAMS);
@@ -362,6 +364,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                 .build();
     }
 
+    @SneakyThrows
     @SuppressWarnings({"rawtypes", "unchecked"})
     private void importEntities(EntitiesImportCtx ctx, EntityType entityType) {
         int limit = 100;
@@ -373,9 +376,9 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
             } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
             }
+            log.debug("[{}] Loading {} entities pack ({})", ctx.getTenantId(), entityType, entityDataList.size());
             for (EntityExportData entityData : entityDataList) {
                 EntityExportData reimportBackup = JacksonUtil.clone(entityData);
-                log.debug("[{}] Loading {} entities", ctx.getTenantId(), entityType);
                 EntityImportResult<?> importResult;
                 try {
                     importResult = exportImportService.importEntity(ctx, entityData);
@@ -391,6 +394,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                 ctx.getImportedEntities().computeIfAbsent(entityType, t -> new HashSet<>())
                         .add(importResult.getSavedEntity().getId());
             }
+            log.debug("Imported {} pack for tenant {}", entityType, ctx.getTenantId());
             offset += limit;
         } while (entityDataList.size() == limit);
     }
@@ -456,18 +460,20 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         EntityId externalId = ((ExportableEntity<EntityId>) entity).getExternalId();
         if (externalId == null) externalId = entityId;
 
-        return transformAsync(gitServiceQueue.getEntity(user.getTenantId(), versionId, externalId),
+        return transform(gitServiceQueue.getEntity(user.getTenantId(), versionId, externalId),
                 otherVersion -> {
                     SimpleEntitiesExportCtx ctx = new SimpleEntitiesExportCtx(user, null, null, EntityExportSettings.builder()
                             .exportRelations(otherVersion.hasRelations())
                             .exportAttributes(otherVersion.hasAttributes())
                             .exportCredentials(otherVersion.hasCredentials())
                             .build());
-                    EntityExportData<?> currentVersion = exportImportService.exportEntity(ctx, entityId);
-                    return transform(gitServiceQueue.getContentsDiff(user.getTenantId(),
-                            JacksonUtil.toPrettyString(currentVersion.sort()),
-                            JacksonUtil.toPrettyString(otherVersion.sort())),
-                            rawDiff -> new EntityDataDiff(currentVersion, otherVersion, rawDiff), MoreExecutors.directExecutor());
+                    EntityExportData<?> currentVersion;
+                    try {
+                        currentVersion = exportImportService.exportEntity(ctx, entityId);
+                    } catch (ThingsboardException e) {
+                        throw new RuntimeException(e);
+                    }
+                    return new EntityDataDiff(currentVersion.sort(), otherVersion.sort());
                 }, MoreExecutors.directExecutor());
     }
 

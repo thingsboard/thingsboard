@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -119,14 +120,15 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
             RuleChainMetaData newMD = exportData.getMetaData();
             RuleChainMetaData existingMD = ruleChainService.loadRuleChainMetaData(ctx.getTenantId(), prepared.getId());
             existingMD.setRuleChainId(null);
-            different = newMD.equals(existingMD);
+            different = !newMD.equals(existingMD);
         }
         return different;
     }
 
     @Override
     protected void onEntitySaved(SecurityUser user, RuleChain savedRuleChain, RuleChain oldRuleChain) throws ThingsboardException {
-        super.onEntitySaved(user, savedRuleChain, oldRuleChain);
+        entityActionService.logEntityAction(user, savedRuleChain.getId(), savedRuleChain, null,
+                oldRuleChain == null ? ActionType.ADDED : ActionType.UPDATED, null);
         if (savedRuleChain.getType() == RuleChainType.CORE) {
             clusterService.broadcastEntityStateChangeEvent(user.getTenantId(), savedRuleChain.getId(),
                     oldRuleChain == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);

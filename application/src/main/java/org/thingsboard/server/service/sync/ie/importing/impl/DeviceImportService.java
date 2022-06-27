@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -93,8 +94,8 @@ public class DeviceImportService extends BaseEntityImportService<DeviceId, Devic
 
     @Override
     protected void onEntitySaved(SecurityUser user, Device savedDevice, Device oldDevice) throws ThingsboardException {
-        super.onEntitySaved(user, savedDevice, oldDevice);
-        clusterService.onDeviceUpdated(savedDevice, oldDevice);
+        entityNotificationService.notifyCreateOrUpdateDevice(user.getTenantId(), savedDevice.getId(), savedDevice.getCustomerId(),
+                savedDevice, oldDevice, oldDevice == null ? ActionType.ADDED : ActionType.UPDATED, user);
     }
 
     @Override

@@ -128,7 +128,7 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
     }
 
     @Override
-    public void notifyCreateOruUpdateTenant(Tenant tenant, ComponentLifecycleEvent event) {
+    public void notifyCreateOrUpdateTenant(Tenant tenant, ComponentLifecycleEvent event) {
         tbClusterService.onTenantChange(tenant, null);
         tbClusterService.broadcastEntityStateChangeEvent(tenant.getId(), tenant.getId(), event);
     }

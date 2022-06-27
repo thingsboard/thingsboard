@@ -64,8 +64,6 @@ public interface GitVersionControlQueueService {
 
     ListenableFuture<List<EntityVersionsDiff>> getVersionsDiff(TenantId tenantId, EntityType entityType, EntityId externalId, String versionId1, String versionId2);
 
-    ListenableFuture<String> getContentsDiff(TenantId tenantId, String rawEntityData1, String rawEntityData2);
-
     ListenableFuture<Void> initRepository(TenantId tenantId, RepositorySettings settings);
 
     ListenableFuture<Void> testRepository(TenantId tenantId, RepositorySettings settings);
