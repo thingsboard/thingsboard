@@ -16,14 +16,17 @@
 package org.thingsboard.server.cache;
 
 import org.springframework.data.redis.serializer.SerializationException;
-import org.springframework.lang.Nullable;
+import org.thingsboard.server.common.data.FSTUtils;
 
-public interface TbRedisSerializer<K, T> {
+public class TbFSTRedisSerializer<K, V> implements TbRedisSerializer<K, V> {
 
-    @Nullable
-    byte[] serialize(@Nullable T t) throws SerializationException;
+    @Override
+    public byte[] serialize(V value) throws SerializationException {
+        return FSTUtils.encode(value);
+    }
 
-    @Nullable
-    T deserialize(K key, @Nullable byte[] bytes) throws SerializationException;
-
+    @Override
+    public V deserialize(K key, byte[] bytes) throws SerializationException {
+        return FSTUtils.decode(bytes);
+    }
 }

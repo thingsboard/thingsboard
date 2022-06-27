@@ -81,7 +81,7 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
         try {
             Asset savedAsset = checkNotNull(assetService.assignAssetToCustomer(tenantId, assetId, customerId));
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, assetId, customerId, savedAsset,
-                    actionType, user, true, customerId.toString(), customer.getName());
+                    actionType, user, true, assetId.toString(), customerId.toString(), customer.getName());
 
             return savedAsset;
         } catch (Exception e) {
@@ -98,7 +98,7 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
             Asset savedAsset = checkNotNull(assetService.unassignAssetFromCustomer(tenantId, assetId));
             CustomerId customerId = customer.getId();
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, assetId, customerId, savedAsset,
-                    actionType, user, true, customerId.toString(), customer.getName());
+                    actionType, user, true, assetId.toString(), customerId.toString(), customer.getName());
 
             return savedAsset;
         } catch (Exception e) {

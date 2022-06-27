@@ -15,19 +15,14 @@
  */
 package org.thingsboard.server.service.sync.vc;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.serializer.RedisSerializer;
-import org.springframework.data.redis.serializer.SerializationException;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.CacheSpecsMap;
 import org.thingsboard.server.cache.RedisTbTransactionalCache;
 import org.thingsboard.server.cache.TBRedisCacheConfiguration;
-import org.thingsboard.server.cache.TbRedisSerializer;
+import org.thingsboard.server.cache.TbFSTRedisSerializer;
 import org.thingsboard.server.common.data.CacheConstants;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.UUID;
 
@@ -36,6 +31,6 @@ import java.util.UUID;
 public class VersionControlTaskRedisCache extends RedisTbTransactionalCache<UUID, VersionControlTaskCacheEntry> {
 
     public VersionControlTaskRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
-        super(CacheConstants.VERSION_CONTROL_TASK_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbRedisSerializer<>());
+        super(CacheConstants.VERSION_CONTROL_TASK_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbFSTRedisSerializer<>());
     }
 }

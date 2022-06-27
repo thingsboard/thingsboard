@@ -175,12 +175,12 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantCacheKe
         log.trace("Executing deleteTenant [{}]", tenantId);
         Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         entityViewService.deleteEntityViewsByTenantId(tenantId);
-        customerService.deleteCustomersByTenantId(tenantId);
         widgetsBundleService.deleteWidgetsBundlesByTenantId(tenantId);
         assetService.deleteAssetsByTenantId(tenantId);
         deviceService.deleteDevicesByTenantId(tenantId);
         deviceProfileService.deleteDeviceProfilesByTenantId(tenantId);
         dashboardService.deleteDashboardsByTenantId(tenantId);
+        customerService.deleteCustomersByTenantId(tenantId);
         edgeService.deleteEdgesByTenantId(tenantId);
         userService.deleteTenantAdmins(tenantId);
         ruleChainService.deleteRuleChainsByTenantId(tenantId);
