@@ -67,14 +67,10 @@ public class DefaultTbTenantService extends AbstractTbEntityService implements T
 
     @Override
     public void delete(Tenant tenant) throws Exception {
-        try {
-            TenantId tenantId = tenant.getId();
-            tenantService.deleteTenant(tenantId);
-            tenantProfileCache.evict(tenantId);
-            notificationEntityService.notifyDeleteTenant(tenant);
-            versionControlService.deleteVersionControlSettings(tenantId).get(1, TimeUnit.MINUTES);
-        } catch (Exception e) {
-            throw e;
-        }
+        TenantId tenantId = tenant.getId();
+        tenantService.deleteTenant(tenantId);
+        tenantProfileCache.evict(tenantId);
+        notificationEntityService.notifyDeleteTenant(tenant);
+        versionControlService.deleteVersionControlSettings(tenantId).get(1, TimeUnit.MINUTES);
     }
 }

@@ -21,11 +21,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.EntityType;
 
+import java.io.Serializable;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class EntityTypeLoadResult {
+public class EntityTypeLoadResult implements Serializable {
+    private static final long serialVersionUID = -8428039809651395241L;
+
     private EntityType entityType;
     private int created;
     private int updated;

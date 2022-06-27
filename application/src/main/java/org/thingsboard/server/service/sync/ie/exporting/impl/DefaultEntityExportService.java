@@ -30,7 +30,7 @@ import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.sync.ie.AttributeExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.dao.attributes.AttributesService;
-import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.ie.exporting.EntityExportService;
 import org.thingsboard.server.service.sync.ie.exporting.ExportableEntitiesService;
@@ -55,7 +55,7 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
     @Lazy
     protected ExportableEntitiesService exportableEntitiesService;
     @Autowired
-    private RelationService relationService;
+    private RelationDao relationDao;
     @Autowired
     private AttributesService attributesService;
 
@@ -99,10 +99,10 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
     private List<EntityRelation> exportRelations(EntitiesExportCtx<?> ctx, E entity) throws ThingsboardException {
         List<EntityRelation> relations = new ArrayList<>();
 
-        List<EntityRelation> inboundRelations = relationService.findByTo(ctx.getTenantId(), entity.getId(), RelationTypeGroup.COMMON);
+        List<EntityRelation> inboundRelations = relationDao.findAllByTo(ctx.getTenantId(), entity.getId(), RelationTypeGroup.COMMON);
         relations.addAll(inboundRelations);
 
-        List<EntityRelation> outboundRelations = relationService.findByFrom(ctx.getTenantId(), entity.getId(), RelationTypeGroup.COMMON);
+        List<EntityRelation> outboundRelations = relationDao.findAllByFrom(ctx.getTenantId(), entity.getId(), RelationTypeGroup.COMMON);
         relations.addAll(outboundRelations);
         return relations;
     }

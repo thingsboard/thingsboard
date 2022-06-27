@@ -42,7 +42,7 @@ public class DefaultTbEntityRelationService extends AbstractTbEntityService impl
     public void save(TenantId tenantId, CustomerId customerId, EntityRelation relation, User user) throws ThingsboardException {
         try {
             relationService.saveRelation(tenantId, relation);
-            notificationEntityService.notifyCreateOrUpdateRelation(tenantId, customerId,
+            notificationEntityService.notifyRelation(tenantId, customerId,
                     relation, user, ActionType.RELATION_ADD_OR_UPDATE, relation);
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, relation.getFrom(), null, customerId,
@@ -60,7 +60,7 @@ public class DefaultTbEntityRelationService extends AbstractTbEntityService impl
             if (!found) {
                 throw new ThingsboardException("Requested item wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND);
             }
-            notificationEntityService.notifyCreateOrUpdateRelation(tenantId, customerId,
+            notificationEntityService.notifyRelation(tenantId, customerId,
                     relation, user, ActionType.RELATION_DELETED, relation);
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, relation.getFrom(), null, customerId,

@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -52,6 +51,7 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
         deviceProfile.setDefaultDashboardId(idProvider.getInternalId(deviceProfile.getDefaultDashboardId()));
         deviceProfile.setFirmwareId(getOldEntityField(old, DeviceProfile::getFirmwareId));
         deviceProfile.setSoftwareId(getOldEntityField(old, DeviceProfile::getSoftwareId));
+        deviceProfile.setDefaultQueueId(getOldEntityField(old, DeviceProfile::getDefaultQueueId));
         return deviceProfile;
     }
 
@@ -62,15 +62,13 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
 
     @Override
     protected void onEntitySaved(User user, DeviceProfile savedDeviceProfile, DeviceProfile oldDeviceProfile) throws ThingsboardException {
-        super.onEntitySaved(user, savedDeviceProfile, oldDeviceProfile);
         clusterService.onDeviceProfileChange(savedDeviceProfile, null);
         clusterService.broadcastEntityStateChangeEvent(user.getTenantId(), savedDeviceProfile.getId(),
                 oldDeviceProfile == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
-        entityActionService.sendEntityNotificationMsgToEdge(user.getTenantId(), savedDeviceProfile.getId(),
-                oldDeviceProfile == null ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
         otaPackageStateService.update(savedDeviceProfile,
                 oldDeviceProfile != null && !Objects.equals(oldDeviceProfile.getFirmwareId(), savedDeviceProfile.getFirmwareId()),
                 oldDeviceProfile != null && !Objects.equals(oldDeviceProfile.getSoftwareId(), savedDeviceProfile.getSoftwareId()));
+        super.onEntitySaved(user, savedDeviceProfile, oldDeviceProfile);
     }
 
     @Override

@@ -94,36 +94,32 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
 
     @Override
     public void updateEntityViewAttributes(TenantId tenantId, EntityView savedEntityView, EntityView oldEntityView, User user) throws ThingsboardException {
-        try {
-            List<ListenableFuture<?>> futures = new ArrayList<>();
+        List<ListenableFuture<?>> futures = new ArrayList<>();
 
-            if (oldEntityView != null) {
-                if (oldEntityView.getKeys() != null && oldEntityView.getKeys().getAttributes() != null) {
-                    futures.add(deleteAttributesFromEntityView(oldEntityView, DataConstants.CLIENT_SCOPE, oldEntityView.getKeys().getAttributes().getCs(), user));
-                    futures.add(deleteAttributesFromEntityView(oldEntityView, DataConstants.SERVER_SCOPE, oldEntityView.getKeys().getAttributes().getSs(), user));
-                    futures.add(deleteAttributesFromEntityView(oldEntityView, DataConstants.SHARED_SCOPE, oldEntityView.getKeys().getAttributes().getSh(), user));
-                }
-                List<String> tsKeys = oldEntityView.getKeys() != null && oldEntityView.getKeys().getTimeseries() != null ?
-                        oldEntityView.getKeys().getTimeseries() : Collections.emptyList();
-                futures.add(deleteLatestFromEntityView(oldEntityView, tsKeys, user));
+        if (oldEntityView != null) {
+            if (oldEntityView.getKeys() != null && oldEntityView.getKeys().getAttributes() != null) {
+                futures.add(deleteAttributesFromEntityView(oldEntityView, DataConstants.CLIENT_SCOPE, oldEntityView.getKeys().getAttributes().getCs(), user));
+                futures.add(deleteAttributesFromEntityView(oldEntityView, DataConstants.SERVER_SCOPE, oldEntityView.getKeys().getAttributes().getSs(), user));
+                futures.add(deleteAttributesFromEntityView(oldEntityView, DataConstants.SHARED_SCOPE, oldEntityView.getKeys().getAttributes().getSh(), user));
             }
-            if (savedEntityView.getKeys() != null) {
-                if (savedEntityView.getKeys().getAttributes() != null) {
-                    futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.CLIENT_SCOPE, savedEntityView.getKeys().getAttributes().getCs(), user));
-                    futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SERVER_SCOPE, savedEntityView.getKeys().getAttributes().getSs(), user));
-                    futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SHARED_SCOPE, savedEntityView.getKeys().getAttributes().getSh(), user));
-                }
-                futures.add(copyLatestFromEntityToEntityView(tenantId, savedEntityView));
+            List<String> tsKeys = oldEntityView.getKeys() != null && oldEntityView.getKeys().getTimeseries() != null ?
+                    oldEntityView.getKeys().getTimeseries() : Collections.emptyList();
+            futures.add(deleteLatestFromEntityView(oldEntityView, tsKeys, user));
+        }
+        if (savedEntityView.getKeys() != null) {
+            if (savedEntityView.getKeys().getAttributes() != null) {
+                futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.CLIENT_SCOPE, savedEntityView.getKeys().getAttributes().getCs(), user));
+                futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SERVER_SCOPE, savedEntityView.getKeys().getAttributes().getSs(), user));
+                futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SHARED_SCOPE, savedEntityView.getKeys().getAttributes().getSh(), user));
             }
-            for (ListenableFuture<?> future : futures) {
-                try {
-                    future.get();
-                } catch (InterruptedException | ExecutionException e) {
-                    throw new RuntimeException("Failed to copy attributes to entity view", e);
-                }
+            futures.add(copyLatestFromEntityToEntityView(tenantId, savedEntityView));
+        }
+        for (ListenableFuture<?> future : futures) {
+            try {
+                future.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException("Failed to copy attributes to entity view", e);
             }
-        } catch (Exception e) {
-            throw e;
         }
     }
 

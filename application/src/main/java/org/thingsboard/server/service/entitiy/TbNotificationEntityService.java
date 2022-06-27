@@ -107,6 +107,6 @@ public interface TbNotificationEntityService {
                                                                               ActionType actionType, boolean sendNotifyMsgToEdge,
                                                                               Exception e, Object... additionalInfo);
 
-    void notifyCreateOrUpdateRelation(TenantId tenantId, CustomerId customerId, EntityRelation relation, User user,
-                                      ActionType actionType, Object... additionalInfo);
+    void notifyRelation(TenantId tenantId, CustomerId customerId, EntityRelation relation, User user,
+                        ActionType actionType, Object... additionalInfo);
 }

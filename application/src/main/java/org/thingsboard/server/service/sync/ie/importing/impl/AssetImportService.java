@@ -18,10 +18,7 @@ package org.thingsboard.server.service.sync.ie.importing.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
@@ -50,14 +47,6 @@ public class AssetImportService extends BaseEntityImportService<AssetId, Asset, 
     @Override
     protected Asset saveOrUpdate(EntitiesImportCtx ctx, Asset asset, EntityExportData<Asset> exportData, IdProvider idProvider) {
         return assetService.saveAsset(asset);
-    }
-
-    @Override
-    protected void onEntitySaved(User user, Asset savedAsset, Asset oldAsset) throws ThingsboardException {
-        super.onEntitySaved(user, savedAsset, oldAsset);
-        if (oldAsset != null) {
-            entityActionService.sendEntityNotificationMsgToEdge(user.getTenantId(), savedAsset.getId(), EdgeEventActionType.UPDATED);
-        }
     }
 
     @Override

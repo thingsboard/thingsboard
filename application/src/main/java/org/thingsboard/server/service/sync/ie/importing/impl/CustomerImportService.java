@@ -19,9 +19,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
@@ -66,14 +63,6 @@ public class CustomerImportService extends BaseEntityImportService<CustomerId, C
     @Override
     protected Customer deepCopy(Customer customer) {
         return new Customer(customer);
-    }
-
-    @Override
-    protected void onEntitySaved(User user, Customer savedCustomer, Customer oldCustomer) throws ThingsboardException {
-        super.onEntitySaved(user, savedCustomer, oldCustomer);
-        if (oldCustomer != null) {
-            entityActionService.sendEntityNotificationMsgToEdge(user.getTenantId(), savedCustomer.getId(), EdgeEventActionType.UPDATED);
-        }
     }
 
     @Override

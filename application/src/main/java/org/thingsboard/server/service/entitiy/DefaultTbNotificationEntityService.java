@@ -256,8 +256,8 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
     }
 
     @Override
-    public void notifyCreateOrUpdateRelation(TenantId tenantId, CustomerId customerId, EntityRelation relation, User user,
-                                             ActionType actionType, Object... additionalInfo) {
+    public void notifyRelation(TenantId tenantId, CustomerId customerId, EntityRelation relation, User user,
+                               ActionType actionType, Object... additionalInfo) {
         logEntityAction(tenantId, relation.getFrom(), null, customerId, actionType, user, additionalInfo);
         logEntityAction(tenantId, relation.getTo(), null, customerId, actionType, user, additionalInfo);
         try {

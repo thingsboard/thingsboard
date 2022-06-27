@@ -715,7 +715,10 @@ message PrepareMsg {
 
 message AddMsg {
   string relativePath = 1;
-  string entityDataJson = 2;
+  string entityDataJsonChunk = 2;
+  string chunkedMsgId = 3;
+  int32 chunkIndex = 4;
+  int32 chunksCount = 5;
 }
 
 message DeleteMsg {
@@ -755,9 +758,8 @@ message ListVersionsResponseMsg {
 }
 
 message ListEntitiesRequestMsg {
-  string branchName = 1;
-  string versionId = 2;
-  string entityType = 3;
+  string versionId = 1;
+  string entityType = 2;
 }
 
 message VersionedEntityInfoProto {
@@ -791,6 +793,9 @@ message EntityContentRequestMsg {
 
 message EntityContentResponseMsg {
   string data = 1;
+  string chunkedMsgId = 2;
+  int32 chunkIndex = 3;
+  int32 chunksCount = 4;
 }
 
 message EntitiesContentRequestMsg {
@@ -801,7 +806,8 @@ message EntitiesContentRequestMsg {
 }
 
 message EntitiesContentResponseMsg {
-  repeated string data = 1;
+  EntityContentResponseMsg item = 1;
+  int32 itemsCount = 2;
 }
 
 message VersionsDiffRequestMsg {
@@ -821,15 +827,6 @@ message EntityVersionsDiff {
   string entityDataAtVersion1 = 4;
   string entityDataAtVersion2 = 5;
   string rawDiff = 6;
-}
-
-message ContentsDiffRequestMsg {
-  string content1 = 1;
-  string content2 = 2;
-}
-
-message ContentsDiffResponseMsg {
-  string diff = 1;
 }
 
 message GenericRepositoryRequestMsg {}
@@ -853,7 +850,6 @@ message ToVersionControlServiceMsg {
   EntityContentRequestMsg entityContentRequest = 14;
   EntitiesContentRequestMsg entitiesContentRequest = 15;
   VersionsDiffRequestMsg versionsDiffRequest = 16;
-  ContentsDiffRequestMsg contentsDiffRequest = 17;
 }
 
 message VersionControlResponseMsg {
@@ -868,7 +864,6 @@ message VersionControlResponseMsg {
   EntityContentResponseMsg entityContentResponse = 9;
   EntitiesContentResponseMsg entitiesContentResponse = 10;
   VersionsDiffResponseMsg versionsDiffResponse = 11;
-  ContentsDiffResponseMsg contentsDiffResponse = 12;
 }
 
 /**
