@@ -71,7 +71,7 @@ public interface TbNotificationEntityService {
                                                                                     E entity, ActionType actionType,
                                                                                     SecurityUser user, Object... additionalInfo);
 
-    void notifyCreateOruUpdateTenant(Tenant tenant, ComponentLifecycleEvent event);
+    void notifyCreateOrUpdateTenant(Tenant tenant, ComponentLifecycleEvent event);
 
 
     void notifyDeleteTenant(Tenant tenant);

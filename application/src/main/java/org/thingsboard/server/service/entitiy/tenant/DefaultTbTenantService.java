@@ -54,7 +54,7 @@ public class DefaultTbTenantService extends AbstractTbEntityService implements T
                 installScripts.createDefaultEdgeRuleChains(savedTenant.getId());
             }
             tenantProfileCache.evict(savedTenant.getId());
-            notificationEntityService.notifyCreateOruUpdateTenant(savedTenant, created ?
+            notificationEntityService.notifyCreateOrUpdateTenant(savedTenant, created ?
                     ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
 
             TenantProfile oldTenantProfile = oldTenant != null ? tenantProfileService.findTenantProfileById(TenantId.SYS_TENANT_ID, oldTenant.getTenantProfileId()) : null;

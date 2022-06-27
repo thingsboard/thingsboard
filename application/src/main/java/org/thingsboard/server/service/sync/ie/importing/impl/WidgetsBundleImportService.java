@@ -87,8 +87,12 @@ public class WidgetsBundleImportService extends BaseEntityImportService<WidgetsB
     }
 
     @Override
+    protected boolean compare(EntitiesImportCtx ctx, WidgetsBundleExportData exportData, WidgetsBundle prepared, WidgetsBundle existing) {
+        return true;
+    }
+
+    @Override
     protected void onEntitySaved(SecurityUser user, WidgetsBundle savedWidgetsBundle, WidgetsBundle oldWidgetsBundle) throws ThingsboardException {
-        super.onEntitySaved(user, savedWidgetsBundle, oldWidgetsBundle);
         entityNotificationService.notifySendMsgToEdgeService(user.getTenantId(), savedWidgetsBundle.getId(),
                 oldWidgetsBundle == null ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
     }
