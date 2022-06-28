@@ -179,16 +179,16 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
 
     @Override
     public void notifyUpdateDeviceCredentials(TenantId tenantId, DeviceId deviceId, CustomerId customerId, Device device,
-                                              DeviceCredentials deviceCredentials, ActionType actionType, User user) {
+                                              DeviceCredentials deviceCredentials, User user) {
         tbClusterService.pushMsgToCore(new DeviceCredentialsUpdateNotificationMsg(tenantId, deviceCredentials.getDeviceId(), deviceCredentials), null);
-        sendEntityNotificationMsg(tenantId, deviceId, edgeTypeByActionType(actionType));
-        logEntityAction(tenantId, deviceId, device, customerId, actionType, user, deviceCredentials);
+        sendEntityNotificationMsg(tenantId, deviceId, EdgeEventActionType.CREDENTIALS_UPDATED);
+        logEntityAction(tenantId, deviceId, device, customerId, ActionType.CREDENTIALS_UPDATED, user, deviceCredentials);
     }
 
     @Override
     public void notifyAssignDeviceToTenant(TenantId tenantId, TenantId newTenantId, DeviceId deviceId, CustomerId customerId,
-                                           Device device, Tenant tenant, ActionType actionType, User user, Object... additionalInfo) {
-        logEntityAction(tenantId, deviceId, device, customerId, actionType, user, additionalInfo);
+                                           Device device, Tenant tenant, User user, Object... additionalInfo) {
+        logEntityAction(tenantId, deviceId, device, customerId, ActionType.ASSIGNED_TO_TENANT, user, additionalInfo);
         pushAssignedFromNotification(tenant, newTenantId, device);
     }
 

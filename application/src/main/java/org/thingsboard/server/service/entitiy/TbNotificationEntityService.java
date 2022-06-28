@@ -92,10 +92,10 @@ public interface TbNotificationEntityService {
                             List<EdgeId> relatedEdgeIds, User user, Object... additionalInfo);
 
     void notifyUpdateDeviceCredentials(TenantId tenantId, DeviceId deviceId, CustomerId customerId, Device device,
-                                       DeviceCredentials deviceCredentials, ActionType actionType, User user);
+                                       DeviceCredentials deviceCredentials, User user);
 
     void notifyAssignDeviceToTenant(TenantId tenantId, TenantId newTenantId, DeviceId deviceId, CustomerId customerId,
-                                    Device device, Tenant tenant, ActionType actionType, User user, Object... additionalInfo);
+                                    Device device, Tenant tenant, User user, Object... additionalInfo);
 
     void notifyEdge(TenantId tenantId, EdgeId edgeId, CustomerId customerId, Edge edge, ActionType actionType,
                     User user, Object... additionalInfo);

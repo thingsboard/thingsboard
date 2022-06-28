@@ -185,14 +185,13 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
     public DeviceCredentials updateDeviceCredentials(Device device, DeviceCredentials deviceCredentials, User user) throws ThingsboardException {
         TenantId tenantId = device.getTenantId();
         DeviceId deviceId = device.getId();
-        ActionType actionType = ActionType.CREDENTIALS_UPDATED;
         try {
             DeviceCredentials result = checkNotNull(deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials));
-            notificationEntityService.notifyUpdateDeviceCredentials(tenantId, deviceId, device.getCustomerId(), device, result, actionType, user);
+            notificationEntityService.notifyUpdateDeviceCredentials(tenantId, deviceId, device.getCustomerId(), device, result, user);
             return result;
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.DEVICE),
-                    actionType, user, e, deviceCredentials);
+                    ActionType.CREDENTIALS_UPDATED, user, e, deviceCredentials);
             throw e;
         }
     }
@@ -231,18 +230,17 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
         TenantId tenantId = device.getTenantId();
         TenantId newTenantId = newTenant.getId();
         DeviceId deviceId = device.getId();
-        ActionType actionType = ActionType.ASSIGNED_TO_TENANT;
         try {
             Tenant tenant = tenantService.findTenantById(tenantId);
             Device assignedDevice = deviceService.assignDeviceToTenant(newTenantId, device);
 
             notificationEntityService.notifyAssignDeviceToTenant(tenantId, newTenantId, deviceId,
-                    assignedDevice.getCustomerId(), assignedDevice, tenant, actionType, user, newTenantId.toString(), newTenant.getName());
+                    assignedDevice.getCustomerId(), assignedDevice, tenant, user, newTenantId.toString(), newTenant.getName());
 
             return assignedDevice;
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.DEVICE),
-                    actionType, user, e, deviceId.toString());
+                    ActionType.ASSIGNED_TO_TENANT, user, e, deviceId.toString());
             throw e;
         }
     }
