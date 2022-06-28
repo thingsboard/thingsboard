@@ -45,8 +45,9 @@ public interface CustomerRepository extends JpaRepository<CustomerEntity, UUID>,
 
 
     @Query(value = "SELECT c.* FROM customer c " +
-            "INNER JOIN (SELECT tenant_id, title, FROM customer GROUP BY tenant_id, title HAVING COUNT(title) > 1) dc " +
-            "ON c.tenant_id = :tenantId AND c.tenant_id = dc.tenant_id AND c.title = dc.title",
+            "INNER JOIN (SELECT tenant_id, title FROM customer GROUP BY tenant_id, title HAVING COUNT(title) > 1) dc " +
+            "ON c.tenant_id = dc.tenant_id AND c.title = dc.title " +
+            "ORDER BY c.tenant_id, c.title, c.created_time",
             nativeQuery = true)
-    Page<CustomerEntity> findCustomerWithEqualTitle(@Param("tenantId") UUID tenantId, Pageable pageable);
+    Page<CustomerEntity> findCustomerWithEqualTitle(Pageable pageable);
 }

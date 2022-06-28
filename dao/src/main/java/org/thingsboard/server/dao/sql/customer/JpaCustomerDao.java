@@ -99,9 +99,9 @@ public class JpaCustomerDao extends JpaAbstractSearchTextDao<CustomerEntity, Cus
 
 
     @Override
-    public PageData<Customer> findCustomerWithEqualTitle(UUID tenantId, PageLink pageLink) {
+    public PageData<Customer> findCustomerWithEqualTitle(PageLink pageLink) {
         return DaoUtil.toPageData(
-                customerRepository.findCustomerWithEqualTitle(tenantId, DaoUtil.toPageable(pageLink))
+                customerRepository.findCustomerWithEqualTitle(DaoUtil.toPageable(pageLink))
         );
     }
 

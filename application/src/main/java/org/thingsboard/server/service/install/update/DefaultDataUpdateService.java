@@ -587,7 +587,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
                 @Override
                 protected void updateEntity(Tenant entity) {
-                    tenantCustomersTitleUpdaterComponent.updateDuplicateCustomersTitle(entity);
+                    tenantCustomersTitleUpdaterComponent.updateDuplicateCustomersTitle();
                 }
             };
     private final PaginatedUpdater<String, TenantProfile> tenantsProfileQueueConfigurationUpdater =

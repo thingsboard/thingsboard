@@ -35,12 +35,12 @@ public class TenantCustomersTitleUpdaterComponent {
 
     private static final int DEFAULT_LIMIT = 100;
 
-    public List<Customer> updateDuplicateCustomersTitle(Tenant entity) {
+    public List<Customer> updateDuplicateCustomersTitle() {
         PageLink pageLink = new PageLink(DEFAULT_LIMIT);
         boolean hasNext = true;
         List<Customer> customers = new ArrayList<>();
         while (hasNext) {
-            PageData<Customer> entities = customerDao.findCustomerWithEqualTitle(entity.getUuidId(), pageLink);
+            PageData<Customer> entities = customerDao.findCustomerWithEqualTitle(pageLink);
             customers.addAll(entities.getData());
 
             hasNext = entities.hasNext();

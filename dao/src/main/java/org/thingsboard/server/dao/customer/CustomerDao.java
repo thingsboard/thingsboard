@@ -58,6 +58,6 @@ public interface CustomerDao extends Dao<Customer>, TenantEntityDao, ExportableE
      */
     Optional<Customer> findCustomersByTenantIdAndTitle(UUID tenantId, String title);
 
-    PageData<Customer> findCustomerWithEqualTitle(UUID tenantID, PageLink pageLink);
+    PageData<Customer> findCustomerWithEqualTitle(PageLink pageLink);
 
 }
