@@ -432,7 +432,7 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new Dashboard(), new Dashboard(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ADDED, ActionType.ASSIGNED_TO_CUSTOMER, cntEntity, cntEntity*2);
+                ActionType.ADDED, ActionType.ASSIGNED_TO_CUSTOMER, cntEntity, cntEntity, cntEntity*2);
 
         List<DashboardInfo> loadedDashboards = new ArrayList<>();
         PageLink pageLink = new PageLink(21);
