@@ -286,7 +286,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
             result.setDone(true);
             return cachePut(ctx.getRequestId(), result);
         } catch (LoadEntityException e) {
-            return cachePut(ctx.getRequestId(), onError(e.getData(), e.getCause()));
+            return cachePut(ctx.getRequestId(), onError(e.getExternalId(), e.getCause()));
         } catch (Exception e) {
             log.info("[{}] Failed to process request [{}] due to: ", ctx.getTenantId(), request, e);
             return cachePut(ctx.getRequestId(), VersionLoadResult.error(EntityLoadError.runtimeError(e.getMessage())));
@@ -313,7 +313,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                     .deleted(0)
                     .build());
         } catch (Exception e) {
-            throw new LoadEntityException(entityData, e);
+            throw new LoadEntityException(entityData.getExternalId(), e);
         }
     }
 
@@ -382,7 +382,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                 try {
                     importResult = exportImportService.importEntity(ctx, entityData);
                 } catch (Exception e) {
-                    throw new LoadEntityException(entityData, e);
+                    throw new LoadEntityException(entityData.getExternalId(), e);
                 }
                 registerResult(ctx, entityType, importResult);
 
@@ -432,20 +432,20 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         });
     }
 
-    private VersionLoadResult onError(EntityExportData<?> entityData, Throwable e) {
-        return analyze(e, entityData).orElse(VersionLoadResult.error(EntityLoadError.runtimeError(e.getMessage())));
+    private VersionLoadResult onError(EntityId externalId, Throwable e) {
+        return analyze(e, externalId).orElse(VersionLoadResult.error(EntityLoadError.runtimeError(e.getMessage())));
     }
 
-    private Optional<VersionLoadResult> analyze(Throwable e, EntityExportData<?> entityData) {
+    private Optional<VersionLoadResult> analyze(Throwable e, EntityId externalId) {
         if (e == null) {
             return Optional.empty();
         } else {
             if (e instanceof DeviceCredentialsValidationException) {
-                return Optional.of(VersionLoadResult.error(EntityLoadError.credentialsError(entityData.getExternalId())));
+                return Optional.of(VersionLoadResult.error(EntityLoadError.credentialsError(externalId)));
             } else if (e instanceof MissingEntityException) {
-                return Optional.of(VersionLoadResult.error(EntityLoadError.referenceEntityError(entityData.getExternalId(), ((MissingEntityException) e).getEntityId())));
+                return Optional.of(VersionLoadResult.error(EntityLoadError.referenceEntityError(externalId, ((MissingEntityException) e).getEntityId())));
             } else {
-                return analyze(e.getCause(), entityData);
+                return analyze(e.getCause(), externalId);
             }
         }
     }
