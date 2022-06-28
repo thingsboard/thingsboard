@@ -13,24 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy.otaPackageController;
+package org.thingsboard.server.service.entitiy.ota;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.StringUtils;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
+import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
+import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
-import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.nio.ByteBuffer;
 
@@ -39,45 +40,31 @@ import java.nio.ByteBuffer;
 @AllArgsConstructor
 @Slf4j
 public class DefaultTbOtaPackageService extends AbstractTbEntityService implements TbOtaPackageService {
+
+    private final OtaPackageService otaPackageService;
+
     @Override
-    public OtaPackageInfo save(SaveOtaPackageInfoRequest saveOtaPackageInfoRequest, SecurityUser user) throws ThingsboardException {
-        TenantId tenantId = saveOtaPackageInfoRequest.getTenantId();
+    public OtaPackageInfo save(SaveOtaPackageInfoRequest saveOtaPackageInfoRequest, User user) throws ThingsboardException {
         ActionType actionType = saveOtaPackageInfoRequest.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
+        TenantId tenantId = saveOtaPackageInfoRequest.getTenantId();
         try {
             OtaPackageInfo savedOtaPackageInfo = otaPackageService.saveOtaPackageInfo(new OtaPackageInfo(saveOtaPackageInfoRequest), saveOtaPackageInfoRequest.isUsesUrl());
 
             boolean sendToEdge = savedOtaPackageInfo.hasUrl() || savedOtaPackageInfo.isHasData();
-            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, savedOtaPackageInfo.getId(), savedOtaPackageInfo, user, actionType, sendToEdge, null);
+            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, savedOtaPackageInfo.getId(),
+                    savedOtaPackageInfo, user, actionType, sendToEdge, null);
 
             return savedOtaPackageInfo;
         } catch (Exception e) {
-            notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.OTA_PACKAGE), saveOtaPackageInfoRequest, null,
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.OTA_PACKAGE), saveOtaPackageInfoRequest,
                     actionType, user, e);
-            throw handleException(e);
-        }
-    }
-
-    @Override
-    public void delete(OtaPackageInfo otaPackageInfo, SecurityUser user) throws ThingsboardException {
-        TenantId tenantId = otaPackageInfo.getTenantId();
-        OtaPackageId otaPackageId = otaPackageInfo.getId();
-        try {
-            otaPackageService.deleteOtaPackage(tenantId, otaPackageId);
-//            notificationEntityService.notifyEntity(tenantId, otaPackageId, otaPackageInfo, null,
-//                    ActionType.DELETED, user, null, otaPackageInfo.getId().toString());
-
-            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, otaPackageId, otaPackageInfo,
-                    user, ActionType.DELETED, true, null, otaPackageInfo.getId().toString());
-        } catch (Exception e) {
-            notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.OTA_PACKAGE), null, null,
-                    ActionType.DELETED, user, e, otaPackageInfo.getId().toString());
-            throw handleException(e);
+            throw e;
         }
     }
 
     @Override
     public OtaPackageInfo saveOtaPackageData(OtaPackageInfo otaPackageInfo, String checksum, ChecksumAlgorithm checksumAlgorithm,
-                                             byte[] data, String filename, String contentType, SecurityUser user) throws ThingsboardException {
+                                             byte[] data, String filename, String contentType, User user) throws ThingsboardException {
         TenantId tenantId = otaPackageInfo.getTenantId();
         OtaPackageId otaPackageId = otaPackageInfo.getId();
         try {
@@ -100,13 +87,28 @@ public class DefaultTbOtaPackageService extends AbstractTbEntityService implemen
             otaPackage.setData(ByteBuffer.wrap(data));
             otaPackage.setDataSize((long) data.length);
             OtaPackageInfo savedOtaPackage = otaPackageService.saveOtaPackage(otaPackage);
-
-            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, savedOtaPackage.getId(), savedOtaPackage, user, ActionType.UPDATED, true, null);
+            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, savedOtaPackage.getId(),
+                    savedOtaPackage, user, ActionType.UPDATED, true, null);
             return savedOtaPackage;
         } catch (Exception e) {
-            notificationEntityService.notifyEntity(tenantId, emptyId(EntityType.OTA_PACKAGE), null, null,
-                    ActionType.UPDATED, user, e, otaPackageId.toString());
-            throw handleException(e);
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.OTA_PACKAGE), ActionType.UPDATED,
+                    user, e, otaPackageId.toString());
+            throw e;
+        }
+    }
+
+    @Override
+    public void delete(OtaPackageInfo otaPackageInfo, User user) throws ThingsboardException {
+        TenantId tenantId = otaPackageInfo.getTenantId();
+        OtaPackageId otaPackageId = otaPackageInfo.getId();
+        try {
+            otaPackageService.deleteOtaPackage(tenantId, otaPackageId);
+            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, otaPackageId, otaPackageInfo,
+                    user, ActionType.DELETED, true, null, otaPackageInfo.getId().toString());
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.OTA_PACKAGE),
+                    ActionType.DELETED, user, e, otaPackageId.toString());
+            throw e;
         }
     }
 }

@@ -194,8 +194,15 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
 
         testNotifyEntityNever(savedCustomer.getId(), savedCustomer);
 
+        doDelete("/api/customer/" + savedCustomer.getId().getId().toString())
+                .andExpect(status().isForbidden());
+
+        testNotifyEntityNever(savedCustomer.getId(), savedCustomer);
+
         deleteDifferentTenant();
         login(tenantAdmin.getName(), "testPassword1");
+
+        Mockito.reset(tbClusterService, auditLogService);
 
         doDelete("/api/customer/" + savedCustomer.getId().getId().toString())
                 .andExpect(status().isOk());

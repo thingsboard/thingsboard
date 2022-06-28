@@ -17,6 +17,7 @@ package org.thingsboard.server.service.sync.vc;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -30,18 +31,17 @@ import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionLoadResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
-import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadRequest;
 import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
+import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadRequest;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface EntitiesVersionControlService {
 
-    ListenableFuture<UUID> saveEntitiesVersion(SecurityUser user, VersionCreateRequest request) throws Exception;
+    ListenableFuture<UUID> saveEntitiesVersion(User user, VersionCreateRequest request) throws Exception;
 
-    VersionCreationResult getVersionCreateStatus(SecurityUser user, UUID requestId) throws ThingsboardException;
+    VersionCreationResult getVersionCreateStatus(User user, UUID requestId) throws ThingsboardException;
 
     ListenableFuture<PageData<EntityVersion>> listEntityVersions(TenantId tenantId, String branch, EntityId externalId, PageLink pageLink) throws Exception;
 
@@ -53,11 +53,11 @@ public interface EntitiesVersionControlService {
 
     ListenableFuture<List<VersionedEntityInfo>> listAllEntitiesAtVersion(TenantId tenantId, String branch, String versionId) throws Exception;
 
-    UUID loadEntitiesVersion(SecurityUser user, VersionLoadRequest request) throws Exception;
+    UUID loadEntitiesVersion(User user, VersionLoadRequest request) throws Exception;
 
-    VersionLoadResult getVersionLoadStatus(SecurityUser user, UUID requestId) throws ThingsboardException;
+    VersionLoadResult getVersionLoadStatus(User user, UUID requestId) throws ThingsboardException;
 
-    ListenableFuture<EntityDataDiff> compareEntityDataToVersion(SecurityUser user, String branch, EntityId entityId, String versionId) throws Exception;
+    ListenableFuture<EntityDataDiff> compareEntityDataToVersion(User user, String branch, EntityId entityId, String versionId) throws Exception;
 
     ListenableFuture<List<BranchInfo>> listBranches(TenantId tenantId) throws Exception;
 
@@ -69,10 +69,10 @@ public interface EntitiesVersionControlService {
 
     ListenableFuture<Void> checkVersionControlAccess(TenantId tenantId, RepositorySettings settings) throws Exception;
 
-    ListenableFuture<UUID> autoCommit(SecurityUser user, EntityId entityId) throws Exception;
+    ListenableFuture<UUID> autoCommit(User user, EntityId entityId) throws Exception;
 
-    ListenableFuture<UUID> autoCommit(SecurityUser user, EntityType entityType, List<UUID> entityIds) throws Exception;
+    ListenableFuture<UUID> autoCommit(User user, EntityType entityType, List<UUID> entityIds) throws Exception;
 
-    ListenableFuture<EntityDataInfo> getEntityDataInfo(SecurityUser user, EntityId entityId, String versionId);
+    ListenableFuture<EntityDataInfo> getEntityDataInfo(User user, EntityId entityId, String versionId);
 
 }

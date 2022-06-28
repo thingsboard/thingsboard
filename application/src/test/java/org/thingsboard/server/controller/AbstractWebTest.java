@@ -278,7 +278,8 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         login(userName, password);
     }
 
-    private Tenant savedDifferentTenant;
+    protected Tenant savedDifferentTenant;
+    protected User savedDifferentTenantUser;
     private Customer savedDifferentCustomer;
 
     protected void loginDifferentTenant() throws Exception {
@@ -296,8 +297,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
             differentTenantAdmin.setAuthority(Authority.TENANT_ADMIN);
             differentTenantAdmin.setTenantId(savedDifferentTenant.getId());
             differentTenantAdmin.setEmail(DIFFERENT_TENANT_ADMIN_EMAIL);
-
-            createUserAndLogin(differentTenantAdmin, DIFFERENT_TENANT_ADMIN_PASSWORD);
+            savedDifferentTenantUser = createUserAndLogin(differentTenantAdmin, DIFFERENT_TENANT_ADMIN_PASSWORD);
         }
     }
 

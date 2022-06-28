@@ -506,6 +506,9 @@ spring.mvc.cors:
 # The default timeout for asynchronous requests in milliseconds
 spring.mvc.async.request-timeout: "${SPRING_MVC_ASYNC_REQUEST_TIMEOUT:30000}"
 
+# For endpoints matching in Swagger
+spring.mvc.pathmatch.matching-strategy: "ANT_PATH_MATCHER"
+
 # spring serve gzip compressed static resources
 spring.resources.chain:
   compressed: "true"

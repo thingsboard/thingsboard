@@ -33,6 +33,7 @@ import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -71,7 +72,6 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
-import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.ie.EntitiesExportImportService;
 import org.thingsboard.server.service.sync.ie.exporting.ExportableEntitiesService;
 import org.thingsboard.server.service.sync.ie.importing.impl.MissingEntityException;
@@ -99,7 +99,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.google.common.util.concurrent.Futures.transform;
-import static com.google.common.util.concurrent.Futures.transformAsync;
 
 @Service
 @TbCoreComponent
@@ -135,7 +134,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
     @SuppressWarnings("UnstableApiUsage")
     @Override
-    public ListenableFuture<UUID> saveEntitiesVersion(SecurityUser user, VersionCreateRequest request) throws Exception {
+    public ListenableFuture<UUID> saveEntitiesVersion(User user, VersionCreateRequest request) throws Exception {
         var pendingCommit = gitServiceQueue.prepareCommit(user, request);
         DonAsynchron.withCallback(pendingCommit, commit -> {
             cachePut(commit.getTxId(), new VersionCreationResult());
@@ -162,16 +161,16 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     }
 
     @Override
-    public VersionCreationResult getVersionCreateStatus(SecurityUser user, UUID requestId) throws ThingsboardException {
+    public VersionCreationResult getVersionCreateStatus(User user, UUID requestId) throws ThingsboardException {
         return getStatus(user, requestId, VersionControlTaskCacheEntry::getExportResult);
     }
 
     @Override
-    public VersionLoadResult getVersionLoadStatus(SecurityUser user, UUID requestId) throws ThingsboardException {
+    public VersionLoadResult getVersionLoadStatus(User user, UUID requestId) throws ThingsboardException {
         return getStatus(user, requestId, VersionControlTaskCacheEntry::getImportResult);
     }
 
-    private <T> T getStatus(SecurityUser user, UUID requestId, Function<VersionControlTaskCacheEntry, T> getter) throws ThingsboardException {
+    private <T> T getStatus(User user, UUID requestId, Function<VersionControlTaskCacheEntry, T> getter) throws ThingsboardException {
         var cacheEntry = taskCache.get(requestId);
         if (cacheEntry == null || cacheEntry.get() == null) {
             log.debug("[{}] No cache record: {}", requestId, cacheEntry);
@@ -253,7 +252,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
     @SuppressWarnings({"UnstableApiUsage", "rawtypes"})
     @Override
-    public UUID loadEntitiesVersion(SecurityUser user, VersionLoadRequest request) throws Exception {
+    public UUID loadEntitiesVersion(User user, VersionLoadRequest request) throws Exception {
         EntitiesImportCtx ctx = new EntitiesImportCtx(UUID.randomUUID(), user, request.getVersionId());
         cachePut(ctx.getRequestId(), VersionLoadResult.empty());
         switch (request.getType()) {
@@ -453,7 +452,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     }
 
     @Override
-    public ListenableFuture<EntityDataDiff> compareEntityDataToVersion(SecurityUser user, String branch, EntityId entityId, String versionId) throws Exception {
+    public ListenableFuture<EntityDataDiff> compareEntityDataToVersion(User user, String branch, EntityId entityId, String versionId) throws Exception {
         HasId<EntityId> entity = exportableEntitiesService.findEntityByTenantIdAndId(user.getTenantId(), entityId);
         if (!(entity instanceof ExportableEntity)) throw new IllegalArgumentException("Unsupported entity type");
 
@@ -478,7 +477,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     }
 
     @Override
-    public ListenableFuture<EntityDataInfo> getEntityDataInfo(SecurityUser user, EntityId entityId, String versionId) {
+    public ListenableFuture<EntityDataInfo> getEntityDataInfo(User user, EntityId entityId, String versionId) {
         return Futures.transform(gitServiceQueue.getEntity(user.getTenantId(), versionId, entityId),
                 entity -> new EntityDataInfo(entity.hasRelations(), entity.hasAttributes(), entity.hasCredentials()), MoreExecutors.directExecutor());
     }
@@ -527,7 +526,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     }
 
     @Override
-    public ListenableFuture<UUID> autoCommit(SecurityUser user, EntityId entityId) throws Exception {
+    public ListenableFuture<UUID> autoCommit(User user, EntityId entityId) throws Exception {
         var repositorySettings = repositorySettingsService.get(user.getTenantId());
         if (repositorySettings == null) {
             return Futures.immediateFuture(null);
@@ -554,7 +553,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     }
 
     @Override
-    public ListenableFuture<UUID> autoCommit(SecurityUser user, EntityType entityType, List<UUID> entityIds) throws Exception {
+    public ListenableFuture<UUID> autoCommit(User user, EntityType entityType, List<UUID> entityIds) throws Exception {
         var repositorySettings = repositorySettingsService.get(user.getTenantId());
         if (repositorySettings == null) {
             return Futures.immediateFuture(null);
@@ -600,7 +599,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         }
     }
 
-    private void processCommitError(SecurityUser user, VersionCreateRequest request, CommitGitRequest commit, Throwable e) {
+    private void processCommitError(User user, VersionCreateRequest request, CommitGitRequest commit, Throwable e) {
         log.debug("[{}] Failed to prepare the commit: {}", user.getId(), request, e);
         cachePut(commit.getTxId(), new VersionCreationResult(e.getMessage()));
     }

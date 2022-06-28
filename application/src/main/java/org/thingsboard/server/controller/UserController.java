@@ -102,9 +102,9 @@ public class UserController extends BaseController {
 
     @ApiOperation(value = "Get User (getUserById)",
             notes = "Fetch the User object based on the provided User Id. " +
-            "If the user has the authority of 'SYS_ADMIN', the server does not perform additional checks. " +
-            "If the user has the authority of 'TENANT_ADMIN', the server checks that the requested user is owned by the same tenant. " +
-            "If the user has the authority of 'CUSTOMER_USER', the server checks that the requested user is owned by the same customer.")
+                    "If the user has the authority of 'SYS_ADMIN', the server does not perform additional checks. " +
+                    "If the user has the authority of 'TENANT_ADMIN', the server checks that the requested user is owned by the same tenant. " +
+                    "If the user has the authority of 'CUSTOMER_USER', the server checks that the requested user is owned by the same customer.")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/user/{userId}", method = RequestMethod.GET)
     @ResponseBody
@@ -190,7 +190,7 @@ public class UserController extends BaseController {
         }
         checkEntity(user.getId(), user, Resource.USER);
         return tbUserService.save(getTenantId(), getCurrentUser().getCustomerId(), user, sendActivationMail, request, getCurrentUser());
-     }
+    }
 
     @ApiOperation(value = "Send or re-send the activation email",
             notes = "Force send the activation email to the user. Useful to resend the email if user has accidentally deleted it. " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
