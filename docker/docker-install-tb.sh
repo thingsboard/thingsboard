@@ -41,8 +41,6 @@ set -e
 
 source compose-utils.sh
 
-checkFolders --create || exit $?
-
 ADDITIONAL_COMPOSE_QUEUE_ARGS=$(additionalComposeQueueArgs) || exit $?
 
 ADDITIONAL_COMPOSE_ARGS=$(additionalComposeArgs) || exit $?
@@ -50,6 +48,8 @@ ADDITIONAL_COMPOSE_ARGS=$(additionalComposeArgs) || exit $?
 ADDITIONAL_CACHE_ARGS=$(additionalComposeCacheArgs) || exit $?
 
 ADDITIONAL_STARTUP_SERVICES=$(additionalStartupServices) || exit $?
+
+checkFolders --create || exit $?
 
 if [ ! -z "${ADDITIONAL_STARTUP_SERVICES// }" ]; then
     docker-compose \
