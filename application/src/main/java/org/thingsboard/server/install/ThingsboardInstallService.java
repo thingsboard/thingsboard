@@ -39,11 +39,11 @@ import org.thingsboard.server.service.install.update.DataUpdateService;
 @Slf4j
 public class ThingsboardInstallService {
 
-//    @Value("${install.upgrade:false}")
-    private Boolean isUpgrade = true;
+    @Value("${install.upgrade:false}")
+    private Boolean isUpgrade;
 
-//    @Value("${install.upgrade.from_version:1.2.3}")
-    private String upgradeFromVersion = "3.3.4";
+    @Value("${install.upgrade.from_version:1.2.3}")
+    private String upgradeFromVersion;
 
     @Value("${install.load_demo:false}")
     private Boolean loadDemo;
