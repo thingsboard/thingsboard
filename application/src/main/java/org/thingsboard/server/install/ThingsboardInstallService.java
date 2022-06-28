@@ -39,11 +39,11 @@ import org.thingsboard.server.service.install.update.DataUpdateService;
 @Slf4j
 public class ThingsboardInstallService {
 
-    @Value("${install.upgrade:false}")
-    private Boolean isUpgrade;
+//    @Value("${install.upgrade:false}")
+    private Boolean isUpgrade = true;
 
-    @Value("${install.upgrade.from_version:1.2.3}")
-    private String upgradeFromVersion;
+//    @Value("${install.upgrade.from_version:1.2.3}")
+    private String upgradeFromVersion = "3.3.4";
 
     @Value("${install.load_demo:false}")
     private Boolean loadDemo;
@@ -219,8 +219,8 @@ public class ThingsboardInstallService {
                             databaseEntitiesUpgradeService.upgradeDatabase("3.3.3");
                         case "3.3.4":
                             log.info("Upgrading ThingsBoard from version 3.3.4 to 3.4.0 ...");
-                            databaseEntitiesUpgradeService.upgradeDatabase("3.3.4");
                             dataUpdateService.updateData("3.3.4");
+                            databaseEntitiesUpgradeService.upgradeDatabase("3.3.4");
                             log.info("Updating system data...");
                             systemDataLoaderService.updateSystemWidgets();
                             break;
