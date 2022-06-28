@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 @Component
 public class TenantProfileDataValidator extends DataValidator<TenantProfile> {
@@ -44,6 +45,8 @@ public class TenantProfileDataValidator extends DataValidator<TenantProfile> {
     @Autowired
     @Lazy
     private TenantProfileService tenantProfileService;
+
+    private final Pattern queueTopicPattern = Pattern.compile("^[a-zA-Z0-9_.\\-]+$");
 
     @Override
     protected void validateDataImpl(TenantId tenantId, TenantProfile tenantProfile) {
@@ -110,8 +113,14 @@ public class TenantProfileDataValidator extends DataValidator<TenantProfile> {
         if (StringUtils.isEmpty(queue.getName())) {
             throw new DataValidationException("Queue name should be specified!");
         }
-        if (StringUtils.isBlank(queue.getTopic())) {
-            throw new DataValidationException("Queue topic should be non empty and without spaces!");
+        if (!queueTopicPattern.matcher(queue.getName()).matches()) {
+            throw new DataValidationException("Queue name contains a character other than ASCII alphanumerics, '.', '_' and '-'!");
+        }
+        if (StringUtils.isEmpty(queue.getTopic())) {
+            throw new DataValidationException("Queue topic should be specified!");
+        }
+        if (!queueTopicPattern.matcher(queue.getTopic()).matches()) {
+            throw new DataValidationException("Queue topic contains a character other than ASCII alphanumerics, '.', '_' and '-'!");
         }
         if (queue.getPollInterval() < 1) {
             throw new DataValidationException("Queue poll interval should be more then 0!");
