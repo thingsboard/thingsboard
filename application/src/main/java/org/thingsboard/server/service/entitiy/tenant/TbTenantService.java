@@ -16,12 +16,11 @@
 package org.thingsboard.server.service.entitiy.tenant;
 
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 
 public interface TbTenantService {
 
-    Tenant save(Tenant tenant) throws ThingsboardException;
+    Tenant save(Tenant tenant) throws Exception;
 
-    void delete(Tenant tenant) throws ThingsboardException;
+    void delete(Tenant tenant) throws Exception;
 
 }

@@ -175,7 +175,7 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         doDelete("/api/alarm/" + alarm.getId()).andExpect(status().isOk());
 
         testNotifyEntityOneTimeMsgToEdgeServiceNever(alarm, alarm.getId(), alarm.getOriginator(),
-                tenantId, tenantAdminCustomerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.DELETED);
+                tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.DELETED);
     }
 
     @Test

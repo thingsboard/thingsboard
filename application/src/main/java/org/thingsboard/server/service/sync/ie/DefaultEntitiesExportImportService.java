@@ -32,7 +32,6 @@ import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.apiusage.RateLimitService;
 import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
 import org.thingsboard.server.service.sync.ie.exporting.EntityExportService;
@@ -110,8 +109,8 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
         relationService.saveRelations(ctx.getTenantId(), new ArrayList<>(ctx.getRelations()));
 
         for (EntityRelation relation : ctx.getRelations()) {
-            entityNotificationService.notifyCreateOrUpdateOrDeleteRelation(ctx.getTenantId(), null,
-                    relation, ctx.getUser(), ActionType.RELATION_ADD_OR_UPDATE, null, relation);
+            entityNotificationService.notifyRelation(ctx.getTenantId(), null,
+                    relation, ctx.getUser(), ActionType.RELATION_ADD_OR_UPDATE, relation);
         }
     }
 

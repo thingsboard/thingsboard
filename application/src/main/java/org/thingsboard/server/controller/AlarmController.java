@@ -132,7 +132,7 @@ public class AlarmController extends BaseController {
     @RequestMapping(value = "/alarm", method = RequestMethod.POST)
     @ResponseBody
     public Alarm saveAlarm(@ApiParam(value = "A JSON value representing the alarm.") @RequestBody Alarm alarm) throws ThingsboardException {
-        alarm.setTenantId(getCurrentUser().getTenantId());
+        alarm.setTenantId(getTenantId());
         checkEntity(alarm.getId(), alarm, Resource.ALARM);
         return tbAlarmService.save(alarm, getCurrentUser());
     }
@@ -144,13 +144,9 @@ public class AlarmController extends BaseController {
     @ResponseBody
     public Boolean deleteAlarm(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION) @PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
         checkParameter(ALARM_ID, strAlarmId);
-        try {
-            AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
-            Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
-            return tbAlarmService.delete(alarm, getCurrentUser());
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
+        Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
+        return tbAlarmService.delete(alarm, getCurrentUser());
     }
 
     @ApiOperation(value = "Acknowledge Alarm (ackAlarm)",
@@ -160,11 +156,11 @@ public class AlarmController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarm/{alarmId}/ack", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
-    public void ackAlarm(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION) @PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
+    public void ackAlarm(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION) @PathVariable(ALARM_ID) String strAlarmId) throws Exception {
         checkParameter(ALARM_ID, strAlarmId);
         AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
         Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
-        tbAlarmService.ack(alarm, getCurrentUser());
+        tbAlarmService.ack(alarm, getCurrentUser()).get();
     }
 
     @ApiOperation(value = "Clear Alarm (clearAlarm)",
@@ -174,11 +170,11 @@ public class AlarmController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarm/{alarmId}/clear", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
-    public void clearAlarm(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION) @PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
+    public void clearAlarm(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION) @PathVariable(ALARM_ID) String strAlarmId) throws Exception {
         checkParameter(ALARM_ID, strAlarmId);
         AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
         Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
-        tbAlarmService.clear(alarm, getCurrentUser());
+        tbAlarmService.clear(alarm, getCurrentUser()).get();
     }
 
     @ApiOperation(value = "Get Alarms (getAlarms)",

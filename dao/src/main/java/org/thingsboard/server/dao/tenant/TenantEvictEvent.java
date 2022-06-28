@@ -21,6 +21,5 @@ import org.thingsboard.server.common.data.id.TenantId;
 @Data
 public class TenantEvictEvent {
     private final TenantId tenantId;
-    // for exists tenant cache
-    private final boolean isExistsTenant;
+    private final boolean invalidateExists;
 }

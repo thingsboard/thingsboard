@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -40,7 +41,6 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
-import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -67,45 +67,6 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
     public DefaultTbResourceService(ResourceService resourceService) {
         this.resourceService = resourceService;
         this.ddfFileParser = new DDFFileParser(new DefaultDDFFileValidator());
-    }
-
-    @Override
-    public TbResource saveResourceInternal(TbResource resource) throws ThingsboardException {
-        log.trace("Executing saveResource [{}]", resource);
-        if (StringUtils.isEmpty(resource.getData())) {
-            throw new DataValidationException("Resource data should be specified!");
-        }
-        if (ResourceType.LWM2M_MODEL.equals(resource.getResourceType())) {
-            try {
-                List<ObjectModel> objectModels =
-                        ddfFileParser.parse(new ByteArrayInputStream(Base64.getDecoder().decode(resource.getData())), resource.getSearchText());
-                if (!objectModels.isEmpty()) {
-                    ObjectModel objectModel = objectModels.get(0);
-
-                    String resourceKey = objectModel.id + LWM2M_SEPARATOR_KEY + objectModel.version;
-                    String name = objectModel.name;
-                    resource.setResourceKey(resourceKey);
-                    if (resource.getId() == null) {
-                        resource.setTitle(name + " id=" + objectModel.id + " v" + objectModel.version);
-                    }
-                    resource.setSearchText(resourceKey + LWM2M_SEPARATOR_SEARCH_TEXT + name);
-                } else {
-                    throw new DataValidationException(String.format("Could not parse the XML of objectModel with name %s", resource.getSearchText()));
-                }
-            } catch (InvalidDDFFileException e) {
-                log.error("Failed to parse file {}", resource.getFileName(), e);
-                throw new DataValidationException("Failed to parse file " + resource.getFileName());
-            } catch (IOException e) {
-                throw new ThingsboardException(e, ThingsboardErrorCode.GENERAL);
-            }
-            if (resource.getResourceType().equals(ResourceType.LWM2M_MODEL) && toLwM2mObject(resource, true) == null) {
-                throw new DataValidationException(String.format("Could not parse the XML of objectModel with name %s", resource.getSearchText()));
-            }
-        } else {
-            resource.setResourceKey(resource.getFileName());
-        }
-
-        return resourceService.saveResource(resource);
     }
 
     @Override
@@ -218,35 +179,71 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
     }
 
     @Override
-    public TbResource save(TbResource tbResource, SecurityUser user) throws ThingsboardException {
+    public TbResource save(TbResource tbResource, User user) throws ThingsboardException {
         ActionType actionType = tbResource.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = tbResource.getTenantId();
         try {
-
-            TbResource savedResource = checkNotNull(saveResourceInternal(tbResource));
+            TbResource savedResource = checkNotNull(doSave(tbResource));
             tbClusterService.onResourceChange(savedResource, null);
-            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, savedResource.getId(),
-                    savedResource, user, actionType, false, null);
+            notificationEntityService.logEntityAction(tenantId, savedResource.getId(), savedResource, actionType, user);
             return savedResource;
         } catch (Exception e) {
-            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, emptyId(EntityType.TB_RESOURCE),
-                    tbResource, user, actionType, false, e);
-            throw handleException(e);
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE),
+                    tbResource, actionType, user, e);
+            throw e;
         }
     }
 
     @Override
-    public void delete(TbResource tbResource, SecurityUser user) throws ThingsboardException {
+    public void delete(TbResource tbResource, User user) {
         TbResourceId resourceId = tbResource.getId();
         TenantId tenantId = tbResource.getTenantId();
         try {
             resourceService.deleteResource(tenantId, resourceId);
             tbClusterService.onResourceDeleted(tbResource, null);
-            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, resourceId, tbResource, user, ActionType.DELETED,
-                    false, null, resourceId.toString());
+            notificationEntityService.logEntityAction(tenantId, resourceId, tbResource, ActionType.DELETED, user, resourceId.toString());
         } catch (Exception e) {
-            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, emptyId(EntityType.TB_RESOURCE), null, user, ActionType.DELETED,
-                    false, e, resourceId.toString());
-            throw handleException(e);
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE),
+                    ActionType.DELETED, user, e, resourceId.toString());
+            throw e;
         }
-    }}
+    }
+
+    private TbResource doSave(TbResource resource) throws ThingsboardException {
+        log.trace("Executing saveResource [{}]", resource);
+        if (StringUtils.isEmpty(resource.getData())) {
+            throw new DataValidationException("Resource data should be specified!");
+        }
+        if (ResourceType.LWM2M_MODEL.equals(resource.getResourceType())) {
+            try {
+                List<ObjectModel> objectModels =
+                        ddfFileParser.parse(new ByteArrayInputStream(Base64.getDecoder().decode(resource.getData())), resource.getSearchText());
+                if (!objectModels.isEmpty()) {
+                    ObjectModel objectModel = objectModels.get(0);
+
+                    String resourceKey = objectModel.id + LWM2M_SEPARATOR_KEY + objectModel.version;
+                    String name = objectModel.name;
+                    resource.setResourceKey(resourceKey);
+                    if (resource.getId() == null) {
+                        resource.setTitle(name + " id=" + objectModel.id + " v" + objectModel.version);
+                    }
+                    resource.setSearchText(resourceKey + LWM2M_SEPARATOR_SEARCH_TEXT + name);
+                } else {
+                    throw new DataValidationException(String.format("Could not parse the XML of objectModel with name %s", resource.getSearchText()));
+                }
+            } catch (InvalidDDFFileException e) {
+                log.error("Failed to parse file {}", resource.getFileName(), e);
+                throw new DataValidationException("Failed to parse file " + resource.getFileName());
+            } catch (IOException e) {
+                throw new ThingsboardException(e, ThingsboardErrorCode.GENERAL);
+            }
+            if (resource.getResourceType().equals(ResourceType.LWM2M_MODEL) && toLwM2mObject(resource, true) == null) {
+                throw new DataValidationException(String.format("Could not parse the XML of objectModel with name %s", resource.getSearchText()));
+            }
+        } else {
+            resource.setResourceKey(resource.getFileName());
+        }
+
+        return resourceService.saveResource(resource);
+    }
+}

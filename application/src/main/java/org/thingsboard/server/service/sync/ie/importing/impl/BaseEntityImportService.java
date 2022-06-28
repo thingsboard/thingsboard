@@ -28,6 +28,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -51,7 +52,6 @@ import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
-import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.ie.exporting.ExportableEntitiesService;
 import org.thingsboard.server.service.sync.ie.importing.EntityImportService;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
@@ -213,8 +213,8 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                         importResult.setUpdatedRelatedEntities(true);
                         relationService.deleteRelation(ctx.getTenantId(), existingRelation.getFrom(), existingRelation.getTo(), existingRelation.getType(), existingRelation.getTypeGroup());
                         importResult.addSendEventsCallback(() -> {
-                            entityNotificationService.notifyCreateOrUpdateOrDeleteRelation(tenantId, null,
-                                    existingRelation, ctx.getUser(), ActionType.RELATION_DELETED, null, existingRelation);
+                            entityNotificationService.notifyRelation(tenantId, null,
+                                    existingRelation, ctx.getUser(), ActionType.RELATION_DELETED, existingRelation);
                         });
                     } else if (Objects.equal(relation.getAdditionalInfo(), existingRelation.getAdditionalInfo())) {
                         relationsMap.remove(relation);
@@ -228,7 +228,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
         });
     }
 
-    private void importAttributes(SecurityUser user, Map<String, List<AttributeExportData>> attributes, EntityImportResult<E> importResult) {
+    private void importAttributes(User user, Map<String, List<AttributeExportData>> attributes, EntityImportResult<E> importResult) {
         E entity = importResult.getSavedEntity();
         importResult.addSaveReferencesCallback(() -> {
             attributes.forEach((scope, attributesExportData) -> {
@@ -267,7 +267,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
         });
     }
 
-    protected void onEntitySaved(SecurityUser user, E savedEntity, E oldEntity) throws ThingsboardException {
+    protected void onEntitySaved(User user, E savedEntity, E oldEntity) throws ThingsboardException {
         entityNotificationService.notifyCreateOrUpdateEntity(user.getTenantId(), savedEntity.getId(), savedEntity,
                 null, oldEntity == null ? ActionType.ADDED : ActionType.UPDATED, user);
     }
