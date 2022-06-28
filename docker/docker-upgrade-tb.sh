@@ -40,6 +40,8 @@ set -e
 
 source compose-utils.sh
 
+checkFolders --create || exit $?
+
 ADDITIONAL_COMPOSE_QUEUE_ARGS=$(additionalComposeQueueArgs) || exit $?
 
 ADDITIONAL_COMPOSE_ARGS=$(additionalComposeArgs) || exit $?
