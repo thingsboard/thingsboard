@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -59,7 +58,6 @@ import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
-@Slf4j
 public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
     static final TypeReference<PageData<Device>> PAGE_DATA_DEVICE_TYPE_REF = new TypeReference<>() {
     };
@@ -74,7 +72,6 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
 
     @Before
     public void beforeTest() throws Exception {
-        log.debug("beforeTest");
         executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(8, getClass()));
 
         loginSysAdmin();
@@ -96,7 +93,6 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
 
     @After
     public void afterTest() throws Exception {
-        log.debug("afterTest...");
         executor.shutdownNow();
 
         loginSysAdmin();
@@ -572,7 +568,6 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
 
     @Test
     public void testFindTenantDevices() throws Exception {
-        log.debug("testFindTenantDevices");
         int cntEntity = 178;
 
         Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);

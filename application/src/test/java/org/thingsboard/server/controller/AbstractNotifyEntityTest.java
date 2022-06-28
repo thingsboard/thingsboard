@@ -254,12 +254,6 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
                 Mockito.argThat(matcherOriginatorId), Mockito.any(TbMsg.class), Mockito.isNull());
     }
 
-//    private void testPushMsgToRuleEngineOne(EntityId originatorId, TenantId tenantId) {
-//        ArgumentMatcher<EntityId> matcherOriginatorId = argument -> argument.equals(originatorId) ;
-//        Mockito.verify(tbClusterService, times(1)).pushMsgToRuleEngine(Mockito.eq(tenantId),
-//                Mockito.argThat(matcherOriginatorId), Mockito.any(TbMsg.class), Mockito.isNull());
-//    }
-
     private void testSendNotificationMsgToEdgeServiceTime(EntityId entityId, TenantId tenantId, ActionType actionType, int cntTime) {
         Mockito.verify(tbClusterService, times(cntTime)).sendNotificationMsgToEdge(Mockito.eq(tenantId),
                 Mockito.any(), Mockito.eq(entityId), Mockito.any(), Mockito.isNull(),
