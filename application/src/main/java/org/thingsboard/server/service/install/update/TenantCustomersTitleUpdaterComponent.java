@@ -18,7 +18,6 @@ package org.thingsboard.server.service.install.update;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -53,17 +52,18 @@ public class TenantCustomersTitleUpdaterComponent {
 
     protected List<Customer> updateDuplicateCustomersTitle(List<Customer> customers) {
         if (customers == null || customers.isEmpty()) return customers;
-        sortCustomersByTitleAndCreatedTime(customers);
         int countEqualsTitleAndTenantIdBefore = 0;
         String lastCustomerName = customers.get(0).getName();
+        TenantId lastTenantId = customers.get(0).getTenantId();
         for (int i = 1; i < customers.size(); i++) {
             Customer customer = customers.get(i);
-            if (customer.getName().equals(lastCustomerName)) {
+            if (customer.getName().equals(lastCustomerName) && customer.getTenantId().equals(lastTenantId)) {
                 countEqualsTitleAndTenantIdBefore++;
                 customer.setTitle(customer.getName() + "-" + countEqualsTitleAndTenantIdBefore);
                 customers.set(i, updateCustomerTitle(customer.getTenantId(), customer));
             } else {
                 lastCustomerName = customer.getName();
+                lastTenantId = customer.getTenantId();
                 countEqualsTitleAndTenantIdBefore = 0;
             }
         }
@@ -74,10 +74,4 @@ public class TenantCustomersTitleUpdaterComponent {
         return customerDao.save(id, customer);
     }
 
-    protected void sortCustomersByTitleAndCreatedTime(List<Customer> customers) {
-        customers.sort((o1, o2) -> {
-            if (!o1.getName().equals(o2.getName())) return o1.getName().compareTo(o2.getName());
-            else return Long.compare(o2.getCreatedTime(), o1.getCreatedTime());
-        });
-    }
 }

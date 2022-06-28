@@ -24,11 +24,10 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.willCallRealMethod;
 import static org.mockito.Mockito.mock;
@@ -44,7 +43,6 @@ public class TenantCustomersTitleUpdaterComponentTest {
     @Before
     public void setUp() {
         willCallRealMethod().given(tenantCustomersTitleUpdaterComponent).updateDuplicateCustomersTitle(anyList());
-        willCallRealMethod().given(tenantCustomersTitleUpdaterComponent).sortCustomersByTitleAndCreatedTime(any());
     }
 
     @Test
@@ -82,15 +80,12 @@ public class TenantCustomersTitleUpdaterComponentTest {
             }
             resultCustomers.add(updatedCustomer);
         }
+        customers.sort(Comparator.comparing(Customer::getTitle));
+        resultCustomers.sort(Comparator.comparing(Customer::getTitle));
         testUpdateCustomerMethod(customers, resultCustomers);
     }
 
     void testUpdateCustomerMethod(List<Customer> customers, List<Customer> resultCustomers) {
-        tenantCustomersTitleUpdaterComponent.sortCustomersByTitleAndCreatedTime(resultCustomers);
-
-        // Shuffle customers for check sort function
-        Collections.shuffle(customers);
-
         customers = tenantCustomersTitleUpdaterComponent.updateDuplicateCustomersTitle(customers);
         Assertions.assertEquals(customers, resultCustomers);
     }
