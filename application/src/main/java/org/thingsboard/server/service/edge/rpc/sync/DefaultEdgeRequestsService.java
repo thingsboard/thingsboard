@@ -74,6 +74,7 @@ import org.thingsboard.server.gen.edge.v1.UserCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetBundleTypesRequestMsg;
 import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
+import org.thingsboard.server.service.state.DefaultDeviceStateService;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -162,6 +163,9 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                     Map<String, Object> entityData = new HashMap<>();
                     ObjectNode attributes = mapper.createObjectNode();
                     for (AttributeKvEntry attr : ssAttributes) {
+                        if (DefaultDeviceStateService.PERSISTENT_ATTRIBUTES.contains(attr.getKey())) {
+                            continue;
+                        }
                         if (attr.getDataType() == DataType.BOOLEAN && attr.getBooleanValue().isPresent()) {
                             attributes.put(attr.getKey(), attr.getBooleanValue().get());
                         } else if (attr.getDataType() == DataType.DOUBLE && attr.getDoubleValue().isPresent()) {
