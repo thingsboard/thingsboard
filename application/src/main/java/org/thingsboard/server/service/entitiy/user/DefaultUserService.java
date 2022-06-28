@@ -28,9 +28,9 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.UserCredentials;
+import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
-import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
 import javax.servlet.http.HttpServletRequest;
@@ -44,12 +44,13 @@ import static org.thingsboard.server.controller.UserController.ACTIVATE_URL_PATT
 @Slf4j
 public class DefaultUserService extends AbstractTbEntityService implements TbUserService {
 
+    private final UserService userService;
     private final MailService mailService;
     private final SystemSecurityService systemSecurityService;
 
     @Override
     public User save(TenantId tenantId, CustomerId customerId, User tbUser, boolean sendActivationMail,
-                     HttpServletRequest request, SecurityUser user) throws ThingsboardException {
+                     HttpServletRequest request, User user) throws ThingsboardException {
         ActionType actionType = tbUser.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         try {
             boolean sendEmail = tbUser.getId() == null && sendActivationMail;
@@ -71,25 +72,24 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
                     savedUser, user, actionType, true, null);
             return savedUser;
         } catch (Exception e) {
-            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, emptyId(EntityType.USER),
-                    tbUser, user, actionType, false, e);
-            throw handleException(e);
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.USER), user, actionType, user, e);
+            throw e;
         }
     }
 
     @Override
-    public void delete(TenantId tenantId, CustomerId customerId, User tbUser, SecurityUser user) throws ThingsboardException {
+    public void delete(TenantId tenantId, CustomerId customerId, User tbUser, User user) throws ThingsboardException {
         UserId userId = tbUser.getId();
+
         try {
             List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, userId);
-
             userService.deleteUser(tenantId, userId);
             notificationEntityService.notifyDeleteEntity(tenantId, userId, tbUser, customerId,
-                    ActionType.DELETED,  relatedEdgeIds, user, userId.toString());
+                    ActionType.DELETED, relatedEdgeIds, user, userId.toString());
         } catch (Exception e) {
-            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, emptyId(EntityType.USER),
-                    null, user, ActionType.DELETED, false, e, userId.toString());
-            throw handleException(e);
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.USER),
+                    ActionType.DELETED, user, e, userId.toString());
+            throw e;
         }
     }
 }

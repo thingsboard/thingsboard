@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy.otaPackageController;
+package org.thingsboard.server.service.entitiy.ota;
 
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
-import org.thingsboard.server.service.security.model.SecurityUser;
 
-public interface TbOtaPackageService  {
+public interface TbOtaPackageService {
 
-    OtaPackageInfo save(SaveOtaPackageInfoRequest saveOtaPackageInfoRequest, SecurityUser user) throws ThingsboardException;
-
-    void  delete(OtaPackageInfo otaPackageInfo, SecurityUser user) throws ThingsboardException;
+    OtaPackageInfo save(SaveOtaPackageInfoRequest saveOtaPackageInfoRequest, User user) throws ThingsboardException;
 
     OtaPackageInfo saveOtaPackageData(OtaPackageInfo otaPackageInfo, String checksum, ChecksumAlgorithm checksumAlgorithm,
-                                      byte[] data, String filename, String contentType, SecurityUser securityUser) throws ThingsboardException;
+                                      byte[] data, String filename, String contentType, User user) throws ThingsboardException;
+
+    void delete(OtaPackageInfo otaPackageInfo, User user) throws ThingsboardException;
+
 }
