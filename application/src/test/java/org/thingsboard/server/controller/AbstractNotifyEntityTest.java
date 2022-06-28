@@ -57,6 +57,8 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
     @SpyBean
     protected GatewayNotificationsService gatewayNotificationsService;
 
+    protected final String msgErrorPermission = "You don't have permission to perform this operation!";
+
     protected void testNotifyEntityAllOneTime(HasName entity, EntityId entityId, EntityId originatorId,
                                               TenantId tenantId, CustomerId customerId, UserId userId, String userName,
                                               ActionType actionType, Object... additionalInfo) {
