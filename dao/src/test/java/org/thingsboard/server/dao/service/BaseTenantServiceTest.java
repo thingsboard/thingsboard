@@ -17,17 +17,12 @@ package org.thingsboard.server.dao.service;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.cache.TbCacheValueWrapper;
 import org.thingsboard.server.cache.TbTransactionalCache;
-import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
@@ -61,19 +56,17 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.tenant.TenantCacheKey;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
-import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class BaseTenantServiceTest extends AbstractServiceTest {
 
@@ -83,10 +76,10 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
     protected TenantDao tenantDao;
 
     @Autowired
-    protected TbTransactionalCache<TenantCacheKey, Tenant> cache;
+    protected TbTransactionalCache<TenantId, Tenant> cache;
 
     @Autowired
-    protected TbTransactionalCache<TenantCacheKey, Boolean> existsTenantCache;
+    protected TbTransactionalCache<TenantId, Boolean> existsTenantCache;
 
     @Test
     public void testSaveTenant() {
@@ -97,15 +90,15 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         Assert.assertNotNull(savedTenant.getId());
         Assert.assertTrue(savedTenant.getCreatedTime() > 0);
         Assert.assertEquals(tenant.getTitle(), savedTenant.getTitle());
-        
+
         savedTenant.setTitle("My new tenant");
         tenantService.saveTenant(savedTenant);
         Tenant foundTenant = tenantService.findTenantById(savedTenant.getId());
         Assert.assertEquals(foundTenant.getTitle(), savedTenant.getTitle());
-        
+
         tenantService.deleteTenant(savedTenant.getId());
     }
-    
+
     @Test
     public void testFindTenantById() {
         Tenant tenant = new Tenant();
@@ -127,13 +120,13 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         Assert.assertEquals(new TenantInfo(savedTenant, "Default"), foundTenant);
         tenantService.deleteTenant(savedTenant.getId());
     }
-    
+
     @Test(expected = DataValidationException.class)
     public void testSaveTenantWithEmptyTitle() {
         Tenant tenant = new Tenant();
         tenantService.saveTenant(tenant);
     }
-    
+
     @Test(expected = DataValidationException.class)
     public void testSaveTenantWithInvalidEmail() {
         Tenant tenant = new Tenant();
@@ -141,7 +134,7 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         tenant.setEmail("invalid@mail");
         tenantService.saveTenant(tenant);
     }
-    
+
     @Test
     public void testDeleteTenant() {
         Tenant tenant = new Tenant();
@@ -151,7 +144,7 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         Tenant foundTenant = tenantService.findTenantById(savedTenant.getId());
         Assert.assertNull(foundTenant);
     }
-    
+
     @Test
     public void testFindTenants() {
         List<Tenant> tenants = new ArrayList<>();
@@ -160,13 +153,13 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
         tenants.addAll(pageData.getData());
-        
-        for (int i=0;i<156;i++) {
+
+        for (int i = 0; i < 156; i++) {
             Tenant tenant = new Tenant();
-            tenant.setTitle("Tenant"+i);
+            tenant.setTitle("Tenant" + i);
             tenants.add(tenantService.saveTenant(tenant));
         }
-        
+
         List<Tenant> loadedTenants = new ArrayList<>();
         pageLink = new PageLink(17);
         do {
@@ -176,46 +169,46 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
                 pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
-        
+
         Collections.sort(tenants, idComparator);
         Collections.sort(loadedTenants, idComparator);
-        
+
         Assert.assertEquals(tenants, loadedTenants);
-        
+
         for (Tenant tenant : loadedTenants) {
             tenantService.deleteTenant(tenant.getId());
         }
-        
+
         pageLink = new PageLink(17);
         pageData = tenantService.findTenants(pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
-        
+
     }
-    
+
     @Test
     public void testFindTenantsByTitle() {
         String title1 = "Tenant title 1";
         List<Tenant> tenantsTitle1 = new ArrayList<>();
-        for (int i=0;i<134;i++) {
+        for (int i = 0; i < 134; i++) {
             Tenant tenant = new Tenant();
-            String suffix = RandomStringUtils.randomAlphanumeric((int)(Math.random()*15));
-            String title = title1+suffix;
+            String suffix = RandomStringUtils.randomAlphanumeric((int) (Math.random() * 15));
+            String title = title1 + suffix;
             title = i % 2 == 0 ? title.toLowerCase() : title.toUpperCase();
             tenant.setTitle(title);
             tenantsTitle1.add(tenantService.saveTenant(tenant));
         }
         String title2 = "Tenant title 2";
         List<Tenant> tenantsTitle2 = new ArrayList<>();
-        for (int i=0;i<127;i++) {
+        for (int i = 0; i < 127; i++) {
             Tenant tenant = new Tenant();
-            String suffix = RandomStringUtils.randomAlphanumeric((int)(Math.random()*15));
-            String title = title2+suffix;
+            String suffix = RandomStringUtils.randomAlphanumeric((int) (Math.random() * 15));
+            String title = title2 + suffix;
             title = i % 2 == 0 ? title.toLowerCase() : title.toUpperCase();
             tenant.setTitle(title);
             tenantsTitle2.add(tenantService.saveTenant(tenant));
         }
-        
+
         List<Tenant> loadedTenantsTitle1 = new ArrayList<>();
         PageLink pageLink = new PageLink(15, 0, title1);
         PageData<Tenant> pageData = null;
@@ -226,12 +219,12 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
                 pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
-        
+
         Collections.sort(tenantsTitle1, idComparator);
         Collections.sort(loadedTenantsTitle1, idComparator);
-        
+
         Assert.assertEquals(tenantsTitle1, loadedTenantsTitle1);
-        
+
         List<Tenant> loadedTenantsTitle2 = new ArrayList<>();
         pageLink = new PageLink(4, 0, title2);
         do {
@@ -244,22 +237,22 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
 
         Collections.sort(tenantsTitle2, idComparator);
         Collections.sort(loadedTenantsTitle2, idComparator);
-        
+
         Assert.assertEquals(tenantsTitle2, loadedTenantsTitle2);
 
         for (Tenant tenant : loadedTenantsTitle1) {
             tenantService.deleteTenant(tenant.getId());
         }
-        
+
         pageLink = new PageLink(4, 0, title1);
         pageData = tenantService.findTenants(pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
-        
+
         for (Tenant tenant : loadedTenantsTitle2) {
             tenantService.deleteTenant(tenant.getId());
         }
-        
+
         pageLink = new PageLink(4, 0, title2);
         pageData = tenantService.findTenants(pageLink);
         Assert.assertFalse(pageData.hasNext());
@@ -276,9 +269,9 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         Assert.assertTrue(pageData.getData().isEmpty());
         tenants.addAll(pageData.getData());
 
-        for (int i=0;i<156;i++) {
+        for (int i = 0; i < 156; i++) {
             Tenant tenant = new Tenant();
-            tenant.setTitle("Tenant"+i);
+            tenant.setTitle("Tenant" + i);
             tenants.add(new TenantInfo(tenantService.saveTenant(tenant), "Default"));
         }
 
@@ -338,7 +331,7 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         tenantService.findTenantById(savedTenant.getId());
         verify(tenantDao, Mockito.times(1)).findById(eq(savedTenant.getId()), eq(savedTenant.getId().getId()));
 
-        var cachedTenant = cache.get(TenantCacheKey.fromId(savedTenant.getId()));
+        var cachedTenant = cache.get(savedTenant.getId());
         Assert.assertNotNull("Getting an existing Tenant doesn't add it to the cache!", cachedTenant);
         Assert.assertEquals(savedTenant, cachedTenant.get());
 
@@ -358,13 +351,13 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
 
         Mockito.reset(tenantDao);
         //fromIdExists invoked from device profile validator
-        existsTenantCache.evict(TenantCacheKey.fromIdExists(savedTenant.getTenantId()));
+        existsTenantCache.evict(savedTenant.getTenantId());
 
         verify(tenantDao, Mockito.times(0)).existsById(any(), any());
         tenantService.tenantExists(savedTenant.getId());
         verify(tenantDao, Mockito.times(1)).existsById(eq(savedTenant.getId()), eq(savedTenant.getId().getId()));
 
-        var isExists = existsTenantCache.get(TenantCacheKey.fromIdExists(savedTenant.getId()));
+        var isExists = existsTenantCache.get(savedTenant.getId());
         Assert.assertNotNull("Getting an existing Tenant doesn't add it to the cache!", isExists);
 
         for (int i = 0; i < 100; i++) {
@@ -383,7 +376,7 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
 
         tenantService.findTenantById(savedTenant.getId());
 
-        var cachedTenant = cache.get(TenantCacheKey.fromId(savedTenant.getId()));
+        var cachedTenant = cache.get(savedTenant.getId());
         Assert.assertNotNull("Saving a Tenant doesn't add it to the cache!", cachedTenant);
         Assert.assertEquals(savedTenant, cachedTenant.get());
 
@@ -392,7 +385,7 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
 
         Mockito.reset(tenantDao);
 
-        cachedTenant = cache.get(TenantCacheKey.fromId(savedTenant.getId()));
+        cachedTenant = cache.get(savedTenant.getId());
         Assert.assertNull("Updating a Tenant doesn't evict the cache!", cachedTenant);
 
         verify(tenantDao, Mockito.times(0)).findById(any(), any());
@@ -411,18 +404,18 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         tenantService.findTenantById(savedTenant.getId());
         tenantService.tenantExists(savedTenant.getId());
 
-       var cachedTenant =
-                cache.get(TenantCacheKey.fromId(savedTenant.getId()));
+        var cachedTenant =
+                cache.get(savedTenant.getId());
         var cachedExists =
-               existsTenantCache.get(TenantCacheKey.fromIdExists(savedTenant.getId()));
+                existsTenantCache.get(savedTenant.getId());
         Assert.assertNotNull("Saving a Tenant doesn't add it to the cache!", cachedTenant);
         Assert.assertNotNull("Saving a Tenant doesn't add it to the cache!", cachedExists);
 
         tenantService.deleteTenant(savedTenant.getId());
         cachedTenant =
-                cache.get(TenantCacheKey.fromId(savedTenant.getId()));
+                cache.get(savedTenant.getId());
         cachedExists =
-                existsTenantCache.get(TenantCacheKey.fromIdExists(savedTenant.getId()));
+                existsTenantCache.get(savedTenant.getId());
 
 
         Assert.assertNull("Removing a Tenant doesn't evict the cache!", cachedTenant);

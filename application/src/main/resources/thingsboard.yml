@@ -28,7 +28,7 @@ server:
     # Server SSL credentials
     credentials:
       # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
-      type:  "${SSL_CREDENTIALS_TYPE:PEM}"
+      type: "${SSL_CREDENTIALS_TYPE:PEM}"
       # PEM server credentials
       pem:
         # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
@@ -397,15 +397,19 @@ cache:
     tenants:
       timeToLiveInMinutes: "${CACHE_SPECS_TENANTS_TTL:1440}"
       maxSize: "${CACHE_SPECS_TENANTS_MAX_SIZE:10000}"
+    tenantsExist:
+      # environment variables are intentionally the same as in 'tenants' cache to be equal.
+      timeToLiveInMinutes: "${CACHE_SPECS_TENANTS_TTL:1440}"
+      maxSize: "${CACHE_SPECS_TENANTS_MAX_SIZE:10000}"
     deviceProfiles:
       timeToLiveInMinutes: "${CACHE_SPECS_DEVICE_PROFILES_TTL:1440}"
       maxSize: "${CACHE_SPECS_DEVICE_PROFILES_MAX_SIZE:10000}"
     attributes:
       timeToLiveInMinutes: "${CACHE_SPECS_ATTRIBUTES_TTL:1440}"
       maxSize: "${CACHE_SPECS_ATTRIBUTES_MAX_SIZE:100000}"
-    tokensOutdatageTime:
-      timeToLiveInMinutes: "${CACHE_SPECS_TOKENS_OUTDATAGE_TIME_TTL:20000}"
-      maxSize: "${CACHE_SPECS_TOKENS_OUTDATAGE_TIME_MAX_SIZE:10000}"
+    usersUpdateTime:
+      timeToLiveInMinutes: "${CACHE_SPECS_USERS_UPDATE_TIME_TTL:20000}"
+      maxSize: "${CACHE_SPECS_USERS_UPDATE_TIME_MAX_SIZE:10000}"
     otaPackages:
       timeToLiveInMinutes: "${CACHE_SPECS_OTA_PACKAGES_TTL:60}"
       maxSize: "${CACHE_SPECS_OTA_PACKAGES_MAX_SIZE:10}"
@@ -669,7 +673,7 @@ transport:
       # Server SSL credentials
       credentials:
         # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
-        type:  "${MQTT_SSL_CREDENTIALS_TYPE:PEM}"
+        type: "${MQTT_SSL_CREDENTIALS_TYPE:PEM}"
         # PEM server credentials
         pem:
           # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
@@ -712,7 +716,7 @@ transport:
       # Server DTLS credentials
       credentials:
         # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
-        type:  "${COAP_DTLS_CREDENTIALS_TYPE:PEM}"
+        type: "${COAP_DTLS_CREDENTIALS_TYPE:PEM}"
         # PEM server credentials
         pem:
           # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
@@ -790,7 +794,7 @@ transport:
           # Whether to enable LWM2M bootstrap server X509 Certificate/RPK support
           enabled: "${LWM2M_BS_CREDENTIALS_ENABLED:false}"
           # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
-          type:  "${LWM2M_BS_CREDENTIALS_TYPE:PEM}"
+          type: "${LWM2M_BS_CREDENTIALS_TYPE:PEM}"
           # PEM server credentials
           pem:
             # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
@@ -817,7 +821,7 @@ transport:
         # Whether to load X509 trust certificates
         enabled: "${LWM2M_TRUST_CREDENTIALS_ENABLED:false}"
         # Trust certificates store type (PEM - pem certificates file; KEYSTORE - java keystore)
-        type:  "${LWM2M_TRUST_CREDENTIALS_TYPE:PEM}"
+        type: "${LWM2M_TRUST_CREDENTIALS_TYPE:PEM}"
         # PEM certificates
         pem:
           # Path to the certificates file (holds trust certificates)
@@ -841,8 +845,8 @@ transport:
     psm_activity_timer: "${LWM2M_PSM_ACTIVITY_TIMER:10000}"
     paging_transmission_window: "${LWM2M_PAGING_TRANSMISSION_WINDOW:10000}"
     network_config: # In this section you can specify custom parameters for LwM2M network configuration and expose the env variables to configure outside
-#      - key: "PROTOCOL_STAGE_THREAD_COUNT"
-#        value: "${LWM2M_PROTOCOL_STAGE_THREAD_COUNT:4}"
+  #      - key: "PROTOCOL_STAGE_THREAD_COUNT"
+  #        value: "${LWM2M_PROTOCOL_STAGE_THREAD_COUNT:4}"
   snmp:
     enabled: "${SNMP_ENABLED:true}"
     response_processing:
@@ -928,9 +932,9 @@ queue:
       tb_version_control:
         - key: max.poll.interval.ms
           value: "${TB_QUEUE_KAFKA_VC_MAX_POLL_INTERVAL_MS:600000}"
-#      tb_rule_engine.sq:
-#        - key: max.poll.records
-#          value: "${TB_QUEUE_KAFKA_SQ_MAX_POLL_RECORDS:1024}"
+    #      tb_rule_engine.sq:
+    #        - key: max.poll.records
+    #          value: "${TB_QUEUE_KAFKA_SQ_MAX_POLL_RECORDS:1024}"
     other: # In this section you can specify custom parameters for Kafka consumer/producer and expose the env variables to configure outside
       - key: "request.timeout.ms" # refer to https://docs.confluent.io/platform/current/installation/configuration/producer-configs.html#producerconfigs_request.timeout.ms
         value: "${TB_QUEUE_KAFKA_REQUEST_TIMEOUT_MS:30000}" # (30 seconds)

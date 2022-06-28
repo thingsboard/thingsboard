@@ -21,13 +21,15 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.CaffeineTbTransactionalCache;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantInfo;
+import org.thingsboard.server.common.data.id.TenantId;
 
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "caffeine", matchIfMissing = true)
 @Service("TenantExistsCache")
-public class TenantExistsCaffeineCache extends CaffeineTbTransactionalCache<TenantCacheKey, Boolean> {
+public class TenantExistsCaffeineCache extends CaffeineTbTransactionalCache<TenantId, Boolean> {
 
     public TenantExistsCaffeineCache(CacheManager cacheManager) {
-        super(cacheManager, CacheConstants.TENANTS_CACHE);
+        super(cacheManager, CacheConstants.TENANTS_EXIST_CACHE);
     }
 
 }
