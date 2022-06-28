@@ -177,7 +177,7 @@ function checkFolders() {
     if [ -z "$DIR" ]; then # skip empty lines
           continue
     fi
-    MESSAGE="Checking user ${USR} group ${GRP} dir ${DIR} "
+    MESSAGE="Checking user ${USR} group ${GRP} dir ${DIR}"
     if [[ -d "$DIR" ]] &&
        [[ $(ls -ldn "$DIR" | awk '{print $3}') -eq "$USR" ]] &&
        [[ $(ls -ldn "$DIR" | awk '{print $4}') -eq "$GRP" ]]
