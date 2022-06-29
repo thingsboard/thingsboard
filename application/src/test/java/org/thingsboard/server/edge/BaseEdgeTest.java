@@ -1813,6 +1813,10 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertTrue(latestMessage instanceof QueueUpdateMsg);
         QueueUpdateMsg queueUpdateMsg = (QueueUpdateMsg) latestMessage;
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, queueUpdateMsg.getMsgType());
+        Assert.assertEquals(savedQueue.getUuidId().getMostSignificantBits(), queueUpdateMsg.getIdMSB());
+        Assert.assertEquals(savedQueue.getUuidId().getLeastSignificantBits(), queueUpdateMsg.getIdLSB());
+        Assert.assertEquals(savedQueue.getTenantId().getId().getMostSignificantBits(), queueUpdateMsg.getTenantIdMSB());
+        Assert.assertEquals(savedQueue.getTenantId().getId().getLeastSignificantBits(), queueUpdateMsg.getTenantIdLSB());
         Assert.assertEquals("EdgeMain", queueUpdateMsg.getName());
         Assert.assertEquals("tb_rule_engine.EdgeMain", queueUpdateMsg.getTopic());
         Assert.assertEquals(25, queueUpdateMsg.getPollInterval());
@@ -1828,6 +1832,17 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(5, queueUpdateMsg.getProcessingStrategy().getMaxPauseBetweenRetries());
 
         // 2
+        edgeImitator.expectMessageAmount(1);
+        savedQueue.setPollInterval(50);
+        savedQueue = doPost("/api/queues?serviceType=" + ServiceType.TB_RULE_ENGINE.name(), savedQueue, Queue.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof QueueUpdateMsg);
+        queueUpdateMsg = (QueueUpdateMsg) latestMessage;
+        Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, queueUpdateMsg.getMsgType());
+        Assert.assertEquals(50, queueUpdateMsg.getPollInterval());
+
+        // 3
         edgeImitator.expectMessageAmount(1);
         doDelete("/api/queues/" + savedQueue.getUuidId())
                 .andExpect(status().isOk());

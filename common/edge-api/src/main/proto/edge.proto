@@ -445,14 +445,16 @@ message QueueUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  string name = 4;
-  string topic = 5;
-  int32 pollInterval = 6;
-  int32 partitions = 7;
-  bool consumerPerPartition = 8;
-  int64 packProcessingTimeout = 9;
-  SubmitStrategyProto submitStrategy = 10;
-  ProcessingStrategyProto processingStrategy = 11;
+  int64 tenantIdMSB = 4;
+  int64 tenantIdLSB = 5;
+  string name = 6;
+  string topic = 7;
+  int32 pollInterval = 8;
+  int32 partitions = 9;
+  bool consumerPerPartition = 10;
+  int64 packProcessingTimeout = 11;
+  SubmitStrategyProto submitStrategy = 12;
+  ProcessingStrategyProto processingStrategy = 13;
 }
 
 message SubmitStrategyProto {

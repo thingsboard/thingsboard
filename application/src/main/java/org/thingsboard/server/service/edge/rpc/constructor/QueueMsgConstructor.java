@@ -35,6 +35,8 @@ public class QueueMsgConstructor {
                 .setMsgType(msgType)
                 .setIdMSB(queue.getId().getId().getMostSignificantBits())
                 .setIdLSB(queue.getId().getId().getLeastSignificantBits())
+                .setTenantIdMSB(queue.getTenantId().getId().getMostSignificantBits())
+                .setTenantIdLSB(queue.getTenantId().getId().getLeastSignificantBits())
                 .setName(queue.getName())
                 .setTopic(queue.getTopic())
                 .setPollInterval(queue.getPollInterval())
