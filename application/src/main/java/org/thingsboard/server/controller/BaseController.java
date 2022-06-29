@@ -903,22 +903,6 @@ public abstract class BaseController {
         tbClusterService.sendNotificationMsgToEdge(tenantId, edgeId, entityId, body, type, action);
     }
 
-    protected List<EdgeId> findRelatedEdgeIds(TenantId tenantId, EntityId entityId) {
-        if (!edgesEnabled) {
-            return null;
-        }
-        if (EntityType.EDGE.equals(entityId.getEntityType())) {
-            return Collections.singletonList(new EdgeId(entityId.getId()));
-        }
-        PageDataIterableByTenantIdEntityId<EdgeId> relatedEdgeIdsIterator =
-                new PageDataIterableByTenantIdEntityId<>(edgeService::findRelatedEdgeIdsByEntityId, tenantId, entityId, DEFAULT_PAGE_SIZE);
-        List<EdgeId> result = new ArrayList<>();
-        for (EdgeId edgeId : relatedEdgeIdsIterator) {
-            result.add(edgeId);
-        }
-        return result;
-    }
-
     protected void processDashboardIdFromAdditionalInfo(ObjectNode additionalInfo, String requiredFields) throws ThingsboardException {
         String dashboardId = additionalInfo.has(requiredFields) ? additionalInfo.get(requiredFields).asText() : null;
         if (dashboardId != null && !dashboardId.equals("null")) {

@@ -441,6 +441,33 @@ message OtaPackageUpdateMsg {
   optional string additionalInfo = 17;
 }
 
+message QueueUpdateMsg {
+  UpdateMsgType msgType = 1;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string name = 4;
+  string topic = 5;
+  int32 pollInterval = 6;
+  int32 partitions = 7;
+  bool consumerPerPartition = 8;
+  int64 packProcessingTimeout = 9;
+  SubmitStrategyProto submitStrategy = 10;
+  ProcessingStrategyProto processingStrategy = 11;
+}
+
+message SubmitStrategyProto {
+  string type = 1;
+  int32 batchSize = 2;
+}
+
+message ProcessingStrategyProto {
+  string type = 1;
+  int32 retries = 2;
+  double failurePercentage = 3;
+  int64 pauseBetweenRetries = 4;
+  int64 maxPauseBetweenRetries = 5;
+}
+
 /**
  * Main Messages;
  */
@@ -498,5 +525,6 @@ message DownlinkMsg {
   repeated AdminSettingsUpdateMsg adminSettingsUpdateMsg = 20;
   repeated DeviceRpcCallMsg deviceRpcCallMsg = 21;
   repeated OtaPackageUpdateMsg otaPackageUpdateMsg = 22;
+  repeated QueueUpdateMsg queueUpdateMsg = 23;
 }
 
