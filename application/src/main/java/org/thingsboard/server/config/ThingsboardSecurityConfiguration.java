@@ -24,22 +24,22 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
+import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
-import org.thingsboard.server.dao.audit.AuditLogLevelFilter;
 import org.thingsboard.server.dao.oauth2.OAuth2Configuration;
 import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -63,7 +63,7 @@ import java.util.List;
 @EnableGlobalMethodSecurity(prePostEnabled=true)
 @Order(SecurityProperties.BASIC_AUTH_ORDER)
 @TbCoreComponent
-public class ThingsboardSecurityConfiguration extends WebSecurityConfigurerAdapter {
+public class ThingsboardSecurityConfiguration {
 
     public static final String JWT_TOKEN_HEADER_PARAM = "X-Authorization";
     public static final String JWT_TOKEN_HEADER_PARAM_V2 = "Authorization";
@@ -161,16 +161,15 @@ public class ThingsboardSecurityConfiguration extends WebSecurityConfigurerAdapt
     }
 
     @Bean
-    @Override
-    public AuthenticationManager authenticationManagerBean() throws Exception {
-        return super.authenticationManagerBean();
-    }
-
-    @Override
-    protected void configure(AuthenticationManagerBuilder auth) {
+    public AuthenticationManager authenticationManager(ObjectPostProcessor<Object> objectPostProcessor) throws Exception {
+        DefaultAuthenticationEventPublisher eventPublisher = objectPostProcessor
+                .postProcess(new DefaultAuthenticationEventPublisher());
+        var auth = new AuthenticationManagerBuilder(objectPostProcessor);
+        auth.authenticationEventPublisher(eventPublisher);
         auth.authenticationProvider(restAuthenticationProvider);
         auth.authenticationProvider(jwtAuthenticationProvider);
         auth.authenticationProvider(refreshTokenAuthenticationProvider);
+        return auth.build();
     }
 
     @Bean
@@ -181,18 +180,20 @@ public class ThingsboardSecurityConfiguration extends WebSecurityConfigurerAdapt
     @Autowired
     private OAuth2AuthorizationRequestResolver oAuth2AuthorizationRequestResolver;
 
-    @Override
-    public void configure(WebSecurity web) throws Exception {
-        web.ignoring().antMatchers("/*.js","/*.css","/*.ico","/assets/**","/static/**");
+    @Bean
+    @Order(0)
+    SecurityFilterChain resources(HttpSecurity http) throws Exception {
+        http
+                .requestMatchers((matchers) -> matchers.antMatchers("/*.js","/*.css","/*.ico","/assets/**","/static/**"))
+                .authorizeHttpRequests((authorize) -> authorize.anyRequest().permitAll())
+                .requestCache().disable()
+                .securityContext().disable()
+                .sessionManagement().disable();
+        return http.build();
     }
 
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-//        http.authorizeHttpRequests((authorizeHttpRequests) ->
-//                authorizeHttpRequests
-//                        .antMatchers("/*.js","/*.css","/*.ico","/assets/**","/static/**")
-//                        .permitAll()
-//        );
+    @Bean
+    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.headers().cacheControl().and().frameOptions().disable()
                 .and()
                 .cors()
@@ -234,6 +235,7 @@ public class ThingsboardSecurityConfiguration extends WebSecurityConfigurerAdapt
                     .successHandler(oauth2AuthenticationSuccessHandler)
                     .failureHandler(oauth2AuthenticationFailureHandler);
         }
+        return http.build();
     }
 
     @Bean
@@ -247,5 +249,4 @@ public class ThingsboardSecurityConfiguration extends WebSecurityConfigurerAdapt
             return new CorsFilter(source);
         }
     }
-
 }

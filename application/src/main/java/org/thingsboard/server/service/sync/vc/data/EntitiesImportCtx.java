@@ -48,7 +48,7 @@ public class EntitiesImportCtx {
     private final Map<EntityType, EntityTypeLoadResult> results = new HashMap<>();
     private final Map<EntityType, Set<EntityId>> importedEntities = new HashMap<>();
     private final Map<EntityId, ReimportTask> toReimport = new HashMap<>();
-    private final List<ThrowingRunnable> referenceCallbacks = new ArrayList<>();
+    private final Map<EntityId, ThrowingRunnable> referenceCallbacks = new HashMap<>();
     private final List<ThrowingRunnable> eventCallbacks = new ArrayList<>();
     private final Map<EntityId, EntityId> externalToInternalIdMap = new HashMap<>();
     private final Set<EntityId> notFoundIds = new HashSet<>();
@@ -119,9 +119,9 @@ public class EntitiesImportCtx {
         relations.addAll(values);
     }
 
-    public void addReferenceCallback(ThrowingRunnable tr) {
+    public void addReferenceCallback(EntityId externalId, ThrowingRunnable tr) {
         if (tr != null) {
-            referenceCallbacks.add(tr);
+            referenceCallbacks.put(externalId, tr);
         }
     }
 

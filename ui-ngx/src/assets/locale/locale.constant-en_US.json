@@ -2928,6 +2928,7 @@
         "name": "Name",
         "name-required": "Queue name is required!",
         "name-unique": "Queue name is not unique!",
+        "name-pattern": "Queue name contains a character other than ASCII alphanumerics, '.', '_' and '-'!",
         "queue-required": "Queue is required!",
         "topic-required": "Queue topic is required!",
         "poll-interval-required": "Poll interval is required!",

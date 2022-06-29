@@ -99,7 +99,7 @@ export class QueueFormComponent implements ControlValueAccessor, OnInit, OnDestr
   ngOnInit() {
     this.queueFormGroup = this.fb.group(
       {
-        name: ['', [Validators.required]],
+        name: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9_.\-]+$/)]],
         pollInterval: [25, [Validators.min(1), Validators.required]],
         partitions: [10, [Validators.min(1), Validators.required]],
         consumerPerPartition: [false, []],
