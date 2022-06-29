@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -257,9 +258,11 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
     }
 
     private void testSendNotificationMsgToEdgeServiceTime(EntityId entityId, TenantId tenantId, ActionType actionType, int cntTime) {
+        EdgeEventActionType edgeEventActionType = ActionType.CREDENTIALS_UPDATED.equals(actionType) ?
+                EdgeEventActionType.CREDENTIALS_UPDATED : edgeTypeByActionType(actionType);
         Mockito.verify(tbClusterService, times(cntTime)).sendNotificationMsgToEdge(Mockito.eq(tenantId),
                 Mockito.any(), Mockito.eq(entityId), Mockito.any(), Mockito.isNull(),
-                Mockito.eq(edgeTypeByActionType(actionType)));
+                Mockito.eq(edgeEventActionType));
     }
 
     private void testSendNotificationMsgToEdgeServiceTimeEntityEqAny(TenantId tenantId, ActionType actionType, int cntTime) {
