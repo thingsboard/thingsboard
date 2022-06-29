@@ -43,6 +43,7 @@ public class EdgeSyncCursor {
     int currentIdx = 0;
 
     public EdgeSyncCursor(EdgeContextComponent ctx, Edge edge) {
+        fetchers.add(new QueuesEdgeEventFetcher(ctx.getQueueService()));
         fetchers.add(new RuleChainsEdgeEventFetcher(ctx.getRuleChainService()));
         fetchers.add(new AdminSettingsEdgeEventFetcher(ctx.getAdminSettingsService(), ctx.getFreemarkerConfig()));
         fetchers.add(new DeviceProfilesEdgeEventFetcher(ctx.getDeviceProfileService()));
@@ -56,7 +57,6 @@ public class EdgeSyncCursor {
         fetchers.add(new TenantWidgetsBundlesEdgeEventFetcher(ctx.getWidgetsBundleService()));
         fetchers.add(new DashboardsEdgeEventFetcher(ctx.getDashboardService()));
         fetchers.add(new OtaPackagesEdgeEventFetcher(ctx.getOtaPackageService()));
-        fetchers.add(new QueuesEdgeEventFetcher(ctx.getQueueService()));
     }
 
     public boolean hasNext() {
