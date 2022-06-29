@@ -3081,7 +3081,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         addPageLinkToParam(params, pageLink);
 
         return restTemplate.exchange(
-                baseURL + "/api/queues?{serviceType}&" + getUrlParams(pageLink),
+                baseURL + "/api/queues?serviceType={serviceType}&" + getUrlParams(pageLink),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<Queue>>() {
