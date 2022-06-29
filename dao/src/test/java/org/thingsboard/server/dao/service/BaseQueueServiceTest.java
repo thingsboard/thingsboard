@@ -153,10 +153,38 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
     }
 
     @Test(expected = DataValidationException.class)
+    public void testSaveQueueWithInvalidName() {
+        Queue queue = new Queue();
+        queue.setTenantId(tenantId);
+        queue.setName("Test 1");
+        queue.setTopic("tb_rule_engine.test");
+        queue.setPollInterval(25);
+        queue.setPartitions(1);
+        queue.setPackProcessingTimeout(2000);
+        queue.setSubmitStrategy(createTestSubmitStrategy());
+        queue.setProcessingStrategy(createTestProcessingStrategy());
+        queueService.saveQueue(queue);
+    }
+
+    @Test(expected = DataValidationException.class)
     public void testSaveQueueWithEmptyTopic() {
         Queue queue = new Queue();
         queue.setTenantId(tenantId);
         queue.setName("Test");
+        queue.setPollInterval(25);
+        queue.setPartitions(1);
+        queue.setPackProcessingTimeout(2000);
+        queue.setSubmitStrategy(createTestSubmitStrategy());
+        queue.setProcessingStrategy(createTestProcessingStrategy());
+        queueService.saveQueue(queue);
+    }
+
+    @Test(expected = DataValidationException.class)
+    public void testSaveQueueWithInvalidTopic() {
+        Queue queue = new Queue();
+        queue.setTenantId(tenantId);
+        queue.setName("Test");
+        queue.setTopic("tb rule engine test");
         queue.setPollInterval(25);
         queue.setPartitions(1);
         queue.setPackProcessingTimeout(2000);
