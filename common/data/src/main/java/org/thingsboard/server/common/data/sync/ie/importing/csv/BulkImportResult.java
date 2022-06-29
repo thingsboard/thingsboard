@@ -13,29 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.sync.ie.importing.csv;
+package org.thingsboard.server.common.data.sync.ie.importing.csv;
 
 import lombok.Data;
 
-import java.util.List;
+import java.util.Collection;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Data
-public class BulkImportRequest {
-    private String file;
-    private Mapping mapping;
-
-    @Data
-    public static class Mapping {
-        private List<ColumnMapping> columns;
-        private Character delimiter;
-        private Boolean update;
-        private Boolean header;
-    }
-
-    @Data
-    public static class ColumnMapping {
-        private BulkImportColumnType type;
-        private String key;
-    }
-
+public class BulkImportResult<E> {
+    private AtomicInteger created = new AtomicInteger();
+    private AtomicInteger updated = new AtomicInteger();
+    private AtomicInteger errors = new AtomicInteger();
+    private Collection<String> errorsList = new ConcurrentLinkedDeque<>();
 }

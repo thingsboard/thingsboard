@@ -49,15 +49,15 @@ public interface EntitiesVersionControlService {
 
     ListenableFuture<PageData<EntityVersion>> listVersions(TenantId tenantId, String branch, PageLink pageLink) throws Exception;
 
-    ListenableFuture<List<VersionedEntityInfo>> listEntitiesAtVersion(TenantId tenantId, String branch, String versionId, EntityType entityType) throws Exception;
+    ListenableFuture<List<VersionedEntityInfo>> listEntitiesAtVersion(TenantId tenantId, String versionId, EntityType entityType) throws Exception;
 
-    ListenableFuture<List<VersionedEntityInfo>> listAllEntitiesAtVersion(TenantId tenantId, String branch, String versionId) throws Exception;
+    ListenableFuture<List<VersionedEntityInfo>> listAllEntitiesAtVersion(TenantId tenantId, String versionId) throws Exception;
 
     UUID loadEntitiesVersion(User user, VersionLoadRequest request) throws Exception;
 
     VersionLoadResult getVersionLoadStatus(User user, UUID requestId) throws ThingsboardException;
 
-    ListenableFuture<EntityDataDiff> compareEntityDataToVersion(User user, String branch, EntityId entityId, String versionId) throws Exception;
+    ListenableFuture<EntityDataDiff> compareEntityDataToVersion(User user, EntityId entityId, String versionId) throws Exception;
 
     ListenableFuture<List<BranchInfo>> listBranches(TenantId tenantId) throws Exception;
 

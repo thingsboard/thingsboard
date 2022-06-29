@@ -158,12 +158,10 @@ export class EntitiesVersionControlService {
       defaultHttpOptionsFromConfig({...config, ...{ignoreLoading: true}}));
   }
 
-  public compareEntityDataToVersion(branch: string,
-                                    entityId: EntityId,
+  public compareEntityDataToVersion(entityId: EntityId,
                                     versionId: string,
                                     config?: RequestConfig): Observable<EntityDataDiff> {
-    const encodedBranch = encodeURIComponent(branch);
-    return this.http.get<EntityDataDiff>(`/api/entities/vc/diff/${entityId.entityType}/${entityId.id}?branch=${encodedBranch}&versionId=${versionId}`,
+    return this.http.get<EntityDataDiff>(`/api/entities/vc/diff/${entityId.entityType}/${entityId.id}?versionId=${versionId}`,
       defaultHttpOptionsFromConfig(config));
   }
 
