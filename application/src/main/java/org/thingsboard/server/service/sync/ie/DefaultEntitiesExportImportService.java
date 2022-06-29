@@ -38,6 +38,8 @@ import org.thingsboard.server.service.sync.ie.exporting.EntityExportService;
 import org.thingsboard.server.service.sync.ie.exporting.impl.BaseEntityExportService;
 import org.thingsboard.server.service.sync.ie.exporting.impl.DefaultEntityExportService;
 import org.thingsboard.server.service.sync.ie.importing.EntityImportService;
+import org.thingsboard.server.service.sync.ie.importing.impl.MissingEntityException;
+import org.thingsboard.server.service.sync.vc.LoadEntityException;
 import org.thingsboard.server.service.sync.vc.data.EntitiesExportCtx;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 
@@ -95,15 +97,21 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
         EntityImportResult<E> importResult = importService.importEntity(ctx, exportData);
         ctx.putInternalId(exportData.getExternalId(), importResult.getSavedEntity().getId());
 
-        ctx.addReferenceCallback(importResult.getSaveReferencesCallback());
+        ctx.addReferenceCallback(exportData.getExternalId(), importResult.getSaveReferencesCallback());
         ctx.addEventCallback(importResult.getSendEventsCallback());
         return importResult;
     }
 
     @Override
     public void saveReferencesAndRelations(EntitiesImportCtx ctx) throws ThingsboardException {
-        for (ThrowingRunnable saveReferencesCallback : ctx.getReferenceCallbacks()) {
-            saveReferencesCallback.run();
+        for (Map.Entry<EntityId, ThrowingRunnable> callbackEntry : ctx.getReferenceCallbacks().entrySet()) {
+            EntityId externalId = callbackEntry.getKey();
+            ThrowingRunnable saveReferencesCallback = callbackEntry.getValue();
+            try {
+                saveReferencesCallback.run();
+            } catch (MissingEntityException e) {
+                throw new LoadEntityException(externalId, e);
+            }
         }
 
         relationService.saveRelations(ctx.getTenantId(), new ArrayList<>(ctx.getRelations()));
