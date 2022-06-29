@@ -168,6 +168,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         testNotifyEntityNever(savedAsset.getId(), savedAsset);
 
+        //TODO fix bug: "No value at JSON path "$.message"
         doDelete("/api/asset" + savedAsset.getId().getId().toString())
                 .andExpect(status().isNotFound());
 
