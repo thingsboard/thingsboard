@@ -121,3 +121,77 @@ function additionalStartupServices() {
 
     echo $ADDITIONAL_STARTUP_SERVICES
 }
+
+function permissionList() {
+    PERMISSION_LIST="
+      799  799  tb-node/log
+      799  799  tb-transports/coap/log
+      799  799  tb-transports/lwm2m/log
+      799  799  tb-transports/http/log
+      799  799  tb-transports/mqtt/log
+      799  799  tb-transports/snmp/log
+      799  799  tb-transports/coap/log
+      799  799  tb-vc-executor/log
+      999  999  tb-node/postgres
+      "
+
+    source .env
+
+    if [ "$DATABASE" = "hybrid" ]; then
+      PERMISSION_LIST="$PERMISSION_LIST
+      999  999  tb-node/cassandra
+      "
+    fi
+
+    CACHE="${CACHE:-redis}"
+    case $CACHE in
+        redis)
+          PERMISSION_LIST="$PERMISSION_LIST
+          1001 1001 tb-node/redis-data
+          "
+        ;;
+        redis-cluster)
+          PERMISSION_LIST="$PERMISSION_LIST
+          1001 1001 tb-node/redis-cluster-data-0
+          1001 1001 tb-node/redis-cluster-data-1
+          1001 1001 tb-node/redis-cluster-data-2
+          1001 1001 tb-node/redis-cluster-data-3
+          1001 1001 tb-node/redis-cluster-data-4
+          1001 1001 tb-node/redis-cluster-data-5
+          "
+        ;;
+        *)
+        echo "Unknown CACHE value specified in the .env file: '${CACHE}'. Should be either 'redis' or 'redis-cluster'." >&2
+        exit 1
+    esac
+
+    echo "$PERMISSION_LIST"
+}
+
+function checkFolders() {
+  EXIT_CODE=0
+  PERMISSION_LIST=$(permissionList) || exit $?
+  set -e
+  while read -r USR GRP DIR
+  do
+    if [ -z "$DIR" ]; then # skip empty lines
+          continue
+    fi
+    MESSAGE="Checking user ${USR} group ${GRP} dir ${DIR}"
+    if [[ -d "$DIR" ]] &&
+       [[ $(ls -ldn "$DIR" | awk '{print $3}') -eq "$USR" ]] &&
+       [[ $(ls -ldn "$DIR" | awk '{print $4}') -eq "$GRP" ]]
+    then
+      MESSAGE="$MESSAGE OK"
+    else
+      if [ "$1" = "--create" ]; then
+        echo "Create and chown: user ${USR} group ${GRP} dir ${DIR}"
+        mkdir -p "$DIR" && sudo chown -R "$USR":"$GRP" "$DIR"
+      else
+        echo "$MESSAGE FAILED"
+        EXIT_CODE=1
+      fi
+    fi
+  done < <(echo "$PERMISSION_LIST")
+  return $EXIT_CODE
+}
