@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.service.validator;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -29,8 +28,6 @@ import org.thingsboard.server.dao.queue.QueueDao;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 
-import java.util.regex.Pattern;
-
 @Component
 public class QueueValidator extends DataValidator<Queue> {
 
@@ -39,8 +36,6 @@ public class QueueValidator extends DataValidator<Queue> {
 
     @Autowired
     private TbTenantProfileCache tenantProfileCache;
-
-    private final Pattern queueTopicPattern = Pattern.compile("^[a-zA-Z0-9_.\\-]+$");
 
     @Override
     protected void validateCreate(TenantId tenantId, Queue queue) {
@@ -77,18 +72,9 @@ public class QueueValidator extends DataValidator<Queue> {
             }
         }
 
-        if (StringUtils.isEmpty(queue.getName())) {
-            throw new DataValidationException("Queue name should be specified!");
-        }
-        if (!queueTopicPattern.matcher(queue.getName()).matches()) {
-            throw new DataValidationException("Queue name contains a character other than ASCII alphanumerics, '.', '_' and '-'!");
-        }
-        if (StringUtils.isEmpty(queue.getTopic())) {
-            throw new DataValidationException("Queue topic should be specified!");
-        }
-        if (!queueTopicPattern.matcher(queue.getTopic()).matches()) {
-            throw new DataValidationException("Queue topic contains a character other than ASCII alphanumerics, '.', '_' and '-'!");
-        }
+        validateQueueName(queue.getName());
+        validateQueueTopic(queue.getTopic());
+
         if (queue.getPollInterval() < 1) {
             throw new DataValidationException("Queue poll interval should be more then 0!");
         }
