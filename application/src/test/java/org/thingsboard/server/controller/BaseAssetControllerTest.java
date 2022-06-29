@@ -122,7 +122,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        String msgError = "length of name must be equal or less than 255";
+        String msgError = msgErrorFieldLength("name");
         doPost("/api/asset", asset)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
@@ -133,7 +133,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         asset.setName("Normal name");
         asset.setType(RandomStringUtils.randomAlphabetic(300));
-        msgError = "length of type must be equal or less than 255";
+        msgError = msgErrorFieldLength("type");
         doPost("/api/asset", asset)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
@@ -144,7 +144,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         asset.setType("default");
         asset.setLabel(RandomStringUtils.randomAlphabetic(300));
-        msgError = "length of label must be equal or less than 255";
+        msgError = msgErrorFieldLength("label");
         doPost("/api/asset", asset)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
@@ -245,10 +245,9 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
                 ActionType.DELETED, savedAsset.getId().getId().toString());
 
         String assetIdStr = savedAsset.getId().getId().toString();
-        String msgError = "Asset with id [" + assetIdStr + "] is not found";
-        doGet("/api/asset/" + savedAsset.getId().getId().toString())
+        doGet("/api/asset/" + assetIdStr)
                 .andExpect(status().isNotFound())
-                .andExpect(statusReason(containsString(msgError)));
+                .andExpect(statusReason(containsString(msgErrorNoFound("Asset", assetIdStr))));
     }
 
     @Test
@@ -288,10 +287,9 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
                 .andExpect(status().isOk());
 
         String assetIdStr = savedAsset1.getId().getId().toString();
-        msgError = "Asset with id [" + assetIdStr + "] is not found";
         doGet("/api/asset/" + assetIdStr)
                 .andExpect(status().isNotFound())
-                .andExpect(statusReason(containsString(msgError)));
+                .andExpect(statusReason(containsString(msgErrorNoFound("Asset", assetIdStr))));
     }
 
     @Test
@@ -301,7 +299,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        String msgError = "Asset type should be specified";
+        String msgError = "Asset type " + msgErrorShouldBeSpecified;
         doPost("/api/asset", asset)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
@@ -317,7 +315,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        String msgError = "Asset name should be specified";
+        String msgError = "Asset name " + msgErrorShouldBeSpecified;
         doPost("/api/asset", asset)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
@@ -374,11 +372,10 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         Mockito.reset(tbClusterService, auditLogService);
 
         String customerIdStr = Uuids.timeBased().toString();
-        String msgError = "Customer with id [" + customerIdStr + "] is not found";
         doPost("/api/customer/" + customerIdStr
                 + "/asset/" + savedAsset.getId().getId().toString())
                 .andExpect(status().isNotFound())
-                .andExpect(statusReason(containsString(msgError)));
+                .andExpect(statusReason(containsString(msgErrorNoFound("Customer", customerIdStr))));
 
         testNotifyEntityNever(asset.getId(), asset);
     }

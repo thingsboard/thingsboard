@@ -112,7 +112,7 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
     public void testSaveDashboardInfoWithViolationOfValidation() throws Exception {
         Dashboard dashboard = new Dashboard();
         dashboard.setTitle(RandomStringUtils.randomAlphabetic(300));
-        String msgError = "length of title must be equal or less than 255";
+        String msgError = msgErrorFieldLength("title");
 
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -168,16 +168,15 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
                 savedDashboard.getId().getId().toString());
 
         String dashboardIdStr = savedDashboard.getId().getId().toString();
-        String msgError = "Dashboard with id [" + dashboardIdStr + "] is not found";
         doGet("/api/dashboard/" + savedDashboard.getId().getId().toString())
                 .andExpect(status().isNotFound())
-                .andExpect(statusReason(containsString(msgError)));
+                .andExpect(statusReason(containsString(msgErrorNoFound("Dashboard", dashboardIdStr))));
     }
 
     @Test
     public void testSaveDashboardWithEmptyTitle() throws Exception {
         Dashboard dashboard = new Dashboard();
-        String msgError = "Dashboard title should be specified";
+        String msgError = "Dashboard title " + msgErrorShouldBeSpecified;;
 
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -236,11 +235,10 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         Dashboard savedDashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
 
         String customerIdStr = Uuids.timeBased().toString();
-        String msgError = "Customer with id [" + customerIdStr + "] is not found";
         doPost("/api/customer/" + customerIdStr
                 + "/dashboard/" + savedDashboard.getId().getId().toString())
                 .andExpect(status().isNotFound())
-                .andExpect(statusReason(containsString(msgError)));
+                .andExpect(statusReason(containsString(msgErrorNoFound("Customer", customerIdStr))));
 
         Mockito.reset(tbClusterService, auditLogService);
         testNotifyEntityNever(savedDashboard.getId(), savedDashboard);

@@ -322,8 +322,8 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        doPost("/api/alarm/" + alarm.getId() + "/ack").andExpect(status()
-                .isForbidden())
+        doPost("/api/alarm/" + alarm.getId() + "/ack")
+                .andExpect(status().isForbidden())
                 .andExpect(statusReason(containsString(msgErrorPermission)));
     }
 

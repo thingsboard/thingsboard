@@ -59,6 +59,8 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
     protected GatewayNotificationsService gatewayNotificationsService;
 
     protected final String msgErrorPermission = "You don't have permission to perform this operation!";
+    protected final String msgErrorShouldBeSpecified = "should be specified";
+
 
     protected void testNotifyEntityAllOneTime(HasName entity, EntityId entityId, EntityId originatorId,
                                               TenantId tenantId, CustomerId customerId, UserId userId, String userName,
@@ -489,5 +491,13 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
         return EntityIdFactory.getByTypeAndUuid(EntityType.valueOf(entity.getClass().toString()
                         .substring(entity.getClass().toString().lastIndexOf(".") + 1).toUpperCase(Locale.ENGLISH)),
                 ModelConstants.NULL_UUID);
+    }
+
+    protected String msgErrorFieldLength(String fieldName){
+        return "length of " + fieldName + " must be equal or less than 255";
+    }
+
+    protected String msgErrorNoFound(String entityClassName, String assetIdStr){
+        return entityClassName + " with id [" + assetIdStr + "] is not found";
     }
 }
