@@ -45,7 +45,8 @@ import java.util.UUID;
 @AllArgsConstructor
 public abstract class AbstractRuleChainMetadataConstructor implements RuleChainMetadataConstructor {
 
-    public static final String CHECKPOINT_NODE = TbCheckpointNode.class.getName();
+    public static final List<String> nodeTypes = List.of(TbCheckpointNode.class.getName());
+
     private final QueueService queueService;
 
     @Override
@@ -144,10 +145,10 @@ public abstract class AbstractRuleChainMetadataConstructor implements RuleChainM
                 .build();
     }
 
-    protected List<RuleNode> updateCheckpointNodesConfiguration(TenantId tenantId, List<RuleNode> nodes) {
+    protected List<RuleNode> updateQueueIdToQueueNameNodeConfiguration(TenantId tenantId, List<RuleNode> nodes) {
         List<RuleNode> result = new ArrayList<>();
         for (RuleNode node : nodes) {
-            if (CHECKPOINT_NODE.equals(node.getType())) {
+            if (nodeTypes.contains(node.getType())) {
                 ObjectNode configuration = (ObjectNode) node.getConfiguration();
                 JsonNode queueIdNode = configuration.remove("queueId");
                 if (queueIdNode != null) {

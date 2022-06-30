@@ -217,7 +217,7 @@ public class RuleChainMsgConstructorTest {
     private void assertCheckpointRuleNodeConfiguration(List<RuleNodeProto> nodesList,
                                                        String expectedConfiguration) {
         Optional<RuleNodeProto> checkpointRuleNodeOpt = nodesList.stream()
-                .filter(rn -> RuleChainMetadataConstructorV333.CHECKPOINT_NODE.equals(rn.getType()))
+                .filter(rn -> "org.thingsboard.rule.engine.flow.TbCheckpointNode".equals(rn.getType()))
                 .findFirst();
         Assert.assertTrue(checkpointRuleNodeOpt.isPresent());
         RuleNodeProto checkpointRuleNode = checkpointRuleNodeOpt.get();

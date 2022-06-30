@@ -52,7 +52,7 @@ public class RuleChainMetadataConstructorV330 extends AbstractRuleChainMetadataC
                                                         RuleChainMetadataUpdateMsg.Builder builder,
                                                         RuleChainMetaData ruleChainMetaData) throws JsonProcessingException {
         List<RuleNode> supportedNodes = filterNodes(ruleChainMetaData.getNodes());
-        supportedNodes = updateCheckpointNodesConfiguration(tenantId, supportedNodes);
+        supportedNodes = updateQueueIdToQueueNameNodeConfiguration(tenantId, supportedNodes);
 
         NavigableSet<Integer> removedNodeIndexes = getRemovedNodeIndexes(ruleChainMetaData.getNodes(), ruleChainMetaData.getConnections());
         List<NodeConnectionInfo> connections = filterConnections(ruleChainMetaData.getNodes(), ruleChainMetaData.getConnections(), removedNodeIndexes);

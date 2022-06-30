@@ -37,7 +37,7 @@ public class RuleChainMetadataConstructorV333 extends AbstractRuleChainMetadataC
     protected void constructRuleChainMetadataUpdatedMsg(TenantId tenantId,
                                                         RuleChainMetadataUpdateMsg.Builder builder,
                                                         RuleChainMetaData ruleChainMetaData) throws JsonProcessingException {
-        List<RuleNode> nodes = updateCheckpointNodesConfiguration(tenantId, ruleChainMetaData.getNodes());
+        List<RuleNode> nodes = updateQueueIdToQueueNameNodeConfiguration(tenantId, ruleChainMetaData.getNodes());
         builder.addAllNodes(constructNodes(nodes))
                 .addAllConnections(constructConnections(ruleChainMetaData.getConnections()))
                 .addAllRuleChainConnections(constructRuleChainConnections(ruleChainMetaData.getRuleChainConnections(), new TreeSet<>()));
