@@ -157,36 +157,36 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
 
-        String msgError = "length of name must be equal or less than 255";
+        String msgError = msgErrorFieldLength("name");
         doPost("/api/device", device)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeError(device, savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(device, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
         testNotificationUpdateGatewayNever();
         Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
 
         device.setTenantId(savedTenant.getId());
-        msgError = "length of type must be equal or less than 255";
+        msgError = msgErrorFieldLength("type");
         device.setType(RandomStringUtils.randomAlphabetic(300));
         doPost("/api/device", device)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeError(device, savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(device, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
         testNotificationUpdateGatewayNever();
         Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
 
-        msgError = "length of label must be equal or less than 255";
+        msgError = msgErrorFieldLength("label");
         device.setType("Normal type");
         device.setLabel(RandomStringUtils.randomAlphabetic(300));
         doPost("/api/device", device)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeError(device, savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(device, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
         testNotificationUpdateGatewayNever();
     }
@@ -326,7 +326,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeError(device, savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(device, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
         testNotificationUpdateGatewayNever();
     }
@@ -506,7 +506,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityIsNullOneTimeError(device, savedTenant.getId(),
+        testNotifyEntityIsNullOneTimeEdgeServiceNeverError(device, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.CREDENTIALS_UPDATED,
                 new DataValidationException(msgError), deviceCredentials);
         testNotificationUpdateGatewayNever();
@@ -529,7 +529,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityIsNullOneTimeError(device, savedTenant.getId(),
+        testNotifyEntityIsNullOneTimeEdgeServiceNeverError(device, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.CREDENTIALS_UPDATED,
                 new DeviceCredentialsValidationException(msgError), deviceCredentials);
         testNotificationUpdateGatewayNever();
@@ -556,7 +556,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityIsNullOneTimeError(device, savedTenant.getId(),
+        testNotifyEntityIsNullOneTimeEdgeServiceNeverError(device, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.CREDENTIALS_UPDATED,
                 new DeviceCredentialsValidationException(msgError), newDeviceCredentials);
         testNotificationUpdateGatewayNever();

@@ -132,7 +132,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
                 .andExpect(statusReason(containsString(msgError)));
 
         customer.setTenantId(savedTenant.getId());
-        testNotifyEntityEqualsOneTimeError(customer,savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer,savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -143,7 +143,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeError(customer,savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer,savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -154,7 +154,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeError(customer,savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer,savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -165,7 +165,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeError(customer,savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer,savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -176,7 +176,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeError(customer,savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer,savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -187,7 +187,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeError(customer,savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer,savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
     }
 
@@ -271,7 +271,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeError(customer,savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer,savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
     }
 
@@ -288,7 +288,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeError(customer, savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
     }
 
