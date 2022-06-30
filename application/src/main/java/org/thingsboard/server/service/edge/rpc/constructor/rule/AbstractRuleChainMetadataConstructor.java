@@ -86,37 +86,6 @@ public abstract class AbstractRuleChainMetadataConstructor implements RuleChainM
         return result;
     }
 
-    protected List<RuleChainConnectionInfoProto> constructRuleChainConnections(List<RuleChainConnectionInfo> ruleChainConnections, NavigableSet<Integer> removedNodeIndexes) throws JsonProcessingException {
-        List<RuleChainConnectionInfoProto> result = new ArrayList<>();
-        if (ruleChainConnections != null && !ruleChainConnections.isEmpty()) {
-            for (RuleChainConnectionInfo ruleChainConnectionInfo : ruleChainConnections) {
-                result.add(constructRuleChainConnection(ruleChainConnectionInfo, removedNodeIndexes));
-            }
-        }
-        return result;
-    }
-
-    private RuleChainConnectionInfoProto constructRuleChainConnection(RuleChainConnectionInfo ruleChainConnectionInfo, NavigableSet<Integer> removedNodeIndexes) throws JsonProcessingException {
-        int fromIndex = ruleChainConnectionInfo.getFromIndex();
-        // decrease index because of removed nodes
-        for (Integer removedIndex : removedNodeIndexes) {
-            if (fromIndex > removedIndex) {
-                fromIndex = fromIndex - 1;
-            }
-        }
-        ObjectNode additionalInfo = (ObjectNode) ruleChainConnectionInfo.getAdditionalInfo();
-        if (additionalInfo.get("ruleChainNodeId") == null) {
-            additionalInfo.put("ruleChainNodeId", "rule-chain-node-UNDEFINED");
-        }
-        return RuleChainConnectionInfoProto.newBuilder()
-                .setFromIndex(fromIndex)
-                .setTargetRuleChainIdMSB(ruleChainConnectionInfo.getTargetRuleChainId().getId().getMostSignificantBits())
-                .setTargetRuleChainIdLSB(ruleChainConnectionInfo.getTargetRuleChainId().getId().getLeastSignificantBits())
-                .setType(ruleChainConnectionInfo.getType())
-                .setAdditionalInfo(JacksonUtil.OBJECT_MAPPER.writeValueAsString(additionalInfo))
-                .build();
-    }
-
     private RuleNodeProto constructNode(RuleNode node) throws JsonProcessingException {
         return RuleNodeProto.newBuilder()
                 .setIdMSB(node.getId().getId().getMostSignificantBits())
@@ -126,6 +95,41 @@ public abstract class AbstractRuleChainMetadataConstructor implements RuleChainM
                 .setDebugMode(node.isDebugMode())
                 .setConfiguration(JacksonUtil.OBJECT_MAPPER.writeValueAsString(node.getConfiguration()))
                 .setAdditionalInfo(JacksonUtil.OBJECT_MAPPER.writeValueAsString(node.getAdditionalInfo()))
+                .build();
+    }
+
+    protected List<RuleChainConnectionInfoProto> constructRuleChainConnections(List<RuleChainConnectionInfo> ruleChainConnections,
+                                                                               NavigableSet<Integer> removedNodeIndexes) throws JsonProcessingException {
+        List<RuleChainConnectionInfoProto> result = new ArrayList<>();
+        if (ruleChainConnections != null && !ruleChainConnections.isEmpty()) {
+            for (RuleChainConnectionInfo ruleChainConnectionInfo : ruleChainConnections) {
+                if (!removedNodeIndexes.isEmpty()) { // 3_3_0 only
+                    int fromIndex = ruleChainConnectionInfo.getFromIndex();
+                    // decrease index because of removed nodes
+                    for (Integer removedIndex : removedNodeIndexes) {
+                        if (fromIndex > removedIndex) {
+                            fromIndex = fromIndex - 1;
+                        }
+                    }
+                    ruleChainConnectionInfo.setFromIndex(fromIndex);
+                    ObjectNode additionalInfo = (ObjectNode) ruleChainConnectionInfo.getAdditionalInfo();
+                    if (additionalInfo.get("ruleChainNodeId") == null) {
+                        additionalInfo.put("ruleChainNodeId", "rule-chain-node-UNDEFINED");
+                    }
+                }
+                result.add(constructRuleChainConnection(ruleChainConnectionInfo));
+            }
+        }
+        return result;
+    }
+
+    private RuleChainConnectionInfoProto constructRuleChainConnection(RuleChainConnectionInfo ruleChainConnectionInfo) throws JsonProcessingException {
+        return RuleChainConnectionInfoProto.newBuilder()
+                .setFromIndex(ruleChainConnectionInfo.getFromIndex())
+                .setTargetRuleChainIdMSB(ruleChainConnectionInfo.getTargetRuleChainId().getId().getMostSignificantBits())
+                .setTargetRuleChainIdLSB(ruleChainConnectionInfo.getTargetRuleChainId().getId().getLeastSignificantBits())
+                .setType(ruleChainConnectionInfo.getType())
+                .setAdditionalInfo(JacksonUtil.OBJECT_MAPPER.writeValueAsString(ruleChainConnectionInfo.getAdditionalInfo()))
                 .build();
     }
 
