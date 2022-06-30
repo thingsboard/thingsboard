@@ -354,7 +354,11 @@ public class GitRepository {
     }
 
     private ObjectId resolve(String rev) throws IOException {
-        return git.getRepository().resolve(rev);
+        ObjectId result = git.getRepository().resolve(rev);
+        if (result == null) {
+            throw new IllegalArgumentException("Failed to parse git revision string: \"" + rev + "\"");
+        }
+        return result;
     }
 
     private <C extends GitCommand<T>, T> T execute(C command) throws GitAPIException {
