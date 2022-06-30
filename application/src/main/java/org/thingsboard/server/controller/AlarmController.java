@@ -145,7 +145,7 @@ public class AlarmController extends BaseController {
     public Boolean deleteAlarm(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION) @PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
         checkParameter(ALARM_ID, strAlarmId);
         AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
-        Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
+        Alarm alarm = checkAlarmId(alarmId, Operation.DELETE);
         return tbAlarmService.delete(alarm, getCurrentUser());
     }
 
