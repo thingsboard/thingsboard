@@ -139,7 +139,7 @@ public class EntityViewController extends BaseController {
     @ResponseBody
     public EntityView saveEntityView(
             @ApiParam(value = "A JSON object representing the entity view.")
-            @RequestBody EntityView entityView) throws ThingsboardException {
+            @RequestBody EntityView entityView) throws Exception {
         entityView.setTenantId(getCurrentUser().getTenantId());
         EntityView existingEntityView = null;
         if (entityView.getId() == null) {

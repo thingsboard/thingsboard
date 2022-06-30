@@ -74,12 +74,13 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
     final Map<TenantId, Map<EntityId, List<EntityView>>> localCache = new ConcurrentHashMap<>();
 
     @Override
-    public EntityView save(EntityView entityView, EntityView existingEntityView, User user) throws ThingsboardException {
+    public EntityView save(EntityView entityView, EntityView existingEntityView, User user) throws Exception {
         ActionType actionType = entityView.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = entityView.getTenantId();
         try {
             EntityView savedEntityView = checkNotNull(entityViewService.saveEntityView(entityView));
             this.updateEntityViewAttributes(tenantId, savedEntityView, existingEntityView, user);
+            autoCommit(user, savedEntityView.getId());
             notificationEntityService.notifyCreateOrUpdateEntity(savedEntityView.getTenantId(), savedEntityView.getId(), savedEntityView,
                     null, actionType, user);
             localCache.computeIfAbsent(savedEntityView.getTenantId(), (k) -> new ConcurrentReferenceHashMap<>()).clear();
