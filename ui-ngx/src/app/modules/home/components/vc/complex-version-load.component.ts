@@ -42,9 +42,6 @@ import { parseHttpErrorMessage } from '@core/utils';
 export class ComplexVersionLoadComponent extends PageComponent implements OnInit, OnDestroy {
 
   @Input()
-  branch: string;
-
-  @Input()
   versionName: string;
 
   @Input()
@@ -117,7 +114,6 @@ export class ComplexVersionLoadComponent extends PageComponent implements OnInit
 
   restore(): void {
     const request: EntityTypeVersionLoadRequest = {
-      branch: this.branch,
       versionId: this.versionId,
       entityTypes: this.loadVersionFormGroup.get('entityTypes').value,
       type: VersionLoadRequestType.ENTITY_TYPE

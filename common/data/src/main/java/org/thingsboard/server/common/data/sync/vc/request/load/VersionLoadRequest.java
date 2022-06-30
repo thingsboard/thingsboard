@@ -29,7 +29,6 @@ import static com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 @Data
 public abstract class VersionLoadRequest {
 
-    private String branch;
     private String versionId;
 
     public abstract VersionLoadRequestType getType();

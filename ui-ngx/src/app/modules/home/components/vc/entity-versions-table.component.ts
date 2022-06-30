@@ -260,7 +260,6 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
       const diffVersionPopover = this.popoverService.displayPopover(trigger, this.renderer,
         this.viewContainerRef, EntityVersionDiffComponent, 'leftTop', true, null,
         {
-          branch: this.branch,
           versionName: entityVersion.name,
           versionId: entityVersion.id,
           entityId: this.entityId,
@@ -284,7 +283,6 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
       const restoreVersionPopover = this.popoverService.displayPopover(trigger, this.renderer,
         this.viewContainerRef, EntityVersionRestoreComponent, 'leftTop', true, null,
         {
-          branch: this.branch,
           versionName: entityVersion.name,
           versionId: entityVersion.id,
           externalEntityId: this.externalEntityIdValue,
@@ -310,7 +308,6 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
       const restoreEntitiesVersionPopover = this.popoverService.displayPopover(trigger, this.renderer,
         this.viewContainerRef, ComplexVersionLoadComponent, 'leftTop', true, null,
         {
-          branch: this.branch,
           versionName: entityVersion.name,
           versionId: entityVersion.id,
           onClose: (result: VersionLoadResult | null) => {
