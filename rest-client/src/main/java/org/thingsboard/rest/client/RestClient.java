@@ -3092,7 +3092,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
 
     public Queue getQueueById(QueueId queueId) {
         return restTemplate.exchange(
-                baseURL + "/api/queue/" + queueId,
+                baseURL + "/api/queues/" + queueId,
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<Queue>() {
