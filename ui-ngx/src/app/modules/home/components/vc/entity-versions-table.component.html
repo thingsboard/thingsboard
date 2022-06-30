@@ -128,7 +128,7 @@
           <mat-cell *matCellDef="let entityVersion">
             <div fxFlex fxLayout="row" fxLayoutAlign="end">
               <button *ngIf="singleEntityMode" mat-icon-button [disabled]="isLoading$ | async"
-                      matTooltip="{{ 'version-control.show-version-diff' | translate }}"
+                      matTooltip="{{ 'version-control.compare-with-current' | translate }}"
                       matTooltipPosition="above"
                       #diffVersionButton
                       (click)="toggleShowVersionDiff($event, diffVersionButton, entityVersion)">
