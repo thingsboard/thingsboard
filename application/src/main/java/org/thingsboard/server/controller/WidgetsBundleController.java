@@ -96,16 +96,17 @@ public class WidgetsBundleController extends BaseController {
     @ResponseBody
     public WidgetsBundle saveWidgetsBundle(
             @ApiParam(value = "A JSON value representing the Widget Bundle.", required = true)
-            @RequestBody WidgetsBundle widgetsBundle) throws ThingsboardException {
-        if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
+            @RequestBody WidgetsBundle widgetsBundle) throws Exception {
+        var currentUser = getCurrentUser();
+        if (Authority.SYS_ADMIN.equals(currentUser.getAuthority())) {
             widgetsBundle.setTenantId(TenantId.SYS_TENANT_ID);
         } else {
-            widgetsBundle.setTenantId(getCurrentUser().getTenantId());
+            widgetsBundle.setTenantId(currentUser.getTenantId());
         }
 
         checkEntity(widgetsBundle.getId(), widgetsBundle, Resource.WIDGETS_BUNDLE);
 
-        return tbWidgetsBundleService.save(widgetsBundle);
+        return tbWidgetsBundleService.save(widgetsBundle, currentUser);
     }
 
     @ApiOperation(value = "Delete widgets bundle (deleteWidgetsBundle)",
