@@ -3347,7 +3347,7 @@
         "load-relations": "Load relations",
         "load-attributes": "Load attributes",
         "load-credentials": "Load credentials",
-        "show-version-diff": "Show version diff",
+        "compare-with-current": "Compare with current",
         "diff-entity-with-version": "Diff with entity version '{{versionName}}'",
         "previous-difference": "Previous Difference",
         "next-difference": "Next Difference",
