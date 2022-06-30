@@ -16,12 +16,12 @@
 package org.thingsboard.server.service.edge.rpc.constructor.rule;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.flow.TbCheckpointNode;
-import org.thingsboard.rule.engine.flow.TbCheckpointNodeConfiguration;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.Queue;
@@ -144,15 +144,19 @@ public abstract class AbstractRuleChainMetadataConstructor implements RuleChainM
                 .build();
     }
 
-    protected List<RuleNode> updateCheckpointNodesConfiguration(TenantId tenantId, List<RuleNode> nodes) throws JsonProcessingException {
+    protected List<RuleNode> updateCheckpointNodesConfiguration(TenantId tenantId, List<RuleNode> nodes) {
         List<RuleNode> result = new ArrayList<>();
         for (RuleNode node : nodes) {
             if (CHECKPOINT_NODE.equals(node.getType())) {
-                TbCheckpointNodeConfiguration configuration =
-                        JacksonUtil.treeToValue(node.getConfiguration(), TbCheckpointNodeConfiguration.class);
-                Queue queueById = queueService.findQueueById(tenantId, new QueueId(UUID.fromString(configuration.getQueueId())));
-                if (queueById != null) {
-                    node.setConfiguration(JacksonUtil.OBJECT_MAPPER.readTree("{\"queueName\":\"" + queueById.getName() + "\"}"));
+                ObjectNode configuration = (ObjectNode) node.getConfiguration();
+                JsonNode queueIdNode = configuration.remove("queueId");
+                if (queueIdNode != null) {
+                    String queueId = queueIdNode.asText();
+                    Queue queueById = queueService.findQueueById(tenantId, new QueueId(UUID.fromString(queueId)));
+                    if (queueById != null) {
+                        configuration.put("queueName", queueById.getName());
+                        node.setConfiguration(configuration);
+                    }
                 }
             }
             result.add(node);
