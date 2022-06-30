@@ -176,7 +176,7 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
         ActionType actionType = ruleChain.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         try {
             RuleChain savedRuleChain = checkNotNull(ruleChainService.saveRuleChain(ruleChain));
-            vcService.autoCommit(user, savedRuleChain.getId());
+            autoCommit(user, savedRuleChain.getId());
 
             if (RuleChainType.CORE.equals(savedRuleChain.getType())) {
                 tbClusterService.broadcastEntityStateChangeEvent(tenantId, savedRuleChain.getId(),
@@ -229,7 +229,7 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
     public RuleChain saveDefaultByName(TenantId tenantId, DefaultRuleChainCreateRequest request, User user) throws Exception {
         try {
             RuleChain savedRuleChain = installScripts.createDefaultRuleChain(tenantId, request.getName());
-            vcService.autoCommit(user, savedRuleChain.getId());
+            autoCommit(user, savedRuleChain.getId());
             tbClusterService.broadcastEntityStateChangeEvent(tenantId, savedRuleChain.getId(), ComponentLifecycleEvent.CREATED);
             notificationEntityService.logEntityAction(tenantId, savedRuleChain.getId(), savedRuleChain, ActionType.ADDED, user);
             return savedRuleChain;
@@ -288,12 +288,12 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
             }
 
             if (updatedRuleChains.isEmpty()) {
-                vcService.autoCommit(user, ruleChainMetaData.getRuleChainId());
+                autoCommit(user, ruleChainMetaData.getRuleChainId());
             } else {
                 List<UUID> uuids = new ArrayList<>(updatedRuleChains.size() + 1);
                 uuids.add(ruleChainMetaData.getRuleChainId().getId());
                 updatedRuleChains.forEach(rc -> uuids.add(rc.getId().getId()));
-                vcService.autoCommit(user, EntityType.RULE_CHAIN, uuids);
+                autoCommit(user, EntityType.RULE_CHAIN, uuids);
             }
 
             RuleChainMetaData savedRuleChainMetaData = checkNotNull(ruleChainService.loadRuleChainMetaData(tenantId, ruleChainMetaDataId));

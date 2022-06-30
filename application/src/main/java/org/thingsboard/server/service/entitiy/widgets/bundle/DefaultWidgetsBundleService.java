@@ -17,6 +17,7 @@ package org.thingsboard.server.service.entitiy.widgets.bundle;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
@@ -32,8 +33,9 @@ public class DefaultWidgetsBundleService extends AbstractTbEntityService impleme
     private final WidgetsBundleService widgetsBundleService;
 
     @Override
-    public WidgetsBundle save(WidgetsBundle widgetsBundle) throws ThingsboardException {
+    public WidgetsBundle save(WidgetsBundle widgetsBundle, User user) throws Exception {
         WidgetsBundle savedWidgetsBundle = checkNotNull(widgetsBundleService.saveWidgetsBundle(widgetsBundle));
+        autoCommit(user, savedWidgetsBundle.getId());
         notificationEntityService.notifySendMsgToEdgeService(widgetsBundle.getTenantId(), savedWidgetsBundle.getId(),
                 widgetsBundle.getId() == null ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
         return savedWidgetsBundle;

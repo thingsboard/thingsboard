@@ -141,4 +141,13 @@ public abstract class AbstractTbEntityService {
             return Futures.immediateFailedFuture(new RuntimeException("Operation not supported!"));
         }
     }
+
+    protected ListenableFuture<UUID> autoCommit(User user, EntityType entityType, List<UUID> entityIds) throws Exception {
+        if (vcService != null) {
+            return vcService.autoCommit(user, entityType, entityIds);
+        } else {
+            // We do not support auto-commit for rule engine
+            return Futures.immediateFailedFuture(new RuntimeException("Operation not supported!"));
+        }
+    }
 }

@@ -31,7 +31,7 @@ import java.util.List;
 
 public interface TbEntityViewService extends ComponentLifecycleListener {
 
-    EntityView save(EntityView entityView, EntityView existingEntityView, User user) throws ThingsboardException;
+    EntityView save(EntityView entityView, EntityView existingEntityView, User user) throws Exception;
 
     void updateEntityViewAttributes(TenantId tenantId, EntityView savedEntityView, EntityView oldEntityView, User user) throws ThingsboardException;
 
