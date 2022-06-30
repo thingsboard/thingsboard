@@ -17,13 +17,19 @@ package org.thingsboard.server.service.edge.rpc.constructor.rule;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.flow.TbCheckpointNode;
+import org.thingsboard.rule.engine.flow.TbCheckpointNodeConfiguration;
+import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.gen.edge.v1.NodeConnectionInfoProto;
 import org.thingsboard.server.gen.edge.v1.RuleChainConnectionInfoProto;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
@@ -33,9 +39,14 @@ import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NavigableSet;
+import java.util.UUID;
 
 @Slf4j
+@AllArgsConstructor
 public abstract class AbstractRuleChainMetadataConstructor implements RuleChainMetadataConstructor {
+
+    public static final String CHECKPOINT_NODE = TbCheckpointNode.class.getName();
+    private final QueueService queueService;
 
     @Override
     public RuleChainMetadataUpdateMsg constructRuleChainMetadataUpdatedMsg(TenantId tenantId,
@@ -133,4 +144,19 @@ public abstract class AbstractRuleChainMetadataConstructor implements RuleChainM
                 .build();
     }
 
+    protected List<RuleNode> updateCheckpointNodesConfiguration(TenantId tenantId, List<RuleNode> nodes) throws JsonProcessingException {
+        List<RuleNode> result = new ArrayList<>();
+        for (RuleNode node : nodes) {
+            if (CHECKPOINT_NODE.equals(node.getType())) {
+                TbCheckpointNodeConfiguration configuration =
+                        JacksonUtil.treeToValue(node.getConfiguration(), TbCheckpointNodeConfiguration.class);
+                Queue queueById = queueService.findQueueById(tenantId, new QueueId(UUID.fromString(configuration.getQueueId())));
+                if (queueById != null) {
+                    node.setConfiguration(JacksonUtil.OBJECT_MAPPER.readTree("{\"queueName\":\"" + queueById.getName() + "\"}"));
+                }
+            }
+            result.add(node);
+        }
+        return result;
+    }
 }

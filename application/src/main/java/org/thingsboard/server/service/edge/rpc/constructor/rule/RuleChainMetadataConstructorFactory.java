@@ -24,12 +24,12 @@ public final class RuleChainMetadataConstructorFactory {
                                                                 QueueService queueService) {
         switch (edgeVersion) {
             case V_3_3_0:
-                return new RuleChainMetadataConstructorV330();
+                return new RuleChainMetadataConstructorV330(queueService);
             case V_3_3_3:
                 return new RuleChainMetadataConstructorV333(queueService);
             case V_3_4_0:
             default:
-                return new RuleChainMetadataConstructorV340();
+                return new RuleChainMetadataConstructorV340(queueService);
         }
     }
 }

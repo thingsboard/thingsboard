@@ -66,6 +66,10 @@ public class RuleChainMsgConstructorTest {
         queueService = mock(QueueService.class);
         constructor = new RuleChainMsgConstructor(queueService);
         tenantId = new TenantId(UUID.randomUUID());
+
+        Queue queue = new Queue();
+        queue.setName("HighPriority");
+        Mockito.when(queueService.findQueueById(tenantId, new QueueId(UUID.fromString(queueId)))).thenReturn(queue);
     }
 
     @Test
@@ -89,10 +93,6 @@ public class RuleChainMsgConstructorTest {
 
     @Test
     public void testConstructRuleChainMetadataUpdatedMsg_V_3_3_3() throws JsonProcessingException {
-        Queue queue = new Queue();
-        queue.setName("HighPriority");
-        Mockito.when(queueService.findQueueById(tenantId, new QueueId(UUID.fromString(queueId)))).thenReturn(queue);
-
         RuleChainId ruleChainId = new RuleChainId(UUID.randomUUID());
         RuleChainMetaData ruleChainMetaData = createRuleChainMetaData(
                 ruleChainId, 3, createRuleNodes(ruleChainId), createConnections());
@@ -108,16 +108,6 @@ public class RuleChainMsgConstructorTest {
         assertCheckpointRuleNodeConfiguration(
                 ruleChainMetadataUpdateMsg.getNodesList(),
                 "{\"queueName\":\"HighPriority\"}");
-    }
-
-    private void assertCheckpointRuleNodeConfiguration(List<RuleNodeProto> nodesList,
-                                                       String expectedConfiguration) {
-        Optional<RuleNodeProto> checkpointRuleNodeOpt = nodesList.stream()
-                .filter(rn -> RuleChainMetadataConstructorV333.CHECKPOINT_NODE.equals(rn.getType()))
-                .findFirst();
-        Assert.assertTrue(checkpointRuleNodeOpt.isPresent());
-        RuleNodeProto checkpointRuleNode = checkpointRuleNodeOpt.get();
-        Assert.assertEquals(expectedConfiguration, checkpointRuleNode.getConfiguration());
     }
 
     private void assetV_3_3_3_and_V_3_4_0(RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg) {
@@ -176,6 +166,10 @@ public class RuleChainMsgConstructorTest {
                 ruleChainConnection.getAdditionalInfo());
         Assert.assertTrue("Target rule chain id MSB incorrect!", ruleChainConnection.getTargetRuleChainIdMSB() != 0);
         Assert.assertTrue("Target rule chain id LSB incorrect!", ruleChainConnection.getTargetRuleChainIdLSB() != 0);
+
+        assertCheckpointRuleNodeConfiguration(
+                ruleChainMetadataUpdateMsg.getNodesList(),
+                "{\"queueName\":\"HighPriority\"}");
     }
 
     @Test
@@ -214,6 +208,20 @@ public class RuleChainMsgConstructorTest {
                 ruleChainConnection.getAdditionalInfo());
         Assert.assertTrue("Target rule chain id MSB incorrect!", ruleChainConnection.getTargetRuleChainIdMSB() != 0);
         Assert.assertTrue("Target rule chain id LSB incorrect!", ruleChainConnection.getTargetRuleChainIdLSB() != 0);
+
+        assertCheckpointRuleNodeConfiguration(
+                ruleChainMetadataUpdateMsg.getNodesList(),
+                "{\"queueName\":\"HighPriority\"}");
+    }
+
+    private void assertCheckpointRuleNodeConfiguration(List<RuleNodeProto> nodesList,
+                                                       String expectedConfiguration) {
+        Optional<RuleNodeProto> checkpointRuleNodeOpt = nodesList.stream()
+                .filter(rn -> RuleChainMetadataConstructorV333.CHECKPOINT_NODE.equals(rn.getType()))
+                .findFirst();
+        Assert.assertTrue(checkpointRuleNodeOpt.isPresent());
+        RuleNodeProto checkpointRuleNode = checkpointRuleNodeOpt.get();
+        Assert.assertEquals(expectedConfiguration, checkpointRuleNode.getConfiguration());
     }
 
     private void compareNodeConnectionInfoAndProto(NodeConnectionInfo expected, org.thingsboard.server.gen.edge.v1.NodeConnectionInfoProto actual) {

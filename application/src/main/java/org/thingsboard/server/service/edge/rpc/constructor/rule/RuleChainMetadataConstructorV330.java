@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
 
 import java.util.ArrayList;
@@ -42,11 +43,17 @@ public class RuleChainMetadataConstructorV330 extends AbstractRuleChainMetadataC
     private static final String RULE_CHAIN_INPUT_NODE = TbRuleChainInputNode.class.getName();
     private static final String TB_RULE_CHAIN_OUTPUT_NODE = TbRuleChainOutputNode.class.getName();
 
+    public RuleChainMetadataConstructorV330(QueueService queueService) {
+        super(queueService);
+    }
+
     @Override
     protected void constructRuleChainMetadataUpdatedMsg(TenantId tenantId,
                                                         RuleChainMetadataUpdateMsg.Builder builder,
                                                         RuleChainMetaData ruleChainMetaData) throws JsonProcessingException {
         List<RuleNode> supportedNodes = filterNodes(ruleChainMetaData.getNodes());
+        supportedNodes = updateCheckpointNodesConfiguration(tenantId, supportedNodes);
+
         NavigableSet<Integer> removedNodeIndexes = getRemovedNodeIndexes(ruleChainMetaData.getNodes(), ruleChainMetaData.getConnections());
         List<NodeConnectionInfo> connections = filterConnections(ruleChainMetaData.getNodes(), ruleChainMetaData.getConnections(), removedNodeIndexes);
 
