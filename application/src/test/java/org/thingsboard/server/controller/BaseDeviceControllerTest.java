@@ -201,14 +201,16 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
 
-        doPost("/api/device", savedDevice, Device.class, status().isNotFound());
+        String savedDeviceIdStr = savedDevice.getId().getId().toString();
+        doPost("/api/device", savedDevice)
+                .andExpect( status().isNotFound())
+                .andExpect(statusReason(containsString(msgErrorNoFound("Device", savedDeviceIdStr))));
 
         testNotifyEntityNever(savedDevice.getId(), savedDevice);
         testNotificationUpdateGatewayNever();
 
         Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
 
-        String savedDeviceIdStr = savedDevice.getId().getId().toString();
         doDelete("/api/device/" + savedDeviceIdStr)
                 .andExpect(status().isNotFound())
                 .andExpect(statusReason(containsString(msgErrorNoFound("Device", savedDeviceIdStr))));
