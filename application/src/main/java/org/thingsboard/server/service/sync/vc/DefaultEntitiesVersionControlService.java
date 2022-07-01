@@ -289,7 +289,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
             return cachePut(ctx.getRequestId(), onError(e.getExternalId(), e.getCause()));
         } catch (Exception e) {
             log.info("[{}] Failed to process request [{}] due to: ", ctx.getTenantId(), request, e);
-            return cachePut(ctx.getRequestId(), VersionLoadResult.error(EntityLoadError.runtimeError(e.getMessage())));
+            return cachePut(ctx.getRequestId(), VersionLoadResult.error(EntityLoadError.runtimeError(e)));
         }
     }
 
@@ -433,7 +433,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     }
 
     private VersionLoadResult onError(EntityId externalId, Throwable e) {
-        return analyze(e, externalId).orElse(VersionLoadResult.error(EntityLoadError.runtimeError(e.getMessage())));
+        return analyze(e, externalId).orElse(VersionLoadResult.error(EntityLoadError.runtimeError(e)));
     }
 
     private Optional<VersionLoadResult> analyze(Throwable e, EntityId externalId) {
@@ -605,7 +605,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
     private void processLoadError(EntitiesImportCtx ctx, Throwable e) {
         log.debug("[{}] Failed to load the commit: {}", ctx.getRequestId(), ctx.getVersionId(), e);
-        cachePut(ctx.getRequestId(), VersionLoadResult.error(EntityLoadError.runtimeError(e.getMessage())));
+        cachePut(ctx.getRequestId(), VersionLoadResult.error(EntityLoadError.runtimeError(e)));
     }
 
     private void cachePut(UUID requestId, VersionCreationResult result) {
