@@ -66,7 +66,7 @@ let server: http.Server | null;
                 }
             });
 
-            apiProxy.on('error', function (err, req, res) {
+            apiProxy.on('error', (err, req, res) => {
                 logger.warn('API proxy error: %s', err.message);
                 if (res instanceof ServerResponse) {
                     res.writeHead(500);
@@ -74,7 +74,7 @@ let server: http.Server | null;
                     if (error.code && error.code === 'ECONNREFUSED') {
                         res.end('Unable to connect to ThingsBoard server.');
                     } else {
-                        res.end('Thingsboard server connection error: ' + error.code ? error.code : '');
+                        res.end('ThingsBoard server connection error: ' + error.code ? error.code : '');
                     }
                 }
             });
@@ -115,7 +115,7 @@ let server: http.Server | null;
     }
 })();
 
-process.on('exit', function () {
+process.on('exit', () => {
     exit(0);
 });
 
