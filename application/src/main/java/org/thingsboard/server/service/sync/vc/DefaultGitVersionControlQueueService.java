@@ -77,6 +77,7 @@ import org.thingsboard.server.service.sync.vc.data.VoidGitRequest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -101,7 +102,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     private final SchedulerComponent scheduler;
 
     private final Map<UUID, PendingGitRequest<?>> pendingRequestMap = new HashMap<>();
-    private final Map<UUID, Map<String, String[]>> chunkedMsgs = new ConcurrentHashMap<>();
+    private final Map<UUID, LinkedHashMap<String, String[]>> chunkedMsgs = new ConcurrentHashMap<>();
 
     @Value("${queue.vc.request-timeout:60000}")
     private int requestTimeout;
@@ -285,7 +286,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     @SuppressWarnings("rawtypes")
     public ListenableFuture<EntityExportData> getEntity(TenantId tenantId, String versionId, EntityId entityId) {
         EntityContentGitRequest request = new EntityContentGitRequest(tenantId, versionId, entityId);
-        chunkedMsgs.put(request.getRequestId(), new HashMap<>());
+        chunkedMsgs.put(request.getRequestId(), new LinkedHashMap<>());
         registerAndSend(request, builder -> builder.setEntityContentRequest(EntityContentRequestMsg.newBuilder()
                         .setVersionId(versionId)
                         .setEntityType(entityId.getEntityType().name())
@@ -327,7 +328,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     @SuppressWarnings("rawtypes")
     public ListenableFuture<List<EntityExportData>> getEntities(TenantId tenantId, String versionId, EntityType entityType, int offset, int limit) {
         EntitiesContentGitRequest request = new EntitiesContentGitRequest(tenantId, versionId, entityType);
-        chunkedMsgs.put(request.getRequestId(), new HashMap<>());
+        chunkedMsgs.put(request.getRequestId(), new LinkedHashMap<>());
         registerAndSend(request, builder -> builder.setEntitiesContentRequest(EntitiesContentRequestMsg.newBuilder()
                         .setVersionId(versionId)
                         .setEntityType(entityType.name())
