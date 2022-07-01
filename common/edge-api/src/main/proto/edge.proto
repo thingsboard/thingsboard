@@ -215,6 +215,8 @@ message DeviceProfileUpdateMsg {
   bytes profileDataBytes = 13;
   optional string provisionDeviceKey = 14;
   optional bytes image = 15;
+  int64 defaultQueueIdMSB = 16;
+  int64 defaultQueueIdLSB = 17;
 }
 
 message DeviceCredentialsUpdateMsg {

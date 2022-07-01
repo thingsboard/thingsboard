@@ -69,6 +69,7 @@ import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeCon
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.HasId;
+import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.id.UserId;
@@ -421,6 +422,12 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     protected DeviceProfile createDeviceProfile(String name, DeviceProfileTransportConfiguration deviceProfileTransportConfiguration) {
+        return createDeviceProfile(name, deviceProfileTransportConfiguration, null);
+    }
+
+    protected DeviceProfile createDeviceProfile(String name,
+                                                DeviceProfileTransportConfiguration deviceProfileTransportConfiguration,
+                                                QueueId defaultQueueId) {
         DeviceProfile deviceProfile = new DeviceProfile();
         deviceProfile.setName(name);
         deviceProfile.setType(DeviceProfileType.DEFAULT);
@@ -438,6 +445,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         deviceProfile.setProfileData(deviceProfileData);
         deviceProfile.setDefault(false);
         deviceProfile.setDefaultRuleChainId(null);
+        deviceProfile.setDefaultQueueId(defaultQueueId);
         return deviceProfile;
     }
 
