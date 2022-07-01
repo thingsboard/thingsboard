@@ -414,11 +414,10 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        String msgError = "You don't have permission to perform this operation!";
         doPost("/api/customer/" + savedCustomer.getId().getId().toString()
                 + "/asset/" + savedAsset.getId().getId().toString())
                 .andExpect(status().isForbidden())
-                .andExpect(statusReason(containsString(msgError)));
+                .andExpect(statusReason(containsString(msgErrorPermission)));
 
         testNotifyEntityNever(savedAsset.getId(), savedAsset);
 
