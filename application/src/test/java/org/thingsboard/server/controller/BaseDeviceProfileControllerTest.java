@@ -170,6 +170,14 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         Assert.assertEquals(savedDeviceProfile.getId(), foundDeviceProfileInfo.getId());
         Assert.assertEquals(savedDeviceProfile.getName(), foundDeviceProfileInfo.getName());
         Assert.assertEquals(savedDeviceProfile.getType(), foundDeviceProfileInfo.getType());
+
+        loginCustomerUser();
+
+        foundDeviceProfileInfo = doGet("/api/deviceProfileInfo/" + savedDeviceProfile.getId().getId().toString(), DeviceProfileInfo.class);
+        Assert.assertNotNull(foundDeviceProfileInfo);
+        Assert.assertEquals(savedDeviceProfile.getId(), foundDeviceProfileInfo.getId());
+        Assert.assertEquals(savedDeviceProfile.getName(), foundDeviceProfileInfo.getName());
+        Assert.assertEquals(savedDeviceProfile.getType(), foundDeviceProfileInfo.getType());
     }
 
     @Test
