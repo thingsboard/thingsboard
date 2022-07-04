@@ -3152,7 +3152,8 @@
         "advanced-settings": "Advanced settings",
         "data-settings": "Data settings",
         "no-data-display-message": "\"No data to display\" alternative message",
-        "process-no-data": "Process \"No data\" by widget"
+        "process-no-data": "Process \"No data\" by widget",
+        "process-no-data-tooltip": "Useful only for custom widget"
     },
     "widget-type": {
         "import": "Import widget type",

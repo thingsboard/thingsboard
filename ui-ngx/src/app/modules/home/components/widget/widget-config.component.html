@@ -310,7 +310,8 @@
                 <mat-label translate>widget-config.no-data-display-message</mat-label>
                 <input matInput formControlName="noDataDisplayMessage">
               </mat-form-field>
-              <mat-slide-toggle fxFlex="none" class="mat-slide"  formControlName="processNoDataByWidget">
+              <mat-slide-toggle fxFlex="none" class="mat-slide" formControlName="processNoDataByWidget"
+                                matTooltip="{{ 'widget-config.process-no-data-tooltip' | translate }}">
                 {{ 'widget-config.process-no-data' | translate }}
               </mat-slide-toggle>
             </div>
