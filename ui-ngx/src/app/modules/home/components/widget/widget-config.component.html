@@ -305,11 +305,14 @@
                 <input matInput formControlName="decimals" type="number" min="0" max="15" step="1">
               </mat-form-field>
             </div>
-            <div fxLayout="row">
-              <mat-form-field fxFlex>
+            <div fxLayout.xs="column" fxLayout="row" fxLayoutGap="8px">
+              <mat-form-field fxFlex="grow">
                 <mat-label translate>widget-config.no-data-display-message</mat-label>
                 <input matInput formControlName="noDataDisplayMessage">
               </mat-form-field>
+              <mat-slide-toggle fxFlex="none" class="mat-slide"  formControlName="processNoDataByWidget">
+                {{ 'widget-config.process-no-data' | translate }}
+              </mat-slide-toggle>
             </div>
           </ng-template>
         </mat-expansion-panel>

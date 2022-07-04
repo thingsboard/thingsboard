@@ -213,8 +213,16 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       units: [null, []],
       decimals: [null, [Validators.min(0), Validators.max(15), Validators.pattern(/^\d*$/)]],
       noDataDisplayMessage: [null, []],
+      processNoDataByWidget: [null, []],
       showLegend: [null, []],
       legendConfig: [null, []]
+    });
+    this.widgetSettings.get('processNoDataByWidget').valueChanges.subscribe((value: boolean) => {
+      if (value) {
+        this.widgetSettings.get('noDataDisplayMessage').disable({emitEvent: false});
+      } else {
+        this.widgetSettings.get('noDataDisplayMessage').enable({emitEvent: false});
+      }
     });
     this.widgetSettings.get('showTitle').valueChanges.subscribe((value: boolean) => {
       if (value) {
@@ -420,6 +428,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
             units: config.units,
             decimals: config.decimals,
             noDataDisplayMessage: isDefined(config.noDataDisplayMessage) ? config.noDataDisplayMessage : '',
+            processNoDataByWidget: isDefined(config.processNoDataByWidget) ? config.processNoDataByWidget : false,
             showLegend: isDefined(config.showLegend) ? config.showLegend :
               this.widgetType === widgetType.timeseries,
             legendConfig: config.legendConfig || defaultLegendConfig(this.widgetType)

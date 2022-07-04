@@ -399,7 +399,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   }
 
   private displayWidgetInstance(): boolean {
-    if (this.widget.type !== widgetType.static) {
+    if (this.widget.type !== widgetType.static || !this.widgetContext.settings.processNoDataByWidget) {
       for (const id of Object.keys(this.widgetContext.subscriptions)) {
         const subscription = this.widgetContext.subscriptions[id];
         if (subscription.isDataResolved()) {

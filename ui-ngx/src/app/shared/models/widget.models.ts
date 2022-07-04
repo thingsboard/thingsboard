@@ -511,6 +511,7 @@ export interface WidgetConfig {
   units?: string;
   decimals?: number;
   noDataDisplayMessage?: string;
+  processNoDataByWidget?: boolean;
   actions?: {[actionSourceId: string]: Array<WidgetActionDescriptor>};
   settings?: any;
   alarmSource?: Datasource;
