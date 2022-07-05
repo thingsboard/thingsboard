@@ -357,7 +357,6 @@ public abstract class BaseEntityRelationControllerTest extends AbstractControlle
                 .andExpect(statusReason(containsString("Requested item wasn't found!")));
 
         testNotifyEntityNever(mainDevice.getId(), null);
-
     }
 
     @Test
@@ -569,7 +568,6 @@ public abstract class BaseEntityRelationControllerTest extends AbstractControlle
         doGet(url)
                 .andExpect(status().isNotFound())
                 .andExpect(statusReason(containsString(msgErrorNoFound("Device", relation.getFrom().getId().toString()))));
-
 
         deleteDifferentTenant();
     }

@@ -113,6 +113,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         Device savedDevice = doPost("/api/device", device, Device.class);
 
         Device oldDevice = new Device(savedDevice);
+
         testNotifyEntityOneTimeMsgToEdgeServiceNever(savedDevice, savedDevice.getId(), savedDevice.getId(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.ADDED);
@@ -248,8 +249,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         }
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceNever(new Device(), new Device(),
-                savedTenant.getId(),
-                tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.ADDED, cntEntity);
         testNotificationUpdateGatewayNever();
 
