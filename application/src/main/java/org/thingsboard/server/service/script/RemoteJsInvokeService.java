@@ -192,23 +192,20 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
         Futures.addCallback(future, new FutureCallback<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>>() {
             @Override
             public void onSuccess(@Nullable TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse> result) {
-                if (result == null) {
-                    queueInvokeMsgs.incrementAndGet();
-                } else {
+                if (result != null) {
                     JsInvokeProtos.JsInvokeResponse invokeResponse = result.getValue().getInvokeResponse();
                     if (invokeResponse.getSuccess()) {
                         queueInvokeMsgs.incrementAndGet();
                     } else {
                         JsInvokeProtos.JsInvokeErrorCode errorCode = invokeResponse.getErrorCode();
                         final RuntimeException e = new RuntimeException(invokeResponse.getErrorDetails());
-                        onScriptExecutionError(scriptId, e, scriptBody);
                         if (JsInvokeProtos.JsInvokeErrorCode.TIMEOUT_ERROR.equals(errorCode)) {
+                            onScriptExecutionError(scriptId, e, scriptBody);
                             queueTimeoutMsgs.incrementAndGet();
-                            queueFailedMsgs.incrementAndGet();
-                        } else if (JsInvokeProtos.JsInvokeErrorCode.COMPILATION_ERROR.equals(errorCode)
-                                || JsInvokeProtos.JsInvokeErrorCode.RUNTIME_ERROR.equals(errorCode)) {
-                            queueFailedMsgs.incrementAndGet();
+                        } else if (JsInvokeProtos.JsInvokeErrorCode.COMPILATION_ERROR.equals(errorCode)) {
+                            onScriptExecutionError(scriptId, e, scriptBody);
                         }
+                        queueFailedMsgs.incrementAndGet();
                     }
                 }
             }
@@ -217,8 +214,6 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
             public void onFailure(Throwable t) {
                 if (t instanceof TimeoutException || (t.getCause() != null && t.getCause() instanceof TimeoutException)) {
                     queueTimeoutMsgs.incrementAndGet();
-                } else {
-                    onScriptExecutionError(scriptId, t, scriptBody);
                 }
                 queueFailedMsgs.incrementAndGet();
             }
