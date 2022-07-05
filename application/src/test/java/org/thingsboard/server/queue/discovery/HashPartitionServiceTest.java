@@ -107,13 +107,13 @@ public class HashPartitionServiceTest {
             map.put(partition, map.getOrDefault(partition, 0) + 1);
         }
 
-        printDispersion(start, map);
+        printDispersion(start, map, ITERATIONS);
     }
 
     @Test
     public void testDispersionOnResolveByPartitionIdx() {
         int serverCount = 10;
-        int queueCount = 1000;
+        int queueCount = 10000;
         int partitionCount = 3;
 
         List<TransportProtos.ServiceInfo> services = new ArrayList<>();
@@ -135,14 +135,14 @@ public class HashPartitionServiceTest {
             }
         }
 
-        printDispersion(start, map);
+        printDispersion(start, map, queueCount * partitionCount);
     }
 
-    private <T> void printDispersion(long start, Map<T, Integer> map) {
+    private <T> void printDispersion(long start, Map<T, Integer> map, int iterations) {
         List<Map.Entry<T, Integer>> data = map.entrySet().stream().sorted(Comparator.comparingInt(Map.Entry::getValue)).collect(Collectors.toList());
         long end = System.currentTimeMillis();
         double diff = (data.get(data.size() - 1).getValue() - data.get(0).getValue());
-        double diffPercent = (diff / ITERATIONS) * 100.0;
+        double diffPercent = (diff / iterations) * 100.0;
         System.out.println("Time: " + (end - start) + " Diff: " + diff + "(" + String.format("%f", diffPercent) + "%)");
         Assert.assertTrue(diffPercent < 0.5);
         for (Map.Entry<T, Integer> entry : data) {
