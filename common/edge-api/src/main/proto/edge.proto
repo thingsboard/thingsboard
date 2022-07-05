@@ -33,6 +33,7 @@ service EdgeRpcService {
 enum EdgeVersion {
   V_3_3_0 = 0;
   V_3_3_3 = 1;
+  V_3_4_0 = 2;
 }
 
 /**
