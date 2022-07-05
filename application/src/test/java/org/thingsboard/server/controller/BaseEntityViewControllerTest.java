@@ -145,9 +145,10 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
         assertEquals(savedView, foundEntityView);
 
-        testNotifyEntityBroadcastEntityStateChangeEventOneTimeMsgToEdgeServiceNever(foundEntityView, foundEntityView.getId(), foundEntityView.getId(),
+        testBroadcastEntityStateChangeEventTime(foundEntityView.getId(), tenantId, 1);
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(foundEntityView, foundEntityView,
                 tenantId, tenantAdminCustomerId, tenantAdminUserId, TENANT_ADMIN_EMAIL,
-                ActionType.ADDED);
+                ActionType.ADDED, ActionType.ADDED, 1, 0, 1);
 
         savedView.setName("New test entity view");
 
