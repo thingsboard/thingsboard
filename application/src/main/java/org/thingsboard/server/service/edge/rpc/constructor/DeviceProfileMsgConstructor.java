@@ -48,9 +48,10 @@ public class DeviceProfileMsgConstructor {
 //            builder.setDefaultRuleChainIdMSB(deviceProfile.getDefaultRuleChainId().getId().getMostSignificantBits())
 //                    .setDefaultRuleChainIdLSB(deviceProfile.getDefaultRuleChainId().getId().getLeastSignificantBits());
 //        }
-//        if (deviceProfile.getDefaultQueueName() != null) {
-//            builder.setDefaultQueueName(deviceProfile.getDefaultQueueName());
-//        }
+        if (deviceProfile.getDefaultQueueId() != null) {
+            builder.setDefaultQueueIdMSB(deviceProfile.getDefaultQueueId().getId().getMostSignificantBits())
+                   .setDefaultQueueIdLSB(deviceProfile.getDefaultQueueId().getId().getLeastSignificantBits());
+        }
         if (deviceProfile.getDescription() != null) {
             builder.setDescription(deviceProfile.getDescription());
         }
