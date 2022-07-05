@@ -253,8 +253,12 @@ public class HashPartitionService implements PartitionService {
         ConcurrentMap<QueueKey, List<Integer>> oldPartitions = myPartitions;
         myPartitions = new ConcurrentHashMap<>();
         partitionSizesMap.forEach((queueKey, size) -> {
+            TenantId tenantId = queueKey.getTenantId();
+            String topic = partitionTopicsMap.get(queueKey);
+
             for (int i = 0; i < size; i++) {
-                ServiceInfo serviceInfo = resolveByPartitionIdx(queueServicesMap.get(queueKey), i);
+                TopicPartitionInfo tpi = new TopicPartitionInfo(topic, tenantId, i, false);
+                ServiceInfo serviceInfo = resolveByPartitionIdx(queueServicesMap.get(queueKey), tpi);
                 if (currentService.equals(serviceInfo)) {
                     myPartitions.computeIfAbsent(queueKey, key -> new ArrayList<>()).add(i);
                 }
@@ -434,11 +438,14 @@ public class HashPartitionService implements PartitionService {
         }
     }
 
-    private ServiceInfo resolveByPartitionIdx(List<ServiceInfo> servers, Integer partitionIdx) {
+    protected ServiceInfo resolveByPartitionIdx(List<ServiceInfo> servers, TopicPartitionInfo tpi) {
         if (servers == null || servers.isEmpty()) {
             return null;
         }
-        return servers.get(partitionIdx % servers.size());
+
+        int hash = hashFunction.newHasher().putInt(tpi.hashCode()).hash().asInt();
+
+        return servers.get(Math.abs(hash % servers.size()));
     }
 
     public static HashFunction forName(String name) {
