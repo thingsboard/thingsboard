@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.service.validator;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.OtaPackageInfo;
@@ -29,6 +30,7 @@ import java.util.Objects;
 
 public abstract class BaseOtaPackageDataValidator<D extends BaseData<?>> extends DataValidator<D> {
 
+    @Lazy
     @Autowired
     private TenantService tenantService;
 
