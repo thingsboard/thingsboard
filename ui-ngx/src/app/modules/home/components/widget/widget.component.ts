@@ -399,7 +399,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   }
 
   private displayWidgetInstance(): boolean {
-    if (this.widget.type === widgetType.static || this.widgetContext.settings.processNoDataByWidget) {
+    if (this.widget.type === widgetType.static || this.widget.config.processNoDataByWidget) {
       return true;
     }
 
