@@ -476,7 +476,7 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         queueConfiguration.setName(queueName);
         queueConfiguration.setTopic("tb_rule_engine." + queueName.toLowerCase());
         queueConfiguration.setPollInterval(25);
-        queueConfiguration.setPartitions(new Random().nextInt(100));
+        queueConfiguration.setPartitions(1 + new Random().nextInt(99));
         queueConfiguration.setConsumerPerPartition(true);
         queueConfiguration.setPackProcessingTimeout(2000);
         SubmitStrategy submitStrategy = new SubmitStrategy();
