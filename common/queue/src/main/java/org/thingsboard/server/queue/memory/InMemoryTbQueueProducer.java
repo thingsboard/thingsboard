@@ -24,11 +24,12 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 @Data
 public class InMemoryTbQueueProducer<T extends TbQueueMsg> implements TbQueueProducer<T> {
 
-    private final InMemoryStorage storage = InMemoryStorage.getInstance();
+    private final InMemoryStorage storage;
 
     private final String defaultTopic;
 
-    public InMemoryTbQueueProducer(String defaultTopic) {
+    public InMemoryTbQueueProducer(InMemoryStorage storage, String defaultTopic) {
+        this.storage = storage;
         this.defaultTopic = defaultTopic;
     }
 

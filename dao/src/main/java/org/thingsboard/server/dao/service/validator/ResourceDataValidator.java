@@ -20,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.TbResource;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -28,7 +27,7 @@ import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.resource.TbResourceDao;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
-import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.tenant.TenantService;
 
 import static org.thingsboard.server.common.data.EntityType.TB_RESOURCE;
 
@@ -39,7 +38,7 @@ public class ResourceDataValidator extends DataValidator<TbResource> {
     private TbResourceDao resourceDao;
 
     @Autowired
-    private TenantDao tenantDao;
+    private TenantService tenantService;
 
     @Autowired
     @Lazy
@@ -73,8 +72,7 @@ public class ResourceDataValidator extends DataValidator<TbResource> {
             resource.setTenantId(TenantId.fromUUID(ModelConstants.NULL_UUID));
         }
         if (!resource.getTenantId().getId().equals(ModelConstants.NULL_UUID)) {
-            Tenant tenant = tenantDao.findById(tenantId, resource.getTenantId().getId());
-            if (tenant == null) {
+            if (!tenantService.tenantExists(resource.getTenantId())) {
                 throw new DataValidationException("Resource is referencing to non-existent tenant!");
             }
         }

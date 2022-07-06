@@ -15,8 +15,8 @@
  */
 package org.thingsboard.server.dao.sql.widget;
 
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.WidgetTypeDetailsEntity;
 import org.thingsboard.server.dao.model.sql.WidgetTypeEntity;
@@ -25,7 +25,7 @@ import org.thingsboard.server.dao.model.sql.WidgetTypeInfoEntity;
 import java.util.List;
 import java.util.UUID;
 
-public interface WidgetTypeRepository extends CrudRepository<WidgetTypeDetailsEntity, UUID> {
+public interface WidgetTypeRepository extends JpaRepository<WidgetTypeDetailsEntity, UUID> {
 
     @Query("SELECT wt FROM WidgetTypeEntity wt WHERE wt.id = :widgetTypeId")
     WidgetTypeEntity findWidgetTypeById(@Param("widgetTypeId") UUID widgetTypeId);

@@ -1,0 +1,68 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section class="tb-widget-settings" [formGroup]="updateJsonAttributeWidgetSettingsForm">
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>widgets.input-widgets.general-settings</legend>
+    <mat-form-field fxFlex class="mat-block">
+      <mat-label translate>widgets.input-widgets.widget-title</mat-label>
+      <input matInput formControlName="widgetTitle">
+    </mat-form-field>
+    <section fxLayout="column" fxLayout.gt-sm="row" fxLayoutGap="8px" fxLayoutAlign.gt-sm="start center">
+      <mat-slide-toggle fxFlex fxFlex.gt-sm="20" formControlName="showLabel">
+        {{ 'widgets.input-widgets.show-label' | translate }}
+      </mat-slide-toggle>
+      <mat-form-field fxFlex fxFlex.gt-sm="80" class="mat-block">
+        <mat-label translate>widgets.input-widgets.label</mat-label>
+        <input matInput formControlName="labelValue">
+      </mat-form-field>
+    </section>
+    <mat-slide-toggle formControlName="showResultMessage" class="slide-block">
+      {{ 'widgets.input-widgets.show-result-message' | translate }}
+    </mat-slide-toggle>
+  </fieldset>
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>widgets.input-widgets.attribute-settings</legend>
+    <section fxLayout="column" fxLayout.gt-sm="row" fxLayoutGap="8px" fxLayoutAlign.gt-sm="start center">
+      <mat-form-field fxFlex class="mat-block">
+        <mat-label translate>widgets.input-widgets.widget-mode</mat-label>
+        <mat-select formControlName="widgetMode">
+          <mat-option [value]="'ATTRIBUTE'">
+            {{ 'widgets.input-widgets.widget-mode-update-attribute' | translate }}
+          </mat-option>
+          <mat-option [value]="'TIME_SERIES'">
+            {{ 'widgets.input-widgets.widget-mode-update-timeseries' | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field [fxShow]="updateJsonAttributeWidgetSettingsForm.get('widgetMode').value === 'ATTRIBUTE'" fxFlex class="mat-block">
+        <mat-label translate>widgets.input-widgets.attribute-scope</mat-label>
+        <mat-select formControlName="attributeScope">
+          <mat-option [value]="'SERVER_SCOPE'">
+            {{ 'widgets.input-widgets.attribute-scope-server' | translate }}
+          </mat-option>
+          <mat-option [value]="'SHARED_SCOPE'">
+            {{ 'widgets.input-widgets.attribute-scope-shared' | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </section>
+    <mat-slide-toggle formControlName="attributeRequired" class="slide-block">
+      {{ 'widgets.input-widgets.value-required' | translate }}
+    </mat-slide-toggle>
+  </fieldset>
+</section>

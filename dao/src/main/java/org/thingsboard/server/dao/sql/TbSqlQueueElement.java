@@ -17,7 +17,9 @@ package org.thingsboard.server.dao.sql;
 
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.Getter;
+import lombok.ToString;
 
+@ToString(exclude = "future")
 public final class TbSqlQueueElement<E> {
     @Getter
     private final SettableFuture<Void> future;

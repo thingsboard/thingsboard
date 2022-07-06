@@ -29,7 +29,7 @@ import java.util.Set;
 public final class PartitionChangeMsg implements TbActorMsg {
 
     @Getter
-    private final ServiceQueueKey serviceQueueKey;
+    private final ServiceType serviceType;
     @Getter
     private final Set<TopicPartitionInfo> partitions;
 

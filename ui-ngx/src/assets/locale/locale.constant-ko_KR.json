@@ -57,7 +57,8 @@
         "download": "다운로드",
         "next-with-label": "다음: {{label}}",
         "read-more": "더보기",
-        "hide": "숨기기"
+        "hide": "숨기기",
+        "done": "완료"
     },
     "aggregation": {
         "aggregation": "집합",
@@ -1724,8 +1725,7 @@
             "select-file": "파일 선택",
             "configuration": "설정 불러오기",
             "column-type": "컬럼 유형 선택",
-            "creat-entities": "새로운 개체 생성",
-            "done": "완료"
+            "creat-entities": "새로운 개체 생성"
         },
         "message": {
             "create-entities": "{{count}}개의 새로운 개체사 성공적으로 생성되었습니다.",

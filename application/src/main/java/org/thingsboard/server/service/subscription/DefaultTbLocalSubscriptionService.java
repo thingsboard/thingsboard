@@ -76,7 +76,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     private TbApplicationEventListener<ClusterTopologyChangeEvent> clusterTopologyChangeListener = new TbApplicationEventListener<>() {
         @Override
         protected void onTbApplicationEvent(ClusterTopologyChangeEvent event) {
-            if (event.getServiceQueueKeys().stream().anyMatch(key -> ServiceType.TB_CORE.equals(key.getServiceType()))) {
+            if (event.getQueueKeys().stream().anyMatch(key -> ServiceType.TB_CORE.equals(key.getType()))) {
                 /*
                  * If the cluster topology has changed, we need to push all current subscriptions to SubscriptionManagerService again.
                  * Otherwise, the SubscriptionManagerService may "forget" those subscriptions in case of restart.

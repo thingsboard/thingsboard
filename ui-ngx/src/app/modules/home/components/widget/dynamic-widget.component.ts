@@ -39,6 +39,7 @@ import { EntityService } from '@core/http/entity.service';
 import { AuthService } from '@core/auth/auth.service';
 import { DialogService } from '@core/services/dialog.service';
 import { CustomDialogService } from '@home/components/widget/dialog/custom-dialog.service';
+import { ResourceService } from '@core/http/resource.service';
 import { DatePipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -78,6 +79,7 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
     this.ctx.authService = $injector.get(AuthService);
     this.ctx.dialogs = $injector.get(DialogService);
     this.ctx.customDialog = $injector.get(CustomDialogService);
+    this.ctx.resourceService = $injector.get(ResourceService);
     this.ctx.date = $injector.get(DatePipe);
     this.ctx.translate = $injector.get(TranslateService);
     this.ctx.http = $injector.get(HttpClient);

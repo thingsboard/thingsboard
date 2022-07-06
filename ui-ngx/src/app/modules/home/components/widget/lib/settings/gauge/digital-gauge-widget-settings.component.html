@@ -1,0 +1,382 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section class="tb-widget-settings" [formGroup]="digitalGaugeWidgetSettingsForm" fxLayout="column">
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>widgets.gauge.common-settings</legend>
+    <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+      <mat-form-field fxFlex class="mat-block">
+        <mat-label translate>widgets.gauge.min-value</mat-label>
+        <input matInput type="number" formControlName="minValue">
+      </mat-form-field>
+      <mat-form-field fxFlex class="mat-block">
+        <mat-label translate>widgets.gauge.max-value</mat-label>
+        <input matInput type="number" formControlName="maxValue">
+      </mat-form-field>
+    </section>
+    <mat-form-field fxFlex class="mat-block">
+      <mat-label translate>widgets.gauge.gauge-type</mat-label>
+      <mat-select formControlName="gaugeType">
+        <mat-option [value]="'arc'">
+          {{ 'widgets.gauge.gauge-type-arc' | translate }}
+        </mat-option>
+        <mat-option [value]="'donut'">
+          {{ 'widgets.gauge.gauge-type-donut' | translate }}
+        </mat-option>
+        <mat-option [value]="'horizontalBar'">
+          {{ 'widgets.gauge.gauge-type-horizontal-bar' | translate }}
+        </mat-option>
+        <mat-option [value]="'verticalBar'">
+          {{ 'widgets.gauge.gauge-type-vertical-bar' | translate }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field [fxShow]="digitalGaugeWidgetSettingsForm.get('gaugeType').value === 'donut'" fxFlex class="mat-block">
+      <mat-label translate>widgets.gauge.donut-start-angle</mat-label>
+      <input matInput type="number" formControlName="donutStartAngle">
+    </mat-form-field>
+    <tb-color-input
+      formControlName="defaultColor"
+      icon="format_color_fill"
+      label="{{ 'widgets.gauge.default-color' | translate }}" openOnInput colorClearButton>
+    </tb-color-input>
+  </fieldset>
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>widgets.gauge.bar-settings</legend>
+    <mat-form-field fxFlex class="mat-block">
+      <mat-label translate>widgets.gauge.relative-bar-width</mat-label>
+      <input matInput type="number" min="0" formControlName="gaugeWidthScale">
+    </mat-form-field>
+    <mat-form-field fxFlex class="mat-block">
+      <mat-label translate>widgets.gauge.neon-glow-brightness</mat-label>
+      <input matInput type="number" min="0" max="100" formControlName="neonGlowBrightness">
+    </mat-form-field>
+    <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+      <mat-form-field fxFlex class="mat-block">
+        <mat-label translate>widgets.gauge.stripes-thickness</mat-label>
+        <input matInput type="number" min="0" formControlName="dashThickness">
+      </mat-form-field>
+      <mat-checkbox fxFlex formControlName="roundedLineCap" style="margin-bottom: 16px;">
+        {{ 'widgets.gauge.rounded-line-cap' | translate }}
+      </mat-checkbox>
+    </section>
+    <fieldset class="fields-group">
+      <legend class="group-title" translate>widgets.gauge.bar-color-settings</legend>
+      <tb-color-input
+        formControlName="gaugeColor"
+        icon="format_color_fill"
+        label="{{ 'widgets.gauge.bar-background-color' | translate }}" openOnInput colorClearButton>
+      </tb-color-input>
+      <mat-slide-toggle class="slide-block" formControlName="useFixedLevelColor">
+        {{ 'widgets.gauge.use-precise-level-color-values' | translate }}
+      </mat-slide-toggle>
+      <fieldset [fxShow]="!digitalGaugeWidgetSettingsForm.get('useFixedLevelColor').value" class="fields-group">
+        <legend class="group-title" translate>widgets.gauge.bar-colors</legend>
+        <div fxLayout="column">
+          <div class="tb-control-list tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
+               (cdkDropListDropped)="levelColorDrop($event)">
+            <div cdkDrag class="tb-draggable" *ngFor="let levelColorControl of levelColorsFormArray().controls; trackBy: trackByLevelColor;
+                 let $index = index; last as isLast;"
+                 fxLayout="row" fxLayoutAlign="start center" [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
+              <div cdkDragHandle class="tb-drag-handle" style="margin-right: 10px;">
+                <mat-icon class="tb-mat-20">drag_handle</mat-icon>
+              </div>
+              <tb-color-input fxFlex
+                [formControl]="levelColorControl"
+                icon="format_color_fill"
+                label="{{ 'widgets.gauge.color' | translate }}" openOnInput colorClearButton>
+              </tb-color-input>
+              <button mat-icon-button style="min-width: 40px;"
+                      type="button"
+                      (click)="removeLevelColor($index)"
+                      matTooltip="{{ 'action.remove' | translate }}"
+                      matTooltipPosition="above">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </div>
+          <div *ngIf="!levelColorsFormArray().controls.length">
+            <span translate fxLayoutAlign="center center"
+              class="tb-prompt">widgets.gauge.no-bar-colors</span>
+          </div>
+          <div style="padding-top: 16px;">
+            <button mat-raised-button color="primary"
+                    type="button"
+                    (click)="addLevelColor()">
+              <span translate>widgets.gauge.add-bar-color</span>
+            </button>
+          </div>
+        </div>
+      </fieldset>
+      <fieldset [fxShow]="digitalGaugeWidgetSettingsForm.get('useFixedLevelColor').value" class="fields-group">
+        <legend class="group-title" translate>widgets.gauge.fixed-level-colors</legend>
+        <div fxLayout="column">
+          <div class="tb-control-list tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
+               (cdkDropListDropped)="fixedLevelColorDrop($event)">
+            <div cdkDrag class="tb-draggable" *ngFor="let fixedLevelColorControl of fixedLevelColorFormArray().controls; trackBy: trackByFixedLevelColor;
+                 let $index = index; last as isLast;"
+                 fxLayout="column" [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
+              <tb-fixed-color-level [formControl]="fixedLevelColorControl"
+                                  [expanded]="fixedLevelColorControl.new"
+                                  [aliasController]="aliasController"
+                                  (removeFixedColorLevel)="removeFixedLevelColor($index)">
+              </tb-fixed-color-level>
+            </div>
+          </div>
+          <div *ngIf="!fixedLevelColorFormArray().controls.length">
+            <span translate fxLayoutAlign="center center"
+                  class="tb-prompt">widgets.gauge.no-bar-colors</span>
+          </div>
+          <div style="padding-top: 16px;">
+            <button mat-raised-button color="primary"
+                    type="button"
+                    (click)="addFixedLevelColor()">
+              <span translate>widgets.gauge.add-bar-color</span>
+            </button>
+          </div>
+        </div>
+      </fieldset>
+    </fieldset>
+  </fieldset>
+  <fieldset class="fields-group fields-group-slider">
+    <legend class="group-title" translate>widgets.gauge.gauge-title-settings</legend>
+    <mat-expansion-panel class="tb-settings" [expanded]="digitalGaugeWidgetSettingsForm.get('showTitle').value">
+      <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-panel-title>
+          <mat-slide-toggle formControlName="showTitle" (click)="$event.stopPropagation()"
+                            fxLayoutAlign="center">
+            {{ 'widgets.gauge.show-gauge-title' | translate }}
+          </mat-slide-toggle>
+        </mat-panel-title>
+        <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+          widget-config.advanced-settings
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <section fxLayout="column">
+          <mat-form-field fxFlex class="mat-block">
+            <mat-label translate>widgets.gauge.gauge-title</mat-label>
+            <input matInput formControlName="title">
+          </mat-form-field>
+          <fieldset class="fields-group">
+            <legend class="group-title" translate>widgets.gauge.gauge-title-font</legend>
+            <tb-widget-font formControlName="titleFont"></tb-widget-font>
+          </fieldset>
+        </section>
+      </ng-template>
+    </mat-expansion-panel>
+  </fieldset>
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>widgets.gauge.unit-title-and-timestamp-settings</legend>
+    <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+      <mat-slide-toggle fxFlex formControlName="showUnitTitle">
+        {{ 'widgets.gauge.show-unit-title' | translate }}
+      </mat-slide-toggle>
+      <mat-form-field fxFlex class="mat-block">
+        <mat-label translate>widgets.gauge.unit-title</mat-label>
+        <input matInput formControlName="unitTitle">
+      </mat-form-field>
+    </section>
+    <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+      <mat-slide-toggle fxFlex formControlName="showTimestamp">
+        {{ 'widgets.gauge.show-timestamp' | translate }}
+      </mat-slide-toggle>
+      <mat-form-field fxFlex class="mat-block">
+        <mat-label translate>widgets.gauge.timestamp-format</mat-label>
+        <input matInput formControlName="timestampFormat">
+      </mat-form-field>
+    </section>
+    <mat-expansion-panel class="tb-settings" [expanded]="digitalGaugeWidgetSettingsForm.get('showUnitTitle').value ||
+                                                         digitalGaugeWidgetSettingsForm.get('showTimestamp').value">
+      <mat-expansion-panel-header>
+        <mat-panel-description fxLayoutAlign="end" translate>
+          widget-config.advanced-settings
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <fieldset class="fields-group">
+          <legend class="group-title" translate>widgets.gauge.label-font</legend>
+          <tb-widget-font formControlName="labelFont"></tb-widget-font>
+        </fieldset>
+      </ng-template>
+    </mat-expansion-panel>
+  </fieldset>
+  <fieldset class="fields-group fields-group-slider">
+    <legend class="group-title" translate>widgets.gauge.value-settings</legend>
+    <mat-expansion-panel class="tb-settings" [expanded]="digitalGaugeWidgetSettingsForm.get('showValue').value">
+      <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-panel-title>
+          <mat-slide-toggle formControlName="showValue" (click)="$event.stopPropagation()"
+                            fxLayoutAlign="center">
+            {{ 'widgets.gauge.show-value' | translate }}
+          </mat-slide-toggle>
+        </mat-panel-title>
+        <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+          widget-config.advanced-settings
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <fieldset class="fields-group">
+          <legend class="group-title" translate>widgets.gauge.value-font</legend>
+          <tb-widget-font formControlName="valueFont"></tb-widget-font>
+        </fieldset>
+      </ng-template>
+    </mat-expansion-panel>
+  </fieldset>
+  <fieldset class="fields-group fields-group-slider">
+    <legend class="group-title" translate>widgets.gauge.min-max-settings</legend>
+    <mat-expansion-panel class="tb-settings" [expanded]="digitalGaugeWidgetSettingsForm.get('showMinMax').value">
+      <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-panel-title>
+          <mat-slide-toggle formControlName="showMinMax" (click)="$event.stopPropagation()"
+                            fxLayoutAlign="center">
+            {{ 'widgets.gauge.show-min-max' | translate }}
+          </mat-slide-toggle>
+        </mat-panel-title>
+        <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+          widget-config.advanced-settings
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <fieldset class="fields-group">
+          <legend class="group-title" translate>widgets.gauge.min-max-font</legend>
+          <tb-widget-font formControlName="minMaxFont"></tb-widget-font>
+        </fieldset>
+      </ng-template>
+    </mat-expansion-panel>
+  </fieldset>
+  <fieldset class="fields-group fields-group-slider">
+    <legend class="group-title" translate>widgets.gauge.ticks-settings</legend>
+    <mat-expansion-panel class="tb-settings" [expanded]="digitalGaugeWidgetSettingsForm.get('showTicks').value">
+      <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-panel-title>
+          <mat-slide-toggle formControlName="showTicks" (click)="$event.stopPropagation()"
+                            fxLayoutAlign="center">
+            {{ 'widgets.gauge.show-ticks' | translate }}
+          </mat-slide-toggle>
+        </mat-panel-title>
+        <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+          widget-config.advanced-settings
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <section fxLayout="column">
+          <mat-form-field fxFlex class="mat-block">
+            <mat-label translate>widgets.gauge.tick-width</mat-label>
+            <input matInput type="number" min="0" formControlName="tickWidth">
+          </mat-form-field>
+          <tb-color-input
+            formControlName="colorTicks"
+            icon="format_color_fill"
+            label="{{ 'widgets.gauge.tick-color' | translate }}" openOnInput colorClearButton>
+          </tb-color-input>
+          <fieldset class="fields-group">
+            <legend class="group-title" translate>widgets.gauge.tick-values</legend>
+            <div fxLayout="column">
+              <div class="tb-control-list tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
+                   (cdkDropListDropped)="tickValueDrop($event)">
+                <div cdkDrag class="tb-draggable" *ngFor="let tickValueControl of tickValuesFormArray().controls; trackBy: trackByTickValue;
+                  let $index = index; last as isLast;"
+                     fxLayout="column" [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
+
+                    <tb-tick-value [formControl]="tickValueControl"
+                                          [expanded]="tickValueControl.new"
+                                          [aliasController]="aliasController"
+                                          (removeTickValue)="removeTickValue($index)">
+                    </tb-tick-value>
+                </div>
+              </div>
+              <div *ngIf="!tickValuesFormArray().controls.length">
+            <span translate fxLayoutAlign="center center"
+                  class="tb-prompt">widgets.gauge.no-tick-values</span>
+              </div>
+              <div style="padding-top: 16px;">
+                <button mat-raised-button color="primary"
+                        type="button"
+                        (click)="addTickValue()">
+                  <span translate>widgets.gauge.add-tick-value</span>
+                </button>
+              </div>
+            </div>
+          </fieldset>
+        </section>
+      </ng-template>
+    </mat-expansion-panel>
+  </fieldset>
+  <fieldset class="fields-group fields-group-slider">
+    <legend class="group-title" translate>widgets.gauge.animation-settings</legend>
+    <mat-expansion-panel class="tb-settings" [expanded]="digitalGaugeWidgetSettingsForm.get('animation').value">
+      <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-panel-title>
+          <mat-slide-toggle formControlName="animation" (click)="$event.stopPropagation()"
+                            fxLayoutAlign="center">
+            {{ 'widgets.gauge.enable-animation' | translate }}
+          </mat-slide-toggle>
+        </mat-panel-title>
+        <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+          widget-config.advanced-settings
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <section fxLayout="column">
+          <mat-form-field fxFlex class="mat-block">
+            <mat-label translate>widgets.gauge.animation-duration</mat-label>
+            <input matInput type="number" min="0" formControlName="animationDuration">
+          </mat-form-field>
+          <mat-form-field fxFlex class="mat-block">
+            <mat-label translate>widgets.gauge.animation-rule</mat-label>
+            <mat-select formControlName="animationRule">
+              <mat-option [value]="'linear'">
+                {{ 'widgets.gauge.animation-linear' | translate }}
+              </mat-option>
+              <mat-option [value]="'quad'">
+                {{ 'widgets.gauge.animation-quad' | translate }}
+              </mat-option>
+              <mat-option [value]="'quint'">
+                {{ 'widgets.gauge.animation-quint' | translate }}
+              </mat-option>
+              <mat-option [value]="'cycle'">
+                {{ 'widgets.gauge.animation-cycle' | translate }}
+              </mat-option>
+              <mat-option [value]="'bounce'">
+                {{ 'widgets.gauge.animation-bounce' | translate }}
+              </mat-option>
+              <mat-option [value]="'elastic'">
+                {{ 'widgets.gauge.animation-elastic' | translate }}
+              </mat-option>
+              <mat-option [value]="'dequad'">
+                {{ 'widgets.gauge.animation-dequad' | translate }}
+              </mat-option>
+              <mat-option [value]="'dequint'">
+                {{ 'widgets.gauge.animation-dequint' | translate }}
+              </mat-option>
+              <mat-option [value]="'decycle'">
+                {{ 'widgets.gauge.animation-decycle' | translate }}
+              </mat-option>
+              <mat-option [value]="'debounce'">
+                {{ 'widgets.gauge.animation-debounce' | translate }}
+              </mat-option>
+              <mat-option [value]="'delastic'">
+                {{ 'widgets.gauge.animation-delastic' | translate }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </section>
+      </ng-template>
+    </mat-expansion-panel>
+  </fieldset>
+</section>

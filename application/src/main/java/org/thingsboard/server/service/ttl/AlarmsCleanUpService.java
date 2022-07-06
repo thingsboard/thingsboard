@@ -32,7 +32,7 @@ import org.thingsboard.server.dao.alarm.AlarmDao;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
-import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.action.EntityActionService;
@@ -50,7 +50,7 @@ public class AlarmsCleanUpService {
     @Value("${sql.ttl.alarms.removal_batch_size}")
     private Integer removalBatchSize;
 
-    private final TenantDao tenantDao;
+    private final TenantService tenantService;
     private final AlarmDao alarmDao;
     private final AlarmService alarmService;
     private final RelationService relationService;
@@ -64,7 +64,7 @@ public class AlarmsCleanUpService {
         PageLink removalBatchRequest = new PageLink(removalBatchSize, 0 );
         PageData<TenantId> tenantsIds;
         do {
-            tenantsIds = tenantDao.findTenantsIds(tenantsBatchRequest);
+            tenantsIds = tenantService.findTenantsIds(tenantsBatchRequest);
             for (TenantId tenantId : tenantsIds.getData()) {
                 if (!partitionService.resolve(ServiceType.TB_CORE, tenantId, tenantId).isMyPartition()) {
                     continue;

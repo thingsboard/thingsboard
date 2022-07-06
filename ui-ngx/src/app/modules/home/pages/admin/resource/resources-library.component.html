@@ -74,7 +74,7 @@
         [contentConvertFunction]="convertToBase64File"
         [accept]="getAcceptType()"
         [multipleFile]="entityForm.get('resourceType').value === resourceType.LWM2M_MODEL"
-        dropLabel="{{'resource.drop-file' | translate}}"
+        dropLabel="{{'resource.drop-resource-file-or' | translate}}"
         [existingFileName]="entityForm.get('fileName')?.value"
         (fileNameChanged)="entityForm?.get('fileName').patchValue($event)">
       </tb-file-input>

@@ -30,7 +30,8 @@ public class ClientRegistrationTemplateDataValidator extends DataValidator<OAuth
     }
 
     @Override
-    protected void validateUpdate(TenantId tenantId, OAuth2ClientRegistrationTemplate clientRegistrationTemplate) {
+    protected OAuth2ClientRegistrationTemplate validateUpdate(TenantId tenantId, OAuth2ClientRegistrationTemplate clientRegistrationTemplate) {
+        return null;
     }
 
     @Override

@@ -16,8 +16,9 @@
 package org.thingsboard.server.dao.sql.user;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -48,7 +49,7 @@ public class JpaUserDao extends JpaAbstractSearchTextDao<UserEntity, User> imple
     }
 
     @Override
-    protected CrudRepository<UserEntity, UUID> getCrudRepository() {
+    protected JpaRepository<UserEntity, UUID> getRepository() {
         return userRepository;
     }
 
@@ -96,4 +97,10 @@ public class JpaUserDao extends JpaAbstractSearchTextDao<UserEntity, User> imple
     public Long countByTenantId(TenantId tenantId) {
         return userRepository.countByTenantId(tenantId.getId());
     }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.USER;
+    }
+
 }

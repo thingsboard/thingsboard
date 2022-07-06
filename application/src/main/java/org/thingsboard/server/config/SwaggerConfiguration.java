@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -84,6 +85,7 @@ import static springfox.documentation.builders.PathSelectors.regex;
 @Slf4j
 @Configuration
 @TbCoreComponent
+@Profile("!test")
 public class SwaggerConfiguration {
 
     @Value("${swagger.api_path_regex}")

@@ -54,7 +54,8 @@
     "share-via": "Compartilhar via {{provider}}",
     "continue": "Continuar",
     "discard-changes": "Descartar alterações",
-    "download": "Download"
+    "download": "Download",
+    "done": "Concluído"
   },
   "aggregation": {
     "aggregation": "Agregação",
@@ -1387,8 +1388,7 @@
       "select-file": "Selecionar um arquivo",
       "configuration": "Importar configuração",
       "column-type": "Selecionar tipos de colunas",
-      "creat-entities": "Criar novas entidades",
-      "done": "Concluído"
+      "creat-entities": "Criar novas entidades"
     },
     "message": {
       "create-entities": "{{count}} novas entidades foram criadas corretamente.",

@@ -15,9 +15,9 @@
  */
 package org.thingsboard.server.dao.sql.usagerecord;
 
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sql.ApiUsageStateEntity;
@@ -27,7 +27,7 @@ import java.util.UUID;
 /**
  * @author Valerii Sosliuk
  */
-public interface ApiUsageStateRepository extends CrudRepository<ApiUsageStateEntity, UUID> {
+public interface ApiUsageStateRepository extends JpaRepository<ApiUsageStateEntity, UUID> {
 
     @Query("SELECT ur FROM ApiUsageStateEntity ur WHERE ur.tenantId = :tenantId " +
             "AND ur.entityId = :tenantId AND ur.entityType = 'TENANT' ")
@@ -42,5 +42,6 @@ public interface ApiUsageStateRepository extends CrudRepository<ApiUsageStateEnt
 
     @Transactional
     @Modifying
-    void deleteByEntityIdAndEntityType(UUID entityId, String entityType);
+    @Query("DELETE FROM ApiUsageStateEntity e WHERE e.entityId = :entityId and e.entityType = :entityType")
+    void deleteByEntityIdAndEntityType(@Param("entityId") UUID entityId, @Param("entityType") String entityType);
 }

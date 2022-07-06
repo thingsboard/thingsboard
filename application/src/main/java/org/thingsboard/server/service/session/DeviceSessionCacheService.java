@@ -23,8 +23,8 @@ import org.thingsboard.server.gen.transport.TransportProtos.DeviceSessionsCacheE
  */
 public interface DeviceSessionCacheService {
 
-    byte[] get(DeviceId deviceId);
+    DeviceSessionsCacheEntry get(DeviceId deviceId);
 
-    byte[] put(DeviceId deviceId, byte[] sessions);
+    DeviceSessionsCacheEntry put(DeviceId deviceId, DeviceSessionsCacheEntry sessions);
 
 }

@@ -17,7 +17,7 @@
 
 import L from 'leaflet';
 import LeafletMap from '../leaflet-map';
-import { DEFAULT_ZOOM_LEVEL, UnitedMapSettings } from '../map-models';
+import { DEFAULT_ZOOM_LEVEL, WidgetUnitedMapSettings } from '../map-models';
 import 'leaflet.gridlayer.googlemutant';
 import { ResourcesService } from '@core/services/resources.service';
 import { WidgetContext } from '@home/models/widget-component.models';
@@ -31,16 +31,15 @@ interface GmGlobal {
 export class GoogleMap extends LeafletMap {
   private resource: ResourcesService;
 
-  constructor(ctx: WidgetContext, $container, options: UnitedMapSettings) {
+  constructor(ctx: WidgetContext, $container, options: WidgetUnitedMapSettings) {
     super(ctx, $container, options);
     this.resource = ctx.$injector.get(ResourcesService);
-    super.initSettings(options);
     this.loadGoogle(() => {
       const map = L.map($container, {
         attributionControl: false,
         zoomControl: !this.options.disableZoomControl,
         tap: L.Browser.safari && L.Browser.mobile
-      }).setView(options?.defaultCenterPosition, options?.defaultZoomLevel || DEFAULT_ZOOM_LEVEL);
+      }).setView(options?.parsedDefaultCenterPosition, options?.defaultZoomLevel || DEFAULT_ZOOM_LEVEL);
       (L.gridLayer as any).googleMutant({
         type: options?.gmDefaultMapType || 'roadmap'
       }).addTo(map);

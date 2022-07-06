@@ -16,9 +16,12 @@
 package org.thingsboard.server.dao.sql.widget;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
@@ -28,6 +31,7 @@ import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
@@ -47,7 +51,7 @@ public class JpaWidgetsBundleDao extends JpaAbstractSearchTextDao<WidgetsBundleE
     }
 
     @Override
-    protected CrudRepository<WidgetsBundleEntity, UUID> getCrudRepository() {
+    protected JpaRepository<WidgetsBundleEntity, UUID> getRepository() {
         return widgetsBundleRepository;
     }
 
@@ -86,4 +90,31 @@ public class JpaWidgetsBundleDao extends JpaAbstractSearchTextDao<WidgetsBundleE
                                 Objects.toString(pageLink.getTextSearch(), ""),
                                 DaoUtil.toPageable(pageLink)));
     }
+
+    @Override
+    public WidgetsBundle findByTenantIdAndExternalId(UUID tenantId, UUID externalId) {
+        return DaoUtil.getData(widgetsBundleRepository.findByTenantIdAndExternalId(tenantId, externalId));
+    }
+
+    @Override
+    public WidgetsBundle findByTenantIdAndName(UUID tenantId, String name) {
+        return DaoUtil.getData(widgetsBundleRepository.findFirstByTenantIdAndTitle(tenantId, name));
+    }
+
+    @Override
+    public PageData<WidgetsBundle> findByTenantId(UUID tenantId, PageLink pageLink) {
+        return findTenantWidgetsBundlesByTenantId(tenantId, pageLink);
+    }
+
+    @Override
+    public WidgetsBundleId getExternalIdByInternal(WidgetsBundleId internalId) {
+        return Optional.ofNullable(widgetsBundleRepository.getExternalIdById(internalId.getId()))
+                .map(WidgetsBundleId::new).orElse(null);
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.WIDGETS_BUNDLE;
+    }
+
 }

@@ -25,15 +25,18 @@ firstlaunch=${DATA_FOLDER}/.firstlaunch
 source "${CONF_FOLDER}/${configfile}"
 
 if [ ! -f ${firstlaunch} ]; then
-    install-tb.sh --loadDemo
-    touch ${firstlaunch}
+    install-tb.sh --loadDemo && touch ${firstlaunch}
 fi
 
-echo "Starting ThingsBoard ..."
+if [ -f ${firstlaunch} ]; then
+    echo "Starting ThingsBoard ..."
 
-java -cp ${jarfile} $JAVA_OPTS -Dloader.main=org.thingsboard.server.ThingsboardServerApplication \
-                    -Dspring.jpa.hibernate.ddl-auto=none \
-                    -Dlogging.config=${CONF_FOLDER}/logback.xml \
-                    org.springframework.boot.loader.PropertiesLauncher
+    java -cp ${jarfile} $JAVA_OPTS -Dloader.main=org.thingsboard.server.ThingsboardServerApplication \
+                        -Dspring.jpa.hibernate.ddl-auto=none \
+                        -Dlogging.config=${CONF_FOLDER}/logback.xml \
+                        org.springframework.boot.loader.PropertiesLauncher
+else
+    echo "ERROR: ThingsBoard is not installed"
+fi
 
 stop-db.sh

@@ -17,8 +17,8 @@ package org.thingsboard.server.dao.sql.event;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.dao.model.sql.EventEntity;
@@ -29,7 +29,7 @@ import java.util.UUID;
 /**
  * Created by Valerii Sosliuk on 5/3/2017.
  */
-public interface EventRepository extends PagingAndSortingRepository<EventEntity, UUID> {
+public interface EventRepository extends JpaRepository<EventEntity, UUID> {
 
     EventEntity findByTenantIdAndEntityTypeAndEntityIdAndEventTypeAndEventUid(UUID tenantId,
                                                                               EntityType entityType,

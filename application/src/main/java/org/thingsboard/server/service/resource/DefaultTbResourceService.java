@@ -22,9 +22,12 @@ import org.eclipse.leshan.core.model.DefaultDDFFileValidator;
 import org.eclipse.leshan.core.model.InvalidDDFFileException;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TbResourceId;
@@ -36,6 +39,8 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.resource.ResourceService;
+import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -53,7 +58,8 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Slf4j
 @Service
-public class DefaultTbResourceService implements TbResourceService {
+@TbCoreComponent
+public class DefaultTbResourceService extends AbstractTbEntityService implements TbResourceService {
 
     private final ResourceService resourceService;
     private final DDFFileParser ddfFileParser;
@@ -61,45 +67,6 @@ public class DefaultTbResourceService implements TbResourceService {
     public DefaultTbResourceService(ResourceService resourceService) {
         this.resourceService = resourceService;
         this.ddfFileParser = new DDFFileParser(new DefaultDDFFileValidator());
-    }
-
-    @Override
-    public TbResource saveResource(TbResource resource) throws ThingsboardException {
-        log.trace("Executing saveResource [{}]", resource);
-        if (StringUtils.isEmpty(resource.getData())) {
-            throw new DataValidationException("Resource data should be specified!");
-        }
-        if (ResourceType.LWM2M_MODEL.equals(resource.getResourceType())) {
-            try {
-                List<ObjectModel> objectModels =
-                        ddfFileParser.parse(new ByteArrayInputStream(Base64.getDecoder().decode(resource.getData())), resource.getSearchText());
-                if (!objectModels.isEmpty()) {
-                    ObjectModel objectModel = objectModels.get(0);
-
-                    String resourceKey = objectModel.id + LWM2M_SEPARATOR_KEY + objectModel.version;
-                    String name = objectModel.name;
-                    resource.setResourceKey(resourceKey);
-                    if (resource.getId() == null) {
-                        resource.setTitle(name + " id=" + objectModel.id + " v" + objectModel.version);
-                    }
-                    resource.setSearchText(resourceKey + LWM2M_SEPARATOR_SEARCH_TEXT + name);
-                } else {
-                    throw new DataValidationException(String.format("Could not parse the XML of objectModel with name %s", resource.getSearchText()));
-                }
-            } catch (InvalidDDFFileException e) {
-                log.error("Failed to parse file {}", resource.getFileName(), e);
-                throw new DataValidationException("Failed to parse file " + resource.getFileName());
-            } catch (IOException e) {
-                throw new ThingsboardException(e, ThingsboardErrorCode.GENERAL);
-            }
-            if (resource.getResourceType().equals(ResourceType.LWM2M_MODEL) && toLwM2mObject(resource, true) == null) {
-                throw new DataValidationException(String.format("Could not parse the XML of objectModel with name %s", resource.getSearchText()));
-            }
-        } else {
-            resource.setResourceKey(resource.getFileName());
-        }
-
-        return resourceService.saveResource(resource);
     }
 
     @Override
@@ -148,11 +115,6 @@ public class DefaultTbResourceService implements TbResourceService {
                 .flatMap(s -> Stream.ofNullable(toLwM2mObject(s, false)))
                 .sorted(getComparator(sortProperty, sortOrder))
                 .collect(Collectors.toList());
-    }
-
-    @Override
-    public void deleteResource(TenantId tenantId, TbResourceId resourceId) {
-        resourceService.deleteResource(tenantId, resourceId);
     }
 
     @Override
@@ -214,5 +176,74 @@ public class DefaultTbResourceService implements TbResourceService {
             log.error("Could not parse the XML of objectModel with name [{}]", resource.getSearchText(), e);
             return null;
         }
+    }
+
+    @Override
+    public TbResource save(TbResource tbResource, User user) throws ThingsboardException {
+        ActionType actionType = tbResource.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
+        TenantId tenantId = tbResource.getTenantId();
+        try {
+            TbResource savedResource = checkNotNull(doSave(tbResource));
+            tbClusterService.onResourceChange(savedResource, null);
+            notificationEntityService.logEntityAction(tenantId, savedResource.getId(), savedResource, actionType, user);
+            return savedResource;
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE),
+                    tbResource, actionType, user, e);
+            throw e;
+        }
+    }
+
+    @Override
+    public void delete(TbResource tbResource, User user) {
+        TbResourceId resourceId = tbResource.getId();
+        TenantId tenantId = tbResource.getTenantId();
+        try {
+            resourceService.deleteResource(tenantId, resourceId);
+            tbClusterService.onResourceDeleted(tbResource, null);
+            notificationEntityService.logEntityAction(tenantId, resourceId, tbResource, ActionType.DELETED, user, resourceId.toString());
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE),
+                    ActionType.DELETED, user, e, resourceId.toString());
+            throw e;
+        }
+    }
+
+    private TbResource doSave(TbResource resource) throws ThingsboardException {
+        log.trace("Executing saveResource [{}]", resource);
+        if (StringUtils.isEmpty(resource.getData())) {
+            throw new DataValidationException("Resource data should be specified!");
+        }
+        if (ResourceType.LWM2M_MODEL.equals(resource.getResourceType())) {
+            try {
+                List<ObjectModel> objectModels =
+                        ddfFileParser.parse(new ByteArrayInputStream(Base64.getDecoder().decode(resource.getData())), resource.getSearchText());
+                if (!objectModels.isEmpty()) {
+                    ObjectModel objectModel = objectModels.get(0);
+
+                    String resourceKey = objectModel.id + LWM2M_SEPARATOR_KEY + objectModel.version;
+                    String name = objectModel.name;
+                    resource.setResourceKey(resourceKey);
+                    if (resource.getId() == null) {
+                        resource.setTitle(name + " id=" + objectModel.id + " v" + objectModel.version);
+                    }
+                    resource.setSearchText(resourceKey + LWM2M_SEPARATOR_SEARCH_TEXT + name);
+                } else {
+                    throw new DataValidationException(String.format("Could not parse the XML of objectModel with name %s", resource.getSearchText()));
+                }
+            } catch (InvalidDDFFileException e) {
+                log.error("Failed to parse file {}", resource.getFileName(), e);
+                throw new DataValidationException("Failed to parse file " + resource.getFileName());
+            } catch (IOException e) {
+                throw new ThingsboardException(e, ThingsboardErrorCode.GENERAL);
+            }
+            if (resource.getResourceType().equals(ResourceType.LWM2M_MODEL) && toLwM2mObject(resource, true) == null) {
+                throw new DataValidationException(String.format("Could not parse the XML of objectModel with name %s", resource.getSearchText()));
+            }
+        } else {
+            resource.setResourceKey(resource.getFileName());
+        }
+
+        return resourceService.saveResource(resource);
     }
 }

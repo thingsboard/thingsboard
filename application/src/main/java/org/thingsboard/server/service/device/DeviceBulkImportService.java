@@ -49,8 +49,9 @@ import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.importing.AbstractBulkImportService;
-import org.thingsboard.server.service.importing.BulkImportColumnType;
+import org.thingsboard.server.service.sync.ie.importing.csv.AbstractBulkImportService;
+import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportColumnType;
+import org.thingsboard.server.service.entitiy.device.TbDeviceService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.Collection;
@@ -68,6 +69,7 @@ import java.util.concurrent.locks.ReentrantLock;
 @RequiredArgsConstructor
 public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
     protected final DeviceService deviceService;
+    protected final TbDeviceService tbDeviceService;
     protected final DeviceCredentialsService deviceCredentialsService;
     protected final DeviceProfileService deviceProfileService;
 
@@ -99,7 +101,8 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
     }
 
     @Override
-    protected Device saveEntity(Device entity, Map<BulkImportColumnType, String> fields) {
+    @SneakyThrows
+    protected Device saveEntity(SecurityUser user, Device entity, Map<BulkImportColumnType, String> fields) {
         DeviceCredentials deviceCredentials;
         try {
             deviceCredentials = createDeviceCredentials(fields);
@@ -118,7 +121,7 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
         }
         entity.setDeviceProfileId(deviceProfile.getId());
 
-        return deviceService.saveDeviceWithCredentials(entity, deviceCredentials);
+        return tbDeviceService.saveDeviceWithCredentials(entity, deviceCredentials, user);
     }
 
     @Override
@@ -173,7 +176,7 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
         ObjectNode lwm2mCredentials = JacksonUtil.newObjectNode();
 
         Set.of(BulkImportColumnType.LWM2M_CLIENT_SECURITY_CONFIG_MODE, BulkImportColumnType.LWM2M_BOOTSTRAP_SERVER_SECURITY_MODE,
-                BulkImportColumnType.LWM2M_SERVER_SECURITY_MODE).stream()
+                        BulkImportColumnType.LWM2M_SERVER_SECURITY_MODE).stream()
                 .map(fields::get)
                 .filter(Objects::nonNull)
                 .forEach(securityMode -> {
@@ -230,7 +233,7 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
 
                     Lwm2mDeviceProfileTransportConfiguration transportConfiguration = new Lwm2mDeviceProfileTransportConfiguration();
                     transportConfiguration.setBootstrap(Collections.emptyList());
-                    transportConfiguration.setClientLwM2mSettings(new OtherConfiguration(1,1,1, PowerMode.DRX, null, null, null, null, null));
+                    transportConfiguration.setClientLwM2mSettings(new OtherConfiguration(1, 1, 1, PowerMode.DRX, null, null, null, null, null));
                     transportConfiguration.setObserveAttr(new TelemetryMappingConfiguration(Collections.emptyMap(), Collections.emptySet(), Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
 
                     DeviceProfileData deviceProfileData = new DeviceProfileData();

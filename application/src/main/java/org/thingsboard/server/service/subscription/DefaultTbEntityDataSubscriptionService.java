@@ -219,13 +219,16 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
             @Override
             public void onSuccess(@Nullable TbEntityDataSubCtx theCtx) {
                 try {
-                    if (cmd.getLatestCmd() != null) {
-                        handleLatestCmd(theCtx, cmd.getLatestCmd());
-                    } else if (cmd.getTsCmd() != null) {
-                        handleTimeSeriesCmd(theCtx, cmd.getTsCmd());
+                    if (cmd.getLatestCmd() != null || cmd.getTsCmd() != null) {
+                        if (cmd.getLatestCmd() != null) {
+                            handleLatestCmd(theCtx, cmd.getLatestCmd());
+                        }
+                        if (cmd.getTsCmd() != null) {
+                            handleTimeSeriesCmd(theCtx, cmd.getTsCmd());
+                        }
                     } else if (!theCtx.isInitialDataSent()) {
                         EntityDataUpdate update = new EntityDataUpdate(theCtx.getCmdId(), theCtx.getData(), null, theCtx.getMaxEntitiesPerDataSubscription());
-                        wsService.sendWsMsg(theCtx.getSessionId(), update);
+                        theCtx.sendWsMsg(update);
                         theCtx.setInitialDataSent(true);
                     }
                 } catch (RuntimeException e) {
@@ -284,7 +287,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         ctx.clearEntitySubscriptions();
         if (entities.isEmpty()) {
             AlarmDataUpdate update = new AlarmDataUpdate(cmd.getCmdId(), new PageData<>(), null, 0, 0);
-            wsService.sendWsMsg(ctx.getSessionId(), update);
+            ctx.sendWsMsg(update);
         } else {
             ctx.fetchAlarms();
             ctx.createLatestValuesSubscriptions(cmd.getQuery().getLatestValues());
@@ -417,22 +420,26 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                     }
                 } catch (InterruptedException | ExecutionException e) {
                     log.warn("[{}][{}][{}] Failed to fetch historical data", ctx.getSessionId(), ctx.getCmdId(), entityData.getEntityId(), e);
-                    wsService.sendWsMsg(ctx.getSessionId(),
-                            new EntityDataUpdate(ctx.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR.getCode(), "Failed to fetch historical data!"));
+                    ctx.sendWsMsg(new EntityDataUpdate(ctx.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR.getCode(), "Failed to fetch historical data!"));
                 }
             });
-            EntityDataUpdate update;
-            if (!ctx.isInitialDataSent()) {
-                update = new EntityDataUpdate(ctx.getCmdId(), ctx.getData(), null, ctx.getMaxEntitiesPerDataSubscription());
-                ctx.setInitialDataSent(true);
-            } else {
-                update = new EntityDataUpdate(ctx.getCmdId(), null, ctx.getData().getData(), ctx.getMaxEntitiesPerDataSubscription());
+            ctx.getWsLock().lock();
+            try {
+                EntityDataUpdate update;
+                if (!ctx.isInitialDataSent()) {
+                    update = new EntityDataUpdate(ctx.getCmdId(), ctx.getData(), null, ctx.getMaxEntitiesPerDataSubscription());
+                    ctx.setInitialDataSent(true);
+                } else {
+                    update = new EntityDataUpdate(ctx.getCmdId(), null, ctx.getData().getData(), ctx.getMaxEntitiesPerDataSubscription());
+                }
+                if (subscribe) {
+                    ctx.createTimeseriesSubscriptions(keys.stream().map(key -> new EntityKey(EntityKeyType.TIME_SERIES, key)).collect(Collectors.toList()), cmd.getStartTs(), cmd.getEndTs());
+                }
+                ctx.sendWsMsg(update);
+                ctx.getData().getData().forEach(ed -> ed.getTimeseries().clear());
+            } finally {
+                ctx.getWsLock().unlock();
             }
-            wsService.sendWsMsg(ctx.getSessionId(), update);
-            if (subscribe) {
-                ctx.createTimeseriesSubscriptions(keys.stream().map(key -> new EntityKey(EntityKeyType.TIME_SERIES, key)).collect(Collectors.toList()), cmd.getStartTs(), cmd.getEndTs());
-            }
-            ctx.getData().getData().forEach(ed -> ed.getTimeseries().clear());
             return ctx;
         }, wsCallBackExecutor);
     }
@@ -461,7 +468,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                 ListenableFuture<List<TsKvEntry>> missingTsData = tsService.findLatest(ctx.getTenantId(), entityData.getEntityId(), missingTsKeys);
                 missingTelemetryFutures.put(entityData, Futures.transform(missingTsData, this::toTsValue, MoreExecutors.directExecutor()));
             }
-            Futures.addCallback(Futures.allAsList(missingTelemetryFutures.values()), new FutureCallback<List<Map<String, TsValue>>>() {
+            Futures.addCallback(Futures.allAsList(missingTelemetryFutures.values()), new FutureCallback<>() {
                 @Override
                 public void onSuccess(@Nullable List<Map<String, TsValue>> result) {
                     missingTelemetryFutures.forEach((key, value) -> {
@@ -472,30 +479,39 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                         }
                     });
                     EntityDataUpdate update;
-                    if (!ctx.isInitialDataSent()) {
-                        update = new EntityDataUpdate(ctx.getCmdId(), ctx.getData(), null, ctx.getMaxEntitiesPerDataSubscription());
-                        ctx.setInitialDataSent(true);
-                    } else {
-                        update = new EntityDataUpdate(ctx.getCmdId(), null, ctx.getData().getData(), ctx.getMaxEntitiesPerDataSubscription());
+                    ctx.getWsLock().lock();
+                    try {
+                        ctx.createLatestValuesSubscriptions(latestCmd.getKeys());
+                        if (!ctx.isInitialDataSent()) {
+                            update = new EntityDataUpdate(ctx.getCmdId(), ctx.getData(), null, ctx.getMaxEntitiesPerDataSubscription());
+                            ctx.setInitialDataSent(true);
+                        } else {
+                            update = new EntityDataUpdate(ctx.getCmdId(), null, ctx.getData().getData(), ctx.getMaxEntitiesPerDataSubscription());
+                        }
+                        ctx.sendWsMsg(update);
+                    } finally {
+                        ctx.getWsLock().unlock();
                     }
-                    wsService.sendWsMsg(ctx.getSessionId(), update);
-                    ctx.createLatestValuesSubscriptions(latestCmd.getKeys());
                 }
 
                 @Override
                 public void onFailure(Throwable t) {
                     log.warn("[{}][{}] Failed to process websocket command: {}:{}", ctx.getSessionId(), ctx.getCmdId(), ctx.getQuery(), latestCmd, t);
-                    wsService.sendWsMsg(ctx.getSessionId(),
-                            new EntityDataUpdate(ctx.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR.getCode(), "Failed to process websocket command!"));
+                    ctx.sendWsMsg(new EntityDataUpdate(ctx.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR.getCode(), "Failed to process websocket command!"));
                 }
             }, wsCallBackExecutor);
         } else {
-            if (!ctx.isInitialDataSent()) {
-                EntityDataUpdate update = new EntityDataUpdate(ctx.getCmdId(), ctx.getData(), null, ctx.getMaxEntitiesPerDataSubscription());
-                wsService.sendWsMsg(ctx.getSessionId(), update);
-                ctx.setInitialDataSent(true);
+            ctx.getWsLock().lock();
+            try {
+                ctx.createLatestValuesSubscriptions(latestCmd.getKeys());
+                if (!ctx.isInitialDataSent()) {
+                    EntityDataUpdate update = new EntityDataUpdate(ctx.getCmdId(), ctx.getData(), null, ctx.getMaxEntitiesPerDataSubscription());
+                    ctx.sendWsMsg(update);
+                    ctx.setInitialDataSent(true);
+                }
+            } finally {
+                ctx.getWsLock().unlock();
             }
-            ctx.createLatestValuesSubscriptions(latestCmd.getKeys());
         }
     }
 

@@ -15,16 +15,18 @@
  */
 package org.thingsboard.rule.engine.edge;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNode;
-import org.thingsboard.rule.engine.api.TbNodeConfiguration;
-import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
+
+import java.util.UUID;
 
 @Slf4j
 @RuleNode(
@@ -57,22 +59,37 @@ import org.thingsboard.server.common.msg.TbMsg;
         icon = "cloud_upload",
         ruleChainTypes = RuleChainType.EDGE
 )
-public class TbMsgPushToCloudNode implements TbNode {
+public class TbMsgPushToCloudNode extends AbstractTbMsgPushNode<TbMsgPushToCloudNodeConfiguration, Object, Object> {
 
-    private TbMsgPushToCloudNodeConfiguration config;
+    // Implementation of this node is done on the Edge
 
     @Override
-    public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbMsgPushToCloudNodeConfiguration.class);
+    Object buildEvent(TenantId tenantId, EdgeEventActionType eventAction, UUID entityId, Object eventType, JsonNode entityBody) {
+        return null;
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) {
-        // Implementation of this node is done on the Edge
+    Object getEventTypeByEntityType(EntityType entityType) {
+        return null;
     }
 
     @Override
-    public void destroy() {
+    Object getAlarmEventType() {
+        return null;
+    }
+
+    @Override
+    String getIgnoredMessageSource() {
+        return null;
+    }
+
+    @Override
+    protected Class<TbMsgPushToCloudNodeConfiguration> getConfigClazz() {
+        return TbMsgPushToCloudNodeConfiguration.class;
+    }
+
+    @Override
+    void processMsg(TbContext ctx, TbMsg msg) {
     }
 
 }

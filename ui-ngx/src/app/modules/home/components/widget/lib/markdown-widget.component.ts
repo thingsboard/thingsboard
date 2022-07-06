@@ -19,17 +19,18 @@ import { PageComponent } from '@shared/components/page.component';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { DatasourceData } from '@shared/models/widget.models';
+import { DatasourceData, FormattedData } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import {
-  fillPattern, flatData,
-  parseData,
-  parseFunction,
-  processPattern,
+  createLabelFromPattern,
+  fillDataPattern,
+  flatFormattedData,
+  formattedDataFormDatasourceData,
+  hashCode, isDefinedAndNotNull,
+  isNotEmptyStr,
+  parseFunction, processDataPattern,
   safeExecute
-} from '@home/components/widget/lib/maps/common-maps-utils';
-import { FormattedData } from '@home/components/widget/lib/maps/map-models';
-import { hashCode, isNotEmptyStr } from '@core/utils';
+} from '@core/utils';
 import cssjs from '@core/css/css';
 import { UtilsService } from '@core/services/utils.service';
 import { HOME_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
@@ -82,9 +83,11 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
       cssParser.cssPreviewNamespace = this.markdownClass;
       cssParser.createStyleElement(this.markdownClass, cssString);
     }
+    const pageSize = isDefinedAndNotNull(this.ctx.widgetConfig.pageSize) &&
+                      this.ctx.widgetConfig.pageSize > 0 ? this.ctx.widgetConfig.pageSize : 16384;
     const pageLink: EntityDataPageLink = {
       page: 0,
-      pageSize: 16384,
+      pageSize,
       textSearch: null,
       dynamic: true
     };
@@ -113,12 +116,11 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
     } else {
       initialData = [];
     }
-    const data = parseData(initialData);
+    const data = formattedDataFormDatasourceData(initialData);
     let markdownText = this.settings.useMarkdownTextFunction ?
       safeExecute(this.markdownTextFunction, [data]) : this.settings.markdownTextPattern;
-    const allData = flatData(data);
-    const replaceInfo = processPattern(markdownText, allData);
-    markdownText = fillPattern(markdownText, replaceInfo, allData);
+    const allData = flatFormattedData(data);
+    markdownText = createLabelFromPattern(markdownText, allData);
     if (this.markdownText !== markdownText) {
       this.markdownText = this.utils.customTranslation(markdownText, markdownText);
       this.cd.detectChanges();

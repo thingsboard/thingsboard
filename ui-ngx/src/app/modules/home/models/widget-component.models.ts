@@ -18,7 +18,7 @@ import { IDashboardComponent } from '@home/models/dashboard-component.models';
 import {
   DataSet,
   Datasource,
-  DatasourceData,
+  DatasourceData, FormattedData,
   JsonSettingsSchema,
   Widget,
   WidgetActionDescriptor,
@@ -50,7 +50,6 @@ import { WidgetTypeId } from '@shared/models/id/widget-type-id';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { WidgetLayout } from '@shared/models/dashboard.models';
 import { formatValue, isDefined } from '@core/utils';
-import { forkJoin, of } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
@@ -73,14 +72,16 @@ import { EntityService } from '@core/http/entity.service';
 import { DialogService } from '@core/services/dialog.service';
 import { CustomDialogService } from '@home/components/widget/dialog/custom-dialog.service';
 import { AuthService } from '@core/auth/auth.service';
+import { ResourceService } from '@core/http/resource.service';
 import { DatePipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { PageLink } from '@shared/models/page/page-link';
 import { SortOrder } from '@shared/models/page/sort-order';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
-import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
-import { FormattedData } from '@home/components/widget/lib/maps/map-models';
+import { EdgeService } from '@core/http/edge.service';
+import * as RxJS from 'rxjs';
+import * as RxJSOperators from 'rxjs/operators';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { EntityId } from '@shared/models/id/entity-id';
 
@@ -162,6 +163,7 @@ export class WidgetContext {
   deviceService: DeviceService;
   assetService: AssetService;
   entityViewService: EntityViewService;
+  edgeService: EdgeService;
   customerService: CustomerService;
   dashboardService: DashboardService;
   userService: UserService;
@@ -170,6 +172,7 @@ export class WidgetContext {
   entityService: EntityService;
   dialogs: DialogService;
   customDialog: CustomDialogService;
+  resourceService: ResourceService;
   date: DatePipe;
   translate: TranslateService;
   http: HttpClient;
@@ -204,7 +207,7 @@ export class WidgetContext {
       if (this.defaultSubscription) {
         return this.defaultSubscription.sendOneWayCommand(method, params, timeout, persistent, retries, additionalInfo, requestUUID);
       } else {
-        return of(null);
+        return RxJS.of(null);
       }
     },
     sendTwoWayCommand: (method, params, timeout, persistent,
@@ -212,14 +215,14 @@ export class WidgetContext {
       if (this.defaultSubscription) {
         return this.defaultSubscription.sendTwoWayCommand(method, params, timeout, persistent, retries, additionalInfo, requestUUID);
       } else {
-        return of(null);
+        return RxJS.of(null);
       }
     },
     completedCommand: () => {
       if (this.defaultSubscription) {
         return this.defaultSubscription.completedCommand();
       } else {
-        return of(null);
+        return RxJS.of(null);
       }
     }
   };
@@ -245,6 +248,7 @@ export class WidgetContext {
 
   datasources?: Array<Datasource>;
   data?: Array<DatasourceData>;
+  latestData?: Array<DatasourceData>;
   hiddenData?: Array<{data: DataSet}>;
   timeWindow?: WidgetTimewindow;
 
@@ -266,12 +270,9 @@ export class WidgetContext {
   private popoverComponents: TbPopoverComponent[] = [];
 
   rxjs = {
-    forkJoin,
-    of,
-    map,
-    mergeMap,
-    switchMap,
-    catchError
+
+    ...RxJS,
+    ...RxJSOperators
   };
 
   registerPopoverComponent(popoverComponent: TbPopoverComponent) {
@@ -412,6 +413,7 @@ export interface WidgetInfo extends WidgetTypeDescriptor, WidgetControllerDescri
   alias: string;
   typeSettingsSchema?: string | any;
   typeDataKeySettingsSchema?: string | any;
+  typeLatestDataKeySettingsSchema?: string | any;
   image?: string;
   description?: string;
   componentFactory?: ComponentFactory<IDynamicWidgetComponent>;
@@ -426,6 +428,10 @@ export interface WidgetConfigComponentData {
   isDataEnabled: boolean;
   settingsSchema: JsonSettingsSchema;
   dataKeySettingsSchema: JsonSettingsSchema;
+  latestDataKeySettingsSchema: JsonSettingsSchema;
+  settingsDirective: string;
+  dataKeySettingsDirective: string;
+  latestDataKeySettingsDirective: string;
 }
 
 export const MissingWidgetType: WidgetInfo = {
@@ -480,12 +486,14 @@ export const ErrorWidgetType: WidgetInfo = {
 export interface WidgetTypeInstance {
   getSettingsSchema?: () => string;
   getDataKeySettingsSchema?: () => string;
+  getLatestDataKeySettingsSchema?: () => string;
   typeParameters?: () => WidgetTypeParameters;
   useCustomDatasources?: () => boolean;
   actionSources?: () => {[actionSourceId: string]: WidgetActionSource};
 
   onInit?: () => void;
   onDataUpdated?: () => void;
+  onLatestDataUpdated?: () => void;
   onResize?: () => void;
   onEditModeChanged?: () => void;
   onMobileModeChanged?: () => void;
@@ -512,6 +520,10 @@ export function toWidgetInfo(widgetTypeEntity: WidgetType): WidgetInfo {
     controllerScript: widgetTypeEntity.descriptor.controllerScript,
     settingsSchema: widgetTypeEntity.descriptor.settingsSchema,
     dataKeySettingsSchema: widgetTypeEntity.descriptor.dataKeySettingsSchema,
+    latestDataKeySettingsSchema: widgetTypeEntity.descriptor.latestDataKeySettingsSchema,
+    settingsDirective: widgetTypeEntity.descriptor.settingsDirective,
+    dataKeySettingsDirective: widgetTypeEntity.descriptor.dataKeySettingsDirective,
+    latestDataKeySettingsDirective: widgetTypeEntity.descriptor.latestDataKeySettingsDirective,
     defaultConfig: widgetTypeEntity.descriptor.defaultConfig
   };
 }
@@ -538,6 +550,10 @@ export function toWidgetType(widgetInfo: WidgetInfo, id: WidgetTypeId, tenantId:
     controllerScript: widgetInfo.controllerScript,
     settingsSchema: widgetInfo.settingsSchema,
     dataKeySettingsSchema: widgetInfo.dataKeySettingsSchema,
+    latestDataKeySettingsSchema: widgetInfo.latestDataKeySettingsSchema,
+    settingsDirective: widgetInfo.settingsDirective,
+    dataKeySettingsDirective: widgetInfo.dataKeySettingsDirective,
+    latestDataKeySettingsDirective: widgetInfo.latestDataKeySettingsDirective,
     defaultConfig: widgetInfo.defaultConfig
   };
   return {

@@ -15,16 +15,21 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
-import { Observable } from 'rxjs';
+import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
+import { Observable, of } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import {
   AdminSettings,
+  RepositorySettings,
   MailServerSettings,
   SecuritySettings,
   TestSmsRequest,
-  UpdateMessage
+  UpdateMessage, AutoCommitSettings
 } from '@shared/models/settings.models';
+import { EntitiesVersionControlService } from '@core/http/entities-version-control.service';
+import { tap } from 'rxjs/operators';
+import { AuthUser } from '@shared/models/user.model';
+import { Authority } from '@shared/models/authority.enum';
 
 @Injectable({
   providedIn: 'root'
@@ -32,7 +37,8 @@ import {
 export class AdminService {
 
   constructor(
-    private http: HttpClient
+    private http: HttpClient,
+    private entitiesVersionControlService: EntitiesVersionControlService
   ) { }
 
   public getAdminSettings<T>(key: string, config?: RequestConfig): Observable<AdminSettings<T>> {
@@ -62,6 +68,50 @@ export class AdminService {
                               config?: RequestConfig): Observable<SecuritySettings> {
     return this.http.post<SecuritySettings>('/api/admin/securitySettings', securitySettings,
       defaultHttpOptionsFromConfig(config));
+  }
+
+  public getRepositorySettings(config?: RequestConfig): Observable<RepositorySettings> {
+    return this.http.get<RepositorySettings>(`/api/admin/repositorySettings`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public saveRepositorySettings(repositorySettings: RepositorySettings,
+                                config?: RequestConfig): Observable<RepositorySettings> {
+    return this.http.post<RepositorySettings>('/api/admin/repositorySettings', repositorySettings,
+      defaultHttpOptionsFromConfig(config)).pipe(
+      tap(() => {
+        this.entitiesVersionControlService.clearBranchList();
+      })
+    );
+  }
+
+  public deleteRepositorySettings(config?: RequestConfig) {
+    return this.http.delete('/api/admin/repositorySettings', defaultHttpOptionsFromConfig(config)).pipe(
+      tap(() => {
+        this.entitiesVersionControlService.clearBranchList();
+      })
+    );
+  }
+
+  public checkRepositoryAccess(repositorySettings: RepositorySettings,
+                               config?: RequestConfig): Observable<void> {
+    return this.http.post<void>('/api/admin/repositorySettings/checkAccess', repositorySettings, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getAutoCommitSettings(config?: RequestConfig): Observable<AutoCommitSettings> {
+    return this.http.get<AutoCommitSettings>(`/api/admin/autoCommitSettings`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public autoCommitSettingsExists(config?: RequestConfig): Observable<boolean> {
+    return this.http.get<boolean>('/api/admin/autoCommitSettings/exists', defaultHttpOptionsFromConfig(config));
+  }
+
+  public saveAutoCommitSettings(autoCommitSettings: AutoCommitSettings,
+                                config?: RequestConfig): Observable<AutoCommitSettings> {
+    return this.http.post<AutoCommitSettings>('/api/admin/autoCommitSettings', autoCommitSettings, defaultHttpOptionsFromConfig(config));
+  }
+
+  public deleteAutoCommitSettings(config?: RequestConfig) {
+    return this.http.delete('/api/admin/autoCommitSettings', defaultHttpOptionsFromConfig(config));
   }
 
   public checkUpdates(config?: RequestConfig): Observable<UpdateMessage> {

@@ -50,7 +50,8 @@
         "export": "Экспортировать",
         "share-via": "Поделиться в {{provider}}",
         "continue": "Продолжить",
-        "discard-changes": "Отменить изменения"
+        "discard-changes": "Отменить изменения",
+        "done": "Завершено"
     },
     "aggregation": {
         "aggregation": "Агрегация",
@@ -107,8 +108,33 @@
         "general-policy": "Общая политика",
         "max-failed-login-attempts": "Максимальное количество неудачных попыток входа в систему, прежде чем учетная запись заблокирована",
         "minimum-max-failed-login-attempts-range": "Максимальное количество неудачных попыток входа в систему не может быть отрицательным",
-        "user-lockout-notification-email": "В случае блокировки учетной записи пользователя отправьте уведомление на электронную почту"
-    },
+        "user-lockout-notification-email": "В случае блокировки учетной записи пользователя отправьте уведомление на электронную почту",
+        "smpp-provider": {
+          "smpp-version": "SMPP версия",
+          "smpp-host": "SMPP хост",
+          "smpp-host-required": "SMPP хост обязателен.",
+          "smpp-port": "SMPP порт",
+          "smpp-port-required": "SMPP порт обязателен.",
+          "system-id": "ИД системи",
+          "system-id-required": "ИД системи обязателен.",
+          "password": "Пароль",
+          "password-required": "Пароль обязателен.",
+          "type-settings": "Настройки типов",
+          "source-settings": "Настройки источника",
+          "destination-settings": "Настройки назначения",
+          "additional-settings": "Дополнительные настройки",
+          "system-type": "Тип системы",
+          "bind-type": "Тип привязки",
+          "service-type": "Тип обслуживания",
+          "source-address": "Адрес источника",
+          "source-ton": "Тип номера источника",
+          "source-npi": "Идентификация плана нумерации источника",
+          "destination-ton": "Тип номера назничения",
+          "destination-npi": "Идентификация плана нумерации назначения",
+          "address-range": "Диапазон адресов",
+          "coding-scheme": "Схема кодирования"
+        }
+      },
     "alarm": {
         "alarm": "Оповещение",
         "alarms": "Оповещения",
@@ -457,6 +483,8 @@
         "add-widget": "Добавить новый виджет",
         "title": "Название",
         "select-widget-title": "Выберите виджет",
+        "copyId": "Копировать идентификатор дашборда",
+        "idCopiedMessage": "Идентификатор дашборда скопирован в буфер обмена",
         "select-widget-subtitle": "Список доступных виджетов",
         "delete": "Удалить дашборд",
         "title-required": "Название обязательно.",
@@ -1181,8 +1209,7 @@
             "select-file": "Выберите файл",
             "configuration": "Конфигурация импорта",
             "column-type": "Выберите тип колонок",
-            "creat-entities": "Создание новых объектов",
-            "done": "Завершено"
+            "creat-entities": "Создание новых объектов"
         },
         "message": {
             "create-entities": "{{count}} новый(х) объект(ов) было успешно создано.",
@@ -1264,7 +1291,6 @@
         "change-password": "Изменить пароль",
         "current-password": "Текущий пароль",
         "copy-jwt-token": "Копировать JWT токен",
-        "valid-till": "Действителен до {{expirationData}}",
         "tokenCopiedMessage": "JWT токен скопирован в буфер обмена",
         "tokenCopiedWarnMessage": "JWT токен недействителен! Перезагрузите страницу."
     },

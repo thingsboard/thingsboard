@@ -17,10 +17,9 @@ package org.thingsboard.server.dao.sql.rule;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleNodeState;
@@ -44,7 +43,7 @@ public class JpaRuleNodeStateDao extends JpaAbstractDao<RuleNodeStateEntity, Rul
     }
 
     @Override
-    protected CrudRepository<RuleNodeStateEntity, UUID> getCrudRepository() {
+    protected JpaRepository<RuleNodeStateEntity, UUID> getRepository() {
         return ruleNodeStateRepository;
     }
 

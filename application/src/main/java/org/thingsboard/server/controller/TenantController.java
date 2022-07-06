@@ -18,8 +18,8 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,10 +36,9 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.install.InstallScripts;
+import org.thingsboard.server.service.entitiy.tenant.TbTenantService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
@@ -63,14 +62,13 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 @TbCoreComponent
 @RequestMapping("/api")
 @Slf4j
+@RequiredArgsConstructor
 public class TenantController extends BaseController {
 
     private static final String TENANT_INFO_DESCRIPTION = "The Tenant Info object extends regular Tenant object and includes Tenant Profile name. ";
-    @Autowired
-    private InstallScripts installScripts;
 
-    @Autowired
-    private TenantService tenantService;
+    private final TenantService tenantService;
+    private final TbTenantService tbTenantService;
 
     @ApiOperation(value = "Get Tenant (getTenantById)",
             notes = "Fetch the Tenant object based on the provided Tenant Id. " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
@@ -121,27 +119,10 @@ public class TenantController extends BaseController {
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/tenant", method = RequestMethod.POST)
     @ResponseBody
-    public Tenant saveTenant(
-            @ApiParam(value = "A JSON value representing the tenant.")
-            @RequestBody Tenant tenant) throws ThingsboardException {
-        try {
-            boolean newTenant = tenant.getId() == null;
-
-            checkEntity(tenant.getId(), tenant, Resource.TENANT);
-
-            tenant = checkNotNull(tenantService.saveTenant(tenant));
-            if (newTenant) {
-                installScripts.createDefaultRuleChains(tenant.getId());
-                installScripts.createDefaultEdgeRuleChains(tenant.getId());
-            }
-            tenantProfileCache.evict(tenant.getId());
-            tbClusterService.onTenantChange(tenant, null);
-            tbClusterService.broadcastEntityStateChangeEvent(tenant.getId(), tenant.getId(),
-                    newTenant ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
-            return tenant;
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+    public Tenant saveTenant(@ApiParam(value = "A JSON value representing the tenant.")
+                             @RequestBody Tenant tenant) throws Exception {
+        checkEntity(tenant.getId(), tenant, Resource.TENANT);
+        return tbTenantService.save(tenant);
     }
 
     @ApiOperation(value = "Delete Tenant (deleteTenant)",
@@ -149,20 +130,12 @@ public class TenantController extends BaseController {
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/tenant/{tenantId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
-    public void deleteTenant(
-            @ApiParam(value = TENANT_ID_PARAM_DESCRIPTION)
-            @PathVariable(TENANT_ID) String strTenantId) throws ThingsboardException {
+    public void deleteTenant(@ApiParam(value = TENANT_ID_PARAM_DESCRIPTION)
+                             @PathVariable(TENANT_ID) String strTenantId) throws Exception {
         checkParameter(TENANT_ID, strTenantId);
-        try {
-            TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
-            Tenant tenant = checkTenantId(tenantId, Operation.DELETE);
-            tenantService.deleteTenant(tenantId);
-            tenantProfileCache.evict(tenantId);
-            tbClusterService.onTenantDelete(tenant, null);
-            tbClusterService.broadcastEntityStateChangeEvent(tenantId, tenantId, ComponentLifecycleEvent.DELETED);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
+        Tenant tenant = checkTenantId(tenantId, Operation.DELETE);
+        tbTenantService.delete(tenant);
     }
 
     @ApiOperation(value = "Get Tenants (getTenants)", notes = "Returns a page of tenants registered in the platform. " + PAGE_DATA_PARAMETERS + SYSTEM_AUTHORITY_PARAGRAPH)

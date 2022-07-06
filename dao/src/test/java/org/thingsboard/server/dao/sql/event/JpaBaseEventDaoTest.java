@@ -18,10 +18,11 @@ package org.thingsboard.server.dao.sql.event;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.springtestdbunit.annotation.DatabaseSetup;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.After;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -31,7 +32,6 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.event.EventDao;
-import org.thingsboard.server.dao.service.AbstractServiceTest;
 
 import java.io.IOException;
 import java.util.List;
@@ -52,30 +52,33 @@ import static org.thingsboard.server.common.data.DataConstants.STATS;
 @Slf4j
 public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
 
-    public static final long HOUR_MILLISECONDS = (long) 3.6e+6;
     @Autowired
     private EventDao eventDao;
+    UUID tenantId = Uuids.timeBased();
+
+    @After
+    public void deleteEvents() {
+        List<Event> events = eventDao.find(TenantId.fromUUID(tenantId));
+        for (Event event : events) {
+            eventDao.removeById(TenantId.fromUUID(tenantId), event.getUuidId());
+        }
+    }
 
     @Test
-    @DatabaseSetup("classpath:dbunit/event.xml")
     public void findEvent() {
-        UUID tenantId = UUID.fromString("be41c7a0-31f5-11e7-9cfd-2786e6aa2046");
-        UUID entityId = UUID.fromString("be41c7a1-31f5-11e7-9cfd-2786e6aa2046");
-        String eventType = STATS;
-        String eventUid = "be41c7a3-31f5-11e7-9cfd-2786e6aa2046";
-        Event event = eventDao.findEvent(tenantId, new DeviceId(entityId), eventType, eventUid);
-        eventDao.find(AbstractServiceTest.SYSTEM_TENANT_ID).stream().forEach(System.out::println);
-        assertNotNull("Event expected to be not null", event);
-        assertEquals("be41c7a2-31f5-11e7-9cfd-2786e6aa2046", event.getId().getId().toString());
+        UUID entityId = Uuids.timeBased();
+        Event savedEvent = eventDao.save(TenantId.fromUUID(tenantId), getEvent(entityId, tenantId, entityId));
+        Event foundEvent = eventDao.findEvent(tenantId, new DeviceId(entityId), DataConstants.STATS, savedEvent.getUid());
+        assertNotNull("Event expected to be not null", foundEvent);
+        assertEquals(savedEvent.getId(), foundEvent.getId());
     }
 
     @Test
     public void findEventsByEntityIdAndPageLink() throws Exception {
-        UUID tenantId = Uuids.timeBased();
         UUID entityId1 = Uuids.timeBased();
         UUID entityId2 = Uuids.timeBased();
         long startTime = System.currentTimeMillis();
-        long endTime = createEventsTwoEntities(tenantId, entityId1, entityId2, startTime, 20);
+        long endTime = createEventsTwoEntities(tenantId, entityId1, entityId2, 20);
 
         TimePageLink pageLink1 = new TimePageLink(30);
         PageData<Event> events1 = eventDao.findEvents(tenantId, new DeviceId(entityId1), pageLink1);
@@ -105,11 +108,10 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void findEventsByEntityIdAndEventTypeAndPageLink() throws Exception {
-        UUID tenantId = Uuids.timeBased();
         UUID entityId1 = Uuids.timeBased();
         UUID entityId2 = Uuids.timeBased();
         long startTime = System.currentTimeMillis();
-        long endTime = createEventsTwoEntitiesTwoTypes(tenantId, entityId1, entityId2, startTime, 20);
+        long endTime = createEventsTwoEntitiesTwoTypes(tenantId, entityId1, entityId2, 20);
 
         TimePageLink pageLink1 = new TimePageLink(30);
         PageData<Event> events1 = eventDao.findEvents(tenantId, new DeviceId(entityId1), ALARM, pageLink1);
@@ -129,10 +131,10 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
 
         pageLink4 = pageLink4.nextPageLink();
         PageData<Event> events5 = eventDao.findEvents(tenantId, new DeviceId(entityId1), ALARM, pageLink4);
-        assertEquals(2, events5.getData().size());
+        assertEquals(1, events5.getData().size());
     }
 
-    private long createEventsTwoEntitiesTwoTypes(UUID tenantId, UUID entityId1, UUID entityId2, long startTime, int count) throws Exception {
+    private long createEventsTwoEntitiesTwoTypes(UUID tenantId, UUID entityId1, UUID entityId2, int count) throws Exception {
         for (int i = 0; i < count / 2; i++) {
             String type = i % 2 == 0 ? STATS : ALARM;
             UUID eventId1 = Uuids.timeBased();
@@ -145,7 +147,7 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
         return System.currentTimeMillis();
     }
 
-    private long createEventsTwoEntities(UUID tenantId, UUID entityId1, UUID entityId2, long startTime, int count) throws Exception {
+    private long createEventsTwoEntities(UUID tenantId, UUID entityId1, UUID entityId2, int count) throws Exception {
         for (int i = 0; i < count / 2; i++) {
             UUID eventId1 = Uuids.timeBased();
             Event event1 = getEvent(eventId1, tenantId, entityId1);

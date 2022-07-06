@@ -16,15 +16,18 @@
 package org.thingsboard.server.service.security.auth.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.WebAttributes;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.security.model.JwtToken;
+import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.service.security.auth.MfaAuthenticationToken;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
+import org.thingsboard.server.service.security.auth.mfa.config.TwoFaConfigManager;
+import org.thingsboard.server.service.security.model.JwtTokenPair;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 
@@ -33,37 +36,39 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 @Component(value = "defaultAuthenticationSuccessHandler")
+@RequiredArgsConstructor
 public class RestAwareAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
     private final ObjectMapper mapper;
     private final JwtTokenFactory tokenFactory;
+    private final TwoFaConfigManager twoFaConfigManager;
     private final RefreshTokenRepository refreshTokenRepository;
-
-    @Autowired
-    public RestAwareAuthenticationSuccessHandler(final ObjectMapper mapper, final JwtTokenFactory tokenFactory, final RefreshTokenRepository refreshTokenRepository) {
-        this.mapper = mapper;
-        this.tokenFactory = tokenFactory;
-        this.refreshTokenRepository = refreshTokenRepository;
-    }
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
         SecurityUser securityUser = (SecurityUser) authentication.getPrincipal();
+        JwtTokenPair tokenPair = new JwtTokenPair();
 
-        JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
-        JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);
-
-        Map<String, String> tokenMap = new HashMap<String, String>();
-        tokenMap.put("token", accessToken.getToken());
-        tokenMap.put("refreshToken", refreshToken.getToken());
+        if (authentication instanceof MfaAuthenticationToken) {
+            int preVerificationTokenLifetime = twoFaConfigManager.getPlatformTwoFaSettings(securityUser.getTenantId(), true)
+                    .flatMap(settings -> Optional.ofNullable(settings.getTotalAllowedTimeForVerification())
+                            .filter(time -> time > 0))
+                    .orElse((int) TimeUnit.MINUTES.toSeconds(30));
+            tokenPair.setToken(tokenFactory.createPreVerificationToken(securityUser, preVerificationTokenLifetime).getToken());
+            tokenPair.setRefreshToken(null);
+            tokenPair.setScope(Authority.PRE_VERIFICATION_TOKEN);
+        } else {
+            tokenPair.setToken(tokenFactory.createAccessJwtToken(securityUser).getToken());
+            tokenPair.setRefreshToken(refreshTokenRepository.requestRefreshToken(securityUser).getToken());
+        }
 
         response.setStatus(HttpStatus.OK.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        mapper.writeValue(response.getWriter(), tokenMap);
+        mapper.writeValue(response.getWriter(), tokenPair);
 
         clearAuthenticationAttributes(request);
     }
