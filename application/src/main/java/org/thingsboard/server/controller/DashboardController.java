@@ -261,7 +261,7 @@ public class DashboardController extends BaseController {
         checkParameter(DASHBOARD_ID, strDashboardId);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
         Dashboard dashboard = checkDashboardId(dashboardId, Operation.ASSIGN_TO_CUSTOMER);
-        Set<CustomerId> customerIds = customerIdFromStr(strCustomerIds, dashboard);
+        Set<CustomerId> customerIds = customerIdFromStr(strCustomerIds);
         return tbDashboardService.updateDashboardCustomers(dashboard, customerIds, getCurrentUser());
     }
 
@@ -281,7 +281,7 @@ public class DashboardController extends BaseController {
         checkParameter(DASHBOARD_ID, strDashboardId);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
         Dashboard dashboard = checkDashboardId(dashboardId, Operation.ASSIGN_TO_CUSTOMER);
-        Set<CustomerId> customerIds = customerIdFromStr(strCustomerIds, dashboard);
+        Set<CustomerId> customerIds = customerIdFromStr(strCustomerIds);
         return tbDashboardService.addDashboardCustomers(dashboard, customerIds, getCurrentUser());
     }
 
@@ -301,7 +301,7 @@ public class DashboardController extends BaseController {
         checkParameter(DASHBOARD_ID, strDashboardId);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
         Dashboard dashboard = checkDashboardId(dashboardId, Operation.UNASSIGN_FROM_CUSTOMER);
-        Set<CustomerId> customerIds = customerIdFromStr(strCustomerIds, dashboard);
+        Set<CustomerId> customerIds = customerIdFromStr(strCustomerIds);
         return tbDashboardService.removeDashboardCustomers(dashboard, customerIds, getCurrentUser());
     }
 
@@ -704,14 +704,11 @@ public class DashboardController extends BaseController {
         }
     }
 
-    private Set<CustomerId> customerIdFromStr(String[] strCustomerIds, Dashboard dashboard) {
+    private Set<CustomerId> customerIdFromStr(String[] strCustomerIds) {
         Set<CustomerId> customerIds = new HashSet<>();
         if (strCustomerIds != null) {
             for (String strCustomerId : strCustomerIds) {
-                CustomerId customerId = new CustomerId(UUID.fromString(strCustomerId));
-                if (dashboard.isAssignedToCustomer(customerId)) {
-                    customerIds.add(customerId);
-                }
+                customerIds.add(new CustomerId(UUID.fromString(strCustomerId)));
             }
         }
         return customerIds;
