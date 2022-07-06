@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.cluster.routing;
+package org.thingsboard.server.queue.discovery;
 
+import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Before;
@@ -29,17 +31,16 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.queue.discovery.HashPartitionService;
-import org.thingsboard.server.queue.discovery.QueueRoutingInfoService;
-import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
-import org.thingsboard.server.queue.discovery.TenantRoutingInfoService;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.mockito.Mockito.mock;
@@ -111,15 +112,56 @@ public class HashPartitionServiceTest {
             map.put(partition, map.getOrDefault(partition, 0) + 1);
         }
 
-        List<Map.Entry<Integer, Integer>> data = map.entrySet().stream().sorted(Comparator.comparingInt(Map.Entry::getValue)).collect(Collectors.toList());
+        checkDispersion(start, map, ITERATIONS, 1.0);
+    }
+
+    @SneakyThrows
+    @Test
+    public void testDispersionOnResolveByPartitionIdx() {
+        int serverCount = 5;
+        int tenantCount = 1000;
+        int queueCount = 3;
+        int partitionCount = 3;
+
+        List<TransportProtos.ServiceInfo> services = new ArrayList<>();
+
+        for (int i = 0; i < serverCount; i++) {
+            services.add(TransportProtos.ServiceInfo.newBuilder().setServiceId("RE-" + i).build());
+        }
+
+        long start = System.currentTimeMillis();
+        Map<String, Integer> map = new HashMap<>();
+        services.forEach(s -> map.put(s.getServiceId(), 0));
+
+        Random random = new Random();
+        long ts = new SimpleDateFormat("dd-MM-yyyy").parse("06-12-2016").getTime() - TimeUnit.DAYS.toMillis(tenantCount);
+        for (int tenantIndex = 0; tenantIndex < tenantCount; tenantIndex++) {
+            TenantId tenantId = new TenantId(UUIDs.startOf(ts));
+            ts += TimeUnit.DAYS.toMillis(1) + random.nextInt(1000);
+            for (int queueIndex = 0; queueIndex < queueCount; queueIndex++) {
+                QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, "queue" + queueIndex, tenantId);
+                for (int partition = 0; partition < partitionCount; partition++) {
+                    TransportProtos.ServiceInfo serviceInfo = clusterRoutingService.resolveByPartitionIdx(services, queueKey, partition);
+                    String serviceId = serviceInfo.getServiceId();
+                    map.put(serviceId, map.get(serviceId) + 1);
+                }
+            }
+        }
+
+        checkDispersion(start, map, tenantCount * queueCount * partitionCount, 10.0);
+    }
+
+    private <T> void checkDispersion(long start, Map<T, Integer> map, int iterations, double maxDiffPercent) {
+        List<Map.Entry<T, Integer>> data = map.entrySet().stream().sorted(Comparator.comparingInt(Map.Entry::getValue)).collect(Collectors.toList());
         long end = System.currentTimeMillis();
-        double diff = (data.get(data.size() - 1).getValue() - data.get(0).getValue());
-        double diffPercent = (diff / ITERATIONS) * 100.0;
+        double ideal = ((double) iterations) / map.size();
+        double diff = Math.max(data.get(data.size() - 1).getValue() - ideal, ideal - data.get(0).getValue());
+        double diffPercent = (diff / ideal) * 100.0;
         System.out.println("Time: " + (end - start) + " Diff: " + diff + "(" + String.format("%f", diffPercent) + "%)");
-        Assert.assertTrue(diffPercent < 0.5);
-        for (Map.Entry<Integer, Integer> entry : data) {
+        for (Map.Entry<T, Integer> entry : data) {
             System.out.println(entry.getKey() + ": " + entry.getValue());
         }
+        Assert.assertTrue(diffPercent < maxDiffPercent);
     }
 
 }
