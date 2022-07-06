@@ -246,8 +246,14 @@ function parseTopicProperties() {
     });
 }
 
-process.on('exit', () => {
-    exit(0);
+process.on('exit', async () => {
+    logger.info('exit event received');
+    await exit(0);
+});
+
+process.on('SIGTERM', async () => {
+    logger.info('SIGTERM signal received');
+    await exit(0);
 });
 
 async function exit(status) {
@@ -255,7 +261,9 @@ async function exit(status) {
 
     if (kafkaAdmin) {
         logger.info('Stopping Kafka Admin...');
-        await kafkaAdmin.disconnect();
+        let _kafkaAdmin = kafkaAdmin;
+        kafkaAdmin = null;
+        await _kafkaAdmin.disconnect();
         logger.info('Kafka Admin stopped.');
     }
 
