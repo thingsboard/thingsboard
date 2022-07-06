@@ -21,6 +21,7 @@ import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { DefaultTenantProfileConfiguration, TenantProfileConfiguration } from '@shared/models/tenant.model';
 import { isDefinedAndNotNull } from '@core/utils';
+import { RateLimitsType } from '@shared/models/rate-limits.models';
 
 @Component({
   selector: 'tb-default-tenant-profile-configuration',
@@ -48,6 +49,8 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
 
   @Input()
   disabled: boolean;
+
+  rateLimitsType = RateLimitsType;
 
   private propagateChange = (v: any) => { };
 

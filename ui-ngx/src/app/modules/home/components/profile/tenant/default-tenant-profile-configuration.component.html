@@ -418,38 +418,24 @@
   </fieldset>
 
   <fieldset class="fields-group">
-    <legend class="group-title">Rate limits</legend>
+    <legend class="group-title">
+      {{ 'tenant-profile.rate-limits.rate-limits' | translate }}
+    </legend>
     <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
-      <mat-form-field fxFlex class="mat-block">
-        <mat-label translate>tenant-profile.transport-tenant-msg-rate-limit</mat-label>
-        <input matInput formControlName="transportTenantMsgRateLimit">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('transportTenantMsgRateLimit').hasError('pattern')">
-          {{ 'tenant-profile.incorrect-pattern-for-rate-limits' | translate}}
-        </mat-error>
-      </mat-form-field>
-      <mat-form-field fxFlex class="mat-block">
-        <mat-label translate>tenant-profile.transport-device-msg-rate-limit</mat-label>
-        <input matInput formControlName="transportDeviceMsgRateLimit">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('transportDeviceMsgRateLimit').hasError('pattern')">
-          {{ 'tenant-profile.incorrect-pattern-for-rate-limits' | translate}}
-        </mat-error>
-      </mat-form-field>
+      <tb-rate-limits fxFlex="50" formControlName="transportTenantMsgRateLimit"
+                      [type]="rateLimitsType.TENANT_MESSAGES">
+      </tb-rate-limits>
+      <tb-rate-limits fxFlex="50" formControlName="transportDeviceMsgRateLimit"
+                      [type]="rateLimitsType.DEVICE_MESSAGES">
+      </tb-rate-limits>
     </div>
     <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
-      <mat-form-field fxFlex class="mat-block">
-        <mat-label translate>tenant-profile.transport-tenant-telemetry-msg-rate-limit</mat-label>
-        <input matInput formControlName="transportTenantTelemetryMsgRateLimit">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('transportTenantTelemetryMsgRateLimit').hasError('pattern')">
-          {{ 'tenant-profile.incorrect-pattern-for-rate-limits' | translate}}
-        </mat-error>
-      </mat-form-field>
-      <mat-form-field fxFlex class="mat-block">
-        <mat-label translate>tenant-profile.transport-device-telemetry-msg-rate-limit</mat-label>
-        <input matInput formControlName="transportDeviceTelemetryMsgRateLimit">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('transportTenantTelemetryMsgRateLimit').hasError('pattern')">
-          {{ 'tenant-profile.incorrect-pattern-for-rate-limits' | translate}}
-        </mat-error>
-      </mat-form-field>
+      <tb-rate-limits fxFlex="50" formControlName="transportTenantTelemetryMsgRateLimit"
+                      [type]="rateLimitsType.TENANT_TELEMETRY_MESSAGES">
+      </tb-rate-limits>
+      <tb-rate-limits fxFlex="50" formControlName="transportDeviceTelemetryMsgRateLimit"
+                      [type]="rateLimitsType.DEVICE_TELEMETRY_MESSAGES">
+      </tb-rate-limits>
     </div>
     <mat-expansion-panel class="configuration-panel">
       <mat-expansion-panel-header>
@@ -459,40 +445,28 @@
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
         <div fxFlex fxLayout="row"  fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
-          <mat-form-field fxFlex class="mat-block">
-            <mat-label translate>tenant-profile.transport-tenant-telemetry-data-points-rate-limit</mat-label>
-            <input matInput formControlName="transportTenantTelemetryDataPointsRateLimit">
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('transportTenantTelemetryDataPointsRateLimit').hasError('pattern')">
-              {{ 'tenant-profile.incorrect-pattern-for-rate-limits' | translate}}
-            </mat-error>
-          </mat-form-field>
-          <mat-form-field fxFlex class="mat-block">
-            <mat-label translate>tenant-profile.transport-device-telemetry-data-points-rate-limit</mat-label>
-            <input matInput formControlName="transportDeviceTelemetryDataPointsRateLimit">
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('transportDeviceTelemetryDataPointsRateLimit').hasError('pattern')">
-              {{ 'tenant-profile.incorrect-pattern-for-rate-limits' | translate}}
-            </mat-error>
-          </mat-form-field>
+          <tb-rate-limits fxFlex="50" formControlName="transportTenantTelemetryDataPointsRateLimit"
+                          [type]="rateLimitsType.TENANT_TELEMETRY_DATA_POINTS">
+          </tb-rate-limits>
+          <tb-rate-limits fxFlex="50" formControlName="transportDeviceTelemetryDataPointsRateLimit"
+                          [type]="rateLimitsType.DEVICE_TELEMETRY_DATA_POINTS">
+          </tb-rate-limits>
         </div>
         <div fxFlex fxLayout="row"  fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
-          <mat-form-field fxFlex class="mat-block">
-            <mat-label translate>tenant-profile.tenant-rest-limits</mat-label>
-            <input matInput
-                   formControlName="tenantServerRestLimitsConfiguration"
-                   type="text">
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('tenantServerRestLimitsConfiguration').hasError('pattern')">
-              {{ 'tenant-profile.incorrect-pattern-for-rate-limits' | translate}}
-            </mat-error>
-          </mat-form-field>
-          <mat-form-field fxFlex class="mat-block">
-            <mat-label translate>tenant-profile.customer-rest-limits</mat-label>
-            <input matInput
-                   formControlName="customerServerRestLimitsConfiguration"
-                   type="text">
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('customerServerRestLimitsConfiguration').hasError('pattern')">
-              {{ 'tenant-profile.incorrect-pattern-for-rate-limits' | translate}}
-            </mat-error>
-          </mat-form-field>
+          <tb-rate-limits fxFlex="50" formControlName="tenantServerRestLimitsConfiguration"
+                          [type]="rateLimitsType.TENANT_SERVER_REST_LIMITS_CONFIGURATION">
+          </tb-rate-limits>
+          <tb-rate-limits fxFlex="50" formControlName="customerServerRestLimitsConfiguration"
+                          [type]="rateLimitsType.CUSTOMER_SERVER_REST_LIMITS_CONFIGURATION">
+          </tb-rate-limits>
+        </div>
+        <div fxFlex fxLayout="row"  fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+          <tb-rate-limits fxFlex="50" formControlName="wsUpdatesPerSessionRateLimit"
+                          [type]="rateLimitsType.WS_UPDATE_PER_SESSION_RATE_LIMIT">
+          </tb-rate-limits>
+          <tb-rate-limits fxFlex="50" formControlName="cassandraQueryTenantRateLimitsConfiguration"
+                          [type]="rateLimitsType.CASSANDRA_QUERY_TENANT_RATE_LIMITS_CONFIGURATION">
+          </tb-rate-limits>
         </div>
         <div fxFlex fxLayout="row"  fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
           <mat-form-field fxFlex class="mat-block">
@@ -503,22 +477,12 @@
             <mat-label translate>tenant-profile.tenant-entity-import-rate-limit</mat-label>
             <input matInput formControlName="tenantEntityImportRateLimit">
           </mat-form-field>
-        </div>
-        <div fxFlex fxLayout="row"  fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
-          <mat-form-field fxFlex class="mat-block">
-            <mat-label translate>tenant-profile.ws-limit-updates-per-session</mat-label>
-            <input matInput type="text" formControlName="wsUpdatesPerSessionRateLimit">
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('wsUpdatesPerSessionRateLimit').hasError('pattern')">
-              {{ 'tenant-profile.incorrect-pattern-for-rate-limits' | translate}}
-            </mat-error>
-          </mat-form-field>
-          <mat-form-field fxFlex class="mat-block">
-            <mat-label translate>tenant-profile.cassandra-tenant-limits-configuration</mat-label>
-            <input matInput type="text" formControlName="cassandraQueryTenantRateLimitsConfiguration">
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('cassandraQueryTenantRateLimitsConfiguration').hasError('pattern')">
-              {{ 'tenant-profile.incorrect-pattern-for-rate-limits' | translate}}
-            </mat-error>
-          </mat-form-field>
+          <!--          <tb-rate-limits fxFlex="50" formControlName="tenantEntityExportRateLimit"
+                                    [type]="rateLimitsType.TENANT_ENTITY_EXPORT_RATE_LIMIT">
+                    </tb-rate-limits>
+                    <tb-rate-limits fxFlex="50" formControlName="tenantEntityImportRateLimit"
+                                    [type]="rateLimitsType.TENANT_ENTITY_IMPORT_RATE_LIMIT">
+                    </tb-rate-limits>-->
         </div>
       </ng-template>
     </mat-expansion-panel>
