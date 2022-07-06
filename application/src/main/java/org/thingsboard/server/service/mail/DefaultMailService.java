@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.NestedRuntimeException;
@@ -34,6 +35,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.TbEmail;
+import org.thingsboard.rule.engine.mail.TbSendEmailNodeConfiguration;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.ApiFeature;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
@@ -49,6 +51,7 @@ import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import java.io.ByteArrayInputStream;
@@ -56,6 +59,8 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -83,6 +88,11 @@ public class DefaultMailService implements MailService {
     @Autowired
     private MailExecutorService mailExecutorService;
 
+    @Value("${actors.rule.mail_timeout_thread_pool_size}")
+    private int timeoutExecutorPoolSize;
+
+    private ExecutorService timeoutExecutorService;
+
     private JavaMailSenderImpl mailSender;
 
     private String mailFrom;
@@ -99,6 +109,14 @@ public class DefaultMailService implements MailService {
     @PostConstruct
     private void init() {
         updateMailConfiguration();
+        timeoutExecutorService = Executors.newFixedThreadPool(timeoutExecutorPoolSize);
+    }
+
+    @PreDestroy
+    private void destroy() {
+        if (timeoutExecutorService != null) {
+            timeoutExecutorService.shutdown();
+        }
     }
 
     @Override
@@ -262,15 +280,15 @@ public class DefaultMailService implements MailService {
 
     @Override
     public void send(TenantId tenantId, CustomerId customerId, TbEmail tbEmail) throws ThingsboardException {
-        sendMail(tenantId, customerId, tbEmail, this.mailSender);
+        sendMail(tenantId, customerId, tbEmail, this.mailSender, timeout);
     }
 
     @Override
-    public void send(TenantId tenantId, CustomerId customerId, TbEmail tbEmail, JavaMailSender javaMailSender) throws ThingsboardException {
-        sendMail(tenantId, customerId, tbEmail, javaMailSender);
+    public void send(TenantId tenantId, CustomerId customerId, TbEmail tbEmail, JavaMailSender javaMailSender, long timeout) throws ThingsboardException {
+        sendMail(tenantId, customerId, tbEmail, javaMailSender, timeout);
     }
 
-    private void sendMail(TenantId tenantId, CustomerId customerId, TbEmail tbEmail, JavaMailSender javaMailSender) throws ThingsboardException {
+    private void sendMail(TenantId tenantId, CustomerId customerId, TbEmail tbEmail, JavaMailSender javaMailSender, long timeout) throws ThingsboardException {
         if (apiUsageStateService.getApiUsageState(tenantId).isEmailSendEnabled()) {
             try {
                 MimeMessage mailMsg = javaMailSender.createMimeMessage();
@@ -474,10 +492,11 @@ public class DefaultMailService implements MailService {
     }
 
     private void sendMailWithTimeout(JavaMailSender mailSender, MimeMessage msg, long timeout) {
-        var submittedMail = Futures.submit(() -> mailSender.send(msg), mailExecutorService);
+        var submittedMail = timeoutExecutorService.submit(() -> mailSender.send(msg));
         try {
             submittedMail.get(timeout, TimeUnit.MILLISECONDS);
-        } catch (TimeoutException ignored) {
+        } catch (TimeoutException e) {
+            log.debug("Error during mail submission", e);
             throw new RuntimeException("Timeout!");
         } catch (Exception e) {
             throw new RuntimeException(ExceptionUtils.getRootCause(e));
