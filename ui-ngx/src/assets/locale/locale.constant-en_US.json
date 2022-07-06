@@ -4371,6 +4371,7 @@
             "default-map-zoom-level": "Default map zoom level (0 - 20)",
             "default-map-center-position": "Default map center position (0,0)",
             "disable-scroll-zooming": "Disable scroll zooming",
+            "disable-double-click-zooming": "Disable double click zooming",
             "disable-zoom-control-buttons": "Disable zoom control buttons",
             "fit-map-bounds": "Fit map bounds to cover all markers",
             "use-default-map-center-position": "Use default map center position",
