@@ -65,15 +65,15 @@ async function pushMessageToSendLater(message) {
 function sendLoopWithLinger() {
     if (sendLoopInstance) {
         clearTimeout(sendLoopInstance);
-    } else {
-        logger.debug("Starting new send loop with linger [%s]", linger)
+    // } else {
+    //     logger.debug("Starting new send loop with linger [%s]", linger)
     }
     sendLoopInstance = setTimeout(sendMessagesAsBatch, linger);
 }
 
 async function sendMessagesAsBatch(isImmediately) {
     if (sendLoopInstance) {
-        logger.debug("sendMessagesAsBatch: Clear sendLoop scheduler. Starting new send loop with linger [%s]", linger);
+        // logger.debug("sendMessagesAsBatch: Clear sendLoop scheduler. Starting new send loop with linger [%s]", linger);
         clearTimeout(sendLoopInstance);
     }
     sendLoopInstance = null;
