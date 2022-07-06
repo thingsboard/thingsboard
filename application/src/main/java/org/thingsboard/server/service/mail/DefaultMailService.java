@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.mail;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.util.concurrent.Futures;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +34,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.TbEmail;
-import org.thingsboard.rule.engine.mail.TbSendEmailNodeConfiguration;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.ApiFeature;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
@@ -52,7 +50,6 @@ import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import java.io.ByteArrayInputStream;
 import java.util.HashMap;
