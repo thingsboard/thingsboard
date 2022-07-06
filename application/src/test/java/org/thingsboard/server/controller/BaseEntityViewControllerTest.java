@@ -164,7 +164,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
         doGet("/api/tenant/entityViews?entityViewName=" + name)
                 .andExpect(status().isNotFound())
-                .andExpect(statusReason(containsString("Requested item wasn't found!")));
+                .andExpect(statusReason(containsString(msgErrorNotFound)));
     }
 
     @Test

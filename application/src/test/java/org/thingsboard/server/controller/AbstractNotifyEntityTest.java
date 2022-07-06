@@ -63,6 +63,7 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
 
     protected final String msgErrorPermission = "You don't have permission to perform this operation!";
     protected final String msgErrorShouldBeSpecified = "should be specified";
+    protected final String msgErrorNotFound = "Requested item wasn't found!";
 
 
     protected void testNotifyEntityAllOneTime(HasName entity, EntityId entityId, EntityId originatorId,
