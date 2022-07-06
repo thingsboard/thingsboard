@@ -34,7 +34,11 @@ COPY src/server.js ./
 RUN chmod a+x /tmp/*.sh \
     && mv /tmp/start-js-executor.sh /usr/bin \
     && chown -R node:node ${pkg.installFolder} \
-    && yarn install --production && yarn cache clean --all
+    && yarn install --production && yarn cache clean --all \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends procps \
+    && apt-get purge -y --auto-remove \
+    && rm -rf /var/lib/apt/lists/*
 
 USER node
 
