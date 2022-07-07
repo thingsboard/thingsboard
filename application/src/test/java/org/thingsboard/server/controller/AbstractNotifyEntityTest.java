@@ -381,8 +381,8 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
     }
 
     protected void testBroadcastEntityStateChangeEventTime(EntityId entityId, TenantId tenantId, int cntTime) {
-        ArgumentMatcher<TenantId> matcherTenantIdId = cntTime == 1 ? argument -> argument.equals(tenantId) :
-                argument -> argument.getClass().equals(TenantId.class);
+        ArgumentMatcher<TenantId> matcherTenantIdId = cntTime > 1 || tenantId == null ? argument -> argument.getClass().equals(TenantId.class) :
+                argument -> argument.equals(tenantId) ;
         Mockito.verify(tbClusterService, times(cntTime)).broadcastEntityStateChangeEvent(Mockito.argThat(matcherTenantIdId),
                 Mockito.any(entityId.getClass()), Mockito.any(ComponentLifecycleEvent.class));
     }
