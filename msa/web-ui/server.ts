@@ -123,7 +123,7 @@ let connections: Socket[] = [];
 })();
 
 [`SIGINT`, `SIGUSR1`, `SIGUSR2`, `uncaughtException`, `SIGTERM`].forEach((eventType) => {
-    process.on(eventType, async () => {
+    process.once(eventType, async () => {
         logger.info(`${eventType} signal received`);
         await exit(0);
     });
