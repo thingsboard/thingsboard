@@ -288,7 +288,7 @@
   <fieldset *ngIf="chartType === 'graph' || chartType === 'bar'" class="fields-group fields-group-slider">
     <legend class="group-title" translate>widgets.chart.custom-legend-settings</legend>
     <mat-expansion-panel class="tb-settings" [expanded]="flotSettingsFormGroup.get('customLegendEnabled').value">
-      <mat-expansion-panel-header fxLayout="row" style="height: 100%;">
+      <mat-expansion-panel-header fxLayout="row" style="height: 100%; min-height: 48px;">
         <mat-panel-title>
           <mat-slide-toggle formControlName="customLegendEnabled" (click)="$event.stopPropagation()"
                             fxLayoutAlign="center" style="height: 100%;">
