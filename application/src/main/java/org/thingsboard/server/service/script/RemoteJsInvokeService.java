@@ -192,22 +192,6 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
         Futures.addCallback(future, new FutureCallback<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>>() {
             @Override
             public void onSuccess(@Nullable TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse> result) {
-                if (result != null) {
-                    JsInvokeProtos.JsInvokeResponse invokeResponse = result.getValue().getInvokeResponse();
-                    if (invokeResponse.getSuccess()) {
-                        queueInvokeMsgs.incrementAndGet();
-                    } else {
-                        JsInvokeProtos.JsInvokeErrorCode errorCode = invokeResponse.getErrorCode();
-                        final RuntimeException e = new RuntimeException(invokeResponse.getErrorDetails());
-                        if (JsInvokeProtos.JsInvokeErrorCode.TIMEOUT_ERROR.equals(errorCode)) {
-                            onScriptExecutionError(scriptId, e, scriptBody);
-                            queueTimeoutMsgs.incrementAndGet();
-                        } else if (JsInvokeProtos.JsInvokeErrorCode.COMPILATION_ERROR.equals(errorCode)) {
-                            onScriptExecutionError(scriptId, e, scriptBody);
-                        }
-                        queueFailedMsgs.incrementAndGet();
-                    }
-                }
             }
 
             @Override
@@ -223,10 +207,18 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
             log.trace("doInvokeFunction js-response took {}ms for uuid {}", stopWatch.getTotalTimeMillis(), response.getKey());
             JsInvokeProtos.JsInvokeResponse invokeResult = response.getValue().getInvokeResponse();
             if (invokeResult.getSuccess()) {
+                queueInvokeMsgs.incrementAndGet();
                 return invokeResult.getResult();
             } else {
                 final RuntimeException e = new RuntimeException(invokeResult.getErrorDetails());
-                onScriptExecutionError(scriptId, e, scriptBody);
+                JsInvokeProtos.JsInvokeErrorCode errorCode = invokeResult.getErrorCode();
+                if (JsInvokeProtos.JsInvokeErrorCode.TIMEOUT_ERROR.equals(errorCode)) {
+                    onScriptExecutionError(scriptId, e, scriptBody);
+                    queueTimeoutMsgs.incrementAndGet();
+                } else if (JsInvokeProtos.JsInvokeErrorCode.COMPILATION_ERROR.equals(errorCode)) {
+                    onScriptExecutionError(scriptId, e, scriptBody);
+                }
+                queueFailedMsgs.incrementAndGet();
                 log.debug("[{}] Failed to compile script due to [{}]: {}", scriptId, invokeResult.getErrorCode().name(), invokeResult.getErrorDetails());
                 throw e;
             }
