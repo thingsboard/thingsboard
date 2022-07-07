@@ -543,6 +543,8 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             ctx.addUuidParameter("permissions_customer_id", ctx.getCustomerId().getId());
             if (ctx.getEntityType() == EntityType.CUSTOMER) {
                 return "e.tenant_id=:permissions_tenant_id and e.id=:permissions_customer_id";
+            } else if (ctx.getEntityType() == EntityType.API_USAGE_STATE) {
+                return "e.tenant_id=:permissions_tenant_id and e.entity_id=:permissions_customer_id";
             } else {
                 return "e.tenant_id=:permissions_tenant_id and e.customer_id=:permissions_customer_id";
             }
