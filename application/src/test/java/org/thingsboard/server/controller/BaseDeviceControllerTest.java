@@ -815,6 +815,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
                 ActionType.ADDED, ActionType.ASSIGNED_TO_CUSTOMER, cntEntity, cntEntity, cntEntity * 2);
         Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
         testNotificationUpdateGatewayNever();
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
 
         List<Device> loadedDevices = new ArrayList<>(cntEntity);
         PageLink pageLink = new PageLink(23);
@@ -828,8 +829,6 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         } while (pageData.hasNext());
 
         assertThat(devices).containsExactlyInAnyOrderElementsOf(loadedDevices);
-
-        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
 
         deleteEntitiesAsync("/api/customer/device/", loadedDevices, executor).get(TIMEOUT, TimeUnit.SECONDS);
 
