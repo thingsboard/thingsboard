@@ -288,19 +288,19 @@
   <fieldset *ngIf="chartType === 'graph' || chartType === 'bar'" class="fields-group fields-group-slider">
     <legend class="group-title" translate>widgets.chart.custom-legend-settings</legend>
     <mat-expansion-panel class="tb-settings" [expanded]="flotSettingsFormGroup.get('customLegendEnabled').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header fxLayout="row" style="height: 100%;">
         <mat-panel-title>
           <mat-slide-toggle formControlName="customLegendEnabled" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+                            fxLayoutAlign="center" style="height: 100%;">
             {{ 'widgets.chart.enable-custom-legend' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
-        <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+        <mat-panel-description style="white-space: nowrap;" fxLayoutAlign="end center" fxHide.xs translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <fieldset [fxShow]="flotSettingsFormGroup.get('customLegendEnabled').value" class="fields-group">
+        <fieldset class="fields-group">
           <legend class="group-title" translate>widgets.chart.label-keys-list</legend>
           <div fxLayout="column">
             <div class="tb-control-list tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
@@ -321,6 +321,7 @@
             <div style="padding-top: 16px;">
               <button mat-raised-button color="primary"
                       type="button"
+                      [disabled]="!flotSettingsFormGroup.get('customLegendEnabled').value"
                       (click)="addLabelDataKey()">
                 <span translate>widgets.chart.add-label-key</span>
               </button>
