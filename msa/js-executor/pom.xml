@@ -89,6 +89,7 @@
                         <goals>
                             <goal>yarn</goal>
                         </goals>
+                        <phase>compile</phase>
                         <configuration>
                             <arguments>run pkg</arguments>
                         </configuration>
@@ -104,38 +105,6 @@
                 <artifactId>maven-resources-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>copy-src-api</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}/src/api</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>api</directory>
-                                    <filtering>false</filtering>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-src-queue</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}/src/queue</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>queue</directory>
-                                    <filtering>false</filtering>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                    <execution>
                         <id>copy-src-root</id>
                         <phase>process-resources</phase>
                         <goals>
@@ -147,7 +116,6 @@
                                 <resource>
                                     <directory>${basedir}</directory>
                                     <includes>
-                                        <include>server.js</include>
                                         <include>package.json</include>
                                         <include>yarn.lock</include>
                                     </includes>
