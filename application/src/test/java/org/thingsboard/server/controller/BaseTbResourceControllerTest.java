@@ -188,16 +188,18 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
         TbResource savedResource = save(resource);
 
         Mockito.reset(tbClusterService, auditLogService);
-
-        doDelete("/api/resource/" + savedResource.getId().getId().toString())
+        String resourceIdStr = savedResource.getId().getId().toString();
+        doDelete("/api/resource/" + resourceIdStr)
                 .andExpect(status().isOk());
+
 
         testNotifyEntityOneTimeMsgToEdgeServiceNever(savedResource, savedResource.getId(), savedResource.getId(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                                ActionType.DELETED, savedResource.getId().getId().toString());
+                                ActionType.DELETED, resourceIdStr);
 
         doGet("/api/resource/" + savedResource.getId().getId().toString())
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(containsString(msgErrorNoFound("Resource", resourceIdStr))));
     }
 
     @Test
