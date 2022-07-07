@@ -211,15 +211,14 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 return invokeResult.getResult();
             } else {
                 final RuntimeException e = new RuntimeException(invokeResult.getErrorDetails());
-                JsInvokeProtos.JsInvokeErrorCode errorCode = invokeResult.getErrorCode();
-                if (JsInvokeProtos.JsInvokeErrorCode.TIMEOUT_ERROR.equals(errorCode)) {
+                if (JsInvokeProtos.JsInvokeErrorCode.TIMEOUT_ERROR.equals(invokeResult.getErrorCode())) {
                     onScriptExecutionError(scriptId, e, scriptBody);
                     queueTimeoutMsgs.incrementAndGet();
-                } else if (JsInvokeProtos.JsInvokeErrorCode.COMPILATION_ERROR.equals(errorCode)) {
+                } else if (JsInvokeProtos.JsInvokeErrorCode.COMPILATION_ERROR.equals(invokeResult.getErrorCode())) {
                     onScriptExecutionError(scriptId, e, scriptBody);
                 }
                 queueFailedMsgs.incrementAndGet();
-                log.debug("[{}] Failed to compile script due to [{}]: {}", scriptId, invokeResult.getErrorCode().name(), invokeResult.getErrorDetails());
+                log.debug("[{}] Failed to invoke function due to [{}]: {}", scriptId, invokeResult.getErrorCode().name(), invokeResult.getErrorDetails());
                 throw e;
             }
         }, callbackExecutor);
