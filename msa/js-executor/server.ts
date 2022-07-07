@@ -71,7 +71,8 @@ let httpServer: HttpServer;
 })();
 
 process.on('SIGTERM', () => {
-    process.exit();
+    logger.info('SIGTERM signal received');
+    process.exit(0);
 });
 
 process.on('exit', async () => {
@@ -81,5 +82,5 @@ process.on('exit', async () => {
     if (queues) {
         queues.exit(0);
     }
+    logger.info('JavaScript Executor Microservice has been stopped.');
 });
-

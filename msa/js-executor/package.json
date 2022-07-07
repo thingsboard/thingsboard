@@ -8,8 +8,8 @@
   "scripts": {
     "pkg": "tsc && pkg -t node16-linux-x64,node16-win-x64 --out-path ./target ./target/src && node install.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon --watch '.' --ext 'ts' --exec 'WEB_FOLDER=./target/web ts-node server.ts'",
-    "start-prod": "nodemon --watch '.' --ext 'ts' --exec 'WEB_FOLDER=./target/web NODE_ENV=production ts-node server.ts'",
+    "start": "nodemon --watch '.' --ext 'ts' --exec 'ts-node server.ts'",
+    "start-prod": "nodemon --watch '.' --ext 'ts' --exec 'NODE_ENV=production ts-node server.ts'",
     "build": "tsc"
   },
   "dependencies": {
