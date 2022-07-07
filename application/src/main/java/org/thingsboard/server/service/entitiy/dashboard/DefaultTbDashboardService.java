@@ -183,11 +183,17 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
         TenantId tenantId = dashboard.getTenantId();
         DashboardId dashboardId = dashboard.getId();
         try {
-            if (customerIds.isEmpty()) {
+            Set<CustomerId> addedCustomerIds = new HashSet<>();
+            for (CustomerId customerId : customerIds) {
+                if (!dashboard.isAssignedToCustomer(customerId)) {
+                    addedCustomerIds.add(customerId);
+                }
+            }
+            if (addedCustomerIds.isEmpty()) {
                 return dashboard;
             } else {
                 Dashboard savedDashboard = null;
-                for (CustomerId customerId : customerIds) {
+                for (CustomerId customerId : addedCustomerIds) {
                     savedDashboard = checkNotNull(dashboardService.assignDashboardToCustomer(tenantId, dashboardId, customerId));
                     ShortCustomerInfo customerInfo = savedDashboard.getAssignedCustomerInfo(customerId);
                     notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, dashboardId, customerId, savedDashboard,
@@ -207,11 +213,17 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
         TenantId tenantId = dashboard.getTenantId();
         DashboardId dashboardId = dashboard.getId();
         try {
-            if (customerIds.isEmpty()) {
+            Set<CustomerId> removedCustomerIds = new HashSet<>();
+            for (CustomerId customerId : customerIds) {
+                if (dashboard.isAssignedToCustomer(customerId)) {
+                    removedCustomerIds.add(customerId);
+                }
+            }
+            if (removedCustomerIds.isEmpty()) {
                 return dashboard;
             } else {
                 Dashboard savedDashboard = null;
-                for (CustomerId customerId : customerIds) {
+                for (CustomerId customerId : removedCustomerIds) {
                     ShortCustomerInfo customerInfo = dashboard.getAssignedCustomerInfo(customerId);
                     savedDashboard = checkNotNull(dashboardService.unassignDashboardFromCustomer(tenantId, dashboardId, customerId));
                     notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, dashboardId, customerId, savedDashboard,

@@ -91,7 +91,7 @@
               "node_modules/tinycolor2/dist/tinycolor-min.js",
               "node_modules/split.js/dist/split.min.js",
               "node_modules/systemjs/dist/system.min.js",
-              "node_modules/marked/lib/marked.js",
+              "node_modules/marked/lib/marked.umd.js",
               "node_modules/prismjs/prism.js",
               "node_modules/prismjs/components/prism-css.min.js",
               "node_modules/prismjs/components/prism-bash.min.js",

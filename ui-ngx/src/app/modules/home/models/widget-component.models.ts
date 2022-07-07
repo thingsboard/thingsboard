@@ -71,6 +71,7 @@ import { EntityRelationService } from '@core/http/entity-relation.service';
 import { EntityService } from '@core/http/entity.service';
 import { DialogService } from '@core/services/dialog.service';
 import { CustomDialogService } from '@home/components/widget/dialog/custom-dialog.service';
+import { AuthService } from '@core/auth/auth.service';
 import { ResourceService } from '@core/http/resource.service';
 import { DatePipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
@@ -158,6 +159,7 @@ export class WidgetContext {
     }
   }
 
+  authService: AuthService;
   deviceService: DeviceService;
   assetService: AssetService;
   entityViewService: EntityViewService;
