@@ -39,7 +39,6 @@ export class PubSubTemplate implements IQueue {
 
     async init() {
         try {
-            this.logger.info('Starting ThingsBoard JavaScript Executor Microservice...');
             this.pubSubClient = new PubSub({
                 projectId: this.projectId,
                 credentials: this.credentials
@@ -82,7 +81,7 @@ export class PubSubTemplate implements IQueue {
         } catch (e: any) {
             this.logger.error('Failed to start ThingsBoard JavaScript Executor Microservice: %s', e.message);
             this.logger.error(e.stack);
-            await this.exit(-1);
+            await this.destroy(-1);
         }
     }
 
@@ -153,23 +152,23 @@ export class PubSubTemplate implements IQueue {
         return queue;
     }
 
-    async exit(status: number): Promise<void> {
+    async destroy(status: number): Promise<void> {
         this.logger.info('Exiting with status: %d ...', status);
+        this.logger.info('Stopping Pub/Sub resources...');
         if (this.pubSubClient) {
-            this.logger.info('Stopping Pub/Sub client.')
+            this.logger.info('Stopping Pub/Sub client...');
             try {
-                await this.pubSubClient.close();
+                const _pubSubClient = this.pubSubClient;
                 // @ts-ignore
                 delete this.pubSubClient;
-                this.logger.info('Pub/Sub client stopped.')
-                process.exit(status);
+                await _pubSubClient.close();
+                this.logger.info('Pub/Sub client stopped.');
             } catch (e) {
                 this.logger.info('Pub/Sub client stop error.');
-                process.exit(status);
             }
-        } else {
-            process.exit(status);
         }
+        this.logger.info('Pub/Sub resources stopped.');
+        process.exit(status);
     }
 }
 

@@ -32,33 +32,34 @@ logger.info('===CONFIG END===');
 
 const serviceType = config.get('queue_type');
 const httpPort = Number(config.get('http_port'));
-let queues: IQueue;
-let httpServer: HttpServer;
+let queues: IQueue | null;
+let httpServer: HttpServer | null;
 
 (async () => {
+    logger.info('Starting ThingsBoard JavaScript Executor Microservice...');
     switch (serviceType) {
         case 'kafka':
-            logger.info('Starting kafka template.');
+            logger.info('Starting Kafka template...');
             queues = await KafkaTemplate.build();
-            logger.info('kafka template started.');
+            logger.info('Kafka template started.');
             break;
         case 'pubsub':
-            logger.info('Starting Pub/Sub template.')
+            logger.info('Starting Pub/Sub template...')
             queues = await PubSubTemplate.build();
             logger.info('Pub/Sub template started.')
             break;
         case 'aws-sqs':
-            logger.info('Starting Aws Sqs template.')
+            logger.info('Starting AWS SQS template...')
             queues = await AwsSqsTemplate.build();
-            logger.info('Aws Sqs template started.')
+            logger.info('AWS SQS template started.')
             break;
         case 'rabbitmq':
-            logger.info('Starting RabbitMq template.')
+            logger.info('Starting RabbitMQ template...')
             queues = await RabbitMqTemplate.build();
-            logger.info('RabbitMq template started.')
+            logger.info('RabbitMQ template started.')
             break;
         case 'service-bus':
-            logger.info('Starting Azure Service Bus template.')
+            logger.info('Starting Azure Service Bus template...')
             queues = await ServiceBusTemplate.build();
             logger.info('Azure Service Bus template started.')
             break;
@@ -70,17 +71,22 @@ let httpServer: HttpServer;
     httpServer = new HttpServer(httpPort);
 })();
 
-process.on('SIGTERM', () => {
-    logger.info('SIGTERM signal received');
-    process.exit(0);
-});
+[`SIGINT`, `SIGUSR1`, `SIGUSR2`, `uncaughtException`, `SIGTERM`].forEach((eventType) => {
+    process.on(eventType, async () => {
+        logger.info(`${eventType} signal received`);
+        if (httpServer) {
+            const _httpServer = httpServer;
+            httpServer = null;
+            await _httpServer.stop();
+        }
+        if (queues) {
+            const _queues = queues;
+            queues = null;
+            await _queues.destroy(0);
+        }
+    })
+})
 
-process.on('exit', async () => {
-    if (httpServer) {
-        httpServer.stop();
-    }
-    if (queues) {
-        queues.exit(0);
-    }
-    logger.info('JavaScript Executor Microservice has been stopped.');
+process.on('exit', (code: number) => {
+    logger.info(`JavaScript Executor Microservice has been stopped. Exit code: ${code}.`);
 });

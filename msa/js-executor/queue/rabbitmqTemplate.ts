@@ -49,8 +49,6 @@ export class RabbitMqTemplate implements IQueue {
 
     async init(): Promise<void> {
         try {
-            this.logger.info('Starting ThingsBoard JavaScript Executor Microservice...');
-
             const url = `amqp://${this.username}:${this.password}@${this.host}:${this.port}${this.vhost}`;
             this.connection = await amqp.connect(url);
             this.channel = await this.connection.createConfirmChannel();
@@ -78,7 +76,7 @@ export class RabbitMqTemplate implements IQueue {
         } catch (e: any) {
             this.logger.error('Failed to start ThingsBoard JavaScript Executor Microservice: %s', e.message);
             this.logger.error(e.stack);
-            await this.exit(-1);
+            await this.destroy(-1);
         }
     }
 
@@ -120,32 +118,33 @@ export class RabbitMqTemplate implements IQueue {
         return queue;
     }
 
-    async exit(status: number) {
+    async destroy(status: number) {
         this.logger.info('Exiting with status: %d ...', status);
+        this.logger.info('Stopping RabbitMQ resources...');
 
         if (this.channel) {
-            this.logger.info('Stopping RabbitMq chanel.')
-            await this.channel.close();
+            this.logger.info('Stopping RabbitMQ chanel...');
+            const _channel = this.channel;
             // @ts-ignore
             delete this.channel;
-            this.logger.info('RabbitMq chanel stopped');
+            await _channel.close();
+            this.logger.info('RabbitMQ chanel stopped');
         }
 
         if (this.connection) {
-            this.logger.info('Stopping RabbitMq connection.')
+            this.logger.info('Stopping RabbitMQ connection...')
             try {
-                await this.connection.close();
+                const _connection = this.connection;
                 // @ts-ignore
                 delete this.connection;
-                this.logger.info('RabbitMq client connection.')
-                process.exit(status);
+                await _connection.close();
+                this.logger.info('RabbitMQ client connection.');
             } catch (e) {
-                this.logger.info('RabbitMq connection stop error.');
-                process.exit(status);
+                this.logger.info('RabbitMQ connection stop error.');
             }
-        } else {
-            process.exit(status);
         }
+        this.logger.info('RabbitMQ resources stopped.')
+        process.exit(status);
     }
 
 }
