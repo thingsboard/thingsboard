@@ -56,8 +56,6 @@ export class KafkaTemplate implements IQueue {
 
     async init(): Promise<void> {
         try {
-            this.logger.info('Starting ThingsBoard JavaScript Executor Microservice...');
-
             const kafkaBootstrapServers: string = config.get('kafka.bootstrap.servers');
             const requestTopic: string = config.get('request_topic');
             const useConfluent = config.get('kafka.use_confluent_cloud');
@@ -119,11 +117,11 @@ export class KafkaTemplate implements IQueue {
 
             const {CRASH} = this.consumer.events;
 
-            this.consumer.on(CRASH, e => {
+            this.consumer.on(CRASH, async (e) => {
                 this.logger.error(`Got consumer CRASH event, should restart: ${e.payload.restart}`);
                 if (!e.payload.restart) {
                     this.logger.error('Going to exit due to not retryable error!');
-                    this.exit(-1);
+                    await this.destroy(-1);
                 }
             });
 
@@ -133,7 +131,6 @@ export class KafkaTemplate implements IQueue {
             this.sendLoopWithLinger();
             await this.consumer.subscribe({topic: requestTopic});
 
-            this.logger.info('Started ThingsBoard JavaScript Executor Microservice.');
             await this.consumer.run({
                 partitionsConsumedConcurrently: this.partitionsConsumedConcurrently,
                 eachMessage: async ({topic, partition, message}) => {
@@ -153,7 +150,7 @@ export class KafkaTemplate implements IQueue {
         } catch (e: any) {
             this.logger.error('Failed to start ThingsBoard JavaScript Executor Microservice: %s', e.message);
             this.logger.error(e.stack);
-            await this.exit(-1);
+            await this.destroy(-1);
         }
     }
 
@@ -242,34 +239,35 @@ export class KafkaTemplate implements IQueue {
     }
 
 
-    async exit(status: number): Promise<void> {
+    async destroy(status: number): Promise<void> {
         this.logger.info('Exiting with status: %d ...', status);
+        this.logger.info('Stopping Kafka resources...');
 
         if (this.kafkaAdmin) {
             this.logger.info('Stopping Kafka Admin...');
-            await this.kafkaAdmin.disconnect();
+            const _kafkaAdmin = this.kafkaAdmin;
             // @ts-ignore
             delete this.kafkaAdmin;
+            await _kafkaAdmin.disconnect();
             this.logger.info('Kafka Admin stopped.');
         }
 
         if (this.consumer) {
             this.logger.info('Stopping Kafka Consumer...');
             try {
-                await this.consumer.disconnect();
+                const _consumer = this.consumer;
                 // @ts-ignore
                 delete this.consumer;
+                await _consumer.disconnect();
                 this.logger.info('Kafka Consumer stopped.');
                 await this.disconnectProducer();
-                process.exit(status);
             } catch (e: any) {
                 this.logger.info('Kafka Consumer stop error.');
                 await this.disconnectProducer();
-                process.exit(status);
             }
-        } else {
-            process.exit(status);
         }
+        this.logger.info('Kafka resources stopped.');
+        process.exit(status);
     }
 
     private async disconnectProducer(): Promise<void> {
@@ -279,9 +277,10 @@ export class KafkaTemplate implements IQueue {
                 this.logger.info('Stopping loop...');
                 clearTimeout(this.sendLoopInstance);
                 await this.sendMessagesAsBatch();
-                await this.producer.disconnect();
+                const _producer = this.producer;
                 // @ts-ignore
                 delete this.producer;
+                await _producer.disconnect();
                 this.logger.info('Kafka Producer stopped.');
             } catch (e) {
                 this.logger.info('Kafka Producer stop error.');

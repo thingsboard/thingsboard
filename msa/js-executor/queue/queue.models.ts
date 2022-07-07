@@ -17,5 +17,5 @@
 export interface IQueue {
     init(): Promise<void>;
     send(responseTopic: string, scriptId: string, rawResponse: Buffer, headers: any): Promise<any>;
-    exit(status: number): Promise<void>;
+    destroy(status: number): Promise<void>;
 }

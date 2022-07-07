@@ -59,8 +59,6 @@ export class AwsSqsTemplate implements IQueue {
 
     async init() {
         try {
-            this.logger.info('Starting ThingsBoard JavaScript Executor Microservice...');
-
             this.sqsClient = new SQSClient({
                 apiVersion: '2012-11-05',
                 credentials: {
@@ -129,7 +127,7 @@ export class AwsSqsTemplate implements IQueue {
         } catch (e: any) {
             this.logger.error('Failed to start ThingsBoard JavaScript Executor Microservice: %s', e.message);
             this.logger.error(e.stack);
-            await this.exit(-1);
+            await this.destroy(-1);
         }
     }
 
@@ -193,23 +191,23 @@ export class AwsSqsTemplate implements IQueue {
         return queue;
     }
 
-    async exit(status: number) {
+    async destroy(status: number): Promise<void> {
         this.stopped = true;
         this.logger.info('Exiting with status: %d ...', status);
+        this.logger.info('Stopping AWS SQS resources...');
         if (this.sqsClient) {
-            this.logger.info('Stopping Aws Sqs client.')
+            this.logger.info('Stopping AWS SQS client...');
             try {
-                this.sqsClient.destroy();
+                const _sqsClient = this.sqsClient;
                 // @ts-ignore
                 delete this.sqsClient;
-                this.logger.info('Aws Sqs client stopped.')
-                process.exit(status);
+                _sqsClient.destroy();
+                this.logger.info('AWS SQS client stopped.');
             } catch (e: any) {
-                this.logger.info('Aws Sqs client stop error.');
-                process.exit(status);
+                this.logger.info('AWS SQS client stop error.');
             }
-        } else {
-            process.exit(status);
         }
+        this.logger.info('AWS SQS resources stopped.')
+        process.exit(status);
     }
 }

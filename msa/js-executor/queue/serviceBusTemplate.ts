@@ -49,8 +49,6 @@ export class ServiceBusTemplate implements IQueue {
 
     async init() {
         try {
-            this.logger.info('Starting ThingsBoard JavaScript Executor Microservice...');
-
             const connectionString = `Endpoint=sb://${this.namespaceName}.servicebus.windows.net/;SharedAccessKeyName=${this.sasKeyName};SharedAccessKey=${this.sasKey}`;
             this.sbClient = new ServiceBusClient(connectionString)
             this.serviceBusService = new ServiceBusAdministrationClient(connectionString);
@@ -84,7 +82,7 @@ export class ServiceBusTemplate implements IQueue {
         } catch (e: any) {
             this.logger.error('Failed to start ThingsBoard JavaScript Executor Microservice: %s', e.message);
             this.logger.error(e.stack);
-            await this.exit(-1);
+            await this.destroy(-1);
         }
     }
 
@@ -141,32 +139,45 @@ export class ServiceBusTemplate implements IQueue {
         return queue;
     }
 
-    async exit(status: number) {
+    async destroy(status: number) {
         this.logger.info('Exiting with status: %d ...', status);
         this.logger.info('Stopping Azure Service Bus resources...')
         if (this.receiver) {
+            this.logger.info('Stopping Service Bus Receiver...');
             try {
-                await this.receiver.close();
+                const _receiver = this.receiver;
                 // @ts-ignore
                 delete this.receiver;
+                await _receiver.close();
+                this.logger.info('Service Bus Receiver stopped.');
             } catch (e) {
+                this.logger.info('Service Bus Receiver stop error.');
             }
         }
 
-        this.senderMap.forEach(k => {
-            try {
-                k.close();
-            } catch (e) {
-            }
+        this.logger.info('Stopping Service Bus Senders...');
+        const senders: Promise<void>[] = [];
+        this.senderMap.forEach((sender) => {
+            senders.push(sender.close());
         });
         this.senderMap.clear();
+        try {
+            await Promise.all(senders);
+            this.logger.info('Service Bus Senders stopped.');
+        } catch (e) {
+            this.logger.info('Service Bus Senders stop error.');
+        }
 
         if (this.sbClient) {
+            this.logger.info('Stopping Service Bus Client...');
             try {
-                await this.sbClient.close();
+                const _sbClient = this.sbClient;
                 // @ts-ignore
                 delete this.sbClient;
+                await _sbClient.close();
+                this.logger.info('Service Bus Client stopped.');
             } catch (e) {
+                this.logger.info('Service Bus Client stop error.');
             }
         }
         this.logger.info('Azure Service Bus resources stopped.')
