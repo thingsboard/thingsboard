@@ -29,13 +29,17 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.OtaPackageInfo;
+import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
@@ -45,7 +49,15 @@ import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadCo
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.queue.ProcessingStrategy;
+import org.thingsboard.server.common.data.queue.ProcessingStrategyType;
+import org.thingsboard.server.common.data.queue.Queue;
+import org.thingsboard.server.common.data.queue.SubmitStrategy;
+import org.thingsboard.server.common.data.queue.SubmitStrategyType;
+import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.ArrayList;
@@ -59,6 +71,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
+import static org.thingsboard.server.common.data.ota.OtaPackageType.SOFTWARE;
 
 public abstract class BaseDeviceProfileControllerTest extends AbstractControllerTest {
 
@@ -343,6 +357,129 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
                 .andExpect(statusReason(containsString("The device profile referenced by the devices cannot be deleted")));
 
         testNotifyEntityNever(savedDeviceProfile.getId(), savedDeviceProfile);
+    }
+
+    @Test
+    public void testSaveDeviceProfileWithRuleChainFromDifferentTenant() throws Exception {
+        loginDifferentTenant();
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setName("Different rule chain");
+        RuleChain savedRuleChain = doPost("/api/ruleChain", ruleChain, RuleChain.class);
+
+        loginTenantAdmin();
+
+        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile");
+        deviceProfile.setDefaultRuleChainId(savedRuleChain.getId());
+        doPost("/api/deviceProfile", deviceProfile).andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Can't assign rule chain from different tenant!")));
+    }
+
+    @Test
+    public void testSaveDeviceProfileWithDashboardFromDifferentTenant() throws Exception {
+        loginDifferentTenant();
+        Dashboard dashboard = new Dashboard();
+        dashboard.setTitle("Different dashboard");
+        Dashboard savedDashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
+
+        loginTenantAdmin();
+
+        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile");
+        deviceProfile.setDefaultDashboardId(savedDashboard.getId());
+        doPost("/api/deviceProfile", deviceProfile).andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Can't assign dashboard from different tenant!")));
+    }
+
+    @Test
+    public void testSaveDeviceProfileWithQueueFromDifferentTenant() throws Exception {
+        loginDifferentTenant();
+        loginSysAdmin();
+        TenantProfile tenantProfile = new TenantProfile();
+        tenantProfile.setDefault(false);
+        tenantProfile.setName("Isolated TB Rule Engine");
+        tenantProfile.setDescription("Isolated TB Rule Engine tenant profile");
+        tenantProfile.setIsolatedTbCore(false);
+        tenantProfile.setIsolatedTbRuleEngine(true);
+
+        TenantProfileQueueConfiguration mainQueueConfiguration = new TenantProfileQueueConfiguration();
+        mainQueueConfiguration.setName("Main");
+        mainQueueConfiguration.setTopic("tb_rule_engine.main");
+        mainQueueConfiguration.setPollInterval(25);
+        mainQueueConfiguration.setPartitions(10);
+        mainQueueConfiguration.setConsumerPerPartition(true);
+        mainQueueConfiguration.setPackProcessingTimeout(2000);
+        SubmitStrategy mainQueueSubmitStrategy = new SubmitStrategy();
+        mainQueueSubmitStrategy.setType(SubmitStrategyType.BURST);
+        mainQueueSubmitStrategy.setBatchSize(1000);
+        mainQueueConfiguration.setSubmitStrategy(mainQueueSubmitStrategy);
+        ProcessingStrategy mainQueueProcessingStrategy = new ProcessingStrategy();
+        mainQueueProcessingStrategy.setType(ProcessingStrategyType.SKIP_ALL_FAILURES);
+        mainQueueProcessingStrategy.setRetries(3);
+        mainQueueProcessingStrategy.setFailurePercentage(0);
+        mainQueueProcessingStrategy.setPauseBetweenRetries(3);
+        mainQueueProcessingStrategy.setMaxPauseBetweenRetries(3);
+        mainQueueConfiguration.setProcessingStrategy(mainQueueProcessingStrategy);
+        TenantProfileData profileData = tenantProfile.getProfileData();
+        profileData.setQueueConfiguration(Collections.singletonList(mainQueueConfiguration));
+        tenantProfile.setProfileData(profileData);
+        TenantProfile savedTenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
+        savedDifferentTenant.setTenantProfileId(savedTenantProfile.getId());
+        savedDifferentTenant = doPost("/api/tenant", savedDifferentTenant, Tenant.class);
+        loginDifferentTenant();
+        PageLink pageLink = new PageLink(1);
+        PageData<Queue> pageData = doGetTypedWithPageLink("/api/queues?serviceType=TB_RULE_ENGINE&",
+                new TypeReference<>() {}, pageLink);
+        Queue differentQueue = pageData.getData().get(0);
+
+        loginTenantAdmin();
+
+        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile");
+        deviceProfile.setDefaultQueueId(differentQueue.getId());
+        doPost("/api/deviceProfile", deviceProfile).andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Can't assign queue from different tenant!")));
+    }
+
+    @Test
+    public void testSaveDeviceProfileWithFirmwareFromDifferentTenant() throws Exception {
+        loginDifferentTenant();
+        DeviceProfile differentProfile = createDeviceProfile("Different profile");
+        differentProfile = doPost("/api/deviceProfile", differentProfile, DeviceProfile.class);
+        SaveOtaPackageInfoRequest firmwareInfo = new SaveOtaPackageInfoRequest();
+        firmwareInfo.setDeviceProfileId(differentProfile.getId());
+        firmwareInfo.setType(FIRMWARE);
+        firmwareInfo.setTitle("title");
+        firmwareInfo.setVersion("1.0");
+        firmwareInfo.setUrl("test.url");
+        firmwareInfo.setUsesUrl(true);
+        OtaPackageInfo savedFw = doPost("/api/otaPackage", firmwareInfo, OtaPackageInfo.class);
+
+        loginTenantAdmin();
+
+        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile");
+        deviceProfile.setFirmwareId(savedFw.getId());
+        doPost("/api/deviceProfile", deviceProfile).andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Can't assign firmware from different tenant!")));
+    }
+
+    @Test
+    public void testSaveDeviceProfileWithSoftwareFromDifferentTenant() throws Exception {
+        loginDifferentTenant();
+        DeviceProfile differentProfile = createDeviceProfile("Different profile");
+        differentProfile = doPost("/api/deviceProfile", differentProfile, DeviceProfile.class);
+        SaveOtaPackageInfoRequest softwareInfo = new SaveOtaPackageInfoRequest();
+        softwareInfo.setDeviceProfileId(differentProfile.getId());
+        softwareInfo.setType(SOFTWARE);
+        softwareInfo.setTitle("title");
+        softwareInfo.setVersion("1.0");
+        softwareInfo.setUrl("test.url");
+        softwareInfo.setUsesUrl(true);
+        OtaPackageInfo savedSw = doPost("/api/otaPackage", softwareInfo, OtaPackageInfo.class);
+
+        loginTenantAdmin();
+
+        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile");
+        deviceProfile.setSoftwareId(savedSw.getId());
+        doPost("/api/deviceProfile", deviceProfile).andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Can't assign software from different tenant!")));
     }
 
     @Test
@@ -1009,7 +1146,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(errorMsg)));
 
-        testNotifyEntityEqualsOneTimeServiceNeverError(deviceProfile,savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(deviceProfile, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(errorMsg));
     }
 
@@ -1024,7 +1161,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(errorMsg)));
 
-        testNotifyEntityEqualsOneTimeServiceNeverError(deviceProfile,savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(deviceProfile, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(errorMsg));
     }
 
