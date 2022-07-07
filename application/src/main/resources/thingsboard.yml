@@ -545,10 +545,6 @@ spring:
 audit-log:
   # Enable/disable audit log functionality.
   enabled: "${AUDIT_LOG_ENABLED:true}"
-  # Specify partitioning size for audit log by tenant id storage. Example MINUTES, HOURS, DAYS, MONTHS
-  by_tenant_partitioning: "${AUDIT_LOG_BY_TENANT_PARTITIONING:MONTHS}"
-  # Number of days as history period if startTime and endTime are not specified
-  default_query_period: "${AUDIT_LOG_DEFAULT_QUERY_PERIOD:30}"
   # Logging levels per each entity type.
   # Allowed values: OFF (disable), W (log write operations), RW (log read and write operations)
   logging-level:
