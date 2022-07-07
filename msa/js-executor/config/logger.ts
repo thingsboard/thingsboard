@@ -1,27 +1,30 @@
-/*
- * Copyright © 2016-2022 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-var config = require('config'),
-    path = require('path'),
-    DailyRotateFile = require('winston-daily-rotate-file');
+///
+/// Copyright © 2016-2022 The Thingsboard Authors
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///     http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
 
-const { logLevel } = require('kafkajs');
-const { createLogger, format, transports } = require('winston');
+import config from 'config';
+import path from 'path';
+import DailyRotateFile from 'winston-daily-rotate-file';
+
+import { LogEntry, logLevel } from 'kafkajs';
+import { createLogger, format, transports } from 'winston';
+import * as Transport from 'winston-transport';
+
 const { combine, timestamp, label, printf, splat } = format;
 
-const toWinstonLogLevel = level => {
+const toWinstonLogLevel = (level: logLevel): string => {
     switch(level) {
         case logLevel.ERROR:
         case logLevel.NOTHING:
@@ -35,15 +38,15 @@ const toWinstonLogLevel = level => {
     }
 }
 
-var loggerTransports = [];
+const loggerTransports: Array<Transport> = [];
 
 if (process.env.NODE_ENV !== 'production' || process.env.DOCKER_MODE === 'true') {
     loggerTransports.push(new transports.Console({
         handleExceptions: true
     }));
 } else {
-    var filename = path.join(config.get('logger.path'), config.get('logger.filename'));
-    var transport = new (DailyRotateFile)({
+    const filename = path.join(config.get('logger.path'), config.get('logger.filename'));
+    const transport = new (DailyRotateFile)({
         filename: filename,
         datePattern: 'YYYY-MM-DD-HH',
         zippedArchive: true,
@@ -58,7 +61,7 @@ const tbFormat = printf(info => {
     return `${info.timestamp} [${info.label}] ${info.level.toUpperCase()}: ${info.message}`;
 });
 
-function _logger(moduleLabel) {
+export function _logger(moduleLabel: string) {
     return createLogger({
         level: config.get('logger.level'),
         format:combine(
@@ -71,7 +74,7 @@ function _logger(moduleLabel) {
     });
 }
 
-const KafkaJsWinstonLogCreator = logLevel => {
+export function KafkaJsWinstonLogCreator(logLevel: logLevel): (entry: LogEntry) => void {
     const logger = createLogger({
         level: toWinstonLogLevel(logLevel),
         format:combine(
@@ -99,5 +102,3 @@ const KafkaJsWinstonLogCreator = logLevel => {
         });
     }
 }
-
-module.exports = {_logger, KafkaJsWinstonLogCreator};
