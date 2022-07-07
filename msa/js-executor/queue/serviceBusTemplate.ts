@@ -44,46 +44,42 @@ export class ServiceBusTemplate implements IQueue {
     private receiver: ServiceBusReceiver;
     private senderMap = new Map<string, ServiceBusSender>();
 
+    name = 'Azure Service Bus';
+
     constructor() {
     }
 
     async init() {
-        try {
-            const connectionString = `Endpoint=sb://${this.namespaceName}.servicebus.windows.net/;SharedAccessKeyName=${this.sasKeyName};SharedAccessKey=${this.sasKey}`;
-            this.sbClient = new ServiceBusClient(connectionString)
-            this.serviceBusService = new ServiceBusAdministrationClient(connectionString);
+        const connectionString = `Endpoint=sb://${this.namespaceName}.servicebus.windows.net/;SharedAccessKeyName=${this.sasKeyName};SharedAccessKey=${this.sasKey}`;
+        this.sbClient = new ServiceBusClient(connectionString)
+        this.serviceBusService = new ServiceBusAdministrationClient(connectionString);
 
-            this.parseQueueProperties();
+        this.parseQueueProperties();
 
-            const listQueues = await this.serviceBusService.listQueues();
-            for await (const queue of listQueues) {
-                this.queues.push(queue.name);
-            }
-
-            if (!this.queues.includes(this.requestTopic)) {
-                await this.createQueueIfNotExist(this.requestTopic);
-                this.queues.push(this.requestTopic);
-            }
-
-            this.receiver = this.sbClient.createReceiver(this.requestTopic, {receiveMode: 'peekLock'});
-
-            const messageProcessor = new JsInvokeMessageProcessor(this);
-
-            const messageHandler = async (message: ServiceBusReceivedMessage) => {
-                if (message) {
-                    messageProcessor.onJsInvokeMessage(message.body);
-                    await this.receiver.completeMessage(message);
-                }
-            };
-            const errorHandler = async (error: ProcessErrorArgs) => {
-                this.logger.error('Failed to receive message from queue.', error);
-            };
-            this.receiver.subscribe({processMessage: messageHandler, processError: errorHandler})
-        } catch (e: any) {
-            this.logger.error('Failed to start ThingsBoard JavaScript Executor Microservice: %s', e.message);
-            this.logger.error(e.stack);
-            await this.destroy(-1);
+        const listQueues = await this.serviceBusService.listQueues();
+        for await (const queue of listQueues) {
+            this.queues.push(queue.name);
         }
+
+        if (!this.queues.includes(this.requestTopic)) {
+            await this.createQueueIfNotExist(this.requestTopic);
+            this.queues.push(this.requestTopic);
+        }
+
+        this.receiver = this.sbClient.createReceiver(this.requestTopic, {receiveMode: 'peekLock'});
+
+        const messageProcessor = new JsInvokeMessageProcessor(this);
+
+        const messageHandler = async (message: ServiceBusReceivedMessage) => {
+            if (message) {
+                messageProcessor.onJsInvokeMessage(message.body);
+                await this.receiver.completeMessage(message);
+            }
+        };
+        const errorHandler = async (error: ProcessErrorArgs) => {
+            this.logger.error('Failed to receive message from queue.', error);
+        };
+        this.receiver.subscribe({processMessage: messageHandler, processError: errorHandler})
     }
 
     async send(responseTopic: string, scriptId: string, rawResponse: Buffer, headers: any): Promise<any> {
@@ -133,14 +129,7 @@ export class ServiceBusTemplate implements IQueue {
         }
     }
 
-    static async build(): Promise<ServiceBusTemplate> {
-        const queue = new ServiceBusTemplate();
-        await queue.init();
-        return queue;
-    }
-
-    async destroy(status: number) {
-        this.logger.info('Exiting with status: %d ...', status);
+    async destroy() {
         this.logger.info('Stopping Azure Service Bus resources...')
         if (this.receiver) {
             this.logger.info('Stopping Service Bus Receiver...');
@@ -181,6 +170,5 @@ export class ServiceBusTemplate implements IQueue {
             }
         }
         this.logger.info('Azure Service Bus resources stopped.')
-        process.exit(status);
     }
 }

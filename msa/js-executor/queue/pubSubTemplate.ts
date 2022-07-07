@@ -34,55 +34,50 @@ export class PubSubTemplate implements IQueue {
     private topics: string[] = [];
     private subscriptions: string[] = [];
 
+    name = 'Pub/Sub';
+
     constructor() {
     }
 
     async init() {
-        try {
-            this.pubSubClient = new PubSub({
-                projectId: this.projectId,
-                credentials: this.credentials
+        this.pubSubClient = new PubSub({
+            projectId: this.projectId,
+            credentials: this.credentials
+        });
+
+        this.parseQueueProperties();
+
+        const topicList = await this.pubSubClient.getTopics();
+
+        if (topicList) {
+            topicList[0].forEach(topic => {
+                this.topics.push(PubSubTemplate.getName(topic.name));
             });
-
-            this.parseQueueProperties();
-
-            const topicList = await this.pubSubClient.getTopics();
-
-            if (topicList) {
-                topicList[0].forEach(topic => {
-                    this.topics.push(PubSubTemplate.getName(topic.name));
-                });
-            }
-
-            const subscriptionList = await this.pubSubClient.getSubscriptions();
-
-            if (subscriptionList) {
-                topicList[0].forEach(sub => {
-                    this.subscriptions.push(PubSubTemplate.getName(sub.name));
-                });
-            }
-
-            if (!(this.subscriptions.includes(this.requestTopic) && this.topics.includes(this.requestTopic))) {
-                await this.createTopic(this.requestTopic);
-                await this.createSubscription(this.requestTopic);
-            }
-
-            const subscription = this.pubSubClient.subscription(this.requestTopic);
-
-            const messageProcessor = new JsInvokeMessageProcessor(this);
-
-            const messageHandler = (message: Message) => {
-                messageProcessor.onJsInvokeMessage(JSON.parse(message.data.toString('utf8')));
-                message.ack();
-            };
-
-            subscription.on('message', messageHandler);
-
-        } catch (e: any) {
-            this.logger.error('Failed to start ThingsBoard JavaScript Executor Microservice: %s', e.message);
-            this.logger.error(e.stack);
-            await this.destroy(-1);
         }
+
+        const subscriptionList = await this.pubSubClient.getSubscriptions();
+
+        if (subscriptionList) {
+            topicList[0].forEach(sub => {
+                this.subscriptions.push(PubSubTemplate.getName(sub.name));
+            });
+        }
+
+        if (!(this.subscriptions.includes(this.requestTopic) && this.topics.includes(this.requestTopic))) {
+            await this.createTopic(this.requestTopic);
+            await this.createSubscription(this.requestTopic);
+        }
+
+        const subscription = this.pubSubClient.subscription(this.requestTopic);
+
+        const messageProcessor = new JsInvokeMessageProcessor(this);
+
+        const messageHandler = (message: Message) => {
+            messageProcessor.onJsInvokeMessage(JSON.parse(message.data.toString('utf8')));
+            message.ack();
+        };
+
+        subscription.on('message', messageHandler);
     }
 
     async send(responseTopic: string, scriptId: string, rawResponse: Buffer, headers: any): Promise<any> {
@@ -146,14 +141,7 @@ export class PubSubTemplate implements IQueue {
         }
     }
 
-    static async build(): Promise<PubSubTemplate> {
-        const queue = new PubSubTemplate();
-        await queue.init();
-        return queue;
-    }
-
-    async destroy(status: number): Promise<void> {
-        this.logger.info('Exiting with status: %d ...', status);
+    async destroy(): Promise<void> {
         this.logger.info('Stopping Pub/Sub resources...');
         if (this.pubSubClient) {
             this.logger.info('Stopping Pub/Sub client...');
@@ -168,7 +156,6 @@ export class PubSubTemplate implements IQueue {
             }
         }
         this.logger.info('Pub/Sub resources stopped.');
-        process.exit(status);
     }
 }
 

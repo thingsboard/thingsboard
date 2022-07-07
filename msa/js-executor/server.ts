@@ -30,63 +30,66 @@ logger.info('===CONFIG BEGIN===');
 logger.info(JSON.stringify(config, null, 4));
 logger.info('===CONFIG END===');
 
-const serviceType = config.get('queue_type');
+const serviceType: string = config.get('queue_type');
 const httpPort = Number(config.get('http_port'));
 let queues: IQueue | null;
 let httpServer: HttpServer | null;
 
 (async () => {
     logger.info('Starting ThingsBoard JavaScript Executor Microservice...');
-    switch (serviceType) {
-        case 'kafka':
-            logger.info('Starting Kafka template...');
-            queues = await KafkaTemplate.build();
-            logger.info('Kafka template started.');
-            break;
-        case 'pubsub':
-            logger.info('Starting Pub/Sub template...')
-            queues = await PubSubTemplate.build();
-            logger.info('Pub/Sub template started.')
-            break;
-        case 'aws-sqs':
-            logger.info('Starting AWS SQS template...')
-            queues = await AwsSqsTemplate.build();
-            logger.info('AWS SQS template started.')
-            break;
-        case 'rabbitmq':
-            logger.info('Starting RabbitMQ template...')
-            queues = await RabbitMqTemplate.build();
-            logger.info('RabbitMQ template started.')
-            break;
-        case 'service-bus':
-            logger.info('Starting Azure Service Bus template...')
-            queues = await ServiceBusTemplate.build();
-            logger.info('Azure Service Bus template started.')
-            break;
-        default:
-            logger.error('Unknown service type: ', serviceType);
-            process.exit(-1);
+    try {
+        queues = await createQueue(serviceType);
+        logger.info(`Starting ${queues.name} template...`);
+        await queues.init();
+        logger.info(`${queues.name} template started.`);
+        httpServer = new HttpServer(httpPort);
+    } catch (e: any) {
+        logger.error('Failed to start ThingsBoard JavaScript Executor Microservice: %s', e.message);
+        logger.error(e.stack);
+        await exit(-1);
     }
 
-    httpServer = new HttpServer(httpPort);
 })();
+
+async function createQueue(serviceType: string): Promise<IQueue> {
+    switch (serviceType) {
+        case 'kafka':
+            return new KafkaTemplate();
+        case 'pubsub':
+            return new PubSubTemplate();
+        case 'aws-sqs':
+            return new AwsSqsTemplate();
+        case 'rabbitmq':
+            return new RabbitMqTemplate();
+        case 'service-bus':
+            return new ServiceBusTemplate();
+        default:
+            throw new Error('Unknown service type: ' + serviceType);
+    }
+}
 
 [`SIGINT`, `SIGUSR1`, `SIGUSR2`, `uncaughtException`, `SIGTERM`].forEach((eventType) => {
     process.on(eventType, async () => {
         logger.info(`${eventType} signal received`);
-        if (httpServer) {
-            const _httpServer = httpServer;
-            httpServer = null;
-            await _httpServer.stop();
-        }
-        if (queues) {
-            const _queues = queues;
-            queues = null;
-            await _queues.destroy(0);
-        }
+        await exit(0);
     })
 })
 
 process.on('exit', (code: number) => {
-    logger.info(`JavaScript Executor Microservice has been stopped. Exit code: ${code}.`);
+    logger.info(`ThingsBoard JavaScript Executor Microservice has been stopped. Exit code: ${code}.`);
 });
+
+async function exit(status: number) {
+    logger.info('Exiting with status: %d ...', status);
+    if (httpServer) {
+        const _httpServer = httpServer;
+        httpServer = null;
+        await _httpServer.stop();
+    }
+    if (queues) {
+        const _queues = queues;
+        queues = null;
+        await _queues.destroy();
+    }
+    process.exit(status);
+}

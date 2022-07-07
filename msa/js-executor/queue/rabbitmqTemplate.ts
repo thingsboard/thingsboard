@@ -44,39 +44,35 @@ export class RabbitMqTemplate implements IQueue {
     private stopped = false;
     private topics: string[] = [];
 
+    name = 'RabbitMQ';
+
     constructor() {
     }
 
     async init(): Promise<void> {
-        try {
-            const url = `amqp://${this.username}:${this.password}@${this.host}:${this.port}${this.vhost}`;
-            this.connection = await amqp.connect(url);
-            this.channel = await this.connection.createConfirmChannel();
+        const url = `amqp://${this.username}:${this.password}@${this.host}:${this.port}${this.vhost}`;
+        this.connection = await amqp.connect(url);
+        this.channel = await this.connection.createConfirmChannel();
 
-            this.parseQueueProperties();
+        this.parseQueueProperties();
 
-            await this.createQueue(this.requestTopic);
+        await this.createQueue(this.requestTopic);
 
-            const messageProcessor = new JsInvokeMessageProcessor(this);
+        const messageProcessor = new JsInvokeMessageProcessor(this);
 
-            while (!this.stopped) {
-                let pollStartTs = new Date().getTime();
-                let message = await this.channel.get(this.requestTopic);
+        while (!this.stopped) {
+            let pollStartTs = new Date().getTime();
+            let message = await this.channel.get(this.requestTopic);
 
-                if (message) {
-                    messageProcessor.onJsInvokeMessage(JSON.parse(message.content.toString('utf8')));
-                    this.channel.ack(message);
-                } else {
-                    let pollDuration = new Date().getTime() - pollStartTs;
-                    if (pollDuration < this.pollInterval) {
-                        await sleep(this.pollInterval - pollDuration);
-                    }
+            if (message) {
+                messageProcessor.onJsInvokeMessage(JSON.parse(message.content.toString('utf8')));
+                this.channel.ack(message);
+            } else {
+                let pollDuration = new Date().getTime() - pollStartTs;
+                if (pollDuration < this.pollInterval) {
+                    await sleep(this.pollInterval - pollDuration);
                 }
             }
-        } catch (e: any) {
-            this.logger.error('Failed to start ThingsBoard JavaScript Executor Microservice: %s', e.message);
-            this.logger.error(e.stack);
-            await this.destroy(-1);
         }
     }
 
@@ -112,14 +108,7 @@ export class RabbitMqTemplate implements IQueue {
         return this.channel.assertQueue(topic, this.queueOptions);
     }
 
-    static async build(): Promise<RabbitMqTemplate> {
-        const queue = new RabbitMqTemplate();
-        await queue.init();
-        return queue;
-    }
-
-    async destroy(status: number) {
-        this.logger.info('Exiting with status: %d ...', status);
+    async destroy() {
         this.logger.info('Stopping RabbitMQ resources...');
 
         if (this.channel) {
@@ -144,7 +133,6 @@ export class RabbitMqTemplate implements IQueue {
             }
         }
         this.logger.info('RabbitMQ resources stopped.')
-        process.exit(status);
     }
 
 }
