@@ -51,8 +51,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Service
 public class RemoteJsInvokeService extends AbstractJsInvokeService {
 
-    private static final int QUEUE_TRANSFER_DELAY = 2000;
-
     @Value("${queue.js.max_eval_requests_timeout}")
     private long maxEvalRequestsTimeout;
 
@@ -172,7 +170,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 .setScriptIdMSB(scriptId.getMostSignificantBits())
                 .setScriptIdLSB(scriptId.getLeastSignificantBits())
                 .setFunctionName(functionName)
-                .setTimeout((int) maxRequestsTimeout)
+                .setTimeout((int) (maxRequestsTimeout  * 0.75)) // timeout on JS executor must be less than on Java
                 .setScriptBody(scriptBody);
 
         for (Object arg : args) {
@@ -188,7 +186,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
 
         ListenableFuture<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> future = requestTemplate.send(new TbProtoJsQueueMsg<>(UUID.randomUUID(), jsRequestWrapper));
         if (maxRequestsTimeout > 0) {
-            future = Futures.withTimeout(future, maxRequestsTimeout + QUEUE_TRANSFER_DELAY, TimeUnit.MILLISECONDS, timeoutExecutorService);
+            future = Futures.withTimeout(future, maxRequestsTimeout, TimeUnit.MILLISECONDS, timeoutExecutorService);
         }
         queuePushedMsgs.incrementAndGet();
         Futures.addCallback(future, new FutureCallback<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>>() {
