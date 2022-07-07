@@ -219,6 +219,7 @@ export interface CommonMapSettings {
   defaultZoomLevel: number;
   defaultCenterPosition?: string;
   disableScrollZooming: boolean;
+  disableDoubleClickZooming: boolean;
   disableZoomControl: boolean;
   fitMapBounds: boolean;
   useDefaultCenterPosition: boolean;
@@ -242,6 +243,7 @@ export const defaultCommonMapSettings: CommonMapSettings = {
   defaultZoomLevel: null,
   defaultCenterPosition: '0,0',
   disableScrollZooming: false,
+  disableDoubleClickZooming: false,
   disableZoomControl: false,
   fitMapBounds: true,
   useDefaultCenterPosition: false,
