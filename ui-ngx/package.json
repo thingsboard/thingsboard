@@ -29,7 +29,7 @@
     "@date-io/date-fns": "^2.11.0",
     "@flowjs/flow.js": "^2.14.1",
     "@flowjs/ngx-flow": "~0.4.6",
-    "@geoman-io/leaflet-geoman-free": "^2.11.4",
+    "@geoman-io/leaflet-geoman-free": "~2.11.4",
     "@juggle/resize-observer": "^3.3.1",
     "@mat-datetimepicker/core": "~7.0.1",
     "@material-ui/core": "^4.12.3",
