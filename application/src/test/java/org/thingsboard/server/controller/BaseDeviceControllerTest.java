@@ -113,6 +113,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         Device savedDevice = doPost("/api/device", device, Device.class);
 
         Device oldDevice = new Device(savedDevice);
+
         testNotifyEntityOneTimeMsgToEdgeServiceNever(savedDevice, savedDevice.getId(), savedDevice.getId(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.ADDED);
@@ -248,8 +249,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         }
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceNever(new Device(), new Device(),
-                savedTenant.getId(),
-                tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.ADDED, cntEntity);
         testNotificationUpdateGatewayNever();
 
@@ -813,7 +813,9 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new Device(), new Device(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.ADDED, ActionType.ASSIGNED_TO_CUSTOMER, cntEntity, cntEntity, cntEntity * 2);
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
         testNotificationUpdateGatewayNever();
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
 
         List<Device> loadedDevices = new ArrayList<>(cntEntity);
         PageLink pageLink = new PageLink(23);
@@ -827,8 +829,6 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         } while (pageData.hasNext());
 
         assertThat(devices).containsExactlyInAnyOrderElementsOf(loadedDevices);
-
-        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
 
         deleteEntitiesAsync("/api/customer/device/", loadedDevices, executor).get(TIMEOUT, TimeUnit.SECONDS);
 

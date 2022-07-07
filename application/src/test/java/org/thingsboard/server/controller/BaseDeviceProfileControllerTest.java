@@ -387,6 +387,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new DeviceProfile(), new DeviceProfile(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.ADDED, ActionType.ADDED, cntEntity, cntEntity, cntEntity);
+        Mockito.reset(tbClusterService, auditLogService);
 
         List<DeviceProfile> loadedDeviceProfiles = new ArrayList<>();
         pageLink = new PageLink(17);
