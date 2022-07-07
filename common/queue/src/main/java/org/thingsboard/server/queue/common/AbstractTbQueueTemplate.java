@@ -22,7 +22,7 @@ import java.util.UUID;
 public class AbstractTbQueueTemplate {
     protected static final String REQUEST_ID_HEADER = "requestId";
     protected static final String RESPONSE_TOPIC_HEADER = "responseTopic";
-    protected static final String REQUEST_TIME = "requestTime";
+    protected static final String EXPIRE_TS_HEADER = "expireTs";
 
     protected byte[] uuidToBytes(UUID uuid) {
         ByteBuffer buf = ByteBuffer.allocate(16);
