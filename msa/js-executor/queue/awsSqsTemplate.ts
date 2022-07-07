@@ -54,82 +54,76 @@ export class AwsSqsTemplate implements IQueue {
         FifoQueue: 'true'
     };
 
+    name = 'AWS SQS';
+
     constructor() {
     }
 
     async init() {
-        try {
-            this.logger.info('Starting ThingsBoard JavaScript Executor Microservice...');
+        this.sqsClient = new SQSClient({
+            apiVersion: '2012-11-05',
+            credentials: {
+                accessKeyId: this.accessKeyId,
+                secretAccessKey: this.secretAccessKey
+            },
+            region: this.region
+        });
 
-            this.sqsClient = new SQSClient({
-                apiVersion: '2012-11-05',
-                credentials: {
-                    accessKeyId: this.accessKeyId,
-                    secretAccessKey: this.secretAccessKey
-                },
-                region: this.region
+        const queues = await this.getQueues();
+
+        if (queues.QueueUrls) {
+            queues.QueueUrls.forEach(queueUrl => {
+                const delimiterPosition = queueUrl.lastIndexOf('/');
+                const queueName = queueUrl.substring(delimiterPosition + 1);
+                this.queueUrls.set(queueName, queueUrl);
             });
+        }
 
-            const queues = await this.getQueues();
+        this.parseQueueProperties();
 
-            if (queues.QueueUrls) {
-                queues.QueueUrls.forEach(queueUrl => {
-                    const delimiterPosition = queueUrl.lastIndexOf('/');
-                    const queueName = queueUrl.substring(delimiterPosition + 1);
-                    this.queueUrls.set(queueName, queueUrl);
-                });
-            }
+        this.requestQueueURL = this.queueUrls.get(AwsSqsTemplate.topicToSqsQueueName(this.requestTopic)) || '';
+        if (!this.requestQueueURL) {
+            this.requestQueueURL = await this.createQueue(this.requestTopic);
+        }
 
-            this.parseQueueProperties();
+        const messageProcessor = new JsInvokeMessageProcessor(this);
 
-            this.requestQueueURL = this.queueUrls.get(AwsSqsTemplate.topicToSqsQueueName(this.requestTopic)) || '';
-            if (!this.requestQueueURL) {
-                this.requestQueueURL = await this.createQueue(this.requestTopic);
-            }
+        const params: ReceiveMessageRequest = {
+            MaxNumberOfMessages: 10,
+            QueueUrl: this.requestQueueURL,
+            WaitTimeSeconds: this.pollInterval / 1000
+        };
+        while (!this.stopped) {
+            let pollStartTs = new Date().getTime();
+            const messagesResponse: ReceiveMessageResult = await this.sqsClient.send(new ReceiveMessageCommand(params));
+            const messages = messagesResponse.Messages;
 
-            const messageProcessor = new JsInvokeMessageProcessor(this);
+            if (messages && messages.length > 0) {
+                const entries: DeleteMessageBatchRequestEntry[] = [];
 
-            const params: ReceiveMessageRequest = {
-                MaxNumberOfMessages: 10,
-                QueueUrl: this.requestQueueURL,
-                WaitTimeSeconds: this.pollInterval / 1000
-            };
-            while (!this.stopped) {
-                let pollStartTs = new Date().getTime();
-                const messagesResponse: ReceiveMessageResult = await this.sqsClient.send(new ReceiveMessageCommand(params));
-                const messages = messagesResponse.Messages;
-
-                if (messages && messages.length > 0) {
-                    const entries: DeleteMessageBatchRequestEntry[] = [];
-
-                    messages.forEach(message => {
-                        entries.push({
-                            Id: message.MessageId,
-                            ReceiptHandle: message.ReceiptHandle
-                        });
-                        messageProcessor.onJsInvokeMessage(JSON.parse(message.Body || ''));
+                messages.forEach(message => {
+                    entries.push({
+                        Id: message.MessageId,
+                        ReceiptHandle: message.ReceiptHandle
                     });
+                    messageProcessor.onJsInvokeMessage(JSON.parse(message.Body || ''));
+                });
 
-                    const deleteBatch: DeleteMessageBatchRequest = {
-                        QueueUrl: this.requestQueueURL,
-                        Entries: entries
-                    };
-                    try {
-                        await this.sqsClient.send(new DeleteMessageBatchCommand(deleteBatch))
-                    } catch (err: any) {
-                        this.logger.error("Failed to delete messages from queue.", err.message);
-                    }
-                } else {
-                    let pollDuration = new Date().getTime() - pollStartTs;
-                    if (pollDuration < this.pollInterval) {
-                        await sleep(this.pollInterval - pollDuration);
-                    }
+                const deleteBatch: DeleteMessageBatchRequest = {
+                    QueueUrl: this.requestQueueURL,
+                    Entries: entries
+                };
+                try {
+                    await this.sqsClient.send(new DeleteMessageBatchCommand(deleteBatch))
+                } catch (err: any) {
+                    this.logger.error("Failed to delete messages from queue.", err.message);
+                }
+            } else {
+                let pollDuration = new Date().getTime() - pollStartTs;
+                if (pollDuration < this.pollInterval) {
+                    await sleep(this.pollInterval - pollDuration);
                 }
             }
-        } catch (e: any) {
-            this.logger.error('Failed to start ThingsBoard JavaScript Executor Microservice: %s', e.message);
-            this.logger.error(e.stack);
-            await this.exit(-1);
         }
     }
 
@@ -187,29 +181,21 @@ export class AwsSqsTemplate implements IQueue {
         return result.QueueUrl || '';
     }
 
-    static async build(): Promise<AwsSqsTemplate> {
-        const queue = new AwsSqsTemplate();
-        await queue.init();
-        return queue;
-    }
-
-    async exit(status: number) {
+    async destroy(): Promise<void> {
         this.stopped = true;
-        this.logger.info('Exiting with status: %d ...', status);
+        this.logger.info('Stopping AWS SQS resources...');
         if (this.sqsClient) {
-            this.logger.info('Stopping Aws Sqs client.')
+            this.logger.info('Stopping AWS SQS client...');
             try {
-                this.sqsClient.destroy();
+                const _sqsClient = this.sqsClient;
                 // @ts-ignore
                 delete this.sqsClient;
-                this.logger.info('Aws Sqs client stopped.')
-                process.exit(status);
+                _sqsClient.destroy();
+                this.logger.info('AWS SQS client stopped.');
             } catch (e: any) {
-                this.logger.info('Aws Sqs client stop error.');
-                process.exit(status);
+                this.logger.info('AWS SQS client stop error.');
             }
-        } else {
-            process.exit(status);
         }
+        this.logger.info('AWS SQS resources stopped.')
     }
 }

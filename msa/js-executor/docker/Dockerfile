@@ -29,6 +29,7 @@ COPY package/linux/conf ./conf
 COPY package/linux/conf ./config
 COPY src/api ./api
 COPY src/queue ./queue
+COPY src/config ./config
 COPY src/server.js ./
 
 RUN chmod a+x /tmp/*.sh \
