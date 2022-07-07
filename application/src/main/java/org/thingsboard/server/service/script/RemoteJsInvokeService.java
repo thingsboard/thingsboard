@@ -192,6 +192,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
         Futures.addCallback(future, new FutureCallback<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>>() {
             @Override
             public void onSuccess(@Nullable TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse> result) {
+                queueInvokeMsgs.incrementAndGet();
             }
 
             @Override
@@ -207,7 +208,6 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
             log.trace("doInvokeFunction js-response took {}ms for uuid {}", stopWatch.getTotalTimeMillis(), response.getKey());
             JsInvokeProtos.JsInvokeResponse invokeResult = response.getValue().getInvokeResponse();
             if (invokeResult.getSuccess()) {
-                queueInvokeMsgs.incrementAndGet();
                 return invokeResult.getResult();
             } else {
                 final RuntimeException e = new RuntimeException(invokeResult.getErrorDetails());
