@@ -85,10 +85,8 @@ public class DefaultMailService implements MailService {
     @Autowired
     private MailExecutorService mailExecutorService;
 
-    @Value("${actors.rule.mail_timeout_thread_pool_size}")
-    private int timeoutExecutorPoolSize;
-
-    private ExecutorService timeoutExecutorService;
+    @Autowired
+    private PasswordResetExecutorService passwordResetExecutorService;
 
     private JavaMailSenderImpl mailSender;
 
@@ -106,14 +104,6 @@ public class DefaultMailService implements MailService {
     @PostConstruct
     private void init() {
         updateMailConfiguration();
-        timeoutExecutorService = Executors.newFixedThreadPool(timeoutExecutorPoolSize);
-    }
-
-    @PreDestroy
-    private void destroy() {
-        if (timeoutExecutorService != null) {
-            timeoutExecutorService.shutdown();
-        }
     }
 
     @Override
@@ -252,7 +242,7 @@ public class DefaultMailService implements MailService {
 
     @Override
     public void sendResetPasswordEmailAsync(String passwordResetLink, String email) {
-        mailExecutorService.execute(() -> {
+        passwordResetExecutorService.execute(() -> {
             try {
                 this.sendResetPasswordEmail(passwordResetLink, email);
             } catch (ThingsboardException e) {
@@ -489,9 +479,8 @@ public class DefaultMailService implements MailService {
     }
 
     private void sendMailWithTimeout(JavaMailSender mailSender, MimeMessage msg, long timeout) {
-        var submittedMail = timeoutExecutorService.submit(() -> mailSender.send(msg));
         try {
-            submittedMail.get(timeout, TimeUnit.MILLISECONDS);
+            mailExecutorService.submit(() -> mailSender.send(msg)).get(timeout, TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
             log.debug("Error during mail submission", e);
             throw new RuntimeException("Timeout!");

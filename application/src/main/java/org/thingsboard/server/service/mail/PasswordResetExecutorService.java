@@ -13,25 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.common.util;
+package org.thingsboard.server.service.mail;
 
-import com.google.common.util.concurrent.ListenableFuture;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.AbstractListeningExecutor;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executor;
+@Component
+public class PasswordResetExecutorService extends AbstractListeningExecutor {
 
-public interface ListeningExecutor extends Executor {
+    @Value("${actors.rule.mail_password_reset_thread_pool_size:10}")
+    private int mailExecutorThreadPoolSize;
 
-    <T> ListenableFuture<T> executeAsync(Callable<T> task);
-
-    ListenableFuture<?> executeAsync(Runnable task);
-
-    default <T> ListenableFuture<T> submit(Callable<T> task) {
-        return executeAsync(task);
-    }
-
-    default ListenableFuture<?> submit(Runnable task) {
-        return executeAsync(task);
+    @Override
+    protected int getThreadPollSize() {
+        return mailExecutorThreadPoolSize;
     }
 
 }
