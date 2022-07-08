@@ -93,7 +93,7 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
 
-        Mockito.reset(tbClusterService, auditLogService);
+        Mockito.reset(tbClusterService);
 
         Tenant savedTenant = doPost("/api/tenant", tenant, Tenant.class);
         Assert.assertNotNull(savedTenant);
@@ -122,7 +122,7 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         Tenant tenant = new Tenant();
         tenant.setTitle(RandomStringUtils.randomAlphanumeric(300));
 
-        Mockito.reset(tbClusterService, auditLogService);
+        Mockito.reset(tbClusterService);
 
         doPost("/api/tenant", tenant)
                 .andExpect(status().isBadRequest())
@@ -161,7 +161,7 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
     public void testSaveTenantWithEmptyTitle() throws Exception {
         loginSysAdmin();
 
-        Mockito.reset(tbClusterService, auditLogService);
+        Mockito.reset(tbClusterService);
 
         Tenant tenant = new Tenant();
         doPost("/api/tenant", tenant)
@@ -175,7 +175,7 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
     public void testSaveTenantWithInvalidEmail() throws Exception {
         loginSysAdmin();
 
-        Mockito.reset(tbClusterService, auditLogService);
+        Mockito.reset(tbClusterService);
 
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
@@ -212,7 +212,7 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         Assert.assertEquals(1, pageData.getData().size());
         tenants.addAll(pageData.getData());
 
-        Mockito.reset(tbClusterService, auditLogService);
+        Mockito.reset(tbClusterService);
 
         int cntEntity = 56;
         List<ListenableFuture<Tenant>> createFutures = new ArrayList<>(56);
@@ -578,13 +578,13 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         }
         TenantId tenantId = cntTime == 1 ? tenant.getId() : (TenantId) createEntityId_NULL_UUID(tenant);
         testBroadcastEntityStateChangeEventTime(tenantId, tenantId,  cntTime);
-        Mockito.reset(tbClusterService, auditLogService);
+        Mockito.reset(tbClusterService);
     }
 
     private void testBroadcastEntityStateChangeEventNeverTenant() {
         Mockito.verify(tbClusterService, never()).onTenantChange(Mockito.any(Tenant.class),
                     Mockito.isNull());
         testBroadcastEntityStateChangeEventNever(createEntityId_NULL_UUID(new Tenant()));
-        Mockito.reset(tbClusterService, auditLogService);
+        Mockito.reset(tbClusterService);
     }
 }
