@@ -55,7 +55,7 @@ public class ContainerTestSuite {
     private static final String TB_CORE_LOG_REGEXP = ".*Starting polling for events.*";
     private static final String TRANSPORTS_LOG_REGEXP = ".*Going to recalculate partitions.*";
     private static final String TB_VC_LOG_REGEXP = TRANSPORTS_LOG_REGEXP;
-    private static final Duration CONTAINER_STARTUP_TIMEOUT = Duration.ofSeconds(120);
+    private static final Duration CONTAINER_STARTUP_TIMEOUT = Duration.ofSeconds(400);
 
     private static DockerComposeContainer<?> testContainer;
 
