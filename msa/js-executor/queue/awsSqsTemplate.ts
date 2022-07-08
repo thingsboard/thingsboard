@@ -90,12 +90,12 @@ export class AwsSqsTemplate implements IQueue {
         const params: ReceiveMessageRequest = {
             MaxNumberOfMessages: 10,
             QueueUrl: this.requestQueueURL,
-            WaitTimeSeconds: Math.round(this.pollInterval / 10)
+            WaitTimeSeconds: Math.ceil(this.pollInterval / 10)
         };
-        this.timer = setTimeout(() => {this.processMessage(messageProcessor, params)}, this.pollInterval);
+        this.timer = setTimeout(() => {this.getAndProcessMessage(messageProcessor, params)}, this.pollInterval);
     }
 
-    private async processMessage(messageProcessor: JsInvokeMessageProcessor, params: ReceiveMessageRequest) {
+    private async getAndProcessMessage(messageProcessor: JsInvokeMessageProcessor, params: ReceiveMessageRequest) {
         const messagesResponse: ReceiveMessageResult = await this.sqsClient.send(new ReceiveMessageCommand(params));
         const messages = messagesResponse.Messages;
 
@@ -120,7 +120,7 @@ export class AwsSqsTemplate implements IQueue {
                 this.logger.error("Failed to delete messages from queue.", err.message);
             }
         }
-        this.timer = setTimeout(() => {this.processMessage(messageProcessor, params)}, this.pollInterval);
+        this.timer = setTimeout(() => {this.getAndProcessMessage(messageProcessor, params)}, this.pollInterval);
     }
 
     async send(responseTopic: string, scriptId: string, rawResponse: Buffer, headers: any): Promise<any> {
