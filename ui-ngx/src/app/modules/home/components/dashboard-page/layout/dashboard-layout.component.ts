@@ -27,7 +27,7 @@ import {
   IDashboardComponent,
   WidgetContextMenuItem
 } from '@home/models/dashboard-component.models';
-import { Subscription } from 'rxjs';
+import { merge, Subscription } from 'rxjs';
 import { Hotkey } from 'angular2-hotkeys';
 import { TranslateService } from '@ngx-translate/core';
 import { ItemBufferService } from '@app/core/services/item-buffer.service';
@@ -94,7 +94,11 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
   }
 
   ngOnInit(): void {
-    this.rxSubscriptions.push(this.dashboard.dashboardTimewindowChanged.subscribe(
+    const dashboardTimewindowChanged = [this.dashboard.dashboardTimewindowChanged];
+    if (this.parentDashboard) {
+      dashboardTimewindowChanged.push(this.parentDashboard.dashboardTimewindowChanged);
+    }
+    this.rxSubscriptions.push(merge(...dashboardTimewindowChanged).subscribe(
       (dashboardTimewindow) => {
         this.dashboardCtx.dashboardTimewindow = dashboardTimewindow;
         this.dashboardCtx.runChangeDetection();
