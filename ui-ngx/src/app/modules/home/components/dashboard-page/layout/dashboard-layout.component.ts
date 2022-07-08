@@ -94,7 +94,8 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
   }
 
   ngOnInit(): void {
-    this.rxSubscriptions.push(this.dashboard.dashboardTimewindowChanged.subscribe(
+    const dashboardTimewindowChanged = this.parentDashboard ? this.parentDashboard.dashboardTimewindowChanged : this.dashboard.dashboardTimewindowChanged;    
+    this.rxSubscriptions.push(dashboardTimewindowChanged.subscribe(
       (dashboardTimewindow) => {
         this.dashboardCtx.dashboardTimewindow = dashboardTimewindow;
         this.dashboardCtx.runChangeDetection();
