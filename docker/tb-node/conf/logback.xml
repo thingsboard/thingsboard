@@ -41,7 +41,6 @@
     </appender>
 
     <logger name="org.thingsboard.server" level="INFO" />
-    <logger name="org.thingsboard.server.service.script" level="TRACE" />
     <logger name="com.google.common.util.concurrent.AggregateFuture" level="OFF" />
 
     <root level="INFO">
