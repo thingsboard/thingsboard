@@ -57,6 +57,9 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     @Value("${queue.js.max_requests_timeout}")
     private long maxRequestsTimeout;
 
+    @Value("${queue.js.max_exec_requests_timeout}")
+    private long maxExecRequestsTimeout;
+
     @Getter
     @Value("${js.remote.max_errors}")
     private int maxErrors;
@@ -170,7 +173,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 .setScriptIdMSB(scriptId.getMostSignificantBits())
                 .setScriptIdLSB(scriptId.getLeastSignificantBits())
                 .setFunctionName(functionName)
-                .setTimeout((int) (maxRequestsTimeout  * 0.75)) // timeout on JS executor must be less than on Java
+                .setTimeout((int) maxExecRequestsTimeout)
                 .setScriptBody(scriptBody);
 
         for (Object arg : args) {
