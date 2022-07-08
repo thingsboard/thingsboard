@@ -30,7 +30,10 @@ import org.mockito.Mockito;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.OtaPackageInfo;
+import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -57,6 +60,8 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
+import static org.thingsboard.server.common.data.ota.OtaPackageType.SOFTWARE;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
@@ -204,7 +209,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
 
         String savedDeviceIdStr = savedDevice.getId().getId().toString();
         doPost("/api/device", savedDevice)
-                .andExpect( status().isNotFound())
+                .andExpect(status().isNotFound())
                 .andExpect(statusReason(containsString(msgErrorNoFound("Device", savedDeviceIdStr))));
 
         testNotifyEntityNever(savedDevice.getId(), savedDevice);
@@ -220,6 +225,66 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         testNotificationUpdateGatewayNever();
 
         deleteDifferentTenant();
+    }
+
+    @Test
+    public void testSaveDeviceWithProfileFromDifferentTenant() throws Exception {
+        loginDifferentTenant();
+        DeviceProfile differentProfile = createDeviceProfile("Different profile");
+        differentProfile = doPost("/api/deviceProfile", differentProfile, DeviceProfile.class);
+
+        loginTenantAdmin();
+        Device device = new Device();
+        device.setName("My device");
+        device.setDeviceProfileId(differentProfile.getId());
+        doPost("/api/device", device).andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Device can`t be referencing to device profile from different tenant!")));
+    }
+
+    @Test
+    public void testSaveDeviceWithFirmwareFromDifferentTenant() throws Exception {
+        loginDifferentTenant();
+        DeviceProfile differentProfile = createDeviceProfile("Different profile");
+        differentProfile = doPost("/api/deviceProfile", differentProfile, DeviceProfile.class);
+        SaveOtaPackageInfoRequest firmwareInfo = new SaveOtaPackageInfoRequest();
+        firmwareInfo.setDeviceProfileId(differentProfile.getId());
+        firmwareInfo.setType(FIRMWARE);
+        firmwareInfo.setTitle("title");
+        firmwareInfo.setVersion("1.0");
+        firmwareInfo.setUrl("test.url");
+        firmwareInfo.setUsesUrl(true);
+        OtaPackageInfo savedFw = doPost("/api/otaPackage", firmwareInfo, OtaPackageInfo.class);
+
+        loginTenantAdmin();
+        Device device = new Device();
+        device.setName("My device");
+        device.setType("default");
+        device.setFirmwareId(savedFw.getId());
+        doPost("/api/device", device).andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Can't assign firmware from different tenant!")));
+    }
+
+    @Test
+    public void testSaveDeviceWithSoftwareFromDifferentTenant() throws Exception {
+        loginDifferentTenant();
+        DeviceProfile differentProfile = createDeviceProfile("Different profile");
+        differentProfile = doPost("/api/deviceProfile", differentProfile, DeviceProfile.class);
+        SaveOtaPackageInfoRequest softwareInfo = new SaveOtaPackageInfoRequest();
+        softwareInfo.setDeviceProfileId(differentProfile.getId());
+        softwareInfo.setType(SOFTWARE);
+        softwareInfo.setTitle("title");
+        softwareInfo.setVersion("1.0");
+        softwareInfo.setUrl("test.url");
+        softwareInfo.setUsesUrl(true);
+        OtaPackageInfo savedSw = doPost("/api/otaPackage", softwareInfo, OtaPackageInfo.class);
+
+        loginTenantAdmin();
+        Device device = new Device();
+        device.setName("My device");
+        device.setType("default");
+        device.setSoftwareId(savedSw.getId());
+        doPost("/api/device", device).andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Can't assign software from different tenant!")));
     }
 
     @Test
