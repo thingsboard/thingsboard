@@ -285,7 +285,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected void loginDifferentTenant() throws Exception {
         if (savedDifferentTenant != null) {
-            login(savedDifferentTenant.getEmail(), TENANT_ADMIN_PASSWORD);
+            login(DIFFERENT_TENANT_ADMIN_EMAIL, DIFFERENT_TENANT_ADMIN_PASSWORD);
         } else {
             loginSysAdmin();
 

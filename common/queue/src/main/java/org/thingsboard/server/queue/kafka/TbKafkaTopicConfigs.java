@@ -28,15 +28,15 @@ import java.util.Map;
 @Component
 @ConditionalOnProperty(prefix = "queue", value = "type", havingValue = "kafka")
 public class TbKafkaTopicConfigs {
-    @Value("${queue.kafka.topic-properties.core}")
+    @Value("${queue.kafka.topic-properties.core:}")
     private String coreProperties;
-    @Value("${queue.kafka.topic-properties.rule-engine}")
+    @Value("${queue.kafka.topic-properties.rule-engine:}")
     private String ruleEngineProperties;
-    @Value("${queue.kafka.topic-properties.transport-api}")
+    @Value("${queue.kafka.topic-properties.transport-api:}")
     private String transportApiProperties;
-    @Value("${queue.kafka.topic-properties.notifications}")
+    @Value("${queue.kafka.topic-properties.notifications:}")
     private String notificationsProperties;
-    @Value("${queue.kafka.topic-properties.js-executor}")
+    @Value("${queue.kafka.topic-properties.js-executor:}")
     private String jsExecutorProperties;
     @Value("${queue.kafka.topic-properties.ota-updates:}")
     private String fwUpdatesProperties;

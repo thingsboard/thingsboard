@@ -19,6 +19,7 @@ import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.StringUtils;
 
 import javax.annotation.PostConstruct;
 import java.util.HashMap;
@@ -27,15 +28,15 @@ import java.util.Map;
 @Component
 @ConditionalOnExpression("'${queue.type:null}'=='service-bus'")
 public class TbServiceBusQueueConfigs {
-    @Value("${queue.service-bus.queue-properties.core}")
+    @Value("${queue.service-bus.queue-properties.core:}")
     private String coreProperties;
-    @Value("${queue.service-bus.queue-properties.rule-engine}")
+    @Value("${queue.service-bus.queue-properties.rule-engine:}")
     private String ruleEngineProperties;
-    @Value("${queue.service-bus.queue-properties.transport-api}")
+    @Value("${queue.service-bus.queue-properties.transport-api:}")
     private String transportApiProperties;
-    @Value("${queue.service-bus.queue-properties.notifications}")
+    @Value("${queue.service-bus.queue-properties.notifications:}")
     private String notificationsProperties;
-    @Value("${queue.service-bus.queue-properties.js-executor}")
+    @Value("${queue.service-bus.queue-properties.js-executor:}")
     private String jsExecutorProperties;
     @Value("${queue.service-bus.queue-properties.version-control:}")
     private String vcProperties;
@@ -64,11 +65,13 @@ public class TbServiceBusQueueConfigs {
 
     private Map<String, String> getConfigs(String properties) {
         Map<String, String> configs = new HashMap<>();
-        for (String property : properties.split(";")) {
-            int delimiterPosition = property.indexOf(":");
-            String key = property.substring(0, delimiterPosition);
-            String value = property.substring(delimiterPosition + 1);
-            configs.put(key, value);
+        if (StringUtils.isNotEmpty(properties)) {
+            for (String property : properties.split(";")) {
+                int delimiterPosition = property.indexOf(":");
+                String key = property.substring(0, delimiterPosition);
+                String value = property.substring(delimiterPosition + 1);
+                configs.put(key, value);
+            }
         }
         return configs;
     }

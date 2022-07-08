@@ -20,7 +20,6 @@ import { JsInvokeMessageProcessor } from '../api/jsInvokeMessageProcessor'
 import { IQueue } from './queue.models';
 import amqp, { ConfirmChannel, Connection } from 'amqplib';
 import { Options, Replies } from 'amqplib/properties';
-import { sleep } from '../api/utils';
 
 export class RabbitMqTemplate implements IQueue {
 
@@ -32,7 +31,6 @@ export class RabbitMqTemplate implements IQueue {
     private username = config.get('rabbitmq.username');
     private password = config.get('rabbitmq.password');
     private queueProperties: string = config.get('rabbitmq.queue_properties');
-    private pollInterval = Number(config.get('js.response_poll_interval'));
 
     private queueOptions: Options.AssertQueue = {
         durable: false,
@@ -41,45 +39,30 @@ export class RabbitMqTemplate implements IQueue {
     };
     private connection: Connection;
     private channel: ConfirmChannel;
-    private stopped = false;
     private topics: string[] = [];
+
+    name = 'RabbitMQ';
 
     constructor() {
     }
 
     async init(): Promise<void> {
-        try {
-            this.logger.info('Starting ThingsBoard JavaScript Executor Microservice...');
+        const url = `amqp://${this.username}:${this.password}@${this.host}:${this.port}${this.vhost}`;
+        this.connection = await amqp.connect(url);
+        this.channel = await this.connection.createConfirmChannel();
 
-            const url = `amqp://${this.username}:${this.password}@${this.host}:${this.port}${this.vhost}`;
-            this.connection = await amqp.connect(url);
-            this.channel = await this.connection.createConfirmChannel();
+        this.parseQueueProperties();
 
-            this.parseQueueProperties();
+        await this.createQueue(this.requestTopic);
 
-            await this.createQueue(this.requestTopic);
+        const messageProcessor = new JsInvokeMessageProcessor(this);
 
-            const messageProcessor = new JsInvokeMessageProcessor(this);
-
-            while (!this.stopped) {
-                let pollStartTs = new Date().getTime();
-                let message = await this.channel.get(this.requestTopic);
-
-                if (message) {
-                    messageProcessor.onJsInvokeMessage(JSON.parse(message.content.toString('utf8')));
-                    this.channel.ack(message);
-                } else {
-                    let pollDuration = new Date().getTime() - pollStartTs;
-                    if (pollDuration < this.pollInterval) {
-                        await sleep(this.pollInterval - pollDuration);
-                    }
-                }
+        await this.channel.consume(this.requestTopic, (message) => {
+            if (message) {
+                messageProcessor.onJsInvokeMessage(JSON.parse(message.content.toString('utf8')));
+                this.channel.ack(message);
             }
-        } catch (e: any) {
-            this.logger.error('Failed to start ThingsBoard JavaScript Executor Microservice: %s', e.message);
-            this.logger.error(e.stack);
-            await this.exit(-1);
-        }
+        })
     }
 
     async send(responseTopic: string, scriptId: string, rawResponse: Buffer, headers: any): Promise<any> {
@@ -114,38 +97,31 @@ export class RabbitMqTemplate implements IQueue {
         return this.channel.assertQueue(topic, this.queueOptions);
     }
 
-    static async build(): Promise<RabbitMqTemplate> {
-        const queue = new RabbitMqTemplate();
-        await queue.init();
-        return queue;
-    }
-
-    async exit(status: number) {
-        this.logger.info('Exiting with status: %d ...', status);
+    async destroy() {
+        this.logger.info('Stopping RabbitMQ resources...');
 
         if (this.channel) {
-            this.logger.info('Stopping RabbitMq chanel.')
-            await this.channel.close();
+            this.logger.info('Stopping RabbitMQ chanel...');
+            const _channel = this.channel;
             // @ts-ignore
             delete this.channel;
-            this.logger.info('RabbitMq chanel stopped');
+            await _channel.close();
+            this.logger.info('RabbitMQ chanel stopped');
         }
 
         if (this.connection) {
-            this.logger.info('Stopping RabbitMq connection.')
+            this.logger.info('Stopping RabbitMQ connection...')
             try {
-                await this.connection.close();
+                const _connection = this.connection;
                 // @ts-ignore
                 delete this.connection;
-                this.logger.info('RabbitMq client connection.')
-                process.exit(status);
+                await _connection.close();
+                this.logger.info('RabbitMQ client connection.');
             } catch (e) {
-                this.logger.info('RabbitMq connection stop error.');
-                process.exit(status);
+                this.logger.info('RabbitMQ connection stop error.');
             }
-        } else {
-            process.exit(status);
         }
+        this.logger.info('RabbitMQ resources stopped.')
     }
 
 }
