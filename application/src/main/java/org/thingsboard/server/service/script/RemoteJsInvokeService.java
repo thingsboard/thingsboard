@@ -57,7 +57,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     @Value("${queue.js.max_requests_timeout}")
     private long maxRequestsTimeout;
 
-    @Value("${queue.js.max_exec_requests_timeout}")
+    @Value("${queue.js.max_exec_requests_timeout:2000}")
     private long maxExecRequestsTimeout;
 
     @Getter
