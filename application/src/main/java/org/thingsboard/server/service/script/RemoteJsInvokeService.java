@@ -57,6 +57,9 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     @Value("${queue.js.max_requests_timeout}")
     private long maxRequestsTimeout;
 
+    @Value("${queue.js.max_exec_requests_timeout:2000}")
+    private long maxExecRequestsTimeout;
+
     @Getter
     @Value("${js.remote.max_errors}")
     private int maxErrors;
@@ -170,7 +173,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 .setScriptIdMSB(scriptId.getMostSignificantBits())
                 .setScriptIdLSB(scriptId.getLeastSignificantBits())
                 .setFunctionName(functionName)
-                .setTimeout((int) maxRequestsTimeout)
+                .setTimeout((int) maxExecRequestsTimeout)
                 .setScriptBody(scriptBody);
 
         for (Object arg : args) {
@@ -197,7 +200,6 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
 
             @Override
             public void onFailure(Throwable t) {
-                onScriptExecutionError(scriptId, t, scriptBody);
                 if (t instanceof TimeoutException || (t.getCause() != null && t.getCause() instanceof TimeoutException)) {
                     queueTimeoutMsgs.incrementAndGet();
                 }
@@ -212,8 +214,14 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 return invokeResult.getResult();
             } else {
                 final RuntimeException e = new RuntimeException(invokeResult.getErrorDetails());
-                onScriptExecutionError(scriptId, e, scriptBody);
-                log.debug("[{}] Failed to compile script due to [{}]: {}", scriptId, invokeResult.getErrorCode().name(), invokeResult.getErrorDetails());
+                if (JsInvokeProtos.JsInvokeErrorCode.TIMEOUT_ERROR.equals(invokeResult.getErrorCode())) {
+                    onScriptExecutionError(scriptId, e, scriptBody);
+                    queueTimeoutMsgs.incrementAndGet();
+                } else if (JsInvokeProtos.JsInvokeErrorCode.COMPILATION_ERROR.equals(invokeResult.getErrorCode())) {
+                    onScriptExecutionError(scriptId, e, scriptBody);
+                }
+                queueFailedMsgs.incrementAndGet();
+                log.debug("[{}] Failed to invoke function due to [{}]: {}", scriptId, invokeResult.getErrorCode().name(), invokeResult.getErrorDetails());
                 throw e;
             }
         }, callbackExecutor);
