@@ -112,7 +112,7 @@ public class HashPartitionServiceTest {
             map.put(partition, map.getOrDefault(partition, 0) + 1);
         }
 
-        checkDispersion(start, map, ITERATIONS, 1.0);
+        checkDispersion(start, map, ITERATIONS, 5.0);
     }
 
     @SneakyThrows
