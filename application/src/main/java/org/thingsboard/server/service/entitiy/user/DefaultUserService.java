@@ -72,7 +72,7 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
                     savedUser, user, actionType, true, null);
             return savedUser;
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.USER), user, actionType, user, e);
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.USER), tbUser, actionType, user, e);
             throw e;
         }
     }
