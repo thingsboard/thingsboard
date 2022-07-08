@@ -74,6 +74,8 @@ public class ContainerTestSuite {
                 FileUtils.copyDirectory(new File(SOURCE_DIR), new File(targetDir));
                 replaceInFile(targetDir + "docker-compose.yml", "    container_name: \"${LOAD_BALANCER_NAME}\"", "", "container_name");
 
+                FileUtils.copyDirectory(new File("src/test/resources"), new File(targetDir));
+
                 class DockerComposeContainerImpl<SELF extends DockerComposeContainer<SELF>> extends DockerComposeContainer<SELF> {
                     public DockerComposeContainerImpl(List<File> composeFiles) {
                         super(composeFiles);
