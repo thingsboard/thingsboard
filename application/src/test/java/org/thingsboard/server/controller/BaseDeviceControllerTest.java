@@ -1188,7 +1188,6 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         Assert.assertEquals(0, pageData.getData().size());
     }
 
-
     protected void testNotificationUpdateGatewayOneTime(Device device, Device oldDevice) {
         Mockito.verify(gatewayNotificationsService, times(1)).onDeviceUpdated(Mockito.eq(device), Mockito.eq(oldDevice));
     }

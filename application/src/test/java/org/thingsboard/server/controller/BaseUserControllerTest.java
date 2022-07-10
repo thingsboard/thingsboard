@@ -76,9 +76,10 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         User foundUser = doGet("/api/user/" + savedUser.getId().getId().toString(), User.class);
         Assert.assertEquals(foundUser, savedUser);
 
-        testNotifyEntityAllOneTime(savedUser, savedUser.getId(), savedUser.getId(),
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(foundUser, foundUser,
                 SYSTEM_TENANT, customerNUULId, null, SYS_ADMIN_EMAIL,
-                ActionType.ADDED);
+                ActionType.ADDED, ActionType.ADDED, 1, 1, 1);
+        Mockito.reset(tbClusterService, auditLogService);
 
         logout();
         doGet("/api/noauth/activate?activateToken={activateToken}", TestMailService.currentActivateToken)

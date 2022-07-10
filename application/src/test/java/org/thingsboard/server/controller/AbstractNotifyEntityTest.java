@@ -341,7 +341,7 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
     }
 
     private void testPushMsgToRuleEngineTime(ArgumentMatcher<EntityId> matcherOriginatorId, TenantId tenantId, HasName entity, int cntTime) {
-        tenantId = tenantId.isNullUid() ? ((HasTenantId) entity).getTenantId() : tenantId;
+        tenantId = tenantId.isNullUid() && ((HasTenantId) entity).getTenantId() != null ? ((HasTenantId) entity).getTenantId() : tenantId;
         Mockito.verify(tbClusterService, times(cntTime)).pushMsgToRuleEngine(Mockito.eq(tenantId),
                 Mockito.argThat(matcherOriginatorId), Mockito.any(TbMsg.class), Mockito.isNull());
     }
