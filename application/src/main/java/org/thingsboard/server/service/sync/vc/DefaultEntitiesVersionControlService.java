@@ -139,18 +139,24 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         DonAsynchron.withCallback(pendingCommit, commit -> {
             cachePut(commit.getTxId(), new VersionCreationResult());
             try {
-                List<ListenableFuture<Void>> gitFutures = new ArrayList<>();
+                EntitiesExportCtx<?> theCtx;
                 switch (request.getType()) {
                     case SINGLE_ENTITY: {
-                        handleSingleEntityRequest(new SimpleEntitiesExportCtx(user, commit, (SingleEntityVersionCreateRequest) request));
+                        var ctx = new SimpleEntitiesExportCtx(user, commit, (SingleEntityVersionCreateRequest) request);
+                        handleSingleEntityRequest(ctx);
+                        theCtx = ctx;
                         break;
                     }
                     case COMPLEX: {
-                        handleComplexRequest(new ComplexEntitiesExportCtx(user, commit, (ComplexVersionCreateRequest) request));
+                        var ctx = new ComplexEntitiesExportCtx(user, commit, (ComplexVersionCreateRequest) request);
+                        handleComplexRequest(ctx);
+                        theCtx = ctx;
                         break;
                     }
+                    default:
+                        throw new RuntimeException("Unsupported request type: " + request.getType());
                 }
-                var resultFuture = Futures.transformAsync(Futures.allAsList(gitFutures), f -> gitServiceQueue.push(commit), executor);
+                var resultFuture = Futures.transformAsync(Futures.allAsList(theCtx.getFutures()), f -> gitServiceQueue.push(commit), executor);
                 DonAsynchron.withCallback(resultFuture, result -> cachePut(commit.getTxId(), result), e -> processCommitError(user, request, commit, e), executor);
             } catch (Exception e) {
                 processCommitError(user, request, commit, e);

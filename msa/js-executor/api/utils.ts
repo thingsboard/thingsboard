@@ -39,12 +39,6 @@ export function isString(value: any): boolean {
     return typeof value === 'string';
 }
 
-export function sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => {
-        setTimeout(resolve, ms);
-    });
-}
-
 export function parseJsErrorDetails(err: any): string | undefined {
     if (!err) {
         return undefined;

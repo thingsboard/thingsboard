@@ -27,7 +27,7 @@
 
     <logger name="org.thingsboard.server" level="INFO"/>
     <logger name="org.apache.kafka.common.utils.AppInfoParser" level="WARN"/>
-    <logger name="org.apache.kafka.clients.consumer.ConsumerConfig" level="WARN"/>
+    <logger name="org.apache.kafka.clients" level="WARN"/>
     <!-- To enable the logging of scanned rule engine components-->
     <!--    <logger name="org.thingsboard.server.service.component.AnnotationComponentDiscoveryService" level="DEBUG" />-->
     <!-- Other useful logs -->

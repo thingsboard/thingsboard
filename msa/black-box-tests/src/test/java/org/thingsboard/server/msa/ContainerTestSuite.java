@@ -95,7 +95,7 @@ public class ContainerTestSuite {
                         new File(targetDir + "docker-compose.postgres.volumes.yml"),
                         new File(targetDir + "docker-compose." + QUEUE_TYPE + ".yml"),
                         new File(targetDir + (IS_REDIS_CLUSTER ? "docker-compose.redis-cluster.yml" : "docker-compose.redis.yml")),
-                        new File(targetDir + (IS_HYBRID_MODE ? "docker-compose.redis-cluster.volumes.yml" : "docker-compose.redis.volumes.yml"))
+                        new File(targetDir + (IS_REDIS_CLUSTER ? "docker-compose.redis-cluster.volumes.yml" : "docker-compose.redis.volumes.yml"))
                 ));
 
                 Map<String, String> queueEnv = new HashMap<>();
