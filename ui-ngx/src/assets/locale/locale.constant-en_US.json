@@ -2923,6 +2923,7 @@
     },
     "queue": {
         "queue-name": "Queue",
+        "no-queues-found": "No queues found.",
         "no-queues-matching": "No queues matching '{{queue}}' were found.",
         "select-name": "Select queue name",
         "name": "Name",
