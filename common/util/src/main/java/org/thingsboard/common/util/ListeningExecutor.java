@@ -24,7 +24,12 @@ public interface ListeningExecutor extends Executor {
 
     <T> ListenableFuture<T> executeAsync(Callable<T> task);
 
-    ListenableFuture<?> executeAsync(Runnable task);
+    default ListenableFuture<?> executeAsync(Runnable task) {
+        return executeAsync(() -> {
+            task.run();
+            return null;
+        });
+    }
 
     default <T> ListenableFuture<T> submit(Callable<T> task) {
         return executeAsync(task);
