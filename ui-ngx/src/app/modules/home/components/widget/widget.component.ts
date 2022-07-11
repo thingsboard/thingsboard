@@ -399,17 +399,17 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   }
 
   private displayWidgetInstance(): boolean {
-    if (this.widget.type !== widgetType.static) {
-      for (const id of Object.keys(this.widgetContext.subscriptions)) {
-        const subscription = this.widgetContext.subscriptions[id];
-        if (subscription.isDataResolved()) {
-          return true;
-        }
-      }
-      return false;
-    } else {
+    if (this.widget.type === widgetType.static || this.typeParameters?.processNoDataByWidget) {
       return true;
     }
+
+    for (const id of Object.keys(this.widgetContext.subscriptions)) {
+      const subscription = this.widgetContext.subscriptions[id];
+      if (subscription.isDataResolved()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private onDestroy() {

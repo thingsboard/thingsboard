@@ -159,6 +159,7 @@ export interface WidgetTypeParameters {
   singleEntity?: boolean;
   warnOnPageDataOverflow?: boolean;
   ignoreDataUpdateOnIntervalTick?: boolean;
+  processNoDataByWidget?: boolean;
 }
 
 export interface WidgetControllerDescriptor {
