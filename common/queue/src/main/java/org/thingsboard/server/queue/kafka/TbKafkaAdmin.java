@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.queue.kafka;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
@@ -37,6 +38,7 @@ public class TbKafkaAdmin implements TbQueueAdmin {
     private final AdminClient client;
     private final Map<String, String> topicConfigs;
     private final Set<String> topics = ConcurrentHashMap.newKeySet();
+    @Getter
     private final int numPartitions;
 
     private final short replicationFactor;
@@ -67,7 +69,7 @@ public class TbKafkaAdmin implements TbQueueAdmin {
             return;
         }
         try {
-            NewTopic newTopic = new NewTopic(topic, numPartitions, replicationFactor).configs(topicConfigs);
+            NewTopic newTopic = new NewTopic(topic, getPartitionsForTopic(topic), replicationFactor).configs(topicConfigs);
             createTopic(newTopic).values().get(topic).get();
             topics.add(topic);
         } catch (ExecutionException ee) {
@@ -82,6 +84,12 @@ public class TbKafkaAdmin implements TbQueueAdmin {
             throw new RuntimeException(e);
         }
 
+    }
+
+    int getPartitionsForTopic(String topic) {
+        return (topic.startsWith("js_eval.responses.") || topic.startsWith("tb_transport.api.responses."))
+                ? 1
+                : getNumPartitions();
     }
 
     @Override
