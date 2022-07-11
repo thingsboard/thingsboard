@@ -107,7 +107,7 @@ public class DeviceProfileDataValidator extends DataValidator<DeviceProfile> {
 
     @Override
     protected void validateDataImpl(TenantId tenantId, DeviceProfile deviceProfile) {
-        if (org.thingsboard.server.common.data.StringUtils.isEmpty(deviceProfile.getName())) {
+        if (StringUtils.isEmpty(deviceProfile.getName())) {
             throw new DataValidationException("Device profile name should be specified!");
         }
         if (deviceProfile.getType() == null) {
@@ -130,7 +130,7 @@ public class DeviceProfileDataValidator extends DataValidator<DeviceProfile> {
                 throw new DataValidationException("Another default device profile is present in scope of current tenant!");
             }
         }
-        if (!org.thingsboard.server.common.data.StringUtils.isEmpty(deviceProfile.getDefaultQueueName()) && queueService != null) {
+        if (!StringUtils.isEmpty(deviceProfile.getDefaultQueueName()) && queueService != null) {
             if (!queueService.getQueuesByServiceType(ServiceType.TB_RULE_ENGINE).contains(deviceProfile.getDefaultQueueName())) {
                 throw new DataValidationException("Device profile is referencing to non-existent queue!");
             }

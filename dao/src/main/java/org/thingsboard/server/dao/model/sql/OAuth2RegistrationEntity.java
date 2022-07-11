@@ -16,7 +16,7 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.micrometer.core.instrument.util.StringUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;

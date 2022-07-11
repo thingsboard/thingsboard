@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.msa;
 
-import org.apache.commons.lang3.RandomStringUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.junit.rules.ExternalResource;
 import org.testcontainers.utility.Base58;
 
