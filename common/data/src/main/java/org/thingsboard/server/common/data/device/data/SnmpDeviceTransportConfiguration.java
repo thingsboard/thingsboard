@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.ToString;
 import org.apache.commons.lang3.ObjectUtils;
-import org.apache.commons.lang3.StringUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.transport.snmp.AuthenticationProtocol;
 import org.thingsboard.server.common.data.transport.snmp.PrivacyProtocol;

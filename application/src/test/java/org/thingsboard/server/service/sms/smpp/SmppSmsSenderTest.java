@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.service.sms.smpp;
 
-import org.apache.commons.lang3.StringUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Ignore;

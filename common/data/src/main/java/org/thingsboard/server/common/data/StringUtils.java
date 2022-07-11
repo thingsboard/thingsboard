@@ -17,9 +17,12 @@ package org.thingsboard.server.common.data;
 
 import com.google.common.base.Splitter;
 
+import java.nio.charset.Charset;
+
 import static org.apache.commons.lang3.StringUtils.repeat;
 
 public class StringUtils {
+    public static Charset UTF8 = com.amazonaws.util.StringUtils.UTF8;
 
     public static final String EMPTY = "";
 
@@ -98,4 +101,51 @@ public class StringUtils {
         return Splitter.fixedLength(maxPartSize).split(value);
     }
 
+    public static boolean equalsIgnoreCase(String value, String aTrue) {
+        return org.eclipse.leshan.core.util.StringUtils.equalsIgnoreCase(value, aTrue);
+    }
+
+    public static String join(String[] keyArray, String lwm2mSeparatorPath) {
+        return org.apache.commons.lang3.StringUtils.join(keyArray, lwm2mSeparatorPath);
+    }
+
+    public static String trimToNull(String toString) {
+        return org.apache.commons.lang3.StringUtils.trimToNull(toString);
+    }
+
+    public static boolean isNoneEmpty(String str) {
+        return org.apache.commons.lang3.StringUtils.isNoneEmpty(str);
+    }
+
+    public static boolean endsWith(String str, String suffix) {
+        return org.apache.commons.lang3.StringUtils.endsWith(str, suffix);
+    }
+
+    public static boolean hasLength(String str) {
+        return org.springframework.util.StringUtils.hasLength(str);
+    }
+
+    public static boolean isNoneBlank(String str) {
+        return org.apache.commons.lang3.StringUtils.isNoneBlank(str);
+    }
+
+    public static boolean hasText(String str) {
+        return org.springframework.util.StringUtils.hasText(str);
+    }
+
+    public static String defaultString(String s, String defaultValue) {
+        return org.apache.commons.lang3.StringUtils.defaultString(s, defaultValue);
+    }
+
+    public static boolean isNumeric(String str) {
+        return org.apache.commons.lang3.StringUtils.isNumeric(str);
+    }
+
+    public static boolean equals(String str1, String str2) {
+        return org.apache.commons.lang3.StringUtils.equals(str1, str2);
+    }
+
+    public static String substringAfterLast(String str, String sep) {
+        return org.apache.commons.lang3.StringUtils.substringAfterLast(str, sep);
+    }
 }

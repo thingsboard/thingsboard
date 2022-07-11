@@ -17,7 +17,7 @@ package org.thingsboard.server.dao.model.sqlts.timescale.ts;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
 
 import javax.persistence.ColumnResult;
