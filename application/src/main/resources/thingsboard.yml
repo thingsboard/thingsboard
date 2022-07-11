@@ -326,7 +326,9 @@ actors:
     # Specify thread pool size for javascript executor service
     js_thread_pool_size: "${ACTORS_RULE_JS_THREAD_POOL_SIZE:50}"
     # Specify thread pool size for mail sender executor service
-    mail_thread_pool_size: "${ACTORS_RULE_MAIL_THREAD_POOL_SIZE:50}"
+    mail_thread_pool_size: "${ACTORS_RULE_MAIL_THREAD_POOL_SIZE:40}"
+    # Specify thread pool size for password reset emails
+    mail_password_reset_thread_pool_size: "${ACTORS_RULE_MAIL_PASSWORD_RESET_THREAD_POOL_SIZE:10}"
     # Specify thread pool size for sms sender executor service
     sms_thread_pool_size: "${ACTORS_RULE_SMS_THREAD_POOL_SIZE:50}"
     # Whether to allow usage of system mail service for rules
