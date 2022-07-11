@@ -120,7 +120,7 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
         DeviceProfile oldDeviceProfile = deviceProfileValidator.validate(deviceProfile, DeviceProfile::getTenantId);
         DeviceProfile savedDeviceProfile;
         try {
-            if (deviceProfile.getDefaultQueueId() == null && StringUtils.isNotEmpty(deviceProfile.getDefaultQueueName())) {
+            if (StringUtils.isNotEmpty(deviceProfile.getDefaultQueueName())) {
                 Queue existing = queueService.findQueueByTenantIdAndName(deviceProfile.getTenantId(), deviceProfile.getDefaultQueueName());
                 if (existing != null) {
                     deviceProfile.setDefaultQueueId(existing.getId());

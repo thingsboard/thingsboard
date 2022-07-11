@@ -254,6 +254,7 @@ CREATE TABLE IF NOT EXISTS device_profile (
     default_rule_chain_id uuid,
     default_dashboard_id uuid,
     default_queue_id uuid,
+    default_queue_name varchar(255),
     provision_device_key varchar,
     external_id uuid,
     CONSTRAINT device_profile_name_unq_key UNIQUE (tenant_id, name),

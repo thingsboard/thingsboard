@@ -91,6 +91,9 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
     @Column(name = ModelConstants.DEVICE_PROFILE_DEFAULT_QUEUE_ID_PROPERTY)
     private UUID defaultQueueId;
 
+    @Column(name = ModelConstants.DEVICE_PROFILE_DEFAULT_QUEUE_NAME_PROPERTY)
+    private String defaultQueueName;
+
     @Type(type = "jsonb")
     @Column(name = ModelConstants.DEVICE_PROFILE_PROFILE_DATA_PROPERTY, columnDefinition = "jsonb")
     private JsonNode profileData;
@@ -133,6 +136,7 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
         if (deviceProfile.getDefaultDashboardId() != null) {
             this.defaultDashboardId = deviceProfile.getDefaultDashboardId().getId();
         }
+        this.defaultQueueName = deviceProfile.getDefaultQueueName();
         if (deviceProfile.getDefaultQueueId() != null) {
             this.defaultQueueId = deviceProfile.getDefaultQueueId().getId();
         }
@@ -176,6 +180,7 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
         deviceProfile.setProvisionType(provisionType);
         deviceProfile.setDescription(description);
         deviceProfile.setDefault(isDefault);
+        deviceProfile.setDefaultQueueName(defaultQueueName);
         deviceProfile.setProfileData(JacksonUtil.convertValue(profileData, DeviceProfileData.class));
         if (defaultRuleChainId != null) {
             deviceProfile.setDefaultRuleChainId(new RuleChainId(defaultRuleChainId));
@@ -191,7 +196,6 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
         if (firmwareId != null) {
             deviceProfile.setFirmwareId(new OtaPackageId(firmwareId));
         }
-
         if (softwareId != null) {
             deviceProfile.setSoftwareId(new OtaPackageId(softwareId));
         }

@@ -75,6 +75,14 @@ public class QueueController extends BaseController {
         return checkNotNull(queueService.findQueueById(getTenantId(), queueId));
     }
 
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/queues/name/{queueName}", method = RequestMethod.GET)
+    @ResponseBody
+    public Queue getQueueByName(@PathVariable("queueName") String queueName) throws ThingsboardException {
+        checkParameter("queueName", queueName);
+        return checkNotNull(queueService.findQueueByTenantIdAndName(getTenantId(), queueName));
+    }
+
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/queues", params = {"serviceType"}, method = RequestMethod.POST)
     @ResponseBody
