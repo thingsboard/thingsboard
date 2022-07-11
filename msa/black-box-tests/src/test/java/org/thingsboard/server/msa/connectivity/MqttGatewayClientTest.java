@@ -410,6 +410,8 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         String deviceName = "mqtt_device";
         mqttClient.publish("v1/gateway/connect", Unpooled.wrappedBuffer(createGatewayConnectPayload(deviceName).toString().getBytes()), MqttQoS.AT_LEAST_ONCE).get();
 
+        TimeUnit.SECONDS.sleep(60);
+
         List<EntityRelation> relations = restClient.findByFrom(gatewayDevice.getId(), RelationTypeGroup.COMMON);
 
         Assert.assertEquals(1, relations.size());

@@ -107,13 +107,20 @@ public class ContainerTestSuite {
                     case "aws-sqs":
                         replaceInFile(targetDir, "queue-aws-sqs.env",
                                 Map.of("YOUR_KEY", getSysProp("blackBoxTests.awsKey"),
-                                        "YOUR_SECRET", "blackBoxTests.awsSecret",
-                                        "YOUR_REGION", "blackBoxTests.awsRegion"));
+                                        "YOUR_SECRET", getSysProp("blackBoxTests.awsSecret"),
+                                        "YOUR_REGION", getSysProp("blackBoxTests.awsRegion")));
                         break;
                     case "rabbitmq":
                         composeFiles.add(new File(targetDir + "docker-compose.rabbitmq-server.yml"));
                         replaceInFile(targetDir, "queue-rabbitmq.env",
                                 Map.of("localhost", "rabbitmq"));
+                        break;
+                    case "service-bus":
+                        replaceInFile(targetDir, "queue-service-bus.env",
+                                Map.of("YOUR_NAMESPACE_NAME", getSysProp("blackBoxTests.serviceBusNamespace"),
+                                        "YOUR_SAS_KEY_NAME", getSysProp("blackBoxTests.serviceBusSASPolicy")));
+                        replaceInFile(targetDir, "queue-service-bus.env",
+                                Map.of("YOUR_SAS_KEY", getSysProp("blackBoxTests.serviceBusPrimaryKey")));
                         break;
                     default:
                         throw new RuntimeException("Unsupported queue type: " + QUEUE_TYPE);

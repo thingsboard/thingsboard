@@ -277,7 +277,7 @@ public class MqttClientTest extends AbstractContainerTest {
         });
 
         // Wait for RPC call from the server and send the response
-        MqttEvent requestFromServer = listener.getEvents().poll(10, TimeUnit.SECONDS);
+        MqttEvent requestFromServer = listener.getEvents().poll(60, TimeUnit.SECONDS);
 
         Assert.assertEquals("{\"method\":\"getValue\",\"params\":true}", Objects.requireNonNull(requestFromServer).getMessage());
 
@@ -320,8 +320,8 @@ public class MqttClientTest extends AbstractContainerTest {
         mqttClient.publish("v1/devices/me/rpc/request/" + requestId, Unpooled.wrappedBuffer(clientRequest.toString().getBytes())).get();
 
         // Check the response from the server
-        TimeUnit.SECONDS.sleep(1);
-        MqttEvent responseFromServer = listener.getEvents().poll(1, TimeUnit.SECONDS);
+        TimeUnit.SECONDS.sleep(10);
+        MqttEvent responseFromServer = listener.getEvents().poll(10, TimeUnit.SECONDS);
         Integer responseId = Integer.valueOf(Objects.requireNonNull(responseFromServer).getTopic().substring("v1/devices/me/rpc/response/".length()));
         Assert.assertEquals(requestId, responseId);
         Assert.assertEquals("requestReceived", mapper.readTree(responseFromServer.getMessage()).get("response").asText());
