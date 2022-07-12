@@ -35,6 +35,10 @@ export class QueueService {
     return this.http.get<QueueInfo>(`/api/queues/${queueId}`, defaultHttpOptionsFromConfig(config));
   }
 
+  public getQueueByName(queueName: string, config?: RequestConfig): Observable<QueueInfo> {
+    return this.http.get<QueueInfo>(`/api/queues/name/${queueName}`, defaultHttpOptionsFromConfig(config));
+  }
+
   public getTenantQueuesByServiceType(pageLink: PageLink,
                                       serviceType: ServiceType,
                                       config?: RequestConfig): Observable<PageData<QueueInfo>> {
