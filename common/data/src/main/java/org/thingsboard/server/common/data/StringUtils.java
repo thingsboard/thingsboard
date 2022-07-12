@@ -76,7 +76,7 @@ public class StringUtils {
     }
 
     public static String join(String[] keyArray, String sep) {
-        return null;
+        return org.apache.commons.lang3.StringUtils.join(keyArray, sep);
     }
 
     public static String trim(String str) {
