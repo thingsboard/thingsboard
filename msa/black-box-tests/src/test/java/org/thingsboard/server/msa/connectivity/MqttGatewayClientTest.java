@@ -168,7 +168,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
                         mapper.readTree(sharedAttributes.toString()), ResponseEntity.class,
                         createdDevice.getId());
         Assert.assertTrue(sharedAttributesResponse.getStatusCode().is2xxSuccessful());
-        var event = listener.getEvents().poll(10, TimeUnit.SECONDS);
+        var event = listener.getEvents().poll(60, TimeUnit.SECONDS);
 
         JsonObject requestData = new JsonObject();
         requestData.addProperty("id", 1);
@@ -178,7 +178,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
 
         mqttClient.on("v1/gateway/attributes/response", listener, MqttQoS.AT_LEAST_ONCE).get();
         mqttClient.publish("v1/gateway/attributes/request", Unpooled.wrappedBuffer(requestData.toString().getBytes())).get();
-        event = listener.getEvents().poll(10, TimeUnit.SECONDS);
+        event = listener.getEvents().poll(60, TimeUnit.SECONDS);
 
         JsonObject responseData = jsonParser.parse(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
         Assert.assertTrue(responseData.has("value"));
@@ -195,7 +195,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
 
         mqttClient.on("v1/gateway/attributes/response", listener, MqttQoS.AT_LEAST_ONCE).get();
         mqttClient.publish("v1/gateway/attributes/request", Unpooled.wrappedBuffer(requestData.toString().getBytes())).get();
-        event = listener.getEvents().poll(10, TimeUnit.SECONDS);
+        event = listener.getEvents().poll(60, TimeUnit.SECONDS);
         responseData = jsonParser.parse(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
 
         Assert.assertTrue(responseData.has("values"));
@@ -213,7 +213,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
 
         mqttClient.on("v1/gateway/attributes/response", listener, MqttQoS.AT_LEAST_ONCE).get();
         mqttClient.publish("v1/gateway/attributes/request", Unpooled.wrappedBuffer(requestData.toString().getBytes())).get();
-        event = listener.getEvents().poll(10, TimeUnit.SECONDS);
+        event = listener.getEvents().poll(60, TimeUnit.SECONDS);
         responseData = jsonParser.parse(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
 
         Assert.assertTrue(responseData.has("values"));
@@ -256,7 +256,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
                         mapper.readTree(sharedAttributes.toString()), ResponseEntity.class,
                         createdDevice.getId());
         Assert.assertTrue(sharedAttributesResponse.getStatusCode().is2xxSuccessful());
-        MqttEvent sharedAttributeEvent = listener.getEvents().poll(10, TimeUnit.SECONDS);
+        MqttEvent sharedAttributeEvent = listener.getEvents().poll(60, TimeUnit.SECONDS);
 
         // Catch attribute update event
         Assert.assertNotNull(sharedAttributeEvent);
@@ -266,7 +266,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         mqttClient.on("v1/gateway/attributes/response", listener, MqttQoS.AT_LEAST_ONCE).get();
 
         // Wait until subscription is processed
-        TimeUnit.SECONDS.sleep(3);
+        TimeUnit.SECONDS.sleep(30);
 
         checkAttribute(true, clientAttributeValue);
         checkAttribute(false, sharedAttributeValue);
@@ -276,7 +276,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
     public void subscribeToAttributeUpdatesFromServer() throws Exception {
         mqttClient.on("v1/gateway/attributes", listener, MqttQoS.AT_LEAST_ONCE).get();
         // Wait until subscription is processed
-        TimeUnit.SECONDS.sleep(3);
+        TimeUnit.SECONDS.sleep(30);
         String sharedAttributeName = "sharedAttr";
         // Add a new shared attribute
 
@@ -313,7 +313,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
                         createdDevice.getId());
         Assert.assertTrue(updatedSharedAttributesResponse.getStatusCode().is2xxSuccessful());
 
-        event = listener.getEvents().poll(10, TimeUnit.SECONDS);
+        event = listener.getEvents().poll(60, TimeUnit.SECONDS);
         Assert.assertEquals(updatedSharedAttributeValue,
                 mapper.readValue(Objects.requireNonNull(event).getMessage(), JsonNode.class).get("data").get(sharedAttributeName).asText());
     }
@@ -324,7 +324,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         mqttClient.on(gatewayRpcTopic, listener, MqttQoS.AT_LEAST_ONCE).get();
 
         // Wait until subscription is processed
-        TimeUnit.SECONDS.sleep(3);
+        TimeUnit.SECONDS.sleep(30);
 
         // Send an RPC from the server
         JsonObject serverRpcPayload = new JsonObject();
@@ -343,7 +343,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         });
 
         // Wait for RPC call from the server and send the response
-        MqttEvent requestFromServer = listener.getEvents().poll(10, TimeUnit.SECONDS);
+        MqttEvent requestFromServer = listener.getEvents().poll(60, TimeUnit.SECONDS);
         service.shutdownNow();
 
         Assert.assertNotNull(requestFromServer);
@@ -396,7 +396,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         gatewayAttributesRequest.addProperty("key", attributeName);
         log.info(gatewayAttributesRequest.toString());
         mqttClient.publish("v1/gateway/attributes/request", Unpooled.wrappedBuffer(gatewayAttributesRequest.toString().getBytes())).get();
-        MqttEvent clientAttributeEvent = listener.getEvents().poll(10, TimeUnit.SECONDS);
+        MqttEvent clientAttributeEvent = listener.getEvents().poll(60, TimeUnit.SECONDS);
         Assert.assertNotNull(clientAttributeEvent);
         JsonObject responseMessage = new JsonParser().parse(Objects.requireNonNull(clientAttributeEvent).getMessage()).getAsJsonObject();
 
@@ -407,10 +407,12 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
     }
 
     private Device createDeviceThroughGateway(MqttClient mqttClient, Device gatewayDevice) throws Exception {
+        TimeUnit.SECONDS.sleep(30);
+
         String deviceName = "mqtt_device";
         mqttClient.publish("v1/gateway/connect", Unpooled.wrappedBuffer(createGatewayConnectPayload(deviceName).toString().getBytes()), MqttQoS.AT_LEAST_ONCE).get();
 
-        TimeUnit.SECONDS.sleep(60);
+        TimeUnit.SECONDS.sleep(30);
 
         List<EntityRelation> relations = restClient.findByFrom(gatewayDevice.getId(), RelationTypeGroup.COMMON);
 

@@ -122,6 +122,11 @@ public class ContainerTestSuite {
                         replaceInFile(targetDir, "queue-service-bus.env",
                                 Map.of("YOUR_SAS_KEY", getSysProp("blackBoxTests.serviceBusPrimaryKey")));
                         break;
+                    case "pubsub":
+                        replaceInFile(targetDir, "queue-pubsub.env",
+                                Map.of("YOUR_PROJECT_ID", getSysProp("blackBoxTests.pubSubProjectId"),
+                                        "YOUR_SERVICE_ACCOUNT", getSysProp("blackBoxTests.pubSubServiceAccount")));
+                        break;
                     default:
                         throw new RuntimeException("Unsupported queue type: " + QUEUE_TYPE);
                 }
