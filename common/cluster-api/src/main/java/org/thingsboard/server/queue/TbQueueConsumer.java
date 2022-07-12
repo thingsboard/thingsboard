@@ -24,7 +24,9 @@ public interface TbQueueConsumer<T extends TbQueueMsg> {
 
     String getTopic();
 
-    boolean isSinglePartitionTopic();
+    default boolean isSinglePartitionTopic() {
+        return false;
+    }
 
     void subscribe();
 
