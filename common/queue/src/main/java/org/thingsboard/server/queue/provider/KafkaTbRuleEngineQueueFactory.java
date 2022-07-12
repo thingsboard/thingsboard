@@ -196,6 +196,7 @@ public class KafkaTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
         TbKafkaConsumerTemplate.TbKafkaConsumerTemplateBuilder<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> responseBuilder = TbKafkaConsumerTemplate.builder();
         responseBuilder.settings(kafkaSettings);
         responseBuilder.topic(jsInvokeSettings.getResponseTopic() + "." + serviceInfoProvider.getServiceId());
+        responseBuilder.singlePartitionTopic(true);
         responseBuilder.clientId("js-" + serviceInfoProvider.getServiceId());
         responseBuilder.groupId("rule-engine-node-" + serviceInfoProvider.getServiceId());
         responseBuilder.decoder(msg -> {

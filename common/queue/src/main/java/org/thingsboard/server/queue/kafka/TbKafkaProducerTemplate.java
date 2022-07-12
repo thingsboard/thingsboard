@@ -33,6 +33,7 @@ import org.thingsboard.server.queue.TbQueueProducer;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -47,6 +48,9 @@ public class TbKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
     private final String defaultTopic;
 
     @Getter
+    private final boolean singlePartitionTopic;
+
+    @Getter
     private final TbKafkaSettings settings;
 
     private final TbQueueAdmin admin;
@@ -54,7 +58,7 @@ public class TbKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
     private final Set<TopicPartitionInfo> topics;
 
     @Builder
-    private TbKafkaProducerTemplate(TbKafkaSettings settings, String defaultTopic, String clientId, TbQueueAdmin admin) {
+    private TbKafkaProducerTemplate(TbKafkaSettings settings, String defaultTopic, boolean singlePartitionTopic, String clientId, TbQueueAdmin admin) {
         Properties props = settings.toProducerProps();
 
         if (!StringUtils.isEmpty(clientId)) {
@@ -64,6 +68,7 @@ public class TbKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
 
         this.producer = new KafkaProducer<>(props);
         this.defaultTopic = defaultTopic;
+        this.singlePartitionTopic = singlePartitionTopic;
         this.admin = admin;
         topics = ConcurrentHashMap.newKeySet();
     }
@@ -108,10 +113,13 @@ public class TbKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
         if (topics.contains(tpi)) {
             return;
         }
-        admin.createTopicIfNotExists(tpi.getFullTopicName());
+        getCreateTopicIfNotExists().accept(tpi.getFullTopicName());
         topics.add(tpi);
     }
 
+    Consumer<String> getCreateTopicIfNotExists() {
+        return isSinglePartitionTopic() ? admin::createSinglePartitionTopicIfNotExists : admin::createTopicIfNotExists;
+    }
     @Override
     public void stop() {
         if (producer != null) {

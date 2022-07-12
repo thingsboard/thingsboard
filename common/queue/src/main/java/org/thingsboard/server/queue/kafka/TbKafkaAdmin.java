@@ -62,7 +62,16 @@ public class TbKafkaAdmin implements TbQueueAdmin {
     }
 
     @Override
+    public void createSinglePartitionTopicIfNotExists(String topic) {
+        doCreateTopicIfNotExists(topic, 1);
+    }
+
+    @Override
     public void createTopicIfNotExists(String topic) {
+        doCreateTopicIfNotExists(topic, this.numPartitions);
+    }
+
+    void doCreateTopicIfNotExists(String topic, int numPartitions) {
         if (topics.contains(topic)) {
             return;
         }

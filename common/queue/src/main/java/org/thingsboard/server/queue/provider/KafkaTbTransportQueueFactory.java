@@ -95,6 +95,7 @@ public class KafkaTbTransportQueueFactory implements TbTransportQueueFactory {
         TbKafkaConsumerTemplate.TbKafkaConsumerTemplateBuilder<TbProtoQueueMsg<TransportApiResponseMsg>> responseBuilder = TbKafkaConsumerTemplate.builder();
         responseBuilder.settings(kafkaSettings);
         responseBuilder.topic(transportApiSettings.getResponsesTopic() + "." + serviceInfoProvider.getServiceId());
+        responseBuilder.singlePartitionTopic(true);
         responseBuilder.clientId("transport-api-response-" + serviceInfoProvider.getServiceId());
         responseBuilder.groupId("transport-node-" + serviceInfoProvider.getServiceId());
         responseBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportApiResponseMsg.parseFrom(msg.getData()), msg.getHeaders()));

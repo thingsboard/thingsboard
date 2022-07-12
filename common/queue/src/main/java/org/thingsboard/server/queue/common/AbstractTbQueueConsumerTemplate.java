@@ -47,9 +47,16 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
 
     @Getter
     private final String topic;
+    @Getter
+    private final boolean singlePartitionTopic;
 
     public AbstractTbQueueConsumerTemplate(String topic) {
+        this(topic, false);
+    }
+
+    public AbstractTbQueueConsumerTemplate(String topic, boolean singlePartitionTopic) {
         this.topic = topic;
+        this.singlePartitionTopic = singlePartitionTopic;
     }
 
     @Override

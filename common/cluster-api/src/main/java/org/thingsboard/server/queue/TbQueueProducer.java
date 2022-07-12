@@ -23,6 +23,10 @@ public interface TbQueueProducer<T extends TbQueueMsg> {
 
     String getDefaultTopic();
 
+    default boolean isSinglePartitionTopic() {
+        return false;
+    }
+
     void send(TopicPartitionInfo tpi, T msg, TbQueueCallback callback);
 
     void stop();

@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+import java.util.function.Consumer;
 
 /**
  * Created by ashvayka on 24.09.18.
@@ -49,8 +50,9 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
     @Builder
     private TbKafkaConsumerTemplate(TbKafkaSettings settings, TbKafkaDecoder<T> decoder,
                                     String clientId, String groupId, String topic,
+                                    boolean singlePartitionTopic,
                                     TbQueueAdmin admin, TbKafkaConsumerStatsService statsService) {
-        super(topic);
+        super(topic, singlePartitionTopic);
         Properties props = settings.toConsumerProps(topic);
         props.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
         if (groupId != null) {
@@ -72,13 +74,17 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
     @Override
     protected void doSubscribe(List<String> topicNames) {
         if (!topicNames.isEmpty()) {
-            topicNames.forEach(admin::createTopicIfNotExists);
+            topicNames.forEach(getCreateTopicIfNotExists());
             log.info("subscribe topics {}", topicNames);
             consumer.subscribe(topicNames);
         } else {
             log.info("unsubscribe due to empty topic list");
             consumer.unsubscribe();
         }
+    }
+
+    Consumer<String> getCreateTopicIfNotExists() {
+        return isSinglePartitionTopic() ? admin::createSinglePartitionTopicIfNotExists : admin::createTopicIfNotExists;
     }
 
     @Override

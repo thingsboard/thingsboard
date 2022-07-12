@@ -248,6 +248,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
         requestBuilder.settings(kafkaSettings);
         requestBuilder.clientId("monolith-transport-api-producer-" + serviceInfoProvider.getServiceId());
         requestBuilder.defaultTopic(transportApiSettings.getResponsesTopic());
+        requestBuilder.singlePartitionTopic(true);
         requestBuilder.admin(transportApiAdmin);
         return requestBuilder.build();
     }
@@ -264,6 +265,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
         TbKafkaConsumerTemplate.TbKafkaConsumerTemplateBuilder<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> responseBuilder = TbKafkaConsumerTemplate.builder();
         responseBuilder.settings(kafkaSettings);
         responseBuilder.topic(jsInvokeSettings.getResponseTopic() + "." + serviceInfoProvider.getServiceId());
+        responseBuilder.singlePartitionTopic(true);
         responseBuilder.clientId("js-" + serviceInfoProvider.getServiceId());
         responseBuilder.groupId("rule-engine-node-" + serviceInfoProvider.getServiceId());
         responseBuilder.decoder(msg -> {

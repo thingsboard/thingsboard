@@ -24,6 +24,8 @@ public interface TbQueueConsumer<T extends TbQueueMsg> {
 
     String getTopic();
 
+    boolean isSinglePartitionTopic();
+
     void subscribe();
 
     void subscribe(Set<TopicPartitionInfo> partitions);

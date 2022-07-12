@@ -19,6 +19,10 @@ public interface TbQueueAdmin {
 
     void createTopicIfNotExists(String topic);
 
+    default void createSinglePartitionTopicIfNotExists(String topic) {
+        createTopicIfNotExists(topic);
+    }
+
     void destroy();
 
     void deleteTopic(String topic);
