@@ -51,7 +51,6 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
         tenantProfile.setDefault(false);
         tenantProfile.setName("Isolated TB Rule Engine");
         tenantProfile.setDescription("Isolated TB Rule Engine tenant profile");
-        tenantProfile.setIsolatedTbCore(false);
         tenantProfile.setIsolatedTbRuleEngine(true);
 
         TenantProfileQueueConfiguration mainQueueConfiguration = new TenantProfileQueueConfiguration();
