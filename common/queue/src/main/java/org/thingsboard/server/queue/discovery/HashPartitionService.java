@@ -365,8 +365,6 @@ public class HashPartitionService implements PartitionService {
             throw new RuntimeException("Tenant not found!");
         }
         switch (serviceType) {
-            case TB_CORE:
-                return routingInfo.isIsolatedTbCore();
             case TB_RULE_ENGINE:
                 return routingInfo.isIsolatedTbRuleEngine();
             default:

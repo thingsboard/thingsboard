@@ -126,11 +126,11 @@ export class TbMarkdownComponent implements OnChanges {
         this.handlePlugins(this.tbMarkdownInstanceComponentRef.location.nativeElement);
         this.markdownService.highlight(this.tbMarkdownInstanceComponentRef.location.nativeElement);
         readyObservable = this.handleImages(this.tbMarkdownInstanceComponentRef.location.nativeElement);
+        this.cd.detectChanges();
         this.error = null;
       } catch (error) {
         readyObservable = this.handleError(compiled, error);
       }
-      this.cd.detectChanges();
       readyObservable.subscribe(() => {
         this.ready.emit();
       });
@@ -146,9 +146,8 @@ export class TbMarkdownComponent implements OnChanges {
 
   private handleError(template: string, error): Observable<void> {
     this.error = (error ? error + '' : 'Failed to render markdown!').replace(/\n/g, '<br>');
-    this.destroyMarkdownInstanceResources();
+    this.markdownContainer.clear();
     if (this.fallbackToPlainMarkdownValue) {
-      this.markdownContainer.clear();
       const element = this.fallbackElement.nativeElement;
       element.innerHTML = template;
       this.handlePlugins(element);
