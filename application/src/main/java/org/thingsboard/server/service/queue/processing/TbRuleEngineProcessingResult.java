@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentMap;
 public class TbRuleEngineProcessingResult {
 
     @Getter
-    private final QueueId queueId;
+    private final String queueName;
     @Getter
     private final boolean success;
     @Getter
@@ -37,8 +37,8 @@ public class TbRuleEngineProcessingResult {
     @Getter
     private final TbMsgPackProcessingContext ctx;
 
-    public TbRuleEngineProcessingResult(QueueId queueId, boolean timeout, TbMsgPackProcessingContext ctx) {
-        this.queueId = queueId;
+    public TbRuleEngineProcessingResult(String queueName, boolean timeout, TbMsgPackProcessingContext ctx) {
+        this.queueName = queueName;
         this.timeout = timeout;
         this.ctx = ctx;
         this.success = !timeout && ctx.getPendingMap().isEmpty() && ctx.getFailedMap().isEmpty();

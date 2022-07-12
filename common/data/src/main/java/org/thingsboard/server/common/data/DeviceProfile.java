@@ -75,8 +75,6 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
     @ApiModelProperty(position = 6, value = "Reference to the dashboard. Used in the mobile application to open the default dashboard when user navigates to device details.")
     private DashboardId defaultDashboardId;
 
-    @JsonIgnore
-    private QueueId defaultQueueId;
     @NoXss
     @ApiModelProperty(position = 8, value = "Rule engine queue name. " +
             "If present, the specified queue will be used to store all unprocessed messages related to device, including telemetry, attribute updates, etc. " +
@@ -114,7 +112,6 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
         this.isDefault = deviceProfile.isDefault();
         this.defaultRuleChainId = deviceProfile.getDefaultRuleChainId();
         this.defaultDashboardId = deviceProfile.getDefaultDashboardId();
-        this.defaultQueueId = deviceProfile.getDefaultQueueId();
         this.defaultQueueName = deviceProfile.getDefaultQueueName();
         this.setProfileData(deviceProfile.getProfileData());
         this.provisionDeviceKey = deviceProfile.getProvisionDeviceKey();
