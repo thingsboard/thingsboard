@@ -126,7 +126,7 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
                 throw new DataValidationException("Another default device profile is present in scope of current tenant!");
             }
         }
-        if (deviceProfile.getDefaultQueueName() != null) {
+        if (StringUtils.isNotEmpty(deviceProfile.getDefaultQueueName())) {
             Queue queue = queueService.findQueueByTenantIdAndName(tenantId, deviceProfile.getDefaultQueueName());
             if (queue == null) {
                 throw new DataValidationException("Device profile is referencing to non-existent queue!");

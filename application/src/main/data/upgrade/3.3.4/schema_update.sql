@@ -71,3 +71,5 @@ CREATE TABLE IF NOT EXISTS user_auth_settings (
 );
 
 CREATE INDEX IF NOT EXISTS idx_api_usage_state_entity_id ON api_usage_state(entity_id);
+
+ALTER TABLE tenant_profile DROP COLUMN IF EXISTS isolated_tb_core;

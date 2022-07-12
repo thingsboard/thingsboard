@@ -66,7 +66,6 @@ public abstract class BaseTenantProfileControllerTest extends AbstractController
         Assert.assertEquals(tenantProfile.getDescription(), savedTenantProfile.getDescription());
         Assert.assertEquals(tenantProfile.getProfileData(), savedTenantProfile.getProfileData());
         Assert.assertEquals(tenantProfile.isDefault(), savedTenantProfile.isDefault());
-        Assert.assertEquals(tenantProfile.isIsolatedTbCore(), savedTenantProfile.isIsolatedTbCore());
         Assert.assertEquals(tenantProfile.isIsolatedTbRuleEngine(), savedTenantProfile.isIsolatedTbRuleEngine());
 
         testBroadcastEntityStateChangeEventTimeManyTimeTenantProfile(savedTenantProfile, ComponentLifecycleEvent.CREATED, 1);
@@ -178,22 +177,6 @@ public abstract class BaseTenantProfileControllerTest extends AbstractController
         doPost("/api/tenantProfile", savedTenantProfile)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("Can't update isolatedTbRuleEngine property")));
-
-        testBroadcastEntityStateChangeEventNeverTenantProfile();
-    }
-
-    @Test
-    public void testSaveSameTenantProfileWithDifferentIsolatedTbCore() throws Exception {
-        loginSysAdmin();
-        TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile");
-        TenantProfile savedTenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
-
-        Mockito.reset(tbClusterService);
-
-        savedTenantProfile.setIsolatedTbCore(true);
-        doPost("/api/tenantProfile", savedTenantProfile)
-                .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Can't update isolatedTbCore property")));
 
         testBroadcastEntityStateChangeEventNeverTenantProfile();
     }
@@ -352,7 +335,6 @@ public abstract class BaseTenantProfileControllerTest extends AbstractController
         tenantProfileData.setConfiguration(new DefaultTenantProfileConfiguration());
         tenantProfile.setProfileData(tenantProfileData);
         tenantProfile.setDefault(false);
-        tenantProfile.setIsolatedTbCore(false);
         tenantProfile.setIsolatedTbRuleEngine(false);
         return tenantProfile;
     }
