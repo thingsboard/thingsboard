@@ -3029,9 +3029,7 @@
         "tenant-required": "Propietario requerido",
         "search": "Buscar propietarios",
         "selected-tenants": "{ count, plural, 1 {1 propietario} other {# propietarios} } seleccionados",
-        "isolated-tb-core": "Procesando en contenedor aislado",
         "isolated-tb-rule-engine": "Procesando en contenedor Motor de Reglas aislado",
-        "isolated-tb-core-details": "Requiere microservicios separados por propietario aislado",
         "isolated-tb-rule-engine-details": "Requiere microservicios separados por propietario aislado"
     },
     "tenant-profile": {

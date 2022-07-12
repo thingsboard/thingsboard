@@ -81,7 +81,6 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
     const formGroup = this.fb.group(
       {
         name: [entity ? entity.name : '', [Validators.required, Validators.maxLength(255)]],
-        isolatedTbCore: [entity ? entity.isolatedTbCore : false, []],
         isolatedTbRuleEngine: [entity ? entity.isolatedTbRuleEngine : false, []],
         profileData: this.fb.group({
           configuration: [entity && !this.isAdd ? entity?.profileData.configuration
@@ -107,7 +106,6 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
 
   updateForm(entity: TenantProfile) {
     this.entityForm.patchValue({name: entity.name}, {emitEvent: false});
-    this.entityForm.patchValue({isolatedTbCore: entity.isolatedTbCore}, {emitEvent: false});
     this.entityForm.patchValue({isolatedTbRuleEngine: entity.isolatedTbRuleEngine}, {emitEvent: false});
     this.entityForm.get('profileData').patchValue({
       configuration: !this.isAdd ? entity.profileData?.configuration : createTenantProfileConfiguration(TenantProfileType.DEFAULT)
@@ -121,7 +119,6 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
       if (this.isEditValue) {
         this.entityForm.enable({emitEvent: false});
         if (!this.isAdd) {
-          this.entityForm.get('isolatedTbCore').disable({emitEvent: false});
           this.entityForm.get('isolatedTbRuleEngine').disable({emitEvent: false});
         }
       } else {
