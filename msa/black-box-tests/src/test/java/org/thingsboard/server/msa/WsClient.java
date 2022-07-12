@@ -89,7 +89,7 @@ public class WsClient extends WebSocketClient {
 
     void waitForFirstReply() {
         try {
-            boolean result = firstReply.await(10, TimeUnit.SECONDS);
+            boolean result = firstReply.await(120, TimeUnit.SECONDS);
             if (!result) {
                 log.error("Timeout, ws message wasn't received");
                 throw new RuntimeException("Timeout, ws message wasn't received");
