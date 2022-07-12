@@ -309,7 +309,6 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         profileData.setConfiguration(new DefaultTenantProfileConfiguration());
         tenantProfile.setProfileData(profileData);
         tenantProfile.setDefault(false);
-        tenantProfile.setIsolatedTbCore(true);
         tenantProfile.setIsolatedTbRuleEngine(true);
         TenantProfile isolatedTenantProfile = tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
 

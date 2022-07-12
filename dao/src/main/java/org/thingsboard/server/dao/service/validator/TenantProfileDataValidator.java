@@ -100,8 +100,6 @@ public class TenantProfileDataValidator extends DataValidator<TenantProfile> {
             throw new DataValidationException("Can't update non existing tenant profile!");
         } else if (old.isIsolatedTbRuleEngine() != tenantProfile.isIsolatedTbRuleEngine()) {
             throw new DataValidationException("Can't update isolatedTbRuleEngine property!");
-        } else if (old.isIsolatedTbCore() != tenantProfile.isIsolatedTbCore()) {
-            throw new DataValidationException("Can't update isolatedTbCore property!");
         }
         return old;
     }

@@ -2550,9 +2550,7 @@
         "tenant-required": "Tenant je povinný",
         "search": "Vyhledat tenanty",
         "selected-tenants": "Vybráno { count, plural, 1 {1 tenantů} other {# tenantů} }",
-        "isolated-tb-core": "Zpracování v izolovaném kontejneru ThingsBoard Core",
         "isolated-tb-rule-engine": "Zpracování v izolovaném kontejneru ThingsBoard Rule Engine",
-        "isolated-tb-core-details": "Vyžaduje samostatnou mikroslužbu(y) pro každého izolovaného tenanta",
         "isolated-tb-rule-engine-details": "Vyžaduje samostatnou mikroslužbu(y) pro každého izolovaného tenanta"
     },
     "tenant-profile": {
