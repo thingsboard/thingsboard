@@ -52,6 +52,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -536,21 +537,49 @@ public class BaseRelationService implements RelationService {
         DonAsynchron.withCallback(findRelations(tenantId, rootId, direction, relationTypeGroup), childrenList -> {
             final int finalLvl = lvl != Integer.MAX_VALUE ? lvl - 1 : lvl;
             Set<EntityRelation> children = new HashSet<>(childrenList);
-            var childrenIdsAndRootRelations =
-                    getChildrenIdsAndTheirRootRelations(children, direction, uniqueMap);
 
-            DonAsynchron.withCallback(getRelationsOfChildren(
-                    tenantId, direction, relationTypeGroup,
-                    finalLvl, fetchLastLevelOnly,
-                    uniqueMap, childrenIdsAndRootRelations
-            ), relationsPairs -> {
+            Map<EntityId, EntityRelation> childIdBaseRelation = new HashMap<>();
+
+            children.forEach(childRelation -> {
+                EntityId childId;
+                if (direction == EntitySearchDirection.FROM) {
+                    childId = childRelation.getTo();
+                } else {
+                    childId = childRelation.getFrom();
+                }
+                if (uniqueMap.putIfAbsent(childId, Boolean.TRUE) == null) {
+                    childIdBaseRelation.put(childId, childRelation);
+                }
+            });
+
+            List<ListenableFuture<Pair<EntityRelation, Set<EntityRelation>>>> relationPairsFutureList = new LinkedList<>();
+            for (var entry : childIdBaseRelation.entrySet()) {
+                EntityId childId = entry.getKey();
+                SettableFuture<Pair<EntityRelation, Set<EntityRelation>>> childRelationsFuture = SettableFuture.create();
+
+                EntityRelation baseRelation = childIdBaseRelation.get(childId);
+
+                var recursiveTask = findRelationsRecursively(tenantId, childId, entry.getValue(), direction, relationTypeGroup, finalLvl, fetchLastLevelOnly, uniqueMap);
+
+                DonAsynchron.withCallback(recursiveTask, childRelations -> {
+                    if (childRelations == null) {
+                        childRelationsFuture.set(Pair.of(baseRelation, Collections.emptySet()));
+                    }
+                    childRelationsFuture.set(Pair.of(baseRelation, childRelations));
+                }, t -> log.warn("Error during findRelationsRecursively execution!", t), executor);
+
+                relationPairsFutureList.add(childRelationsFuture);
+            }
+
+            var relationsPairsFuture = Futures.successfulAsList(relationPairsFutureList);
+
+            DonAsynchron.withCallback(relationsPairsFuture, relationsPairs -> {
                 var relations = relationsPairs.stream()
                         .collect(Collectors.toMap(
                                 Pair::getFirst,
                                 Pair::getSecond
                         ));
-
-                var resultSet = checkFetching(finalLvl, fetchLastLevelOnly, children, rootRelation, relations);
+                var resultSet = checkFetching(finalLvl, fetchLastLevelOnly, rootRelation, children, relations);
                 relations.values().forEach(resultSet::addAll);
 
                 resultFuture.set(resultSet);
@@ -562,15 +591,16 @@ public class BaseRelationService implements RelationService {
 
     private Set<EntityRelation> checkFetching(
             int lvl, boolean fetchLastLevelOnly,
-            Set<EntityRelation> children, EntityRelation rootRelation,
-            Map<EntityRelation, Set<EntityRelation>> relations
+            EntityRelation rootRelation,
+            Set<EntityRelation> children,
+            Map<EntityRelation, Set<EntityRelation>> childrenRelations
     ) {
         if (fetchLastLevelOnly) {
             if (lvl != Integer.MAX_VALUE) {
                 if (lvl > 0) {
                     Set<EntityRelation> result = new HashSet<>();
                     children.forEach(c -> {
-                        if (relations.get(c).isEmpty()) {
+                        if (childrenRelations.get(c).isEmpty()) {
                             result.add(c);
                         }
                     });
@@ -585,53 +615,6 @@ public class BaseRelationService implements RelationService {
         }
 
         return children;
-    }
-
-    private ListenableFuture<List<Pair<EntityRelation, Set<EntityRelation>>>> getRelationsOfChildren(
-            TenantId tenantId, EntitySearchDirection direction,
-            RelationTypeGroup relationTypeGroup, int lvl, boolean fetchLastLevelOnly,
-            ConcurrentHashMap<EntityId, Boolean> uniqueMap, Map<EntityId, EntityRelation> children
-    ) {
-        List<ListenableFuture<Pair<EntityRelation, Set<EntityRelation>>>> result =
-                children.entrySet()
-                        .stream()
-                        .map(e -> {
-                            var relationsFuture = findRelationsRecursively(
-                                    tenantId, e.getKey(), e.getValue(),
-                                    direction, relationTypeGroup, lvl,
-                                    fetchLastLevelOnly, uniqueMap
-                            );
-
-                            return Futures.transformAsync(relationsFuture, relations ->
-                                    Futures.immediateFuture(
-                                            Pair.of(e.getValue(), Objects.requireNonNullElse(relations, new HashSet<EntityRelation>()))
-                                    ), MoreExecutors.directExecutor());
-                        })
-                        .collect(Collectors.toList());
-
-        return Futures.successfulAsList(result);
-    }
-
-    private Map<EntityId, EntityRelation> getChildrenIdsAndTheirRootRelations(
-            Set<EntityRelation> children,
-            EntitySearchDirection direction,
-            ConcurrentHashMap<EntityId, Boolean> uniqueMap
-    ) {
-        Map<EntityId, EntityRelation> childrenIds = new HashMap<>();
-
-        children.forEach(childRelation -> {
-            EntityId childId;
-            if (direction == EntitySearchDirection.FROM) {
-                childId = childRelation.getTo();
-            } else {
-                childId = childRelation.getFrom();
-            }
-            if (uniqueMap.putIfAbsent(childId, Boolean.TRUE) == null) {
-                childrenIds.put(childId, childRelation);
-            }
-        });
-
-        return childrenIds;
     }
 
     private ListenableFuture<List<EntityRelation>> findRelations(final TenantId tenantId, final EntityId rootId, final EntitySearchDirection direction, RelationTypeGroup relationTypeGroup) {
