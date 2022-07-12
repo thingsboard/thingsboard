@@ -20,7 +20,7 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import lombok.SneakyThrows;
+import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.StringUtils;
+import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -526,21 +527,19 @@ public class BaseRelationService implements RelationService {
             boolean fetchLastLevelOnly,
             final ConcurrentHashMap<EntityId, Boolean> uniqueMap
     ) {
-
         if (lvl == 0) {
             return Futures.immediateFuture(Collections.emptySet());
         }
-        if (lvl != Integer.MAX_VALUE) {
-            lvl--;
-        }
 
-        int finalLvl = lvl;
-        return Futures.transformAsync(findRelations(tenantId, rootId, direction, relationTypeGroup), childrenList -> {
+        SettableFuture<Set<EntityRelation>> resultFuture = SettableFuture.create();
+
+        DonAsynchron.withCallback(findRelations(tenantId, rootId, direction, relationTypeGroup), childrenList -> {
+            final int finalLvl = lvl != Integer.MAX_VALUE ? lvl - 1 : lvl;
             Set<EntityRelation> children = new HashSet<>(childrenList);
             var childrenIdsAndRootRelations =
                     getChildrenIdsAndTheirRootRelations(children, direction, uniqueMap);
 
-            return Futures.transformAsync(getRelationsOfChildren(
+            DonAsynchron.withCallback(getRelationsOfChildren(
                     tenantId, direction, relationTypeGroup,
                     finalLvl, fetchLastLevelOnly,
                     uniqueMap, childrenIdsAndRootRelations
@@ -551,12 +550,14 @@ public class BaseRelationService implements RelationService {
                                 Pair::getSecond
                         ));
 
-                var result = checkFetching(finalLvl, fetchLastLevelOnly, children, rootRelation, relations);
-                relations.values().forEach(result::addAll);
+                var resultSet = checkFetching(finalLvl, fetchLastLevelOnly, children, rootRelation, relations);
+                relations.values().forEach(resultSet::addAll);
 
-                return Futures.immediateFuture(result);
-            }, MoreExecutors.directExecutor());
-        }, MoreExecutors.directExecutor());
+                resultFuture.set(resultSet);
+            }, t -> log.warn("Error during findRelationsRecursively execution!", t), executor);
+        }, t -> log.warn("Error during findRelationsRecursively execution!", t), executor);
+
+        return resultFuture;
     }
 
     private Set<EntityRelation> checkFetching(
