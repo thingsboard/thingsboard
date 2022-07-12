@@ -422,12 +422,6 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     protected DeviceProfile createDeviceProfile(String name, DeviceProfileTransportConfiguration deviceProfileTransportConfiguration) {
-        return createDeviceProfile(name, deviceProfileTransportConfiguration, null);
-    }
-
-    protected DeviceProfile createDeviceProfile(String name,
-                                                DeviceProfileTransportConfiguration deviceProfileTransportConfiguration,
-                                                QueueId defaultQueueId) {
         DeviceProfile deviceProfile = new DeviceProfile();
         deviceProfile.setName(name);
         deviceProfile.setType(DeviceProfileType.DEFAULT);
@@ -445,7 +439,6 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         deviceProfile.setProfileData(deviceProfileData);
         deviceProfile.setDefault(false);
         deviceProfile.setDefaultRuleChainId(null);
-        deviceProfile.setDefaultQueueId(defaultQueueId);
         return deviceProfile;
     }
 

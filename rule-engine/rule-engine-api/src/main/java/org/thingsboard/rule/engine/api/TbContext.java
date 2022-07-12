@@ -142,15 +142,12 @@ public interface TbContext {
      */
     void output(TbMsg msg, String relationType);
 
-    @Deprecated
-    void enqueue(TbMsg tbMsg, String queueName, Runnable onSuccess, Consumer<Throwable> onFailure);
-
     /**
      * Puts new message to custom queue for processing
      *
      * @param msg - message
      */
-    void enqueue(TbMsg msg, QueueId queueId, Runnable onSuccess, Consumer<Throwable> onFailure);
+    void enqueue(TbMsg msg, String queueName, Runnable onSuccess, Consumer<Throwable> onFailure);
 
     void enqueueForTellFailure(TbMsg msg, String failureMessage);
 
@@ -162,15 +159,15 @@ public interface TbContext {
 
     void enqueueForTellNext(TbMsg msg, Set<String> relationTypes, Runnable onSuccess, Consumer<Throwable> onFailure);
 
-    void enqueueForTellNext(TbMsg msg, QueueId queueId, String relationType, Runnable onSuccess, Consumer<Throwable> onFailure);
+    void enqueueForTellNext(TbMsg msg, String queueName, String relationType, Runnable onSuccess, Consumer<Throwable> onFailure);
 
-    void enqueueForTellNext(TbMsg msg, QueueId queueId, Set<String> relationTypes, Runnable onSuccess, Consumer<Throwable> onFailure);
+    void enqueueForTellNext(TbMsg msg, String queueName, Set<String> relationTypes, Runnable onSuccess, Consumer<Throwable> onFailure);
 
     void ack(TbMsg tbMsg);
 
-    TbMsg newMsg(QueueId queueId, String type, EntityId originator, TbMsgMetaData metaData, String data);
+    TbMsg newMsg(String queueName, String type, EntityId originator, TbMsgMetaData metaData, String data);
 
-    TbMsg newMsg(QueueId queueId, String type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, String data);
+    TbMsg newMsg(String queueName, String type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, String data);
 
     TbMsg transformMsg(TbMsg origMsg, String type, EntityId originator, TbMsgMetaData metaData, String data);
 

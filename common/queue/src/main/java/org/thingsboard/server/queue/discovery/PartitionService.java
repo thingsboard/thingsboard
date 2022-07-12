@@ -32,12 +32,9 @@ import java.util.UUID;
  */
 public interface PartitionService {
 
-    @Deprecated
-    TopicPartitionInfo resolve(ServiceType serviceType, TenantId tenantId, EntityId entityId, String queueName);
+    TopicPartitionInfo resolve(ServiceType serviceType, String queueName, TenantId tenantId, EntityId entityId);
 
     TopicPartitionInfo resolve(ServiceType serviceType, TenantId tenantId, EntityId entityId);
-
-    TopicPartitionInfo resolve(ServiceType serviceType, QueueId queueId, TenantId tenantId, EntityId entityId);
 
     /**
      * Received from the Discovery service when network topology is changed.
