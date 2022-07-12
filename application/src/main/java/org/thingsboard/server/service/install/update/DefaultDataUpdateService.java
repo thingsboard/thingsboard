@@ -158,7 +158,6 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 log.info("Updating data from version 3.3.4 to 3.4.0 ...");
                 rateLimitsUpdater.updateEntities();
                 tenantsProfileQueueConfigurationUpdater.updateEntities();
-                checkPointRuleNodesUpdater.updateEntities();
                 break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
@@ -627,49 +626,6 @@ public class DefaultDataUpdateService implements DataUpdateService {
         mainQueueProcessingStrategy.setMaxPauseBetweenRetries(3);
         mainQueueConfiguration.setProcessingStrategy(mainQueueProcessingStrategy);
         return mainQueueConfiguration;
-    }
-
-    private final PaginatedUpdater<String, RuleNode> checkPointRuleNodesUpdater =
-            new PaginatedUpdater<>() {
-
-                @Override
-                protected String getName() {
-                    return "Checkpoint rule nodes updater";
-                }
-
-                @Override
-                protected boolean forceReportTotal() {
-                    return true;
-                }
-
-                @Override
-                protected PageData<RuleNode> findEntities(String id, PageLink pageLink) {
-                    return ruleChainService.findAllRuleNodesByType("org.thingsboard.rule.engine.flow.TbCheckpointNode", pageLink);
-                }
-
-                @Override
-                protected void updateEntity(RuleNode ruleNode) {
-                    updateCheckPointRuleNodeConfiguration(ruleNode);
-                }
-            };
-
-    private void updateCheckPointRuleNodeConfiguration(RuleNode node) {
-        try {
-            ObjectNode configuration = (ObjectNode) node.getConfiguration();
-            JsonNode queueNameNode = configuration.remove("queueName");
-            if (queueNameNode != null) {
-                RuleChain ruleChain = this.ruleChainService.findRuleChainById(TenantId.SYS_TENANT_ID, node.getRuleChainId());
-                TenantId tenantId = ruleChain.getTenantId();
-                Map<String, QueueId> queues =
-                        queueService.findQueuesByTenantId(tenantId).stream().collect(Collectors.toMap(Queue::getName, Queue::getId));
-                String queueName = queueNameNode.asText();
-                QueueId queueId = queues.get(queueName);
-                configuration.put("queueId", queueId != null ? queueId.toString() : "");
-                ruleChainService.saveRuleNode(tenantId, node);
-            }
-        } catch (Exception e) {
-            log.error("Failed to update checkpoint rule node configuration name=["+node.getName()+"], id=["+ node.getId().getId() +"]", e);
-        }
     }
 
 }

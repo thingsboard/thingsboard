@@ -53,7 +53,6 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
         deviceProfile.setDefaultDashboardId(idProvider.getInternalId(deviceProfile.getDefaultDashboardId()));
         deviceProfile.setFirmwareId(getOldEntityField(old, DeviceProfile::getFirmwareId));
         deviceProfile.setSoftwareId(getOldEntityField(old, DeviceProfile::getSoftwareId));
-        deviceProfile.setDefaultQueueId(getOldEntityField(old, DeviceProfile::getDefaultQueueId));
         return deviceProfile;
     }
 
