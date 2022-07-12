@@ -108,16 +108,6 @@
             <groupId>de.ruedigermoeller</groupId>
             <artifactId>fst</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.eclipse.leshan</groupId>
-            <artifactId>leshan-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk-core</artifactId>
-            <version>1.11.747</version>
-            <scope>compile</scope>
-        </dependency>
     </dependencies>
 
     <build>

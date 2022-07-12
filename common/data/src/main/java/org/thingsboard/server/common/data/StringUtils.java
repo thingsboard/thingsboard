@@ -17,13 +17,9 @@ package org.thingsboard.server.common.data;
 
 import com.google.common.base.Splitter;
 
-import java.nio.charset.Charset;
-
 import static org.apache.commons.lang3.StringUtils.repeat;
 
 public class StringUtils {
-    public static Charset UTF8 = com.amazonaws.util.StringUtils.UTF8;
-
     public static final String EMPTY = "";
 
     public static final int INDEX_NOT_FOUND = -1;
@@ -101,8 +97,8 @@ public class StringUtils {
         return Splitter.fixedLength(maxPartSize).split(value);
     }
 
-    public static boolean equalsIgnoreCase(String value, String aTrue) {
-        return org.eclipse.leshan.core.util.StringUtils.equalsIgnoreCase(value, aTrue);
+    public static boolean equalsIgnoreCase(String str1, String str2) {
+        return str1 == null ? str2 == null : str1.equalsIgnoreCase(str2);
     }
 
     public static String join(String[] keyArray, String lwm2mSeparatorPath) {
