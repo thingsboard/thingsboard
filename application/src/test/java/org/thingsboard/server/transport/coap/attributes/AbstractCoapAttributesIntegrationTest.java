@@ -247,24 +247,24 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
             validateUpdateAttributesJsonResponse(callbackCoap, SHARED_ATTRIBUTES_PAYLOAD_ON_CURRENT_STATE_NOTIFICATION);
         }
 
-        int expectedObserveBeforeAddCnt = callbackCoap.getObserve().intValue() + 1;
+        int expectedObserveForAttributesUpdate = callbackCoap.getObserve().intValue() + 1;
         doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", SHARED_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
         awaitAlias = "await Json Test Subscribe To AttributesUpdates (add attributes)";
         await(awaitAlias)
                 .atMost(10, TimeUnit.SECONDS)
                 .until(() -> CoAP.ResponseCode.CONTENT.equals(callbackCoap.getResponseCode()) &&
                         callbackCoap.getObserve() != null &&
-                        expectedObserveBeforeAddCnt == callbackCoap.getObserve().intValue());
+                        expectedObserveForAttributesUpdate == callbackCoap.getObserve().intValue());
         validateUpdateAttributesJsonResponse(callbackCoap, SHARED_ATTRIBUTES_PAYLOAD);
 
-        int expectedObserveBeforeDeleteCnt = callbackCoap.getObserve().intValue() + 1;
+        int expectedObserveForAttributesDelete = callbackCoap.getObserve().intValue() + 1;
         doDelete("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/SHARED_SCOPE?keys=sharedJson", String.class);
         awaitAlias = "await Json Test Subscribe To AttributesUpdates (deleted attributes)";
         await(awaitAlias)
                 .atMost(10, TimeUnit.SECONDS)
                 .until(() -> CoAP.ResponseCode.CONTENT.equals(callbackCoap.getResponseCode()) &&
                         callbackCoap.getObserve() != null &&
-                        expectedObserveBeforeDeleteCnt == callbackCoap.getObserve().intValue());
+                        expectedObserveForAttributesDelete == callbackCoap.getObserve().intValue());
         validateUpdateAttributesJsonResponse(callbackCoap, SHARED_ATTRIBUTES_DELETED_RESPONSE);
 
         observeRelation.proactiveCancel();
@@ -295,25 +295,25 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
             validateCurrentStateAttributesProtoResponse(callbackCoap);
         }
 
-        int expectedObserveBeforeAddCnt = callbackCoap.getObserve().intValue() + 1;
+        int expectedObserveForAttributesUpdate = callbackCoap.getObserve().intValue() + 1;
         doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", SHARED_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
         awaitAlias = "await Proto Test Subscribe To Attributes Updates (add attributes)";
         await(awaitAlias)
                 .atMost(10, TimeUnit.SECONDS)
                 .until(() -> CoAP.ResponseCode.CONTENT.equals(callbackCoap.getResponseCode()) &&
                         callbackCoap.getObserve() != null &&
-                        expectedObserveBeforeAddCnt == callbackCoap.getObserve().intValue());
-        validateUpdateProtoAttributesResponse(callbackCoap, expectedObserveBeforeAddCnt);
+                        expectedObserveForAttributesUpdate == callbackCoap.getObserve().intValue());
+        validateUpdateProtoAttributesResponse(callbackCoap, expectedObserveForAttributesUpdate);
 
-        int expectedObserveBeforeDeleteCnt = callbackCoap.getObserve().intValue() + 1;
+        int expectedObserveForAttributesDelete = callbackCoap.getObserve().intValue() + 1;
         doDelete("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/SHARED_SCOPE?keys=sharedJson", String.class);
         awaitAlias = "await Proto Test Subscribe To Attributes Updates (deleted attributes)";
         await(awaitAlias)
                 .atMost(10, TimeUnit.SECONDS)
                 .until(() -> CoAP.ResponseCode.CONTENT.equals(callbackCoap.getResponseCode()) &&
                         callbackCoap.getObserve() != null &&
-                        expectedObserveBeforeDeleteCnt == callbackCoap.getObserve().intValue());
-        validateDeleteProtoAttributesResponse(callbackCoap, expectedObserveBeforeDeleteCnt);
+                        expectedObserveForAttributesDelete == callbackCoap.getObserve().intValue());
+        validateDeleteProtoAttributesResponse(callbackCoap, expectedObserveForAttributesDelete);
 
         observeRelation.proactiveCancel();
         assertTrue(observeRelation.isCanceled());
