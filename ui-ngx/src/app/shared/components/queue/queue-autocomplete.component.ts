@@ -106,7 +106,7 @@ export class QueueAutocompleteComponent implements ControlValueAccessor, OnInit 
           if (typeof value === 'string' || !value) {
             modelValue = null;
           } else {
-            modelValue = value.id.id;
+            modelValue = value.name;
           }
           this.updateView(modelValue);
           if (value === null) {
