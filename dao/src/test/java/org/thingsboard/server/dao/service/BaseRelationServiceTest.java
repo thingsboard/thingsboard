@@ -37,7 +37,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class BaseRelationServiceTest extends AbstractServiceTest {
 
@@ -578,6 +582,98 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
         Assert.assertEquals(expectedRelations.size(), relations.size());
         Assert.assertTrue(relations.containsAll(expectedRelations));
     }
+
+    @Test
+    public void testFindByQueryLargeHierarchyFetchLastOnlyWithUnlimLvlMultipleThreads() throws Exception {
+        final int threadsNumber = Runtime.getRuntime().availableProcessors() * 2;
+        AssetId rootAsset = new AssetId(Uuids.timeBased());
+        final int hierarchyLvl = 15;
+        List<EntityRelation> expectedRelations = new LinkedList<>();
+
+        createAssetRelationsRecursively(rootAsset, hierarchyLvl, expectedRelations, true);
+
+        CyclicBarrier barrier = new CyclicBarrier(threadsNumber);
+
+        AtomicBoolean successFlag = new AtomicBoolean(false);
+        Runnable r = () -> {
+            try {
+                barrier.await();
+                EntityRelationsQuery query = new EntityRelationsQuery();
+                query.setParameters(new RelationsSearchParameters(rootAsset, EntitySearchDirection.FROM, -1, true));
+                query.setFilters(Collections.singletonList(new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.singletonList(EntityType.ASSET))));
+                List<EntityRelation> relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+                Assert.assertEquals(expectedRelations.size(), relations.size());
+                Assert.assertTrue(relations.containsAll(expectedRelations));
+                successFlag.set(true);
+            } catch (Exception e) {
+                successFlag.set(false);
+                throw new RuntimeException(e);
+            }
+        };
+
+        List<Thread> threads = new LinkedList<>();
+        for (int i = 0; i < threadsNumber; i++) {
+            threads.add(
+                    new Thread(r)
+            );
+        }
+
+        threads.forEach(Thread::start);
+        threads.forEach(t -> {
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        Assert.assertTrue(successFlag.get());
+    }
+
+    @Test
+    public void testFindByQueryLargeHierarchyFetchLAllWithUnlimLvlMultipleThreads() throws Exception {
+        final int threadsNumber = Runtime.getRuntime().availableProcessors() * 2;
+        AssetId rootAsset = new AssetId(Uuids.timeBased());
+        final int hierarchyLvl = 15;
+        List<EntityRelation> expectedRelations = new LinkedList<>();
+
+        createAssetRelationsRecursively(rootAsset, hierarchyLvl, expectedRelations, false);
+
+        CyclicBarrier barrier = new CyclicBarrier(threadsNumber);
+
+        AtomicBoolean successFlag = new AtomicBoolean(true);
+        Runnable r = () -> {
+            try {
+                barrier.await();
+                EntityRelationsQuery query = new EntityRelationsQuery();
+                query.setParameters(new RelationsSearchParameters(rootAsset, EntitySearchDirection.FROM, -1, false));
+                query.setFilters(Collections.singletonList(new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.singletonList(EntityType.ASSET))));
+                List<EntityRelation> relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+                Assert.assertEquals(expectedRelations.size(), relations.size());
+                Assert.assertTrue(relations.containsAll(expectedRelations));
+            } catch (Exception e) {
+                successFlag.set(false);
+                throw new RuntimeException(e);
+            }
+        };
+
+        List<Thread> threads = new LinkedList<>();
+        for (int i = 0; i < threadsNumber; i++) {
+            threads.add(
+                    new Thread(r)
+            );
+        }
+
+        threads.forEach(Thread::start);
+        threads.forEach(t -> {
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        Assert.assertTrue(successFlag.get());
+    }
+
 
     private void createAssetRelationsRecursively(AssetId rootAsset, int lvl, List<EntityRelation> entityRelations, boolean lastLvlOnly) throws Exception {
         if (lvl == 0) return;
