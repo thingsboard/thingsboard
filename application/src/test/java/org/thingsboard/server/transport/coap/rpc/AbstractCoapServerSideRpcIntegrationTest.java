@@ -114,24 +114,24 @@ public abstract class AbstractCoapServerSideRpcIntegrationTest extends AbstractC
 
         String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"26\",\"value\": 1}}";
         String deviceId = savedDevice.getId().getId().toString();
-        int expectedObserveBeforeGpioRequestAddCnt1 = callbackCoap.getObserve().intValue() + 1;
+        int expectedObserveCountAfterGpioRequest1 = callbackCoap.getObserve().intValue() + 1;
         String actualResult = doPostAsync("/api/rpc/twoway/" + deviceId, setGpioRequest, String.class, status().isOk());
         awaitAlias = "await Two Way Rpc (setGpio(method, params, value) first";
         await(awaitAlias)
                 .atMost(10, TimeUnit.SECONDS)
                 .until(() -> CoAP.ResponseCode.CONTENT.equals(callbackCoap.getResponseCode()) &&
                         callbackCoap.getObserve() != null &&
-                        expectedObserveBeforeGpioRequestAddCnt1 == callbackCoap.getObserve().intValue());
+                        expectedObserveCountAfterGpioRequest1 == callbackCoap.getObserve().intValue());
         validateTwoWayStateChangedNotification(callbackCoap, expectedResponseResult, actualResult);
 
-        int expectedObserveBeforeGpioRequestAddCnt2 = callbackCoap.getObserve().intValue() + 1;
+        int expectedObserveCountAfterGpioRequest2 = callbackCoap.getObserve().intValue() + 1;
         actualResult = doPostAsync("/api/rpc/twoway/" + deviceId, setGpioRequest, String.class, status().isOk());
         awaitAlias = "await Two Way Rpc (setGpio(method, params, value) first";
         await(awaitAlias)
                 .atMost(10, TimeUnit.SECONDS)
                 .until(() -> CoAP.ResponseCode.CONTENT.equals(callbackCoap.getResponseCode()) &&
                         callbackCoap.getObserve() != null &&
-                        expectedObserveBeforeGpioRequestAddCnt2 == callbackCoap.getObserve().intValue());
+                        expectedObserveCountAfterGpioRequest2 == callbackCoap.getObserve().intValue());
 
         validateTwoWayStateChangedNotification(callbackCoap, expectedResponseResult, actualResult);
 
