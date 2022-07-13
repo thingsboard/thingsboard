@@ -16,20 +16,15 @@
 package org.thingsboard.server.service.edge.rpc.constructor.rule;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.flow.TbCheckpointNode;
-import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
-import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.gen.edge.v1.NodeConnectionInfoProto;
 import org.thingsboard.server.gen.edge.v1.RuleChainConnectionInfoProto;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
@@ -39,15 +34,10 @@ import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NavigableSet;
-import java.util.UUID;
 
 @Slf4j
 @AllArgsConstructor
 public abstract class AbstractRuleChainMetadataConstructor implements RuleChainMetadataConstructor {
-
-    public static final List<String> nodeTypes = List.of(TbCheckpointNode.class.getName());
-
-    private final QueueService queueService;
 
     @Override
     public RuleChainMetadataUpdateMsg constructRuleChainMetadataUpdatedMsg(TenantId tenantId,
@@ -143,25 +133,5 @@ public abstract class AbstractRuleChainMetadataConstructor implements RuleChainM
                 .setType(ruleChainConnectionInfo.getType())
                 .setAdditionalInfo(JacksonUtil.OBJECT_MAPPER.writeValueAsString(ruleChainConnectionInfo.getAdditionalInfo()))
                 .build();
-    }
-
-    protected List<RuleNode> updateQueueIdToQueueNameNodeConfiguration(TenantId tenantId, List<RuleNode> nodes) {
-        List<RuleNode> result = new ArrayList<>();
-        for (RuleNode node : nodes) {
-            if (nodeTypes.contains(node.getType())) {
-                ObjectNode configuration = (ObjectNode) node.getConfiguration();
-                JsonNode queueIdNode = configuration.remove("queueId");
-                if (queueIdNode != null) {
-                    String queueId = queueIdNode.asText();
-                    Queue queueById = queueService.findQueueById(tenantId, new QueueId(UUID.fromString(queueId)));
-                    if (queueById != null) {
-                        configuration.put("queueName", queueById.getName());
-                        node.setConfiguration(configuration);
-                    }
-                }
-            }
-            result.add(node);
-        }
-        return result;
     }
 }
