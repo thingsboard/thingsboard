@@ -43,7 +43,7 @@
           <ng-template matExpansionPanelContent>
             <div class="entity-type-config-content" fxLayout="column" fxLayoutGap="0.5em">
               <mat-divider></mat-divider>
-              <div fxLayout="row" fxLayoutGap="16px">
+              <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
                 <tb-entity-type-select
                   showLabel
                   formControlName="entityType"
@@ -51,7 +51,7 @@
                   [filterAllowedEntityTypes]="false"
                   [allowedEntityTypes]="allowedEntityTypes(entityTypeFormGroup)">
                 </tb-entity-type-select>
-                <div fxFlex fxLayout="row" fxLayoutGap="16px" formGroupName="config">
+                <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px" formGroupName="config">
                   <mat-form-field fxFlex class="mat-block">
                     <mat-label translate>version-control.sync-strategy</mat-label>
                     <mat-select formControlName="syncStrategy">
@@ -76,8 +76,8 @@
                   </div>
                 </div>
               </div>
-              <div fxLayout="row" fxLayoutGap="16px" fxLayoutAlign="start center"
-                   formGroupName="config" style="min-height: 76px;">
+              <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px" fxLayoutAlign.gt-xs="start center"
+                   formGroupName="config" ngStyle.gt-xs="min-height: 60px;">
                 <mat-slide-toggle formControlName="allEntities">
                   {{ 'version-control.all-entities' | translate }}
                 </mat-slide-toggle>

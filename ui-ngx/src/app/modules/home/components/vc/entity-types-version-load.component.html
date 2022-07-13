@@ -43,15 +43,16 @@
           <ng-template matExpansionPanelContent>
             <div class="entity-type-config-content" fxLayout="column" fxLayoutGap="0.5em">
               <mat-divider></mat-divider>
-              <div fxLayout="row" fxLayoutGap="32px">
+              <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="32px">
                 <tb-entity-type-select
+                  fxFlex
                   showLabel
                   formControlName="entityType"
                   required
                   [filterAllowedEntityTypes]="false"
                   [allowedEntityTypes]="allowedEntityTypes(entityTypeFormGroup)">
                 </tb-entity-type-select>
-                <div fxFlex fxLayout="row" fxLayoutGap="16px" formGroupName="config">
+                <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px" fxLayoutGap.xs="8px" formGroupName="config">
                   <div fxFlex fxLayout="column" fxLayoutGap="8px">
                     <mat-checkbox #removeOtherEntitiesCheckbox
                                   formControlName="removeOtherEntities"
