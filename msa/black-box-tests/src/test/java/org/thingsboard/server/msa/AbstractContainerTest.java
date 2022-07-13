@@ -131,7 +131,7 @@ public abstract class AbstractContainerTest {
     }
 
     protected WsClient subscribeToWebSocket(DeviceId deviceId, String scope, CmdsType property) throws Exception {
-        WsClient wsClient = new WsClient(new URI(WSS_URL + "/api/ws/plugins/telemetry?token=" + restClient.getToken()));
+        WsClient wsClient = new WsClient(new URI(WSS_URL + "/api/ws/plugins/telemetry?token=" + restClient.getToken()), timeoutMultiplier);
         SSLContextBuilder builder = SSLContexts.custom();
         builder.loadTrustMaterial(null, (TrustStrategy) (chain, authType) -> true);
         wsClient.setSocketFactory(builder.build().getSocketFactory());
