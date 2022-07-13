@@ -74,14 +74,17 @@
     min-width: 250px;
 
     .mat-toolbar {
-      height: 48px;
-      min-height: 48px;
+      height: 96px;
+      min-height: 96px;
       padding: 0;
+
+      .mat-toolbar-tools, tb-rulechain-select {
+        font-size: 14px;
+      }
 
       .mat-toolbar-tools {
         height: 48px;
         padding: 0 6px;
-        font-size: 14px;
 
         .mat-form-field {
           .mat-form-field-infix {

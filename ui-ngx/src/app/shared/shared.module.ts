@@ -104,6 +104,7 @@ import {
 } from '@shared/components/fab-toolbar.component';
 import { DashboardSelectPanelComponent } from '@shared/components/dashboard-select-panel.component';
 import { DashboardSelectComponent } from '@shared/components/dashboard-select.component';
+import { RuleChainSelectComponent } from '@shared/components/rulechain-select.component';
 import { WidgetsBundleSelectComponent } from '@shared/components/widgets-bundle-select.component';
 import { KeyboardShortcutPipe } from '@shared/pipe/keyboard-shortcut.pipe';
 import { TbErrorComponent } from '@shared/components/tb-error.component';
@@ -216,6 +217,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     QuickTimeIntervalComponent,
     DashboardSelectComponent,
     DashboardSelectPanelComponent,
+    RuleChainSelectComponent,
     DatetimePeriodComponent,
     DatetimeComponent,
     TimezoneSelectComponent,
@@ -365,6 +367,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TimeintervalComponent,
     QuickTimeIntervalComponent,
     DashboardSelectComponent,
+    RuleChainSelectComponent,
     DatetimePeriodComponent,
     DatetimeComponent,
     TimezoneSelectComponent,

@@ -38,32 +38,38 @@
                     [opened]="isLibraryOpen"
                     position="start"
                     fxLayout="column">
-          <mat-toolbar color="primary" class="tb-dark">
-            <div class="mat-toolbar-tools">
-              <button mat-button mat-icon-button class="tb-small"
-                matTooltip="{{'rulenode.search' | translate}}"
-                matTooltipPosition="above">
-                <mat-icon>search</mat-icon>
-              </button>
-              <mat-form-field fxFlex floatLabel="always">
-                <mat-label></mat-label>
-                <input #ruleNodeSearchInput matInput
-                       [(ngModel)]="ruleNodeTypeSearch"
-                       placeholder="{{'rulenode.search' | translate}}"/>
-              </mat-form-field>
-              <button mat-button mat-icon-button class="tb-small"
-                      [fxShow]="ruleNodeTypeSearch !== ''"
-                      (click)="ruleNodeTypeSearch = ''; updateRuleChainLibrary()"
-                      matTooltip="{{'action.clear-search' | translate}}"
-                      matTooltipPosition="above">
-                <mat-icon>close</mat-icon>
-              </button>
-              <button mat-button mat-icon-button class="tb-small"
-                      (click)="isLibraryOpen = false"
-                      matTooltip="{{'action.close' | translate}}"
-                      matTooltipPosition="above">
-                <mat-icon>chevron_left</mat-icon>
-              </button>
+          <mat-toolbar color="primary" class="tb-dark" fxLayout="column" fxLayoutAlign="space-evenly center">
+            <tb-rulechain-select
+              [(ngModel)]="ruleChain.id.id"
+              (ngModelChange)="currentRuleChainIdChanged(ruleChain.id?.id)">
+            </tb-rulechain-select>
+            <div>
+              <div class="mat-toolbar-tools">
+                <button mat-button mat-icon-button class="tb-small"
+                  matTooltip="{{'rulenode.search' | translate}}"
+                  matTooltipPosition="above">
+                  <mat-icon>search</mat-icon>
+                </button>
+                <mat-form-field fxFlex floatLabel="always">
+                  <mat-label></mat-label>
+                  <input #ruleNodeSearchInput matInput
+                        [(ngModel)]="ruleNodeTypeSearch"
+                        placeholder="{{'rulenode.search' | translate}}"/>
+                </mat-form-field>
+                <button mat-button mat-icon-button class="tb-small"
+                        [fxShow]="ruleNodeTypeSearch !== ''"
+                        (click)="ruleNodeTypeSearch = ''; updateRuleChainLibrary()"
+                        matTooltip="{{'action.clear-search' | translate}}"
+                        matTooltipPosition="above">
+                  <mat-icon>close</mat-icon>
+                </button>
+                <button mat-button mat-icon-button class="tb-small"
+                        (click)="isLibraryOpen = false"
+                        matTooltip="{{'action.close' | translate}}"
+                        matTooltipPosition="above">
+                  <mat-icon>chevron_left</mat-icon>
+                </button>
+              </div>
             </div>
           </mat-toolbar>
           <div class="tb-rulechain-library-panel-group">

@@ -281,6 +281,13 @@ export class RuleChainPageComponent extends PageComponent
     this.updateRuleNodesHighlight();
   }
 
+  currentRuleChainIdChanged(ruleChainId: string) {
+    if (this.isEditingRuleNode) {
+      return;
+    }
+    this.router.navigateByUrl(`ruleChains/${ruleChainId}`);
+  }
+
   private init() {
     this.initHotKeys();
     this.isImport = this.route.snapshot.data.import;

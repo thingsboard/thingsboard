@@ -120,6 +120,7 @@ import * as TimeintervalComponent from '@shared/components/time/timeinterval.com
 import * as QuickTimeIntervalComponent from '@shared/components/time/quick-time-interval.component';
 import * as DashboardSelectComponent from '@shared/components/dashboard-select.component';
 import * as DashboardSelectPanelComponent from '@shared/components/dashboard-select-panel.component';
+import * as RuleChainSelectComponent from '@shared/components/rulechain-select.component';
 import * as DatetimePeriodComponent from '@shared/components/time/datetime-period.component';
 import * as DatetimeComponent from '@shared/components/time/datetime.component';
 import * as TimezoneSelectComponent from '@shared/components/time/timezone-select.component';
@@ -402,6 +403,7 @@ class ModulesMap implements IModulesMap {
     '@shared/components/time/quick-time-interval.component': QuickTimeIntervalComponent,
     '@shared/components/dashboard-select.component': DashboardSelectComponent,
     '@shared/components/dashboard-select-panel.component': DashboardSelectPanelComponent,
+    '@shared/components/rulechain-select.component': RuleChainSelectComponent,
     '@shared/components/time/datetime-period.component': DatetimePeriodComponent,
     '@shared/components/time/datetime.component': DatetimeComponent,
     '@shared/components/time/timezone-select.component': TimezoneSelectComponent,
