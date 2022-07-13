@@ -123,15 +123,6 @@ export class QueueAutocompleteComponent implements ControlValueAccessor, OnInit 
 
   ngAfterViewInit(): void {}
 
-  getCurrentEntity(): BaseData<EntityId> | null {
-    const currentRuleChain = this.selectQueueFormGroup.get('queueId').value;
-    if (currentRuleChain && typeof currentRuleChain !== 'string') {
-      return currentRuleChain as BaseData<EntityId>;
-    } else {
-      return null;
-    }
-  }
-
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (this.disabled) {
