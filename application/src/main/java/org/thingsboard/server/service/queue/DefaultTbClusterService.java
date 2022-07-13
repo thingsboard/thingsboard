@@ -181,7 +181,7 @@ public class DefaultTbClusterService implements TbClusterService {
                 tbMsg = transformMsg(tbMsg, deviceProfileCache.get(tenantId, new DeviceProfileId(entityId.getId())));
             }
         }
-        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, tbMsg.getQueueId(), tenantId, entityId);
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, tbMsg.getQueueName(), tenantId, entityId);
         log.trace("PUSHING msg: {} to:{}", tbMsg, tpi);
         ToRuleEngineMsg msg = ToRuleEngineMsg.newBuilder()
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
@@ -194,16 +194,16 @@ public class DefaultTbClusterService implements TbClusterService {
     private TbMsg transformMsg(TbMsg tbMsg, DeviceProfile deviceProfile) {
         if (deviceProfile != null) {
             RuleChainId targetRuleChainId = deviceProfile.getDefaultRuleChainId();
-            QueueId targetQueueId = deviceProfile.getDefaultQueueId();
+            String targetQueueName = deviceProfile.getDefaultQueueName();
             boolean isRuleChainTransform = targetRuleChainId != null && !targetRuleChainId.equals(tbMsg.getRuleChainId());
-            boolean isQueueTransform = targetQueueId != null && !targetQueueId.equals(tbMsg.getQueueId());
+            boolean isQueueTransform = targetQueueName != null && !targetQueueName.equals(tbMsg.getQueueName());
 
             if (isRuleChainTransform && isQueueTransform) {
-                tbMsg = TbMsg.transformMsg(tbMsg, targetRuleChainId, targetQueueId);
+                tbMsg = TbMsg.transformMsg(tbMsg, targetRuleChainId, targetQueueName);
             } else if (isRuleChainTransform) {
                 tbMsg = TbMsg.transformMsg(tbMsg, targetRuleChainId);
             } else if (isQueueTransform) {
-                tbMsg = TbMsg.transformMsg(tbMsg, targetQueueId);
+                tbMsg = TbMsg.transformMsg(tbMsg, targetQueueName);
             }
         }
         return tbMsg;

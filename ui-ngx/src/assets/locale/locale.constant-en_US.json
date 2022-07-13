@@ -2923,6 +2923,7 @@
     },
     "queue": {
         "queue-name": "Queue",
+        "no-queues-found": "No queues found.",
         "no-queues-matching": "No queues matching '{{queue}}' were found.",
         "select-name": "Select queue name",
         "name": "Name",
@@ -3052,9 +3053,7 @@
         "tenant-required": "Tenant is required",
         "search": "Search tenants",
         "selected-tenants": "{ count, plural, 1 {1 tenant} other {# tenants} } selected",
-        "isolated-tb-core": "Processing in isolated ThingsBoard Core container",
         "isolated-tb-rule-engine": "Processing in isolated ThingsBoard Rule Engine container",
-        "isolated-tb-core-details": "Requires separate microservice(s) per isolated Tenant",
         "isolated-tb-rule-engine-details": "Requires separate microservice(s) per isolated Tenant"
     },
     "tenant-profile": {

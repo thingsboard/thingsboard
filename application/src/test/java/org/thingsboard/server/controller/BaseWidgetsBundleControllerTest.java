@@ -21,8 +21,12 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
@@ -34,6 +38,7 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.dao.model.ModelConstants.SYSTEM_TENANT;
 
 public abstract class BaseWidgetsBundleControllerTest extends AbstractControllerTest {
 
@@ -73,7 +78,15 @@ public abstract class BaseWidgetsBundleControllerTest extends AbstractController
     public void testSaveWidgetsBundle() throws Exception {
         WidgetsBundle widgetsBundle = new WidgetsBundle();
         widgetsBundle.setTitle("My widgets bundle");
+
+        Mockito.reset(tbClusterService);
+
         WidgetsBundle savedWidgetsBundle = doPost("/api/widgetsBundle", widgetsBundle, WidgetsBundle.class);
+
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(savedWidgetsBundle, savedWidgetsBundle,
+                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, ActionType.ADDED, 0, 1, 0);
+        Mockito.reset(tbClusterService);
 
         Assert.assertNotNull(savedWidgetsBundle);
         Assert.assertNotNull(savedWidgetsBundle.getId());
@@ -87,13 +100,25 @@ public abstract class BaseWidgetsBundleControllerTest extends AbstractController
 
         WidgetsBundle foundWidgetsBundle = doGet("/api/widgetsBundle/" + savedWidgetsBundle.getId().getId().toString(), WidgetsBundle.class);
         Assert.assertEquals(foundWidgetsBundle.getTitle(), savedWidgetsBundle.getTitle());
+
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(savedWidgetsBundle, savedWidgetsBundle,
+                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.UPDATED, ActionType.UPDATED, 0, 1, 0);
     }
 
      @Test
      public void testSaveWidgetBundleWithViolationOfLengthValidation() throws Exception {
          WidgetsBundle widgetsBundle = new WidgetsBundle();
          widgetsBundle.setTitle(RandomStringUtils.randomAlphabetic(300));
-         doPost("/api/widgetsBundle", widgetsBundle).andExpect(statusReason(containsString("length of title must be equal or less than 255")));
+
+         Mockito.reset(tbClusterService);
+
+         String msgError = msgErrorFieldLength("title");
+         doPost("/api/widgetsBundle", widgetsBundle)
+                 .andExpect(status().isBadRequest())
+                 .andExpect(statusReason(containsString(msgError)));
+
+         testNotifyEntityNever(widgetsBundle.getId(), widgetsBundle);
      }
 
     @Test
@@ -103,7 +128,15 @@ public abstract class BaseWidgetsBundleControllerTest extends AbstractController
         WidgetsBundle savedWidgetsBundle = doPost("/api/widgetsBundle", widgetsBundle, WidgetsBundle.class);
 
         loginDifferentTenant();
-        doPost("/api/widgetsBundle", savedWidgetsBundle, WidgetsBundle.class, status().isForbidden());
+
+        Mockito.reset(tbClusterService);
+
+        doPost("/api/widgetsBundle", savedWidgetsBundle)
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString(msgErrorPermission)));
+
+        testNotifyEntityNever(savedWidgetsBundle.getId(), savedWidgetsBundle);
+
         deleteDifferentTenant();
     }
 
@@ -121,21 +154,35 @@ public abstract class BaseWidgetsBundleControllerTest extends AbstractController
     public void testDeleteWidgetsBundle() throws Exception {
         WidgetsBundle widgetsBundle = new WidgetsBundle();
         widgetsBundle.setTitle("My widgets bundle");
+
+        Mockito.reset(tbClusterService, auditLogService);
+
         WidgetsBundle savedWidgetsBundle = doPost("/api/widgetsBundle", widgetsBundle, WidgetsBundle.class);
 
         doDelete("/api/widgetsBundle/"+savedWidgetsBundle.getId().getId().toString())
                 .andExpect(status().isOk());
 
-        doGet("/api/widgetsBundle/"+savedWidgetsBundle.getId().getId().toString())
-                .andExpect(status().isNotFound());
+        String savedWidgetsBundleIdStr = savedWidgetsBundle.getId().getId().toString();
+        doGet("/api/widgetsBundle/" + savedWidgetsBundleIdStr)
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(containsString(msgErrorNoFound("Widgets bundle", savedWidgetsBundleIdStr))));
+
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(savedWidgetsBundle, savedWidgetsBundle,
+                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.DELETED, ActionType.DELETED, 0, 1, 0);
     }
 
     @Test
     public void testSaveWidgetsBundleWithEmptyTitle() throws Exception {
+
+        Mockito.reset(tbClusterService, auditLogService);
+
         WidgetsBundle widgetsBundle = new WidgetsBundle();
         doPost("/api/widgetsBundle", widgetsBundle)
                 .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Widgets bundle title should be specified")));
+                .andExpect(statusReason(containsString("Widgets bundle title " + msgErrorShouldBeSpecified)));
+
+        testNotifyEntityNever(widgetsBundle.getId(), widgetsBundle);
     }
 
     @Test
@@ -144,10 +191,14 @@ public abstract class BaseWidgetsBundleControllerTest extends AbstractController
         widgetsBundle.setTitle("My widgets bundle");
         WidgetsBundle savedWidgetsBundle = doPost("/api/widgetsBundle", widgetsBundle, WidgetsBundle.class);
         savedWidgetsBundle.setAlias("new_alias");
+
+        Mockito.reset(tbClusterService);
+
         doPost("/api/widgetsBundle", savedWidgetsBundle)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("Update of widgets bundle alias is prohibited")));
 
+        testNotifyEntityNever(savedWidgetsBundle.getId(), savedWidgetsBundle);
     }
 
     @Test
@@ -156,15 +207,21 @@ public abstract class BaseWidgetsBundleControllerTest extends AbstractController
         login(tenantAdmin.getEmail(), "testPassword1");
 
         List<WidgetsBundle> sysWidgetsBundles = doGetTyped("/api/widgetsBundles?",
-                new TypeReference<List<WidgetsBundle>>(){});
+                new TypeReference<>(){});
 
+        Mockito.reset(tbClusterService);
 
+        int cntEntity = 73;
         List<WidgetsBundle> widgetsBundles = new ArrayList<>();
-        for (int i=0;i<73;i++) {
+        for (int i=0;i<cntEntity;i++) {
             WidgetsBundle widgetsBundle = new WidgetsBundle();
             widgetsBundle.setTitle("Widgets bundle"+i);
             widgetsBundles.add(doPost("/api/widgetsBundle", widgetsBundle, WidgetsBundle.class));
         }
+
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new WidgetsBundle(), new WidgetsBundle(),
+                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, ActionType.ADDED, 0, cntEntity, 0);
 
         widgetsBundles.addAll(sysWidgetsBundles);
 
@@ -173,7 +230,7 @@ public abstract class BaseWidgetsBundleControllerTest extends AbstractController
         PageData<WidgetsBundle> pageData;
         do {
             pageData = doGetTypedWithPageLink("/api/widgetsBundles?",
-                    new TypeReference<PageData<WidgetsBundle>>(){}, pageLink);
+                    new TypeReference<>(){}, pageLink);
             loadedWidgetsBundles.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -192,10 +249,11 @@ public abstract class BaseWidgetsBundleControllerTest extends AbstractController
         loginSysAdmin();
 
         List<WidgetsBundle> sysWidgetsBundles = doGetTyped("/api/widgetsBundles?",
-                new TypeReference<List<WidgetsBundle>>(){});
+                new TypeReference<>(){});
 
+        int cntEntity = 120;
         List<WidgetsBundle> createdWidgetsBundles = new ArrayList<>();
-        for (int i=0;i<120;i++) {
+        for (int i=0;i<cntEntity;i++) {
             WidgetsBundle widgetsBundle = new WidgetsBundle();
             widgetsBundle.setTitle("Widgets bundle"+i);
             createdWidgetsBundles.add(doPost("/api/widgetsBundle", widgetsBundle, WidgetsBundle.class));
@@ -209,7 +267,7 @@ public abstract class BaseWidgetsBundleControllerTest extends AbstractController
         PageData<WidgetsBundle> pageData;
         do {
             pageData = doGetTypedWithPageLink("/api/widgetsBundles?",
-                    new TypeReference<PageData<WidgetsBundle>>(){}, pageLink);
+                    new TypeReference<>(){}, pageLink);
             loadedWidgetsBundles.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -221,10 +279,16 @@ public abstract class BaseWidgetsBundleControllerTest extends AbstractController
 
         Assert.assertEquals(widgetsBundles, loadedWidgetsBundles);
 
+        Mockito.reset(tbClusterService);
+
         for (WidgetsBundle widgetsBundle : createdWidgetsBundles) {
             doDelete("/api/widgetsBundle/"+widgetsBundle.getId().getId().toString())
                     .andExpect(status().isOk());
         }
+
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new WidgetsBundle(), new WidgetsBundle(),
+                SYSTEM_TENANT, (CustomerId) createEntityId_NULL_UUID(new Customer()), null, SYS_ADMIN_EMAIL,
+                ActionType.DELETED, ActionType.DELETED, 0, cntEntity, 0);
 
         pageLink = new PageLink(17);
         loadedWidgetsBundles.clear();
@@ -262,7 +326,7 @@ public abstract class BaseWidgetsBundleControllerTest extends AbstractController
         widgetsBundles.addAll(sysWidgetsBundles);
 
         List<WidgetsBundle> loadedWidgetsBundles = doGetTyped("/api/widgetsBundles?",
-                new TypeReference<List<WidgetsBundle>>(){});
+                new TypeReference<>(){});
 
         Collections.sort(widgetsBundles, idComparator);
         Collections.sort(loadedWidgetsBundles, idComparator);
@@ -277,7 +341,7 @@ public abstract class BaseWidgetsBundleControllerTest extends AbstractController
 
 
         List<WidgetsBundle> sysWidgetsBundles = doGetTyped("/api/widgetsBundles?",
-                new TypeReference<List<WidgetsBundle>>(){});
+                new TypeReference<>(){});
 
         List<WidgetsBundle> createdSystemWidgetsBundles = new ArrayList<>();
         for (int i=0;i<82;i++) {
@@ -324,7 +388,7 @@ public abstract class BaseWidgetsBundleControllerTest extends AbstractController
         }
 
         loadedWidgetsBundles = doGetTyped("/api/widgetsBundles?",
-                new TypeReference<List<WidgetsBundle>>(){});
+                new TypeReference<>(){});
 
         Collections.sort(sysWidgetsBundles, idComparator);
         Collections.sort(loadedWidgetsBundles, idComparator);

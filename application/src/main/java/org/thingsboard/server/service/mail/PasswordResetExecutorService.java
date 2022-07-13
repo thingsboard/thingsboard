@@ -13,13 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.discovery;
+package org.thingsboard.server.service.mail;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.AbstractListeningExecutor;
 
-@Data
-public class TenantRoutingInfo {
-    private final TenantId tenantId;
-    private final boolean isolatedTbRuleEngine;
+@Component
+public class PasswordResetExecutorService extends AbstractListeningExecutor {
+
+    @Value("${actors.rule.mail_password_reset_thread_pool_size:10}")
+    private int mailExecutorThreadPoolSize;
+
+    @Override
+    protected int getThreadPollSize() {
+        return mailExecutorThreadPoolSize;
+    }
+
 }

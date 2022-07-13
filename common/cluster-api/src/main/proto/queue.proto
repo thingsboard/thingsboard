@@ -273,7 +273,6 @@ message GetTenantRoutingInfoRequestMsg {
 }
 
 message GetTenantRoutingInfoResponseMsg {
-  bool isolatedTbCore = 1;
   bool isolatedTbRuleEngine = 2;
 }
 
