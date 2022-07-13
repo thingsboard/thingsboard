@@ -68,8 +68,6 @@ public class HashPartitionService implements PartitionService {
     private final TenantRoutingInfoService tenantRoutingInfoService;
     private final QueueRoutingInfoService queueRoutingInfoService;
 
-    private final ConcurrentMap<QueueId, QueueRoutingInfo> queuesById = new ConcurrentHashMap<>();
-
     private ConcurrentMap<QueueKey, List<Integer>> myPartitions = new ConcurrentHashMap<>();
 
     private final ConcurrentMap<QueueKey, String> partitionTopicsMap = new ConcurrentHashMap<>();
@@ -121,7 +119,6 @@ public class HashPartitionService implements PartitionService {
             QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, queue);
             partitionTopicsMap.put(queueKey, queue.getQueueTopic());
             partitionSizesMap.put(queueKey, queue.getPartitions());
-            queuesById.put(queue.getQueueId(), queue);
         });
     }
 
@@ -165,8 +162,6 @@ public class HashPartitionService implements PartitionService {
     public void updateQueue(TransportProtos.QueueUpdateMsg queueUpdateMsg) {
         TenantId tenantId = new TenantId(new UUID(queueUpdateMsg.getTenantIdMSB(), queueUpdateMsg.getTenantIdLSB()));
         QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, queueUpdateMsg.getQueueName(), tenantId);
-        QueueRoutingInfo queue = new QueueRoutingInfo(queueUpdateMsg);
-        queuesById.put(queue.getQueueId(), queue);
         partitionTopicsMap.put(queueKey, queueUpdateMsg.getQueueTopic());
         partitionSizesMap.put(queueKey, queueUpdateMsg.getPartitions());
         myPartitions.remove(queueKey);
@@ -176,7 +171,6 @@ public class HashPartitionService implements PartitionService {
     public void removeQueue(TransportProtos.QueueDeleteMsg queueDeleteMsg) {
         TenantId tenantId = new TenantId(new UUID(queueDeleteMsg.getTenantIdMSB(), queueDeleteMsg.getTenantIdLSB()));
         QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, queueDeleteMsg.getQueueName(), tenantId);
-        queuesById.remove(new QueueId(new UUID(queueDeleteMsg.getQueueIdMSB(), queueDeleteMsg.getQueueIdLSB())));
         myPartitions.remove(queueKey);
         partitionTopicsMap.remove(queueKey);
         partitionSizesMap.remove(queueKey);
@@ -185,9 +179,7 @@ public class HashPartitionService implements PartitionService {
     }
 
     @Override
-    @Deprecated
-    public TopicPartitionInfo resolve(ServiceType serviceType, TenantId tenantId, EntityId entityId, String queueName) {
-        log.warn("This method is deprecated and will be removed!!!");
+    public TopicPartitionInfo resolve(ServiceType serviceType, String queueName, TenantId tenantId, EntityId entityId) {
         TenantId isolatedOrSystemTenantId = getIsolatedOrSystemTenantId(serviceType, tenantId);
         QueueKey queueKey = new QueueKey(serviceType, queueName, isolatedOrSystemTenantId);
         if (!partitionSizesMap.containsKey(queueKey)) {
@@ -199,32 +191,6 @@ public class HashPartitionService implements PartitionService {
     @Override
     public TopicPartitionInfo resolve(ServiceType serviceType, TenantId tenantId, EntityId entityId) {
         return resolve(serviceType, null, tenantId, entityId);
-    }
-
-    @Override
-    public TopicPartitionInfo resolve(ServiceType serviceType, QueueId queueId, TenantId tenantId, EntityId entityId) {
-        QueueKey queueKey;
-        if (queueId == null) {
-            queueKey = getMainQueueKey(serviceType, tenantId);
-        } else {
-            QueueRoutingInfo queueRoutingInfo = queuesById.get(queueId);
-
-            if (queueRoutingInfo == null) {
-                log.debug("Queue was removed but still used in CheckPoint rule node. [{}][{}]", tenantId, entityId);
-                queueKey = getMainQueueKey(serviceType, tenantId);
-            } else if (!queueRoutingInfo.getTenantId().equals(getIsolatedOrSystemTenantId(serviceType, tenantId))) {
-                log.debug("Tenant profile was changed but CheckPoint rule node still uses the queue from system level. [{}][{}]", tenantId, entityId);
-                queueKey = getMainQueueKey(serviceType, tenantId);
-            } else {
-                queueKey = new QueueKey(serviceType, queueRoutingInfo);
-            }
-        }
-
-        return resolve(queueKey, entityId);
-    }
-
-    private QueueKey getMainQueueKey(ServiceType serviceType, TenantId tenantId) {
-        return new QueueKey(serviceType, getIsolatedOrSystemTenantId(serviceType, tenantId));
     }
 
     private TopicPartitionInfo resolve(QueueKey queueKey, EntityId entityId) {
@@ -399,8 +365,6 @@ public class HashPartitionService implements PartitionService {
             throw new RuntimeException("Tenant not found!");
         }
         switch (serviceType) {
-            case TB_CORE:
-                return routingInfo.isIsolatedTbCore();
             case TB_RULE_ENGINE:
                 return routingInfo.isIsolatedTbRuleEngine();
             default:

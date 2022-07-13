@@ -526,7 +526,8 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
                 .setRequestIdLSB(ctx.getRequestId().getLeastSignificantBits());
         if (e.isPresent()) {
             log.debug("[{}][{}] Failed to process task", ctx.getTenantId(), ctx.getRequestId(), e.get());
-            builder.setError(e.get().getMessage());
+            var message = e.get().getMessage();
+            builder.setError(message != null ? message : e.get().getClass().getSimpleName());
         } else {
             if (enrichFunction != null) {
                 builder = enrichFunction.apply(builder);

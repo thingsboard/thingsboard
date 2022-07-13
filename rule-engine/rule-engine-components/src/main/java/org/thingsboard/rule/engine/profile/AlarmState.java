@@ -60,7 +60,7 @@ class AlarmState {
     private volatile Alarm currentAlarm;
     private volatile boolean initialFetchDone;
     private volatile TbMsgMetaData lastMsgMetaData;
-    private volatile QueueId lastMsgQueueId;
+    private volatile String lastMsgQueueName;
     private volatile DataSnapshot dataSnapshot;
     private final DynamicPredicateValueCtx dynamicPredicateValueCtx;
 
@@ -74,7 +74,7 @@ class AlarmState {
     public boolean process(TbContext ctx, TbMsg msg, DataSnapshot data, SnapshotUpdate update) throws ExecutionException, InterruptedException {
         initCurrentAlarm(ctx);
         lastMsgMetaData = msg.getMetaData();
-        lastMsgQueueId = msg.getQueueId();
+        lastMsgQueueName = msg.getQueueName();
         this.dataSnapshot = data;
         try {
             return createOrClearAlarms(ctx, msg, data, update, AlarmRuleState::eval);
@@ -195,7 +195,7 @@ class AlarmState {
             metaData.putValue(DataConstants.IS_CLEARED_ALARM, Boolean.TRUE.toString());
         }
         setAlarmConditionMetadata(ruleState, metaData);
-        TbMsg newMsg = ctx.newMsg(lastMsgQueueId != null ? lastMsgQueueId : null, "ALARM",
+        TbMsg newMsg = ctx.newMsg(lastMsgQueueName != null ? lastMsgQueueName : null, "ALARM",
                 originator, msg != null ? msg.getCustomerId() : null, metaData, data);
         ctx.enqueueForTellNext(newMsg, relationType);
     }

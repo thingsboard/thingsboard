@@ -126,15 +126,10 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
                 throw new DataValidationException("Another default device profile is present in scope of current tenant!");
             }
         }
-        if (deviceProfile.getDefaultQueueId() != null) {
-            Queue queue = queueService.findQueueById(tenantId, deviceProfile.getDefaultQueueId());
+        if (StringUtils.isNotEmpty(deviceProfile.getDefaultQueueName())) {
+            Queue queue = queueService.findQueueByTenantIdAndName(tenantId, deviceProfile.getDefaultQueueName());
             if (queue == null) {
                 throw new DataValidationException("Device profile is referencing to non-existent queue!");
-            }
-            TenantProfile tenantProfile = tenantProfileCache.get(deviceProfile.getTenantId());
-            if ((tenantProfile.isIsolatedTbRuleEngine() && !queue.getTenantId().equals(deviceProfile.getTenantId()))
-                    || (!tenantProfile.isIsolatedTbRuleEngine() && !queue.getTenantId().isNullUid())) {
-                throw new DataValidationException("Can't assign queue from different tenant!");
             }
         }
         if (deviceProfile.getProvisionType() == null) {
