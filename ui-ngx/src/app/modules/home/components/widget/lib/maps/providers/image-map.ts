@@ -16,9 +16,15 @@
 
 import L, { LatLngBounds, LatLngLiteral, LatLngTuple } from 'leaflet';
 import LeafletMap from '../leaflet-map';
-import { CircleData, MapImage, PosFuncton, WidgetUnitedMapSettings } from '../map-models';
+import {
+  CircleData,
+  defaultImageMapProviderSettings,
+  MapImage,
+  PosFuncton,
+  WidgetUnitedMapSettings
+} from '../map-models';
 import { Observable, ReplaySubject } from 'rxjs';
-import { map, mergeMap } from 'rxjs/operators';
+import { catchError, map, mergeMap } from 'rxjs/operators';
 import {
   aspectCache,
   calculateNewPointCoordinate
@@ -124,7 +130,11 @@ export class ImageMap extends LeafletMap {
             };
             return mapImage;
           }
-        ));
+        ),
+        catchError((e) => {
+          return this.imageFromUrl(defaultImageMapProviderSettings.mapImageUrl);
+        })
+      );
     }
 
     private imageFromAlias(alias: Observable<[DataSet, boolean]>): Observable<MapImage> {
@@ -140,7 +150,11 @@ export class ImageMap extends LeafletMap {
                 mapImage.aspect = aspect;
                 return mapImage;
               }
-            ));
+            ),
+            catchError((e) => {
+              return this.imageFromUrl(defaultImageMapProviderSettings.mapImageUrl);
+            })
+          );
         })
       );
     }
