@@ -50,7 +50,7 @@ import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
 @RequestMapping("/api/2fa")
 @TbCoreComponent
 @RequiredArgsConstructor
-public class TwoFaConfigController extends BaseController {
+public class TwoFactorAuthConfigController extends BaseController {
 
     private final TwoFaConfigManager twoFaConfigManager;
     private final TwoFactorAuthService twoFactorAuthService;
