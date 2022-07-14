@@ -21,11 +21,12 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.ConcurrencyFailureException;
-import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -55,11 +56,10 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -75,15 +75,19 @@ public class BaseRelationService implements RelationService {
     private final TbTransactionalCache<RelationCacheKey, RelationCacheValue> cache;
     private final ApplicationEventPublisher eventPublisher;
     private final JpaExecutorService executor;
+    private final RelationsRecursiveTasksExecutor relationsRecursiveTasksExecutor;
 
     public BaseRelationService(RelationDao relationDao, @Lazy EntityService entityService,
                                TbTransactionalCache<RelationCacheKey, RelationCacheValue> cache,
-                               ApplicationEventPublisher eventPublisher, JpaExecutorService executor) {
+                               ApplicationEventPublisher eventPublisher, JpaExecutorService executor,
+                               RelationsRecursiveTasksExecutor relationsRecursiveTasksExecutor
+    ) {
         this.relationDao = relationDao;
         this.entityService = entityService;
         this.cache = cache;
         this.eventPublisher = eventPublisher;
         this.executor = executor;
+        this.relationsRecursiveTasksExecutor = relationsRecursiveTasksExecutor;
     }
 
     @TransactionalEventListener(classes = EntityRelationEvent.class)
@@ -394,7 +398,7 @@ public class BaseRelationService implements RelationService {
         int maxLvl = params.getMaxLevel() > 0 ? params.getMaxLevel() : Integer.MAX_VALUE;
 
         try {
-            ListenableFuture<Set<EntityRelation>> relationSet = findRelationsRecursively(tenantId, params.getEntityId(), null, params.getDirection(), params.getRelationTypeGroup(), maxLvl, params.isFetchLastLevelOnly(), new ConcurrentHashMap<>());
+            ListenableFuture<Set<EntityRelation>> relationSet = findRelationsRecursively(tenantId, params.getEntityId(), params.getDirection(), params.getRelationTypeGroup(), maxLvl, params.isFetchLastLevelOnly());
             return Futures.transform(relationSet, input -> {
                 List<EntityRelation> relations = new ArrayList<>();
                 if (filters == null || filters.isEmpty()) {
@@ -519,14 +523,12 @@ public class BaseRelationService implements RelationService {
     }
 
     private ListenableFuture<Set<EntityRelation>> findRelationsRecursively(
-            final TenantId tenantId,
-            final EntityId rootId,
-            final EntityRelation rootRelation,
-            final EntitySearchDirection direction,
+            TenantId tenantId,
+            EntityId rootId,
+            EntitySearchDirection direction,
             RelationTypeGroup relationTypeGroup,
             int lvl,
-            boolean fetchLastLevelOnly,
-            final ConcurrentHashMap<EntityId, Boolean> uniqueMap
+            boolean fetchLastLevelOnly
     ) {
         if (lvl == 0) {
             return Futures.immediateFuture(Collections.emptySet());
@@ -534,87 +536,85 @@ public class BaseRelationService implements RelationService {
 
         SettableFuture<Set<EntityRelation>> resultFuture = SettableFuture.create();
 
-        DonAsynchron.withCallback(findRelations(tenantId, rootId, direction, relationTypeGroup), childrenList -> {
-            final int finalLvl = lvl != Integer.MAX_VALUE ? lvl - 1 : lvl;
-            Set<EntityRelation> children = new HashSet<>(childrenList);
+        ConcurrentHashMap<EntityId, Boolean> uniqueMap = new ConcurrentHashMap<>();
+        var firstTask = new RecursiveRelationTask(tenantId,
+                rootId, null, direction,
+                relationTypeGroup, lvl, fetchLastLevelOnly,
+                uniqueMap, resultFuture, relationsRecursiveTasksExecutor
+        );
 
-            Map<EntityId, EntityRelation> childIdBaseRelation = new HashMap<>();
-
-            children.forEach(childRelation -> {
-                EntityId childId;
-                if (direction == EntitySearchDirection.FROM) {
-                    childId = childRelation.getTo();
-                } else {
-                    childId = childRelation.getFrom();
-                }
-                if (uniqueMap.putIfAbsent(childId, Boolean.TRUE) == null) {
-                    childIdBaseRelation.put(childId, childRelation);
-                }
-            });
-
-            List<ListenableFuture<Pair<EntityRelation, Set<EntityRelation>>>> relationPairsFutureList = new LinkedList<>();
-            for (var entry : childIdBaseRelation.entrySet()) {
-                EntityId childId = entry.getKey();
-                SettableFuture<Pair<EntityRelation, Set<EntityRelation>>> childRelationsFuture = SettableFuture.create();
-
-                EntityRelation baseRelation = childIdBaseRelation.get(childId);
-
-                var recursiveTask = findRelationsRecursively(tenantId, childId, entry.getValue(), direction, relationTypeGroup, finalLvl, fetchLastLevelOnly, uniqueMap);
-
-                DonAsynchron.withCallback(recursiveTask, childRelations -> {
-                    if (childRelations == null) {
-                        childRelationsFuture.set(Pair.of(baseRelation, Collections.emptySet()));
-                    }
-                    childRelationsFuture.set(Pair.of(baseRelation, childRelations));
-                }, t -> log.warn("Error during findRelationsRecursively execution!", t), executor);
-
-                relationPairsFutureList.add(childRelationsFuture);
-            }
-
-            var relationsPairsFuture = Futures.successfulAsList(relationPairsFutureList);
-
-            DonAsynchron.withCallback(relationsPairsFuture, relationsPairs -> {
-                var relations = relationsPairs.stream()
-                        .collect(Collectors.toMap(
-                                Pair::getFirst,
-                                Pair::getSecond
-                        ));
-                var resultSet = checkFetching(finalLvl, fetchLastLevelOnly, rootRelation, children, relations);
-                relations.values().forEach(resultSet::addAll);
-
-                resultFuture.set(resultSet);
-            }, t -> log.warn("Error during findRelationsRecursively execution!", t), executor);
-        }, t -> log.warn("Error during findRelationsRecursively execution!", t), executor);
+        relationsRecursiveTasksExecutor.execute(firstTask);
 
         return resultFuture;
     }
 
-    private Set<EntityRelation> checkFetching(
-            int lvl, boolean fetchLastLevelOnly,
-            EntityRelation rootRelation,
-            Set<EntityRelation> children,
-            Map<EntityRelation, Set<EntityRelation>> childrenRelations
-    ) {
-        if (fetchLastLevelOnly) {
-            if (lvl != Integer.MAX_VALUE) {
-                if (lvl > 0) {
-                    Set<EntityRelation> result = new HashSet<>();
-                    children.forEach(c -> {
-                        if (childrenRelations.get(c).isEmpty()) {
-                            result.add(c);
+    @AllArgsConstructor
+    @Getter
+    private class RecursiveRelationTask implements Runnable {
+        private TenantId tenantId;
+        private EntityId rootId;
+        private EntityRelation baseRelation;
+        private EntitySearchDirection direction;
+        private RelationTypeGroup relationTypeGroup;
+        private int lvl;
+        private boolean fetchLastLvlOnly;
+        private ConcurrentHashMap<EntityId, Boolean> uniqueMap;
+        private SettableFuture<Set<EntityRelation>> resultFuture;
+        private Executor workExecutor;
+
+        @Override
+        public void run() {
+            if (lvl == 0) {
+                resultFuture.set(Collections.singleton(baseRelation));
+            } else {
+
+                int currLvl = lvl == Integer.MAX_VALUE ? lvl : lvl - 1;
+                var foundRelationsFuture = findRelations(tenantId, rootId, direction, relationTypeGroup);
+
+                DonAsynchron.withCallback(foundRelationsFuture, foundRelations -> {
+                    if (foundRelations.isEmpty()) {
+                        if (baseRelation == null) {
+                            resultFuture.set(Collections.emptySet());
+                        } else {
+                            resultFuture.set(Collections.singleton(baseRelation));
+                        }
+                        return;
+                    }
+
+                    Map<EntityId, EntityRelation> childIds = new HashMap<>();
+                    foundRelations.forEach(relation -> {
+                        var childId = direction == EntitySearchDirection.TO ? relation.getFrom() : relation.getTo();
+                        if (uniqueMap.putIfAbsent(childId, Boolean.TRUE) == null) {
+                            childIds.put(childId, relation);
                         }
                     });
 
-                    children = result;
-                }
-            } else if (!children.isEmpty()) {
-                children.clear();
-            } else if (rootRelation != null) {
-                children = Set.of(rootRelation);
+
+                    List<SettableFuture<Set<EntityRelation>>> tasksList = new LinkedList<>();
+                    for (var child : childIds.entrySet()) {
+                        SettableFuture<Set<EntityRelation>> taskResult = SettableFuture.create();
+                        var task = new RecursiveRelationTask(tenantId, child.getKey(), child.getValue(),
+                                direction, relationTypeGroup, currLvl, fetchLastLvlOnly, uniqueMap, taskResult, workExecutor);
+                        workExecutor.execute(task);
+                        tasksList.add(taskResult);
+                    }
+
+                    var successListFuture = Futures.successfulAsList(tasksList);
+
+                    DonAsynchron.withCallback(successListFuture, successList -> {
+                        Set<EntityRelation> resultSet;
+                        if (!fetchLastLvlOnly || lvl == 0) {
+                            resultSet = new HashSet<>(foundRelations);
+                        } else {
+                            resultSet = new HashSet<>();
+                        }
+
+                        successList.forEach(resultSet::addAll);
+                        resultFuture.set(resultSet);
+                    }, t -> log.warn("Failed to execute RecursiveRelationTask!", t), executor);
+                }, t -> log.warn("Failed to execute RecursiveRelationTask!", t), executor);
             }
         }
-
-        return children;
     }
 
     private ListenableFuture<List<EntityRelation>> findRelations(final TenantId tenantId, final EntityId rootId, final EntitySearchDirection direction, RelationTypeGroup relationTypeGroup) {

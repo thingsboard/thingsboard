@@ -330,6 +330,8 @@ actors:
     mail_thread_pool_size: "${ACTORS_RULE_MAIL_THREAD_POOL_SIZE:50}"
     # Specify thread pool size for sms sender executor service
     sms_thread_pool_size: "${ACTORS_RULE_SMS_THREAD_POOL_SIZE:50}"
+    # Specify thread pool size for relations queue executor service
+    relation_queue_thread_pool_size: "${ACTORS_RULE_RELATION_QUEUE_THREAD_POOL_SIZE:50}"
     # Whether to allow usage of system mail service for rules
     allow_system_mail_service: "${ACTORS_RULE_ALLOW_SYSTEM_MAIL_SERVICE:true}"
     # Whether to allow usage of system sms service for rules

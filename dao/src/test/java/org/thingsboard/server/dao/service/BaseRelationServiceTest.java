@@ -587,7 +587,7 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
     public void testFindByQueryLargeHierarchyFetchLastOnlyWithUnlimLvlMultipleThreads() throws Exception {
         final int threadsNumber = Runtime.getRuntime().availableProcessors() * 2;
         AssetId rootAsset = new AssetId(Uuids.timeBased());
-        final int hierarchyLvl = 15;
+        final int hierarchyLvl = 10;
         List<EntityRelation> expectedRelations = new LinkedList<>();
 
         createAssetRelationsRecursively(rootAsset, hierarchyLvl, expectedRelations, true);
@@ -633,7 +633,7 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
     public void testFindByQueryLargeHierarchyFetchLAllWithUnlimLvlMultipleThreads() throws Exception {
         final int threadsNumber = Runtime.getRuntime().availableProcessors() * 2;
         AssetId rootAsset = new AssetId(Uuids.timeBased());
-        final int hierarchyLvl = 15;
+        final int hierarchyLvl = 10;
         List<EntityRelation> expectedRelations = new LinkedList<>();
 
         createAssetRelationsRecursively(rootAsset, hierarchyLvl, expectedRelations, false);
