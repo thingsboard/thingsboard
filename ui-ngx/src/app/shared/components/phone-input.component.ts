@@ -92,6 +92,7 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
       this.isLoading = value;
       if (this.phoneFormGroup) {
         this.defineCountryFromNumber(this.phoneFormGroup.get('phoneNumber').value);
+        this.getFlagAndPhoneNumberData(this.phoneFormGroup.get('country').value);
       }
     }
   }
@@ -183,7 +184,7 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
   validatePhoneNumber(): ValidatorFn {
     return (c: FormControl) => {
       const phoneNumber = c.value;
-      if (phoneNumber && this.countryCallingCode !== phoneNumber && this.parsePhoneNumberFromString) {
+      if (phoneNumber && this.parsePhoneNumberFromString) {
         const parsedPhoneNumber = this.parsePhoneNumberFromString(phoneNumber);
         if (!parsedPhoneNumber?.isValid() || !parsedPhoneNumber?.isPossible()) {
           return {
@@ -213,7 +214,7 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
 
   validate(): ValidationErrors | null {
     const phoneNumber = this.phoneFormGroup.get('phoneNumber');
-    return phoneNumber.valid || phoneNumber.untouched || this.countryCallingCode === phoneNumber.value ? null : {
+    return phoneNumber.valid ? null : {
       phoneFormGroup: false
     };
   }
