@@ -2641,7 +2641,7 @@
         "tokenCopiedWarnMessage": "JWT token is expired! Please, refresh the page."
     },
     "security": {
-        "security": "Password and authentication",
+        "security": "Security",
         "2fa": {
             "2fa": "Two-factor authentication",
             "2fa-description": "Two-factor authentication protects your account from unauthorized access. All you have to do is enter a security code when you log in.",
