@@ -35,8 +35,13 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class BaseRelationServiceTest extends AbstractServiceTest {
 
@@ -312,4 +317,383 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
         relation.setTo(new AssetId(Uuids.timeBased()));
         Assert.assertTrue(saveRelation(relation));
     }
+
+    @Test
+    public void testFindByQueryFetchLastOnlyTreeLike() throws Exception {
+        // A -> B
+        // A -> C
+        // C -> D
+        // C -> E
+
+        AssetId assetA = new AssetId(Uuids.timeBased());
+        AssetId assetB = new AssetId(Uuids.timeBased());
+        AssetId assetC = new AssetId(Uuids.timeBased());
+        AssetId assetD = new AssetId(Uuids.timeBased());
+        AssetId assetE = new AssetId(Uuids.timeBased());
+
+        EntityRelation relationA = new EntityRelation(assetA, assetB, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationB = new EntityRelation(assetA, assetC, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationC = new EntityRelation(assetC, assetD, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationD = new EntityRelation(assetC, assetE, EntityRelation.CONTAINS_TYPE);
+
+        saveRelation(relationA);
+        saveRelation(relationB);
+        saveRelation(relationC);
+        saveRelation(relationD);
+
+        EntityRelationsQuery query = new EntityRelationsQuery();
+        query.setParameters(new RelationsSearchParameters(assetA, EntitySearchDirection.FROM, -1, true));
+        query.setFilters(Collections.singletonList(new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.singletonList(EntityType.ASSET))));
+        List<EntityRelation> relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        Assert.assertEquals(3, relations.size());
+        Assert.assertTrue(relations.contains(relationA));
+        Assert.assertTrue(relations.contains(relationC));
+        Assert.assertTrue(relations.contains(relationD));
+        Assert.assertFalse(relations.contains(relationB));
+
+        //Test from cache
+        relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        Assert.assertTrue(relations.contains(relationA));
+        Assert.assertTrue(relations.contains(relationC));
+        Assert.assertTrue(relations.contains(relationD));
+        Assert.assertFalse(relations.contains(relationB));
+    }
+
+    @Test
+    public void testFindByQueryFetchLastOnlySingleLinked() throws Exception {
+        // A -> B -> C -> D
+
+        AssetId assetA = new AssetId(Uuids.timeBased());
+        AssetId assetB = new AssetId(Uuids.timeBased());
+        AssetId assetC = new AssetId(Uuids.timeBased());
+        AssetId assetD = new AssetId(Uuids.timeBased());
+
+        EntityRelation relationA = new EntityRelation(assetA, assetB, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationB = new EntityRelation(assetB, assetC, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationC = new EntityRelation(assetC, assetD, EntityRelation.CONTAINS_TYPE);
+
+        saveRelation(relationA);
+        saveRelation(relationB);
+        saveRelation(relationC);
+
+        EntityRelationsQuery query = new EntityRelationsQuery();
+        query.setParameters(new RelationsSearchParameters(assetA, EntitySearchDirection.FROM, -1, true));
+        query.setFilters(Collections.singletonList(new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.singletonList(EntityType.ASSET))));
+        List<EntityRelation> relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        Assert.assertEquals(1, relations.size());
+        Assert.assertTrue(relations.contains(relationC));
+        Assert.assertFalse(relations.contains(relationA));
+        Assert.assertFalse(relations.contains(relationB));
+
+        //Test from cache
+        relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        Assert.assertTrue(relations.contains(relationC));
+        Assert.assertFalse(relations.contains(relationA));
+        Assert.assertFalse(relations.contains(relationB));
+    }
+
+    @Test
+    public void testFindByQueryFetchLastOnlyTreeLikeWithMaxLvl() throws Exception {
+        // A -> B   A
+        // A -> C   B
+        // C -> D   C
+        // C -> E   D
+        // D -> F   E
+        // D -> G   F
+
+        AssetId assetA = new AssetId(Uuids.timeBased());
+        AssetId assetB = new AssetId(Uuids.timeBased());
+        AssetId assetC = new AssetId(Uuids.timeBased());
+        AssetId assetD = new AssetId(Uuids.timeBased());
+        AssetId assetE = new AssetId(Uuids.timeBased());
+        AssetId assetF = new AssetId(Uuids.timeBased());
+        AssetId assetG = new AssetId(Uuids.timeBased());
+
+        EntityRelation relationA = new EntityRelation(assetA, assetB, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationB = new EntityRelation(assetA, assetC, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationC = new EntityRelation(assetC, assetD, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationD = new EntityRelation(assetC, assetE, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationE = new EntityRelation(assetD, assetF, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationF = new EntityRelation(assetD, assetG, EntityRelation.CONTAINS_TYPE);
+
+        saveRelation(relationA);
+        saveRelation(relationB);
+        saveRelation(relationC);
+        saveRelation(relationD);
+        saveRelation(relationE);
+        saveRelation(relationF);
+
+        EntityRelationsQuery query = new EntityRelationsQuery();
+        query.setParameters(new RelationsSearchParameters(assetA, EntitySearchDirection.FROM, 2, true));
+        query.setFilters(Collections.singletonList(new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.singletonList(EntityType.ASSET))));
+        List<EntityRelation> relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        Assert.assertEquals(3, relations.size());
+        Assert.assertTrue(relations.contains(relationA));
+        Assert.assertTrue(relations.contains(relationC));
+        Assert.assertTrue(relations.contains(relationD));
+        Assert.assertFalse(relations.contains(relationB));
+        Assert.assertFalse(relations.contains(relationE));
+        Assert.assertFalse(relations.contains(relationF));
+
+        //Test from cache
+        relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        Assert.assertTrue(relations.contains(relationA));
+        Assert.assertTrue(relations.contains(relationC));
+        Assert.assertTrue(relations.contains(relationD));
+        Assert.assertFalse(relations.contains(relationB));
+        Assert.assertFalse(relations.contains(relationE));
+        Assert.assertFalse(relations.contains(relationF));
+    }
+
+    @Test
+    public void testFindByQueryTreeLikeWithMaxLvl() throws Exception {
+        // A -> B   A
+        // A -> C   B
+        // C -> D   C
+        // C -> E   D
+        // D -> F   E
+        // D -> G   F
+
+        AssetId assetA = new AssetId(Uuids.timeBased());
+        AssetId assetB = new AssetId(Uuids.timeBased());
+        AssetId assetC = new AssetId(Uuids.timeBased());
+        AssetId assetD = new AssetId(Uuids.timeBased());
+        AssetId assetE = new AssetId(Uuids.timeBased());
+        AssetId assetF = new AssetId(Uuids.timeBased());
+        AssetId assetG = new AssetId(Uuids.timeBased());
+
+        EntityRelation relationA = new EntityRelation(assetA, assetB, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationB = new EntityRelation(assetA, assetC, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationC = new EntityRelation(assetC, assetD, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationD = new EntityRelation(assetC, assetE, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationE = new EntityRelation(assetD, assetF, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationF = new EntityRelation(assetD, assetG, EntityRelation.CONTAINS_TYPE);
+
+        saveRelation(relationA);
+        saveRelation(relationB);
+        saveRelation(relationC);
+        saveRelation(relationD);
+        saveRelation(relationE);
+        saveRelation(relationF);
+
+        EntityRelationsQuery query = new EntityRelationsQuery();
+        query.setParameters(new RelationsSearchParameters(assetA, EntitySearchDirection.FROM, 2, false));
+        query.setFilters(Collections.singletonList(new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.singletonList(EntityType.ASSET))));
+        List<EntityRelation> relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        Assert.assertEquals(4, relations.size());
+        Assert.assertTrue(relations.contains(relationA));
+        Assert.assertTrue(relations.contains(relationB));
+        Assert.assertTrue(relations.contains(relationC));
+        Assert.assertTrue(relations.contains(relationD));
+        Assert.assertFalse(relations.contains(relationE));
+        Assert.assertFalse(relations.contains(relationF));
+
+        //Test from cache
+        relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        Assert.assertTrue(relations.contains(relationA));
+        Assert.assertTrue(relations.contains(relationB));
+        Assert.assertTrue(relations.contains(relationC));
+        Assert.assertTrue(relations.contains(relationD));
+        Assert.assertFalse(relations.contains(relationE));
+        Assert.assertFalse(relations.contains(relationF));
+    }
+
+    @Test
+    public void testFindByQueryTreeLikeWithUnlimLvl() throws Exception {
+        // A -> B   A
+        // A -> C   B
+        // C -> D   C
+        // C -> E   D
+        // D -> F   E
+        // D -> G   F
+
+        AssetId assetA = new AssetId(Uuids.timeBased());
+        AssetId assetB = new AssetId(Uuids.timeBased());
+        AssetId assetC = new AssetId(Uuids.timeBased());
+        AssetId assetD = new AssetId(Uuids.timeBased());
+        AssetId assetE = new AssetId(Uuids.timeBased());
+        AssetId assetF = new AssetId(Uuids.timeBased());
+        AssetId assetG = new AssetId(Uuids.timeBased());
+
+        EntityRelation relationA = new EntityRelation(assetA, assetB, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationB = new EntityRelation(assetA, assetC, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationC = new EntityRelation(assetC, assetD, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationD = new EntityRelation(assetC, assetE, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationE = new EntityRelation(assetD, assetF, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationF = new EntityRelation(assetD, assetG, EntityRelation.CONTAINS_TYPE);
+
+        saveRelation(relationA);
+        saveRelation(relationB);
+        saveRelation(relationC);
+        saveRelation(relationD);
+        saveRelation(relationE);
+        saveRelation(relationF);
+
+        EntityRelationsQuery query = new EntityRelationsQuery();
+        query.setParameters(new RelationsSearchParameters(assetA, EntitySearchDirection.FROM, -1, false));
+        query.setFilters(Collections.singletonList(new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.singletonList(EntityType.ASSET))));
+        List<EntityRelation> relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        Assert.assertEquals(6, relations.size());
+        Assert.assertTrue(relations.contains(relationA));
+        Assert.assertTrue(relations.contains(relationB));
+        Assert.assertTrue(relations.contains(relationC));
+        Assert.assertTrue(relations.contains(relationD));
+        Assert.assertTrue(relations.contains(relationE));
+        Assert.assertTrue(relations.contains(relationF));
+
+        //Test from cache
+        relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        Assert.assertTrue(relations.contains(relationA));
+        Assert.assertTrue(relations.contains(relationB));
+        Assert.assertTrue(relations.contains(relationC));
+        Assert.assertTrue(relations.contains(relationD));
+        Assert.assertTrue(relations.contains(relationE));
+        Assert.assertTrue(relations.contains(relationF));
+    }
+
+    @Test
+    public void testFindByQueryLargeHierarchyFetchAllWithUnlimLvl() throws Exception {
+        AssetId rootAsset = new AssetId(Uuids.timeBased());
+        final int hierarchyLvl = 10;
+        List<EntityRelation> expectedRelations = new LinkedList<>();
+
+        createAssetRelationsRecursively(rootAsset, hierarchyLvl, expectedRelations, false);
+
+        EntityRelationsQuery query = new EntityRelationsQuery();
+        query.setParameters(new RelationsSearchParameters(rootAsset, EntitySearchDirection.FROM, -1, false));
+        query.setFilters(Collections.singletonList(new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.singletonList(EntityType.ASSET))));
+        List<EntityRelation> relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        Assert.assertEquals(expectedRelations.size(), relations.size());
+        Assert.assertTrue(relations.containsAll(expectedRelations));
+    }
+
+    @Test
+    public void testFindByQueryLargeHierarchyFetchLastOnlyWithUnlimLvl() throws Exception {
+        AssetId rootAsset = new AssetId(Uuids.timeBased());
+        final int hierarchyLvl = 10;
+        List<EntityRelation> expectedRelations = new LinkedList<>();
+
+        createAssetRelationsRecursively(rootAsset, hierarchyLvl, expectedRelations, true);
+
+        EntityRelationsQuery query = new EntityRelationsQuery();
+        query.setParameters(new RelationsSearchParameters(rootAsset, EntitySearchDirection.FROM, -1, true));
+        query.setFilters(Collections.singletonList(new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.singletonList(EntityType.ASSET))));
+        List<EntityRelation> relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        Assert.assertEquals(expectedRelations.size(), relations.size());
+        Assert.assertTrue(relations.containsAll(expectedRelations));
+    }
+
+    @Test
+    public void testFindByQueryLargeHierarchyFetchLastOnlyWithUnlimLvlMultipleThreads() throws Exception {
+        final int threadsNumber = Runtime.getRuntime().availableProcessors() * 2;
+        AssetId rootAsset = new AssetId(Uuids.timeBased());
+        final int hierarchyLvl = 10;
+        List<EntityRelation> expectedRelations = new LinkedList<>();
+
+        createAssetRelationsRecursively(rootAsset, hierarchyLvl, expectedRelations, true);
+
+        CyclicBarrier barrier = new CyclicBarrier(threadsNumber);
+
+        AtomicBoolean successFlag = new AtomicBoolean(false);
+        Runnable r = () -> {
+            try {
+                barrier.await();
+                EntityRelationsQuery query = new EntityRelationsQuery();
+                query.setParameters(new RelationsSearchParameters(rootAsset, EntitySearchDirection.FROM, -1, true));
+                query.setFilters(Collections.singletonList(new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.singletonList(EntityType.ASSET))));
+                List<EntityRelation> relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+                Assert.assertEquals(expectedRelations.size(), relations.size());
+                Assert.assertTrue(relations.containsAll(expectedRelations));
+                successFlag.set(true);
+            } catch (Exception e) {
+                successFlag.set(false);
+                throw new RuntimeException(e);
+            }
+        };
+
+        List<Thread> threads = new LinkedList<>();
+        for (int i = 0; i < threadsNumber; i++) {
+            threads.add(
+                    new Thread(r)
+            );
+        }
+
+        threads.forEach(Thread::start);
+        threads.forEach(t -> {
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        Assert.assertTrue(successFlag.get());
+    }
+
+    @Test
+    public void testFindByQueryLargeHierarchyFetchLAllWithUnlimLvlMultipleThreads() throws Exception {
+        final int threadsNumber = Runtime.getRuntime().availableProcessors() * 2;
+        AssetId rootAsset = new AssetId(Uuids.timeBased());
+        final int hierarchyLvl = 10;
+        List<EntityRelation> expectedRelations = new LinkedList<>();
+
+        createAssetRelationsRecursively(rootAsset, hierarchyLvl, expectedRelations, false);
+
+        CyclicBarrier barrier = new CyclicBarrier(threadsNumber);
+
+        AtomicBoolean successFlag = new AtomicBoolean(true);
+        Runnable r = () -> {
+            try {
+                barrier.await();
+                EntityRelationsQuery query = new EntityRelationsQuery();
+                query.setParameters(new RelationsSearchParameters(rootAsset, EntitySearchDirection.FROM, -1, false));
+                query.setFilters(Collections.singletonList(new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.singletonList(EntityType.ASSET))));
+                List<EntityRelation> relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+                Assert.assertEquals(expectedRelations.size(), relations.size());
+                Assert.assertTrue(relations.containsAll(expectedRelations));
+            } catch (Exception e) {
+                successFlag.set(false);
+                throw new RuntimeException(e);
+            }
+        };
+
+        List<Thread> threads = new LinkedList<>();
+        for (int i = 0; i < threadsNumber; i++) {
+            threads.add(
+                    new Thread(r)
+            );
+        }
+
+        threads.forEach(Thread::start);
+        threads.forEach(t -> {
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        Assert.assertTrue(successFlag.get());
+    }
+
+
+    private void createAssetRelationsRecursively(AssetId rootAsset, int lvl, List<EntityRelation> entityRelations, boolean lastLvlOnly) throws Exception {
+        if (lvl == 0) return;
+
+        AssetId firstAsset = new AssetId(Uuids.timeBased());
+        AssetId secondAsset = new AssetId(Uuids.timeBased());
+
+        EntityRelation firstRelation = new EntityRelation(rootAsset, firstAsset, EntityRelation.CONTAINS_TYPE);
+        EntityRelation secondRelation = new EntityRelation(rootAsset, secondAsset, EntityRelation.CONTAINS_TYPE);
+
+        saveRelation(firstRelation);
+        saveRelation(secondRelation);
+
+        if (!lastLvlOnly || lvl == 1) {
+            entityRelations.add(firstRelation);
+            entityRelations.add(secondRelation);
+        }
+
+        createAssetRelationsRecursively(firstAsset, lvl - 1, entityRelations, lastLvlOnly);
+        createAssetRelationsRecursively(secondAsset, lvl - 1, entityRelations, lastLvlOnly);
+    }
+
 }
