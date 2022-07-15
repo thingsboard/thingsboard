@@ -23,10 +23,13 @@ public class TbSendRpcRequestNodeConfiguration implements NodeConfiguration<TbSe
 
     private int timeoutInSeconds;
 
+    private boolean addRequestToResponseMetadata;
+
     @Override
     public TbSendRpcRequestNodeConfiguration defaultConfiguration() {
         TbSendRpcRequestNodeConfiguration configuration = new TbSendRpcRequestNodeConfiguration();
         configuration.setTimeoutInSeconds(60);
+        configuration.setAddRequestToResponseMetadata(false);
         return configuration;
     }
 }
