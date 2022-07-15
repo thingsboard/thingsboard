@@ -52,6 +52,7 @@ public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements
     @Length(fieldName = "label")
     private String label;
 
+    @ApiModelProperty(position = 100, value = "JSON object with External Id from the VCS", accessMode = ApiModelProperty.AccessMode.READ_ONLY, hidden = true)
     @Getter @Setter
     private AssetId externalId;
 
@@ -98,7 +99,7 @@ public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements
         return super.getCreatedTime();
     }
 
-    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id.", readOnly = true)
+    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     public TenantId getTenantId() {
         return tenantId;
     }
