@@ -121,7 +121,7 @@ public class StringUtils {
         return org.springframework.util.StringUtils.hasLength(str);
     }
 
-    public static boolean isNoneBlank(String str) {
+    public static boolean isNoneBlank(String... str) {
         return org.apache.commons.lang3.StringUtils.isNoneBlank(str);
     }
 
