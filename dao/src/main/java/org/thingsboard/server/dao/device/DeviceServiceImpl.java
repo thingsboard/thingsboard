@@ -237,12 +237,10 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
             return result;
         } catch (Exception t) {
             handleEvictEvent(deviceCacheEvictEvent);
-            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
-            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("device_name_unq_key")) {
-                throw new DataValidationException("Device with such name already exists!");
-            } else {
-                throw t;
-            }
+            checkConstraintViolation(t,
+                    "device_name_unq_key", "Device with such name already exists!",
+                    "device_external_id_unq_key", "Device with such external id already exists!");
+            throw t;
         }
     }
 

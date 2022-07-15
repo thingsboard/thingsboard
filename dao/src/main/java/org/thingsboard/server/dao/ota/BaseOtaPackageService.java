@@ -234,14 +234,4 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
                 }
             };
 
-    protected Optional<ConstraintViolationException> extractConstraintViolationException(Exception t) {
-        if (t instanceof ConstraintViolationException) {
-            return Optional.of((ConstraintViolationException) t);
-        } else if (t.getCause() instanceof ConstraintViolationException) {
-            return Optional.of((ConstraintViolationException) (t.getCause()));
-        } else {
-            return Optional.empty();
-        }
-    }
-
 }
