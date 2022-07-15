@@ -28,8 +28,3 @@ export enum LayoutWidthType {
   FIXED = "fixed"
 }
 
-export enum LayoutType {
-  MAIN = "main",
-  RIGHT = "right",
-  LEFT = "left"
-}

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Inject, OnInit, SkipSelf} from '@angular/core';
+import { Component, Inject, OnInit, SkipSelf} from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -31,7 +31,8 @@ import {
   DashboardSettingsDialogComponent,
   DashboardSettingsDialogData
 } from '@home/components/dashboard-page/dashboard-settings-dialog.component';
-import { LayoutType, LayoutWidthType } from "@home/components/dashboard-page/layout/layout.models";
+import { LayoutWidthType } from "@home/components/dashboard-page/layout/layout.models";
+import { Subscription } from "rxjs";
 
 export interface ManageDashboardLayoutsDialogData {
   layouts: DashboardStateLayouts;
@@ -52,7 +53,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
 
   LayoutWidthType = LayoutWidthType;
 
-  LayoutType = LayoutType;
+  subscriptions: Array<Subscription>;
 
   submitted = false;
 
@@ -65,19 +66,18 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
               private utils: UtilsService,
               private dashboardUtils: DashboardUtilsService,
               private translate: TranslateService,
-              private dialog: MatDialog,
-              private cd: ChangeDetectorRef) {
+              private dialog: MatDialog) {
     super(store, router, dialogRef);
 
     this.layouts = this.data.layouts;
     this.layoutsFormGroup = this.fb.group({
         main:  [{value: isDefined(this.layouts.main), disabled: true}, []],
         right: [isDefined(this.layouts.right), []],
-        leftWidthPercentage: [50, [Validators.min(10), Validators.max(90)]],
-        rightWidthPercentage: [50, [Validators.min(10), Validators.max(90)]],
+        leftWidthPercentage: [50, [Validators.min(10), Validators.max(90), Validators.required]],
+        rightWidthPercentage: [50, [Validators.min(10), Validators.max(90), Validators.required]],
         type: [LayoutWidthType.PERCENTAGE, []],
-        fixedWidth: [150, [Validators.min(150), Validators.max(1700)]],
-        fixedLayout: [LayoutType.MAIN, []]
+        fixedWidth: [150, [Validators.min(150), Validators.max(1700), Validators.required]],
+        fixedLayout: ['main', []]
       }
     );
 
@@ -99,18 +99,27 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
       }
     }
 
-    if (!this.layouts[LayoutType.MAIN]) {
-      this.layouts[LayoutType.MAIN] = this.dashboardUtils.createDefaultLayoutData();
+    if (!this.layouts['main']) {
+      this.layouts['main'] = this.dashboardUtils.createDefaultLayoutData();
     }
-    if (!this.layouts[LayoutType.RIGHT]) {
-      this.layouts[LayoutType.RIGHT] = this.dashboardUtils.createDefaultLayoutData();
+    if (!this.layouts['right']) {
+      this.layouts['right'] = this.dashboardUtils.createDefaultLayoutData();
     }
 
-    this.layoutsFormGroup.get('leftWidthPercentage').valueChanges.subscribe((value) => this.layoutControlChange('rightWidthPercentage', value));
-    this.layoutsFormGroup.get('rightWidthPercentage').valueChanges.subscribe((value) => this.layoutControlChange('leftWidthPercentage', value));
+    const leftWidthPercentageSub = this.layoutsFormGroup.get('leftWidthPercentage').valueChanges
+      .subscribe((value) => this.layoutControlChange('rightWidthPercentage', value));
+    const rightWidthPercentageSub = this.layoutsFormGroup.get('rightWidthPercentage').valueChanges
+      .subscribe((value) => this.layoutControlChange('leftWidthPercentage', value));
+    this.subscriptions = [leftWidthPercentageSub, rightWidthPercentageSub];
   }
 
   ngOnInit(): void {
+  }
+
+  ngOnDestroy(): void {
+    for (let subscription of this.subscriptions) {
+      subscription.unsubscribe();
+    }
   }
 
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
@@ -143,7 +152,8 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
 
   save(): void {
     this.submitted = true;
-    for (const l of Object.keys(this.layoutsFormGroup.controls)) {
+    const layouts = ['main', 'right'];
+    for (const l of layouts) {
       const control = this.layoutsFormGroup.controls[l];
       if (!control.value) {
         if (this.layouts[l]) {
@@ -165,7 +175,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
       } else {
         layoutDimension.fixedWidth = formValues.fixedWidth;
         layoutDimension.fixedLayout = formValues.fixedLayout;
-        if (formValues.fixedLayout === LayoutType.MAIN) {
+        if (formValues.fixedLayout === 'main') {
           this.layouts.main.gridSettings.layoutDimension = layoutDimension;
         } else {
           this.layouts.right.gridSettings.layoutDimension = layoutDimension;
@@ -177,7 +187,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
 
   buttonFlexValue(): number {
     if (this.layoutsFormGroup.get('right').value && this.layoutsFormGroup.value.type !== LayoutWidthType.FIXED) {
-      return this.layoutsFormGroup.get('leftWidthPercentage').value;
+      return this.layoutsFormGroup.get('leftWidthPercentage').value - 1;
     }
   }
 
