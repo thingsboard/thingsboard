@@ -86,6 +86,7 @@ public class QueueController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/queues", params = {"serviceType"}, method = RequestMethod.POST)
     @ResponseBody
+
     public Queue saveQueue(@RequestBody Queue queue,
                            @RequestParam String serviceType) throws ThingsboardException {
         checkParameter("serviceType", serviceType);
