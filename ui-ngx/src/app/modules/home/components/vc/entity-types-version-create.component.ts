@@ -74,6 +74,8 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
 
   entityTypes = EntityType;
 
+  loading = true;
+
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
               private fb: FormBuilder) {
