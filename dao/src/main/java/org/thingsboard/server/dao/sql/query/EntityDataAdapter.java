@@ -81,7 +81,10 @@ public class EntityDataAdapter {
         if (value != null) {
             String strVal = value.toString();
             // check number
-            if (strVal.length() > 0 && NumberUtils.isParsable(strVal)) {
+            if (NumberUtils.isParsable(strVal)) {
+                if (strVal.startsWith("0") && !strVal.startsWith("0.")) {
+                    return strVal;
+                }
                 try {
                     long longVal = Long.parseLong(strVal);
                     return Long.toString(longVal);
