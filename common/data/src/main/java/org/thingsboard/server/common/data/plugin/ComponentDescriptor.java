@@ -32,19 +32,19 @@ public class ComponentDescriptor extends SearchTextBased<ComponentDescriptorId> 
 
     private static final long serialVersionUID = 1L;
 
-    @ApiModelProperty(position = 3, value = "Type of the Rule Node", readOnly = true)
+    @ApiModelProperty(position = 3, value = "Type of the Rule Node", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     @Getter @Setter private ComponentType type;
-    @ApiModelProperty(position = 4, value = "Scope of the Rule Node. Always set to 'TENANT', since no rule chains on the 'SYSTEM' level yet.", readOnly = true, allowableValues = "TENANT", example = "TENANT")
+    @ApiModelProperty(position = 4, value = "Scope of the Rule Node. Always set to 'TENANT', since no rule chains on the 'SYSTEM' level yet.", accessMode = ApiModelProperty.AccessMode.READ_ONLY, allowableValues = "TENANT", example = "TENANT")
     @Getter @Setter private ComponentScope scope;
     @Length(fieldName = "name")
-    @ApiModelProperty(position = 5, value = "Name of the Rule Node. Taken from the @RuleNode annotation.", readOnly = true, example = "Custom Rule Node")
+    @ApiModelProperty(position = 5, value = "Name of the Rule Node. Taken from the @RuleNode annotation.", accessMode = ApiModelProperty.AccessMode.READ_ONLY, example = "Custom Rule Node")
     @Getter @Setter private String name;
-    @ApiModelProperty(position = 6, value = "Full name of the Java class that implements the Rule Engine Node interface.", readOnly = true, example = "com.mycompany.CustomRuleNode")
+    @ApiModelProperty(position = 6, value = "Full name of the Java class that implements the Rule Engine Node interface.", accessMode = ApiModelProperty.AccessMode.READ_ONLY, example = "com.mycompany.CustomRuleNode")
     @Getter @Setter private String clazz;
-    @ApiModelProperty(position = 7, value = "Complex JSON object that represents the Rule Node configuration.", readOnly = true)
+    @ApiModelProperty(position = 7, value = "Complex JSON object that represents the Rule Node configuration.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     @Getter @Setter private transient JsonNode configurationDescriptor;
     @Length(fieldName = "actions")
-    @ApiModelProperty(position = 8, value = "Rule Node Actions. Deprecated. Always null.", readOnly = true)
+    @ApiModelProperty(position = 8, value = "Rule Node Actions. Deprecated. Always null.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     @Getter @Setter private String actions;
 
     public ComponentDescriptor() {
@@ -74,7 +74,7 @@ public class ComponentDescriptor extends SearchTextBased<ComponentDescriptorId> 
         return super.getId();
     }
 
-    @ApiModelProperty(position = 2, value = "Timestamp of the descriptor creation, in milliseconds", example = "1609459200000", readOnly = true)
+    @ApiModelProperty(position = 2, value = "Timestamp of the descriptor creation, in milliseconds", example = "1609459200000", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();

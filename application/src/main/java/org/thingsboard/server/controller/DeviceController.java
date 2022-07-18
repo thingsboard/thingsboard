@@ -158,8 +158,9 @@ public class DeviceController extends BaseController {
                     "The newly created device id will be present in the response. " +
                     "Specify existing Device id to update the device. " +
                     "Referencing non-existing device Id will cause 'Not Found' error." +
-                    "\n\nDevice name is unique in the scope of tenant. Use unique identifiers like MAC or IMEI for the device names and non-unique 'label' field for user-friendly visualization purposes."
-                    + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+                    "\n\nDevice name is unique in the scope of tenant. Use unique identifiers like MAC or IMEI for the device names and non-unique 'label' field for user-friendly visualization purposes." +
+                    "Remove 'id', 'tenantId' and optionally 'customerId' from the request body example (below) to create new Device entity. " +
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device", method = RequestMethod.POST)
     @ResponseBody
@@ -181,6 +182,7 @@ public class DeviceController extends BaseController {
                     "Requires to provide the Device Credentials object as well. Useful to create device and credentials in one request. " +
                     "You may find the example of LwM2M device and RPK credentials below: \n\n" +
                     DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_DESCRIPTION_MARKDOWN +
+                    "Remove 'id', 'tenantId' and optionally 'customerId' from the request body example (below) to create new Device entity. " +
                     TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device-with-credentials", method = RequestMethod.POST)

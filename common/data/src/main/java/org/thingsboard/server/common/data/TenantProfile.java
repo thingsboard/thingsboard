@@ -87,7 +87,7 @@ public class TenantProfile extends SearchTextBased<TenantProfileId> implements H
         return super.getId();
     }
 
-    @ApiModelProperty(position = 2, value = "Timestamp of the tenant profile creation, in milliseconds", example = "1609459200000", readOnly = true)
+    @ApiModelProperty(position = 2, value = "Timestamp of the tenant profile creation, in milliseconds", example = "1609459200000", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();

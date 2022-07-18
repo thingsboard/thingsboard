@@ -85,8 +85,9 @@ public class WidgetTypeController extends AutoCommitController {
                     "Specify existing Widget Type id to update the Widget Type. " +
                     "Referencing non-existing Widget Type Id will cause 'Not Found' error." +
                     "\n\nWidget Type alias is unique in the scope of Widget Bundle. " +
-                    "Special Tenant Id '13814000-1dd2-11b2-8080-808080808080' is automatically used if the create request is sent by user with 'SYS_ADMIN' authority."
-                    + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+                    "Special Tenant Id '13814000-1dd2-11b2-8080-808080808080' is automatically used if the create request is sent by user with 'SYS_ADMIN' authority." +
+                    "Remove 'id', 'tenantId' rom the request body example (below) to create new Widget Type entity." +
+                    SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/widgetType", method = RequestMethod.POST)
     @ResponseBody

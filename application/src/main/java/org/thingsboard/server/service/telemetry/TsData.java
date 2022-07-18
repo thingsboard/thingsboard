@@ -30,12 +30,12 @@ public class TsData implements Comparable<TsData>{
         this.value = value;
     }
 
-    @ApiModelProperty(position = 1, value = "Timestamp last updated timeseries, in milliseconds", example = "1609459200000", readOnly = true)
+    @ApiModelProperty(position = 1, value = "Timestamp last updated timeseries, in milliseconds", example = "1609459200000", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     public long getTs() {
         return ts;
     }
 
-    @ApiModelProperty(position = 2, value = "Object representing value of timeseries key", example = "20", readOnly = true)
+    @ApiModelProperty(position = 2, value = "Object representing value of timeseries key", example = "20", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     public Object getValue() {
         return value;
     }
