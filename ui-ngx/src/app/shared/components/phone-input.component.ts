@@ -77,6 +77,10 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
   @Input()
   label = 'phone-input.phone-input-label';
 
+  get showFlagSelect(): boolean {
+    return this.enableFlagsSelect && !this.isLegacy;
+  }
+
   allCountries: Array<Country> = this.countryCodeData.allCountries;
   phonePlaceholder = '+12015550123';
   flagIcon: string;
@@ -96,6 +100,7 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
     }
   }
 
+  private isLegacy = false;
   private getExampleNumber;
   private parsePhoneNumberFromString;
   private baseCode = 127397;
@@ -241,17 +246,17 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
       if (phoneNumber) {
         const parsedPhoneNumber = this.parsePhoneNumberFromString(phoneNumber);
         if (parsedPhoneNumber?.isValid() && parsedPhoneNumber?.isPossible()) {
-          this.enableFlagsSelect = true;
+          this.isLegacy = false;
         } else {
           const validators = [Validators.maxLength(255)];
           if (this.required) {
             validators.push(Validators.required);
           }
           this.phoneFormGroup.get('phoneNumber').setValidators(validators);
-          this.enableFlagsSelect = false;
+          this.isLegacy = true;
         }
       } else {
-        this.enableFlagsSelect = true;
+        this.isLegacy = false;
       }
       this.phoneFormGroup.updateValueAndValidity({emitEvent: false});
       country = phoneNumber ? this.parsePhoneNumberFromString(phoneNumber)?.country || this.defaultCountry : this.defaultCountry;
