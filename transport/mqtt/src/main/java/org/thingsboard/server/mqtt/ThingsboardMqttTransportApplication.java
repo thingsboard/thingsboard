@@ -26,6 +26,7 @@ import java.util.Arrays;
 
 @SpringBootConfiguration
 @EnableAsync
+@EnableScheduling
 @EnableAutoConfiguration
 @EnableScheduling
 @ComponentScan({"org.thingsboard.server.mqtt", "org.thingsboard.server.common", "org.thingsboard.server.transport.mqtt", "org.thingsboard.server.queue", "org.thingsboard.server.cache"})
