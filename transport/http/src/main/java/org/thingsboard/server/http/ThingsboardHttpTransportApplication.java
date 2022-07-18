@@ -20,11 +20,13 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.util.Arrays;
 
 @SpringBootApplication
 @EnableAsync
+@EnableScheduling
 @EnableAutoConfiguration
 @ComponentScan({"org.thingsboard.server.http", "org.thingsboard.server.common", "org.thingsboard.server.transport.http", "org.thingsboard.server.queue", "org.thingsboard.server.cache"})
 public class ThingsboardHttpTransportApplication {
