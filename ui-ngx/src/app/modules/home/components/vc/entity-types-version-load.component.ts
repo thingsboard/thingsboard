@@ -68,6 +68,8 @@ export class EntityTypesVersionLoadComponent extends PageComponent implements On
 
   entityTypes = EntityType;
 
+  loading = true;
+
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
               private popoverService: TbPopoverService,

@@ -55,5 +55,9 @@
     .mat-expansion-panel-body {
       padding: 0;
     }
+    &.load .mat-expansion-panel-content {
+      height: 0;
+      visibility: hidden;
+    }
   }
 }

@@ -22,7 +22,8 @@
       <div *ngFor="let entityTypeFormGroup of entityTypesFormGroupArray(); trackBy: trackByEntityType;
                let $index = index; last as isLast;"
            fxLayout="row" fxLayoutAlign="start center" [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
-        <mat-expansion-panel class="entity-type-config" fxFlex [formGroup]="entityTypeFormGroup" [expanded]="entityTypesFormGroupExpanded(entityTypeFormGroup)">
+        <mat-expansion-panel class="entity-type-config" [ngClass]="{'load': loading}" fxFlex [formGroup]="entityTypeFormGroup"
+                             [expanded]="entityTypesFormGroupExpanded(entityTypeFormGroup)" (opened)="loading = false">
           <mat-expansion-panel-header>
             <div fxFlex fxLayout="row" fxLayoutAlign="start center">
               <mat-panel-title>
@@ -40,57 +41,55 @@
               </button>
             </div>
           </mat-expansion-panel-header>
-          <ng-template matExpansionPanelContent>
-            <div class="entity-type-config-content" fxLayout="column" fxLayoutGap="0.5em">
-              <mat-divider></mat-divider>
-              <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
-                <tb-entity-type-select
-                  showLabel
-                  formControlName="entityType"
-                  required
-                  [filterAllowedEntityTypes]="false"
-                  [allowedEntityTypes]="allowedEntityTypes(entityTypeFormGroup)">
-                </tb-entity-type-select>
-                <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px" formGroupName="config">
-                  <mat-form-field fxFlex class="mat-block">
-                    <mat-label translate>version-control.sync-strategy</mat-label>
-                    <mat-select formControlName="syncStrategy">
-                      <mat-option [value]="'default'">
-                        {{ 'version-control.default' | translate }}
-                      </mat-option>
-                      <mat-option *ngFor="let strategy of syncStrategies" [value]="strategy">
-                        {{syncStrategyTranslations.get(strategy) | translate}}
-                      </mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                  <div fxFlex fxLayout="column" fxLayoutGap="8px">
-                    <mat-checkbox *ngIf="entityTypeFormGroup.get('entityType').value === entityTypes.DEVICE" formControlName="saveCredentials">
-                      {{ 'version-control.export-credentials' | translate }}
-                    </mat-checkbox>
-                    <mat-checkbox formControlName="saveAttributes">
-                      {{ 'version-control.export-attributes' | translate }}
-                    </mat-checkbox>
-                    <mat-checkbox formControlName="saveRelations">
-                      {{ 'version-control.export-relations' | translate }}
-                    </mat-checkbox>
-                  </div>
+          <div class="entity-type-config-content" fxLayout="column" fxLayoutGap="0.5em">
+            <mat-divider></mat-divider>
+            <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+              <tb-entity-type-select
+                showLabel
+                formControlName="entityType"
+                required
+                [filterAllowedEntityTypes]="false"
+                [allowedEntityTypes]="allowedEntityTypes(entityTypeFormGroup)">
+              </tb-entity-type-select>
+              <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px" formGroupName="config">
+                <mat-form-field fxFlex class="mat-block">
+                  <mat-label translate>version-control.sync-strategy</mat-label>
+                  <mat-select formControlName="syncStrategy">
+                    <mat-option [value]="'default'">
+                      {{ 'version-control.default' | translate }}
+                    </mat-option>
+                    <mat-option *ngFor="let strategy of syncStrategies" [value]="strategy">
+                      {{syncStrategyTranslations.get(strategy) | translate}}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <div fxFlex fxLayout="column" fxLayoutGap="8px">
+                  <mat-checkbox *ngIf="entityTypeFormGroup.get('entityType').value === entityTypes.DEVICE" formControlName="saveCredentials">
+                    {{ 'version-control.export-credentials' | translate }}
+                  </mat-checkbox>
+                  <mat-checkbox formControlName="saveAttributes">
+                    {{ 'version-control.export-attributes' | translate }}
+                  </mat-checkbox>
+                  <mat-checkbox formControlName="saveRelations">
+                    {{ 'version-control.export-relations' | translate }}
+                  </mat-checkbox>
                 </div>
               </div>
-              <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px" fxLayoutAlign.gt-xs="start center"
-                   formGroupName="config" ngStyle.gt-xs="min-height: 76px;">
-                <mat-slide-toggle formControlName="allEntities">
-                  {{ 'version-control.all-entities' | translate }}
-                </mat-slide-toggle>
-                <tb-entity-list
-                  fxFlex
-                  [fxShow]="!entityTypeFormGroup.get('config').get('allEntities').value"
-                  [entityType]="entityTypeFormGroup.get('entityType').value"
-                  required
-                  formControlName="entityIds">
-                </tb-entity-list>
-              </div>
             </div>
-          </ng-template>
+            <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px" fxLayoutAlign.gt-xs="start center"
+                 formGroupName="config" ngStyle.gt-xs="min-height: 76px;">
+              <mat-slide-toggle formControlName="allEntities">
+                {{ 'version-control.all-entities' | translate }}
+              </mat-slide-toggle>
+              <tb-entity-list
+                fxFlex
+                [fxShow]="!entityTypeFormGroup.get('config').get('allEntities').value"
+                [entityType]="entityTypeFormGroup.get('entityType').value"
+                required
+                formControlName="entityIds">
+              </tb-entity-list>
+            </div>
+          </div>
         </mat-expansion-panel>
       </div>
       <div *ngIf="!entityTypesFormGroupArray().length">

@@ -248,7 +248,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
           }
         },
         {maxHeight: '90vh', height: '100%', padding: '10px'},
-        {width: '600px', minWidth: '100%', maxWidth: '100%'}, {}, false);
+        {}, {}, false);
       complexCreateVersionPopover.tbComponentRef.instance.popoverComponent = complexCreateVersionPopover;
     }
   }
@@ -321,7 +321,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
           }
         },
         {maxHeight: '80vh', height: '100%', padding: '10px'},
-        {width: '600px', minWidth: '100%', maxWidth: '100%'}, {}, false);
+        {}, {}, false);
       restoreEntitiesVersionPopover.tbComponentRef.instance.popoverComponent = restoreEntitiesVersionPopover;
     }
   }
