@@ -73,7 +73,6 @@ public class TbTransformMsgNodeTest {
         when(scriptEngine.executeUpdateAsync(msg)).thenReturn(Futures.immediateFuture(Collections.singletonList(transformedMsg)));
 
         node.onMsg(ctx, msg);
-        verify(ctx).getDbCallbackExecutor();
         ArgumentCaptor<TbMsg> captor = ArgumentCaptor.forClass(TbMsg.class);
         verify(ctx).tellSuccess(captor.capture());
         TbMsg actualMsg = captor.getValue();

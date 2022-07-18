@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
+import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -52,7 +53,7 @@ import static org.thingsboard.server.controller.ControllerConstants.WIDGET_TYPE_
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
-public class WidgetTypeController extends BaseController {
+public class WidgetTypeController extends AutoCommitController {
 
     private static final String WIDGET_TYPE_DESCRIPTION = "Widget Type represents the template for widget creation. Widget Type and Widget are similar to class and object in OOP theory.";
     private static final String WIDGET_TYPE_DETAILS_DESCRIPTION = "Widget Type Details extend Widget Type and add image and description properties. " +
@@ -93,14 +94,22 @@ public class WidgetTypeController extends BaseController {
             @ApiParam(value = "A JSON value representing the Widget Type Details.", required = true)
             @RequestBody WidgetTypeDetails widgetTypeDetails) throws ThingsboardException {
         try {
-            if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
+            var currentUser = getCurrentUser();
+            if (Authority.SYS_ADMIN.equals(currentUser.getAuthority())) {
                 widgetTypeDetails.setTenantId(TenantId.SYS_TENANT_ID);
             } else {
-                widgetTypeDetails.setTenantId(getCurrentUser().getTenantId());
+                widgetTypeDetails.setTenantId(currentUser.getTenantId());
             }
 
             checkEntity(widgetTypeDetails.getId(), widgetTypeDetails, Resource.WIDGET_TYPE);
             WidgetTypeDetails savedWidgetTypeDetails = widgetTypeService.saveWidgetType(widgetTypeDetails);
+
+            if (!Authority.SYS_ADMIN.equals(currentUser.getAuthority())) {
+                WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(widgetTypeDetails.getTenantId(), widgetTypeDetails.getBundleAlias());
+                if (widgetsBundle != null) {
+                    autoCommit(currentUser, widgetsBundle.getId());
+                }
+            }
 
             sendEntityNotificationMsg(getTenantId(), savedWidgetTypeDetails.getId(),
                     widgetTypeDetails.getId() == null ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
@@ -121,9 +130,17 @@ public class WidgetTypeController extends BaseController {
             @PathVariable("widgetTypeId") String strWidgetTypeId) throws ThingsboardException {
         checkParameter("widgetTypeId", strWidgetTypeId);
         try {
+            var currentUser = getCurrentUser();
             WidgetTypeId widgetTypeId = new WidgetTypeId(toUUID(strWidgetTypeId));
-            checkWidgetTypeId(widgetTypeId, Operation.DELETE);
-            widgetTypeService.deleteWidgetType(getCurrentUser().getTenantId(), widgetTypeId);
+            WidgetTypeDetails wtd = checkWidgetTypeId(widgetTypeId, Operation.DELETE);
+            widgetTypeService.deleteWidgetType(currentUser.getTenantId(), widgetTypeId);
+
+            if (wtd != null && !Authority.SYS_ADMIN.equals(currentUser.getAuthority())) {
+                WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(wtd.getTenantId(), wtd.getBundleAlias());
+                if (widgetsBundle != null) {
+                    autoCommit(currentUser, widgetsBundle.getId());
+                }
+            }
 
             sendEntityNotificationMsg(getTenantId(), widgetTypeId, EdgeEventActionType.DELETED);
 

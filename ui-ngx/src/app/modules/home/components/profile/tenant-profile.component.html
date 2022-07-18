@@ -48,7 +48,7 @@
 <div class="mat-padding" fxLayout="column">
   <form [formGroup]="entityForm">
     <fieldset [disabled]="(isLoading$ | async) || !isEdit">
-      <mat-form-field class="mat-block">
+      <mat-form-field class="mat-block" appearance="fill">
         <mat-label translate>tenant-profile.name</mat-label>
         <input matInput formControlName="name" required/>
         <mat-error *ngIf="entityForm.get('name').hasError('required')">
@@ -59,10 +59,6 @@
         </mat-error>
       </mat-form-field>
       <div fxLayout="column">
-        <mat-checkbox class="hinted-checkbox" formControlName="isolatedTbCore">
-          <div>{{ 'tenant.isolated-tb-core' | translate }}</div>
-          <div class="tb-hint">{{'tenant.isolated-tb-core-details' | translate}}</div>
-        </mat-checkbox>
         <mat-checkbox class="hinted-checkbox" formControlName="isolatedTbRuleEngine">
           <div>{{ 'tenant.isolated-tb-rule-engine' | translate }}</div>
           <div class="tb-hint">{{'tenant.isolated-tb-rule-engine-details' | translate}}</div>
@@ -99,7 +95,7 @@
           </mat-expansion-panel>
         </mat-accordion>
       </div>
-      <mat-form-field class="mat-block">
+      <mat-form-field class="mat-block" appearance="fill">
         <mat-label translate>tenant-profile.description</mat-label>
         <textarea matInput formControlName="description" rows="2"></textarea>
       </mat-form-field>

@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,6 +51,7 @@ import static org.thingsboard.server.dao.service.Validator.validateString;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class UserServiceImpl extends AbstractEntityService implements UserService {
 
     public static final String USER_PASSWORD_HISTORY = "userPasswordHistory";
@@ -72,20 +74,6 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     private final DataValidator<User> userValidator;
     private final DataValidator<UserCredentials> userCredentialsValidator;
     private final ApplicationEventPublisher eventPublisher;
-
-    public UserServiceImpl(UserDao userDao,
-                           UserCredentialsDao userCredentialsDao,
-                           UserAuthSettingsDao userAuthSettingsDao,
-                           DataValidator<User> userValidator,
-                           DataValidator<UserCredentials> userCredentialsValidator,
-                           ApplicationEventPublisher eventPublisher) {
-        this.userDao = userDao;
-        this.userCredentialsDao = userCredentialsDao;
-        this.userAuthSettingsDao = userAuthSettingsDao;
-        this.userValidator = userValidator;
-        this.userCredentialsValidator = userCredentialsValidator;
-        this.eventPublisher = eventPublisher;
-    }
 
     @Override
     public User findUserByEmail(TenantId tenantId, String email) {

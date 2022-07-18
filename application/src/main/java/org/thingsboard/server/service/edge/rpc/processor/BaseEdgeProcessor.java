@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EdgeUtils;
@@ -46,12 +47,17 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DataValidator;
+import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
+import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.service.edge.rpc.constructor.AdminSettingsMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.AlarmMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.AssetMsgConstructor;
@@ -61,6 +67,8 @@ import org.thingsboard.server.service.edge.rpc.constructor.DeviceMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.DeviceProfileMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.EntityDataMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.EntityViewMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.OtaPackageMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.QueueMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.RelationMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.RuleChainMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.UserMsgConstructor;
@@ -102,6 +110,9 @@ public abstract class BaseEdgeProcessor {
     protected EntityViewService entityViewService;
 
     @Autowired
+    protected TenantService tenantService;
+
+    @Autowired
     protected EdgeService edgeService;
 
     @Autowired
@@ -136,6 +147,19 @@ public abstract class BaseEdgeProcessor {
 
     @Autowired
     protected WidgetTypeService widgetTypeService;
+
+    @Autowired
+    protected OtaPackageService otaPackageService;
+
+    @Autowired
+    protected QueueService queueService;
+
+    @Autowired
+    protected PartitionService partitionService;
+
+    @Autowired
+    @Lazy
+    protected TbQueueProducerProvider producerProvider;
 
     @Autowired
     protected DataValidator<Device> deviceValidator;
@@ -183,6 +207,12 @@ public abstract class BaseEdgeProcessor {
     protected AdminSettingsMsgConstructor adminSettingsMsgConstructor;
 
     @Autowired
+    protected OtaPackageMsgConstructor otaPackageMsgConstructor;
+
+    @Autowired
+    protected QueueMsgConstructor queueMsgConstructor;
+
+    @Autowired
     protected DbCallbackExecutorService dbCallbackExecutorService;
 
     protected ListenableFuture<Void> saveEdgeEvent(TenantId tenantId,
@@ -212,6 +242,24 @@ public abstract class BaseEdgeProcessor {
     }
 
     protected ListenableFuture<Void> processActionForAllEdges(TenantId tenantId, EdgeEventType type, EdgeEventActionType actionType, EntityId entityId) {
+        List<ListenableFuture<Void>> futures = new ArrayList<>();
+        if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
+            PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
+            PageData<TenantId> tenantsIds;
+            do {
+                tenantsIds = tenantService.findTenantsIds(pageLink);
+                for (TenantId tenantId1 : tenantsIds.getData()) {
+                    futures.addAll(processActionForAllEdgesByTenantId(tenantId1, type, actionType, entityId));
+                }
+                pageLink = pageLink.nextPageLink();
+            } while (tenantsIds.hasNext());
+        } else {
+            futures = processActionForAllEdgesByTenantId(tenantId, type, actionType, entityId);
+        }
+        return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
+    }
+
+    private List<ListenableFuture<Void>> processActionForAllEdgesByTenantId(TenantId tenantId, EdgeEventType type, EdgeEventActionType actionType, EntityId entityId) {
         PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
         PageData<Edge> pageData;
         List<ListenableFuture<Void>> futures = new ArrayList<>();
@@ -226,6 +274,6 @@ public abstract class BaseEdgeProcessor {
                 }
             }
         } while (pageData != null && pageData.hasNext());
-        return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
+        return futures;
     }
 }

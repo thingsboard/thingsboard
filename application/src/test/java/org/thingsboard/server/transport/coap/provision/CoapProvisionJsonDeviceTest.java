@@ -15,16 +15,13 @@
  */
 package org.thingsboard.server.transport.coap.provision;
 
-import com.google.gson.JsonObject;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.californium.core.CoapClient;
-import org.eclipse.californium.core.CoapResponse;
-import org.eclipse.californium.core.coap.MediaTypeRegistry;
-import org.eclipse.californium.elements.exception.ConnectorException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.coap.AbstractCoapIntegrationTest;
 import org.thingsboard.server.common.data.CoapDeviceType;
@@ -34,13 +31,11 @@ import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.msg.session.FeatureType;
-import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.device.provision.ProvisionResponseStatus;
+import org.thingsboard.server.transport.coap.CoapTestClient;
 import org.thingsboard.server.transport.coap.CoapTestConfigProperties;
-
-import java.io.IOException;
 
 @Slf4j
 @DaoSqlTest
@@ -95,10 +90,11 @@ public class CoapProvisionJsonDeviceTest extends AbstractCoapIntegrationTest {
                 .transportPayloadType(TransportPayloadType.JSON)
                 .build();
         processBeforeTest(configProperties);
-        byte[] result = createCoapClientAndPublish().getPayload();
-        JsonObject response = JsonUtils.parse(new String(result)).getAsJsonObject();
-        Assert.assertEquals("Provision data was not found!", response.get("errorMsg").getAsString());
-        Assert.assertEquals(ProvisionResponseStatus.NOT_FOUND.name(), response.get("status").getAsString());
+        JsonNode response = JacksonUtil.fromBytes(createCoapClientAndPublish());
+        Assert.assertTrue(response.hasNonNull("errorMsg"));
+        Assert.assertTrue(response.hasNonNull("status"));
+        Assert.assertEquals("Provision data was not found!", response.get("errorMsg").asText());
+        Assert.assertEquals(ProvisionResponseStatus.NOT_FOUND.name(), response.get("status").asText());
     }
 
 
@@ -112,8 +108,9 @@ public class CoapProvisionJsonDeviceTest extends AbstractCoapIntegrationTest {
                 .provisionSecret("testProvisionSecret")
                 .build();
         processBeforeTest(configProperties);
-        byte[] result = createCoapClientAndPublish().getPayload();
-        JsonObject response = JsonUtils.parse(new String(result)).getAsJsonObject();
+        JsonNode response = JacksonUtil.fromBytes(createCoapClientAndPublish());
+        Assert.assertTrue(response.hasNonNull("credentialsType"));
+        Assert.assertTrue(response.hasNonNull("status"));
 
         Device createdDevice = deviceService.findDeviceByTenantIdAndName(tenantId, "Test Provision device");
 
@@ -121,8 +118,8 @@ public class CoapProvisionJsonDeviceTest extends AbstractCoapIntegrationTest {
 
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, createdDevice.getId());
 
-        Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.get("credentialsType").getAsString());
-        Assert.assertEquals(ProvisionResponseStatus.SUCCESS.name(), response.get("status").getAsString());
+        Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.get("credentialsType").asText());
+        Assert.assertEquals(ProvisionResponseStatus.SUCCESS.name(), response.get("status").asText());
     }
 
 
@@ -137,8 +134,9 @@ public class CoapProvisionJsonDeviceTest extends AbstractCoapIntegrationTest {
                 .build();
         processBeforeTest(configProperties);
         String requestCredentials = ",\"credentialsType\": \"ACCESS_TOKEN\",\"token\": \"test_token\"";
-        byte[] result = createCoapClientAndPublish(requestCredentials).getPayload();
-        JsonObject response = JsonUtils.parse(new String(result)).getAsJsonObject();
+        JsonNode response = JacksonUtil.fromBytes(createCoapClientAndPublish(requestCredentials));
+        Assert.assertTrue(response.hasNonNull("credentialsType"));
+        Assert.assertTrue(response.hasNonNull("status"));
 
         Device createdDevice = deviceService.findDeviceByTenantIdAndName(tenantId, "Test Provision device");
 
@@ -146,10 +144,10 @@ public class CoapProvisionJsonDeviceTest extends AbstractCoapIntegrationTest {
 
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, createdDevice.getId());
 
-        Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.get("credentialsType").getAsString());
+        Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.get("credentialsType").asText());
         Assert.assertEquals(deviceCredentials.getCredentialsType().name(), "ACCESS_TOKEN");
         Assert.assertEquals(deviceCredentials.getCredentialsId(), "test_token");
-        Assert.assertEquals(ProvisionResponseStatus.SUCCESS.name(), response.get("status").getAsString());
+        Assert.assertEquals(ProvisionResponseStatus.SUCCESS.name(), response.get("status").asText());
     }
 
 
@@ -164,8 +162,9 @@ public class CoapProvisionJsonDeviceTest extends AbstractCoapIntegrationTest {
                 .build();
         processBeforeTest(configProperties);
         String requestCredentials = ",\"credentialsType\": \"X509_CERTIFICATE\",\"hash\": \"testHash\"";
-        byte[] result = createCoapClientAndPublish(requestCredentials).getPayload();
-        JsonObject response = JsonUtils.parse(new String(result)).getAsJsonObject();
+        JsonNode response = JacksonUtil.fromBytes(createCoapClientAndPublish(requestCredentials));
+        Assert.assertTrue(response.hasNonNull("credentialsType"));
+        Assert.assertTrue(response.hasNonNull("status"));
 
         Device createdDevice = deviceService.findDeviceByTenantIdAndName(tenantId, "Test Provision device");
 
@@ -173,7 +172,7 @@ public class CoapProvisionJsonDeviceTest extends AbstractCoapIntegrationTest {
 
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, createdDevice.getId());
 
-        Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.get("credentialsType").getAsString());
+        Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.get("credentialsType").asText());
         Assert.assertEquals(deviceCredentials.getCredentialsType().name(), "X509_CERTIFICATE");
 
         String cert = EncryptionUtil.certTrimNewLines(deviceCredentials.getCredentialsValue());
@@ -182,7 +181,7 @@ public class CoapProvisionJsonDeviceTest extends AbstractCoapIntegrationTest {
         Assert.assertEquals(deviceCredentials.getCredentialsId(), sha3Hash);
 
         Assert.assertEquals(deviceCredentials.getCredentialsValue(), "testHash");
-        Assert.assertEquals(ProvisionResponseStatus.SUCCESS.name(), response.get("status").getAsString());
+        Assert.assertEquals(ProvisionResponseStatus.SUCCESS.name(), response.get("status").asText());
     }
 
     private void processTestProvisioningCheckPreProvisionedDevice() throws Exception {
@@ -195,13 +194,14 @@ public class CoapProvisionJsonDeviceTest extends AbstractCoapIntegrationTest {
                 .provisionSecret("testProvisionSecret")
                 .build();
         processBeforeTest(configProperties);
-        byte[] result = createCoapClientAndPublish().getPayload();
-        JsonObject response = JsonUtils.parse(new String(result)).getAsJsonObject();
+        JsonNode response = JacksonUtil.fromBytes(createCoapClientAndPublish());
+        Assert.assertTrue(response.hasNonNull("credentialsType"));
+        Assert.assertTrue(response.hasNonNull("status"));
 
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, savedDevice.getId());
 
-        Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.get("credentialsType").getAsString());
-        Assert.assertEquals(ProvisionResponseStatus.SUCCESS.name(), response.get("status").getAsString());
+        Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.get("credentialsType").asText());
+        Assert.assertEquals(ProvisionResponseStatus.SUCCESS.name(), response.get("status").asText());
     }
 
     private void processTestProvisioningWithBadKeyDevice() throws Exception {
@@ -214,25 +214,21 @@ public class CoapProvisionJsonDeviceTest extends AbstractCoapIntegrationTest {
                 .provisionSecret("testProvisionSecret")
                 .build();
         processBeforeTest(configProperties);
-        byte[] result = createCoapClientAndPublish().getPayload();
-        JsonObject response = JsonUtils.parse(new String(result)).getAsJsonObject();
-        Assert.assertEquals("Provision data was not found!", response.get("errorMsg").getAsString());
-        Assert.assertEquals(ProvisionResponseStatus.NOT_FOUND.name(), response.get("status").getAsString());
+        JsonNode response = JacksonUtil.fromBytes(createCoapClientAndPublish());
+        Assert.assertTrue(response.hasNonNull("errorMsg"));
+        Assert.assertTrue(response.hasNonNull("status"));
+        Assert.assertEquals("Provision data was not found!", response.get("errorMsg").asText());
+        Assert.assertEquals(ProvisionResponseStatus.NOT_FOUND.name(), response.get("status").asText());
     }
 
-    private CoapResponse createCoapClientAndPublish() throws Exception {
+    private byte[] createCoapClientAndPublish() throws Exception {
         return createCoapClientAndPublish("");
     }
 
-    private CoapResponse createCoapClientAndPublish(String deviceCredentials) throws Exception {
+    private byte[] createCoapClientAndPublish(String deviceCredentials) throws Exception {
         String provisionRequestMsg = createTestProvisionMessage(deviceCredentials);
-        client = getCoapClient(FeatureType.PROVISION);
-        return postProvision(client, provisionRequestMsg.getBytes());
-    }
-
-
-    private CoapResponse postProvision(CoapClient client, byte[] payload) throws IOException, ConnectorException {
-        return client.setTimeout((long) 60000).post(payload, MediaTypeRegistry.APPLICATION_JSON);
+        client = new CoapTestClient(accessToken, FeatureType.PROVISION);
+        return client.postMethod(provisionRequestMsg.getBytes()).getPayload();
     }
 
     private String createTestProvisionMessage(String deviceCredentials) {

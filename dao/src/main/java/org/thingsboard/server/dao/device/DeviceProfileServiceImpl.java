@@ -18,9 +18,8 @@ package org.thingsboard.server.dao.device;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -47,8 +46,6 @@ import org.thingsboard.server.dao.service.Validator;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -73,10 +70,9 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     @Autowired
     private DataValidator<DeviceProfile> deviceProfileValidator;
 
+    @Lazy
     @Autowired
     private QueueService queueService;
-
-    private final Lock findOrCreateLock = new ReentrantLock();
 
     @TransactionalEventListener(classes = DeviceProfileEvictEvent.class)
     @Override
@@ -124,12 +120,6 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
         DeviceProfile oldDeviceProfile = deviceProfileValidator.validate(deviceProfile, DeviceProfile::getTenantId);
         DeviceProfile savedDeviceProfile;
         try {
-            if (deviceProfile.getDefaultQueueId() == null && StringUtils.isNotEmpty(deviceProfile.getDefaultQueueName())) {
-                Queue existing = queueService.findQueueByTenantIdAndName(deviceProfile.getTenantId(), deviceProfile.getDefaultQueueName());
-                if (existing != null) {
-                    deviceProfile.setDefaultQueueId(existing.getId());
-                }
-            }
             savedDeviceProfile = deviceProfileDao.saveAndFlush(deviceProfile.getTenantId(), deviceProfile);
             publishEvictEvent(new DeviceProfileEvictEvent(savedDeviceProfile.getTenantId(), savedDeviceProfile.getName(),
                     oldDeviceProfile != null ? oldDeviceProfile.getName() : null, savedDeviceProfile.getId(), savedDeviceProfile.isDefault()));

@@ -18,13 +18,12 @@ package org.thingsboard.server.dao.service.validator;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.service.DataValidator;
-import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 
 @Component
@@ -32,7 +31,7 @@ import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 public class WidgetsBundleDataValidator extends DataValidator<WidgetsBundle> {
 
     private final WidgetsBundleDao widgetsBundleDao;
-    private final TenantDao tenantDao;
+    private final TenantService tenantService;
 
     @Override
     protected void validateDataImpl(TenantId tenantId, WidgetsBundle widgetsBundle) {
@@ -43,8 +42,7 @@ public class WidgetsBundleDataValidator extends DataValidator<WidgetsBundle> {
             widgetsBundle.setTenantId(TenantId.fromUUID(ModelConstants.NULL_UUID));
         }
         if (!widgetsBundle.getTenantId().getId().equals(ModelConstants.NULL_UUID)) {
-            Tenant tenant = tenantDao.findById(tenantId, widgetsBundle.getTenantId().getId());
-            if (tenant == null) {
+            if (!tenantService.tenantExists(widgetsBundle.getTenantId())) {
                 throw new DataValidationException("Widgets bundle is referencing to non-existent tenant!");
             }
         }

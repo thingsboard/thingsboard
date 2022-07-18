@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM node:16.15.1-bullseye-slim
+FROM thingsboard/node:16.15.1-bullseye-slim
 
 ENV NODE_ENV production
 ENV DOCKER_MODE true
@@ -29,6 +29,7 @@ COPY package/linux/conf ./conf
 COPY package/linux/conf ./config
 COPY src/api ./api
 COPY src/queue ./queue
+COPY src/config ./config
 COPY src/server.js ./
 
 RUN chmod a+x /tmp/*.sh \

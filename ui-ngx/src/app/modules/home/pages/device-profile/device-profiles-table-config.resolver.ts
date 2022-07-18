@@ -42,6 +42,7 @@ import {
   AddDeviceProfileDialogData
 } from '@home/components/profile/add-device-profile-dialog.component';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
 
 @Injectable()
 export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableConfig<DeviceProfile>> {
@@ -50,6 +51,7 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
 
   constructor(private deviceProfileService: DeviceProfileService,
               private importExport: ImportExportService,
+              private homeDialogs: HomeDialogsService,
               private translate: TranslateService,
               private datePipe: DatePipe,
               private dialogService: DialogService,

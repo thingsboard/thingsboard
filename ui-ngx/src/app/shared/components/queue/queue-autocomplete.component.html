@@ -18,11 +18,11 @@
 <mat-form-field [formGroup]="selectQueueFormGroup" class="mat-block autocomplete-queue">
   <input matInput type="text" placeholder="{{ 'queue.queue-name' | translate }}"
          #queueInput
-         formControlName="queueId"
+         formControlName="queueName"
          (focusin)="onFocus()"
          [required]="required"
          [matAutocomplete]="queueAutocomplete">
-  <button *ngIf="selectQueueFormGroup.get('queueId').value && !disabled"
+  <button *ngIf="selectQueueFormGroup.get('queueName').value && !disabled"
           type="button"
           matSuffix mat-button mat-icon-button aria-label="Clear"
           (click)="clear()">
@@ -39,7 +39,7 @@
     <mat-option *ngIf="!(filteredQueues | async)?.length" [value]="null" class="tb-not-found">
       <div class="tb-not-found-content" (click)="$event.stopPropagation()">
         <div *ngIf="!textIsNotEmpty(searchText); else searchNotEmpty">
-          <span translate>device-profile.no-device-profiles-found</span>
+          <span translate>queue.no-queues-found</span>
         </div>
         <ng-template #searchNotEmpty>
           <span>
@@ -50,7 +50,7 @@
       </div>
     </mat-option>
   </mat-autocomplete>
-  <mat-error *ngIf="selectQueueFormGroup.get('queueId').hasError('required')">
+  <mat-error *ngIf="selectQueueFormGroup.get('queueName').hasError('required')">
     {{ 'queue.queue-required' | translate }}
   </mat-error>
 </mat-form-field>

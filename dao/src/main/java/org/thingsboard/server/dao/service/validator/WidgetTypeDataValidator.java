@@ -27,6 +27,7 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.widget.WidgetTypeDao;
 import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 
@@ -35,8 +36,8 @@ import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 public class WidgetTypeDataValidator extends DataValidator<WidgetTypeDetails> {
 
     private final WidgetTypeDao widgetTypeDao;
-    private final TenantDao tenantDao;
     private final WidgetsBundleDao widgetsBundleDao;
+    private final TenantService tenantService;
 
     @Override
     protected void validateDataImpl(TenantId tenantId, WidgetTypeDetails widgetTypeDetails) {
@@ -53,8 +54,7 @@ public class WidgetTypeDataValidator extends DataValidator<WidgetTypeDetails> {
             widgetTypeDetails.setTenantId(TenantId.fromUUID(ModelConstants.NULL_UUID));
         }
         if (!widgetTypeDetails.getTenantId().getId().equals(ModelConstants.NULL_UUID)) {
-            Tenant tenant = tenantDao.findById(tenantId, widgetTypeDetails.getTenantId().getId());
-            if (tenant == null) {
+            if (!tenantService.tenantExists(widgetTypeDetails.getTenantId())) {
                 throw new DataValidationException("Widget type is referencing to non-existent tenant!");
             }
         }
