@@ -27,7 +27,6 @@ import java.util.Arrays;
 @SpringBootApplication
 @EnableAsync
 @EnableScheduling
-@EnableAutoConfiguration
 @ComponentScan({"org.thingsboard.server.http", "org.thingsboard.server.common", "org.thingsboard.server.transport.http", "org.thingsboard.server.queue", "org.thingsboard.server.cache"})
 public class ThingsboardHttpTransportApplication {
 
