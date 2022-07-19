@@ -346,7 +346,7 @@ public class LwM2MTestClient {
         }).when(defaultLwM2mUplinkMsgHandlerTest).initAttributes(lwM2MClient, true);
 
         try {
-            if (!latch.await(1, TimeUnit.SECONDS)) {
+            if (!latch.await(20, TimeUnit.SECONDS)) {
                 throw new RuntimeException("Failed to await TimeOut lwm2m client initialization!");
             }
         } catch (InterruptedException e) {
