@@ -274,20 +274,20 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
         var ids = vcService.listEntitiesAtVersion(ctx.getTenantId(), request.getVersionId(), path)
                 .stream().skip(request.getOffset()).limit(request.getLimit()).collect(Collectors.toList());
         if (!ids.isEmpty()) {
-            for (VersionedEntityInfo info : ids) {
+            for (int i = 0; i < ids.size(); i++){
+                VersionedEntityInfo info = ids.get(i);
                 var data = vcService.getFileContentAtCommit(ctx.getTenantId(),
                         getRelativePath(info.getExternalId().getEntityType(), info.getExternalId().getId().toString()), request.getVersionId());
-
                 Iterable<String> dataChunks = StringUtils.split(data, msgChunkSize);
-                String chunkedMsgId = UUID.randomUUID().toString();
                 int chunksCount = Iterables.size(dataChunks);
                 AtomicInteger chunkIndex = new AtomicInteger();
+                int itemIdx = i;
                 dataChunks.forEach(chunk -> {
                     EntitiesContentResponseMsg.Builder response = EntitiesContentResponseMsg.newBuilder()
                             .setItemsCount(ids.size())
+                            .setItemIdx(itemIdx)
                             .setItem(EntityContentResponseMsg.newBuilder()
                                     .setData(chunk)
-                                    .setChunkedMsgId(chunkedMsgId)
                                     .setChunksCount(chunksCount)
                                     .setChunkIndex(chunkIndex.getAndIncrement())
                                     .build());
@@ -313,7 +313,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
         dataChunks.forEach(chunk -> {
             log.trace("[{}] sending chunk {} for 'getEntity'", chunkedMsgId, chunkIndex.get());
             reply(ctx, Optional.empty(), builder -> builder.setEntityContentResponse(EntityContentResponseMsg.newBuilder()
-                    .setData(chunk).setChunkedMsgId(chunkedMsgId).setChunksCount(chunksCount)
+                    .setData(chunk).setChunksCount(chunksCount)
                     .setChunkIndex(chunkIndex.getAndIncrement())));
         });
     }

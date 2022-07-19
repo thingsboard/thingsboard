@@ -308,6 +308,10 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
         public <ID extends EntityId> ID getInternalId(ID externalId, boolean throwExceptionIfNotFound) {
             if (externalId == null || externalId.isNullUid()) return null;
 
+            if (EntityType.TENANT.equals(externalId.getEntityType())) {
+                return (ID) ctx.getTenantId();
+            }
+
             EntityId localId = ctx.getInternalId(externalId);
             if (localId != null) {
                 return (ID) localId;

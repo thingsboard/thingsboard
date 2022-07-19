@@ -32,7 +32,7 @@ public class EntityRelationInfo extends EntityRelation {
         super(entityRelation);
     }
 
-    @ApiModelProperty(position = 6, value = "Name of the entity for [from] direction.", readOnly = true, example = "A4B72CCDFF33")
+    @ApiModelProperty(position = 6, value = "Name of the entity for [from] direction.", accessMode = ApiModelProperty.AccessMode.READ_ONLY, example = "A4B72CCDFF33")
     public String getFromName() {
         return fromName;
     }
@@ -41,7 +41,7 @@ public class EntityRelationInfo extends EntityRelation {
         this.fromName = fromName;
     }
 
-    @ApiModelProperty(position = 7, value = "Name of the entity for [to] direction.", readOnly = true, example = "A4B72CCDFF35")
+    @ApiModelProperty(position = 7, value = "Name of the entity for [to] direction.", accessMode = ApiModelProperty.AccessMode.READ_ONLY, example = "A4B72CCDFF35")
     public String getToName() {
         return toName;
     }
