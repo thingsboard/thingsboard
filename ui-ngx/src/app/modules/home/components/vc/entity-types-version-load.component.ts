@@ -41,7 +41,7 @@ import { RemoveOtherEntitiesConfirmComponent } from '@home/components/vc/remove-
 @Component({
   selector: 'tb-entity-types-version-load',
   templateUrl: './entity-types-version-load.component.html',
-  styleUrls: ['./entity-types-version-load.component.scss'],
+  styleUrls: ['./entity-types-version.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

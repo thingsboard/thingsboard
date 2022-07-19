@@ -13,39 +13,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+@import '../../../../../scss/constants';
+
 :host {
-  .entity-types-version-create {
-    .fields-group {
-      padding: 0 16px 8px;
-      margin-bottom: 10px;
-      border: 1px groove rgba(0, 0, 0, .25);
-      border-radius: 4px;
+  min-height: 200px;
+  min-width: 300px;
+  @media #{$mat-gt-xs} {
+    min-width: 550px;
+  }
+  .fields-group {
+    height: 100%;
+    padding: 0 16px 8px;
+    border: 1px groove rgba(0, 0, 0, .25);
+    border-radius: 4px;
 
-      legend {
-        color: rgba(0, 0, 0, .7);
-        width: fit-content;
-      }
-
-      legend + * {
-        display: block;
-        margin-top: 16px;
-      }
+    legend {
+      color: rgba(0, 0, 0, .7);
+      width: fit-content;
     }
 
-    .tb-prompt {
-      margin: 30px 0;
+    legend + * {
+      display: block;
+      margin-top: 16px;
     }
+  }
 
-    mat-expansion-panel.entity-type-config {
-      box-shadow: none;
-      border: 1px groove rgba(0, 0, 0, .25);
-      .mat-expansion-panel-header {
-        padding: 0 24px 0 8px;
-        height: 48px;
-      }
-      .entity-type-config-content {
-        padding: 0 8px 8px;
-      }
+  .tb-prompt {
+    margin: 30px 0;
+  }
+
+  mat-expansion-panel.entity-type-config {
+    box-shadow: none;
+    border: 1px groove rgba(0, 0, 0, .25);
+    .mat-expansion-panel-header {
+      padding: 0 24px 0 8px;
+      height: 48px;
+    }
+    .entity-type-config-content {
+      padding: 0 8px 8px;
     }
   }
 }

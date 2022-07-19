@@ -16,7 +16,7 @@
 
 -->
 
-<section *ngIf="!versionLoadResult$">
+<section *ngIf="!versionLoadResult$" fxLayout="column" style="height: 100%;">
   <mat-toolbar>
     <h2>{{ 'version-control.restore-entities-from-version' | translate: {versionName} }}</h2>
     <span fxFlex></span>
@@ -24,16 +24,12 @@
   <mat-progress-bar color="warn" style="z-index: 10; width: 100%; margin-bottom: -4px;" mode="indeterminate"
                     *ngIf="isLoading$ | async">
   </mat-progress-bar>
-  <form [formGroup]="loadVersionFormGroup" style="padding-top: 16px;">
-    <fieldset [disabled]="isLoading$ | async">
-      <div fxFlex fxLayout="column">
-        <tb-entity-types-version-load
-          formControlName="entityTypes">
-        </tb-entity-types-version-load>
-      </div>
-    </fieldset>
+  <form [formGroup]="loadVersionFormGroup" fxLayout="column" style="flex: 1; padding-top: 16px; overflow: auto;">
+    <tb-entity-types-version-load
+      formControlName="entityTypes">
+    </tb-entity-types-version-load>
   </form>
-  <div fxLayoutAlign="end center" fxLayoutGap="8px">
+  <div fxLayoutAlign="end center" fxLayoutGap="8px" style="padding-top: 16px;">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

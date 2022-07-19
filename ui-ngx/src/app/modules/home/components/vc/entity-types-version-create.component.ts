@@ -43,7 +43,7 @@ import { isDefinedAndNotNull } from '@core/utils';
 @Component({
   selector: 'tb-entity-types-version-create',
   templateUrl: './entity-types-version-create.component.html',
-  styleUrls: ['./entity-types-version-create.component.scss'],
+  styleUrls: ['./entity-types-version.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
