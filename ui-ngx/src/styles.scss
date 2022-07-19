@@ -1263,8 +1263,8 @@ mat-label {
     }
   }
 
-  .tb-fullscreen-dialog-gt-sm {
-    @media #{$mat-gt-sm} {
+  .tb-fullscreen-dialog-gt-xs {
+    @media #{$mat-gt-xs} {
       min-height: 100%;
       min-width: 100%;
       max-width: none !important;

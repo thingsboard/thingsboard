@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import java.util.LinkedList;
 import java.util.List;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
@@ -132,7 +133,9 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        doPost("/api/alarm", alarm).andExpect(status().isForbidden());
+        doPost("/api/alarm", alarm)
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString(msgErrorPermission)));
 
         testNotifyEntityNever(alarm.getId(), alarm);
     }
@@ -147,7 +150,9 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        doPost("/api/alarm", alarm).andExpect(status().isForbidden());
+        doPost("/api/alarm", alarm)
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString(msgErrorPermission)));
 
         testNotifyEntityNever(alarm.getId(), alarm);
     }
@@ -175,7 +180,7 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         doDelete("/api/alarm/" + alarm.getId()).andExpect(status().isOk());
 
         testNotifyEntityOneTimeMsgToEdgeServiceNever(alarm, alarm.getId(), alarm.getOriginator(),
-                tenantId, tenantAdminCustomerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.DELETED);
+                tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.DELETED);
     }
 
     @Test
@@ -187,7 +192,9 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        doDelete("/api/alarm/" + alarm.getId()).andExpect(status().isForbidden());
+        doDelete("/api/alarm/" + alarm.getId())
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString(msgErrorPermission)));
 
         testNotifyEntityNever(alarm.getId(), alarm);
     }
@@ -201,7 +208,9 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        doDelete("/api/alarm/" + alarm.getId()).andExpect(status().isForbidden());
+        doDelete("/api/alarm/" + alarm.getId())
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString(msgErrorPermission)));
 
         testNotifyEntityNever(alarm.getId(), alarm);
     }
@@ -265,7 +274,9 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        doPost("/api/alarm/" + alarm.getId() + "/clear").andExpect(status().isForbidden());
+        doPost("/api/alarm/" + alarm.getId() + "/clear")
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString(msgErrorPermission)));
 
         testNotifyEntityNever(alarm.getId(), alarm);
     }
@@ -279,7 +290,9 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        doPost("/api/alarm/" + alarm.getId() + "/clear").andExpect(status().isForbidden());
+        doPost("/api/alarm/" + alarm.getId() + "/clear")
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString(msgErrorPermission)));
 
         testNotifyEntityNever(alarm.getId(), alarm);
     }
@@ -293,7 +306,9 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        doPost("/api/alarm/" + alarm.getId() + "/ack").andExpect(status().isForbidden());
+        doPost("/api/alarm/" + alarm.getId() + "/ack")
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString(msgErrorPermission)));
 
         testNotifyEntityNever(alarm.getId(), alarm);
     }
@@ -307,7 +322,9 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        doPost("/api/alarm/" + alarm.getId() + "/ack").andExpect(status().isForbidden());
+        doPost("/api/alarm/" + alarm.getId() + "/ack")
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString(msgErrorPermission)));
     }
 
     @Test
@@ -355,7 +372,8 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         loginDifferentCustomer();
         doGet("/api/alarm/" + EntityType.DEVICE + "/"
                 + customerDevice.getUuidId() + "?page=0&pageSize=" + size)
-                .andExpect(status().isForbidden());
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString(msgErrorPermission)));
     }
 
     @Test

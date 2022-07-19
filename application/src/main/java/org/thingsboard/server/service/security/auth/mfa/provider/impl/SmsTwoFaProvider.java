@@ -63,7 +63,7 @@ public class SmsTwoFaProvider extends OtpBasedTwoFaProvider<SmsTwoFaProviderConf
     @Override
     public void check(TenantId tenantId) throws ThingsboardException {
         if (!smsService.isConfigured(tenantId)) {
-            throw new ThingsboardException("SMS service in not configured", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+            throw new ThingsboardException("SMS service is not configured", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
     }
 

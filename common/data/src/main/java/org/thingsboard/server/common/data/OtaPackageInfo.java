@@ -40,44 +40,44 @@ public class OtaPackageInfo extends SearchTextBasedWithAdditionalInfo<OtaPackage
 
     private static final long serialVersionUID = 3168391583570815419L;
 
-    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id. Tenant Id of the ota package can't be changed.", readOnly = true)
+    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id. Tenant Id of the ota package can't be changed.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private TenantId tenantId;
-    @ApiModelProperty(position = 4, value = "JSON object with Device Profile Id. Device Profile Id of the ota package can't be changed.", readOnly = true)
+    @ApiModelProperty(position = 4, value = "JSON object with Device Profile Id. Device Profile Id of the ota package can't be changed.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private DeviceProfileId deviceProfileId;
-    @ApiModelProperty(position = 5, value = "OTA Package type.", example = "FIRMWARE", readOnly = true)
+    @ApiModelProperty(position = 5, value = "OTA Package type.", example = "FIRMWARE", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private OtaPackageType type;
     @Length(fieldName = "title")
     @NoXss
-    @ApiModelProperty(position = 6, value = "OTA Package title.", example = "fw", readOnly = true)
+    @ApiModelProperty(position = 6, value = "OTA Package title.", example = "fw", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String title;
     @Length(fieldName = "version")
     @NoXss
-    @ApiModelProperty(position = 7, value = "OTA Package version.", example = "1.0", readOnly = true)
+    @ApiModelProperty(position = 7, value = "OTA Package version.", example = "1.0", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String version;
     @Length(fieldName = "tag")
     @NoXss
-    @ApiModelProperty(position = 8, value = "OTA Package tag.", example = "fw_1.0", readOnly = true)
+    @ApiModelProperty(position = 8, value = "OTA Package tag.", example = "fw_1.0", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String tag;
     @Length(fieldName = "url")
     @NoXss
-    @ApiModelProperty(position = 9, value = "OTA Package url.", example = "http://thingsboard.org/fw/1", readOnly = true)
+    @ApiModelProperty(position = 9, value = "OTA Package url.", example = "http://thingsboard.org/fw/1", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String url;
-    @ApiModelProperty(position = 10, value = "Indicates OTA Package 'has data'. Field is returned from DB ('true' if data exists or url is set).  If OTA Package 'has data' is 'false' we can not assign the OTA Package to the Device or Device Profile.", example = "true", readOnly = true)
+    @ApiModelProperty(position = 10, value = "Indicates OTA Package 'has data'. Field is returned from DB ('true' if data exists or url is set).  If OTA Package 'has data' is 'false' we can not assign the OTA Package to the Device or Device Profile.", example = "true", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private boolean hasData;
     @Length(fieldName = "file name")
     @NoXss
-    @ApiModelProperty(position = 11, value = "OTA Package file name.", example = "fw_1.0", readOnly = true)
+    @ApiModelProperty(position = 11, value = "OTA Package file name.", example = "fw_1.0", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String fileName;
     @NoXss
     @Length(fieldName = "contentType")
-    @ApiModelProperty(position = 12, value = "OTA Package content type.", example = "APPLICATION_OCTET_STREAM", readOnly = true)
+    @ApiModelProperty(position = 12, value = "OTA Package content type.", example = "APPLICATION_OCTET_STREAM", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String contentType;
-    @ApiModelProperty(position = 13, value = "OTA Package checksum algorithm.", example = "CRC32", readOnly = true)
+    @ApiModelProperty(position = 13, value = "OTA Package checksum algorithm.", example = "CRC32", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private ChecksumAlgorithm checksumAlgorithm;
     @Length(fieldName = "checksum", max = 1020)
-    @ApiModelProperty(position = 14, value = "OTA Package checksum.", example = "0xd87f7e0c", readOnly = true)
+    @ApiModelProperty(position = 14, value = "OTA Package checksum.", example = "0xd87f7e0c", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String checksum;
-    @ApiModelProperty(position = 15, value = "OTA Package data size.", example = "8", readOnly = true)
+    @ApiModelProperty(position = 15, value = "OTA Package data size.", example = "8", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private Long dataSize;
 
     public OtaPackageInfo() {
@@ -114,7 +114,7 @@ public class OtaPackageInfo extends SearchTextBasedWithAdditionalInfo<OtaPackage
         return super.getId();
     }
 
-    @ApiModelProperty(position = 2, value = "Timestamp of the ota package creation, in milliseconds", example = "1609459200000", readOnly = true)
+    @ApiModelProperty(position = 2, value = "Timestamp of the ota package creation, in milliseconds", example = "1609459200000", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();

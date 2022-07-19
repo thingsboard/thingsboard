@@ -70,6 +70,7 @@ import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -226,18 +227,19 @@ public class RuleChainController extends BaseController {
                     "The newly created Rule Chain Id will be present in the response. " +
                     "Specify existing Rule Chain id to update the rule chain. " +
                     "Referencing non-existing rule chain Id will cause 'Not Found' error." +
-                    "\n\n" + RULE_CHAIN_DESCRIPTION + TENANT_AUTHORITY_PARAGRAPH)
+                    "\n\n" + RULE_CHAIN_DESCRIPTION +
+                    "Remove 'id', 'tenantId' from the request body example (below) to create new Rule Chain entity." +
+                    TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/ruleChain", method = RequestMethod.POST)
     @ResponseBody
     public RuleChain saveRuleChain(
             @ApiParam(value = "A JSON value representing the rule chain.")
-            @RequestBody RuleChain ruleChain) throws ThingsboardException {
-
+            @RequestBody RuleChain ruleChain) throws Exception {
         ruleChain.setTenantId(getCurrentUser().getTenantId());
         checkEntity(ruleChain.getId(), ruleChain, Resource.RULE_CHAIN);
         return tbRuleChainService.save(ruleChain, getCurrentUser());
-     }
+    }
 
     @ApiOperation(value = "Create Default Rule Chain",
             notes = "Create rule chain from template, based on the specified name in the request. " +
@@ -247,12 +249,11 @@ public class RuleChainController extends BaseController {
     @ResponseBody
     public RuleChain saveRuleChain(
             @ApiParam(value = "A JSON value representing the request.")
-            @RequestBody DefaultRuleChainCreateRequest request) throws ThingsboardException {
-
+            @RequestBody DefaultRuleChainCreateRequest request) throws Exception {
         checkNotNull(request);
         checkParameter(request.getName(), "name");
         return tbRuleChainService.saveDefaultByName(getTenantId(), request, getCurrentUser());
-     }
+    }
 
     @ApiOperation(value = "Set Root Rule Chain (setRootRuleChain)",
             notes = "Makes the rule chain to be root rule chain. Updates previous root rule chain as well. " + TENANT_AUTHORITY_PARAGRAPH)
@@ -265,8 +266,7 @@ public class RuleChainController extends BaseController {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
         RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.WRITE);
-        return tbRuleChainService.setRootRuleChain(getTenantId(),ruleChain, getCurrentUser());
-
+        return tbRuleChainService.setRootRuleChain(getTenantId(), ruleChain, getCurrentUser());
     }
 
     @ApiOperation(value = "Update Rule Chain Metadata",
@@ -279,7 +279,7 @@ public class RuleChainController extends BaseController {
             @RequestBody RuleChainMetaData ruleChainMetaData,
             @ApiParam(value = "Update related rule nodes.")
             @RequestParam(value = "updateRelated", required = false, defaultValue = "true") boolean updateRelated
-    ) throws ThingsboardException {
+    ) throws Exception {
         TenantId tenantId = getTenantId();
         if (debugPerTenantEnabled) {
             ConcurrentMap<TenantId, DebugTbRateLimits> debugPerTenantLimits = actorContext.getDebugPerTenantLimits();
@@ -290,9 +290,8 @@ public class RuleChainController extends BaseController {
         }
         RuleChain ruleChain = checkRuleChain(ruleChainMetaData.getRuleChainId(), Operation.WRITE);
 
-        return tbRuleChainService.saveRuleChainMetaData(tenantId, ruleChain, ruleChainMetaData, updateRelated,
-                getCurrentUser());
-     }
+        return tbRuleChainService.saveRuleChainMetaData(tenantId, ruleChain, ruleChainMetaData, updateRelated, getCurrentUser());
+    }
 
     @ApiOperation(value = "Get Rule Chains (getRuleChains)",
             notes = "Returns a page of Rule Chains owned by tenant. " + RULE_CHAIN_DESCRIPTION + PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
@@ -335,11 +334,10 @@ public class RuleChainController extends BaseController {
             @ApiParam(value = RULE_CHAIN_ID_PARAM_DESCRIPTION)
             @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
-
         RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
         RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.DELETE);
         tbRuleChainService.delete(ruleChain, getCurrentUser());
-     }
+    }
 
     @ApiOperation(value = "Get latest input message (getLatestRuleNodeDebugInput)",
             notes = "Gets the input message from the debug events for specified Rule Chain Id. " +
@@ -532,7 +530,7 @@ public class RuleChainController extends BaseController {
         RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.READ);
 
         return tbRuleChainService.assignRuleChainToEdge(getTenantId(), ruleChain, edge, getCurrentUser());
-     }
+    }
 
     @ApiOperation(value = "Unassign rule chain from edge (unassignRuleChainFromEdge)",
             notes = "Clears assignment of the rule chain to the edge. " +
@@ -554,7 +552,7 @@ public class RuleChainController extends BaseController {
         RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.READ);
 
         return tbRuleChainService.unassignRuleChainFromEdge(getTenantId(), ruleChain, edge, getCurrentUser());
-     }
+    }
 
     @ApiOperation(value = "Get Edge Rule Chains (getEdgeRuleChains)",
             notes = "Returns a page of Rule Chains assigned to the specified edge. " + RULE_CHAIN_DESCRIPTION + PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
@@ -612,7 +610,7 @@ public class RuleChainController extends BaseController {
         RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
         RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.WRITE);
         return tbRuleChainService.setAutoAssignToEdgeRuleChain(getTenantId(), ruleChain, getCurrentUser());
-      }
+    }
 
     @ApiOperation(value = "Unset Auto Assign To Edge Rule Chain (unsetAutoAssignToEdgeRuleChain)",
             notes = "Removes the rule chain from the list of rule chains that are going to be automatically assigned for any new edge that will be created. " +
@@ -625,9 +623,8 @@ public class RuleChainController extends BaseController {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
         RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.WRITE);
-
         return tbRuleChainService.unsetAutoAssignToEdgeRuleChain(getTenantId(), ruleChain, getCurrentUser());
-     }
+    }
 
     // TODO: @voba refactor this - add new config to edge rule chain to set it as auto-assign
     @ApiOperation(value = "Get Auto Assign To Edge Rule Chains (getAutoAssignToEdgeRuleChains)",

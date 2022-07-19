@@ -16,9 +16,15 @@
 
 import L, { LatLngBounds, LatLngLiteral, LatLngTuple } from 'leaflet';
 import LeafletMap from '../leaflet-map';
-import { CircleData, MapImage, PosFuncton, WidgetUnitedMapSettings } from '../map-models';
+import {
+  CircleData,
+  defaultImageMapProviderSettings,
+  MapImage,
+  PosFuncton,
+  WidgetUnitedMapSettings
+} from '../map-models';
 import { Observable, ReplaySubject } from 'rxjs';
-import { map, mergeMap } from 'rxjs/operators';
+import { catchError, map, mergeMap } from 'rxjs/operators';
 import {
   aspectCache,
   calculateNewPointCoordinate
@@ -27,7 +33,7 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import { DataSet, DatasourceType, widgetType } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetSubscriptionOptions } from '@core/api/widget-api.models';
-import { isDefinedAndNotNull, isEmptyStr, parseFunction } from '@core/utils';
+import { isDefinedAndNotNull, isEmptyStr, isNotEmptyStr, parseFunction } from '@core/utils';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
 
 const maxZoom = 4; // ?
@@ -93,10 +99,12 @@ export class ImageMap extends LeafletMap {
         type: widgetType.latest,
         callbacks: {
           onDataUpdated: (subscription) => {
-            if (subscription.data[0]?.data[0]?.length > 0) {
+            if (isNotEmptyStr(subscription.data[0]?.data[0]?.[1])) {
               result.next([subscription.data[0].data, isUpdate]);
-              isUpdate = true;
+            } else {
+              result.next([[[0, options.mapImageUrl]], isUpdate]);
             }
+            isUpdate = true;
           }
         }
       };
@@ -122,7 +130,11 @@ export class ImageMap extends LeafletMap {
             };
             return mapImage;
           }
-        ));
+        ),
+        catchError((e) => {
+          return this.imageFromUrl(defaultImageMapProviderSettings.mapImageUrl);
+        })
+      );
     }
 
     private imageFromAlias(alias: Observable<[DataSet, boolean]>): Observable<MapImage> {
@@ -138,7 +150,11 @@ export class ImageMap extends LeafletMap {
                 mapImage.aspect = aspect;
                 return mapImage;
               }
-            ));
+            ),
+            catchError((e) => {
+              return this.imageFromUrl(defaultImageMapProviderSettings.mapImageUrl);
+            })
+          );
         })
       );
     }
@@ -222,7 +238,7 @@ export class ImageMap extends LeafletMap {
           maxZoom,
           scrollWheelZoom: !this.options.disableScrollZooming,
           center,
-          doubleClickZoom: !this.options.disableZoomControl,
+          doubleClickZoom: !this.options.disableDoubleClickZooming,
           zoomControl: !this.options.disableZoomControl,
           zoom: 1,
           crs: L.CRS.Simple,

@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -29,6 +30,7 @@ import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.device.DeviceProfileService;
+import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -46,12 +48,11 @@ import java.util.stream.Collectors;
 @TbCoreComponent
 @AllArgsConstructor
 public class DefaultTbQueueService extends AbstractTbEntityService implements TbQueueService {
-    private static final String MAIN = "Main";
     private static final long DELETE_DELAY = 30;
 
+    private final QueueService queueService;
     private final TbClusterService tbClusterService;
     private final TbQueueAdmin tbQueueAdmin;
-    private final DeviceProfileService deviceProfileService;
     private final SchedulerComponent scheduler;
 
     @Override
@@ -73,6 +74,8 @@ public class DefaultTbQueueService extends AbstractTbEntityService implements Tb
         } else {
             onQueueUpdated(savedQueue, oldQueue);
         }
+
+        notificationEntityService.notifySendMsgToEdgeService(queue.getTenantId(), savedQueue.getId(), create ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
 
         return savedQueue;
     }
@@ -146,6 +149,8 @@ public class DefaultTbQueueService extends AbstractTbEntityService implements Tb
                 }
             }
         }, DELETE_DELAY, TimeUnit.SECONDS);
+
+        notificationEntityService.notifySendMsgToEdgeService(queue.getTenantId(), queue.getId(), EdgeEventActionType.DELETED);
     }
 
     @Override
@@ -198,35 +203,7 @@ public class DefaultTbQueueService extends AbstractTbEntityService implements Tb
         }
 
         tenantIds.forEach(tenantId -> {
-            Map<QueueId, List<DeviceProfile>> deviceProfileQueues;
-
-            if (oldTenantProfile != null && !newTenantProfile.getId().equals(oldTenantProfile.getId()) || !toRemove.isEmpty()) {
-                List<DeviceProfile> deviceProfiles = deviceProfileService.findDeviceProfiles(tenantId, new PageLink(Integer.MAX_VALUE)).getData();
-                deviceProfileQueues = deviceProfiles.stream()
-                        .filter(dp -> dp.getDefaultQueueId() != null)
-                        .collect(Collectors.groupingBy(DeviceProfile::getDefaultQueueId));
-            } else {
-                deviceProfileQueues = Collections.emptyMap();
-            }
-
-            Map<String, QueueId> createdQueues = toCreate.stream()
-                    .map(key -> saveQueue(new Queue(tenantId, newQueues.get(key))))
-                    .collect(Collectors.toMap(Queue::getName, Queue::getId));
-
-            // assigning created queues to device profiles instead of system queues
-            if (oldTenantProfile != null && !oldTenantProfile.isIsolatedTbRuleEngine()) {
-                deviceProfileQueues.forEach((queueId, list) -> {
-                    Queue queue = queueService.findQueueById(TenantId.SYS_TENANT_ID, queueId);
-                    QueueId queueIdToAssign = createdQueues.get(queue.getName());
-                    if (queueIdToAssign == null) {
-                        queueIdToAssign = createdQueues.get(MAIN);
-                    }
-                    for (DeviceProfile deviceProfile : list) {
-                        deviceProfile.setDefaultQueueId(queueIdToAssign);
-                        saveDeviceProfile(deviceProfile);
-                    }
-                });
-            }
+            toCreate.forEach(key -> saveQueue(new Queue(tenantId, newQueues.get(key))));
 
             toUpdate.forEach(key -> {
                 Queue queueToUpdate = new Queue(tenantId, newQueues.get(key));
@@ -234,9 +211,7 @@ public class DefaultTbQueueService extends AbstractTbEntityService implements Tb
                 queueToUpdate.setId(foundQueue.getId());
                 queueToUpdate.setCreatedTime(foundQueue.getCreatedTime());
 
-                if (queueToUpdate.equals(foundQueue)) {
-                    //Queue not changed
-                } else {
+                if (!queueToUpdate.equals(foundQueue)) {
                     saveQueue(queueToUpdate);
                 }
             });
@@ -244,26 +219,9 @@ public class DefaultTbQueueService extends AbstractTbEntityService implements Tb
             toRemove.forEach(q -> {
                 Queue queue = queueService.findQueueByTenantIdAndNameInternal(tenantId, q);
                 QueueId queueIdForRemove = queue.getId();
-                if (deviceProfileQueues.containsKey(queueIdForRemove)) {
-                    Queue foundQueue = queueService.findQueueByTenantIdAndName(tenantId, q);
-                    if (foundQueue == null || queue.equals(foundQueue)) {
-                        foundQueue = queueService.findQueueByTenantIdAndName(tenantId, MAIN);
-                    }
-                    QueueId newQueueId = foundQueue.getId();
-                    deviceProfileQueues.get(queueIdForRemove).stream()
-                            .peek(dp -> dp.setDefaultQueueId(newQueueId))
-                            .forEach(this::saveDeviceProfile);
-                }
                 deleteQueue(tenantId, queueIdForRemove);
             });
         });
-    }
-
-    //TODO: remove after implementing TbDeviceProfileService
-    private void saveDeviceProfile(DeviceProfile deviceProfile) {
-        DeviceProfile savedDeviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
-        tbClusterService.onDeviceProfileChange(savedDeviceProfile, null);
-        tbClusterService.broadcastEntityStateChangeEvent(deviceProfile.getTenantId(), savedDeviceProfile.getId(), ComponentLifecycleEvent.UPDATED);
     }
 
 }

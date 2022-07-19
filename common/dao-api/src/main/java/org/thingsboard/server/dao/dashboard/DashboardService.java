@@ -25,6 +25,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 
+import java.util.List;
+
 public interface DashboardService {
     
     Dashboard findDashboardById(TenantId tenantId, DashboardId dashboardId);
@@ -64,4 +66,7 @@ public interface DashboardService {
     PageData<DashboardInfo> findDashboardsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, PageLink pageLink);
 
     DashboardInfo findFirstDashboardInfoByTenantIdAndName(TenantId tenantId, String name);
+
+    List<Dashboard> findTenantDashboardsByTitle(TenantId tenantId, String title);
+
 }

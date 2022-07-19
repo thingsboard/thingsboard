@@ -39,7 +39,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.entitiy.deviceProfile.TbDeviceProfileService;
+import org.thingsboard.server.service.entitiy.device.profile.TbDeviceProfileService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
@@ -71,7 +71,7 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 @Slf4j
 public class DeviceProfileController extends BaseController {
 
-    private  final TbDeviceProfileService tbDeviceProfileService;
+    private final TbDeviceProfileService tbDeviceProfileService;
 
     @Autowired
     private TimeseriesService timeseriesService;
@@ -108,7 +108,7 @@ public class DeviceProfileController extends BaseController {
         checkParameter(DEVICE_PROFILE_ID, strDeviceProfileId);
         try {
             DeviceProfileId deviceProfileId = new DeviceProfileId(toUUID(strDeviceProfileId));
-            return checkNotNull(deviceProfileService.findDeviceProfileInfoById(getTenantId(), deviceProfileId));
+            return new DeviceProfileInfo(checkDeviceProfileId(deviceProfileId, Operation.READ));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -191,6 +191,7 @@ public class DeviceProfileController extends BaseController {
                     "Specify existing device profile id to update the device profile. " +
                     "Referencing non-existing device profile Id will cause 'Not Found' error. " + NEW_LINE +
                     "Device profile name is unique in the scope of tenant. Only one 'default' device profile may exist in scope of tenant." + DEVICE_PROFILE_DATA +
+                    "Remove 'id', 'tenantId' and optionally 'customerId' from the request body example (below) to create new Device Profile entity. " +
                     TENANT_AUTHORITY_PARAGRAPH,
             produces = "application/json",
             consumes = "application/json")
@@ -199,7 +200,7 @@ public class DeviceProfileController extends BaseController {
     @ResponseBody
     public DeviceProfile saveDeviceProfile(
             @ApiParam(value = "A JSON value representing the device profile.")
-            @RequestBody DeviceProfile deviceProfile) throws ThingsboardException {
+            @RequestBody DeviceProfile deviceProfile) throws Exception {
         deviceProfile.setTenantId(getTenantId());
         checkEntity(deviceProfile.getId(), deviceProfile, Resource.DEVICE_PROFILE);
         return tbDeviceProfileService.save(deviceProfile, getCurrentUser());
@@ -219,7 +220,7 @@ public class DeviceProfileController extends BaseController {
         DeviceProfileId deviceProfileId = new DeviceProfileId(toUUID(strDeviceProfileId));
         DeviceProfile deviceProfile = checkDeviceProfileId(deviceProfileId, Operation.DELETE);
         tbDeviceProfileService.delete(deviceProfile, getCurrentUser());
-     }
+    }
 
     @ApiOperation(value = "Make Device Profile Default (setDefaultDeviceProfile)",
             notes = "Marks device profile as default within a tenant scope." + TENANT_AUTHORITY_PARAGRAPH,

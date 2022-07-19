@@ -31,5 +31,7 @@ public enum EdgeEventType {
     TENANT,
     WIDGETS_BUNDLE,
     WIDGET_TYPE,
-    ADMIN_SETTINGS
+    ADMIN_SETTINGS,
+    OTA_PACKAGE,
+    QUEUE
 }

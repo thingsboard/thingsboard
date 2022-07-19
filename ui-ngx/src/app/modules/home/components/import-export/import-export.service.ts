@@ -631,7 +631,6 @@ export class ImportExportService {
   private validateImportedTenantProfile(tenantProfile: TenantProfile): boolean {
     return isDefined(tenantProfile.name)
       && isDefined(tenantProfile.profileData)
-      && isDefined(tenantProfile.isolatedTbCore)
       && isDefined(tenantProfile.isolatedTbRuleEngine);
   }
 

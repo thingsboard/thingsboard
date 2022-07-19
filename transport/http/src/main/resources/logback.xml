@@ -29,6 +29,9 @@
 
     <logger name="com.microsoft.azure.servicebus.primitives.CoreMessageReceiver" level="OFF" />
 
+    <logger name="org.apache.kafka.common.utils.AppInfoParser" level="WARN"/>
+    <logger name="org.apache.kafka.clients" level="WARN"/>
+
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
     </root>

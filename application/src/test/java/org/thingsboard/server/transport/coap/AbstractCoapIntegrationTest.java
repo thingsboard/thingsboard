@@ -16,8 +16,6 @@
 package org.thingsboard.server.transport.coap;
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.californium.core.CoapClient;
-import org.junit.After;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.common.data.CoapDeviceType;
 import org.thingsboard.server.common.data.Device;
@@ -41,7 +39,6 @@ import org.thingsboard.server.common.data.device.profile.JsonTransportPayloadCon
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
-import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.transport.AbstractTransportIntegrationTest;
 
 import static org.junit.Assert.assertEquals;
@@ -54,12 +51,11 @@ import static org.junit.Assert.assertNotNull;
 public abstract class AbstractCoapIntegrationTest extends AbstractTransportIntegrationTest {
 
     protected final byte[] EMPTY_PAYLOAD = new byte[0];
-
-    protected CoapClient client;
+    protected CoapTestClient client;
 
     protected void processAfterTest() throws Exception {
         if (client != null) {
-            client.shutdown();
+            client.disconnect();
         }
     }
 
@@ -155,17 +151,5 @@ public abstract class AbstractCoapIntegrationTest extends AbstractTransportInteg
         device.setName(name);
         device.setType(type);
         return doPost("/api/device", device, Device.class);
-    }
-
-    protected CoapClient getCoapClient(FeatureType featureType) {
-        return new CoapClient(getFeatureTokenUrl(accessToken, featureType));
-    }
-
-    protected CoapClient getCoapClient(String featureTokenUrl) {
-        return new CoapClient(featureTokenUrl);
-    }
-
-    protected String getFeatureTokenUrl(String token, FeatureType featureType) {
-        return COAP_BASE_URL + token + "/" + featureType.name().toLowerCase();
     }
 }

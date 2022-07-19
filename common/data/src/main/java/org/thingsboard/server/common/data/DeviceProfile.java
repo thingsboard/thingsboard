@@ -45,11 +45,11 @@ import static org.thingsboard.server.common.data.SearchTextBasedWithAdditionalIn
 @ToString(exclude = {"image", "profileDataBytes"})
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements HasName, HasTenantId, HasOtaPackage {
+public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements HasName, HasTenantId, HasOtaPackage, ExportableEntity<DeviceProfileId> {
 
     private static final long serialVersionUID = 6998485460273302018L;
 
-    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id that owns the profile.", readOnly = true)
+    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id that owns the profile.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private TenantId tenantId;
     @NoXss
     @Length(fieldName = "name")
@@ -74,12 +74,11 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
     private RuleChainId defaultRuleChainId;
     @ApiModelProperty(position = 6, value = "Reference to the dashboard. Used in the mobile application to open the default dashboard when user navigates to device details.")
     private DashboardId defaultDashboardId;
+
     @NoXss
-    @ApiModelProperty(position = 8, value = "Reference to the rule engine queue. " +
+    @ApiModelProperty(position = 8, value = "Rule engine queue name. " +
             "If present, the specified queue will be used to store all unprocessed messages related to device, including telemetry, attribute updates, etc. " +
             "Otherwise, the 'Main' queue will be used to store those messages.")
-    private QueueId defaultQueueId;
-
     private String defaultQueueName;
     @Valid
     private transient DeviceProfileData profileData;
@@ -93,6 +92,8 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
     private OtaPackageId firmwareId;
     @ApiModelProperty(position = 10, value = "Reference to the software OTA package. If present, the specified package will be used as default device software. ")
     private OtaPackageId softwareId;
+
+    private DeviceProfileId externalId;
 
     public DeviceProfile() {
         super();
@@ -111,11 +112,12 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
         this.isDefault = deviceProfile.isDefault();
         this.defaultRuleChainId = deviceProfile.getDefaultRuleChainId();
         this.defaultDashboardId = deviceProfile.getDefaultDashboardId();
-        this.defaultQueueId = deviceProfile.getDefaultQueueId();
+        this.defaultQueueName = deviceProfile.getDefaultQueueName();
         this.setProfileData(deviceProfile.getProfileData());
         this.provisionDeviceKey = deviceProfile.getProvisionDeviceKey();
         this.firmwareId = deviceProfile.getFirmwareId();
         this.softwareId = deviceProfile.getSoftwareId();
+        this.externalId = deviceProfile.getExternalId();
     }
 
     @ApiModelProperty(position = 1, value = "JSON object with the device profile Id. " +
@@ -127,7 +129,7 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
         return super.getId();
     }
 
-    @ApiModelProperty(position = 2, value = "Timestamp of the profile creation, in milliseconds", example = "1609459200000", readOnly = true)
+    @ApiModelProperty(position = 2, value = "Timestamp of the profile creation, in milliseconds", example = "1609459200000", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();
@@ -171,13 +173,4 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
         }
     }
 
-    @JsonIgnore
-    public String getDefaultQueueName() {
-        return defaultQueueName;
-    }
-
-    @JsonProperty
-    public void setDefaultQueueName(String defaultQueueName) {
-        this.defaultQueueName = defaultQueueName;
-    }
 }

@@ -29,19 +29,19 @@ public class BaseWidgetType extends BaseData<WidgetTypeId> implements HasTenantI
 
     private static final long serialVersionUID = 8388684344603660756L;
 
-    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id.", readOnly = true)
+    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private TenantId tenantId;
     @NoXss
     @Length(fieldName = "bundleAlias")
-    @ApiModelProperty(position = 4, value = "Reference to widget bundle", readOnly = true)
+    @ApiModelProperty(position = 4, value = "Reference to widget bundle", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String bundleAlias;
     @NoXss
     @Length(fieldName = "alias")
-    @ApiModelProperty(position = 5, value = "Unique alias that is used in dashboards as a reference widget type", readOnly = true)
+    @ApiModelProperty(position = 5, value = "Unique alias that is used in dashboards as a reference widget type", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String alias;
     @NoXss
     @Length(fieldName = "name")
-    @ApiModelProperty(position = 6, value = "Widget name used in search and UI", readOnly = true)
+    @ApiModelProperty(position = 6, value = "Widget name used in search and UI", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String name;
 
     public BaseWidgetType() {
@@ -69,7 +69,7 @@ public class BaseWidgetType extends BaseData<WidgetTypeId> implements HasTenantI
         return super.getId();
     }
 
-    @ApiModelProperty(position = 2, value = "Timestamp of the Widget Type creation, in milliseconds", example = "1609459200000", readOnly = true)
+    @ApiModelProperty(position = 2, value = "Timestamp of the Widget Type creation, in milliseconds", example = "1609459200000", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();

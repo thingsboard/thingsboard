@@ -15,20 +15,15 @@
  */
 package org.thingsboard.server.cache;
 
-import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.SerializationException;
+import org.springframework.lang.Nullable;
 
-public class TbRedisSerializer<T> implements RedisSerializer<T> {
+public interface TbRedisSerializer<K, T> {
 
-    private final RedisSerializer<Object> java = RedisSerializer.java();
+    @Nullable
+    byte[] serialize(@Nullable T t) throws SerializationException;
 
-    @Override
-    public byte[] serialize(T t) throws SerializationException {
-        return java.serialize(t);
-    }
+    @Nullable
+    T deserialize(K key, @Nullable byte[] bytes) throws SerializationException;
 
-    @Override
-    public T deserialize(byte[] bytes) throws SerializationException {
-        return (T) java.deserialize(bytes);
-    }
 }

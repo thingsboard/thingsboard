@@ -100,19 +100,14 @@ public class TenantProfileDataValidator extends DataValidator<TenantProfile> {
             throw new DataValidationException("Can't update non existing tenant profile!");
         } else if (old.isIsolatedTbRuleEngine() != tenantProfile.isIsolatedTbRuleEngine()) {
             throw new DataValidationException("Can't update isolatedTbRuleEngine property!");
-        } else if (old.isIsolatedTbCore() != tenantProfile.isIsolatedTbCore()) {
-            throw new DataValidationException("Can't update isolatedTbCore property!");
         }
         return old;
     }
 
     private void validateQueueConfiguration(TenantProfileQueueConfiguration queue) {
-        if (StringUtils.isEmpty(queue.getName())) {
-            throw new DataValidationException("Queue name should be specified!");
-        }
-        if (StringUtils.isBlank(queue.getTopic())) {
-            throw new DataValidationException("Queue topic should be non empty and without spaces!");
-        }
+        validateQueueName(queue.getName());
+        validateQueueTopic(queue.getTopic());
+
         if (queue.getPollInterval() < 1) {
             throw new DataValidationException("Queue poll interval should be more then 0!");
         }

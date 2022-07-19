@@ -41,6 +41,8 @@ import org.thingsboard.server.gen.edge.v1.DownlinkResponseMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeConfiguration;
 import org.thingsboard.server.gen.edge.v1.EntityDataProto;
 import org.thingsboard.server.gen.edge.v1.EntityViewUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.OtaPackageUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.QueueUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RelationUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainUpdateMsg;
@@ -275,6 +277,16 @@ public class EdgeImitator {
         if (downlinkMsg.getDeviceCredentialsRequestMsgCount() > 0) {
             for (DeviceCredentialsRequestMsg deviceCredentialsRequestMsg : downlinkMsg.getDeviceCredentialsRequestMsgList()) {
                 result.add(saveDownlinkMsg(deviceCredentialsRequestMsg));
+            }
+        }
+        if (downlinkMsg.getOtaPackageUpdateMsgCount() > 0) {
+            for (OtaPackageUpdateMsg otaPackageUpdateMsg : downlinkMsg.getOtaPackageUpdateMsgList()) {
+                result.add(saveDownlinkMsg(otaPackageUpdateMsg));
+            }
+        }
+        if (downlinkMsg.getQueueUpdateMsgCount() > 0) {
+            for (QueueUpdateMsg queueUpdateMsg : downlinkMsg.getQueueUpdateMsgList()) {
+                result.add(saveDownlinkMsg(queueUpdateMsg));
             }
         }
         return Futures.allAsList(result);

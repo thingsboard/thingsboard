@@ -21,26 +21,34 @@ import org.springframework.cache.support.NullValue;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStringCommands;
+import org.springframework.data.redis.connection.jedis.JedisClusterConnection;
+import org.springframework.data.redis.connection.jedis.JedisConnection;
+import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.types.Expiration;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.util.JedisClusterCRC16;
 
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public abstract class RedisTbTransactionalCache<K extends Serializable, V extends Serializable> implements TbTransactionalCache<K, V> {
 
     private static final byte[] BINARY_NULL_VALUE = RedisSerializer.java().serialize(NullValue.INSTANCE);
+    static final JedisPool MOCK_POOL = new JedisPool(); //non-null pool required for JedisConnection to trigger closing jedis connection
 
     @Getter
     private final String cacheName;
-    private final RedisConnectionFactory connectionFactory;
-    private final RedisSerializer<String> keySerializer = new StringRedisSerializer();
-    private final RedisSerializer<V> valueSerializer;
+    private final JedisConnectionFactory connectionFactory;
+    private final RedisSerializer<String> keySerializer = StringRedisSerializer.UTF_8;
+    private final TbRedisSerializer<K, V> valueSerializer;
     private final Expiration evictExpiration;
     private final Expiration cacheTtl;
 
@@ -48,17 +56,17 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
                                      CacheSpecsMap cacheSpecsMap,
                                      RedisConnectionFactory connectionFactory,
                                      TBRedisCacheConfiguration configuration,
-                                     RedisSerializer<V> valueSerializer) {
+                                     TbRedisSerializer<K, V> valueSerializer) {
         this.cacheName = cacheName;
-        this.connectionFactory = connectionFactory;
+        this.connectionFactory = (JedisConnectionFactory) connectionFactory;
         this.valueSerializer = valueSerializer;
         this.evictExpiration = Expiration.from(configuration.getEvictTtlInMs(), TimeUnit.MILLISECONDS);
-        if (cacheSpecsMap.getSpecs() != null && cacheSpecsMap.getSpecs().get(cacheName) != null) {
-            CacheSpecs cacheSpecs = cacheSpecsMap.getSpecs().get(cacheName);
-            this.cacheTtl = Expiration.from(cacheSpecs.getTimeToLiveInMinutes(), TimeUnit.MINUTES);
-        } else {
-            this.cacheTtl = Expiration.persistent();
-        }
+        this.cacheTtl = Optional.ofNullable(cacheSpecsMap)
+                .map(CacheSpecsMap::getSpecs)
+                .map(x -> x.get(cacheName))
+                .map(CacheSpecs::getTimeToLiveInMinutes)
+                .map(t -> Expiration.from(t, TimeUnit.MINUTES))
+                .orElseGet(Expiration::persistent);
     }
 
     @Override
@@ -71,7 +79,7 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
             } else if (Arrays.equals(rawValue, BINARY_NULL_VALUE)) {
                 return SimpleTbCacheValueWrapper.empty();
             } else {
-                V value = valueSerializer.deserialize(rawValue);
+                V value = valueSerializer.deserialize(key, rawValue);
                 return SimpleTbCacheValueWrapper.wrap(value);
             }
         }
@@ -130,8 +138,23 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
         return new RedisTbCacheTransaction<>(this, connection);
     }
 
+    private RedisConnection getConnection(byte[] rawKey) {
+        if (!connectionFactory.isRedisClusterAware()) {
+            return connectionFactory.getConnection();
+        }
+        RedisConnection connection = connectionFactory.getClusterConnection();
+
+        int slotNum = JedisClusterCRC16.getSlot(rawKey);
+        Jedis jedis = ((JedisClusterConnection) connection).getNativeConnection().getConnectionFromSlot(slotNum);
+
+        JedisConnection jedisConnection = new JedisConnection(jedis, MOCK_POOL, jedis.getDB());
+        jedisConnection.setConvertPipelineAndTxResults(connectionFactory.getConvertPipelineAndTxResults());
+
+        return jedisConnection;
+    }
+
     private RedisConnection watch(byte[][] rawKeysList) {
-        var connection = connectionFactory.getConnection();
+        RedisConnection connection = getConnection(rawKeysList[0]);
         try {
             connection.watch(rawKeysList);
             connection.multi();

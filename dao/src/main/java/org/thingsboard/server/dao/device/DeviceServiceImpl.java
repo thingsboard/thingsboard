@@ -78,7 +78,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
@@ -227,6 +226,9 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
                 if (deviceProfile == null) {
                     throw new DataValidationException("Device is referencing non existing device profile!");
                 }
+                if (!deviceProfile.getTenantId().equals(device.getTenantId())) {
+                    throw new DataValidationException("Device can`t be referencing to device profile from different tenant!");
+                }
             }
             device.setType(deviceProfile.getName());
             device.setDeviceData(syncDeviceData(deviceProfile, device.getDeviceData()));
@@ -235,12 +237,10 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
             return result;
         } catch (Exception t) {
             handleEvictEvent(deviceCacheEvictEvent);
-            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
-            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("device_name_unq_key")) {
-                throw new DataValidationException("Device with such name already exists!");
-            } else {
-                throw t;
-            }
+            checkConstraintViolation(t,
+                    "device_name_unq_key", "Device with such name already exists!",
+                    "device_external_id_unq_key", "Device with such external id already exists!");
+            throw t;
         }
     }
 
@@ -313,14 +313,9 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
 
         Device device = deviceDao.findById(tenantId, deviceId.getId());
         DeviceCacheEvictEvent deviceCacheEvictEvent = new DeviceCacheEvictEvent(device.getTenantId(), device.getId(), device.getName(), null);
-        try {
-            List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityIdAsync(device.getTenantId(), deviceId).get();
-            if (entityViews != null && !entityViews.isEmpty()) {
-                throw new DataValidationException("Can't delete device that has entity views!");
-            }
-        } catch (ExecutionException | InterruptedException e) {
-            log.error("Exception while finding entity views for deviceId [{}]", deviceId, e);
-            throw new RuntimeException("Exception while finding entity views for deviceId [" + deviceId + "]", e);
+        List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityId(device.getTenantId(), deviceId);
+        if (entityViews != null && !entityViews.isEmpty()) {
+            throw new DataValidationException("Can't delete device that has entity views!");
         }
 
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, deviceId);
@@ -523,14 +518,9 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     @Override
     public Device assignDeviceToTenant(TenantId tenantId, Device device) {
         log.trace("Executing assignDeviceToTenant [{}][{}]", tenantId, device);
-        try {
-            List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityIdAsync(device.getTenantId(), device.getId()).get();
-            if (!CollectionUtils.isEmpty(entityViews)) {
-                throw new DataValidationException("Can't assign device that has entity views to another tenant!");
-            }
-        } catch (ExecutionException | InterruptedException e) {
-            log.error("Exception while finding entity views for deviceId [{}]", device.getId(), e);
-            throw new RuntimeException("Exception while finding entity views for deviceId [" + device.getId() + "]", e);
+        List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityId(device.getTenantId(), device.getId());
+        if (!CollectionUtils.isEmpty(entityViews)) {
+            throw new DataValidationException("Can't assign device that has entity views to another tenant!");
         }
 
         eventService.removeEvents(device.getTenantId(), device.getId());
@@ -541,6 +531,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
 
         device.setTenantId(tenantId);
         device.setCustomerId(null);
+        device.setDeviceProfileId(null);
         Device savedDevice = doSaveDevice(device, null, true);
 
         DeviceCacheEvictEvent oldTenantEvent = new DeviceCacheEvictEvent(oldTenantId, device.getId(), device.getName(), null);

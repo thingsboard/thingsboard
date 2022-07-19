@@ -35,7 +35,8 @@ import { DatePipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 
 export interface AlarmDetailsDialogData {
-  alarmId: string;
+  alarmId?: string;
+  alarm?: AlarmInfo;
   allowAcknowledgment: boolean;
   allowClear: boolean;
   displayDetails: boolean;
@@ -48,6 +49,7 @@ export interface AlarmDetailsDialogData {
 })
 export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDialogComponent, boolean> implements OnInit {
 
+  alarmId: string;
   alarmFormGroup: FormGroup;
 
   allowAcknowledgment: boolean;
@@ -93,12 +95,17 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
       }
     );
 
-    this.loadAlarm();
-
+    if (!this.data.alarm) {
+      this.alarmId = this.data.alarmId;
+      this.loadAlarm();
+    } else {
+      this.alarmId = this.data.alarm?.id?.id;
+      this.loadAlarmSubject.next(this.data.alarm);
+    }
   }
 
   loadAlarm() {
-    this.alarmService.getAlarmInfo(this.data.alarmId).subscribe(
+    this.alarmService.getAlarmInfo(this.alarmId).subscribe(
       alarm => this.loadAlarmSubject.next(alarm)
     );
   }
@@ -140,15 +147,25 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
   }
 
   acknowledge(): void {
-    this.alarmService.ackAlarm(this.data.alarmId).subscribe(
-      () => { this.alarmUpdated = true; this.loadAlarm(); }
-    );
+    if (this.alarmId) {
+      this.alarmService.ackAlarm(this.alarmId).subscribe(
+        () => {
+          this.alarmUpdated = true;
+          this.loadAlarm();
+        }
+      );
+    }
   }
 
   clear(): void {
-    this.alarmService.clearAlarm(this.data.alarmId).subscribe(
-      () => { this.alarmUpdated = true; this.loadAlarm(); }
-    );
+    if (this.alarmId) {
+      this.alarmService.clearAlarm(this.alarmId).subscribe(
+        () => {
+          this.alarmUpdated = true;
+          this.loadAlarm();
+        }
+      );
+    }
   }
 
 }

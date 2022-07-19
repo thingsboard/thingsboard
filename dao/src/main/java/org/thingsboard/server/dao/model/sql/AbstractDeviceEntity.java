@@ -84,6 +84,9 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
     @Column(name = ModelConstants.DEVICE_DEVICE_DATA_PROPERTY, columnDefinition = "jsonb")
     private JsonNode deviceData;
 
+    @Column(name = ModelConstants.EXTERNAL_ID_PROPERTY, columnDefinition = "uuid")
+    private UUID externalId;
+
     public AbstractDeviceEntity() {
         super();
     }
@@ -113,6 +116,9 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
         this.type = device.getType();
         this.label = device.getLabel();
         this.additionalInfo = device.getAdditionalInfo();
+        if (device.getExternalId() != null) {
+            this.externalId = device.getExternalId().getId();
+        }
     }
 
     public AbstractDeviceEntity(DeviceEntity deviceEntity) {
@@ -129,6 +135,7 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
         this.additionalInfo = deviceEntity.getAdditionalInfo();
         this.firmwareId = deviceEntity.getFirmwareId();
         this.softwareId = deviceEntity.getSoftwareId();
+        this.externalId = deviceEntity.getExternalId();
     }
 
     @Override
@@ -164,6 +171,9 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
         device.setType(type);
         device.setLabel(label);
         device.setAdditionalInfo(additionalInfo);
+        if (externalId != null) {
+            device.setExternalId(new DeviceId(externalId));
+        }
         return device;
     }
 

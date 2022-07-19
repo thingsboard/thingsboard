@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.DaoUtil;
@@ -46,7 +47,24 @@ public class JpaAdminSettingsDao extends JpaAbstractDao<AdminSettingsEntity, Adm
     }
 
     @Override
-    public AdminSettings findByKey(TenantId tenantId, String key) {
-        return DaoUtil.getData(adminSettingsRepository.findByKey(key));
+    public AdminSettings findByTenantIdAndKey(UUID tenantId, String key) {
+        return DaoUtil.getData(adminSettingsRepository.findByTenantIdAndKey(tenantId, key));
     }
+
+    @Override
+    @Transactional
+    public boolean removeByTenantIdAndKey(UUID tenantId, String key) {
+        if (adminSettingsRepository.existsByTenantIdAndKey(tenantId, key)) {
+            adminSettingsRepository.deleteByTenantIdAndKey(tenantId, key);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    @Transactional
+    public void removeByTenantId(UUID tenantId) {
+        adminSettingsRepository.deleteByTenantId(tenantId);
+    }
+
 }

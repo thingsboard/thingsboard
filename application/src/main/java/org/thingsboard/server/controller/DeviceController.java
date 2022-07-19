@@ -66,9 +66,9 @@ import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.device.DeviceBulkImportService;
+import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportRequest;
+import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportResult;
 import org.thingsboard.server.service.entitiy.device.TbDeviceService;
-import org.thingsboard.server.service.importing.BulkImportRequest;
-import org.thingsboard.server.service.importing.BulkImportResult;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
@@ -158,14 +158,15 @@ public class DeviceController extends BaseController {
                     "The newly created device id will be present in the response. " +
                     "Specify existing Device id to update the device. " +
                     "Referencing non-existing device Id will cause 'Not Found' error." +
-                    "\n\nDevice name is unique in the scope of tenant. Use unique identifiers like MAC or IMEI for the device names and non-unique 'label' field for user-friendly visualization purposes."
-                    + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+                    "\n\nDevice name is unique in the scope of tenant. Use unique identifiers like MAC or IMEI for the device names and non-unique 'label' field for user-friendly visualization purposes." +
+                    "Remove 'id', 'tenantId' and optionally 'customerId' from the request body example (below) to create new Device entity. " +
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device", method = RequestMethod.POST)
     @ResponseBody
     public Device saveDevice(@ApiParam(value = "A JSON value representing the device.") @RequestBody Device device,
                              @ApiParam(value = "Optional value of the device credentials to be used during device creation. " +
-                                     "If omitted, access token will be auto-generated.") @RequestParam(name = "accessToken", required = false) String accessToken) throws ThingsboardException {
+                                     "If omitted, access token will be auto-generated.") @RequestParam(name = "accessToken", required = false) String accessToken) throws Exception {
         device.setTenantId(getCurrentUser().getTenantId());
         Device oldDevice = null;
         if (device.getId() != null) {
@@ -173,7 +174,7 @@ public class DeviceController extends BaseController {
         } else {
             checkEntity(null, device, Resource.DEVICE);
         }
-        return tbDeviceService.save(getTenantId(), device, oldDevice, accessToken, getCurrentUser());
+        return tbDeviceService.save(device, oldDevice, accessToken, getCurrentUser());
     }
 
     @ApiOperation(value = "Create Device (saveDevice) with credentials ",
@@ -181,6 +182,7 @@ public class DeviceController extends BaseController {
                     "Requires to provide the Device Credentials object as well. Useful to create device and credentials in one request. " +
                     "You may find the example of LwM2M device and RPK credentials below: \n\n" +
                     DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_DESCRIPTION_MARKDOWN +
+                    "Remove 'id', 'tenantId' and optionally 'customerId' from the request body example (below) to create new Device entity. " +
                     TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device-with-credentials", method = RequestMethod.POST)
@@ -191,9 +193,8 @@ public class DeviceController extends BaseController {
         DeviceCredentials credentials = checkNotNull(deviceAndCredentials.getCredentials());
         device.setTenantId(getCurrentUser().getTenantId());
         checkEntity(device.getId(), device, Resource.DEVICE);
-        return tbDeviceService.saveDeviceWithCredentials(getTenantId(), device, credentials, getCurrentUser());
+        return tbDeviceService.saveDeviceWithCredentials(device, credentials, getCurrentUser());
     }
-
 
     @ApiOperation(value = "Delete device (deleteDevice)",
             notes = "Deletes the device, it's credentials and all the relations (from and to the device). Referencing non-existing device Id will cause an error." + TENANT_AUTHORITY_PARAGRAPH)
@@ -201,15 +202,11 @@ public class DeviceController extends BaseController {
     @RequestMapping(value = "/device/{deviceId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteDevice(@ApiParam(value = DEVICE_ID_PARAM_DESCRIPTION)
-                             @PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
+                             @PathVariable(DEVICE_ID) String strDeviceId) throws Exception {
         checkParameter(DEVICE_ID, strDeviceId);
         DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
         Device device = checkDeviceId(deviceId, Operation.DELETE);
-        try {
-            tbDeviceService.delete(device, getCurrentUser()).get();
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        tbDeviceService.delete(device, getCurrentUser()).get();
     }
 
     @ApiOperation(value = "Assign device to customer (assignDeviceToCustomer)",
@@ -238,19 +235,15 @@ public class DeviceController extends BaseController {
     public Device unassignDeviceFromCustomer(@ApiParam(value = DEVICE_ID_PARAM_DESCRIPTION)
                                              @PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
         checkParameter(DEVICE_ID, strDeviceId);
-        try {
-            DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
-            Device device = checkDeviceId(deviceId, Operation.UNASSIGN_FROM_CUSTOMER);
-            if (device.getCustomerId() == null || device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
-                throw new IncorrectParameterException("Device isn't assigned to any customer!");
-            }
-
-            Customer customer = checkCustomerId(device.getCustomerId(), Operation.READ);
-
-            return tbDeviceService.unassignDeviceFromCustomer(device, customer, getCurrentUser());
-        } catch (Exception e) {
-            throw handleException(e);
+        DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
+        Device device = checkDeviceId(deviceId, Operation.UNASSIGN_FROM_CUSTOMER);
+        if (device.getCustomerId() == null || device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
+            throw new IncorrectParameterException("Device isn't assigned to any customer!");
         }
+
+        Customer customer = checkCustomerId(device.getCustomerId(), Operation.READ);
+
+        return tbDeviceService.unassignDeviceFromCustomer(device, customer, getCurrentUser());
     }
 
     @ApiOperation(value = "Make device publicly available (assignDeviceToPublicCustomer)",
@@ -566,7 +559,7 @@ public class DeviceController extends BaseController {
 
         ListenableFuture<ClaimResult> future = tbDeviceService.claimDevice(tenantId, device, customerId, secretKey, user);
 
-        Futures.addCallback(future, new FutureCallback<ClaimResult>() {
+        Futures.addCallback(future, new FutureCallback<>() {
             @Override
             public void onSuccess(@Nullable ClaimResult result) {
                 HttpStatus status;
@@ -600,32 +593,28 @@ public class DeviceController extends BaseController {
     public DeferredResult<ResponseEntity> reClaimDevice(@ApiParam(value = "Unique name of the device which is going to be reclaimed")
                                                         @PathVariable(DEVICE_NAME) String deviceName) throws ThingsboardException {
         checkParameter(DEVICE_NAME, deviceName);
-        try {
-            final DeferredResult<ResponseEntity> deferredResult = new DeferredResult<>();
+        final DeferredResult<ResponseEntity> deferredResult = new DeferredResult<>();
 
-            SecurityUser user = getCurrentUser();
-            TenantId tenantId = user.getTenantId();
+        SecurityUser user = getCurrentUser();
+        TenantId tenantId = user.getTenantId();
 
-            Device device = checkNotNull(deviceService.findDeviceByTenantIdAndName(tenantId, deviceName));
-            accessControlService.checkPermission(user, Resource.DEVICE, Operation.CLAIM_DEVICES,
-                    device.getId(), device);
+        Device device = checkNotNull(deviceService.findDeviceByTenantIdAndName(tenantId, deviceName));
+        accessControlService.checkPermission(user, Resource.DEVICE, Operation.CLAIM_DEVICES,
+                device.getId(), device);
 
-            ListenableFuture<ReclaimResult> result = tbDeviceService.reclaimDevice(tenantId, device, user);
-            Futures.addCallback(result, new FutureCallback<>() {
-                @Override
-                public void onSuccess(ReclaimResult reclaimResult) {
-                    deferredResult.setResult(new ResponseEntity(HttpStatus.OK));
-                }
+        ListenableFuture<ReclaimResult> result = tbDeviceService.reclaimDevice(tenantId, device, user);
+        Futures.addCallback(result, new FutureCallback<>() {
+            @Override
+            public void onSuccess(ReclaimResult reclaimResult) {
+                deferredResult.setResult(new ResponseEntity(HttpStatus.OK));
+            }
 
-                @Override
-                public void onFailure(Throwable t) {
-                    deferredResult.setErrorResult(t);
-                }
-            }, MoreExecutors.directExecutor());
-            return deferredResult;
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+            @Override
+            public void onFailure(Throwable t) {
+                deferredResult.setErrorResult(t);
+            }
+        }, MoreExecutors.directExecutor());
+        return deferredResult;
     }
 
     private String getSecretKey(ClaimRequest claimRequest) {
