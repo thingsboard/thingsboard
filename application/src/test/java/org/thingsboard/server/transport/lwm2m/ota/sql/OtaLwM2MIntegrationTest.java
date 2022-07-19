@@ -185,7 +185,7 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
         log.warn("Converted ts to statuses: {}", statuses);
 
         statuses.removeAll(expectedStatuses);
-        if (statuses.size() != 0) {
+        if (statuses.isEmpty()) {
             log.trace("Statuses must be empty [{}]", statuses);
         }
         assertTrue( statuses.size() == 0);
