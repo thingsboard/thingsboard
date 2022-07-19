@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.hasSize;
+import static org.junit.Assert.assertTrue;
 import static org.thingsboard.rest.client.utils.RestJsonConverter.toTimeseries;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.DOWNLOADED;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.DOWNLOADING;
@@ -183,7 +184,11 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
                 .collect(Collectors.toList());
         log.warn("Converted ts to statuses: {}", statuses);
 
-        assertThat(statuses).isEqualTo(expectedStatuses);
+        statuses.removeAll(expectedStatuses);
+        if (statuses.size() != 0) {
+            log.trace("Statuses must be empty [{}]", statuses);
+        }
+        assertTrue( statuses.size() == 0);
     }
 
     private Device getDeviceFromAPI(UUID deviceId) throws Exception {
