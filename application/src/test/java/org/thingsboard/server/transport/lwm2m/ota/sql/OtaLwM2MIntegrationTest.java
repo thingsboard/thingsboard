@@ -188,7 +188,7 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
         if (statuses.isEmpty()) {
             log.trace("Statuses must be empty [{}]", statuses);
         }
-        assertTrue( statuses.size() == 0);
+        assertTrue(statuses.isEmpty());
     }
 
     private Device getDeviceFromAPI(UUID deviceId) throws Exception {
