@@ -43,10 +43,10 @@ import java.util.List;
 @AllArgsConstructor
 public class Alarm extends BaseData<AlarmId> implements HasName, HasTenantId, HasCustomerId {
 
-    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id", readOnly = true)
+    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private TenantId tenantId;
 
-    @ApiModelProperty(position = 4, value = "JSON object with Customer Id", readOnly = true)
+    @ApiModelProperty(position = 4, value = "JSON object with Customer Id", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private CustomerId customerId;
 
     @ApiModelProperty(position = 6, required = true, value = "representing type of the Alarm", example = "High Temperature Alarm")
@@ -124,7 +124,7 @@ public class Alarm extends BaseData<AlarmId> implements HasName, HasTenantId, Ha
     }
 
 
-    @ApiModelProperty(position = 2, value = "Timestamp of the alarm creation, in milliseconds", example = "1634058704567", readOnly = true)
+    @ApiModelProperty(position = 2, value = "Timestamp of the alarm creation, in milliseconds", example = "1634058704567", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();

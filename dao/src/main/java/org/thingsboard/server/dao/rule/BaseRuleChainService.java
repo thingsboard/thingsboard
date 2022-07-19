@@ -98,7 +98,12 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     @Transactional
     public RuleChain saveRuleChain(RuleChain ruleChain) {
         ruleChainValidator.validate(ruleChain, RuleChain::getTenantId);
-        return ruleChainDao.save(ruleChain.getTenantId(), ruleChain);
+        try {
+            return ruleChainDao.save(ruleChain.getTenantId(), ruleChain);
+        } catch (Exception e) {
+            checkConstraintViolation(e, "rule_chain_external_id_unq_key", "Rule Chain with such external id already exists!");
+            throw e;
+        }
     }
 
     @Override

@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.EntitySubtype;
@@ -126,12 +127,10 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
             publishEvictEvent(evictEvent);
         } catch (Exception t) {
             handleEvictEvent(evictEvent);
-            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
-            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("asset_name_unq_key")) {
-                throw new DataValidationException("Asset with such name already exists!");
-            } else {
-                throw t;
-            }
+            checkConstraintViolation(t,
+                    "asset_name_unq_key", "Asset with such name already exists!",
+                    "asset_external_id_unq_key", "Asset with such external id already exists!");
+            throw t;
         }
         return savedAsset;
     }

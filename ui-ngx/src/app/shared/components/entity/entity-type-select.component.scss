@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 :host {
+  .mat-form-field {
+    width: 100%;
+  }
 }
 
 :host ::ng-deep {
