@@ -167,7 +167,7 @@ public class OtaPackageController extends BaseController {
             produces = APPLICATION_JSON_VALUE,
             consumes = MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/otaPackage/{otaPackageId}", method = RequestMethod.POST, consumes = APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/otaPackage/{otaPackageId}", method = RequestMethod.POST)
     @ResponseBody
     public OtaPackageInfo saveOtaPackageData(@ApiParam(value = OTA_PACKAGE_ID_PARAM_DESCRIPTION)
                                              @PathVariable(OTA_PACKAGE_ID) String strOtaPackageId,
