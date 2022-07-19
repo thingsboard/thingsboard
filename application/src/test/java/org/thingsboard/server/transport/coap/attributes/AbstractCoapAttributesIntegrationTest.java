@@ -157,11 +157,11 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         Descriptors.Descriptor postAttributesMsgDescriptor = postAttributesBuilder.getDescriptorForType();
         assertNotNull(postAttributesMsgDescriptor);
         DynamicMessage postAttributesMsg = postAttributesBuilder
-                .setField(postAttributesMsgDescriptor.findFieldByName("attribute1"), "value1")
-                .setField(postAttributesMsgDescriptor.findFieldByName("attribute2"), true)
-                .setField(postAttributesMsgDescriptor.findFieldByName("attribute3"), 42.0)
-                .setField(postAttributesMsgDescriptor.findFieldByName("attribute4"), 73)
-                .setField(postAttributesMsgDescriptor.findFieldByName("attribute5"), jsonObject)
+                .setField(postAttributesMsgDescriptor.findFieldByName("clientStr"), "value1")
+                .setField(postAttributesMsgDescriptor.findFieldByName("clientBool"), true)
+                .setField(postAttributesMsgDescriptor.findFieldByName("clientDbl"), 42.0)
+                .setField(postAttributesMsgDescriptor.findFieldByName("clientLong"), 73)
+                .setField(postAttributesMsgDescriptor.findFieldByName("clientJson"), jsonObject)
                 .build();
         return postAttributesMsg.toByteArray();
     }

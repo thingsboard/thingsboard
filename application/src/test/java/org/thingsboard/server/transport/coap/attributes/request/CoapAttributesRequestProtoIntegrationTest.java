@@ -43,5 +43,4 @@ public class CoapAttributesRequestProtoIntegrationTest extends CoapAttributesReq
     public void testRequestAttributesValuesFromTheServer() throws Exception {
         processProtoTestRequestAttributesValuesFromTheServer();
     }
-
 }
