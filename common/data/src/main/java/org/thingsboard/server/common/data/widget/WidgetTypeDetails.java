@@ -27,11 +27,11 @@ import org.thingsboard.server.common.data.validation.NoXss;
 public class WidgetTypeDetails extends WidgetType {
 
     @Length(fieldName = "image", max = 1000000)
-    @ApiModelProperty(position = 8, value = "Base64 encoded thumbnail", readOnly = true)
+    @ApiModelProperty(position = 8, value = "Base64 encoded thumbnail", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String image;
     @NoXss
     @Length(fieldName = "description")
-    @ApiModelProperty(position = 9, value = "Description of the widget", readOnly = true)
+    @ApiModelProperty(position = 9, value = "Description of the widget", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String description;
 
     public WidgetTypeDetails() {

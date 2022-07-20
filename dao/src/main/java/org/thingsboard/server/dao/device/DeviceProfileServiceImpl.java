@@ -46,6 +46,7 @@ import org.thingsboard.server.dao.service.Validator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -126,15 +127,11 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
         } catch (Exception t) {
             handleEvictEvent(new DeviceProfileEvictEvent(deviceProfile.getTenantId(), deviceProfile.getName(),
                     oldDeviceProfile != null ? oldDeviceProfile.getName() : null, null, deviceProfile.isDefault()));
-            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
-            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("device_profile_name_unq_key")) {
-                //TODO: refactor this to return existing device profile. If they are equal - no need to throw exception. Then we can make this call @Transactional and tests will not fail.
-                throw new DataValidationException(DEVICE_PROFILE_WITH_SUCH_NAME_ALREADY_EXISTS);
-            } else if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("device_provision_key_unq_key")) {
-                throw new DataValidationException("Device profile with such provision device key already exists!");
-            } else {
-                throw t;
-            }
+            checkConstraintViolation(t,
+                    Map.of("device_profile_name_unq_key", DEVICE_PROFILE_WITH_SUCH_NAME_ALREADY_EXISTS,
+                            "device_provision_key_unq_key", "Device profile with such provision device key already exists!",
+                            "device_profile_external_id_unq_key", "Device profile with such external id already exists!"));
+            throw t;
         }
         if (oldDeviceProfile != null && !oldDeviceProfile.getName().equals(deviceProfile.getName())) {
             PageLink pageLink = new PageLink(100);

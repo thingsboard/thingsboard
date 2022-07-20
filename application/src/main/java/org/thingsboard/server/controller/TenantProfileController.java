@@ -164,6 +164,7 @@ public class TenantProfileController extends BaseController {
                     "  \"default\": true\n" +
                     "}" +
                     MARKDOWN_CODE_BLOCK_END +
+                    "Remove 'id', from the request body example (below) to create new Tenant Profile entity." +
                     SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/tenantProfile", method = RequestMethod.POST)

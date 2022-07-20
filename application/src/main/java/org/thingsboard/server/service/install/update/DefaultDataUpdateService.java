@@ -156,8 +156,8 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 break;
             case "3.3.4":
                 log.info("Updating data from version 3.3.4 to 3.4.0 ...");
-                rateLimitsUpdater.updateEntities();
                 tenantsProfileQueueConfigurationUpdater.updateEntities();
+                rateLimitsUpdater.updateEntities();
                 break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
