@@ -38,6 +38,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.Lob;
 import javax.persistence.Table;
 import java.nio.ByteBuffer;
+import java.sql.Blob;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_CHECKSUM_ALGORITHM_COLUMN;
@@ -100,7 +101,7 @@ public class OtaPackageEntity extends BaseSqlEntity<OtaPackage> implements Searc
 
     @Lob
     @Column(name = OTA_PACKAGE_DATA_COLUMN, columnDefinition = "BINARY")
-    private byte[] data;
+    private Blob data;
 
     @Column(name = OTA_PACKAGE_DATA_SIZE_COLUMN)
     private Long dataSize;
@@ -132,7 +133,7 @@ public class OtaPackageEntity extends BaseSqlEntity<OtaPackage> implements Searc
         this.contentType = otaPackage.getContentType();
         this.checksumAlgorithm = otaPackage.getChecksumAlgorithm();
         this.checksum = otaPackage.getChecksum();
-        this.data = otaPackage.getData().array();
+        this.data = otaPackage.getData();
         this.dataSize = otaPackage.getDataSize();
         this.additionalInfo = otaPackage.getAdditionalInfo();
     }
@@ -166,7 +167,7 @@ public class OtaPackageEntity extends BaseSqlEntity<OtaPackage> implements Searc
         otaPackage.setChecksum(checksum);
         otaPackage.setDataSize(dataSize);
         if (data != null) {
-            otaPackage.setData(ByteBuffer.wrap(data));
+            otaPackage.setData(data);
             otaPackage.setHasData(true);
         }
         otaPackage.setAdditionalInfo(additionalInfo);

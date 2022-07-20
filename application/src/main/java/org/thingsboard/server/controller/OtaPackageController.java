@@ -17,9 +17,11 @@ package org.thingsboard.server.controller;
 
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.core.io.ByteArrayResource;
+import org.hibernate.engine.jdbc.BlobProxy;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -39,15 +41,20 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.cache.ota.service.FileCacheService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
-import java.nio.ByteBuffer;
+import javax.transaction.Transactional;
+import java.io.InputStream;
+import java.sql.Blob;
+import java.util.UUID;
 
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFILE_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.OTA_PACKAGE_CHECKSUM_ALGORITHM_ALLOWABLE_VALUES;
@@ -69,32 +76,35 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 @Slf4j
 @RestController
 @TbCoreComponent
+@RequiredArgsConstructor
 @RequestMapping("/api")
 public class OtaPackageController extends BaseController {
 
     public static final String OTA_PACKAGE_ID = "otaPackageId";
     public static final String CHECKSUM_ALGORITHM = "checksumAlgorithm";
 
+    private final FileCacheService fileCacheService;
+
     @ApiOperation(value = "Download OTA Package (downloadOtaPackage)", notes = "Download OTA Package based on the provided OTA Package Id." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority( 'TENANT_ADMIN')")
     @RequestMapping(value = "/otaPackage/{otaPackageId}/download", method = RequestMethod.GET)
     @ResponseBody
-    public ResponseEntity<org.springframework.core.io.Resource> downloadOtaPackage(@ApiParam(value = OTA_PACKAGE_ID_PARAM_DESCRIPTION)
+    @Transactional
+    public ResponseEntity<InputStreamResource> downloadOtaPackage(@ApiParam(value = OTA_PACKAGE_ID_PARAM_DESCRIPTION)
                                                                                    @PathVariable(OTA_PACKAGE_ID) String strOtaPackageId) throws ThingsboardException {
         checkParameter(OTA_PACKAGE_ID, strOtaPackageId);
         try {
             OtaPackageId otaPackageId = new OtaPackageId(toUUID(strOtaPackageId));
-            OtaPackage otaPackage = checkOtaPackageId(otaPackageId, Operation.READ);
-
+//            OtaPackage otaPackage = checkOtaPackageId(otaPackageId, Operation.READ);
+            OtaPackage otaPackage = otaPackageService.findOtaPackageById(new TenantId(UUID.fromString("b04858a0-b646-11ec-8d4d-f5c10326c05e")), otaPackageId);
             if (otaPackage.hasUrl()) {
                 return ResponseEntity.badRequest().build();
             }
-
-            ByteArrayResource resource = new ByteArrayResource(otaPackage.getData().array());
+            InputStreamResource resource = fileCacheService.getOtaResourceById(new TenantId(UUID.fromString("b04858a0-b646-11ec-8d4d-f5c10326c05e")), otaPackageId);
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + otaPackage.getFileName())
                     .header("x-filename", otaPackage.getFileName())
-                    .contentLength(resource.contentLength())
+                    .contentLength(otaPackage.getDataSize())
                     .contentType(parseMediaType(otaPackage.getContentType()))
                     .body(resource);
         } catch (Exception e) {
@@ -184,37 +194,43 @@ public class OtaPackageController extends BaseController {
         checkParameter(CHECKSUM_ALGORITHM, checksumAlgorithmStr);
         try {
             OtaPackageId otaPackageId = new OtaPackageId(toUUID(strOtaPackageId));
-            OtaPackageInfo info = checkOtaPackageInfoId(otaPackageId, Operation.READ);
-
-            OtaPackage otaPackage = new OtaPackage(otaPackageId);
-            otaPackage.setCreatedTime(info.getCreatedTime());
-            otaPackage.setTenantId(getTenantId());
-            otaPackage.setDeviceProfileId(info.getDeviceProfileId());
-            otaPackage.setType(info.getType());
-            otaPackage.setTitle(info.getTitle());
-            otaPackage.setVersion(info.getVersion());
-            otaPackage.setTag(info.getTag());
-            otaPackage.setAdditionalInfo(info.getAdditionalInfo());
-
             ChecksumAlgorithm checksumAlgorithm = ChecksumAlgorithm.valueOf(checksumAlgorithmStr.toUpperCase());
 
-            byte[] bytes = file.getBytes();
             if (StringUtils.isEmpty(checksum)) {
-                checksum = otaPackageService.generateChecksum(checksumAlgorithm, ByteBuffer.wrap(bytes));
+                checksum = otaPackageService.generateChecksum(checksumAlgorithm, file.getInputStream());
             }
-
-            otaPackage.setChecksumAlgorithm(checksumAlgorithm);
-            otaPackage.setChecksum(checksum);
-            otaPackage.setFileName(file.getOriginalFilename());
-            otaPackage.setContentType(file.getContentType());
-            otaPackage.setData(ByteBuffer.wrap(bytes));
-            otaPackage.setDataSize((long) bytes.length);
-            OtaPackageInfo savedOtaPackage = otaPackageService.saveOtaPackage(otaPackage);
+            OtaPackageInfo savedOtaPackage = saveOtaPackageWithData(otaPackageId, file, checksum, checksumAlgorithm);
             logEntityAction(savedOtaPackage.getId(), savedOtaPackage, null, ActionType.UPDATED, null);
             return savedOtaPackage;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.OTA_PACKAGE), null, null, ActionType.UPDATED, e, strOtaPackageId);
             throw handleException(e);
+        }
+    }
+
+    private OtaPackage saveOtaPackageWithData(OtaPackageId otaPackageId, MultipartFile file, String checksum, ChecksumAlgorithm checksumAlgorithm) throws  ThingsboardException {
+        OtaPackageInfo info = checkOtaPackageInfoId(otaPackageId, Operation.READ);
+        OtaPackage otaPackage = new OtaPackage(otaPackageId);
+        otaPackage.setCreatedTime(info.getCreatedTime());
+        otaPackage.setTenantId(info.getTenantId());
+        otaPackage.setDeviceProfileId(info.getDeviceProfileId());
+        otaPackage.setType(info.getType());
+        otaPackage.setTitle(info.getTitle());
+        otaPackage.setVersion(info.getVersion());
+        otaPackage.setTag(info.getTag());
+        otaPackage.setAdditionalInfo(info.getAdditionalInfo());
+        otaPackage.setChecksumAlgorithm(checksumAlgorithm);
+        otaPackage.setChecksum(checksum);
+        try(InputStream inputStream = file.getInputStream()) {
+            otaPackage.setFileName(file.getOriginalFilename());
+            otaPackage.setContentType(file.getContentType());
+            otaPackage.setDataSize(file.getSize());
+            Blob blob = BlobProxy.generateProxy(inputStream, file.getSize());
+            otaPackage.setData(blob);
+            return otaPackageService.saveOtaPackage(otaPackage);
+        } catch (Exception e){
+            log.error("Failed to save ota package {} with data {}",otaPackageId, file.getName(), e);
+            return null;
         }
     }
 

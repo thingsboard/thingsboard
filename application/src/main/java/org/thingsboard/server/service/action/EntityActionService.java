@@ -22,11 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.HasName;
-import org.thingsboard.server.common.data.HasTenantId;
-import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -159,9 +155,15 @@ public class EntityActionService {
                 }
                 ObjectNode entityNode;
                 if (entity != null) {
-                    entityNode = json.valueToTree(entity);
-                    if (entityId.getEntityType() == EntityType.DASHBOARD) {
-                        entityNode.put("configuration", "");
+                    if (entity instanceof OtaPackage) {
+                        OtaPackage otaPackage = (OtaPackage) entity;
+                        otaPackage.setData(null);
+                        entityNode = json.valueToTree(otaPackage); //todo
+                    } else {
+                        entityNode = json.valueToTree(entity);
+                        if (entityId.getEntityType() == EntityType.DASHBOARD) {
+                            entityNode.put("configuration", "");
+                        }
                     }
                 } else {
                     entityNode = json.createObjectNode();

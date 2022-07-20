@@ -99,6 +99,7 @@ import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.resource.TbResourceService;
 
+import java.sql.SQLException;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -596,7 +597,11 @@ public class DefaultTransportApiService implements TransportApiService {
                 builder.setContentType(otaPackageInfo.getContentType());
                 if (!otaPackageDataCache.has(otaPackageId.toString())) {
                     OtaPackage otaPackage = otaPackageService.findOtaPackageById(tenantId, otaPackageId);
-                    otaPackageDataCache.put(otaPackageId.toString(), otaPackage.getData().array());
+                    try {
+                        otaPackageDataCache.put(otaPackageId.toString(), otaPackage.getData().getBytes(100L, 0));//todo
+                    } catch (SQLException e) {
+                        log.error("ERROR", e); // todo
+                    }
                 }
             }
         }

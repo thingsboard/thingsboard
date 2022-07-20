@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 
 public interface OtaPackageService {
@@ -51,4 +52,5 @@ public interface OtaPackageService {
     void deleteOtaPackagesByTenantId(TenantId tenantId);
 
     long sumDataSizeByTenantId(TenantId tenantId);
+    String generateChecksum(ChecksumAlgorithm checksumAlgorithm, InputStream fileData);
 }

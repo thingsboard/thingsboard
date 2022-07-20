@@ -22,6 +22,7 @@ import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 
 import java.nio.ByteBuffer;
+import java.sql.Blob;
 
 @ApiModel
 @Data
@@ -31,7 +32,7 @@ public class OtaPackage extends OtaPackageInfo {
     private static final long serialVersionUID = 3091601761339422546L;
 
     @ApiModelProperty(position = 16, value = "OTA Package data.", readOnly = true)
-    private transient ByteBuffer data;
+    private transient Blob data;
 
     public OtaPackage() {
         super();

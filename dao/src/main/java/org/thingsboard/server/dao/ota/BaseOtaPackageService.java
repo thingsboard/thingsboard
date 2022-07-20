@@ -20,6 +20,8 @@ import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
+import org.hibernate.engine.jdbc.BlobProxy;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
@@ -40,10 +42,15 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 
+import java.io.*;
 import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.thingsboard.server.common.data.CacheConstants.OTA_PACKAGE_CACHE;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -55,6 +62,8 @@ import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 public class BaseOtaPackageService implements OtaPackageService {
     public static final String INCORRECT_OTA_PACKAGE_ID = "Incorrect otaPackageId ";
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
+
+    private static final int ONE_MEGA_BYTE = 1_000_000;
 
     private final OtaPackageDao otaPackageDao;
     private final OtaPackageInfoDao otaPackageInfoDao;
@@ -91,15 +100,28 @@ public class BaseOtaPackageService implements OtaPackageService {
     @Override
     public OtaPackage saveOtaPackage(OtaPackage otaPackage) {
         log.trace("Executing saveOtaPackage [{}]", otaPackage);
-        otaPackageValidator.validate(otaPackage, OtaPackageInfo::getTenantId);
         try {
+            File tempFile = saveDataToTemporaryFile(otaPackage.getData().getBinaryStream());
+            otaPackage.setData(BlobProxy.generateProxy(new FileInputStream(tempFile), otaPackage.getDataSize()));
+            try {
+                otaPackageValidator.validate(otaPackage, OtaPackageInfo::getTenantId);
+            }catch (RuntimeException e){
+                deleteTempFile(tempFile);
+                throw e;
+            }
+            otaPackage.setData(BlobProxy.generateProxy(new FileInputStream(tempFile), otaPackage.getDataSize()));
             OtaPackageId otaPackageId = otaPackage.getId();
             if (otaPackageId != null) {
                 Cache cache = cacheManager.getCache(OTA_PACKAGE_CACHE);
                 cache.evict(toOtaPackageInfoKey(otaPackageId));
                 otaPackageDataCache.evict(otaPackageId.toString());
             }
-            return otaPackageDao.save(otaPackage.getTenantId(), otaPackage);
+            OtaPackage save = otaPackageDao.save(otaPackage.getTenantId(), otaPackage);
+            deleteTempFile(tempFile);
+            return save;
+        } catch (FileNotFoundException | SQLException e){
+            log.error("Failed to validate ota package {}",otaPackage.getId(), e);
+            throw new RuntimeException(e);
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("ota_package_tenant_title_version_unq_key")) {
@@ -107,6 +129,30 @@ public class BaseOtaPackageService implements OtaPackageService {
             } else {
                 throw t;
             }
+        }
+    }
+
+
+    public void deleteTempFile(File file) {
+        try {
+            if(file.exists()) {
+                FileUtils.delete(file);
+                log.info("System file {} was deleted", file.getName());
+            }
+        } catch (IOException e) {
+            log.error("Failed to delete file {}", file.getName(), e);
+        }
+    }
+
+    public File saveDataToTemporaryFile(InputStream inputStream){
+        File path = new File("files/");
+        try {
+            File tempFile = File.createTempFile(UUID.randomUUID().toString(), ".tmp", path);
+            FileUtils.copyInputStreamToFile(inputStream, tempFile);
+            return tempFile;
+        }catch (IOException e){
+            log.error("Failed to create temp file", e);
+            throw new RuntimeException("Failed to create temp file for input stream");
         }
     }
 
@@ -242,6 +288,35 @@ public class BaseOtaPackageService implements OtaPackageService {
 
     private static List<OtaPackageId> toOtaPackageInfoKey(OtaPackageId otaPackageId) {
         return Collections.singletonList(otaPackageId);
+    }
+
+    public String generateChecksum(ChecksumAlgorithm checksumAlgorithm, InputStream fileData) {
+        try {
+            MessageDigest md = MessageDigest.getInstance(checksumAlgorithm.name());
+            return checksum(fileData, md);
+        } catch (NoSuchAlgorithmException e) {
+            log.error("No such checksum algorithm {}", checksumAlgorithm, e);
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            log.error("Failed to calculate checksum", e);
+            throw new RuntimeException(e);
+        } catch (Exception e) {
+            log.error("ff", e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    private String checksum(InputStream inputStream, MessageDigest md) throws IOException {
+        byte[] buffer = new byte[ONE_MEGA_BYTE];
+        int count = 0;
+        while ((count = inputStream.read(buffer)) != -1) {
+            md.update(buffer, 0, count);
+        }
+        StringBuilder result = new StringBuilder();
+        for (byte b : md.digest()) {
+            result.append(String.format("%02x", b));
+        }
+        return result.toString();
     }
 
 }
