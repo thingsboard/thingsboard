@@ -25,7 +25,10 @@ public class MqttDeviceProfileTransportConfiguration implements DeviceProfileTra
     @NoXss
     private String deviceTelemetryTopic = MqttTopics.DEVICE_TELEMETRY_TOPIC;
     @NoXss
-    private String deviceAttributesTopic = MqttTopics.DEVICE_ATTRIBUTES_TOPIC;
+    private String deviceAttributesPublishTopic = MqttTopics.DEVICE_ATTRIBUTES_TOPIC;
+    @NoXss
+    private String deviceAttributesSubscribeTopic = MqttTopics.DEVICE_ATTRIBUTES_TOPIC;//todo
+
     private TransportPayloadTypeConfiguration transportPayloadTypeConfiguration;
     private boolean sendAckOnValidationException;
 
