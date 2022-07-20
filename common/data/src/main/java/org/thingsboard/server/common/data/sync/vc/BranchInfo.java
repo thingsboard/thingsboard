@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.sync.vc;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.Objects;
@@ -22,6 +23,8 @@ import java.util.Objects;
 @Data
 public class BranchInfo {
     private final String name;
+
+    @JsonProperty("default")
     private final boolean isDefault;
 
     @Override

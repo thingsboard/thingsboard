@@ -99,7 +99,7 @@ export class QueueFormComponent implements ControlValueAccessor, OnInit, OnDestr
   ngOnInit() {
     this.queueFormGroup = this.fb.group(
       {
-        name: ['', [Validators.required]],
+        name: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9_.\-]+$/)]],
         pollInterval: [25, [Validators.min(1), Validators.required]],
         partitions: [10, [Validators.min(1), Validators.required]],
         consumerPerPartition: [false, []],
@@ -205,10 +205,12 @@ export class QueueFormComponent implements ControlValueAccessor, OnInit, OnDestr
     if (type === QueueSubmitStrategyTypes.BATCH) {
       batchSizeField.patchValue(1000, {emitEvent: false});
       batchSizeField.setValidators([Validators.min(1), Validators.required]);
+      batchSizeField.updateValueAndValidity({emitEvent: false});
       this.hideBatchSize = true;
     } else {
       batchSizeField.patchValue(null, {emitEvent: false});
       batchSizeField.clearValidators();
+      batchSizeField.updateValueAndValidity({emitEvent: false});
       this.hideBatchSize = false;
     }
   }

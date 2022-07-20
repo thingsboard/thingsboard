@@ -72,9 +72,6 @@ public class JpaBaseEdgeEventDao extends JpaAbstractSearchTextDao<EdgeEventEntit
     @Value("${sql.edge_events.stats_print_interval_ms:10000}")
     private long statsPrintIntervalMs;
 
-    @Value("${sql.edge_events.batch_threads:3}")
-    private int batchThreads;
-
     private TbSqlBlockingQueueWrapper<EdgeEventEntity> queue;
 
     @Autowired
@@ -110,7 +107,7 @@ public class JpaBaseEdgeEventDao extends JpaAbstractSearchTextDao<EdgeEventEntit
                 return NULL_UUID.hashCode();
             }
         };
-        queue = new TbSqlBlockingQueueWrapper<>(params, hashcodeFunction, batchThreads, statsFactory);
+        queue = new TbSqlBlockingQueueWrapper<>(params, hashcodeFunction, 1, statsFactory);
         queue.init(logExecutor, v -> edgeEventInsertRepository.save(v),
                 Comparator.comparing(EdgeEventEntity::getTs)
         );

@@ -192,7 +192,7 @@ public class EntitiesVersionControlController extends BaseController {
     @GetMapping(value = "/version/{requestId}/status")
     public VersionCreationResult getVersionCreateRequestStatus(@ApiParam(value = VC_REQUEST_ID_PARAM_DESCRIPTION, required = true)
                                                                @PathVariable UUID requestId) throws Exception {
-        accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
+        accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.WRITE);
         return versionControlService.getVersionCreateStatus(getCurrentUser(), requestId);
     }
 
@@ -310,15 +310,13 @@ public class EntitiesVersionControlController extends BaseController {
             "Each entity item in the result has `externalId` property. " +
             "Entities order will be the same as in the repository." +
             TENANT_AUTHORITY_PARAGRAPH)
-    @GetMapping(value = "/entity/{entityType}/{versionId}", params = {"branch"})
+    @GetMapping(value = "/entity/{entityType}/{versionId}")
     public DeferredResult<List<VersionedEntityInfo>> listEntitiesAtVersion(@ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
                                                                            @PathVariable EntityType entityType,
                                                                            @ApiParam(value = VERSION_ID_PARAM_DESCRIPTION, required = true)
-                                                                           @PathVariable String versionId,
-                                                                           @ApiParam(value = BRANCH_PARAM_DESCRIPTION, required = true)
-                                                                           @RequestParam String branch) throws Exception {
+                                                                           @PathVariable String versionId) throws Exception {
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
-        return wrapFuture(versionControlService.listEntitiesAtVersion(getTenantId(), branch, versionId, entityType));
+        return wrapFuture(versionControlService.listEntitiesAtVersion(getTenantId(), versionId, entityType));
     }
 
     @ApiOperation(value = "List all entities at version (listAllEntitiesAtVersion)", notes = "" +
@@ -326,13 +324,11 @@ public class EntitiesVersionControlController extends BaseController {
             "Response type is the same as for listAllEntitiesAtVersion API method. \n" +
             "Returned entities order will be the same as in the repository." +
             TENANT_AUTHORITY_PARAGRAPH)
-    @GetMapping(value = "/entity/{versionId}", params = {"branch"})
+    @GetMapping(value = "/entity/{versionId}")
     public DeferredResult<List<VersionedEntityInfo>> listAllEntitiesAtVersion(@ApiParam(value = VERSION_ID_PARAM_DESCRIPTION, required = true)
-                                                                              @PathVariable String versionId,
-                                                                              @ApiParam(value = BRANCH_PARAM_DESCRIPTION, required = true)
-                                                                              @RequestParam String branch) throws Exception {
+                                                                              @PathVariable String versionId) throws Exception {
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
-        return wrapFuture(versionControlService.listAllEntitiesAtVersion(getTenantId(), branch, versionId));
+        return wrapFuture(versionControlService.listAllEntitiesAtVersion(getTenantId(), versionId));
     }
 
     @ApiOperation(value = "Get entity data info (getEntityDataInfo)", notes = "" +
@@ -357,18 +353,16 @@ public class EntitiesVersionControlController extends BaseController {
             "Returns an object with current entity data and the one at a specific version. " +
             "Entity data structure is the same as stored in a repository. " +
             TENANT_AUTHORITY_PARAGRAPH)
-    @GetMapping(value = "/diff/{entityType}/{internalEntityUuid}", params = {"branch", "versionId"})
+    @GetMapping(value = "/diff/{entityType}/{internalEntityUuid}", params = {"versionId"})
     public DeferredResult<EntityDataDiff> compareEntityDataToVersion(@ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
                                                                      @PathVariable EntityType entityType,
                                                                      @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true)
                                                                      @PathVariable UUID internalEntityUuid,
-                                                                     @ApiParam(value = BRANCH_PARAM_DESCRIPTION)
-                                                                     @RequestParam String branch,
                                                                      @ApiParam(value = VERSION_ID_PARAM_DESCRIPTION, required = true)
                                                                      @RequestParam String versionId) throws Exception {
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, internalEntityUuid);
-        return wrapFuture(versionControlService.compareEntityDataToVersion(getCurrentUser(), branch, entityId, versionId));
+        return wrapFuture(versionControlService.compareEntityDataToVersion(getCurrentUser(), entityId, versionId));
     }
 
     @ApiOperation(value = "Load entities version (loadEntitiesVersion)", notes = "" +
@@ -475,7 +469,7 @@ public class EntitiesVersionControlController extends BaseController {
     @GetMapping(value = "/entity/{requestId}/status")
     public VersionLoadResult getVersionLoadRequestStatus(@ApiParam(value = VC_REQUEST_ID_PARAM_DESCRIPTION, required = true)
                                                          @PathVariable UUID requestId) throws Exception {
-        accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
+        accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.WRITE);
         return versionControlService.getVersionLoadStatus(getCurrentUser(), requestId);
     }
 

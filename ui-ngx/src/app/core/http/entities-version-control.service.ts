@@ -38,11 +38,10 @@ import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.m
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { selectIsUserLoaded } from '@core/auth/auth.selectors';
-import { catchError, finalize, map, switchMap, takeWhile, tap } from 'rxjs/operators';
+import { catchError, finalize, switchMap, takeWhile, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActionLoadFinish, ActionLoadStart } from '@core/interceptors/load.actions';
-import { NULL_UUID } from '@shared/models/id/has-uuid';
 
 @Injectable({
   providedIn: 'root'
@@ -159,12 +158,10 @@ export class EntitiesVersionControlService {
       defaultHttpOptionsFromConfig({...config, ...{ignoreLoading: true}}));
   }
 
-  public compareEntityDataToVersion(branch: string,
-                                    entityId: EntityId,
+  public compareEntityDataToVersion(entityId: EntityId,
                                     versionId: string,
                                     config?: RequestConfig): Observable<EntityDataDiff> {
-    const encodedBranch = encodeURIComponent(branch);
-    return this.http.get<EntityDataDiff>(`/api/entities/vc/diff/${entityId.entityType}/${entityId.id}?branch=${encodedBranch}&versionId=${versionId}`,
+    return this.http.get<EntityDataDiff>(`/api/entities/vc/diff/${entityId.entityType}/${entityId.id}?versionId=${versionId}`,
       defaultHttpOptionsFromConfig(config));
   }
 
@@ -183,6 +180,9 @@ export class EntitiesVersionControlService {
         messageArgs.targetEntityTypeName =
           (this.translate.instant(entityTypeTranslations.get(entityLoadError.target.entityType).type) as string).toLowerCase();
         messageArgs.targetEntityId = entityLoadError.target.id;
+        break;
+      case EntityLoadErrorType.RUNTIME:
+        messageArgs.message = entityLoadError.message;
         break;
     }
     return this.sanitizer.bypassSecurityTrustHtml(this.translate.instant(messageId, messageArgs));

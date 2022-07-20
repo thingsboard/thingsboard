@@ -538,6 +538,8 @@ public final class EdgeGrpcSession implements Closeable {
                 return ctx.getAdminSettingsProcessor().processAdminSettingsToEdge(edgeEvent);
             case OTA_PACKAGE:
                 return ctx.getOtaPackageEdgeProcessor().processOtaPackageToEdge(edgeEvent, msgType, action);
+            case QUEUE:
+                return ctx.getQueueEdgeProcessor().processQueueToEdge(edgeEvent, msgType, action);
             default:
                 log.warn("Unsupported edge event type [{}]", edgeEvent);
                 return null;

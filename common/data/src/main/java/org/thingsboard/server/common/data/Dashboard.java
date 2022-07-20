@@ -17,19 +17,18 @@ package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.collect.Streams;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.thingsboard.server.common.data.id.DashboardId;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.StreamSupport;
+import java.util.stream.Collectors;
 
 @EqualsAndHashCode(callSuper = true)
 public class Dashboard extends DashboardInfo implements ExportableEntity<DashboardId> {
@@ -86,17 +85,11 @@ public class Dashboard extends DashboardInfo implements ExportableEntity<Dashboa
     private List<ObjectNode> getChildObjects(String propertyName) {
         return Optional.ofNullable(configuration)
                 .map(config -> config.get(propertyName))
-                .filter(node -> !node.isEmpty())
-                .map(node -> (ObjectNode) node)
-                .map(object -> {
-                    List<ObjectNode> widgets = new ArrayList<>(object.size());
-                    object.forEach(child -> {
-                        if (child.isObject()) {
-                            widgets.add((ObjectNode) child);
-                        }
-                    });
-                    return widgets;
-                })
+                .filter(node -> !node.isEmpty() && (node.isObject() || node.isArray()))
+                .map(node -> Streams.stream(node.elements())
+                        .filter(JsonNode::isObject)
+                        .map(jsonNode -> (ObjectNode) jsonNode)
+                        .collect(Collectors.toList()))
                 .orElse(Collections.emptyList());
     }
 

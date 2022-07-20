@@ -18,11 +18,15 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
-  ElementRef, EventEmitter,
+  ElementRef,
+  EventEmitter,
   Input,
   OnDestroy,
-  OnInit, Output, Renderer2,
-  ViewChild, ViewContainerRef
+  OnInit,
+  Output,
+  Renderer2,
+  ViewChild,
+  ViewContainerRef
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -213,7 +217,9 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
               }
             }
           }
-        }, {}, {}, {}, false);
+        },
+        {maxHeight: '100vh', height: '100%', padding: '10px'},
+        {width: '400px', minWidth: '100%', maxWidth: '100%'}, {}, false);
       createVersionPopover.tbComponentRef.instance.popoverComponent = createVersionPopover;
     }
   }
@@ -240,7 +246,9 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
               }
             }
           }
-        }, {}, {}, {}, false);
+        },
+        {maxHeight: '90vh', height: '100%', padding: '10px'},
+        {}, {}, false);
       complexCreateVersionPopover.tbComponentRef.instance.popoverComponent = complexCreateVersionPopover;
     }
   }
@@ -256,7 +264,6 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
       const diffVersionPopover = this.popoverService.displayPopover(trigger, this.renderer,
         this.viewContainerRef, EntityVersionDiffComponent, 'leftTop', true, null,
         {
-          branch: this.branch,
           versionName: entityVersion.name,
           versionId: entityVersion.id,
           entityId: this.entityId,
@@ -280,7 +287,6 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
       const restoreVersionPopover = this.popoverService.displayPopover(trigger, this.renderer,
         this.viewContainerRef, EntityVersionRestoreComponent, 'leftTop', true, null,
         {
-          branch: this.branch,
           versionName: entityVersion.name,
           versionId: entityVersion.id,
           externalEntityId: this.externalEntityIdValue,
@@ -290,7 +296,9 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
               this.versionRestored.emit();
             }
           }
-        }, {}, {}, {}, false);
+        },
+        {maxHeight: '100vh', height: '100%', padding: '10px'},
+        {width: '400px', minWidth: '100%', maxWidth: '100%'}, {}, false);
       restoreVersionPopover.tbComponentRef.instance.popoverComponent = restoreVersionPopover;
     }
   }
@@ -306,13 +314,14 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
       const restoreEntitiesVersionPopover = this.popoverService.displayPopover(trigger, this.renderer,
         this.viewContainerRef, ComplexVersionLoadComponent, 'leftTop', true, null,
         {
-          branch: this.branch,
           versionName: entityVersion.name,
           versionId: entityVersion.id,
           onClose: (result: VersionLoadResult | null) => {
             restoreEntitiesVersionPopover.hide();
           }
-        }, {}, {}, {}, false);
+        },
+        {maxHeight: '80vh', height: '100%', padding: '10px'},
+        {}, {}, false);
       restoreEntitiesVersionPopover.tbComponentRef.instance.popoverComponent = restoreEntitiesVersionPopover;
     }
   }

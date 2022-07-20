@@ -25,6 +25,6 @@ public class VersionControlTenantRoutingInfoService implements TenantRoutingInfo
     @Override
     public TenantRoutingInfo getRoutingInfo(TenantId tenantId) {
         //This dummy implementation is ok since Version Control service does not produce any rule engine messages.
-        return new TenantRoutingInfo(tenantId, false, false);
+        return new TenantRoutingInfo(tenantId, false);
     }
 }

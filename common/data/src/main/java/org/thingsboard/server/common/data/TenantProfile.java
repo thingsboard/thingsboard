@@ -53,13 +53,10 @@ public class TenantProfile extends SearchTextBased<TenantProfileId> implements H
     private String description;
     @ApiModelProperty(position = 5, value = "Default Tenant profile to be used.", example = "true")
     private boolean isDefault;
-    @ApiModelProperty(position = 6, value = "If enabled, will push all messages related to this tenant and processed by core platform services into separate queue. " +
-            "Useful for complex microservices deployments, to isolate processing of the data for specific tenants", example = "true")
-    private boolean isolatedTbCore;
-    @ApiModelProperty(position = 7, value = "If enabled, will push all messages related to this tenant and processed by the rule engine into separate queue. " +
+    @ApiModelProperty(position = 6, value = "If enabled, will push all messages related to this tenant and processed by the rule engine into separate queue. " +
             "Useful for complex microservices deployments, to isolate processing of the data for specific tenants", example = "true")
     private boolean isolatedTbRuleEngine;
-    @ApiModelProperty(position = 8, value = "Complex JSON object that contains profile settings: queue configs, max devices, max assets, rate limits, etc.")
+    @ApiModelProperty(position = 7, value = "Complex JSON object that contains profile settings: queue configs, max devices, max assets, rate limits, etc.")
     private transient TenantProfileData profileData;
     @JsonIgnore
     private byte[] profileDataBytes;
@@ -77,7 +74,6 @@ public class TenantProfile extends SearchTextBased<TenantProfileId> implements H
         this.name = tenantProfile.getName();
         this.description = tenantProfile.getDescription();
         this.isDefault = tenantProfile.isDefault();
-        this.isolatedTbCore = tenantProfile.isIsolatedTbCore();
         this.isolatedTbRuleEngine = tenantProfile.isIsolatedTbRuleEngine();
         this.setProfileData(tenantProfile.getProfileData());
     }
@@ -91,7 +87,7 @@ public class TenantProfile extends SearchTextBased<TenantProfileId> implements H
         return super.getId();
     }
 
-    @ApiModelProperty(position = 2, value = "Timestamp of the tenant profile creation, in milliseconds", example = "1609459200000", readOnly = true)
+    @ApiModelProperty(position = 2, value = "Timestamp of the tenant profile creation, in milliseconds", example = "1609459200000", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();

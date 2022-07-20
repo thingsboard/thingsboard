@@ -98,9 +98,15 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
     public Customer saveCustomer(Customer customer) {
         log.trace("Executing saveCustomer [{}]", customer);
         customerValidator.validate(customer, Customer::getTenantId);
-        Customer savedCustomer = customerDao.save(customer.getTenantId(), customer);
-        dashboardService.updateCustomerDashboards(savedCustomer.getTenantId(), savedCustomer.getId());
-        return savedCustomer;
+        try {
+            Customer savedCustomer = customerDao.save(customer.getTenantId(), customer);
+            dashboardService.updateCustomerDashboards(savedCustomer.getTenantId(), savedCustomer.getId());
+            return savedCustomer;
+        } catch (Exception e) {
+            checkConstraintViolation(e, "customer_external_id_unq_key", "Customer with such external id already exists!");
+            throw e;
+        }
+
     }
 
     @Override

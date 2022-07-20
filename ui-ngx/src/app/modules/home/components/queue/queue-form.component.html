@@ -26,6 +26,9 @@
     <mat-error *ngIf="queueFormGroup.get('name').hasError('unique')">
       {{ 'queue.name-unique' | translate }}
     </mat-error>
+    <mat-error *ngIf="queueFormGroup.get('name').hasError('pattern')">
+      {{ 'queue.name-pattern' | translate }}
+    </mat-error>
   </mat-form-field>
   <mat-accordion class="queue-strategy" [multi]="true">
     <mat-expansion-panel [expanded]="true">

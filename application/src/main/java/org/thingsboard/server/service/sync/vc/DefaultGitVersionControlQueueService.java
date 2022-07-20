@@ -76,10 +76,13 @@ import org.thingsboard.server.service.sync.vc.data.VoidGitRequest;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -101,7 +104,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     private final SchedulerComponent scheduler;
 
     private final Map<UUID, PendingGitRequest<?>> pendingRequestMap = new HashMap<>();
-    private final Map<UUID, Map<String, String[]>> chunkedMsgs = new ConcurrentHashMap<>();
+    private final Map<UUID, HashMap<Integer, String[]>> chunkedMsgs = new ConcurrentHashMap<>();
 
     @Value("${queue.vc.request-timeout:60000}")
     private int requestTimeout;
@@ -245,7 +248,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     }
 
     @Override
-    public ListenableFuture<List<VersionedEntityInfo>> listEntitiesAtVersion(TenantId tenantId, String branch, String versionId, EntityType entityType) {
+    public ListenableFuture<List<VersionedEntityInfo>> listEntitiesAtVersion(TenantId tenantId, String versionId, EntityType entityType) {
         return listEntitiesAtVersion(tenantId, ListEntitiesRequestMsg.newBuilder()
                 .setVersionId(versionId)
                 .setEntityType(entityType.name())
@@ -253,7 +256,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     }
 
     @Override
-    public ListenableFuture<List<VersionedEntityInfo>> listEntitiesAtVersion(TenantId tenantId, String branch, String versionId) {
+    public ListenableFuture<List<VersionedEntityInfo>> listEntitiesAtVersion(TenantId tenantId, String versionId) {
         return listEntitiesAtVersion(tenantId, ListEntitiesRequestMsg.newBuilder()
                 .setVersionId(versionId)
                 .build());
@@ -385,66 +388,71 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
         if (!StringUtils.isEmpty(vcResponseMsg.getError())) {
             future.setException(new RuntimeException(vcResponseMsg.getError()));
         } else {
-            if (vcResponseMsg.hasGenericResponse()) {
-                future.set(null);
-            } else if (vcResponseMsg.hasCommitResponse()) {
-                var commitResponse = vcResponseMsg.getCommitResponse();
-                var commitResult = new VersionCreationResult();
-                if (commitResponse.getTs() > 0) {
-                    commitResult.setVersion(new EntityVersion(commitResponse.getTs(), commitResponse.getCommitId(), commitResponse.getName(), commitResponse.getAuthor()));
-                }
-                commitResult.setAdded(commitResponse.getAdded());
-                commitResult.setRemoved(commitResponse.getRemoved());
-                commitResult.setModified(commitResponse.getModified());
-                commitResult.setDone(true);
-                ((CommitGitRequest) request).getFuture().set(commitResult);
-            } else if (vcResponseMsg.hasListBranchesResponse()) {
-                var listBranchesResponse = vcResponseMsg.getListBranchesResponse();
-                ((ListBranchesGitRequest) request).getFuture().set(listBranchesResponse.getBranchesList().stream().map(this::getBranchInfo).collect(Collectors.toList()));
-            } else if (vcResponseMsg.hasListEntitiesResponse()) {
-                var listEntitiesResponse = vcResponseMsg.getListEntitiesResponse();
-                ((ListEntitiesGitRequest) request).getFuture().set(
-                        listEntitiesResponse.getEntitiesList().stream().map(this::getVersionedEntityInfo).collect(Collectors.toList()));
-            } else if (vcResponseMsg.hasListVersionsResponse()) {
-                var listVersionsResponse = vcResponseMsg.getListVersionsResponse();
-                ((ListVersionsGitRequest) request).getFuture().set(toPageData(listVersionsResponse));
-            } else if (vcResponseMsg.hasEntityContentResponse()) {
-                TransportProtos.EntityContentResponseMsg responseMsg = vcResponseMsg.getEntityContentResponse();
-                log.trace("[{}] received chunk {} for 'getEntity'", responseMsg.getChunkedMsgId(), responseMsg.getChunkIndex());
-                var joined = joinChunks(requestId, responseMsg, 1);
-                if (joined.isPresent()) {
-                    log.trace("[{}] collected all chunks for 'getEntity'", responseMsg.getChunkedMsgId());
-                    ((EntityContentGitRequest) request).getFuture().set(joined.get().get(0));
-                } else {
-                    completed = false;
-                }
-            } else if (vcResponseMsg.hasEntitiesContentResponse()) {
-                TransportProtos.EntitiesContentResponseMsg responseMsg = vcResponseMsg.getEntitiesContentResponse();
-                TransportProtos.EntityContentResponseMsg item = responseMsg.getItem();
-                if (responseMsg.getItemsCount() > 0) {
-                    var joined = joinChunks(requestId, item, responseMsg.getItemsCount());
+            try {
+                if (vcResponseMsg.hasGenericResponse()) {
+                    future.set(null);
+                } else if (vcResponseMsg.hasCommitResponse()) {
+                    var commitResponse = vcResponseMsg.getCommitResponse();
+                    var commitResult = new VersionCreationResult();
+                    if (commitResponse.getTs() > 0) {
+                        commitResult.setVersion(new EntityVersion(commitResponse.getTs(), commitResponse.getCommitId(), commitResponse.getName(), commitResponse.getAuthor()));
+                    }
+                    commitResult.setAdded(commitResponse.getAdded());
+                    commitResult.setRemoved(commitResponse.getRemoved());
+                    commitResult.setModified(commitResponse.getModified());
+                    commitResult.setDone(true);
+                    ((CommitGitRequest) request).getFuture().set(commitResult);
+                } else if (vcResponseMsg.hasListBranchesResponse()) {
+                    var listBranchesResponse = vcResponseMsg.getListBranchesResponse();
+                    ((ListBranchesGitRequest) request).getFuture().set(listBranchesResponse.getBranchesList().stream().map(this::getBranchInfo).collect(Collectors.toList()));
+                } else if (vcResponseMsg.hasListEntitiesResponse()) {
+                    var listEntitiesResponse = vcResponseMsg.getListEntitiesResponse();
+                    ((ListEntitiesGitRequest) request).getFuture().set(
+                            listEntitiesResponse.getEntitiesList().stream().map(this::getVersionedEntityInfo).collect(Collectors.toList()));
+                } else if (vcResponseMsg.hasListVersionsResponse()) {
+                    var listVersionsResponse = vcResponseMsg.getListVersionsResponse();
+                    ((ListVersionsGitRequest) request).getFuture().set(toPageData(listVersionsResponse));
+                } else if (vcResponseMsg.hasEntityContentResponse()) {
+                    TransportProtos.EntityContentResponseMsg responseMsg = vcResponseMsg.getEntityContentResponse();
+                    log.trace("Received chunk {} for 'getEntity'", responseMsg.getChunkIndex());
+                    var joined = joinChunks(requestId, responseMsg, 0, 1);
                     if (joined.isPresent()) {
-                        ((EntitiesContentGitRequest) request).getFuture().set(joined.get());
+                        log.trace("Collected all chunks for 'getEntity'");
+                        ((EntityContentGitRequest) request).getFuture().set(joined.get().get(0));
                     } else {
                         completed = false;
                     }
-                } else {
-                    ((EntitiesContentGitRequest) request).getFuture().set(Collections.emptyList());
+                } else if (vcResponseMsg.hasEntitiesContentResponse()) {
+                    TransportProtos.EntitiesContentResponseMsg responseMsg = vcResponseMsg.getEntitiesContentResponse();
+                    TransportProtos.EntityContentResponseMsg item = responseMsg.getItem();
+                    if (responseMsg.getItemsCount() > 0) {
+                        var joined = joinChunks(requestId, item, responseMsg.getItemIdx(), responseMsg.getItemsCount());
+                        if (joined.isPresent()) {
+                            ((EntitiesContentGitRequest) request).getFuture().set(joined.get());
+                        } else {
+                            completed = false;
+                        }
+                    } else {
+                        ((EntitiesContentGitRequest) request).getFuture().set(Collections.emptyList());
+                    }
+                } else if (vcResponseMsg.hasVersionsDiffResponse()) {
+                    TransportProtos.VersionsDiffResponseMsg diffResponse = vcResponseMsg.getVersionsDiffResponse();
+                    List<EntityVersionsDiff> entityVersionsDiffList = diffResponse.getDiffList().stream()
+                            .map(diff -> EntityVersionsDiff.builder()
+                                    .externalId(EntityIdFactory.getByTypeAndUuid(EntityType.valueOf(diff.getEntityType()),
+                                            new UUID(diff.getEntityIdMSB(), diff.getEntityIdLSB())))
+                                    .entityDataAtVersion1(StringUtils.isNotEmpty(diff.getEntityDataAtVersion1()) ?
+                                            toData(diff.getEntityDataAtVersion1()) : null)
+                                    .entityDataAtVersion2(StringUtils.isNotEmpty(diff.getEntityDataAtVersion2()) ?
+                                            toData(diff.getEntityDataAtVersion2()) : null)
+                                    .rawDiff(diff.getRawDiff())
+                                    .build())
+                            .collect(Collectors.toList());
+                    ((VersionsDiffGitRequest) request).getFuture().set(entityVersionsDiffList);
                 }
-            } else if (vcResponseMsg.hasVersionsDiffResponse()) {
-                TransportProtos.VersionsDiffResponseMsg diffResponse = vcResponseMsg.getVersionsDiffResponse();
-                List<EntityVersionsDiff> entityVersionsDiffList = diffResponse.getDiffList().stream()
-                        .map(diff -> EntityVersionsDiff.builder()
-                                .externalId(EntityIdFactory.getByTypeAndUuid(EntityType.valueOf(diff.getEntityType()),
-                                        new UUID(diff.getEntityIdMSB(), diff.getEntityIdLSB())))
-                                .entityDataAtVersion1(StringUtils.isNotEmpty(diff.getEntityDataAtVersion1()) ?
-                                        toData(diff.getEntityDataAtVersion1()) : null)
-                                .entityDataAtVersion2(StringUtils.isNotEmpty(diff.getEntityDataAtVersion2()) ?
-                                        toData(diff.getEntityDataAtVersion2()) : null)
-                                .rawDiff(diff.getRawDiff())
-                                .build())
-                        .collect(Collectors.toList());
-                ((VersionsDiffGitRequest) request).getFuture().set(entityVersionsDiffList);
+            } catch (Exception e) {
+                future.setException(e);
+                throw e;
             }
         }
         if (completed) {
@@ -453,16 +461,17 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     }
 
     @SuppressWarnings("rawtypes")
-    private Optional<List<EntityExportData>> joinChunks(UUID requestId, TransportProtos.EntityContentResponseMsg responseMsg, int expectedMsgCount) {
+    private Optional<List<EntityExportData>> joinChunks(UUID requestId, TransportProtos.EntityContentResponseMsg responseMsg, int itemIdx, int expectedMsgCount) {
         var chunksMap = chunkedMsgs.get(requestId);
         if (chunksMap == null) {
             return Optional.empty();
         }
-        String[] msgChunks = chunksMap.computeIfAbsent(responseMsg.getChunkedMsgId(), id -> new String[responseMsg.getChunksCount()]);
+        String[] msgChunks = chunksMap.computeIfAbsent(itemIdx, id -> new String[responseMsg.getChunksCount()]);
         msgChunks[responseMsg.getChunkIndex()] = responseMsg.getData();
         if (chunksMap.size() == expectedMsgCount && chunksMap.values().stream()
                 .allMatch(chunks -> CollectionsUtil.countNonNull(chunks) == chunks.length)) {
-            return Optional.of(chunksMap.values().stream()
+            return Optional.of(chunksMap.entrySet().stream()
+                    .sorted(Comparator.comparingInt(Map.Entry::getKey)).map(Map.Entry::getValue)
                     .map(chunks -> String.join("", chunks))
                     .map(this::toData)
                     .collect(Collectors.toList()));

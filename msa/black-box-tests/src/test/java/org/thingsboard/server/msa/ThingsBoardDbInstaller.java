@@ -46,6 +46,7 @@ public class ThingsBoardDbInstaller extends ExternalResource {
     private final static String TB_MQTT_TRANSPORT_LOG_VOLUME = "tb-mqtt-transport-log-test-volume";
     private final static String TB_SNMP_TRANSPORT_LOG_VOLUME = "tb-snmp-transport-log-test-volume";
     private final static String TB_VC_EXECUTOR_LOG_VOLUME = "tb-vc-executor-log-test-volume";
+    private final static String JAVA_OPTS = "-Xmx512m";
 
     private final DockerComposeExecutor dockerCompose;
 
@@ -102,6 +103,7 @@ public class ThingsBoardDbInstaller extends ExternalResource {
         dockerCompose = new DockerComposeExecutor(composeFiles, project);
 
         env = new HashMap<>();
+        env.put("JAVA_OPTS", JAVA_OPTS);
         env.put("POSTGRES_DATA_VOLUME", postgresDataVolume);
         if (IS_HYBRID_MODE) {
             env.put("CASSANDRA_DATA_VOLUME", cassandraDataVolume);

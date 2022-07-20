@@ -48,9 +48,9 @@ public class DeviceProfileMsgConstructor {
 //            builder.setDefaultRuleChainIdMSB(deviceProfile.getDefaultRuleChainId().getId().getMostSignificantBits())
 //                    .setDefaultRuleChainIdLSB(deviceProfile.getDefaultRuleChainId().getId().getLeastSignificantBits());
 //        }
-//        if (deviceProfile.getDefaultQueueName() != null) {
-//            builder.setDefaultQueueName(deviceProfile.getDefaultQueueName());
-//        }
+        if (deviceProfile.getDefaultQueueName() != null) {
+            builder.setDefaultQueueName(deviceProfile.getDefaultQueueName());
+        }
         if (deviceProfile.getDescription() != null) {
             builder.setDescription(deviceProfile.getDescription());
         }

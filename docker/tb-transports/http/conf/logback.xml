@@ -42,6 +42,11 @@
 
     <logger name="org.thingsboard.server" level="INFO" />
 
+    <logger name="com.microsoft.azure.servicebus.primitives.CoreMessageReceiver" level="OFF" />
+
+    <logger name="org.apache.kafka.common.utils.AppInfoParser" level="WARN"/>
+    <logger name="org.apache.kafka.clients" level="WARN"/>
+
     <root level="INFO">
         <appender-ref ref="fileLogAppender"/>
         <appender-ref ref="STDOUT"/>

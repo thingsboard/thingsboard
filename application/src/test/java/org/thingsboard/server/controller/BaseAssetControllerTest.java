@@ -122,29 +122,34 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        String msgError = "length of name must be equal or less than 255";
-        doPost("/api/asset", asset).andExpect(statusReason(containsString(msgError)));
+        String msgError = msgErrorFieldLength("name");
+        doPost("/api/asset", asset)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString(msgError)));
 
-
-        testNotifyEntityEqualsOneTimeError(asset, savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(asset, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
         Mockito.reset(tbClusterService, auditLogService);
 
         asset.setName("Normal name");
         asset.setType(RandomStringUtils.randomAlphabetic(300));
-        msgError = "length of type must be equal or less than 255";
-        doPost("/api/asset", asset).andExpect(statusReason(containsString(msgError)));
+        msgError = msgErrorFieldLength("type");
+        doPost("/api/asset", asset)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeError(asset, savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(asset, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
         Mockito.reset(tbClusterService, auditLogService);
 
         asset.setType("default");
         asset.setLabel(RandomStringUtils.randomAlphabetic(300));
-        msgError = "length of label must be equal or less than 255";
-        doPost("/api/asset", asset).andExpect(statusReason(containsString(msgError)));
+        msgError = msgErrorFieldLength("label");
+        doPost("/api/asset", asset)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeError(asset, savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(asset, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
     }
 
@@ -159,7 +164,15 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        doPost("/api/asset", savedAsset, Asset.class, status().isForbidden());
+        doPost("/api/asset", savedAsset)
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString(msgErrorPermission)));
+
+        testNotifyEntityNever(savedAsset.getId(), savedAsset);
+
+        doDelete("/api/asset/" + savedAsset.getId().getId().toString())
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString(msgErrorPermission)));
 
         testNotifyEntityNever(savedAsset.getId(), savedAsset);
 
@@ -234,8 +247,10 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.DELETED, savedAsset.getId().getId().toString());
 
-        doGet("/api/asset/" + savedAsset.getId().getId().toString())
-                .andExpect(status().isNotFound());
+        String assetIdStr = savedAsset.getId().getId().toString();
+        doGet("/api/asset/" + assetIdStr)
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(containsString(msgErrorNoFound("Asset", assetIdStr))));
     }
 
     @Test
@@ -259,12 +274,12 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        doDelete("/api/asset/" + savedAsset1.getId().getId().toString())
-                .andExpect(status().isBadRequest());
-
         String msgError = "Can't delete asset that has entity views";
+        doDelete("/api/asset/" + savedAsset1.getId().getId().toString())
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityIsNullOneTimeError(savedAsset1,  savedTenant.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+        testNotifyEntityIsNullOneTimeEdgeServiceNeverError(savedAsset1, savedTenant.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.DELETED, new DataValidationException(msgError), savedAsset1.getId().getId().toString());
 
         savedView.setEntityId(savedAsset2.getId());
@@ -274,8 +289,10 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         doDelete("/api/asset/" + savedAsset1.getId().getId().toString())
                 .andExpect(status().isOk());
 
-        doGet("/api/asset/" + savedAsset1.getId().getId().toString())
-                .andExpect(status().isNotFound());
+        String assetIdStr = savedAsset1.getId().getId().toString();
+        doGet("/api/asset/" + assetIdStr)
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(containsString(msgErrorNoFound("Asset", assetIdStr))));
     }
 
     @Test
@@ -285,12 +302,12 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        String msgError = "Asset type should be specified";
+        String msgError = "Asset type " + msgErrorShouldBeSpecified;
         doPost("/api/asset", asset)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeError(asset, savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(asset, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
     }
 
@@ -301,12 +318,12 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        String msgError = "Asset name should be specified";
+        String msgError = "Asset name " + msgErrorShouldBeSpecified;
         doPost("/api/asset", asset)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeError(asset, savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(asset, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
     }
 
@@ -329,7 +346,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         testNotifyEntityAllOneTime(assignedAsset, assignedAsset.getId(), assignedAsset.getId(),
                 savedTenant.getId(), savedCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ASSIGNED_TO_CUSTOMER, savedCustomer.getId().toString(), savedCustomer.getTitle());
+                ActionType.ASSIGNED_TO_CUSTOMER, assignedAsset.getId().toString(), savedCustomer.getId().toString(), savedCustomer.getTitle());
 
         Asset foundAsset = doGet("/api/asset/" + savedAsset.getId().getId().toString(), Asset.class);
         Assert.assertEquals(savedCustomer.getId(), foundAsset.getCustomerId());
@@ -342,7 +359,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         testNotifyEntityAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(),
                 savedTenant.getId(), savedCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.UNASSIGNED_FROM_CUSTOMER, savedCustomer.getId().toString(), savedCustomer.getTitle());
+                ActionType.UNASSIGNED_FROM_CUSTOMER, savedAsset.getId().toString(), savedCustomer.getId().toString(), savedCustomer.getTitle());
 
         foundAsset = doGet("/api/asset/" + savedAsset.getId().getId().toString(), Asset.class);
         Assert.assertEquals(ModelConstants.NULL_UUID, foundAsset.getCustomerId().getId());
@@ -357,10 +374,11 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        String msgError = "Asset name should be specified";
-        doPost("/api/customer/" + Uuids.timeBased().toString()
+        String customerIdStr = Uuids.timeBased().toString();
+        doPost("/api/customer/" + customerIdStr
                 + "/asset/" + savedAsset.getId().getId().toString())
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(containsString(msgErrorNoFound("Customer", customerIdStr))));
 
         testNotifyEntityNever(asset.getId(), asset);
     }
@@ -381,7 +399,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         tenantAdmin2.setFirstName("Joe");
         tenantAdmin2.setLastName("Downs");
 
-        tenantAdmin2 = createUserAndLogin(tenantAdmin2, "testPassword1");
+        createUserAndLogin(tenantAdmin2, "testPassword1");
 
         Customer customer = new Customer();
         customer.setTitle("Different customer");
@@ -398,7 +416,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         doPost("/api/customer/" + savedCustomer.getId().getId().toString()
                 + "/asset/" + savedAsset.getId().getId().toString())
-                .andExpect(status().isForbidden());
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString(msgErrorPermission)));
 
         testNotifyEntityNever(savedAsset.getId(), savedAsset);
 
@@ -426,7 +445,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         PageData<Asset> pageData = null;
         do {
             pageData = doGetTypedWithPageLink("/api/tenant/assets?",
-                    new TypeReference<PageData<Asset>>(){}, pageLink);
+                    new TypeReference<PageData<Asset>>() {
+                    }, pageLink);
             loadedAssets.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -475,7 +495,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         PageData<Asset> pageData = null;
         do {
             pageData = doGetTypedWithPageLink("/api/tenant/assets?",
-                    new TypeReference<PageData<Asset>>(){}, pageLink);
+                    new TypeReference<PageData<Asset>>() {
+                    }, pageLink);
             loadedAssetsTitle1.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -491,7 +512,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         pageLink = new PageLink(4, 0, title2);
         do {
             pageData = doGetTypedWithPageLink("/api/tenant/assets?",
-                    new TypeReference<PageData<Asset>>(){}, pageLink);
+                    new TypeReference<PageData<Asset>>() {
+                    }, pageLink);
             loadedAssetsTitle2.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -510,7 +532,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         pageLink = new PageLink(4, 0, title1);
         pageData = doGetTypedWithPageLink("/api/tenant/assets?",
-                new TypeReference<PageData<Asset>>(){}, pageLink);
+                new TypeReference<PageData<Asset>>() {
+                }, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
@@ -521,7 +544,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         pageLink = new PageLink(4, 0, title2);
         pageData = doGetTypedWithPageLink("/api/tenant/assets?",
-                new TypeReference<PageData<Asset>>(){}, pageLink);
+                new TypeReference<PageData<Asset>>() {
+                }, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
     }
@@ -558,7 +582,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         PageData<Asset> pageData = null;
         do {
             pageData = doGetTypedWithPageLink("/api/tenant/assets?type={type}&",
-                    new TypeReference<PageData<Asset>>(){}, pageLink, type1);
+                    new TypeReference<PageData<Asset>>() {
+                    }, pageLink, type1);
             loadedAssetsType1.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -574,7 +599,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         pageLink = new PageLink(4);
         do {
             pageData = doGetTypedWithPageLink("/api/tenant/assets?type={type}&",
-                    new TypeReference<PageData<Asset>>(){}, pageLink, type2);
+                    new TypeReference<PageData<Asset>>() {
+                    }, pageLink, type2);
             loadedAssetsType2.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -593,7 +619,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         pageLink = new PageLink(4);
         pageData = doGetTypedWithPageLink("/api/tenant/assets?type={type}&",
-                new TypeReference<PageData<Asset>>(){}, pageLink, type1);
+                new TypeReference<PageData<Asset>>() {
+                }, pageLink, type1);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
@@ -604,7 +631,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         pageLink = new PageLink(4);
         pageData = doGetTypedWithPageLink("/api/tenant/assets?type={type}&",
-                new TypeReference<PageData<Asset>>(){}, pageLink, type2);
+                new TypeReference<PageData<Asset>>() {
+                }, pageLink, type2);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
     }
@@ -631,7 +659,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         PageData<Asset> pageData = null;
         do {
             pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/assets?",
-                    new TypeReference<PageData<Asset>>(){}, pageLink);
+                    new TypeReference<PageData<Asset>>() {
+                    }, pageLink);
             loadedAssets.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -683,7 +712,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         PageData<Asset> pageData = null;
         do {
             pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/assets?",
-                    new TypeReference<PageData<Asset>>(){}, pageLink);
+                    new TypeReference<PageData<Asset>>() {
+                    }, pageLink);
             loadedAssetsTitle1.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -699,7 +729,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         pageLink = new PageLink(4, 0, title2);
         do {
             pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/assets?",
-                    new TypeReference<PageData<Asset>>(){}, pageLink);
+                    new TypeReference<PageData<Asset>>() {
+                    }, pageLink);
             loadedAssetsTitle2.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -718,7 +749,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         pageLink = new PageLink(4, 0, title1);
         pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/assets?",
-                new TypeReference<PageData<Asset>>(){}, pageLink);
+                new TypeReference<PageData<Asset>>() {
+                }, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
@@ -729,7 +761,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         pageLink = new PageLink(4, 0, title2);
         pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/assets?",
-                new TypeReference<PageData<Asset>>(){}, pageLink);
+                new TypeReference<PageData<Asset>>() {
+                }, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
     }
@@ -775,7 +808,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         PageData<Asset> pageData = null;
         do {
             pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/assets?type={type}&",
-                    new TypeReference<PageData<Asset>>(){}, pageLink, type1);
+                    new TypeReference<PageData<Asset>>() {
+                    }, pageLink, type1);
             loadedAssetsType1.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -791,7 +825,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         pageLink = new PageLink(4);
         do {
             pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/assets?type={type}&",
-                    new TypeReference<PageData<Asset>>(){}, pageLink, type2);
+                    new TypeReference<PageData<Asset>>() {
+                    }, pageLink, type2);
             loadedAssetsType2.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -810,7 +845,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         pageLink = new PageLink(4);
         pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/assets?type={type}&",
-                new TypeReference<PageData<Asset>>(){}, pageLink, type1);
+                new TypeReference<PageData<Asset>>() {
+                }, pageLink, type1);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
@@ -821,7 +857,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         pageLink = new PageLink(4);
         pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/assets?type={type}&",
-                new TypeReference<PageData<Asset>>(){}, pageLink, type2);
+                new TypeReference<PageData<Asset>>() {
+                }, pageLink, type2);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
     }
@@ -847,7 +884,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
 
         PageData<Asset> pageData = doGetTypedWithPageLink("/api/edge/" + savedEdge.getId().getId().toString() + "/assets?",
-                new TypeReference<PageData<Asset>>() {}, new PageLink(100));
+                new TypeReference<PageData<Asset>>() {
+                }, new PageLink(100));
 
         Assert.assertEquals(1, pageData.getData().size());
 
@@ -862,7 +900,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
                 ActionType.UNASSIGNED_FROM_EDGE, savedAsset.getId().getId().toString(), savedEdge.getId().getId().toString(), savedEdge.getName());
 
         pageData = doGetTypedWithPageLink("/api/edge/" + savedEdge.getId().getId().toString() + "/assets?",
-                new TypeReference<PageData<Asset>>() {}, new PageLink(100));
+                new TypeReference<PageData<Asset>>() {
+                }, new PageLink(100));
 
         Assert.assertEquals(0, pageData.getData().size());
     }

@@ -49,7 +49,6 @@ import { MediaBreakpoints } from '@shared/models/constants';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { ServiceType } from '@shared/models/queue.models';
 import { deepTrim } from '@core/utils';
-import { QueueId } from '@shared/models/id/queue-id';
 
 @Component({
   selector: 'tb-device-wizard',
@@ -114,7 +113,7 @@ export class DeviceWizardDialogComponent extends
         deviceProfileId: [null, Validators.required],
         newDeviceProfileTitle: [{value: null, disabled: true}],
         defaultRuleChainId: [{value: null, disabled: true}],
-        defaultQueueId: [{value: null, disabled: true}],
+        defaultQueueName: [{value: null, disabled: true}],
         description: ['']
       }
     );
@@ -127,7 +126,7 @@ export class DeviceWizardDialogComponent extends
           this.deviceWizardFormGroup.get('newDeviceProfileTitle').setValidators(null);
           this.deviceWizardFormGroup.get('newDeviceProfileTitle').disable();
           this.deviceWizardFormGroup.get('defaultRuleChainId').disable();
-          this.deviceWizardFormGroup.get('defaultQueueId').disable();
+          this.deviceWizardFormGroup.get('defaultQueueName').disable();
           this.deviceWizardFormGroup.updateValueAndValidity();
           this.createProfile = false;
         } else {
@@ -136,7 +135,7 @@ export class DeviceWizardDialogComponent extends
           this.deviceWizardFormGroup.get('newDeviceProfileTitle').setValidators([Validators.required]);
           this.deviceWizardFormGroup.get('newDeviceProfileTitle').enable();
           this.deviceWizardFormGroup.get('defaultRuleChainId').enable();
-          this.deviceWizardFormGroup.get('defaultQueueId').enable();
+          this.deviceWizardFormGroup.get('defaultQueueName').enable();
 
           this.deviceWizardFormGroup.updateValueAndValidity();
           this.createProfile = true;
@@ -298,6 +297,7 @@ export class DeviceWizardDialogComponent extends
       const deviceProfile: DeviceProfile = {
         name: this.deviceWizardFormGroup.get('newDeviceProfileTitle').value,
         type: DeviceProfileType.DEFAULT,
+        defaultQueueName: this.deviceWizardFormGroup.get('defaultQueueName').value,
         transportType: this.transportConfigFormGroup.get('transportType').value,
         provisionType: deviceProvisionConfiguration.type,
         provisionDeviceKey,
@@ -310,9 +310,6 @@ export class DeviceWizardDialogComponent extends
       };
       if (this.deviceWizardFormGroup.get('defaultRuleChainId').value) {
         deviceProfile.defaultRuleChainId = new RuleChainId(this.deviceWizardFormGroup.get('defaultRuleChainId').value);
-      }
-      if (this.deviceWizardFormGroup.get('defaultQueueId').value) {
-        deviceProfile.defaultQueueId = new QueueId(this.deviceWizardFormGroup.get('defaultQueueId').value);
       }
       return this.deviceProfileService.saveDeviceProfile(deepTrim(deviceProfile)).pipe(
         tap((profile) => {

@@ -71,7 +71,7 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 @RequiredArgsConstructor
 public class TbResourceController extends BaseController {
 
-    private  final TbResourceService tbResourceService;
+    private final TbResourceService tbResourceService;
 
     public static final String RESOURCE_ID = "resourceId";
 
@@ -139,14 +139,16 @@ public class TbResourceController extends BaseController {
                     "The newly created Resource id will be present in the response. " +
                     "Specify existing Resource id to update the Resource. " +
                     "Referencing non-existing Resource Id will cause 'Not Found' error. " +
-                    "\n\nResource combination of the title with the key is unique in the scope of tenant. " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH,
+                    "\n\nResource combination of the title with the key is unique in the scope of tenant. " +
+                    "Remove 'id', 'tenantId' from the request body example (below) to create new Resource entity." +
+                    SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH,
             produces = "application/json",
             consumes = "application/json")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/resource", method = RequestMethod.POST)
     @ResponseBody
     public TbResource saveResource(@ApiParam(value = "A JSON value representing the Resource.")
-                                   @RequestBody TbResource resource) throws ThingsboardException {
+                                   @RequestBody TbResource resource) throws Exception {
         resource.setTenantId(getTenantId());
         checkEntity(resource.getId(), resource, Resource.TB_RESOURCE);
         return tbResourceService.save(resource, getCurrentUser());

@@ -18,6 +18,7 @@ package org.thingsboard.server.service.sync.vc.data;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -25,7 +26,6 @@ import org.thingsboard.server.common.data.sync.ThrowingRunnable;
 import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
 import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
 import org.thingsboard.server.common.data.sync.vc.EntityTypeLoadResult;
-import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,13 +42,13 @@ import java.util.UUID;
 public class EntitiesImportCtx {
 
     private final UUID requestId;
-    private final SecurityUser user;
+    private final User user;
     private final String versionId;
 
     private final Map<EntityType, EntityTypeLoadResult> results = new HashMap<>();
     private final Map<EntityType, Set<EntityId>> importedEntities = new HashMap<>();
     private final Map<EntityId, ReimportTask> toReimport = new HashMap<>();
-    private final List<ThrowingRunnable> referenceCallbacks = new ArrayList<>();
+    private final Map<EntityId, ThrowingRunnable> referenceCallbacks = new HashMap<>();
     private final List<ThrowingRunnable> eventCallbacks = new ArrayList<>();
     private final Map<EntityId, EntityId> externalToInternalIdMap = new HashMap<>();
     private final Set<EntityId> notFoundIds = new HashSet<>();
@@ -59,11 +59,11 @@ public class EntitiesImportCtx {
     private EntityImportSettings settings;
     private EntityImportResult<?> currentImportResult;
 
-    public EntitiesImportCtx(UUID requestId, SecurityUser user, String versionId) {
+    public EntitiesImportCtx(UUID requestId, User user, String versionId) {
         this(requestId, user, versionId, null);
     }
 
-    public EntitiesImportCtx(UUID requestId, SecurityUser user, String versionId, EntityImportSettings settings) {
+    public EntitiesImportCtx(UUID requestId, User user, String versionId, EntityImportSettings settings) {
         this.requestId = requestId;
         this.user = user;
         this.versionId = versionId;
@@ -119,9 +119,9 @@ public class EntitiesImportCtx {
         relations.addAll(values);
     }
 
-    public void addReferenceCallback(ThrowingRunnable tr) {
+    public void addReferenceCallback(EntityId externalId, ThrowingRunnable tr) {
         if (tr != null) {
-            referenceCallbacks.add(tr);
+            referenceCallbacks.put(externalId, tr);
         }
     }
 
@@ -138,7 +138,6 @@ public class EntitiesImportCtx {
     public boolean isNotFound(EntityId externalId) {
         return notFoundIds.contains(externalId);
     }
-
 
 
 }

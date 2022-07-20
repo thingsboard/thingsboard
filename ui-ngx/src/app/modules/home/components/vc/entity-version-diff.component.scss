@@ -19,6 +19,7 @@
 .entity-version-diff-view {
   position: relative;
   &:not(.tb-fullscreen) {
+    max-height: 95vh;
     &.content-ready {
       width: 600px;
       @media #{$mat-gt-sm} {
@@ -45,9 +46,15 @@
       height: 40px;
       margin-right: 16px;
       margin-left: 16px;
+      @media #{$mat-xs} {
+        margin-right: 8px;
+        margin-left: 8px;
+      }
     }
     .diff-count {
       font-size: 16px;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   }
   .version-title {

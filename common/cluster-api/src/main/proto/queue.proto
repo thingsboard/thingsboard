@@ -85,6 +85,17 @@ message KeyValueProto {
   string json_v = 7;
 }
 
+message AttributeValueProto {
+  int64 lastUpdateTs = 1;
+  KeyValueType type = 2;
+  bool has_v = 3;
+  bool bool_v = 4;
+  int64 long_v = 5;
+  double double_v = 6;
+  string string_v = 7;
+  string json_v = 8;
+}
+
 message TsKvProto {
   int64 ts = 1;
   KeyValueProto kv = 2;
@@ -262,7 +273,6 @@ message GetTenantRoutingInfoRequestMsg {
 }
 
 message GetTenantRoutingInfoResponseMsg {
-  bool isolatedTbCore = 1;
   bool isolatedTbRuleEngine = 2;
 }
 
@@ -793,9 +803,8 @@ message EntityContentRequestMsg {
 
 message EntityContentResponseMsg {
   string data = 1;
-  string chunkedMsgId = 2;
-  int32 chunkIndex = 3;
-  int32 chunksCount = 4;
+  int32 chunkIndex = 2;
+  int32 chunksCount = 3;
 }
 
 message EntitiesContentRequestMsg {
@@ -807,7 +816,8 @@ message EntitiesContentRequestMsg {
 
 message EntitiesContentResponseMsg {
   EntityContentResponseMsg item = 1;
-  int32 itemsCount = 2;
+  int32 itemIdx = 2;
+  int32 itemsCount = 3;
 }
 
 message VersionsDiffRequestMsg {

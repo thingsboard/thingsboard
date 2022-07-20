@@ -30,7 +30,7 @@ import {
   WidgetLayout
 } from '@shared/models/dashboard.models';
 import { isDefined, isString, isUndefined } from '@core/utils';
-import { Datasource, DatasourceType, Widget } from '@app/shared/models/widget.models';
+import { Datasource, DatasourceType, Widget, widgetType } from '@app/shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AliasFilterType, EntityAlias, EntityAliasFilter } from '@app/shared/models/alias.models';
 import { EntityId } from '@app/shared/models/id/entity-id';
@@ -106,7 +106,8 @@ export class DashboardUtilsService {
     const targetDevicesByAliasId: {[aliasId: string]: Array<Array<string>>} = {};
     for (const widgetId of Object.keys(dashboard.configuration.widgets)) {
       const widget = dashboard.configuration.widgets[widgetId];
-      widget.config.datasources.forEach((datasource) => {
+      const datasources = widget.type === widgetType.alarm ? [widget.config.alarmSource] : widget.config.datasources;
+      datasources.forEach((datasource) => {
         if (datasource.entityAliasId) {
           const aliasId = datasource.entityAliasId;
           let aliasDatasources = datasourcesByAliasId[aliasId];

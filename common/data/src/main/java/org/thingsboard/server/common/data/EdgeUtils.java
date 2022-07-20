@@ -62,6 +62,8 @@ public final class EdgeUtils {
                 return EdgeEventType.WIDGET_TYPE;
             case OTA_PACKAGE:
                 return EdgeEventType.OTA_PACKAGE;
+            case QUEUE:
+                return EdgeEventType.QUEUE;
             default:
                 log.warn("Unsupported entity type [{}]", entityType);
                 return null;
