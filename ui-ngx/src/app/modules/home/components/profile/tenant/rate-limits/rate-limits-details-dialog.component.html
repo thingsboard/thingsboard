@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<form [formGroup]="editDetailsFormGroup" style="width: 800px;">
+<form [formGroup]="editDetailsFormGroup">
   <mat-toolbar color="primary">
-    <h2 translate>{{ title }}</h2>
+    <h2>{{ title | translate }}</h2>
     <span fxFlex></span>
     <button mat-icon-button
             (click)="cancel()"

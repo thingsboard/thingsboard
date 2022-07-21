@@ -469,20 +469,12 @@
           </tb-rate-limits>
         </div>
         <div fxFlex fxLayout="row"  fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
-          <mat-form-field fxFlex class="mat-block">
-            <mat-label translate>tenant-profile.tenant-entity-export-rate-limit</mat-label>
-            <input matInput formControlName="tenantEntityExportRateLimit">
-          </mat-form-field>
-          <mat-form-field fxFlex class="mat-block">
-            <mat-label translate>tenant-profile.tenant-entity-import-rate-limit</mat-label>
-            <input matInput formControlName="tenantEntityImportRateLimit">
-          </mat-form-field>
-          <!--          <tb-rate-limits fxFlex="50" formControlName="tenantEntityExportRateLimit"
-                                    [type]="rateLimitsType.TENANT_ENTITY_EXPORT_RATE_LIMIT">
-                    </tb-rate-limits>
-                    <tb-rate-limits fxFlex="50" formControlName="tenantEntityImportRateLimit"
-                                    [type]="rateLimitsType.TENANT_ENTITY_IMPORT_RATE_LIMIT">
-                    </tb-rate-limits>-->
+          <tb-rate-limits fxFlex="50" formControlName="tenantEntityExportRateLimit"
+                          [type]="rateLimitsType.TENANT_ENTITY_EXPORT_RATE_LIMIT">
+          </tb-rate-limits>
+          <tb-rate-limits fxFlex="50" formControlName="tenantEntityImportRateLimit"
+                          [type]="rateLimitsType.TENANT_ENTITY_IMPORT_RATE_LIMIT">
+          </tb-rate-limits>
         </div>
       </ng-template>
     </mat-expansion-panel>

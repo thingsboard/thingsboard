@@ -24,11 +24,10 @@
       <tb-rate-limits-text formControlName="rateLimits"></tb-rate-limits-text>
     </div>
   </fieldset>
-  <div style="padding-top: 12px">
-    <button mat-icon-button color="primary" type="button" *ngIf="!disabled"
-            (click)="onClick($event, 'add')"
-            [matTooltip]="'tenant-profile.rate-limits.add-limit' | translate" matTooltipPosition="above">
-      <mat-icon>add_circle_outline</mat-icon>
-    </button>
-  </div>
+  <button mat-icon-button color="primary" type="button" *ngIf="!disabled"
+          class="tb-rate-limits-button"
+          (click)="onClick($event, 'add')"
+          [matTooltip]="'tenant-profile.rate-limits.add-limit' | translate" matTooltipPosition="above">
+    <mat-icon>add_circle_outline</mat-icon>
+  </button>
 </div>

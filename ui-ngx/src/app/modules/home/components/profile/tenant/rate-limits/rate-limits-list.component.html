@@ -28,6 +28,9 @@
         <mat-error *ngIf="rateLimit.get('value').hasError('required')">
           {{ 'tenant-profile.rate-limits.number-of-messages-required' | translate }}
         </mat-error>
+        <mat-error *ngIf="rateLimit.get('value').hasError('min')">
+          {{ 'tenant-profile.rate-limits.number-of-messages-min' | translate }}
+        </mat-error>
       </mat-form-field>
       <mat-form-field fxFlex hideRequiredMarker appearance="fill" class="mat-block">
         <mat-label translate>tenant-profile.rate-limits.per-seconds</mat-label>
@@ -36,8 +39,12 @@
         <mat-error *ngIf="rateLimit.get('time').hasError('required')">
           {{ 'tenant-profile.rate-limits.per-seconds-required' | translate }}
         </mat-error>
+        <mat-error *ngIf="rateLimit.get('time').hasError('min')">
+          {{ 'tenant-profile.rate-limits.per-seconds-min' | translate }}
+        </mat-error>
       </mat-form-field>
       <button mat-icon-button type="button" color="primary"
+              class="tb-rate-limits-button"
               *ngIf="!rateLimitsFormArray().disabled"
               (click)="removeRateLimits($index)"
               [matTooltip]="'tenant-profile.rate-limits.remove-limit' | translate" matTooltipPosition="above">

@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 :host {
-  button {
-    min-width: 40px;
-    mat-icon {
-      margin-top: 0.6em;
-    }
-  }
   .tb-rate-limits-preview {
     margin-top: 1.5em;
     span {
@@ -36,12 +30,18 @@
     color: rgba(0,0,0,.54);
     margin-bottom: 16px;
   }
+  .tb-rate-limits-button {
+    margin-top: 0.5em;
+  }
 }
 
 :host ::ng-deep {
   mat-form-field {
     .mat-form-field-wrapper {
       padding-bottom: 1em;
+    }
+    .mat-form-field-infix {
+      width: 100%;
     }
   }
 }
