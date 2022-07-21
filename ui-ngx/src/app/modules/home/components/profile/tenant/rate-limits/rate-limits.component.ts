@@ -30,7 +30,7 @@ import {
   RateLimitsDetailsDialogData
 } from '@home/components/profile/tenant/rate-limits/rate-limits-details-dialog.component';
 import {
-  editRateLimitTranslationMap,
+  rateLimitDialogTitleTranslationMap,
   rateLimitLabelTranslationMap,
   RateLimitsType,
   stringToRateLimitsArray
@@ -109,7 +109,7 @@ export class RateLimitsComponent implements ControlValueAccessor, OnInit, Valida
     if ($event) {
       $event.stopPropagation();
     }
-    const title = editRateLimitTranslationMap.get(this.type);
+    const title = rateLimitDialogTitleTranslationMap.get(this.type);
     this.dialog.open<RateLimitsDetailsDialogComponent, RateLimitsDetailsDialogData,
       string>(RateLimitsDetailsDialogComponent, {
       disableClose: true,

@@ -53,7 +53,7 @@ export const rateLimitLabelTranslationMap = new Map<RateLimitsType, string>(
   ]
 );
 
-export const editRateLimitTranslationMap = new Map<RateLimitsType, string>(
+export const rateLimitDialogTitleTranslationMap = new Map<RateLimitsType, string>(
   [
     [RateLimitsType.TENANT_MESSAGES, 'tenant-profile.rate-limits.edit-transport-tenant-msg-title'],
     [RateLimitsType.TENANT_TELEMETRY_MESSAGES, 'tenant-profile.rate-limits.edit-transport-tenant-telemetry-msg-title'],
