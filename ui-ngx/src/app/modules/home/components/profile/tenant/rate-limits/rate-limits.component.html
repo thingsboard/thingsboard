@@ -19,14 +19,14 @@
   <fieldset class="fieldset-element">
     <legend class="legend-element">{{ label | translate }}</legend>
     <div [formGroup]="rateLimitsFormGroup" fxFlex fxLayout="row" fxLayoutGap="8px"
-         (click)="onClick($event, 'edit')"
+         (click)="onClick($event)"
          [matTooltip]="'tenant-profile.rate-limits.edit-limit' | translate" matTooltipPosition="above">
       <tb-rate-limits-text formControlName="rateLimits"></tb-rate-limits-text>
     </div>
   </fieldset>
   <button mat-icon-button color="primary" type="button" *ngIf="!disabled"
           class="tb-rate-limits-button"
-          (click)="onClick($event, 'add')"
+          (click)="onClick($event)"
           [matTooltip]="'tenant-profile.rate-limits.add-limit' | translate" matTooltipPosition="above">
     <mat-icon>add_circle_outline</mat-icon>
   </button>

@@ -70,23 +70,6 @@ export const editRateLimitTranslationMap = new Map<RateLimitsType, string>(
   ]
 );
 
-export const addRateLimitTranslationMap = new Map<RateLimitsType, string>(
-  [
-    [RateLimitsType.TENANT_MESSAGES, 'tenant-profile.rate-limits.add-transport-tenant-msg-title'],
-    [RateLimitsType.TENANT_TELEMETRY_MESSAGES, 'tenant-profile.rate-limits.add-transport-tenant-telemetry-msg-title'],
-    [RateLimitsType.TENANT_TELEMETRY_DATA_POINTS, 'tenant-profile.rate-limits.add-transport-tenant-telemetry-data-points-title'],
-    [RateLimitsType.DEVICE_MESSAGES, 'tenant-profile.rate-limits.add-transport-device-msg-title'],
-    [RateLimitsType.DEVICE_TELEMETRY_MESSAGES, 'tenant-profile.rate-limits.add-transport-device-telemetry-msg-title'],
-    [RateLimitsType.DEVICE_TELEMETRY_DATA_POINTS, 'tenant-profile.rate-limits.add-transport-device-telemetry-data-points-title'],
-    [RateLimitsType.TENANT_SERVER_REST_LIMITS_CONFIGURATION, 'tenant-profile.rate-limits.add-transport-tenant-msg-rate-limit-title'],
-    [RateLimitsType.CUSTOMER_SERVER_REST_LIMITS_CONFIGURATION, 'tenant-profile.rate-limits.add-customer-rest-limits-title'],
-    [RateLimitsType.WS_UPDATE_PER_SESSION_RATE_LIMIT, 'tenant-profile.rate-limits.add-ws-limit-updates-per-session-title'],
-    [RateLimitsType.CASSANDRA_QUERY_TENANT_RATE_LIMITS_CONFIGURATION, 'tenant-profile.rate-limits.add-cassandra-tenant-limits-configuration-title'],
-    [RateLimitsType.TENANT_ENTITY_EXPORT_RATE_LIMIT, 'tenant-profile.rate-limits.add-tenant-entity-export-rate-limit-title'],
-    [RateLimitsType.TENANT_ENTITY_IMPORT_RATE_LIMIT, 'tenant-profile.rate-limits.add-tenant-entity-import-rate-limit-title'],
-  ]
-);
-
 export function stringToRateLimitsArray(rateLimits: string): Array<RateLimits> {
   const result: Array<RateLimits> = [];
   if (rateLimits?.length > 0) {

@@ -30,7 +30,6 @@ import {
   RateLimitsDetailsDialogData
 } from '@home/components/profile/tenant/rate-limits/rate-limits-details-dialog.component';
 import {
-  addRateLimitTranslationMap,
   editRateLimitTranslationMap,
   rateLimitLabelTranslationMap,
   RateLimitsType,
@@ -106,11 +105,11 @@ export class RateLimitsComponent implements ControlValueAccessor, OnInit, Valida
     return null;
   }
 
-  public onClick($event: Event, action: string) {
+  public onClick($event: Event) {
     if ($event) {
       $event.stopPropagation();
     }
-    const title = this.setTitle(action);
+    const title = editRateLimitTranslationMap.get(this.type);
     this.dialog.open<RateLimitsDetailsDialogComponent, RateLimitsDetailsDialogData,
       string>(RateLimitsDetailsDialogComponent, {
       disableClose: true,
@@ -126,15 +125,6 @@ export class RateLimitsComponent implements ControlValueAccessor, OnInit, Valida
         this.updateModel();
       }
     });
-  }
-
-  private setTitle(action: string): string {
-    switch (action) {
-      case 'add':
-        return addRateLimitTranslationMap.get(this.type);
-      case 'edit':
-        return editRateLimitTranslationMap.get(this.type);
-    }
   }
 
   private updateRateLimitsInfo() {
