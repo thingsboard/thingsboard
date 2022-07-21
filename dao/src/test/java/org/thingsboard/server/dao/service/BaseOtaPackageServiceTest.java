@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.hibernate.engine.jdbc.BlobProxy;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -40,6 +41,7 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 
 import javax.validation.ValidationException;
 import java.nio.ByteBuffer;
+import java.sql.Blob;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -56,7 +58,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
     private static final ChecksumAlgorithm CHECKSUM_ALGORITHM = ChecksumAlgorithm.SHA256;
     private static final String CHECKSUM = "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a";
     private static final long DATA_SIZE = 1L;
-    private static final ByteBuffer DATA = ByteBuffer.wrap(new byte[]{(int) DATA_SIZE});
+    private static final Blob DATA = BlobProxy.generateProxy(new byte[]{(int) DATA_SIZE});
     private static final String URL = "http://firmware.test.org";
 
     private final IdComparator<OtaPackageInfo> idComparator = new IdComparator<>();

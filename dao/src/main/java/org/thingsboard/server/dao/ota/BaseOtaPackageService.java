@@ -28,6 +28,7 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
+import org.thingsboard.server.cache.ota.service.FileCacheService;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.StringUtils;
@@ -42,6 +43,7 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 
+import javax.transaction.Transactional;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
@@ -62,15 +64,13 @@ import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 public class BaseOtaPackageService implements OtaPackageService {
     public static final String INCORRECT_OTA_PACKAGE_ID = "Incorrect otaPackageId ";
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
-
-    private static final int ONE_MEGA_BYTE = 1_000_000;
-
     private final OtaPackageDao otaPackageDao;
     private final OtaPackageInfoDao otaPackageInfoDao;
     private final CacheManager cacheManager;
     private final OtaPackageDataCache otaPackageDataCache;
     private final DataValidator<OtaPackageInfo> otaPackageInfoValidator;
     private final DataValidator<OtaPackage> otaPackageValidator;
+    private final FileCacheService fileCacheService;
 
     @Override
     public OtaPackageInfo saveOtaPackageInfo(OtaPackageInfo otaPackageInfo, boolean isUrl) {
@@ -101,12 +101,12 @@ public class BaseOtaPackageService implements OtaPackageService {
     public OtaPackage saveOtaPackage(OtaPackage otaPackage) {
         log.trace("Executing saveOtaPackage [{}]", otaPackage);
         try {
-            File tempFile = saveDataToTemporaryFile(otaPackage.getData().getBinaryStream());
+            File tempFile= fileCacheService.saveDataTemporaryFile(otaPackage.getData().getBinaryStream());
             otaPackage.setData(BlobProxy.generateProxy(new FileInputStream(tempFile), otaPackage.getDataSize()));
             try {
                 otaPackageValidator.validate(otaPackage, OtaPackageInfo::getTenantId);
             }catch (RuntimeException e){
-                deleteTempFile(tempFile);
+                fileCacheService.deleteFile(tempFile);
                 throw e;
             }
             otaPackage.setData(BlobProxy.generateProxy(new FileInputStream(tempFile), otaPackage.getDataSize()));
@@ -117,7 +117,7 @@ public class BaseOtaPackageService implements OtaPackageService {
                 otaPackageDataCache.evict(otaPackageId.toString());
             }
             OtaPackage save = otaPackageDao.save(otaPackage.getTenantId(), otaPackage);
-            deleteTempFile(tempFile);
+            fileCacheService.deleteFile(tempFile);
             return save;
         } catch (FileNotFoundException | SQLException e){
             log.error("Failed to validate ota package {}",otaPackage.getId(), e);
@@ -131,31 +131,6 @@ public class BaseOtaPackageService implements OtaPackageService {
             }
         }
     }
-
-
-    public void deleteTempFile(File file) {
-        try {
-            if(file.exists()) {
-                FileUtils.delete(file);
-                log.info("System file {} was deleted", file.getName());
-            }
-        } catch (IOException e) {
-            log.error("Failed to delete file {}", file.getName(), e);
-        }
-    }
-
-    public File saveDataToTemporaryFile(InputStream inputStream){
-        File path = new File("files/");
-        try {
-            File tempFile = File.createTempFile(UUID.randomUUID().toString(), ".tmp", path);
-            FileUtils.copyInputStreamToFile(inputStream, tempFile);
-            return tempFile;
-        }catch (IOException e){
-            log.error("Failed to create temp file", e);
-            throw new RuntimeException("Failed to create temp file for input stream");
-        }
-    }
-
     @Override
     public String generateChecksum(ChecksumAlgorithm checksumAlgorithm, ByteBuffer data) {
         if (data == null || !data.hasArray() || data.array().length == 0) {
@@ -290,33 +265,17 @@ public class BaseOtaPackageService implements OtaPackageService {
         return Collections.singletonList(otaPackageId);
     }
 
-    public String generateChecksum(ChecksumAlgorithm checksumAlgorithm, InputStream fileData) {
+    @Transactional
+    public InputStream getOtaDataStream(TenantId tenantId, OtaPackageId otaPackageId){
         try {
-            MessageDigest md = MessageDigest.getInstance(checksumAlgorithm.name());
-            return checksum(fileData, md);
-        } catch (NoSuchAlgorithmException e) {
-            log.error("No such checksum algorithm {}", checksumAlgorithm, e);
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            log.error("Failed to calculate checksum", e);
-            throw new RuntimeException(e);
-        } catch (Exception e) {
-            log.error("ff", e);
-            throw new RuntimeException(e);
+            return fileCacheService.getOtaDataStream(otaPackageId);
+        }catch (FileNotFoundException e){
+            OtaPackage otaPackage = findOtaPackageById(tenantId, otaPackageId);
+            if (otaPackage == null) {
+                log.error("Can't find otaPackage to download file  {}", otaPackage);
+                throw new RuntimeException("No such OtaPackageId");
+            }
+            return fileCacheService.loadOtaData(otaPackageId,otaPackage.getData());
         }
     }
-
-    private String checksum(InputStream inputStream, MessageDigest md) throws IOException {
-        byte[] buffer = new byte[ONE_MEGA_BYTE];
-        int count = 0;
-        while ((count = inputStream.read(buffer)) != -1) {
-            md.update(buffer, 0, count);
-        }
-        StringBuilder result = new StringBuilder();
-        for (byte b : md.digest()) {
-            result.append(String.format("%02x", b));
-        }
-        return result.toString();
-    }
-
 }

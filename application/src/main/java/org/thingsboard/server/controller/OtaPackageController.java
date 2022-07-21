@@ -46,6 +46,7 @@ import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.ota.util.ChecksumUtil;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.cache.ota.service.FileCacheService;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -95,12 +96,12 @@ public class OtaPackageController extends BaseController {
         checkParameter(OTA_PACKAGE_ID, strOtaPackageId);
         try {
             OtaPackageId otaPackageId = new OtaPackageId(toUUID(strOtaPackageId));
-//            OtaPackage otaPackage = checkOtaPackageId(otaPackageId, Operation.READ);
-            OtaPackage otaPackage = otaPackageService.findOtaPackageById(new TenantId(UUID.fromString("b04858a0-b646-11ec-8d4d-f5c10326c05e")), otaPackageId);
+            OtaPackage otaPackage = checkOtaPackageId(otaPackageId, Operation.READ);
             if (otaPackage.hasUrl()) {
                 return ResponseEntity.badRequest().build();
             }
-            InputStreamResource resource = fileCacheService.getOtaResourceById(new TenantId(UUID.fromString("b04858a0-b646-11ec-8d4d-f5c10326c05e")), otaPackageId);
+            InputStream dataStream = otaPackageService.getOtaDataStream(getTenantId(), otaPackageId);
+            InputStreamResource resource = new InputStreamResource(dataStream);
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + otaPackage.getFileName())
                     .header("x-filename", otaPackage.getFileName())
@@ -197,7 +198,7 @@ public class OtaPackageController extends BaseController {
             ChecksumAlgorithm checksumAlgorithm = ChecksumAlgorithm.valueOf(checksumAlgorithmStr.toUpperCase());
 
             if (StringUtils.isEmpty(checksum)) {
-                checksum = otaPackageService.generateChecksum(checksumAlgorithm, file.getInputStream());
+                checksum = ChecksumUtil.generateChecksum(checksumAlgorithm, file.getInputStream());
             }
             OtaPackageInfo savedOtaPackage = saveOtaPackageWithData(otaPackageId, file, checksum, checksumAlgorithm);
             logEntityAction(savedOtaPackage.getId(), savedOtaPackage, null, ActionType.UPDATED, null);

@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.hibernate.engine.jdbc.BlobProxy;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -200,7 +201,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         firmware.setContentType("text/plain");
         firmware.setChecksumAlgorithm(ChecksumAlgorithm.SHA256);
         firmware.setChecksum("4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a");
-        firmware.setData(ByteBuffer.wrap(new byte[]{1}));
+        firmware.setData(BlobProxy.generateProxy(new byte[]{1}));
         firmware.setDataSize(1L);
         OtaPackage savedFirmware = otaPackageService.saveOtaPackage(firmware);
 
@@ -235,7 +236,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         firmware.setContentType("text/plain");
         firmware.setChecksumAlgorithm(ChecksumAlgorithm.SHA256);
         firmware.setChecksum("4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a");
-        firmware.setData(ByteBuffer.wrap(new byte[]{1}));
+        firmware.setData(BlobProxy.generateProxy(new byte[]{1}));
         firmware.setDataSize(1L);
         OtaPackage savedFirmware = otaPackageService.saveOtaPackage(firmware);
 

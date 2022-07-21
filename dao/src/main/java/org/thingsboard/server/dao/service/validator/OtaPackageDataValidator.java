@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.ota.OtaPackageDao;
 import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.dao.ota.util.ChecksumUtil;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 
 
@@ -40,10 +41,6 @@ public class OtaPackageDataValidator extends BaseOtaPackageDataValidator<OtaPack
 
     @Autowired
     private OtaPackageDao otaPackageDao;
-
-    @Autowired
-    @Lazy
-    private OtaPackageService otaPackageService;
 
     @Autowired
     @Lazy
@@ -77,7 +74,7 @@ public class OtaPackageDataValidator extends BaseOtaPackageDataValidator<OtaPack
                 throw new DataValidationException("OtaPackage checksum should be specified!");
             }
             try {
-                String currentChecksum = otaPackageService.generateChecksum(otaPackage.getChecksumAlgorithm(), otaPackage.getData().getBinaryStream());
+                String currentChecksum = ChecksumUtil.generateChecksum(otaPackage.getChecksumAlgorithm(), otaPackage.getData().getBinaryStream());
                 if (!currentChecksum.equals(otaPackage.getChecksum())) {
                     throw new DataValidationException("Wrong otaPackage file!");
                 }
