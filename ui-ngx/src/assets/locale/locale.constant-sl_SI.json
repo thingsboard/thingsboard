@@ -1997,9 +1997,7 @@
     "tenant-required": "Najemnik je obvezen",
     "search": "Iskanje najemnikov",
     "selected-tenants": "{ count, plural, 1 {1 tenant} other {# tenants} } izbran",
-    "isolated-tb-core": "Obdelava v izoliranem odlagališču ThingsBoard Core",
     "isolated-tb-rule-engine": "Obdelava v izoliranem odlagališču ThingsBoard Rule Engine",
-    "isolated-tb-core-details": "Zahteva ločene mikro storitve na izoliranega najemnika",
     "isolated-tb-rule-engine-details": "Zahteva ločene mikro storitve na izoliranega najemnika"
   },
   "tenant-profile": {

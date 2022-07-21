@@ -116,11 +116,11 @@ const linkActionRegex = /<link-act name=['"]([^['"]*)['"]>([^<]*)<\/link-act>/g;
 const buttonActionRegex = /<button-act name=['"]([^['"]*)['"]>([^<]*)<\/button-act>/g;
 
 function createLinkElement(actionName: string, actionText: string): string {
-  return `<a href="javascript:void(0);" class="tb-custom-action" data-action-name=${actionName}>${actionText}</a>`;
+  return `<a href="javascript:void(0);" class="tb-custom-action" data-action-name="${actionName}">${actionText}</a>`;
 }
 
 function createButtonElement(actionName: string, actionText: string) {
-  return `<button mat-button class="tb-custom-action" data-action-name=${actionName}>${actionText}</button>`;
+  return `<button mat-button class="tb-custom-action" data-action-name="${actionName}">${actionText}</button>`;
 }
 
 function parseTemplate(template: string, data: FormattedData,

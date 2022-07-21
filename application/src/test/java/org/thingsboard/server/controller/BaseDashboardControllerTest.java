@@ -283,6 +283,7 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         doDelete("/api/tenant/" + savedTenant2.getId().getId().toString())
                 .andExpect(status().isForbidden())
                 .andExpect(statusReason(containsString(msgErrorPermission)));
+
         testNotifyEntityNever(savedDashboard.getId(), savedDashboard);
 
         loginSysAdmin();

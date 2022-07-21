@@ -226,6 +226,9 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
                 if (deviceProfile == null) {
                     throw new DataValidationException("Device is referencing non existing device profile!");
                 }
+                if (!deviceProfile.getTenantId().equals(device.getTenantId())) {
+                    throw new DataValidationException("Device can`t be referencing to device profile from different tenant!");
+                }
             }
             device.setType(deviceProfile.getName());
             device.setDeviceData(syncDeviceData(deviceProfile, device.getDeviceData()));
@@ -234,12 +237,10 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
             return result;
         } catch (Exception t) {
             handleEvictEvent(deviceCacheEvictEvent);
-            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
-            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("device_name_unq_key")) {
-                throw new DataValidationException("Device with such name already exists!");
-            } else {
-                throw t;
-            }
+            checkConstraintViolation(t,
+                    "device_name_unq_key", "Device with such name already exists!",
+                    "device_external_id_unq_key", "Device with such external id already exists!");
+            throw t;
         }
     }
 
@@ -530,6 +531,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
 
         device.setTenantId(tenantId);
         device.setCustomerId(null);
+        device.setDeviceProfileId(null);
         Device savedDevice = doSaveDevice(device, null, true);
 
         DeviceCacheEvictEvent oldTenantEvent = new DeviceCacheEvictEvent(oldTenantId, device.getId(), device.getName(), null);

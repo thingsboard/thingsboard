@@ -27,10 +27,14 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.OtaPackageInfo;
+import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -49,6 +53,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,12 +61,15 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
+import static org.thingsboard.server.common.data.ota.OtaPackageType.SOFTWARE;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
-    static final TypeReference<PageData<Device>> PAGE_DATA_DEVICE_TYPE_REF = new TypeReference<>() {
-    };
+    static final TypeReference<PageData<Device>> PAGE_DATA_DEVICE_TYPE_REF = new TypeReference<>() {};
 
     ListeningExecutorService executor;
 
@@ -70,6 +78,9 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
 
     private Tenant savedTenant;
     private User tenantAdmin;
+
+    @SpyBean
+    private GatewayNotificationsService gatewayNotificationsService;
 
     @Before
     public void beforeTest() throws Exception {
@@ -113,6 +124,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         Device savedDevice = doPost("/api/device", device, Device.class);
 
         Device oldDevice = new Device(savedDevice);
+
         testNotifyEntityOneTimeMsgToEdgeServiceNever(savedDevice, savedDevice.getId(), savedDevice.getId(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.ADDED);
@@ -203,7 +215,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
 
         String savedDeviceIdStr = savedDevice.getId().getId().toString();
         doPost("/api/device", savedDevice)
-                .andExpect( status().isNotFound())
+                .andExpect(status().isNotFound())
                 .andExpect(statusReason(containsString(msgErrorNoFound("Device", savedDeviceIdStr))));
 
         testNotifyEntityNever(savedDevice.getId(), savedDevice);
@@ -219,6 +231,66 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         testNotificationUpdateGatewayNever();
 
         deleteDifferentTenant();
+    }
+
+    @Test
+    public void testSaveDeviceWithProfileFromDifferentTenant() throws Exception {
+        loginDifferentTenant();
+        DeviceProfile differentProfile = createDeviceProfile("Different profile");
+        differentProfile = doPost("/api/deviceProfile", differentProfile, DeviceProfile.class);
+
+        loginTenantAdmin();
+        Device device = new Device();
+        device.setName("My device");
+        device.setDeviceProfileId(differentProfile.getId());
+        doPost("/api/device", device).andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Device can`t be referencing to device profile from different tenant!")));
+    }
+
+    @Test
+    public void testSaveDeviceWithFirmwareFromDifferentTenant() throws Exception {
+        loginDifferentTenant();
+        DeviceProfile differentProfile = createDeviceProfile("Different profile");
+        differentProfile = doPost("/api/deviceProfile", differentProfile, DeviceProfile.class);
+        SaveOtaPackageInfoRequest firmwareInfo = new SaveOtaPackageInfoRequest();
+        firmwareInfo.setDeviceProfileId(differentProfile.getId());
+        firmwareInfo.setType(FIRMWARE);
+        firmwareInfo.setTitle("title");
+        firmwareInfo.setVersion("1.0");
+        firmwareInfo.setUrl("test.url");
+        firmwareInfo.setUsesUrl(true);
+        OtaPackageInfo savedFw = doPost("/api/otaPackage", firmwareInfo, OtaPackageInfo.class);
+
+        loginTenantAdmin();
+        Device device = new Device();
+        device.setName("My device");
+        device.setType("default");
+        device.setFirmwareId(savedFw.getId());
+        doPost("/api/device", device).andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Can't assign firmware from different tenant!")));
+    }
+
+    @Test
+    public void testSaveDeviceWithSoftwareFromDifferentTenant() throws Exception {
+        loginDifferentTenant();
+        DeviceProfile differentProfile = createDeviceProfile("Different profile");
+        differentProfile = doPost("/api/deviceProfile", differentProfile, DeviceProfile.class);
+        SaveOtaPackageInfoRequest softwareInfo = new SaveOtaPackageInfoRequest();
+        softwareInfo.setDeviceProfileId(differentProfile.getId());
+        softwareInfo.setType(SOFTWARE);
+        softwareInfo.setTitle("title");
+        softwareInfo.setVersion("1.0");
+        softwareInfo.setUrl("test.url");
+        softwareInfo.setUsesUrl(true);
+        OtaPackageInfo savedSw = doPost("/api/otaPackage", softwareInfo, OtaPackageInfo.class);
+
+        loginTenantAdmin();
+        Device device = new Device();
+        device.setName("My device");
+        device.setType("default");
+        device.setSoftwareId(savedSw.getId());
+        doPost("/api/device", device).andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Can't assign software from different tenant!")));
     }
 
     @Test
@@ -248,8 +320,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         }
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceNever(new Device(), new Device(),
-                savedTenant.getId(),
-                tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.ADDED, cntEntity);
         testNotificationUpdateGatewayNever();
 
@@ -813,7 +884,9 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new Device(), new Device(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.ADDED, ActionType.ASSIGNED_TO_CUSTOMER, cntEntity, cntEntity, cntEntity * 2);
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
         testNotificationUpdateGatewayNever();
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
 
         List<Device> loadedDevices = new ArrayList<>(cntEntity);
         PageLink pageLink = new PageLink(23);
@@ -827,8 +900,6 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         } while (pageData.hasNext());
 
         assertThat(devices).containsExactlyInAnyOrderElementsOf(loadedDevices);
-
-        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
 
         deleteEntitiesAsync("/api/customer/device/", loadedDevices, executor).get(TIMEOUT, TimeUnit.SECONDS);
 
@@ -1115,5 +1186,21 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
                 PAGE_DATA_DEVICE_TYPE_REF, new PageLink(100));
 
         Assert.assertEquals(0, pageData.getData().size());
+    }
+
+    protected void testNotificationUpdateGatewayOneTime(Device device, Device oldDevice) {
+        Mockito.verify(gatewayNotificationsService, times(1)).onDeviceUpdated(Mockito.eq(device), Mockito.eq(oldDevice));
+    }
+
+    protected void testNotificationUpdateGatewayNever() {
+        Mockito.verify(gatewayNotificationsService, never()).onDeviceUpdated(Mockito.any(Device.class), Mockito.any(Device.class));
+    }
+
+    protected void testNotificationDeleteGatewayOneTime(Device device) {
+        Mockito.verify(gatewayNotificationsService, times(1)).onDeviceDeleted(device);
+    }
+
+    protected void testNotificationDeleteGatewayNever() {
+        Mockito.verify(gatewayNotificationsService, never()).onDeviceDeleted(Mockito.any(Device.class));
     }
 }

@@ -2641,7 +2641,7 @@
         "tokenCopiedWarnMessage": "JWT token is expired! Please, refresh the page."
     },
     "security": {
-        "security": "Password and authentication",
+        "security": "Security",
         "2fa": {
             "2fa": "Two-factor authentication",
             "2fa-description": "Two-factor authentication protects your account from unauthorized access. All you have to do is enter a security code when you log in.",
@@ -2923,6 +2923,7 @@
     },
     "queue": {
         "queue-name": "Queue",
+        "no-queues-found": "No queues found.",
         "no-queues-matching": "No queues matching '{{queue}}' were found.",
         "select-name": "Select queue name",
         "name": "Name",
@@ -3052,9 +3053,7 @@
         "tenant-required": "Tenant is required",
         "search": "Search tenants",
         "selected-tenants": "{ count, plural, 1 {1 tenant} other {# tenants} } selected",
-        "isolated-tb-core": "Processing in isolated ThingsBoard Core container",
         "isolated-tb-rule-engine": "Processing in isolated ThingsBoard Rule Engine container",
-        "isolated-tb-core-details": "Requires separate microservice(s) per isolated Tenant",
         "isolated-tb-rule-engine-details": "Requires separate microservice(s) per isolated Tenant"
     },
     "tenant-profile": {
@@ -4408,6 +4407,7 @@
             "default-map-zoom-level": "Default map zoom level (0 - 20)",
             "default-map-center-position": "Default map center position (0,0)",
             "disable-scroll-zooming": "Disable scroll zooming",
+            "disable-double-click-zooming": "Disable double click zooming",
             "disable-zoom-control-buttons": "Disable zoom control buttons",
             "fit-map-bounds": "Fit map bounds to cover all markers",
             "use-default-map-center-position": "Use default map center position",

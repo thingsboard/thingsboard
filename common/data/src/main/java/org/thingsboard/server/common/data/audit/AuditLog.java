@@ -28,25 +28,25 @@ import org.thingsboard.server.common.data.id.*;
 @Data
 public class AuditLog extends BaseData<AuditLogId> {
 
-    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id", readOnly = true)
+    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private TenantId tenantId;
-    @ApiModelProperty(position = 4, value = "JSON object with Customer Id", readOnly = true)
+    @ApiModelProperty(position = 4, value = "JSON object with Customer Id", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private CustomerId customerId;
-    @ApiModelProperty(position = 5, value = "JSON object with Entity id", readOnly = true)
+    @ApiModelProperty(position = 5, value = "JSON object with Entity id", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private EntityId entityId;
-    @ApiModelProperty(position = 6, value = "Name of the logged entity", example = "Thermometer", readOnly = true)
+    @ApiModelProperty(position = 6, value = "Name of the logged entity", example = "Thermometer", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String entityName;
-    @ApiModelProperty(position = 7, value = "JSON object with User id.", readOnly = true)
+    @ApiModelProperty(position = 7, value = "JSON object with User id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private UserId userId;
-    @ApiModelProperty(position = 8, value = "Unique user name(email) of the user that performed some action on logged entity", example = "tenant@thingsboard.org", readOnly = true)
+    @ApiModelProperty(position = 8, value = "Unique user name(email) of the user that performed some action on logged entity", example = "tenant@thingsboard.org", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String userName;
-    @ApiModelProperty(position = 9, value = "String represented Action type", example = "ADDED", readOnly = true)
+    @ApiModelProperty(position = 9, value = "String represented Action type", example = "ADDED", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private ActionType actionType;
-    @ApiModelProperty(position = 10, value = "JsonNode represented action data", readOnly = true)
+    @ApiModelProperty(position = 10, value = "JsonNode represented action data", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private JsonNode actionData;
-    @ApiModelProperty(position = 11, value = "String represented Action status", example = "SUCCESS", allowableValues = "SUCCESS,FAILURE", readOnly = true)
+    @ApiModelProperty(position = 11, value = "String represented Action status", example = "SUCCESS", allowableValues = "SUCCESS,FAILURE", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private ActionStatus actionStatus;
-    @ApiModelProperty(position = 12, value = "Failure action details info. An empty string in case of action status type 'SUCCESS', otherwise includes stack trace of the caused exception.", readOnly = true)
+    @ApiModelProperty(position = 12, value = "Failure action details info. An empty string in case of action status type 'SUCCESS', otherwise includes stack trace of the caused exception.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String actionFailureDetails;
 
     public AuditLog() {
@@ -71,7 +71,7 @@ public class AuditLog extends BaseData<AuditLogId> {
         this.actionFailureDetails = auditLog.getActionFailureDetails();
     }
 
-    @ApiModelProperty(position = 2, value = "Timestamp of the auditLog creation, in milliseconds", example = "1609459200000", readOnly = true)
+    @ApiModelProperty(position = 2, value = "Timestamp of the auditLog creation, in milliseconds", example = "1609459200000", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();

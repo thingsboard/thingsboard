@@ -31,19 +31,19 @@ import org.thingsboard.server.common.data.id.TenantId;
 @EqualsAndHashCode(callSuper = true)
 public class Rpc extends BaseData<RpcId> implements HasTenantId {
 
-    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id.", readOnly = true)
+    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private TenantId tenantId;
-    @ApiModelProperty(position = 4, value = "JSON object with Device Id.", readOnly = true)
+    @ApiModelProperty(position = 4, value = "JSON object with Device Id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private DeviceId deviceId;
-    @ApiModelProperty(position = 5, value = "Expiration time of the request.", readOnly = true)
+    @ApiModelProperty(position = 5, value = "Expiration time of the request.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private long expirationTime;
-    @ApiModelProperty(position = 6, value = "The request body that will be used to send message to device.", readOnly = true)
+    @ApiModelProperty(position = 6, value = "The request body that will be used to send message to device.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private JsonNode request;
-    @ApiModelProperty(position = 7, value = "The response from the device.", readOnly = true)
+    @ApiModelProperty(position = 7, value = "The response from the device.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private JsonNode response;
-    @ApiModelProperty(position = 8, value = "The current status of the RPC call.", readOnly = true)
+    @ApiModelProperty(position = 8, value = "The current status of the RPC call.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private RpcStatus status;
-    @ApiModelProperty(position = 9, value = "Additional info used in the rule engine to process the updates to the RPC state.", readOnly = true)
+    @ApiModelProperty(position = 9, value = "Additional info used in the rule engine to process the updates to the RPC state.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private JsonNode additionalInfo;
 
     public Rpc() {
@@ -71,7 +71,7 @@ public class Rpc extends BaseData<RpcId> implements HasTenantId {
         return super.getId();
     }
 
-    @ApiModelProperty(position = 2, value = "Timestamp of the rpc creation, in milliseconds", example = "1609459200000", readOnly = true)
+    @ApiModelProperty(position = 2, value = "Timestamp of the rpc creation, in milliseconds", example = "1609459200000", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();

@@ -48,7 +48,7 @@ public class DeviceCredentials extends BaseData<DeviceCredentialsId> implements 
         this.credentialsValue = deviceCredentials.getCredentialsValue();
     }
 
-    @ApiModelProperty(position = 1, required = true, readOnly = true, value = "The Id is automatically generated during device creation. " +
+    @ApiModelProperty(position = 1, required = true, accessMode = ApiModelProperty.AccessMode.READ_ONLY, value = "The Id is automatically generated during device creation. " +
             "Use 'getDeviceCredentialsByDeviceId' to obtain the id based on device id. " +
             "Use 'updateDeviceCredentials' to update device credentials. ", example = "784f394c-42b6-435a-983c-b7beff2784f9")
     @Override

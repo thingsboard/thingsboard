@@ -273,7 +273,6 @@ message GetTenantRoutingInfoRequestMsg {
 }
 
 message GetTenantRoutingInfoResponseMsg {
-  bool isolatedTbCore = 1;
   bool isolatedTbRuleEngine = 2;
 }
 
@@ -804,9 +803,8 @@ message EntityContentRequestMsg {
 
 message EntityContentResponseMsg {
   string data = 1;
-  string chunkedMsgId = 2;
-  int32 chunkIndex = 3;
-  int32 chunksCount = 4;
+  int32 chunkIndex = 2;
+  int32 chunksCount = 3;
 }
 
 message EntitiesContentRequestMsg {
@@ -818,7 +816,8 @@ message EntitiesContentRequestMsg {
 
 message EntitiesContentResponseMsg {
   EntityContentResponseMsg item = 1;
-  int32 itemsCount = 2;
+  int32 itemIdx = 2;
+  int32 itemsCount = 3;
 }
 
 message VersionsDiffRequestMsg {

@@ -23,7 +23,7 @@ import org.thingsboard.server.common.data.id.WidgetTypeId;
 @Data
 public class WidgetType extends BaseWidgetType {
 
-    @ApiModelProperty(position = 7, value = "Complex JSON object that describes the widget type", readOnly = true)
+    @ApiModelProperty(position = 7, value = "Complex JSON object that describes the widget type", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private transient JsonNode descriptor;
 
     public WidgetType() {

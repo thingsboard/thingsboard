@@ -22,14 +22,19 @@ import org.junit.extensions.cpsuite.ClasspathSuite;
 import org.junit.runner.RunWith;
 import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
+import org.thingsboard.server.common.data.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.containsString;
@@ -44,10 +49,13 @@ import static org.junit.Assert.fail;
 public class ContainerTestSuite {
     final static boolean IS_REDIS_CLUSTER = Boolean.parseBoolean(System.getProperty("blackBoxTests.redisCluster"));
     final static boolean IS_HYBRID_MODE = Boolean.parseBoolean(System.getProperty("blackBoxTests.hybridMode"));
+    final static String QUEUE_TYPE = System.getProperty("blackBoxTests.queue", "kafka");
     private static final String SOURCE_DIR = "./../../docker/";
     private static final String TB_CORE_LOG_REGEXP = ".*Starting polling for events.*";
     private static final String TRANSPORTS_LOG_REGEXP = ".*Going to recalculate partitions.*";
     private static final String TB_VC_LOG_REGEXP = TRANSPORTS_LOG_REGEXP;
+    private static final String TB_JS_EXECUTOR_LOG_REGEXP = ".*template started.*";
+    private static final Duration CONTAINER_STARTUP_TIMEOUT = Duration.ofSeconds(400);
 
     private static DockerComposeContainer<?> testContainer;
 
@@ -66,6 +74,8 @@ public class ContainerTestSuite {
                 FileUtils.copyDirectory(new File(SOURCE_DIR), new File(targetDir));
                 replaceInFile(targetDir + "docker-compose.yml", "    container_name: \"${LOAD_BALANCER_NAME}\"", "", "container_name");
 
+                FileUtils.copyDirectory(new File("src/test/resources"), new File(targetDir));
+
                 class DockerComposeContainerImpl<SELF extends DockerComposeContainer<SELF>> extends DockerComposeContainer<SELF> {
                     public DockerComposeContainerImpl(List<File> composeFiles) {
                         super(composeFiles);
@@ -81,17 +91,45 @@ public class ContainerTestSuite {
                 List<File> composeFiles = new ArrayList<>(Arrays.asList(
                         new File(targetDir + "docker-compose.yml"),
                         new File(targetDir + "docker-compose.volumes.yml"),
-                        IS_HYBRID_MODE
-                                ? new File(targetDir + "docker-compose.hybrid.yml")
-                                : new File(targetDir + "docker-compose.postgres.yml"),
+                        new File(targetDir + (IS_HYBRID_MODE ? "docker-compose.hybrid.yml" : "docker-compose.postgres.yml")),
                         new File(targetDir + "docker-compose.postgres.volumes.yml"),
-                        new File(targetDir + "docker-compose.kafka.yml"),
-                        IS_REDIS_CLUSTER
-                                ? new File(targetDir + "docker-compose.redis-cluster.yml")
-                                : new File(targetDir + "docker-compose.redis.yml"),
-                        IS_REDIS_CLUSTER
-                                ? new File(targetDir + "docker-compose.redis-cluster.volumes.yml")
-                                : new File(targetDir + "docker-compose.redis.volumes.yml")));
+                        new File(targetDir + "docker-compose." + QUEUE_TYPE + ".yml"),
+                        new File(targetDir + (IS_REDIS_CLUSTER ? "docker-compose.redis-cluster.yml" : "docker-compose.redis.yml")),
+                        new File(targetDir + (IS_REDIS_CLUSTER ? "docker-compose.redis-cluster.volumes.yml" : "docker-compose.redis.volumes.yml"))
+                ));
+
+                Map<String, String> queueEnv = new HashMap<>();
+                queueEnv.put("TB_QUEUE_TYPE", QUEUE_TYPE);
+                switch (QUEUE_TYPE) {
+                    case "kafka":
+                        composeFiles.add(new File(targetDir + "docker-compose.kafka.yml"));
+                        break;
+                    case "aws-sqs":
+                        replaceInFile(targetDir, "queue-aws-sqs.env",
+                                Map.of("YOUR_KEY", getSysProp("blackBoxTests.awsKey"),
+                                        "YOUR_SECRET", getSysProp("blackBoxTests.awsSecret"),
+                                        "YOUR_REGION", getSysProp("blackBoxTests.awsRegion")));
+                        break;
+                    case "rabbitmq":
+                        composeFiles.add(new File(targetDir + "docker-compose.rabbitmq-server.yml"));
+                        replaceInFile(targetDir, "queue-rabbitmq.env",
+                                Map.of("localhost", "rabbitmq"));
+                        break;
+                    case "service-bus":
+                        replaceInFile(targetDir, "queue-service-bus.env",
+                                Map.of("YOUR_NAMESPACE_NAME", getSysProp("blackBoxTests.serviceBusNamespace"),
+                                        "YOUR_SAS_KEY_NAME", getSysProp("blackBoxTests.serviceBusSASPolicy")));
+                        replaceInFile(targetDir, "queue-service-bus.env",
+                                Map.of("YOUR_SAS_KEY", getSysProp("blackBoxTests.serviceBusPrimaryKey")));
+                        break;
+                    case "pubsub":
+                        replaceInFile(targetDir, "queue-pubsub.env",
+                                Map.of("YOUR_PROJECT_ID", getSysProp("blackBoxTests.pubSubProjectId"),
+                                        "YOUR_SERVICE_ACCOUNT", getSysProp("blackBoxTests.pubSubServiceAccount")));
+                        break;
+                    default:
+                        throw new RuntimeException("Unsupported queue type: " + QUEUE_TYPE);
+                }
 
                 if (IS_HYBRID_MODE) {
                     composeFiles.add(new File(targetDir + "docker-compose.cassandra.volumes.yml"));
@@ -102,22 +140,41 @@ public class ContainerTestSuite {
                         .withLocalCompose(true)
                         .withTailChildContainers(!skipTailChildContainers)
                         .withEnv(installTb.getEnv())
+                        .withEnv(queueEnv)
                         .withEnv("LOAD_BALANCER_NAME", "")
-                        .withExposedService("haproxy", 80, Wait.forHttp("/swagger-ui.html").withStartupTimeout(Duration.ofSeconds(400)))
-                        .waitingFor("tb-core1", Wait.forLogMessage(TB_CORE_LOG_REGEXP, 1).withStartupTimeout(Duration.ofSeconds(400)))
-                        .waitingFor("tb-core2", Wait.forLogMessage(TB_CORE_LOG_REGEXP, 1).withStartupTimeout(Duration.ofSeconds(400)))
-                        .waitingFor("tb-http-transport1", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(Duration.ofSeconds(400)))
-                        .waitingFor("tb-http-transport2", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(Duration.ofSeconds(400)))
-                        .waitingFor("tb-mqtt-transport1", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(Duration.ofSeconds(400)))
-                        .waitingFor("tb-mqtt-transport2", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(Duration.ofSeconds(400)))
-                        .waitingFor("tb-vc-executor1", Wait.forLogMessage(TB_VC_LOG_REGEXP, 1).withStartupTimeout(Duration.ofSeconds(400)))
-                        .waitingFor("tb-vc-executor2", Wait.forLogMessage(TB_VC_LOG_REGEXP, 1).withStartupTimeout(Duration.ofSeconds(400)));
+                        .withExposedService("haproxy", 80, Wait.forHttp("/swagger-ui.html").withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                        .waitingFor("tb-core1", Wait.forLogMessage(TB_CORE_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                        .waitingFor("tb-core2", Wait.forLogMessage(TB_CORE_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                        .waitingFor("tb-http-transport1", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                        .waitingFor("tb-http-transport2", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                        .waitingFor("tb-mqtt-transport1", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                        .waitingFor("tb-mqtt-transport2", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                        .waitingFor("tb-vc-executor1", Wait.forLogMessage(TB_VC_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                        .waitingFor("tb-vc-executor2", Wait.forLogMessage(TB_VC_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                        .waitingFor("tb-js-executor", Wait.forLogMessage(TB_JS_EXECUTOR_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT));
             } catch (Exception e) {
                 log.error("Failed to create test container", e);
                 fail("Failed to create test container");
             }
         }
         return testContainer;
+    }
+
+    private static void replaceInFile(String targetDir, String fileName, Map<String, String> replacements) throws IOException {
+        Path envFilePath = Path.of(targetDir, fileName);
+        String data = Files.readString(envFilePath);
+        for (var entry : replacements.entrySet()) {
+            data = data.replace(entry.getKey(), entry.getValue());
+        }
+        Files.write(envFilePath, data.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private static String getSysProp(String propertyName) {
+        var value = System.getProperty(propertyName);
+        if (StringUtils.isEmpty(value)) {
+            throw new RuntimeException("Please define system property: " + propertyName + "!");
+        }
+        return value;
     }
 
     private static void tryDeleteDir(String targetDir) {
@@ -135,7 +192,7 @@ public class ContainerTestSuite {
      * docker-compose files which contain container_name are not supported and the creation of DockerComposeContainer fails due to IllegalStateException.
      * This has been introduced in #1151 as a quick fix for unintuitive feedback. https://github.com/testcontainers/testcontainers-java/issues/1151
      * Using the latest testcontainers and waiting for the fix...
-     * */
+     */
     private static void replaceInFile(String sourceFilename, String target, String replacement, String verifyPhrase) {
         try {
             File file = new File(sourceFilename);

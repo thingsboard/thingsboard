@@ -172,6 +172,7 @@ public class DashboardController extends BaseController {
                     "The newly created Dashboard id will be present in the response. " +
                     "Specify existing Dashboard id to update the dashboard. " +
                     "Referencing non-existing dashboard Id will cause 'Not Found' error. " +
+                    "Remove 'id', 'tenantId' and optionally 'customerId' from the request body example (below) to create new Dashboard entity. " +
                     TENANT_AUTHORITY_PARAGRAPH,
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -261,7 +262,7 @@ public class DashboardController extends BaseController {
         checkParameter(DASHBOARD_ID, strDashboardId);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
         Dashboard dashboard = checkDashboardId(dashboardId, Operation.ASSIGN_TO_CUSTOMER);
-        Set<CustomerId> customerIds = customerIdFromStr(strCustomerIds, dashboard);
+        Set<CustomerId> customerIds = customerIdFromStr(strCustomerIds);
         return tbDashboardService.updateDashboardCustomers(dashboard, customerIds, getCurrentUser());
     }
 
@@ -281,7 +282,7 @@ public class DashboardController extends BaseController {
         checkParameter(DASHBOARD_ID, strDashboardId);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
         Dashboard dashboard = checkDashboardId(dashboardId, Operation.ASSIGN_TO_CUSTOMER);
-        Set<CustomerId> customerIds = customerIdFromStr(strCustomerIds, dashboard);
+        Set<CustomerId> customerIds = customerIdFromStr(strCustomerIds);
         return tbDashboardService.addDashboardCustomers(dashboard, customerIds, getCurrentUser());
     }
 
@@ -301,7 +302,7 @@ public class DashboardController extends BaseController {
         checkParameter(DASHBOARD_ID, strDashboardId);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
         Dashboard dashboard = checkDashboardId(dashboardId, Operation.UNASSIGN_FROM_CUSTOMER);
-        Set<CustomerId> customerIds = customerIdFromStr(strCustomerIds, dashboard);
+        Set<CustomerId> customerIds = customerIdFromStr(strCustomerIds);
         return tbDashboardService.removeDashboardCustomers(dashboard, customerIds, getCurrentUser());
     }
 
@@ -704,14 +705,11 @@ public class DashboardController extends BaseController {
         }
     }
 
-    private Set<CustomerId> customerIdFromStr(String[] strCustomerIds, Dashboard dashboard) {
+    private Set<CustomerId> customerIdFromStr(String[] strCustomerIds) {
         Set<CustomerId> customerIds = new HashSet<>();
         if (strCustomerIds != null) {
             for (String strCustomerId : strCustomerIds) {
-                CustomerId customerId = new CustomerId(UUID.fromString(strCustomerId));
-                if (dashboard.isAssignedToCustomer(customerId)) {
-                    customerIds.add(customerId);
-                }
+                customerIds.add(new CustomerId(UUID.fromString(strCustomerId)));
             }
         }
         return customerIds;
