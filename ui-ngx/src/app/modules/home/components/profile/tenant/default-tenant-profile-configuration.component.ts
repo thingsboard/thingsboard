@@ -36,7 +36,6 @@ import { RateLimitsType } from '@shared/models/rate-limits.models';
 export class DefaultTenantProfileConfigurationComponent implements ControlValueAccessor, OnInit {
 
   defaultTenantProfileConfigurationFormGroup: FormGroup;
-  rateLimitsPattern = '([1-9]\\d*:[1-9]\\d*)(,[1-9]\\d*:[1-9]\\d*)*';
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -65,14 +64,14 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       maxRuleChains: [null, [Validators.required, Validators.min(0)]],
       maxResourcesInBytes: [null, [Validators.required, Validators.min(0)]],
       maxOtaPackagesInBytes: [null, [Validators.required, Validators.min(0)]],
-      transportTenantMsgRateLimit: [null, [Validators.pattern(this.rateLimitsPattern)]],
-      transportTenantTelemetryMsgRateLimit: [null, [Validators.pattern(this.rateLimitsPattern)]],
-      transportTenantTelemetryDataPointsRateLimit: [null, [Validators.pattern(this.rateLimitsPattern)]],
-      transportDeviceMsgRateLimit: [null, [Validators.pattern(this.rateLimitsPattern)]],
-      transportDeviceTelemetryMsgRateLimit: [null, [Validators.pattern(this.rateLimitsPattern)]],
-      transportDeviceTelemetryDataPointsRateLimit: [null, [Validators.pattern(this.rateLimitsPattern)]],
-      tenantEntityExportRateLimit: [null, [Validators.pattern(this.rateLimitsPattern)]],
-      tenantEntityImportRateLimit: [null, [Validators.pattern(this.rateLimitsPattern)]],
+      transportTenantMsgRateLimit: [null, []],
+      transportTenantTelemetryMsgRateLimit: [null, []],
+      transportTenantTelemetryDataPointsRateLimit: [null, []],
+      transportDeviceMsgRateLimit: [null, []],
+      transportDeviceTelemetryMsgRateLimit: [null, []],
+      transportDeviceTelemetryDataPointsRateLimit: [null, []],
+      tenantEntityExportRateLimit: [null, []],
+      tenantEntityImportRateLimit: [null, []],
       maxTransportMessages: [null, [Validators.required, Validators.min(0)]],
       maxTransportDataPoints: [null, [Validators.required, Validators.min(0)]],
       maxREExecutions: [null, [Validators.required, Validators.min(0)]],
@@ -85,8 +84,8 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       defaultStorageTtlDays: [null, [Validators.required, Validators.min(0)]],
       alarmsTtlDays: [null, [Validators.required, Validators.min(0)]],
       rpcTtlDays: [null, [Validators.required, Validators.min(0)]],
-      tenantServerRestLimitsConfiguration: [null, [Validators.pattern(this.rateLimitsPattern)]],
-      customerServerRestLimitsConfiguration: [null, [Validators.pattern(this.rateLimitsPattern)]],
+      tenantServerRestLimitsConfiguration: [null, []],
+      customerServerRestLimitsConfiguration: [null, []],
       maxWsSessionsPerTenant: [null, [Validators.min(0)]],
       maxWsSessionsPerCustomer: [null, [Validators.min(0)]],
       maxWsSessionsPerRegularUser: [null, [Validators.min(0)]],
@@ -96,8 +95,8 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       maxWsSubscriptionsPerCustomer: [null, [Validators.min(0)]],
       maxWsSubscriptionsPerRegularUser: [null, [Validators.min(0)]],
       maxWsSubscriptionsPerPublicUser: [null, [Validators.min(0)]],
-      wsUpdatesPerSessionRateLimit: [null, [Validators.pattern(this.rateLimitsPattern)]],
-      cassandraQueryTenantRateLimitsConfiguration: [null, [Validators.pattern(this.rateLimitsPattern)]]
+      wsUpdatesPerSessionRateLimit: [null, []],
+      cassandraQueryTenantRateLimitsConfiguration: [null, []]
     });
     this.defaultTenantProfileConfigurationFormGroup.valueChanges.subscribe(() => {
       this.updateModel();

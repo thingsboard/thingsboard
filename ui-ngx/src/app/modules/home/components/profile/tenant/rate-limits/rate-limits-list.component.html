@@ -47,6 +47,7 @@
               class="tb-rate-limits-button"
               *ngIf="!rateLimitsFormArray().disabled"
               (click)="removeRateLimits($index)"
+              [disabled]="disabled"
               [matTooltip]="'tenant-profile.rate-limits.remove-limit' | translate" matTooltipPosition="above">
         <mat-icon>remove_circle_outline</mat-icon>
       </button>
@@ -55,6 +56,7 @@
   <div>
     <button mat-raised-button color="primary" *ngIf="!rateLimitsFormArray().disabled"
             (click)="addRateLimits()"
+            [disabled]="disabled"
             [matTooltip]="'tenant-profile.rate-limits.add-limit' | translate" matTooltipPosition="above">
       <span translate>tenant-profile.rate-limits.add-limit</span>
     </button>
