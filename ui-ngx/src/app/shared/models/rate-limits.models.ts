@@ -36,7 +36,7 @@ export enum RateLimitsType {
   TENANT_ENTITY_IMPORT_RATE_LIMIT = 'TENANT_ENTITY_IMPORT_RATE_LIMIT'
 }
 
-export const rateLimitLabelTranslationMap = new Map<RateLimitsType, string>(
+export const rateLimitsLabelTranslationMap = new Map<RateLimitsType, string>(
   [
     [RateLimitsType.TENANT_MESSAGES, 'tenant-profile.rate-limits.transport-tenant-msg'],
     [RateLimitsType.TENANT_TELEMETRY_MESSAGES, 'tenant-profile.rate-limits.transport-tenant-telemetry-msg'],
@@ -53,7 +53,7 @@ export const rateLimitLabelTranslationMap = new Map<RateLimitsType, string>(
   ]
 );
 
-export const rateLimitDialogTitleTranslationMap = new Map<RateLimitsType, string>(
+export const rateLimitsDialogTitleTranslationMap = new Map<RateLimitsType, string>(
   [
     [RateLimitsType.TENANT_MESSAGES, 'tenant-profile.rate-limits.edit-transport-tenant-msg-title'],
     [RateLimitsType.TENANT_TELEMETRY_MESSAGES, 'tenant-profile.rate-limits.edit-transport-tenant-telemetry-msg-title'],

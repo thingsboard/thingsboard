@@ -30,11 +30,12 @@ import {
   RateLimitsDetailsDialogData
 } from '@home/components/profile/tenant/rate-limits/rate-limits-details-dialog.component';
 import {
-  rateLimitDialogTitleTranslationMap,
-  rateLimitLabelTranslationMap,
+  rateLimitsDialogTitleTranslationMap,
+  rateLimitsLabelTranslationMap,
   RateLimitsType,
   stringToRateLimitsArray
 } from '@shared/models/rate-limits.models';
+import { isNull } from 'util';
 
 @Component({
   selector: 'tb-rate-limits',
@@ -81,7 +82,7 @@ export class RateLimitsComponent implements ControlValueAccessor, OnInit, Valida
   }
 
   ngOnInit() {
-    this.label = rateLimitLabelTranslationMap.get(this.type);
+    this.label = rateLimitsLabelTranslationMap.get(this.type);
     this.rateLimitsFormGroup = this.fb.group({
       rateLimits: [null, []]
     });
@@ -109,7 +110,7 @@ export class RateLimitsComponent implements ControlValueAccessor, OnInit, Valida
     if ($event) {
       $event.stopPropagation();
     }
-    const title = rateLimitDialogTitleTranslationMap.get(this.type);
+    const title = rateLimitsDialogTitleTranslationMap.get(this.type);
     this.dialog.open<RateLimitsDetailsDialogComponent, RateLimitsDetailsDialogData,
       string>(RateLimitsDetailsDialogComponent, {
       disableClose: true,
@@ -120,7 +121,7 @@ export class RateLimitsComponent implements ControlValueAccessor, OnInit, Valida
         readonly: this.disabled
       }
     }).afterClosed().subscribe((result) => {
-      if (result) {
+      if (result || result === null) {
         this.modelValue = result;
         this.updateModel();
       }

@@ -72,7 +72,7 @@ export class RateLimitsDetailsDialogComponent extends DialogComponent<RateLimits
   }
 
   cancel(): void {
-    this.dialogRef.close(null);
+    this.dialogRef.close(false);
   }
 
   save(): void {
