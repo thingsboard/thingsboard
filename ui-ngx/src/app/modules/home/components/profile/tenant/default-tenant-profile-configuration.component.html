@@ -461,19 +461,19 @@
           </tb-rate-limits>
         </div>
         <div fxFlex fxLayout="row"  fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
-          <tb-rate-limits fxFlex="50" formControlName="wsUpdatesPerSessionRateLimit"
-                          [type]="rateLimitsType.WS_UPDATE_PER_SESSION_RATE_LIMIT">
-          </tb-rate-limits>
-          <tb-rate-limits fxFlex="50" formControlName="cassandraQueryTenantRateLimitsConfiguration"
-                          [type]="rateLimitsType.CASSANDRA_QUERY_TENANT_RATE_LIMITS_CONFIGURATION">
-          </tb-rate-limits>
-        </div>
-        <div fxFlex fxLayout="row"  fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
           <tb-rate-limits fxFlex="50" formControlName="tenantEntityExportRateLimit"
                           [type]="rateLimitsType.TENANT_ENTITY_EXPORT_RATE_LIMIT">
           </tb-rate-limits>
           <tb-rate-limits fxFlex="50" formControlName="tenantEntityImportRateLimit"
                           [type]="rateLimitsType.TENANT_ENTITY_IMPORT_RATE_LIMIT">
+          </tb-rate-limits>
+        </div>
+        <div fxFlex fxLayout="row"  fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+          <tb-rate-limits fxFlex="50" formControlName="wsUpdatesPerSessionRateLimit"
+                          [type]="rateLimitsType.WS_UPDATE_PER_SESSION_RATE_LIMIT">
+          </tb-rate-limits>
+          <tb-rate-limits fxFlex="50" formControlName="cassandraQueryTenantRateLimitsConfiguration"
+                          [type]="rateLimitsType.CASSANDRA_QUERY_TENANT_RATE_LIMITS_CONFIGURATION">
           </tb-rate-limits>
         </div>
       </ng-template>
