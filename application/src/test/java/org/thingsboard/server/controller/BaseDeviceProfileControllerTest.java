@@ -74,7 +74,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.SOFTWARE;
 
-public abstract class BaseDeviceProfileControllerTest extends AbstractControllerTest {
+public abstract class  BaseDeviceProfileControllerTest extends AbstractControllerTest {
 
     private IdComparator<DeviceProfile> idComparator = new IdComparator<>();
     private IdComparator<DeviceProfileInfo> deviceProfileInfoIdComparator = new IdComparator<>();
@@ -1121,6 +1121,28 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         MqttDeviceProfileTransportConfiguration transportConfiguration = (MqttDeviceProfileTransportConfiguration) savedDeviceProfile.getProfileData().getTransportConfiguration();
         Assert.assertTrue(transportConfiguration.isSendAckOnValidationException());
         DeviceProfile foundDeviceProfile = doGet("/api/deviceProfile/" + savedDeviceProfile.getId().getId().toString(), DeviceProfile.class);
+        Assert.assertEquals(savedDeviceProfile, foundDeviceProfile);
+    }
+
+    @Test
+    public void testSaveDeviceProfileWorks() throws Exception { //todo
+        JsonTransportPayloadConfiguration jsonTransportPayloadConfiguration = new JsonTransportPayloadConfiguration();
+        MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration =
+                this.createMqttDeviceProfileTransportConfiguration(jsonTransportPayloadConfiguration, true,
+                        "v1/devices/me/telemetry", "v1/devices/me/attributes", "v1/devices/me/subscribeattributes");
+        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile",
+                mqttDeviceProfileTransportConfiguration);
+        DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+        Assert.assertNotNull(savedDeviceProfile);
+        Assert.assertEquals(savedDeviceProfile.getTransportType(), DeviceTransportType.MQTT);
+        Assert.assertTrue(savedDeviceProfile.getProfileData().getTransportConfiguration() instanceof MqttDeviceProfileTransportConfiguration);
+        MqttDeviceProfileTransportConfiguration transportConfiguration =
+                (MqttDeviceProfileTransportConfiguration) savedDeviceProfile.getProfileData().getTransportConfiguration();
+        Assert.assertTrue(transportConfiguration.isSendAckOnValidationException());
+        DeviceProfile foundDeviceProfile =
+                doGet("/api/deviceProfile/" + savedDeviceProfile.getId().getId().toString(), DeviceProfile.class);
+        Assert.assertEquals(savedDeviceProfile.getProfileData().getTransportConfiguration(),
+                foundDeviceProfile.getProfileData().getTransportConfiguration());
         Assert.assertEquals(savedDeviceProfile, foundDeviceProfile);
     }
 

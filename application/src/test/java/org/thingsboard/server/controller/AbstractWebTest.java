@@ -452,7 +452,18 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected MqttDeviceProfileTransportConfiguration createMqttDeviceProfileTransportConfiguration(TransportPayloadTypeConfiguration transportPayloadTypeConfiguration, boolean sendAckOnValidationException) {
         MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration = new MqttDeviceProfileTransportConfiguration();
         mqttDeviceProfileTransportConfiguration.setDeviceTelemetryTopic(MqttTopics.DEVICE_TELEMETRY_TOPIC);
-        mqttDeviceProfileTransportConfiguration.setDeviceTelemetryTopic(MqttTopics.DEVICE_ATTRIBUTES_TOPIC);
+        mqttDeviceProfileTransportConfiguration.setDeviceAttributesPublishTopic(MqttTopics.DEVICE_ATTRIBUTES_TOPIC); //todo
+        mqttDeviceProfileTransportConfiguration.setSendAckOnValidationException(sendAckOnValidationException);
+        mqttDeviceProfileTransportConfiguration.setTransportPayloadTypeConfiguration(transportPayloadTypeConfiguration);
+        return mqttDeviceProfileTransportConfiguration;
+    }
+
+    protected MqttDeviceProfileTransportConfiguration createMqttDeviceProfileTransportConfiguration(TransportPayloadTypeConfiguration transportPayloadTypeConfiguration, boolean sendAckOnValidationException,
+                                                                                                    String telemetryTopic, String attributesPublishTopic, String attributesSubscribeTopic) {
+        MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration = new MqttDeviceProfileTransportConfiguration();
+        mqttDeviceProfileTransportConfiguration.setDeviceTelemetryTopic(telemetryTopic);
+        mqttDeviceProfileTransportConfiguration.setDeviceAttributesPublishTopic(attributesPublishTopic);
+        mqttDeviceProfileTransportConfiguration.setDeviceAttributesSubscribeTopic(attributesSubscribeTopic);
         mqttDeviceProfileTransportConfiguration.setSendAckOnValidationException(sendAckOnValidationException);
         mqttDeviceProfileTransportConfiguration.setTransportPayloadTypeConfiguration(transportPayloadTypeConfiguration);
         return mqttDeviceProfileTransportConfiguration;

@@ -18,7 +18,10 @@ package org.thingsboard.server.transport.mqtt.attributes.updates;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.TransportPayloadType;
+import org.thingsboard.server.common.data.device.profile.JsonTransportPayloadConfiguration;
+import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 import org.thingsboard.server.transport.mqtt.attributes.AbstractMqttAttributesIntegrationTest;
@@ -44,6 +47,19 @@ public class MqttAttributesUpdatesIntegrationTest extends AbstractMqttAttributes
     @Test
     public void testJsonSubscribeToAttributesUpdatesFromTheServer() throws Exception {
         processJsonTestSubscribeToAttributesUpdates(DEVICE_ATTRIBUTES_TOPIC);
+    }
+
+    @Test
+    public void testJsonSubscribeToAttributesUpdatesFromTheServerOnCustomTopic() throws Exception {
+        String customTopic = "v1/devices/me/subscribeattributes";
+        JsonTransportPayloadConfiguration jsonTransportPayloadConfiguration = new JsonTransportPayloadConfiguration();
+        MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration =
+                this.createMqttDeviceProfileTransportConfiguration(jsonTransportPayloadConfiguration, true,
+                        "v1/devices/me/telemetry", "v1/devices/me/attributes", customTopic);
+        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile",
+                mqttDeviceProfileTransportConfiguration);
+        doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+        processJsonTestSubscribeToAttributesUpdates(customTopic);
     }
 
     @Test
