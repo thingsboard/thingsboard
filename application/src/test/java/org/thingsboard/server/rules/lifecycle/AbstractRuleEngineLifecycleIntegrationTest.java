@@ -20,18 +20,14 @@ import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.test.context.support.TestPropertySourceUtils;
-import org.testcontainers.containers.GenericContainer;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -109,11 +105,11 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
         Assert.assertNotNull(ruleChainFinal.getFirstRuleNodeId());
 
         //TODO find out why RULE_NODE update event did not appear all the time
-        List<Event> rcEvents = Awaitility.await("Rule Node started successfully")
+        List<EventInfo> rcEvents = Awaitility.await("Rule Node started successfully")
                 .pollInterval(10, MILLISECONDS)
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> {
-                            List<Event> debugEvents = getEvents(tenantId, ruleChainFinal.getFirstRuleNodeId(), DataConstants.LC_EVENT, 1000)
+                            List<EventInfo> debugEvents = getEvents(tenantId, ruleChainFinal.getFirstRuleNodeId(), DataConstants.LC_EVENT, 1000)
                                     .getData().stream().filter(e -> {
                                         var body = e.getBody();
                                         return body.has("event") && body.get("event").asText().equals("STARTED")
@@ -145,11 +141,11 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
         log.warn("awaiting tbMsgCallback");
         Mockito.verify(tbMsgCallback, Mockito.timeout(TimeUnit.SECONDS.toMillis(TIMEOUT))).onSuccess();
         log.warn("awaiting events");
-        List<Event> events = Awaitility.await("get debug by custom event")
+        List<EventInfo> events = Awaitility.await("get debug by custom event")
                 .pollInterval(10, MILLISECONDS)
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> {
-                            List<Event> debugEvents = getDebugEvents(tenantId, ruleChainFinal.getFirstRuleNodeId(), 1000)
+                            List<EventInfo> debugEvents = getDebugEvents(tenantId, ruleChainFinal.getFirstRuleNodeId(), 1000)
                                     .getData().stream().filter(filterByCustomEvent()).collect(Collectors.toList());
                             log.warn("filtered debug events [{}]", debugEvents.size());
                             debugEvents.forEach((e) -> log.warn("event: {}", e));
@@ -158,11 +154,11 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
                         x -> x.size() == 2);
         log.warn("asserting..");
 
-        Event inEvent = events.stream().filter(e -> e.getBody().get("type").asText().equals(DataConstants.IN)).findFirst().get();
+        EventInfo inEvent = events.stream().filter(e -> e.getBody().get("type").asText().equals(DataConstants.IN)).findFirst().get();
         Assert.assertEquals(ruleChainFinal.getFirstRuleNodeId(), inEvent.getEntityId());
         Assert.assertEquals(device.getId().getId().toString(), inEvent.getBody().get("entityId").asText());
 
-        Event outEvent = events.stream().filter(e -> e.getBody().get("type").asText().equals(DataConstants.OUT)).findFirst().get();
+        EventInfo outEvent = events.stream().filter(e -> e.getBody().get("type").asText().equals(DataConstants.OUT)).findFirst().get();
         Assert.assertEquals(ruleChainFinal.getFirstRuleNodeId(), outEvent.getEntityId());
         Assert.assertEquals(device.getId().getId().toString(), outEvent.getBody().get("entityId").asText());
 

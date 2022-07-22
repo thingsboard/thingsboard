@@ -16,7 +16,8 @@
 package org.thingsboard.server.dao.event;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.EventInfo;
+import org.thingsboard.server.common.data.event.Event;
 import org.thingsboard.server.common.data.event.EventFilter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -30,15 +31,15 @@ public interface EventService {
 
     ListenableFuture<Void> saveAsync(Event event);
 
-    Optional<Event> findEvent(TenantId tenantId, EntityId entityId, String eventType, String eventUid);
+    Optional<EventInfo> findEvent(TenantId tenantId, EntityId entityId, String eventType, String eventUid);
 
-    PageData<Event> findEvents(TenantId tenantId, EntityId entityId, TimePageLink pageLink);
+    PageData<EventInfo> findEvents(TenantId tenantId, EntityId entityId, TimePageLink pageLink);
 
-    PageData<Event> findEvents(TenantId tenantId, EntityId entityId, String eventType, TimePageLink pageLink);
+    PageData<EventInfo> findEvents(TenantId tenantId, EntityId entityId, String eventType, TimePageLink pageLink);
 
-    List<Event> findLatestEvents(TenantId tenantId, EntityId entityId, String eventType, int limit);
+    List<EventInfo> findLatestEvents(TenantId tenantId, EntityId entityId, String eventType, int limit);
 
-    PageData<Event> findEventsByFilter(TenantId tenantId, EntityId entityId, EventFilter eventFilter, TimePageLink pageLink);
+    PageData<EventInfo> findEventsByFilter(TenantId tenantId, EntityId entityId, EventFilter eventFilter, TimePageLink pageLink);
 
     void removeEvents(TenantId tenantId, EntityId entityId);
 

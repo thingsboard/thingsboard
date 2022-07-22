@@ -16,12 +16,13 @@
 package org.thingsboard.server.dao.service.event;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import org.apache.commons.lang3.time.DateFormatUtils;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.EventInfo;
+import org.thingsboard.server.common.data.event.Event;
+import org.thingsboard.server.common.data.event.RuleNodeDebugEvent;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -33,9 +34,6 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
 
 import java.text.ParseException;
-import java.time.LocalDateTime;
-import java.time.Month;
-import java.time.ZoneOffset;
 import java.util.Optional;
 
 import static org.apache.commons.lang3.time.DateFormatUtils.ISO_DATETIME_TIME_ZONE_FORMAT;
@@ -59,14 +57,15 @@ public abstract class BaseEventServiceTest extends AbstractServiceTest {
     @Test
     public void saveEvent() throws Exception {
         DeviceId devId = new DeviceId(Uuids.timeBased());
-        Event event = generateEvent(null, devId, "ALARM", Uuids.timeBased().toString());
+        RuleNodeDebugEvent event = generateEvent(null, devId, "ALARM", Uuids.timeBased().toString());
         eventService.saveAsync(event).get();
-        Optional<Event> loaded = eventService.findEvent(event.getTenantId(), event.getEntityId(), event.getType(), event.getUid());
-        Assert.assertTrue(loaded.isPresent());
-        Assert.assertNotNull(loaded.get());
-        Assert.assertEquals(event.getEntityId(), loaded.get().getEntityId());
-        Assert.assertEquals(event.getType(), loaded.get().getType());
-        Assert.assertEquals(event.getBody(), loaded.get().getBody());
+        throw new RuntimeException("fix me!");
+//        Optional<EventInfo> loaded = eventService.findEvent(event.getTenantId(), event.getEntityId(), event.getType(), event.getUid());
+//        Assert.assertTrue(loaded.isPresent());
+//        Assert.assertNotNull(loaded.get());
+//        Assert.assertEquals(event.getEntityId(), loaded.get().getEntityId());
+//        Assert.assertEquals(event.getType(), loaded.get().getType());
+//        Assert.assertEquals(event.getBody(), loaded.get().getBody());
     }
 
     @Test
@@ -74,14 +73,14 @@ public abstract class BaseEventServiceTest extends AbstractServiceTest {
         CustomerId customerId = new CustomerId(Uuids.timeBased());
         TenantId tenantId = TenantId.fromUUID(Uuids.timeBased());
         saveEventWithProvidedTime(timeBeforeStartTime, customerId, tenantId);
-        Event savedEvent = saveEventWithProvidedTime(eventTime, customerId, tenantId);
-        Event savedEvent2 = saveEventWithProvidedTime(eventTime + 1, customerId, tenantId);
-        Event savedEvent3 = saveEventWithProvidedTime(eventTime + 2, customerId, tenantId);
+        EventInfo savedEvent = saveEventWithProvidedTime(eventTime, customerId, tenantId);
+        EventInfo savedEvent2 = saveEventWithProvidedTime(eventTime + 1, customerId, tenantId);
+        EventInfo savedEvent3 = saveEventWithProvidedTime(eventTime + 2, customerId, tenantId);
         saveEventWithProvidedTime(timeAfterEndTime, customerId, tenantId);
 
         TimePageLink timePageLink = new TimePageLink(2, 0, "", new SortOrder("createdTime"), startTime, endTime);
 
-        PageData<Event> events = eventService.findEvents(tenantId, customerId, DataConstants.STATS,
+        PageData<EventInfo> events = eventService.findEvents(tenantId, customerId, DataConstants.STATS,
                 timePageLink);
 
         Assert.assertNotNull(events.getData());
@@ -105,14 +104,14 @@ public abstract class BaseEventServiceTest extends AbstractServiceTest {
         CustomerId customerId = new CustomerId(Uuids.timeBased());
         TenantId tenantId = TenantId.fromUUID(Uuids.timeBased());
         saveEventWithProvidedTime(timeBeforeStartTime, customerId, tenantId);
-        Event savedEvent = saveEventWithProvidedTime(eventTime, customerId, tenantId);
-        Event savedEvent2 = saveEventWithProvidedTime(eventTime + 1, customerId, tenantId);
-        Event savedEvent3 = saveEventWithProvidedTime(eventTime + 2, customerId, tenantId);
+        EventInfo savedEvent = saveEventWithProvidedTime(eventTime, customerId, tenantId);
+        EventInfo savedEvent2 = saveEventWithProvidedTime(eventTime + 1, customerId, tenantId);
+        EventInfo savedEvent3 = saveEventWithProvidedTime(eventTime + 2, customerId, tenantId);
         saveEventWithProvidedTime(timeAfterEndTime, customerId, tenantId);
 
         TimePageLink timePageLink = new TimePageLink(2, 0, "", new SortOrder("createdTime", SortOrder.Direction.DESC), startTime, endTime);
 
-        PageData<Event> events = eventService.findEvents(tenantId, customerId, DataConstants.STATS,
+        PageData<EventInfo> events = eventService.findEvents(tenantId, customerId, DataConstants.STATS,
                 timePageLink);
 
         Assert.assertNotNull(events.getData());
@@ -131,10 +130,11 @@ public abstract class BaseEventServiceTest extends AbstractServiceTest {
         eventService.cleanupEvents(timeBeforeStartTime - 1, timeAfterEndTime + 1, timeBeforeStartTime - 1, timeAfterEndTime + 1);
     }
 
-    private Event saveEventWithProvidedTime(long time, EntityId entityId, TenantId tenantId) throws Exception {
-        Event event = generateEvent(tenantId, entityId, DataConstants.STATS, null);
-        event.setId(new EventId(Uuids.startOf(time)));
-        eventService.saveAsync(event).get();
-        return event;
+    private EventInfo saveEventWithProvidedTime(long time, EntityId entityId, TenantId tenantId) throws Exception {
+        throw new RuntimeException("fix me!");
+//        EventInfo event = generateEvent(tenantId, entityId, DataConstants.STATS, null);
+//        event.setId(new EventId(Uuids.startOf(time)));
+//        eventService.saveAsync(event).get();
+//        return event;
     }
 }

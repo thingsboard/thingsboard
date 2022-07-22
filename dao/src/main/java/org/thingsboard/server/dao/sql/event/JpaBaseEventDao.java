@@ -19,15 +19,19 @@ import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.event.DebugEvent;
 import org.thingsboard.server.common.data.event.ErrorEventFilter;
+import org.thingsboard.server.common.data.event.Event;
 import org.thingsboard.server.common.data.event.EventFilter;
+import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.event.LifeCycleEventFilter;
 import org.thingsboard.server.common.data.event.StatisticsEventFilter;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -42,16 +46,26 @@ import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
+import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
+import org.thingsboard.server.dao.timeseries.SqlPartition;
+import org.thingsboard.server.dao.timeseries.SqlTsPartitionDate;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
-
-import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 /**
  * Created by Valerii Sosliuk on 5/3/2017.
@@ -60,7 +74,12 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 @Component
 public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implements EventDao {
 
-    private final UUID systemTenantId = NULL_UUID;
+    private static final long PARTITION_DURATION = TimeUnit.HOURS.toMillis(1);
+    private final Map<EventType, Map<Long, SqlPartition>> partitionsByEventType = new ConcurrentHashMap<>();
+    private static final ReentrantLock partitionCreationLock = new ReentrantLock();
+
+    @Autowired
+    private SqlPartitioningRepository partitioningRepository;
 
     @Autowired
     private EventRepository eventRepository;
@@ -102,10 +121,13 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
     @Value("${sql.batch_sort:false}")
     private boolean batchSortEnabled;
 
-    private TbSqlBlockingQueueWrapper<EventEntity> queue;
+    private TbSqlBlockingQueueWrapper<Event> queue;
 
     @PostConstruct
     private void init() {
+        for (EventType eventType : EventType.values()) {
+            partitionsByEventType.put(eventType, new ConcurrentHashMap<>());
+        }
         TbSqlBlockingQueueParams params = TbSqlBlockingQueueParams.builder()
                 .logName("Events")
                 .batchSize(batchSize)
@@ -114,11 +136,9 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
                 .statsNamePrefix("events")
                 .batchSortEnabled(batchSortEnabled)
                 .build();
-        Function<EventEntity, Integer> hashcodeFunction = entity -> entity.getEntityId().hashCode();
+        Function<Event, Integer> hashcodeFunction = entity -> Objects.hash(super.hashCode(), entity.getTenantId(), entity.getEntityId());
         queue = new TbSqlBlockingQueueWrapper<>(params, hashcodeFunction, batchThreads, statsFactory);
-        queue.init(logExecutor, v -> eventInsertRepository.save(v),
-                Comparator.comparing((EventEntity eventEntity) -> eventEntity.getTs())
-        );
+        queue.init(logExecutor, v -> eventInsertRepository.save(v), Comparator.comparing(Event::getCreatedTime));
     }
 
     @PreDestroy
@@ -143,68 +163,80 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
                 event.setCreatedTime(System.currentTimeMillis());
             }
         }
-        if (StringUtils.isEmpty(event.getUid())) {
-            event.setUid(event.getId().toString());
-        }
-
-        return save(new EventEntity(event));
+        savePartitionIfNotExist(event);
+        return queue.add(event);
     }
 
-    private ListenableFuture<Void> save(EventEntity entity) {
-        log.debug("Save event [{}] ", entity);
-        if (entity.getTenantId() == null) {
-            log.trace("Save system event with predefined id {}", systemTenantId);
-            entity.setTenantId(systemTenantId);
+    private void savePartitionIfNotExist(Event event) {
+        var partitionsMap = partitionsByEventType.get(event.getType());
+        long partitionStartTs = event.getCreatedTime() - (event.getCreatedTime() % PARTITION_DURATION);
+        if (partitionsMap.get(partitionStartTs) == null) {
+            long partitionEndTs = partitionStartTs + PARTITION_DURATION;
+            savePartition(partitionsMap, new SqlPartition(event.getType().getTable(), partitionStartTs, partitionEndTs, Long.toString(partitionStartTs)));
         }
-        if (entity.getUuid() == null) {
-            entity.setUuid(Uuids.timeBased());
-        }
-        if (StringUtils.isEmpty(entity.getEventUid())) {
-            entity.setEventUid(entity.getUuid().toString());
-        }
-        return addToQueue(entity);
     }
 
-    private ListenableFuture<Void> addToQueue(EventEntity entity) {
-        return queue.add(entity);
+    private void savePartition(Map<Long, SqlPartition> partitionsMap, SqlPartition sqlPartition) {
+        if (!partitionsMap.containsKey(sqlPartition.getStart())) {
+            partitionCreationLock.lock();
+            try {
+                log.trace("Saving partition: {}", sqlPartition);
+                partitioningRepository.save(sqlPartition);
+                log.trace("Adding partition to map: {}", sqlPartition);
+                partitionsMap.put(sqlPartition.getStart(), sqlPartition);
+            } catch (DataIntegrityViolationException ex) {
+                log.trace("Error occurred during partition save:", ex);
+                if (ex.getCause() instanceof ConstraintViolationException) {
+                    log.warn("Saving partition [{}] rejected. Event data will save to the DEFAULT partition.", sqlPartition.getPartitionDate());
+                    partitionsMap.put(sqlPartition.getStart(), sqlPartition);
+                } else {
+                    throw new RuntimeException(ex);
+                }
+            } finally {
+                partitionCreationLock.unlock();
+            }
+        }
     }
 
     @Override
-    public Event findEvent(UUID tenantId, EntityId entityId, String eventType, String eventUid) {
-        return DaoUtil.getData(eventRepository.findByTenantIdAndEntityTypeAndEntityIdAndEventTypeAndEventUid(
-                tenantId, entityId.getEntityType(), entityId.getId(), eventType, eventUid));
+    public EventInfo findEvent(UUID tenantId, EntityId entityId, String eventType, String eventUid) {
+        return null;
+//        return DaoUtil.getData(eventRepository.findByTenantIdAndEntityTypeAndEntityIdAndEventTypeAndEventUid(
+//                tenantId, entityId.getEntityType(), entityId.getId(), eventType, eventUid));
     }
 
     @Override
-    public PageData<Event> findEvents(UUID tenantId, EntityId entityId, TimePageLink pageLink) {
-        return DaoUtil.toPageData(
-                eventRepository
-                        .findEventsByTenantIdAndEntityId(
-                                tenantId,
-                                entityId.getEntityType(),
-                                entityId.getId(),
-                                Objects.toString(pageLink.getTextSearch(), ""),
-                                pageLink.getStartTime(),
-                                pageLink.getEndTime(),
-                                DaoUtil.toPageable(pageLink)));
+    public PageData<EventInfo> findEvents(UUID tenantId, EntityId entityId, TimePageLink pageLink) {
+        return null;
+//        return DaoUtil.toPageData(
+//                eventRepository
+//                        .findEventsByTenantIdAndEntityId(
+//                                tenantId,
+//                                entityId.getEntityType(),
+//                                entityId.getId(),
+//                                Objects.toString(pageLink.getTextSearch(), ""),
+//                                pageLink.getStartTime(),
+//                                pageLink.getEndTime(),
+//                                DaoUtil.toPageable(pageLink)));
     }
 
     @Override
-    public PageData<Event> findEvents(UUID tenantId, EntityId entityId, String eventType, TimePageLink pageLink) {
-        return DaoUtil.toPageData(
-                eventRepository
-                        .findEventsByTenantIdAndEntityIdAndEventType(
-                                tenantId,
-                                entityId.getEntityType(),
-                                entityId.getId(),
-                                eventType,
-                                pageLink.getStartTime(),
-                                pageLink.getEndTime(),
-                                DaoUtil.toPageable(pageLink)));
+    public PageData<EventInfo> findEvents(UUID tenantId, EntityId entityId, String eventType, TimePageLink pageLink) {
+        return null;
+//        return DaoUtil.toPageData(
+//                eventRepository
+//                        .findEventsByTenantIdAndEntityIdAndEventType(
+//                                tenantId,
+//                                entityId.getEntityType(),
+//                                entityId.getId(),
+//                                eventType,
+//                                pageLink.getStartTime(),
+//                                pageLink.getEndTime(),
+//                                DaoUtil.toPageable(pageLink)));
     }
 
     @Override
-    public PageData<Event> findEventByFilter(UUID tenantId, EntityId entityId, EventFilter eventFilter, TimePageLink pageLink) {
+    public PageData<EventInfo> findEventByFilter(UUID tenantId, EntityId entityId, EventFilter eventFilter, TimePageLink pageLink) {
         if (eventFilter.hasFilterForJsonBody()) {
             switch (eventFilter.getEventType()) {
                 case DEBUG_RULE_NODE:
@@ -224,86 +256,91 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
         }
     }
 
-    private PageData<Event> findEventByFilter(UUID tenantId, EntityId entityId, DebugEvent eventFilter, TimePageLink pageLink) {
-        return DaoUtil.toPageData(
-                eventRepository.findDebugRuleNodeEvents(
-                        tenantId,
-                        entityId.getId(),
-                        entityId.getEntityType().name(),
-                        eventFilter.getEventType().name(),
-                        notNull(pageLink.getStartTime()),
-                        notNull(pageLink.getEndTime()),
-                        eventFilter.getMsgDirectionType(),
-                        eventFilter.getServer(),
-                        eventFilter.getEntityName(),
-                        eventFilter.getRelationType(),
-                        eventFilter.getEntityId(),
-                        eventFilter.getMsgType(),
-                        eventFilter.isError(),
-                        eventFilter.getErrorStr(),
-                        eventFilter.getDataSearch(),
-                        eventFilter.getMetadataSearch(),
-                        DaoUtil.toPageable(pageLink)));
+    private PageData<EventInfo> findEventByFilter(UUID tenantId, EntityId entityId, DebugEvent eventFilter, TimePageLink pageLink) {
+        return null;
+//        return DaoUtil.toPageData(
+//                eventRepository.findDebugRuleNodeEvents(
+//                        tenantId,
+//                        entityId.getId(),
+//                        entityId.getEntityType().name(),
+//                        eventFilter.getEventType().name(),
+//                        notNull(pageLink.getStartTime()),
+//                        notNull(pageLink.getEndTime()),
+//                        eventFilter.getMsgDirectionType(),
+//                        eventFilter.getServer(),
+//                        eventFilter.getEntityName(),
+//                        eventFilter.getRelationType(),
+//                        eventFilter.getEntityId(),
+//                        eventFilter.getMsgType(),
+//                        eventFilter.isError(),
+//                        eventFilter.getErrorStr(),
+//                        eventFilter.getDataSearch(),
+//                        eventFilter.getMetadataSearch(),
+//                        DaoUtil.toPageable(pageLink)));
     }
 
-    private PageData<Event> findEventByFilter(UUID tenantId, EntityId entityId, ErrorEventFilter eventFilter, TimePageLink pageLink) {
-        return DaoUtil.toPageData(
-                eventRepository.findErrorEvents(
-                        tenantId,
-                        entityId.getId(),
-                        entityId.getEntityType().name(),
-                        notNull(pageLink.getStartTime()),
-                        notNull(pageLink.getEndTime()),
-                        eventFilter.getServer(),
-                        eventFilter.getMethod(),
-                        eventFilter.getErrorStr(),
-                        DaoUtil.toPageable(pageLink))
-        );
+    private PageData<EventInfo> findEventByFilter(UUID tenantId, EntityId entityId, ErrorEventFilter eventFilter, TimePageLink pageLink) {
+        return null;
+//        return DaoUtil.toPageData(
+//                eventRepository.findErrorEvents(
+//                        tenantId,
+//                        entityId.getId(),
+//                        entityId.getEntityType().name(),
+//                        notNull(pageLink.getStartTime()),
+//                        notNull(pageLink.getEndTime()),
+//                        eventFilter.getServer(),
+//                        eventFilter.getMethod(),
+//                        eventFilter.getErrorStr(),
+//                        DaoUtil.toPageable(pageLink))
+//        );
     }
 
-    private PageData<Event> findEventByFilter(UUID tenantId, EntityId entityId, LifeCycleEventFilter eventFilter, TimePageLink pageLink) {
-        boolean statusFilterEnabled = !StringUtils.isEmpty(eventFilter.getStatus());
-        boolean statusFilter = statusFilterEnabled && eventFilter.getStatus().equalsIgnoreCase("Success");
-        return DaoUtil.toPageData(
-                eventRepository.findLifeCycleEvents(
-                        tenantId,
-                        entityId.getId(),
-                        entityId.getEntityType().name(),
-                        notNull(pageLink.getStartTime()),
-                        notNull(pageLink.getEndTime()),
-                        eventFilter.getServer(),
-                        eventFilter.getEvent(),
-                        statusFilterEnabled,
-                        statusFilter,
-                        eventFilter.getErrorStr(),
-                        DaoUtil.toPageable(pageLink))
-        );
+    private PageData<EventInfo> findEventByFilter(UUID tenantId, EntityId entityId, LifeCycleEventFilter eventFilter, TimePageLink pageLink) {
+        return null;
+//        boolean statusFilterEnabled = !StringUtils.isEmpty(eventFilter.getStatus());
+//        boolean statusFilter = statusFilterEnabled && eventFilter.getStatus().equalsIgnoreCase("Success");
+//        return DaoUtil.toPageData(
+//                eventRepository.findLifeCycleEvents(
+//                        tenantId,
+//                        entityId.getId(),
+//                        entityId.getEntityType().name(),
+//                        notNull(pageLink.getStartTime()),
+//                        notNull(pageLink.getEndTime()),
+//                        eventFilter.getServer(),
+//                        eventFilter.getEvent(),
+//                        statusFilterEnabled,
+//                        statusFilter,
+//                        eventFilter.getErrorStr(),
+//                        DaoUtil.toPageable(pageLink))
+//        );
     }
 
-    private PageData<Event> findEventByFilter(UUID tenantId, EntityId entityId, StatisticsEventFilter eventFilter, TimePageLink pageLink) {
-        return DaoUtil.toPageData(
-                eventRepository.findStatisticsEvents(
-                        tenantId,
-                        entityId.getId(),
-                        entityId.getEntityType().name(),
-                        notNull(pageLink.getStartTime()),
-                        notNull(pageLink.getEndTime()),
-                        eventFilter.getServer(),
-                        notNull(eventFilter.getMessagesProcessed()),
-                        notNull(eventFilter.getErrorsOccurred()),
-                        DaoUtil.toPageable(pageLink))
-        );
+    private PageData<EventInfo> findEventByFilter(UUID tenantId, EntityId entityId, StatisticsEventFilter eventFilter, TimePageLink pageLink) {
+        return null;
+//        return DaoUtil.toPageData(
+//                eventRepository.findStatisticsEvents(
+//                        tenantId,
+//                        entityId.getId(),
+//                        entityId.getEntityType().name(),
+//                        notNull(pageLink.getStartTime()),
+//                        notNull(pageLink.getEndTime()),
+//                        eventFilter.getServer(),
+//                        notNull(eventFilter.getMessagesProcessed()),
+//                        notNull(eventFilter.getErrorsOccurred()),
+//                        DaoUtil.toPageable(pageLink))
+//        );
     }
 
     @Override
-    public List<Event> findLatestEvents(UUID tenantId, EntityId entityId, String eventType, int limit) {
-        List<EventEntity> latest = eventRepository.findLatestByTenantIdAndEntityTypeAndEntityIdAndEventType(
-                tenantId,
-                entityId.getEntityType(),
-                entityId.getId(),
-                eventType,
-                PageRequest.of(0, limit));
-        return DaoUtil.convertDataList(latest);
+    public List<EventInfo> findLatestEvents(UUID tenantId, EntityId entityId, String eventType, int limit) {
+        return null;
+//        List<EventEntity> latest = eventRepository.findLatestByTenantIdAndEntityTypeAndEntityIdAndEventType(
+//                tenantId,
+//                entityId.getEntityType(),
+//                entityId.getId(),
+//                eventType,
+//                PageRequest.of(0, limit));
+//        return DaoUtil.convertDataList(latest);
     }
 
     @Override

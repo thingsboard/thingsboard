@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.event.EventFilter;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -110,7 +110,7 @@ public class EventController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/events/{entityType}/{entityId}/{eventType}", method = RequestMethod.GET)
     @ResponseBody
-    public PageData<Event> getEvents(
+    public PageData<EventInfo> getEvents(
             @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
             @PathVariable(ENTITY_TYPE) String strEntityType,
             @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true)
@@ -153,7 +153,7 @@ public class EventController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/events/{entityType}/{entityId}", method = RequestMethod.GET)
     @ResponseBody
-    public PageData<Event> getEvents(
+    public PageData<EventInfo> getEvents(
             @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
             @PathVariable(ENTITY_TYPE) String strEntityType,
             @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true)
@@ -198,7 +198,7 @@ public class EventController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/events/{entityType}/{entityId}", method = RequestMethod.POST)
     @ResponseBody
-    public PageData<Event> getEvents(
+    public PageData<EventInfo> getEvents(
             @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
             @PathVariable(ENTITY_TYPE) String strEntityType,
             @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true)

@@ -15,6 +15,16 @@
  */
 package org.thingsboard.server.common.data.event;
 
+import lombok.Getter;
+
 public enum EventType {
-    ERROR, LC_EVENT, STATS, DEBUG_RULE_NODE, DEBUG_RULE_CHAIN
+    ERROR("error_event"), LC_EVENT("lc_event"), STATS("stats_event"), DEBUG_RULE_NODE("rule_node_debug_event"), DEBUG_RULE_CHAIN("rule_chain_debug_event");
+
+    @Getter
+    private final String table;
+
+    EventType(String table) {
+        this.table = table;
+    }
+
 }

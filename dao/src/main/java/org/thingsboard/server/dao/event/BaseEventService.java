@@ -15,15 +15,19 @@
  */
 package org.thingsboard.server.dao.event;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.EventInfo;
+import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.event.ErrorEvent;
+import org.thingsboard.server.common.data.event.Event;
 import org.thingsboard.server.common.data.event.EventFilter;
+import org.thingsboard.server.common.data.event.LifecycleEvent;
+import org.thingsboard.server.common.data.event.RuleChainDebugEvent;
+import org.thingsboard.server.common.data.event.RuleNodeDebugEvent;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.IdBased;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -34,6 +38,8 @@ import org.thingsboard.server.dao.service.DataValidator;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -57,18 +63,41 @@ public class BaseEventService implements EventService {
     }
 
     private void checkAndTruncateDebugEvent(Event event) {
-        if (event.getType().startsWith("DEBUG") && event.getBody() != null && event.getBody().has("data")) {
-            String dataStr = event.getBody().get("data").asText();
-            int length = dataStr.length();
+        switch (event.getType()) {
+            case DEBUG_RULE_NODE:
+                RuleNodeDebugEvent rnEvent = (RuleNodeDebugEvent) event;
+                truncateField(rnEvent, RuleNodeDebugEvent::getData, RuleNodeDebugEvent::setData);
+                truncateField(rnEvent, RuleNodeDebugEvent::getMetadata, RuleNodeDebugEvent::setMetadata);
+                truncateField(rnEvent, RuleNodeDebugEvent::getError, RuleNodeDebugEvent::setError);
+                break;
+            case DEBUG_RULE_CHAIN:
+                RuleChainDebugEvent rcEvent = (RuleChainDebugEvent) event;
+                truncateField(rcEvent, RuleChainDebugEvent::getMessage, RuleChainDebugEvent::setMessage);
+                truncateField(rcEvent, RuleChainDebugEvent::getError, RuleChainDebugEvent::setError);
+                break;
+            case LC_EVENT:
+                LifecycleEvent lcEvent = (LifecycleEvent) event;
+                truncateField(lcEvent, LifecycleEvent::getError, LifecycleEvent::setError);
+                break;
+            case ERROR:
+                ErrorEvent eEvent = (ErrorEvent) event;
+                truncateField(eEvent, ErrorEvent::getError, ErrorEvent::setError);
+                break;
+        }
+    }
+
+    private <T extends Event> void truncateField(T event, Function<T, String> getter, BiConsumer<T, String> setter) {
+        var str = getter.apply(event);
+        if (StringUtils.isNotEmpty(str)) {
+            var length = str.length();
             if (length > maxDebugEventSymbols) {
-                ((ObjectNode) event.getBody()).put("data", dataStr.substring(0, maxDebugEventSymbols) + "...[truncated " + (length - maxDebugEventSymbols) + " symbols]");
-                log.trace("[{}] Event was truncated: {}", event.getId(), dataStr);
+                setter.accept(event, str.substring(0, maxDebugEventSymbols) + "...[truncated " + (length - maxDebugEventSymbols) + " symbols]");
             }
         }
     }
 
     @Override
-    public Optional<Event> findEvent(TenantId tenantId, EntityId entityId, String eventType, String eventUid) {
+    public Optional<EventInfo> findEvent(TenantId tenantId, EntityId entityId, String eventType, String eventUid) {
         if (tenantId == null) {
             throw new DataValidationException("Tenant id should be specified!.");
         }
@@ -81,27 +110,27 @@ public class BaseEventService implements EventService {
         if (StringUtils.isEmpty(eventUid)) {
             throw new DataValidationException("Event uid should be specified!.");
         }
-        Event event = eventDao.findEvent(tenantId.getId(), entityId, eventType, eventUid);
+        EventInfo event = eventDao.findEvent(tenantId.getId(), entityId, eventType, eventUid);
         return event != null ? Optional.of(event) : Optional.empty();
     }
 
     @Override
-    public PageData<Event> findEvents(TenantId tenantId, EntityId entityId, TimePageLink pageLink) {
+    public PageData<EventInfo> findEvents(TenantId tenantId, EntityId entityId, TimePageLink pageLink) {
         return eventDao.findEvents(tenantId.getId(), entityId, pageLink);
     }
 
     @Override
-    public PageData<Event> findEvents(TenantId tenantId, EntityId entityId, String eventType, TimePageLink pageLink) {
+    public PageData<EventInfo> findEvents(TenantId tenantId, EntityId entityId, String eventType, TimePageLink pageLink) {
         return eventDao.findEvents(tenantId.getId(), entityId, eventType, pageLink);
     }
 
     @Override
-    public List<Event> findLatestEvents(TenantId tenantId, EntityId entityId, String eventType, int limit) {
+    public List<EventInfo> findLatestEvents(TenantId tenantId, EntityId entityId, String eventType, int limit) {
         return eventDao.findLatestEvents(tenantId.getId(), entityId, eventType, limit);
     }
 
     @Override
-    public PageData<Event> findEventsByFilter(TenantId tenantId, EntityId entityId, EventFilter eventFilter, TimePageLink pageLink) {
+    public PageData<EventInfo> findEventsByFilter(TenantId tenantId, EntityId entityId, EventFilter eventFilter, TimePageLink pageLink) {
         return eventDao.findEventByFilter(tenantId.getId(), entityId, eventFilter, pageLink);
     }
 
@@ -113,7 +142,7 @@ public class BaseEventService implements EventService {
     @Override
     public void removeEvents(TenantId tenantId, EntityId entityId, EventFilter eventFilter, Long startTime, Long endTime) {
         TimePageLink eventsPageLink = new TimePageLink(1000, 0, null, null, startTime, endTime);
-        PageData<Event> eventsPageData;
+        PageData<EventInfo> eventsPageData;
         do {
             if (eventFilter == null) {
                 eventsPageData = findEvents(tenantId, entityId, eventsPageLink);

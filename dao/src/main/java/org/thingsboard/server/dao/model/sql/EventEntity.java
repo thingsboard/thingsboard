@@ -22,7 +22,8 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.EventInfo;
+import org.thingsboard.server.common.data.event.Event;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EventId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -78,7 +79,7 @@ public class EventEntity extends BaseSqlEntity<Event> implements BaseEntity<Even
     @Column(name = TS_COLUMN)
     private long ts;
 
-    public EventEntity(Event event) {
+    public EventEntity(EventInfo event) {
         if (event.getId() != null) {
             this.setUuid(event.getId().getId());
             this.ts = getTs(event.getId().getId());
@@ -101,14 +102,14 @@ public class EventEntity extends BaseSqlEntity<Event> implements BaseEntity<Even
 
     @Override
     public Event toData() {
-        Event event = new Event(new EventId(this.getUuid()));
+        EventInfo event = new EventInfo(new EventId(this.getUuid()));
         event.setCreatedTime(createdTime);
         event.setTenantId(TenantId.fromUUID(tenantId));
         event.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, entityId));
         event.setBody(body);
         event.setType(eventType);
         event.setUid(eventUid);
-        return event;
+        return null;
     }
 
     private static long getTs(UUID uuid) {
