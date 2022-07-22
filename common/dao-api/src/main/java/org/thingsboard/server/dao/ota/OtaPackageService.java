@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 
+import java.io.File;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 
@@ -54,4 +55,5 @@ public interface OtaPackageService {
     long sumDataSizeByTenantId(TenantId tenantId);
 
     InputStream getOtaDataStream(TenantId tenantId, OtaPackageId otaPackageId);
+    File getOtaDataFile (TenantId tenantId, OtaPackageId otaPackageId);
 }

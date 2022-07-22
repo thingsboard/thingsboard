@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2022 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,19 +18,10 @@ package org.thingsboard.server.dao.service;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.hibernate.engine.jdbc.BlobProxy;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.ExpectedException;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.OtaPackage;
-import org.thingsboard.server.common.data.OtaPackageInfo;
-import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
@@ -38,15 +29,20 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.ota.util.ChecksumUtil;
 
 import javax.validation.ValidationException;
-import java.nio.ByteBuffer;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.sql.Blob;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 
 public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
@@ -695,6 +691,24 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         thrown.expectMessage("length of version must be equal or less than 255");
 
         otaPackageService.saveOtaPackageInfo(firmwareInfo, true);
+    }
+
+    @Test
+    public void testGettingCorrectStreamWithOtaData() {
+        OtaPackage firmware = createFirmware(tenantId, "24687846");
+        InputStream stream = otaPackageService.getOtaDataStream(tenantId, firmware.getId());
+        assertEquals(firmware.getChecksum(), ChecksumUtil.generateChecksum(CHECKSUM_ALGORITHM, stream));
+    }
+
+    @Test
+    public void testGettingCorrectFileWithOtaData() {
+        OtaPackage firmware = createFirmware(tenantId, "24687846");
+        File file = otaPackageService.getOtaDataFile(tenantId, firmware.getId());
+        try {
+            assertEquals(firmware.getChecksum(), ChecksumUtil.generateChecksum(CHECKSUM_ALGORITHM, new FileInputStream(file)));
+        } catch (FileNotFoundException e){
+            throw new RuntimeException(e);
+        }
     }
 
     private OtaPackage createFirmware(TenantId tenantId, String version) {

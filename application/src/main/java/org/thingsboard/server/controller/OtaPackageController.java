@@ -21,9 +21,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.engine.jdbc.BlobProxy;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseEntity;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -41,21 +40,20 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.ota.util.ChecksumUtil;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.cache.ota.service.FileCacheService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import javax.transaction.Transactional;
 import java.io.InputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.sql.Blob;
-import java.util.UUID;
 
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFILE_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.OTA_PACKAGE_CHECKSUM_ALGORITHM_ALLOWABLE_VALUES;
@@ -84,14 +82,13 @@ public class OtaPackageController extends BaseController {
     public static final String OTA_PACKAGE_ID = "otaPackageId";
     public static final String CHECKSUM_ALGORITHM = "checksumAlgorithm";
 
-    private final FileCacheService fileCacheService;
 
     @ApiOperation(value = "Download OTA Package (downloadOtaPackage)", notes = "Download OTA Package based on the provided OTA Package Id." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority( 'TENANT_ADMIN')")
     @RequestMapping(value = "/otaPackage/{otaPackageId}/download", method = RequestMethod.GET)
     @ResponseBody
     @Transactional
-    public ResponseEntity<InputStreamResource> downloadOtaPackage(@ApiParam(value = OTA_PACKAGE_ID_PARAM_DESCRIPTION)
+    public ResponseEntity<FileSystemResource> downloadOtaPackage(@ApiParam(value = OTA_PACKAGE_ID_PARAM_DESCRIPTION)
                                                                                    @PathVariable(OTA_PACKAGE_ID) String strOtaPackageId) throws ThingsboardException {
         checkParameter(OTA_PACKAGE_ID, strOtaPackageId);
         try {
@@ -100,17 +97,20 @@ public class OtaPackageController extends BaseController {
             if (otaPackage.hasUrl()) {
                 return ResponseEntity.badRequest().build();
             }
-            InputStream dataStream = otaPackageService.getOtaDataStream(getTenantId(), otaPackageId);
-            InputStreamResource resource = new InputStreamResource(dataStream);
+            FileSystemResource resource = new FileSystemResource(otaPackageService.getOtaDataFile(getTenantId(), otaPackageId));
+            String fileName= URLEncoder.encode(otaPackage.getFileName(), StandardCharsets.UTF_8.toString());
             return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + otaPackage.getFileName())
-                    .header("x-filename", otaPackage.getFileName())
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename*=UTF-8''" + fileName)
+                    .header("x-filename", fileName)
                     .contentLength(otaPackage.getDataSize())
-                    .contentType(parseMediaType(otaPackage.getContentType()))
+                    .contentType(new MediaType(parseMediaType(otaPackage.getContentType()), StandardCharsets.UTF_8))
                     .body(resource);
         } catch (Exception e) {
             throw handleException(e);
         }
+    }
+    private static String encodeFileName(String fileName)  {
+        return URLEncoder.encode(fileName, StandardCharsets.UTF_8).replace("+", "%20");
     }
 
     @ApiOperation(value = "Get OTA Package Info (getOtaPackageInfoById)",

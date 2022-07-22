@@ -20,7 +20,6 @@ import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.hibernate.engine.jdbc.BlobProxy;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.cache.Cache;
@@ -28,7 +27,7 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
-import org.thingsboard.server.cache.ota.service.FileCacheService;
+import org.thingsboard.server.cache.ota.service.BaseFileCacheService;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.StringUtils;
@@ -46,13 +45,10 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import javax.transaction.Transactional;
 import java.io.*;
 import java.nio.ByteBuffer;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.thingsboard.server.common.data.CacheConstants.OTA_PACKAGE_CACHE;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -70,7 +66,7 @@ public class BaseOtaPackageService implements OtaPackageService {
     private final OtaPackageDataCache otaPackageDataCache;
     private final DataValidator<OtaPackageInfo> otaPackageInfoValidator;
     private final DataValidator<OtaPackage> otaPackageValidator;
-    private final FileCacheService fileCacheService;
+    private final BaseFileCacheService baseFileCacheService;
 
     @Override
     public OtaPackageInfo saveOtaPackageInfo(OtaPackageInfo otaPackageInfo, boolean isUrl) {
@@ -101,12 +97,12 @@ public class BaseOtaPackageService implements OtaPackageService {
     public OtaPackage saveOtaPackage(OtaPackage otaPackage) {
         log.trace("Executing saveOtaPackage [{}]", otaPackage);
         try {
-            File tempFile= fileCacheService.saveDataTemporaryFile(otaPackage.getData().getBinaryStream());
+            File tempFile= baseFileCacheService.saveDataTemporaryFile(otaPackage.getData().getBinaryStream());
             otaPackage.setData(BlobProxy.generateProxy(new FileInputStream(tempFile), otaPackage.getDataSize()));
             try {
                 otaPackageValidator.validate(otaPackage, OtaPackageInfo::getTenantId);
             }catch (RuntimeException e){
-                fileCacheService.deleteFile(tempFile);
+                baseFileCacheService.deleteFile(tempFile);
                 throw e;
             }
             otaPackage.setData(BlobProxy.generateProxy(new FileInputStream(tempFile), otaPackage.getDataSize()));
@@ -117,7 +113,7 @@ public class BaseOtaPackageService implements OtaPackageService {
                 otaPackageDataCache.evict(otaPackageId.toString());
             }
             OtaPackage save = otaPackageDao.save(otaPackage.getTenantId(), otaPackage);
-            fileCacheService.deleteFile(tempFile);
+            baseFileCacheService.deleteFile(tempFile);
             return save;
         } catch (FileNotFoundException | SQLException e){
             log.error("Failed to validate ota package {}",otaPackage.getId(), e);
@@ -268,14 +264,28 @@ public class BaseOtaPackageService implements OtaPackageService {
     @Transactional
     public InputStream getOtaDataStream(TenantId tenantId, OtaPackageId otaPackageId){
         try {
-            return fileCacheService.getOtaDataStream(otaPackageId);
+            return baseFileCacheService.getOtaDataStream(otaPackageId);
         }catch (FileNotFoundException e){
             OtaPackage otaPackage = findOtaPackageById(tenantId, otaPackageId);
             if (otaPackage == null) {
                 log.error("Can't find otaPackage to download file  {}", otaPackage);
                 throw new RuntimeException("No such OtaPackageId");
             }
-            return fileCacheService.loadOtaData(otaPackageId,otaPackage.getData());
+            return baseFileCacheService.loadOtaData(otaPackageId,otaPackage.getData());
+        }
+    }
+
+    @Transactional
+    public File getOtaDataFile(TenantId tenantId, OtaPackageId otaPackageId){
+        try {
+            return baseFileCacheService.getOtaDataFile(otaPackageId);
+        }catch (FileNotFoundException e){
+            OtaPackage otaPackage = findOtaPackageById(tenantId, otaPackageId);
+            if (otaPackage == null) {
+                log.error("Can't find otaPackage to download file  {}", otaPackage);
+                throw new RuntimeException("No such OtaPackageId");
+            }
+            return baseFileCacheService.loadToFile(otaPackageId,otaPackage.getData());
         }
     }
 }
