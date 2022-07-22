@@ -51,7 +51,7 @@ public class TbKafkaAdmin implements TbQueueAdmin {
             log.error("Failed to get all topics.", e);
         }
 
-        String numPartitionsStr = topicConfigs.get("partitions");
+        String numPartitionsStr = topicConfigs.get(TbKafkaTopicConfigs.NUM_PARTITIONS_SETTING);
         if (numPartitionsStr != null) {
             numPartitions = Integer.parseInt(numPartitionsStr);
             topicConfigs.remove("partitions");

@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.edge.rpc.constructor;
 
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
@@ -23,7 +22,6 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
-import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainUpdateMsg;
@@ -35,10 +33,7 @@ import org.thingsboard.server.service.edge.rpc.constructor.rule.RuleChainMetadat
 @Component
 @Slf4j
 @TbCoreComponent
-@AllArgsConstructor
 public class RuleChainMsgConstructor {
-
-    private final QueueService queueService;
 
     public RuleChainUpdateMsg constructRuleChainUpdatedMsg(RuleChainId edgeRootRuleChainId, UpdateMsgType msgType, RuleChain ruleChain) {
         RuleChainUpdateMsg.Builder builder = RuleChainUpdateMsg.newBuilder()
@@ -61,7 +56,7 @@ public class RuleChainMsgConstructor {
                                                                            RuleChainMetaData ruleChainMetaData,
                                                                            EdgeVersion edgeVersion) {
         RuleChainMetadataConstructor ruleChainMetadataConstructor
-                = RuleChainMetadataConstructorFactory.getByEdgeVersion(edgeVersion, queueService);
+                = RuleChainMetadataConstructorFactory.getByEdgeVersion(edgeVersion);
         return ruleChainMetadataConstructor.constructRuleChainMetadataUpdatedMsg(tenantId, msgType, ruleChainMetaData);
     }
 

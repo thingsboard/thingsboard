@@ -30,13 +30,13 @@ import java.util.Map;
 public class TbPubSubSubscriptionSettings {
     @Value("${queue.pubsub.queue-properties.core:}")
     private String coreProperties;
-    @Value("${queue.pubsub.queue-properties.rule-engine}")
+    @Value("${queue.pubsub.queue-properties.rule-engine:}")
     private String ruleEngineProperties;
-    @Value("${queue.pubsub.queue-properties.transport-api}")
+    @Value("${queue.pubsub.queue-properties.transport-api:}")
     private String transportApiProperties;
-    @Value("${queue.pubsub.queue-properties.notifications}")
+    @Value("${queue.pubsub.queue-properties.notifications:}")
     private String notificationsProperties;
-    @Value("${queue.pubsub.queue-properties.js-executor}")
+    @Value("${queue.pubsub.queue-properties.js-executor:}")
     private String jsExecutorProperties;
     @Value("${queue.pubsub.queue-properties.version-control:}")
     private String vcProperties;

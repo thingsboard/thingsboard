@@ -138,7 +138,9 @@ public class CustomerController extends BaseController {
             notes = "Creates or Updates the Customer. When creating customer, platform generates Customer Id as " + UUID_WIKI_LINK +
                     "The newly created Customer Id will be present in the response. " +
                     "Specify existing Customer Id to update the Customer. " +
-                    "Referencing non-existing Customer Id will cause 'Not Found' error." + TENANT_AUTHORITY_PARAGRAPH)
+                    "Referencing non-existing Customer Id will cause 'Not Found' error." +
+                    "Remove 'id', 'tenantId' from the request body example (below) to create new Customer entity. " +
+                    TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/customer", method = RequestMethod.POST)
     @ResponseBody

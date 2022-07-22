@@ -83,7 +83,7 @@ public class Customer extends ContactBased<CustomerId> implements HasTenantId, E
         return super.getId();
     }
 
-    @ApiModelProperty(position = 2, value = "Timestamp of the customer creation, in milliseconds", example = "1609459200000", readOnly = true)
+    @ApiModelProperty(position = 2, value = "Timestamp of the customer creation, in milliseconds", example = "1609459200000", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();
@@ -159,7 +159,7 @@ public class Customer extends ContactBased<CustomerId> implements HasTenantId, E
 
     @Override
     @JsonProperty(access = Access.READ_ONLY)
-    @ApiModelProperty(position = 4, value = "Name of the customer. Read-only, duplicated from title for backward compatibility", example = "Company A", readOnly = true)
+    @ApiModelProperty(position = 4, value = "Name of the customer. Read-only, duplicated from title for backward compatibility", example = "Company A", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     public String getName() {
         return title;
     }

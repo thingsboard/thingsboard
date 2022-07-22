@@ -508,13 +508,8 @@ public class ActorSystemContext {
         return partitionService.resolve(serviceType, tenantId, entityId);
     }
 
-    public TopicPartitionInfo resolve(ServiceType serviceType, QueueId queueId, TenantId tenantId, EntityId entityId) {
-        return partitionService.resolve(serviceType, queueId, tenantId, entityId);
-    }
-
-    @Deprecated
     public TopicPartitionInfo resolve(ServiceType serviceType, String queueName, TenantId tenantId, EntityId entityId) {
-        return partitionService.resolve(serviceType, tenantId, entityId, queueName);
+        return partitionService.resolve(serviceType, queueName, tenantId, entityId);
     }
 
     public String getServiceId() {

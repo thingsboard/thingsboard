@@ -44,11 +44,11 @@ ENV CASSANDRA_LOG=/var/log/cassandra
 COPY logback.xml ${pkg.name}.conf start-db.sh stop-db.sh start-tb.sh upgrade-tb.sh install-tb.sh ${pkg.name}.deb /tmp/
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl nmap procps gnupg2 \
+    && apt-get install -y --no-install-recommends wget nmap procps gnupg2 \
     && echo "deb http://apt.postgresql.org/pub/repos/apt/ $(. /etc/os-release && echo -n $VERSION_CODENAME)-pgdg main" | tee --append /etc/apt/sources.list.d/pgdg.list > /dev/null \
-    && curl -L https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
+    && wget -q https://www.postgresql.org/media/keys/ACCC4CF8.asc -O- | apt-key add - \
     && echo 'deb http://downloads.apache.org/cassandra/debian 40x main' | tee --append /etc/apt/sources.list.d/cassandra.list > /dev/null \
-    && curl -L https://downloads.apache.org/cassandra/KEYS | apt-key add - \
+    && wget -q https://downloads.apache.org/cassandra/KEYS -O- | apt-key add - \
     && apt-get update \
     && apt-get install -y --no-install-recommends cassandra cassandra-tools postgresql-${PG_MAJOR} \
     && rm -rf /var/lib/apt/lists/* \

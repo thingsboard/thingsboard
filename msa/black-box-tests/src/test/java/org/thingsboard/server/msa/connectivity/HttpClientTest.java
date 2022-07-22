@@ -90,7 +90,7 @@ public class HttpClientTest extends AbstractContainerTest {
 
         Assert.assertTrue(deviceClientsAttributes.getStatusCode().is2xxSuccessful());
 
-        TimeUnit.SECONDS.sleep(3);
+        TimeUnit.SECONDS.sleep(3 * timeoutMultiplier);
 
         @SuppressWarnings("deprecation")
         Optional<JsonNode> allOptional = restClient.getAttributes(accessToken, null, null);
