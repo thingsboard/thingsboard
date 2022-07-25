@@ -29,6 +29,7 @@ import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Dashboard } from '@shared/models/dashboard.models';
+import { base64toObj } from '@core/utils';
 
 export interface EmbedDashboardDialogData {
   dashboard: Dashboard;
@@ -51,6 +52,7 @@ export class EmbedDashboardDialogComponent extends DialogComponent<EmbedDashboar
 
   dashboard = this.data.dashboard;
   state = this.data.state;
+  stateId = base64toObj(this.data.state)[0]?.id;
   title = this.data.title;
   hideToolbar = this.data.hideToolbar;
 
