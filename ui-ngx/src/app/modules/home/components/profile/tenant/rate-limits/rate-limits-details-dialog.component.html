@@ -20,7 +20,7 @@
     <h2>{{ title | translate }}</h2>
     <span fxFlex></span>
     <button mat-icon-button
-            (click)="cancel()"
+            [matDialogClose]="undefined"
             type="button">
       <mat-icon class="material-icons">close</mat-icon>
     </button>
@@ -37,7 +37,8 @@
   <div mat-dialog-actions fxLayoutAlign="end center">
     <button mat-button color="primary"
             type="button"
-            (click)="cancel()" cdkFocusInitial>
+            [matDialogClose]="undefined"
+            cdkFocusInitial>
       {{ 'action.cancel' | translate }}
     </button>
     <button *ngIf="!data.readonly" mat-raised-button color="primary" (click)="save()"

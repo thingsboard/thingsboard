@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 :host {
+  @media screen and (min-width: 800px) {
+    min-width: 600px;
+  }
+
   .tb-rate-limits-preview {
     margin-top: 1.5em;
     span {

@@ -35,6 +35,7 @@ import {
   RateLimitsType,
   stringToRateLimitsArray
 } from './rate-limits.models';
+import { isDefined } from '@core/utils';
 
 @Component({
   selector: 'tb-rate-limits',
@@ -120,7 +121,7 @@ export class RateLimitsComponent implements ControlValueAccessor, OnInit, Valida
         readonly: this.disabled
       }
     }).afterClosed().subscribe((result) => {
-      if (result || result === null) {
+      if (isDefined(result)) {
         this.modelValue = result;
         this.updateModel();
       }

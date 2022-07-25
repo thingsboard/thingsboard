@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
+import { Component, Inject, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -33,7 +33,7 @@ export interface RateLimitsDetailsDialogData {
 @Component({
   templateUrl: './rate-limits-details-dialog.component.html'
 })
-export class RateLimitsDetailsDialogComponent extends DialogComponent<RateLimitsDetailsDialogComponent> implements OnInit {
+export class RateLimitsDetailsDialogComponent extends DialogComponent<RateLimitsDetailsDialogComponent> {
 
   editDetailsFormGroup: FormGroup;
 
@@ -49,7 +49,6 @@ export class RateLimitsDetailsDialogComponent extends DialogComponent<RateLimits
               private fb: FormBuilder,
               public translate: TranslateService) {
     super(store, router, dialogRef);
-
     this.editDetailsFormGroup = this.fb.group({
       rateLimits: [this.rateLimits, []]
     });
@@ -58,15 +57,7 @@ export class RateLimitsDetailsDialogComponent extends DialogComponent<RateLimits
     }
   }
 
-  ngOnInit(): void {
-  }
-
-  cancel(): void {
-    this.dialogRef.close(undefined);
-  }
-
   save(): void {
     this.dialogRef.close(this.editDetailsFormGroup.get('rateLimits').value);
   }
-
 }
