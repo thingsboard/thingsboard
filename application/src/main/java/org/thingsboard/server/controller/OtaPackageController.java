@@ -98,19 +98,15 @@ public class OtaPackageController extends BaseController {
                 return ResponseEntity.badRequest().build();
             }
             FileSystemResource resource = new FileSystemResource(otaPackageService.getOtaDataFile(getTenantId(), otaPackageId));
-            String fileName= URLEncoder.encode(otaPackage.getFileName(), StandardCharsets.UTF_8.toString());
             return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename*=UTF-8''" + fileName)
-                    .header("x-filename", fileName)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + otaPackage.getFileName())
+                    .header("x-filename", otaPackage.getFileName())
                     .contentLength(otaPackage.getDataSize())
-                    .contentType(new MediaType(parseMediaType(otaPackage.getContentType()), StandardCharsets.UTF_8))
+                    .contentType(parseMediaType(otaPackage.getContentType()))
                     .body(resource);
         } catch (Exception e) {
             throw handleException(e);
         }
-    }
-    private static String encodeFileName(String fileName)  {
-        return URLEncoder.encode(fileName, StandardCharsets.UTF_8).replace("+", "%20");
     }
 
     @ApiOperation(value = "Get OTA Package Info (getOtaPackageInfoById)",
