@@ -368,16 +368,25 @@ public class ModelConstants {
     /**
      * Cassandra event constants.
      */
-    public static final String EVENT_COLUMN_FAMILY_NAME = "event";
+    public static final String ERROR_EVENT_TABLE_NAME = "error_event";
+    public static final String LC_EVENT_TABLE_NAME = "lc_event";
+    public static final String STATS_EVENT_TABLE_NAME = "stats_event";
+    public static final String RULE_NODE_DEBUG_EVENT_TABLE_NAME = "rule_node_debug_event";
+    public static final String RULE_CHAIN_DEBUG_EVENT_TABLE_NAME = "rule_chain_debug_event";
+
     public static final String EVENT_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
-    public static final String EVENT_TYPE_PROPERTY = "event_type";
-    public static final String EVENT_UID_PROPERTY = "event_uid";
-    public static final String EVENT_ENTITY_TYPE_PROPERTY = ENTITY_TYPE_PROPERTY;
+    public static final String EVENT_SERVICE_ID_PROPERTY = "service_id";
     public static final String EVENT_ENTITY_ID_PROPERTY = "entity_id";
     public static final String EVENT_BODY_PROPERTY = "body";
 
-    public static final String EVENT_BY_TYPE_AND_ID_VIEW_NAME = "event_by_type_and_id";
-    public static final String EVENT_BY_ID_VIEW_NAME = "event_by_id";
+    public static final String EVENT_MESSAGES_PROCESSED_COLUMN_NAME = "e_messages_processed";
+    public static final String EVENT_ERRORS_OCCURRED_COLUMN_NAME = "e_errors_occurred";
+
+    public static final String EVENT_METHOD_COLUMN_NAME = "e_method";
+
+    public static final String EVENT_TYPE_COLUMN_NAME = "e_type";
+    public static final String EVENT_ERROR_COLUMN_NAME = "e_error";
+    public static final String EVENT_SUCCESS_COLUMN_NAME = "e_success";
 
     public static final String DEBUG_MODE = "debug_mode";
 

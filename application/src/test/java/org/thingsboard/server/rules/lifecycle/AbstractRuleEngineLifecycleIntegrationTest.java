@@ -28,6 +28,7 @@ import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EventInfo;
+import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -109,7 +110,7 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
                 .pollInterval(10, MILLISECONDS)
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> {
-                            List<EventInfo> debugEvents = getEvents(tenantId, ruleChainFinal.getFirstRuleNodeId(), DataConstants.LC_EVENT, 1000)
+                            List<EventInfo> debugEvents = getEvents(tenantId, ruleChainFinal.getFirstRuleNodeId(), EventType.LC_EVENT.getOldName(), 1000)
                                     .getData().stream().filter(e -> {
                                         var body = e.getBody();
                                         return body.has("event") && body.get("event").asText().equals("STARTED")

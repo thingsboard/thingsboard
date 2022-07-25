@@ -18,13 +18,16 @@ package org.thingsboard.server.common.data.event;
 import lombok.Getter;
 
 public enum EventType {
-    ERROR("error_event"), LC_EVENT("lc_event"), STATS("stats_event"), DEBUG_RULE_NODE("rule_node_debug_event"), DEBUG_RULE_CHAIN("rule_chain_debug_event");
+    ERROR("error_event", "ERROR"), LC_EVENT("lc_event", "LC_EVENT"), STATS("stats_event", "STATS"), DEBUG_RULE_NODE("rule_node_debug_event", "DEBUG_RULE_NODE"), DEBUG_RULE_CHAIN("rule_chain_debug_event", "DEBUG_RULE_CHAIN");
 
     @Getter
     private final String table;
+    @Getter
+    private final String oldName;
 
-    EventType(String table) {
+    EventType(String table, String oldName) {
         this.table = table;
+        this.oldName = oldName;
     }
 
 }

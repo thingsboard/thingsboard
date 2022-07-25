@@ -20,8 +20,12 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+
+import java.util.UUID;
 
 @ToString
 @EqualsAndHashCode(callSuper = true)
@@ -30,8 +34,8 @@ public class ErrorEvent extends Event {
     private static final long serialVersionUID = 960461434033192571L;
 
     @Builder
-    private ErrorEvent(TenantId tenantId, EntityId entityId, String serviceId, String method, String error) {
-        super(tenantId, entityId, serviceId);
+    private ErrorEvent(TenantId tenantId, UUID entityId, String serviceId, UUID id, long ts, String method, String error) {
+        super(tenantId, entityId, serviceId, id, ts);
         this.method = method;
         this.error = error;
     }
@@ -44,5 +48,10 @@ public class ErrorEvent extends Event {
     @Override
     public EventType getType() {
         return EventType.ERROR;
+    }
+
+    @Override
+    public EventInfo toInfo(EntityType entityType) {
+        return null;
     }
 }

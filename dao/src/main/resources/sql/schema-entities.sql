@@ -324,7 +324,7 @@ CREATE TABLE IF NOT EXISTS device_credentials (
 );
 
 CREATE TABLE IF NOT EXISTS rule_node_debug_event (
-    id uuid NOT NULL CONSTRAINT rule_node_debug_event_pkey PRIMARY KEY,
+    id uuid NOT NULL,
     tenant_id uuid NOT NULL ,
     ts bigint NOT NULL,
     entity_id uuid NOT NULL,
@@ -342,7 +342,7 @@ CREATE TABLE IF NOT EXISTS rule_node_debug_event (
 ) PARTITION BY RANGE (ts);
 
 CREATE TABLE IF NOT EXISTS rule_chain_debug_event (
-    id uuid NOT NULL CONSTRAINT rule_chain_debug_event_pkey PRIMARY KEY,
+    id uuid NOT NULL,
     tenant_id uuid NOT NULL,
     ts bigint NOT NULL,
     entity_id uuid NOT NULL,
@@ -352,17 +352,17 @@ CREATE TABLE IF NOT EXISTS rule_chain_debug_event (
 ) PARTITION BY RANGE (ts);
 
 CREATE TABLE IF NOT EXISTS stats_event (
-    id uuid NOT NULL CONSTRAINT stats_event_pkey PRIMARY KEY,
+    id uuid NOT NULL,
     tenant_id uuid NOT NULL,
     ts bigint NOT NULL,
     entity_id uuid NOT NULL,
     service_id varchar NOT NULL,
     e_messages_processed bigint NOT NULL,
-    e_errors_occured bigint NOT NULL
+    e_errors_occurred bigint NOT NULL
 ) PARTITION BY RANGE (ts);
 
 CREATE TABLE IF NOT EXISTS lc_event (
-    id uuid NOT NULL CONSTRAINT lc_event_pkey PRIMARY KEY,
+    id uuid NOT NULL,
     tenant_id uuid NOT NULL,
     ts bigint NOT NULL,
     entity_id uuid NOT NULL,
@@ -373,7 +373,7 @@ CREATE TABLE IF NOT EXISTS lc_event (
 ) PARTITION BY RANGE (ts);
 
 CREATE TABLE IF NOT EXISTS error_event (
-    id uuid NOT NULL CONSTRAINT error_event_pkey PRIMARY KEY,
+    id uuid NOT NULL,
     tenant_id uuid NOT NULL,
     ts bigint NOT NULL,
     entity_id uuid NOT NULL,

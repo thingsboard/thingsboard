@@ -56,7 +56,7 @@ public class StatsActor extends ContextAwareActor {
         }
         systemContext.getEventService().saveAsync(StatisticsEvent.builder()
                 .tenantId(msg.getTenantId())
-                .entityId(msg.getEntityId())
+                .entityId(msg.getEntityId().getId())
                 .serviceId(systemContext.getServiceInfoProvider().getServiceId())
                 .messagesProcessed(msg.getMessagesProcessed())
                 .errorsOccurred(msg.getErrorsOccurred())

@@ -194,7 +194,7 @@ public abstract class AbstractServiceTest {
         }
         return RuleNodeDebugEvent.builder()
                 .tenantId(tenantId)
-                .entityId(entityId)
+                .entityId(entityId.getId())
                 .serviceId("server A")
                 .data(JacksonUtil.toString(readFromResource("TestJsonData.json")))
                 .build();

@@ -19,8 +19,12 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+
+import java.util.UUID;
 
 @ToString
 @EqualsAndHashCode(callSuper = true)
@@ -29,8 +33,8 @@ public class StatisticsEvent extends Event {
     private static final long serialVersionUID = 6683733979448910631L;
 
     @Builder
-    private StatisticsEvent(TenantId tenantId, EntityId entityId, String serviceId, long messagesProcessed, long errorsOccurred) {
-        super(tenantId, entityId, serviceId);
+    private StatisticsEvent(TenantId tenantId, UUID entityId, String serviceId, UUID id, long ts, long messagesProcessed, long errorsOccurred) {
+        super(tenantId, entityId, serviceId, id, ts);
         this.messagesProcessed = messagesProcessed;
         this.errorsOccurred = errorsOccurred;
     }
@@ -43,5 +47,10 @@ public class StatisticsEvent extends Event {
     @Override
     public EventType getType() {
         return EventType.STATS;
+    }
+
+    @Override
+    public EventInfo toInfo(EntityType entityType) {
+        return null;
     }
 }

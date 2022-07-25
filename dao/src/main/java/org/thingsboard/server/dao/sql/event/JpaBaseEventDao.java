@@ -18,21 +18,22 @@ package org.thingsboard.server.dao.sql.event;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EventInfo;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.event.DebugEvent;
+import org.thingsboard.server.common.data.event.ErrorEvent;
 import org.thingsboard.server.common.data.event.ErrorEventFilter;
 import org.thingsboard.server.common.data.event.Event;
 import org.thingsboard.server.common.data.event.EventFilter;
 import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.event.LifeCycleEventFilter;
+import org.thingsboard.server.common.data.event.LifecycleEvent;
+import org.thingsboard.server.common.data.event.StatisticsEvent;
 import org.thingsboard.server.common.data.event.StatisticsEventFilter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EventId;
@@ -41,22 +42,14 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.event.EventDao;
-import org.thingsboard.server.dao.model.sql.EventEntity;
-import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
 import org.thingsboard.server.dao.timeseries.SqlPartition;
-import org.thingsboard.server.dao.timeseries.SqlTsPartitionDate;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -72,7 +65,7 @@ import java.util.function.Function;
  */
 @Slf4j
 @Component
-public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implements EventDao {
+public class JpaBaseEventDao implements EventDao {
 
     private static final long PARTITION_DURATION = TimeUnit.HOURS.toMillis(1);
     private final Map<EventType, Map<Long, SqlPartition>> partitionsByEventType = new ConcurrentHashMap<>();
@@ -85,20 +78,19 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
     private EventRepository eventRepository;
 
     @Autowired
+    private LifecycleEventRepository lcEventRepository;
+
+    @Autowired
+    private StatisticsEventRepository statsEventRepository;
+
+    @Autowired
+    private ErrorEventRepository errorEventRepository;
+
+    @Autowired
     private EventInsertRepository eventInsertRepository;
 
     @Autowired
     private EventCleanupRepository eventCleanupRepository;
-
-    @Override
-    protected Class<EventEntity> getEntityClass() {
-        return EventEntity.class;
-    }
-
-    @Override
-    protected JpaRepository<EventEntity, UUID> getRepository() {
-        return eventRepository;
-    }
 
     @Autowired
     ScheduledLogExecutorComponent logExecutor;
@@ -199,13 +191,6 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
     }
 
     @Override
-    public EventInfo findEvent(UUID tenantId, EntityId entityId, String eventType, String eventUid) {
-        return null;
-//        return DaoUtil.getData(eventRepository.findByTenantIdAndEntityTypeAndEntityIdAndEventTypeAndEventUid(
-//                tenantId, entityId.getEntityType(), entityId.getId(), eventType, eventUid));
-    }
-
-    @Override
     public PageData<EventInfo> findEvents(UUID tenantId, EntityId entityId, TimePageLink pageLink) {
         return null;
 //        return DaoUtil.toPageData(
@@ -221,22 +206,37 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
     }
 
     @Override
-    public PageData<EventInfo> findEvents(UUID tenantId, EntityId entityId, String eventType, TimePageLink pageLink) {
-        return null;
-//        return DaoUtil.toPageData(
-//                eventRepository
-//                        .findEventsByTenantIdAndEntityIdAndEventType(
-//                                tenantId,
-//                                entityId.getEntityType(),
-//                                entityId.getId(),
-//                                eventType,
-//                                pageLink.getStartTime(),
-//                                pageLink.getEndTime(),
-//                                DaoUtil.toPageable(pageLink)));
+    public PageData<? extends Event> findEvents(UUID tenantId, UUID entityId, EventType eventType, TimePageLink pageLink) {
+        switch (eventType) {
+            case LC_EVENT:
+                return findLcEventsWithoutFilter(tenantId, entityId, pageLink);
+            case STATS:
+                return findStatsEventsWithoutFilter(tenantId, entityId, pageLink);
+            case ERROR:
+                return findErrorEventsWithoutFilter(tenantId, entityId, pageLink);
+            default:
+                throw new RuntimeException("Event type: " + eventType + " is not supported!");
+        }
     }
 
+    private PageData<LifecycleEvent> findLcEventsWithoutFilter(UUID tenantId, UUID entityId, TimePageLink pageLink) {
+        return DaoUtil.toPageData(
+                lcEventRepository.findEvents(tenantId, entityId, pageLink.getStartTime(), pageLink.getEndTime(), DaoUtil.toPageable(pageLink)));
+    }
+
+    private PageData<StatisticsEvent> findStatsEventsWithoutFilter(UUID tenantId, UUID entityId, TimePageLink pageLink) {
+        return DaoUtil.toPageData(
+                statsEventRepository.findEventsWithoutFilter(tenantId, entityId, pageLink.getStartTime(), pageLink.getEndTime(), DaoUtil.toPageable(pageLink)));
+    }
+
+    private PageData<ErrorEvent> findErrorEventsWithoutFilter(UUID tenantId, UUID entityId, TimePageLink pageLink) {
+        return DaoUtil.toPageData(
+                errorEventRepository.findEvents(tenantId, entityId, pageLink.getStartTime(), pageLink.getEndTime(), DaoUtil.toPageable(pageLink)));
+    }
+
+
     @Override
-    public PageData<EventInfo> findEventByFilter(UUID tenantId, EntityId entityId, EventFilter eventFilter, TimePageLink pageLink) {
+    public PageData<? extends Event> findEventByFilter(UUID tenantId, UUID entityId, EventFilter eventFilter, TimePageLink pageLink) {
         if (eventFilter.hasFilterForJsonBody()) {
             switch (eventFilter.getEventType()) {
                 case DEBUG_RULE_NODE:
@@ -252,7 +252,7 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
                     throw new RuntimeException("Not supported event type: " + eventFilter.getEventType());
             }
         } else {
-            return findEvents(tenantId, entityId, eventFilter.getEventType().name(), pageLink);
+            return findEvents(tenantId, entityId, eventFilter.getEventType(), pageLink);
         }
     }
 
@@ -279,40 +279,36 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
 //                        DaoUtil.toPageable(pageLink)));
     }
 
-    private PageData<EventInfo> findEventByFilter(UUID tenantId, EntityId entityId, ErrorEventFilter eventFilter, TimePageLink pageLink) {
-        return null;
-//        return DaoUtil.toPageData(
-//                eventRepository.findErrorEvents(
-//                        tenantId,
-//                        entityId.getId(),
-//                        entityId.getEntityType().name(),
-//                        notNull(pageLink.getStartTime()),
-//                        notNull(pageLink.getEndTime()),
-//                        eventFilter.getServer(),
-//                        eventFilter.getMethod(),
-//                        eventFilter.getErrorStr(),
-//                        DaoUtil.toPageable(pageLink))
-//        );
+    private PageData<? extends Event> findEventByFilter(UUID tenantId, UUID entityId, ErrorEventFilter eventFilter, TimePageLink pageLink) {
+        return DaoUtil.toPageData(
+                errorEventRepository.findEvents(
+                        tenantId,
+                        entityId,
+                        pageLink.getStartTime(),
+                        pageLink.getEndTime(),
+                        eventFilter.getServer(),
+                        eventFilter.getMethod(),
+                        eventFilter.getErrorStr(),
+                        DaoUtil.toPageable(pageLink))
+        );
     }
 
-    private PageData<EventInfo> findEventByFilter(UUID tenantId, EntityId entityId, LifeCycleEventFilter eventFilter, TimePageLink pageLink) {
-        return null;
-//        boolean statusFilterEnabled = !StringUtils.isEmpty(eventFilter.getStatus());
-//        boolean statusFilter = statusFilterEnabled && eventFilter.getStatus().equalsIgnoreCase("Success");
-//        return DaoUtil.toPageData(
-//                eventRepository.findLifeCycleEvents(
-//                        tenantId,
-//                        entityId.getId(),
-//                        entityId.getEntityType().name(),
-//                        notNull(pageLink.getStartTime()),
-//                        notNull(pageLink.getEndTime()),
-//                        eventFilter.getServer(),
-//                        eventFilter.getEvent(),
-//                        statusFilterEnabled,
-//                        statusFilter,
-//                        eventFilter.getErrorStr(),
-//                        DaoUtil.toPageable(pageLink))
-//        );
+    private PageData<? extends Event> findEventByFilter(UUID tenantId, UUID entityId, LifeCycleEventFilter eventFilter, TimePageLink pageLink) {
+        boolean statusFilterEnabled = !StringUtils.isEmpty(eventFilter.getStatus());
+        boolean statusFilter = statusFilterEnabled && eventFilter.getStatus().equalsIgnoreCase("Success");
+        return DaoUtil.toPageData(
+                lcEventRepository.findEvents(
+                        tenantId,
+                        entityId,
+                        pageLink.getStartTime(),
+                        pageLink.getEndTime(),
+                        eventFilter.getServer(),
+                        eventFilter.getEvent(),
+                        statusFilterEnabled,
+                        statusFilter,
+                        eventFilter.getErrorStr(),
+                        DaoUtil.toPageable(pageLink))
+        );
     }
 
     private PageData<EventInfo> findEventByFilter(UUID tenantId, EntityId entityId, StatisticsEventFilter eventFilter, TimePageLink pageLink) {
@@ -332,7 +328,7 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
     }
 
     @Override
-    public List<EventInfo> findLatestEvents(UUID tenantId, EntityId entityId, String eventType, int limit) {
+    public List<EventInfo> findLatestEvents(UUID tenantId, UUID entityId, EventType eventType, int limit) {
         return null;
 //        List<EventEntity> latest = eventRepository.findLatestByTenantIdAndEntityTypeAndEntityIdAndEventType(
 //                tenantId,

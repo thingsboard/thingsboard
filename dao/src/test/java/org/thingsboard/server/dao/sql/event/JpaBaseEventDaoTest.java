@@ -16,33 +16,13 @@
 package org.thingsboard.server.dao.sql.event;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
-import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.EventInfo;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EventId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.event.EventDao;
 
-import java.io.IOException;
-import java.util.List;
 import java.util.UUID;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.thingsboard.server.common.data.DataConstants.ALARM;
-import static org.thingsboard.server.common.data.DataConstants.STATS;
 
 /**
  * Created by Valerii Sosliuk on 5/5/2017.

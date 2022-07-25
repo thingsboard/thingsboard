@@ -20,24 +20,23 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.event.ErrorEvent;
 import org.thingsboard.server.common.data.event.Event;
 import org.thingsboard.server.common.data.event.EventFilter;
+import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.event.LifecycleEvent;
 import org.thingsboard.server.common.data.event.RuleChainDebugEvent;
 import org.thingsboard.server.common.data.event.RuleNodeDebugEvent;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.IdBased;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
-import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -97,41 +96,18 @@ public class BaseEventService implements EventService {
     }
 
     @Override
-    public Optional<EventInfo> findEvent(TenantId tenantId, EntityId entityId, String eventType, String eventUid) {
-        if (tenantId == null) {
-            throw new DataValidationException("Tenant id should be specified!.");
-        }
-        if (entityId == null) {
-            throw new DataValidationException("Entity id should be specified!.");
-        }
-        if (StringUtils.isEmpty(eventType)) {
-            throw new DataValidationException("Event type should be specified!.");
-        }
-        if (StringUtils.isEmpty(eventUid)) {
-            throw new DataValidationException("Event uid should be specified!.");
-        }
-        EventInfo event = eventDao.findEvent(tenantId.getId(), entityId, eventType, eventUid);
-        return event != null ? Optional.of(event) : Optional.empty();
+    public PageData<EventInfo> findEvents(TenantId tenantId, EntityId entityId, EventType eventType, TimePageLink pageLink) {
+        return convert(entityId.getEntityType(), eventDao.findEvents(tenantId.getId(), entityId.getId(), eventType, pageLink));
     }
 
     @Override
-    public PageData<EventInfo> findEvents(TenantId tenantId, EntityId entityId, TimePageLink pageLink) {
-        return eventDao.findEvents(tenantId.getId(), entityId, pageLink);
-    }
-
-    @Override
-    public PageData<EventInfo> findEvents(TenantId tenantId, EntityId entityId, String eventType, TimePageLink pageLink) {
-        return eventDao.findEvents(tenantId.getId(), entityId, eventType, pageLink);
-    }
-
-    @Override
-    public List<EventInfo> findLatestEvents(TenantId tenantId, EntityId entityId, String eventType, int limit) {
-        return eventDao.findLatestEvents(tenantId.getId(), entityId, eventType, limit);
+    public List<EventInfo> findLatestEvents(TenantId tenantId, EntityId entityId, EventType eventType, int limit) {
+        return eventDao.findLatestEvents(tenantId.getId(), entityId.getId(), eventType, limit);
     }
 
     @Override
     public PageData<EventInfo> findEventsByFilter(TenantId tenantId, EntityId entityId, EventFilter eventFilter, TimePageLink pageLink) {
-        return eventDao.findEventByFilter(tenantId.getId(), entityId, eventFilter, pageLink);
+        return convert(entityId.getEntityType(), eventDao.findEventByFilter(tenantId.getId(), entityId.getId(), eventFilter, pageLink));
     }
 
     @Override
@@ -141,23 +117,29 @@ public class BaseEventService implements EventService {
 
     @Override
     public void removeEvents(TenantId tenantId, EntityId entityId, EventFilter eventFilter, Long startTime, Long endTime) {
-        TimePageLink eventsPageLink = new TimePageLink(1000, 0, null, null, startTime, endTime);
-        PageData<EventInfo> eventsPageData;
-        do {
-            if (eventFilter == null) {
-                eventsPageData = findEvents(tenantId, entityId, eventsPageLink);
-            } else {
-                eventsPageData = findEventsByFilter(tenantId, entityId, eventFilter, eventsPageLink);
-            }
-
-            eventDao.removeAllByIds(eventsPageData.getData().stream()
-                    .map(IdBased::getUuidId)
-                    .collect(Collectors.toList()));
-        } while (eventsPageData.hasNext());
+//        TimePageLink eventsPageLink = new TimePageLink(1000, 0, null, null, startTime, endTime);
+//        PageData<EventInfo> eventsPageData;
+//        do {
+//            if (eventFilter == null) {
+//                eventsPageData = findEvents(tenantId, entityId, eventsPageLink);
+//            } else {
+//                eventsPageData = findEventsByFilter(tenantId, entityId, eventFilter, eventsPageLink);
+//            }
+//
+//            eventDao.removeAllByIds(eventsPageData.getData().stream()
+//                    .map(IdBased::getUuidId)
+//                    .collect(Collectors.toList()));
+//        } while (eventsPageData.hasNext());
     }
 
     @Override
     public void cleanupEvents(long regularEventStartTs, long regularEventEndTs, long debugEventStartTs, long debugEventEndTs) {
         eventDao.cleanupEvents(regularEventStartTs, regularEventEndTs, debugEventStartTs, debugEventEndTs);
+    }
+
+    private PageData<EventInfo> convert(EntityType entityType, PageData<? extends Event> pd) {
+        return new PageData<>(pd.getData() == null ? null :
+                pd.getData().stream().map(e -> e.toInfo(entityType)).collect(Collectors.toList())
+                , pd.getTotalPages(), pd.getTotalElements(), pd.hasNext());
     }
 }

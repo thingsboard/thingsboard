@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EventInfo;
+import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -61,7 +62,7 @@ public abstract class AbstractRuleEngineControllerTest extends AbstractControlle
     }
 
     protected PageData<EventInfo> getDebugEvents(TenantId tenantId, EntityId entityId, int limit) throws Exception {
-        return getEvents(tenantId, entityId, DataConstants.DEBUG_RULE_NODE, limit);
+        return getEvents(tenantId, entityId, EventType.DEBUG_RULE_NODE.getOldName(), limit);
     }
 
     protected PageData<EventInfo> getEvents(TenantId tenantId, EntityId entityId, String eventType, int limit) throws Exception {
@@ -70,7 +71,6 @@ public abstract class AbstractRuleEngineControllerTest extends AbstractControlle
                 new TypeReference<PageData<EventInfo>>() {
                 }, pageLink, entityId.getEntityType(), entityId.getId(), eventType, tenantId.getId());
     }
-
 
 
     protected JsonNode getMetadata(EventInfo outEvent) {

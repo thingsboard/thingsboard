@@ -20,6 +20,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
@@ -32,8 +34,8 @@ public class RuleChainDebugEvent extends Event {
     private static final long serialVersionUID = -386392236201116767L;
 
     @Builder
-    private RuleChainDebugEvent(TenantId tenantId, EntityId entityId, String serviceId, String message, String error) {
-        super(tenantId, entityId, serviceId);
+    private RuleChainDebugEvent(TenantId tenantId, UUID entityId, String serviceId, UUID id, long ts, String message, String error) {
+        super(tenantId, entityId, serviceId, id, ts);
         this.message = message;
         this.error = error;
     }
@@ -46,5 +48,10 @@ public class RuleChainDebugEvent extends Event {
     @Override
     public EventType getType() {
         return EventType.DEBUG_RULE_CHAIN;
+    }
+
+    @Override
+    public EventInfo toInfo(EntityType entityType) {
+        return null;
     }
 }

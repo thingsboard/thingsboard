@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.event.Event;
 import org.thingsboard.server.common.data.event.EventFilter;
+import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -30,7 +31,7 @@ import java.util.UUID;
 /**
  * The Interface EventDao.
  */
-public interface EventDao extends Dao<Event> {
+public interface EventDao {
 
     /**
      * Save or update event object async
@@ -39,17 +40,6 @@ public interface EventDao extends Dao<Event> {
      * @return saved event object future
      */
     ListenableFuture<Void> saveAsync(Event event);
-
-    /**
-     * Find event by tenantId, entityId and eventUid.
-     *
-     * @param tenantId the tenantId
-     * @param entityId the entityId
-     * @param eventType the eventType
-     * @param eventUid the eventUid
-     * @return the event
-     */
-    EventInfo findEvent(UUID tenantId, EntityId entityId, String eventType, String eventUid);
 
     /**
      * Find events by tenantId, entityId and pageLink.
@@ -70,9 +60,9 @@ public interface EventDao extends Dao<Event> {
      * @param pageLink the pageLink
      * @return the event list
      */
-    PageData<EventInfo> findEvents(UUID tenantId, EntityId entityId, String eventType, TimePageLink pageLink);
+    PageData<? extends Event> findEvents(UUID tenantId, UUID entityId, EventType eventType, TimePageLink pageLink);
 
-    PageData<EventInfo> findEventByFilter(UUID tenantId, EntityId entityId, EventFilter eventFilter, TimePageLink pageLink);
+    PageData<? extends Event> findEventByFilter(UUID tenantId, UUID entityId, EventFilter eventFilter, TimePageLink pageLink);
 
     /**
      * Find latest events by tenantId, entityId and eventType.
@@ -83,7 +73,7 @@ public interface EventDao extends Dao<Event> {
      * @param limit the limit
      * @return the event list
      */
-    List<EventInfo> findLatestEvents(UUID tenantId, EntityId entityId, String eventType, int limit);
+    List<EventInfo> findLatestEvents(UUID tenantId, UUID entityId, EventType eventType, int limit);
 
     /**
      * Executes stored procedure to cleanup old events. Uses separate ttl for debug and other events.

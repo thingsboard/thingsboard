@@ -22,6 +22,7 @@ import org.junit.Test;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.event.Event;
+import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.event.RuleNodeDebugEvent;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -80,8 +81,7 @@ public abstract class BaseEventServiceTest extends AbstractServiceTest {
 
         TimePageLink timePageLink = new TimePageLink(2, 0, "", new SortOrder("createdTime"), startTime, endTime);
 
-        PageData<EventInfo> events = eventService.findEvents(tenantId, customerId, DataConstants.STATS,
-                timePageLink);
+        PageData<EventInfo> events = eventService.findEvents(tenantId, customerId, EventType.STATS, timePageLink);
 
         Assert.assertNotNull(events.getData());
         Assert.assertTrue(events.getData().size() == 2);
@@ -89,7 +89,7 @@ public abstract class BaseEventServiceTest extends AbstractServiceTest {
         Assert.assertTrue(events.getData().get(1).getUuidId().equals(savedEvent2.getUuidId()));
         Assert.assertTrue(events.hasNext());
 
-        events = eventService.findEvents(tenantId, customerId, DataConstants.STATS, timePageLink.nextPageLink());
+        events = eventService.findEvents(tenantId, customerId, EventType.STATS, timePageLink.nextPageLink());
 
         Assert.assertNotNull(events.getData());
         Assert.assertTrue(events.getData().size() == 1);
@@ -111,8 +111,7 @@ public abstract class BaseEventServiceTest extends AbstractServiceTest {
 
         TimePageLink timePageLink = new TimePageLink(2, 0, "", new SortOrder("createdTime", SortOrder.Direction.DESC), startTime, endTime);
 
-        PageData<EventInfo> events = eventService.findEvents(tenantId, customerId, DataConstants.STATS,
-                timePageLink);
+        PageData<EventInfo> events = eventService.findEvents(tenantId, customerId, EventType.STATS, timePageLink);
 
         Assert.assertNotNull(events.getData());
         Assert.assertTrue(events.getData().size() == 2);
@@ -120,7 +119,7 @@ public abstract class BaseEventServiceTest extends AbstractServiceTest {
         Assert.assertTrue(events.getData().get(1).getUuidId().equals(savedEvent2.getUuidId()));
         Assert.assertTrue(events.hasNext());
 
-        events = eventService.findEvents(tenantId, customerId, DataConstants.STATS, timePageLink.nextPageLink());
+        events = eventService.findEvents(tenantId, customerId, EventType.STATS, timePageLink.nextPageLink());
 
         Assert.assertNotNull(events.getData());
         Assert.assertTrue(events.getData().size() == 1);

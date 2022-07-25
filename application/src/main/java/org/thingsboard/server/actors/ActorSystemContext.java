@@ -488,7 +488,7 @@ public class ActorSystemContext {
     public void persistError(TenantId tenantId, EntityId entityId, String method, Exception e) {
         eventService.saveAsync(ErrorEvent.builder()
                 .tenantId(tenantId)
-                .entityId(entityId)
+                .entityId(entityId.getId())
                 .serviceId(getServiceId())
                 .method(method)
                 .error(toString(e)).build());
@@ -497,14 +497,14 @@ public class ActorSystemContext {
     public void persistLifecycleEvent(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent lcEvent, Exception e) {
         LifecycleEvent.LifecycleEventBuilder event = LifecycleEvent.builder()
                 .tenantId(tenantId)
-                .entityId(entityId)
+                .entityId(entityId.getId())
                 .serviceId(getServiceId())
                 .lcEventType(lcEvent.name());
 
         if (e != null) {
             event.success(false).error(toString(e));
         } else {
-            event.success(false);
+            event.success(true);
         }
 
         eventService.saveAsync(event.build());
@@ -553,7 +553,7 @@ public class ActorSystemContext {
             try {
                 RuleNodeDebugEvent.RuleNodeDebugEventBuilder event = RuleNodeDebugEvent.builder()
                         .tenantId(tenantId)
-                        .entityId(entityId)
+                        .entityId(entityId.getId())
                         .serviceId(getServiceId())
                         .eventType(type)
                         .eventEntity(tbMsg.getOriginator())
@@ -600,7 +600,7 @@ public class ActorSystemContext {
     private void persistRuleChainDebugModeEvent(TenantId tenantId, EntityId entityId, Throwable error) {
         RuleChainDebugEvent.RuleChainDebugEventBuilder event = RuleChainDebugEvent.builder()
                 .tenantId(tenantId)
-                .entityId(entityId)
+                .entityId(entityId.getId())
                 .serviceId(getServiceId())
                 .message("Reached debug mode rate limit!");
         if (error != null) {

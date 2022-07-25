@@ -73,7 +73,7 @@ public class EventInsertRepository {
                 " (id, tenant_id, ts, entity_id, service_id, e_type, e_success, e_error) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT DO NOTHING;");
         insertStmtMap.put(EventType.STATS, "INSERT INTO " + EventType.STATS.getTable() +
-                " (id, tenant_id, ts, entity_id, service_id, e_messages_processed, e_errors_occured) " +
+                " (id, tenant_id, ts, entity_id, service_id, e_messages_processed, e_errors_occurred) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT DO NOTHING;");
         insertStmtMap.put(EventType.DEBUG_RULE_NODE, "INSERT INTO " + EventType.DEBUG_RULE_NODE.getTable() +
                 " (id, tenant_id, ts, entity_id, service_id, e_type, e_entity_id, e_entity_type, e_msg_id, e_msg_type, e_data_type, e_relation_type, e_data, e_metadata, e_error) " +
@@ -171,8 +171,8 @@ public class EventInsertRepository {
                 RuleNodeDebugEvent event = (RuleNodeDebugEvent) events.get(i);
                 setCommonEventFields(ps, event);
                 safePutString(ps, 6, event.getEventType());
-                safePutUUID(ps, 7, event.getEntityId() != null ? event.getEntityId().getId() : null);
-                safePutString(ps, 8, event.getEntityId() != null ? event.getEntityId().getEntityType().name() : null);
+                safePutUUID(ps, 7, event.getEventEntity() != null ? event.getEventEntity().getId() : null);
+                safePutString(ps, 8, event.getEventEntity() != null ? event.getEventEntity().getEntityType().name() : null);
                 safePutUUID(ps, 9, event.getMsgId());
                 safePutString(ps, 10, event.getMsgType());
                 safePutString(ps, 11, event.getDataType());
@@ -226,7 +226,7 @@ public class EventInsertRepository {
         ps.setObject(1, event.getId().getId());
         ps.setObject(2, event.getTenantId().getId());
         ps.setLong(3, event.getCreatedTime());
-        ps.setObject(4, event.getEntityId().getId());
+        ps.setObject(4, event.getEntityId());
         ps.setString(5, event.getServiceId());
     }
 

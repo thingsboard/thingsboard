@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.event.Event;
 import org.thingsboard.server.common.data.event.EventFilter;
+import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -31,13 +32,9 @@ public interface EventService {
 
     ListenableFuture<Void> saveAsync(Event event);
 
-    Optional<EventInfo> findEvent(TenantId tenantId, EntityId entityId, String eventType, String eventUid);
+    PageData<EventInfo> findEvents(TenantId tenantId, EntityId entityId, EventType eventType, TimePageLink pageLink);
 
-    PageData<EventInfo> findEvents(TenantId tenantId, EntityId entityId, TimePageLink pageLink);
-
-    PageData<EventInfo> findEvents(TenantId tenantId, EntityId entityId, String eventType, TimePageLink pageLink);
-
-    List<EventInfo> findLatestEvents(TenantId tenantId, EntityId entityId, String eventType, int limit);
+    List<EventInfo> findLatestEvents(TenantId tenantId, EntityId entityId, EventType eventType, int limit);
 
     PageData<EventInfo> findEventsByFilter(TenantId tenantId, EntityId entityId, EventFilter eventFilter, TimePageLink pageLink);
 

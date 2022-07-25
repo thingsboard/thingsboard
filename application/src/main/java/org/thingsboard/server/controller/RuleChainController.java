@@ -43,6 +43,7 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -352,7 +353,7 @@ public class RuleChainController extends BaseController {
             RuleNodeId ruleNodeId = new RuleNodeId(toUUID(strRuleNodeId));
             checkRuleNode(ruleNodeId, Operation.READ);
             TenantId tenantId = getCurrentUser().getTenantId();
-            List<EventInfo> events = eventService.findLatestEvents(tenantId, ruleNodeId, DataConstants.DEBUG_RULE_NODE, 2);
+            List<EventInfo> events = eventService.findLatestEvents(tenantId, ruleNodeId, EventType.DEBUG_RULE_NODE, 2);
             JsonNode result = null;
             if (events != null) {
                 for (EventInfo event : events) {
