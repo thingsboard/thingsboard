@@ -126,11 +126,11 @@ public class TbMsgDeleteAttributesTest {
     }
 
     @Test
-    void givenEmptyMsg_whenOnMsg_thenTellFailure() throws Exception {
+    void giveInvalidScope_whenOnMsg_thenTellFailure() throws Exception {
         final TbMsgMetaData metaData = new TbMsgMetaData();
         final String data = "{}";
 
-        config.setScopePattern("NOT_SERVER_SCOPE");
+        config.setScopePattern("INVALID_SCOPE");
         nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
         node.init(ctx, nodeConfiguration);
 
