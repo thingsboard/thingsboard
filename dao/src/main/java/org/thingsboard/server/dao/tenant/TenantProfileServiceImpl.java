@@ -153,7 +153,6 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
             profileData.setConfiguration(new DefaultTenantProfileConfiguration());
             defaultTenantProfile.setProfileData(profileData);
             defaultTenantProfile.setDescription("Default tenant profile");
-            defaultTenantProfile.setIsolatedTbCore(false);
             defaultTenantProfile.setIsolatedTbRuleEngine(false);
             defaultTenantProfile = saveTenantProfile(tenantId, defaultTenantProfile);
         }

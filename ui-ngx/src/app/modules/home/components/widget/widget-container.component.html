@@ -25,7 +25,8 @@
                 'tb-highlighted': isHighlighted(widget),
                 'tb-not-highlighted': isNotHighlighted(widget),
                 'mat-elevation-z4': widget.dropShadow,
-                'tb-has-timewindow': widget.hasTimewindow
+                'tb-has-timewindow': widget.hasTimewindow,
+                'tb-edit': isEdit
              }"
      [ngStyle]="widget.style"
      (mousedown)="onMouseDown($event)"

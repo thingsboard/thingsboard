@@ -24,11 +24,11 @@ import org.thingsboard.server.common.data.id.DeviceId;
 @Data
 public class DeviceInfo extends Device {
 
-    @ApiModelProperty(position = 13, value = "Title of the Customer that owns the device.", readOnly = true)
+    @ApiModelProperty(position = 13, value = "Title of the Customer that owns the device.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String customerTitle;
-    @ApiModelProperty(position = 14, value = "Indicates special 'Public' Customer that is auto-generated to use the devices on public dashboards.", readOnly = true)
+    @ApiModelProperty(position = 14, value = "Indicates special 'Public' Customer that is auto-generated to use the devices on public dashboards.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private boolean customerIsPublic;
-    @ApiModelProperty(position = 15, value = "Name of the corresponding Device Profile.", readOnly = true)
+    @ApiModelProperty(position = 15, value = "Name of the corresponding Device Profile.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String deviceProfileName;
 
     public DeviceInfo() {

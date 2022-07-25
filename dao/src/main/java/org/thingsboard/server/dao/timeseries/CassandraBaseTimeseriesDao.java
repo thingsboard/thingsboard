@@ -254,6 +254,10 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
                     }
                     QueryCursor cursor = new QueryCursor(entityId.getEntityType().name(), entityId.getId(), query, partitionsToDelete);
                     deletePartitionAsync(tenantId, cursor, resultFuture);
+
+                    for (Long partition : partitionsToDelete) {
+                        cassandraTsPartitionsCache.invalidate(new CassandraPartitionCacheKey(entityId, query.getKey(), partition));
+                    }
                 }
 
                 @Override

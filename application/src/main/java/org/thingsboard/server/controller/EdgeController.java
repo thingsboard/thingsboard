@@ -141,8 +141,9 @@ public class EdgeController extends BaseController {
                     "The newly created edge id will be present in the response. " +
                     "Specify existing Edge id to update the edge. " +
                     "Referencing non-existing Edge Id will cause 'Not Found' error." +
-                    "\n\nEdge name is unique in the scope of tenant. Use unique identifiers like MAC or IMEI for the edge names and non-unique 'label' field for user-friendly visualization purposes."
-                    + TENANT_AUTHORITY_PARAGRAPH,
+                    "\n\nEdge name is unique in the scope of tenant. Use unique identifiers like MAC or IMEI for the edge names and non-unique 'label' field for user-friendly visualization purposes." +
+                    "Remove 'id', 'tenantId' and optionally 'customerId' from the request body example (below) to create new Edge entity. " +
+                    TENANT_AUTHORITY_PARAGRAPH,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge", method = RequestMethod.POST)

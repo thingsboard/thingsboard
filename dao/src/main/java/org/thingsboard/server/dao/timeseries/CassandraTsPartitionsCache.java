@@ -39,4 +39,8 @@ public class CassandraTsPartitionsCache {
     public void put(CassandraPartitionCacheKey key) {
         partitionsCache.put(key, CompletableFuture.completedFuture(true));
     }
+
+    public void invalidate(CassandraPartitionCacheKey key) {
+        partitionsCache.synchronous().invalidate(key);
+    }
 }

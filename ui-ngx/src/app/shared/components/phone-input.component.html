@@ -18,7 +18,7 @@
 
 <form [formGroup]="phoneFormGroup">
   <div class="phone-input-container">
-    <div class="flags-select-container" *ngIf="enableFlagsSelect">
+    <div class="flags-select-container" *ngIf="showFlagSelect">
       <span class="flag-container" *ngIf="!isLoad">{{ flagIcon }}</span>
       <mat-spinner diameter="20" class="flag-loader" *ngIf="isLoad"></mat-spinner>
       <mat-select class="country-select" formControlName="country">

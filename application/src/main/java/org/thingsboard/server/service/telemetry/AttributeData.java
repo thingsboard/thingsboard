@@ -32,17 +32,17 @@ public class AttributeData implements Comparable<AttributeData>{
         this.value = value;
     }
 
-    @ApiModelProperty(position = 1, value = "Timestamp last updated attribute, in milliseconds", example = "1609459200000", readOnly = true)
+    @ApiModelProperty(position = 1, value = "Timestamp last updated attribute, in milliseconds", example = "1609459200000", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     public long getLastUpdateTs() {
         return lastUpdateTs;
     }
 
-    @ApiModelProperty(position = 2, value = "String representing attribute key", example = "active", readOnly = true)
+    @ApiModelProperty(position = 2, value = "String representing attribute key", example = "active", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     public String getKey() {
         return key;
     }
 
-    @ApiModelProperty(position = 3, value = "Object representing value of attribute key", example = "false", readOnly = true)
+    @ApiModelProperty(position = 3, value = "Object representing value of attribute key", example = "false", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     public Object getValue() {
         return value;
     }

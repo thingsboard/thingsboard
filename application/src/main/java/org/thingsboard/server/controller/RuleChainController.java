@@ -227,7 +227,9 @@ public class RuleChainController extends BaseController {
                     "The newly created Rule Chain Id will be present in the response. " +
                     "Specify existing Rule Chain id to update the rule chain. " +
                     "Referencing non-existing rule chain Id will cause 'Not Found' error." +
-                    "\n\n" + RULE_CHAIN_DESCRIPTION + TENANT_AUTHORITY_PARAGRAPH)
+                    "\n\n" + RULE_CHAIN_DESCRIPTION +
+                    "Remove 'id', 'tenantId' from the request body example (below) to create new Rule Chain entity." +
+                    TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/ruleChain", method = RequestMethod.POST)
     @ResponseBody

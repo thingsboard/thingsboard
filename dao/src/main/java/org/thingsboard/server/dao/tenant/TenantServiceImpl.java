@@ -171,7 +171,6 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
     }
 
     @Override
-    @Transactional(timeout = 60 * 60)
     public void deleteTenant(TenantId tenantId) {
         log.trace("Executing deleteTenant [{}]", tenantId);
         Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);

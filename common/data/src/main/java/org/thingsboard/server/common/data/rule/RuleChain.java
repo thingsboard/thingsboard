@@ -40,7 +40,7 @@ public class RuleChain extends SearchTextBasedWithAdditionalInfo<RuleChainId> im
 
     private static final long serialVersionUID = -5656679015121935465L;
 
-    @ApiModelProperty(position = 3, required = true, value = "JSON object with Tenant Id.", readOnly = true)
+    @ApiModelProperty(position = 3, required = true, value = "JSON object with Tenant Id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private TenantId tenantId;
     @NoXss
     @Length(fieldName = "name")
@@ -100,7 +100,7 @@ public class RuleChain extends SearchTextBasedWithAdditionalInfo<RuleChainId> im
         return super.getId();
     }
 
-    @ApiModelProperty(position = 2, value = "Timestamp of the rule chain creation, in milliseconds", example = "1609459200000", readOnly = true)
+    @ApiModelProperty(position = 2, value = "Timestamp of the rule chain creation, in milliseconds", example = "1609459200000", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();

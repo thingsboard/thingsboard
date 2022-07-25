@@ -28,6 +28,8 @@ import java.util.Map;
 @Component
 @ConditionalOnProperty(prefix = "queue", value = "type", havingValue = "kafka")
 public class TbKafkaTopicConfigs {
+    public static final String NUM_PARTITIONS_SETTING = "partitions";
+
     @Value("${queue.kafka.topic-properties.core:}")
     private String coreProperties;
     @Value("${queue.kafka.topic-properties.rule-engine:}")
@@ -43,17 +45,20 @@ public class TbKafkaTopicConfigs {
     @Value("${queue.kafka.topic-properties.version-control:}")
     private String vcProperties;
 
-
     @Getter
     private Map<String, String> coreConfigs;
     @Getter
     private Map<String, String> ruleEngineConfigs;
     @Getter
-    private Map<String, String> transportApiConfigs;
+    private Map<String, String> transportApiRequestConfigs;
+    @Getter
+    private Map<String, String> transportApiResponseConfigs;
     @Getter
     private Map<String, String> notificationsConfigs;
     @Getter
-    private Map<String, String> jsExecutorConfigs;
+    private Map<String, String> jsExecutorRequestConfigs;
+    @Getter
+    private Map<String, String> jsExecutorResponseConfigs;
     @Getter
     private Map<String, String> fwUpdatesConfigs;
     @Getter
@@ -63,9 +68,13 @@ public class TbKafkaTopicConfigs {
     private void init() {
         coreConfigs = getConfigs(coreProperties);
         ruleEngineConfigs = getConfigs(ruleEngineProperties);
-        transportApiConfigs = getConfigs(transportApiProperties);
+        transportApiRequestConfigs = getConfigs(transportApiProperties);
+        transportApiResponseConfigs = getConfigs(transportApiProperties);
+        transportApiResponseConfigs.put(NUM_PARTITIONS_SETTING, "1");
         notificationsConfigs = getConfigs(notificationsProperties);
-        jsExecutorConfigs = getConfigs(jsExecutorProperties);
+        jsExecutorRequestConfigs = getConfigs(jsExecutorProperties);
+        jsExecutorResponseConfigs = getConfigs(jsExecutorProperties);
+        jsExecutorResponseConfigs.put(NUM_PARTITIONS_SETTING, "1");
         fwUpdatesConfigs = getConfigs(fwUpdatesProperties);
         vcConfigs = getConfigs(vcProperties);
     }

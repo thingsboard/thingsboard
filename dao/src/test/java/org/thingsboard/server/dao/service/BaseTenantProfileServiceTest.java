@@ -85,7 +85,6 @@ public abstract class BaseTenantProfileServiceTest extends AbstractServiceTest {
         Assert.assertEquals(tenantProfile.getDescription(), savedTenantProfile.getDescription());
         Assert.assertEquals(tenantProfile.getProfileData(), savedTenantProfile.getProfileData());
         Assert.assertEquals(tenantProfile.isDefault(), savedTenantProfile.isDefault());
-        Assert.assertEquals(tenantProfile.isIsolatedTbCore(), savedTenantProfile.isIsolatedTbCore());
         Assert.assertEquals(tenantProfile.isIsolatedTbRuleEngine(), savedTenantProfile.isIsolatedTbRuleEngine());
 
         savedTenantProfile.setName("New tenant profile");
@@ -174,14 +173,6 @@ public abstract class BaseTenantProfileServiceTest extends AbstractServiceTest {
         TenantProfile savedTenantProfile = tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
         savedTenantProfile.setIsolatedTbRuleEngine(true);
         addMainQueueConfig(savedTenantProfile);
-        tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, savedTenantProfile);
-    }
-
-    @Test(expected = DataValidationException.class)
-    public void testSaveSameTenantProfileWithDifferentIsolatedTbCore() {
-        TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile");
-        TenantProfile savedTenantProfile = tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
-        savedTenantProfile.setIsolatedTbCore(true);
         tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, savedTenantProfile);
     }
 
@@ -298,7 +289,6 @@ public abstract class BaseTenantProfileServiceTest extends AbstractServiceTest {
         profileData.setConfiguration(new DefaultTenantProfileConfiguration());
         tenantProfile.setProfileData(profileData);
         tenantProfile.setDefault(false);
-        tenantProfile.setIsolatedTbCore(false);
         tenantProfile.setIsolatedTbRuleEngine(false);
         return tenantProfile;
     }

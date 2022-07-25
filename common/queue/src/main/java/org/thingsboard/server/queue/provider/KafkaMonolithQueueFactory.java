@@ -75,8 +75,10 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
 
     private final TbQueueAdmin coreAdmin;
     private final TbQueueAdmin ruleEngineAdmin;
-    private final TbQueueAdmin jsExecutorAdmin;
-    private final TbQueueAdmin transportApiAdmin;
+    private final TbQueueAdmin jsExecutorRequestAdmin;
+    private final TbQueueAdmin jsExecutorResponseAdmin;
+    private final TbQueueAdmin transportApiRequestAdmin;
+    private final TbQueueAdmin transportApiResponseAdmin;
     private final TbQueueAdmin notificationAdmin;
     private final TbQueueAdmin fwUpdatesAdmin;
     private final TbQueueAdmin vcAdmin;
@@ -106,8 +108,10 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
 
         this.coreAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getCoreConfigs());
         this.ruleEngineAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getRuleEngineConfigs());
-        this.jsExecutorAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getJsExecutorConfigs());
-        this.transportApiAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getTransportApiConfigs());
+        this.jsExecutorRequestAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getJsExecutorRequestConfigs());
+        this.jsExecutorResponseAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getJsExecutorResponseConfigs());
+        this.transportApiRequestAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getTransportApiRequestConfigs());
+        this.transportApiResponseAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getTransportApiResponseConfigs());
         this.notificationAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getNotificationsConfigs());
         this.fwUpdatesAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getFwUpdatesConfigs());
         this.vcAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getVcConfigs());
@@ -237,7 +241,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
         consumerBuilder.clientId("monolith-transport-api-consumer-" + serviceInfoProvider.getServiceId());
         consumerBuilder.groupId("monolith-transport-api-consumer");
         consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportApiRequestMsg.parseFrom(msg.getData()), msg.getHeaders()));
-        consumerBuilder.admin(transportApiAdmin);
+        consumerBuilder.admin(transportApiRequestAdmin);
         consumerBuilder.statsService(consumerStatsService);
         return consumerBuilder.build();
     }
@@ -248,7 +252,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
         requestBuilder.settings(kafkaSettings);
         requestBuilder.clientId("monolith-transport-api-producer-" + serviceInfoProvider.getServiceId());
         requestBuilder.defaultTopic(transportApiSettings.getResponsesTopic());
-        requestBuilder.admin(transportApiAdmin);
+        requestBuilder.admin(transportApiResponseAdmin);
         return requestBuilder.build();
     }
 
@@ -259,7 +263,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
         requestBuilder.settings(kafkaSettings);
         requestBuilder.clientId("producer-js-invoke-" + serviceInfoProvider.getServiceId());
         requestBuilder.defaultTopic(jsInvokeSettings.getRequestTopic());
-        requestBuilder.admin(jsExecutorAdmin);
+        requestBuilder.admin(jsExecutorRequestAdmin);
 
         TbKafkaConsumerTemplate.TbKafkaConsumerTemplateBuilder<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> responseBuilder = TbKafkaConsumerTemplate.builder();
         responseBuilder.settings(kafkaSettings);
@@ -273,11 +277,11 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
                 }
         );
         responseBuilder.statsService(consumerStatsService);
-        responseBuilder.admin(jsExecutorAdmin);
+        responseBuilder.admin(jsExecutorResponseAdmin);
 
         DefaultTbQueueRequestTemplate.DefaultTbQueueRequestTemplateBuilder
                 <TbProtoJsQueueMsg<JsInvokeProtos.RemoteJsRequest>, TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> builder = DefaultTbQueueRequestTemplate.builder();
-        builder.queueAdmin(jsExecutorAdmin);
+        builder.queueAdmin(jsExecutorResponseAdmin);
         builder.requestTemplate(requestBuilder.build());
         builder.responseTemplate(responseBuilder.build());
         builder.maxPendingRequests(jsInvokeSettings.getMaxPendingRequests());
@@ -350,11 +354,17 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
         if (ruleEngineAdmin != null) {
             ruleEngineAdmin.destroy();
         }
-        if (jsExecutorAdmin != null) {
-            jsExecutorAdmin.destroy();
+        if (jsExecutorRequestAdmin != null) {
+            jsExecutorRequestAdmin.destroy();
         }
-        if (transportApiAdmin != null) {
-            transportApiAdmin.destroy();
+        if (jsExecutorResponseAdmin != null) {
+            jsExecutorResponseAdmin.destroy();
+        }
+        if (transportApiRequestAdmin != null) {
+            transportApiRequestAdmin.destroy();
+        }
+        if (transportApiResponseAdmin != null) {
+            transportApiResponseAdmin.destroy();
         }
         if (notificationAdmin != null) {
             notificationAdmin.destroy();
