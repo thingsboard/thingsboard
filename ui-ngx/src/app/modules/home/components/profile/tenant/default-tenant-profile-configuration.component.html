@@ -422,18 +422,18 @@
       {{ 'tenant-profile.rate-limits.rate-limits' | translate }}
     </legend>
     <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
-      <tb-rate-limits fxFlex="50" formControlName="transportTenantMsgRateLimit"
+      <tb-rate-limits fxFlex formControlName="transportTenantMsgRateLimit"
                       [type]="rateLimitsType.TENANT_MESSAGES">
       </tb-rate-limits>
-      <tb-rate-limits fxFlex="50" formControlName="transportDeviceMsgRateLimit"
+      <tb-rate-limits fxFlex formControlName="transportDeviceMsgRateLimit"
                       [type]="rateLimitsType.DEVICE_MESSAGES">
       </tb-rate-limits>
     </div>
     <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
-      <tb-rate-limits fxFlex="50" formControlName="transportTenantTelemetryMsgRateLimit"
+      <tb-rate-limits fxFlex formControlName="transportTenantTelemetryMsgRateLimit"
                       [type]="rateLimitsType.TENANT_TELEMETRY_MESSAGES">
       </tb-rate-limits>
-      <tb-rate-limits fxFlex="50" formControlName="transportDeviceTelemetryMsgRateLimit"
+      <tb-rate-limits fxFlex formControlName="transportDeviceTelemetryMsgRateLimit"
                       [type]="rateLimitsType.DEVICE_TELEMETRY_MESSAGES">
       </tb-rate-limits>
     </div>
@@ -445,34 +445,34 @@
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
         <div fxFlex fxLayout="row"  fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
-          <tb-rate-limits fxFlex="50" formControlName="transportTenantTelemetryDataPointsRateLimit"
+          <tb-rate-limits fxFlex formControlName="transportTenantTelemetryDataPointsRateLimit"
                           [type]="rateLimitsType.TENANT_TELEMETRY_DATA_POINTS">
           </tb-rate-limits>
-          <tb-rate-limits fxFlex="50" formControlName="transportDeviceTelemetryDataPointsRateLimit"
+          <tb-rate-limits fxFlex formControlName="transportDeviceTelemetryDataPointsRateLimit"
                           [type]="rateLimitsType.DEVICE_TELEMETRY_DATA_POINTS">
           </tb-rate-limits>
         </div>
         <div fxFlex fxLayout="row"  fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
-          <tb-rate-limits fxFlex="50" formControlName="tenantServerRestLimitsConfiguration"
+          <tb-rate-limits fxFlex formControlName="tenantServerRestLimitsConfiguration"
                           [type]="rateLimitsType.TENANT_SERVER_REST_LIMITS_CONFIGURATION">
           </tb-rate-limits>
-          <tb-rate-limits fxFlex="50" formControlName="customerServerRestLimitsConfiguration"
+          <tb-rate-limits fxFlex formControlName="customerServerRestLimitsConfiguration"
                           [type]="rateLimitsType.CUSTOMER_SERVER_REST_LIMITS_CONFIGURATION">
           </tb-rate-limits>
         </div>
         <div fxFlex fxLayout="row"  fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
-          <tb-rate-limits fxFlex="50" formControlName="tenantEntityExportRateLimit"
+          <tb-rate-limits fxFlex formControlName="tenantEntityExportRateLimit"
                           [type]="rateLimitsType.TENANT_ENTITY_EXPORT_RATE_LIMIT">
           </tb-rate-limits>
-          <tb-rate-limits fxFlex="50" formControlName="tenantEntityImportRateLimit"
+          <tb-rate-limits fxFlex formControlName="tenantEntityImportRateLimit"
                           [type]="rateLimitsType.TENANT_ENTITY_IMPORT_RATE_LIMIT">
           </tb-rate-limits>
         </div>
         <div fxFlex fxLayout="row"  fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
-          <tb-rate-limits fxFlex="50" formControlName="wsUpdatesPerSessionRateLimit"
+          <tb-rate-limits fxFlex formControlName="wsUpdatesPerSessionRateLimit"
                           [type]="rateLimitsType.WS_UPDATE_PER_SESSION_RATE_LIMIT">
           </tb-rate-limits>
-          <tb-rate-limits fxFlex="50" formControlName="cassandraQueryTenantRateLimitsConfiguration"
+          <tb-rate-limits fxFlex formControlName="cassandraQueryTenantRateLimitsConfiguration"
                           [type]="rateLimitsType.CASSANDRA_QUERY_TENANT_RATE_LIMITS_CONFIGURATION">
           </tb-rate-limits>
         </div>

@@ -18,8 +18,7 @@ import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { RateLimits, rateLimitsArrayToHtml } from '@shared/models/rate-limits.models';
+import { RateLimits, rateLimitsArrayToHtml } from './rate-limits.models';
 
 @Component({
   selector: 'tb-rate-limits-text',
@@ -35,25 +34,10 @@ import { RateLimits, rateLimitsArrayToHtml } from '@shared/models/rate-limits.mo
 })
 export class RateLimitsTextComponent implements ControlValueAccessor, OnInit {
 
-  private requiredValue: boolean;
-  get required(): boolean {
-    return this.requiredValue;
-  }
-  @Input()
-  set required(value: boolean) {
-    this.requiredValue = coerceBooleanProperty(value);
-  }
-
   @Input()
   disabled: boolean;
 
-  @Input()
   noRateLimitsText = this.translate.instant('tenant-profile.rate-limits.not-set');
-
-  @Input()
-  nowrap = false;
-
-  requiredClass = false;
 
   public rateLimitsText: string;
 
@@ -83,15 +67,10 @@ export class RateLimitsTextComponent implements ControlValueAccessor, OnInit {
   }
 
   private updateText(value: Array<RateLimits>) {
-    this.requiredClass = false;
     if (value && value.length) {
       this.rateLimitsText = rateLimitsArrayToHtml(this.translate, value);
     } else {
-      if (this.required && !this.disabled) {
-        this.requiredClass = true;
-      } else {
-        this.rateLimitsText = this.noRateLimitsText;
-      }
+      this.rateLimitsText = this.noRateLimitsText;
     }
   }
 

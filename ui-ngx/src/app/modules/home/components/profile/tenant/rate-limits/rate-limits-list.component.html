@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<section fxFlex fxLayout="column" [formGroup]="rateLimitsListFormGroup">
-  <div fxFlex fxLayout="column" [formGroup]="rateLimit" *ngFor="let rateLimit of rateLimitsFormArray().controls; let $index = index">
-    <div class="tb-rate-limits-operation" *ngIf="$index > 0 && rateLimitsFormArray().controls.length > 1" translate>
+<section [formGroup]="rateLimitsListFormGroup">
+  <div fxFlex [formGroup]="rateLimit" *ngFor="let rateLimit of rateLimitsFormArray.controls; let $index = index">
+    <div class="tb-rate-limits-operation" *ngIf="$index > 0 && rateLimitsFormArray.controls.length > 1" translate>
       tenant-profile.rate-limits.but-less-than
     </div>
     <div fxFlex fxLayout="row" fxLayoutGap="8px">
@@ -45,7 +45,7 @@
       </mat-form-field>
       <button mat-icon-button type="button" color="primary"
               class="tb-rate-limits-button"
-              *ngIf="!rateLimitsFormArray().disabled"
+              *ngIf="!rateLimitsFormArray.disabled"
               (click)="removeRateLimits($index)"
               [disabled]="disabled"
               [matTooltip]="'tenant-profile.rate-limits.remove-limit' | translate" matTooltipPosition="above">
@@ -53,14 +53,12 @@
       </button>
     </div>
   </div>
-  <div>
-    <button mat-raised-button color="primary" *ngIf="!rateLimitsFormArray().disabled"
-            (click)="addRateLimits()"
-            [disabled]="disabled"
-            [matTooltip]="'tenant-profile.rate-limits.add-limit' | translate" matTooltipPosition="above">
-      <span translate>tenant-profile.rate-limits.add-limit</span>
-    </button>
-  </div>
+  <button mat-raised-button color="primary" *ngIf="!rateLimitsFormArray.disabled"
+          (click)="addRateLimits()"
+          [disabled]="disabled"
+          [matTooltip]="'tenant-profile.rate-limits.add-limit' | translate" matTooltipPosition="above">
+    <span translate>tenant-profile.rate-limits.add-limit</span>
+  </button>
   <div fxFlex fxLayoutGap="8px" fxLayout="column" class="tb-rate-limits-preview" [ngClass]="{'tb-rate-limits-preview-short': !disabled}">
     <span translate>tenant-profile.rate-limits.preview</span>
     <div>
