@@ -15,14 +15,12 @@
 ///
 
 import { Component, Inject, SkipSelf } from '@angular/core';
-import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
-import { TranslateService } from '@ngx-translate/core';
 
 export interface RateLimitsDetailsDialogData {
   rateLimits: string;
@@ -44,10 +42,8 @@ export class RateLimitsDetailsDialogComponent extends DialogComponent<RateLimits
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: RateLimitsDetailsDialogData,
-              @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<RateLimitsDetailsDialogComponent>,
-              private fb: FormBuilder,
-              public translate: TranslateService) {
+              private fb: FormBuilder) {
     super(store, router, dialogRef);
     this.editDetailsFormGroup = this.fb.group({
       rateLimits: [this.rateLimits, []]
