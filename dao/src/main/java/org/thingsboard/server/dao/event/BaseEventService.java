@@ -133,8 +133,8 @@ public class BaseEventService implements EventService {
     }
 
     @Override
-    public void cleanupEvents(long regularEventStartTs, long regularEventEndTs, long debugEventStartTs, long debugEventEndTs) {
-        eventDao.cleanupEvents(regularEventStartTs, regularEventEndTs, debugEventStartTs, debugEventEndTs);
+    public void cleanupEvents(long regularEventExpTs, long debugEventExpTs) {
+        eventDao.cleanupEvents(regularEventExpTs, debugEventExpTs);
     }
 
     private PageData<EventInfo> convert(EntityType entityType, PageData<? extends Event> pd) {

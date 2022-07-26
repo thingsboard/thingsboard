@@ -56,26 +56,9 @@ public class EventsCleanUpService extends AbstractCleanUpService {
     public void cleanUp() {
         if (ttlTaskExecutionEnabled && isSystemTenantPartitionMine()) {
             long ts = System.currentTimeMillis();
-            long regularEventStartTs;
-            long regularEventEndTs;
-            long debugEventStartTs;
-            long debugEventEndTs;
-
-            if (ttlInSec > 0) {
-                regularEventEndTs = ts - TimeUnit.SECONDS.toMillis(ttlInSec);
-                regularEventStartTs = regularEventEndTs - 2 * executionIntervalInMs;
-            } else {
-                regularEventStartTs = regularEventEndTs = 0;
-            }
-
-            if (debugTtlInSec > 0) {
-                debugEventEndTs = ts - TimeUnit.SECONDS.toMillis(debugTtlInSec);
-                debugEventStartTs = debugEventEndTs - 2 * executionIntervalInMs;
-            } else {
-                debugEventStartTs = debugEventEndTs = 0;
-            }
-
-            eventService.cleanupEvents(regularEventStartTs, regularEventEndTs, debugEventStartTs, debugEventEndTs);
+            long regularEventExpTs = ttlInSec > 0 ? ts - TimeUnit.SECONDS.toMillis(ttlInSec) : 0;
+            long debugEventExpTs = debugTtlInSec > 0 ? ts - TimeUnit.SECONDS.toMillis(debugTtlInSec) : 0;
+            eventService.cleanupEvents(regularEventExpTs, debugEventExpTs);
         }
     }
 

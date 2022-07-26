@@ -96,7 +96,7 @@ public abstract class BaseEventServiceTest extends AbstractServiceTest {
         Assert.assertTrue(events.getData().get(0).getUuidId().equals(savedEvent3.getUuidId()));
         Assert.assertFalse(events.hasNext());
 
-        eventService.cleanupEvents(timeBeforeStartTime - 1, timeAfterEndTime + 1, timeBeforeStartTime - 1, timeAfterEndTime + 1);
+        eventService.cleanupEvents(timeBeforeStartTime - 1, timeAfterEndTime + 1);
     }
 
     @Test
@@ -126,7 +126,7 @@ public abstract class BaseEventServiceTest extends AbstractServiceTest {
         Assert.assertTrue(events.getData().get(0).getUuidId().equals(savedEvent.getUuidId()));
         Assert.assertFalse(events.hasNext());
 
-        eventService.cleanupEvents(timeBeforeStartTime - 1, timeAfterEndTime + 1, timeBeforeStartTime - 1, timeAfterEndTime + 1);
+        eventService.cleanupEvents(timeBeforeStartTime - 1, timeAfterEndTime + 1);
     }
 
     private EventInfo saveEventWithProvidedTime(long time, EntityId entityId, TenantId tenantId) throws Exception {

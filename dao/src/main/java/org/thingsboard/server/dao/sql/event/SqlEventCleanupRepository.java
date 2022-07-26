@@ -16,38 +16,116 @@
 package org.thingsboard.server.dao.sql.event;
 
 import lombok.extern.slf4j.Slf4j;
+import org.postgresql.util.PSQLException;
 import org.springframework.stereotype.Repository;
+import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.thingsboard.server.dao.sql.event.JpaBaseEventDao.DEBUG_PARTITION_DURATION;
+import static org.thingsboard.server.dao.sql.event.JpaBaseEventDao.REGULAR_PARTITION_DURATION;
 
 @Slf4j
 @Repository
 public class SqlEventCleanupRepository extends JpaAbstractDaoListeningExecutorService implements EventCleanupRepository {
 
+    private static final String SELECT_PARTITIONS_STMT = "SELECT tablename from pg_tables WHERE schemaname = 'public' and tablename like concat(?, '_%')";
+    private static final int PSQL_VERSION_14 = 140000;
+
+    private volatile Integer currentServerVersion;
+
     @Override
-    public void cleanupEvents(long regularEventStartTs, long regularEventEndTs, long debugEventStartTs, long debugEventEndTs) {
+    public void cleanupEvents(long eventExpTime, boolean debug) {
+        for (EventType eventType : EventType.values()) {
+            if (eventType.isDebug() == debug) {
+                cleanupEvents(eventType, eventExpTime);
+            }
+        }
+    }
+
+    private void cleanupEvents(EventType eventType, long eventExpTime) {
+        var partitionDuration = eventType.isDebug() ? DEBUG_PARTITION_DURATION : REGULAR_PARTITION_DURATION;
+        List<Long> partitions = fetchPartitions(eventType);
+        for (var partitionTs : partitions) {
+            var partitionEndTs = partitionTs + partitionDuration;
+            if (partitionEndTs < eventExpTime) {
+                log.info("[{}] Detaching expired partition: [{}-{}]", eventType, partitionTs, partitionEndTs);
+                if (detachAndDropPartition(eventType, partitionTs)) {
+                    log.info("[{}] Detached expired partition: {}", eventType, partitionTs);
+                }
+            } else {
+                log.debug("[{}] Skip valid partition: {}", eventType, partitionTs);
+            }
+        }
+    }
+
+    private List<Long> fetchPartitions(EventType eventType) {
+        List<Long> partitions = new ArrayList<>();
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement("call cleanup_events_by_ttl(?,?,?,?,?)")) {
-            stmt.setLong(1, regularEventStartTs);
-            stmt.setLong(2, regularEventEndTs);
-            stmt.setLong(3, debugEventStartTs);
-            stmt.setLong(4, debugEventEndTs);
-            stmt.setLong(5, 0);
-            stmt.setQueryTimeout((int) TimeUnit.HOURS.toSeconds(1));
+             PreparedStatement stmt = connection.prepareStatement(SELECT_PARTITIONS_STMT)) {
+            stmt.setString(1, eventType.getTable());
             stmt.execute();
-            printWarnings(stmt);
-            try (ResultSet resultSet = stmt.getResultSet()){
-                resultSet.next();
-                log.info("Total events removed by TTL: [{}]", resultSet.getLong(1));
+            try (ResultSet resultSet = stmt.getResultSet()) {
+                while (resultSet.next()) {
+                    String partitionTableName = resultSet.getString(1);
+                    String partitionTsStr = partitionTableName.substring(eventType.getTable().length() + 1);
+                    try {
+                        partitions.add(Long.parseLong(partitionTsStr));
+                    } catch (NumberFormatException nfe) {
+                        log.warn("Failed to parse table name: {}", partitionTableName);
+                    }
+                }
             }
         } catch (SQLException e) {
             log.error("SQLException occurred during events TTL task execution ", e);
         }
+        return partitions;
+    }
+
+    private boolean detachAndDropPartition(EventType eventType, long partitionTs) {
+        String tablePartition = eventType.getTable() + "_" + partitionTs;
+        String detachPsqlStmtStr = "ALTER TABLE " + eventType.getTable() + " DETACH PARTITION " + tablePartition;
+        if (getCurrentServerVersion() >= PSQL_VERSION_14) {
+            detachPsqlStmtStr += " CONCURRENTLY";
+        }
+
+        String dropStmtStr = "DROP TABLE " + tablePartition;
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement detachStmt = connection.prepareStatement(detachPsqlStmtStr);
+             PreparedStatement dropStmt = connection.prepareStatement(dropStmtStr)) {
+            detachStmt.execute();
+            dropStmt.execute();
+            return true;
+        } catch (SQLException e) {
+            log.error("[{}] SQLException occurred during detach and drop of the partition: {}", eventType, partitionTs, e);
+        }
+        return false;
+    }
+
+    private synchronized int getCurrentServerVersion() {
+        if (currentServerVersion == null) {
+            try (Connection connection = dataSource.getConnection();
+                 PreparedStatement versionStmt = connection.prepareStatement("SELECT current_setting('server_version_num')")) {
+                versionStmt.execute();
+                try (ResultSet resultSet = versionStmt.getResultSet()) {
+                    while (resultSet.next()) {
+                        currentServerVersion = resultSet.getInt(1);
+                    }
+                }
+            } catch (SQLException e) {
+                log.warn("SQLException occurred during fetch of the server version", e);
+            }
+            if (currentServerVersion == null) {
+                currentServerVersion = 0;
+            }
+        }
+        return currentServerVersion;
     }
 
 }

@@ -67,10 +67,8 @@ public interface EventDao {
 
     /**
      * Executes stored procedure to cleanup old events. Uses separate ttl for debug and other events.
-     * @param regularEventStartTs the start time of the interval to use to delete non debug events
-     * @param regularEventEndTs the end time of the interval to use to delete non debug events
-     * @param debugEventStartTs the start time of the interval to use to delete debug events
-     * @param debugEventEndTs the end time of the interval to use to delete debug events
+     * @param regularEventExpTs the expiration time of the regular events
+     * @param debugEventExpTs the expiration time of the debug events
      */
-    void cleanupEvents(long regularEventStartTs, long regularEventEndTs, long debugEventStartTs, long debugEventEndTs);
+    void cleanupEvents(long regularEventExpTs, long debugEventExpTs);
 }

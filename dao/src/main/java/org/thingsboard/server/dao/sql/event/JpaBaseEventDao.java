@@ -65,7 +65,9 @@ import java.util.function.Function;
 @Component
 public class JpaBaseEventDao implements EventDao {
 
-    private static final long PARTITION_DURATION = TimeUnit.HOURS.toMillis(1);
+    public static final long REGULAR_PARTITION_DURATION = TimeUnit.DAYS.toMillis(1);
+    public static final long DEBUG_PARTITION_DURATION = TimeUnit.HOURS.toMillis(1);
+
     private final Map<EventType, Map<Long, SqlPartition>> partitionsByEventType = new ConcurrentHashMap<>();
     private static final ReentrantLock partitionCreationLock = new ReentrantLock();
 
@@ -169,10 +171,11 @@ public class JpaBaseEventDao implements EventDao {
 
     private void savePartitionIfNotExist(Event event) {
         var partitionsMap = partitionsByEventType.get(event.getType());
-        long partitionStartTs = event.getCreatedTime() - (event.getCreatedTime() % PARTITION_DURATION);
+        var partitionDuration = event.getType().isDebug() ? DEBUG_PARTITION_DURATION : REGULAR_PARTITION_DURATION;
+        long partitionStartTs = event.getCreatedTime() - (event.getCreatedTime() % partitionDuration);
         if (partitionsMap.get(partitionStartTs) == null) {
-            long partitionEndTs = partitionStartTs + PARTITION_DURATION;
-            savePartition(partitionsMap, new SqlPartition(event.getType().getTable(), partitionStartTs, partitionEndTs, Long.toString(partitionStartTs)));
+            savePartition(partitionsMap, new SqlPartition(event.getType().getTable(), partitionStartTs,
+                    partitionStartTs + partitionDuration, Long.toString(partitionStartTs)));
         }
     }
 
@@ -314,9 +317,15 @@ public class JpaBaseEventDao implements EventDao {
     }
 
     @Override
-    public void cleanupEvents(long regularEventStartTs, long regularEventEndTs, long debugEventStartTs, long debugEventEndTs) {
-        log.info("Going to cleanup old events. Interval for regular events: [{}:{}], for debug events: [{}:{}]", regularEventStartTs, regularEventEndTs, debugEventStartTs, debugEventEndTs);
-        eventCleanupRepository.cleanupEvents(regularEventStartTs, regularEventEndTs, debugEventStartTs, debugEventEndTs);
+    public void cleanupEvents(long regularEventExpTs, long debugEventExpTs) {
+        if (regularEventExpTs > 0) {
+            log.info("Going to cleanup regular events with exp time: {}", regularEventExpTs);
+            eventCleanupRepository.cleanupEvents(regularEventExpTs, false);
+        }
+        if (debugEventExpTs > 0) {
+            log.info("Going to cleanup debug events with exp time: {}", debugEventExpTs);
+            eventCleanupRepository.cleanupEvents(debugEventExpTs, true);
+        }
     }
 
     private void parseUUID(String src, String paramName) {
