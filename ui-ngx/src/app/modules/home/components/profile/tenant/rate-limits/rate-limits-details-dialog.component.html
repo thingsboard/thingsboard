@@ -26,13 +26,7 @@
     </button>
   </mat-toolbar>
   <div mat-dialog-content>
-    <fieldset>
-      <div fxFlex fxLayout="column">
-        <tb-rate-limits-list
-          formControlName="rateLimits">
-        </tb-rate-limits-list>
-      </div>
-    </fieldset>
+    <tb-rate-limits-list formControlName="rateLimits"></tb-rate-limits-list>
   </div>
   <div mat-dialog-actions fxLayoutAlign="end center">
     <button mat-button color="primary"

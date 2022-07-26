@@ -13,9 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import "../../../../../../../scss/constants";
+
 :host {
-  @media screen and (min-width: 800px) {
-    min-width: 600px;
+  .tb-rate-limits-form {
+    @media #{$mat-gt-sm} {
+      min-width: 600px;
+    }
   }
 
   .tb-rate-limits-preview {
@@ -29,11 +33,13 @@
       padding: 1em;
     }
   }
+
   .tb-rate-limits-operation {
     font-size: 12px;
     color: rgba(0,0,0,.54);
     margin-bottom: 16px;
   }
+
   .tb-rate-limits-button {
     margin-top: 0.5em;
   }

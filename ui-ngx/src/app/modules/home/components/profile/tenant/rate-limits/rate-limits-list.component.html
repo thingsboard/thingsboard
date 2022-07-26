@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<section [formGroup]="rateLimitsListFormGroup">
+<section class="tb-rate-limits-form" [formGroup]="rateLimitsListFormGroup">
   <div fxFlex [formGroup]="rateLimit" *ngFor="let rateLimit of rateLimitsFormArray.controls; let $index = index">
     <div class="tb-rate-limits-operation" *ngIf="$index > 0 && rateLimitsFormArray.controls.length > 1" translate>
       tenant-profile.rate-limits.but-less-than
