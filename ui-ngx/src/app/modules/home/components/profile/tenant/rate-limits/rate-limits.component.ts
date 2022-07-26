@@ -30,6 +30,7 @@ import {
   RateLimitsDetailsDialogData
 } from '@home/components/profile/tenant/rate-limits/rate-limits-details-dialog.component';
 import {
+  RateLimits,
   rateLimitsDialogTitleTranslationMap,
   rateLimitsLabelTranslationMap,
   RateLimitsType,
@@ -65,6 +66,10 @@ export class RateLimitsComponent implements ControlValueAccessor, OnInit, Valida
   label: string;
 
   rateLimitsFormGroup: FormGroup;
+
+  get rateLimitsArray(): Array<RateLimits> {
+    return this.rateLimitsFormGroup.get('rateLimits').value;
+  }
 
   private modelValue: string;
 
