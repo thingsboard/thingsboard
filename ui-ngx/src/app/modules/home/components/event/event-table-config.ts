@@ -365,6 +365,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
           {key: 'msgDirectionType', title: 'event.type'},
           {key: 'entityId', title: 'event.entity-id'},
           {key: 'entityType', title: 'event.entity-type'},
+          {key: 'msgId', title: 'event.message-id'},
           {key: 'msgType', title: 'event.message-type'},
           {key: 'relationType', title: 'event.relation-type'},
           {key: 'dataSearch', title: 'event.data'},
@@ -375,6 +376,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
         break;
       case DebugEventType.DEBUG_RULE_CHAIN:
         this.filterColumns.push(
+          {key: 'message', title: 'event.message'},
           {key: 'isError', title: 'event.error'},
           {key: 'errorStr', title: 'event.error'}
         );
