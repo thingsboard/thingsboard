@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.event;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.BaseData;
@@ -56,8 +57,15 @@ public abstract class Event extends BaseData<EventId> {
         eventInfo.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, entityId));
         eventInfo.setType(getType().getOldName());
         eventInfo.setId(id);
+        eventInfo.setUid(id.toString());
         eventInfo.setCreatedTime(createdTime);
         eventInfo.setBody(OBJECT_MAPPER.createObjectNode().put("server", getServiceId()));
         return eventInfo;
+    }
+
+    protected static void putNotNull(ObjectNode json, String key, String value) {
+        if (value != null) {
+            json.put(key, value);
+        }
     }
 }

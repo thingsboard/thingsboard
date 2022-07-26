@@ -388,6 +388,16 @@ public class ModelConstants {
     public static final String EVENT_ERROR_COLUMN_NAME = "e_error";
     public static final String EVENT_SUCCESS_COLUMN_NAME = "e_success";
 
+    public static final String EVENT_ENTITY_ID_COLUMN_NAME = "e_entity_id";
+    public static final String EVENT_ENTITY_TYPE_COLUMN_NAME = "e_entity_type";
+    public static final String EVENT_MSG_ID_COLUMN_NAME = "e_msg_id";
+    public static final String EVENT_MSG_TYPE_COLUMN_NAME = "e_msg_type";
+    public static final String EVENT_DATA_TYPE_COLUMN_NAME = "e_data_type";
+    public static final String EVENT_RELATION_TYPE_COLUMN_NAME = "e_relation_type";
+    public static final String EVENT_DATA_COLUMN_NAME = "e_data";
+    public static final String EVENT_METADATA_COLUMN_NAME = "e_metadata";
+    public static final String EVENT_MESSAGE_COLUMN_NAME = "e_message";
+
     public static final String DEBUG_MODE = "debug_mode";
 
     /**

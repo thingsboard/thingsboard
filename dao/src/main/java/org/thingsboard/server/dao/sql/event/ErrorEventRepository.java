@@ -20,17 +20,23 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.event.ErrorEvent;
+import org.thingsboard.server.common.data.event.LifecycleEvent;
 import org.thingsboard.server.dao.model.sql.ErrorEventEntity;
 import org.thingsboard.server.dao.model.sql.LifecycleEventEntity;
 import org.thingsboard.server.dao.model.sql.StatisticsEventEntity;
 
+import java.util.List;
 import java.util.UUID;
 
-/**
- * Created by Valerii Sosliuk on 5/3/2017.
- */
-public interface ErrorEventRepository extends JpaRepository<ErrorEventEntity, UUID> {
 
+public interface ErrorEventRepository extends EventRepository<ErrorEventEntity, ErrorEvent>, JpaRepository<ErrorEventEntity, UUID> {
+
+    @Override
+    @Query("SELECT e FROM ErrorEventEntity e WHERE e.tenantId = :tenantId AND e.entityId = :entityId ORDER BY e.ts DESC")
+    List<ErrorEventEntity> findLatestEvents(UUID tenantId, UUID entityId, int limit);
+
+    @Override
     @Query("SELECT e FROM ErrorEventEntity e WHERE " +
             "e.tenantId = :tenantId " +
             "AND e.entityId = :entityId " +

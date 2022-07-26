@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.dao.sql.event;
 
-import org.jetbrains.annotations.NotNull;
-import org.postgresql.core.Oid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;

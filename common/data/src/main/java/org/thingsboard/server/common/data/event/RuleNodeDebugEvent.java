@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.event;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -62,14 +63,16 @@ public class RuleNodeDebugEvent extends Event {
     private final String dataType;
     @Getter
     private final String relationType;
-    @Getter @Setter
+    @Getter
+    @Setter
     private String data;
-    @Getter @Setter
+    @Getter
+    @Setter
     private String metadata;
-    @Getter @Setter
+    @Getter
+    @Setter
     private String error;
 
-    //TODO: rename the enum constant
     @Override
     public EventType getType() {
         return EventType.DEBUG_RULE_NODE;
@@ -77,6 +80,22 @@ public class RuleNodeDebugEvent extends Event {
 
     @Override
     public EventInfo toInfo(EntityType entityType) {
-        return null;
+        EventInfo eventInfo = super.toInfo(entityType);
+        var json = (ObjectNode) eventInfo.getBody();
+        json.put("type", eventType);
+        if (eventEntity != null) {
+            json.put("entityId", eventEntity.getId().toString()).put("entityType", eventEntity.getEntityType().name());
+        }
+        if (msgId != null) {
+            json.put("msgId", msgId.toString());
+        }
+        putNotNull(json, "msgType", msgType);
+        putNotNull(json, "dataType", dataType);
+        putNotNull(json, "relationType", relationType);
+        putNotNull(json, "data", data);
+        putNotNull(json, "metadata", metadata);
+        putNotNull(json, "error", error);
+        return eventInfo;
     }
+
 }

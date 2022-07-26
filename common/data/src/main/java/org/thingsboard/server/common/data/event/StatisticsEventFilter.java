@@ -37,7 +37,7 @@ public class StatisticsEventFilter implements EventFilter {
     }
 
     @Override
-    public boolean hasFilterForJsonBody() {
+    public boolean isNotEmpty() {
         return !StringUtils.isEmpty(server) || (messagesProcessed != null && messagesProcessed > 0) || (errorsOccurred != null && errorsOccurred > 0);
     }
 }

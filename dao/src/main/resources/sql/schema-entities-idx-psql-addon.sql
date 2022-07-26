@@ -22,17 +22,17 @@
 --       That why we need to define DESC index explicitly as (ts DESC NULLS LAST)
 
 CREATE INDEX IF NOT EXISTS idx_rule_node_debug_event_main
-    ON rule_node_debug_event (tenant_id ASC, entity_id ASC, ts DESC) WITH (FILLFACTOR=95);
+    ON rule_node_debug_event (tenant_id ASC, entity_id ASC, ts DESC NULLS LAST) WITH (FILLFACTOR=95);
 
 CREATE INDEX IF NOT EXISTS idx_rule_chain_debug_event_main
-    ON rule_chain_debug_event (tenant_id ASC, entity_id ASC, ts DESC) WITH (FILLFACTOR=95);
+    ON rule_chain_debug_event (tenant_id ASC, entity_id ASC, ts DESC NULLS LAST) WITH (FILLFACTOR=95);
 
 CREATE INDEX IF NOT EXISTS idx_stats_event_main
-    ON stats_event (tenant_id ASC, entity_id ASC, ts DESC) WITH (FILLFACTOR=95);
+    ON stats_event (tenant_id ASC, entity_id ASC, ts DESC NULLS LAST) WITH (FILLFACTOR=95);
 
 CREATE INDEX IF NOT EXISTS idx_lc_event_main
-    ON lc_event (tenant_id ASC, entity_id ASC, ts DESC) WITH (FILLFACTOR=95);
+    ON lc_event (tenant_id ASC, entity_id ASC, ts DESC NULLS LAST) WITH (FILLFACTOR=95);
 
 CREATE INDEX IF NOT EXISTS idx_error_event_main
-    ON error_event (tenant_id ASC, entity_id ASC, ts DESC) WITH (FILLFACTOR=95);
+    ON error_event (tenant_id ASC, entity_id ASC, ts DESC NULLS LAST) WITH (FILLFACTOR=95);
 

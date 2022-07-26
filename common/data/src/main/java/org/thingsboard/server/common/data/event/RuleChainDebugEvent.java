@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.event;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -22,7 +23,6 @@ import lombok.Setter;
 import lombok.ToString;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EventInfo;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.UUID;
@@ -40,9 +40,11 @@ public class RuleChainDebugEvent extends Event {
         this.error = error;
     }
 
-    @Getter @Setter
+    @Getter
+    @Setter
     private String message;
-    @Getter @Setter
+    @Getter
+    @Setter
     private String error;
 
     @Override
@@ -52,6 +54,10 @@ public class RuleChainDebugEvent extends Event {
 
     @Override
     public EventInfo toInfo(EntityType entityType) {
-        return null;
+        EventInfo eventInfo = super.toInfo(entityType);
+        var json = (ObjectNode) eventInfo.getBody();
+        putNotNull(json, "message", message);
+        putNotNull(json, "error", error);
+        return eventInfo;
     }
 }

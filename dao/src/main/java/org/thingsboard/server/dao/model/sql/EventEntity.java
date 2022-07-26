@@ -17,11 +17,9 @@ package org.thingsboard.server.dao.model.sql;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.event.Event;
 import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
 import javax.persistence.Id;
@@ -34,7 +32,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.EVENT_TENANT_ID_PR
 import static org.thingsboard.server.dao.model.ModelConstants.TS_COLUMN;
 
 @Data
-@TypeDef(name = "json", typeClass = JsonStringType.class)
 @NoArgsConstructor
 @MappedSuperclass
 public abstract class EventEntity<T extends Event> implements BaseEntity<T> {

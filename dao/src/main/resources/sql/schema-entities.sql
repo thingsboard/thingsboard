@@ -336,9 +336,9 @@ CREATE TABLE IF NOT EXISTS rule_node_debug_event (
     e_msg_type varchar,
     e_data_type varchar,
     e_relation_type varchar,
-    e_data varchar NOT NULL,
-    e_metadata varchar NOT NULL,
-    e_error varchar NOT NULL
+    e_data varchar,
+    e_metadata varchar,
+    e_error varchar
 ) PARTITION BY RANGE (ts);
 
 CREATE TABLE IF NOT EXISTS rule_chain_debug_event (

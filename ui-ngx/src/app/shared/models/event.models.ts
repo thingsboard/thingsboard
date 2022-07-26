@@ -65,7 +65,7 @@ export interface StatsEventBody extends BaseEventBody {
 export interface DebugRuleNodeEventBody extends BaseEventBody {
   type: string;
   entityId: string;
-  entityName: string;
+  entityType: string;
   msgId: string;
   msgType: string;
   relationType: string;

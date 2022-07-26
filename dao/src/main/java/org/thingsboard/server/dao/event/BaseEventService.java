@@ -102,7 +102,7 @@ public class BaseEventService implements EventService {
 
     @Override
     public List<EventInfo> findLatestEvents(TenantId tenantId, EntityId entityId, EventType eventType, int limit) {
-        return eventDao.findLatestEvents(tenantId.getId(), entityId.getId(), eventType, limit);
+        return convert(entityId.getEntityType(), eventDao.findLatestEvents(tenantId.getId(), entityId.getId(), eventType, limit));
     }
 
     @Override
@@ -141,5 +141,9 @@ public class BaseEventService implements EventService {
         return new PageData<>(pd.getData() == null ? null :
                 pd.getData().stream().map(e -> e.toInfo(entityType)).collect(Collectors.toList())
                 , pd.getTotalPages(), pd.getTotalElements(), pd.hasNext());
+    }
+
+    private List<EventInfo> convert(EntityType entityType, List<? extends Event> list) {
+        return list == null ? null : list.stream().map(e -> e.toInfo(entityType)).collect(Collectors.toList());
     }
 }

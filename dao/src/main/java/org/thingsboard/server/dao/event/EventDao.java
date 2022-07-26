@@ -42,16 +42,6 @@ public interface EventDao {
     ListenableFuture<Void> saveAsync(Event event);
 
     /**
-     * Find events by tenantId, entityId and pageLink.
-     *
-     * @param tenantId the tenantId
-     * @param entityId the entityId
-     * @param pageLink the pageLink
-     * @return the event list
-     */
-    PageData<EventInfo> findEvents(UUID tenantId, EntityId entityId, TimePageLink pageLink);
-
-    /**
      * Find events by tenantId, entityId, eventType and pageLink.
      *
      * @param tenantId the tenantId
@@ -73,7 +63,7 @@ public interface EventDao {
      * @param limit the limit
      * @return the event list
      */
-    List<EventInfo> findLatestEvents(UUID tenantId, UUID entityId, EventType eventType, int limit);
+    List<? extends Event> findLatestEvents(UUID tenantId, UUID entityId, EventType eventType, int limit);
 
     /**
      * Executes stored procedure to cleanup old events. Uses separate ttl for debug and other events.

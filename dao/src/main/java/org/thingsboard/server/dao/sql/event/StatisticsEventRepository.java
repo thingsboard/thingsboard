@@ -21,15 +21,16 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.event.StatisticsEvent;
-import org.thingsboard.server.dao.model.sql.LifecycleEventEntity;
 import org.thingsboard.server.dao.model.sql.StatisticsEventEntity;
 
+import java.util.List;
 import java.util.UUID;
 
-/**
- * Created by Valerii Sosliuk on 5/3/2017.
- */
-public interface StatisticsEventRepository extends JpaRepository<StatisticsEventEntity, UUID> {
+public interface StatisticsEventRepository extends EventRepository<StatisticsEventEntity, StatisticsEvent>, JpaRepository<StatisticsEventEntity, UUID> {
+
+    @Override
+    @Query("SELECT e FROM LifecycleEventEntity e WHERE e.tenantId = :tenantId AND e.entityId = :entityId ORDER BY e.ts DESC")
+    List<StatisticsEventEntity> findLatestEvents(UUID tenantId, UUID entityId, int limit);
 
     @Query("SELECT e FROM StatisticsEventEntity e WHERE " +
             "e.tenantId = :tenantId " +
@@ -37,10 +38,38 @@ public interface StatisticsEventRepository extends JpaRepository<StatisticsEvent
             "AND (:startTime IS NULL OR e.ts >= :startTime) " +
             "AND (:endTime IS NULL OR e.ts <= :endTime)"
     )
-    Page<StatisticsEventEntity> findEventsWithoutFilter(@Param("tenantId") UUID tenantId,
-                                                  @Param("entityId") UUID entityId,
-                                                  @Param("startTime") Long startTime,
-                                                  @Param("endTime") Long endTime,
-                                                  Pageable pageable);
+    Page<StatisticsEventEntity> findEvents(@Param("tenantId") UUID tenantId,
+                                           @Param("entityId") UUID entityId,
+                                           @Param("startTime") Long startTime,
+                                           @Param("endTime") Long endTime,
+                                           Pageable pageable);
+
+    @Query(nativeQuery = true,
+            value = "SELECT * FROM stats_event e WHERE " +
+                    "e.tenant_id = :tenantId " +
+                    "AND e.entity_id = :entityId " +
+                    "AND (:startTime IS NULL OR e.ts >= :startTime) " +
+                    "AND (:endTime IS NULL OR e.ts <= :endTime) " +
+                    "AND (:serviceId IS NULL OR e.service_id ILIKE concat('%', :serviceId, '%')) " +
+                    "AND (:messagesProcessed IS NULL OR e.e_messages_processed >= :messagesProcessed) " +
+                    "AND (:errorsOccurred IS NULL OR e.e_errors_occurred >= :errorsOccurred)"
+            ,
+            countQuery = "SELECT count(*) FROM stats_event e WHERE " +
+                    "e.tenant_id = :tenantId " +
+                    "AND e.entity_id = :entityId " +
+                    "AND (:startTime IS NULL OR e.ts >= :startTime) " +
+                    "AND (:endTime IS NULL OR e.ts <= :endTime) " +
+                    "AND (:serviceId IS NULL OR e.service_id ILIKE concat('%', :serviceId, '%')) " +
+                    "AND (:messagesProcessed IS NULL OR e.e_messages_processed >= :messagesProcessed) " +
+                    "AND (:errorsOccurred IS NULL OR e.e_errors_occurred >= :errorsOccurred)"
+    )
+    Page<StatisticsEventEntity> findEvents(@Param("tenantId") UUID tenantId,
+                                           @Param("entityId") UUID entityId,
+                                           @Param("startTime") Long startTime,
+                                           @Param("endTime") Long endTime,
+                                           @Param("serviceId") String server,
+                                           @Param("messagesProcessed") Integer messagesProcessed,
+                                           @Param("errorsOccurred") Integer errorsOccurred,
+                                           Pageable pageable);
 
 }

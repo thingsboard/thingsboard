@@ -39,7 +39,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.tenant.DebugTbRateLimits;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edge.Edge;
