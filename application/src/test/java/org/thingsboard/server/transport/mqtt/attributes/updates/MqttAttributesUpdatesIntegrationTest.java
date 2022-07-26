@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.mqtt.attributes.updates;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.JsonTransportPayloadConfiguration;
@@ -51,15 +52,19 @@ public class MqttAttributesUpdatesIntegrationTest extends AbstractMqttAttributes
 
     @Test
     public void testJsonSubscribeToAttributesUpdatesFromTheServerOnCustomTopic() throws Exception {
+        Device tmp = savedDevice;
         String customTopic = "v1/devices/me/subscribeattributes";
         JsonTransportPayloadConfiguration jsonTransportPayloadConfiguration = new JsonTransportPayloadConfiguration();
         MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration =
                 this.createMqttDeviceProfileTransportConfiguration(jsonTransportPayloadConfiguration, true,
                         "v1/devices/me/telemetry", "v1/devices/me/attributes", customTopic);
-        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile",
+        DeviceProfile deviceProfile = this.createDeviceProfile("New device Profile",
                 mqttDeviceProfileTransportConfiguration);
-        doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+        DeviceProfile savedProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+        savedDevice.setDeviceProfileId(savedProfile.getId());
+        doPost("/api/device", savedDevice);
         processJsonTestSubscribeToAttributesUpdates(customTopic);
+        savedDevice = tmp;
     }
 
     @Test
