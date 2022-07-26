@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, SkipSelf } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
