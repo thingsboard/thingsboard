@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   FormArray,
@@ -27,13 +27,14 @@ import {
   Validator,
   Validators
 } from '@angular/forms';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import {
   RateLimits,
   rateLimitsArrayToString,
   stringToRateLimitsArray
 } from './rate-limits.models';
 import { isDefinedAndNotNull } from '@core/utils';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-rate-limits-list',
@@ -52,7 +53,7 @@ import { isDefinedAndNotNull } from '@core/utils';
     }
   ]
 })
-export class RateLimitsListComponent implements ControlValueAccessor, Validator, OnInit {
+export class RateLimitsListComponent implements ControlValueAccessor, Validator, OnInit, OnDestroy {
 
   @Input() disabled: boolean;
 
@@ -61,21 +62,33 @@ export class RateLimitsListComponent implements ControlValueAccessor, Validator,
   rateLimitsControl: FormControl;
 
   private propagateChange = (v: any) => { };
-
   private valueChangeSubscription: Subscription = null;
+  private destroy$ = new Subject();
 
-  constructor(private fb: FormBuilder) {
-  }
+  constructor(private fb: FormBuilder) {}
 
   ngOnInit(): void {
     this.rateLimitsListFormGroup = this.fb.group({
       rateLimits: this.fb.array([])
     });
     this.rateLimitsControl = this.fb.control(null);
-    this.valueChangeSubscription = this.rateLimitsListFormGroup.valueChanges.subscribe((value) => {
+    this.valueChangeSubscription = this.rateLimitsListFormGroup.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((value) => {
         this.updateView(value?.rateLimits);
       }
     );
+  }
+
+  public removeRateLimits(index: number) {
+    (this.rateLimitsListFormGroup.get('rateLimits') as FormArray).removeAt(index);
+  }
+
+  public addRateLimits() {
+    this.rateLimitsFormArray.push(this.fb.group({
+      value: [null, [Validators.required]],
+      time: [null, [Validators.required]]
+    }));
   }
 
   get rateLimitsFormArray(): FormArray {
@@ -126,17 +139,6 @@ export class RateLimitsListComponent implements ControlValueAccessor, Validator,
     this.rateLimitsControl.patchValue(stringToRateLimitsArray(value), {emitEvent: false});
   }
 
-  public removeRateLimits(index: number) {
-    (this.rateLimitsListFormGroup.get('rateLimits') as FormArray).removeAt(index);
-  }
-
-  public addRateLimits() {
-    this.rateLimitsFormArray.push(this.fb.group({
-      value: [null, [Validators.required]],
-      time: [null, [Validators.required]]
-    }));
-  }
-
   updateView(rateLimitsArray: Array<RateLimits>) {
     if (rateLimitsArray.length > 0) {
       const notNullRateLimits = rateLimitsArray.filter(rateLimits =>
@@ -149,5 +151,10 @@ export class RateLimitsListComponent implements ControlValueAccessor, Validator,
       this.propagateChange(null);
       this.rateLimitsControl.patchValue(null, {emitEvent: false});
     }
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }
