@@ -95,6 +95,10 @@ export class RateLimitsListComponent implements ControlValueAccessor, Validator,
     return this.rateLimitsListFormGroup.get('rateLimits') as FormArray;
   }
 
+  get rateLimitsArray(): Array<RateLimits> {
+    return this.rateLimitsControl.value;
+  }
+
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
   }
