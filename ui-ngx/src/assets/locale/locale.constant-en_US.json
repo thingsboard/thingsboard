@@ -2012,6 +2012,7 @@
         "body": "Body",
         "method": "Method",
         "type": "Type",
+        "message": "Message",
         "message-id": "Message Id",
         "message-type": "Message Type",
         "data-type": "Data Type",

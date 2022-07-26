@@ -75,7 +75,12 @@ export interface DebugRuleNodeEventBody extends BaseEventBody {
   error: string;
 }
 
-export type EventBody = ErrorEventBody & LcEventEventBody & StatsEventBody & DebugRuleNodeEventBody;
+export interface DebugRuleChainEventBody extends BaseEventBody {
+  message: string;
+  error?: string;
+}
+
+export type EventBody = ErrorEventBody & LcEventEventBody & StatsEventBody & DebugRuleNodeEventBody & DebugRuleChainEventBody;
 
 export interface Event extends BaseData<EventId> {
   tenantId: TenantId;

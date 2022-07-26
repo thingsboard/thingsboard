@@ -225,7 +225,6 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
         );
         break;
       case DebugEventType.DEBUG_RULE_NODE:
-      case DebugEventType.DEBUG_RULE_CHAIN:
         this.columns[0].width = '100px';
         this.columns.push(
           new EntityTableColumn<Event>('type', 'event.type', '40px',
@@ -289,6 +288,29 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
             '40px')
         );
         break;
+      case DebugEventType.DEBUG_RULE_CHAIN:
+        this.columns[0].width = '100px';
+        this.columns.push(
+          new EntityActionTableColumn<Event>('message', 'event.message',
+            {
+              name: this.translate.instant('action.view'),
+              icon: 'more_horiz',
+              isEnabled: (entity) => entity.body.message ? entity.body.message.length > 0 : false,
+              onAction: ($event, entity) => this.showContent($event, entity.body.message,
+                'event.message')
+            },
+            '40px'),
+          new EntityActionTableColumn<Event>('error', 'event.error',
+            {
+              name: this.translate.instant('action.view'),
+              icon: 'more_horiz',
+              isEnabled: (entity) => entity.body.error && entity.body.error.length > 0,
+              onAction: ($event, entity) => this.showContent($event, entity.body.error,
+                'event.error')
+            },
+            '40px')
+        );
+        break;
     }
     if (updateTableColumns) {
       this.getTable().columnsUpdated(true);
@@ -339,15 +361,20 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
         );
         break;
       case DebugEventType.DEBUG_RULE_NODE:
-      case DebugEventType.DEBUG_RULE_CHAIN:
         this.filterColumns.push(
           {key: 'msgDirectionType', title: 'event.type'},
           {key: 'entityId', title: 'event.entity-id'},
-          {key: 'entityName', title: 'event.entity-type'},
+          {key: 'entityType', title: 'event.entity-type'},
           {key: 'msgType', title: 'event.message-type'},
           {key: 'relationType', title: 'event.relation-type'},
           {key: 'dataSearch', title: 'event.data'},
           {key: 'metadataSearch', title: 'event.metadata'},
+          {key: 'isError', title: 'event.error'},
+          {key: 'errorStr', title: 'event.error'}
+        );
+        break;
+      case DebugEventType.DEBUG_RULE_CHAIN:
+        this.filterColumns.push(
           {key: 'isError', title: 'event.error'},
           {key: 'errorStr', title: 'event.error'}
         );
