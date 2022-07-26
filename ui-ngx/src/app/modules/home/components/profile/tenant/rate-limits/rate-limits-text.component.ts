@@ -33,7 +33,8 @@ export class RateLimitsTextComponent implements OnChanges {
 
   rateLimitsText: string;
 
-  constructor(private translate: TranslateService) {}
+  constructor(private translate: TranslateService) {
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     for (const propName of Object.keys(changes)) {

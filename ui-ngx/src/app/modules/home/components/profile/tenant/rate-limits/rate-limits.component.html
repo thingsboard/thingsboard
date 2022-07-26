@@ -21,7 +21,7 @@
     <div [formGroup]="rateLimitsFormGroup" fxFlex fxLayout="row" fxLayoutGap="8px"
          (click)="onClick($event)"
          [matTooltip]="'tenant-profile.rate-limits.edit-limit' | translate" matTooltipPosition="above">
-      <tb-rate-limits-text [rateLimitsArray]="rateLimitsArray"></tb-rate-limits-text>
+      <tb-rate-limits-text [rateLimitsArray]="rateLimitsArray" [disabled]="disabled"></tb-rate-limits-text>
     </div>
   </fieldset>
   <button mat-icon-button color="primary" type="button" *ngIf="!disabled"
