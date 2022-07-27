@@ -24,7 +24,7 @@ export interface ILayoutController {
 }
 
 export enum LayoutWidthType {
-  PERCENTAGE = "percentage",
-  FIXED = "fixed"
+  PERCENTAGE = 'percentage',
+  FIXED = 'fixed'
 }
 

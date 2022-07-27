@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit, SkipSelf} from '@angular/core';
+import { Component, Inject, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -31,8 +31,8 @@ import {
   DashboardSettingsDialogComponent,
   DashboardSettingsDialogData
 } from '@home/components/dashboard-page/dashboard-settings-dialog.component';
-import { LayoutWidthType } from "@home/components/dashboard-page/layout/layout.models";
-import { Subscription } from "rxjs";
+import { LayoutWidthType } from '@home/components/dashboard-page/layout/layout.models';
+import { Subscription } from 'rxjs';
 
 export interface ManageDashboardLayoutsDialogData {
   layouts: DashboardStateLayouts;
@@ -45,7 +45,7 @@ export interface ManageDashboardLayoutsDialogData {
   styleUrls: ['./manage-dashboard-layouts-dialog.component.scss', '../../../components/dashboard/layout-button.scss']
 })
 export class ManageDashboardLayoutsDialogComponent extends DialogComponent<ManageDashboardLayoutsDialogComponent, DashboardStateLayouts>
-  implements OnInit, ErrorStateMatcher {
+  implements ErrorStateMatcher {
 
   layoutsFormGroup: FormGroup;
 
@@ -53,7 +53,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
 
   LayoutWidthType = LayoutWidthType;
 
-  subscriptions: Array<Subscription>;
+  subscriptions: Array<Subscription> = [];
 
   submitted = false;
 
@@ -71,53 +71,90 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
 
     this.layouts = this.data.layouts;
     this.layoutsFormGroup = this.fb.group({
-        main:  [{value: isDefined(this.layouts.main), disabled: true}, []],
-        right: [isDefined(this.layouts.right), []],
+        main: [{value: isDefined(this.layouts.main), disabled: true}],
+        right: [isDefined(this.layouts.right)],
+        sliderPercentage: [50],
         leftWidthPercentage: [50, [Validators.min(10), Validators.max(90), Validators.required]],
         rightWidthPercentage: [50, [Validators.min(10), Validators.max(90), Validators.required]],
-        type: [LayoutWidthType.PERCENTAGE, []],
+        type: [LayoutWidthType.PERCENTAGE],
         fixedWidth: [150, [Validators.min(150), Validators.max(1700), Validators.required]],
         fixedLayout: ['main', []]
       }
     );
 
+    this.subscriptions.push(
+      this.layoutsFormGroup.get('type').valueChanges.subscribe(
+        (value) => {
+          if (value === LayoutWidthType.FIXED) {
+            this.layoutsFormGroup.get('leftWidthPercentage').disable();
+            this.layoutsFormGroup.get('rightWidthPercentage').disable();
+            this.layoutsFormGroup.get('fixedWidth').enable();
+            this.layoutsFormGroup.get('fixedLayout').enable();
+          } else {
+            this.layoutsFormGroup.get('leftWidthPercentage').enable();
+            this.layoutsFormGroup.get('rightWidthPercentage').enable();
+            this.layoutsFormGroup.get('fixedWidth').disable();
+            this.layoutsFormGroup.get('fixedLayout').disable();
+          }
+        }
+      )
+    );
+
     if (this.layouts.right) {
       if (this.layouts.right.gridSettings.layoutDimension) {
-        this.layoutsFormGroup.get('fixedLayout').setValue(this.layouts.right.gridSettings.layoutDimension.fixedLayout);
-        this.layoutsFormGroup.get('type').setValue(LayoutWidthType.FIXED);
-        this.layoutsFormGroup.get('fixedWidth').setValue(this.layouts.right.gridSettings.layoutDimension.fixedWidth);
+        this.layoutsFormGroup.patchValue({
+          fixedLayout: this.layouts.right.gridSettings.layoutDimension.fixedLayout,
+          type: LayoutWidthType.FIXED,
+          fixedWidth: this.layouts.right.gridSettings.layoutDimension.fixedWidth
+        }, {emitEvent: false});
       } else if (this.layouts.main.gridSettings.layoutDimension) {
         if (this.layouts.main.gridSettings.layoutDimension.type === LayoutWidthType.FIXED) {
-          this.layoutsFormGroup.get('fixedLayout').setValue(this.layouts.main.gridSettings.layoutDimension.fixedLayout);
-          this.layoutsFormGroup.get('type').setValue(LayoutWidthType.FIXED);
-          this.layoutsFormGroup.get('fixedWidth').setValue(this.layouts.main.gridSettings.layoutDimension.fixedWidth);
+          this.layoutsFormGroup.patchValue({
+            fixedLayout: this.layouts.main.gridSettings.layoutDimension.fixedLayout,
+            type: LayoutWidthType.FIXED,
+            fixedWidth: this.layouts.main.gridSettings.layoutDimension.fixedWidth
+          }, {emitEvent: false});
         } else {
           const leftWidthPercentage: number = Number(this.layouts.main.gridSettings.layoutDimension.leftWidthPercentage);
-          this.layoutsFormGroup.get('leftWidthPercentage').setValue(leftWidthPercentage);
-          this.layoutsFormGroup.get('rightWidthPercentage').setValue(100 - Number(leftWidthPercentage));
+          this.layoutsFormGroup.patchValue({
+            leftWidthPercentage,
+            sliderPercentage: leftWidthPercentage,
+            rightWidthPercentage: 100 - Number(leftWidthPercentage)
+          }, {emitEvent: false});
         }
       }
     }
 
-    if (!this.layouts['main']) {
-      this.layouts['main'] = this.dashboardUtils.createDefaultLayoutData();
+    if (!this.layouts.main) {
+      this.layouts.main = this.dashboardUtils.createDefaultLayoutData();
     }
-    if (!this.layouts['right']) {
-      this.layouts['right'] = this.dashboardUtils.createDefaultLayoutData();
+    if (!this.layouts.right) {
+      this.layouts.right = this.dashboardUtils.createDefaultLayoutData();
     }
 
-    const leftWidthPercentageSub = this.layoutsFormGroup.get('leftWidthPercentage').valueChanges
-      .subscribe((value) => this.layoutControlChange('rightWidthPercentage', value));
-    const rightWidthPercentageSub = this.layoutsFormGroup.get('rightWidthPercentage').valueChanges
-      .subscribe((value) => this.layoutControlChange('leftWidthPercentage', value));
-    this.subscriptions = [leftWidthPercentageSub, rightWidthPercentageSub];
-  }
-
-  ngOnInit(): void {
+    this.subscriptions.push(
+      this.layoutsFormGroup.get('sliderPercentage').valueChanges
+        .subscribe(
+          (value) => this.layoutsFormGroup.get('leftWidthPercentage').patchValue(value)
+        ));
+    this.subscriptions.push(
+      this.layoutsFormGroup.get('leftWidthPercentage').valueChanges
+        .subscribe(
+          (value) => {
+            this.layoutControlChange('rightWidthPercentage', value);
+          }
+        ));
+    this.subscriptions.push(
+      this.layoutsFormGroup.get('rightWidthPercentage').valueChanges
+        .subscribe(
+          (value) => {
+            this.layoutControlChange('leftWidthPercentage', value);
+          }
+        ));
   }
 
   ngOnDestroy(): void {
-    for (let subscription of this.subscriptions) {
+    for (const subscription of this.subscriptions) {
       subscription.unsubscribe();
     }
   }
@@ -186,20 +223,20 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
   }
 
   buttonFlexValue(): number {
-    if (this.layoutsFormGroup.get('right').value && this.layoutsFormGroup.value.type !== LayoutWidthType.FIXED) {
-      return this.layoutsFormGroup.get('leftWidthPercentage').value - 1;
+    const formValues = this.layoutsFormGroup.value;
+    if (formValues.right && formValues.type !== LayoutWidthType.FIXED) {
+      return formValues.leftWidthPercentage - 1;
     }
   }
 
-  formatSliderTooltipLabel(value: number):string {
+  formatSliderTooltipLabel(value: number): string {
     return `${value}|${100 - value}`;
   }
 
-  layoutControlChange(key: string, value) {
-    const previousValue = this.layoutsFormGroup.get(key).value;
+  private layoutControlChange(key: string, value) {
     const valueToSet = 100 - Number(value);
-    if (previousValue !== valueToSet) {
-      this.layoutsFormGroup.get(key).setValue(100 - Number(value));
-    }
+    this.layoutsFormGroup.get(key).setValue(valueToSet, {emitEvent: false});
+    this.layoutsFormGroup.get('sliderPercentage')
+      .setValue(key === 'leftWidthPercentage' ? valueToSet : Number(value), {emitEvent: false});
   }
 }

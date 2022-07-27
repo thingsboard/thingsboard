@@ -140,7 +140,7 @@ import { MatButton } from '@angular/material/button';
 import { VersionControlComponent } from '@home/components/vc/version-control.component';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { tap } from 'rxjs/operators';
-import { LayoutWidthType } from "@home/components/dashboard-page/layout/layout.models";
+import { LayoutWidthType } from '@home/components/dashboard-page/layout/layout.models';
 
 // @dynamic
 @Component({
@@ -685,34 +685,34 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   private calculateWidth(layout: DashboardLayoutId): string {
-      let layoutDimension: LayoutDimension;
-      const mainLayout = this.dashboard.configuration.states[this.dashboardCtx.state].layouts.main;
-      const rightLayout = this.dashboard.configuration.states[this.dashboardCtx.state].layouts.right;
-      if (rightLayout) {
-        if (mainLayout.gridSettings.layoutDimension) {
-          layoutDimension = mainLayout.gridSettings.layoutDimension;
-        } else {
-          layoutDimension = rightLayout.gridSettings.layoutDimension;
-        }
+    let layoutDimension: LayoutDimension;
+    const mainLayout = this.dashboard.configuration.states[this.dashboardCtx.state].layouts.main;
+    const rightLayout = this.dashboard.configuration.states[this.dashboardCtx.state].layouts.right;
+    if (rightLayout) {
+      if (mainLayout.gridSettings.layoutDimension) {
+        layoutDimension = mainLayout.gridSettings.layoutDimension;
+      } else {
+        layoutDimension = rightLayout.gridSettings.layoutDimension;
       }
-      if (layoutDimension) {
-        if (layoutDimension.type === LayoutWidthType.PERCENTAGE) {
-          if (layout === 'right') {
-            return (100 - layoutDimension.leftWidthPercentage) + '%';
-          } else {
-            return layoutDimension.leftWidthPercentage + '%';
-          }
+    }
+    if (layoutDimension) {
+      if (layoutDimension.type === LayoutWidthType.PERCENTAGE) {
+        if (layout === 'right') {
+          return (100 - layoutDimension.leftWidthPercentage) + '%';
         } else {
-          if (layoutDimension.fixedLayout === layout) {
-            return layoutDimension.fixedWidth + 'px';
-          } else {
-            const layoutWidth = this.dashboardContainer.nativeElement.getBoundingClientRect().width - layoutDimension.fixedWidth;
-            return layoutWidth + 'px';
-          }
+          return layoutDimension.leftWidthPercentage + '%';
         }
       } else {
-        return '50%';
+        if (layoutDimension.fixedLayout === layout) {
+          return layoutDimension.fixedWidth + 'px';
+        } else {
+          const layoutWidth = this.dashboardContainer.nativeElement.getBoundingClientRect().width - layoutDimension.fixedWidth;
+          return layoutWidth + 'px';
+        }
       }
+    } else {
+      return '50%';
+    }
   }
 
   public rightLayoutHeight(): string {

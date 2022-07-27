@@ -14,20 +14,27 @@
  * limitations under the License.
  */
 :host {
-  ::ng-deep .mat-slider-wrapper {
+  .tb-layout-fixed-container {
+    width: 100%;
+    min-width: 368px;
+    padding: 8px 8px 8px 0;
+    min-height: 48px;
+  }
 
+  .tb-hint-group {
+    padding: 0;
+    margin-top: -15px;
+    display: block;
+  }
+}
+
+:host ::ng-deep {
+  .mat-slider-wrapper {
     .mat-slider-thumb-container {
       .mat-slider-thumb-label {
         width: 35px;
         height: 35px;
       }
     }
-  }
-
-  .tb-layout-fixed-container {
-    width: 100%;
-    min-width: 368px;
-    padding: 8px 8px 8px 0;
-    min-height: 48px;
   }
 }

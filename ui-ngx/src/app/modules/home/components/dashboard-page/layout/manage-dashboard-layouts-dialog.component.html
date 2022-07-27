@@ -25,167 +25,147 @@
       <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-toolbar>
-  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
-  </mat-progress-bar>
-  <div mat-dialog-content style="min-width: 300px;">
-    <fieldset [disabled]="isLoading$ | async" fxLayout="column" fxLayoutGap="8px">
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-        <mat-checkbox fxFlex formControlName="main">
-          {{ (layoutsFormGroup.value.right ? 'layout.left' : 'layout.main')  | translate }}
-        </mat-checkbox>
-        <mat-checkbox fxFlex formControlName="right">
-          {{ 'layout.right' | translate }}
-        </mat-checkbox>
+  <div mat-dialog-content fxLayout="column" fxLayoutGap="8px" style="min-width: 300px;">
+    <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <mat-checkbox fxFlex formControlName="main">
+        {{ (layoutsFormGroup.value.right ? 'layout.left' : 'layout.main')  | translate }}
+      </mat-checkbox>
+      <mat-checkbox fxFlex formControlName="right">
+        {{ 'layout.right' | translate }}
+      </mat-checkbox>
+    </div>
+    <div fxLayout="column" fxLayoutGap="8px">
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="2%">
+        <button fxFlex="{{buttonFlexValue()}}"
+                type="button"
+                mat-raised-button
+                color="primary"
+                class="tb-layout-button"
+                (click)="openLayoutSettings('main')"
+                >
+          <span >{{ (layoutsFormGroup.value.right ? 'layout.left' : 'layout.main')  | translate }}</span>
+        </button>
+        <button fxFlex
+                [fxShow]="layoutsFormGroup.get('right').value"
+                type="button"
+                mat-raised-button
+                color="primary"
+                class="tb-layout-button"
+                (click)="openLayoutSettings('right')">
+          <span >{{ 'layout.right' | translate }}</span>
+        </button>
       </div>
-      <div fxLayout="column" fxLayoutAlign="start center" fxLayoutGap="8px">
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="2%" style="width: 100%;">
-          <button fxFlex="{{buttonFlexValue()}}"
-                  type="button"
-                  mat-raised-button
-                  color="primary"
-                  class="tb-layout-button"
-                  (click)="openLayoutSettings('main')"
-                  >
-            <span >{{ (layoutsFormGroup.value.right ? 'layout.left' : 'layout.main')  | translate }}</span>
-          </button>
-          <button fxFlex
-                  [fxShow]="layoutsFormGroup.get('right').value"
-                  type="button"
-                  mat-raised-button
-                  color="primary"
-                  class="tb-layout-button"
-                  (click)="openLayoutSettings('right')">
-            <span >{{ 'layout.right' | translate }}</span>
-          </button>
+      <div fxLayout="column" fxLayoutGap="8px" [fxShow]="layoutsFormGroup.get('right').value">
+        <mat-button-toggle-group aria-label="Select width value type"
+                                 formControlName="type">
+          <mat-button-toggle fxFlex value="percentage">
+            {{ 'layout.percentage-width' | translate }}
+          </mat-button-toggle>
+          <mat-button-toggle fxFlex value="fixed">
+            {{ 'layout.fixed-width' | translate }}
+          </mat-button-toggle>
+        </mat-button-toggle-group>
+        <div [fxShow]="layoutsFormGroup.get('type').value === LayoutWidthType.PERCENTAGE">
+          <mat-slider min="10"
+                      step="1"
+                      max="90"
+                      style="width: 100%;"
+                      formControlName="sliderPercentage"
+                      thumbLabel
+                      [displayWith]="formatSliderTooltipLabel">
+          </mat-slider>
+          <div fxLayout="row" fxLayoutGap="8px">
+            <mat-form-field fxFlex class="mat-block">
+              <mat-label>{{ 'layout.left-width' | translate }}</mat-label>
+              <input matInput
+                     formControlName="leftWidthPercentage"
+                     type="number"
+                     step="1"
+                     min="10"
+                     max="90">
+              <mat-error *ngIf="layoutsFormGroup.get('leftWidthPercentage').hasError('required')">
+                {{ 'layout.left-width-percentage-required' | translate }}
+              </mat-error>
+              <mat-error *ngIf="layoutsFormGroup.get('leftWidthPercentage').hasError('max')">
+                {{ 'layout.value-max-error' | translate: { max: 90 } }}
+              </mat-error>
+              <mat-error *ngIf="layoutsFormGroup.get('leftWidthPercentage').hasError('min')">
+                {{ 'layout.value-min-error' | translate: { min: 10 } }}
+              </mat-error>
+            </mat-form-field>
+            <mat-form-field fxFlex class="mat-block">
+              <mat-label>{{ 'layout.right-width' | translate }}</mat-label>
+              <input matInput
+                     formControlName="rightWidthPercentage"
+                     type="number"
+                     step="1"
+                     min="10"
+                     max="90">
+              <mat-error *ngIf="layoutsFormGroup.get('rightWidthPercentage').hasError('required')">
+                {{ 'layout.right-width-percentage-required' | translate }}
+              </mat-error>
+              <mat-error *ngIf="layoutsFormGroup.get('rightWidthPercentage').hasError('max')">
+                {{ 'layout.value-max-error' | translate: { max: 90 } }}
+              </mat-error>
+              <mat-error *ngIf="layoutsFormGroup.get('rightWidthPercentage').hasError('min')">
+                {{ 'layout.value-min-error' | translate: { min: 10 } }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+          <label [fxShow]="layoutsFormGroup.get('leftWidthPercentage').valid && layoutsFormGroup.get('rightWidthPercentage').valid" class="tb-hint tb-hint-group">
+            {{'layout.layout-min-max' | translate: { min: 10, max: 90, units: "%" } }}
+          </label>
         </div>
-        <div fxLayout="column"
-             fxLayoutAlign="start center"
-             fxLayoutGap="8px"
-             style="width: 100%;"
-             [fxShow]="layoutsFormGroup.get('right').value">
-          <mat-button-toggle-group aria-label="Select width value type"
-                                   formControlName="type"
-                                   style="width: 100%;">
-            <mat-button-toggle fxFlex value="percentage">
-              {{ 'layout.percentage-width' | translate }}
-            </mat-button-toggle>
-            <mat-button-toggle fxFlex value="fixed">
-              {{ 'layout.fixed-width' | translate }}
-            </mat-button-toggle>
-          </mat-button-toggle-group>
-          <div [fxShow]="layoutsFormGroup.get('type').value === LayoutWidthType.PERCENTAGE" style="width: 100%;">
-            <div fxLayoutAlign="start center"
-                 fxLayoutGap="8px"
-                 style="width: 100%;">
-              <mat-slider min="10"
-                          step="1"
-                          style="width: 100%;"
-                          max="90"
-                          formControlName="leftWidthPercentage"
-                          thumbLabel
-                          [value]="layoutsFormGroup.get('leftWidthPercentage').value"
-                          [displayWith]="formatSliderTooltipLabel">
-              </mat-slider>
-            </div>
-            <div fxFlex fxLayout="column" style="width: 100%;">
-              <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" style="width: 100%;">
-                <mat-form-field fxFlex class="mat-block">
-                  <mat-label>{{ 'layout.left-width' | translate }}</mat-label>
-                  <input matInput
-                         formControlName="leftWidthPercentage"
-                         [value]="layoutsFormGroup.get('leftWidthPercentage').value"
-                         type="number"
-                         step="1"
-                         min="10"
-                         max="90">
-                  <mat-error *ngIf="layoutsFormGroup.get('leftWidthPercentage').hasError('required')">
-                    {{ 'layout.left-width-percentage-required' | translate }}
-                  </mat-error>
-                  <mat-error *ngIf="layoutsFormGroup.get('leftWidthPercentage').hasError('max')">
-                    {{ 'layout.value-max-error' | translate: { max: 90 } }}
-                  </mat-error>
-                  <mat-error *ngIf="layoutsFormGroup.get('leftWidthPercentage').hasError('min')">
-                    {{ 'layout.value-min-error' | translate: { min: 10 } }}
-                  </mat-error>
-                </mat-form-field>
-                <mat-form-field fxFlex class="mat-block">
-                  <mat-label>{{ 'layout.right-width' | translate }}</mat-label>
-                  <input matInput
-                         formControlName="rightWidthPercentage"
-                         type="number"
-                         step="1"
-                         min="10"
-                         max="90">
-                  <mat-error *ngIf="layoutsFormGroup.get('rightWidthPercentage').hasError('required')">
-                    {{ 'layout.right-width-percentage-required' | translate }}
-                  </mat-error>
-                  <mat-error *ngIf="layoutsFormGroup.get('rightWidthPercentage').hasError('max')">
-                    {{ 'layout.value-max-error' | translate: { max: 90 } }}
-                  </mat-error>
-                  <mat-error *ngIf="layoutsFormGroup.get('rightWidthPercentage').hasError('min')">
-                    {{ 'layout.value-min-error' | translate: { min: 10 } }}
-                  </mat-error>
-                </mat-form-field>
-              </div>
-              <label class="tb-hint">{{'layout.layout-min-max' | translate: { min: 10, max: 90, units: "%" } }}</label>
-            </div>
+        <div [fxShow]="layoutsFormGroup.get('type').value === LayoutWidthType.FIXED">
+          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" class="tb-layout-fixed-container">
+            <label>{{ 'layout.pick-fixed-side' | translate }}</label>
+            <mat-radio-group aria-label="Select side"
+                             formControlName="fixedLayout"
+                             fxLayout="row"
+                             fxLayoutGap="8px">
+              <mat-radio-button value="main">
+                {{ 'layout.left' | translate }}
+              </mat-radio-button>
+              <mat-radio-button value="right">
+                {{ 'layout.right' | translate }}
+              </mat-radio-button>
+            </mat-radio-group>
           </div>
-          <div [fxShow]="layoutsFormGroup.get('type').value === LayoutWidthType.FIXED"
-               fxLayout="column"
-               style="width: 100%;"
-               fxLayoutAlign="start center">
-            <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" class="tb-layout-fixed-container" style="width: 100%;">
-              <label>{{ 'layout.pick-fixed-side' | translate }}</label>
-              <mat-radio-group aria-label="Select side"
-                               formControlName="fixedLayout"
-                               fxLayout="row"
-                               fxLayoutAlign="start center"
-                               fxLayoutGap="8px">
-                <mat-radio-button value="main">
-                  {{ 'layout.left' | translate }}
-                </mat-radio-button>
-                <mat-radio-button value="right">
-                  {{ 'layout.right' | translate }}
-                </mat-radio-button>
-              </mat-radio-group>
-            </div>
-            <div fxLayout="column" style="width: 100%; min-width: 368px;">
-              <mat-form-field class="mat-block" style="width: 100%;">
-                <mat-label>{{ 'layout.layout-fixed-width' | translate }}</mat-label>
-                <input matInput
-                       formControlName="fixedWidth"
-                       type="number"
-                       step="1"
-                       min="150"
-                       max="1700">
-                <mat-error *ngIf="layoutsFormGroup.get('fixedWidth').hasError('required')">
-                  {{ 'layout.layout-fixed-width-required' | translate }}
-                </mat-error>
-                <mat-error *ngIf="layoutsFormGroup.get('fixedWidth').hasError('max')">
-                  {{ 'layout.value-max-error' | translate: { max: 1700 } }}
-                </mat-error>
-                <mat-error *ngIf="layoutsFormGroup.get('fixedWidth').hasError('min')">
-                  {{ 'layout.value-min-error' | translate: { min: 150 } }}
-                </mat-error>
-              </mat-form-field>
-              <label class="tb-hint">{{ 'layout.layout-min-max' | translate: {min: 150, max: 1700, units: "px" } }}</label>
-            </div>
-          </div>
+          <mat-form-field fxFlex class="mat-block" style="min-width: 368px;">
+            <mat-label>{{ 'layout.layout-fixed-width' | translate }}</mat-label>
+            <input matInput
+                   formControlName="fixedWidth"
+                   type="number"
+                   step="1"
+                   min="150"
+                   max="1700">
+            <mat-hint>
+              {{ 'layout.layout-min-max' | translate: {min: 150, max: 1700, units: "px" } }}
+            </mat-hint>
+            <mat-error *ngIf="layoutsFormGroup.get('fixedWidth').hasError('required')">
+              {{ 'layout.layout-fixed-width-required' | translate }}
+            </mat-error>
+            <mat-error *ngIf="layoutsFormGroup.get('fixedWidth').hasError('max')">
+              {{ 'layout.value-max-error' | translate: { max: 1700 } }}
+            </mat-error>
+            <mat-error *ngIf="layoutsFormGroup.get('fixedWidth').hasError('min')">
+              {{ 'layout.value-min-error' | translate: { min: 150 } }}
+            </mat-error>
+          </mat-form-field>
         </div>
       </div>
-    </fieldset>
+    </div>
   </div>
   <div mat-dialog-actions fxLayoutAlign="end center">
     <button mat-button
             color="primary"
             type="button"
-            [disabled]="(isLoading$ | async)"
             (click)="cancel()" cdkFocusInitial>
       {{ 'action.cancel' | translate }}
     </button>
     <button mat-raised-button color="primary"
             type="submit"
-            [disabled]="(isLoading$ | async) || layoutsFormGroup.invalid || !layoutsFormGroup.dirty">
+            [disabled]="layoutsFormGroup.invalid || !layoutsFormGroup.dirty">
       {{ 'action.save' | translate }}
     </button>
   </div>
