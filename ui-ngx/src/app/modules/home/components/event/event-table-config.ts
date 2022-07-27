@@ -356,8 +356,10 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
         break;
       case EventType.STATS:
         this.filterColumns.push(
-          {key: 'messagesProcessed', title: 'event.min-messages-processed'},
-          {key: 'errorsOccurred', title: 'event.min-errors-occurred'}
+          {key: 'minMessagesProcessed', title: 'event.min-messages-processed'},
+          {key: 'maxMessagesProcessed', title: 'event.max-messages-processed'},
+          {key: 'minErrorsOccurred', title: 'event.min-errors-occurred'},
+          {key: 'maxErrorsOccurred', title: 'event.max-errors-occurred'}
         );
         break;
       case DebugEventType.DEBUG_RULE_NODE:
