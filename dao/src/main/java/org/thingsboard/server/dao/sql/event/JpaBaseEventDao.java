@@ -261,6 +261,10 @@ public class JpaBaseEventDao implements EventDao {
         }
     }
 
+    @Override
+    public void migrateEvents(long regularEventTs, long debugEventTs) {
+        eventCleanupRepository.migrateEvents(regularEventTs, debugEventTs);
+    }
 
     private PageData<? extends Event> findEventByFilter(UUID tenantId, UUID entityId, RuleChainDebugEventFilter eventFilter, TimePageLink pageLink) {
         return DaoUtil.toPageData(

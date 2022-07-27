@@ -45,6 +45,11 @@ import java.util.stream.Collectors;
 @Slf4j
 public class BaseEventService implements EventService {
 
+    @Value("${sql.ttl.events.events_ttl:0}")
+    private long ttlInSec;
+    @Value("${sql.ttl.events.debug_events_ttl:604800}")
+    private long debugTtlInSec;
+
     @Value("${event.debug.max-symbols:4096}")
     private int maxDebugEventSymbols;
 
@@ -127,6 +132,11 @@ public class BaseEventService implements EventService {
     @Override
     public void cleanupEvents(long regularEventExpTs, long debugEventExpTs, boolean cleanupDb) {
         eventDao.cleanupEvents(regularEventExpTs, debugEventExpTs, cleanupDb);
+    }
+
+    @Override
+    public void migrateEvents() {
+        eventDao.migrateEvents(ttlInSec > 0 ? System.currentTimeMillis() - ttlInSec : 0, debugTtlInSec > 0 ? System.currentTimeMillis() - debugTtlInSec : 0);
     }
 
     private PageData<EventInfo> convert(EntityType entityType, PageData<? extends Event> pd) {

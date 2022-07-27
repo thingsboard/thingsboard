@@ -58,6 +58,7 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.alarm.AlarmDao;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.model.sql.DeviceProfileEntity;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -128,6 +129,9 @@ public class DefaultDataUpdateService implements DataUpdateService {
     @Autowired
     private SystemDataLoaderService systemDataLoaderService;
 
+    @Autowired
+    private EventService eventService;
+
     @Override
     public void updateData(String fromVersion) throws Exception {
         switch (fromVersion) {
@@ -159,6 +163,11 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 tenantsProfileQueueConfigurationUpdater.updateEntities();
                 rateLimitsUpdater.updateEntities();
                 break;
+            case "3.4.0":
+                if (System.getProperty("TB_EVENTS_MIGRATION", "false").equalsIgnoreCase("true")) {
+                    log.info("Updating data from version 3.3.4 to 3.4.0 ...");
+                    eventService.migrateEvents();
+                }
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
         }
@@ -602,7 +611,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 });
             }
         } catch (Exception e) {
-            log.error("Failed to update tenant profile queue configuration name=["+profile.getName()+"], id=["+ profile.getId().getId() +"]", e);
+            log.error("Failed to update tenant profile queue configuration name=[" + profile.getName() + "], id=[" + profile.getId().getId() + "]", e);
         }
     }
 

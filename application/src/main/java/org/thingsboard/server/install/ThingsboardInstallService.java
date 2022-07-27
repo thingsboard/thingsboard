@@ -224,6 +224,7 @@ public class ThingsboardInstallService {
                         case "3.4.0":
                             log.info("Upgrading ThingsBoard from version 3.4.0 to 3.4.1 ...");
                             databaseEntitiesUpgradeService.upgradeDatabase("3.4.0");
+                            dataUpdateService.updateData("3.4.0");
                             log.info("Updating system data...");
                             systemDataLoaderService.updateSystemWidgets();
                             break;

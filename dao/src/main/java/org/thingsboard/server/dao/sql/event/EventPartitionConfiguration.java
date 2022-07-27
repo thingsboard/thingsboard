@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.event;
 
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.event.EventType;
@@ -25,8 +26,10 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class EventPartitionConfiguration {
 
+    @Getter
     @Value("${sql.events.partition_size:168}")
     private int regularPartitionSizeInHours;
+    @Getter
     @Value("${sql.events.debug_partition_size:1}")
     private int debugPartitionSizeInHours;
 

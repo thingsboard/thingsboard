@@ -25,6 +25,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.QueueId;
@@ -676,7 +677,6 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
         queue.setConsumerPerPartition(queueSettings.isConsumerPerPartition());
         return queue;
     }
-
 
 
 }

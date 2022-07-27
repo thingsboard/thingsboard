@@ -50,6 +50,23 @@ public class SqlEventCleanupRepository extends JpaAbstractDaoListeningExecutorSe
         }
     }
 
+    @Override
+    public void migrateEvents(long regularEventTs, long debugEventTs) {
+        callMigrateFunction("migrate_regular_events", regularEventTs, partitionConfiguration.getRegularPartitionSizeInHours());
+        callMigrateFunction("migrate_debug_events", debugEventTs, partitionConfiguration.getDebugPartitionSizeInHours());
+    }
+
+    private void callMigrateFunction(String functionName, long startTs, int partitionSizeInHours) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement stmt = connection.prepareStatement("call " + functionName + "(?,?)")) {
+            stmt.setLong(1, startTs);
+            stmt.setInt(2, partitionSizeInHours);
+            stmt.execute();
+        } catch (SQLException e) {
+            log.error("[{}] SQLException occurred during execution of {} with parameters {} and {}", functionName, startTs, partitionSizeInHours, e);
+        }
+    }
+
     private void cleanupEvents(EventType eventType, long eventExpTime) {
         var partitionDuration = partitionConfiguration.getPartitionSizeInMs(eventType);
         List<Long> partitions = fetchPartitions(eventType);
