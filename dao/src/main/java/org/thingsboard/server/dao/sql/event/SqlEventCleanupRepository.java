@@ -16,7 +16,7 @@
 package org.thingsboard.server.dao.sql.event;
 
 import lombok.extern.slf4j.Slf4j;
-import org.postgresql.util.PSQLException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
@@ -28,8 +28,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.thingsboard.server.dao.sql.event.JpaBaseEventDao.DEBUG_PARTITION_DURATION;
-import static org.thingsboard.server.dao.sql.event.JpaBaseEventDao.REGULAR_PARTITION_DURATION;
 
 @Slf4j
 @Repository
@@ -37,6 +35,9 @@ public class SqlEventCleanupRepository extends JpaAbstractDaoListeningExecutorSe
 
     private static final String SELECT_PARTITIONS_STMT = "SELECT tablename from pg_tables WHERE schemaname = 'public' and tablename like concat(?, '_%')";
     private static final int PSQL_VERSION_14 = 140000;
+
+    @Autowired
+    private EventPartitionConfiguration partitionConfiguration;
 
     private volatile Integer currentServerVersion;
 
@@ -50,7 +51,7 @@ public class SqlEventCleanupRepository extends JpaAbstractDaoListeningExecutorSe
     }
 
     private void cleanupEvents(EventType eventType, long eventExpTime) {
-        var partitionDuration = eventType.isDebug() ? DEBUG_PARTITION_DURATION : REGULAR_PARTITION_DURATION;
+        var partitionDuration = partitionConfiguration.getPartitionSizeInMs(eventType);
         List<Long> partitions = fetchPartitions(eventType);
         for (var partitionTs : partitions) {
             var partitionEndTs = partitionTs + partitionDuration;

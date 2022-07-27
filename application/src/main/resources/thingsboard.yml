@@ -259,6 +259,8 @@ sql:
     batch_max_delay: "${SQL_EVENTS_BATCH_MAX_DELAY_MS:100}"
     stats_print_interval_ms: "${SQL_EVENTS_BATCH_STATS_PRINT_MS:10000}"
     batch_threads: "${SQL_EVENTS_BATCH_THREADS:3}" # batch thread count have to be a prime number like 3 or 5 to gain perfect hash distribution
+    partition_size: "${SQL_EVENTS_REGULAR_PARTITION_SIZE_HOURS:168}" # Number of hours to partition the events. The current value corresponds to one week.
+    debug_partition_size: "${SQL_EVENTS_REGULAR_PARTITION_SIZE_HOURS:1}" # Number of hours to partition the debug events. The current value corresponds to one hour.
   edge_events:
     batch_size: "${SQL_EDGE_EVENTS_BATCH_SIZE:1000}"
     batch_max_delay: "${SQL_EDGE_EVENTS_BATCH_MAX_DELAY_MS:100}"
@@ -285,8 +287,10 @@ sql:
     events:
       enabled: "${SQL_TTL_EVENTS_ENABLED:true}"
       execution_interval_ms: "${SQL_TTL_EVENTS_EXECUTION_INTERVAL:3600000}" # Number of milliseconds (max random initial delay and fixed period).
-      events_ttl: "${SQL_TTL_EVENTS_EVENTS_TTL:0}" # Number of seconds
-      debug_events_ttl: "${SQL_TTL_EVENTS_DEBUG_EVENTS_TTL:604800}" # Number of seconds. The current value corresponds to one week
+      # Number of seconds. TTL is disabled by default. Accuracy of the cleanup depends on the sql.events.partition_size parameter.
+      events_ttl: "${SQL_TTL_EVENTS_EVENTS_TTL:0}"
+      # Number of seconds. The current value corresponds to one week. Accuracy of the cleanup depends on the sql.events.debug_partition_size parameter.
+      debug_events_ttl: "${SQL_TTL_EVENTS_DEBUG_EVENTS_TTL:604800}"
     edge_events:
       enabled: "${SQL_TTL_EDGE_EVENTS_ENABLED:true}"
       execution_interval_ms: "${SQL_TTL_EDGE_EVENTS_EXECUTION_INTERVAL:86400000}" # Number of milliseconds. The current value corresponds to one day

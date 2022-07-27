@@ -117,19 +117,11 @@ public class BaseEventService implements EventService {
 
     @Override
     public void removeEvents(TenantId tenantId, EntityId entityId, EventFilter eventFilter, Long startTime, Long endTime) {
-//        TimePageLink eventsPageLink = new TimePageLink(1000, 0, null, null, startTime, endTime);
-//        PageData<EventInfo> eventsPageData;
-//        do {
-//            if (eventFilter == null) {
-//                eventsPageData = findEvents(tenantId, entityId, eventsPageLink);
-//            } else {
-//                eventsPageData = findEventsByFilter(tenantId, entityId, eventFilter, eventsPageLink);
-//            }
-//
-//            eventDao.removeAllByIds(eventsPageData.getData().stream()
-//                    .map(IdBased::getUuidId)
-//                    .collect(Collectors.toList()));
-//        } while (eventsPageData.hasNext());
+        if (eventFilter == null) {
+            eventDao.removeEvents(tenantId.getId(), entityId.getId(), startTime, endTime);
+        } else {
+            eventDao.removeEvents(tenantId.getId(), entityId.getId(), eventFilter, startTime, endTime);
+        }
     }
 
     @Override

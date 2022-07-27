@@ -21,6 +21,7 @@ import org.thingsboard.server.common.data.event.Event;
 import org.thingsboard.server.common.data.event.EventFilter;
 import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.Dao;
@@ -71,4 +72,26 @@ public interface EventDao {
      * @param debugEventExpTs the expiration time of the debug events
      */
     void cleanupEvents(long regularEventExpTs, long debugEventExpTs);
+
+    /**
+     * Removes all events for the specified entity and time interval
+     *
+     * @param tenantId
+     * @param entityId
+     * @param startTime
+     * @param endTime
+     */
+    void removeEvents(UUID tenantId, UUID entityId, Long startTime, Long endTime);
+
+    /**
+     *
+     * Removes all events for the specified entity, event filter and time interval
+     *
+     * @param tenantId
+     * @param entityId
+     * @param eventFilter
+     * @param startTime
+     * @param endTime
+     */
+    void removeEvents(UUID tenantId, UUID entityId, EventFilter eventFilter, Long startTime, Long endTime);
 }

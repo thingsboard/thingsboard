@@ -48,13 +48,11 @@ import org.thingsboard.server.dao.timeseries.SqlPartition;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
@@ -65,11 +63,11 @@ import java.util.function.Function;
 @Component
 public class JpaBaseEventDao implements EventDao {
 
-    public static final long REGULAR_PARTITION_DURATION = TimeUnit.DAYS.toMillis(1);
-    public static final long DEBUG_PARTITION_DURATION = TimeUnit.HOURS.toMillis(1);
-
     private final Map<EventType, Map<Long, SqlPartition>> partitionsByEventType = new ConcurrentHashMap<>();
     private static final ReentrantLock partitionCreationLock = new ReentrantLock();
+
+    @Autowired
+    private EventPartitionConfiguration partitionConfiguration;
 
     @Autowired
     private SqlPartitioningRepository partitioningRepository;
@@ -170,12 +168,12 @@ public class JpaBaseEventDao implements EventDao {
     }
 
     private void savePartitionIfNotExist(Event event) {
-        var partitionsMap = partitionsByEventType.get(event.getType());
-        var partitionDuration = event.getType().isDebug() ? DEBUG_PARTITION_DURATION : REGULAR_PARTITION_DURATION;
+        EventType type = event.getType();
+        var partitionsMap = partitionsByEventType.get(type);
+        var partitionDuration = partitionConfiguration.getPartitionSizeInMs(type);
         long partitionStartTs = event.getCreatedTime() - (event.getCreatedTime() % partitionDuration);
         if (partitionsMap.get(partitionStartTs) == null) {
-            savePartition(partitionsMap, new SqlPartition(event.getType().getTable(), partitionStartTs,
-                    partitionStartTs + partitionDuration, Long.toString(partitionStartTs)));
+            savePartition(partitionsMap, new SqlPartition(type.getTable(), partitionStartTs, partitionStartTs + partitionDuration, Long.toString(partitionStartTs)));
         }
     }
 
@@ -227,6 +225,42 @@ public class JpaBaseEventDao implements EventDao {
             return findEvents(tenantId, entityId, eventFilter.getEventType(), pageLink);
         }
     }
+
+    @Override
+    public void removeEvents(UUID tenantId, UUID entityId, Long startTime, Long endTime) {
+        log.debug("[{}][{}] Remove events [{}-{}] ", tenantId, entityId, startTime, endTime);
+        for (EventType eventType : EventType.values()) {
+            getEventRepository(eventType).removeEvents(tenantId, entityId, startTime, endTime);
+        }
+    }
+
+    @Override
+    public void removeEvents(UUID tenantId, UUID entityId, EventFilter eventFilter, Long startTime, Long endTime) {
+        if (eventFilter.isNotEmpty()) {
+            switch (eventFilter.getEventType()) {
+                case DEBUG_RULE_NODE:
+                    removeEventsByFilter(tenantId, entityId, (RuleNodeDebugEventFilter) eventFilter, startTime, endTime);
+                    break;
+                case DEBUG_RULE_CHAIN:
+                    removeEventsByFilter(tenantId, entityId, (RuleChainDebugEventFilter) eventFilter, startTime, endTime);
+                    break;
+                case LC_EVENT:
+                    removeEventsByFilter(tenantId, entityId, (LifeCycleEventFilter) eventFilter, startTime, endTime);
+                    break;
+                case ERROR:
+                    removeEventsByFilter(tenantId, entityId, (ErrorEventFilter) eventFilter, startTime, endTime);
+                    break;
+                case STATS:
+                    removeEventsByFilter(tenantId, entityId, (StatisticsEventFilter) eventFilter, startTime, endTime);
+                    break;
+                default:
+                    throw new RuntimeException("Not supported event type: " + eventFilter.getEventType());
+            }
+        } else {
+            getEventRepository(eventFilter.getEventType()).removeEvents(tenantId, entityId, startTime, endTime);
+        }
+    }
+
 
     private PageData<? extends Event> findEventByFilter(UUID tenantId, UUID entityId, RuleChainDebugEventFilter eventFilter, TimePageLink pageLink) {
         return DaoUtil.toPageData(
@@ -305,9 +339,85 @@ public class JpaBaseEventDao implements EventDao {
                         pageLink.getStartTime(),
                         pageLink.getEndTime(),
                         eventFilter.getServer(),
-                        eventFilter.getMessagesProcessed(),
-                        eventFilter.getErrorsOccurred(),
+                        eventFilter.getMinMessagesProcessed(),
+                        eventFilter.getMaxMessagesProcessed(),
+                        eventFilter.getMinErrorsOccurred(),
+                        eventFilter.getMaxErrorsOccurred(),
                         DaoUtil.toPageable(pageLink))
+        );
+    }
+
+    private void removeEventsByFilter(UUID tenantId, UUID entityId, RuleChainDebugEventFilter eventFilter, Long startTime, Long endTime) {
+        ruleChainDebugEventRepository.removeEvents(
+                tenantId,
+                entityId,
+                startTime,
+                endTime,
+                eventFilter.getServer(),
+                eventFilter.getMessage(),
+                eventFilter.isError(),
+                eventFilter.getErrorStr());
+    }
+
+    private void removeEventsByFilter(UUID tenantId, UUID entityId, RuleNodeDebugEventFilter eventFilter, Long startTime, Long endTime) {
+        parseUUID(eventFilter.getEntityId(), "Entity Id");
+        parseUUID(eventFilter.getMsgId(), "Message Id");
+        ruleNodeDebugEventRepository.removeEvents(
+                tenantId,
+                entityId,
+                startTime,
+                endTime,
+                eventFilter.getServer(),
+                eventFilter.getMsgDirectionType(),
+                eventFilter.getEntityId(),
+                eventFilter.getEntityType(),
+                eventFilter.getMsgId(),
+                eventFilter.getMsgType(),
+                eventFilter.getRelationType(),
+                eventFilter.getDataSearch(),
+                eventFilter.getMetadataSearch(),
+                eventFilter.isError(),
+                eventFilter.getErrorStr());
+    }
+
+    private void removeEventsByFilter(UUID tenantId, UUID entityId, ErrorEventFilter eventFilter, Long startTime, Long endTime) {
+        errorEventRepository.removeEvents(
+                tenantId,
+                entityId,
+                startTime,
+                endTime,
+                eventFilter.getServer(),
+                eventFilter.getMethod(),
+                eventFilter.getErrorStr());
+
+    }
+
+    private void removeEventsByFilter(UUID tenantId, UUID entityId, LifeCycleEventFilter eventFilter, Long startTime, Long endTime) {
+        boolean statusFilterEnabled = !StringUtils.isEmpty(eventFilter.getStatus());
+        boolean statusFilter = statusFilterEnabled && eventFilter.getStatus().equalsIgnoreCase("Success");
+        lcEventRepository.removeEvents(
+                tenantId,
+                entityId,
+                startTime,
+                endTime,
+                eventFilter.getServer(),
+                eventFilter.getEvent(),
+                statusFilterEnabled,
+                statusFilter,
+                eventFilter.getErrorStr());
+    }
+
+    private void removeEventsByFilter(UUID tenantId, UUID entityId, StatisticsEventFilter eventFilter, Long startTime, Long endTime) {
+        statsEventRepository.removeEvents(
+                tenantId,
+                entityId,
+                startTime,
+                endTime,
+                eventFilter.getServer(),
+                eventFilter.getMinMessagesProcessed(),
+                eventFilter.getMaxMessagesProcessed(),
+                eventFilter.getMinErrorsOccurred(),
+                eventFilter.getMaxErrorsOccurred()
         );
     }
 

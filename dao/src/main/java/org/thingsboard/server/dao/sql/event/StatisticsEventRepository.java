@@ -18,8 +18,10 @@ package org.thingsboard.server.dao.sql.event;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.event.StatisticsEvent;
 import org.thingsboard.server.dao.model.sql.StatisticsEventEntity;
 
@@ -51,8 +53,10 @@ public interface StatisticsEventRepository extends EventRepository<StatisticsEve
                     "AND (:startTime IS NULL OR e.ts >= :startTime) " +
                     "AND (:endTime IS NULL OR e.ts <= :endTime) " +
                     "AND (:serviceId IS NULL OR e.service_id ILIKE concat('%', :serviceId, '%')) " +
-                    "AND (:messagesProcessed IS NULL OR e.e_messages_processed >= :messagesProcessed) " +
-                    "AND (:errorsOccurred IS NULL OR e.e_errors_occurred >= :errorsOccurred)"
+                    "AND (:minMessagesProcessed IS NULL OR e.e_messages_processed >= :minMessagesProcessed) " +
+                    "AND (:maxMessagesProcessed IS NULL OR e.e_messages_processed < :maxMessagesProcessed) " +
+                    "AND (:minErrorsOccurred IS NULL OR e.e_errors_occurred >= :minErrorsOccurred) " +
+                    "AND (:maxErrorsOccurred IS NULL OR e.e_errors_occurred < :maxErrorsOccurred)"
             ,
             countQuery = "SELECT count(*) FROM stats_event e WHERE " +
                     "e.tenant_id = :tenantId " +
@@ -60,16 +64,57 @@ public interface StatisticsEventRepository extends EventRepository<StatisticsEve
                     "AND (:startTime IS NULL OR e.ts >= :startTime) " +
                     "AND (:endTime IS NULL OR e.ts <= :endTime) " +
                     "AND (:serviceId IS NULL OR e.service_id ILIKE concat('%', :serviceId, '%')) " +
-                    "AND (:messagesProcessed IS NULL OR e.e_messages_processed >= :messagesProcessed) " +
-                    "AND (:errorsOccurred IS NULL OR e.e_errors_occurred >= :errorsOccurred)"
+                    "AND (:minMessagesProcessed IS NULL OR e.e_messages_processed >= :minMessagesProcessed) " +
+                    "AND (:maxMessagesProcessed IS NULL OR e.e_messages_processed < :maxMessagesProcessed) " +
+                    "AND (:minErrorsOccurred IS NULL OR e.e_errors_occurred >= :minErrorsOccurred) " +
+                    "AND (:maxErrorsOccurred IS NULL OR e.e_errors_occurred < :maxErrorsOccurred)"
     )
     Page<StatisticsEventEntity> findEvents(@Param("tenantId") UUID tenantId,
                                            @Param("entityId") UUID entityId,
                                            @Param("startTime") Long startTime,
                                            @Param("endTime") Long endTime,
                                            @Param("serviceId") String server,
-                                           @Param("messagesProcessed") Integer messagesProcessed,
-                                           @Param("errorsOccurred") Integer errorsOccurred,
+                                           @Param("minMessagesProcessed") Integer minMessagesProcessed,
+                                           @Param("maxMessagesProcessed") Integer maxMessagesProcessed,
+                                           @Param("minErrorsOccurred") Integer minErrorsOccurred,
+                                           @Param("maxErrorsOccurred") Integer maxErrorsOccurred,
                                            Pageable pageable);
 
+    @Transactional
+    @Modifying
+    @Query("DELETE FROM StatisticsEventEntity e WHERE " +
+            "e.tenantId = :tenantId " +
+            "AND e.entityId = :entityId " +
+            "AND (:startTime IS NULL OR e.ts >= :startTime) " +
+            "AND (:endTime IS NULL OR e.ts <= :endTime)"
+    )
+    void removeEvents(@Param("tenantId") UUID tenantId,
+                      @Param("entityId") UUID entityId,
+                      @Param("startTime") Long startTime,
+                      @Param("endTime") Long endTime);
+
+    @Transactional
+    @Modifying
+    @Query(nativeQuery = true,
+            value = "DELETE FROM stats_event e WHERE " +
+                    "e.tenant_id = :tenantId " +
+                    "AND e.entity_id = :entityId " +
+                    "AND (:startTime IS NULL OR e.ts >= :startTime) " +
+                    "AND (:endTime IS NULL OR e.ts <= :endTime) " +
+                    "AND (:serviceId IS NULL OR e.service_id ILIKE concat('%', :serviceId, '%')) " +
+                    "AND (:minMessagesProcessed IS NULL OR e.e_messages_processed >= :minMessagesProcessed) " +
+                    "AND (:maxMessagesProcessed IS NULL OR e.e_messages_processed < :maxMessagesProcessed) " +
+                    "AND (:minErrorsOccurred IS NULL OR e.e_errors_occurred >= :minErrorsOccurred) " +
+                    "AND (:maxErrorsOccurred IS NULL OR e.e_errors_occurred < :maxErrorsOccurred)"
+
+    )
+    void removeEvents(@Param("tenantId") UUID tenantId,
+                      @Param("entityId") UUID entityId,
+                      @Param("startTime") Long startTime,
+                      @Param("endTime") Long endTime,
+                      @Param("serviceId") String server,
+                      @Param("minMessagesProcessed") Integer minMessagesProcessed,
+                      @Param("maxMessagesProcessed") Integer maxMessagesProcessed,
+                      @Param("minErrorsOccurred") Integer minErrorsOccurred,
+                      @Param("maxErrorsOccurred") Integer maxErrorsOccurred);
 }
