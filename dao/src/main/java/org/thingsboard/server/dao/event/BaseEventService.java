@@ -125,8 +125,8 @@ public class BaseEventService implements EventService {
     }
 
     @Override
-    public void cleanupEvents(long regularEventExpTs, long debugEventExpTs) {
-        eventDao.cleanupEvents(regularEventExpTs, debugEventExpTs);
+    public void cleanupEvents(long regularEventExpTs, long debugEventExpTs, boolean cleanupDb) {
+        eventDao.cleanupEvents(regularEventExpTs, debugEventExpTs, cleanupDb);
     }
 
     private PageData<EventInfo> convert(EntityType entityType, PageData<? extends Event> pd) {

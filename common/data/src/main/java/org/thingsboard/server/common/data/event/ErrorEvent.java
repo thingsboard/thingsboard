@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.event;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -40,9 +41,11 @@ public class ErrorEvent extends Event {
         this.error = error;
     }
 
-    @Getter @Setter
+    @Getter
+    @Setter
     private String method;
-    @Getter @Setter
+    @Getter
+    @Setter
     private String error;
 
     @Override
@@ -52,6 +55,12 @@ public class ErrorEvent extends Event {
 
     @Override
     public EventInfo toInfo(EntityType entityType) {
-        return null;
+        EventInfo eventInfo = super.toInfo(entityType);
+        var json = (ObjectNode) eventInfo.getBody();
+        json.put("method", method);
+        if (error != null) {
+            json.put("error", error);
+        }
+        return eventInfo;
     }
 }

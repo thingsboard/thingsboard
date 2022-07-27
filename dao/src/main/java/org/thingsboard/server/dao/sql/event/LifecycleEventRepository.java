@@ -24,6 +24,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.event.LifecycleEvent;
 import org.thingsboard.server.dao.model.sql.LifecycleEventEntity;
+import org.thingsboard.server.dao.model.sql.RuleChainDebugEventEntity;
 
 import java.util.List;
 import java.util.UUID;
@@ -31,8 +32,8 @@ import java.util.UUID;
 public interface LifecycleEventRepository extends EventRepository<LifecycleEventEntity, LifecycleEvent>, JpaRepository<LifecycleEventEntity, UUID> {
 
     @Override
-    @Query("SELECT e FROM LifecycleEventEntity e WHERE e.tenantId = :tenantId AND e.entityId = :entityId ORDER BY e.ts DESC")
-    List<LifecycleEventEntity> findLatestEvents(UUID tenantId, UUID entityId, int limit);
+    @Query(nativeQuery = true, value = "SELECT * FROM lc_event e WHERE e.tenant_id = :tenantId AND e.entity_id = :entityId ORDER BY e.ts DESC LIMIT :limit")
+    List<LifecycleEventEntity> findLatestEvents(@Param("tenantId") UUID tenantId, @Param("entityId") UUID entityId, @Param("limit") int limit);
 
 
     @Query("SELECT e FROM LifecycleEventEntity e WHERE " +

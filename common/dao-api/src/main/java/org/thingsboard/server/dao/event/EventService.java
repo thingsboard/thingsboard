@@ -26,7 +26,6 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface EventService {
 
@@ -42,6 +41,6 @@ public interface EventService {
 
     void removeEvents(TenantId tenantId, EntityId entityId, EventFilter eventFilter, Long startTime, Long endTime);
 
-    void cleanupEvents(long regularEventExpTs, long debugEventExpTs);
+    void cleanupEvents(long regularEventExpTs, long debugEventExpTs, boolean cleanupDb);
 
 }

@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.event.ErrorEvent;
 import org.thingsboard.server.common.data.event.RuleNodeDebugEvent;
 import org.thingsboard.server.dao.model.sql.ErrorEventEntity;
 import org.thingsboard.server.dao.model.sql.RuleNodeDebugEventEntity;
+import org.thingsboard.server.dao.model.sql.StatisticsEventEntity;
 
 import java.util.List;
 import java.util.UUID;
@@ -34,8 +35,8 @@ import java.util.UUID;
 public interface RuleNodeDebugEventRepository extends EventRepository<RuleNodeDebugEventEntity, RuleNodeDebugEvent>, JpaRepository<RuleNodeDebugEventEntity, UUID> {
 
     @Override
-    @Query("SELECT e FROM RuleNodeDebugEventEntity e WHERE e.tenantId = :tenantId AND e.entityId = :entityId ORDER BY e.ts DESC")
-    List<RuleNodeDebugEventEntity> findLatestEvents(UUID tenantId, UUID entityId, int limit);
+    @Query(nativeQuery = true,  value = "SELECT * FROM rule_node_debug_event e WHERE e.tenant_id = :tenantId AND e.entity_id = :entityId ORDER BY e.ts DESC LIMIT :limit")
+    List<RuleNodeDebugEventEntity> findLatestEvents(@Param("tenantId") UUID tenantId, @Param("entityId") UUID entityId, @Param("limit") int limit);
 
     @Override
     @Query("SELECT e FROM RuleNodeDebugEventEntity e WHERE " +

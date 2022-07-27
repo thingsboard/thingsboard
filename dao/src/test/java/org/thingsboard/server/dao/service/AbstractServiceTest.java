@@ -188,7 +188,7 @@ public abstract class AbstractServiceTest {
     }
 
 
-    protected RuleNodeDebugEvent generateEvent(TenantId tenantId, EntityId entityId, String eventType, String eventUid) throws IOException {
+    protected RuleNodeDebugEvent generateEvent(TenantId tenantId, EntityId entityId) throws IOException {
         if (tenantId == null) {
             tenantId = TenantId.fromUUID(Uuids.timeBased());
         }

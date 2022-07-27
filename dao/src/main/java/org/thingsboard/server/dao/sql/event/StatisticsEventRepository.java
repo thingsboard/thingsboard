@@ -31,8 +31,8 @@ import java.util.UUID;
 public interface StatisticsEventRepository extends EventRepository<StatisticsEventEntity, StatisticsEvent>, JpaRepository<StatisticsEventEntity, UUID> {
 
     @Override
-    @Query("SELECT e FROM LifecycleEventEntity e WHERE e.tenantId = :tenantId AND e.entityId = :entityId ORDER BY e.ts DESC")
-    List<StatisticsEventEntity> findLatestEvents(UUID tenantId, UUID entityId, int limit);
+    @Query(nativeQuery = true,  value = "SELECT * FROM stats_event e WHERE e.tenant_id = :tenantId AND e.entity_id = :entityId ORDER BY e.ts DESC LIMIT :limit")
+    List<StatisticsEventEntity> findLatestEvents(@Param("tenantId") UUID tenantId, @Param("entityId") UUID entityId, @Param("limit") int limit);
 
     @Query("SELECT e FROM StatisticsEventEntity e WHERE " +
             "e.tenantId = :tenantId " +

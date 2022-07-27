@@ -19,7 +19,6 @@ import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.event.Event;
 import org.thingsboard.server.common.data.event.EventType;
@@ -35,7 +34,7 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
 
 import java.text.ParseException;
-import java.util.Optional;
+import java.util.List;
 
 import static org.apache.commons.lang3.time.DateFormatUtils.ISO_DATETIME_TIME_ZONE_FORMAT;
 
@@ -57,16 +56,14 @@ public abstract class BaseEventServiceTest extends AbstractServiceTest {
 
     @Test
     public void saveEvent() throws Exception {
+        TenantId tenantId = new TenantId(Uuids.timeBased());
         DeviceId devId = new DeviceId(Uuids.timeBased());
-        RuleNodeDebugEvent event = generateEvent(null, devId, "ALARM", Uuids.timeBased().toString());
+        RuleNodeDebugEvent event = generateEvent(tenantId, devId);
         eventService.saveAsync(event).get();
-        throw new RuntimeException("fix me!");
-//        Optional<EventInfo> loaded = eventService.findEvent(event.getTenantId(), event.getEntityId(), event.getType(), event.getUid());
-//        Assert.assertTrue(loaded.isPresent());
-//        Assert.assertNotNull(loaded.get());
-//        Assert.assertEquals(event.getEntityId(), loaded.get().getEntityId());
-//        Assert.assertEquals(event.getType(), loaded.get().getType());
-//        Assert.assertEquals(event.getBody(), loaded.get().getBody());
+        List<EventInfo> loaded = eventService.findLatestEvents(event.getTenantId(), devId, event.getType(), 1);
+        Assert.assertNotNull(loaded);
+        Assert.assertEquals(1, loaded.size());
+        Assert.assertEquals(event.getData(), loaded.get(0).getBody().get("data").asText());
     }
 
     @Test
@@ -74,29 +71,29 @@ public abstract class BaseEventServiceTest extends AbstractServiceTest {
         CustomerId customerId = new CustomerId(Uuids.timeBased());
         TenantId tenantId = TenantId.fromUUID(Uuids.timeBased());
         saveEventWithProvidedTime(timeBeforeStartTime, customerId, tenantId);
-        EventInfo savedEvent = saveEventWithProvidedTime(eventTime, customerId, tenantId);
-        EventInfo savedEvent2 = saveEventWithProvidedTime(eventTime + 1, customerId, tenantId);
-        EventInfo savedEvent3 = saveEventWithProvidedTime(eventTime + 2, customerId, tenantId);
+        Event savedEvent = saveEventWithProvidedTime(eventTime, customerId, tenantId);
+        Event savedEvent2 = saveEventWithProvidedTime(eventTime + 1, customerId, tenantId);
+        Event savedEvent3 = saveEventWithProvidedTime(eventTime + 2, customerId, tenantId);
         saveEventWithProvidedTime(timeAfterEndTime, customerId, tenantId);
 
-        TimePageLink timePageLink = new TimePageLink(2, 0, "", new SortOrder("createdTime"), startTime, endTime);
+        TimePageLink timePageLink = new TimePageLink(2, 0, "", new SortOrder("ts"), startTime, endTime);
 
-        PageData<EventInfo> events = eventService.findEvents(tenantId, customerId, EventType.STATS, timePageLink);
+        PageData<EventInfo> events = eventService.findEvents(tenantId, customerId, EventType.DEBUG_RULE_NODE, timePageLink);
 
         Assert.assertNotNull(events.getData());
-        Assert.assertTrue(events.getData().size() == 2);
-        Assert.assertTrue(events.getData().get(0).getUuidId().equals(savedEvent.getUuidId()));
-        Assert.assertTrue(events.getData().get(1).getUuidId().equals(savedEvent2.getUuidId()));
+        Assert.assertEquals(2, events.getData().size());
+        Assert.assertEquals(savedEvent.getUuidId(), events.getData().get(0).getUuidId());
+        Assert.assertEquals(savedEvent2.getUuidId(), events.getData().get(1).getUuidId());
         Assert.assertTrue(events.hasNext());
 
-        events = eventService.findEvents(tenantId, customerId, EventType.STATS, timePageLink.nextPageLink());
+        events = eventService.findEvents(tenantId, customerId, EventType.DEBUG_RULE_NODE, timePageLink.nextPageLink());
 
         Assert.assertNotNull(events.getData());
-        Assert.assertTrue(events.getData().size() == 1);
-        Assert.assertTrue(events.getData().get(0).getUuidId().equals(savedEvent3.getUuidId()));
+        Assert.assertEquals(1, events.getData().size());
+        Assert.assertEquals(savedEvent3.getUuidId(), events.getData().get(0).getUuidId());
         Assert.assertFalse(events.hasNext());
 
-        eventService.cleanupEvents(timeBeforeStartTime - 1, timeAfterEndTime + 1);
+        eventService.cleanupEvents(timeBeforeStartTime - 1, timeAfterEndTime + 1, true);
     }
 
     @Test
@@ -104,36 +101,36 @@ public abstract class BaseEventServiceTest extends AbstractServiceTest {
         CustomerId customerId = new CustomerId(Uuids.timeBased());
         TenantId tenantId = TenantId.fromUUID(Uuids.timeBased());
         saveEventWithProvidedTime(timeBeforeStartTime, customerId, tenantId);
-        EventInfo savedEvent = saveEventWithProvidedTime(eventTime, customerId, tenantId);
-        EventInfo savedEvent2 = saveEventWithProvidedTime(eventTime + 1, customerId, tenantId);
-        EventInfo savedEvent3 = saveEventWithProvidedTime(eventTime + 2, customerId, tenantId);
+        Event savedEvent = saveEventWithProvidedTime(eventTime, customerId, tenantId);
+        Event savedEvent2 = saveEventWithProvidedTime(eventTime + 1, customerId, tenantId);
+        Event savedEvent3 = saveEventWithProvidedTime(eventTime + 2, customerId, tenantId);
         saveEventWithProvidedTime(timeAfterEndTime, customerId, tenantId);
 
-        TimePageLink timePageLink = new TimePageLink(2, 0, "", new SortOrder("createdTime", SortOrder.Direction.DESC), startTime, endTime);
+        TimePageLink timePageLink = new TimePageLink(2, 0, "", new SortOrder("ts", SortOrder.Direction.DESC), startTime, endTime);
 
-        PageData<EventInfo> events = eventService.findEvents(tenantId, customerId, EventType.STATS, timePageLink);
+        PageData<EventInfo> events = eventService.findEvents(tenantId, customerId, EventType.DEBUG_RULE_NODE, timePageLink);
 
         Assert.assertNotNull(events.getData());
-        Assert.assertTrue(events.getData().size() == 2);
-        Assert.assertTrue(events.getData().get(0).getUuidId().equals(savedEvent3.getUuidId()));
-        Assert.assertTrue(events.getData().get(1).getUuidId().equals(savedEvent2.getUuidId()));
+        Assert.assertEquals(2, events.getData().size());
+        Assert.assertEquals(savedEvent3.getUuidId(), events.getData().get(0).getUuidId());
+        Assert.assertEquals(savedEvent2.getUuidId(), events.getData().get(1).getUuidId());
         Assert.assertTrue(events.hasNext());
 
-        events = eventService.findEvents(tenantId, customerId, EventType.STATS, timePageLink.nextPageLink());
+        events = eventService.findEvents(tenantId, customerId, EventType.DEBUG_RULE_NODE, timePageLink.nextPageLink());
 
         Assert.assertNotNull(events.getData());
-        Assert.assertTrue(events.getData().size() == 1);
-        Assert.assertTrue(events.getData().get(0).getUuidId().equals(savedEvent.getUuidId()));
+        Assert.assertEquals(1, events.getData().size());
+        Assert.assertEquals(savedEvent.getUuidId(), events.getData().get(0).getUuidId());
         Assert.assertFalse(events.hasNext());
 
-        eventService.cleanupEvents(timeBeforeStartTime - 1, timeAfterEndTime + 1);
+        eventService.cleanupEvents(timeBeforeStartTime - 1, timeAfterEndTime + 1, true);
     }
 
-    private EventInfo saveEventWithProvidedTime(long time, EntityId entityId, TenantId tenantId) throws Exception {
-        throw new RuntimeException("fix me!");
-//        EventInfo event = generateEvent(tenantId, entityId, DataConstants.STATS, null);
-//        event.setId(new EventId(Uuids.startOf(time)));
-//        eventService.saveAsync(event).get();
-//        return event;
+    private Event saveEventWithProvidedTime(long time, EntityId entityId, TenantId tenantId) throws Exception {
+        RuleNodeDebugEvent event = generateEvent(tenantId, entityId);
+        event.setId(new EventId(Uuids.timeBased()));
+        event.setCreatedTime(time);
+        eventService.saveAsync(event).get();
+        return event;
     }
 }

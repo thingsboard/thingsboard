@@ -16,15 +16,11 @@
 package org.thingsboard.server.dao.event;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.event.Event;
 import org.thingsboard.server.common.data.event.EventFilter;
 import org.thingsboard.server.common.data.event.EventType;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
-import org.thingsboard.server.dao.Dao;
 
 import java.util.List;
 import java.util.UUID;
@@ -70,8 +66,9 @@ public interface EventDao {
      * Executes stored procedure to cleanup old events. Uses separate ttl for debug and other events.
      * @param regularEventExpTs the expiration time of the regular events
      * @param debugEventExpTs the expiration time of the debug events
+     * @param cleanupDb
      */
-    void cleanupEvents(long regularEventExpTs, long debugEventExpTs);
+    void cleanupEvents(long regularEventExpTs, long debugEventExpTs, boolean cleanupDb);
 
     /**
      * Removes all events for the specified entity and time interval

@@ -427,14 +427,29 @@ public class JpaBaseEventDao implements EventDao {
     }
 
     @Override
-    public void cleanupEvents(long regularEventExpTs, long debugEventExpTs) {
+    public void cleanupEvents(long regularEventExpTs, long debugEventExpTs, boolean cleanupDb) {
         if (regularEventExpTs > 0) {
             log.info("Going to cleanup regular events with exp time: {}", regularEventExpTs);
-            eventCleanupRepository.cleanupEvents(regularEventExpTs, false);
+            if (cleanupDb) {
+                eventCleanupRepository.cleanupEvents(regularEventExpTs, false);
+            }
+            cleanupPartitions(regularEventExpTs, false);
         }
         if (debugEventExpTs > 0) {
             log.info("Going to cleanup debug events with exp time: {}", debugEventExpTs);
-            eventCleanupRepository.cleanupEvents(debugEventExpTs, true);
+            if (cleanupDb) {
+                eventCleanupRepository.cleanupEvents(debugEventExpTs, true);
+            }
+            cleanupPartitions(debugEventExpTs, true);
+        }
+    }
+
+    private void cleanupPartitions(long expTime, boolean isDebug) {
+        for (EventType eventType : EventType.values()) {
+            if (eventType.isDebug() == isDebug) {
+                Map<Long, SqlPartition> partitions = partitionsByEventType.get(eventType);
+                partitions.keySet().removeIf(startTs -> startTs + partitionConfiguration.getPartitionSizeInMs(eventType) < expTime);
+            }
         }
     }
 

@@ -35,8 +35,8 @@ import java.util.UUID;
 public interface ErrorEventRepository extends EventRepository<ErrorEventEntity, ErrorEvent>, JpaRepository<ErrorEventEntity, UUID> {
 
     @Override
-    @Query("SELECT e FROM ErrorEventEntity e WHERE e.tenantId = :tenantId AND e.entityId = :entityId ORDER BY e.ts DESC")
-    List<ErrorEventEntity> findLatestEvents(UUID tenantId, UUID entityId, int limit);
+    @Query(nativeQuery = true, value = "SELECT * FROM error_event e WHERE e.tenant_id = :tenantId AND e.entity_id = :entityId ORDER BY e.ts DESC LIMIT :limit")
+    List<ErrorEventEntity> findLatestEvents(@Param("tenantId") UUID tenantId, @Param("entityId") UUID entityId, @Param("limit") int limit);
 
     @Override
     @Query("SELECT e FROM ErrorEventEntity e WHERE " +

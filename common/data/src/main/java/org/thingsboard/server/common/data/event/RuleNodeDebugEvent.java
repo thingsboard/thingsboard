@@ -84,7 +84,8 @@ public class RuleNodeDebugEvent extends Event {
         var json = (ObjectNode) eventInfo.getBody();
         json.put("type", eventType);
         if (eventEntity != null) {
-            json.put("entityId", eventEntity.getId().toString()).put("entityType", eventEntity.getEntityType().name());
+            json.put("entityId", eventEntity.getId().toString())
+                    .put("entityType", eventEntity.getEntityType().name());
         }
         if (msgId != null) {
             json.put("msgId", msgId.toString());

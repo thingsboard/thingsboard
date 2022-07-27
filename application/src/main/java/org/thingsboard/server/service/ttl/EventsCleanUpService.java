@@ -25,7 +25,6 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.concurrent.TimeUnit;
 
-@TbCoreComponent
 @Slf4j
 @Service
 public class EventsCleanUpService extends AbstractCleanUpService {
@@ -39,9 +38,6 @@ public class EventsCleanUpService extends AbstractCleanUpService {
     @Value("${sql.ttl.events.debug_events_ttl}")
     private long debugTtlInSec;
 
-    @Value("${sql.ttl.events.execution_interval_ms}")
-    private long executionIntervalInMs;
-
     @Value("${sql.ttl.events.enabled}")
     private boolean ttlTaskExecutionEnabled;
 
@@ -54,11 +50,11 @@ public class EventsCleanUpService extends AbstractCleanUpService {
 
     @Scheduled(initialDelayString = RANDOM_DELAY_INTERVAL_MS_EXPRESSION, fixedDelayString = "${sql.ttl.events.execution_interval_ms}")
     public void cleanUp() {
-        if (ttlTaskExecutionEnabled && isSystemTenantPartitionMine()) {
+        if (ttlTaskExecutionEnabled) {
             long ts = System.currentTimeMillis();
             long regularEventExpTs = ttlInSec > 0 ? ts - TimeUnit.SECONDS.toMillis(ttlInSec) : 0;
             long debugEventExpTs = debugTtlInSec > 0 ? ts - TimeUnit.SECONDS.toMillis(debugTtlInSec) : 0;
-            eventService.cleanupEvents(regularEventExpTs, debugEventExpTs);
+            eventService.cleanupEvents(regularEventExpTs, debugEventExpTs, isSystemTenantPartitionMine());
         }
     }
 

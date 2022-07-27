@@ -34,8 +34,8 @@ import java.util.UUID;
 public interface RuleChainDebugEventRepository extends EventRepository<RuleChainDebugEventEntity, RuleChainDebugEvent>, JpaRepository<RuleChainDebugEventEntity, UUID> {
 
     @Override
-    @Query("SELECT e FROM RuleChainDebugEventEntity e WHERE e.tenantId = :tenantId AND e.entityId = :entityId ORDER BY e.ts DESC")
-    List<RuleChainDebugEventEntity> findLatestEvents(UUID tenantId, UUID entityId, int limit);
+    @Query(nativeQuery = true, value = "SELECT * FROM rule_chain_debug_event e WHERE e.tenant_id = :tenantId AND e.entity_id = :entityId ORDER BY e.ts DESC LIMIT :limit")
+    List<RuleChainDebugEventEntity> findLatestEvents(@Param("tenantId") UUID tenantId, @Param("entityId") UUID entityId, @Param("limit") int limit);
 
     @Override
     @Query("SELECT e FROM RuleChainDebugEventEntity e WHERE " +
