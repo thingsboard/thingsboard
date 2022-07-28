@@ -117,13 +117,6 @@ public class TbSplitArrayMsgNodeTest {
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         verify(ctx, times(dataNode.size())).tellSuccess(newMsgCaptor.capture());
         verify(ctx, never()).tellFailure(any(), any());
-
-        if (!dataNode.isEmpty()) {
-            TbMsg newMsg = newMsgCaptor.getValue();
-            assertThat(newMsg).isNotNull();
-
-            assertThat(newMsg.getData()).isEqualTo(dataNode.get(dataNode.size() - 1).toString());
-        }
     }
 
     private TbMsg getTbMsg(EntityId entityId, String data) {
