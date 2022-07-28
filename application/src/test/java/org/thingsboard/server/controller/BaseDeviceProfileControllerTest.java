@@ -1068,7 +1068,7 @@ public abstract class  BaseDeviceProfileControllerTest extends AbstractControlle
     }
 
     @Test
-    public void testSaveDeviceProfileWorks() throws Exception { //todo
+    public void testSaveDeviceProfileWorks() throws Exception {
         JsonTransportPayloadConfiguration jsonTransportPayloadConfiguration = new JsonTransportPayloadConfiguration();
         MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration =
                 this.createMqttDeviceProfileTransportConfiguration(jsonTransportPayloadConfiguration, true,

@@ -17,11 +17,6 @@ package org.thingsboard.server.transport.mqtt;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Device;
@@ -106,7 +101,7 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
                 mqttDeviceProfileTransportConfiguration.setDeviceTelemetryTopic(config.getTelemetryTopicFilter());
             }
             if (StringUtils.hasLength(config.getAttributesTopicFilter())) {
-                mqttDeviceProfileTransportConfiguration.setDeviceAttributesPublishTopic(config.getAttributesTopicFilter());
+                mqttDeviceProfileTransportConfiguration.setDeviceAttributesTopic(config.getAttributesTopicFilter());
             }
             mqttDeviceProfileTransportConfiguration.setSendAckOnValidationException(config.isSendAckOnValidationException());
             TransportPayloadTypeConfiguration transportPayloadTypeConfiguration;

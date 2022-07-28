@@ -69,7 +69,6 @@ import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeCon
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.HasId;
-import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.id.UserId;
@@ -445,7 +444,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected MqttDeviceProfileTransportConfiguration createMqttDeviceProfileTransportConfiguration(TransportPayloadTypeConfiguration transportPayloadTypeConfiguration, boolean sendAckOnValidationException) {
         MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration = new MqttDeviceProfileTransportConfiguration();
         mqttDeviceProfileTransportConfiguration.setDeviceTelemetryTopic(MqttTopics.DEVICE_TELEMETRY_TOPIC);
-        mqttDeviceProfileTransportConfiguration.setDeviceAttributesPublishTopic(MqttTopics.DEVICE_ATTRIBUTES_TOPIC);
+        mqttDeviceProfileTransportConfiguration.setDeviceAttributesTopic(MqttTopics.DEVICE_ATTRIBUTES_TOPIC);
         mqttDeviceProfileTransportConfiguration.setDeviceAttributesSubscribeTopic(MqttTopics.DEVICE_ATTRIBUTES_TOPIC);
         mqttDeviceProfileTransportConfiguration.setSendAckOnValidationException(sendAckOnValidationException);
         mqttDeviceProfileTransportConfiguration.setTransportPayloadTypeConfiguration(transportPayloadTypeConfiguration);
@@ -456,7 +455,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
                                                                                                     String telemetryTopic, String attributesPublishTopic, String attributesSubscribeTopic) {
         MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration = new MqttDeviceProfileTransportConfiguration();
         mqttDeviceProfileTransportConfiguration.setDeviceTelemetryTopic(telemetryTopic);
-        mqttDeviceProfileTransportConfiguration.setDeviceAttributesPublishTopic(attributesPublishTopic);
+        mqttDeviceProfileTransportConfiguration.setDeviceAttributesTopic(attributesPublishTopic);
         mqttDeviceProfileTransportConfiguration.setDeviceAttributesSubscribeTopic(attributesSubscribeTopic);
         mqttDeviceProfileTransportConfiguration.setSendAckOnValidationException(sendAckOnValidationException);
         mqttDeviceProfileTransportConfiguration.setTransportPayloadTypeConfiguration(transportPayloadTypeConfiguration);
