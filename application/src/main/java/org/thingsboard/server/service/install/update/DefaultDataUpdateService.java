@@ -164,10 +164,12 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 rateLimitsUpdater.updateEntities();
                 break;
             case "3.4.0":
-                if (System.getProperty("TB_EVENTS_MIGRATION", "false").equalsIgnoreCase("true")) {
-                    log.info("Updating data from version 3.3.4 to 3.4.0 ...");
+                String skipEventsMigration = System.getenv("TB_SKIP_EVENTS_MIGRATION");
+                if (skipEventsMigration == null || skipEventsMigration.equalsIgnoreCase("false")) {
+                    log.info("Updating data from version 3.4.0 to 3.4.1 ...");
                     eventService.migrateEvents();
                 }
+                break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
         }

@@ -54,6 +54,17 @@ public class SqlEventCleanupRepository extends JpaAbstractDaoListeningExecutorSe
     public void migrateEvents(long regularEventTs, long debugEventTs) {
         callMigrateFunction("migrate_regular_events", regularEventTs, partitionConfiguration.getRegularPartitionSizeInHours());
         callMigrateFunction("migrate_debug_events", debugEventTs, partitionConfiguration.getDebugPartitionSizeInHours());
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement dropFunction1 = connection.prepareStatement("DROP PROCEDURE IF EXISTS migrate_regular_events");
+             PreparedStatement dropFunction2 = connection.prepareStatement("DROP PROCEDURE IF EXISTS migrate_debug_events");
+             PreparedStatement dropTable = connection.prepareStatement("DROP TABLE IF EXISTS event")) {
+            dropFunction1.execute();
+            dropFunction2.execute();
+            dropTable.execute();
+        } catch (SQLException e) {
+            log.error("SQLException occurred during drop of the `events` table", e);
+            throw new RuntimeException(e);
+        }
     }
 
     private void callMigrateFunction(String functionName, long startTs, int partitionSizeInHours) {
@@ -63,7 +74,10 @@ public class SqlEventCleanupRepository extends JpaAbstractDaoListeningExecutorSe
             stmt.setInt(2, partitionSizeInHours);
             stmt.execute();
         } catch (SQLException e) {
-            log.error("[{}] SQLException occurred during execution of {} with parameters {} and {}", functionName, startTs, partitionSizeInHours, e);
+            if (e.getMessage() == null || !e.getMessage().contains("relation \"event\" does not exist")) {
+                log.error("[{}] SQLException occurred during execution of {} with parameters {} and {}", functionName, startTs, partitionSizeInHours, e);
+                throw new RuntimeException(e);
+            }
         }
     }
 
