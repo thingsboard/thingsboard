@@ -128,9 +128,9 @@ BEGIN
            tenant_id,
            ts,
            entity_id,
-           body::json ->> 'server',
-           (body::json ->> 'messagesProcessed')::bigint,
-           (body::json ->> 'errorsOccurred')::bigint
+           body ->> 'server',
+           (body ->> 'messagesProcessed')::bigint,
+           (body ->> 'errorsOccurred')::bigint
     FROM
     (select id, tenant_id, ts, entity_id, to_safe_json(body) as body
      FROM event WHERE ts >= start_ts_in_ms and ts < end_ts_in_ms AND event_type = 'STATS' AND to_safe_json(body) ->> 'server' IS NOT NULL
@@ -142,10 +142,10 @@ BEGIN
            tenant_id,
            ts,
            entity_id,
-           body::json ->> 'server',
-           body::json ->> 'event',
-           (body::json ->> 'success')::boolean,
-           body::json ->> 'error'
+           body ->> 'server',
+           body ->> 'event',
+           (body ->> 'success')::boolean,
+           body ->> 'error'
     FROM
     (select id, tenant_id, ts, entity_id, to_safe_json(body) as body
      FROM event WHERE ts >= start_ts_in_ms and ts < end_ts_in_ms AND event_type = 'LC_EVENT' AND to_safe_json(body) ->> 'server' IS NOT NULL
@@ -157,9 +157,9 @@ BEGIN
            tenant_id,
            ts,
            entity_id,
-           body::json ->> 'server',
-           body::json ->> 'method',
-           body::json ->> 'error'
+           body ->> 'server',
+           body ->> 'method',
+           body ->> 'error'
     FROM
     (select id, tenant_id, ts, entity_id, to_safe_json(body) as body
      FROM event WHERE ts >= start_ts_in_ms and ts < end_ts_in_ms AND event_type = 'ERROR' AND to_safe_json(body) ->> 'server' IS NOT NULL
