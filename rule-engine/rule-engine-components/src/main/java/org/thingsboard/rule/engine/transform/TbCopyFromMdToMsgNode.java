@@ -39,8 +39,10 @@ import java.util.concurrent.ExecutionException;
         type = ComponentType.TRANSFORMATION,
         name = "copy from metadata to msg",
         configClazz = TbCopyFromMdToMsgNodeConfiguration.class,
-        nodeDescription = "Copies the message metadata keys to msg data with specified key names selected in the list",
-        nodeDetails = "",
+        nodeDescription = "Copies the msg metadata keys to msg data with specified key names selected in the list",
+        nodeDetails = "Will fetch fields values specified in list. If specified field is not part of msg metadata fields it will be ignored." +
+                "If the msg is not a JSON object returns the incoming message as outbound message with <code>Failure</code> chain, " +
+                "otherwise returns transformed messages via <code>Success</code> chain",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "",
         icon = "functions"
