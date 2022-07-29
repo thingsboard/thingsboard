@@ -1159,8 +1159,8 @@ mat-label {
 
   .mat-snack-bar-container {
     position: absolute;
-    background: none;
-    box-shadow: none;
+    background: none !important;
+    box-shadow: none !important;
     margin: 0;
     padding: 0;
     border: none;
