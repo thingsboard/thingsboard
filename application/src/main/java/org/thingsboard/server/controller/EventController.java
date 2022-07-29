@@ -225,10 +225,6 @@ public class EventController extends BaseController {
         EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
         checkEntityId(entityId, Operation.READ);
 
-        if (sortProperty != null && sortProperty.equals("createdTime")) {
-            sortProperty = ModelConstants.TS_COLUMN;
-        }
-
         TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
         return checkNotNull(eventService.findEventsByFilter(tenantId, entityId, eventFilter, pageLink));
     }
