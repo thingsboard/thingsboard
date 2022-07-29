@@ -16,7 +16,6 @@
 package org.thingsboard.rule.engine.transform;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,7 +31,6 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -45,11 +43,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 public class TbCopyFromMdToMsgNodeTest {
-    final ObjectMapper mapper = new ObjectMapper();
-
     DeviceId deviceId;
-    TbCopyFromMdToMsgNode node;
-    TbCopyFromMdToMsgNodeConfiguration config;
+    TbRenameMsgKeysNode node;
+    TbRenameMsgKeysNodeConfiguration config;
     TbNodeConfiguration nodeConfiguration;
     TbContext ctx;
     TbMsgCallback callback;
@@ -59,10 +55,10 @@ public class TbCopyFromMdToMsgNodeTest {
         deviceId = new DeviceId(UUID.randomUUID());
         callback = mock(TbMsgCallback.class);
         ctx = mock(TbContext.class);
-        config = new TbCopyFromMdToMsgNodeConfiguration().defaultConfiguration();
-        config.setMetadataMsgKeys(List.of("TestKey_1", "TestKey_2", "TestKey_3"));
-        nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
-        node = spy(new TbCopyFromMdToMsgNode());
+        config = new TbRenameMsgKeysNodeConfiguration().defaultConfiguration();
+        config.setRenameKeysMapping(Map.of("TestKey_1", "Attribute_1", "TestKey_2", "Attribute_2"));
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node = spy(new TbRenameMsgKeysNode());
         node.init(ctx, nodeConfiguration);
     }
 
@@ -78,13 +74,13 @@ public class TbCopyFromMdToMsgNodeTest {
 
     @Test
     void givenDefaultConfig_whenVerify_thenOK() {
-        TbCopyFromMdToMsgNodeConfiguration defaultConfig = new TbCopyFromMdToMsgNodeConfiguration().defaultConfiguration();
-        assertThat(defaultConfig.getMetadataMsgKeys()).isEqualTo(Collections.emptyList());
+        TbRenameMsgKeysNodeConfiguration defaultConfig = new TbRenameMsgKeysNodeConfiguration().defaultConfiguration();
+        assertThat(defaultConfig.getRenameKeysMapping()).isEqualTo(Collections.emptyMap());
     }
 
     @Test
     void givenMsg_whenOnMsg_thenVerifyOutput() throws Exception {
-        String data = "{}";
+        String data = "{\"Temperature_1\":22.5,\"TestKey_2\":10.3}";
         node.onMsg(ctx, getTbMsg(deviceId, data));
 
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
@@ -95,13 +91,14 @@ public class TbCopyFromMdToMsgNodeTest {
         assertThat(newMsg).isNotNull();
 
         JsonNode dataNode = JacksonUtil.toJsonNode(newMsg.getData());
-        assertThat(dataNode.has("TestKey_1")).isEqualTo(true);
+        assertThat(dataNode.has("Attribute_2")).isEqualTo(true);
+        assertThat(dataNode.has("Temperature_1")).isEqualTo(true);
     }
 
     @Test
     void givenEmptyKeys_whenOnMsg_thenVerifyOutput() throws Exception {
-        TbCopyFromMdToMsgNodeConfiguration defaultConfig = new TbCopyFromMdToMsgNodeConfiguration().defaultConfiguration();
-        nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(defaultConfig));
+        TbRenameMsgKeysNodeConfiguration defaultConfig = new TbRenameMsgKeysNodeConfiguration().defaultConfiguration();
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(defaultConfig));
         node.init(ctx, nodeConfiguration);
 
         String data = "{}";
