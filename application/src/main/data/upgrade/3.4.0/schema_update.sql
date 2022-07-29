@@ -88,9 +88,19 @@ CREATE INDEX IF NOT EXISTS idx_lc_event_main
 CREATE INDEX IF NOT EXISTS idx_error_event_main
     ON error_event (tenant_id ASC, entity_id ASC, ts DESC NULLS LAST) WITH (FILLFACTOR=95);
 
+CREATE OR REPLACE FUNCTION to_safe_json(p_json text) RETURNS json
+LANGUAGE plpgsql AS
+$$
+BEGIN
+  return REPLACE(p_json, '\u0000', '' )::json;
+EXCEPTION
+  WHEN OTHERS THEN
+  return '{}'::json;
+END;
+$$;
 
 -- Useful to migrate old events to the new table structure;
-CREATE OR REPLACE PROCEDURE migrate_regular_events(IN start_ts_in_ms bigint, IN partition_size_in_hours int)
+CREATE OR REPLACE PROCEDURE migrate_regular_events(IN start_ts_in_ms bigint, IN end_ts_in_ms bigint, IN partition_size_in_hours int)
     LANGUAGE plpgsql AS
 $$
 DECLARE
@@ -100,7 +110,7 @@ DECLARE
 BEGIN
     partition_size_in_ms = partition_size_in_hours * 3600 * 1000;
 
-    FOR p IN SELECT DISTINCT event_type as event_type, (created_time - created_time % partition_size_in_ms) as partition_ts FROM event e WHERE e.event_type in ('STATS', 'LC_EVENT', 'ERROR') and ts > start_ts_in_ms
+    FOR p IN SELECT DISTINCT event_type as event_type, (created_time - created_time % partition_size_in_ms) as partition_ts FROM event e WHERE e.event_type in ('STATS', 'LC_EVENT', 'ERROR') and ts >= start_ts_in_ms and ts < end_ts_in_ms
     LOOP
         IF p.event_type = 'STATS' THEN
             table_name := 'stats_event';
@@ -121,9 +131,10 @@ BEGIN
            body::json ->> 'server',
            (body::json ->> 'messagesProcessed')::bigint,
            (body::json ->> 'errorsOccurred')::bigint
-    FROM event
-    WHERE ts > start_ts_in_ms
-      AND event_type = 'STATS'
+    FROM
+    (select id, tenant_id, ts, entity_id, to_safe_json(body) as body
+     FROM event WHERE ts >= start_ts_in_ms and ts < end_ts_in_ms AND event_type = 'STATS' AND to_safe_json(body) ->> 'server' IS NOT NULL
+    ) safe_event
     ON CONFLICT DO NOTHING;
 
     INSERT INTO lc_event
@@ -135,9 +146,10 @@ BEGIN
            body::json ->> 'event',
            (body::json ->> 'success')::boolean,
            body::json ->> 'error'
-    FROM event
-    WHERE ts > start_ts_in_ms
-      AND event_type = 'LC_EVENT'
+    FROM
+    (select id, tenant_id, ts, entity_id, to_safe_json(body) as body
+     FROM event WHERE ts >= start_ts_in_ms and ts < end_ts_in_ms AND event_type = 'LC_EVENT' AND to_safe_json(body) ->> 'server' IS NOT NULL
+    ) safe_event
     ON CONFLICT DO NOTHING;
 
     INSERT INTO error_event
@@ -148,16 +160,17 @@ BEGIN
            body::json ->> 'server',
            body::json ->> 'method',
            body::json ->> 'error'
-    FROM event
-    WHERE ts > start_ts_in_ms
-      AND event_type = 'ERROR'
+    FROM
+    (select id, tenant_id, ts, entity_id, to_safe_json(body) as body
+     FROM event WHERE ts >= start_ts_in_ms and ts < end_ts_in_ms AND event_type = 'ERROR' AND to_safe_json(body) ->> 'server' IS NOT NULL
+    ) safe_event
     ON CONFLICT DO NOTHING;
 
 END
 $$;
 
 -- Useful to migrate old debug events to the new table structure;
-CREATE OR REPLACE PROCEDURE migrate_debug_events(IN start_ts_in_ms bigint, IN partition_size_in_hours int)
+CREATE OR REPLACE PROCEDURE migrate_debug_events(IN start_ts_in_ms bigint, IN end_ts_in_ms bigint, IN partition_size_in_hours int)
     LANGUAGE plpgsql AS
 $$
 DECLARE
@@ -167,7 +180,7 @@ DECLARE
 BEGIN
     partition_size_in_ms = partition_size_in_hours * 3600 * 1000;
 
-    FOR p IN SELECT DISTINCT event_type as event_type, (created_time - created_time % partition_size_in_ms) as partition_ts FROM event e WHERE e.event_type in ('DEBUG_RULE_NODE', 'DEBUG_RULE_CHAIN') and ts > start_ts_in_ms
+    FOR p IN SELECT DISTINCT event_type as event_type, (created_time - created_time % partition_size_in_ms) as partition_ts FROM event e WHERE e.event_type in ('DEBUG_RULE_NODE', 'DEBUG_RULE_CHAIN') and ts >= start_ts_in_ms and ts < end_ts_in_ms
     LOOP
         IF p.event_type = 'DEBUG_RULE_NODE' THEN
             table_name := 'rule_node_debug_event';
@@ -183,20 +196,21 @@ BEGIN
            tenant_id,
            ts,
            entity_id,
-           body::json ->> 'server',
-           body::json ->> 'type',
-           (body::json ->> 'entityId')::uuid,
-           body::json ->> 'entityName',
-           (body::json ->> 'msgId')::uuid,
-           body::json ->> 'msgType',
-           body::json ->> 'dataType',
-           body::json ->> 'relationType',
-           body::json ->> 'data',
-           body::json ->> 'metadata',
-           body::json ->> 'error'
-    FROM event
-    WHERE ts > start_ts_in_ms
-      AND event_type = 'DEBUG_RULE_NODE'
+           body ->> 'server',
+           body ->> 'type',
+           (body ->> 'entityId')::uuid,
+           body ->> 'entityName',
+           (body ->> 'msgId')::uuid,
+           body ->> 'msgType',
+           body ->> 'dataType',
+           body ->> 'relationType',
+           body ->> 'data',
+           body ->> 'metadata',
+           body ->> 'error'
+    FROM
+    (select id, tenant_id, ts, entity_id, to_safe_json(body) as body
+     FROM event WHERE ts >= start_ts_in_ms and ts < end_ts_in_ms AND event_type = 'DEBUG_RULE_NODE' AND to_safe_json(body) ->> 'server' IS NOT NULL
+    ) safe_event
     ON CONFLICT DO NOTHING;
 
     INSERT INTO rule_chain_debug_event
@@ -204,12 +218,13 @@ BEGIN
            tenant_id,
            ts,
            entity_id,
-           body::json ->> 'server',
-           body::json ->> 'message',
-           body::json ->> 'error'
-    FROM event
-    WHERE ts > start_ts_in_ms
-      AND event_type = 'DEBUG_RULE_CHAIN'
+           body ->> 'server',
+           body ->> 'message',
+           body ->> 'error'
+    FROM
+    (select id, tenant_id, ts, entity_id, to_safe_json(body) as body
+     FROM event WHERE ts >= start_ts_in_ms and ts < end_ts_in_ms AND event_type = 'DEBUG_RULE_CHAIN' AND to_safe_json(body) ->> 'server' IS NOT NULL
+    ) safe_event
     ON CONFLICT DO NOTHING;
 END
 $$;

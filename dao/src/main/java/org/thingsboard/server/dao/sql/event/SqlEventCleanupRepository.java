@@ -27,6 +27,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 
 @Slf4j
@@ -52,11 +53,15 @@ public class SqlEventCleanupRepository extends JpaAbstractDaoListeningExecutorSe
 
     @Override
     public void migrateEvents(long regularEventTs, long debugEventTs) {
-        callMigrateFunction("migrate_regular_events", regularEventTs, partitionConfiguration.getRegularPartitionSizeInHours());
-        callMigrateFunction("migrate_debug_events", debugEventTs, partitionConfiguration.getDebugPartitionSizeInHours());
+        regularEventTs = Math.max(regularEventTs, 1480982400000L);
+        debugEventTs = Math.max(debugEventTs, 1480982400000L);
+
+        callMigrateFunctionByPartitions("regular", "migrate_regular_events", regularEventTs, partitionConfiguration.getRegularPartitionSizeInHours());
+        callMigrateFunctionByPartitions("debug", "migrate_debug_events", debugEventTs, partitionConfiguration.getDebugPartitionSizeInHours());
+
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement dropFunction1 = connection.prepareStatement("DROP PROCEDURE IF EXISTS migrate_regular_events");
-             PreparedStatement dropFunction2 = connection.prepareStatement("DROP PROCEDURE IF EXISTS migrate_debug_events");
+             PreparedStatement dropFunction1 = connection.prepareStatement("DROP PROCEDURE IF EXISTS migrate_regular_events(bigint, bigint, int)");
+             PreparedStatement dropFunction2 = connection.prepareStatement("DROP PROCEDURE IF EXISTS migrate_debug_events(bigint, bigint, int)");
              PreparedStatement dropTable = connection.prepareStatement("DROP TABLE IF EXISTS event")) {
             dropFunction1.execute();
             dropFunction2.execute();
@@ -67,11 +72,33 @@ public class SqlEventCleanupRepository extends JpaAbstractDaoListeningExecutorSe
         }
     }
 
-    private void callMigrateFunction(String functionName, long startTs, int partitionSizeInHours) {
+    private void callMigrateFunctionByPartitions(String logTag, String functionName, long startTs, int partitionSizeInHours) {
+        long currentTs = System.currentTimeMillis();
+        var regularPartitionStepInMs = TimeUnit.HOURS.toMillis(partitionSizeInHours);
+        long numberOfPartitions = (currentTs - startTs) / regularPartitionStepInMs;
+        if (numberOfPartitions > 1000) {
+            log.error("Please adjust your {} events partitioning configuration. " +
+                            "Configuration with partition size of {} hours and corresponding TTL will use {} (>1000) partitions which is not recommended!",
+                    logTag, partitionSizeInHours, numberOfPartitions);
+            throw new RuntimeException("Please adjust your " + logTag + " events partitioning configuration. " +
+                    "Configuration with partition size of " + partitionSizeInHours + " hours and corresponding TTL will use " +
+                    +numberOfPartitions + " (>1000) partitions which is not recommended!");
+        }
+        while (startTs < currentTs) {
+            var endTs = startTs + regularPartitionStepInMs;
+            log.info("Migrate {} events for time period: [{},{}]", logTag, startTs, endTs);
+            callMigrateFunction(functionName, startTs, startTs + regularPartitionStepInMs, partitionSizeInHours);
+            startTs = endTs;
+        }
+        log.info("Migrate {} events done.", logTag);
+    }
+
+    private void callMigrateFunction(String functionName, long startTs, long endTs, int partitionSizeInHours) {
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement("call " + functionName + "(?,?)")) {
+             PreparedStatement stmt = connection.prepareStatement("call " + functionName + "(?,?,?)")) {
             stmt.setLong(1, startTs);
-            stmt.setInt(2, partitionSizeInHours);
+            stmt.setLong(2, endTs);
+            stmt.setInt(3, partitionSizeInHours);
             stmt.execute();
         } catch (SQLException e) {
             if (e.getMessage() == null || !e.getMessage().contains("relation \"event\" does not exist")) {
