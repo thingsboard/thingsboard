@@ -94,7 +94,7 @@ public class ControllerConstants {
     protected static final String DEVICE_PROFILE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type, transportType, description, isDefault";
     protected static final String ASSET_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type, label, customerTitle";
     protected static final String ALARM_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, startTs, endTs, type, ackTs, clearTs, severity, status";
-    protected static final String EVENT_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, id";
+    protected static final String EVENT_SORT_PROPERTY_ALLOWABLE_VALUES = "ts, id";
     protected static final String EDGE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type, label, customerTitle";
     protected static final String RULE_CHAIN_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, root";
     protected static final String WIDGET_BUNDLE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, title, tenantId";

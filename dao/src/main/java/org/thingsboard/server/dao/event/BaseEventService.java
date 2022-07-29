@@ -15,30 +15,40 @@
  */
 package org.thingsboard.server.dao.event;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.EventInfo;
+import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.event.ErrorEvent;
+import org.thingsboard.server.common.data.event.Event;
 import org.thingsboard.server.common.data.event.EventFilter;
+import org.thingsboard.server.common.data.event.EventType;
+import org.thingsboard.server.common.data.event.LifecycleEvent;
+import org.thingsboard.server.common.data.event.RuleChainDebugEvent;
+import org.thingsboard.server.common.data.event.RuleNodeDebugEvent;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.IdBased;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
-import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 public class BaseEventService implements EventService {
+
+    @Value("${sql.ttl.events.events_ttl:0}")
+    private long ttlInSec;
+    @Value("${sql.ttl.events.debug_events_ttl:604800}")
+    private long debugTtlInSec;
 
     @Value("${event.debug.max-symbols:4096}")
     private int maxDebugEventSymbols;
@@ -57,52 +67,52 @@ public class BaseEventService implements EventService {
     }
 
     private void checkAndTruncateDebugEvent(Event event) {
-        if (event.getType().startsWith("DEBUG") && event.getBody() != null && event.getBody().has("data")) {
-            String dataStr = event.getBody().get("data").asText();
-            int length = dataStr.length();
+        switch (event.getType()) {
+            case DEBUG_RULE_NODE:
+                RuleNodeDebugEvent rnEvent = (RuleNodeDebugEvent) event;
+                truncateField(rnEvent, RuleNodeDebugEvent::getData, RuleNodeDebugEvent::setData);
+                truncateField(rnEvent, RuleNodeDebugEvent::getMetadata, RuleNodeDebugEvent::setMetadata);
+                truncateField(rnEvent, RuleNodeDebugEvent::getError, RuleNodeDebugEvent::setError);
+                break;
+            case DEBUG_RULE_CHAIN:
+                RuleChainDebugEvent rcEvent = (RuleChainDebugEvent) event;
+                truncateField(rcEvent, RuleChainDebugEvent::getMessage, RuleChainDebugEvent::setMessage);
+                truncateField(rcEvent, RuleChainDebugEvent::getError, RuleChainDebugEvent::setError);
+                break;
+            case LC_EVENT:
+                LifecycleEvent lcEvent = (LifecycleEvent) event;
+                truncateField(lcEvent, LifecycleEvent::getError, LifecycleEvent::setError);
+                break;
+            case ERROR:
+                ErrorEvent eEvent = (ErrorEvent) event;
+                truncateField(eEvent, ErrorEvent::getError, ErrorEvent::setError);
+                break;
+        }
+    }
+
+    private <T extends Event> void truncateField(T event, Function<T, String> getter, BiConsumer<T, String> setter) {
+        var str = getter.apply(event);
+        if (StringUtils.isNotEmpty(str)) {
+            var length = str.length();
             if (length > maxDebugEventSymbols) {
-                ((ObjectNode) event.getBody()).put("data", dataStr.substring(0, maxDebugEventSymbols) + "...[truncated " + (length - maxDebugEventSymbols) + " symbols]");
-                log.trace("[{}] Event was truncated: {}", event.getId(), dataStr);
+                setter.accept(event, str.substring(0, maxDebugEventSymbols) + "...[truncated " + (length - maxDebugEventSymbols) + " symbols]");
             }
         }
     }
 
     @Override
-    public Optional<Event> findEvent(TenantId tenantId, EntityId entityId, String eventType, String eventUid) {
-        if (tenantId == null) {
-            throw new DataValidationException("Tenant id should be specified!.");
-        }
-        if (entityId == null) {
-            throw new DataValidationException("Entity id should be specified!.");
-        }
-        if (StringUtils.isEmpty(eventType)) {
-            throw new DataValidationException("Event type should be specified!.");
-        }
-        if (StringUtils.isEmpty(eventUid)) {
-            throw new DataValidationException("Event uid should be specified!.");
-        }
-        Event event = eventDao.findEvent(tenantId.getId(), entityId, eventType, eventUid);
-        return event != null ? Optional.of(event) : Optional.empty();
+    public PageData<EventInfo> findEvents(TenantId tenantId, EntityId entityId, EventType eventType, TimePageLink pageLink) {
+        return convert(entityId.getEntityType(), eventDao.findEvents(tenantId.getId(), entityId.getId(), eventType, pageLink));
     }
 
     @Override
-    public PageData<Event> findEvents(TenantId tenantId, EntityId entityId, TimePageLink pageLink) {
-        return eventDao.findEvents(tenantId.getId(), entityId, pageLink);
+    public List<EventInfo> findLatestEvents(TenantId tenantId, EntityId entityId, EventType eventType, int limit) {
+        return convert(entityId.getEntityType(), eventDao.findLatestEvents(tenantId.getId(), entityId.getId(), eventType, limit));
     }
 
     @Override
-    public PageData<Event> findEvents(TenantId tenantId, EntityId entityId, String eventType, TimePageLink pageLink) {
-        return eventDao.findEvents(tenantId.getId(), entityId, eventType, pageLink);
-    }
-
-    @Override
-    public List<Event> findLatestEvents(TenantId tenantId, EntityId entityId, String eventType, int limit) {
-        return eventDao.findLatestEvents(tenantId.getId(), entityId, eventType, limit);
-    }
-
-    @Override
-    public PageData<Event> findEventsByFilter(TenantId tenantId, EntityId entityId, EventFilter eventFilter, TimePageLink pageLink) {
-        return eventDao.findEventByFilter(tenantId.getId(), entityId, eventFilter, pageLink);
+    public PageData<EventInfo> findEventsByFilter(TenantId tenantId, EntityId entityId, EventFilter eventFilter, TimePageLink pageLink) {
+        return convert(entityId.getEntityType(), eventDao.findEventByFilter(tenantId.getId(), entityId.getId(), eventFilter, pageLink));
     }
 
     @Override
@@ -112,23 +122,30 @@ public class BaseEventService implements EventService {
 
     @Override
     public void removeEvents(TenantId tenantId, EntityId entityId, EventFilter eventFilter, Long startTime, Long endTime) {
-        TimePageLink eventsPageLink = new TimePageLink(1000, 0, null, null, startTime, endTime);
-        PageData<Event> eventsPageData;
-        do {
-            if (eventFilter == null) {
-                eventsPageData = findEvents(tenantId, entityId, eventsPageLink);
-            } else {
-                eventsPageData = findEventsByFilter(tenantId, entityId, eventFilter, eventsPageLink);
-            }
-
-            eventDao.removeAllByIds(eventsPageData.getData().stream()
-                    .map(IdBased::getUuidId)
-                    .collect(Collectors.toList()));
-        } while (eventsPageData.hasNext());
+        if (eventFilter == null) {
+            eventDao.removeEvents(tenantId.getId(), entityId.getId(), startTime, endTime);
+        } else {
+            eventDao.removeEvents(tenantId.getId(), entityId.getId(), eventFilter, startTime, endTime);
+        }
     }
 
     @Override
-    public void cleanupEvents(long regularEventStartTs, long regularEventEndTs, long debugEventStartTs, long debugEventEndTs) {
-        eventDao.cleanupEvents(regularEventStartTs, regularEventEndTs, debugEventStartTs, debugEventEndTs);
+    public void cleanupEvents(long regularEventExpTs, long debugEventExpTs, boolean cleanupDb) {
+        eventDao.cleanupEvents(regularEventExpTs, debugEventExpTs, cleanupDb);
+    }
+
+    @Override
+    public void migrateEvents() {
+        eventDao.migrateEvents(ttlInSec > 0 ? System.currentTimeMillis() - ttlInSec : 0, debugTtlInSec > 0 ? System.currentTimeMillis() - debugTtlInSec : 0);
+    }
+
+    private PageData<EventInfo> convert(EntityType entityType, PageData<? extends Event> pd) {
+        return new PageData<>(pd.getData() == null ? null :
+                pd.getData().stream().map(e -> e.toInfo(entityType)).collect(Collectors.toList())
+                , pd.getTotalPages(), pd.getTotalElements(), pd.hasNext());
+    }
+
+    private List<EventInfo> convert(EntityType entityType, List<? extends Event> list) {
+        return list == null ? null : list.stream().map(e -> e.toInfo(entityType)).collect(Collectors.toList());
     }
 }
