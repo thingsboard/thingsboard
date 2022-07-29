@@ -136,7 +136,7 @@ public class BaseEventService implements EventService {
 
     @Override
     public void migrateEvents() {
-        eventDao.migrateEvents(ttlInSec > 0 ? System.currentTimeMillis() - ttlInSec : 0, debugTtlInSec > 0 ? System.currentTimeMillis() - debugTtlInSec : 0);
+        eventDao.migrateEvents(ttlInSec > 0 ? (System.currentTimeMillis() - ttlInSec * 1000) : 0, debugTtlInSec > 0 ? (System.currentTimeMillis() - debugTtlInSec * 1000) : 0);
     }
 
     private PageData<EventInfo> convert(EntityType entityType, PageData<? extends Event> pd) {
