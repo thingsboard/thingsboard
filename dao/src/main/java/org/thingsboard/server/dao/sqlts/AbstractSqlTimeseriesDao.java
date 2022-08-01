@@ -137,11 +137,7 @@ public abstract class AbstractSqlTimeseriesDao extends BaseAbstractSqlTimeseries
 
     private long getTtl(long standardTtl, TenantId tenantId, EntityId entityId) {
         Optional<AttributeKvEntry> ttl;
-        try {
-            ttl = attributesDao.find(tenantId, entityId, DataConstants.SERVER_SCOPE, TTL).get(30, TimeUnit.SECONDS);
-        } catch (Exception e) {
-            throw new IllegalStateException("Cannot get server scope attribute TTL for entity[" + entityId + "], error: " + e);
-        }
+        ttl = attributesDao.find(tenantId, entityId, DataConstants.SERVER_SCOPE, TTL);
 
         return ttl != null && ttl.isPresent() && ttl.get().getLongValue().isPresent() ? ttl.get().getLongValue().get() : standardTtl;
     }

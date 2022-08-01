@@ -38,7 +38,7 @@ import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.device.DeviceDao;
 import org.thingsboard.server.dao.device.DeviceProfileDao;
 import org.thingsboard.server.dao.service.BaseTenantProfileServiceTest;
-import org.thingsboard.server.dao.sqlts.psql.JpaPsqlTimeseriesDao;
+import org.thingsboard.server.dao.sqlts.sql.JpaSqlTimeseriesDao;
 import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.dao.tenant.TenantProfileDao;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
@@ -50,7 +50,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public class JpaPsqlTimeseriesDaoTest extends AbstractJpaDaoTest {
+public class JpaSqlTimeseriesDaoTest extends AbstractJpaDaoTest {
 
     public static final int DIFF_AFTER_CLEANUP_FOR_ONE_ENTITY = 1;
     public static final int TIMEOUT = 30;
@@ -59,7 +59,7 @@ public class JpaPsqlTimeseriesDaoTest extends AbstractJpaDaoTest {
     public static final String KEY_FOR_CLEANUP = "CLEANUP";
     public static final String EXCLUDED_KEY = "TESTED_TELEMETRY";
     @Autowired
-    JpaPsqlTimeseriesDao psqlTimeseriesDao;
+    JpaSqlTimeseriesDao sqlTimeseriesDao;
 
     @Autowired
     TimeseriesDao timeseriesDao;
@@ -127,7 +127,7 @@ public class JpaPsqlTimeseriesDaoTest extends AbstractJpaDaoTest {
         saveTimeseries(device.getTenantId(), device.getId());
 
         long beforeCleanup = checkSavedTs(device.getTenantId(), device.getId());
-        psqlTimeseriesDao.cleanup(TTL, List.of("TESTED_TELEMETRY"));
+        sqlTimeseriesDao.cleanup(TTL, List.of("TESTED_TELEMETRY"));
         long afterCleanup = checkSavedTs(device.getTenantId(), device.getId());
 
         Assert.assertEquals(beforeCleanup, afterCleanup + DIFF_AFTER_CLEANUP_FOR_ONE_ENTITY);
@@ -143,7 +143,7 @@ public class JpaPsqlTimeseriesDaoTest extends AbstractJpaDaoTest {
         saveTimeseries(device.getTenantId(), device.getId());
 
         long beforeCleanup = checkSavedTs(device.getTenantId(), device.getId());
-        psqlTimeseriesDao.cleanup(TTL, List.of("TESTED_TELEMETRY"));
+        sqlTimeseriesDao.cleanup(TTL, List.of("TESTED_TELEMETRY"));
         long afterCleanup = checkSavedTs(device.getTenantId(), device.getId());
 
         Assert.assertEquals(beforeCleanup, afterCleanup);
@@ -157,7 +157,7 @@ public class JpaPsqlTimeseriesDaoTest extends AbstractJpaDaoTest {
         saveTimeseries(asset.getTenantId(), asset.getId());
 
         long beforeCleanup = checkSavedTs(asset.getTenantId(), asset.getId());
-        psqlTimeseriesDao.cleanup(TTL, List.of("TESTED_TELEMETRY"));
+        sqlTimeseriesDao.cleanup(TTL, List.of("TESTED_TELEMETRY"));
         long afterCleanup = checkSavedTs(asset.getTenantId(), asset.getId());
 
         Assert.assertEquals(beforeCleanup, afterCleanup + DIFF_AFTER_CLEANUP_FOR_ONE_ENTITY);
@@ -173,7 +173,7 @@ public class JpaPsqlTimeseriesDaoTest extends AbstractJpaDaoTest {
 
         long beforeCleanup = checkSavedTs(device.getTenantId(), device.getId())
                 + checkSavedTs(asset.getTenantId(), asset.getId());
-        psqlTimeseriesDao.cleanup(TTL, List.of("TESTED_TELEMETRY"));
+        sqlTimeseriesDao.cleanup(TTL, List.of("TESTED_TELEMETRY"));
         long afterCleanup = checkSavedTs(device.getTenantId(), device.getId())
                 + checkSavedTs(asset.getTenantId(), asset.getId());
 
@@ -190,7 +190,7 @@ public class JpaPsqlTimeseriesDaoTest extends AbstractJpaDaoTest {
         saveTimeseries(device.getTenantId(), device.getId());
 
         long beforeCleanup = checkSavedTs(device.getTenantId(), device.getId());
-        psqlTimeseriesDao.cleanup(TTL, List.of("TESTED_TELEMETRY"));
+        sqlTimeseriesDao.cleanup(TTL, List.of("TESTED_TELEMETRY"));
         long afterCleanup = checkSavedTs(device.getTenantId(), device.getId());
 
         Assert.assertEquals(beforeCleanup, afterCleanup + DIFF_AFTER_CLEANUP_FOR_ONE_ENTITY);
@@ -207,7 +207,7 @@ public class JpaPsqlTimeseriesDaoTest extends AbstractJpaDaoTest {
         saveTimeseries(device.getTenantId(), device.getId());
 
         long beforeCleanup = checkSavedTs(device.getTenantId(), device.getId());
-        psqlTimeseriesDao.cleanup(TTL, List.of("TESTED_TELEMETRY"));
+        sqlTimeseriesDao.cleanup(TTL, List.of("TESTED_TELEMETRY"));
         long afterCleanup = checkSavedTs(device.getTenantId(), device.getId());
 
         Assert.assertEquals(beforeCleanup, afterCleanup);
@@ -224,7 +224,7 @@ public class JpaPsqlTimeseriesDaoTest extends AbstractJpaDaoTest {
         saveTimeseries(device.getTenantId(), device.getId());
 
         long beforeCleanup = checkSavedTs(device.getTenantId(), device.getId());
-        psqlTimeseriesDao.cleanup(TTL, List.of("TESTED_TELEMETRY"));
+        sqlTimeseriesDao.cleanup(TTL, List.of("TESTED_TELEMETRY"));
         long afterCleanup = checkSavedTs(device.getTenantId(), device.getId());
 
         Assert.assertEquals(beforeCleanup, afterCleanup);
@@ -242,7 +242,7 @@ public class JpaPsqlTimeseriesDaoTest extends AbstractJpaDaoTest {
         saveTimeseries(device.getTenantId(), device.getId());
 
         long beforeCleanup = checkSavedTs(device.getTenantId(), device.getId());
-        psqlTimeseriesDao.cleanup(TTL, List.of("TESTED_TELEMETRY"));
+        sqlTimeseriesDao.cleanup(TTL, List.of("TESTED_TELEMETRY"));
         long afterCleanup = checkSavedTs(device.getTenantId(), device.getId());
 
         Assert.assertEquals(beforeCleanup, afterCleanup + DIFF_AFTER_CLEANUP_FOR_ONE_ENTITY);
@@ -257,7 +257,7 @@ public class JpaPsqlTimeseriesDaoTest extends AbstractJpaDaoTest {
         saveTimeseries(asset.getTenantId(), asset.getId());
 
         long beforeCleanup = checkSavedTs(asset.getTenantId(), asset.getId());
-        psqlTimeseriesDao.cleanup(TTL, List.of("TESTED_TELEMETRY"));
+        sqlTimeseriesDao.cleanup(TTL, List.of("TESTED_TELEMETRY"));
         long afterCleanup = checkSavedTs(asset.getTenantId(), asset.getId());
 
         Assert.assertEquals(beforeCleanup, afterCleanup + DIFF_AFTER_CLEANUP_FOR_ONE_ENTITY);
@@ -270,7 +270,7 @@ public class JpaPsqlTimeseriesDaoTest extends AbstractJpaDaoTest {
         saveTimeseries(customer.getTenantId(), customer.getId());
 
         long beforeCleanup = checkSavedTs(customer.getTenantId(), customer.getId());
-        psqlTimeseriesDao.cleanup(TTL, List.of("TESTED_TELEMETRY"));
+        sqlTimeseriesDao.cleanup(TTL, List.of("TESTED_TELEMETRY"));
         long afterCleanup = checkSavedTs(customer.getTenantId(), customer.getId());
 
         Assert.assertEquals(beforeCleanup, afterCleanup + DIFF_AFTER_CLEANUP_FOR_ONE_ENTITY);
@@ -290,7 +290,7 @@ public class JpaPsqlTimeseriesDaoTest extends AbstractJpaDaoTest {
         long beforeCleanup = checkSavedTs(customer.getTenantId(), customer.getId())
                 + checkSavedTs(device.getTenantId(), device.getId())
                 + checkSavedTs(asset.getTenantId(), asset.getId());
-        psqlTimeseriesDao.cleanup(TTL, List.of("TESTED_TELEMETRY"));
+        sqlTimeseriesDao.cleanup(TTL, List.of("TESTED_TELEMETRY"));
         long afterCleanup = checkSavedTs(customer.getTenantId(), customer.getId())
                 + checkSavedTs(device.getTenantId(), device.getId())
                 + checkSavedTs(asset.getTenantId(), asset.getId());
@@ -320,7 +320,7 @@ public class JpaPsqlTimeseriesDaoTest extends AbstractJpaDaoTest {
                 + checkSavedTs(customer.getTenantId(), customer.getId())
                 + checkSavedTs(deviceFromCustomer.getTenantId(), deviceFromCustomer.getId())
                 + checkSavedTs(assetFromCustomer.getTenantId(), assetFromCustomer.getId());
-        psqlTimeseriesDao.cleanup(TTL, List.of("TESTED_TELEMETRY"));
+        sqlTimeseriesDao.cleanup(TTL, List.of("TESTED_TELEMETRY"));
         long afterCleanup = checkSavedTs(deviceFromTenant.getTenantId(), deviceFromTenant.getId())
                 + checkSavedTs(assetFromTenant.getTenantId(), assetFromTenant.getId())
                 + checkSavedTs(customer.getTenantId(), customer.getId())
