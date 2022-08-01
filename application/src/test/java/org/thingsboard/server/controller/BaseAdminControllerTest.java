@@ -18,13 +18,28 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.service.mail.DefaultMailService;
 
-import static org.hamcrest.Matchers.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
 public abstract class BaseAdminControllerTest extends AbstractControllerTest {
+
+    @Autowired
+    MailService mailService;
+
+    @Autowired
+    DefaultMailService defaultMailService;
 
     @Test
     public void testFindAdminSettingsByKey() throws Exception {
@@ -100,5 +115,28 @@ public abstract class BaseAdminControllerTest extends AbstractControllerTest {
         doPost("/api/admin/settings/testMail", adminSettings)
         .andExpect(status().isOk());
     }
-    
+
+    @Test
+    public void testSendTestMailTimeout() throws Exception {
+        loginSysAdmin();
+        AdminSettings adminSettings = doGet("/api/admin/settings/mail", AdminSettings.class);
+        ObjectNode objectNode = JacksonUtil.fromString(adminSettings.getJsonValue().toString(), ObjectNode.class);
+
+        objectNode.put("smtpHost", "mail.gandi.net");
+        objectNode.put("timeout", 1_000);
+        objectNode.put("username", "username");
+        objectNode.put("password", "password");
+
+        adminSettings.setJsonValue(objectNode);
+
+        Mockito.doAnswer((invocations) -> {
+            var jsonConfig = (JsonNode) invocations.getArgument(0);
+            var email = (String) invocations.getArgument(1);
+
+            defaultMailService.sendTestMail(jsonConfig, email);
+            return null;
+        }).when(mailService).sendTestMail(Mockito.any(), Mockito.anyString());
+        doPost("/api/admin/settings/testMail", adminSettings).andExpect(status().is5xxServerError());
+        Mockito.doNothing().when(mailService).sendTestMail(Mockito.any(), Mockito.any());
+    }
 }

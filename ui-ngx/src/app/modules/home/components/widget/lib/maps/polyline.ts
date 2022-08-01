@@ -18,7 +18,7 @@
 import L, { PolylineDecorator, PolylineDecoratorOptions, Symbol } from 'leaflet';
 import 'leaflet-polylinedecorator';
 
-import { PolylineSettings } from './map-models';
+import { WidgetPolylineSettings } from './map-models';
 import { functionValueCalculator } from '@home/components/widget/lib/maps/common-maps-utils';
 import { FormattedData } from '@shared/models/widget.models';
 
@@ -26,12 +26,12 @@ export class Polyline {
 
   leafletPoly: L.Polyline;
   polylineDecorator: PolylineDecorator;
-  dataSources: FormattedData[];
-  data: FormattedData;
 
-  constructor(private map: L.Map, locations: L.LatLng[], data: FormattedData, dataSources: FormattedData[], settings: PolylineSettings) {
-    this.dataSources = dataSources;
-    this.data = data;
+  constructor(private map: L.Map,
+              locations: L.LatLng[],
+              private data: FormattedData,
+              private dataSources: FormattedData[],
+              settings: Partial<WidgetPolylineSettings>) {
 
     this.leafletPoly = L.polyline(locations,
       this.getPolyStyle(settings)
@@ -42,7 +42,7 @@ export class Polyline {
     }
   }
 
-  getDecoratorSettings(settings: PolylineSettings): PolylineDecoratorOptions {
+  getDecoratorSettings(settings: Partial<WidgetPolylineSettings>): PolylineDecoratorOptions {
     return {
       patterns: [
         {
@@ -62,7 +62,7 @@ export class Polyline {
     };
   }
 
-  updatePolyline(locations: L.LatLng[], data: FormattedData, dataSources: FormattedData[], settings: PolylineSettings) {
+  updatePolyline(locations: L.LatLng[], data: FormattedData, dataSources: FormattedData[], settings: Partial<WidgetPolylineSettings>) {
     this.data = data;
     this.dataSources = dataSources;
     this.leafletPoly.setLatLngs(locations);
@@ -72,14 +72,14 @@ export class Polyline {
     }
   }
 
-  getPolyStyle(settings: PolylineSettings): L.PolylineOptions {
+  getPolyStyle(settings: Partial<WidgetPolylineSettings>): L.PolylineOptions {
     return {
       interactive: false,
-      color: functionValueCalculator(settings.useColorFunction, settings.colorFunction,
+      color: functionValueCalculator(settings.useColorFunction, settings.parsedColorFunction,
         [this.data, this.dataSources, this.data.dsIndex], settings.color),
-      opacity: functionValueCalculator(settings.useStrokeOpacityFunction, settings.strokeOpacityFunction,
+      opacity: functionValueCalculator(settings.useStrokeOpacityFunction, settings.parsedStrokeOpacityFunction,
         [this.data, this.dataSources, this.data.dsIndex], settings.strokeOpacity),
-      weight: functionValueCalculator(settings.useStrokeWeightFunction, settings.strokeWeightFunction,
+      weight: functionValueCalculator(settings.useStrokeWeightFunction, settings.parsedStrokeWeightFunction,
         [this.data, this.dataSources, this.data.dsIndex], settings.strokeWeight),
       pmIgnore: true
     };

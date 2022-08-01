@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, forwardRef, Input, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, forwardRef, Input, OnDestroy, ViewChild } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -89,7 +89,8 @@ export class ImageInputComponent extends PageComponent implements AfterViewInit,
               private sanitizer: DomSanitizer,
               private dialog: DialogService,
               private translate: TranslateService,
-              private fileSize: FileSizePipe) {
+              private fileSize: FileSizePipe,
+              private cd: ChangeDetectorRef) {
     super(store);
   }
 
@@ -144,6 +145,7 @@ export class ImageInputComponent extends PageComponent implements AfterViewInit,
   }
 
   private updateModel() {
+    this.cd.markForCheck();
     this.propagateChange(this.imageUrl);
   }
 

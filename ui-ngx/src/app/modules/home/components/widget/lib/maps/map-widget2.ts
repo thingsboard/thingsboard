@@ -14,21 +14,11 @@
 /// limitations under the License.
 ///
 
-import { defaultSettings, hereProviders, MapProviders, UnitedMapSettings } from './map-models';
+import { defaultMapSettings, MapProviders, UnitedMapSettings, WidgetUnitedMapSettings } from './map-models';
 import LeafletMap from './leaflet-map';
-import {
-  commonMapSettingsSchema,
-  editorSettingSchema,
-  mapCircleSchema,
-  mapPolygonSchema,
-  markerClusteringSettingsSchema,
-  markerClusteringSettingsSchemaLeaflet,
-  routeMapSettingsSchema
-} from './schemes';
 import { MapWidgetInterface, MapWidgetStaticInterface } from './map-widget.interface';
-import { addCondition, addGroupInfo, addToSchema, initSchema, mergeSchemes } from '@core/schema-utils';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
-import { getDefCenterPosition, getProviderSchema, parseWithTranslation } from './common-maps-utils';
+import { getDefCenterPosition, parseWithTranslation } from './common-maps-utils';
 import {
   Datasource,
   DatasourceData,
@@ -40,7 +30,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
 import { providerClass } from '@home/components/widget/lib/maps/providers';
-import { isDefined, parseFunction } from '@core/utils';
+import { isDefined, isDefinedAndNotNull, parseFunction } from '@core/utils';
 import L from 'leaflet';
 import { forkJoin, Observable, of } from 'rxjs';
 import { AttributeService } from '@core/http/attribute.service';
@@ -82,9 +72,13 @@ export class MapWidgetController implements MapWidgetInterface {
         this.map.saveMarkerLocation = this.setMarkerLocation.bind(this);
         this.map.savePolygonLocation = this.savePolygonLocation.bind(this);
         this.map.saveLocation = this.saveLocation.bind(this);
+        let pageSize = this.settings.mapPageSize;
+        if (isDefinedAndNotNull(this.ctx.widgetConfig.pageSize)) {
+          pageSize = Math.max(pageSize, this.ctx.widgetConfig.pageSize);
+        }
         this.pageLink = {
           page: 0,
-          pageSize: this.settings.mapPageSize,
+          pageSize,
           textSearch: null,
           dynamic: true
         };
@@ -96,41 +90,8 @@ export class MapWidgetController implements MapWidgetInterface {
     provider: MapProviders;
     schema: JsonSettingsSchema;
     data: DatasourceData[];
-    settings: UnitedMapSettings;
+    settings: WidgetUnitedMapSettings;
     pageLink: EntityDataPageLink;
-
-    public static dataKeySettingsSchema(): object {
-        return {};
-    }
-
-    public static getProvidersSchema(mapProvider: MapProviders, ignoreImageMap = false) {
-       return getProviderSchema(mapProvider, ignoreImageMap);
-    }
-
-    public static settingsSchema(mapProvider: MapProviders, drawRoutes: boolean): JsonSettingsSchema {
-        const schema = initSchema();
-        addToSchema(schema, this.getProvidersSchema(mapProvider));
-        addGroupInfo(schema, 'Map Provider Settings');
-        addToSchema(schema, commonMapSettingsSchema);
-        addGroupInfo(schema, 'Common Map Settings');
-        addToSchema(schema, addCondition(mapPolygonSchema, 'model.showPolygon === true', ['showPolygon']));
-        addGroupInfo(schema, 'Polygon Settings');
-        addToSchema(schema, addCondition(mapCircleSchema, 'model.showCircle === true', ['showCircle']));
-        addGroupInfo(schema, 'Circle Settings');
-        if (drawRoutes) {
-            addToSchema(schema, routeMapSettingsSchema);
-            addGroupInfo(schema, 'Route Map Settings');
-        } else {
-            const clusteringSchema = mergeSchemes([markerClusteringSettingsSchema,
-                addCondition(markerClusteringSettingsSchemaLeaflet,
-                    `model.useClusterMarkers === true && model.provider !== "image-map"`)]);
-            addToSchema(schema, clusteringSchema);
-            addGroupInfo(schema, 'Markers Clustering Settings');
-            addToSchema(schema, addCondition(editorSettingSchema, '(model.editablePolygon === true || model.draggableMarker === true)'));
-            addGroupInfo(schema, 'Editor settings');
-        }
-        return schema;
-    }
 
     public static actionSources(): object {
         return {
@@ -190,7 +151,7 @@ export class MapWidgetController implements MapWidgetInterface {
       if (isDefined(lat) && isDefined(lng)) {
         const point = lat != null && lng !== null ? L.latLng(lat, lng) : null;
         markerValue = this.map.convertToCustomFormat(point);
-      } else if (this.settings.mapProvider !== MapProviders.image) {
+      } else if (this.settings.provider !== MapProviders.image) {
         markerValue = {
           [this.settings.latKeyName]: e[this.settings.latKeyName],
           [this.settings.lngKeyName]: e[this.settings.lngKeyName],
@@ -269,60 +230,55 @@ export class MapWidgetController implements MapWidgetInterface {
       }
     }
 
-    initSettings(settings: UnitedMapSettings, isEditMap?: boolean): UnitedMapSettings {
+    initSettings(settings: UnitedMapSettings, isEditMap?: boolean): WidgetUnitedMapSettings {
         const functionParams = ['data', 'dsData', 'dsIndex'];
         this.provider = settings.provider || this.mapProvider;
-        if (this.provider === MapProviders.here && !settings.mapProviderHere) {
-          if (settings.mapProvider && hereProviders.includes(settings.mapProvider)) {
-            settings.mapProviderHere = settings.mapProvider;
-          } else {
-            settings.mapProviderHere = hereProviders[0];
-          }
-        }
-        const customOptions: Partial<UnitedMapSettings> = {
+        const parsedOptions: Partial<WidgetUnitedMapSettings> = {
             provider: this.provider,
-            mapUrl: settings?.mapImageUrl,
-            labelFunction: parseFunction(settings.labelFunction, functionParams),
-            tooltipFunction: parseFunction(settings.tooltipFunction, functionParams),
-            colorFunction: parseFunction(settings.colorFunction, functionParams),
-            colorPointFunction: parseFunction(settings.colorPointFunction, functionParams),
-            polygonLabelFunction: parseFunction(settings.polygonLabelFunction, functionParams),
-            polygonColorFunction: parseFunction(settings.polygonColorFunction, functionParams),
-            polygonStrokeColorFunction: parseFunction(settings.polygonStrokeColorFunction, functionParams),
-            polygonTooltipFunction: parseFunction(settings.polygonTooltipFunction, functionParams),
-            circleLabelFunction: parseFunction(settings.circleLabelFunction, functionParams),
-            circleStrokeColorFunction: parseFunction(settings.circleStrokeColorFunction, functionParams),
-            circleFillColorFunction: parseFunction(settings.circleFillColorFunction, functionParams),
-            circleTooltipFunction: parseFunction(settings.circleTooltipFunction, functionParams),
-            markerImageFunction: parseFunction(settings.markerImageFunction, ['data', 'images', 'dsData', 'dsIndex']),
-            labelColor: this.ctx.widgetConfig.color,
-            polygonLabelColor: this.ctx.widgetConfig.color,
-            polygonKeyName: settings.polKeyName ? settings.polKeyName : settings.polygonKeyName,
+            parsedLabelFunction: parseFunction(settings.labelFunction, functionParams),
+            parsedTooltipFunction: parseFunction(settings.tooltipFunction, functionParams),
+            parsedColorFunction: parseFunction(settings.colorFunction, functionParams),
+            parsedColorPointFunction: parseFunction(settings.colorPointFunction, functionParams),
+            parsedStrokeOpacityFunction: parseFunction(settings.strokeOpacityFunction, functionParams),
+            parsedStrokeWeightFunction: parseFunction(settings.strokeWeightFunction, functionParams),
+            parsedPolygonLabelFunction: parseFunction(settings.polygonLabelFunction, functionParams),
+            parsedPolygonColorFunction: parseFunction(settings.polygonColorFunction, functionParams),
+            parsedPolygonStrokeColorFunction: parseFunction(settings.polygonStrokeColorFunction, functionParams),
+            parsedPolygonTooltipFunction: parseFunction(settings.polygonTooltipFunction, functionParams),
+            parsedCircleLabelFunction: parseFunction(settings.circleLabelFunction, functionParams),
+            parsedCircleStrokeColorFunction: parseFunction(settings.circleStrokeColorFunction, functionParams),
+            parsedCircleFillColorFunction: parseFunction(settings.circleFillColorFunction, functionParams),
+            parsedCircleTooltipFunction: parseFunction(settings.circleTooltipFunction, functionParams),
+            parsedMarkerImageFunction: parseFunction(settings.markerImageFunction, ['data', 'images', 'dsData', 'dsIndex']),
+            // labelColor: this.ctx.widgetConfig.color,
+            // polygonLabelColor: this.ctx.widgetConfig.color,
+            polygonKeyName: (settings as any).polKeyName ? (settings as any).polKeyName : settings.polygonKeyName,
             tooltipPattern: settings.tooltipPattern ||
                 '<b>${entityName}</b><br/><br/><b>Latitude:</b> ${' +
                 settings.latKeyName + ':7}<br/><b>Longitude:</b> ${' + settings.lngKeyName + ':7}',
-            defaultCenterPosition: getDefCenterPosition(settings?.defaultCenterPosition),
+            parsedDefaultCenterPosition: getDefCenterPosition(settings?.defaultCenterPosition),
             currentImage: (settings.markerImage?.length) ? {
                 url: settings.markerImage,
                 size: settings.markerImageSize || 34
             } : null
         };
         if (isEditMap && !settings.hasOwnProperty('draggableMarker')) {
-            settings.draggableMarker = true;
+          parsedOptions.draggableMarker = true;
         }
         if (isEditMap && !settings.hasOwnProperty('editablePolygon')) {
-            settings.editablePolygon = true;
+          parsedOptions.editablePolygon = true;
         }
-        return { ...defaultSettings, ...settings, ...customOptions, };
+        parsedOptions.minZoomLevel = 16;
+        return { ...defaultMapSettings, ...settings, ...parsedOptions };
     }
 
     update() {
-        this.map.updateData(this.drawRoutes, this.settings.showPolygon);
+        this.map.updateData(this.drawRoutes);
         this.map.setLoading(false);
     }
 
     latestDataUpdate() {
-      this.map.updateData(this.drawRoutes, this.settings.showPolygon);
+      this.map.updateData(this.drawRoutes);
     }
 
     resize() {

@@ -27,7 +27,7 @@ import org.thingsboard.server.dao.util.TbAutoConfiguration;
  */
 @Configuration
 @TbAutoConfiguration
-@ComponentScan("org.thingsboard.server.dao.sql")
+@ComponentScan({"org.thingsboard.server.dao.sql", "org.thingsboard.server.dao.attributes", "org.thingsboard.server.dao.cache", "org.thingsboard.server.cache"})
 @EnableJpaRepositories("org.thingsboard.server.dao.sql")
 @EntityScan("org.thingsboard.server.dao.model.sql")
 @EnableTransactionManagement

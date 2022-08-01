@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 :host ::ng-deep {
+  .mat-form-field-infix {
+    width: 100% !important;
+  }
+
   .mat-checkbox{
     &.hinted-checkbox {
       .mat-checkbox-inner-container {
@@ -24,5 +28,22 @@
     .mat-checkbox-layout{
       white-space: normal;
     }
+  }
+  .fields-group {
+    padding: 0 16px 8px;
+    margin-bottom: 10px;
+    border: 1px groove rgba(0, 0, 0, .25);
+    border-radius: 4px;
+    legend {
+      color: rgba(0, 0, 0, .7);
+      width: fit-content;
+    }
+  }
+
+  .mat-expansion-panel-header {
+    height: 48px;
+  }
+  .expansion-panel-block {
+    padding-bottom: 16px;
   }
 }

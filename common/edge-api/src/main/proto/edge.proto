@@ -33,6 +33,7 @@ service EdgeRpcService {
 enum EdgeVersion {
   V_3_3_0 = 0;
   V_3_3_3 = 1;
+  V_3_4_0 = 2;
 }
 
 /**
@@ -421,6 +422,55 @@ enum EdgeEntityType {
   ASSET = 1;
 }
 
+message OtaPackageUpdateMsg {
+  UpdateMsgType msgType = 1;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  int64 deviceProfileIdMSB = 4;
+  int64 deviceProfileIdLSB = 5;
+  string type = 6;
+  string title = 7;
+  string version = 8;
+  string tag = 9;
+  optional string url = 10;
+  optional string fileName = 11;
+  optional string contentType = 12;
+  optional string checksumAlgorithm = 13;
+  optional string checksum = 14;
+  optional int64 dataSize = 15;
+  optional bytes data = 16;
+  optional string additionalInfo = 17;
+}
+
+message QueueUpdateMsg {
+  UpdateMsgType msgType = 1;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  int64 tenantIdMSB = 4;
+  int64 tenantIdLSB = 5;
+  string name = 6;
+  string topic = 7;
+  int32 pollInterval = 8;
+  int32 partitions = 9;
+  bool consumerPerPartition = 10;
+  int64 packProcessingTimeout = 11;
+  SubmitStrategyProto submitStrategy = 12;
+  ProcessingStrategyProto processingStrategy = 13;
+}
+
+message SubmitStrategyProto {
+  string type = 1;
+  int32 batchSize = 2;
+}
+
+message ProcessingStrategyProto {
+  string type = 1;
+  int32 retries = 2;
+  double failurePercentage = 3;
+  int64 pauseBetweenRetries = 4;
+  int64 maxPauseBetweenRetries = 5;
+}
+
 /**
  * Main Messages;
  */
@@ -477,5 +527,7 @@ message DownlinkMsg {
   repeated WidgetTypeUpdateMsg widgetTypeUpdateMsg = 19;
   repeated AdminSettingsUpdateMsg adminSettingsUpdateMsg = 20;
   repeated DeviceRpcCallMsg deviceRpcCallMsg = 21;
+  repeated OtaPackageUpdateMsg otaPackageUpdateMsg = 22;
+  repeated QueueUpdateMsg queueUpdateMsg = 23;
 }
 

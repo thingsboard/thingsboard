@@ -1,0 +1,111 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section class="tb-widget-settings" [formGroup]="persistentTableWidgetSettingsForm" fxLayout="column">
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>widgets.persistent-table.general-settings</legend>
+    <section fxLayout="column" fxLayout.gt-sm="row" fxLayoutGap="8px">
+      <section fxLayout="column" fxFlex>
+        <mat-checkbox formControlName="enableFilter" style="margin-bottom: 16px;">
+          {{ 'widgets.persistent-table.enable-filter' | translate }}
+        </mat-checkbox>
+      </section>
+      <section fxLayout="column" fxFlex>
+        <mat-checkbox formControlName="enableStickyHeader" style="margin-bottom: 16px;">
+          {{ 'widgets.persistent-table.enable-sticky-header' | translate }}
+        </mat-checkbox>
+        <mat-checkbox formControlName="enableStickyAction" style="margin-bottom: 16px;">
+          {{ 'widgets.persistent-table.enable-sticky-action' | translate }}
+        </mat-checkbox>
+      </section>
+    </section>
+    <section fxLayout="column" fxLayoutGap="8px">
+      <mat-slide-toggle fxFlex formControlName="displayDetails">
+        {{ 'widgets.persistent-table.display-request-details' | translate }}
+      </mat-slide-toggle>
+      <mat-slide-toggle formControlName="allowSendRequest">
+        {{ 'widgets.persistent-table.allow-send-request' | translate }}
+      </mat-slide-toggle>
+      <mat-slide-toggle formControlName="allowDelete">
+        {{ 'widgets.persistent-table.allow-delete-request' | translate }}
+      </mat-slide-toggle>
+      <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+        <mat-slide-toggle fxFlex formControlName="displayPagination">
+          {{ 'widgets.table.display-pagination' | translate }}
+        </mat-slide-toggle>
+        <mat-form-field fxFlex class="mat-block">
+          <mat-label translate>widgets.table.default-page-size</mat-label>
+          <input matInput type="number" min="1" step="1" formControlName="defaultPageSize">
+        </mat-form-field>
+      </section>
+      <mat-form-field fxFlex class="mat-block">
+        <mat-label translate>widgets.table.default-sort-order</mat-label>
+        <input matInput formControlName="defaultSortOrder">
+      </mat-form-field>
+    </section>
+  </fieldset>
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>widgets.persistent-table.columns-settings</legend>
+    <mat-form-field fxFlex class="mat-block">
+      <mat-label translate>widgets.persistent-table.display-columns</mat-label>
+      <mat-chip-list #columnsChipList class="tb-drop-list"
+                     required
+                     cdkDropList
+                     cdkDropListOrientation="horizontal"
+                     (cdkDropListDropped)="columnDrop($event)">
+        <mat-chip class="tb-draggable" cdkDrag *ngFor="let column of persistentTableWidgetSettingsForm.get('displayColumns').value"
+                  [removable]="true" (removed)="onColumnRemoved(column)">
+          {{ displayColumnFromValue(column)?.name }}
+          <mat-icon matChipRemove>cancel</mat-icon>
+        </mat-chip>
+        <input matInput type="text" placeholder="{{ 'widgets.persistent-table.column' | translate }}"
+               style="max-width: 200px;"
+               #columnInput
+               (focusin)="onColumnInputFocus()"
+               matAutocompleteOrigin
+               #origin="matAutocompleteOrigin"
+               (input)="columnInputChange.next(columnInput.value)"
+               [matAutocompleteConnectedTo]="origin"
+               [matAutocomplete]="columnAutocomplete"
+               [matChipInputFor]="columnsChipList"
+               [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+               (matChipInputTokenEnd)="addColumnFromChipInput($event)">
+      </mat-chip-list>
+      <mat-autocomplete #columnAutocomplete="matAutocomplete"
+                        class="tb-autocomplete"
+                        (optionSelected)="columnSelected($event)"
+                        [displayWith]="displayColumnFn">
+        <mat-option *ngFor="let column of filteredDisplayColumns | async" [value]="column">
+          <span [innerHTML]="column.name | highlight:columnSearchText"></span>
+        </mat-option>
+        <mat-option *ngIf="(filteredDisplayColumns | async)?.length === 0" [value]="null" class="tb-not-found">
+          <div class="tb-not-found-content" (click)="$event.stopPropagation()">
+            <div *ngIf="!textIsNotEmpty(columnSearchText); else searchNotEmpty">
+              <span translate>widgets.persistent-table.no-columns-found</span>
+            </div>
+            <ng-template #searchNotEmpty>
+                <span>
+                  {{ translate.get('widgets.persistent-table.no-columns-matching',
+                  {column: truncate.transform(columnSearchText, true, 6, &apos;...&apos;)}) | async }}
+                </span>
+            </ng-template>
+          </div>
+        </mat-option>
+      </mat-autocomplete>
+    </mat-form-field>
+  </fieldset>
+</section>

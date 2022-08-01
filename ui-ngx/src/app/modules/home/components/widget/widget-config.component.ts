@@ -25,7 +25,9 @@ import {
   datasourceTypeTranslationMap,
   defaultLegendConfig,
   GroupInfo,
-  JsonSchema, JsonSettingsSchema,
+  JsonSchema,
+  JsonSettingsSchema,
+  Widget,
   widgetType
 } from '@shared/models/widget.models';
 import {
@@ -65,13 +67,13 @@ import { MatDialog } from '@angular/material/dialog';
 import { EntityService } from '@core/http/entity.service';
 import { JsonFormComponentData } from '@shared/components/json-form/json-form-component.models';
 import { WidgetActionsData } from './action/manage-widget-actions.component.models';
-import { DashboardState } from '@shared/models/dashboard.models';
+import { Dashboard, DashboardState } from '@shared/models/dashboard.models';
 import { entityFields } from '@shared/models/entity.models';
 import { Filter, Filters } from '@shared/models/query/query.models';
 import { FilterDialogComponent, FilterDialogData } from '@home/components/filter/filter-dialog.component';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import { MatChipInputEvent } from '@angular/material/chips';
-import { DndDropEvent } from 'ngx-drag-drop';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 
 const emptySettingsSchema: JsonSchema = {
   type: 'object',
@@ -126,16 +128,13 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   aliasController: IAliasController;
 
   @Input()
-  entityAliases: EntityAliases;
+  dashboard: Dashboard;
 
   @Input()
-  filters: Filters;
+  widget: Widget;
 
   @Input()
   functionsOnly: boolean;
-
-  @Input()
-  dashboardStates: {[id: string]: DashboardState };
 
   @Input() disabled: boolean;
 
@@ -214,6 +213,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       widgetStyle: [null, []],
       widgetCss: [null, []],
       titleStyle: [null, []],
+      pageSize: [1024, [Validators.min(1), Validators.pattern(/^\d*$/)]],
       units: [null, []],
       decimals: [null, [Validators.min(0), Validators.max(15), Validators.pattern(/^\d*$/)]],
       noDataDisplayMessage: [null, []],
@@ -421,6 +421,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
               fontSize: '16px',
               fontWeight: 400
             },
+            pageSize: isDefined(config.pageSize) ? config.pageSize : 1024,
             units: config.units,
             decimals: config.decimals,
             noDataDisplayMessage: isDefined(config.noDataDisplayMessage) ? config.noDataDisplayMessage : '',
@@ -619,8 +620,9 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       widgetSettingsFormData.schema = deepClone(emptySettingsSchema);
       widgetSettingsFormData.form = deepClone(defaultSettingsForm);
       widgetSettingsFormData.groupInfoes = deepClone(emptySettingsGroupInfoes);
-      widgetSettingsFormData.model = {};
+      widgetSettingsFormData.model = settings || {};
     }
+    widgetSettingsFormData.settingsDirective = this.modelValue.settingsDirective;
     this.advancedSettings.patchValue({ settings: widgetSettingsFormData }, {emitEvent: false});
   }
 
@@ -678,7 +680,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   private updateAdvancedSettings() {
     if (this.modelValue) {
       if (this.modelValue.config) {
-        const settings = this.advancedSettings.get('settings').value.model;
+        const settings = this.advancedSettings.get('settings').value?.model;
         this.modelValue.config.settings = settings;
       }
       this.propagateChange(this.modelValue);
@@ -727,21 +729,15 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   }
 
   public displayAdvanced(): boolean {
-    return !!this.modelValue && !!this.modelValue.settingsSchema && !!this.modelValue.settingsSchema.schema;
+    return !!this.modelValue && (!!this.modelValue.settingsSchema && !!this.modelValue.settingsSchema.schema ||
+        !!this.modelValue.settingsDirective && !!this.modelValue.settingsDirective.length);
   }
 
-  public dndDatasourceMoved(index: number) {
-    this.datasourcesFormArray().removeAt(index);
-  }
-
-  public onDatasourceDrop(event: DndDropEvent) {
-    let index = event.index;
-    if (isUndefined(index)) {
-      index = this.datasourcesFormArray().length;
-    }
-    this.datasourcesFormArray().insert(index,
-      this.buildDatasourceForm(event.data)
-    );
+  public onDatasourceDrop(event: CdkDragDrop<string[]>) {
+    const datasourcesFormArray = this.datasourcesFormArray();
+    const datasourceForm = datasourcesFormArray.at(event.previousIndex);
+    datasourcesFormArray.removeAt(event.previousIndex);
+    datasourcesFormArray.insert(event.currentIndex, datasourceForm);
   }
 
   public removeDatasource(index: number) {
@@ -859,14 +855,14 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       data: {
         isAdd: true,
         allowedEntityTypes,
-        entityAliases: this.entityAliases,
+        entityAliases: this.dashboard.configuration.entityAliases,
         alias: singleEntityAlias
       }
     }).afterClosed().pipe(
       tap((entityAlias) => {
         if (entityAlias) {
-          this.entityAliases[entityAlias.id] = entityAlias;
-          this.aliasController.updateEntityAliases(this.entityAliases);
+          this.dashboard.configuration.entityAliases[entityAlias.id] = entityAlias;
+          this.aliasController.updateEntityAliases(this.dashboard.configuration.entityAliases);
         }
       })
     );
@@ -880,14 +876,14 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         isAdd: true,
-        filters: this.filters,
+        filters: this.dashboard.configuration.filters,
         filter: singleFilter
       }
     }).afterClosed().pipe(
       tap((result) => {
         if (result) {
-          this.filters[result.id] = result;
-          this.aliasController.updateFilters(this.filters);
+          this.dashboard.configuration.filters[result.id] = result;
+          this.aliasController.updateFilters(this.dashboard.configuration.filters);
         }
       })
     );
@@ -909,7 +905,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   }
 
   private fetchDashboardStates(query: string): Array<string> {
-    const stateIds = Object.keys(this.dashboardStates);
+    const stateIds = Object.keys(this.dashboard.configuration.states);
     const result = query ? stateIds.filter(this.createFilterForDashboardState(query)) : stateIds;
     if (result && result.length) {
       return result;
@@ -944,7 +940,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
           valid: false
         }
       };
-    } else if (!this.advancedSettings.valid) {
+    } else if (!this.advancedSettings.valid || (this.displayAdvanced() && !this.modelValue.config.settings)) {
       return {
         advancedSettings: {
           valid: false

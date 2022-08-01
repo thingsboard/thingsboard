@@ -54,10 +54,10 @@
               formControlName="defaultDashboardId">
               <div tb-hint>{{'device-profile.mobile-dashboard-hint' | translate}}</div>
             </tb-dashboard-autocomplete>
-            <tb-queue-type-list
+            <tb-queue-autocomplete
               [queueType]="serviceType"
               formControlName="defaultQueueName">
-            </tb-queue-type-list>
+            </tb-queue-autocomplete>
             <mat-form-field fxHide class="mat-block">
               <mat-label translate>device-profile.type</mat-label>
               <mat-select formControlName="type" required>

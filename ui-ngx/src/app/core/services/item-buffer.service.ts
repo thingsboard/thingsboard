@@ -17,7 +17,14 @@
 import { Injectable } from '@angular/core';
 import { Dashboard, DashboardLayoutId } from '@app/shared/models/dashboard.models';
 import { AliasesInfo, EntityAlias, EntityAliases, EntityAliasInfo } from '@shared/models/alias.models';
-import { DatasourceType, Widget, WidgetPosition, WidgetSize } from '@shared/models/widget.models';
+import {
+  Datasource,
+  DatasourceType,
+  Widget,
+  WidgetPosition,
+  WidgetSize,
+  widgetType
+} from '@shared/models/widget.models';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { deepClone, isEqual } from '@core/utils';
 import { UtilsService } from '@core/services/utils.service';
@@ -87,12 +94,13 @@ export class ItemBufferService {
     };
     const originalColumns = this.getOriginalColumns(dashboard, sourceState, sourceLayout);
     const originalSize = this.getOriginalSize(dashboard, sourceState, sourceLayout, widget);
+    const datasources: Datasource[] = widget.type === widgetType.alarm ? [widget.config.alarmSource] : widget.config.datasources;
     if (widget.config && dashboard.configuration
       && dashboard.configuration.entityAliases) {
       let entityAlias: EntityAlias;
-      if (widget.config.datasources) {
-        for (let i = 0; i < widget.config.datasources.length; i++) {
-          const datasource = widget.config.datasources[i];
+      if (datasources) {
+        for (let i = 0; i < datasources.length; i++) {
+          const datasource = datasources[i];
           if ((datasource.type === DatasourceType.entity || datasource.type === DatasourceType.entityCount) && datasource.entityAliasId) {
             entityAlias = dashboard.configuration.entityAliases[datasource.entityAliasId];
             if (entityAlias) {
@@ -116,9 +124,9 @@ export class ItemBufferService {
     if (widget.config && dashboard.configuration
       && dashboard.configuration.filters) {
       let filter: Filter;
-      if (widget.config.datasources) {
-        for (let i = 0; i < widget.config.datasources.length; i++) {
-          const datasource = widget.config.datasources[i];
+      if (datasources) {
+        for (let i = 0; i < datasources.length; i++) {
+          const datasource = datasources[i];
           if ((datasource.type === DatasourceType.entity || datasource.type === DatasourceType.entityCount) && datasource.filterId) {
             filter = dashboard.configuration.filters[datasource.filterId];
             if (filter) {
@@ -438,7 +446,11 @@ export class ItemBufferService {
       const datasourceIndex = Number(datasourceIndexStr);
       aliasInfo = aliasesInfo.datasourceAliases[datasourceIndex];
       newAliasId = this.getEntityAliasId(entityAliases, aliasInfo);
-      widget.config.datasources[datasourceIndex].entityAliasId = newAliasId;
+      if (widget.type === widgetType.alarm) {
+        widget.config.alarmSource.entityAliasId = newAliasId;
+      } else {
+        widget.config.datasources[datasourceIndex].entityAliasId = newAliasId;
+      }
     }
     for (const targetDeviceAliasIndexStr of Object.keys(aliasesInfo.targetDeviceAliases)) {
       const targetDeviceAliasIndex = Number(targetDeviceAliasIndexStr);
@@ -457,7 +469,11 @@ export class ItemBufferService {
       const datasourceIndex = Number(datasourceIndexStr);
       filterInfo = filtersInfo.datasourceFilters[datasourceIndex];
       newFilterId = this.getFilterId(filters, filterInfo);
-      widget.config.datasources[datasourceIndex].filterId = newFilterId;
+      if (widget.type === widgetType.alarm) {
+        widget.config.alarmSource.filterId = newFilterId;
+      } else {
+        widget.config.datasources[datasourceIndex].filterId = newFilterId;
+      }
     }
     return filters;
   }

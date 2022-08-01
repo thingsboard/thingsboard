@@ -28,6 +28,10 @@ import { SmsProviderComponent } from '@home/pages/admin/sms-provider.component';
 import { SendTestSmsDialogComponent } from '@home/pages/admin/send-test-sms-dialog.component';
 import { HomeSettingsComponent } from '@home/pages/admin/home-settings.component';
 import { ResourcesLibraryComponent } from '@home/pages/admin/resource/resources-library.component';
+import { QueueComponent} from '@home/pages/admin/queue/queue.component';
+import { RepositoryAdminSettingsComponent } from '@home/pages/admin/repository-admin-settings.component';
+import { AutoCommitAdminSettingsComponent } from '@home/pages/admin/auto-commit-admin-settings.component';
+import { TwoFactorAuthSettingsComponent } from '@home/pages/admin/two-factor-auth-settings.component';
 
 @NgModule({
   declarations:
@@ -39,7 +43,11 @@ import { ResourcesLibraryComponent } from '@home/pages/admin/resource/resources-
       SecuritySettingsComponent,
       OAuth2SettingsComponent,
       HomeSettingsComponent,
-      ResourcesLibraryComponent
+      ResourcesLibraryComponent,
+      QueueComponent,
+      RepositoryAdminSettingsComponent,
+      AutoCommitAdminSettingsComponent,
+      TwoFactorAuthSettingsComponent
     ],
   imports: [
     CommonModule,

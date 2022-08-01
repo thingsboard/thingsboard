@@ -21,7 +21,6 @@ import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Service;
 
-import static org.thingsboard.server.common.data.CacheConstants.OTA_PACKAGE_CACHE;
 import static org.thingsboard.server.common.data.CacheConstants.OTA_PACKAGE_DATA_CACHE;
 
 @Service

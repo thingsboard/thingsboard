@@ -18,16 +18,12 @@ package org.thingsboard.server.transport;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
 public abstract class AbstractTransportIntegrationTest extends AbstractControllerTest {
@@ -95,20 +91,10 @@ public abstract class AbstractTransportIntegrationTest extends AbstractControlle
             "  optional string params = 3;\n" +
             "}";
 
-    protected Tenant savedTenant;
-    protected User tenantAdmin;
-
     protected Device savedDevice;
     protected String accessToken;
 
     protected DeviceProfile deviceProfile;
-
-    protected void processAfterTest() throws Exception {
-        loginSysAdmin();
-        if (savedTenant != null) {
-            doDelete("/api/tenant/" + savedTenant.getId().getId().toString()).andExpect(status().isOk());
-        }
-    }
 
     protected List<TransportProtos.KeyValueProto> getKvProtos(List<String> expectedKeys) {
         List<TransportProtos.KeyValueProto> keyValueProtos = new ArrayList<>();

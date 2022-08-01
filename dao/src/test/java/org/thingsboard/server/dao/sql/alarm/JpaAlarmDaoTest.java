@@ -56,6 +56,8 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         UUID alarm3Id = UUID.fromString("d4b68f45-3e96-11e7-a884-898080180d6b");
         int alarmCountBeforeSave = alarmDao.find(TenantId.fromUUID(tenantId)).size();
         saveAlarm(alarm1Id, tenantId, originator1Id, "TEST_ALARM");
+        //The timestamp of the startTime should be different in order for test to always work
+        Thread.sleep(1);
         saveAlarm(alarm2Id, tenantId, originator1Id, "TEST_ALARM");
         saveAlarm(alarm3Id, tenantId, originator2Id, "TEST_ALARM");
         int alarmCountAfterSave = alarmDao.find(TenantId.fromUUID(tenantId)).size();

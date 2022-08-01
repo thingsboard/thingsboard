@@ -17,18 +17,17 @@ package org.thingsboard.server.transport.coap.telemetry.timeseries;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.CoAP;
-import org.eclipse.californium.core.coap.MediaTypeRegistry;
-import org.eclipse.californium.elements.exception.ConnectorException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.thingsboard.server.transport.coap.AbstractCoapIntegrationTest;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.msg.session.FeatureType;
+import org.thingsboard.server.transport.coap.AbstractCoapIntegrationTest;
+import org.thingsboard.server.transport.coap.CoapTestClient;
+import org.thingsboard.server.transport.coap.CoapTestConfigProperties;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -46,7 +45,10 @@ public abstract class AbstractCoapTimeseriesIntegrationTest extends AbstractCoap
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest("Test Post Telemetry device", null, null);
+        CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
+                .deviceName("Test Post Telemetry device")
+                .build();
+        processBeforeTest(configProperties);
     }
 
     @After
@@ -71,28 +73,16 @@ public abstract class AbstractCoapTimeseriesIntegrationTest extends AbstractCoap
     }
 
     protected void processTestPostTelemetry(byte[] payloadBytes, List<String> expectedKeys, boolean withTs, boolean presenceFieldsTest) throws Exception {
-        client = getCoapClient(FeatureType.TELEMETRY);
-        postTelemetry(client, payloadBytes);
+        client = new CoapTestClient(accessToken, FeatureType.TELEMETRY);
+        CoapResponse coapResponse = client.postMethod(payloadBytes);
+        assertEquals(CoAP.ResponseCode.CREATED, coapResponse.getCode());
 
-        String deviceId = savedDevice.getId().getId().toString();
-
-        long start = System.currentTimeMillis();
-        long end = System.currentTimeMillis() + 5000;
-
-        List<String> actualKeys = null;
-        while (start <= end) {
-            actualKeys = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + deviceId + "/keys/timeseries", new TypeReference<>() {});
-            if (actualKeys.size() == expectedKeys.size()) {
-                break;
-            }
-            Thread.sleep(100);
-            start += 100;
-        }
+        DeviceId deviceId = savedDevice.getId();
+        List<String> actualKeys = getActualKeysList(deviceId, expectedKeys);
         assertNotNull(actualKeys);
 
         Set<String> actualKeySet = new HashSet<>(actualKeys);
         Set<String> expectedKeySet = new HashSet<>(expectedKeys);
-
         assertEquals(expectedKeySet, actualKeySet);
 
         String getTelemetryValuesUrl;
@@ -101,8 +91,8 @@ public abstract class AbstractCoapTimeseriesIntegrationTest extends AbstractCoap
         } else {
             getTelemetryValuesUrl = "/api/plugins/telemetry/DEVICE/" + deviceId + "/values/timeseries?keys=" + String.join(",", actualKeySet);
         }
-        start = System.currentTimeMillis();
-        end = System.currentTimeMillis() + 5000;
+        long start = System.currentTimeMillis();
+        long end = System.currentTimeMillis() + 5000;
         Map<String, List<Map<String, Object>>> values = null;
         while (start <= end) {
             values = doGetAsyncTyped(getTelemetryValuesUrl, new TypeReference<>() {});
@@ -138,11 +128,6 @@ public abstract class AbstractCoapTimeseriesIntegrationTest extends AbstractCoap
         } else {
             assertValues(values, 0);
         }
-    }
-
-    private void postTelemetry(CoapClient client, byte[] payload) throws IOException, ConnectorException {
-        CoapResponse coapResponse = client.setTimeout((long) 60000).post(payload, MediaTypeRegistry.APPLICATION_JSON);
-        assertEquals(CoAP.ResponseCode.CREATED, coapResponse.getCode());
     }
 
     private void assertTs(Map<String, List<Map<String, Object>>> deviceValues, List<String> expectedKeys, int ts, int arrayIndex) {
@@ -201,6 +186,22 @@ public abstract class AbstractCoapTimeseriesIntegrationTest extends AbstractCoap
                     break;
             }
         }
+    }
+
+    private List<String> getActualKeysList(DeviceId deviceId, List<String> expectedKeys) throws Exception {
+        long start = System.currentTimeMillis();
+        long end = System.currentTimeMillis() + 5000;
+
+        List<String> actualKeys = null;
+        while (start <= end) {
+            actualKeys = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + deviceId + "/keys/timeseries", new TypeReference<>() {});
+            if (actualKeys.size() == expectedKeys.size()) {
+                break;
+            }
+            Thread.sleep(100);
+            start += 100;
+        }
+        return actualKeys;
     }
 
 }

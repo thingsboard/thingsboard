@@ -253,6 +253,24 @@
                                 rows="2" maxlength="255"></textarea>
                       <mat-hint align="end">{{descriptionInput.value?.length || 0}}/255</mat-hint>
                     </mat-form-field>
+                    <mat-form-field class="mat-block">
+                      <mat-label translate>widget.settings-form-selector</mat-label>
+                      <input matInput
+                             [(ngModel)]="widget.settingsDirective"
+                             (ngModelChange)="isDirty = true"/>
+                    </mat-form-field>
+                    <mat-form-field class="mat-block">
+                      <mat-label translate>widget.data-key-settings-form-selector</mat-label>
+                      <input matInput
+                             [(ngModel)]="widget.dataKeySettingsDirective"
+                             (ngModelChange)="isDirty = true"/>
+                    </mat-form-field>
+                    <mat-form-field *ngIf="widget.type === widgetTypes.timeseries" class="mat-block">
+                      <mat-label translate>widget.latest-data-key-settings-form-selector</mat-label>
+                      <input matInput
+                             [(ngModel)]="widget.latestDataKeySettingsDirective"
+                             (ngModelChange)="isDirty = true"/>
+                    </mat-form-field>
                   </div>
                 </div>
               </mat-tab>

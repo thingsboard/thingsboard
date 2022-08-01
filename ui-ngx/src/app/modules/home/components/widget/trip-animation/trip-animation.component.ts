@@ -27,31 +27,27 @@ import {
   SecurityContext,
   ViewChild
 } from '@angular/core';
-import { MapProviders, TripAnimationSettings } from '@home/components/widget/lib/maps/map-models';
-import { addCondition, addGroupInfo, addToSchema, initSchema } from '@app/core/schema-utils';
 import {
-  mapCircleSchema,
-  mapPolygonSchema,
-  pathSchema,
-  pointSchema,
-  tripAnimationSchema
-} from '@home/components/widget/lib/maps/schemes';
+  defaultTripAnimationSettings,
+  MapProviders,
+  WidgetUnitedTripAnimationSettings
+} from '@home/components/widget/lib/maps/map-models';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
 import {
   findAngle,
-  getProviderSchema,
   getRatio,
   interpolateOnLineSegment,
   parseWithTranslation
 } from '@home/components/widget/lib/maps/common-maps-utils';
-import { FormattedData, JsonSettingsSchema, WidgetConfig } from '@shared/models/widget.models';
+import { FormattedData, WidgetConfig } from '@shared/models/widget.models';
 import moment from 'moment';
 import {
-  deepClone,
-  formattedDataArrayFromDatasourceData, formattedDataFormDatasourceData,
+  formattedDataArrayFromDatasourceData,
+  formattedDataFormDatasourceData,
   isDefined,
-  isUndefined, mergeFormattedData,
+  isUndefined,
+  mergeFormattedData,
   parseFunction,
   safeExecute
 } from '@core/utils';
@@ -86,7 +82,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
   formattedCurrentPosition: FormattedData[] = [];
   formattedLatestData: FormattedData[] = [];
   widgetConfig: WidgetConfig;
-  settings: TripAnimationSettings;
+  settings: WidgetUnitedTripAnimationSettings;
   mainTooltips = [];
   visibleTooltip = false;
   activeTrip: FormattedData;
@@ -97,38 +93,18 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
   useAnchors: boolean;
   currentTime: number;
 
-  static getSettingsSchema(): JsonSettingsSchema {
-    const schema = initSchema();
-    addToSchema(schema, getProviderSchema(null, true));
-    addGroupInfo(schema, 'Map Provider Settings');
-    addToSchema(schema, tripAnimationSchema);
-    addGroupInfo(schema, 'Trip Animation Settings');
-    addToSchema(schema, pathSchema);
-    addGroupInfo(schema, 'Path Settings');
-    addToSchema(schema, addCondition(pointSchema, 'model.showPoints === true', ['showPoints']));
-    addGroupInfo(schema, 'Path Points Settings');
-    addToSchema(schema, addCondition(mapPolygonSchema, 'model.showPolygon === true', ['showPolygon']));
-    addGroupInfo(schema, 'Polygon Settings');
-    addToSchema(schema, addCondition(mapCircleSchema, 'model.showCircle === true', ['showCircle']));
-    addGroupInfo(schema, 'Circle Settings');
-    return schema;
-  }
-
   ngOnInit(): void {
     this.widgetConfig = this.ctx.widgetConfig;
-    const settings = {
-      normalizationStep: 1000,
-      showLabel: false,
+    this.settings = {
       buttonColor: tinycolor(this.widgetConfig.color).setAlpha(0.54).toRgbString(),
-      disabledButtonColor: tinycolor(this.widgetConfig.color).setAlpha(0.3).toRgbString(),
-      rotationAngle: 0
+      ...defaultTripAnimationSettings,
+      ...this.ctx.settings
     };
-    this.settings = { ...settings, ...this.ctx.settings };
     this.useAnchors = this.settings.showPoints && this.settings.usePointAsAnchor;
-    this.settings.pointAsAnchorFunction = parseFunction(this.settings.pointAsAnchorFunction, ['data', 'dsData', 'dsIndex']);
-    this.settings.tooltipFunction = parseFunction(this.settings.tooltipFunction, ['data', 'dsData', 'dsIndex']);
-    this.settings.labelFunction = parseFunction(this.settings.labelFunction, ['data', 'dsData', 'dsIndex']);
-    this.settings.colorPointFunction = parseFunction(this.settings.colorPointFunction, ['data', 'dsData', 'dsIndex']);
+    this.settings.parsedPointAsAnchorFunction = parseFunction(this.settings.pointAsAnchorFunction, ['data', 'dsData', 'dsIndex']);
+    this.settings.parsedTooltipFunction = parseFunction(this.settings.tooltipFunction, ['data', 'dsData', 'dsIndex']);
+    this.settings.parsedLabelFunction = parseFunction(this.settings.labelFunction, ['data', 'dsData', 'dsIndex']);
+    this.settings.parsedColorPointFunction = parseFunction(this.settings.colorPointFunction, ['data', 'dsData', 'dsIndex']);
     this.normalizationStep = this.settings.normalizationStep;
     const subscription = this.ctx.defaultSubscription;
     subscription.callbacks.onDataUpdated = () => {
@@ -136,14 +112,12 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
         item => this.clearIncorrectFirsLastDatapoint(item)).filter(arr => arr.length);
       this.interpolatedTimeData.length = 0;
       this.formattedInterpolatedTimeData.length = 0;
-      if (this.historicalData.length) {
-        const prevMinTime = this.minTime;
-        const prevMaxTime = this.maxTime;
-        this.calculateIntervals();
-        const currentTime = this.calculateCurrentTime(prevMinTime, prevMaxTime);
-        if (currentTime !== this.currentTime) {
-          this.timeUpdated(currentTime);
-        }
+      const prevMinTime = this.minTime;
+      const prevMaxTime = this.maxTime;
+      this.calculateIntervals();
+      const currentTime = this.calculateCurrentTime(prevMinTime, prevMaxTime);
+      if (currentTime !== this.currentTime) {
+        this.timeUpdated(currentTime);
       }
       this.mapWidget.map.map?.invalidateSize();
       this.mapWidget.map.setLoading(false);
@@ -212,7 +186,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
     this.calcLabel(currentPosition);
     this.calcMainTooltip(currentPosition);
     if (this.mapWidget && this.mapWidget.map && this.mapWidget.map.map) {
-      this.mapWidget.map.updateFromData(true, this.settings.showPolygon, currentPosition, this.formattedInterpolatedTimeData, (trip) => {
+      this.mapWidget.map.updateFromData(true, currentPosition, this.formattedInterpolatedTimeData, (trip) => {
         this.activeTrip = trip;
         this.timeUpdated(this.currentTime);
         this.cd.markForCheck();
@@ -262,7 +236,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
     if (this.useAnchors) {
       const anchorDate = Object.entries(_.union(this.interpolatedTimeData)[0]);
       this.anchors = anchorDate
-        .filter((data: [string, FormattedData], tsIndex) => safeExecute(this.settings.pointAsAnchorFunction, [data[1],
+        .filter((data: [string, FormattedData], tsIndex) => safeExecute(this.settings.parsedPointAsAnchorFunction, [data[1],
           this.formattedInterpolatedTimeData.map(ds => ds[tsIndex]), data[1].dsIndex]))
         .map(data => parseInt(data[0], 10));
     }
@@ -271,7 +245,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
   calcTooltip = (point: FormattedData, points: FormattedData[]): string => {
     const data = point ? point : this.activeTrip;
     const tooltipPattern: string = this.settings.useTooltipFunction ?
-      safeExecute(this.settings.tooltipFunction,
+      safeExecute(this.settings.parsedTooltipFunction,
         [data, points, point.dsIndex]) : this.settings.tooltipPattern;
     return parseWithTranslation.parseTemplate(tooltipPattern, data, true);
   }
@@ -285,10 +259,12 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   calcLabel(points: FormattedData[]) {
-    const data = points[this.activeTrip.dsIndex];
-    const labelText: string = this.settings.useLabelFunction ?
-      safeExecute(this.settings.labelFunction, [data, points, data.dsIndex]) : this.settings.label;
-    this.label = this.sanitizer.bypassSecurityTrustHtml(parseWithTranslation.parseTemplate(labelText, data, true));
+    if (this.activeTrip) {
+      const data = points[this.activeTrip.dsIndex];
+      const labelText: string = this.settings.useLabelFunction ?
+        safeExecute(this.settings.parsedLabelFunction, [data, points, data.dsIndex]) : this.settings.label;
+      this.label = this.sanitizer.bypassSecurityTrustHtml(parseWithTranslation.parseTemplate(labelText, data, true));
+    }
   }
 
   private interpolateArray(originData: FormattedData[]): {[time: number]: FormattedData} {

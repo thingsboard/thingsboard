@@ -24,6 +24,8 @@ import { DialogService } from '@core/services/dialog.service';
 import { AlarmTableConfig } from './alarm-table-config';
 import { AlarmSearchStatus } from '@shared/models/alarm.models';
 import { AlarmService } from '@app/core/http/alarm.service';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
 
 @Component({
   selector: 'tb-alarm-table',
@@ -68,7 +70,8 @@ export class AlarmTableComponent implements OnInit {
               private dialogService: DialogService,
               private translate: TranslateService,
               private datePipe: DatePipe,
-              private dialog: MatDialog) {
+              private dialog: MatDialog,
+              private store: Store<AppState>) {
   }
 
   ngOnInit() {
@@ -80,7 +83,8 @@ export class AlarmTableComponent implements OnInit {
       this.datePipe,
       this.dialog,
       this.entityIdValue,
-      AlarmSearchStatus.ANY
+      AlarmSearchStatus.ANY,
+      this.store
     );
   }
 

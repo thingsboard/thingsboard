@@ -18,9 +18,7 @@ import L, { LeafletMouseEvent } from 'leaflet';
 import {
   MarkerIconInfo,
   MarkerIconReadyFunction,
-  MarkerImageInfo,
-  MarkerSettings,
-  UnitedMapSettings
+  MarkerImageInfo, WidgetMarkersSettings,
 } from './map-models';
 import { bindPopupActions, createTooltip } from './maps-utils';
 import { aspectCache, parseWithTranslation } from './common-maps-utils';
@@ -38,15 +36,17 @@ export class Marker {
     tooltipOffset: L.LatLngTuple;
     markerOffset: L.LatLngTuple;
     tooltip: L.Popup;
-    data: FormattedData;
-    dataSources: FormattedData[];
 
-  constructor(private map: LeafletMap, private location: L.LatLng, public settings: UnitedMapSettings,
-              data?: FormattedData, dataSources?, onDragendListener?) {
-        this.setDataSources(data, dataSources);
+  constructor(private map: LeafletMap,
+              private location: L.LatLng,
+              private settings: Partial<WidgetMarkersSettings>,
+              private data?: FormattedData,
+              private dataSources?,
+              private onDragendListener?,
+              snappable = false) {
         this.leafletMarker = L.marker(location, {
           pmIgnore: !settings.draggableMarker,
-          snapIgnore: !settings.snappable
+          snapIgnore: !snappable
         });
 
         this.markerOffset = [
@@ -59,7 +59,7 @@ export class Marker {
           isDefined(settings.tooltipOffsetY) ? settings.tooltipOffsetY : -1,
         ];
 
-        this.updateMarkerIcon(settings);
+        this.updateMarkerIcon(this.settings);
 
         if (settings.showTooltip) {
             this.tooltip = createTooltip(this.leafletMarker, settings, data.$datasource,
@@ -100,7 +100,7 @@ export class Marker {
     updateMarkerTooltip(data: FormattedData) {
       if (!this.map.markerTooltipText || this.settings.useTooltipFunction) {
         const pattern = this.settings.useTooltipFunction ?
-          safeExecute(this.settings.tooltipFunction, [this.data, this.dataSources, this.data.dsIndex]) : this.settings.tooltipPattern;
+          safeExecute(this.settings.parsedTooltipFunction, [this.data, this.dataSources, this.data.dsIndex]) : this.settings.tooltipPattern;
         this.map.markerTooltipText = parseWithTranslation.prepareProcessPattern(pattern, true);
         this.map.replaceInfoTooltipMarker = processDataPattern(this.map.markerTooltipText, data);
       }
@@ -117,17 +117,18 @@ export class Marker {
       }
     }
 
-    updateMarkerLabel(settings: MarkerSettings) {
+    updateMarkerLabel(settings: Partial<WidgetMarkersSettings>) {
         this.leafletMarker.unbindTooltip();
         if (settings.showLabel) {
             if (!this.map.markerLabelText || settings.useLabelFunction) {
               const pattern = settings.useLabelFunction ?
-                safeExecute(settings.labelFunction, [this.data, this.dataSources, this.data.dsIndex]) : settings.label;
+                safeExecute(settings.parsedLabelFunction, [this.data, this.dataSources, this.data.dsIndex]) : settings.label;
               this.map.markerLabelText = parseWithTranslation.prepareProcessPattern(pattern, true);
               this.map.replaceInfoLabelMarker = processDataPattern(this.map.markerLabelText, this.data);
             }
-            settings.labelText = fillDataPattern(this.map.markerLabelText, this.map.replaceInfoLabelMarker, this.data);
-            this.leafletMarker.bindTooltip(`<div style="color: ${settings.labelColor};"><b>${settings.labelText}</b></div>`,
+            const labelText = fillDataPattern(this.map.markerLabelText, this.map.replaceInfoLabelMarker, this.data);
+            const labelColor = this.map.ctx.widgetConfig.color;
+            this.leafletMarker.bindTooltip(`<div style="color: ${labelColor};"><b>${labelText}</b></div>`,
                 { className: 'tb-marker-label', permanent: true, direction: 'top', offset: this.labelOffset });
         }
     }
@@ -138,7 +139,7 @@ export class Marker {
         });
     }
 
-    updateMarkerIcon(settings: MarkerSettings) {
+    updateMarkerIcon(settings: Partial<WidgetMarkersSettings>) {
         this.createMarkerIcon((iconInfo) => {
             this.leafletMarker.setIcon(iconInfo.icon);
             const anchor = iconInfo.icon.options.iconAnchor;
@@ -157,11 +158,11 @@ export class Marker {
           return;
         }
         const currentImage: MarkerImageInfo = this.settings.useMarkerImageFunction ?
-            safeExecute(this.settings.markerImageFunction,
+            safeExecute(this.settings.parsedMarkerImageFunction,
                 [this.data, this.settings.markerImages, this.dataSources, this.data.dsIndex]) : this.settings.currentImage;
         let currentColor = this.settings.tinyColor;
         if (this.settings.useColorFunction) {
-          const functionColor = safeExecute(this.settings.colorFunction,
+          const functionColor = safeExecute(this.settings.parsedColorFunction,
             [this.data, this.dataSources, this.data.dsIndex]);
           if (isDefinedAndNotNull(functionColor)) {
             currentColor = tinycolor(functionColor);

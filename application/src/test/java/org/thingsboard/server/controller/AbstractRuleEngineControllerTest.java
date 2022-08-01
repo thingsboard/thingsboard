@@ -18,6 +18,7 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -35,6 +36,9 @@ import java.util.function.Predicate;
 /**
  * Created by ashvayka on 20.03.18.
  */
+@TestPropertySource(properties = {
+        "js.evaluator=mock",
+})
 public abstract class AbstractRuleEngineControllerTest extends AbstractControllerTest {
 
     @Autowired
@@ -57,11 +61,17 @@ public abstract class AbstractRuleEngineControllerTest extends AbstractControlle
     }
 
     protected PageData<Event> getDebugEvents(TenantId tenantId, EntityId entityId, int limit) throws Exception {
+        return getEvents(tenantId, entityId, DataConstants.DEBUG_RULE_NODE, limit);
+    }
+
+    protected PageData<Event> getEvents(TenantId tenantId, EntityId entityId, String eventType, int limit) throws Exception {
         TimePageLink pageLink = new TimePageLink(limit);
         return doGetTypedWithTimePageLink("/api/events/{entityType}/{entityId}/{eventType}?tenantId={tenantId}&",
                 new TypeReference<PageData<Event>>() {
-                }, pageLink, entityId.getEntityType(), entityId.getId(), DataConstants.DEBUG_RULE_NODE, tenantId.getId());
+                }, pageLink, entityId.getEntityType(), entityId.getId(), eventType, tenantId.getId());
     }
+
+
 
     protected JsonNode getMetadata(Event outEvent) {
         String metaDataStr = outEvent.getBody().get("metadata").asText();

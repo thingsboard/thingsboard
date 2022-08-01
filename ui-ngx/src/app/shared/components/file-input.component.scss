@@ -61,19 +61,38 @@ $previewSize: 100px !default;
     position: relative;
     height: $previewSize;
     overflow: hidden;
-    border: dashed 2px;
+    border: 2px dashed rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    box-sizing: border-box;
 
-    label {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
+    .upload-label {
       width: 100%;
       height: 100%;
+      padding: 0 16px;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
       font-size: 16px;
+      color: rgba(0, 0, 0, 0.54);
       text-align: center;
+      .mat-icon {
+        margin-right: 17px;
+      }
+    }
+  }
+}
 
-      @media #{$mat-gt-sm} {
-        font-size: 24px;
+:host ::ng-deep {
+  button.browse-file {
+    padding: 0;
+    font-size: 16px;
+    span.mat-button-wrapper {
+      display: block;
+      label {
+        display: block;
+        cursor: pointer;
+        padding: 0 16px;
       }
     }
   }

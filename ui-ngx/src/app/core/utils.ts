@@ -21,6 +21,10 @@ import { Datasource, DatasourceData, FormattedData, ReplaceInfo } from '@app/sha
 import { EntityId } from '@shared/models/id/entity-id';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { EntityType, baseDetailsPageByEntityType } from '@shared/models/entity-type.models';
+import { HttpErrorResponse } from '@angular/common/http';
+import { letterSpacing } from 'html2canvas/dist/types/css/property-descriptors/letter-spacing';
+import { TranslateService } from '@ngx-translate/core';
+import { serverErrorCodesTranslations } from '@shared/models/constants';
 
 const varsRegex = /\${([^}]*)}/g;
 
@@ -96,7 +100,7 @@ export function isEmptyStr(value: any): boolean {
 }
 
 export function isNotEmptyStr(value: any): boolean {
-  return value !== null && typeof value === 'string' && value.trim().length > 0;
+  return typeof value === 'string' && value.trim().length > 0;
 }
 
 export function isFunction(value: any): boolean {
@@ -311,6 +315,10 @@ export function deepClone<T>(target: T, ignoreFields?: string[]): T {
     return cp as T;
   }
   return target;
+}
+
+export function extractType<T extends object>(target: any, keysOfProps: (keyof T)[]): T {
+  return _.pick(target, keysOfProps);
 }
 
 export function isEqual(a: any, b: any): boolean {
@@ -659,4 +667,54 @@ export function randomAlphanumeric(length: number): string {
 
 export function getEntityDetailsPageURL(id: string, entityType: EntityType): string {
   return `${baseDetailsPageByEntityType.get(entityType)}/${id}`;
+}
+
+export function parseHttpErrorMessage(errorResponse: HttpErrorResponse,
+                                      translate: TranslateService, responseType?: string): {message: string, timeout: number} {
+  let error = null;
+  let errorMessage: string;
+  let timeout = 0;
+  if (responseType === 'text') {
+    try {
+      error = errorResponse.error ? JSON.parse(errorResponse.error) : null;
+    } catch (e) {}
+  } else {
+    error = errorResponse.error;
+  }
+  if (error && !error.message) {
+    errorMessage = prepareMessageFromData(error);
+  } else if (error && error.message) {
+    errorMessage = error.message;
+    timeout = error.timeout ? error.timeout : 0;
+  } else {
+    errorMessage = `Unhandled error code ${error ? error.status : '\'Unknown\''}`;
+  }
+  if (isObject(errorMessage)) {
+    let errorText = `${errorResponse.status}: `;
+    let errorKey = null;
+    if ((errorMessage as any).errorCode) {
+      errorKey = serverErrorCodesTranslations.get((errorMessage as any).errorCode);
+    }
+    errorText += errorKey ? translate.instant(errorKey) : errorResponse.statusText;
+    errorMessage = errorText;
+  }
+  return {message: errorMessage, timeout};
+}
+
+function prepareMessageFromData(data): string {
+  if (typeof data === 'object' && data.constructor === ArrayBuffer) {
+    const msg = String.fromCharCode.apply(null, new Uint8Array(data));
+    try {
+      const msgObj = JSON.parse(msg);
+      if (msgObj.message) {
+        return msgObj.message;
+      } else {
+        return msg;
+      }
+    } catch (e) {
+      return msg;
+    }
+  } else {
+    return data;
+  }
 }

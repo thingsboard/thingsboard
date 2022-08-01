@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -29,28 +30,23 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
-import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AlarmId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.entitiy.alarm.TbAlarmService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
-
-import java.util.List;
 
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_INFO_DESCRIPTION;
@@ -70,8 +66,11 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 
 @RestController
 @TbCoreComponent
+@RequiredArgsConstructor
 @RequestMapping("/api")
 public class AlarmController extends BaseController {
+
+    private final TbAlarmService tbAlarmService;
 
     public static final String ALARM_ID = "alarmId";
     private static final String ALARM_SECURITY_CHECK = "If the user has the authority of 'Tenant Administrator', the server checks that the originator of alarm is owned by the same tenant. " +
@@ -127,30 +126,17 @@ public class AlarmController extends BaseController {
                     "\n\nPlatform also deduplicate the alarms based on the entity id of originator and alarm 'type'. " +
                     "For example, if the user or system component create the alarm with the type 'HighTemperature' for device 'Device A' the new active alarm is created. " +
                     "If the user tries to create 'HighTemperature' alarm for the same device again, the previous alarm will be updated (the 'end_ts' will be set to current timestamp). " +
-                    "If the user clears the alarm (see 'Clear Alarm(clearAlarm)'), than new alarm with the same type and same device may be created. " + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH
+                    "If the user clears the alarm (see 'Clear Alarm(clearAlarm)'), than new alarm with the same type and same device may be created. " +
+                    "Remove 'id', 'tenantId' and optionally 'customerId' from the request body example (below) to create new Alarm entity. " +
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH
             , produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarm", method = RequestMethod.POST)
     @ResponseBody
     public Alarm saveAlarm(@ApiParam(value = "A JSON value representing the alarm.") @RequestBody Alarm alarm) throws ThingsboardException {
-        try {
-            alarm.setTenantId(getCurrentUser().getTenantId());
-
-            checkEntity(alarm.getId(), alarm, Resource.ALARM);
-
-            Alarm savedAlarm = checkNotNull(alarmService.createOrUpdateAlarm(alarm));
-            logEntityAction(savedAlarm.getOriginator(), savedAlarm,
-                    getCurrentUser().getCustomerId(),
-                    alarm.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
-
-            sendEntityNotificationMsg(getTenantId(), savedAlarm.getId(), alarm.getId() == null ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
-
-            return savedAlarm;
-        } catch (Exception e) {
-            logEntityAction(emptyId(EntityType.ALARM), alarm,
-                    null, alarm.getId() == null ? ActionType.ADDED : ActionType.UPDATED, e);
-            throw handleException(e);
-        }
+        alarm.setTenantId(getTenantId());
+        checkEntity(alarm.getId(), alarm, Resource.ALARM);
+        return tbAlarmService.save(alarm, getCurrentUser());
     }
 
     @ApiOperation(value = "Delete Alarm (deleteAlarm)",
@@ -160,22 +146,9 @@ public class AlarmController extends BaseController {
     @ResponseBody
     public Boolean deleteAlarm(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION) @PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
         checkParameter(ALARM_ID, strAlarmId);
-        try {
-            AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
-            Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
-
-            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(getTenantId(), alarm.getOriginator());
-
-            logEntityAction(alarm.getOriginator(), alarm,
-                    getCurrentUser().getCustomerId(),
-                    ActionType.ALARM_DELETE, null);
-
-            sendAlarmDeleteNotificationMsg(getTenantId(), alarmId, relatedEdgeIds, alarm);
-
-            return alarmService.deleteAlarm(getTenantId(), alarmId);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
+        Alarm alarm = checkAlarmId(alarmId, Operation.DELETE);
+        return tbAlarmService.delete(alarm, getCurrentUser());
     }
 
     @ApiOperation(value = "Acknowledge Alarm (ackAlarm)",
@@ -185,21 +158,11 @@ public class AlarmController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarm/{alarmId}/ack", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
-    public void ackAlarm(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION) @PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
+    public void ackAlarm(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION) @PathVariable(ALARM_ID) String strAlarmId) throws Exception {
         checkParameter(ALARM_ID, strAlarmId);
-        try {
-            AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
-            Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
-            long ackTs = System.currentTimeMillis();
-            alarmService.ackAlarm(getCurrentUser().getTenantId(), alarmId, ackTs).get();
-            alarm.setAckTs(ackTs);
-            alarm.setStatus(alarm.getStatus().isCleared() ? AlarmStatus.CLEARED_ACK : AlarmStatus.ACTIVE_ACK);
-            logEntityAction(alarm.getOriginator(), alarm, getCurrentUser().getCustomerId(), ActionType.ALARM_ACK, null);
-
-            sendEntityNotificationMsg(getTenantId(), alarmId, EdgeEventActionType.ALARM_ACK);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
+        Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
+        tbAlarmService.ack(alarm, getCurrentUser()).get();
     }
 
     @ApiOperation(value = "Clear Alarm (clearAlarm)",
@@ -209,21 +172,11 @@ public class AlarmController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarm/{alarmId}/clear", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
-    public void clearAlarm(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION) @PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
+    public void clearAlarm(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION) @PathVariable(ALARM_ID) String strAlarmId) throws Exception {
         checkParameter(ALARM_ID, strAlarmId);
-        try {
-            AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
-            Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
-            long clearTs = System.currentTimeMillis();
-            alarmService.clearAlarm(getCurrentUser().getTenantId(), alarmId, null, clearTs).get();
-            alarm.setClearTs(clearTs);
-            alarm.setStatus(alarm.getStatus().isAck() ? AlarmStatus.CLEARED_ACK : AlarmStatus.CLEARED_UNACK);
-            logEntityAction(alarm.getOriginator(), alarm, getCurrentUser().getCustomerId(), ActionType.ALARM_CLEAR, null);
-
-            sendEntityNotificationMsg(getTenantId(), alarmId, EdgeEventActionType.ALARM_CLEAR);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
+        Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
+        tbAlarmService.clear(alarm, getCurrentUser()).get();
     }
 
     @ApiOperation(value = "Get Alarms (getAlarms)",
@@ -276,6 +229,7 @@ public class AlarmController extends BaseController {
             throw handleException(e);
         }
     }
+
     @ApiOperation(value = "Get All Alarms (getAllAlarms)",
             notes = "Returns a page of alarms that belongs to the current user owner. " +
                     "If the user has the authority of 'Tenant Administrator', the server returns alarms that belongs to the tenant of current user. " +

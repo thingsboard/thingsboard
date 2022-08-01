@@ -16,9 +16,15 @@
 
 -->
 <div fxLayout="row" [formGroup]="materialIconFormGroup">
-  <mat-icon (click)="openIconDialog()">{{materialIconFormGroup.get('icon').value}}</mat-icon>
+  <mat-icon class="icon-value" (click)="openIconDialog()">{{materialIconFormGroup.get('icon').value}}</mat-icon>
   <mat-form-field fxFlex>
-    <mat-label translate>icon.icon</mat-label>
-    <input matInput formControlName="icon" (mousedown)="openIconDialog()">
+    <mat-label>{{ label }}</mat-label>
+    <input [required]="required" matInput formControlName="icon" (mousedown)="openIconDialog()">
+    <button *ngIf="iconClearButton"
+            type="button"
+            matSuffix mat-button mat-icon-button aria-label="Clear"
+            (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
   </mat-form-field>
 </div>

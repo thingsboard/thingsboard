@@ -31,6 +31,7 @@ import org.thingsboard.server.queue.TbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.DefaultTbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.memory.InMemoryStorage;
 import org.thingsboard.server.queue.memory.InMemoryTbQueueConsumer;
 import org.thingsboard.server.queue.memory.InMemoryTbQueueProducer;
 import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
@@ -45,24 +46,27 @@ public class InMemoryTbTransportQueueFactory implements TbTransportQueueFactory 
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TbQueueCoreSettings coreSettings;
+    private final InMemoryStorage storage;
 
     public InMemoryTbTransportQueueFactory(TbQueueTransportApiSettings transportApiSettings,
                                            TbQueueTransportNotificationSettings transportNotificationSettings,
                                            TbServiceInfoProvider serviceInfoProvider,
-                                           TbQueueCoreSettings coreSettings) {
+                                           TbQueueCoreSettings coreSettings,
+                                           InMemoryStorage storage) {
         this.transportApiSettings = transportApiSettings;
         this.transportNotificationSettings = transportNotificationSettings;
         this.serviceInfoProvider = serviceInfoProvider;
         this.coreSettings = coreSettings;
+        this.storage = storage;
     }
 
     @Override
     public TbQueueRequestTemplate<TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> createTransportApiRequestTemplate() {
         InMemoryTbQueueProducer<TbProtoQueueMsg<TransportApiRequestMsg>> producerTemplate =
-                new InMemoryTbQueueProducer<>(transportApiSettings.getRequestsTopic());
+                new InMemoryTbQueueProducer<>(storage, transportApiSettings.getRequestsTopic());
 
         InMemoryTbQueueConsumer<TbProtoQueueMsg<TransportApiResponseMsg>> consumerTemplate =
-                new InMemoryTbQueueConsumer<>(transportApiSettings.getResponsesTopic() + "." + serviceInfoProvider.getServiceId());
+                new InMemoryTbQueueConsumer<>(storage, transportApiSettings.getResponsesTopic() + "." + serviceInfoProvider.getServiceId());
 
         DefaultTbQueueRequestTemplate.DefaultTbQueueRequestTemplateBuilder
                 <TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> templateBuilder = DefaultTbQueueRequestTemplate.builder();
@@ -73,6 +77,9 @@ public class InMemoryTbTransportQueueFactory implements TbTransportQueueFactory 
 
             @Override
             public void destroy() {}
+
+            @Override
+            public void deleteTopic(String topic) {}
         });
 
         templateBuilder.requestTemplate(producerTemplate);
@@ -85,22 +92,22 @@ public class InMemoryTbTransportQueueFactory implements TbTransportQueueFactory 
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> createRuleEngineMsgProducer() {
-        return new InMemoryTbQueueProducer<>(transportApiSettings.getRequestsTopic());
+        return new InMemoryTbQueueProducer<>(storage, transportApiSettings.getRequestsTopic());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> createTbCoreMsgProducer() {
-        return new InMemoryTbQueueProducer<>(coreSettings.getTopic());
+        return new InMemoryTbQueueProducer<>(storage, coreSettings.getTopic());
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToTransportMsg>> createTransportNotificationsConsumer() {
-        return new InMemoryTbQueueConsumer<>(transportNotificationSettings.getNotificationsTopic() + "." + serviceInfoProvider.getServiceId());
+        return new InMemoryTbQueueConsumer<>(storage, transportNotificationSettings.getNotificationsTopic() + "." + serviceInfoProvider.getServiceId());
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToUsageStatsServiceMsg>> createToUsageStatsServiceMsgProducer() {
-        return new InMemoryTbQueueProducer<>(coreSettings.getUsageStatsTopic());
+        return new InMemoryTbQueueProducer<>(storage, coreSettings.getUsageStatsTopic());
     }
 
 }

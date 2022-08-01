@@ -25,8 +25,8 @@ import java.util.List;
 @Data
 public class RuleChainData {
 
-    @ApiModelProperty(position = 1, required = true, value = "List of the Rule Chain objects.", readOnly = true)
+    @ApiModelProperty(position = 1, required = true, value = "List of the Rule Chain objects.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     List<RuleChain> ruleChains;
-    @ApiModelProperty(position = 2, required = true, value = "List of the Rule Chain metadata objects.", readOnly = true)
+    @ApiModelProperty(position = 2, required = true, value = "List of the Rule Chain metadata objects.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     List<RuleChainMetaData> metadata;
 }

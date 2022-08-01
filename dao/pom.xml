@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>3.4.0-SNAPSHOT</version>
+        <version>3.4.1-SNAPSHOT</version>
         <artifactId>thingsboard</artifactId>
     </parent>
     <artifactId>dao</artifactId>
@@ -234,12 +234,8 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>${surfire.version}</version>
                 <configuration>
                     <excludes>
-                        <exclude>**/sql/*Test.java</exclude>
-                        <exclude>**/sql/*/*DaoTest.java</exclude>
-                        <exclude>**/psql/*Test.java</exclude>
                         <exclude>**/nosql/*Test.java</exclude>
                     </excludes>
                     <includes>

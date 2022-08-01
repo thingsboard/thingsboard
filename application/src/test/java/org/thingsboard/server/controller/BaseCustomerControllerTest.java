@@ -15,37 +15,50 @@
  */
 package org.thingsboard.server.controller;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mockito;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
-import org.junit.Assert;
-import org.junit.Test;
+import org.thingsboard.server.dao.exception.DataValidationException;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public abstract class BaseCustomerControllerTest extends AbstractControllerTest {
+    static final TypeReference<PageData<Customer>> PAGE_DATA_CUSTOMER_TYPE_REFERENCE = new TypeReference<>() {
+    };
 
-    private IdComparator<Customer> idComparator = new IdComparator<>();
+    ListeningExecutorService executor;
 
     private Tenant savedTenant;
     private User tenantAdmin;
 
     @Before
     public void beforeTest() throws Exception {
+        executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(8, getClass()));
+
         loginSysAdmin();
 
         Tenant tenant = new Tenant();
@@ -65,6 +78,8 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
 
     @After
     public void afterTest() throws Exception {
+        executor.shutdownNow();
+
         loginSysAdmin();
 
         doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
@@ -75,41 +90,105 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
     public void testSaveCustomer() throws Exception {
         Customer customer = new Customer();
         customer.setTitle("My customer");
+
+        Mockito.reset(tbClusterService, auditLogService);
+
         Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
+
+        testNotifyEntityOneTimeMsgToEdgeServiceNever(savedCustomer, savedCustomer.getId(), savedCustomer.getId(),
+                savedCustomer.getTenantId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED);
+
         Assert.assertNotNull(savedCustomer);
         Assert.assertNotNull(savedCustomer.getId());
         Assert.assertTrue(savedCustomer.getCreatedTime() > 0);
         Assert.assertEquals(customer.getTitle(), savedCustomer.getTitle());
+
         savedCustomer.setTitle("My new customer");
+
         doPost("/api/customer", savedCustomer, Customer.class);
 
-        Customer foundCustomer = doGet("/api/customer/"+savedCustomer.getId().getId().toString(), Customer.class);
+        testNotifyEntityAllOneTime(savedCustomer, savedCustomer.getId(), savedCustomer.getId(), savedCustomer.getTenantId(),
+                new CustomerId(CustomerId.NULL_UUID), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.UPDATED);
+
+        Customer foundCustomer = doGet("/api/customer/" + savedCustomer.getId().getId().toString(), Customer.class);
         Assert.assertEquals(foundCustomer.getTitle(), savedCustomer.getTitle());
 
-        doDelete("/api/customer/"+savedCustomer.getId().getId().toString())
-        .andExpect(status().isOk());
+        doDelete("/api/customer/" + savedCustomer.getId().getId().toString())
+                .andExpect(status().isOk());
     }
 
     @Test
     public void testSaveCustomerWithViolationOfValidation() throws Exception {
         Customer customer = new Customer();
         customer.setTitle(RandomStringUtils.randomAlphabetic(300));
-        doPost("/api/customer", customer).andExpect(statusReason(containsString("length of title must be equal or less than 255")));
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        String msgError = msgErrorFieldLength("title");
+        doPost("/api/customer", customer)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString(msgError)));
+
+        customer.setTenantId(savedTenant.getId());
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer,savedTenant.getId(),
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+        Mockito.reset(tbClusterService, auditLogService);
+
         customer.setTitle("Normal title");
         customer.setCity(RandomStringUtils.randomAlphabetic(300));
-        doPost("/api/customer", customer).andExpect(statusReason(containsString("length of city must be equal or less than 255")));
+        msgError = msgErrorFieldLength("city");
+        doPost("/api/customer", customer)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString(msgError)));
+
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer,savedTenant.getId(),
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+        Mockito.reset(tbClusterService, auditLogService);
+
         customer.setCity("Normal city");
         customer.setCountry(RandomStringUtils.randomAlphabetic(300));
-        doPost("/api/customer", customer).andExpect(statusReason(containsString("length of country must be equal or less than 255")));
+        msgError = msgErrorFieldLength("country");
+        doPost("/api/customer", customer)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString(msgError)));
+
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer,savedTenant.getId(),
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+        Mockito.reset(tbClusterService, auditLogService);
+
         customer.setCountry("Ukraine");
         customer.setPhone(RandomStringUtils.randomAlphabetic(300));
-        doPost("/api/customer", customer).andExpect(statusReason(containsString("length of phone must be equal or less than 255")));
+        msgError = msgErrorFieldLength("phone");
+        doPost("/api/customer", customer)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString(msgError)));
+
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer,savedTenant.getId(),
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+        Mockito.reset(tbClusterService, auditLogService);
+
         customer.setPhone("+3892555554512");
         customer.setState(RandomStringUtils.randomAlphabetic(300));
-        doPost("/api/customer", customer).andExpect(statusReason(containsString("length of state must be equal or less than 255")));
+        msgError = msgErrorFieldLength("state");
+        doPost("/api/customer", customer)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString(msgError)));
+
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer,savedTenant.getId(),
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+        Mockito.reset(tbClusterService, auditLogService);
+
         customer.setState("Normal state");
         customer.setZip(RandomStringUtils.randomAlphabetic(300));
-        doPost("/api/customer", customer).andExpect(statusReason(containsString("length of zip or postal code must be equal or less than 255")));
+        msgError = msgErrorFieldLength("zip or postal code");
+        doPost("/api/customer", customer)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString(msgError)));
+
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer,savedTenant.getId(),
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
     }
 
     @Test
@@ -120,12 +199,30 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         doPost("/api/customer", savedCustomer, Customer.class);
 
         loginDifferentTenant();
-        doPost("/api/customer", savedCustomer, Customer.class, status().isForbidden());
-        deleteDifferentTenant();
 
+        Mockito.reset(tbClusterService, auditLogService);
+
+        doPost("/api/customer", savedCustomer, Customer.class, status().isForbidden());
+
+        testNotifyEntityNever(savedCustomer.getId(), savedCustomer);
+
+        doDelete("/api/customer/" + savedCustomer.getId().getId().toString())
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString(msgErrorPermission)));
+
+        testNotifyEntityNever(savedCustomer.getId(), savedCustomer);
+
+        deleteDifferentTenant();
         login(tenantAdmin.getName(), "testPassword1");
+
+        Mockito.reset(tbClusterService, auditLogService);
+
         doDelete("/api/customer/" + savedCustomer.getId().getId().toString())
                 .andExpect(status().isOk());
+
+        testNotifyEntityBroadcastEntityStateChangeEventOneTimeMsgToEdgeServiceNever(savedCustomer, savedCustomer.getId(),
+                savedCustomer.getId(), savedCustomer.getTenantId(), savedCustomer.getId(), tenantAdmin.getId(),
+                tenantAdmin.getEmail(), ActionType.DELETED, savedCustomer.getId().getId().toString());
     }
 
     @Test
@@ -148,63 +245,89 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         customer.setTitle("My customer");
         Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
 
+        Mockito.reset(tbClusterService, auditLogService);
+
         doDelete("/api/customer/" + savedCustomer.getId().getId().toString())
                 .andExpect(status().isOk());
 
-        doGet("/api/customer/" + savedCustomer.getId().getId().toString())
-                .andExpect(status().isNotFound());
+        testNotifyEntityBroadcastEntityStateChangeEventOneTimeMsgToEdgeServiceNever(savedCustomer, savedCustomer.getId(),
+                savedCustomer.getId(), savedCustomer.getTenantId(), savedCustomer.getId(), tenantAdmin.getId(),
+                tenantAdmin.getEmail(), ActionType.DELETED, savedCustomer.getId().getId().toString());
+
+        String customerIdStr = savedCustomer.getId().getId().toString();
+        doGet("/api/customer/" + customerIdStr)
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(containsString(msgErrorNoFound("Customer", customerIdStr))));
     }
 
     @Test
     public void testSaveCustomerWithEmptyTitle() throws Exception {
         Customer customer = new Customer();
+        String msgError = "Customer title " + msgErrorShouldBeSpecified;
+
+        Mockito.reset(tbClusterService, auditLogService);
+
         doPost("/api/customer", customer)
                 .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Customer title should be specified")));
+                .andExpect(statusReason(containsString(msgError)));
+
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer,savedTenant.getId(),
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
     }
 
     @Test
     public void testSaveCustomerWithInvalidEmail() throws Exception {
         Customer customer = new Customer();
+        String msgError = "Invalid email address format 'invalid@mail'";
         customer.setTitle("My customer");
         customer.setEmail("invalid@mail");
+
+        Mockito.reset(tbClusterService, auditLogService);
+
         doPost("/api/customer", customer)
                 .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Invalid email address format 'invalid@mail'")));
+                .andExpect(statusReason(containsString(msgError)));
 
-//        loginSysAdmin();
-//
-//        doDelete("/api/tenant/"+savedTenant.getId().getId().toString())
-//        .andExpect(status().isOk());
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(),
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
     }
 
     @Test
     public void testFindCustomers() throws Exception {
         TenantId tenantId = savedTenant.getId();
 
-        List<Customer> customers = new ArrayList<>();
-        for (int i = 0; i < 135; i++) {
+        int cntEntity = 135;
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        List<ListenableFuture<Customer>> futures = new ArrayList<>(cntEntity);
+        for (int i = 0; i < cntEntity; i++) {
             Customer customer = new Customer();
             customer.setTenantId(tenantId);
             customer.setTitle("Customer" + i);
-            customers.add(doPost("/api/customer", customer, Customer.class));
+            futures.add(executor.submit(() ->
+                    doPost("/api/customer", customer, Customer.class)));
         }
+        List<Customer> customers = Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS);
 
-        List<Customer> loadedCustomers = new ArrayList<>();
+        testNotifyManyEntityManyTimeMsgToEdgeServiceNever(new Customer(), new Customer(),
+                tenantId, tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, cntEntity);
+
+        List<Customer> loadedCustomers = new ArrayList<>(135);
         PageLink pageLink = new PageLink(23);
         PageData<Customer> pageData = null;
         do {
-            pageData = doGetTypedWithPageLink("/api/customers?", new TypeReference<PageData<Customer>>(){}, pageLink);
+            pageData = doGetTypedWithPageLink("/api/customers?", PAGE_DATA_CUSTOMER_TYPE_REFERENCE, pageLink);
             loadedCustomers.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
 
-        Collections.sort(customers, idComparator);
-        Collections.sort(loadedCustomers, idComparator);
+        assertThat(customers).containsExactlyInAnyOrderElementsOf(loadedCustomers);
 
-        Assert.assertEquals(customers, loadedCustomers);
+        deleteEntitiesAsync("/api/customer/", loadedCustomers, executor).get(TIMEOUT, TimeUnit.SECONDS);
     }
 
     @Test
@@ -212,7 +335,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         TenantId tenantId = savedTenant.getId();
 
         String title1 = "Customer title 1";
-        List<Customer> customersTitle1 = new ArrayList<>();
+        List<ListenableFuture<Customer>> futures = new ArrayList<>(143);
         for (int i = 0; i < 143; i++) {
             Customer customer = new Customer();
             customer.setTenantId(tenantId);
@@ -220,10 +343,13 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
             String title = title1 + suffix;
             title = i % 2 == 0 ? title.toLowerCase() : title.toUpperCase();
             customer.setTitle(title);
-            customersTitle1.add(doPost("/api/customer", customer, Customer.class));
+            futures.add(executor.submit(() ->
+                    doPost("/api/customer", customer, Customer.class)));
         }
+        List<Customer> customersTitle1 = Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS);
+
         String title2 = "Customer title 2";
-        List<Customer> customersTitle2 = new ArrayList<>();
+        futures = new ArrayList<>(175);
         for (int i = 0; i < 175; i++) {
             Customer customer = new Customer();
             customer.setTenantId(tenantId);
@@ -231,59 +357,49 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
             String title = title2 + suffix;
             title = i % 2 == 0 ? title.toLowerCase() : title.toUpperCase();
             customer.setTitle(title);
-            customersTitle2.add(doPost("/api/customer", customer, Customer.class));
+            futures.add(executor.submit(() ->
+                    doPost("/api/customer", customer, Customer.class)));
         }
+
+        List<Customer> customersTitle2 = Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS);
 
         List<Customer> loadedCustomersTitle1 = new ArrayList<>();
         PageLink pageLink = new PageLink(15, 0, title1);
         PageData<Customer> pageData = null;
         do {
-            pageData = doGetTypedWithPageLink("/api/customers?", new TypeReference<PageData<Customer>>(){}, pageLink);
+            pageData = doGetTypedWithPageLink("/api/customers?", PAGE_DATA_CUSTOMER_TYPE_REFERENCE, pageLink);
             loadedCustomersTitle1.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
 
-        Collections.sort(customersTitle1, idComparator);
-        Collections.sort(loadedCustomersTitle1, idComparator);
-
-        Assert.assertEquals(customersTitle1, loadedCustomersTitle1);
+        assertThat(customersTitle1).as(title1).containsExactlyInAnyOrderElementsOf(loadedCustomersTitle1);
 
         List<Customer> loadedCustomersTitle2 = new ArrayList<>();
         pageLink = new PageLink(4, 0, title2);
         do {
-            pageData = doGetTypedWithPageLink("/api/customers?", new TypeReference<PageData<Customer>>(){}, pageLink);
+            pageData = doGetTypedWithPageLink("/api/customers?", PAGE_DATA_CUSTOMER_TYPE_REFERENCE, pageLink);
             loadedCustomersTitle2.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
 
-        Collections.sort(customersTitle2, idComparator);
-        Collections.sort(loadedCustomersTitle2, idComparator);
+        assertThat(customersTitle2).as(title2).containsExactlyInAnyOrderElementsOf(loadedCustomersTitle2);
 
-        Assert.assertEquals(customersTitle2, loadedCustomersTitle2);
-
-        for (Customer customer : loadedCustomersTitle1) {
-            doDelete("/api/customer/" + customer.getId().getId().toString())
-                    .andExpect(status().isOk());
-        }
+        deleteEntitiesAsync("/api/customer/", loadedCustomersTitle1, executor).get(TIMEOUT, TimeUnit.SECONDS);
 
         pageLink = new PageLink(4, 0, title1);
-        pageData = doGetTypedWithPageLink("/api/customers?", new TypeReference<PageData<Customer>>(){}, pageLink);
+        pageData = doGetTypedWithPageLink("/api/customers?", PAGE_DATA_CUSTOMER_TYPE_REFERENCE, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
-        for (Customer customer : loadedCustomersTitle2) {
-            doDelete("/api/customer/" + customer.getId().getId().toString())
-                    .andExpect(status().isOk());
-        }
+        deleteEntitiesAsync("/api/customer/", loadedCustomersTitle2, executor).get(TIMEOUT, TimeUnit.SECONDS);
 
         pageLink = new PageLink(4, 0, title2);
-        pageData = doGetTypedWithPageLink("/api/customers?", new TypeReference<PageData<Customer>>(){}, pageLink);
+        pageData = doGetTypedWithPageLink("/api/customers?", PAGE_DATA_CUSTOMER_TYPE_REFERENCE, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
     }
-
 }

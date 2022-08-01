@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>3.4.0-SNAPSHOT</version>
+        <version>3.4.1-SNAPSHOT</version>
         <artifactId>msa</artifactId>
     </parent>
     <groupId>org.thingsboard.msa</groupId>
@@ -71,8 +71,8 @@
                             <goal>install-node-and-yarn</goal>
                         </goals>
                         <configuration>
-                            <nodeVersion>v12.16.1</nodeVersion>
-                            <yarnVersion>v1.22.4</yarnVersion>
+                            <nodeVersion>v16.15.1</nodeVersion>
+                            <yarnVersion>v1.22.17</yarnVersion>
                         </configuration>
                     </execution>
                     <execution>
@@ -89,6 +89,7 @@
                         <goals>
                             <goal>yarn</goal>
                         </goals>
+                        <phase>compile</phase>
                         <configuration>
                             <arguments>run pkg</arguments>
                         </configuration>
@@ -104,38 +105,6 @@
                 <artifactId>maven-resources-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>copy-src-api</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}/src/api</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>api</directory>
-                                    <filtering>false</filtering>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-src-queue</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}/src/queue</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>queue</directory>
-                                    <filtering>false</filtering>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                    <execution>
                         <id>copy-src-root</id>
                         <phase>process-resources</phase>
                         <goals>
@@ -147,7 +116,6 @@
                                 <resource>
                                     <directory>${basedir}</directory>
                                     <includes>
-                                        <include>server.js</include>
                                         <include>package.json</include>
                                         <include>yarn.lock</include>
                                     </includes>

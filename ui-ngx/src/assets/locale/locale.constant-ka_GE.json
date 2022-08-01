@@ -53,7 +53,8 @@
     "export": "ექსპორტი",
     "share-via": "გაზიარება როგორც {{provider}}",
     "continue": "გაგრძელება",
-    "discard-changes": "ცვლილებების გაუქმება"
+    "discard-changes": "ცვლილებების გაუქმება",
+    "done": "შესრულებულია"
   },
   "aggregation": {
     "aggregation": "აგრეგაცია",
@@ -1191,8 +1192,7 @@
       "select-file": "აირჩიე ფაილი",
       "configuration": "დააიმპორტე კონფიგურაცია",
       "column-type": "აირჩიე სვეტის ტიპი",
-      "creat-entities": "იქმნება ახალი ობიექტები",
-      "done": "შესრულებულია"
+      "creat-entities": "იქმნება ახალი ობიექტები"
     },
     "message": {
       "create-entities": "{{count}} ახალი ობიექტები წარმატებით შეიქმნა.",

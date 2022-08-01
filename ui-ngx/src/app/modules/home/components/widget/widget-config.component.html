@@ -110,23 +110,21 @@
               </div>
             </div>
             <div style="overflow: auto; padding-bottom: 15px;">
-              <mat-list dndDropzone dndEffectAllowed="move"
-                        (dndDrop)="onDatasourceDrop($event)"
-                        [dndDisableIf]="disabled" formArrayName="datasources">
-                <mat-list-item dndPlaceholderRef
-                               class="dndPlaceholder">
-                </mat-list-item>
+              <mat-list class="tb-drop-list"
+                        cdkDropList
+                        cdkDropListOrientation="vertical"
+                        (cdkDropListDropped)="onDatasourceDrop($event)"
+                        [cdkDropListDisabled]="disabled"
+                        formArrayName="datasources">
                 <mat-list-item *ngFor="let datasourceControl of datasourcesFormArray().controls; let $index = index;"
-                               [dndDraggable]="datasourceControl.value"
-                               (dndMoved)="dndDatasourceMoved($index)"
-                               [dndDisableIf]="disabled"
-                               dndEffectAllowed="move">
+                               class="tb-datasource-list-item tb-draggable" cdkDrag
+                               [cdkDragDisabled]="disabled">
                   <div fxFlex fxLayout="row" fxLayoutAlign="start center">
                     <div style="width: 60px;">
                       <button *ngIf="!disabled" mat-icon-button color="primary"
                               class="handle"
                               style="min-width: 40px; margin: 0"
-                              dndHandle
+                              cdkDragHandle
                               matTooltip="{{ 'action.drag' | translate }}"
                               matTooltipPosition="above">
                         <mat-icon>drag_handle</mat-icon>
@@ -190,6 +188,9 @@
                                           [optDataKeys]="dataKeysOptional(datasourceControl.value)"
                                           [aliasController]="aliasController"
                                           [datakeySettingsSchema]="modelValue?.dataKeySettingsSchema"
+                                          [dataKeySettingsDirective]="modelValue?.dataKeySettingsDirective"
+                                          [dashboard]="dashboard"
+                                          [widget]="widget"
                                           [callbacks]="widgetConfigCallbacks"
                                           [entityAliasId]="datasourceControl.get('entityAliasId').value"
                                           [formControl]="datasourceControl.get('dataKeys')">
@@ -201,6 +202,9 @@
                                           [optDataKeys]="true"
                                           [aliasController]="aliasController"
                                           [datakeySettingsSchema]="modelValue?.latestDataKeySettingsSchema"
+                                          [dataKeySettingsDirective]="modelValue?.latestDataKeySettingsDirective"
+                                          [dashboard]="dashboard"
+                                          [widget]="widget"
                                           [callbacks]="widgetConfigCallbacks"
                                           [entityAliasId]="datasourceControl.get('entityAliasId').value"
                                           [formControl]="datasourceControl.get('latestDataKeys')">
@@ -298,6 +302,9 @@
                             [datasourceType]="alarmSourceSettings.get('type').value"
                             [aliasController]="aliasController"
                             [datakeySettingsSchema]="modelValue?.dataKeySettingsSchema"
+                            [dataKeySettingsDirective]="modelValue?.dataKeySettingsDirective"
+                            [dashboard]="dashboard"
+                            [widget]="widget"
                             [callbacks]="widgetConfigCallbacks"
                             [entityAliasId]="alarmSourceSettings.get('entityAliasId').value"
                             formControlName="dataKeys">
@@ -310,6 +317,14 @@
             <mat-panel-title translate>widget-config.data-settings</mat-panel-title>
           </mat-expansion-panel-header>
           <ng-template matExpansionPanelContent>
+            <div fxLayout="row" *ngIf="widgetType !== widgetTypes.rpc &&
+                                    widgetType !== widgetTypes.alarm &&
+                                    modelValue?.isDataEnabled && !modelValue?.typeParameters?.singleEntity">
+              <mat-form-field fxFlex>
+                <mat-label translate>widget-config.data-page-size</mat-label>
+                <input matInput formControlName="pageSize" type="number" min="1" step="1">
+              </mat-form-field>
+            </div>
             <div fxLayout.xs="column" fxLayout="row" fxLayoutGap="8px">
               <mat-form-field fxFlex>
                 <mat-label translate>widget-config.units</mat-label>
@@ -491,9 +506,12 @@
   <mat-tab *ngIf="displayAdvanced()" label="{{ 'widget-config.advanced' | translate }}">
     <div [formGroup]="advancedSettings" class="mat-content mat-padding tb-advanced-widget-config"
          fxLayout="column">
-        <tb-json-form
+        <tb-widget-settings
+          [aliasController]="aliasController"
+          [dashboard]="dashboard"
+          [widget]="widget"
           formControlName="settings">
-        </tb-json-form>
+        </tb-widget-settings>
     </div>
   </mat-tab>
   <mat-tab label="{{ 'widget-config.actions' | translate }}" [formGroup]="actionsSettings">

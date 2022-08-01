@@ -196,7 +196,7 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
         device.getId().getId().toString();
         lwM2MTestClient.start(isStartLw);
         await(awaitAlias)
-                .atMost(1000, TimeUnit.MILLISECONDS)
+                .atMost(20, TimeUnit.SECONDS)
                 .until(() -> finishState.equals(lwM2MTestClient.getClientState()));
         Assert.assertEquals(expectedStatuses, lwM2MTestClient.getClientStates());
     }
@@ -234,7 +234,7 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
         String deviceId = device.getId().getId().toString();
         lwM2MTestClient.start(true);
         await(awaitAlias)
-                .atMost(1000, TimeUnit.MILLISECONDS)
+                .atMost(20, TimeUnit.SECONDS)
                 .until(() -> ON_REGISTRATION_SUCCESS.equals(lwM2MTestClient.getClientState()));
         Assert.assertEquals(expectedStatusesLwm2m, lwM2MTestClient.getClientStates());
 
@@ -246,7 +246,7 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
         expectedStatusesBs.add(ON_DEREGISTRATION_STARTED);
         expectedStatusesBs.add(ON_DEREGISTRATION_SUCCESS);
         await(awaitAlias)
-                .atMost(1000, TimeUnit.MILLISECONDS)
+                .atMost(20, TimeUnit.SECONDS)
                 .until(() -> ON_REGISTRATION_SUCCESS.equals(lwM2MTestClient.getClientState()));
         Assert.assertEquals(expectedStatusesBs, lwM2MTestClient.getClientStates());
     }

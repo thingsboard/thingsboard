@@ -79,7 +79,8 @@
               "node_modules/leaflet.markercluster/dist/MarkerCluster.Default.css",
               "node_modules/@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css",
               "node_modules/prismjs/themes/prism.css",
-              "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.css"
+              "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.css",
+              "node_modules/ace-diff/dist/ace-diff.min.css"
             ],
             "stylePreprocessorOptions": {
               "includePaths": [
@@ -90,7 +91,7 @@
               "node_modules/tinycolor2/dist/tinycolor-min.js",
               "node_modules/split.js/dist/split.min.js",
               "node_modules/systemjs/dist/system.min.js",
-              "node_modules/marked/lib/marked.js",
+              "node_modules/marked/lib/marked.umd.js",
               "node_modules/prismjs/prism.js",
               "node_modules/prismjs/components/prism-css.min.js",
               "node_modules/prismjs/components/prism-bash.min.js",
@@ -130,7 +131,8 @@
               "jstree",
               "qrcode",
               "wcwidth",
-              "leaflet-polylinedecorator"
+              "leaflet-polylinedecorator",
+              "ace-diff"
             ]
           },
           "configurations": {

@@ -872,7 +872,11 @@ export class EntityDataSubscription {
       }
     }
     if (tsDataKeys.length) {
-      this.timeseriesTimer = setTimeout(this.onTimeseriesTick.bind(this, tsDataKeys, true), 0);
+      if (this.history) {
+        this.onTimeseriesTick(tsDataKeys, true);
+      } else {
+        this.timeseriesTimer = setTimeout(this.onTimeseriesTick.bind(this, tsDataKeys, true), 0);
+      }
     }
     if (latestDataKeys.length) {
       this.onLatestTick(latestDataKeys, detectChanges);

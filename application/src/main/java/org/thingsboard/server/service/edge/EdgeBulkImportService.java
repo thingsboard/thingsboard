@@ -18,15 +18,19 @@ package org.thingsboard.server.service.edge;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.importing.AbstractBulkImportService;
-import org.thingsboard.server.service.importing.BulkImportColumnType;
+import org.thingsboard.server.service.sync.ie.importing.csv.AbstractBulkImportService;
+import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportColumnType;
+import org.thingsboard.server.service.entitiy.edge.TbEdgeService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.Map;
@@ -37,6 +41,8 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class EdgeBulkImportService extends AbstractBulkImportService<Edge> {
     private final EdgeService edgeService;
+    private final TbEdgeService tbEdgeService;
+    private final RuleChainService ruleChainService;
 
     @Override
     protected void setEntityFields(Edge entity, Map<BulkImportColumnType, String> fields) {
@@ -66,9 +72,11 @@ public class EdgeBulkImportService extends AbstractBulkImportService<Edge> {
         entity.setAdditionalInfo(additionalInfo);
     }
 
+    @SneakyThrows
     @Override
-    protected Edge saveEntity(Edge entity, Map<BulkImportColumnType, String> fields) {
-        return edgeService.saveEdge(entity);
+    protected Edge saveEntity(SecurityUser user, Edge entity, Map<BulkImportColumnType, String> fields) {
+        RuleChain edgeTemplateRootRuleChain = ruleChainService.getEdgeTemplateRootRuleChain(user.getTenantId());
+        return tbEdgeService.save(entity, edgeTemplateRootRuleChain, user);
     }
 
     @Override

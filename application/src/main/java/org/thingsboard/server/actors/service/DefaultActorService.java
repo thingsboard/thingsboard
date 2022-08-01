@@ -35,6 +35,7 @@ import org.thingsboard.server.actors.stats.StatsActor;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
+import org.thingsboard.server.queue.util.AfterStartUp;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -113,8 +114,7 @@ public class DefaultActorService extends TbApplicationEventListener<PartitionCha
         }
     }
 
-    @EventListener(ApplicationReadyEvent.class)
-    @Order(value = 2)
+    @AfterStartUp(order = AfterStartUp.ACTOR_SYSTEM)
     public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
         log.info("Received application ready event. Sending application init message to actor system");
         appActor.tellWithHighPriority(new AppInitMsg());
@@ -123,7 +123,7 @@ public class DefaultActorService extends TbApplicationEventListener<PartitionCha
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
         log.info("Received partition change event.");
-        this.appActor.tellWithHighPriority(new PartitionChangeMsg(event.getServiceQueueKey(), event.getPartitions()));
+        this.appActor.tellWithHighPriority(new PartitionChangeMsg(event.getQueueKey().getType(), event.getPartitions()));
     }
 
     @PreDestroy

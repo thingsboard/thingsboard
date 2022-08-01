@@ -46,7 +46,7 @@ import { MatAutocomplete } from '@angular/material/autocomplete';
 import { MatChipInputEvent, MatChipList } from '@angular/material/chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { DataKey, DatasourceType, JsonSettingsSchema, widgetType } from '@shared/models/widget.models';
+import { DataKey, DatasourceType, Widget, JsonSettingsSchema, widgetType } from '@shared/models/widget.models';
 import { IAliasController } from '@core/api/widget-api.models';
 import { DataKeysCallbacks } from './data-keys.component.models';
 import { alarmFields } from '@shared/models/alarm.models';
@@ -61,6 +61,7 @@ import {
 } from '@home/components/widget/data-key-config-dialog.component';
 import { deepClone } from '@core/utils';
 import { MatChipDropEvent } from '@app/shared/components/mat-chip-draggable.directive';
+import { Dashboard } from '@shared/models/dashboard.models';
 
 @Component({
   selector: 'tb-data-keys',
@@ -112,6 +113,15 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
 
   @Input()
   datakeySettingsSchema: JsonSettingsSchema;
+
+  @Input()
+  dataKeySettingsDirective: string;
+
+  @Input()
+  dashboard: Dashboard;
+
+  @Input()
+  widget: Widget;
 
   @Input()
   callbacks: DataKeysCallbacks;
@@ -410,6 +420,10 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
         data: {
           dataKey: deepClone(key),
           dataKeySettingsSchema: this.datakeySettingsSchema,
+          dataKeySettingsDirective: this.dataKeySettingsDirective,
+          dashboard: this.dashboard,
+          aliasController: this.aliasController,
+          widget: this.widget,
           entityAliasId: this.entityAliasId,
           showPostProcessing: this.widgetType !== widgetType.alarm,
           callbacks: this.callbacks

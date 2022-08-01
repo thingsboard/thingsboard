@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -35,7 +36,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
-import org.thingsboard.server.service.edge.rpc.EdgeEventUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -80,19 +80,19 @@ public class AdminSettingsEdgeEventFetcher implements EdgeEventFetcher {
         List<EdgeEvent> result = new ArrayList<>();
 
         AdminSettings systemMailSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
-        result.add(EdgeEventUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.ADMIN_SETTINGS,
+        result.add(EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.ADMIN_SETTINGS,
                 EdgeEventActionType.UPDATED, null, mapper.valueToTree(systemMailSettings)));
 
-        AdminSettings tenantMailSettings = convertToTenantAdminSettings(systemMailSettings.getKey(), (ObjectNode) systemMailSettings.getJsonValue());
-        result.add(EdgeEventUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.ADMIN_SETTINGS,
+        AdminSettings tenantMailSettings = convertToTenantAdminSettings(tenantId, systemMailSettings.getKey(), (ObjectNode) systemMailSettings.getJsonValue());
+        result.add(EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.ADMIN_SETTINGS,
                 EdgeEventActionType.UPDATED, null, mapper.valueToTree(tenantMailSettings)));
 
         AdminSettings systemMailTemplates = loadMailTemplates();
-        result.add(EdgeEventUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.ADMIN_SETTINGS,
+        result.add(EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.ADMIN_SETTINGS,
                 EdgeEventActionType.UPDATED, null, mapper.valueToTree(systemMailTemplates)));
 
-        AdminSettings tenantMailTemplates = convertToTenantAdminSettings(systemMailTemplates.getKey(), (ObjectNode) systemMailTemplates.getJsonValue());
-        result.add(EdgeEventUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.ADMIN_SETTINGS,
+        AdminSettings tenantMailTemplates = convertToTenantAdminSettings(tenantId, systemMailTemplates.getKey(), (ObjectNode) systemMailTemplates.getJsonValue());
+        result.add(EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.ADMIN_SETTINGS,
                 EdgeEventActionType.UPDATED, null, mapper.valueToTree(tenantMailTemplates)));
 
         // @voba - returns PageData object to be in sync with other fetchers
@@ -151,8 +151,9 @@ public class AdminSettingsEdgeEventFetcher implements EdgeEventFetcher {
         }
     }
 
-    private AdminSettings convertToTenantAdminSettings(String key, ObjectNode jsonValue) {
+    private AdminSettings convertToTenantAdminSettings(TenantId tenantId, String key, ObjectNode jsonValue) {
         AdminSettings tenantMailSettings = new AdminSettings();
+        tenantMailSettings.setTenantId(tenantId);
         jsonValue.put("useSystemMailSettings", true);
         tenantMailSettings.setJsonValue(jsonValue);
         tenantMailSettings.setKey(key);

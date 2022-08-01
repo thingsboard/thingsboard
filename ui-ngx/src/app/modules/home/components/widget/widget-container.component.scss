@@ -114,4 +114,8 @@ div.tb-widget {
   &.tb-not-highlighted {
     opacity: .5;
   }
+
+  &.tb-edit {
+    cursor: pointer;
+  }
 }

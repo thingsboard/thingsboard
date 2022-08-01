@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thingsboard</groupId>
     <artifactId>thingsboard</artifactId>
-    <version>3.4.0-SNAPSHOT</version>
+    <version>3.4.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Thingsboard</name>
@@ -39,12 +39,12 @@
         <javax-annotation.version>1.3.2</javax-annotation.version>
         <jakarta.xml.bind-api.version>2.3.2</jakarta.xml.bind-api.version>
         <jaxb-runtime.version>2.3.2</jaxb-runtime.version>
-        <spring-boot.version>2.5.12</spring-boot.version>
-        <spring-data.version>2.5.10</spring-data.version>
-        <spring.version>5.3.18</spring.version>
-        <spring-redis.version>5.5.10</spring-redis.version>
-        <spring-security.version>5.6.2</spring-security.version>
-        <spring-data-redis.version>2.5.10</spring-data-redis.version>
+        <spring-boot.version>2.7.0</spring-boot.version>
+        <spring-data.version>2.7.0</spring-data.version>
+        <spring.version>5.3.20</spring.version>
+        <spring-redis.version>5.5.12</spring-redis.version>
+        <spring-security.version>5.7.1</spring-security.version>
+        <spring-data-redis.version>2.7.0</spring-data-redis.version>
         <jedis.version>3.7.1</jedis.version>
         <jjwt.version>0.7.0</jjwt.version>
         <slf4j.version>1.7.32</slf4j.version>
@@ -70,7 +70,7 @@
         <json-schema-validator.version>2.2.6</json-schema-validator.version>
         <californium.version>3.0.0</californium.version>
         <leshan.version>2.0.0-M5</leshan.version>
-        <gson.version>2.6.2</gson.version>
+        <gson.version>2.9.0</gson.version>
         <freemarker.version>2.3.30</freemarker.version>
         <mail.version>1.6.2</mail.version>
         <curator.version>4.2.0</curator.version>
@@ -83,7 +83,7 @@
         <netty-tcnative.version>2.0.51.Final</netty-tcnative.version>
         <os-maven-plugin.version>1.7.0</os-maven-plugin.version>
         <rabbitmq.version>4.8.0</rabbitmq.version>
-        <surfire.version>2.19.1</surfire.version>
+        <surefire.version>3.0.0-M6</surefire.version>
         <jar-plugin.version>3.0.2</jar-plugin.version>
         <springfox-swagger.version>3.0.4</springfox-swagger.version>
         <swagger-annotations.version>1.6.3</swagger-annotations.version>
@@ -98,8 +98,9 @@
         <elasticsearch.version>5.0.2</elasticsearch.version>
         <delight-nashorn-sandbox.version>0.2.1</delight-nashorn-sandbox.version>
         <!-- IMPORTANT: If you change the version of the kafka client, make sure to synchronize our overwritten implementation of the
-        org.apache.kafka.common.network.NetworkReceive class in the application module. It addresses the issue https://issues.apache.org/jira/browse/KAFKA-4090. -->
-        <kafka.version>2.8.0</kafka.version>
+        org.apache.kafka.common.network.NetworkReceive class in the application module. It addresses the issue https://issues.apache.org/jira/browse/KAFKA-4090.
+        Here is the source to track https://github.com/apache/kafka/tree/trunk/clients/src/main/java/org/apache/kafka/common/network -->
+        <kafka.version>3.2.0</kafka.version>
         <bucket4j.version>4.1.1</bucket4j.version>
         <fst.version>2.57</fst.version>
         <antlr.version>2.7.7</antlr.version>
@@ -112,28 +113,31 @@
         <ua-parser.version>1.4.3</ua-parser.version>
         <commons-beanutils.version>1.9.4</commons-beanutils.version>
         <commons-collections.version>3.2.2</commons-collections.version>
-        <micrometer.version>1.8.3</micrometer.version>
+        <micrometer.version>1.9.0</micrometer.version>
         <protobuf-dynamic.version>1.0.3TB</protobuf-dynamic.version>
         <wire-schema.version>3.4.0</wire-schema.version>
         <twilio.version>8.17.0</twilio.version>
         <hibernate-validator.version>6.0.20.Final</hibernate-validator.version>
         <javax.el.version>3.0.0</javax.el.version>
         <javax.validation-api.version>2.0.1.Final</javax.validation-api.version>
-        <antisamy.version>1.6.4</antisamy.version>
+        <antisamy.version>1.6.8</antisamy.version>
         <snmp4j.version>2.8.5</snmp4j.version>
         <!--         TEST SCOPE         -->
         <awaitility.version>4.1.0</awaitility.version>
         <cassandra-unit.version>4.3.1.0</cassandra-unit.version>
         <dbunit.version>2.7.2</dbunit.version>
-        <hsqldb.version>2.6.1</hsqldb.version>
         <java-websocket.version>1.5.2</java-websocket.version>
-        <jupiter.version>5.7.2</jupiter.version> <!-- keep the same version as spring-boot-starter-test depend on jupiter-->
+        <jupiter.version>5.8.2</jupiter.version> <!-- keep the same version as spring-boot-starter-test depend on jupiter-->
         <json-path.version>2.6.0</json-path.version>
+        <mock-server.version>5.13.1</mock-server.version>
         <spring-test-dbunit.version>1.3.0</spring-test-dbunit.version> <!-- 2016 -->
         <takari-cpsuite.version>1.2.7</takari-cpsuite.version> <!-- 2015 -->
         <!--      BLACKBOX TEST SCOPE     -->
         <testcontainers.version>1.16.0</testcontainers.version>
         <zeroturnaround.version>1.12</zeroturnaround.version>
+        <opensmpp.version>3.0.0</opensmpp.version>
+        <jgit.version>6.1.0.202203080745-r</jgit.version>
+        <aerogear-otp.version>1.0.0</aerogear-otp.version>
     </properties>
 
     <modules>
@@ -641,7 +645,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.0.0-M5</version>
+                    <version>${surefire.version}</version>
                     <configuration>
                         <argLine>
                             --illegal-access=permit
@@ -862,6 +866,11 @@
             <dependency>
                 <groupId>org.thingsboard.common</groupId>
                 <artifactId>util</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.common</groupId>
+                <artifactId>version-control</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -1658,11 +1667,6 @@
                 <version>${bouncycastle.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.hsqldb</groupId>
-                <artifactId>hsqldb</artifactId>
-                <version>${hsqldb.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.testcontainers</groupId>
                 <artifactId>postgresql</artifactId>
                 <version>${testcontainers.version}</version>
@@ -1874,6 +1878,38 @@
                 <artifactId>zt-exec</artifactId>
                 <version>${zeroturnaround.version}</version>
                 <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.mock-server</groupId>
+                <artifactId>mockserver-netty</artifactId>
+                <version>${mock-server.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.mock-server</groupId>
+                <artifactId>mockserver-client-java</artifactId>
+                <version>${mock-server.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.opensmpp</groupId>
+                <artifactId>opensmpp-core</artifactId>
+                <version>${opensmpp.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.aerogear</groupId>
+                <artifactId>aerogear-otp-java</artifactId>
+                <version>${aerogear-otp.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jgit</groupId>
+                <artifactId>org.eclipse.jgit</artifactId>
+                <version>${jgit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jgit</groupId>
+                <artifactId>org.eclipse.jgit.ssh.apache</artifactId>
+                <version>${jgit.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
