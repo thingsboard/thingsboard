@@ -29,6 +29,7 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -61,8 +62,8 @@ public class TbSplitArrayMsgNode implements TbNode {
         this.configurationJsonPath = Configuration.builder()
                 .jsonProvider(new JacksonJsonNodeJsonProvider())
                 .build();
-        if (config.getJsonPath().isEmpty()) {
-            throw new IllegalArgumentException("Configuration property 'JsonPath' is not specified!");
+        if (StringUtils.isEmpty(config.getJsonPath())) {
+            throw new IllegalArgumentException("JsonPath expression is not specified");
         }
         this.jsonPath = JsonPath.compile(config.getJsonPath());
     }
