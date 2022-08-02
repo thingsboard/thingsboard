@@ -45,7 +45,7 @@ import java.util.concurrent.ExecutionException;
         nodeDetails = "Rule node returns transformed messages via <code>Success</code> chain in case that message successfully transformed" +
                 " otherwise returns the incoming message as outbound message with <code>Failure</code> chain.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "",
+        configDirective = "tbEnrichmentNodeFetchDeviceCredentialsConfig",
         icon = "functions"
 )
 public class TbFetchDeviceCredentialsNode implements TbNode {
