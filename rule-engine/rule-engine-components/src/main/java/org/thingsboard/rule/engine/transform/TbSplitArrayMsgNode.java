@@ -42,9 +42,10 @@ import java.util.concurrent.ExecutionException;
         name = "split array msg",
         configClazz = TbSplitArrayMsgNodeConfiguration.class,
         nodeDescription = "Split array message into several msgs",
-        nodeDetails = "Fetch the values of the msg field by JsonPath expression. If the field is not found or the " +
-                " received field is not an array returns the incoming msg as outbound msg with <code>Failure</code> " +
-                " chain, otherwise returns transformed messages via <code>Success</code> chain",
+        nodeDetails = "Split the array fetched from the msg body by json path expression. The default value of the " +
+                " expression is set to <b>$</b> (the root object/element).  If extracted field from the expression " +
+                " is not found or the received field is not a json array, the  <code>Failure</code> chain is used, " +
+                " otherwise returns inner objects of the extracted array as separate messages via <code>Success</code> chain",
         icon = "functions",
         configDirective = ""
 )
@@ -52,6 +53,7 @@ public class TbSplitArrayMsgNode implements TbNode {
 
     TbSplitArrayMsgNodeConfiguration config;
     Configuration configurationJsonPath;
+    JsonPath jsonPath;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -60,19 +62,19 @@ public class TbSplitArrayMsgNode implements TbNode {
                 .jsonProvider(new JacksonJsonNodeJsonProvider())
                 .build();
         if (config.getJsonPath().isEmpty()) {
-            throw new IllegalArgumentException("Value 'JsonPath' is empty!");
+            throw new IllegalArgumentException("Configuration property 'JsonPath' is not specified!");
         }
+        this.jsonPath = JsonPath.compile(config.getJsonPath());
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
         try {
-            JsonPath jsonPath = JsonPath.compile(config.getJsonPath());
             JsonNode arrayData = jsonPath.read(msg.getData(), this.configurationJsonPath);
             if (arrayData.isArray()) {
                 splitArrayMsg(ctx, msg, (ArrayNode) arrayData);
             } else {
-                ctx.tellFailure(msg, new RuntimeException("JsonPath expression '" + config.getJsonPath() + "' returned an object that is not an array"));
+                ctx.tellFailure(msg, new RuntimeException("JsonPath expression '" + config.getJsonPath() + "' returned not a json array!"));
             }
         } catch (PathNotFoundException e) {
             ctx.tellFailure(msg, e);
