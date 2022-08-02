@@ -42,7 +42,7 @@ import java.util.concurrent.ExecutionException;
                 "If the msg is not a JSON object returns the incoming message as outbound message with <code>Failure</code> chain," +
                 " otherwise returns transformed messages via <code>Success</code> chain",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "",
+        configDirective = "tbTransformationNodeRenameMsgKeysConfig",
         icon = "functions"
 )
 public class TbRenameMsgKeysNode implements TbNode {
