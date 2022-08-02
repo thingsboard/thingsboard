@@ -39,7 +39,7 @@ import java.util.concurrent.ExecutionException;
 
 @Slf4j
 @RuleNode(
-        type = ComponentType.EXTERNAL,
+        type = ComponentType.TRANSFORMATION,
         name = "split array msg",
         configClazz = TbSplitArrayMsgNodeConfiguration.class,
         nodeDescription = "Split array message into several msgs",
@@ -48,7 +48,7 @@ import java.util.concurrent.ExecutionException;
                 " is not found or the received field is not a json array, the  <code>Failure</code> chain is used, " +
                 " otherwise returns inner objects of the extracted array as separate messages via <code>Success</code> chain",
         icon = "functions",
-        configDirective = ""
+        configDirective = "tbTransformationNodeSplitArrayMsgConfig"
 )
 public class TbSplitArrayMsgNode implements TbNode {
 
