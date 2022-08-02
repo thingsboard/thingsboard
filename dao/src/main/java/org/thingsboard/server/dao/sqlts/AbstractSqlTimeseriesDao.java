@@ -135,7 +135,7 @@ public abstract class AbstractSqlTimeseriesDao extends BaseAbstractSqlTimeseries
         } while (tenantsIds.hasNext());
     }
 
-    private long getTtl(long standardTtl, TenantId tenantId, EntityId entityId) {
+    protected long getTtl(long standardTtl, TenantId tenantId, EntityId entityId) {
         Optional<AttributeKvEntry> ttl;
         ttl = attributesDao.find(tenantId, entityId, DataConstants.SERVER_SCOPE, TTL);
 

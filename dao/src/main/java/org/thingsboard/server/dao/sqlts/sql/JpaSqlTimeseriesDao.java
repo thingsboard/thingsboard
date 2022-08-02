@@ -20,17 +20,23 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.model.sqlts.ts.TsKvEntity;
 import org.thingsboard.server.dao.sqlts.AbstractChunkedAggregationTimeseriesDao;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
+import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.dao.timeseries.SqlPartition;
 import org.thingsboard.server.dao.timeseries.SqlTsPartitionDate;
 import org.thingsboard.server.dao.util.SqlTsDao;
@@ -44,6 +50,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -61,6 +68,10 @@ public class JpaSqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDao
 
     @Autowired
     private SqlPartitioningRepository partitioningRepository;
+    @Autowired
+    private TenantDao tenantDao;
+    @Autowired
+    private CustomerDao customerDao;
 
     private SqlTsPartitionDate tsFormat;
 
@@ -115,21 +126,125 @@ public class JpaSqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDao
         return tsKvRepository.cleanUp(expirationTime, keyIds, tenantId.getId(), customerId.getId());
     }
 
-
     private void cleanupPartitions(long systemTtl) {
-        log.info("Going to cleanup old timeseries data partitions using partition type: {} and ttl: {}s", partitioning, systemTtl);
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement("call drop_partitions_by_max_ttl(?,?,?)")) {
-            stmt.setString(1, partitioning);
-            stmt.setLong(2, systemTtl);
-            stmt.setLong(3, 0);
-            stmt.setQueryTimeout((int) TimeUnit.HOURS.toSeconds(1));
-            stmt.execute();
-            printWarnings(stmt);
-            try (ResultSet resultSet = stmt.getResultSet()) {
-                resultSet.next();
-                log.info("Total partitions removed by TTL: [{}]", resultSet.getLong(1));
+        long maxTtl = getMaxTtl(systemTtl);
+        DateTime dateByTtlDate = getPartitionByTtlDate(maxTtl);
+        log.info("Date by max ttl {}", dateByTtlDate);
+        String partitionByTtlDate = getPartitionByDate(dateByTtlDate);
+        log.info("Partition by max ttl {}", partitionByTtlDate);
+
+        cleanupPartition(dateByTtlDate, partitionByTtlDate);
+    }
+
+    private long getMaxTtl(long systemTtl) {
+        long maxTtl = Math.max(systemTtl, 0L);
+        PageLink tenantsBatchRequest = new PageLink(PAGE_SIZE, 0);
+        PageData<TenantId> tenantsIds;
+        do {
+            tenantsIds = tenantDao.findTenantsIds(tenantsBatchRequest);
+
+            for (TenantId tenantId : tenantsIds.getData()) {
+                long tenantTtl = getTtl(systemTtl, tenantId, tenantId);
+                maxTtl = Math.max(maxTtl, tenantTtl);
+
+                PageLink customersBatchRequest = new PageLink(PAGE_SIZE, 0);
+                PageData<Customer> customersIds;
+                do {
+                    customersIds = customerDao.findCustomersByTenantId(tenantId.getId(), customersBatchRequest);
+
+                    for (Customer customer : customersIds.getData()) {
+                        long customerTtl = getTtl(tenantTtl, tenantId, customer.getId());
+                        maxTtl = Math.max(maxTtl, customerTtl);
+                    }
+                    customersBatchRequest = customersBatchRequest.nextPageLink();
+
+                } while (customersIds.hasNext());
             }
+
+            tenantsBatchRequest = tenantsBatchRequest.nextPageLink();
+        } while (tenantsIds.hasNext());
+        return maxTtl;
+    }
+
+    private DateTime getPartitionByTtlDate(long maxTtl) {
+        return new DateTime(System.currentTimeMillis() - maxTtl);
+    }
+
+    private String getPartitionByDate(DateTime date) {
+        String result = "";
+        switch (partitioning) {
+            case "DAYS":
+                result = "_" + ((date.getDayOfMonth() < 10) ? "0" + date.getDayOfMonth() : date.getDayOfMonth()) + result;
+            case "MONTHS":
+                result = "_" + ((date.getMonthOfYear() < 10) ? "0" + date.getMonthOfYear() : date.getMonthOfYear()) + result;
+            case "YEARS":
+                result = date.getYear() + result;
+        }
+        return "ts_kv_" + result;
+    }
+
+    private void cleanupPartition(DateTime dateByTtlDate, String partitionByTtlDate) {
+        try (Connection connection = dataSource.getConnection();
+            PreparedStatement stmt = connection.prepareStatement("SELECT tablename " +
+                    "FROM pg_tables " +
+                    "WHERE schemaname = 'public'" +
+                    "AND tablename like 'ts_kv_' || '%' "+
+                    "AND tablename != 'ts_kv_latest' " +
+                    "AND tablename != 'ts_kv_dictionary' " +
+                    "AND tablename != 'ts_kv_indefinite' " +
+                    "AND tablename != ?")) {
+                stmt.setString(1, partitionByTtlDate);
+                stmt.setQueryTimeout((int) TimeUnit.MINUTES.toSeconds(1));
+                stmt.execute();
+                try (ResultSet resultSet = stmt.getResultSet()) {
+                    int deleted = 0;
+                    while (resultSet.next()) {
+                        String tableName = resultSet.getString(1);
+                        if (tableName != null && checkNeedDropTable(dateByTtlDate, tableName)) {
+                            dropTable(tableName);
+                            deleted++;
+                        }
+                    }
+                    log.info("Cleanup {} partitions", deleted);
+
+                }
+        } catch (SQLException e) {
+            log.error("SQLException occurred during TTL task execution ", e);
+        }
+    }
+
+    private boolean checkNeedDropTable(DateTime date, String tableName) {
+        List<String> splitTableName = Arrays.asList(tableName.split("_"));
+        //zero position is 'ts', first is 'kv' and after years, months, days
+        if (splitTableName.size() > 2 && splitTableName.get(0).equals("ts") && splitTableName.get(1).equals("kv")) {
+            switch (partitioning) {
+                case "YEARS":
+                    return (splitTableName.size() == 3 && date.getYear() > Integer.parseInt(splitTableName.get(2)));
+                case "MONTHS":
+                    return (
+                            splitTableName.size() == 4 && (date.getYear() > Integer.parseInt(splitTableName.get(2))
+                                    || (date.getYear() == Integer.parseInt(splitTableName.get(2))
+                                    && date.getMonthOfYear() > Integer.parseInt(splitTableName.get(3)))
+                            ));
+                case "DAYS":
+                    return (
+                            splitTableName.size() == 5 && (date.getYear() > Integer.parseInt(splitTableName.get(2))
+                                    || (date.getYear() == Integer.parseInt(splitTableName.get(2))
+                                    && date.getMonthOfYear() > Integer.parseInt(splitTableName.get(3)))
+                                    || (date.getYear() == Integer.parseInt(splitTableName.get(2))
+                                    && date.getMonthOfYear() == Integer.parseInt(splitTableName.get(3))
+                                    && date.getDayOfMonth() > Integer.parseInt(splitTableName.get(4)))
+                            ));
+            }
+        }
+        return false;
+    }
+
+    private void dropTable(String tableName) {
+        try (Connection connection = dataSource.getConnection();
+            PreparedStatement statement = connection.prepareStatement("DROP TABLE IF EXISTS ?")){
+            statement.setString(1, tableName);
+            statement.execute();
         } catch (SQLException e) {
             log.error("SQLException occurred during TTL task execution ", e);
         }
