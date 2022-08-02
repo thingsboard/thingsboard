@@ -17,9 +17,12 @@ package org.thingsboard.rule.engine.transform;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.PathNotFoundException;
+import com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -37,40 +40,57 @@ import java.util.concurrent.ExecutionException;
 @RuleNode(
         type = ComponentType.EXTERNAL,
         name = "split array msg",
-        configClazz = EmptyNodeConfiguration.class,
+        configClazz = TbSplitArrayMsgNodeConfiguration.class,
         nodeDescription = "Split array message into several msgs",
-        nodeDetails = "",
+        nodeDetails = "Fetch the values of the msg field by JsonPath expression. If the field is not found or the " +
+                " received field is not an array returns the incoming msg as outbound msg with <code>Failure</code> " +
+                " chain, otherwise returns transformed messages via <code>Success</code> chain",
         icon = "functions",
-        configDirective = "tbNodeEmptyConfig"
+        configDirective = ""
 )
 public class TbSplitArrayMsgNode implements TbNode {
 
-    EmptyNodeConfiguration config;
+    TbSplitArrayMsgNodeConfiguration config;
+    Configuration configurationJsonPath;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, EmptyNodeConfiguration.class);
+        this.config = TbNodeUtils.convert(configuration, TbSplitArrayMsgNodeConfiguration.class);
+        this.configurationJsonPath = Configuration.builder()
+                .jsonProvider(new JacksonJsonNodeJsonProvider())
+                .build();
+        if (config.getJsonPath().isEmpty()) {
+            throw new IllegalArgumentException("Value 'JsonPath' is empty!");
+        }
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        JsonNode jsonNode = JacksonUtil.toJsonNode(msg.getData());
-        if (jsonNode.isArray()) {
-            ArrayNode data = (ArrayNode) jsonNode;
-            List<TbMsg> messages = new ArrayList<>();
-            data.forEach(msgNode -> {
-                messages.add(createNewMsg(msg, msgNode));
-            });
-            ctx.ack(msg);
-            if (messages.size() == 1) {
-                ctx.tellSuccess(messages.get(0));
+        try {
+            JsonPath jsonPath = JsonPath.compile(config.getJsonPath());
+            JsonNode arrayData = jsonPath.read(msg.getData(), this.configurationJsonPath);
+            if (arrayData.isArray()) {
+                splitArrayMsg(ctx, msg, (ArrayNode) arrayData);
             } else {
-                for (TbMsg newMsg : messages) {
-                    ctx.tellSuccess(newMsg);
-                }
+                ctx.tellFailure(msg, new RuntimeException("JsonPath expression '" + config.getJsonPath() + "' returned an object that is not an array"));
             }
+        } catch (PathNotFoundException e) {
+            ctx.tellFailure(msg, e);
+        }
+    }
+
+    private void splitArrayMsg(TbContext ctx, TbMsg msg, ArrayNode data) {
+        List<TbMsg> messages = new ArrayList<>();
+        data.forEach(msgNode -> {
+            messages.add(createNewMsg(msg, msgNode));
+        });
+        ctx.ack(msg);
+        if (messages.size() == 1) {
+            ctx.tellSuccess(messages.get(0));
         } else {
-            ctx.tellSuccess(msg);
+            for (TbMsg newMsg : messages) {
+                ctx.tellSuccess(newMsg);
+            }
         }
     }
 

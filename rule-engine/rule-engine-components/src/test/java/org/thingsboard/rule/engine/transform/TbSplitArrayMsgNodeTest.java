@@ -17,13 +17,12 @@ package org.thingsboard.rule.engine.transform;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.jayway.jsonpath.PathNotFoundException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
@@ -37,6 +36,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -49,7 +49,7 @@ public class TbSplitArrayMsgNodeTest {
 
     DeviceId deviceId;
     TbSplitArrayMsgNode node;
-    EmptyNodeConfiguration config;
+    TbSplitArrayMsgNodeConfiguration config;
     TbNodeConfiguration nodeConfiguration;
     TbContext ctx;
     TbMsgCallback callback;
@@ -59,7 +59,8 @@ public class TbSplitArrayMsgNodeTest {
         deviceId = new DeviceId(UUID.randomUUID());
         callback = mock(TbMsgCallback.class);
         ctx = mock(TbContext.class);
-        config = new EmptyNodeConfiguration();
+        config = new TbSplitArrayMsgNodeConfiguration();
+        config.setJsonPath("$.Attribute_2");
         nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
         node = spy(new TbSplitArrayMsgNode());
         node.init(ctx, nodeConfiguration);
@@ -76,52 +77,73 @@ public class TbSplitArrayMsgNodeTest {
     }
 
     @Test
-    void givenFewMsg_whenOnMsg_thenVerifyOutput() throws Exception {
-        String data = "[{\"Attribute_1\":22.5,\"Attribute_2\":10.3}, {\"Attribute_1\":1,\"Attribute_2\":2}]";
-        VerifyOutputMsg(data);
+    void givenDefaultConfig_whenInit_thenFail() {
+        config.setJsonPath("");
+        nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+        assertThatThrownBy(() -> node.init(ctx, nodeConfiguration)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
-    void givenOneMsg_whenOnMsg_thenVerifyOutput() throws Exception {
-        String data = "[{\"Attribute_1\":22.5,\"Attribute_2\":10.3}]";
-        VerifyOutputMsg(data);
+    void givenDefaultConfig_whenVerify_thenOK() {
+        TbSplitArrayMsgNodeConfiguration defaultConfig = new TbSplitArrayMsgNodeConfiguration().defaultConfiguration();
+        assertThat(defaultConfig.getJsonPath()).isEqualTo("$");
+    }
+
+    @Test
+    void givenFewMsg_whenOnMsg_thenVerifyOutput() throws Exception {
+        String data = "{\"Attribute_1\":22.5,\"Attribute_2\":[{\"Attribute_3\":22.5,\"Attribute_4\":10.3}, {\"Attribute_5\":22.5,\"Attribute_6\":10.3}]}";
+        VerifyOutputMsg(data, 2);
     }
 
     @Test
     void givenZeroMsg_whenOnMsg_thenVerifyOutput() throws Exception {
-        String data = "[]";
-        VerifyOutputMsg(data);
+        String data = "{\"Attribute_1\":22.5,\"Attribute_2\":[]}";
+        VerifyOutputMsg(data, 0);
     }
 
     @Test
-    void givenNoArrayMsg_whenOnMsg_thenVerifyOutput() throws Exception {
-        String data = "{\"Attribute_1\":22.5,\"Attribute_2\":10.3}";
+    void givenNoArrayMsg_whenOnMsg_thenTellFailure() throws Exception {
+        String data = "{\"Attribute_1\":22.5,\"Attribute_5\":10.3}";
         JsonNode dataNode = JacksonUtil.toJsonNode(data);
         TbMsg msg = getTbMsg(deviceId, dataNode.toString());
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx, times(1)).tellSuccess(newMsgCaptor.capture());
-        verify(ctx, never()).tellFailure(any(), any());
+        ArgumentCaptor<Exception> exceptionCaptor = ArgumentCaptor.forClass(Exception.class);
+        verify(ctx, never()).tellSuccess(any());
+        verify(ctx, times(1)).tellFailure(newMsgCaptor.capture(), exceptionCaptor.capture());
 
-        TbMsg newMsg = newMsgCaptor.getValue();
-        assertThat(newMsg).isNotNull();
-
-        assertThat(newMsg).isSameAs(msg);
+        assertThat(newMsgCaptor.getValue()).isSameAs(msg);
+        assertThat(exceptionCaptor.getValue()).isInstanceOf(RuntimeException.class);
     }
 
-    private void VerifyOutputMsg(String data) throws Exception {
-        ArrayNode dataNode = (ArrayNode) JacksonUtil.toJsonNode(data);
+    @Test
+    void givenNoResultsForPath_whenOnMsg_thenTellFailure() throws Exception {
+        String data = "{\"Attribute_1\":22.5,\"Attribute_5\":10.3}";
+        JsonNode dataNode = JacksonUtil.toJsonNode(data);
+        TbMsg msg = getTbMsg(deviceId, dataNode.toString());
+        node.onMsg(ctx, msg);
+
+        ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        ArgumentCaptor<Exception> exceptionCaptor = ArgumentCaptor.forClass(Exception.class);
+        verify(ctx, never()).tellSuccess(any());
+        verify(ctx, times(1)).tellFailure(newMsgCaptor.capture(), exceptionCaptor.capture());
+
+        assertThat(newMsgCaptor.getValue()).isSameAs(msg);
+        assertThat(exceptionCaptor.getValue()).isInstanceOf(PathNotFoundException.class);
+    }
+
+    private void VerifyOutputMsg(String data, int sizeArray) throws Exception {
+        JsonNode dataNode = JacksonUtil.toJsonNode(data);
         node.onMsg(ctx, getTbMsg(deviceId, dataNode.toString()));
 
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx, times(dataNode.size())).tellSuccess(newMsgCaptor.capture());
+        verify(ctx, times(sizeArray)).tellSuccess(newMsgCaptor.capture());
         verify(ctx, never()).tellFailure(any(), any());
     }
 
     private TbMsg getTbMsg(EntityId entityId, String data) {
-        Map<String, String> mdMap = Map.of(
-                "country", "US",
+        Map<String, String> mdMap = Map.of("country", "US",
                 "city", "NY"
         );
         return TbMsg.newMsg("POST_ATTRIBUTES_REQUEST", entityId, new TbMsgMetaData(mdMap), data, callback);
