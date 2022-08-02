@@ -21,11 +21,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import org.jetbrains.annotations.NotNull;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EventInfo;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.UUID;

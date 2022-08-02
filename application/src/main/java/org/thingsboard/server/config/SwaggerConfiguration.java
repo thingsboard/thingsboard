@@ -18,7 +18,6 @@ package org.thingsboard.server.config;
 import com.fasterxml.classmate.TypeResolver;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -153,7 +152,7 @@ public class SwaggerConfiguration {
             }
 
             @Override
-            public boolean supports(@NotNull DocumentationType delimiter) {
+            public boolean supports(DocumentationType delimiter) {
                 return DocumentationType.SWAGGER_2.equals(delimiter) || DocumentationType.OAS_30.equals(delimiter);
             }
         };
@@ -175,7 +174,7 @@ public class SwaggerConfiguration {
             }
 
             @Override
-            public boolean supports(@NotNull DocumentationType delimiter) {
+            public boolean supports(DocumentationType delimiter) {
                 return DocumentationType.SWAGGER_2.equals(delimiter) || DocumentationType.OAS_30.equals(delimiter);
             }
         };

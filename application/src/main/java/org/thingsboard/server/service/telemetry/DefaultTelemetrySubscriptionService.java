@@ -20,7 +20,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -145,7 +144,6 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         }
     }
 
-    @NotNull
     private FutureCallback<Integer> getCallback(TenantId tenantId, CustomerId customerId, boolean sysTenant, FutureCallback<Void> callback) {
         return new FutureCallback<>() {
             @Override
