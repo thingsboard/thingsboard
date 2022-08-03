@@ -2504,7 +2504,8 @@
         "value-max-error": "Value must be less then {{max}}",
         "layout-fixed-width-required": "Fixed width is required",
         "right-width-percentage-required": "Right percentage is required",
-        "left-width-percentage-required": "Left percentage is required"
+        "left-width-percentage-required": "Left percentage is required",
+        "divider": "Divider"
     },
     "legend": {
         "direction": "Legend direction",

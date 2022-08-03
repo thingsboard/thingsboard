@@ -27,12 +27,9 @@
   </mat-toolbar>
   <div mat-dialog-content fxLayout="column" fxLayoutGap="8px" style="min-width: 300px;">
     <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-      <mat-checkbox fxFlex formControlName="main">
-        {{ (layoutsFormGroup.value.right ? 'layout.left' : 'layout.main')  | translate }}
-      </mat-checkbox>
-      <mat-checkbox fxFlex formControlName="right">
-        {{ 'layout.right' | translate }}
-      </mat-checkbox>
+        <mat-slide-toggle formControlName="right">
+          {{ 'layout.divider' | translate }}
+        </mat-slide-toggle>
     </div>
     <div fxLayout="column" fxLayoutGap="8px">
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="2%">
@@ -56,15 +53,6 @@
         </button>
       </div>
       <div fxLayout="column" fxLayoutGap="8px" [fxShow]="layoutsFormGroup.get('right').value">
-        <mat-button-toggle-group aria-label="Select width value type"
-                                 formControlName="type">
-          <mat-button-toggle fxFlex value="percentage">
-            {{ 'layout.percentage-width' | translate }}
-          </mat-button-toggle>
-          <mat-button-toggle fxFlex value="fixed">
-            {{ 'layout.fixed-width' | translate }}
-          </mat-button-toggle>
-        </mat-button-toggle-group>
         <div [fxShow]="layoutsFormGroup.get('type').value === LayoutWidthType.PERCENTAGE">
           <mat-slider min="10"
                       step="1"
@@ -153,6 +141,15 @@
             </mat-error>
           </mat-form-field>
         </div>
+        <mat-button-toggle-group aria-label="Select width value type"
+                                 formControlName="type">
+          <mat-button-toggle fxFlex value="percentage">
+            {{ 'layout.percentage-width' | translate }}
+          </mat-button-toggle>
+          <mat-button-toggle fxFlex value="fixed">
+            {{ 'layout.fixed-width' | translate }}
+          </mat-button-toggle>
+        </mat-button-toggle-group>
       </div>
     </div>
   </div>
