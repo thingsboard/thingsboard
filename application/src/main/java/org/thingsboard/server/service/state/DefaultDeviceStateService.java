@@ -159,7 +159,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     @Getter
     private boolean persistToTelemetry;
 
-    @Value("${state.initFetchPackSize:1000}")
+    @Value("${state.initFetchPackSize:50000}")
     @Getter
     private int initFetchPackSize;
 
@@ -351,7 +351,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
 
         for (var entry : tpiDeviceMap.entrySet()) {
             AtomicInteger counter = new AtomicInteger(0);
-            for (List<DeviceIdInfo> partition : Lists.partition(entry.getValue(), initFetchPackSize)) {
+            for (List<DeviceIdInfo> partition : Lists.partition(entry.getValue(), 1000)) {
                 log.info("[{}] Submit task for device states: {}", entry.getKey(), partition.size());
                 var devicePackFuture = deviceStateExecutor.submit(() -> {
                     var states = fetchDeviceStateData(partition);
