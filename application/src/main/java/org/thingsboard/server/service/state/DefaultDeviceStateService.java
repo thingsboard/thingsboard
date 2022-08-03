@@ -50,7 +50,6 @@ import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
-import org.thingsboard.server.common.data.query.EntityDataSortOrder;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.EntityListFilter;
@@ -340,7 +339,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     @Override
     protected Map<TopicPartitionInfo, List<ListenableFuture<?>>> onAddedPartitions(Set<TopicPartitionInfo> addedPartitions) {
         var result = new HashMap<TopicPartitionInfo, List<ListenableFuture<?>>>();
-        PageDataIterable<DeviceIdInfo> deviceIdInfos = new PageDataIterable<>(deviceService::findDeviceIdInfos, 1);
+        PageDataIterable<DeviceIdInfo> deviceIdInfos = new PageDataIterable<>(deviceService::findDeviceIdInfos, initFetchPackSize);
         Map<TopicPartitionInfo, List<DeviceIdInfo>> tpiDeviceMap = new HashMap<>();
 
         for (DeviceIdInfo idInfo : deviceIdInfos) {
@@ -569,7 +568,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         ef.setEntityList(deviceIds.stream().map(DeviceIdInfo::getDeviceId).map(DeviceId::getId).map(UUID::toString).collect(Collectors.toList()));
 
         EntityDataQuery query = new EntityDataQuery(ef,
-                new EntityDataPageLink(deviceIds.size(), 0, null, new EntityDataSortOrder(new EntityKey(EntityKeyType.ENTITY_FIELD, "id"))),
+                new EntityDataPageLink(deviceIds.size(), 0, null, null),
                 PERSISTENT_ENTITY_FIELDS,
                 persistToTelemetry ? PERSISTENT_TELEMETRY_KEYS : PERSISTENT_ATTRIBUTE_KEYS, Collections.emptyList());
         PageData<EntityData> queryResult = entityQueryRepository.findEntityDataByQueryInternal(query);

@@ -119,7 +119,9 @@ public abstract class AbstractPartitionBasedService<T extends EntityId> extends 
             // We no longer manage current partition of entities;
             removedPartitions.forEach(partition -> {
                 Set<T> entities = partitionedEntities.remove(partition);
-                entities.forEach(this::cleanupEntityOnPartitionRemoval);
+                if (entities != null) {
+                    entities.forEach(this::cleanupEntityOnPartitionRemoval);
+                }
                 List<ListenableFuture<?>> fetchTasks = partitionedFetchTasks.remove(partition);
                 if (fetchTasks != null) {
                     fetchTasks.forEach(f -> f.cancel(true));
