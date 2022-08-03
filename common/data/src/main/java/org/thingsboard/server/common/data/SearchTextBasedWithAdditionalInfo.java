@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.NullNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.UUIDBased;
 
@@ -26,8 +27,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.function.Supplier;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * Created by ashvayka on 19.02.18.
@@ -98,7 +99,11 @@ public abstract class SearchTextBasedWithAdditionalInfo<I extends UUIDBased> ext
     public static void setJson(JsonNode json, Consumer<JsonNode> jsonConsumer, Consumer<byte[]> bytesConsumer) {
         jsonConsumer.accept(json);
         try {
-            bytesConsumer.accept(mapper.writeValueAsBytes(json));
+            if (json instanceof NullNode) {
+                bytesConsumer.accept(null);
+            } else {
+                bytesConsumer.accept(mapper.writeValueAsBytes(json));
+            }
         } catch (JsonProcessingException e) {
             log.warn("Can't serialize json data: ", e);
         }
