@@ -42,7 +42,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-public class TbCopyFromMdToMsgNodeTest {
+public class TbRenameMsgKeysNodeTest {
     DeviceId deviceId;
     TbRenameMsgKeysNode node;
     TbRenameMsgKeysNodeConfiguration config;
