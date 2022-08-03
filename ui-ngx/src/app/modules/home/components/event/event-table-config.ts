@@ -15,6 +15,7 @@
 ///
 
 import {
+  CellActionDescriptorType,
   DateEntityTableColumn,
   EntityActionTableColumn,
   EntityTableColumn,
@@ -225,7 +226,9 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
         );
         break;
       case DebugEventType.DEBUG_RULE_NODE:
-        this.columns[0].width = '100px';
+        this.columns[0].width = '80px';
+        (this.columns[1] as EntityTableColumn<Event>).headerCellStyleFunction = () => ({padding: '0 12px 0 0'});
+        (this.columns[1] as EntityTableColumn<Event>).cellStyleFunction = () => ({padding: '0 12px 0 0'});
         this.columns.push(
           new EntityTableColumn<Event>('type', 'event.type', '40px',
             (entity) => entity.body.type, entity => ({
@@ -233,20 +236,45 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
             }), false, key => ({
               padding: '0 12px 0 0'
             })),
-          new EntityTableColumn<Event>('entityType', 'event.entity-type', '100px',
+          new EntityTableColumn<Event>('entityType', 'event.entity-type', '75px',
             (entity) => entity.body.entityType, entity => ({
               padding: '0 12px 0 0',
             }), false, key => ({
               padding: '0 12px 0 0'
             })),
-          new EntityTableColumn<Event>('msgId', 'event.message-id', '100px',
-            (entity) => entity.body.msgId, entity => ({
-              whiteSpace: 'nowrap',
+          new EntityTableColumn<Event>('entityId', 'event.entity-id', '85px',
+            (entity) => `${entity.body.entityId.substring(0, 6)}…`, () => ({
               padding: '0 12px 0 0'
-            }), false, key => ({
+            }), false, () => ({
               padding: '0 12px 0 0'
             }),
-            entity => entity.body.msgId),
+            () => undefined, false, {
+              name: this.translate.instant('event.copy-entity-id'),
+              icon: 'content_paste',
+              style: {
+                'font-size': '16px',
+                color: 'rgba(0,0,0,.87)'
+              },
+              isEnabled: () => true,
+              onAction: ($event, entity) => entity.body.entityId,
+              type: CellActionDescriptorType.COPY_BUTTON
+            }),
+          new EntityTableColumn<Event>('msgId', 'event.message-id', '85px',
+            (entity) => `${entity.body.msgId.substring(0, 6)}…`, () => ({
+              padding: '0 12px 0 0'
+            }), false, () => ({
+              padding: '0 12px 0 0'
+            }), () => undefined, false, {
+              name: this.translate.instant('event.copy-message-id'),
+              icon: 'content_paste',
+              style: {
+                'font-size': '16px',
+                color: 'rgba(0,0,0,.87)'
+              },
+              isEnabled: () => true,
+              onAction: ($event, entity) => entity.body.msgId,
+              type: CellActionDescriptorType.COPY_BUTTON
+            }),
           new EntityTableColumn<Event>('msgType', 'event.message-type', '100px',
             (entity) => entity.body.msgType, entity => ({
               whiteSpace: 'nowrap',
@@ -255,8 +283,8 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
               padding: '0 12px 0 0'
             }),
             entity => entity.body.msgType),
-          new EntityTableColumn<Event>('relationType', 'event.relation-type', '100px',
-            (entity) => entity.body.relationType, entity => ({padding: '0 12px 0 0', }), false, key => ({
+          new EntityTableColumn<Event>('relationType', 'event.relation-type', '70px',
+            (entity) => entity.body.relationType, () => ({padding: '0 12px 0 0'}), false, () => ({
               padding: '0 12px 0 0'
             })),
           new EntityActionTableColumn<Event>('data', 'event.data',
