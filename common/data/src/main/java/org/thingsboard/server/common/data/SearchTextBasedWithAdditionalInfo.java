@@ -99,7 +99,7 @@ public abstract class SearchTextBasedWithAdditionalInfo<I extends UUIDBased> ext
     public static void setJson(JsonNode json, Consumer<JsonNode> jsonConsumer, Consumer<byte[]> bytesConsumer) {
         jsonConsumer.accept(json);
         try {
-            if (json instanceof NullNode) {
+            if (json instanceof NullNode || json == null) {
                 bytesConsumer.accept(null);
             } else {
                 bytesConsumer.accept(mapper.writeValueAsBytes(json));
