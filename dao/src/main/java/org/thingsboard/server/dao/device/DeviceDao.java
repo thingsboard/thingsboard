@@ -20,6 +20,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.DeviceIdInfo;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
@@ -127,6 +128,14 @@ public interface DeviceDao extends Dao<Device>, TenantEntityDao, ExportableEntit
      * @return the list of device objects
      */
     ListenableFuture<List<Device>> findDevicesByTenantIdAndIdsAsync(UUID tenantId, List<UUID> deviceIds);
+
+    /**
+     * Find devices by devices Ids.
+     *
+     * @param deviceIds the device Ids
+     * @return the list of device objects
+     */
+    ListenableFuture<List<Device>> findDevicesByIdsAsync(List<UUID> deviceIds);
 
     /**
      * Find devices by tenantId, customerId and page link.
@@ -257,4 +266,8 @@ public interface DeviceDao extends Dao<Device>, TenantEntityDao, ExportableEntit
      * @return the list of device objects
      */
     PageData<Device> findDevicesByTenantIdAndEdgeIdAndType(UUID tenantId, UUID edgeId, String type, PageLink pageLink);
+
+    PageData<DeviceIdInfo> findDeviceIdInfos(PageLink pageLink);
+
+
 }

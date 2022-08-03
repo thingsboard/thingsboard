@@ -15,9 +15,12 @@
  */
 package org.thingsboard.server.service.partition;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -25,7 +28,11 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,6 +44,7 @@ import java.util.concurrent.Executors;
 public abstract class AbstractPartitionBasedService<T extends EntityId> extends TbApplicationEventListener<PartitionChangeEvent> {
 
     protected final ConcurrentMap<TopicPartitionInfo, Set<T>> partitionedEntities = new ConcurrentHashMap<>();
+    protected final ConcurrentMap<TopicPartitionInfo, List<ListenableFuture<?>>> partitionedFetchTasks = new ConcurrentHashMap<>();
     final Queue<Set<TopicPartitionInfo>> subscribeQueue = new ConcurrentLinkedQueue<>();
 
     protected ListeningScheduledExecutorService scheduledExecutor;
@@ -45,7 +53,7 @@ public abstract class AbstractPartitionBasedService<T extends EntityId> extends 
 
     abstract protected String getSchedulerExecutorName();
 
-    abstract protected void onAddedPartitions(Set<TopicPartitionInfo> addedPartitions);
+    abstract protected Map<TopicPartitionInfo, List<ListenableFuture<?>>> onAddedPartitions(Set<TopicPartitionInfo> addedPartitions);
 
     abstract protected void cleanupEntityOnPartitionRemoval(T entityId);
 
@@ -112,6 +120,10 @@ public abstract class AbstractPartitionBasedService<T extends EntityId> extends 
             removedPartitions.forEach(partition -> {
                 Set<T> entities = partitionedEntities.remove(partition);
                 entities.forEach(this::cleanupEntityOnPartitionRemoval);
+                List<ListenableFuture<?>> fetchTasks = partitionedFetchTasks.remove(partition);
+                if (fetchTasks != null) {
+                    fetchTasks.forEach(f -> f.cancel(true));
+                }
             });
 
             onRepartitionEvent();
@@ -119,16 +131,29 @@ public abstract class AbstractPartitionBasedService<T extends EntityId> extends 
             addedPartitions.forEach(tpi -> partitionedEntities.computeIfAbsent(tpi, key -> ConcurrentHashMap.newKeySet()));
 
             if (!addedPartitions.isEmpty()) {
-                onAddedPartitions(addedPartitions);
+                var fetchTasks = onAddedPartitions(addedPartitions);
+                if (fetchTasks != null && !fetchTasks.isEmpty()) {
+                    partitionedFetchTasks.putAll(fetchTasks);
+                    List<ListenableFuture<?>> futures = new ArrayList<>();
+                    fetchTasks.values().forEach(futures::addAll);
+                    DonAsynchron.withCallback(Futures.allAsList(futures),
+                            t -> logPartitions(), e -> log.error("Partition fetch task error", e));
+                } else {
+                    logPartitions();
+                }
+            } else {
+                logPartitions();
             }
-
-            log.info("[{}] Managing following partitions:", getServiceName());
-            partitionedEntities.forEach((tpi, entities) -> {
-                log.info("[{}][{}]: {} entities", getServiceName(), tpi.getFullTopicName(), entities.size());
-            });
         } catch (Throwable t) {
             log.warn("[{}] Failed to init entities state from DB", getServiceName(), t);
         }
+    }
+
+    private void logPartitions() {
+        log.info("[{}] Managing following partitions:", getServiceName());
+        partitionedEntities.forEach((tpi, entities) -> {
+            log.info("[{}][{}]: {} entities", getServiceName(), tpi.getFullTopicName(), entities.size());
+        });
     }
 
     protected void onRepartitionEvent() {

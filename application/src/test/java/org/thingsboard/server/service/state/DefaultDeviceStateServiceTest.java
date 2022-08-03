@@ -28,6 +28,7 @@ import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -53,6 +54,8 @@ public class DefaultDeviceStateServiceTest {
     PartitionService partitionService;
     @Mock
     DeviceStateData deviceStateDataMock;
+    @Mock
+    TbServiceInfoProvider serviceInfoProvider;
 
     DeviceId deviceId = DeviceId.fromString("00797a3b-7aeb-4b5b-b57a-c2a810d0f112");
 
@@ -60,7 +63,7 @@ public class DefaultDeviceStateServiceTest {
 
     @Before
     public void setUp() {
-        service = spy(new DefaultDeviceStateService(tenantService, deviceService, attributesService, tsService, clusterService, partitionService));
+        service = spy(new DefaultDeviceStateService(tenantService, deviceService, attributesService, tsService, clusterService, partitionService, serviceInfoProvider, null));
     }
 
     @Test

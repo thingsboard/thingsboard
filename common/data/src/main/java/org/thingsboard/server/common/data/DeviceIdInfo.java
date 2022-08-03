@@ -13,21 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.query;
+package org.thingsboard.server.common.data;
 
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.query.EntityCountQuery;
-import org.thingsboard.server.common.data.query.EntityData;
-import org.thingsboard.server.common.data.query.EntityDataQuery;
 
-public interface EntityQueryRepository {
+import java.io.Serializable;
+import java.util.UUID;
 
-    long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityCountQuery query);
+@Data
+@Slf4j
+public class DeviceIdInfo implements Serializable, HasTenantId {
 
-    PageData<EntityData> findEntityDataByQuery(TenantId tenantId, CustomerId customerId, EntityDataQuery query);
+    private static final long serialVersionUID = 2233745129677581815L;
 
-    PageData<EntityData> findEntityDataByQueryInternal(EntityDataQuery query);
+    private final TenantId tenantId;
+    private final CustomerId customerId;
+    private final DeviceId deviceId;
 
+    public DeviceIdInfo(UUID tenantId, UUID customerId, UUID deviceId) {
+        this.tenantId = new TenantId(tenantId);
+        this.customerId = customerId != null ? new CustomerId(customerId) : null;
+        this.deviceId = new DeviceId(deviceId);
+    }
 }
