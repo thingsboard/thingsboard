@@ -369,7 +369,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                         } else {
                             states = fetchDeviceStateDataUsingEntityDataQuery(partition);
                         }
-                        if (devicePackFutureHolder.future != null && !devicePackFutureHolder.future.isCancelled()) {
+                        if (devicePackFutureHolder.future == null || !devicePackFutureHolder.future.isCancelled()) {
                             for (var state : states) {
                                 if (!addDeviceUsingState(entry.getKey(), state)) {
                                     return;
