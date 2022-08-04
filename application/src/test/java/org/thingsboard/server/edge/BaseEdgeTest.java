@@ -71,10 +71,10 @@ import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
-import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
@@ -205,13 +205,6 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         edgeImitator.connect();
 
         verifyEdgeConnectionAndInitialData();
-    }
-
-    private QueueId getRandomQueueId() throws Exception {
-        List<Queue> ruleEngineQueues = doGetTypedWithPageLink("/api/queues?serviceType={serviceType}&",
-                new TypeReference<PageData<Queue>>() {}, new PageLink(100), ServiceType.TB_RULE_ENGINE.name())
-                .getData();
-        return ruleEngineQueues.get(0).getId();
     }
 
     @After
@@ -388,6 +381,21 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(deviceProfileUpdateMsg.getIdLSB(), deviceProfile.getUuidId().getLeastSignificantBits());
 
         // 2
+        OtaPackageInfo firmwareOtaPackageInfo = saveOtaPackageInfo(deviceProfile.getId());
+        edgeImitator.expectMessageAmount(1);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        deviceProfile.setFirmwareId(firmwareOtaPackageInfo.getId());
+        edgeImitator.expectMessageAmount(1);
+        deviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof DeviceProfileUpdateMsg);
+        deviceProfileUpdateMsg = (DeviceProfileUpdateMsg) latestMessage;
+        Assert.assertEquals(firmwareOtaPackageInfo.getUuidId().getMostSignificantBits(), deviceProfileUpdateMsg.getFirmwareIdMSB());
+        Assert.assertEquals(firmwareOtaPackageInfo.getUuidId().getLeastSignificantBits(), deviceProfileUpdateMsg.getFirmwareIdLSB());
+
+        // 3
         edgeImitator.expectMessageAmount(1);
         doDelete("/api/deviceProfile/" + deviceProfile.getUuidId())
                 .andExpect(status().isOk());
@@ -1866,8 +1874,15 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
     // Utility methods
 
     private Device saveDeviceOnCloudAndVerifyDeliveryToEdge() throws Exception {
+        OtaPackageInfo firmwareOtaPackageInfo = saveOtaPackageInfo(thermostatDeviceProfile.getId());
         edgeImitator.expectMessageAmount(1);
-        Device savedDevice = saveDevice(RandomStringUtils.randomAlphanumeric(15), "Default");
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        edgeImitator.expectMessageAmount(1);
+        Device savedDevice = saveDevice(RandomStringUtils.randomAlphanumeric(15), thermostatDeviceProfile.getName());
+        savedDevice.setFirmwareId(firmwareOtaPackageInfo.getId());
+        savedDevice = doPost("/api/device", savedDevice, Device.class);
+
         doPost("/api/edge/" + edge.getUuidId()
                 + "/device/" + savedDevice.getUuidId(), Device.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
@@ -1879,6 +1894,8 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(deviceUpdateMsg.getIdLSB(), savedDevice.getUuidId().getLeastSignificantBits());
         Assert.assertEquals(deviceUpdateMsg.getName(), savedDevice.getName());
         Assert.assertEquals(deviceUpdateMsg.getType(), savedDevice.getType());
+        Assert.assertEquals(firmwareOtaPackageInfo.getUuidId().getMostSignificantBits(), deviceUpdateMsg.getFirmwareIdMSB());
+        Assert.assertEquals(firmwareOtaPackageInfo.getUuidId().getLeastSignificantBits(), deviceUpdateMsg.getFirmwareIdLSB());
         return savedDevice;
     }
 
@@ -1904,7 +1921,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         return asset;
     }
 
-    private Device saveDevice(String deviceName, String type) throws Exception {
+    private Device saveDevice(String deviceName, String type) {
         Device device = new Device();
         device.setName(deviceName);
         device.setType(type);
@@ -1916,6 +1933,20 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         asset.setName(assetName);
         asset.setType("test");
         return doPost("/api/asset", asset, Asset.class);
+    }
+
+    private OtaPackageInfo saveOtaPackageInfo(DeviceProfileId deviceProfileId) {
+        SaveOtaPackageInfoRequest firmwareInfo = new SaveOtaPackageInfoRequest();
+        firmwareInfo.setDeviceProfileId(deviceProfileId);
+        firmwareInfo.setType(FIRMWARE);
+        firmwareInfo.setTitle("Firmware Edge");
+        firmwareInfo.setVersion("v1.0");
+        firmwareInfo.setTag("My firmware #1 v1.0");
+        firmwareInfo.setUsesUrl(true);
+        firmwareInfo.setUrl("http://localhost:8080/v1/package");
+        firmwareInfo.setAdditionalInfo(JacksonUtil.newObjectNode());
+        firmwareInfo.setChecksumAlgorithm(ChecksumAlgorithm.SHA256);
+        return doPost("/api/otaPackage", firmwareInfo, OtaPackageInfo.class);
     }
 
     private EdgeEvent constructEdgeEvent(TenantId tenantId, EdgeId edgeId, EdgeEventActionType edgeEventAction, UUID entityId, EdgeEventType edgeEventType, JsonNode entityBody) {
