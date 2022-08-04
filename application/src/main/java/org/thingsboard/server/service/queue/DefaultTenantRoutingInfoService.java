@@ -42,9 +42,8 @@ public class DefaultTenantRoutingInfoService implements TenantRoutingInfoService
 
     @Override
     public TenantRoutingInfo getRoutingInfo(TenantId tenantId) {
-        Tenant tenant = tenantService.findTenantById(tenantId);
-        if (tenant != null) {
-            TenantProfile tenantProfile = tenantProfileCache.get(tenant.getTenantProfileId());
+        TenantProfile tenantProfile = tenantProfileCache.get(tenantId);
+        if (tenantProfile != null) {
             return new TenantRoutingInfo(tenantId, tenantProfile.isIsolatedTbRuleEngine());
         } else {
             throw new RuntimeException("Tenant not found!");
