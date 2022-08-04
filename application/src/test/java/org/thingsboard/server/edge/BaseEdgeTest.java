@@ -1874,22 +1874,25 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
     // Utility methods
 
     private Device saveDeviceOnCloudAndVerifyDeliveryToEdge() throws Exception {
-        OtaPackageInfo firmwareOtaPackageInfo = saveOtaPackageInfo(thermostatDeviceProfile.getId());
         edgeImitator.expectMessageAmount(1);
+        OtaPackageInfo firmwareOtaPackageInfo = saveOtaPackageInfo(thermostatDeviceProfile.getId());
         Assert.assertTrue(edgeImitator.waitForMessages());
 
-        edgeImitator.expectMessageAmount(1);
         Device savedDevice = saveDevice(RandomStringUtils.randomAlphanumeric(15), thermostatDeviceProfile.getName());
         savedDevice.setFirmwareId(firmwareOtaPackageInfo.getId());
         savedDevice = doPost("/api/device", savedDevice, Device.class);
 
+        // wait until device UPDATED event is sent to edge notification service
+        // to avoid edge notification service to send device UPDATED event before ASSIGNED_TO_EDGE
+        Thread.sleep(500);
+
+        edgeImitator.expectMessageAmount(1);
         doPost("/api/edge/" + edge.getUuidId()
                 + "/device/" + savedDevice.getUuidId(), Device.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
         AbstractMessage latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof DeviceUpdateMsg);
         DeviceUpdateMsg deviceUpdateMsg = (DeviceUpdateMsg) latestMessage;
-        Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, deviceUpdateMsg.getMsgType());
         Assert.assertEquals(deviceUpdateMsg.getIdMSB(), savedDevice.getUuidId().getMostSignificantBits());
         Assert.assertEquals(deviceUpdateMsg.getIdLSB(), savedDevice.getUuidId().getLeastSignificantBits());
         Assert.assertEquals(deviceUpdateMsg.getName(), savedDevice.getName());
@@ -1939,7 +1942,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         SaveOtaPackageInfoRequest firmwareInfo = new SaveOtaPackageInfoRequest();
         firmwareInfo.setDeviceProfileId(deviceProfileId);
         firmwareInfo.setType(FIRMWARE);
-        firmwareInfo.setTitle("Firmware Edge");
+        firmwareInfo.setTitle("Firmware Edge " + RandomStringUtils.randomAlphanumeric(3));
         firmwareInfo.setVersion("v1.0");
         firmwareInfo.setTag("My firmware #1 v1.0");
         firmwareInfo.setUsesUrl(true);
