@@ -50,6 +50,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -198,13 +199,19 @@ public class JpaSqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDao
                 stmt.execute();
                 try (ResultSet resultSet = stmt.getResultSet()) {
                     int deleted = 0;
+                    //todo :: remove log list with table and log with drop table
+                    List<String> allTableName = new ArrayList<>();
                     while (resultSet.next()) {
+                        allTableName.add(resultSet.getString(1));
+                        log.info("table = {}", resultSet.getString(1));
                         String tableName = resultSet.getString(1);
                         if (tableName != null && checkNeedDropTable(dateByTtlDate, tableName)) {
+                            log.info("start drop {} table", tableName);
                             dropTable(tableName);
                             deleted++;
                         }
                     }
+                    log.info("select this table = {}", allTableName);
                     log.info("Cleanup {} partitions", deleted);
 
                 }
@@ -242,8 +249,7 @@ public class JpaSqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDao
 
     private void dropTable(String tableName) {
         try (Connection connection = dataSource.getConnection();
-            PreparedStatement statement = connection.prepareStatement("DROP TABLE IF EXISTS ?")){
-            statement.setString(1, tableName);
+            PreparedStatement statement = connection.prepareStatement(String.format("DROP TABLE IF EXISTS %s", tableName))) {
             statement.execute();
         } catch (SQLException e) {
             log.error("SQLException occurred during TTL task execution ", e);
