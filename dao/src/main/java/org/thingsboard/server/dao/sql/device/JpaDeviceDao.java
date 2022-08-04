@@ -59,6 +59,9 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
     @Autowired
     private DeviceRepository deviceRepository;
 
+    @Autowired
+    private NativeDeviceRepository nativeDeviceRepository;
+
     @Override
     protected Class<DeviceEntity> getEntityClass() {
         return DeviceEntity.class;
@@ -113,8 +116,13 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
     }
 
     @Override
+    public List<Device> findDevicesByIds(List<UUID> deviceIds) {
+        return DaoUtil.convertDataList(deviceRepository.findDevicesByIdIn(deviceIds));
+    }
+
+    @Override
     public ListenableFuture<List<Device>> findDevicesByIdsAsync(List<UUID> deviceIds) {
-        return service.submit(() -> DaoUtil.convertDataList(deviceRepository.findDevicesByIdIn(deviceIds)));
+        return service.submit(() -> findDevicesByIds(deviceIds));
     }
 
     @Override
@@ -313,8 +321,7 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
     @Override
     public PageData<DeviceIdInfo> findDeviceIdInfos(PageLink pageLink) {
         log.debug("Try to find tenant device id infos by pageLink [{}]", pageLink);
-        var page = deviceRepository.findDeviceIdInfos(DaoUtil.toPageable(pageLink));
-        return new PageData<>(page.getContent(), page.getTotalPages(), page.getTotalElements(), page.hasNext());
+        return nativeDeviceRepository.findDeviceIdInfos(DaoUtil.toPageable(pageLink));
     }
 
     @Override

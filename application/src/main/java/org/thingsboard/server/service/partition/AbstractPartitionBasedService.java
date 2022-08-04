@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
@@ -116,8 +117,9 @@ public abstract class AbstractPartitionBasedService<T extends EntityId> extends 
 
             log.info("[{}] REMOVED PARTITIONS: {}", getServiceName(), removedPartitions);
 
+            boolean partitionListChanged = false;
             // We no longer manage current partition of entities;
-            removedPartitions.forEach(partition -> {
+            for (var partition : removedPartitions) {
                 Set<T> entities = partitionedEntities.remove(partition);
                 if (entities != null) {
                     entities.forEach(this::cleanupEntityOnPartitionRemoval);
@@ -126,7 +128,8 @@ public abstract class AbstractPartitionBasedService<T extends EntityId> extends 
                 if (fetchTasks != null) {
                     fetchTasks.forEach(f -> f.cancel(true));
                 }
-            });
+                partitionListChanged = true;
+            }
 
             onRepartitionEvent();
 
@@ -136,19 +139,28 @@ public abstract class AbstractPartitionBasedService<T extends EntityId> extends 
                 var fetchTasks = onAddedPartitions(addedPartitions);
                 if (fetchTasks != null && !fetchTasks.isEmpty()) {
                     partitionedFetchTasks.putAll(fetchTasks);
-                    List<ListenableFuture<?>> futures = new ArrayList<>();
-                    fetchTasks.values().forEach(futures::addAll);
-                    DonAsynchron.withCallback(Futures.allAsList(futures),
-                            t -> logPartitions(), e -> log.error("Partition fetch task error", e));
-                } else {
-                    logPartitions();
                 }
-            } else {
-                logPartitions();
+                partitionListChanged = true;
+            }
+
+            if (partitionListChanged) {
+                List<ListenableFuture<?>> partitionFetchFutures = new ArrayList<>();
+                partitionedFetchTasks.values().forEach(partitionFetchFutures::addAll);
+                DonAsynchron.withCallback(Futures.allAsList(partitionFetchFutures), t -> logPartitions(), this::logFailure);
             }
         } catch (Throwable t) {
             log.warn("[{}] Failed to init entities state from DB", getServiceName(), t);
         }
+    }
+
+    private void logFailure(Throwable e) {
+        if (e instanceof CancellationException) {
+            //Probably this is fine and happens due to re-balancing.
+            log.trace("Partition fetch task error", e);
+        } else {
+            log.error("Partition fetch task error", e);
+        }
+
     }
 
     private void logPartitions() {

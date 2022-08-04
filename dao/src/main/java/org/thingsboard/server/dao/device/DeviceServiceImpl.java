@@ -410,6 +410,13 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     }
 
     @Override
+    public List<Device> findDevicesByIds(List<DeviceId> deviceIds) {
+        log.trace("Executing findDevicesByIdsAsync, deviceIds [{}]", deviceIds);
+        validateIds(deviceIds, "Incorrect deviceIds " + deviceIds);
+        return deviceDao.findDevicesByIds(toUUIDs(deviceIds));
+    }
+
+    @Override
     public ListenableFuture<List<Device>> findDevicesByIdsAsync(List<DeviceId> deviceIds) {
         log.trace("Executing findDevicesByIdsAsync, deviceIds [{}]", deviceIds);
         validateIds(deviceIds, "Incorrect deviceIds " + deviceIds);

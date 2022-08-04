@@ -63,7 +63,7 @@ public class DefaultDeviceStateServiceTest {
 
     @Before
     public void setUp() {
-        service = spy(new DefaultDeviceStateService(tenantService, deviceService, attributesService, tsService, clusterService, partitionService, serviceInfoProvider, null));
+        service = spy(new DefaultDeviceStateService(tenantService, deviceService, attributesService, tsService, clusterService, partitionService, serviceInfoProvider, null, null));
     }
 
     @Test
@@ -71,16 +71,16 @@ public class DefaultDeviceStateServiceTest {
         service.deviceStates.put(deviceId, deviceStateDataMock);
         DeviceStateData deviceStateData = service.getOrFetchDeviceStateData(deviceId);
         assertThat(deviceStateData, is(deviceStateDataMock));
-        Mockito.verify(service, never()).fetchDeviceStateData(deviceId);
+        Mockito.verify(service, never()).fetchDeviceStateDataUsingEntityDataQuery(deviceId);
     }
 
     @Test
     public void givenDeviceIdWithoutDeviceStateInMap_whenGetOrFetchDeviceStateData_thenFetchDeviceStateData() {
         service.deviceStates.clear();
-        willReturn(deviceStateDataMock).given(service).fetchDeviceStateData(deviceId);
+        willReturn(deviceStateDataMock).given(service).fetchDeviceStateDataUsingEntityDataQuery(deviceId);
         DeviceStateData deviceStateData = service.getOrFetchDeviceStateData(deviceId);
         assertThat(deviceStateData, is(deviceStateDataMock));
-        Mockito.verify(service, times(1)).fetchDeviceStateData(deviceId);
+        Mockito.verify(service, times(1)).fetchDeviceStateDataUsingEntityDataQuery(deviceId);
     }
 
 }

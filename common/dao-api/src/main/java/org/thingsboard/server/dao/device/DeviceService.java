@@ -81,6 +81,8 @@ public interface DeviceService {
 
     ListenableFuture<List<Device>> findDevicesByTenantIdAndIdsAsync(TenantId tenantId, List<DeviceId> deviceIds);
 
+    List<Device> findDevicesByIds(List<DeviceId> deviceIds);
+
     ListenableFuture<List<Device>> findDevicesByIdsAsync(List<DeviceId> deviceIds);
 
     void deleteDevicesByTenantId(TenantId tenantId);
