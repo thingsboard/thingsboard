@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.discovery.PartitionService;
@@ -59,7 +60,11 @@ public class TimeseriesCleanUpService extends AbstractCleanUpService {
     @Scheduled(initialDelayString = "${sql.ttl.ts.execution_interval_ms}", fixedDelayString = "${sql.ttl.ts.execution_interval_ms}")
     public void cleanUp() {
         if (ttlTaskExecutionEnabled && isSystemTenantPartitionMine()) {
-            timeseriesService.cleanup(systemTtl, excludedKeys);
+            if (CollectionUtils.isEmpty(excludedKeys)) {
+                timeseriesService.cleanup(systemTtl);
+            } else {
+                timeseriesService.cleanup(systemTtl, excludedKeys);
+            }
         }
     }
 
