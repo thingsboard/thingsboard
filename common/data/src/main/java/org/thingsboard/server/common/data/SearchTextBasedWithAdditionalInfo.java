@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.NullNode;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.UUIDBased;
 
@@ -97,11 +97,12 @@ public abstract class SearchTextBasedWithAdditionalInfo<I extends UUIDBased> ext
     }
 
     public static void setJson(JsonNode json, Consumer<JsonNode> jsonConsumer, Consumer<byte[]> bytesConsumer) {
-        jsonConsumer.accept(json);
         try {
-            if (json instanceof NullNode || json == null) {
+            if (json == null || json.getNodeType() == JsonNodeType.NULL) {
+                jsonConsumer.accept(null);
                 bytesConsumer.accept(null);
             } else {
+                jsonConsumer.accept(json);
                 bytesConsumer.accept(mapper.writeValueAsBytes(json));
             }
         } catch (JsonProcessingException e) {
