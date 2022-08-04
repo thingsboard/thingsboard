@@ -126,7 +126,7 @@ public abstract class AbstractPartitionBasedService<T extends EntityId> extends 
                 }
                 List<ListenableFuture<?>> fetchTasks = partitionedFetchTasks.remove(partition);
                 if (fetchTasks != null) {
-                    fetchTasks.forEach(f -> f.cancel(true));
+                    fetchTasks.forEach(f -> f.cancel(false));
                 }
                 partitionListChanged = true;
             }

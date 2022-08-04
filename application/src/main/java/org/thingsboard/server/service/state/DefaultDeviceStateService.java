@@ -307,8 +307,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                             @Override
                             public void onSuccess(@Nullable DeviceStateData state) {
                                 TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, device.getId());
-                                if (partitionedEntities.containsKey(tpi)) {
-                                    addDeviceUsingState(tpi, state);
+                                if (addDeviceUsingState(tpi, state)) {
                                     save(deviceId, ACTIVITY_STATE, false);
                                     callback.onSuccess();
                                 } else {
@@ -361,23 +360,38 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
             // hard-coded limit of 1000 is due to the Entity Data Query limitations and should not be changed.
             for (List<DeviceIdInfo> partition : Lists.partition(entry.getValue(), 1000)) {
                 log.info("[{}] Submit task for device states: {}", entry.getKey(), partition.size());
+                DevicePackFutureHolder devicePackFutureHolder = new DevicePackFutureHolder();
                 var devicePackFuture = deviceStateExecutor.submit(() -> {
-                    List<DeviceStateData> states;
-                    if (persistToTelemetry && !dbTypeInfoComponent.isLatestTsDaoStoredToSql()) {
-                        states = fetchDeviceStateDataUsingSeparateRequests(partition);
-                    } else {
-                        states = fetchDeviceStateDataUsingEntityDataQuery(partition);
+                    try {
+                        List<DeviceStateData> states;
+                        if (persistToTelemetry && !dbTypeInfoComponent.isLatestTsDaoStoredToSql()) {
+                            states = fetchDeviceStateDataUsingSeparateRequests(partition);
+                        } else {
+                            states = fetchDeviceStateDataUsingEntityDataQuery(partition);
+                        }
+                        if (devicePackFutureHolder.future != null && !devicePackFutureHolder.future.isCancelled()) {
+                            for (var state : states) {
+                                if (!addDeviceUsingState(entry.getKey(), state)) {
+                                    return;
+                                }
+                                checkAndUpdateState(state.getDeviceId(), state);
+                            }
+                            log.info("[{}] Initialized {} out of {} device states", entry.getKey().getPartition().orElse(0), counter.addAndGet(states.size()), entry.getValue().size());
+                        }
+                    } catch (Throwable t) {
+                        log.error("Unexpected exception while device pack fetching", t);
+                        throw t;
                     }
-                    for (var state : states) {
-                        addDeviceUsingState(entry.getKey(), state);
-                        checkAndUpdateState(state.getDeviceId(), state);
-                    }
-                    log.info("[{}] Initialized {} out of {} device states", entry.getKey().getPartition().orElse(0), counter.addAndGet(states.size()), entry.getValue().size());
                 });
+                devicePackFutureHolder.future = devicePackFuture;
                 result.computeIfAbsent(entry.getKey(), tmp -> new ArrayList<>()).add(devicePackFuture);
             }
         }
         return result;
+    }
+
+    private static class DevicePackFutureHolder {
+        private volatile ListenableFuture<?> future;
     }
 
     void checkAndUpdateState(@Nonnull DeviceId deviceId, @Nonnull DeviceStateData state) {
@@ -391,14 +405,15 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         }
     }
 
-    private void addDeviceUsingState(TopicPartitionInfo tpi, DeviceStateData state) {
+    private boolean addDeviceUsingState(TopicPartitionInfo tpi, DeviceStateData state) {
         Set<DeviceId> deviceIds = partitionedEntities.get(tpi);
         if (deviceIds != null) {
             deviceIds.add(state.getDeviceId());
             deviceStates.putIfAbsent(state.getDeviceId(), state);
+            return true;
         } else {
             log.debug("[{}] Device belongs to external partition {}", state.getDeviceId(), tpi.getFullTopicName());
-            throw new RuntimeException("Device belongs to external partition " + tpi.getFullTopicName() + "!");
+            return false;
         }
     }
 
