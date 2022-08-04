@@ -349,7 +349,14 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         Map<TopicPartitionInfo, List<DeviceIdInfo>> tpiDeviceMap = new HashMap<>();
 
         for (DeviceIdInfo idInfo : deviceIdInfos) {
-            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, idInfo.getTenantId(), idInfo.getDeviceId());
+            TopicPartitionInfo tpi;
+            try {
+                tpi = partitionService.resolve(ServiceType.TB_CORE, idInfo.getTenantId(), idInfo.getDeviceId());
+            } catch (Exception e) {
+                log.warn("Failed to resolve partition for device with id [{}], tenant id [{}], customer id [{}]. Reason: {}",
+                        idInfo.getDeviceId(), idInfo.getTenantId(), idInfo.getCustomerId(), e.getMessage());
+                continue;
+            }
             if (addedPartitions.contains(tpi) && !deviceStates.containsKey(idInfo.getDeviceId())) {
                 tpiDeviceMap.computeIfAbsent(tpi, tmp -> new ArrayList<>()).add(idInfo);
             }
