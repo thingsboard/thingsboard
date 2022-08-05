@@ -68,7 +68,7 @@ public class TbMsgDeleteAttributesTest {
         callback = mock(TbMsgCallback.class);
         ctx = mock(TbContext.class);
         config = new TbMsgDeleteAttributesConfiguration().defaultConfiguration();
-        config.setKeysPatterns(List.of("${TestAttribute_1}", "$[TestAttribute_2]", "$[TestAttribute_3]"));
+        config.setKeys(List.of("${TestAttribute_1}", "$[TestAttribute_2]", "$[TestAttribute_3]"));
         nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
         node = spy(new TbMsgDeleteAttributes());
         node.init(ctx, nodeConfiguration);
@@ -95,7 +95,7 @@ public class TbMsgDeleteAttributesTest {
 
     @Test
     void givenDefaultConfig_whenInit_thenFail() {
-        config.setKeysPatterns(Collections.emptyList());
+        config.setKeys(Collections.emptyList());
         nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
         assertThatThrownBy(() -> node.init(ctx, nodeConfiguration)).isInstanceOf(IllegalArgumentException.class);
     }
@@ -103,8 +103,8 @@ public class TbMsgDeleteAttributesTest {
     @Test
     void givenDefaultConfig_whenVerify_thenOK() {
         TbMsgDeleteAttributesConfiguration defaultConfig = new TbMsgDeleteAttributesConfiguration().defaultConfiguration();
-        assertThat(defaultConfig.getScopePattern()).isEqualTo(DataConstants.SERVER_SCOPE);
-        assertThat(defaultConfig.getKeysPatterns()).isEqualTo(Collections.emptyList());
+        assertThat(defaultConfig.getScope()).isEqualTo(DataConstants.SERVER_SCOPE);
+        assertThat(defaultConfig.getKeys()).isEqualTo(Collections.emptyList());
     }
 
     @Test
@@ -130,7 +130,7 @@ public class TbMsgDeleteAttributesTest {
         final TbMsgMetaData metaData = new TbMsgMetaData();
         final String data = "{}";
 
-        config.setScopePattern("INVALID_SCOPE");
+        config.setScope("INVALID_SCOPE");
         nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
         node.init(ctx, nodeConfiguration);
 

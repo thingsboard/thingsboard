@@ -25,14 +25,14 @@ import java.util.List;
 @Data
 public class TbMsgDeleteAttributesConfiguration implements NodeConfiguration<TbMsgDeleteAttributesConfiguration> {
 
-    private String scopePattern;
-    private List<String> keysPatterns;
+    private String scope;
+    private List<String> keys;
 
     @Override
     public TbMsgDeleteAttributesConfiguration defaultConfiguration() {
         TbMsgDeleteAttributesConfiguration configuration = new TbMsgDeleteAttributesConfiguration();
-        configuration.setScopePattern(DataConstants.SERVER_SCOPE);
-        configuration.setKeysPatterns(Collections.emptyList());
+        configuration.setScope(DataConstants.SERVER_SCOPE);
+        configuration.setKeys(Collections.emptyList());
         return configuration;
     }
 }

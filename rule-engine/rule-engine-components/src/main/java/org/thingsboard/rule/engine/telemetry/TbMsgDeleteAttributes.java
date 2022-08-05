@@ -52,15 +52,15 @@ public class TbMsgDeleteAttributes implements TbNode {
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgDeleteAttributesConfiguration.class);
-        if (CollectionUtils.isEmpty(config.getKeysPatterns())) {
+        if (CollectionUtils.isEmpty(config.getKeys())) {
             throw new IllegalArgumentException("Attribute keys list is empty!");
         }
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        List<String> keysPatterns = config.getKeysPatterns();
-        String scope = TbNodeUtils.processPattern(config.getScopePattern(), msg);
+        List<String> keysPatterns = config.getKeys();
+        String scope = TbNodeUtils.processPattern(config.getScope(), msg);
         if (DataConstants.SERVER_SCOPE.equals(scope) ||
                 DataConstants.CLIENT_SCOPE.equals(scope) ||
                 DataConstants.SHARED_SCOPE.equals(scope)) {
