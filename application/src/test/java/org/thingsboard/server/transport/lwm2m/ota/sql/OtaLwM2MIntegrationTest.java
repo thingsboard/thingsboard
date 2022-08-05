@@ -33,6 +33,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -163,11 +164,12 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
         assertThat(getDeviceFromAPI(device.getId().getId())).as("fetched device").isEqualTo(savedDevice);
 
         final List<OtaPackageUpdateStatus> expectedStatuses = List.of(
-                QUEUED, INITIATED, DOWNLOADING, DOWNLOADING, DOWNLOADING, DOWNLOADED, VERIFIED, UPDATED);
+                QUEUED, INITIATED, FAILED, DOWNLOADING, DOWNLOADING, DOWNLOADING, DOWNLOADED, VERIFIED, UPDATED);
         log.warn("AWAIT atMost {} SECONDS on timeseries List<TsKvEntry> by API with list size {}...", TIMEOUT, expectedStatuses.size());
+        Predicate predicate = argument -> ((List)argument).size() >= expectedStatuses.size();
         List<TsKvEntry> ts = await("await on timeseries")
                 .atMost(30, TimeUnit.SECONDS)
-                .until(() -> getSwStateTelemetryFromAPI(device.getId().getId()), hasSize(expectedStatuses.size()));
+                .until(() -> getSwStateTelemetryFromAPI(device.getId().getId()), predicate);
         log.warn("Got the ts: {}", ts);
 
         ts.sort(Comparator.comparingLong(TsKvEntry::getTs));
