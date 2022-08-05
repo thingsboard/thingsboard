@@ -352,6 +352,8 @@ public class DefaultCoapClientContext implements CoapClientContext {
         try {
             if (state.getConfiguration() == null || state.getAdaptor() == null) {
                 initStateAdaptor(deviceProfile, state);
+            } else if (!state.getConfiguration().getDeviceProfile().equals(deviceProfile)) {
+                initStateAdaptor(deviceProfile, state);
             }
             if (state.getCredentials() == null) {
                 state.init(deviceCredentials);
@@ -380,7 +382,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
     private TransportConfigurationContainer getTransportConfigurationContainer(DeviceProfile deviceProfile) throws AdaptorException {
         DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
         if (transportConfiguration instanceof DefaultDeviceProfileTransportConfiguration) {
-            return new TransportConfigurationContainer(true);
+            return new TransportConfigurationContainer(true, deviceProfile);
         } else if (transportConfiguration instanceof CoapDeviceProfileTransportConfiguration) {
             CoapDeviceProfileTransportConfiguration coapDeviceProfileTransportConfiguration =
                     (CoapDeviceProfileTransportConfiguration) transportConfiguration;
@@ -392,7 +394,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
                 TransportPayloadTypeConfiguration transportPayloadTypeConfiguration =
                         defaultCoapDeviceTypeConfiguration.getTransportPayloadTypeConfiguration();
                 if (transportPayloadTypeConfiguration instanceof JsonTransportPayloadConfiguration) {
-                    return new TransportConfigurationContainer(true);
+                    return new TransportConfigurationContainer(true, deviceProfile);
                 } else {
                     ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration =
                             (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
@@ -404,7 +406,8 @@ public class DefaultCoapClientContext implements CoapClientContext {
                             protoTransportPayloadConfiguration.getTelemetryDynamicMessageDescriptor(deviceTelemetryProtoSchema),
                             protoTransportPayloadConfiguration.getAttributesDynamicMessageDescriptor(deviceAttributesProtoSchema),
                             protoTransportPayloadConfiguration.getRpcResponseDynamicMessageDescriptor(deviceRpcResponseProtoSchema),
-                            protoTransportPayloadConfiguration.getRpcRequestDynamicMessageBuilder(deviceRpcRequestProtoSchema)
+                            protoTransportPayloadConfiguration.getRpcRequestDynamicMessageBuilder(deviceRpcRequestProtoSchema),
+                            deviceProfile
                     );
                 }
             } else {
