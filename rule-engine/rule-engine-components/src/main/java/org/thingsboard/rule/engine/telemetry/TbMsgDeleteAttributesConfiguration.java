@@ -27,6 +27,7 @@ public class TbMsgDeleteAttributesConfiguration implements NodeConfiguration<TbM
 
     private String scope;
     private List<String> keys;
+    private boolean setScopeAsPattern;
 
     @Override
     public TbMsgDeleteAttributesConfiguration defaultConfiguration() {
