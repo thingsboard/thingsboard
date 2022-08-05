@@ -124,12 +124,10 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
         device.setFirmwareId(createFirmware().getId());
         final Device savedDevice = doPost("/api/device", device, Device.class);
 
-        Thread.sleep(1000);
-
         assertThat(savedDevice).as("saved device").isNotNull();
         assertThat(getDeviceFromAPI(device.getId().getId())).as("fetched device").isEqualTo(savedDevice);
 
-        final List<OtaPackageUpdateStatus> expectedStatuses = Arrays.asList(QUEUED, INITIATED, DOWNLOADING, DOWNLOADED, UPDATING, UPDATED);
+        final List<OtaPackageUpdateStatus> expectedStatuses = Arrays.asList(QUEUED, INITIATED, FAILED, DOWNLOADING, DOWNLOADED, UPDATING, UPDATED);
         List<TsKvEntry> ts = await("await on timeseries")
                 .atMost(30, TimeUnit.SECONDS)
                 .until(() -> toTimeseries(doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" +

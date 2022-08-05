@@ -53,9 +53,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY;
 import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
@@ -339,18 +337,6 @@ public class LwM2MTestClient {
 
     private void awaitClientAfterStartConnectLw() {
         LwM2mClient lwM2MClient = this.clientContext.getClientByEndpoint(endpoint);
-        CountDownLatch latch = new CountDownLatch(1);
-        Mockito.doAnswer(invocation -> {
-            latch.countDown();
-            return null;
-        }).when(defaultLwM2mUplinkMsgHandlerTest).initAttributes(lwM2MClient, true);
-
-        try {
-            if (!latch.await(1, TimeUnit.SECONDS)) {
-                throw new RuntimeException("Failed to await TimeOut lwm2m client initialization!");
-            }
-        } catch (InterruptedException e) {
-            throw new RuntimeException("Exception Failed to await lwm2m client initialization! ", e);
-        }
+        Mockito.doAnswer(invocationOnMock -> null).when(defaultLwM2mUplinkMsgHandlerTest).initAttributes(lwM2MClient, true);
     }
 }
