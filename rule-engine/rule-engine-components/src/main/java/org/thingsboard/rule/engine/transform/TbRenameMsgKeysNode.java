@@ -37,8 +37,8 @@ import java.util.concurrent.ExecutionException;
         type = ComponentType.TRANSFORMATION,
         name = "rename keys",
         configClazz = TbRenameMsgKeysNodeConfiguration.class,
-        nodeDescription = "Renames the keys in the msg data to the specified key names selected in the key mapping.",
-        nodeDetails = "Will fetch fields values specified in mapping. If specified field is not part of msg fields it will be ignored." +
+        nodeDescription = "Renames msg data keys to the new key names selected in the key mapping.",
+        nodeDetails = "If the key that is selected in the key mapping is missed in the msg data, it will be ignored." +
                 "If the msg is not a JSON object returns the incoming message as outbound message with <code>Failure</code> chain," +
                 " otherwise returns transformed messages via <code>Success</code> chain",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
@@ -56,14 +56,6 @@ public class TbRenameMsgKeysNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        processRename(ctx, msg);
-    }
-
-    @Override
-    public void destroy() {
-    }
-
-    private void processRename(TbContext ctx, TbMsg msg) {
         Map<String, String> renameKeysMapping = config.getRenameKeysMapping();
         if (CollectionUtils.isEmpty(renameKeysMapping)) {
             ctx.tellSuccess(msg);
@@ -82,6 +74,10 @@ public class TbRenameMsgKeysNode implements TbNode {
                 ctx.tellFailure(msg, new RuntimeException("Msg data is not a JSON Object!"));
             }
         }
+    }
+
+    @Override
+    public void destroy() {
     }
 }
 
