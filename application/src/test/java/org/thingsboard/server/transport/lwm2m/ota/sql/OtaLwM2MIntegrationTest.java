@@ -38,7 +38,6 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertTrue;
 import static org.thingsboard.rest.client.utils.RestJsonConverter.toTimeseries;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.DOWNLOADED;
@@ -130,18 +129,23 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
         assertThat(getDeviceFromAPI(device.getId().getId())).as("fetched device").isEqualTo(savedDevice);
 
         final List<OtaPackageUpdateStatus> expectedStatuses = Arrays.asList(QUEUED, INITIATED, FAILED, DOWNLOADING, DOWNLOADED, UPDATING, UPDATED);
+        Predicate predicate = argument -> ((List)argument).size() >= expectedStatuses.size();
         List<TsKvEntry> ts = await("await on timeseries")
                 .atMost(30, TimeUnit.SECONDS)
                 .until(() -> toTimeseries(doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" +
                         savedDevice.getId().getId() + "/values/timeseries?orderBy=ASC&keys=fw_state&startTs=0&endTs=" +
                         System.currentTimeMillis(), new TypeReference<>() {
-                })), hasSize(expectedStatuses.size()));
+                })), predicate);
         List<OtaPackageUpdateStatus> statuses = ts.stream().sorted(Comparator
                         .comparingLong(TsKvEntry::getTs)).map(KvEntry::getValueAsString)
                 .map(OtaPackageUpdateStatus::valueOf)
                 .collect(Collectors.toList());
 
-        Assert.assertEquals(expectedStatuses, statuses);
+        statuses.removeAll(expectedStatuses);
+        if (statuses.isEmpty()) {
+            log.trace("Statuses must be empty [{}]", statuses);
+        }
+        assertTrue(statuses.isEmpty());
     }
 
     /**
