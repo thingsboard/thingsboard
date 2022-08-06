@@ -57,6 +57,7 @@ import java.security.PublicKey;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -196,8 +197,11 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
         device.getId().getId().toString();
         lwM2MTestClient.start(isStartLw);
         await(awaitAlias)
-                .atMost(20, TimeUnit.SECONDS)
-                .until(() -> lwM2MTestClient.getClientStates().contains(finishState));
+                .atMost(40, TimeUnit.SECONDS)
+                .until(() -> {
+                    log.warn("basicTestConnection -> finishState: [{}] states: {}", finishState, lwM2MTestClient.getClientStates());
+                    return lwM2MTestClient.getClientStates().contains(finishState);
+                });
         Assert.assertTrue(lwM2MTestClient.getClientStates().containsAll(expectedStatuses));
     }
 
@@ -234,12 +238,16 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
         String deviceId = device.getId().getId().toString();
         lwM2MTestClient.start(true);
         await(awaitAlias)
-                .atMost(20, TimeUnit.SECONDS)
-                .until(() -> ON_REGISTRATION_SUCCESS.equals(lwM2MTestClient.getClientState()));
-        Assert.assertEquals(expectedStatusesLwm2m, lwM2MTestClient.getClientStates());
+                .atMost(40, TimeUnit.SECONDS)
+                .until(() -> {
+                    log.warn("basicTestConnection -> finishState: [{}] states: {}", ON_REGISTRATION_SUCCESS, lwM2MTestClient.getClientStates());
+                    return lwM2MTestClient.getClientStates().contains(ON_REGISTRATION_SUCCESS);
+                });
+        Assert.assertTrue(lwM2MTestClient.getClientStates().containsAll(expectedStatusesLwm2m));
 
         String executedPath = "/" + OBJECT_ID_1 + "_" +  lwM2MTestClient.getLeshanClient().getObjectTree().getModel().getObjectModel(OBJECT_ID_1).version
                 + "/0/" + RESOURCE_ID_9;
+        lwM2MTestClient.setClientStates(new HashSet<>());
         String actualResult = sendRPCSecurityExecuteById(executedPath, deviceId, endpoint);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         if (!(rpcActualResult.get("result").asText().equals(ResponseCode.CHANGED.getName()))) {
@@ -250,8 +258,11 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
         expectedStatusesBs.add(ON_DEREGISTRATION_STARTED);
         expectedStatusesBs.add(ON_DEREGISTRATION_SUCCESS);
         await(awaitAlias)
-                .atMost(20, TimeUnit.SECONDS)
-                .until(() -> lwM2MTestClient.getClientStates().contains(ON_REGISTRATION_SUCCESS));
+                .atMost(40, TimeUnit.SECONDS)
+                .until(() -> {
+                    log.warn("basicTestConnection -> finishState: [{}] states: {}", ON_REGISTRATION_SUCCESS, lwM2MTestClient.getClientStates());
+                    return lwM2MTestClient.getClientStates().contains(ON_REGISTRATION_SUCCESS);
+                });
         Assert.assertTrue(lwM2MTestClient.getClientStates().containsAll(expectedStatusesBs));
     }
 

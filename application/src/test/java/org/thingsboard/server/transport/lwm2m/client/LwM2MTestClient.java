@@ -108,7 +108,6 @@ public class LwM2MTestClient {
     private LwM2mBinaryAppDataContainer lwM2MBinaryAppDataContainer;
     private LwM2MLocationParams locationParams;
     private LwM2mTemperatureSensor lwM2MTemperatureSensor;
-    private LwM2MClientState clientState;
     private Set<LwM2MClientState> clientStates;
     private DefaultLwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandlerTest;
     private LwM2mClientContext clientContext;
@@ -178,112 +177,94 @@ public class LwM2MTestClient {
         builder.setDecoder(new DefaultLwM2mDecoder(false));
 
         builder.setEncoder(new DefaultLwM2mEncoder(new LwM2mValueConverterImpl(), false));
-        clientState = ON_INIT;
         clientStates = new HashSet<>();
-        clientStates.add(clientState);
+        clientStates.add(ON_INIT);
         leshanClient = builder.build();
 
         LwM2mClientObserver observer = new LwM2mClientObserver() {
             @Override
             public void onBootstrapStarted(ServerIdentity bsserver, BootstrapRequest request) {
-                clientState = ON_BOOTSTRAP_STARTED;
-                clientStates.add(clientState);
+                clientStates.add(ON_BOOTSTRAP_STARTED);
             }
 
             @Override
             public void onBootstrapSuccess(ServerIdentity bsserver, BootstrapRequest request) {
-                clientState = ON_BOOTSTRAP_SUCCESS;
-                clientStates.add(clientState);
+                clientStates.add(ON_BOOTSTRAP_SUCCESS);
             }
 
             @Override
             public void onBootstrapFailure(ServerIdentity bsserver, BootstrapRequest request, ResponseCode responseCode, String errorMessage, Exception cause) {
-                clientState = ON_BOOTSTRAP_FAILURE;
-                clientStates.add(clientState);
+                clientStates.add(ON_BOOTSTRAP_FAILURE);
             }
 
             @Override
             public void onBootstrapTimeout(ServerIdentity bsserver, BootstrapRequest request) {
-                clientState = ON_BOOTSTRAP_TIMEOUT;
-                clientStates.add(clientState);
+                clientStates.add(ON_BOOTSTRAP_TIMEOUT);
             }
 
             @Override
             public void onRegistrationStarted(ServerIdentity server, RegisterRequest request) {
-                clientState = ON_REGISTRATION_STARTED;
-                clientStates.add(clientState);
+                clientStates.add(ON_REGISTRATION_STARTED);
             }
 
             @Override
             public void onRegistrationSuccess(ServerIdentity server, RegisterRequest request, String registrationID) {
-                clientState = ON_REGISTRATION_SUCCESS;
-                clientStates.add(clientState);
+                clientStates.add(ON_REGISTRATION_SUCCESS);
             }
 
             @Override
             public void onRegistrationFailure(ServerIdentity server, RegisterRequest request, ResponseCode responseCode, String errorMessage, Exception cause) {
-                clientState = ON_REGISTRATION_FAILURE;
-                clientStates.add(clientState);
+                clientStates.add(ON_REGISTRATION_FAILURE);
             }
 
             @Override
             public void onRegistrationTimeout(ServerIdentity server, RegisterRequest request) {
-                clientState = ON_REGISTRATION_TIMEOUT;
-                clientStates.add(clientState);
+                clientStates.add(ON_REGISTRATION_TIMEOUT);
             }
 
             @Override
             public void onUpdateStarted(ServerIdentity server, UpdateRequest request) {
-                clientState = ON_UPDATE_STARTED;
-                clientStates.add(clientState);
+                clientStates.add(ON_UPDATE_STARTED);
             }
 
             @Override
             public void onUpdateSuccess(ServerIdentity server, UpdateRequest request) {
-                clientState = ON_UPDATE_SUCCESS;
-                clientStates.add(clientState);
+                clientStates.add(ON_UPDATE_SUCCESS);
             }
 
             @Override
             public void onUpdateFailure(ServerIdentity server, UpdateRequest request, ResponseCode responseCode, String errorMessage, Exception cause) {
-                clientState = ON_UPDATE_FAILURE;
-                clientStates.add(clientState);
+                clientStates.add(ON_UPDATE_FAILURE);
             }
 
             @Override
             public void onUpdateTimeout(ServerIdentity server, UpdateRequest request) {
-                clientState = ON_UPDATE_TIMEOUT;
-                clientStates.add(clientState);
+                clientStates.add(ON_UPDATE_TIMEOUT);
             }
 
             @Override
             public void onDeregistrationStarted(ServerIdentity server, DeregisterRequest request) {
-                clientState = ON_DEREGISTRATION_STARTED;
-                clientStates.add(clientState);
+                clientStates.add(ON_DEREGISTRATION_STARTED);
             }
 
             @Override
             public void onDeregistrationSuccess(ServerIdentity server, DeregisterRequest request) {
-                clientState = ON_DEREGISTRATION_SUCCESS;
-                clientStates.add(clientState);
+                clientStates.add(ON_DEREGISTRATION_SUCCESS);
             }
 
             @Override
             public void onDeregistrationFailure(ServerIdentity server, DeregisterRequest request, ResponseCode responseCode, String errorMessage, Exception cause) {
-                clientState = ON_DEREGISTRATION_FAILURE;
-                clientStates.add(clientState);
+                clientStates.add(ON_DEREGISTRATION_FAILURE);
             }
 
             @Override
             public void onDeregistrationTimeout(ServerIdentity server, DeregisterRequest request) {
-                clientState = ON_DEREGISTRATION_TIMEOUT;
-                clientStates.add(clientState);
+                clientStates.add(ON_DEREGISTRATION_TIMEOUT);
             }
 
             @Override
             public void onUnexpectedError(Throwable unexpectedError) {
-                clientState = ON_EXPECTED_ERROR;
-                clientStates.add(clientState);
+                clientStates.add(ON_EXPECTED_ERROR);
             }
         };
         this.leshanClient.addObserver(observer);
