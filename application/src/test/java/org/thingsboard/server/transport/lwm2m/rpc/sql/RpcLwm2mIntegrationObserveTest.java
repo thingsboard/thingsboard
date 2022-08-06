@@ -45,13 +45,11 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationT
         String actualResultBefore = sendObserve("ObserveReadAll", null);
         ObjectNode rpcActualResultBefore = JacksonUtil.fromString(actualResultBefore, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResultBefore.get("result").asText());
-        assertTrue(rpcActualResultBefore.get("value").asText().contains(fromVersionedIdToObjectId(idVer_3_0_0)));
-        assertTrue(rpcActualResultBefore.get("value").asText().contains(fromVersionedIdToObjectId(idVer_3_0_9)));
-        assertTrue(rpcActualResultBefore.get("value").asText().contains(fromVersionedIdToObjectId(idVer_19_0_0)));
+        String cntObserve = String.valueOf(rpcActualResultBefore.get("value").asText().split(",").length);
         String actualResult = sendObserve("ObserveCancelAll", null);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
-        assertEquals("3", rpcActualResult.get("value").asText());
+        assertEquals(cntObserve, rpcActualResult.get("value").asText());
         String actualResultAfter = sendObserve("ObserveReadAll", null);
         ObjectNode rpcActualResultAfter = JacksonUtil.fromString(actualResultAfter, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResultAfter.get("result").asText());
@@ -153,7 +151,8 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationT
     public void testObserveRepeatedRequestObserveOnDevice_Result_BAD_REQUEST_ErrorMsg_AlreadyRegistered() throws Exception {
         String idVer_3_0_0 = objectInstanceIdVer_3 + "/" + RESOURCE_ID_0;
         sendObserve("Observe", fromVersionedIdToObjectId(idVer_3_0_0));
-        String actualResult = sendObserve("Observe", idVer_3_0_9);
+        sendObserve("ObserveReadAll", null);
+        String actualResult = sendObserve("Observe", idVer_3_0_0);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.BAD_REQUEST.getName(), rpcActualResult.get("result").asText());
         String expected = "Observation is already registered!";
