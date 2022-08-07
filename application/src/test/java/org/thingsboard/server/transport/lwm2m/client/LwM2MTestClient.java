@@ -166,7 +166,7 @@ public class LwM2MTestClient {
         DefaultRegistrationEngineFactory engineFactory = new DefaultRegistrationEngineFactory();
         engineFactory.setReconnectOnUpdate(false);
         engineFactory.setResumeOnConnect(true);
-        engineFactory.setCommunicationPeriod(100);
+        engineFactory.setCommunicationPeriod(5000);
 
         LeshanClientBuilder builder = new LeshanClientBuilder(endpoint);
         builder.setLocalAddress("0.0.0.0", port);
