@@ -40,17 +40,20 @@ import java.util.concurrent.ExecutionException;
         type = ComponentType.ENRICHMENT,
         name = "fetch device credentials",
         configClazz = TbFetchDeviceCredentialsNodeConfiguration.class,
-        nodeDescription = "Adds <b>deviceCredentials</b> property to the message metadata if the configuration parameter <b>fetchToMetadata</b>" +
-                " is set to <code>true</code> or if it does not exist, otherwise, adds <b>deviceCredentials</b> property to the message data!",
-        nodeDetails = "Rule node returns transformed messages via <code>Success</code> chain in case that message successfully transformed" +
-                " otherwise returns the incoming message as outbound message with <code>Failure</code> chain.",
+        nodeDescription = "Adds <b>сredentialsType</b> and <b>сredentials</b> property to the message metadata if the " +
+                " configuration parameter <b>fetchToMetadata</b> is set to <code>true</code>, otherwise, adds properties " +
+                " to the message data",
+        nodeDetails = "If originator type is not DEVICE or failed get device credentials, the <code>Failure</code> " +
+                " chain is used, otherwise <code>Success</code> chain is used",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeFetchDeviceCredentialsConfig",
         icon = "functions"
 )
 public class TbFetchDeviceCredentialsNode implements TbNode {
 
-    private static final String DEVICE_CREDENTIAL = "deviceCredentials";
+    private static final String CREDENTIALS = "credentials";
+    private static final String CREDENTIALS_TYPE = "credentialsType";
+
     TbFetchDeviceCredentialsNodeConfiguration config;
     boolean fetchToMetadata;
 
@@ -73,21 +76,17 @@ public class TbFetchDeviceCredentialsNode implements TbNode {
             ctx.tellFailure(msg, new RuntimeException("Failed to get Device Credentials for device: " + deviceId + "!"));
             return;
         }
-        //TODO -- ask return type data
-        /*String credentialsId = deviceCredentials.getCredentialsId();
-        if (StringUtils.isEmpty(credentialsId)) {
-            ctx.tellFailure(msg, new RuntimeException("Failed to get accessToken for device: " + deviceId + "!"));
-            return;
-        }*/
 
         TbMsg transformedMsg;
         if (fetchToMetadata) {
             TbMsgMetaData metaData = msg.getMetaData();
-            metaData.putValue(DEVICE_CREDENTIAL, JacksonUtil.toString(deviceCredentials));
+            metaData.putValue(CREDENTIALS_TYPE, String.valueOf(deviceCredentials.getCredentialsType()));
+            metaData.putValue(CREDENTIALS, JacksonUtil.toString(ctx.getDeviceCredentialsService().сredentialsInfo(deviceCredentials)));
             transformedMsg = TbMsg.transformMsg(msg, msg.getType(), originator, metaData, msg.getData());
         } else {
             ObjectNode data = (ObjectNode) JacksonUtil.toJsonNode(msg.getData());
-            data.set(DEVICE_CREDENTIAL, JacksonUtil.valueToTree(deviceCredentials));
+            data.set(CREDENTIALS_TYPE, JacksonUtil.valueToTree(deviceCredentials.getCredentialsType()));
+            data.set(CREDENTIALS, ctx.getDeviceCredentialsService().сredentialsInfo(deviceCredentials));
             transformedMsg = TbMsg.transformMsg(msg, msg.getType(), originator, msg.getMetaData(), JacksonUtil.toString(data));
         }
         ctx.tellSuccess(transformedMsg);

@@ -20,6 +20,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
@@ -72,6 +73,9 @@ public class TbFetchDeviceCredentialsNodeTest {
         willAnswer(invocation -> {
             return new DeviceCredentials();
         }).given(deviceCredentialsService).findDeviceCredentialsByDeviceId(any(), any());
+        willAnswer(invocation -> {
+            return JacksonUtil.newObjectNode();
+        }).given(deviceCredentialsService).сredentialsInfo(any());
     }
 
     @AfterEach
@@ -103,7 +107,8 @@ public class TbFetchDeviceCredentialsNodeTest {
         TbMsg newMsg = newMsgCaptor.getValue();
         assertThat(newMsg).isNotNull();
 
-        assertThat(newMsg.getMetaData().getData().containsKey("deviceCredentials")).isEqualTo(true);
+        assertThat(newMsg.getMetaData().getData().containsKey("credentials")).isEqualTo(true);
+        assertThat(newMsg.getMetaData().getData().containsKey("credentialsType")).isEqualTo(true);
     }
 
     @Test
