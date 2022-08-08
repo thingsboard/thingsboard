@@ -1,19 +1,21 @@
 package org.thingsboard.server.cache.ota.service;
 
 import lombok.SneakyThrows;
-import org.hibernate.engine.jdbc.BlobProxy;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+import org.thingsboard.server.cache.ota.files.BaseFileCacheService;
+import org.thingsboard.server.cache.ota.files.TemporaryFileCleaner;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.security.MessageDigest;
-import java.sql.Blob;
 import java.util.Objects;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 
 class BaseFileCacheServiceTest {
@@ -21,30 +23,18 @@ class BaseFileCacheServiceTest {
     private final static String FILE_FILLING = "Hello, testing environment";
     private static final int ONE_MEGA_BYTE = 1_000_000;
     private final static OtaPackageId OTA_PACKAGE_ID = new OtaPackageId(UUID.randomUUID());
-    private final static Blob DATA = BlobProxy.generateProxy(FILE_FILLING.getBytes());
-    File file;
+    private final static InputStream DATA = new ByteArrayInputStream(FILE_FILLING.getBytes());
     BaseFileCacheService baseFileCacheService = new BaseFileCacheService(new TemporaryFileCleaner());
 
-    @BeforeEach
-    void setUp() {
-        file = Mockito.mock(File.class);
-//        fileCacheService = Mockito.mock(FileCacheService.class);
-    }
 
     @Test
-    void testNotThrowExceptionsWhenDeleteFile() {
-        Mockito.when(file.exists()).thenReturn(true);
-        assertDoesNotThrow(() -> baseFileCacheService.deleteFile(new File("/download/alarm_rule.js")));
-    }
-
-    @Test
-    void testDataSavingWithNullBlob() {
-        assertThrows(NullPointerException.class, () -> baseFileCacheService.loadToFile(OTA_PACKAGE_ID, null));
+    void testDataSavingWithNullInputStream() {
+        assertThrows(RuntimeException.class, () -> baseFileCacheService.loadToFile(OTA_PACKAGE_ID, null));
     }
 
     @Test
     void testDataSavingWithNullOtaPackageId() {
-        assertThrows(NullPointerException.class, () -> baseFileCacheService.loadToFile(null, DATA));
+        assertThrows(RuntimeException.class, () -> baseFileCacheService.loadToFile(null, DATA));
     }
 
     @Test
@@ -69,19 +59,6 @@ class BaseFileCacheServiceTest {
         String sha256 = calculateChecksumSHA256(new ByteArrayInputStream(FILE_FILLING.getBytes()));
         File file = baseFileCacheService.loadToFile(OTA_PACKAGE_ID, DATA);
         assertEquals(sha256, calculateChecksumSHA256(new FileInputStream(file)));
-    }
-
-    @Test
-    @SneakyThrows
-    void testNotThrowExceptionWhenCreatingTemporaryFiles() {
-        BaseFileCacheService mock = Mockito.mock(BaseFileCacheService.class);
-        assertDoesNotThrow(() -> mock.saveDataTemporaryFile(DATA.getBinaryStream()));
-    }
-
-    @Test
-    @SneakyThrows
-    void testGettingStreamWhenFileNotExist(){
-       assertThrows(FileNotFoundException.class, ()->baseFileCacheService.getOtaDataStream(OTA_PACKAGE_ID));
     }
 
     @SneakyThrows

@@ -42,6 +42,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
+import java.io.ByteArrayInputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -201,7 +202,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         firmware.setContentType("text/plain");
         firmware.setChecksumAlgorithm(ChecksumAlgorithm.SHA256);
         firmware.setChecksum("4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a");
-        firmware.setData(BlobProxy.generateProxy(new byte[]{1}));
+        firmware.setData(new ByteArrayInputStream(new byte[]{1}));
         firmware.setDataSize(1L);
         OtaPackage savedFirmware = otaPackageService.saveOtaPackage(firmware);
 
@@ -236,7 +237,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         firmware.setContentType("text/plain");
         firmware.setChecksumAlgorithm(ChecksumAlgorithm.SHA256);
         firmware.setChecksum("4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a");
-        firmware.setData(BlobProxy.generateProxy(new byte[]{1}));
+        firmware.setData(new ByteArrayInputStream(new byte[]{1}));
         firmware.setDataSize(1L);
         OtaPackage savedFirmware = otaPackageService.saveOtaPackage(firmware);
 

@@ -505,8 +505,8 @@ spring.resources.chain:
     content:
       enabled: "true"
 
-spring.servlet.multipart.max-file-size: "2000MB"
-spring.servlet.multipart.max-request-size: "2000MB"
+spring.servlet.multipart.max-file-size: "50MB"
+spring.servlet.multipart.max-request-size: "50MB"
 
 spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation: "true"
 spring.jpa.properties.hibernate.order_by.default_null_ordering: "${SPRING_JPA_PROPERTIES_HIBERNATE_ORDER_BY_DEFAULT_NULL_ORDERING:last}"
@@ -526,9 +526,9 @@ spring:
     database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}"
   datasource:
     driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}"
-    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/board}"
-    username: "${SPRING_DATASOURCE_USERNAME:myuser}"
-    password: "${SPRING_DATASOURCE_PASSWORD:mypass}"
+    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
+    username: "${SPRING_DATASOURCE_USERNAME:postgres}"
+    password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
     hikari:
       maximumPoolSize: "${SPRING_DATASOURCE_MAXIMUM_POOL_SIZE:16}"
 
@@ -1114,3 +1114,6 @@ management:
       exposure:
         # Expose metrics endpoint (use value 'prometheus' to enable prometheus metrics).
         include: '${METRICS_ENDPOINTS_EXPOSE:info}'
+
+files:
+  temporary_files_directory: '${TEMPORARY_FILES_DIRECTORY: ${java.io.tmpdir}}'

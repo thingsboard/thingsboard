@@ -99,6 +99,7 @@ import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.resource.TbResourceService;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Optional;
 import java.util.UUID;
@@ -573,7 +574,6 @@ public class DefaultTransportApiService implements TransportApiService {
             DeviceProfile deviceProfile = deviceProfileCache.find(device.getDeviceProfileId());
             otaPackageId = OtaPackageUtil.getOtaPackageId(deviceProfile, otaPackageType);
         }
-
         TransportProtos.GetOtaPackageResponseMsg.Builder builder = TransportProtos.GetOtaPackageResponseMsg.newBuilder();
 
         if (otaPackageId == null) {
@@ -598,9 +598,9 @@ public class DefaultTransportApiService implements TransportApiService {
                 if (!otaPackageDataCache.has(otaPackageId.toString())) {
                     OtaPackage otaPackage = otaPackageService.findOtaPackageById(tenantId, otaPackageId);
                     try {
-                        otaPackageDataCache.put(otaPackageId.toString(), otaPackage.getData().getBytes(100L, 0));//todo
-                    } catch (SQLException e) {
-                        log.error("ERROR", e); // todo
+                        otaPackageDataCache.put(otaPackageId.toString(), otaPackage.getData().readAllBytes());
+                    } catch (IOException e) {
+                        log.error("Failed to cache ota package with id {}",otaPackage.getId(), e);
                     }
                 }
             }

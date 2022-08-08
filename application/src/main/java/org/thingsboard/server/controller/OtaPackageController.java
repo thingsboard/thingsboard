@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2022 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,17 +20,11 @@ import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.hibernate.engine.jdbc.BlobProxy;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.OtaPackage;
@@ -50,27 +44,9 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import javax.transaction.Transactional;
-import java.io.InputStream;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.sql.Blob;
+import java.io.IOException;
 
-import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFILE_ID_PARAM_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.OTA_PACKAGE_CHECKSUM_ALGORITHM_ALLOWABLE_VALUES;
-import static org.thingsboard.server.controller.ControllerConstants.OTA_PACKAGE_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.OTA_PACKAGE_ID_PARAM_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.OTA_PACKAGE_INFO_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.OTA_PACKAGE_SORT_PROPERTY_ALLOWABLE_VALUES;
-import static org.thingsboard.server.controller.ControllerConstants.OTA_PACKAGE_TEXT_SEARCH_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
-import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_ALLOWABLE_VALUES;
-import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
-import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
-import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
+import static org.thingsboard.server.controller.ControllerConstants.*;
 
 @Slf4j
 @RestController
@@ -89,7 +65,7 @@ public class OtaPackageController extends BaseController {
     @ResponseBody
     @Transactional
     public ResponseEntity<FileSystemResource> downloadOtaPackage(@ApiParam(value = OTA_PACKAGE_ID_PARAM_DESCRIPTION)
-                                                                                   @PathVariable(OTA_PACKAGE_ID) String strOtaPackageId) throws ThingsboardException {
+                                                                 @PathVariable(OTA_PACKAGE_ID) String strOtaPackageId) throws ThingsboardException {
         checkParameter(OTA_PACKAGE_ID, strOtaPackageId);
         try {
             OtaPackageId otaPackageId = new OtaPackageId(toUUID(strOtaPackageId));
@@ -205,7 +181,7 @@ public class OtaPackageController extends BaseController {
         }
     }
 
-    private OtaPackage saveOtaPackageWithData(OtaPackageId otaPackageId, MultipartFile file, String checksum, ChecksumAlgorithm checksumAlgorithm) throws  ThingsboardException {
+    private OtaPackage saveOtaPackageWithData(OtaPackageId otaPackageId, MultipartFile file, String checksum, ChecksumAlgorithm checksumAlgorithm) throws ThingsboardException, IOException {
         OtaPackageInfo info = checkOtaPackageInfoId(otaPackageId, Operation.READ);
         OtaPackage otaPackage = new OtaPackage(otaPackageId);
         otaPackage.setCreatedTime(info.getCreatedTime());
@@ -218,17 +194,11 @@ public class OtaPackageController extends BaseController {
         otaPackage.setAdditionalInfo(info.getAdditionalInfo());
         otaPackage.setChecksumAlgorithm(checksumAlgorithm);
         otaPackage.setChecksum(checksum);
-        try(InputStream inputStream = file.getInputStream()) {
-            otaPackage.setFileName(file.getOriginalFilename());
-            otaPackage.setContentType(file.getContentType());
-            otaPackage.setDataSize(file.getSize());
-            Blob blob = BlobProxy.generateProxy(inputStream, file.getSize());
-            otaPackage.setData(blob);
-            return otaPackageService.saveOtaPackage(otaPackage);
-        } catch (Exception e){
-            log.error("Failed to save ota package {} with data {}",otaPackageId, file.getName(), e);
-            return null;
-        }
+        otaPackage.setFileName(file.getOriginalFilename());
+        otaPackage.setContentType(file.getContentType());
+        otaPackage.setDataSize(file.getSize());
+        otaPackage.setData(file.getInputStream());
+        return otaPackageService.saveOtaPackage(otaPackage);
     }
 
     @ApiOperation(value = "Get OTA Package Infos (getOtaPackages)",

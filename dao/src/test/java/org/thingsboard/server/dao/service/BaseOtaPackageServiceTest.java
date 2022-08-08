@@ -32,10 +32,7 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.ota.util.ChecksumUtil;
 
 import javax.validation.ValidationException;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
+import java.io.*;
 import java.sql.Blob;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -54,7 +51,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
     private static final ChecksumAlgorithm CHECKSUM_ALGORITHM = ChecksumAlgorithm.SHA256;
     private static final String CHECKSUM = "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a";
     private static final long DATA_SIZE = 1L;
-    private static final Blob DATA = BlobProxy.generateProxy(new byte[]{(int) DATA_SIZE});
+    private static final InputStream DATA = new ByteArrayInputStream(new byte[]{1});
     private static final String URL = "http://firmware.test.org";
 
     private final IdComparator<OtaPackageInfo> idComparator = new IdComparator<>();
@@ -691,13 +688,6 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         thrown.expectMessage("length of version must be equal or less than 255");
 
         otaPackageService.saveOtaPackageInfo(firmwareInfo, true);
-    }
-
-    @Test
-    public void testGettingCorrectStreamWithOtaData() {
-        OtaPackage firmware = createFirmware(tenantId, "24687846");
-        InputStream stream = otaPackageService.getOtaDataStream(tenantId, firmware.getId());
-        assertEquals(firmware.getChecksum(), ChecksumUtil.generateChecksum(CHECKSUM_ALGORITHM, stream));
     }
 
     @Test

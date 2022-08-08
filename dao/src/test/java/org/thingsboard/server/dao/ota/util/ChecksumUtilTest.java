@@ -2,57 +2,67 @@ package org.thingsboard.server.dao.ota.util;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.thingsboard.server.common.data.ota.ChecksumAlgorithm.*;
 
 import java.io.ByteArrayInputStream;
+import java.util.Arrays;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.thingsboard.server.common.data.ota.ChecksumAlgorithm.*;
 
 class ChecksumUtilTest {
+    private static final int SIZE = 1_050_000;
     ByteArrayInputStream inputStream;
+
     @BeforeEach
     void setUp() {
-      inputStream =
-                new ByteArrayInputStream("ggvgavsckvawyefgkashcbweyfguas;cnewgfayegfdhvzhxeyrgfzkdfgybycefygkzbvdrgzksdfbfvxjchvksydfvdkzsf".getBytes());
+        char[] chars = new char[SIZE];
+        Arrays.fill(chars, 'f');
+        String s = new String(chars);
+        inputStream = new ByteArrayInputStream(s.getBytes());
     }
 
     @Test
     void testSha256Checksum() {
         String generateChecksum = ChecksumUtil.generateChecksum(SHA256, inputStream);
-        assertEquals("8098be8d5e22198e69316b1eef0b2863d75973b708f2ec4849132122b45fea71", generateChecksum);
+        assertEquals("b23c6c2faa06fe3f9a47b86914d08a77c9db9ce9b87fc8b6b2758db756159b2e", generateChecksum);
     }
 
     @Test
     void testMd5Checksum() {
         String generateChecksum = ChecksumUtil.generateChecksum(MD5, inputStream);
-        assertEquals("64c03752176a3a66e627db31ad4d3a9d", generateChecksum);
+        assertEquals("352b53342cc1ef2a21c480656ef6ffe6", generateChecksum);
     }
 
     @Test
     void testSha384Checksum() {
         String generateChecksum = ChecksumUtil.generateChecksum(SHA384, inputStream);
-        assertEquals("f7a88d89699d5fb9d4fb3b84b606bb1cac6641ed04e51f598fb7729e2142d5b0cec0c4019801d239749ff6ea0a872604", generateChecksum);
+        assertEquals("bd04277a8fc6ace52123d6d6214d2612ccdec802f361974198c44fd3df857b79f2343f010943340aeb7c51321a2d32e9", generateChecksum);
     }
+
     @Test
     void testSha512Checksum() {
         String generateChecksum = ChecksumUtil.generateChecksum(SHA512, inputStream);
-        assertEquals("5709738c21dfc8ea5b80a291a0e11c4c38bc8393d01b075e712877bf4b6329f822ab1a6d8eecd0d578e7ae9a51fff852f3c9849d23f5109a8068f92a858a88f0",
+        assertEquals("2efb6e7ef97eca294e8cc4bf731615622199fba59c2b5ed4f9a56c1f17be3522abac4f5d9fa0f95f39ff10a59c28597a263697b2d794e6686d260ffaa078da7e",
                 generateChecksum);
     }
 
     @Test
     void testCrc32Checksum() {
         String generateChecksum = ChecksumUtil.generateChecksum(CRC32, inputStream);
-        assertEquals("666124cf", generateChecksum);
+        assertEquals("4b8f2fda", generateChecksum);
     }
 
     @Test
-    void testMurmur3_32Checksum(){
-        assertDoesNotThrow(()->ChecksumUtil.generateChecksum(MURMUR3_32, inputStream));
+    void testMurmur3_32Checksum() {
+        assertEquals("3d45a1dd", ChecksumUtil.generateChecksum(MURMUR3_32, inputStream));
+        assertDoesNotThrow(() -> ChecksumUtil.generateChecksum(MURMUR3_32, inputStream));
     }
 
     @Test
-    void testMurmur3_128Checksum(){
-        assertDoesNotThrow(()->ChecksumUtil.generateChecksum(MURMUR3_128, inputStream));
+    void testMurmur3_128Checksum() {
+        assertEquals("9dbf0ffe5f6ecbb5edf207717e7870b7", ChecksumUtil.generateChecksum(MURMUR3_128, inputStream));
+        assertDoesNotThrow(() -> ChecksumUtil.generateChecksum(MURMUR3_128, inputStream));
     }
 
 }

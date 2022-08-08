@@ -74,6 +74,7 @@ import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Comparator;
@@ -269,7 +270,7 @@ public abstract class AbstractServiceTest {
         firmware.setContentType("text/plain");
         firmware.setChecksumAlgorithm(ChecksumAlgorithm.SHA256);
         firmware.setChecksum("4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a");
-        firmware.setData(BlobProxy.generateProxy(new byte[]{1}));
+        firmware.setData(new ByteArrayInputStream(new byte[]{1}));
         firmware.setDataSize(1L);
         return firmware;
     }

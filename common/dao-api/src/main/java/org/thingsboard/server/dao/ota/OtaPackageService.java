@@ -21,22 +21,18 @@ import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 
 import java.io.File;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 
 public interface OtaPackageService {
 
     OtaPackageInfo saveOtaPackageInfo(OtaPackageInfo otaPackageInfo, boolean isUrl);
 
     OtaPackage saveOtaPackage(OtaPackage otaPackage);
-
-    String generateChecksum(ChecksumAlgorithm checksumAlgorithm, ByteBuffer data);
 
     OtaPackage findOtaPackageById(TenantId tenantId, OtaPackageId otaPackageId);
 
@@ -54,6 +50,5 @@ public interface OtaPackageService {
 
     long sumDataSizeByTenantId(TenantId tenantId);
 
-    InputStream getOtaDataStream(TenantId tenantId, OtaPackageId otaPackageId);
-    File getOtaDataFile (TenantId tenantId, OtaPackageId otaPackageId);
+    File getOtaDataFile(TenantId tenantId, OtaPackageId otaPackageId);
 }

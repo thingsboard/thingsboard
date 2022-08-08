@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2022 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,13 +25,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.ota.OtaPackageDao;
-import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.ota.util.ChecksumUtil;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
-
-
-import java.sql.SQLException;
-
 
 import static org.thingsboard.server.common.data.EntityType.OTA_PACKAGE;
 
@@ -73,14 +68,9 @@ public class OtaPackageDataValidator extends BaseOtaPackageDataValidator<OtaPack
             if (StringUtils.isEmpty(otaPackage.getChecksum())) {
                 throw new DataValidationException("OtaPackage checksum should be specified!");
             }
-            try {
-                String currentChecksum = ChecksumUtil.generateChecksum(otaPackage.getChecksumAlgorithm(), otaPackage.getData().getBinaryStream());
-                if (!currentChecksum.equals(otaPackage.getChecksum())) {
-                    throw new DataValidationException("Wrong otaPackage file!");
-                }
-            }catch (SQLException e){
-                log.error("Failed to check ota package data {}",otaPackage.getId(), e);
-                throw new RuntimeException("otaPackage file can't be validated");
+            String currentChecksum = ChecksumUtil.generateChecksum(otaPackage.getChecksumAlgorithm(), otaPackage.getData());
+            if (!currentChecksum.equals(otaPackage.getChecksum())) {
+                throw new DataValidationException("Wrong otaPackage file!");
             }
         } else {
             if (otaPackage.getData() != null) {

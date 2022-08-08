@@ -65,15 +65,13 @@ public class ChecksumUtil {
 
     private static String checksumMurmur3_32(InputStream stream) throws IOException {
         Hasher hasher = Hashing.murmur3_32().newHasher();
-        ByteStreams.copy(stream, Funnels.asOutputStream(hasher));
-        String hash = new String(hasher.hash().asBytes());
-        return new String(Base64.getEncoder().encode(hash.getBytes()));
+        com.google.common.io.ByteStreams.copy(stream, Funnels.asOutputStream(hasher));
+        return hasher.hash().toString();
     }
 
     private static String checksumMurmur3_128(InputStream stream) throws IOException {
         Hasher hasher = Hashing.murmur3_128().newHasher();
         ByteStreams.copy(stream, Funnels.asOutputStream(hasher));
-        String hash = new String(hasher.hash().asBytes());
-        return new String(Base64.getEncoder().encode(hash.getBytes()));
+        return hasher.hash().toString();
     }
 }
