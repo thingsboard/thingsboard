@@ -16,11 +16,13 @@
 package org.thingsboard.server.transport.lwm2m;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.californium.elements.config.Configuration;
 import org.eclipse.leshan.client.californium.LeshanClient;
 import org.eclipse.leshan.client.object.Security;
+import org.eclipse.leshan.core.ResponseCode;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -235,6 +237,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractControllerTes
 
         getWsClient().registerWaitForUpdate();
         createNewClient(security, coapConfig, false, endpoint, false, null);
+        awaitObserveReadAll(0, false, device.getId().getId().toString());
         String msg = getWsClient().waitForUpdate();
 
         EntityDataUpdate update = mapper.readValue(msg, EntityDataUpdate.class);
@@ -390,6 +393,33 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractControllerTes
         await("Destroy LeshanClient: delete All is registered Servers.")
                 .atMost(2000, TimeUnit.MILLISECONDS)
                 .until(() -> leshanClient.getRegisteredServers().size() == 0);
+    }
+
+    protected  void awaitObserveReadAll(int cntObserve, boolean isBootstrap, String deviceIdStr) throws Exception {
+        if (!isBootstrap) {
+            await("ObserveReadAll after start client: countObserve " + cntObserve)
+                    .atMost(40, TimeUnit.SECONDS)
+                    .until(() -> {
+                        String actualResultReadAll = sendObserve("ObserveReadAll", null, deviceIdStr);
+                        ObjectNode rpcActualResultReadAll = JacksonUtil.fromString(actualResultReadAll, ObjectNode.class);
+                        Assert.assertEquals(ResponseCode.CONTENT.getName(), rpcActualResultReadAll.get("result").asText());
+                        String actualValuesReadAll = rpcActualResultReadAll.get("value").asText();
+                        log.warn("ObserveReadAll:  [{}]", actualValuesReadAll);
+                        int actualCntObserve = "[]".equals(actualValuesReadAll) ? 0 : actualValuesReadAll.split(",").length;
+                        return cntObserve == actualCntObserve;
+                    });
+        }
+    }
+
+    protected String sendObserve(String method, String params, String deviceIdStr) throws Exception {
+        String sendRpcRequest;
+        if (params == null) {
+            sendRpcRequest = "{\"method\": \"" + method + "\"}";
+        }
+        else {
+            sendRpcRequest = "{\"method\": \"" + method + "\", \"params\": {\"id\": \"" + params + "\"}}";
+        }
+        return doPostAsync("/api/plugins/rpc/twoway/" + deviceIdStr, sendRpcRequest, String.class, status().isOk());
     }
 
 }

@@ -193,11 +193,12 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
                                        boolean isBootstrap,
                                        LwM2MClientState finishState,
                                        boolean isStartLw) throws Exception {
-        createNewClient(security, coapConfig, true, endpoint, isBootstrap, null);
         createDeviceProfile(transportConfiguration);
         final Device device = createDevice(deviceCredentials, endpoint);
         device.getId().getId().toString();
+        createNewClient(security, coapConfig, true, endpoint, isBootstrap, null);
         lwM2MTestClient.start(isStartLw);
+        awaitObserveReadAll(0, isBootstrap, device.getId().getId().toString());
         await(awaitAlias)
                 .atMost(40, TimeUnit.SECONDS)
                 .until(() -> {
@@ -240,11 +241,13 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
                                                             Set<LwM2MClientState> expectedStatusesBs,
                                                             boolean isBootstrap,
                                                             Security securityBs) throws Exception {
-        createNewClient(security, coapConfig, true, endpoint, isBootstrap, securityBs);
+
         createDeviceProfile(transportConfiguration);
         final Device device = createDevice(deviceCredentials, endpoint);
-        String deviceId = device.getId().getId().toString();
+        String deviceIdStr = device.getId().getId().toString();
+        createNewClient(security, coapConfig, true, endpoint, isBootstrap, securityBs);
         lwM2MTestClient.start(true);
+        awaitObserveReadAll(0, isBootstrap, deviceIdStr);
         await(awaitAlias)
                 .atMost(40, TimeUnit.SECONDS)
                 .until(() -> {
@@ -262,10 +265,10 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
         String executedPath = "/" + OBJECT_ID_1 + "_" +  lwM2MTestClient.getLeshanClient().getObjectTree().getModel().getObjectModel(OBJECT_ID_1).version
                 + "/0/" + RESOURCE_ID_9;
         lwM2MTestClient.setClientStates(new HashSet<>());
-        String actualResult = sendRPCSecurityExecuteById(executedPath, deviceId, endpoint);
+        String actualResult = sendRPCSecurityExecuteById(executedPath, deviceIdStr, endpoint);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         if (!(rpcActualResult.get("result").asText().equals(ResponseCode.CHANGED.getName()))) {
-            actualResult = sendRPCSecurityExecuteById(executedPath, deviceId, endpoint);
+            actualResult = sendRPCSecurityExecuteById(executedPath, deviceIdStr, endpoint);
             rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         }
         assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
@@ -432,7 +435,7 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
         return doPost("/api/device/credentials", deviceCredentials).andReturn();
     }
 
-    private String sendRPCSecurityExecuteById(String path, String deviceId, String endpoint) throws Exception {
+    protected String sendRPCSecurityExecuteById(String path, String deviceId, String endpoint) throws Exception {
         log.info("endpoint1: [{}]", endpoint);
 
 
