@@ -167,18 +167,18 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationT
      */
     @Test
     public void testObserveReadAll_Result_CONTENT_Value_Contains_Paths_Count_ObserveReadAll() throws Exception {
+        String idVer_3_0_0 = objectInstanceIdVer_3 + "/" + RESOURCE_ID_0;
+        sendObserve("Observe", fromVersionedIdToObjectId(idVer_3_0_0));
         String actualResultCancel = sendObserve("ObserveCancelAll", null);
         ObjectNode rpcActualResultCancel = JacksonUtil.fromString(actualResultCancel, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResultCancel.get("result").asText());
-        sendObserve("Observe",idVer_19_0_0);
-        sendObserve("Observe", idVer_3_0_9);
+        sendObserve("Observe", fromVersionedIdToObjectId(idVer_3_0_0));
         String actualResult = sendObserve("ObserveReadAll", null);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
         String actualValues = rpcActualResult.get("value").asText();
-        assertTrue(actualValues.contains(fromVersionedIdToObjectId(idVer_19_0_0)));
-        assertTrue(actualValues.contains(fromVersionedIdToObjectId(idVer_3_0_9)));
-        assertEquals(2, actualValues.split(",").length);
+        assertTrue(actualValues.contains(fromVersionedIdToObjectId(idVer_3_0_0)));
+        assertEquals(1, actualValues.split(",").length);
     }
 
 
