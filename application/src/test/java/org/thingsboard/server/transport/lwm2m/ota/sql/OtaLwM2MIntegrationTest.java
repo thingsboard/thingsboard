@@ -125,7 +125,7 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(this.CLIENT_ENDPOINT_OTA5));
         final Device device = createDevice(deviceCredentials, this.CLIENT_ENDPOINT_OTA5);
         createNewClient(SECURITY_NO_SEC, COAP_CONFIG, false, this.CLIENT_ENDPOINT_OTA5, false, null);
-        awaitObserveReadAll(0, false, device.getId().getId().toString());
+        awaitObserveReadAll(9, false, device.getId().getId().toString());
 
         device.setFirmwareId(createFirmware().getId());
         final Device savedDevice = doPost("/api/device", device, Device.class);
@@ -155,7 +155,7 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(this.CLIENT_ENDPOINT_OTA9));
         final Device device = createDevice(deviceCredentials, this.CLIENT_ENDPOINT_OTA9);
         createNewClient(SECURITY_NO_SEC, COAP_CONFIG, false, this.CLIENT_ENDPOINT_OTA9, false, null);
-        awaitObserveReadAll(0, false, device.getId().getId().toString());
+        awaitObserveReadAll(9, false, device.getId().getId().toString());
 
         device.setSoftwareId(createSoftware().getId());
         final Device savedDevice = doPost("/api/device", device, Device.class); //sync call
