@@ -16,12 +16,16 @@
 package org.thingsboard.server.transport.lwm2m.rpc.sql;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationTest;
 
+import java.util.concurrent.TimeUnit;
+
+import static org.awaitility.Awaitility.await;
 import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -32,6 +36,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_3;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.fromVersionedIdToObjectId;
 
+@Slf4j
 public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationTest {
 
     /**
@@ -167,18 +172,16 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationT
      */
     @Test
     public void testObserveReadAll_Result_CONTENT_Value_Contains_Paths_Count_ObserveReadAll() throws Exception {
-        String idVer_3_0_0 = objectInstanceIdVer_3 + "/" + RESOURCE_ID_0;
-        sendObserve("Observe", fromVersionedIdToObjectId(idVer_3_0_0));
-        String actualResultCancel = sendObserve("ObserveCancelAll", null);
-        ObjectNode rpcActualResultCancel = JacksonUtil.fromString(actualResultCancel, ObjectNode.class);
-        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResultCancel.get("result").asText());
-        sendObserve("Observe", fromVersionedIdToObjectId(idVer_3_0_0));
-        String actualResult = sendObserve("ObserveReadAll", null);
-        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
-        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
-        String actualValues = rpcActualResult.get("value").asText();
-        assertTrue(actualValues.contains(fromVersionedIdToObjectId(idVer_3_0_0)));
-        assertEquals(1, actualValues.split(",").length);
+        await("ObserveReadAll: count 2")
+                .atMost(40, TimeUnit.SECONDS)
+                .until(() -> {
+                    String actualResultReadAll = sendObserve("ObserveReadAll", null);
+                    ObjectNode rpcActualResultReadAll = JacksonUtil.fromString(actualResultReadAll, ObjectNode.class);
+                    assertEquals(ResponseCode.CONTENT.getName(), rpcActualResultReadAll.get("result").asText());
+                    String actualValuesReadAll = rpcActualResultReadAll.get("value").asText();
+                    log.warn("ObserveReadAll:  [{}]", actualValuesReadAll);
+                    return 2 == actualValuesReadAll.split(",").length;
+                });
     }
 
 
