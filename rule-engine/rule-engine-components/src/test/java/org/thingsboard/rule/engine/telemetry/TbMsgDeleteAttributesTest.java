@@ -37,7 +37,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -94,13 +93,6 @@ public class TbMsgDeleteAttributesTest {
     }
 
     @Test
-    void givenDefaultConfig_whenInit_thenFail() {
-        config.setKeys(Collections.emptyList());
-        nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
-        assertThatThrownBy(() -> node.init(ctx, nodeConfiguration)).isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
     void givenDefaultConfig_whenVerify_thenOK() {
         TbMsgDeleteAttributesConfiguration defaultConfig = new TbMsgDeleteAttributesConfiguration().defaultConfiguration();
         assertThat(defaultConfig.getScope()).isEqualTo(DataConstants.SERVER_SCOPE);
@@ -128,9 +120,9 @@ public class TbMsgDeleteAttributesTest {
     @Test
     void giveInvalidScope_whenOnMsg_thenTellFailure() throws Exception {
         final TbMsgMetaData metaData = new TbMsgMetaData();
-        final String data = "{}";
+        final String data = "{\"TestAttribute_1\": \"\", \"TestAttribute_2\": \"\"}";
 
-        config.setScope("INVALID_SCOPE");
+        config.setKeys(List.of("$[TestAttribute_1]", "$[TestAttribute_2]"));
         nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
         node.init(ctx, nodeConfiguration);
 
@@ -143,6 +135,6 @@ public class TbMsgDeleteAttributesTest {
         verify(ctx, times(1)).tellFailure(newMsgCaptor.capture(), exceptionCaptor.capture());
 
         assertThat(newMsgCaptor.getValue()).isSameAs(msg);
-        assertThat(exceptionCaptor.getValue()).isInstanceOf(IllegalArgumentException.class);
+        assertThat(exceptionCaptor.getValue()).isInstanceOf(RuntimeException.class);
     }
 }

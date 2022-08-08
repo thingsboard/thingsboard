@@ -16,14 +16,12 @@
 package org.thingsboard.rule.engine.telemetry;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.CollectionUtils;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -38,9 +36,7 @@ import java.util.stream.Collectors;
         name = "delete attributes",
         configClazz = TbMsgDeleteAttributesConfiguration.class,
         nodeDescription = "Delete attributes for Message Originator.",
-        nodeDetails = "Allowed scope parameter values: <b>SERVER/CLIENT/SHARED</b>. If no attributes are selected - " +
-                "message send via <b>Failure</b> chain. If selected attributes successfully deleted - message send via " +
-                "<b>Success</b> chain, otherwise <b>Failure</b> chain will be used.",
+        nodeDetails = "Allowed scope parameter values: <b>SERVER/CLIENT/SHARED</b>. Will try to remove attributes by keys from the list",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeDeleteAttributesConfig",
         icon = "remove_circle"
@@ -52,29 +48,19 @@ public class TbMsgDeleteAttributes implements TbNode {
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgDeleteAttributesConfiguration.class);
-        if (CollectionUtils.isEmpty(config.getKeys())) {
-            throw new IllegalArgumentException("Attribute keys list is empty!");
-        }
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        List<String> keysPatterns = config.getKeys();
-        String scope = TbNodeUtils.processPattern(config.getScope(), msg);
-        if (DataConstants.SERVER_SCOPE.equals(scope) ||
-                DataConstants.CLIENT_SCOPE.equals(scope) ||
-                DataConstants.SHARED_SCOPE.equals(scope)) {
-            List<String> keysToDelete = keysPatterns.stream()
-                    .map(keyPattern -> TbNodeUtils.processPattern(keyPattern, msg))
-                    .distinct()
-                    .filter(StringUtils::isNotBlank)
-                    .collect(Collectors.toList());
-            if (keysToDelete.isEmpty()) {
-                throw new RuntimeException("Selected keys patterns have invalid values!");
-            }
-            ctx.getTelemetryService().deleteAndNotify(ctx.getTenantId(), msg.getOriginator(), scope, keysToDelete, new TelemetryNodeCallback(ctx, msg));
+        List<String> keysToDelete = config.getKeys().stream()
+                .map(keyPattern -> TbNodeUtils.processPattern(keyPattern, msg))
+                .distinct()
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toList());
+        if (keysToDelete.isEmpty()) {
+            ctx.tellFailure(msg, new RuntimeException("Selected keys patterns have invalid values!"));
         } else {
-            ctx.tellFailure(msg, new IllegalArgumentException("Unsupported attributes scope '" + scope + "'! Only 'SERVER_SCOPE', 'CLIENT_SCOPE' or 'SHARED_SCOPE' are allowed!"));
+            ctx.getTelemetryService().deleteAndNotify(ctx.getTenantId(), msg.getOriginator(), config.getScope(), keysToDelete, new TelemetryNodeCallback(ctx, msg));
         }
     }
 
