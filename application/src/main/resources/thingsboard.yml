@@ -1116,4 +1116,4 @@ management:
         include: '${METRICS_ENDPOINTS_EXPOSE:info}'
 
 files:
-  temporary_files_directory: '${TEMPORARY_FILES_DIRECTORY: ${java.io.tmpdir}}'
+  temporary_files_directory: "${TEMPORARY_FILES_DIRECTORY: ${java.io.tmpdir}}"

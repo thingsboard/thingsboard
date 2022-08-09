@@ -80,7 +80,7 @@ public class TemporaryFileCleaner {
         }
     }
 
-    @Scheduled(fixedDelay = 60000)
+    @Scheduled(fixedDelay = 600_000)
     private void deleteUnusedTemporaryFiles() {
         long currentTime = System.currentTimeMillis();
         List<OtaPackageId> toBeDeleted = lastActivityTimes.entrySet()
