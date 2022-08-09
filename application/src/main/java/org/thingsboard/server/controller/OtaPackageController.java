@@ -190,10 +190,8 @@ public class OtaPackageController extends BaseController {
                 checksum = ChecksumUtil.generateChecksum(checksumAlgorithm, file.getInputStream());
             }
             OtaPackageInfo savedOtaPackage = saveOtaPackageWithData(otaPackageId, file, checksum, checksumAlgorithm);
-            logEntityAction(savedOtaPackage.getId(), savedOtaPackage, null, ActionType.UPDATED, null);
             return savedOtaPackage;
         } catch (Exception e) {
-            logEntityAction(emptyId(EntityType.OTA_PACKAGE), null, null, ActionType.UPDATED, e, strOtaPackageId);
             throw handleException(e);
         }
     }
