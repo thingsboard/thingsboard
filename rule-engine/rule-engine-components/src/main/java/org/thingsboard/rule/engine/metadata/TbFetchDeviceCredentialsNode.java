@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
@@ -40,11 +41,11 @@ import java.util.concurrent.ExecutionException;
         type = ComponentType.ENRICHMENT,
         name = "fetch device credentials",
         configClazz = TbFetchDeviceCredentialsNodeConfiguration.class,
-        nodeDescription = "Adds <b>сredentialsType</b> and <b>сredentials</b> property to the message metadata if the " +
-                " configuration parameter <b>fetchToMetadata</b> is set to <code>true</code>, otherwise, adds properties " +
-                " to the message data",
-        nodeDetails = "If originator type is not DEVICE or failed get device credentials, the <code>Failure</code> " +
-                " chain is used, otherwise <code>Success</code> chain is used",
+        nodeDescription = "Fetch device credentials for message originator",
+        nodeDetails = "Adds <b>credentialsType</b> and <b>credentials</b> properties to the message metadata if the " +
+                "configuration parameter <b>fetchToMetadata</b> is set to <code>true</code>, otherwise, adds properties " +
+                "to the message data. If originator type is not <b>DEVICE</b> or rule node failed to get device credentials " +
+                "- send Message via <code>Failure</code> chain, otherwise <code>Success</code> chain is used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeFetchDeviceCredentialsConfig",
         icon = "functions"
@@ -78,15 +79,17 @@ public class TbFetchDeviceCredentialsNode implements TbNode {
         }
 
         TbMsg transformedMsg;
+        String credentialsType = deviceCredentials.getCredentialsType().name();
+        JsonNode credentialsInfo = ctx.getDeviceCredentialsService().credentialsInfo(deviceCredentials);
         if (fetchToMetadata) {
             TbMsgMetaData metaData = msg.getMetaData();
-            metaData.putValue(CREDENTIALS_TYPE, String.valueOf(deviceCredentials.getCredentialsType()));
-            metaData.putValue(CREDENTIALS, JacksonUtil.toString(ctx.getDeviceCredentialsService().сredentialsInfo(deviceCredentials)));
+            metaData.putValue(CREDENTIALS_TYPE, credentialsType);
+            metaData.putValue(CREDENTIALS, JacksonUtil.toString(credentialsInfo));
             transformedMsg = TbMsg.transformMsg(msg, msg.getType(), originator, metaData, msg.getData());
         } else {
             ObjectNode data = (ObjectNode) JacksonUtil.toJsonNode(msg.getData());
-            data.set(CREDENTIALS_TYPE, JacksonUtil.valueToTree(deviceCredentials.getCredentialsType()));
-            data.set(CREDENTIALS, ctx.getDeviceCredentialsService().сredentialsInfo(deviceCredentials));
+            data.put(CREDENTIALS_TYPE, credentialsType);
+            data.set(CREDENTIALS, credentialsInfo);
             transformedMsg = TbMsg.transformMsg(msg, msg.getType(), originator, msg.getMetaData(), JacksonUtil.toString(data));
         }
         ctx.tellSuccess(transformedMsg);

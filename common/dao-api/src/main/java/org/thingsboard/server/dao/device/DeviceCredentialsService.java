@@ -34,7 +34,7 @@ public interface DeviceCredentialsService {
 
     void formatCredentials(DeviceCredentials deviceCredentials);
 
-    JsonNode сredentialsInfo(DeviceCredentials deviceCredentials);
+    JsonNode credentialsInfo(DeviceCredentials deviceCredentials);
 
     void deleteDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials);
 

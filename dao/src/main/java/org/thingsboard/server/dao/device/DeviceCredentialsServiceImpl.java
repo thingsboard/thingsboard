@@ -139,7 +139,7 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
     }
 
     @Override
-    public JsonNode сredentialsInfo(DeviceCredentials deviceCredentials) {
+    public JsonNode credentialsInfo(DeviceCredentials deviceCredentials) {
         switch (deviceCredentials.getCredentialsType()) {
             case ACCESS_TOKEN:
                 return JacksonUtil.valueToTree(deviceCredentials.getCredentialsId());

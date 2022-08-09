@@ -45,6 +45,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.thingsboard.server.common.data.security.DeviceCredentialsType.ACCESS_TOKEN;
 
 public class TbFetchDeviceCredentialsNodeTest {
     final ObjectMapper mapper = new ObjectMapper();
@@ -71,11 +72,13 @@ public class TbFetchDeviceCredentialsNodeTest {
 
         willReturn(deviceCredentialsService).given(ctx).getDeviceCredentialsService();
         willAnswer(invocation -> {
-            return new DeviceCredentials();
+            DeviceCredentials deviceCredentials = new DeviceCredentials();
+            deviceCredentials.setCredentialsType(ACCESS_TOKEN);
+            return deviceCredentials;
         }).given(deviceCredentialsService).findDeviceCredentialsByDeviceId(any(), any());
         willAnswer(invocation -> {
             return JacksonUtil.newObjectNode();
-        }).given(deviceCredentialsService).сredentialsInfo(any());
+        }).given(deviceCredentialsService).credentialsInfo(any());
     }
 
     @AfterEach
