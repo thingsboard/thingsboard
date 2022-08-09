@@ -57,6 +57,7 @@ import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.ota.OtaPackageUtil;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
@@ -64,7 +65,7 @@ import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
+import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProvisionService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -72,6 +73,7 @@ import org.thingsboard.server.dao.device.provision.ProvisionFailedException;
 import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 import org.thingsboard.server.dao.device.provision.ProvisionResponse;
 import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -100,7 +102,7 @@ import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.resource.TbResourceService;
 
 import java.io.IOException;
-import java.sql.SQLException;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -136,6 +138,7 @@ public class DefaultTransportApiService implements TransportApiService {
     private final TbResourceService resourceService;
     private final OtaPackageService otaPackageService;
     private final OtaPackageDataCache otaPackageDataCache;
+    private final QueueService queueService;
 
     private final ConcurrentMap<String, ReentrantLock> deviceCreationLocks = new ConcurrentHashMap<>();
 
@@ -178,6 +181,8 @@ public class DefaultTransportApiService implements TransportApiService {
             result = handle(transportApiRequestMsg.getDeviceCredentialsRequestMsg());
         } else if (transportApiRequestMsg.hasOtaPackageRequestMsg()) {
             result = handle(transportApiRequestMsg.getOtaPackageRequestMsg());
+        } else if (transportApiRequestMsg.hasGetAllQueueRoutingInfoRequestMsg()) {
+            return Futures.transform(handle(transportApiRequestMsg.getGetAllQueueRoutingInfoRequestMsg()), value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
         }
 
         return Futures.transform(Optional.ofNullable(result).orElseGet(this::getEmptyTransportApiResponseFuture),
@@ -294,7 +299,7 @@ public class DefaultTransportApiService implements TransportApiService {
                     tbClusterService.onDeviceUpdated(savedDevice, null);
                     device = savedDevice;
 
-                    relationService.saveRelationAsync(TenantId.SYS_TENANT_ID, new EntityRelation(gateway.getId(), device.getId(), "Created"));
+                    relationService.saveRelation(TenantId.SYS_TENANT_ID, new EntityRelation(gateway.getId(), device.getId(), "Created"));
 
                     TbMsgMetaData metaData = new TbMsgMetaData();
                     CustomerId customerId = gateway.getCustomerId();
@@ -574,6 +579,7 @@ public class DefaultTransportApiService implements TransportApiService {
             DeviceProfile deviceProfile = deviceProfileCache.find(device.getDeviceProfileId());
             otaPackageId = OtaPackageUtil.getOtaPackageId(deviceProfile, otaPackageType);
         }
+
         TransportProtos.GetOtaPackageResponseMsg.Builder builder = TransportProtos.GetOtaPackageResponseMsg.newBuilder();
 
         if (otaPackageId == null) {
@@ -640,6 +646,25 @@ public class DefaultTransportApiService implements TransportApiService {
             deviceCreationLock.unlock();
         }
     }
+
+    private ListenableFuture<TransportApiResponseMsg> handle(TransportProtos.GetAllQueueRoutingInfoRequestMsg requestMsg) {
+        return queuesToTransportApiResponseMsg(queueService.findAllQueues());
+    }
+
+    private ListenableFuture<TransportApiResponseMsg> queuesToTransportApiResponseMsg(List<Queue> queues) {
+        return Futures.immediateFuture(TransportApiResponseMsg.newBuilder()
+                .addAllGetQueueRoutingInfoResponseMsgs(queues.stream()
+                        .map(queue -> TransportProtos.GetQueueRoutingInfoResponseMsg.newBuilder()
+                                .setTenantIdMSB(queue.getTenantId().getId().getMostSignificantBits())
+                                .setTenantIdLSB(queue.getTenantId().getId().getLeastSignificantBits())
+                                .setQueueIdMSB(queue.getId().getId().getMostSignificantBits())
+                                .setQueueIdLSB(queue.getId().getId().getLeastSignificantBits())
+                                .setQueueName(queue.getName())
+                                .setQueueTopic(queue.getTopic())
+                                .setPartitions(queue.getPartitions())
+                                .build()).collect(Collectors.toList())).build());
+    }
+
 
     private Long checkLong(Long l) {
         return l != null ? l : 0;

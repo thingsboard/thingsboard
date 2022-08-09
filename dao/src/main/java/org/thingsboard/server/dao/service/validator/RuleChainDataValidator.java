@@ -20,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
@@ -30,7 +29,7 @@ import org.thingsboard.server.dao.rule.RuleChainDao;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
-import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.tenant.TenantService;
 
 @Component
 public class RuleChainDataValidator extends DataValidator<RuleChain> {
@@ -43,7 +42,7 @@ public class RuleChainDataValidator extends DataValidator<RuleChain> {
     private RuleChainService ruleChainService;
 
     @Autowired
-    private TenantDao tenantDao;
+    private TenantService tenantService;
 
     @Autowired
     @Lazy
@@ -68,8 +67,7 @@ public class RuleChainDataValidator extends DataValidator<RuleChain> {
         if (ruleChain.getTenantId() == null || ruleChain.getTenantId().isNullUid()) {
             throw new DataValidationException("Rule chain should be assigned to tenant!");
         }
-        Tenant tenant = tenantDao.findById(tenantId, ruleChain.getTenantId().getId());
-        if (tenant == null) {
+        if (!tenantService.tenantExists(ruleChain.getTenantId())) {
             throw new DataValidationException("Rule chain is referencing to non-existent tenant!");
         }
         if (ruleChain.isRoot() && RuleChainType.CORE.equals(ruleChain.getType())) {

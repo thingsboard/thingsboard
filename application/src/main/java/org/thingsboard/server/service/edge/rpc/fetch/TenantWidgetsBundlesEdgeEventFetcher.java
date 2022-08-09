@@ -32,6 +32,6 @@ public class TenantWidgetsBundlesEdgeEventFetcher extends BaseWidgetsBundlesEdge
     }
     @Override
     protected PageData<WidgetsBundle> findWidgetsBundles(TenantId tenantId, PageLink pageLink) {
-        return widgetsBundleService.findAllTenantWidgetsBundlesByTenantIdAndPageLink(tenantId, pageLink);
+        return widgetsBundleService.findTenantWidgetsBundlesByTenantId(tenantId, pageLink);
     }
 }

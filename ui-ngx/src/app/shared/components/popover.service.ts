@@ -55,7 +55,8 @@ export class TbPopoverService {
 
   displayPopover<T>(trigger: Element, renderer: Renderer2, hostView: ViewContainerRef,
                     componentType: Type<T>, preferredPlacement: PopoverPlacement = 'top', hideOnClickOutside = true,
-                    injector?: Injector, context?: any, overlayStyle: any = {}, popoverStyle: any = {}, style?: any): TbPopoverComponent {
+                    injector?: Injector, context?: any, overlayStyle: any = {}, popoverStyle: any = {}, style?: any,
+                    showCloseButton = true): TbPopoverComponent {
     const componentRef = hostView.createComponent(this.componentFactory);
     const component = componentRef.instance;
     this.popoverWithTriggers.push({
@@ -76,11 +77,10 @@ export class TbPopoverService {
     component.tbPopoverInnerStyle = popoverStyle;
     component.tbComponentStyle = style;
     component.tbHideOnClickOutside = hideOnClickOutside;
+    component.tbShowCloseButton = showCloseButton;
     component.tbVisibleChange.subscribe((visible: boolean) => {
       if (!visible) {
-        component.tbAnimationDone.subscribe(() => {
-          componentRef.destroy();
-        });
+        componentRef.destroy();
       }
     });
     component.tbDestroy.subscribe(() => {
@@ -130,9 +130,7 @@ export class TbPopoverService {
       component.tbVisibleChange.subscribe((visible: boolean) => {
         if (!visible) {
           visibleFn(false);
-          component.tbAnimationDone.subscribe(() => {
-            componentRef.destroy();
-          });
+          componentRef.destroy();
         }
       });
       component.tbDestroy.subscribe(() => {

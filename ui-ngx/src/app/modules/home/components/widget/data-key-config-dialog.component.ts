@@ -22,13 +22,19 @@ import { AppState } from '@core/core.state';
 import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
-import { DataKey } from '@shared/models/widget.models';
+import { DataKey, Widget } from '@shared/models/widget.models';
 import { DataKeysCallbacks } from './data-keys.component.models';
 import { DataKeyConfigComponent } from '@home/components/widget/data-key-config.component';
+import { Dashboard } from '@shared/models/dashboard.models';
+import { IAliasController } from '@core/api/widget-api.models';
 
 export interface DataKeyConfigDialogData {
   dataKey: DataKey;
   dataKeySettingsSchema: any;
+  dataKeySettingsDirective: string;
+  dashboard: Dashboard;
+  aliasController: IAliasController;
+  widget: Widget;
   entityAliasId?: string;
   showPostProcessing?: boolean;
   callbacks?: DataKeysCallbacks;

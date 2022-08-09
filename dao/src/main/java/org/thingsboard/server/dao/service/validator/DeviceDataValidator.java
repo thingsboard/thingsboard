@@ -22,34 +22,28 @@ import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.OtaPackage;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.data.DeviceTransportConfiguration;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
-import org.thingsboard.server.dao.cache.EntitiesCacheManager;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.device.DeviceDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.ota.OtaPackageService;
-import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
-import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.util.Optional;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 @Component
-public class DeviceDataValidator extends DataValidator<Device> {
+public class DeviceDataValidator extends AbstractHasOtaPackageValidator<Device> {
 
     @Autowired
     private DeviceDao deviceDao;
 
     @Autowired
-    private TenantDao tenantDao;
+    private TenantService tenantService;
 
     @Autowired
     private CustomerDao customerDao;
@@ -57,12 +51,6 @@ public class DeviceDataValidator extends DataValidator<Device> {
     @Autowired
     @Lazy
     private TbTenantProfileCache tenantProfileCache;
-
-    @Autowired
-    private OtaPackageService otaPackageService;
-
-    @Autowired
-    private EntitiesCacheManager cacheManager;
 
     @Override
     protected void validateCreate(TenantId tenantId, Device device) {
@@ -73,15 +61,12 @@ public class DeviceDataValidator extends DataValidator<Device> {
     }
 
     @Override
-    protected void validateUpdate(TenantId tenantId, Device device) {
+    protected Device validateUpdate(TenantId tenantId, Device device) {
         Device old = deviceDao.findById(device.getTenantId(), device.getId().getId());
         if (old == null) {
             throw new DataValidationException("Can't update non existing device!");
         }
-        if (!old.getName().equals(device.getName())) {
-            cacheManager.removeDeviceFromCacheByName(tenantId, old.getName());
-            cacheManager.removeDeviceFromCacheById(tenantId, device.getId());
-        }
+        return old;
     }
 
     @Override
@@ -92,8 +77,7 @@ public class DeviceDataValidator extends DataValidator<Device> {
         if (device.getTenantId() == null) {
             throw new DataValidationException("Device should be assigned to tenant!");
         } else {
-            Tenant tenant = tenantDao.findById(device.getTenantId(), device.getTenantId().getId());
-            if (tenant == null) {
+            if (!tenantService.tenantExists(device.getTenantId())) {
                 throw new DataValidationException("Device is referencing to non-existent tenant!");
             }
         }
@@ -112,36 +96,6 @@ public class DeviceDataValidator extends DataValidator<Device> {
                 .flatMap(deviceData -> Optional.ofNullable(deviceData.getTransportConfiguration()))
                 .ifPresent(DeviceTransportConfiguration::validate);
 
-        if (device.getFirmwareId() != null) {
-            OtaPackage firmware = otaPackageService.findOtaPackageById(tenantId, device.getFirmwareId());
-            if (firmware == null) {
-                throw new DataValidationException("Can't assign non-existent firmware!");
-            }
-            if (!firmware.getType().equals(OtaPackageType.FIRMWARE)) {
-                throw new DataValidationException("Can't assign firmware with type: " + firmware.getType());
-            }
-            if (firmware.getData() == null && !firmware.hasUrl()) {
-                throw new DataValidationException("Can't assign firmware with empty data!");
-            }
-            if (!firmware.getDeviceProfileId().equals(device.getDeviceProfileId())) {
-                throw new DataValidationException("Can't assign firmware with different deviceProfile!");
-            }
-        }
-
-        if (device.getSoftwareId() != null) {
-            OtaPackage software = otaPackageService.findOtaPackageById(tenantId, device.getSoftwareId());
-            if (software == null) {
-                throw new DataValidationException("Can't assign non-existent software!");
-            }
-            if (!software.getType().equals(OtaPackageType.SOFTWARE)) {
-                throw new DataValidationException("Can't assign software with type: " + software.getType());
-            }
-            if (software.getData() == null && !software.hasUrl()) {
-                throw new DataValidationException("Can't assign software with empty data!");
-            }
-            if (!software.getDeviceProfileId().equals(device.getDeviceProfileId())) {
-                throw new DataValidationException("Can't assign firmware with different deviceProfile!");
-            }
-        }
+        validateOtaPackage(tenantId, device, device.getDeviceProfileId());
     }
 }

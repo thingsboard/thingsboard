@@ -51,21 +51,24 @@ public interface UserService {
 
     UserCredentials replaceUserCredentials(TenantId tenantId, UserCredentials userCredentials);
 
-	void deleteUser(TenantId tenantId, UserId userId);
+    void deleteUser(TenantId tenantId, UserId userId);
 
     PageData<User> findUsersByTenantId(TenantId tenantId, PageLink pageLink);
 
     PageData<User> findTenantAdmins(TenantId tenantId, PageLink pageLink);
-	
-	void deleteTenantAdmins(TenantId tenantId);
+
+    void deleteTenantAdmins(TenantId tenantId);
 
     PageData<User> findCustomerUsers(TenantId tenantId, CustomerId customerId, PageLink pageLink);
-	    
-	void deleteCustomerUsers(TenantId tenantId, CustomerId customerId);
 
-	void setUserCredentialsEnabled(TenantId tenantId, UserId userId, boolean enabled);
+    void deleteCustomerUsers(TenantId tenantId, CustomerId customerId);
 
-	void onUserLoginSuccessful(TenantId tenantId, UserId userId);
+    void setUserCredentialsEnabled(TenantId tenantId, UserId userId, boolean enabled);
 
-	int onUserLoginIncorrectCredentials(TenantId tenantId, UserId userId);
+    void resetFailedLoginAttempts(TenantId tenantId, UserId userId);
+
+    int increaseFailedLoginAttempts(TenantId tenantId, UserId userId);
+
+    void setLastLoginTs(TenantId tenantId, UserId userId);
+
 }

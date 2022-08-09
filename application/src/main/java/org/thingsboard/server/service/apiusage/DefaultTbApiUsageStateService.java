@@ -70,6 +70,7 @@ import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -79,6 +80,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -500,19 +502,19 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
     }
 
     @Override
-    protected void onAddedPartitions(Set<TopicPartitionInfo> addedPartitions) {
+    protected Map<TopicPartitionInfo, List<ListenableFuture<?>>> onAddedPartitions(Set<TopicPartitionInfo> addedPartitions) {
+        var result = new HashMap<TopicPartitionInfo, List<ListenableFuture<?>>>();
         try {
             log.info("Initializing tenant states.");
             updateLock.lock();
             try {
                 PageDataIterable<Tenant> tenantIterator = new PageDataIterable<>(tenantService::findTenants, 1024);
-                List<ListenableFuture<?>> futures = new ArrayList<>();
                 for (Tenant tenant : tenantIterator) {
                     TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenant.getId(), tenant.getId());
                     if (addedPartitions.contains(tpi)) {
                         if (!myUsageStates.containsKey(tenant.getId()) && tpi.isMyPartition()) {
                             log.debug("[{}] Initializing tenant state.", tenant.getId());
-                            futures.add(dbExecutor.submit(() -> {
+                            result.computeIfAbsent(tpi, tmp -> new ArrayList<>()).add(dbExecutor.submit(() -> {
                                 try {
                                     updateTenantState((TenantApiUsageState) getOrFetchState(tenant.getId(), tenant.getId()), tenantProfileCache.get(tenant.getTenantProfileId()));
                                     log.debug("[{}] Initialized tenant state.", tenant.getId());
@@ -526,14 +528,13 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
                         log.debug("[{}][{}] Tenant doesn't belong to current partition. tpi [{}]", tenant.getName(), tenant.getId(), tpi);
                     }
                 }
-                Futures.whenAllComplete(futures);
             } finally {
                 updateLock.unlock();
             }
-            log.info("Initialized {} tenant states.", myUsageStates.size());
         } catch (Exception e) {
             log.warn("Unknown failure", e);
         }
+        return result;
     }
 
     @PreDestroy

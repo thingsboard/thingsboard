@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -219,13 +220,16 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
             @Override
             public void onSuccess(@Nullable TbEntityDataSubCtx theCtx) {
                 try {
-                    if (cmd.getLatestCmd() != null) {
-                        handleLatestCmd(theCtx, cmd.getLatestCmd());
-                    } else if (cmd.getTsCmd() != null) {
-                        handleTimeSeriesCmd(theCtx, cmd.getTsCmd());
+                    if (cmd.getLatestCmd() != null || cmd.getTsCmd() != null) {
+                        if (cmd.getLatestCmd() != null) {
+                            handleLatestCmd(theCtx, cmd.getLatestCmd());
+                        }
+                        if (cmd.getTsCmd() != null) {
+                            handleTimeSeriesCmd(theCtx, cmd.getTsCmd());
+                        }
                     } else if (!theCtx.isInitialDataSent()) {
                         EntityDataUpdate update = new EntityDataUpdate(theCtx.getCmdId(), theCtx.getData(), null, theCtx.getMaxEntitiesPerDataSubscription());
-                        wsService.sendWsMsg(theCtx.getSessionId(), update);
+                        theCtx.sendWsMsg(update);
                         theCtx.setInitialDataSent(true);
                     }
                 } catch (RuntimeException e) {
@@ -284,29 +288,57 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         ctx.clearEntitySubscriptions();
         if (entities.isEmpty()) {
             AlarmDataUpdate update = new AlarmDataUpdate(cmd.getCmdId(), new PageData<>(), null, 0, 0);
-            wsService.sendWsMsg(ctx.getSessionId(), update);
+            ctx.sendWsMsg(update);
         } else {
             ctx.fetchAlarms();
             ctx.createLatestValuesSubscriptions(cmd.getQuery().getLatestValues());
             if (adq.getPageLink().getTimeWindow() > 0) {
                 TbAlarmDataSubCtx finalCtx = ctx;
                 ScheduledFuture<?> task = scheduler.scheduleWithFixedDelay(
-                        finalCtx::checkAndResetInvocationCounter, dynamicPageLinkRefreshInterval, dynamicPageLinkRefreshInterval, TimeUnit.SECONDS);
+                        () -> refreshAlarmQuery(finalCtx), dynamicPageLinkRefreshInterval, dynamicPageLinkRefreshInterval, TimeUnit.SECONDS);
                 finalCtx.setRefreshTask(task);
             }
         }
     }
 
-    private void refreshDynamicQuery(TbAbstractSubCtx finalCtx) {
+    private boolean validate(TbAbstractSubCtx<?> finalCtx) {
+        if (finalCtx.isStopped()) {
+            log.warn("[{}][{}][{}] Received validation task for already stopped context.", finalCtx.getTenantId(), finalCtx.getSessionId(), finalCtx.getCmdId());
+            return false;
+        }
+        var cmdMap = subscriptionsBySessionId.get(finalCtx.getSessionId());
+        if (cmdMap == null) {
+            log.warn("[{}][{}][{}] Received validation task for already removed session.", finalCtx.getTenantId(), finalCtx.getSessionId(), finalCtx.getCmdId());
+            return false;
+        } else if (!cmdMap.containsKey(finalCtx.getCmdId())) {
+            log.warn("[{}][{}][{}] Received validation task for unregistered cmdId.", finalCtx.getTenantId(), finalCtx.getSessionId(), finalCtx.getCmdId());
+            return false;
+        }
+        return true;
+    }
+
+    private void refreshDynamicQuery(TbAbstractSubCtx<?> finalCtx) {
         try {
-            long start = System.currentTimeMillis();
-            finalCtx.update();
-            long end = System.currentTimeMillis();
-            log.trace("[{}][{}] Executing query: {}", finalCtx.getSessionId(), finalCtx.getCmdId(), finalCtx.getQuery());
-            stats.getDynamicQueryInvocationCnt().incrementAndGet();
-            stats.getDynamicQueryTimeSpent().addAndGet(end - start);
+            if (validate(finalCtx)) {
+                long start = System.currentTimeMillis();
+                finalCtx.update();
+                long end = System.currentTimeMillis();
+                log.trace("[{}][{}] Executing query: {}", finalCtx.getSessionId(), finalCtx.getCmdId(), finalCtx.getQuery());
+                stats.getDynamicQueryInvocationCnt().incrementAndGet();
+                stats.getDynamicQueryTimeSpent().addAndGet(end - start);
+            } else {
+                finalCtx.stop();
+            }
         } catch (Exception e) {
             log.warn("[{}][{}] Failed to refresh query", finalCtx.getSessionId(), finalCtx.getCmdId(), e);
+        }
+    }
+
+    private void refreshAlarmQuery(TbAlarmDataSubCtx finalCtx) {
+        if (validate(finalCtx)) {
+            finalCtx.checkAndResetInvocationCounter();
+        } else {
+            finalCtx.stop();
         }
     }
 
@@ -417,22 +449,26 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                     }
                 } catch (InterruptedException | ExecutionException e) {
                     log.warn("[{}][{}][{}] Failed to fetch historical data", ctx.getSessionId(), ctx.getCmdId(), entityData.getEntityId(), e);
-                    wsService.sendWsMsg(ctx.getSessionId(),
-                            new EntityDataUpdate(ctx.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR.getCode(), "Failed to fetch historical data!"));
+                    ctx.sendWsMsg(new EntityDataUpdate(ctx.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR.getCode(), "Failed to fetch historical data!"));
                 }
             });
-            EntityDataUpdate update;
-            if (!ctx.isInitialDataSent()) {
-                update = new EntityDataUpdate(ctx.getCmdId(), ctx.getData(), null, ctx.getMaxEntitiesPerDataSubscription());
-                ctx.setInitialDataSent(true);
-            } else {
-                update = new EntityDataUpdate(ctx.getCmdId(), null, ctx.getData().getData(), ctx.getMaxEntitiesPerDataSubscription());
+            ctx.getWsLock().lock();
+            try {
+                EntityDataUpdate update;
+                if (!ctx.isInitialDataSent()) {
+                    update = new EntityDataUpdate(ctx.getCmdId(), ctx.getData(), null, ctx.getMaxEntitiesPerDataSubscription());
+                    ctx.setInitialDataSent(true);
+                } else {
+                    update = new EntityDataUpdate(ctx.getCmdId(), null, ctx.getData().getData(), ctx.getMaxEntitiesPerDataSubscription());
+                }
+                if (subscribe) {
+                    ctx.createTimeseriesSubscriptions(keys.stream().map(key -> new EntityKey(EntityKeyType.TIME_SERIES, key)).collect(Collectors.toList()), cmd.getStartTs(), cmd.getEndTs());
+                }
+                ctx.sendWsMsg(update);
+                ctx.getData().getData().forEach(ed -> ed.getTimeseries().clear());
+            } finally {
+                ctx.getWsLock().unlock();
             }
-            wsService.sendWsMsg(ctx.getSessionId(), update);
-            if (subscribe) {
-                ctx.createTimeseriesSubscriptions(keys.stream().map(key -> new EntityKey(EntityKeyType.TIME_SERIES, key)).collect(Collectors.toList()), cmd.getStartTs(), cmd.getEndTs());
-            }
-            ctx.getData().getData().forEach(ed -> ed.getTimeseries().clear());
             return ctx;
         }, wsCallBackExecutor);
     }
@@ -461,7 +497,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                 ListenableFuture<List<TsKvEntry>> missingTsData = tsService.findLatest(ctx.getTenantId(), entityData.getEntityId(), missingTsKeys);
                 missingTelemetryFutures.put(entityData, Futures.transform(missingTsData, this::toTsValue, MoreExecutors.directExecutor()));
             }
-            Futures.addCallback(Futures.allAsList(missingTelemetryFutures.values()), new FutureCallback<List<Map<String, TsValue>>>() {
+            Futures.addCallback(Futures.allAsList(missingTelemetryFutures.values()), new FutureCallback<>() {
                 @Override
                 public void onSuccess(@Nullable List<Map<String, TsValue>> result) {
                     missingTelemetryFutures.forEach((key, value) -> {
@@ -472,30 +508,39 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                         }
                     });
                     EntityDataUpdate update;
-                    if (!ctx.isInitialDataSent()) {
-                        update = new EntityDataUpdate(ctx.getCmdId(), ctx.getData(), null, ctx.getMaxEntitiesPerDataSubscription());
-                        ctx.setInitialDataSent(true);
-                    } else {
-                        update = new EntityDataUpdate(ctx.getCmdId(), null, ctx.getData().getData(), ctx.getMaxEntitiesPerDataSubscription());
+                    ctx.getWsLock().lock();
+                    try {
+                        ctx.createLatestValuesSubscriptions(latestCmd.getKeys());
+                        if (!ctx.isInitialDataSent()) {
+                            update = new EntityDataUpdate(ctx.getCmdId(), ctx.getData(), null, ctx.getMaxEntitiesPerDataSubscription());
+                            ctx.setInitialDataSent(true);
+                        } else {
+                            update = new EntityDataUpdate(ctx.getCmdId(), null, ctx.getData().getData(), ctx.getMaxEntitiesPerDataSubscription());
+                        }
+                        ctx.sendWsMsg(update);
+                    } finally {
+                        ctx.getWsLock().unlock();
                     }
-                    wsService.sendWsMsg(ctx.getSessionId(), update);
-                    ctx.createLatestValuesSubscriptions(latestCmd.getKeys());
                 }
 
                 @Override
                 public void onFailure(Throwable t) {
                     log.warn("[{}][{}] Failed to process websocket command: {}:{}", ctx.getSessionId(), ctx.getCmdId(), ctx.getQuery(), latestCmd, t);
-                    wsService.sendWsMsg(ctx.getSessionId(),
-                            new EntityDataUpdate(ctx.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR.getCode(), "Failed to process websocket command!"));
+                    ctx.sendWsMsg(new EntityDataUpdate(ctx.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR.getCode(), "Failed to process websocket command!"));
                 }
             }, wsCallBackExecutor);
         } else {
-            if (!ctx.isInitialDataSent()) {
-                EntityDataUpdate update = new EntityDataUpdate(ctx.getCmdId(), ctx.getData(), null, ctx.getMaxEntitiesPerDataSubscription());
-                wsService.sendWsMsg(ctx.getSessionId(), update);
-                ctx.setInitialDataSent(true);
+            ctx.getWsLock().lock();
+            try {
+                ctx.createLatestValuesSubscriptions(latestCmd.getKeys());
+                if (!ctx.isInitialDataSent()) {
+                    EntityDataUpdate update = new EntityDataUpdate(ctx.getCmdId(), ctx.getData(), null, ctx.getMaxEntitiesPerDataSubscription());
+                    ctx.sendWsMsg(update);
+                    ctx.setInitialDataSent(true);
+                }
+            } finally {
+                ctx.getWsLock().unlock();
             }
-            ctx.createLatestValuesSubscriptions(latestCmd.getKeys());
         }
     }
 
@@ -510,8 +555,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
 
     private void cleanupAndCancel(TbAbstractSubCtx ctx) {
         if (ctx != null) {
-            ctx.cancelTasks();
-            ctx.clearSubscriptions();
+            ctx.stop();
             if (ctx.getSessionId() != null) {
                 Map<Integer, TbAbstractSubCtx> sessionSubs = subscriptionsBySessionId.get(ctx.getSessionId());
                 if (sessionSubs != null) {

@@ -77,6 +77,8 @@ public class EntityIdFactory {
                 return new EdgeId(uuid);
             case RPC:
                 return new RpcId(uuid);
+            case QUEUE:
+                return new QueueId(uuid);
         }
         throw new IllegalArgumentException("EntityType " + type + " is not supported!");
     }
@@ -105,6 +107,10 @@ public class EntityIdFactory {
                 return new WidgetsBundleId(uuid);
             case WIDGET_TYPE:
                 return new WidgetTypeId(uuid);
+            case OTA_PACKAGE:
+                return new OtaPackageId(uuid);
+            case QUEUE:
+                return new QueueId(uuid);
             case EDGE:
                 return new EdgeId(uuid);
         }

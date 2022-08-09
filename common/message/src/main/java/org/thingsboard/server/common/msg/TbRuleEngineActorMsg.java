@@ -17,7 +17,9 @@ package org.thingsboard.server.common.msg;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.ToString;
 
+@ToString
 @EqualsAndHashCode
 public abstract class TbRuleEngineActorMsg implements TbActorMsg {
 

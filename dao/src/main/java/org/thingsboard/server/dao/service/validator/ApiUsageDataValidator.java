@@ -15,29 +15,29 @@
  */
 package org.thingsboard.server.dao.service.validator;
 
-import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
-import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.tenant.TenantService;
 
 @Component
-@AllArgsConstructor
 public class ApiUsageDataValidator extends DataValidator<ApiUsageState> {
 
-    private final TenantDao tenantDao;
+    @Lazy
+    @Autowired
+    private TenantService tenantService;
 
     @Override
     protected void validateDataImpl(TenantId requestTenantId, ApiUsageState apiUsageState) {
         if (apiUsageState.getTenantId() == null) {
             throw new DataValidationException("ApiUsageState should be assigned to tenant!");
         } else {
-            Tenant tenant = tenantDao.findById(requestTenantId, apiUsageState.getTenantId().getId());
-            if (tenant == null && !requestTenantId.equals(TenantId.SYS_TENANT_ID)) {
+            if (!tenantService.tenantExists(apiUsageState.getTenantId()) && !requestTenantId.equals(TenantId.SYS_TENANT_ID)) {
                 throw new DataValidationException("ApiUsageState is referencing to non-existent tenant!");
             }
         }

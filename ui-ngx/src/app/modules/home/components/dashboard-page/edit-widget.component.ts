@@ -89,6 +89,7 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
     const widgetInfo = this.widgetComponentService.getInstantWidgetInfo(this.widget);
     const rawSettingsSchema = widgetInfo.typeSettingsSchema || widgetInfo.settingsSchema;
     const rawDataKeySettingsSchema = widgetInfo.typeDataKeySettingsSchema || widgetInfo.dataKeySettingsSchema;
+    const rawLatestDataKeySettingsSchema = widgetInfo.typeLatestDataKeySettingsSchema || widgetInfo.latestDataKeySettingsSchema;
     const typeParameters = widgetInfo.typeParameters;
     const actionSources = widgetInfo.actionSources;
     const isDataEnabled = isDefined(widgetInfo.typeParameters) ? !widgetInfo.typeParameters.useCustomDatasources : true;
@@ -104,6 +105,13 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
     } else {
       dataKeySettingsSchema = isString(rawDataKeySettingsSchema) ? JSON.parse(rawDataKeySettingsSchema) : rawDataKeySettingsSchema;
     }
+    let latestDataKeySettingsSchema;
+    if (!rawLatestDataKeySettingsSchema || rawLatestDataKeySettingsSchema === '') {
+      latestDataKeySettingsSchema = {};
+    } else {
+      latestDataKeySettingsSchema = isString(rawLatestDataKeySettingsSchema) ?
+        JSON.parse(rawLatestDataKeySettingsSchema) : rawLatestDataKeySettingsSchema;
+    }
     this.widgetConfig = {
       config: this.widget.config,
       layout: this.widgetLayout,
@@ -112,7 +120,11 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
       actionSources,
       isDataEnabled,
       settingsSchema,
-      dataKeySettingsSchema
+      dataKeySettingsSchema,
+      latestDataKeySettingsSchema,
+      settingsDirective: widgetInfo.settingsDirective,
+      dataKeySettingsDirective: widgetInfo.dataKeySettingsDirective,
+      latestDataKeySettingsDirective: widgetInfo.latestDataKeySettingsDirective
     };
     this.widgetFormGroup.reset({widgetConfig: this.widgetConfig});
   }

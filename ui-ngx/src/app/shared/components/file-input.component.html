@@ -16,7 +16,7 @@
 
 -->
 <div class="tb-container">
-  <label class="tb-title">{{ label }}</label>
+  <label class="tb-title" [ngClass]="{'tb-required': !disabled && required}">{{ label }}</label>
   <ng-container #flow="flow"
                 [flowConfig]="{allowDuplicateUploads: true}">
     <div class="tb-file-select-container">
@@ -33,8 +33,14 @@
       <div class="drop-area tb-flow-drop"
            flowDrop
            [flow]="flow.flowJs">
-        <label for="{{inputId}}">{{ dropLabel }}</label>
-        <input class="file-input" flowButton #flowInput type="file" [flow]="flow.flowJs" [flowAttributes]="{accept: accept}" id="{{inputId}}">
+        <div class="upload-label">
+          <mat-icon>cloud_upload</mat-icon>
+          <span>{{ dropLabel }}</span>
+          <button type="button" mat-button color="primary" class="browse-file">
+            <label for="{{inputId}}">{{ (multipleFile ? 'file-input.browse-files' : 'file-input.browse-file') | translate}}</label>
+          </button>
+          <input class="file-input" flowButton #flowInput type="file" [flow]="flow.flowJs" [flowAttributes]="{accept: accept}" id="{{inputId}}">
+        </div>
       </div>
     </div>
   </ng-container>

@@ -1,0 +1,120 @@
+/**
+ * Copyright © 2016-2022 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import "../../../../../../scss/constants";
+
+:host {
+  .mat-toolbar > h2 {
+    font-weight: 400;
+    letter-spacing: 0.25px;
+  }
+
+  form {
+    display: block;
+  }
+
+  .mat-body-1 {
+    margin-bottom: 0;
+    letter-spacing: 0.25px;
+
+    &:not(:first-of-type) {
+      margin: 0 0 8px;
+    }
+
+    &.description {
+      margin: 0;
+      color: rgba(0, 0, 0, 0.54);
+
+      &:last-of-type {
+        margin-bottom: 24px;
+      }
+    }
+  }
+
+  .input-container {
+    max-width: 290px;
+  }
+
+  .code-container {
+    max-width: 170px;
+
+    &.full-width-xs {
+      @media #{$mat-xs} {
+        max-width: 100%;
+        width: 100%;
+      }
+    }
+  }
+
+  .result-title {
+    font: 500 18px / 24px Roboto, "Helvetica Neue", sans-serif;
+    letter-spacing: 0.1px;
+    margin: 8px 0;
+    text-align: center;
+  }
+
+  .result-description {
+    text-align: center;
+    margin: 0 0 16px;
+    letter-spacing: 0.25px;
+    max-width: 500px;
+  }
+
+  .step-description {
+    max-width: 450px;
+
+    &.input {
+      margin: 12px 0 0;
+    }
+  }
+
+  .qr-code-description {
+    text-align: center;
+    max-width: 180px;
+    letter-spacing: 0.25px;
+    color: rgba(0, 0, 0, 0.87);
+    margin-bottom: 0;
+  }
+
+  .backup-code {
+    max-width: 500px;
+
+    .container {
+      max-width: 500px;
+      margin: 40px 0 8px;
+
+      .code {
+        letter-spacing: 0.25px;
+        padding: 0 24px;
+        margin-bottom: 16px;
+        font-family: Roboto Mono, "Helvetica Neue", monospace;
+
+        &.even {
+          text-align: right;
+        }
+      }
+    }
+
+    .action-buttons {
+      margin-bottom: 40px;
+    }
+  }
+
+  & ::ng-deep {
+    .mat-horizontal-stepper-header {
+      pointer-events: none !important;
+    }
+  }
+}

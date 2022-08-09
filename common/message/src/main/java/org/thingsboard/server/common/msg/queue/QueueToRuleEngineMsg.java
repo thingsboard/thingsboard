@@ -29,7 +29,7 @@ import java.util.Set;
 /**
  * Created by ashvayka on 15.03.18.
  */
-@ToString
+@ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 public final class QueueToRuleEngineMsg extends TbRuleEngineActorMsg {
 

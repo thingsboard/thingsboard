@@ -41,6 +41,7 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketSessionRef;
+import org.thingsboard.server.service.telemetry.cmd.v2.CmdUpdate;
 import org.thingsboard.server.service.telemetry.sub.TelemetrySubscriptionUpdate;
 
 import java.util.ArrayList;
@@ -52,14 +53,18 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 @Data
 public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
 
+    @Getter
+    protected final Lock wsLock = new ReentrantLock(true);
     protected final String serviceId;
     protected final SubscriptionServiceStatistics stats;
-    protected final TelemetryWebSocketService wsService;
+    private final TelemetryWebSocketService wsService;
     protected final EntityService entityService;
     protected final TbLocalSubscriptionService localSubscriptionService;
     protected final AttributesService attributesService;
@@ -73,6 +78,7 @@ public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
     protected T query;
     @Setter
     protected volatile ScheduledFuture<?> refreshTask;
+    protected volatile boolean stopped;
 
     public TbAbstractSubCtx(String serviceId, TelemetryWebSocketService wsService,
                             EntityService entityService, TbLocalSubscriptionService localSubscriptionService,
@@ -182,6 +188,12 @@ public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
 
     public void clearSubscriptions() {
         clearDynamicValueSubscriptions();
+    }
+
+    public void stop() {
+        stopped = true;
+        cancelTasks();
+        clearSubscriptions();
     }
 
     @Data
@@ -294,7 +306,11 @@ public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
     }
 
     public void setRefreshTask(ScheduledFuture<?> task) {
-        this.refreshTask = task;
+        if (!stopped) {
+            this.refreshTask = task;
+        } else {
+            task.cancel(true);
+        }
     }
 
     public void cancelTasks() {
@@ -312,6 +328,15 @@ public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
         private final DynamicValueSourceType sourceType;
         @Getter
         private final String sourceAttribute;
+    }
+
+    public void sendWsMsg(CmdUpdate update) {
+        wsLock.lock();
+        try {
+            wsService.sendWsMsg(sessionRef.getSessionId(), update);
+        } finally {
+            wsLock.unlock();
+        }
     }
 
 }

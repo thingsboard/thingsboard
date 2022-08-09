@@ -1,0 +1,32 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section class="tb-widget-settings" [formGroup]="routeMapSettingsFormGroup">
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>widgets.maps.route-map-settings</legend>
+    <section fxLayout="row" fxLayoutGap="8px">
+      <mat-form-field fxFlex class="mat-block">
+        <mat-label translate>widgets.maps.stroke-weight</mat-label>
+        <input matInput type="number" min="0" formControlName="strokeWeight">
+      </mat-form-field>
+      <mat-form-field fxFlex class="mat-block">
+        <mat-label translate>widgets.maps.stroke-opacity</mat-label>
+        <input matInput type="number" min="0" max="1" formControlName="strokeOpacity">
+      </mat-form-field>
+    </section>
+  </fieldset>
+</section>

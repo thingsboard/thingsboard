@@ -19,10 +19,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.cache.ota.files.BaseFileCacheService;
 import org.thingsboard.server.common.data.OtaPackage;
@@ -31,9 +29,11 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -54,33 +54,42 @@ import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class BaseOtaPackageService implements OtaPackageService {
+public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackageCacheKey, OtaPackageInfo, OtaPackageCacheEvictEvent> implements OtaPackageService {
     public static final String INCORRECT_OTA_PACKAGE_ID = "Incorrect otaPackageId ";
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
+
     private final OtaPackageDao otaPackageDao;
     private final OtaPackageInfoDao otaPackageInfoDao;
-    private final CacheManager cacheManager;
     private final OtaPackageDataCache otaPackageDataCache;
     private final DataValidator<OtaPackageInfo> otaPackageInfoValidator;
     private final DataValidator<OtaPackage> otaPackageValidator;
     private final BaseFileCacheService baseFileCacheService;
 
+    @TransactionalEventListener(classes = OtaPackageCacheEvictEvent.class)
+    @Override
+    public void handleEvictEvent(OtaPackageCacheEvictEvent event) {
+        cache.evict(new OtaPackageCacheKey(event.getId()));
+        otaPackageDataCache.evict(event.getId().toString());
+    }
+
     @Override
     public OtaPackageInfo saveOtaPackageInfo(OtaPackageInfo otaPackageInfo, boolean isUrl) {
         log.trace("Executing saveOtaPackageInfo [{}]", otaPackageInfo);
-        if (isUrl && (StringUtils.isEmpty(otaPackageInfo.getUrl()) || otaPackageInfo.getUrl().trim().length() == 0)) {
+        if(isUrl && (StringUtils.isEmpty(otaPackageInfo.getUrl()) || otaPackageInfo.getUrl().trim().length() == 0)) {
             throw new DataValidationException("Ota package URL should be specified!");
         }
         otaPackageInfoValidator.validate(otaPackageInfo, OtaPackageInfo::getTenantId);
+        OtaPackageId otaPackageId = otaPackageInfo.getId();
         try {
-            OtaPackageId otaPackageId = otaPackageInfo.getId();
+            var result = otaPackageInfoDao.save(otaPackageInfo.getTenantId(), otaPackageInfo);
             if (otaPackageId != null) {
-                Cache cache = cacheManager.getCache(OTA_PACKAGE_CACHE);
-                cache.evict(toOtaPackageInfoKey(otaPackageId));
-                otaPackageDataCache.evict(otaPackageId.toString());
+                publishEvictEvent(new OtaPackageCacheEvictEvent(otaPackageId));
             }
-            return otaPackageInfoDao.save(otaPackageInfo.getTenantId(), otaPackageInfo);
+            return result;
         } catch (Exception t) {
+            if (otaPackageId != null) {
+                handleEvictEvent(new OtaPackageCacheEvictEvent(otaPackageId));
+            }
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("ota_package_tenant_title_version_unq_key")) {
                 throw new DataValidationException("OtaPackage with such title and version already exists!");
@@ -103,9 +112,7 @@ public class BaseOtaPackageService implements OtaPackageService {
             otaPackage.setData(stream);
             OtaPackageId otaPackageId = otaPackage.getId();
             if (otaPackageId != null) {
-                Cache cache = cacheManager.getCache(OTA_PACKAGE_CACHE);
-                cache.evict(toOtaPackageInfoKey(otaPackageId));
-                otaPackageDataCache.evict(otaPackageId.toString());
+                publishEvictEvent(new OtaPackageCacheEvictEvent(otaPackageId));
             }
             OtaPackage savedOtaPackage = otaPackageDao.save(otaPackage.getTenantId(), otaPackage);
             return savedOtaPackage;
@@ -130,11 +137,11 @@ public class BaseOtaPackageService implements OtaPackageService {
     }
 
     @Override
-    @Cacheable(cacheNames = OTA_PACKAGE_CACHE, key = "{#otaPackageId}")
     public OtaPackageInfo findOtaPackageInfoById(TenantId tenantId, OtaPackageId otaPackageId) {
         log.trace("Executing findOtaPackageInfoById [{}]", otaPackageId);
         validateId(otaPackageId, INCORRECT_OTA_PACKAGE_ID + otaPackageId);
-        return otaPackageInfoDao.findById(tenantId, otaPackageId.getId());
+        return cache.getAndPutInTransaction(new OtaPackageCacheKey(otaPackageId),
+                () -> otaPackageInfoDao.findById(tenantId, otaPackageId.getId()), true);
     }
 
     @Override
@@ -165,10 +172,8 @@ public class BaseOtaPackageService implements OtaPackageService {
         log.trace("Executing deleteOtaPackage [{}]", otaPackageId);
         validateId(otaPackageId, INCORRECT_OTA_PACKAGE_ID + otaPackageId);
         try {
-            Cache cache = cacheManager.getCache(OTA_PACKAGE_CACHE);
-            cache.evict(toOtaPackageInfoKey(otaPackageId));
-            otaPackageDataCache.evict(otaPackageId.toString());
             otaPackageDao.removeById(tenantId, otaPackageId.getId());
+            publishEvictEvent(new OtaPackageCacheEvictEvent(otaPackageId));
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_firmware_device")) {
@@ -210,20 +215,6 @@ public class BaseOtaPackageService implements OtaPackageService {
                     deleteOtaPackage(tenantId, entity.getId());
                 }
             };
-
-    protected Optional<ConstraintViolationException> extractConstraintViolationException(Exception t) {
-        if (t instanceof ConstraintViolationException) {
-            return Optional.of((ConstraintViolationException) t);
-        } else if (t.getCause() instanceof ConstraintViolationException) {
-            return Optional.of((ConstraintViolationException) (t.getCause()));
-        } else {
-            return Optional.empty();
-        }
-    }
-
-    private static List<OtaPackageId> toOtaPackageInfoKey(OtaPackageId otaPackageId) {
-        return Collections.singletonList(otaPackageId);
-    }
 
     @Override
     @Transactional

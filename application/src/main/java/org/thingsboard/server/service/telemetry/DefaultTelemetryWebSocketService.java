@@ -42,7 +42,9 @@ import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.util.TenantRateLimitException;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
@@ -138,14 +140,8 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
     @Autowired
     private TbServiceInfoProvider serviceInfoProvider;
 
-    @Value("${server.ws.limits.max_subscriptions_per_tenant:0}")
-    private int maxSubscriptionsPerTenant;
-    @Value("${server.ws.limits.max_subscriptions_per_customer:0}")
-    private int maxSubscriptionsPerCustomer;
-    @Value("${server.ws.limits.max_subscriptions_per_regular_user:0}")
-    private int maxSubscriptionsPerRegularUser;
-    @Value("${server.ws.limits.max_subscriptions_per_public_user:0}")
-    private int maxSubscriptionsPerPublicUser;
+    @Autowired
+    private TbTenantProfileCache tenantProfileCache;
 
     @Value("${server.ws.ping_timeout:30000}")
     private long pingTimeout;
@@ -320,44 +316,50 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
     }
 
     private void processSessionClose(TelemetryWebSocketSessionRef sessionRef) {
-        String sessionId = "[" + sessionRef.getSessionId() + "]";
-        if (maxSubscriptionsPerTenant > 0) {
-            Set<String> tenantSubscriptions = tenantSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getTenantId(), id -> ConcurrentHashMap.newKeySet());
-            synchronized (tenantSubscriptions) {
-                tenantSubscriptions.removeIf(subId -> subId.startsWith(sessionId));
-            }
-        }
-        if (sessionRef.getSecurityCtx().isCustomerUser()) {
-            if (maxSubscriptionsPerCustomer > 0) {
-                Set<String> customerSessions = customerSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getCustomerId(), id -> ConcurrentHashMap.newKeySet());
-                synchronized (customerSessions) {
-                    customerSessions.removeIf(subId -> subId.startsWith(sessionId));
+        var tenantProfileConfiguration = tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()).getDefaultProfileConfiguration();
+        if (tenantProfileConfiguration != null) {
+            String sessionId = "[" + sessionRef.getSessionId() + "]";
+
+            if (tenantProfileConfiguration.getMaxWsSubscriptionsPerTenant() > 0) {
+                Set<String> tenantSubscriptions = tenantSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getTenantId(), id -> ConcurrentHashMap.newKeySet());
+                synchronized (tenantSubscriptions) {
+                    tenantSubscriptions.removeIf(subId -> subId.startsWith(sessionId));
                 }
             }
-            if (maxSubscriptionsPerRegularUser > 0 && UserPrincipal.Type.USER_NAME.equals(sessionRef.getSecurityCtx().getUserPrincipal().getType())) {
-                Set<String> regularUserSessions = regularUserSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getId(), id -> ConcurrentHashMap.newKeySet());
-                synchronized (regularUserSessions) {
-                    regularUserSessions.removeIf(subId -> subId.startsWith(sessionId));
+            if (sessionRef.getSecurityCtx().isCustomerUser()) {
+                if (tenantProfileConfiguration.getMaxWsSubscriptionsPerCustomer() > 0) {
+                    Set<String> customerSessions = customerSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getCustomerId(), id -> ConcurrentHashMap.newKeySet());
+                    synchronized (customerSessions) {
+                        customerSessions.removeIf(subId -> subId.startsWith(sessionId));
+                    }
                 }
-            }
-            if (maxSubscriptionsPerPublicUser > 0 && UserPrincipal.Type.PUBLIC_ID.equals(sessionRef.getSecurityCtx().getUserPrincipal().getType())) {
-                Set<String> publicUserSessions = publicUserSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getId(), id -> ConcurrentHashMap.newKeySet());
-                synchronized (publicUserSessions) {
-                    publicUserSessions.removeIf(subId -> subId.startsWith(sessionId));
+                if (tenantProfileConfiguration.getMaxWsSubscriptionsPerRegularUser() > 0 && UserPrincipal.Type.USER_NAME.equals(sessionRef.getSecurityCtx().getUserPrincipal().getType())) {
+                    Set<String> regularUserSessions = regularUserSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getId(), id -> ConcurrentHashMap.newKeySet());
+                    synchronized (regularUserSessions) {
+                        regularUserSessions.removeIf(subId -> subId.startsWith(sessionId));
+                    }
+                }
+                if (tenantProfileConfiguration.getMaxWsSubscriptionsPerPublicUser() > 0 && UserPrincipal.Type.PUBLIC_ID.equals(sessionRef.getSecurityCtx().getUserPrincipal().getType())) {
+                    Set<String> publicUserSessions = publicUserSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getId(), id -> ConcurrentHashMap.newKeySet());
+                    synchronized (publicUserSessions) {
+                        publicUserSessions.removeIf(subId -> subId.startsWith(sessionId));
+                    }
                 }
             }
         }
     }
 
     private boolean processSubscription(TelemetryWebSocketSessionRef sessionRef, SubscriptionCmd cmd) {
+        var tenantProfileConfiguration = (DefaultTenantProfileConfiguration) tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()).getDefaultProfileConfiguration();
+
         String subId = "[" + sessionRef.getSessionId() + "]:[" + cmd.getCmdId() + "]";
         try {
-            if (maxSubscriptionsPerTenant > 0) {
+            if (tenantProfileConfiguration.getMaxWsSubscriptionsPerTenant() > 0) {
                 Set<String> tenantSubscriptions = tenantSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getTenantId(), id -> ConcurrentHashMap.newKeySet());
                 synchronized (tenantSubscriptions) {
                     if (cmd.isUnsubscribe()) {
                         tenantSubscriptions.remove(subId);
-                    } else if (tenantSubscriptions.size() < maxSubscriptionsPerTenant) {
+                    } else if (tenantSubscriptions.size() < tenantProfileConfiguration.getMaxWsSubscriptionsPerTenant()) {
                         tenantSubscriptions.add(subId);
                     } else {
                         log.info("[{}][{}][{}] Failed to start subscription. Max tenant subscriptions limit reached"
@@ -369,12 +371,12 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
             }
 
             if (sessionRef.getSecurityCtx().isCustomerUser()) {
-                if (maxSubscriptionsPerCustomer > 0) {
+                if (tenantProfileConfiguration.getMaxWsSubscriptionsPerCustomer() > 0) {
                     Set<String> customerSessions = customerSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getCustomerId(), id -> ConcurrentHashMap.newKeySet());
                     synchronized (customerSessions) {
                         if (cmd.isUnsubscribe()) {
                             customerSessions.remove(subId);
-                        } else if (customerSessions.size() < maxSubscriptionsPerCustomer) {
+                        } else if (customerSessions.size() < tenantProfileConfiguration.getMaxWsSubscriptionsPerCustomer()) {
                             customerSessions.add(subId);
                         } else {
                             log.info("[{}][{}][{}] Failed to start subscription. Max customer subscriptions limit reached"
@@ -384,10 +386,10 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                         }
                     }
                 }
-                if (maxSubscriptionsPerRegularUser > 0 && UserPrincipal.Type.USER_NAME.equals(sessionRef.getSecurityCtx().getUserPrincipal().getType())) {
+                if (tenantProfileConfiguration.getMaxWsSubscriptionsPerRegularUser() > 0 && UserPrincipal.Type.USER_NAME.equals(sessionRef.getSecurityCtx().getUserPrincipal().getType())) {
                     Set<String> regularUserSessions = regularUserSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getId(), id -> ConcurrentHashMap.newKeySet());
                     synchronized (regularUserSessions) {
-                        if (regularUserSessions.size() < maxSubscriptionsPerRegularUser) {
+                        if (regularUserSessions.size() < tenantProfileConfiguration.getMaxWsSubscriptionsPerRegularUser()) {
                             regularUserSessions.add(subId);
                         } else {
                             log.info("[{}][{}][{}] Failed to start subscription. Max regular user subscriptions limit reached"
@@ -397,10 +399,10 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                         }
                     }
                 }
-                if (maxSubscriptionsPerPublicUser > 0 && UserPrincipal.Type.PUBLIC_ID.equals(sessionRef.getSecurityCtx().getUserPrincipal().getType())) {
+                if (tenantProfileConfiguration.getMaxWsSubscriptionsPerPublicUser() > 0 && UserPrincipal.Type.PUBLIC_ID.equals(sessionRef.getSecurityCtx().getUserPrincipal().getType())) {
                     Set<String> publicUserSessions = publicUserSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getId(), id -> ConcurrentHashMap.newKeySet());
                     synchronized (publicUserSessions) {
-                        if (publicUserSessions.size() < maxSubscriptionsPerPublicUser) {
+                        if (publicUserSessions.size() < tenantProfileConfiguration.getMaxWsSubscriptionsPerPublicUser()) {
                             publicUserSessions.add(subId);
                         } else {
                             log.info("[{}][{}][{}] Failed to start subscription. Max public user subscriptions limit reached"
@@ -442,7 +444,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
     private void handleWsAttributesSubscriptionByKeys(TelemetryWebSocketSessionRef sessionRef,
                                                       AttributesSubscriptionCmd cmd, String sessionId, EntityId entityId,
                                                       List<String> keys) {
-        FutureCallback<List<AttributeKvEntry>> callback = new FutureCallback<List<AttributeKvEntry>>() {
+        FutureCallback<List<AttributeKvEntry>> callback = new FutureCallback<>() {
             @Override
             public void onSuccess(List<AttributeKvEntry> data) {
                 List<TsKvEntry> attributesData = data.stream().map(d -> new BasicTsKvEntry(d.getLastUpdateTs(), d)).collect(Collectors.toList());
@@ -542,7 +544,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
 
     private void handleWsAttributesSubscription(TelemetryWebSocketSessionRef sessionRef,
                                                 AttributesSubscriptionCmd cmd, String sessionId, EntityId entityId) {
-        FutureCallback<List<AttributeKvEntry>> callback = new FutureCallback<List<AttributeKvEntry>>() {
+        FutureCallback<List<AttributeKvEntry>> callback = new FutureCallback<>() {
             @Override
             public void onSuccess(List<AttributeKvEntry> data) {
                 List<TsKvEntry> attributesData = data.stream().map(d -> new BasicTsKvEntry(d.getLastUpdateTs(), d)).collect(Collectors.toList());
@@ -666,7 +668,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
     }
 
     private FutureCallback<List<TsKvEntry>> getSubscriptionCallback(final TelemetryWebSocketSessionRef sessionRef, final TimeseriesSubscriptionCmd cmd, final String sessionId, final EntityId entityId, final long startTs, final List<String> keys) {
-        return new FutureCallback<List<TsKvEntry>>() {
+        return new FutureCallback<>() {
             @Override
             public void onSuccess(List<TsKvEntry> data) {
                 sendWsMsg(sessionRef, new TelemetrySubscriptionUpdate(cmd.getCmdId(), data));

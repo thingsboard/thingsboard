@@ -17,11 +17,19 @@ package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.hibernate.engine.jdbc.BlobProxy;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.*;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.OtaPackage;
+import org.thingsboard.server.common.data.OtaPackageInfo;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
@@ -33,7 +41,7 @@ import org.thingsboard.server.dao.ota.util.ChecksumUtil;
 
 import javax.validation.ValidationException;
 import java.io.*;
-import java.sql.Blob;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -92,26 +100,26 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
 
         Assert.assertEquals(0, otaPackageService.sumDataSizeByTenantId(tenantId));
 
-        createFirmware(tenantId, "1");
+        createAndSaveFirmware(tenantId, "1");
         Assert.assertEquals(1, otaPackageService.sumDataSizeByTenantId(tenantId));
 
         thrown.expect(DataValidationException.class);
         thrown.expectMessage(String.format("Failed to create the ota package, files size limit is exhausted %d bytes!", DATA_SIZE));
-        createFirmware(tenantId, "2");
+        createAndSaveFirmware(tenantId, "2");
     }
 
     @Test
     public void sumDataSizeByTenantId() {
         Assert.assertEquals(0, otaPackageService.sumDataSizeByTenantId(tenantId));
 
-        createFirmware(tenantId, "0.1");
+        createAndSaveFirmware(tenantId, "0.1");
         Assert.assertEquals(1, otaPackageService.sumDataSizeByTenantId(tenantId));
 
         int maxSumDataSize = 8;
         List<OtaPackage> packages = new ArrayList<>(maxSumDataSize);
 
         for (int i = 2; i <= maxSumDataSize; i++) {
-            packages.add(createFirmware(tenantId, "0." + i));
+            packages.add(createAndSaveFirmware(tenantId, "0." + i));
             Assert.assertEquals(i, otaPackageService.sumDataSizeByTenantId(tenantId));
         }
 
@@ -414,15 +422,15 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
 
     @Test
     public void testSaveFirmwareWithExistingTitleAndVersion() {
-        createFirmware(tenantId, VERSION);
+        createAndSaveFirmware(tenantId, VERSION);
         thrown.expect(DataValidationException.class);
         thrown.expectMessage("OtaPackage with such title and version already exists!");
-        createFirmware(tenantId, VERSION);
+        createAndSaveFirmware(tenantId, VERSION);
     }
 
     @Test
     public void testDeleteFirmwareWithReferenceByDevice() {
-        OtaPackage savedFirmware = createFirmware(tenantId, VERSION);
+        OtaPackage savedFirmware = createAndSaveFirmware(tenantId, VERSION);
 
         Device device = new Device();
         device.setTenantId(tenantId);
@@ -443,7 +451,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
 
     @Test
     public void testUpdateDeviceProfileId() {
-        OtaPackage savedFirmware = createFirmware(tenantId, VERSION);
+        OtaPackage savedFirmware = createAndSaveFirmware(tenantId, VERSION);
 
         try {
             thrown.expect(DataValidationException.class);
@@ -488,7 +496,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindFirmwareById() {
-        OtaPackage savedFirmware = createFirmware(tenantId, VERSION);
+        OtaPackage savedFirmware = createAndSaveFirmware(tenantId, VERSION);
 
         OtaPackage foundFirmware = otaPackageService.findOtaPackageById(tenantId, savedFirmware.getId());
         Assert.assertNotNull(foundFirmware);
@@ -514,7 +522,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
 
     @Test
     public void testDeleteFirmware() {
-        OtaPackage savedFirmware = createFirmware(tenantId, VERSION);
+        OtaPackage savedFirmware = createAndSaveFirmware(tenantId, VERSION);
 
         OtaPackage foundFirmware = otaPackageService.findOtaPackageById(tenantId, savedFirmware.getId());
         Assert.assertNotNull(foundFirmware);
@@ -527,7 +535,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
     public void testFindTenantFirmwaresByTenantId() {
         List<OtaPackageInfo> firmwares = new ArrayList<>();
         for (int i = 0; i < 165; i++) {
-            OtaPackageInfo info = new OtaPackageInfo(createFirmware(tenantId, VERSION + i));
+            OtaPackageInfo info = new OtaPackageInfo(createAndSaveFirmware(tenantId, VERSION + i));
             info.setHasData(true);
             firmwares.add(info);
         }
@@ -574,7 +582,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
     public void testFindTenantFirmwaresByTenantIdAndHasData() {
         List<OtaPackageInfo> firmwares = new ArrayList<>();
         for (int i = 0; i < 165; i++) {
-            firmwares.add(new OtaPackageInfo(otaPackageService.saveOtaPackage(createFirmware(tenantId, VERSION + i))));
+            firmwares.add(new OtaPackageInfo(otaPackageService.saveOtaPackage(createAndSaveFirmware(tenantId, VERSION + i))));
         }
 
         OtaPackageInfo firmwareWithUrl = new OtaPackageInfo();
@@ -669,7 +677,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmwareInfo.setUrl(URL);
         firmwareInfo.setTenantId(tenantId);
 
-        thrown.expect(ValidationException.class);
+        thrown.expect(DataValidationException.class);
         thrown.expectMessage("length of title must be equal or less than 255");
 
         otaPackageService.saveOtaPackageInfo(firmwareInfo, true);
@@ -701,7 +709,15 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         }
     }
 
-    private OtaPackage createFirmware(TenantId tenantId, String version) {
+    private OtaPackage createAndSaveFirmware(TenantId tenantId, String version) {
+        return otaPackageService.saveOtaPackage(createFirmware(tenantId, version, deviceProfileId));
+    }
+
+    public static OtaPackage createFirmware(
+            TenantId tenantId,
+            String version,
+            DeviceProfileId deviceProfileId
+    ) {
         OtaPackage firmware = new OtaPackage();
         firmware.setTenantId(tenantId);
         firmware.setDeviceProfileId(deviceProfileId);
@@ -714,6 +730,6 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmware.setChecksum(CHECKSUM);
         firmware.setData(DATA);
         firmware.setDataSize(DATA_SIZE);
-        return otaPackageService.saveOtaPackage(firmware);
+        return firmware;
     }
 }

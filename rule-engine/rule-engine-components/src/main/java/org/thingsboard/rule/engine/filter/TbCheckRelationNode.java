@@ -82,7 +82,7 @@ public class TbCheckRelationNode implements TbNode {
             to = EntityIdFactory.getByTypeAndId(config.getEntityType(), config.getEntityId());
             from = msg.getOriginator();
         }
-        return ctx.getRelationService().checkRelation(ctx.getTenantId(), from, to, config.getRelationType(), RelationTypeGroup.COMMON);
+        return ctx.getRelationService().checkRelationAsync(ctx.getTenantId(), from, to, config.getRelationType(), RelationTypeGroup.COMMON);
     }
 
     private ListenableFuture<Boolean> processList(TbContext ctx, TbMsg msg) {

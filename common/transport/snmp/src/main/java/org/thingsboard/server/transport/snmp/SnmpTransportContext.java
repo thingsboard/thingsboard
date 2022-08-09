@@ -73,7 +73,7 @@ public class SnmpTransportContext extends TransportContext {
     private final Map<DeviceId, DeviceSessionContext> sessions = new ConcurrentHashMap<>();
     private final Collection<DeviceId> allSnmpDevicesIds = new ConcurrentLinkedDeque<>();
 
-    @AfterStartUp(order = Integer.MAX_VALUE)
+    @AfterStartUp(order = AfterStartUp.AFTER_TRANSPORT_SERVICE)
     public void fetchDevicesAndEstablishSessions() {
         log.info("Initializing SNMP devices sessions");
 

@@ -162,6 +162,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   widgetSizeDetected = false;
   widgetInstanceInited = false;
   dataUpdatePending = false;
+  latestDataUpdatePending = false;
   pendingMessage: SubscriptionMessage;
 
   cafs: {[cafId: string]: CancelAnimationFrame} = {};
@@ -485,6 +486,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     if (!this.widgetTypeInstance.onDataUpdated) {
       this.widgetTypeInstance.onDataUpdated = () => {};
     }
+    if (!this.widgetTypeInstance.onLatestDataUpdated) {
+      this.widgetTypeInstance.onLatestDataUpdated = () => {};
+    }
     if (!this.widgetTypeInstance.onResize) {
       this.widgetTypeInstance.onResize = () => {};
     }
@@ -550,6 +554,10 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
                 this.dashboardWidget.updateCustomHeaderActions(true);
               }, 0);
               this.dataUpdatePending = false;
+            }
+            if (this.latestDataUpdatePending) {
+              this.widgetTypeInstance.onLatestDataUpdated();
+              this.latestDataUpdatePending = false;
             }
             if (this.pendingMessage) {
               this.displayMessage(this.pendingMessage.severity, this.pendingMessage.message);
@@ -895,7 +903,21 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           }
         } catch (e){}
       },
+      onLatestDataUpdated: () => {
+        try {
+          if (this.displayWidgetInstance()) {
+            if (this.widgetInstanceInited) {
+              this.widgetTypeInstance.onLatestDataUpdated();
+            } else {
+              this.latestDataUpdatePending = true;
+            }
+          }
+        } catch (e){}
+      },
       onDataUpdateError: (subscription, e) => {
+        this.handleWidgetException(e);
+      },
+      onLatestDataUpdateError: (subscription, e) => {
         this.handleWidgetException(e);
       },
       onSubscriptionMessage: (subscription, message) => {
@@ -955,7 +977,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         ignoreDataUpdateOnIntervalTick: this.typeParameters.ignoreDataUpdateOnIntervalTick,
         comparisonEnabled: comparisonSettings.comparisonEnabled,
         timeForComparison: comparisonSettings.timeForComparison,
-        comparisonCustomIntervalValue: comparisonSettings.comparisonCustomIntervalValue
+        comparisonCustomIntervalValue: comparisonSettings.comparisonCustomIntervalValue,
+        pageSize: this.widget.config.pageSize
       };
       if (this.widget.type === widgetType.alarm) {
         options.alarmSource = deepClone(this.widget.config.alarmSource);
@@ -972,6 +995,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           // backward compatibility
           this.widgetContext.datasources = subscription.datasources;
           this.widgetContext.data = subscription.data;
+          this.widgetContext.latestData = subscription.latestData;
           this.widgetContext.hiddenData = subscription.hiddenData;
           this.widgetContext.timeWindow = subscription.timeWindow;
           this.widgetContext.defaultSubscription = subscription;

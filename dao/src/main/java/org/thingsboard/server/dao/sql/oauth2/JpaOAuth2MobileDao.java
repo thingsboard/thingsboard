@@ -16,7 +16,7 @@
 package org.thingsboard.server.dao.sql.oauth2;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.oauth2.OAuth2Mobile;
 import org.thingsboard.server.dao.DaoUtil;
@@ -39,7 +39,7 @@ public class JpaOAuth2MobileDao extends JpaAbstractDao<OAuth2MobileEntity, OAuth
     }
 
     @Override
-    protected CrudRepository<OAuth2MobileEntity, UUID> getCrudRepository() {
+    protected JpaRepository<OAuth2MobileEntity, UUID> getRepository() {
         return repository;
     }
 

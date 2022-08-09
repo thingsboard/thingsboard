@@ -221,6 +221,22 @@
                   <div #dataKeySettingsJsonInput></div>
                 </div>
               </mat-tab>
+              <mat-tab [aria-labelledby]="widget.type !== widgetTypes.timeseries ? 'hidden': ''" label="{{ 'widget.latest-datakey-settings-schema' | translate }}">
+                <div class="tb-resize-container" tb-fullscreen [fullscreen]="jsonLatestDataKeySettingsFullscreen">
+                  <div class="tb-editor-area-title-panel">
+                    <button mat-button (click)="beautifyLatestDataKeyJson()">
+                      {{ 'widget.tidy' | translate }}
+                    </button>
+                    <button mat-icon-button class="tb-mat-32"
+                            (click)="jsonLatestDataKeySettingsFullscreen = !jsonLatestDataKeySettingsFullscreen"
+                            matTooltip="{{(jsonLatestDataKeySettingsFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
+                            matTooltipPosition="above">
+                      <mat-icon>{{ jsonLatestDataKeySettingsFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+                    </button>
+                  </div>
+                  <div #latestDataKeySettingsJsonInput></div>
+                </div>
+              </mat-tab>
               <mat-tab label="{{ 'widget.widget-settings' | translate }}">
                 <div class="tb-resize-container" style="background-color: #fff;">
                   <div class="mat-padding">
@@ -236,6 +252,24 @@
                                 (ngModelChange)="isDirty = true"
                                 rows="2" maxlength="255"></textarea>
                       <mat-hint align="end">{{descriptionInput.value?.length || 0}}/255</mat-hint>
+                    </mat-form-field>
+                    <mat-form-field class="mat-block">
+                      <mat-label translate>widget.settings-form-selector</mat-label>
+                      <input matInput
+                             [(ngModel)]="widget.settingsDirective"
+                             (ngModelChange)="isDirty = true"/>
+                    </mat-form-field>
+                    <mat-form-field class="mat-block">
+                      <mat-label translate>widget.data-key-settings-form-selector</mat-label>
+                      <input matInput
+                             [(ngModel)]="widget.dataKeySettingsDirective"
+                             (ngModelChange)="isDirty = true"/>
+                    </mat-form-field>
+                    <mat-form-field *ngIf="widget.type === widgetTypes.timeseries" class="mat-block">
+                      <mat-label translate>widget.latest-data-key-settings-form-selector</mat-label>
+                      <input matInput
+                             [(ngModel)]="widget.latestDataKeySettingsDirective"
+                             (ngModelChange)="isDirty = true"/>
                     </mat-form-field>
                   </div>
                 </div>

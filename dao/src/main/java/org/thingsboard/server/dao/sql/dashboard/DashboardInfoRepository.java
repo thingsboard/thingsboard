@@ -17,8 +17,8 @@ package org.thingsboard.server.dao.sql.dashboard;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.DashboardInfoEntity;
 
@@ -27,7 +27,7 @@ import java.util.UUID;
 /**
  * Created by Valerii Sosliuk on 5/6/2017.
  */
-public interface DashboardInfoRepository extends PagingAndSortingRepository<DashboardInfoEntity, UUID> {
+public interface DashboardInfoRepository extends JpaRepository<DashboardInfoEntity, UUID> {
 
     DashboardInfoEntity findFirstByTenantIdAndTitle(UUID tenantId, String title);
 

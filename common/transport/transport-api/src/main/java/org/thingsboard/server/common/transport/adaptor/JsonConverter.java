@@ -575,6 +575,10 @@ public class JsonConverter {
         return JSON_PARSER.parse(json);
     }
 
+    public static <T> T parse(String json, Class<T> clazz) {
+        return fromJson(parse(json), clazz);
+    }
+
     public static String toJson(JsonElement element) {
         return GSON.toJson(element);
     }

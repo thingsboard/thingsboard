@@ -92,11 +92,11 @@
                 </tb-rule-chain-autocomplete>
               </div>
               <div fxLayout="column" fxLayoutAlign="flex-end start">
-                <tb-queue-type-list
+                <tb-queue-autocomplete
                   [ngClass]="{invisible: deviceWizardFormGroup.get('addProfileType').value !== 1}"
                   [queueType]="serviceType"
                   formControlName="defaultQueueName">
-                </tb-queue-type-list>
+                </tb-queue-autocomplete>
               </div>
             </div>
             <div fxLayout="row" fxLayoutGap="16px" style="padding-bottom: 16px;">

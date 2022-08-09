@@ -23,7 +23,8 @@ const emptyUserAuthState: AuthPayload = {
   userTokenAccessEnabled: false,
   forceFullscreen: false,
   allowedDashboardIds: [],
-  edgesSupportEnabled: false
+  edgesSupportEnabled: false,
+  hasRepository: false
 };
 
 export const initialState: AuthState = {
@@ -52,6 +53,9 @@ export function authReducer(
       return { ...state, ...action.payload};
 
     case AuthActionTypes.UPDATE_LAST_PUBLIC_DASHBOARD_ID:
+      return { ...state, ...action.payload};
+
+    case AuthActionTypes.UPDATE_HAS_REPOSITORY:
       return { ...state, ...action.payload};
 
     default:

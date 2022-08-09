@@ -40,23 +40,23 @@ public class TokenOutdatingService {
     private final CacheManager cacheManager;
     private final JwtTokenFactory tokenFactory;
     private final JwtSettings jwtSettings;
-    private Cache tokenOutdatageTimeCache;
+    private Cache usersUpdateTimeCache;
 
     @PostConstruct
     protected void initCache() {
-        tokenOutdatageTimeCache = cacheManager.getCache(CacheConstants.TOKEN_OUTDATAGE_TIME_CACHE);
+        usersUpdateTimeCache = cacheManager.getCache(CacheConstants.USERS_UPDATE_TIME_CACHE);
     }
 
     @EventListener(classes = UserAuthDataChangedEvent.class)
-    public void onUserAuthDataChanged(UserAuthDataChangedEvent userAuthDataChangedEvent) {
-        outdateOldUserTokens(userAuthDataChangedEvent.getUserId());
+    public void onUserAuthDataChanged(UserAuthDataChangedEvent event) {
+        usersUpdateTimeCache.put(toKey(event.getUserId()), event.getTs());
     }
 
     public boolean isOutdated(JwtToken token, UserId userId) {
         Claims claims = tokenFactory.parseTokenClaims(token).getBody();
         long issueTime = claims.getIssuedAt().getTime();
 
-        return Optional.ofNullable(tokenOutdatageTimeCache.get(toKey(userId), Long.class))
+        return Optional.ofNullable(usersUpdateTimeCache.get(toKey(userId), Long.class))
                 .map(outdatageTime -> {
                     if (System.currentTimeMillis() - outdatageTime <= SECONDS.toMillis(jwtSettings.getRefreshTokenExpTime())) {
                         return MILLISECONDS.toSeconds(issueTime) < MILLISECONDS.toSeconds(outdatageTime);
@@ -68,15 +68,11 @@ public class TokenOutdatingService {
                          * as all the tokens issued before the outdatage time
                          * are now expired by themselves
                          * */
-                        tokenOutdatageTimeCache.evict(toKey(userId));
+                        usersUpdateTimeCache.evict(toKey(userId));
                         return false;
                     }
                 })
                 .orElse(false);
-    }
-
-    public void outdateOldUserTokens(UserId userId) {
-        tokenOutdatageTimeCache.put(toKey(userId), System.currentTimeMillis());
     }
 
     private String toKey(UserId userId) {

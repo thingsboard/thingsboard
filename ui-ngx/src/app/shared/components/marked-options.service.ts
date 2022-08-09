@@ -19,8 +19,7 @@ import { Inject, Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { DOCUMENT } from '@angular/common';
 import { WINDOW } from '@core/services/window.service';
-import { Tokenizer } from 'marked';
-import * as marked from 'marked';
+import { Tokenizer, marked } from 'marked';
 import { Clipboard } from '@angular/cdk/clipboard';
 
 const copyCodeBlock = '{:copy-code}';

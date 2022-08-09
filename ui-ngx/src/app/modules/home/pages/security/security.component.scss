@@ -1,0 +1,130 @@
+/**
+ * Copyright © 2016-2022 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import "../../../../../scss/constants";
+
+:host {
+  .profile-container {
+    padding: 8px;
+  }
+
+  mat-card.profile-card {
+    padding: 24px;
+    @media #{$mat-gt-sm} {
+      width: 80%;
+    }
+    @media #{$mat-gt-md} {
+      width: 55%;
+    }
+    @media #{$mat-gt-xl} {
+      width: 45%;
+    }
+
+    .card-title {
+      font: 500 18px / 24px Roboto, "Helvetica Neue", sans-serif;
+      letter-spacing: 0.15px;
+      margin-top: 0;
+    }
+
+    .mat-h4 {
+      font-weight: 500;
+      font-size: 14px;
+      letter-spacing: 0.25px;
+      margin: 0 0 4px;
+    }
+
+    .change-password {
+      margin: 0;
+
+      .mat-divider.mat-divider-vertical {
+        margin-bottom: 25px;
+      }
+
+      .mat-form-field {
+        margin-bottom: 4px;
+      }
+
+      .password-requirements > p {
+        margin: 0 0 8px;
+        letter-spacing: 0.25px;
+        color: rgba(0, 0, 0, 0.87);
+      }
+
+      .mat-icon[data-mat-icon-name="check"] {
+        color: #24A148;
+      }
+    }
+
+    .auth-title {
+      font-weight: 500;
+      margin: 0;
+    }
+
+    .token-text {
+      font: 400 14px / 16px Roboto, "Helvetica Neue", sans-serif;
+      letter-spacing: 0.25px;
+      padding: 8px 0;
+
+      > .date {
+        opacity: .7;
+      }
+    }
+  }
+
+  .description {
+    color: rgba(0, 0, 0, 0.54);
+    letter-spacing: 0.25px;
+    margin-right: 8px;
+  }
+
+  .mat-divider-horizontal {
+    left: 16px;
+    right: 16px;
+    width: auto;
+  }
+
+  .provider {
+    padding: 24px 0;
+
+    .provider-title {
+      font: 400 14px / 16px Roboto, "Helvetica Neue", sans-serif;
+      letter-spacing: 0.25px;
+      margin: 0 0 8px;
+    }
+
+    .description {
+      max-width: 85%;
+    }
+
+    .checkbox-label {
+      font-size: 14px;
+      letter-spacing: 0.25px;
+      opacity: 0.87;
+    }
+
+    .mat-checkbox {
+      margin-top: 8px;
+    }
+
+    .mat-stroked-button {
+      margin-top: 8px;
+    }
+  }
+}
+:host ::ng-deep {
+  .mat-form-field-appearance-fill .mat-form-field-underline::before {
+    background-color: transparent;
+  }
+}

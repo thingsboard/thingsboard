@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>3.3.4-SNAPSHOT</version>
+        <version>3.4.1-SNAPSHOT</version>
         <artifactId>thingsboard</artifactId>
     </parent>
     <artifactId>dao</artifactId>
@@ -221,14 +221,6 @@
             <artifactId>spring-context-support</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.springframework.data</groupId>
-            <artifactId>spring-data-redis</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>redis.clients</groupId>
-            <artifactId>jedis</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>rest</artifactId>
         </dependency>
@@ -242,12 +234,8 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>${surfire.version}</version>
                 <configuration>
                     <excludes>
-                        <exclude>**/sql/*Test.java</exclude>
-                        <exclude>**/sql/*/*DaoTest.java</exclude>
-                        <exclude>**/psql/*Test.java</exclude>
                         <exclude>**/nosql/*Test.java</exclude>
                     </excludes>
                     <includes>

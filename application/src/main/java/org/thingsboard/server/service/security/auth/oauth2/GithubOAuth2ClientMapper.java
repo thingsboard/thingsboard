@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
 import org.thingsboard.server.dao.oauth2.OAuth2Configuration;
 import org.thingsboard.server.dao.oauth2.OAuth2User;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import javax.servlet.http.HttpServletRequest;
@@ -36,6 +37,7 @@ import java.util.Optional;
 
 @Service(value = "githubOAuth2ClientMapper")
 @Slf4j
+@TbCoreComponent
 public class GithubOAuth2ClientMapper extends AbstractOAuth2ClientMapper implements OAuth2ClientMapper {
     private static final String EMAIL_URL_KEY = "emailUrl";
 

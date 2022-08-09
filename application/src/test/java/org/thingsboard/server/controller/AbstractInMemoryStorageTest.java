@@ -23,20 +23,4 @@ import org.thingsboard.server.queue.memory.InMemoryStorage;
 @Slf4j
 public abstract class AbstractInMemoryStorageTest {
 
-    @Before
-    public void setUpInMemoryStorage() {
-        log.info("set up InMemoryStorage");
-        cleanupInMemStorage();
-    }
-
-    @After
-    public void tearDownInMemoryStorage() {
-        log.info("tear down InMemoryStorage");
-        cleanupInMemStorage();
-    }
-
-    public static void cleanupInMemStorage() {
-        InMemoryStorage.getInstance().cleanup();
-    }
-
 }
