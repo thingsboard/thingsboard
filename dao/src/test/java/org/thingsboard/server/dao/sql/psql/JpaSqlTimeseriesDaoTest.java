@@ -37,7 +37,14 @@ import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.*;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.asset.AssetDao;
 import org.thingsboard.server.dao.attributes.AttributesDao;
@@ -57,12 +64,16 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class JpaSqlTimeseriesDaoTest extends AbstractJpaDaoTest {
 
     public static final int DIFF_AFTER_CLEANUP_FOR_ONE_ENTITY = 1;
     public static final int TIMEOUT = 30;
 
     public static final long TTL = 0;
+    public static final int CLEANUP_PARTITIONS = 2;
+    public static final long TIMESTAMP = 1660053001000L;
     public static final String KEY_FOR_CLEANUP = "CLEANUP";
     public static final String EXCLUDED_KEY = "TESTED_TELEMETRY";
     @Autowired
@@ -125,6 +136,15 @@ public class JpaSqlTimeseriesDaoTest extends AbstractJpaDaoTest {
 
         tenantDao.removeById(TenantId.SYS_TENANT_ID, tenant.getUuidId());
         tenantProfileDao.removeById(TenantId.SYS_TENANT_ID, tenantProfile.getUuidId());
+    }
+
+    @Test
+    public void testCleanupPartition() {
+        int cleanupPartitions = sqlTimeseriesDao.cleanupPartitions(System.currentTimeMillis() - TIMESTAMP);
+        assertThat(cleanupPartitions).isEqualTo(CLEANUP_PARTITIONS);
+
+        cleanupPartitions = sqlTimeseriesDao.cleanupPartitions(System.currentTimeMillis() - TIMESTAMP);
+        assertThat(cleanupPartitions).isZero();
     }
 
     @Test

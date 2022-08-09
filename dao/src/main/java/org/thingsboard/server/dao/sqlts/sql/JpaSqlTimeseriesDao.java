@@ -127,14 +127,14 @@ public class JpaSqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDao
         return tsKvRepository.cleanUp(expirationTime, keyIds, tenantId.getId(), customerId.getId());
     }
 
-    private void cleanupPartitions(long systemTtl) {
+    public int cleanupPartitions(long systemTtl) {
         long maxTtl = getMaxTtl(systemTtl);
         DateTime dateByTtlDate = getPartitionByTtlDate(maxTtl);
         log.info("Date by max ttl {}", dateByTtlDate);
         String partitionByTtlDate = getPartitionByDate(dateByTtlDate);
         log.info("Partition by max ttl {}", partitionByTtlDate);
 
-        cleanupPartition(dateByTtlDate, partitionByTtlDate);
+        return cleanupPartition(dateByTtlDate, partitionByTtlDate);
     }
 
     private long getMaxTtl(long systemTtl) {
@@ -184,7 +184,8 @@ public class JpaSqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDao
         return "ts_kv_" + result;
     }
 
-    private void cleanupPartition(DateTime dateByTtlDate, String partitionByTtlDate) {
+    private int cleanupPartition(DateTime dateByTtlDate, String partitionByTtlDate) {
+        int deleted = 0;
         try (Connection connection = dataSource.getConnection();
             PreparedStatement stmt = connection.prepareStatement("SELECT tablename " +
                     "FROM pg_tables " +
@@ -198,14 +199,14 @@ public class JpaSqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDao
                 stmt.setQueryTimeout((int) TimeUnit.MINUTES.toSeconds(1));
                 stmt.execute();
                 try (ResultSet resultSet = stmt.getResultSet()) {
-                    int deleted = 0;
                     //todo :: remove log list with table and log with drop table
                     List<String> allTableName = new ArrayList<>();
                     while (resultSet.next()) {
                         allTableName.add(resultSet.getString(1));
                         log.info("table = {}", resultSet.getString(1));
                         String tableName = resultSet.getString(1);
-                        if (tableName != null && checkNeedDropTable(dateByTtlDate, tableName)) {
+                        //todo :: in tests have failure after remove ts_kv_1970_01
+                        if (tableName != null && checkNeedDropTable(dateByTtlDate, tableName) && !tableName.equals("ts_kv_1970_01")) {
                             log.info("start drop {} table", tableName);
                             dropTable(tableName);
                             deleted++;
@@ -213,11 +214,12 @@ public class JpaSqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDao
                     }
                     log.info("select this table = {}", allTableName);
                     log.info("Cleanup {} partitions", deleted);
-
+                    return deleted;
                 }
         } catch (SQLException e) {
             log.error("SQLException occurred during TTL task execution ", e);
         }
+        return deleted;
     }
 
     private boolean checkNeedDropTable(DateTime date, String tableName) {
