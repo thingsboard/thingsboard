@@ -36,7 +36,8 @@ import java.util.stream.Collectors;
         name = "delete attributes",
         configClazz = TbMsgDeleteAttributesConfiguration.class,
         nodeDescription = "Delete attributes for Message Originator.",
-        nodeDetails = "Allowed scope parameter values: <b>SERVER/CLIENT/SHARED</b>. Will try to remove attributes by keys from the list",
+        nodeDetails = "Attempt to remove attributes by selected keys. If msg originator doesn't have an attribute with " +
+                " a key selected in the configuration, it will be ignored.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeDeleteAttributesConfig",
         icon = "remove_circle"
@@ -58,7 +59,7 @@ public class TbMsgDeleteAttributes implements TbNode {
                 .filter(StringUtils::isNotBlank)
                 .collect(Collectors.toList());
         if (keysToDelete.isEmpty()) {
-            ctx.tellFailure(msg, new RuntimeException("Selected keys patterns have invalid values!"));
+            ctx.tellSuccess(msg);
         } else {
             ctx.getTelemetryService().deleteAndNotify(ctx.getTenantId(), msg.getOriginator(), config.getScope(), keysToDelete, new TelemetryNodeCallback(ctx, msg));
         }

@@ -67,7 +67,7 @@ public class TbMsgDeleteAttributesTest {
         callback = mock(TbMsgCallback.class);
         ctx = mock(TbContext.class);
         config = new TbMsgDeleteAttributesConfiguration().defaultConfiguration();
-        config.setKeys(List.of("${TestAttribute_1}", "$[TestAttribute_2]", "$[TestAttribute_3]"));
+        config.setKeys(List.of("${TestAttribute_1}", "$[TestAttribute_2]", "$[TestAttribute_3]", "TestAttribute_4"));
         nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
         node = spy(new TbMsgDeleteAttributes());
         node.init(ctx, nodeConfiguration);
@@ -115,26 +115,5 @@ public class TbMsgDeleteAttributesTest {
         verify(ctx, times(1)).tellSuccess(newMsgCaptor.capture());
         verify(ctx, never()).tellFailure(any(), any());
         verify(telemetryService, times(1)).deleteAndNotify(any(), any(), anyString(), anyList(), any());
-    }
-
-    @Test
-    void giveInvalidScope_whenOnMsg_thenTellFailure() throws Exception {
-        final TbMsgMetaData metaData = new TbMsgMetaData();
-        final String data = "{\"TestAttribute_1\": \"\", \"TestAttribute_2\": \"\"}";
-
-        config.setKeys(List.of("$[TestAttribute_1]", "$[TestAttribute_2]"));
-        nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
-        node.init(ctx, nodeConfiguration);
-
-        TbMsg msg = TbMsg.newMsg("POST_ATTRIBUTES_REQUEST", deviceId, metaData, data, callback);
-        node.onMsg(ctx, msg);
-
-        ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        ArgumentCaptor<Exception> exceptionCaptor = ArgumentCaptor.forClass(Exception.class);
-        verify(ctx, never()).tellSuccess(any());
-        verify(ctx, times(1)).tellFailure(newMsgCaptor.capture(), exceptionCaptor.capture());
-
-        assertThat(newMsgCaptor.getValue()).isSameAs(msg);
-        assertThat(exceptionCaptor.getValue()).isInstanceOf(RuntimeException.class);
     }
 }
