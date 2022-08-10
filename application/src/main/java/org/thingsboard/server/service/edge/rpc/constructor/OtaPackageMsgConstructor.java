@@ -24,6 +24,8 @@ import org.thingsboard.server.gen.edge.v1.OtaPackageUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import java.io.IOException;
+
 @Component
 @TbCoreComponent
 public class OtaPackageMsgConstructor {
@@ -62,7 +64,11 @@ public class OtaPackageMsgConstructor {
             builder.setDataSize(otaPackage.getDataSize());
         }
         if (otaPackage.getData() != null) {
-            builder.setData(ByteString.copyFrom(otaPackage.getData().array()));
+            try {
+                builder.setData(ByteString.copyFrom(otaPackage.getData().readAllBytes()));
+            } catch (IOException e){
+                throw new RuntimeException(e);
+            }
         }
         return builder.build();
     }

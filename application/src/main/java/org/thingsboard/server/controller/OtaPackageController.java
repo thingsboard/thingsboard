@@ -179,41 +179,13 @@ public class OtaPackageController extends BaseController {
                                              @ApiParam(value = "OTA Package checksum algorithm.", allowableValues = OTA_PACKAGE_CHECKSUM_ALGORITHM_ALLOWABLE_VALUES)
                                              @RequestParam(CHECKSUM_ALGORITHM) String checksumAlgorithmStr,
                                              @ApiParam(value = "OTA Package data.")
-                                             @RequestPart MultipartFile file) throws ThingsboardException, IOException {
+                                             @RequestPart MultipartFile file) throws ThingsboardException {
         checkParameter(OTA_PACKAGE_ID, strOtaPackageId);
         checkParameter(CHECKSUM_ALGORITHM, checksumAlgorithmStr);
-        try {
-            OtaPackageId otaPackageId = new OtaPackageId(toUUID(strOtaPackageId));
-            ChecksumAlgorithm checksumAlgorithm = ChecksumAlgorithm.valueOf(checksumAlgorithmStr.toUpperCase());
-
-            if (StringUtils.isEmpty(checksum)) {
-                checksum = ChecksumUtil.generateChecksum(checksumAlgorithm, file.getInputStream());
-            }
-            OtaPackageInfo savedOtaPackage = saveOtaPackageWithData(otaPackageId, file, checksum, checksumAlgorithm);
-            return savedOtaPackage;
-        } catch (Exception e) {
-            throw handleException(e);
-        }
-    }
-
-    private OtaPackage saveOtaPackageWithData(OtaPackageId otaPackageId, MultipartFile file, String checksum, ChecksumAlgorithm checksumAlgorithm) throws ThingsboardException, IOException {
+        OtaPackageId otaPackageId = new OtaPackageId(toUUID(strOtaPackageId));
         OtaPackageInfo info = checkOtaPackageInfoId(otaPackageId, Operation.READ);
-        OtaPackage otaPackage = new OtaPackage(otaPackageId);
-        otaPackage.setCreatedTime(info.getCreatedTime());
-        otaPackage.setTenantId(info.getTenantId());
-        otaPackage.setDeviceProfileId(info.getDeviceProfileId());
-        otaPackage.setType(info.getType());
-        otaPackage.setTitle(info.getTitle());
-        otaPackage.setVersion(info.getVersion());
-        otaPackage.setTag(info.getTag());
-        otaPackage.setAdditionalInfo(info.getAdditionalInfo());
-        otaPackage.setChecksumAlgorithm(checksumAlgorithm);
-        otaPackage.setChecksum(checksum);
-        otaPackage.setFileName(file.getOriginalFilename());
-        otaPackage.setContentType(file.getContentType());
-        otaPackage.setDataSize(file.getSize());
-        otaPackage.setData(file.getInputStream());
-        return otaPackageService.saveOtaPackage(otaPackage);
+        ChecksumAlgorithm checksumAlgorithm = ChecksumAlgorithm.valueOf(checksumAlgorithmStr.toUpperCase());
+        return tbOtaPackageService.saveOtaPackageData(info, checksum, checksumAlgorithm, file, getCurrentUser());
     }
 
     @ApiOperation(value = "Get OTA Package Infos (getOtaPackages)",

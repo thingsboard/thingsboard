@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.entitiy.ota;
 
+import org.springframework.web.multipart.MultipartFile;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
 import org.thingsboard.server.common.data.User;
@@ -26,7 +27,7 @@ public interface TbOtaPackageService {
     OtaPackageInfo save(SaveOtaPackageInfoRequest saveOtaPackageInfoRequest, User user) throws ThingsboardException;
 
     OtaPackageInfo saveOtaPackageData(OtaPackageInfo otaPackageInfo, String checksum, ChecksumAlgorithm checksumAlgorithm,
-                                      byte[] data, String filename, String contentType, User user) throws ThingsboardException;
+                                      MultipartFile file, User user) throws ThingsboardException;
 
     void delete(OtaPackageInfo otaPackageInfo, User user) throws ThingsboardException;
 
