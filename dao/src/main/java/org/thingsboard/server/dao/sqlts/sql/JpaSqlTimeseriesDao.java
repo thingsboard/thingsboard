@@ -199,20 +199,15 @@ public class JpaSqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDao
                 stmt.setQueryTimeout((int) TimeUnit.MINUTES.toSeconds(1));
                 stmt.execute();
                 try (ResultSet resultSet = stmt.getResultSet()) {
-                    //todo :: remove log list with table and log with drop table
-                    List<String> allTableName = new ArrayList<>();
                     while (resultSet.next()) {
-                        allTableName.add(resultSet.getString(1));
-                        log.info("table = {}", resultSet.getString(1));
                         String tableName = resultSet.getString(1);
                         //todo :: in tests have failure after remove ts_kv_1970_01
                         if (tableName != null && checkNeedDropTable(dateByTtlDate, tableName) && !tableName.equals("ts_kv_1970_01")) {
-                            log.info("start drop {} table", tableName);
+                            log.info("drop {} table", tableName);
                             dropTable(tableName);
                             deleted++;
                         }
                     }
-                    log.info("select this table = {}", allTableName);
                     log.info("Cleanup {} partitions", deleted);
                     return deleted;
                 }
