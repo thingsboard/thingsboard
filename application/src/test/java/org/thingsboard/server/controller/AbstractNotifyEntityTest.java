@@ -89,11 +89,11 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
                 argument -> argument.getClass().equals(UserId.class) : argument -> argument.equals(userId);
         testLogEntityActionAdditionalInfo(matcherEntityClassEquals, matcherOriginatorId, tenantId, matcherCustomerId, matcherUserId, userName, actionType, cntTime,
                 extractMatcherAdditionalInfo(additionalInfo));
-        testPushMsgToRuleEngineNever(relation.getTo());
+        testPushMsgToRuleEngineTime(matcherOriginatorId, tenantId, null, 1);
         matcherOriginatorId = argument -> argument.equals(relation.getFrom());
         testLogEntityActionAdditionalInfo(matcherEntityClassEquals, matcherOriginatorId, tenantId, matcherCustomerId, matcherUserId, userName, actionType, cntTime,
                 extractMatcherAdditionalInfo(additionalInfo));
-        testPushMsgToRuleEngineNever(relation.getFrom());
+        testPushMsgToRuleEngineTime(matcherOriginatorId, tenantId, null, 1);
         Mockito.reset(tbClusterService, auditLogService);
     }
 
@@ -111,7 +111,7 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
                 argument -> argument.getClass().equals(UserId.class) : argument -> argument.equals(userId);
         testLogEntityActionAdditionalInfoAny(matcherEntityClassEquals, matcherOriginatorId, tenantId, matcherCustomerId, matcherUserId,
                 userName, actionType, cntTime * 2, 1);
-        testPushMsgToRuleEngineTime(matcherOriginatorId, tenantId, new Tenant(), cntTime);
+        testPushMsgToRuleEngineTime(matcherOriginatorId, tenantId, new Tenant(), cntTime * 3);
         Mockito.reset(tbClusterService, auditLogService);
     }
 
@@ -141,11 +141,7 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
         testNotificationMsgToEdgeServiceNeverWithActionType(entityId, actionType);
         testLogEntityAction(entity, originatorId, tenantId, customerId, userId, userName, actionType, cntTime, additionalInfo);
         ArgumentMatcher<EntityId> matcherOriginatorId = argument -> argument.equals(originatorId);
-        if (ActionType.RELATIONS_DELETED.equals(actionType)) {
-            testPushMsgToRuleEngineNever(originatorId);
-        } else {
-            testPushMsgToRuleEngineTime(matcherOriginatorId, tenantId, entity, cntTime);
-        }
+        testPushMsgToRuleEngineTime(matcherOriginatorId, tenantId, entity, cntTime);
         Mockito.reset(tbClusterService, auditLogService);
     }
 
