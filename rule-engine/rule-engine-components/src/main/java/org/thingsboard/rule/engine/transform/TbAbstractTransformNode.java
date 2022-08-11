@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.transform;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -49,7 +50,7 @@ public abstract class TbAbstractTransformNode implements TbNode {
         withCallback(transform(ctx, msg),
                 m -> transformSuccess(ctx, msg, m),
                 t -> transformFailure(ctx, msg, t),
-                ctx.getDbCallbackExecutor());
+                MoreExecutors.directExecutor());
     }
 
     protected void transformFailure(TbContext ctx, TbMsg msg, Throwable t) {

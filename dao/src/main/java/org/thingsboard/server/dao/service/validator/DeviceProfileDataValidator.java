@@ -35,7 +35,6 @@ import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
-import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransportConfiguration;
@@ -52,7 +51,6 @@ import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MBo
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.RPKLwM2MBootstrapServerCredential;
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.X509LwM2MBootstrapServerCredential;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.msg.EncryptionUtil;
@@ -62,10 +60,8 @@ import org.thingsboard.server.dao.device.DeviceProfileDao;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
-import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.rule.RuleChainService;
-import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.util.HashSet;
@@ -74,7 +70,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
-public class DeviceProfileDataValidator extends DataValidator<DeviceProfile> {
+public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<DeviceProfile> {
 
     private static final Location LOCATION = new Location("", "", -1, -1);
     private static final String ATTRIBUTES_PROTO_SCHEMA = "attributes proto schema";
@@ -90,11 +86,9 @@ public class DeviceProfileDataValidator extends DataValidator<DeviceProfile> {
     private DeviceDao deviceDao;
     @Autowired
     private TenantService tenantService;
-    @Autowired
     @Lazy
-    private QueueService queueService;
     @Autowired
-    private OtaPackageService otaPackageService;
+    private QueueService queueService;
     @Autowired
     private RuleChainService ruleChainService;
     @Autowired
@@ -128,8 +122,8 @@ public class DeviceProfileDataValidator extends DataValidator<DeviceProfile> {
                 throw new DataValidationException("Another default device profile is present in scope of current tenant!");
             }
         }
-        if (deviceProfile.getDefaultQueueId() != null) {
-            Queue queue = queueService.findQueueById(tenantId, deviceProfile.getDefaultQueueId());
+        if (StringUtils.isNotEmpty(deviceProfile.getDefaultQueueName())) {
+            Queue queue = queueService.findQueueByTenantIdAndName(tenantId, deviceProfile.getDefaultQueueName());
             if (queue == null) {
                 throw new DataValidationException("Device profile is referencing to non-existent queue!");
             }
@@ -192,6 +186,9 @@ public class DeviceProfileDataValidator extends DataValidator<DeviceProfile> {
             if (ruleChain == null) {
                 throw new DataValidationException("Can't assign non-existent rule chain!");
             }
+            if (!ruleChain.getTenantId().equals(deviceProfile.getTenantId())) {
+                throw new DataValidationException("Can't assign rule chain from different tenant!");
+            }
         }
 
         if (deviceProfile.getDefaultDashboardId() != null) {
@@ -199,39 +196,12 @@ public class DeviceProfileDataValidator extends DataValidator<DeviceProfile> {
             if (dashboard == null) {
                 throw new DataValidationException("Can't assign non-existent dashboard!");
             }
-        }
-
-        if (deviceProfile.getFirmwareId() != null) {
-            OtaPackage firmware = otaPackageService.findOtaPackageById(tenantId, deviceProfile.getFirmwareId());
-            if (firmware == null) {
-                throw new DataValidationException("Can't assign non-existent firmware!");
-            }
-            if (!firmware.getType().equals(OtaPackageType.FIRMWARE)) {
-                throw new DataValidationException("Can't assign firmware with type: " + firmware.getType());
-            }
-            if (firmware.getData() == null && !firmware.hasUrl()) {
-                throw new DataValidationException("Can't assign firmware with empty data!");
-            }
-            if (!firmware.getDeviceProfileId().equals(deviceProfile.getId())) {
-                throw new DataValidationException("Can't assign firmware with different deviceProfile!");
+            if (!dashboard.getTenantId().equals(deviceProfile.getTenantId())) {
+                throw new DataValidationException("Can't assign dashboard from different tenant!");
             }
         }
 
-        if (deviceProfile.getSoftwareId() != null) {
-            OtaPackage software = otaPackageService.findOtaPackageById(tenantId, deviceProfile.getSoftwareId());
-            if (software == null) {
-                throw new DataValidationException("Can't assign non-existent software!");
-            }
-            if (!software.getType().equals(OtaPackageType.SOFTWARE)) {
-                throw new DataValidationException("Can't assign software with type: " + software.getType());
-            }
-            if (software.getData() == null && !software.hasUrl()) {
-                throw new DataValidationException("Can't assign software with empty data!");
-            }
-            if (!software.getDeviceProfileId().equals(deviceProfile.getId())) {
-                throw new DataValidationException("Can't assign firmware with different deviceProfile!");
-            }
-        }
+        validateOtaPackage(tenantId, deviceProfile, deviceProfile.getId());
     }
 
     @Override

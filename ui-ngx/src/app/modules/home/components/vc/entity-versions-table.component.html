@@ -31,32 +31,36 @@
           </tb-branch-autocomplete>
         </div>
         <span fxFlex></span>
-        <button *ngIf="singleEntityMode" mat-stroked-button color="primary"
-                #createVersionButton
-                [disabled]="(isLoading$ | async)"
-                (click)="toggleCreateVersion($event, createVersionButton)">
-          <mat-icon>update</mat-icon>
-          {{'version-control.create-version' | translate }}
-        </button>
-        <button *ngIf="!singleEntityMode" mat-stroked-button color="primary"
-                #complexCreateVersionButton
-                [disabled]="(isLoading$ | async)"
-                (click)="toggleComplexCreateVersion($event, complexCreateVersionButton)">
-          <mat-icon>update</mat-icon>
-          {{'version-control.create-entities-version' | translate }}
-        </button>
-        <button mat-icon-button [disabled]="isLoading$ | async" (click)="updateData()"
-                matTooltip="{{ 'action.refresh' | translate }}"
-                matTooltipPosition="above">
-          <mat-icon>refresh</mat-icon>
-        </button>
-        <button mat-icon-button
-                [disabled]="isLoading$ | async"
-                (click)="enterFilterMode()"
-                matTooltip="{{ 'action.search' | translate }}"
-                matTooltipPosition="above">
-          <mat-icon>search</mat-icon>
-        </button>
+        <div fxLayout="row" fxLayout.xs="column" fxLayoutAlign="center end">
+          <button *ngIf="singleEntityMode" mat-stroked-button color="primary"
+                  #createVersionButton
+                  [disabled]="(isLoading$ | async)"
+                  (click)="toggleCreateVersion($event, createVersionButton)">
+            <mat-icon>update</mat-icon>
+            {{'version-control.create-version' | translate }}
+          </button>
+          <button *ngIf="!singleEntityMode" mat-stroked-button color="primary"
+                  #complexCreateVersionButton
+                  [disabled]="(isLoading$ | async)"
+                  (click)="toggleComplexCreateVersion($event, complexCreateVersionButton)">
+            <mat-icon>update</mat-icon>
+            {{'version-control.create-entities-version' | translate }}
+          </button>
+          <div fxLayout="row">
+            <button mat-icon-button [disabled]="isLoading$ | async" (click)="updateData()"
+                    matTooltip="{{ 'action.refresh' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>refresh</mat-icon>
+            </button>
+            <button mat-icon-button
+                    [disabled]="isLoading$ | async"
+                    (click)="enterFilterMode()"
+                    matTooltip="{{ 'action.search' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>search</mat-icon>
+            </button>
+          </div>
+        </div>
       </div>
     </mat-toolbar>
     <mat-toolbar class="mat-table-toolbar" [fxShow]="textSearchMode">
@@ -70,7 +74,7 @@
           <mat-label>&nbsp;</mat-label>
           <input #searchInput matInput
                  [(ngModel)]="pageLink.textSearch"
-                 placeholder="{{ 'common.enter-search' | translate }}"/>
+                 placeholder="{{ 'version-control.search' | translate }}"/>
         </mat-form-field>
         <button mat-icon-button (click)="exitFilterMode()"
                 matTooltip="{{ 'action.close' | translate }}"
@@ -124,7 +128,7 @@
           <mat-cell *matCellDef="let entityVersion">
             <div fxFlex fxLayout="row" fxLayoutAlign="end">
               <button *ngIf="singleEntityMode" mat-icon-button [disabled]="isLoading$ | async"
-                      matTooltip="{{ 'version-control.show-version-diff' | translate }}"
+                      matTooltip="{{ 'version-control.compare-with-current' | translate }}"
                       matTooltipPosition="above"
                       #diffVersionButton
                       (click)="toggleShowVersionDiff($event, diffVersionButton, entityVersion)">

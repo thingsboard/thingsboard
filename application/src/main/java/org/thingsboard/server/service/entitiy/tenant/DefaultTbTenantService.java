@@ -19,10 +19,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
+import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.entitiy.queue.TbQueueService;
@@ -37,45 +38,39 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class DefaultTbTenantService extends AbstractTbEntityService implements TbTenantService {
 
+    private final TenantService tenantService;
+    private final TbTenantProfileCache tenantProfileCache;
     private final InstallScripts installScripts;
     private final TbQueueService tbQueueService;
     private final TenantProfileService tenantProfileService;
     private final EntitiesVersionControlService versionControlService;
 
     @Override
-    public Tenant save(Tenant tenant) throws ThingsboardException {
-        try {
-            boolean created = tenant.getId() == null;
-            Tenant oldTenant = !created ? tenantService.findTenantById(tenant.getId()) : null;
+    public Tenant save(Tenant tenant) throws Exception {
+        boolean created = tenant.getId() == null;
+        Tenant oldTenant = !created ? tenantService.findTenantById(tenant.getId()) : null;
 
-            Tenant savedTenant = checkNotNull(tenantService.saveTenant(tenant));
-            if (created) {
-                installScripts.createDefaultRuleChains(savedTenant.getId());
-                installScripts.createDefaultEdgeRuleChains(savedTenant.getId());
-            }
-            tenantProfileCache.evict(savedTenant.getId());
-            notificationEntityService.notifyCreateOruUpdateTenant(savedTenant, created ?
-                    ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
-
-            TenantProfile oldTenantProfile = oldTenant != null ? tenantProfileService.findTenantProfileById(TenantId.SYS_TENANT_ID, oldTenant.getTenantProfileId()) : null;
-            TenantProfile newTenantProfile = tenantProfileService.findTenantProfileById(TenantId.SYS_TENANT_ID, savedTenant.getTenantProfileId());
-            tbQueueService.updateQueuesByTenants(Collections.singletonList(savedTenant.getTenantId()), newTenantProfile, oldTenantProfile);
-            return savedTenant;
-        } catch (Exception e) {
-            throw handleException(e);
+        Tenant savedTenant = checkNotNull(tenantService.saveTenant(tenant));
+        if (created) {
+            installScripts.createDefaultRuleChains(savedTenant.getId());
+            installScripts.createDefaultEdgeRuleChains(savedTenant.getId());
         }
+        tenantProfileCache.evict(savedTenant.getId());
+        notificationEntityService.notifyCreateOrUpdateTenant(savedTenant, created ?
+                ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+
+        TenantProfile oldTenantProfile = oldTenant != null ? tenantProfileService.findTenantProfileById(TenantId.SYS_TENANT_ID, oldTenant.getTenantProfileId()) : null;
+        TenantProfile newTenantProfile = tenantProfileService.findTenantProfileById(TenantId.SYS_TENANT_ID, savedTenant.getTenantProfileId());
+        tbQueueService.updateQueuesByTenants(Collections.singletonList(savedTenant.getTenantId()), newTenantProfile, oldTenantProfile);
+        return savedTenant;
     }
 
     @Override
-    public void delete(Tenant tenant) throws ThingsboardException {
-        try {
-            TenantId tenantId = tenant.getId();
-            tenantService.deleteTenant(tenantId);
-            tenantProfileCache.evict(tenantId);
-            notificationEntityService.notifyDeleteTenant(tenant);
-            versionControlService.deleteVersionControlSettings(tenantId).get(1, TimeUnit.MINUTES);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+    public void delete(Tenant tenant) throws Exception {
+        TenantId tenantId = tenant.getId();
+        tenantService.deleteTenant(tenantId);
+        tenantProfileCache.evict(tenantId);
+        notificationEntityService.notifyDeleteTenant(tenant);
+        versionControlService.deleteVersionControlSettings(tenantId).get(1, TimeUnit.MINUTES);
     }
 }

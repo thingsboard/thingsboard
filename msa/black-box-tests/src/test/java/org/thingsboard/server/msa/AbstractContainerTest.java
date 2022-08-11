@@ -69,6 +69,9 @@ public abstract class AbstractContainerTest {
     protected static final String WSS_URL = "wss://localhost";
     protected static String TB_TOKEN;
     protected static RestClient restClient;
+
+    protected static long timeoutMultiplier = 1;
+
     protected ObjectMapper mapper = new ObjectMapper();
     protected JsonParser jsonParser = new JsonParser();
 
@@ -76,6 +79,10 @@ public abstract class AbstractContainerTest {
     public static void before() throws Exception {
         restClient = new RestClient(HTTPS_URL);
         restClient.getRestTemplate().setRequestFactory(getRequestFactoryForSelfSignedCert());
+
+        if (!"kafka".equals(System.getProperty("blackBoxTests.queue", "kafka"))) {
+            timeoutMultiplier = 10;
+        }
     }
 
     @Rule
@@ -124,7 +131,7 @@ public abstract class AbstractContainerTest {
     }
 
     protected WsClient subscribeToWebSocket(DeviceId deviceId, String scope, CmdsType property) throws Exception {
-        WsClient wsClient = new WsClient(new URI(WSS_URL + "/api/ws/plugins/telemetry?token=" + restClient.getToken()));
+        WsClient wsClient = new WsClient(new URI(WSS_URL + "/api/ws/plugins/telemetry?token=" + restClient.getToken()), timeoutMultiplier);
         SSLContextBuilder builder = SSLContexts.custom();
         builder.loadTrustMaterial(null, (TrustStrategy) (chain, authType) -> true);
         wsClient.setSocketFactory(builder.build().getSocketFactory());

@@ -59,4 +59,3 @@ services:
   tb-vc-executor2:
     env_file:
       - queue-pubsub.env
-

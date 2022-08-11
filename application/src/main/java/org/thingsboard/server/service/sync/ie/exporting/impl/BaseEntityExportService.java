@@ -41,8 +41,6 @@ public abstract class BaseEntityExportService<I extends EntityId, E extends Expo
         return (D) new EntityExportData<E>();
     }
 
-    ;
-
     public abstract Set<EntityType> getSupportedEntityTypes();
 
     protected void replaceUuidsRecursively(EntitiesExportCtx<?> ctx, JsonNode node, Set<String> skipFieldsSet) {

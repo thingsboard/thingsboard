@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.service.validator;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -73,12 +72,9 @@ public class QueueValidator extends DataValidator<Queue> {
             }
         }
 
-        if (StringUtils.isEmpty(queue.getName())) {
-            throw new DataValidationException("Queue name should be specified!");
-        }
-        if (StringUtils.isBlank(queue.getTopic())) {
-            throw new DataValidationException("Queue topic should be non empty and without spaces!");
-        }
+        validateQueueName(queue.getName());
+        validateQueueTopic(queue.getTopic());
+
         if (queue.getPollInterval() < 1) {
             throw new DataValidationException("Queue poll interval should be more then 0!");
         }

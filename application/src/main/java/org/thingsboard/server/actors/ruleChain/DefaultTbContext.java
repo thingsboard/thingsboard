@@ -166,15 +166,8 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    @Deprecated
     public void enqueue(TbMsg tbMsg, String queueName, Runnable onSuccess, Consumer<Throwable> onFailure) {
         TopicPartitionInfo tpi = resolvePartition(tbMsg, queueName);
-        enqueue(tpi, tbMsg, onFailure, onSuccess);
-    }
-
-    @Override
-    public void enqueue(TbMsg tbMsg, QueueId queueId, Runnable onSuccess, Consumer<Throwable> onFailure) {
-        TopicPartitionInfo tpi = resolvePartition(tbMsg, queueId);
         enqueue(tpi, tbMsg, onFailure, onSuccess);
     }
 
@@ -227,35 +220,30 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public void enqueueForTellNext(TbMsg tbMsg, QueueId queueId, String relationType, Runnable onSuccess, Consumer<Throwable> onFailure) {
-        TopicPartitionInfo tpi = resolvePartition(tbMsg, queueId);
-        enqueueForTellNext(tpi, queueId, tbMsg, Collections.singleton(relationType), null, onSuccess, onFailure);
+    public void enqueueForTellNext(TbMsg tbMsg, String queueName, String relationType, Runnable onSuccess, Consumer<Throwable> onFailure) {
+        TopicPartitionInfo tpi = resolvePartition(tbMsg, queueName);
+        enqueueForTellNext(tpi, queueName, tbMsg, Collections.singleton(relationType), null, onSuccess, onFailure);
     }
 
     @Override
-    public void enqueueForTellNext(TbMsg tbMsg, QueueId queueId, Set<String> relationTypes, Runnable onSuccess, Consumer<Throwable> onFailure) {
-        TopicPartitionInfo tpi = resolvePartition(tbMsg, queueId);
-        enqueueForTellNext(tpi, queueId, tbMsg, relationTypes, null, onSuccess, onFailure);
+    public void enqueueForTellNext(TbMsg tbMsg, String queueName, Set<String> relationTypes, Runnable onSuccess, Consumer<Throwable> onFailure) {
+        TopicPartitionInfo tpi = resolvePartition(tbMsg, queueName);
+        enqueueForTellNext(tpi, queueName, tbMsg, relationTypes, null, onSuccess, onFailure);
     }
 
-    private TopicPartitionInfo resolvePartition(TbMsg tbMsg, QueueId queueId) {
-        return mainCtx.resolve(ServiceType.TB_RULE_ENGINE, queueId, getTenantId(), tbMsg.getOriginator());
-    }
-
-    @Deprecated
     private TopicPartitionInfo resolvePartition(TbMsg tbMsg, String queueName) {
         return mainCtx.resolve(ServiceType.TB_RULE_ENGINE, queueName, getTenantId(), tbMsg.getOriginator());
     }
 
     private TopicPartitionInfo resolvePartition(TbMsg tbMsg) {
-        return resolvePartition(tbMsg, tbMsg.getQueueId());
+        return resolvePartition(tbMsg, tbMsg.getQueueName());
     }
 
     private void enqueueForTellNext(TopicPartitionInfo tpi, TbMsg source, Set<String> relationTypes, String failureMessage, Runnable onSuccess, Consumer<Throwable> onFailure) {
-        enqueueForTellNext(tpi, source.getQueueId(), source, relationTypes, failureMessage, onSuccess, onFailure);
+        enqueueForTellNext(tpi, source.getQueueName(), source, relationTypes, failureMessage, onSuccess, onFailure);
     }
 
-    private void enqueueForTellNext(TopicPartitionInfo tpi, QueueId queueId, TbMsg source, Set<String> relationTypes, String failureMessage, Runnable onSuccess, Consumer<Throwable> onFailure) {
+    private void enqueueForTellNext(TopicPartitionInfo tpi, String queueName, TbMsg source, Set<String> relationTypes, String failureMessage, Runnable onSuccess, Consumer<Throwable> onFailure) {
         if (!source.isValid()) {
             log.trace("[{}] Skip invalid message: {}", getTenantId(), source);
             if (onFailure != null) {
@@ -265,7 +253,7 @@ class DefaultTbContext implements TbContext {
         }
         RuleChainId ruleChainId = nodeCtx.getSelf().getRuleChainId();
         RuleNodeId ruleNodeId = nodeCtx.getSelf().getId();
-        TbMsg tbMsg = TbMsg.newMsg(source, queueId, ruleChainId, ruleNodeId);
+        TbMsg tbMsg = TbMsg.newMsg(source, queueName, ruleChainId, ruleNodeId);
         TransportProtos.ToRuleEngineMsg.Builder msg = TransportProtos.ToRuleEngineMsg.newBuilder()
                 .setTenantIdMSB(getTenantId().getId().getMostSignificantBits())
                 .setTenantIdLSB(getTenantId().getId().getLeastSignificantBits())
@@ -324,13 +312,13 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public TbMsg newMsg(QueueId queueId, String type, EntityId originator, TbMsgMetaData metaData, String data) {
-        return newMsg(queueId, type, originator, null, metaData, data);
+    public TbMsg newMsg(String queueName, String type, EntityId originator, TbMsgMetaData metaData, String data) {
+        return newMsg(queueName, type, originator, null, metaData, data);
     }
 
     @Override
-    public TbMsg newMsg(QueueId queueId, String type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, String data) {
-        return TbMsg.newMsg(queueId, type, originator, customerId, metaData, data, nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId());
+    public TbMsg newMsg(String queueName, String type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, String data) {
+        return TbMsg.newMsg(queueName, type, originator, customerId, metaData, data, nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId());
     }
 
     @Override
@@ -344,17 +332,17 @@ class DefaultTbContext implements TbContext {
 
     public TbMsg deviceCreatedMsg(Device device, RuleNodeId ruleNodeId) {
         RuleChainId ruleChainId = null;
-        QueueId queueId = null;
+         String queueName = null;
         if (device.getDeviceProfileId() != null) {
             DeviceProfile deviceProfile = mainCtx.getDeviceProfileCache().find(device.getDeviceProfileId());
             if (deviceProfile == null) {
                 log.warn("[{}] Device profile is null!", device.getDeviceProfileId());
             } else {
                 ruleChainId = deviceProfile.getDefaultRuleChainId();
-                queueId = deviceProfile.getDefaultQueueId();
+                queueName = deviceProfile.getDefaultQueueName();
             }
         }
-        return entityActionMsg(device, device.getId(), ruleNodeId, DataConstants.ENTITY_CREATED, queueId, ruleChainId);
+        return entityActionMsg(device, device.getId(), ruleNodeId, DataConstants.ENTITY_CREATED, queueName, ruleChainId);
     }
 
     @Override
@@ -404,7 +392,7 @@ class DefaultTbContext implements TbContext {
 
     public TbMsg alarmActionMsg(Alarm alarm, RuleNodeId ruleNodeId, String action) {
         RuleChainId ruleChainId = null;
-        QueueId queueId = null;
+        String queueName = null;
         if (EntityType.DEVICE.equals(alarm.getOriginator().getEntityType())) {
             DeviceId deviceId = new DeviceId(alarm.getOriginator().getId());
             DeviceProfile deviceProfile = getDeviceProfileByDeviceId(deviceId);
@@ -412,10 +400,10 @@ class DefaultTbContext implements TbContext {
                 log.warn("[{}] Device profile is null!", deviceId);
             } else {
                 ruleChainId = deviceProfile.getDefaultRuleChainId();
-                queueId = deviceProfile.getDefaultQueueId();
+                queueName = deviceProfile.getDefaultQueueName();
             }
         }
-        return entityActionMsg(alarm, alarm.getId(), ruleNodeId, action, queueId, ruleChainId);
+        return entityActionMsg(alarm, alarm.getId(), ruleNodeId, action, queueName, ruleChainId);
     }
 
     @Override
@@ -427,9 +415,9 @@ class DefaultTbContext implements TbContext {
         return entityActionMsg(entity, id, ruleNodeId, action, null, null);
     }
 
-    public <E, I extends EntityId> TbMsg entityActionMsg(E entity, I id, RuleNodeId ruleNodeId, String action, QueueId queueId, RuleChainId ruleChainId) {
+    public <E, I extends EntityId> TbMsg entityActionMsg(E entity, I id, RuleNodeId ruleNodeId, String action, String queueName, RuleChainId ruleChainId) {
         try {
-            return TbMsg.newMsg(queueId, action, id, getActionMetaData(ruleNodeId), mapper.writeValueAsString(mapper.valueToTree(entity)), ruleChainId, null);
+            return TbMsg.newMsg(queueName, action, id, getActionMetaData(ruleNodeId), mapper.writeValueAsString(mapper.valueToTree(entity)), ruleChainId, null);
         } catch (JsonProcessingException | IllegalArgumentException e) {
             throw new RuntimeException("Failed to process " + id.getEntityType().name().toLowerCase() + " " + action + " msg: " + e);
         }

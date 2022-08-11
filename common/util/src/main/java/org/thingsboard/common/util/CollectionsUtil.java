@@ -39,4 +39,12 @@ public class CollectionsUtil {
         return isNotEmpty(collection) && collection.contains(element);
     }
 
+    public static <T> int countNonNull(T[] array) {
+        int count = 0;
+        for (T t : array) {
+            if (t != null) count++;
+        }
+        return count;
+    }
+
 }

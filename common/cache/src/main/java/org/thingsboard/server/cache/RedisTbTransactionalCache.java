@@ -48,7 +48,7 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
     private final String cacheName;
     private final JedisConnectionFactory connectionFactory;
     private final RedisSerializer<String> keySerializer = StringRedisSerializer.UTF_8;
-    private final RedisSerializer<V> valueSerializer;
+    private final TbRedisSerializer<K, V> valueSerializer;
     private final Expiration evictExpiration;
     private final Expiration cacheTtl;
 
@@ -56,7 +56,7 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
                                      CacheSpecsMap cacheSpecsMap,
                                      RedisConnectionFactory connectionFactory,
                                      TBRedisCacheConfiguration configuration,
-                                     RedisSerializer<V> valueSerializer) {
+                                     TbRedisSerializer<K, V> valueSerializer) {
         this.cacheName = cacheName;
         this.connectionFactory = (JedisConnectionFactory) connectionFactory;
         this.valueSerializer = valueSerializer;
@@ -79,7 +79,7 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
             } else if (Arrays.equals(rawValue, BINARY_NULL_VALUE)) {
                 return SimpleTbCacheValueWrapper.empty();
             } else {
-                V value = valueSerializer.deserialize(rawValue);
+                V value = valueSerializer.deserialize(key, rawValue);
                 return SimpleTbCacheValueWrapper.wrap(value);
             }
         }

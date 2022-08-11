@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -82,13 +83,21 @@ public class DefaultCacheCleanupService implements CacheCleanupService {
     }
 
     void clearCacheByName(final String cacheName) {
+        log.info("Clearing cache [{}]", cacheName);
         Cache cache = cacheManager.getCache(cacheName);
         Objects.requireNonNull(cache, "Cache does not exist for name " + cacheName);
         cache.clear();
     }
 
     void clearAll() {
-        redisTemplate.ifPresent(rt -> rt.execute(connection ->
-                connection.execute("FLUSHALL"), false));
+        if (redisTemplate.isPresent()) {
+            log.info("Flushing all caches");
+            redisTemplate.get().execute((RedisCallback<Object>) connection -> {
+                connection.flushAll();
+                return null;
+            });
+            return;
+        }
+        cacheManager.getCacheNames().forEach(this::clearCacheByName);
     }
 }

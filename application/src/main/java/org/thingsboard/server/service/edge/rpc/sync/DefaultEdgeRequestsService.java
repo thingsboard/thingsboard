@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Device;
@@ -60,7 +61,6 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
-import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
@@ -72,7 +72,10 @@ import org.thingsboard.server.gen.edge.v1.RelationRequestMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataRequestMsg;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetBundleTypesRequestMsg;
+import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
+import org.thingsboard.server.service.state.DefaultDeviceStateService;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -81,6 +84,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
+@TbCoreComponent
 @Slf4j
 public class DefaultEdgeRequestsService implements EdgeRequestsService {
 
@@ -100,8 +104,9 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
     @Autowired
     private DeviceService deviceService;
 
+    @Lazy
     @Autowired
-    private EntityViewService entityViewService;
+    private TbEntityViewService entityViewService;
 
     @Autowired
     private DeviceProfileService deviceProfileService;
@@ -160,6 +165,9 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                     Map<String, Object> entityData = new HashMap<>();
                     ObjectNode attributes = mapper.createObjectNode();
                     for (AttributeKvEntry attr : ssAttributes) {
+                        if (DefaultDeviceStateService.PERSISTENT_ATTRIBUTES.contains(attr.getKey())) {
+                            continue;
+                        }
                         if (attr.getDataType() == DataType.BOOLEAN && attr.getBooleanValue().isPresent()) {
                             attributes.put(attr.getKey(), attr.getBooleanValue().get());
                         } else if (attr.getDataType() == DataType.DOUBLE && attr.getDoubleValue().isPresent()) {

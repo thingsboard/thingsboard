@@ -20,7 +20,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,6 +38,7 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.sync.vc.BranchInfo;
 import org.thingsboard.server.common.data.sync.vc.EntityDataDiff;
 import org.thingsboard.server.common.data.sync.vc.EntityDataInfo;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
@@ -56,15 +56,24 @@ import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
+import static org.thingsboard.server.controller.ControllerConstants.BRANCH_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.ENTITY_ID_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.ENTITY_TYPE_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_END;
+import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_START;
 import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_VERSION_TEXT_SEARCH_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_ALLOWABLE_VALUES;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.VC_REQUEST_ID_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.VERSION_ID_PARAM_DESCRIPTION;
 
 @RestController
 @TbCoreComponent
@@ -76,9 +85,20 @@ public class EntitiesVersionControlController extends BaseController {
     private final EntitiesVersionControlService versionControlService;
 
 
-    @ApiOperation(value = "", notes = "" +
-            "SINGLE_ENTITY:" + NEW_LINE +
-            "```\n{\n" +
+    @ApiOperation(value = "Save entities version (saveEntitiesVersion)", notes = "" +
+            "Creates a new version of entities (or a single entity) by request.\n" +
+            "Supported entity types: CUSTOMER, ASSET, RULE_CHAIN, DASHBOARD, DEVICE_PROFILE, DEVICE, ENTITY_VIEW, WIDGETS_BUNDLE." + NEW_LINE +
+            "There are two available types of request: `SINGLE_ENTITY` and `COMPLEX`. " +
+            "Each of them contains version name (`versionName`) and name of a branch (`branch`) to create version (commit) in. " +
+            "If specified branch does not exists in a remote repo, then new empty branch will be created. " +
+            "Request of the `SINGLE_ENTITY` type has id of an entity (`entityId`) and additional configuration (`config`) " +
+            "which has following options: \n" +
+            "- `saveRelations` - whether to add inbound and outbound relations of type COMMON to created entity version;\n" +
+            "- `saveAttributes` - to save attributes of server scope (and also shared scope for devices);\n" +
+            "- `saveCredentials` - when saving a version of a device, to add its credentials to the version." + NEW_LINE +
+            "An example of a `SINGLE_ENTITY` version create request:\n" +
+            MARKDOWN_CODE_BLOCK_START +
+            "{\n" +
             "  \"type\": \"SINGLE_ENTITY\",\n" +
             "\n" +
             "  \"versionName\": \"Version 1.0\",\n" +
@@ -89,11 +109,25 @@ public class EntitiesVersionControlController extends BaseController {
             "    \"id\": \"b79448e0-d4f4-11ec-847b-0f432358ab48\"\n" +
             "  },\n" +
             "  \"config\": {\n" +
-            "    \"saveRelations\": true\n" +
+            "    \"saveRelations\": true,\n" +
+            "    \"saveAttributes\": true,\n" +
+            "    \"saveCredentials\": false\n" +
             "  }\n" +
-            "}\n```" + NEW_LINE +
-            "COMPLEX:" + NEW_LINE +
-            "```\n{\n" +
+            "}" +
+            MARKDOWN_CODE_BLOCK_END + NEW_LINE +
+            "Second request type (`COMPLEX`), additionally to `branch` and `versionName`, contains following properties:\n" +
+            "- `entityTypes` - a structure with entity types to export and configuration for each entity type; " +
+            "   this configuration has all the options available for `SINGLE_ENTITY` and additionally has these ones: \n" +
+            "     - `allEntities` and `entityIds` - if you want to save the version of all entities of the entity type " +
+            "        then set `allEntities` param to true, otherwise set it to false and specify the list of specific entities (`entityIds`);\n" +
+            "     - `syncStrategy` - synchronization strategy to use for this entity type: when set to `OVERWRITE` " +
+            "        then the list of remote entities of this type will be overwritten by newly added entities. If set to " +
+            "        `MERGE` - existing remote entities of this entity type will not be removed, new entities will just " +
+            "        be added on top (or existing remote entities will be updated).\n" +
+            "- `syncStrategy` - default synchronization strategy to use when it is not specified for an entity type." + NEW_LINE +
+            "Example for this type of request:\n" +
+            MARKDOWN_CODE_BLOCK_START +
+            "{\n" +
             "  \"type\": \"COMPLEX\",\n" +
             "\n" +
             "  \"versionName\": \"Devices and profiles: release 2\",\n" +
@@ -104,7 +138,9 @@ public class EntitiesVersionControlController extends BaseController {
             "    \"DEVICE\": {\n" +
             "      \"syncStrategy\": null,\n" +
             "      \"allEntities\": true,\n" +
-            "      \"saveRelations\": true\n" +
+            "      \"saveRelations\": true,\n" +
+            "      \"saveAttributes\": true,\n" +
+            "      \"saveCredentials\": true\n" +
             "    },\n" +
             "    \"DEVICE_PROFILE\": {\n" +
             "      \"syncStrategy\": \"MERGE\",\n" +
@@ -115,7 +151,11 @@ public class EntitiesVersionControlController extends BaseController {
             "      \"saveRelations\": true\n" +
             "    }\n" +
             "  }\n" +
-            "}\n```")
+            "}" +
+            MARKDOWN_CODE_BLOCK_END + NEW_LINE +
+            "Response wil contain generated request UUID, that can be then used to retrieve " +
+            "status of operation via `getVersionCreateRequestStatus`.\n" +
+            TENANT_AUTHORITY_PARAGRAPH)
     @PostMapping("/version")
     public DeferredResult<UUID> saveEntitiesVersion(@RequestBody VersionCreateRequest request) throws Exception {
         SecurityUser user = getCurrentUser();
@@ -123,25 +163,82 @@ public class EntitiesVersionControlController extends BaseController {
         return wrapFuture(versionControlService.saveEntitiesVersion(user, request));
     }
 
-    @ApiOperation(value = "", notes = "")
+    @ApiOperation(value = "Get version create request status (getVersionCreateRequestStatus)", notes = "" +
+            "Returns the status of previously made version create request. " + NEW_LINE +
+            "This status contains following properties:\n" +
+            "- `done` - whether request processing is finished;\n" +
+            "- `version` - created version info: timestamp, version id (commit hash), commit name and commit author;\n" +
+            "- `added` - count of items that were created in the remote repo;\n" +
+            "- `modified` - modified items count;\n" +
+            "- `removed` - removed items count;\n" +
+            "- `error` - error message, if an error occurred while handling the request." + NEW_LINE +
+            "An example of successful status:\n" +
+            MARKDOWN_CODE_BLOCK_START +
+            "{\n" +
+            "  \"done\": true,\n" +
+            "  \"added\": 10,\n" +
+            "  \"modified\": 2,\n" +
+            "  \"removed\": 5,\n" +
+            "  \"version\": {\n" +
+            "    \"timestamp\": 1655198528000,\n" +
+            "    \"id\":\"8a834dd389ed80e0759ba8ee338b3f1fd160a114\",\n" +
+            "    \"name\": \"My devices v2.0\",\n" +
+            "    \"author\": \"John Doe\"\n" +
+            "  },\n" +
+            "  \"error\": null\n" +
+            "}" +
+            MARKDOWN_CODE_BLOCK_END +
+            TENANT_AUTHORITY_PARAGRAPH)
     @GetMapping(value = "/version/{requestId}/status")
     public VersionCreationResult getVersionCreateRequestStatus(@ApiParam(value = VC_REQUEST_ID_PARAM_DESCRIPTION, required = true)
                                                                @PathVariable UUID requestId) throws Exception {
-        accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
+        accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.WRITE);
         return versionControlService.getVersionCreateStatus(getCurrentUser(), requestId);
     }
 
-    @ApiOperation(value = "", notes = "" +
-            "```\n[\n" +
-            "  {\n" +
-            "    \"id\": \"c30c8bcaed3f0813649f0dee51a89d04d0a12b28\",\n" +
-            "    \"name\": \"Device profile 1 version 1.0\"\n" +
-            "  }\n" +
-            "]\n```")
-    @GetMapping(value = "/version/{branch}/{entityType}/{externalEntityUuid}", params = {"pageSize", "page"})
-    public DeferredResult<PageData<EntityVersion>> listEntityVersions(@PathVariable String branch,
+    @ApiOperation(value = "List entity versions (listEntityVersions)", notes = "" +
+            "Returns list of versions for a specific entity in a concrete branch. \n" +
+            "You need to specify external id of an entity to list versions for. This is `externalId` property of an entity, " +
+            "or otherwise if not set - simply id of this entity. \n" +
+            "If specified branch does not exist - empty page data will be returned. " + NEW_LINE +
+            "Each version info item has timestamp, id, name and author. Version id can then be used to restore the version. " +
+            PAGE_DATA_PARAMETERS + NEW_LINE +
+            "Response example: \n" +
+            MARKDOWN_CODE_BLOCK_START +
+            "{\n" +
+            "  \"data\": [\n" +
+            "    {\n" +
+            "      \"timestamp\": 1655198593000,\n" +
+            "      \"id\": \"fd82625bdd7d6131cf8027b44ee967012ecaf990\",\n" +
+            "      \"name\": \"Devices and assets - v2.0\",\n" +
+            "      \"author\": \"John Doe <johndoe@gmail.com>\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"timestamp\": 1655198528000,\n" +
+            "      \"id\": \"682adcffa9c8a2f863af6f00c4850323acbd4219\",\n" +
+            "      \"name\": \"Update my device\",\n" +
+            "      \"author\": \"John Doe <johndoe@gmail.com>\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"timestamp\": 1655198280000,\n" +
+            "      \"id\": \"d2a6087c2b30e18cc55e7cdda345a8d0dfb959a4\",\n" +
+            "      \"name\": \"Devices and assets - v1.0\",\n" +
+            "      \"author\": \"John Doe <johndoe@gmail.com>\"\n" +
+            "    }\n" +
+            "  ],\n" +
+            "  \"totalPages\": 1,\n" +
+            "  \"totalElements\": 3,\n" +
+            "  \"hasNext\": false\n" +
+            "}" +
+            MARKDOWN_CODE_BLOCK_END +
+            TENANT_AUTHORITY_PARAGRAPH)
+    @GetMapping(value = "/version/{entityType}/{externalEntityUuid}", params = {"branch", "pageSize", "page"})
+    public DeferredResult<PageData<EntityVersion>> listEntityVersions(@ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
                                                                       @PathVariable EntityType entityType,
+                                                                      @ApiParam(value = "A string value representing external entity id. This is `externalId` property of an entity, or otherwise if not set - simply id of this entity.")
                                                                       @PathVariable UUID externalEntityUuid,
+                                                                      @ApiParam(value = BRANCH_PARAM_DESCRIPTION)
+                                                                      @RequestParam String branch,
                                                                       @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
                                                                       @RequestParam int pageSize,
                                                                       @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
@@ -158,16 +255,17 @@ public class EntitiesVersionControlController extends BaseController {
         return wrapFuture(versionControlService.listEntityVersions(getTenantId(), branch, externalEntityId, pageLink));
     }
 
-    @ApiOperation(value = "", notes = "" +
-            "```\n[\n" +
-            "  {\n" +
-            "    \"id\": \"c30c8bcaed3f0813649f0dee51a89d04d0a12b28\",\n" +
-            "    \"name\": \"Device profiles from dev\"\n" +
-            "  }\n" +
-            "]\n```")
-    @GetMapping(value = "/version/{branch}/{entityType}", params = {"pageSize", "page"})
-    public DeferredResult<PageData<EntityVersion>> listEntityTypeVersions(@PathVariable String branch,
+    @ApiOperation(value = "List entity type versions (listEntityTypeVersions)", notes = "" +
+            "Returns list of versions of an entity type in a branch. This is a collected list of versions that were created " +
+            "for entities of this type in a remote branch. \n" +
+            "If specified branch does not exist - empty page data will be returned. " +
+            "The response structure is the same as for `listEntityVersions` API method." +
+            TENANT_AUTHORITY_PARAGRAPH)
+    @GetMapping(value = "/version/{entityType}", params = {"branch", "pageSize", "page"})
+    public DeferredResult<PageData<EntityVersion>> listEntityTypeVersions(@ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
                                                                           @PathVariable EntityType entityType,
+                                                                          @ApiParam(value = BRANCH_PARAM_DESCRIPTION, required = true)
+                                                                          @RequestParam String branch,
                                                                           @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
                                                                           @RequestParam int pageSize,
                                                                           @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
@@ -183,23 +281,14 @@ public class EntitiesVersionControlController extends BaseController {
         return wrapFuture(versionControlService.listEntityTypeVersions(getTenantId(), branch, entityType, pageLink));
     }
 
-    @ApiOperation(value = "", notes = "" +
-            "```\n[\n" +
-            "  {\n" +
-            "    \"id\": \"ba9baaca1742b730e7331f31a6a51da5fc7da7f7\",\n" +
-            "    \"name\": \"Device 1 removed\"\n" +
-            "  },\n" +
-            "  {\n" +
-            "    \"id\": \"b3c28d722d328324c7c15b0b30047b0c40011cf7\",\n" +
-            "    \"name\": \"Device profiles added\"\n" +
-            "  },\n" +
-            "  {\n" +
-            "    \"id\": \"c30c8bcaed3f0813649f0dee51a89d04d0a12b28\",\n" +
-            "    \"name\": \"Devices added\"\n" +
-            "  }\n" +
-            "]\n```")
-    @GetMapping(value = "/version/{branch}", params = {"pageSize", "page"})
-    public DeferredResult<PageData<EntityVersion>> listVersions(@PathVariable String branch,
+    @ApiOperation(value = "List all versions (listVersions)", notes = "" +
+            "Lists all available versions in a branch for all entity types. \n" +
+            "If specified branch does not exist - empty page data will be returned. " +
+            "The response format is the same as for `listEntityVersions` API method." +
+            TENANT_AUTHORITY_PARAGRAPH)
+    @GetMapping(value = "/version", params = {"branch", "pageSize", "page"})
+    public DeferredResult<PageData<EntityVersion>> listVersions(@ApiParam(value = BRANCH_PARAM_DESCRIPTION, required = true)
+                                                                @RequestParam String branch,
                                                                 @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
                                                                 @RequestParam int pageSize,
                                                                 @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
@@ -216,43 +305,78 @@ public class EntitiesVersionControlController extends BaseController {
     }
 
 
-    @GetMapping("/entity/{branch}/{entityType}/{versionId}")
-    public DeferredResult<List<VersionedEntityInfo>> listEntitiesAtVersion(@PathVariable String branch,
+    @ApiOperation(value = "List entities at version (listEntitiesAtVersion)", notes = "" +
+            "Returns a list of remote entities of a specific entity type that are available at a concrete version. \n" +
+            "Each entity item in the result has `externalId` property. " +
+            "Entities order will be the same as in the repository." +
+            TENANT_AUTHORITY_PARAGRAPH)
+    @GetMapping(value = "/entity/{entityType}/{versionId}")
+    public DeferredResult<List<VersionedEntityInfo>> listEntitiesAtVersion(@ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
                                                                            @PathVariable EntityType entityType,
+                                                                           @ApiParam(value = VERSION_ID_PARAM_DESCRIPTION, required = true)
                                                                            @PathVariable String versionId) throws Exception {
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
-        return wrapFuture(versionControlService.listEntitiesAtVersion(getTenantId(), branch, versionId, entityType));
+        return wrapFuture(versionControlService.listEntitiesAtVersion(getTenantId(), versionId, entityType));
     }
 
-    @GetMapping("/entity/{branch}/{versionId}")
-    public DeferredResult<List<VersionedEntityInfo>> listAllEntitiesAtVersion(@PathVariable String branch,
+    @ApiOperation(value = "List all entities at version (listAllEntitiesAtVersion)", notes = "" +
+            "Returns a list of all remote entities available in a specific version. " +
+            "Response type is the same as for listAllEntitiesAtVersion API method. \n" +
+            "Returned entities order will be the same as in the repository." +
+            TENANT_AUTHORITY_PARAGRAPH)
+    @GetMapping(value = "/entity/{versionId}")
+    public DeferredResult<List<VersionedEntityInfo>> listAllEntitiesAtVersion(@ApiParam(value = VERSION_ID_PARAM_DESCRIPTION, required = true)
                                                                               @PathVariable String versionId) throws Exception {
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
-        return wrapFuture(versionControlService.listAllEntitiesAtVersion(getTenantId(), branch, versionId));
+        return wrapFuture(versionControlService.listAllEntitiesAtVersion(getTenantId(), versionId));
     }
 
+    @ApiOperation(value = "Get entity data info (getEntityDataInfo)", notes = "" +
+            "Retrieves short info about the remote entity by external id at a concrete version. \n" +
+            "Returned entity data info contains following properties: " +
+            "`hasRelations` (whether stored entity data contains relations), `hasAttributes` (contains attributes) and " +
+            "`hasCredentials` (whether stored device data has credentials)." +
+            TENANT_AUTHORITY_PARAGRAPH)
     @GetMapping("/info/{versionId}/{entityType}/{externalEntityUuid}")
-    public DeferredResult<EntityDataInfo> getEntityDataInfo(@PathVariable String versionId,
+    public DeferredResult<EntityDataInfo> getEntityDataInfo(@ApiParam(value = VERSION_ID_PARAM_DESCRIPTION, required = true)
+                                                            @PathVariable String versionId,
+                                                            @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
                                                             @PathVariable EntityType entityType,
+                                                            @ApiParam(value = "A string value representing external entity id", required = true)
                                                             @PathVariable UUID externalEntityUuid) throws Exception {
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, externalEntityUuid);
         return wrapFuture(versionControlService.getEntityDataInfo(getCurrentUser(), entityId, versionId));
     }
 
-    @GetMapping("/diff/{branch}/{entityType}/{internalEntityUuid}")
-    public DeferredResult<EntityDataDiff> compareEntityDataToVersion(@PathVariable String branch,
+    @ApiOperation(value = "Compare entity data to version (compareEntityDataToVersion)", notes = "" +
+            "Returns an object with current entity data and the one at a specific version. " +
+            "Entity data structure is the same as stored in a repository. " +
+            TENANT_AUTHORITY_PARAGRAPH)
+    @GetMapping(value = "/diff/{entityType}/{internalEntityUuid}", params = {"versionId"})
+    public DeferredResult<EntityDataDiff> compareEntityDataToVersion(@ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
                                                                      @PathVariable EntityType entityType,
+                                                                     @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true)
                                                                      @PathVariable UUID internalEntityUuid,
+                                                                     @ApiParam(value = VERSION_ID_PARAM_DESCRIPTION, required = true)
                                                                      @RequestParam String versionId) throws Exception {
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, internalEntityUuid);
-        return wrapFuture(versionControlService.compareEntityDataToVersion(getCurrentUser(), branch, entityId, versionId));
+        return wrapFuture(versionControlService.compareEntityDataToVersion(getCurrentUser(), entityId, versionId));
     }
 
-    @ApiOperation(value = "", notes = "" +
-            "SINGLE_ENTITY:" + NEW_LINE +
-            "```\n{\n" +
+    @ApiOperation(value = "Load entities version (loadEntitiesVersion)", notes = "" +
+            "Loads specific version of remote entities (or single entity) by request. " +
+            "Supported entity types: CUSTOMER, ASSET, RULE_CHAIN, DASHBOARD, DEVICE_PROFILE, DEVICE, ENTITY_VIEW, WIDGETS_BUNDLE." + NEW_LINE +
+            "There are multiple types of request. Each of them requires branch name (`branch`) and version id (`versionId`). " +
+            "Request of type `SINGLE_ENTITY` is needed to restore a concrete version of a specific entity. It contains " +
+            "id of a remote entity (`externalEntityId`) and additional configuration (`config`):\n" +
+            "- `loadRelations` - to update relations list (in case `saveRelations` option was enabled during version creation);\n" +
+            "- `loadAttributes` - to load entity attributes (if `saveAttributes` config option was enabled);\n" +
+            "- `loadCredentials` - to update device credentials (if `saveCredentials` option was enabled during version creation)." + NEW_LINE +
+            "An example of such request:\n" +
+            MARKDOWN_CODE_BLOCK_START +
+            "{\n" +
             "  \"type\": \"SINGLE_ENTITY\",\n" +
             "  \n" +
             "  \"branch\": \"dev\",\n" +
@@ -264,11 +388,23 @@ public class EntitiesVersionControlController extends BaseController {
             "  },\n" +
             "  \"config\": {\n" +
             "    \"loadRelations\": false,\n" +
-            "    \"findExistingEntityByName\": false\n" +
+            "    \"loadAttributes\": true,\n" +
+            "    \"loadCredentials\": true\n" +
             "  }\n" +
-            "}\n```" + NEW_LINE +
-            "ENTITY_TYPE:" + NEW_LINE +
-            "```\n{\n" +
+            "}" +
+            MARKDOWN_CODE_BLOCK_END + NEW_LINE +
+            "Another request type (`ENTITY_TYPE`) is needed to load specific version of the whole entity types. " +
+            "It contains a structure with entity types to load and configs for each entity type (`entityTypes`). " +
+            "For each specified entity type, the method will load all remote entities of this type that are present " +
+            "at the version. A config for each entity type contains the same options as in `SINGLE_ENTITY` request type, and " +
+            "additionally contains following options:\n" +
+            "- `removeOtherEntities` - to remove local entities that are not present on the remote - basically to " +
+            "   overwrite local entity type with the remote one;\n" +
+            "- `findExistingEntityByName` - when you are loading some remote entities that are not yet present at this tenant, " +
+            "   try to find existing entity by name and update it rather than create new." + NEW_LINE +
+            "Here is an example of the request to completely restore version of the whole device entity type:\n" +
+            MARKDOWN_CODE_BLOCK_START +
+            "{\n" +
             "  \"type\": \"ENTITY_TYPE\",\n" +
             "\n" +
             "  \"branch\": \"dev\",\n" +
@@ -276,12 +412,18 @@ public class EntitiesVersionControlController extends BaseController {
             "\n" +
             "  \"entityTypes\": {\n" +
             "    \"DEVICE\": {\n" +
-            "      \"loadRelations\": false,\n" +
+            "      \"removeOtherEntities\": true,\n" +
             "      \"findExistingEntityByName\": false,\n" +
-            "      \"removeOtherEntities\": true\n" +
+            "      \"loadRelations\": true,\n" +
+            "      \"loadAttributes\": true,\n" +
+            "      \"loadCredentials\": true\n" +
             "    }\n" +
             "  }\n" +
-            "}\n```")
+            "}" +
+            MARKDOWN_CODE_BLOCK_END + NEW_LINE +
+            "The response will contain generated request UUID that is to be used to check the status of operation " +
+            "via `getVersionLoadRequestStatus`." +
+            TENANT_AUTHORITY_PARAGRAPH)
     @PostMapping("/entity")
     public UUID loadEntitiesVersion(@RequestBody VersionLoadRequest request) throws Exception {
         SecurityUser user = getCurrentUser();
@@ -289,17 +431,54 @@ public class EntitiesVersionControlController extends BaseController {
         return versionControlService.loadEntitiesVersion(user, request);
     }
 
-    @ApiOperation(value = "", notes = "")
+    @ApiOperation(value = "Get version load request status (getVersionLoadRequestStatus)", notes = "" +
+            "Returns the status of previously made version load request. " +
+            "The structure contains following parameters:\n" +
+            "- `done` - if the request was successfully processed;\n" +
+            "- `result` - a list of load results for each entity type:\n" +
+            "     - `created` - created entities count;\n" +
+            "     - `updated` - updated entities count;\n" +
+            "     - `deleted` - removed entities count.\n" +
+            "- `error` - if an error occurred during processing, error info:\n" +
+            "     - `type` - error type;\n" +
+            "     - `source` - an external id of remote entity;\n" +
+            "     - `target` - if failed to find referenced entity by external id - this external id;\n" +
+            "     - `message` - error message." + NEW_LINE +
+            "An example of successfully processed request status:\n" +
+            MARKDOWN_CODE_BLOCK_START +
+            "{\n" +
+            "  \"done\": true,\n" +
+            "  \"result\": [\n" +
+            "    {\n" +
+            "      \"entityType\": \"DEVICE\",\n" +
+            "      \"created\": 10,\n" +
+            "      \"updated\": 5,\n" +
+            "      \"deleted\": 5\n" +
+            "    },\n" +
+            "     {\n" +
+            "      \"entityType\": \"ASSET\",\n" +
+            "      \"created\": 4,\n" +
+            "      \"updated\": 0,\n" +
+            "      \"deleted\": 8\n" +
+            "    }\n" +
+            "  ]\n" +
+            "}" +
+            MARKDOWN_CODE_BLOCK_END +
+            TENANT_AUTHORITY_PARAGRAPH
+    )
     @GetMapping(value = "/entity/{requestId}/status")
     public VersionLoadResult getVersionLoadRequestStatus(@ApiParam(value = VC_REQUEST_ID_PARAM_DESCRIPTION, required = true)
-                                                               @PathVariable UUID requestId) throws Exception {
-        accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
+                                                         @PathVariable UUID requestId) throws Exception {
+        accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.WRITE);
         return versionControlService.getVersionLoadStatus(getCurrentUser(), requestId);
     }
 
 
-    @ApiOperation(value = "", notes = "" +
-            "```\n[\n" +
+    @ApiOperation(value = "List branches (listBranches)", notes = "" +
+            "Lists branches available in the remote repository. \n\n" +
+            "Response example: \n" +
+            MARKDOWN_CODE_BLOCK_START +
+            "[\n" +
             "  {\n" +
             "    \"name\": \"master\",\n" +
             "    \"default\": true\n" +
@@ -312,37 +491,29 @@ public class EntitiesVersionControlController extends BaseController {
             "    \"name\": \"dev-2\",\n" +
             "    \"default\": false\n" +
             "  }\n" +
-            "]\n\n```")
+            "]" +
+            MARKDOWN_CODE_BLOCK_END)
     @GetMapping("/branches")
-    public DeferredResult<List<BranchInfo>> listBranches() throws ThingsboardException {
-        try {
-            accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
-            final TenantId tenantId = getTenantId();
-            ListenableFuture<List<String>> branches = versionControlService.listBranches(tenantId);
-            return wrapFuture(Futures.transform(branches, remoteBranches -> {
-                List<BranchInfo> infos = new ArrayList<>();
-
-                String defaultBranch = versionControlService.getVersionControlSettings(tenantId).getDefaultBranch();
-                if (StringUtils.isNotEmpty(defaultBranch)) {
-                    infos.add(new BranchInfo(defaultBranch, true));
-                }
-
-                remoteBranches.forEach(branch -> {
-                    if (!branch.equals(defaultBranch)) {
-                        infos.add(new BranchInfo(branch, false));
-                    }
-                });
-                return infos;
-            }, MoreExecutors.directExecutor()));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
-    }
-
-    @Data
-    public static class BranchInfo {
-        private final String name;
-        private final boolean isDefault;
+    public DeferredResult<List<BranchInfo>> listBranches() throws Exception {
+        accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
+        final TenantId tenantId = getTenantId();
+        ListenableFuture<List<BranchInfo>> branches = versionControlService.listBranches(tenantId);
+        return wrapFuture(Futures.transform(branches, remoteBranches -> {
+            List<BranchInfo> infos = new ArrayList<>();
+            BranchInfo defaultBranch;
+            String defaultBranchName = versionControlService.getVersionControlSettings(tenantId).getDefaultBranch();
+            if (StringUtils.isNotEmpty(defaultBranchName)) {
+                defaultBranch = new BranchInfo(defaultBranchName, true);
+            } else {
+                defaultBranch = remoteBranches.stream().filter(BranchInfo::isDefault).findFirst().orElse(null);
+            }
+            if (defaultBranch != null) {
+                infos.add(defaultBranch);
+            }
+            infos.addAll(remoteBranches.stream().filter(b -> !b.equals(defaultBranch))
+                    .map(b -> new BranchInfo(b.getName(), false)).collect(Collectors.toList()));
+            return infos;
+        }, MoreExecutors.directExecutor()));
     }
 
 }
