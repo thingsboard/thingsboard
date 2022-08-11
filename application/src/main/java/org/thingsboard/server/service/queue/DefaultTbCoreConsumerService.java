@@ -28,6 +28,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.server.common.msg.MsgType;
@@ -236,6 +237,9 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                 } else if (toCoreMsg.hasEdgeNotificationMsg()) {
                                     log.trace("[{}] Forwarding message to edge service {}", id, toCoreMsg.getEdgeNotificationMsg());
                                     forwardToEdgeNotificationService(toCoreMsg.getEdgeNotificationMsg(), callback);
+                                } else if (toCoreMsg.hasDeviceActivityMsg()) {
+                                    log.trace("[{}] Forwarding message to device state service {}", id, toCoreMsg.getDeviceActivityMsg());
+                                    forwardToStateService(toCoreMsg.getDeviceActivityMsg(), callback);
                                 } else if (!toCoreMsg.getToDeviceActorNotificationMsg().isEmpty()) {
                                     Optional<TbActorMsg> actorMsg = encodingService.decode(toCoreMsg.getToDeviceActorNotificationMsg().toByteArray());
                                     if (actorMsg.isPresent()) {
@@ -518,6 +522,20 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             stats.log(deviceStateServiceMsg);
         }
         stateService.onQueueMsg(deviceStateServiceMsg, callback);
+    }
+
+    private void forwardToStateService(TransportProtos.DeviceActivityProto deviceActivityMsg, TbCallback callback) {
+        if (statsEnabled) {
+            stats.log(deviceActivityMsg);
+        }
+        TenantId tenantId = TenantId.fromUUID(new UUID(deviceActivityMsg.getTenantIdMSB(), deviceActivityMsg.getTenantIdLSB()));
+        DeviceId deviceId = new DeviceId(new UUID(deviceActivityMsg.getDeviceIdMSB(), deviceActivityMsg.getDeviceIdLSB()));
+        try {
+            stateService.onDeviceActivity(tenantId, deviceId, deviceActivityMsg.getLastActivityTime());
+            callback.onSuccess();
+        } catch (Exception e) {
+            callback.onFailure(new RuntimeException("Failed update device activity for device [" + deviceId.getId() + "]!", e));
+        }
     }
 
     private void forwardToEdgeNotificationService(EdgeNotificationMsgProto edgeNotificationMsg, TbCallback callback) {

@@ -24,14 +24,15 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
-import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
+import org.thingsboard.server.common.data.sync.vc.BranchInfo;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
+import org.thingsboard.server.common.data.sync.vc.EntityVersionsDiff;
+import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
 import org.thingsboard.server.gen.transport.TransportProtos.VersionControlResponseMsg;
 import org.thingsboard.server.service.sync.vc.data.CommitGitRequest;
-import org.thingsboard.server.common.data.sync.vc.EntityVersionsDiff;
 
 import java.util.List;
 
@@ -51,19 +52,17 @@ public interface GitVersionControlQueueService {
 
     ListenableFuture<PageData<EntityVersion>> listVersions(TenantId tenantId, String branch, EntityId entityId, PageLink pageLink);
 
-    ListenableFuture<List<VersionedEntityInfo>> listEntitiesAtVersion(TenantId tenantId, String branch, String versionId, EntityType entityType);
+    ListenableFuture<List<VersionedEntityInfo>> listEntitiesAtVersion(TenantId tenantId, String versionId, EntityType entityType);
 
-    ListenableFuture<List<VersionedEntityInfo>> listEntitiesAtVersion(TenantId tenantId, String branch, String versionId);
+    ListenableFuture<List<VersionedEntityInfo>> listEntitiesAtVersion(TenantId tenantId, String versionId);
 
-    ListenableFuture<List<String>> listBranches(TenantId tenantId);
+    ListenableFuture<List<BranchInfo>> listBranches(TenantId tenantId);
 
     ListenableFuture<EntityExportData> getEntity(TenantId tenantId, String versionId, EntityId entityId);
 
     ListenableFuture<List<EntityExportData>> getEntities(TenantId tenantId, String versionId, EntityType entityType, int offset, int limit);
 
     ListenableFuture<List<EntityVersionsDiff>> getVersionsDiff(TenantId tenantId, EntityType entityType, EntityId externalId, String versionId1, String versionId2);
-
-    ListenableFuture<String> getContentsDiff(TenantId tenantId, String rawEntityData1, String rawEntityData2);
 
     ListenableFuture<Void> initRepository(TenantId tenantId, RepositorySettings settings);
 

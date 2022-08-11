@@ -18,7 +18,7 @@ package org.thingsboard.server.queue.util;
 import lombok.extern.slf4j.Slf4j;
 import org.nustaq.serialization.FSTConfiguration;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
+import org.thingsboard.server.common.data.FSTUtils;
 
 import java.util.Optional;
 
@@ -26,23 +26,23 @@ import java.util.Optional;
 @Service
 public class ProtoWithFSTService implements DataDecodingEncodingService {
 
-    private final FSTConfiguration config = FSTConfiguration.createDefaultConfiguration();
+    public static final FSTConfiguration CONFIG = FSTConfiguration.createDefaultConfiguration();
 
     @Override
     public <T> Optional<T> decode(byte[] byteArray) {
         try {
-            @SuppressWarnings("unchecked")
-            T msg = byteArray != null && byteArray.length > 0 ? (T) config.asObject(byteArray) : null;
-            return Optional.ofNullable(msg);
+            return Optional.ofNullable(FSTUtils.decode(byteArray));
         } catch (IllegalArgumentException e) {
             log.error("Error during deserialization message, [{}]", e.getMessage());
             return Optional.empty();
         }
     }
 
+
     @Override
     public <T> byte[] encode(T msq) {
-        return config.asByteArray(msq);
+        return FSTUtils.encode(msq);
     }
+
 
 }

@@ -24,5 +24,4 @@ import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 public class EntityDataDiff {
     private EntityExportData<?> currentVersion;
     private EntityExportData<?> otherVersion;
-    private String rawDiff;
 }

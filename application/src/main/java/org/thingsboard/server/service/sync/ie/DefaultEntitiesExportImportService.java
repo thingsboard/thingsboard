@@ -32,12 +32,14 @@ import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.apiusage.RateLimitService;
+import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
 import org.thingsboard.server.service.sync.ie.exporting.EntityExportService;
 import org.thingsboard.server.service.sync.ie.exporting.impl.BaseEntityExportService;
 import org.thingsboard.server.service.sync.ie.exporting.impl.DefaultEntityExportService;
 import org.thingsboard.server.service.sync.ie.importing.EntityImportService;
+import org.thingsboard.server.service.sync.ie.importing.impl.MissingEntityException;
+import org.thingsboard.server.service.sync.vc.LoadEntityException;
 import org.thingsboard.server.service.sync.vc.data.EntitiesExportCtx;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 
@@ -57,9 +59,9 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
     private final Map<EntityType, EntityExportService<?, ?, ?>> exportServices = new HashMap<>();
     private final Map<EntityType, EntityImportService<?, ?, ?>> importServices = new HashMap<>();
 
-    private final EntityActionService entityActionService;
     private final RelationService relationService;
     private final RateLimitService rateLimitService;
+    private final TbNotificationEntityService entityNotificationService;
 
     protected static final List<EntityType> SUPPORTED_ENTITY_TYPES = List.of(
             EntityType.CUSTOMER, EntityType.ASSET, EntityType.RULE_CHAIN,
@@ -95,24 +97,28 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
         EntityImportResult<E> importResult = importService.importEntity(ctx, exportData);
         ctx.putInternalId(exportData.getExternalId(), importResult.getSavedEntity().getId());
 
-        ctx.addReferenceCallback(importResult.getSaveReferencesCallback());
+        ctx.addReferenceCallback(exportData.getExternalId(), importResult.getSaveReferencesCallback());
         ctx.addEventCallback(importResult.getSendEventsCallback());
         return importResult;
     }
 
     @Override
     public void saveReferencesAndRelations(EntitiesImportCtx ctx) throws ThingsboardException {
-        for (ThrowingRunnable saveReferencesCallback : ctx.getReferenceCallbacks()) {
-            saveReferencesCallback.run();
+        for (Map.Entry<EntityId, ThrowingRunnable> callbackEntry : ctx.getReferenceCallbacks().entrySet()) {
+            EntityId externalId = callbackEntry.getKey();
+            ThrowingRunnable saveReferencesCallback = callbackEntry.getValue();
+            try {
+                saveReferencesCallback.run();
+            } catch (MissingEntityException e) {
+                throw new LoadEntityException(externalId, e);
+            }
         }
 
         relationService.saveRelations(ctx.getTenantId(), new ArrayList<>(ctx.getRelations()));
 
         for (EntityRelation relation : ctx.getRelations()) {
-            entityActionService.logEntityAction(ctx.getUser(), relation.getFrom(), null, null,
-                    ActionType.RELATION_ADD_OR_UPDATE, null, relation);
-            entityActionService.logEntityAction(ctx.getUser(), relation.getTo(), null, null,
-                    ActionType.RELATION_ADD_OR_UPDATE, null, relation);
+            entityNotificationService.notifyRelation(ctx.getTenantId(), null,
+                    relation, ctx.getUser(), ActionType.RELATION_ADD_OR_UPDATE, relation);
         }
     }
 

@@ -138,11 +138,13 @@ public class CustomerController extends BaseController {
             notes = "Creates or Updates the Customer. When creating customer, platform generates Customer Id as " + UUID_WIKI_LINK +
                     "The newly created Customer Id will be present in the response. " +
                     "Specify existing Customer Id to update the Customer. " +
-                    "Referencing non-existing Customer Id will cause 'Not Found' error." + TENANT_AUTHORITY_PARAGRAPH)
+                    "Referencing non-existing Customer Id will cause 'Not Found' error." +
+                    "Remove 'id', 'tenantId' from the request body example (below) to create new Customer entity. " +
+                    TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/customer", method = RequestMethod.POST)
     @ResponseBody
-    public Customer saveCustomer(@ApiParam(value = "A JSON value representing the customer.") @RequestBody Customer customer) throws ThingsboardException {
+    public Customer saveCustomer(@ApiParam(value = "A JSON value representing the customer.") @RequestBody Customer customer) throws Exception {
         customer.setTenantId(getTenantId());
         checkEntity(customer.getId(), customer, Resource.CUSTOMER);
         return tbCustomerService.save(customer, getCurrentUser());
@@ -160,11 +162,7 @@ public class CustomerController extends BaseController {
         checkParameter(CUSTOMER_ID, strCustomerId);
         CustomerId customerId = new CustomerId(toUUID(strCustomerId));
         Customer customer = checkCustomerId(customerId, Operation.DELETE);
-        try {
-            tbCustomerService.delete(customer, getCurrentUser());
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        tbCustomerService.delete(customer, getCurrentUser());
     }
 
     @ApiOperation(value = "Get Tenant Customers (getCustomers)",

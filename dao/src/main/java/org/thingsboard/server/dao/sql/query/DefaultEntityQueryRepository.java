@@ -378,10 +378,19 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
     }
 
     @Override
+    public PageData<EntityData> findEntityDataByQueryInternal(EntityDataQuery query) {
+        return findEntityDataByQuery(null, null, query, true);
+    }
+
+    @Override
     public PageData<EntityData> findEntityDataByQuery(TenantId tenantId, CustomerId customerId, EntityDataQuery query) {
+        return findEntityDataByQuery(tenantId, customerId, query, false);
+    }
+
+    public PageData<EntityData> findEntityDataByQuery(TenantId tenantId, CustomerId customerId, EntityDataQuery query, boolean ignorePermissionCheck) {
         return transactionTemplate.execute(status -> {
             EntityType entityType = resolveEntityType(query.getEntityFilter());
-            QueryContext ctx = new QueryContext(new QuerySecurityContext(tenantId, customerId, entityType));
+            QueryContext ctx = new QueryContext(new QuerySecurityContext(tenantId, customerId, entityType, ignorePermissionCheck));
             EntityDataPageLink pageLink = query.getPageLink();
 
             List<EntityKeyMapping> mappings = EntityKeyMapping.prepareKeyMapping(query);
@@ -504,6 +513,9 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
     }
 
     private String buildPermissionQuery(QueryContext ctx, EntityFilter entityFilter) {
+        if(ctx.isIgnorePermissionCheck()){
+            return "1=1";
+        }
         switch (entityFilter.getType()) {
             case RELATIONS_QUERY:
             case DEVICE_SEARCH_QUERY:
@@ -543,6 +555,8 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             ctx.addUuidParameter("permissions_customer_id", ctx.getCustomerId().getId());
             if (ctx.getEntityType() == EntityType.CUSTOMER) {
                 return "e.tenant_id=:permissions_tenant_id and e.id=:permissions_customer_id";
+            } else if (ctx.getEntityType() == EntityType.API_USAGE_STATE) {
+                return "e.tenant_id=:permissions_tenant_id and e.entity_id=:permissions_customer_id";
             } else {
                 return "e.tenant_id=:permissions_tenant_id and e.customer_id=:permissions_customer_id";
             }

@@ -37,20 +37,27 @@
       </mat-select>
     </mat-form-field>
   </div>
-  <div fxLayout.xs="column" fxLayoutAlign.xs="center" fxLayout="row wrap" fxLayoutAlign="space-between center" fxLayoutGap="8px">
-    <mat-checkbox formControlName="showMin" fxFlex="48">
+  <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
+    <mat-checkbox formControlName="showMin" fxFlex>
       {{ 'legend.show-min' | translate }}
     </mat-checkbox>
-    <mat-checkbox formControlName="showMax" fxFlex="48">
+    <mat-checkbox formControlName="showMax" fxFlex>
       {{ 'legend.show-max' | translate }}
     </mat-checkbox>
-    <mat-checkbox formControlName="showAvg" fxFlex="48">
+  </div>
+  <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
+    <mat-checkbox formControlName="showAvg" fxFlex>
       {{ 'legend.show-avg' | translate }}
     </mat-checkbox>
-    <mat-checkbox formControlName="showTotal" fxFlex="48">
+    <mat-checkbox formControlName="showTotal" fxFlex>
       {{ 'legend.show-total' | translate }}
     </mat-checkbox>
-    <mat-checkbox formControlName="sortDataKeys" fxFlex="48">
+  </div>
+  <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
+    <mat-checkbox formControlName="showLatest" fxFlex>
+      {{ 'legend.show-latest' | translate }}
+    </mat-checkbox>
+    <mat-checkbox formControlName="sortDataKeys" fxFlex>
       {{ 'legend.sort-legend' | translate }}
     </mat-checkbox>
   </div>

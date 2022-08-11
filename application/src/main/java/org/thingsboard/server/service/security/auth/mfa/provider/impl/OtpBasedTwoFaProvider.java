@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.security.model.mfa.provider.OtpBasedTw
 import org.thingsboard.server.service.security.auth.mfa.provider.TwoFaProvider;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
+import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
 
 public abstract class OtpBasedTwoFaProvider<C extends OtpBasedTwoFaProviderConfig, A extends OtpBasedTwoFaAccountConfig> implements TwoFaProvider<C, A> {
@@ -67,7 +68,7 @@ public abstract class OtpBasedTwoFaProvider<C extends OtpBasedTwoFaProviderConfi
 
 
     @Data
-    public static class Otp {
+    public static class Otp implements Serializable {
         private final long timestamp;
         private final String value;
         private final OtpBasedTwoFaAccountConfig accountConfig;

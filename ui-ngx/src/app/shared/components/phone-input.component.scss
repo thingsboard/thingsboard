@@ -15,6 +15,13 @@
  */
 :host ::ng-deep {
 
+  .flag-loader {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translate(0, -50%);
+  }
+
   .phone-input-container {
     display: flex;
     align-items: center;

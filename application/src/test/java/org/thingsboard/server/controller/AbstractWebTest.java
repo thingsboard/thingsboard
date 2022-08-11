@@ -69,6 +69,7 @@ import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeCon
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.HasId;
+import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.id.UserId;
@@ -237,6 +238,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         loginSysAdmin();
         doDelete("/api/tenant/" + tenantId.getId().toString())
                 .andExpect(status().isOk());
+        deleteDifferentTenant();
 
         verifyNoTenantsLeft();
 
@@ -277,12 +279,13 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         login(userName, password);
     }
 
-    private Tenant savedDifferentTenant;
+    protected Tenant savedDifferentTenant;
+    protected User savedDifferentTenantUser;
     private Customer savedDifferentCustomer;
 
     protected void loginDifferentTenant() throws Exception {
         if (savedDifferentTenant != null) {
-            login(savedDifferentTenant.getEmail(), TENANT_ADMIN_PASSWORD);
+            login(DIFFERENT_TENANT_ADMIN_EMAIL, DIFFERENT_TENANT_ADMIN_PASSWORD);
         } else {
             loginSysAdmin();
 
@@ -295,8 +298,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
             differentTenantAdmin.setAuthority(Authority.TENANT_ADMIN);
             differentTenantAdmin.setTenantId(savedDifferentTenant.getId());
             differentTenantAdmin.setEmail(DIFFERENT_TENANT_ADMIN_EMAIL);
-
-            createUserAndLogin(differentTenantAdmin, DIFFERENT_TENANT_ADMIN_PASSWORD);
+            savedDifferentTenantUser = createUserAndLogin(differentTenantAdmin, DIFFERENT_TENANT_ADMIN_PASSWORD);
         }
     }
 
@@ -334,6 +336,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
             loginSysAdmin();
             doDelete("/api/tenant/" + savedDifferentTenant.getId().getId().toString())
                     .andExpect(status().isOk());
+            savedDifferentTenant = null;
         }
     }
 

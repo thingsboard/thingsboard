@@ -397,40 +397,35 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     @Override
     public PageData<EdgeId> findRelatedEdgeIdsByEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink) {
         log.trace("[{}] Executing findRelatedEdgeIdsByEntityId [{}] [{}]", tenantId, entityId, pageLink);
-        if (EntityType.TENANT.equals(entityId.getEntityType()) ||
-                EntityType.CUSTOMER.equals(entityId.getEntityType()) ||
-                EntityType.DEVICE_PROFILE.equals(entityId.getEntityType())) {
-            if (EntityType.TENANT.equals(entityId.getEntityType()) ||
-                    EntityType.DEVICE_PROFILE.equals(entityId.getEntityType())) {
+        switch (entityId.getEntityType()) {
+            case TENANT:
+            case DEVICE_PROFILE:
+            case OTA_PACKAGE:
                 return convertToEdgeIds(findEdgesByTenantId(tenantId, pageLink));
-            } else {
+            case CUSTOMER:
                 return convertToEdgeIds(findEdgesByTenantIdAndCustomerId(tenantId, new CustomerId(entityId.getId()), pageLink));
-            }
-        } else {
-            switch (entityId.getEntityType()) {
-                case EDGE:
-                    List<EdgeId> edgeIds = Collections.singletonList(new EdgeId(entityId.getId()));
-                    return new PageData<>(edgeIds, 1, 1, false);
-                case DEVICE:
-                case ASSET:
-                case ENTITY_VIEW:
-                case DASHBOARD:
-                case RULE_CHAIN:
-                    return convertToEdgeIds(findEdgesByTenantIdAndEntityId(tenantId, entityId, pageLink));
-                case USER:
-                    User userById = userService.findUserById(tenantId, new UserId(entityId.getId()));
-                    if (userById == null) {
-                        return createEmptyEdgeIdPageData();
-                    }
-                    if (userById.getCustomerId() == null || userById.getCustomerId().isNullUid()) {
-                        return convertToEdgeIds(findEdgesByTenantId(tenantId, pageLink));
-                    } else {
-                        return convertToEdgeIds(findEdgesByTenantIdAndCustomerId(tenantId, userById.getCustomerId(), pageLink));
-                    }
-                default:
-                    log.warn("[{}] Unsupported entity type {}", tenantId, entityId.getEntityType());
+            case EDGE:
+                List<EdgeId> edgeIds = Collections.singletonList(new EdgeId(entityId.getId()));
+                return new PageData<>(edgeIds, 1, 1, false);
+            case DEVICE:
+            case ASSET:
+            case ENTITY_VIEW:
+            case DASHBOARD:
+            case RULE_CHAIN:
+                return convertToEdgeIds(findEdgesByTenantIdAndEntityId(tenantId, entityId, pageLink));
+            case USER:
+                User userById = userService.findUserById(tenantId, new UserId(entityId.getId()));
+                if (userById == null) {
                     return createEmptyEdgeIdPageData();
-            }
+                }
+                if (userById.getCustomerId() == null || userById.getCustomerId().isNullUid()) {
+                    return convertToEdgeIds(findEdgesByTenantId(tenantId, pageLink));
+                } else {
+                    return convertToEdgeIds(findEdgesByTenantIdAndCustomerId(tenantId, userById.getCustomerId(), pageLink));
+                }
+            default:
+                log.warn("[{}] Unsupported entity type {}", tenantId, entityId.getEntityType());
+                return createEmptyEdgeIdPageData();
         }
     }
 

@@ -137,6 +137,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                 case ENTITY_VIEW:
                 case DASHBOARD:
                 case RULE_CHAIN:
+                case OTA_PACKAGE:
                     future = entityProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
                     break;
                 case CUSTOMER:
@@ -144,6 +145,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                     break;
                 case WIDGETS_BUNDLE:
                 case WIDGET_TYPE:
+                case QUEUE:
                     future = entityProcessor.processEntityNotificationForAllEdges(tenantId, edgeNotificationMsg);
                     break;
                 case ALARM:

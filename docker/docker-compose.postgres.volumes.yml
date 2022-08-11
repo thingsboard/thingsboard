@@ -20,69 +20,8 @@ services:
   postgres:
     volumes:
       - postgres-db-volume:/var/lib/postgresql/data
-  tb-core1:
-    volumes:
-      - tb-log-volume:/var/log/thingsboard
-  tb-core2:
-    volumes:
-      - tb-log-volume:/var/log/thingsboard
-  tb-rule-engine1:
-    volumes:
-      - tb-log-volume:/var/log/thingsboard
-  tb-rule-engine2:
-    volumes:
-      - tb-log-volume:/var/log/thingsboard
-  tb-coap-transport:
-    volumes:
-      - tb-coap-transport-log-volume:/var/log/tb-coap-transport
-  tb-lwm2m-transport:
-    volumes:
-      - tb-lwm2m-transport-log-volume:/var/log/tb-lwm2m-transport
-  tb-http-transport1:
-    volumes:
-      - tb-http-transport-log-volume:/var/log/tb-http-transport
-  tb-http-transport2:
-    volumes:
-      - tb-http-transport-log-volume:/var/log/tb-http-transport
-  tb-mqtt-transport1:
-    volumes:
-      - tb-mqtt-transport-log-volume:/var/log/tb-mqtt-transport
-  tb-mqtt-transport2:
-    volumes:
-      - tb-mqtt-transport-log-volume:/var/log/tb-mqtt-transport
-  tb-snmp-transport:
-    volumes:
-      - tb-snmp-transport-log-volume:/var/log/tb-snmp-transport
-  tb-vc-executor1:
-    volumes:
-      - tb-vc-executor-log-volume:/var/log/tb-vc-executor
-  tb-vc-executor2:
-    volumes:
-      - tb-vc-executor-log-volume:/var/log/tb-vc-executor
-
 
 volumes:
   postgres-db-volume:
     external: true
     name: ${POSTGRES_DATA_VOLUME}
-  tb-log-volume:
-    external: true
-    name: ${TB_LOG_VOLUME}
-  tb-coap-transport-log-volume:
-    external: true
-    name: ${TB_COAP_TRANSPORT_LOG_VOLUME}
-  tb-lwm2m-transport-log-volume:
-    external: true
-    name: ${TB_LWM2M_TRANSPORT_LOG_VOLUME}
-  tb-http-transport-log-volume:
-    external: true
-    name: ${TB_HTTP_TRANSPORT_LOG_VOLUME}
-  tb-mqtt-transport-log-volume:
-    external: true
-    name: ${TB_MQTT_TRANSPORT_LOG_VOLUME}
-  tb-snmp-transport-log-volume:
-    external: true
-    name: ${TB_SNMP_TRANSPORT_LOG_VOLUME}
-  tb-vc-executor-log-volume:
-    external: true
-    name: ${TB_VC_EXECUTOR_LOG_VOLUME}

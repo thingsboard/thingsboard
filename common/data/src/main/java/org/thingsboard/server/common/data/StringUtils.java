@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.data;
 
+import com.google.common.base.Splitter;
+
 import static org.apache.commons.lang3.StringUtils.repeat;
 
 public class StringUtils {
@@ -90,6 +92,10 @@ public class StringUtils {
                     + part.substring(part.length() - seenMargin);
         }
         return input.substring(0, startIndexInclusive) + obfuscatedPart + input.substring(endIndexExclusive);
+    }
+
+    public static Iterable<String> split(String value, int maxPartSize) {
+        return Splitter.fixedLength(maxPartSize).split(value);
     }
 
 }

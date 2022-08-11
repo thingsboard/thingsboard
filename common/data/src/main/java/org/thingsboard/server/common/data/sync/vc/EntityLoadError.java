@@ -18,14 +18,18 @@ package org.thingsboard.server.common.data.sync.vc;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Data;
+import org.apache.commons.lang3.ClassUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 
-import java.util.List;
+import java.io.Serializable;
 
 @Data
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class EntityLoadError {
+public class EntityLoadError implements Serializable {
+
+    private static final long serialVersionUID = 7538450180582109391L;
 
     private String type;
     private EntityId source;
@@ -40,8 +44,12 @@ public class EntityLoadError {
         return EntityLoadError.builder().type("MISSING_REFERENCED_ENTITY").source(sourceId).target(targetId).build();
     }
 
-    public static EntityLoadError runtimeError(String msg) {
-        return EntityLoadError.builder().type("RUNTIME").message(msg).build();
+    public static EntityLoadError runtimeError(Throwable e) {
+        String message = e.getMessage();
+        if (StringUtils.isEmpty(message)) {
+            message = "unexpected error (" + ClassUtils.getShortClassName(e.getClass()) + ")";
+        }
+        return EntityLoadError.builder().type("RUNTIME").message(message).build();
     }
 
 }
