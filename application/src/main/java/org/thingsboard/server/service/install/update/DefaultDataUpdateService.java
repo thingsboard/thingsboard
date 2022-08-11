@@ -168,7 +168,6 @@ public class DefaultDataUpdateService implements DataUpdateService {
             case "3.3.4":
                 log.info("Updating data from version 3.3.4 to 3.4.0 ...");
                 tenantsProfileQueueConfigurationUpdater.updateEntities();
-                checkPointRuleNodesUpdater.updateEntities();
                 tenantCustomersTitleUpdater.updateEntities();
                 rateLimitsUpdater.updateEntities();
                 break;
