@@ -19,7 +19,12 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.thingsboard.server.common.data.*;
+import org.thingsboard.server.common.data.OtaPackageInfo;
+import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.OtaPackageId;
@@ -29,6 +34,7 @@ import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.ota.util.ChecksumUtil;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
+import org.thingsboard.server.service.ota.TbMultipartFileImp;
 
 import java.io.IOException;
 
@@ -61,7 +67,7 @@ public class DefaultTbOtaPackageService extends AbstractTbEntityService implemen
 
     @Override
     public OtaPackageInfo saveOtaPackageData(OtaPackageInfo otaPackageInfo, String checksum, ChecksumAlgorithm checksumAlgorithm,
-                                             MultipartFile file, User user) throws ThingsboardException {
+                                             MultipartFile file, User user) {
         TenantId tenantId = otaPackageInfo.getTenantId();
         OtaPackageId otaPackageId = otaPackageInfo.getId();
         try {
@@ -83,7 +89,7 @@ public class DefaultTbOtaPackageService extends AbstractTbEntityService implemen
             otaPackage.setContentType(file.getContentType());
             otaPackage.setData(file.getInputStream());
             otaPackage.setDataSize(file.getSize());
-            OtaPackageInfo savedOtaPackage = otaPackageService.saveOtaPackage(otaPackage);
+            OtaPackageInfo savedOtaPackage = otaPackageService.saveOtaPackage(otaPackage, new TbMultipartFileImp(file));
             notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, savedOtaPackage.getId(),
                     savedOtaPackage, user, ActionType.UPDATED, true, null);
             return savedOtaPackage;

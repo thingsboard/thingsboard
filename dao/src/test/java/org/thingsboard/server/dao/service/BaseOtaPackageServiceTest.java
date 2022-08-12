@@ -23,6 +23,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.springframework.mock.web.MockMultipartFile;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -37,6 +38,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.ota.TbMultipartFile;
 import org.thingsboard.server.dao.ota.util.ChecksumUtil;
 
 import javax.validation.ValidationException;
@@ -45,8 +47,10 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.InstanceOfAssertFactories.FILE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 
@@ -140,7 +144,8 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmware.setChecksum(CHECKSUM);
         firmware.setData(DATA);
         firmware.setDataSize(DATA_SIZE);
-        OtaPackage savedFirmware = otaPackageService.saveOtaPackage(firmware);
+        MockMultipartFile file = new MockMultipartFile(FILE_NAME, new byte[]{1});
+        OtaPackage savedFirmware = otaPackageService.saveOtaPackage(firmware, new TestTbMultipartFile(file));
 
         Assert.assertNotNull(savedFirmware);
         Assert.assertNotNull(savedFirmware.getId());
@@ -152,7 +157,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         Assert.assertEquals(firmware.getData(), savedFirmware.getData());
 
         savedFirmware.setAdditionalInfo(JacksonUtil.newObjectNode());
-        otaPackageService.saveOtaPackage(savedFirmware);
+        otaPackageService.saveOtaPackage(savedFirmware, new TestTbMultipartFile(file));
 
         OtaPackage foundFirmware = otaPackageService.findOtaPackageById(tenantId, savedFirmware.getId());
         Assert.assertEquals(foundFirmware.getTitle(), savedFirmware.getTitle());
@@ -219,7 +224,8 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmware.setData(DATA);
         firmware.setDataSize(DATA_SIZE);
 
-        otaPackageService.saveOtaPackage(firmware);
+        MockMultipartFile file = new MockMultipartFile(FILE_NAME, new byte[]{1});
+        otaPackageService.saveOtaPackage(firmware, new TestTbMultipartFile(file));
 
         savedFirmwareInfo = otaPackageService.findOtaPackageInfoById(tenantId, savedFirmwareInfo.getId());
         savedFirmwareInfo.setAdditionalInfo(JacksonUtil.newObjectNode());
@@ -249,7 +255,8 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
 
         thrown.expect(DataValidationException.class);
         thrown.expectMessage("OtaPackage should be assigned to tenant!");
-        otaPackageService.saveOtaPackage(firmware);
+        MockMultipartFile file = new MockMultipartFile(FILE_NAME, new byte[]{1});
+        otaPackageService.saveOtaPackage(firmware, new TestTbMultipartFile(file));
     }
 
     @Test
@@ -267,7 +274,8 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
 
         thrown.expect(DataValidationException.class);
         thrown.expectMessage("Type should be specified!");
-        otaPackageService.saveOtaPackage(firmware);
+        MockMultipartFile file = new MockMultipartFile(FILE_NAME, new byte[]{1});
+        otaPackageService.saveOtaPackage(firmware, new TestTbMultipartFile(file));
     }
 
     @Test
@@ -285,7 +293,8 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
 
         thrown.expect(DataValidationException.class);
         thrown.expectMessage("OtaPackage title should be specified!");
-        otaPackageService.saveOtaPackage(firmware);
+        MockMultipartFile file = new MockMultipartFile(FILE_NAME, new byte[]{1});
+        otaPackageService.saveOtaPackage(firmware, new TestTbMultipartFile(file));
     }
 
     @Test
@@ -303,8 +312,8 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
 
         thrown.expect(DataValidationException.class);
         thrown.expectMessage("OtaPackage file name should be specified!");
-        otaPackageService.saveOtaPackage(firmware);
-    }
+        MockMultipartFile file = new MockMultipartFile(FILE_NAME, new byte[]{1});
+        otaPackageService.saveOtaPackage(firmware, new TestTbMultipartFile(file));    }
 
     @Test
     public void testSaveFirmwareWithEmptyContentType() {
@@ -321,8 +330,8 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
 
         thrown.expect(DataValidationException.class);
         thrown.expectMessage("OtaPackage content type should be specified!");
-        otaPackageService.saveOtaPackage(firmware);
-    }
+        MockMultipartFile file = new MockMultipartFile(FILE_NAME, new byte[]{1});
+        otaPackageService.saveOtaPackage(firmware, new TestTbMultipartFile(file));    }
 
     @Test
     public void testSaveFirmwareWithEmptyData() {
@@ -339,8 +348,8 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
 
         thrown.expect(DataValidationException.class);
         thrown.expectMessage("OtaPackage data should be specified!");
-        otaPackageService.saveOtaPackage(firmware);
-    }
+        MockMultipartFile file = new MockMultipartFile(FILE_NAME, new byte[]{1});
+        otaPackageService.saveOtaPackage(firmware, new TestTbMultipartFile(file));    }
 
     @Test
     public void testSaveFirmwareWithInvalidTenant() {
@@ -358,8 +367,8 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
 
         thrown.expect(DataValidationException.class);
         thrown.expectMessage("OtaPackage is referencing to non-existent tenant!");
-        otaPackageService.saveOtaPackage(firmware);
-    }
+        MockMultipartFile file = new MockMultipartFile(FILE_NAME, new byte[]{1});
+        otaPackageService.saveOtaPackage(firmware, new TestTbMultipartFile(file));    }
 
     @Test
     public void testSaveFirmwareWithInvalidDeviceProfileId() {
@@ -377,7 +386,8 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
 
         thrown.expect(DataValidationException.class);
         thrown.expectMessage("OtaPackage is referencing to non-existent device profile!");
-        otaPackageService.saveOtaPackage(firmware);
+        MockMultipartFile file = new MockMultipartFile(FILE_NAME, new byte[]{1});
+        otaPackageService.saveOtaPackage(firmware, new TestTbMultipartFile(file));
     }
 
     @Test
@@ -395,7 +405,8 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
 
         thrown.expect(DataValidationException.class);
         thrown.expectMessage("OtaPackage checksum should be specified!");
-        otaPackageService.saveOtaPackage(firmware);
+        MockMultipartFile file = new MockMultipartFile(FILE_NAME, new byte[]{1});
+        otaPackageService.saveOtaPackage(firmware, new TestTbMultipartFile(file));
     }
 
     @Test
@@ -457,7 +468,8 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
             thrown.expect(DataValidationException.class);
             thrown.expectMessage("Updating otaPackage deviceProfile is prohibited!");
             savedFirmware.setDeviceProfileId(null);
-            otaPackageService.saveOtaPackage(savedFirmware);
+            MockMultipartFile file = new MockMultipartFile(FILE_NAME, new byte[]{1});
+            otaPackageService.saveOtaPackage(savedFirmware, new TestTbMultipartFile(file));
         } finally {
             otaPackageService.deleteOtaPackage(tenantId, savedFirmware.getId());
         }
@@ -480,7 +492,8 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmware.setChecksum(CHECKSUM);
         firmware.setData(DATA);
         firmware.setDataSize(DATA_SIZE);
-        OtaPackage savedFirmware = otaPackageService.saveOtaPackage(firmware);
+        MockMultipartFile file = new MockMultipartFile(FILE_NAME, new byte[]{1});
+        OtaPackage savedFirmware = otaPackageService.saveOtaPackage(firmware, new TestTbMultipartFile(file));
 
         savedDeviceProfile.setFirmwareId(savedFirmware.getId());
         deviceProfileService.saveDeviceProfile(savedDeviceProfile);
@@ -581,8 +594,9 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
     @Test
     public void testFindTenantFirmwaresByTenantIdAndHasData() {
         List<OtaPackageInfo> firmwares = new ArrayList<>();
+        MockMultipartFile file = new MockMultipartFile(FILE_NAME, new byte[]{1});
         for (int i = 0; i < 165; i++) {
-            firmwares.add(new OtaPackageInfo(otaPackageService.saveOtaPackage(createAndSaveFirmware(tenantId, VERSION + i))));
+            firmwares.add(new OtaPackageInfo(otaPackageService.saveOtaPackage(createAndSaveFirmware(tenantId, VERSION + i), new TestTbMultipartFile(file))));
         }
 
         OtaPackageInfo firmwareWithUrl = new OtaPackageInfo();
@@ -700,7 +714,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
 
     @Test
     public void testGettingCorrectFileWithOtaData() {
-        OtaPackage firmware = createFirmware(tenantId, "24687846");
+        OtaPackage firmware = createFirmware(tenantId, "24687846", deviceProfileId);
         File file = otaPackageService.getOtaDataFile(tenantId, firmware.getId());
         try {
             assertEquals(firmware.getChecksum(), ChecksumUtil.generateChecksum(CHECKSUM_ALGORITHM, new FileInputStream(file)));
@@ -710,7 +724,8 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
     }
 
     private OtaPackage createAndSaveFirmware(TenantId tenantId, String version) {
-        return otaPackageService.saveOtaPackage(createFirmware(tenantId, version, deviceProfileId));
+        MockMultipartFile file = new MockMultipartFile(FILE_NAME, new byte[]{1});
+        return otaPackageService.saveOtaPackage(createFirmware(tenantId, version, deviceProfileId), new TestTbMultipartFile(file));
     }
 
     public static OtaPackage createFirmware(
@@ -731,5 +746,38 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmware.setData(DATA);
         firmware.setDataSize(DATA_SIZE);
         return firmware;
+    }
+
+    private class TestTbMultipartFile implements TbMultipartFile {
+        private final MockMultipartFile file;
+
+        private TestTbMultipartFile(MockMultipartFile file) {
+            this.file = file;
+        }
+
+        @Override
+        public Optional<InputStream> getInputStream() {
+            try {
+                return Optional.of(file.getInputStream());
+            } catch (IOException e) {
+                return Optional.empty();
+            }
+        }
+
+        @Override
+        public String getFileName() {
+            return file.getName();
+        }
+
+        @Override
+        public long getFileSize() {
+            return file.getSize();
+
+        }
+
+        @Override
+        public String getContentType() {
+            return file.getContentType();
+        }
     }
 }

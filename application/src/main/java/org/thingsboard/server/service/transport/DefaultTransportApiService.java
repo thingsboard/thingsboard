@@ -101,6 +101,7 @@ import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.resource.TbResourceService;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -599,16 +600,17 @@ public class DefaultTransportApiService implements TransportApiService {
                 builder.setType(otaPackageInfo.getType().name());
                 builder.setTitle(otaPackageInfo.getTitle());
                 builder.setVersion(otaPackageInfo.getVersion());
-                builder.setFileName(otaPackageInfo.getFileName());
+                File file = otaPackageService.getOtaDataFile(otaPackageInfo.getTenantId(), otaPackageId);
+                builder.setFileName(file.getAbsolutePath());
                 builder.setContentType(otaPackageInfo.getContentType());
-                if (!otaPackageDataCache.has(otaPackageId.toString())) {
-                    OtaPackage otaPackage = otaPackageService.findOtaPackageById(tenantId, otaPackageId);
-                    try {
-                        otaPackageDataCache.put(otaPackageId.toString(), otaPackage.getData().readAllBytes());
-                    } catch (IOException e) {
-                        log.error("Failed to cache ota package with id {}",otaPackage.getId(), e);
-                    }
-                }
+//                if (!otaPackageDataCache.has(otaPackageId.toString())) {
+//                    OtaPackage otaPackage = otaPackageService.findOtaPackageById(tenantId, otaPackageId);
+//                    try {
+//                        otaPackageDataCache.put(otaPackageId.toString(), otaPackage.getData().readAllBytes());
+//                    } catch (IOException e) {
+//                        log.error("Failed to cache ota package with id {}",otaPackage.getId(), e);
+//                    }
+//                }
             }
         }
 

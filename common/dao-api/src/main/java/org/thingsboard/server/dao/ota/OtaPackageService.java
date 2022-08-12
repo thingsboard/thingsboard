@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.ota;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import org.springframework.boot.web.servlet.MultipartConfigFactory;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -32,7 +33,7 @@ public interface OtaPackageService {
 
     OtaPackageInfo saveOtaPackageInfo(OtaPackageInfo otaPackageInfo, boolean isUrl);
 
-    OtaPackage saveOtaPackage(OtaPackage otaPackage);
+    OtaPackage saveOtaPackage(OtaPackage otaPackage, TbMultipartFile file);
 
     OtaPackage findOtaPackageById(TenantId tenantId, OtaPackageId otaPackageId);
 

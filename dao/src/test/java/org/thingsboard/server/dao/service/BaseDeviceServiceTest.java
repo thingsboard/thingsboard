@@ -17,13 +17,13 @@ package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.hibernate.engine.jdbc.BlobProxy;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.springframework.mock.web.MockMultipartFile;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
@@ -41,12 +41,15 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.ota.TbMultipartFile;
 
 import java.io.ByteArrayInputStream;
-import java.nio.ByteBuffer;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
@@ -204,7 +207,8 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         firmware.setChecksum("4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a");
         firmware.setData(new ByteArrayInputStream(new byte[]{1}));
         firmware.setDataSize(1L);
-        OtaPackage savedFirmware = otaPackageService.saveOtaPackage(firmware);
+        MockMultipartFile file = new MockMultipartFile("test.txt", new byte[]{1});
+        OtaPackage savedFirmware = otaPackageService.saveOtaPackage(firmware, new TestTbMultipartFile(file));
 
         savedDevice.setFirmwareId(savedFirmware.getId());
 
@@ -239,7 +243,9 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         firmware.setChecksum("4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a");
         firmware.setData(new ByteArrayInputStream(new byte[]{1}));
         firmware.setDataSize(1L);
-        OtaPackage savedFirmware = otaPackageService.saveOtaPackage(firmware);
+        MockMultipartFile file = new MockMultipartFile("test.txt", new byte[]{1});
+        OtaPackage savedFirmware = otaPackageService.saveOtaPackage(firmware, new TestTbMultipartFile(file));
+
 
         savedDevice.setFirmwareId(savedFirmware.getId());
 
@@ -848,8 +854,8 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
                 deviceInfosWithLabel.stream()
                         .anyMatch(
                                 d -> d.getId().equals(savedDevice.getId())
-                                    && d.getTenantId().equals(tenantId)
-                                    && d.getLabel().equals(savedDevice.getLabel())
+                                        && d.getTenantId().equals(tenantId)
+                                        && d.getLabel().equals(savedDevice.getLabel())
                         )
         );
 
@@ -907,9 +913,9 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
                 deviceInfosWithLabel.stream()
                         .anyMatch(
                                 d -> d.getId().equals(savedDevice.getId())
-                                    && d.getTenantId().equals(tenantId)
-                                    && d.getDeviceProfileName().equals(savedDevice.getType())
-                                    && d.getLabel().equals(savedDevice.getLabel())
+                                        && d.getTenantId().equals(tenantId)
+                                        && d.getDeviceProfileName().equals(savedDevice.getType())
+                                        && d.getLabel().equals(savedDevice.getLabel())
                         )
         );
 
@@ -974,5 +980,38 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
                                         && d.getCustomerTitle().equals(savedCustomer.getTitle())
                         )
         );
+    }
+
+    private class TestTbMultipartFile implements TbMultipartFile {
+        private final MockMultipartFile file;
+
+        private TestTbMultipartFile(MockMultipartFile file) {
+            this.file = file;
+        }
+
+        @Override
+        public Optional<InputStream> getInputStream() {
+            try {
+                return Optional.of(file.getInputStream());
+            } catch (IOException e) {
+                return Optional.empty();
+            }
+        }
+
+        @Override
+        public String getFileName() {
+            return file.getName();
+        }
+
+        @Override
+        public long getFileSize() {
+            return file.getSize();
+
+        }
+
+        @Override
+        public String getContentType() {
+            return file.getContentType();
+        }
     }
 }

@@ -20,10 +20,13 @@ import com.google.gson.JsonParser;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -65,6 +68,8 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseM
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.File;
+import java.io.FileInputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -505,15 +510,25 @@ public class DeviceApiController implements TbTransportService {
         }
 
         @Override
+        @SneakyThrows
         public void onSuccess(TransportProtos.GetOtaPackageResponseMsg otaPackageResponseMsg) {
             if (!TransportProtos.ResponseStatus.SUCCESS.equals(otaPackageResponseMsg.getResponseStatus())) {
                 responseWriter.setResult(new ResponseEntity<>(HttpStatus.NOT_FOUND));
             } else if (title.equals(otaPackageResponseMsg.getTitle()) && version.equals(otaPackageResponseMsg.getVersion())) {
-                String otaPackageId = new UUID(otaPackageResponseMsg.getOtaPackageIdMSB(), otaPackageResponseMsg.getOtaPackageIdLSB()).toString();
-                ByteArrayResource resource = new ByteArrayResource(transportContext.getOtaPackageDataCache().get(otaPackageId, chuckSize, chuck));
-                ResponseEntity<ByteArrayResource> response = ResponseEntity.ok()
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + otaPackageResponseMsg.getFileName())
-                        .header("x-filename", otaPackageResponseMsg.getFileName())
+//                String otaPackageId = new UUID(otaPackageResponseMsg.getOtaPackageIdMSB(), otaPackageResponseMsg.getOtaPackageIdLSB()).toString();
+                File file = new File(otaPackageResponseMsg.getFileName());
+                Resource resource = null;
+                if(chuckSize!=0){
+                    FileInputStream fileInputStream = new FileInputStream(file);
+                    byte[] bytes = new byte[chuckSize];
+                    fileInputStream.read(bytes, chuck, chuckSize);
+                    resource = new ByteArrayResource(bytes);
+                } else {
+                    resource= new FileSystemResource(file);
+                }
+                ResponseEntity<Resource> response = ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + getFileName(otaPackageResponseMsg.getFileName()))
+                        .header("x-filename", getFileName(otaPackageResponseMsg.getFileName()))
                         .contentLength(resource.contentLength())
                         .contentType(parseMediaType(otaPackageResponseMsg.getContentType()))
                         .body(resource);
@@ -521,6 +536,10 @@ public class DeviceApiController implements TbTransportService {
             } else {
                 responseWriter.setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
             }
+        }
+
+        private String getFileName(String fileName) {
+          return new File(fileName).getName();
         }
 
         @Override

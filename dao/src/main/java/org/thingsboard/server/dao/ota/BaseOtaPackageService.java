@@ -38,10 +38,7 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 
 import javax.transaction.Transactional;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -98,25 +95,23 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
     }
 
     @Override
-    @Transactional
-    public OtaPackage saveOtaPackage(OtaPackage otaPackage) {
+    public OtaPackage saveOtaPackage(OtaPackage otaPackage, TbMultipartFile file) {
         log.trace("Executing saveOtaPackage [{}]", otaPackage);
         try {
-            File tempFile = baseFileCacheService.saveDataTemporaryFile(otaPackage.getData());
-            otaPackage.setData(new FileInputStream(tempFile));
             otaPackageValidator.validate(otaPackage, OtaPackageInfo::getTenantId);
-            BufferedInputStream stream = new BufferedInputStream(new FileInputStream(tempFile));
+            Optional<InputStream> optionalStream = file.getInputStream();
+            if(optionalStream.isEmpty()){
+                log.error("Failed to get input stream from file {}", file.getFileName());
+                throw new RuntimeException("Failed to save ota package file");
+            }
+            BufferedInputStream stream = new BufferedInputStream(optionalStream.get());
             stream.mark(0);
             otaPackage.setData(stream);
             OtaPackageId otaPackageId = otaPackage.getId();
             if (otaPackageId != null) {
                 publishEvictEvent(new OtaPackageCacheEvictEvent(otaPackageId));
             }
-            OtaPackage savedOtaPackage = otaPackageDao.save(otaPackage.getTenantId(), otaPackage);
-            return savedOtaPackage;
-        } catch (FileNotFoundException e) {
-            log.error("Failed to save data of ota package {} to file", otaPackage.getId(), e);
-            throw new RuntimeException(e);
+            return otaPackageDao.save(otaPackage.getTenantId(), otaPackage);
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("ota_package_tenant_title_version_unq_key")) {

@@ -43,6 +43,7 @@ import java.util.stream.Collectors;
 public class TemporaryFileCleaner {
     @Value("${files.temporary_files_directory}/ota/")
     private String PATH;
+    private final static String FILE_NAME_TEMPLATE = "%s%s.tmp";
     private final static long TEMPORARY_FILE_INACTIVITY_TIME = 900_000;
     private final ConcurrentMap<OtaPackageId, Long> lastActivityTimes = new ConcurrentHashMap<>();
 
@@ -51,19 +52,24 @@ public class TemporaryFileCleaner {
     }
 
     @EventListener(ApplicationReadyEvent.class)
-    public void createScheduledTaskToClear() {
+    public void cleanDirectoryWithTemporaryFiles() {
         createTempDirectoryIfNotExist();
-        cleanDirectoryWithTemporaryFiles();
+        cleanDirectory();
+        log.info("Directory {} with temporary ota files cleaned", PATH);
     }
 
     private void createTempDirectoryIfNotExist() {
         File directory = new File(PATH);
         if (!directory.exists()) {
-            directory.mkdir();
+            try{
+                FileUtils.forceMkdir(directory);
+            } catch(IOException e){
+                log.error("Failed to create directory for temporary files ", e);
+            }
         }
     }
 
-    private void cleanDirectoryWithTemporaryFiles() {
+    private void cleanDirectory() {
         File directory = new File(PATH);
         if (directory.isDirectory()) {
             File[] files = directory.listFiles();
@@ -100,7 +106,7 @@ public class TemporaryFileCleaner {
     }
 
     private synchronized void deleteFile(String otaId) {
-        String fileName = PATH + otaId;
+        String fileName = String.format(FILE_NAME_TEMPLATE, PATH, otaId);
         File file = new File(fileName);
         try (FileChannel channel = FileChannel.open(Path.of(URI.create(file.getPath())), StandardOpenOption.APPEND)) {
             FileLock lock = channel.lock();

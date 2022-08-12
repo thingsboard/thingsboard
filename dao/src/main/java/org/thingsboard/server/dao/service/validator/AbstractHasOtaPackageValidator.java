@@ -20,6 +20,7 @@ import org.springframework.context.annotation.Lazy;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasOtaPackage;
 import org.thingsboard.server.common.data.OtaPackage;
+import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
@@ -35,29 +36,29 @@ public abstract class AbstractHasOtaPackageValidator<D extends BaseData<?>> exte
 
     protected <T extends HasOtaPackage> void validateOtaPackage(TenantId tenantId, T entity, DeviceProfileId deviceProfileId) {
         if (entity.getFirmwareId() != null) {
-            OtaPackage firmware = otaPackageService.findOtaPackageById(tenantId, entity.getFirmwareId());
+            OtaPackageInfo firmware = otaPackageService.findOtaPackageInfoById(tenantId, entity.getFirmwareId());
             validateOtaPackage(tenantId, OtaPackageType.FIRMWARE, deviceProfileId, firmware);
         }
         if (entity.getSoftwareId() != null) {
-            OtaPackage software = otaPackageService.findOtaPackageById(tenantId, entity.getSoftwareId());
+            OtaPackageInfo software = otaPackageService.findOtaPackageInfoById(tenantId, entity.getSoftwareId());
             validateOtaPackage(tenantId, OtaPackageType.SOFTWARE, deviceProfileId, software);
         }
     }
 
-    private void validateOtaPackage(TenantId tenantId, OtaPackageType type, DeviceProfileId deviceProfileId, OtaPackage otaPackage) {
-        if (otaPackage == null) {
+    private void validateOtaPackage(TenantId tenantId, OtaPackageType type, DeviceProfileId deviceProfileId, OtaPackageInfo otaPackageInfo) {
+        if (otaPackageInfo == null) {
             throw new DataValidationException(prepareMsg("Can't assign non-existent %s!", type));
         }
-        if (!otaPackage.getTenantId().equals(tenantId)) {
+        if (!otaPackageInfo.getTenantId().equals(tenantId)) {
             throw new DataValidationException(prepareMsg("Can't assign %s from different tenant!", type));
         }
-        if (!otaPackage.getType().equals(type)) {
-            throw new DataValidationException(prepareMsg("Can't assign %s with type: " + otaPackage.getType(), type));
+        if (!otaPackageInfo.getType().equals(type)) {
+            throw new DataValidationException(prepareMsg("Can't assign %s with type: " + otaPackageInfo.getType(), type));
         }
-        if (otaPackage.getData() == null && !otaPackage.hasUrl()) {
+        if (otaPackageInfo.getDataSize() == 0 && !otaPackageInfo.hasUrl()) {
             throw new DataValidationException(prepareMsg("Can't assign %s with empty data!", type));
         }
-        if (!otaPackage.getDeviceProfileId().equals(deviceProfileId)) {
+        if (!otaPackageInfo.getDeviceProfileId().equals(deviceProfileId)) {
             throw new DataValidationException(prepareMsg("Can't assign %s with different deviceProfile!", type));
         }
     }

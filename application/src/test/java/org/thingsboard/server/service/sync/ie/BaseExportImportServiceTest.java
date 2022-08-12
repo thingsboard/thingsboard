@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import org.junit.After;
 import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mock.web.MockMultipartFile;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.debug.TbMsgGeneratorNode;
 import org.thingsboard.rule.engine.debug.TbMsgGeneratorNodeConfiguration;
@@ -71,17 +72,23 @@ import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.dao.ota.TbMultipartFile;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.service.BaseOtaPackageServiceTest;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 import org.thingsboard.server.service.sync.vc.data.SimpleEntitiesExportCtx;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -171,8 +178,9 @@ public abstract class BaseExportImportServiceTest extends AbstractControllerTest
         otaPackage.setChecksumAlgorithm(ChecksumAlgorithm.SHA256);
         otaPackage.setChecksum("4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a");
         otaPackage.setDataSize(1L);
-        otaPackage.setData(ByteBuffer.wrap(new byte[]{(int) 1}));
-        return otaPackageService.saveOtaPackage(otaPackage);
+        otaPackage.setData(new ByteArrayInputStream(new byte[]{1}));
+        MockMultipartFile file = new MockMultipartFile("filename.txt", new byte[]{1});
+        return otaPackageService.saveOtaPackage(otaPackage, new TestTbMultipartFile(file));
     }
 
     protected void checkImportedDeviceData(Device initialDevice, Device importedDevice) {
@@ -449,4 +457,36 @@ public abstract class BaseExportImportServiceTest extends AbstractControllerTest
         return new SecurityUser(user, true, new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail()));
     }
 
+    private class TestTbMultipartFile implements TbMultipartFile {
+        private final MockMultipartFile file;
+
+        private TestTbMultipartFile(MockMultipartFile file) {
+            this.file = file;
+        }
+
+        @Override
+        public Optional<InputStream> getInputStream() {
+            try {
+                return Optional.of(file.getInputStream());
+            } catch (IOException e) {
+                return Optional.empty();
+            }
+        }
+
+        @Override
+        public String getFileName() {
+            return file.getName();
+        }
+
+        @Override
+        public long getFileSize() {
+            return file.getSize();
+
+        }
+
+        @Override
+        public String getContentType() {
+            return file.getContentType();
+        }
+    }
 }

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.service.sql;
 
+
 import org.thingsboard.server.dao.service.BaseOtaPackageServiceTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
