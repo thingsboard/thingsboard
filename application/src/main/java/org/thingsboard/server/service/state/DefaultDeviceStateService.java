@@ -278,17 +278,16 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
 
     @Override
     public void onDeviceInactivityTimeoutUpdate(TenantId tenantId, DeviceId deviceId, long inactivityTimeout) {
-        if (inactivityTimeout <= 0L) {
-            return;
-        }
         if (cleanDeviceStateIfBelongsExternalPartition(tenantId, deviceId)) {
             return;
+        }
+        if (inactivityTimeout <= 0L) {
+            inactivityTimeout = defaultInactivityTimeoutInSec;
         }
         log.trace("on Device Activity Timeout Update device id {} inactivityTimeout {}", deviceId, inactivityTimeout);
         DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
         stateData.getState().setInactivityTimeout(inactivityTimeout);
         checkAndUpdateState(deviceId, stateData);
-
     }
 
     @Override
