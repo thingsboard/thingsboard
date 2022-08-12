@@ -22,14 +22,16 @@ import java.util.Collections;
 import java.util.List;
 
 @Data
-public class TbCopyFromMdToMsgNodeConfiguration implements NodeConfiguration<TbCopyFromMdToMsgNodeConfiguration> {
+public class TbCopyKeysNodeConfiguration implements NodeConfiguration<TbCopyKeysNodeConfiguration> {
 
-    private List<String> metadataMsgKeys;
+    private boolean fromMetadata;
+    private List<String> keys;
 
     @Override
-    public TbCopyFromMdToMsgNodeConfiguration defaultConfiguration() {
-        TbCopyFromMdToMsgNodeConfiguration configuration = new TbCopyFromMdToMsgNodeConfiguration();
-        configuration.setMetadataMsgKeys(Collections.emptyList());
+    public TbCopyKeysNodeConfiguration defaultConfiguration() {
+        TbCopyKeysNodeConfiguration configuration = new TbCopyKeysNodeConfiguration();
+        configuration.setKeys(Collections.emptyList());
+        configuration.setFromMetadata(false);
         return configuration;
     }
 
