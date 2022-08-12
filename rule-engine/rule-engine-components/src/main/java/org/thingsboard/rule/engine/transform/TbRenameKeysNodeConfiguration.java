@@ -22,14 +22,16 @@ import java.util.Collections;
 import java.util.Map;
 
 @Data
-public class TbRenameMsgKeysNodeConfiguration implements NodeConfiguration<TbRenameMsgKeysNodeConfiguration> {
+public class TbRenameKeysNodeConfiguration implements NodeConfiguration<TbRenameKeysNodeConfiguration> {
 
+    private boolean fromMetadata;
     private Map<String, String> renameKeysMapping;
 
     @Override
-    public TbRenameMsgKeysNodeConfiguration defaultConfiguration() {
-        TbRenameMsgKeysNodeConfiguration configuration = new TbRenameMsgKeysNodeConfiguration();
+    public TbRenameKeysNodeConfiguration defaultConfiguration() {
+        TbRenameKeysNodeConfiguration configuration = new TbRenameKeysNodeConfiguration();
         configuration.setRenameKeysMapping(Collections.emptyMap());
+        configuration.setFromMetadata(false);
         return configuration;
     }
 

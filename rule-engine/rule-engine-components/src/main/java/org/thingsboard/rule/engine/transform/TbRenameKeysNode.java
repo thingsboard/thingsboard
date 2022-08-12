@@ -28,6 +28,7 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -36,22 +37,22 @@ import java.util.concurrent.ExecutionException;
 @RuleNode(
         type = ComponentType.TRANSFORMATION,
         name = "rename keys",
-        configClazz = TbRenameMsgKeysNodeConfiguration.class,
-        nodeDescription = "Renames msg data keys to the new key names selected in the key mapping.",
-        nodeDetails = "If the key that is selected in the key mapping is missed in the msg data, it will be ignored." +
-                "If the msg is not a JSON object returns the incoming message as outbound message with <code>Failure</code> chain," +
+        configClazz = TbRenameKeysNodeConfiguration.class,
+        nodeDescription = "Renames msg data or metadata keys to the new key names selected in the key mapping.",
+        nodeDetails = "If the key that is selected in the key mapping is missed in the msg data or metadata, it will be ignored." +
+                "If the msg data is not a JSON object returns the incoming message as outbound message with <code>Failure</code> chain," +
                 " otherwise returns transformed messages via <code>Success</code> chain",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbTransformationNodeRenameMsgKeysConfig",
-        icon = "functions"
+        configDirective = "tbTransformationNodeRenameKeysConfig",
+        icon = "find_replace"
 )
-public class TbRenameMsgKeysNode implements TbNode {
+public class TbRenameKeysNode implements TbNode {
 
-    TbRenameMsgKeysNodeConfiguration config;
+    TbRenameKeysNodeConfiguration config;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbRenameMsgKeysNodeConfiguration.class);
+        this.config = TbNodeUtils.convert(configuration, TbRenameKeysNodeConfiguration.class);
     }
 
     @Override
@@ -60,19 +61,38 @@ public class TbRenameMsgKeysNode implements TbNode {
         if (CollectionUtils.isEmpty(renameKeysMapping)) {
             ctx.tellSuccess(msg);
         } else {
-            JsonNode dataNode = JacksonUtil.toJsonNode(msg.getData());
-            if (dataNode.isObject()) {
-                ObjectNode msgData = (ObjectNode) dataNode;
+            TbMsgMetaData metaData = msg.getMetaData();
+            String data = msg.getData();
+            if (config.isFromMetadata()) {
+                Map<String, String> metaDataMap = metaData.getData();
                 renameKeysMapping.forEach((nameKey, newNameKey) -> {
-                    if (msgData.has(nameKey)) {
-                        msgData.set(newNameKey, msgData.get(nameKey));
-                        msgData.remove(nameKey);
+                    if (!newNameKey.equals(nameKey)) {
+                        if (metaDataMap.containsKey(nameKey)) {
+                            metaDataMap.put(newNameKey, metaDataMap.get(nameKey));
+                            metaDataMap.remove(nameKey);
+                        }
                     }
                 });
-                ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(msgData)));
+                metaData = new TbMsgMetaData(metaDataMap);
             } else {
-                ctx.tellFailure(msg, new RuntimeException("Msg data is not a JSON Object!"));
+                JsonNode dataNode = JacksonUtil.toJsonNode(msg.getData());
+                if (dataNode.isObject()) {
+                    ObjectNode msgData = (ObjectNode) dataNode;
+                    renameKeysMapping.forEach((nameKey, newNameKey) -> {
+                        if (!newNameKey.equals(nameKey)) {
+                            if (msgData.has(nameKey)) {
+                                msgData.set(newNameKey, msgData.get(nameKey));
+                                msgData.remove(nameKey);
+                            }
+                        }
+                    });
+                    data = JacksonUtil.toString(msgData);
+                } else {
+                    ctx.tellFailure(msg, new RuntimeException("Msg data is not a JSON Object!"));
+                    return;
+                }
             }
+            ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), metaData, data));
         }
     }
 

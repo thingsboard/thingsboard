@@ -44,8 +44,8 @@ import static org.mockito.Mockito.verify;
 
 public class TbRenameMsgKeysNodeTest {
     DeviceId deviceId;
-    TbRenameMsgKeysNode node;
-    TbRenameMsgKeysNodeConfiguration config;
+    TbRenameKeysNode node;
+    TbRenameKeysNodeConfiguration config;
     TbNodeConfiguration nodeConfiguration;
     TbContext ctx;
     TbMsgCallback callback;
@@ -55,10 +55,10 @@ public class TbRenameMsgKeysNodeTest {
         deviceId = new DeviceId(UUID.randomUUID());
         callback = mock(TbMsgCallback.class);
         ctx = mock(TbContext.class);
-        config = new TbRenameMsgKeysNodeConfiguration().defaultConfiguration();
+        config = new TbRenameKeysNodeConfiguration().defaultConfiguration();
         config.setRenameKeysMapping(Map.of("TestKey_1", "Attribute_1", "TestKey_2", "Attribute_2"));
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-        node = spy(new TbRenameMsgKeysNode());
+        node = spy(new TbRenameKeysNode());
         node.init(ctx, nodeConfiguration);
     }
 
@@ -74,8 +74,9 @@ public class TbRenameMsgKeysNodeTest {
 
     @Test
     void givenDefaultConfig_whenVerify_thenOK() {
-        TbRenameMsgKeysNodeConfiguration defaultConfig = new TbRenameMsgKeysNodeConfiguration().defaultConfiguration();
+        TbRenameKeysNodeConfiguration defaultConfig = new TbRenameKeysNodeConfiguration().defaultConfiguration();
         assertThat(defaultConfig.getRenameKeysMapping()).isEqualTo(Collections.emptyMap());
+        assertThat(defaultConfig.isFromMetadata()).isEqualTo(false);
     }
 
     @Test
@@ -96,8 +97,30 @@ public class TbRenameMsgKeysNodeTest {
     }
 
     @Test
+    void givenMetadata_whenOnMsg_thenVerifyOutput() throws Exception {
+        config = new TbRenameKeysNodeConfiguration().defaultConfiguration();
+        config.setRenameKeysMapping(Map.of("TestKey_1", "Attribute_1", "TestKey_2", "Attribute_2"));
+        config.setFromMetadata(true);
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctx, nodeConfiguration);
+
+        String data = "{\"Temperature_1\":22.5,\"TestKey_2\":10.3}";
+        node.onMsg(ctx, getTbMsg(deviceId, data));
+
+        ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        verify(ctx, times(1)).tellSuccess(newMsgCaptor.capture());
+        verify(ctx, never()).tellFailure(any(), any());
+
+        TbMsg newMsg = newMsgCaptor.getValue();
+        assertThat(newMsg).isNotNull();
+
+        Map<String, String> mdDataMap = newMsg.getMetaData().getData();
+        assertThat(mdDataMap.containsKey("Attribute_1")).isEqualTo(true);
+    }
+
+    @Test
     void givenEmptyKeys_whenOnMsg_thenVerifyOutput() throws Exception {
-        TbRenameMsgKeysNodeConfiguration defaultConfig = new TbRenameMsgKeysNodeConfiguration().defaultConfiguration();
+        TbRenameKeysNodeConfiguration defaultConfig = new TbRenameKeysNodeConfiguration().defaultConfiguration();
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(defaultConfig));
         node.init(ctx, nodeConfiguration);
 
