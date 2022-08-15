@@ -128,8 +128,9 @@ public class TbCopyKeysNodeTest {
         nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(defaultConfig));
         node.init(ctx, nodeConfiguration);
 
-        String data = "{}";
-        node.onMsg(ctx, getTbMsg(deviceId, data));
+        String data = "{\"DigitData\":22.5,\"TempDataValue\":10.5}";
+        TbMsg msg = getTbMsg(deviceId, data);
+        node.onMsg(ctx, msg);
 
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         verify(ctx, times(1)).tellSuccess(newMsgCaptor.capture());
@@ -138,7 +139,7 @@ public class TbCopyKeysNodeTest {
         TbMsg newMsg = newMsgCaptor.getValue();
         assertThat(newMsg).isNotNull();
 
-        assertThat(newMsg.getData()).isEqualTo(data);
+        assertThat(newMsg.getMetaData()).isEqualTo(msg.getMetaData());
     }
 
     @Test

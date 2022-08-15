@@ -18,7 +18,6 @@ package org.thingsboard.rule.engine.transform;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.CollectionUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -26,7 +25,6 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -61,43 +59,38 @@ public class TbCopyKeysNode implements TbNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
         List<String> keys = config.getKeys();
-        if (CollectionUtils.isEmpty(keys)) {
-            ctx.tellSuccess(msg);
-        } else {
-            TbMsgMetaData metaData = msg.getMetaData();
-            String msgData = msg.getData();
-            JsonNode dataNode = JacksonUtil.toJsonNode(msgData);
-            if (!dataNode.isObject()) {
-                ctx.tellFailure(msg, new RuntimeException("Msg data is not a JSON Object!"));
-                return;
-            }
-            if (config.isFromMetadata()) {
-                ObjectNode msgDataNode = (ObjectNode) dataNode;
-                Map<String, String> metaDataMap = metaData.getData();
-                keys.forEach(key -> {
-                    Pattern pattern = Pattern.compile(key);
-                    metaDataMap.forEach((keyMetaData, valueMetaData) -> {
-                        if (pattern.matcher(keyMetaData).matches()) {
-                            if (!StringUtils.isEmpty(valueMetaData)) {
-                                msgDataNode.put(keyMetaData, valueMetaData);
-                            }
-                        }
-                    });
-                });
-                msgData = JacksonUtil.toString(msgDataNode);
-            } else {
-                keys.forEach(key -> {
-                    Pattern pattern = Pattern.compile(key);
-                    dataNode.fields().forEachRemaining(entry -> {
-                        String keyData = entry.getKey();
-                        if (pattern.matcher(keyData).matches()) {
-                            metaData.putValue(keyData, String.valueOf(entry.getValue()));
-                        }
-                    });
-                });
-            }
-            ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), metaData, msgData));
+        TbMsgMetaData metaData = msg.getMetaData();
+        String msgData = msg.getData();
+        JsonNode dataNode = JacksonUtil.toJsonNode(msgData);
+        if (!dataNode.isObject()) {
+            ctx.tellFailure(msg, new RuntimeException("Msg data is not a JSON Object!"));
+            return;
         }
+
+        if (config.isFromMetadata()) {
+            ObjectNode msgDataNode = (ObjectNode) dataNode;
+            Map<String, String> metaDataMap = metaData.getData();
+            keys.forEach(key -> {
+                Pattern pattern = Pattern.compile(key);
+                metaDataMap.forEach((keyMetaData, valueMetaData) -> {
+                    if (pattern.matcher(keyMetaData).matches()) {
+                        msgDataNode.put(keyMetaData, valueMetaData);
+                    }
+                });
+            });
+            msgData = JacksonUtil.toString(msgDataNode);
+        } else {
+            keys.forEach(key -> {
+                Pattern pattern = Pattern.compile(key);
+                dataNode.fields().forEachRemaining(entry -> {
+                    String keyData = entry.getKey();
+                    if (pattern.matcher(keyData).matches()) {
+                        metaData.putValue(keyData, JacksonUtil.toString(entry.getValue()));
+                    }
+                });
+            });
+        }
+        ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), metaData, msgData));
     }
 
     @Override
