@@ -18,7 +18,6 @@ package org.thingsboard.rule.engine.transform;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.CollectionUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -58,42 +57,34 @@ public class TbRenameKeysNode implements TbNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
         Map<String, String> renameKeysMapping = config.getRenameKeysMapping();
-        if (CollectionUtils.isEmpty(renameKeysMapping)) {
-            ctx.tellSuccess(msg);
+        TbMsgMetaData metaData = msg.getMetaData();
+        String data = msg.getData();
+        if (config.isFromMetadata()) {
+            Map<String, String> metaDataMap = metaData.getData();
+            renameKeysMapping.forEach((nameKey, newNameKey) -> {
+                if (metaDataMap.containsKey(nameKey)) {
+                    metaDataMap.put(newNameKey, metaDataMap.get(nameKey));
+                    metaDataMap.remove(nameKey);
+                }
+            });
+            metaData = new TbMsgMetaData(metaDataMap);
         } else {
-            TbMsgMetaData metaData = msg.getMetaData();
-            String data = msg.getData();
-            if (config.isFromMetadata()) {
-                Map<String, String> metaDataMap = metaData.getData();
+            JsonNode dataNode = JacksonUtil.toJsonNode(msg.getData());
+            if (dataNode.isObject()) {
+                ObjectNode msgData = (ObjectNode) dataNode;
                 renameKeysMapping.forEach((nameKey, newNameKey) -> {
-                    if (!newNameKey.equals(nameKey)) {
-                        if (metaDataMap.containsKey(nameKey)) {
-                            metaDataMap.put(newNameKey, metaDataMap.get(nameKey));
-                            metaDataMap.remove(nameKey);
-                        }
+                    if (msgData.has(nameKey)) {
+                        msgData.set(newNameKey, msgData.get(nameKey));
+                        msgData.remove(nameKey);
                     }
                 });
-                metaData = new TbMsgMetaData(metaDataMap);
+                data = JacksonUtil.toString(msgData);
             } else {
-                JsonNode dataNode = JacksonUtil.toJsonNode(msg.getData());
-                if (dataNode.isObject()) {
-                    ObjectNode msgData = (ObjectNode) dataNode;
-                    renameKeysMapping.forEach((nameKey, newNameKey) -> {
-                        if (!newNameKey.equals(nameKey)) {
-                            if (msgData.has(nameKey)) {
-                                msgData.set(newNameKey, msgData.get(nameKey));
-                                msgData.remove(nameKey);
-                            }
-                        }
-                    });
-                    data = JacksonUtil.toString(msgData);
-                } else {
-                    ctx.tellFailure(msg, new RuntimeException("Msg data is not a JSON Object!"));
-                    return;
-                }
+                ctx.tellFailure(msg, new RuntimeException("Msg data is not a JSON Object!"));
+                return;
             }
-            ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), metaData, data));
         }
+        ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), metaData, data));
     }
 
     @Override

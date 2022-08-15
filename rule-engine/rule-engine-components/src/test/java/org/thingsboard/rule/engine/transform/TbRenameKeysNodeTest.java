@@ -42,7 +42,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-public class TbRenameMsgKeysNodeTest {
+public class TbRenameKeysNodeTest {
     DeviceId deviceId;
     TbRenameKeysNode node;
     TbRenameKeysNodeConfiguration config;
@@ -124,8 +124,9 @@ public class TbRenameMsgKeysNodeTest {
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(defaultConfig));
         node.init(ctx, nodeConfiguration);
 
-        String data = "{}";
-        node.onMsg(ctx, getTbMsg(deviceId, data));
+        String data = "{\"Temperature_1\":22.5,\"TestKey_2\":10.3}";
+        TbMsg msg = getTbMsg(deviceId, data);
+        node.onMsg(ctx, msg);
 
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         verify(ctx, times(1)).tellSuccess(newMsgCaptor.capture());
@@ -134,7 +135,7 @@ public class TbRenameMsgKeysNodeTest {
         TbMsg newMsg = newMsgCaptor.getValue();
         assertThat(newMsg).isNotNull();
 
-        assertThat(newMsg.getData()).isEqualTo(data);
+        assertThat(newMsg.getMetaData()).isEqualTo(msg.getMetaData());
     }
 
     @Test
