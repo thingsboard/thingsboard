@@ -63,16 +63,18 @@ public class TbCheckRelationNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
+        String relationType = TbNodeUtils.processPattern(this.config.getRelationType(), msg);
+
         ListenableFuture<Boolean> checkRelationFuture;
         if (config.isCheckForSingleEntity()) {
-            checkRelationFuture = processSingle(ctx, msg);
+            checkRelationFuture = processSingle(ctx, msg, relationType);
         } else {
-            checkRelationFuture = processList(ctx, msg);
+            checkRelationFuture = processList(ctx, msg, relationType);
         }
         withCallback(checkRelationFuture, filterResult -> ctx.tellNext(msg, filterResult ? "True" : "False"), t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
 
-    private ListenableFuture<Boolean> processSingle(TbContext ctx, TbMsg msg) {
+    private ListenableFuture<Boolean> processSingle(TbContext ctx, TbMsg msg, String relationType) {
         EntityId from;
         EntityId to;
         if (EntitySearchDirection.FROM.name().equals(config.getDirection())) {
@@ -82,16 +84,16 @@ public class TbCheckRelationNode implements TbNode {
             to = EntityIdFactory.getByTypeAndId(config.getEntityType(), config.getEntityId());
             from = msg.getOriginator();
         }
-        return ctx.getRelationService().checkRelationAsync(ctx.getTenantId(), from, to, config.getRelationType(), RelationTypeGroup.COMMON);
+        return ctx.getRelationService().checkRelationAsync(ctx.getTenantId(), from, to, relationType, RelationTypeGroup.COMMON);
     }
 
-    private ListenableFuture<Boolean> processList(TbContext ctx, TbMsg msg) {
+    private ListenableFuture<Boolean> processList(TbContext ctx, TbMsg msg, String relationType) {
         if (EntitySearchDirection.FROM.name().equals(config.getDirection())) {
             return Futures.transformAsync(ctx.getRelationService()
-                    .findByToAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), config.getRelationType(), RelationTypeGroup.COMMON), this::isEmptyList, MoreExecutors.directExecutor());
+                    .findByToAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), relationType, RelationTypeGroup.COMMON), this::isEmptyList, MoreExecutors.directExecutor());
         } else {
             return Futures.transformAsync(ctx.getRelationService()
-                    .findByFromAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), config.getRelationType(), RelationTypeGroup.COMMON), this::isEmptyList, MoreExecutors.directExecutor());
+                    .findByFromAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), relationType, RelationTypeGroup.COMMON), this::isEmptyList, MoreExecutors.directExecutor());
         }
     }
 
