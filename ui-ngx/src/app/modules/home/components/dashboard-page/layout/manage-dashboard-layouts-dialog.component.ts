@@ -14,11 +14,11 @@
 /// limitations under the License.
 ///
 
-import {Component, Inject, SkipSelf, ViewChild} from '@angular/core';
-import {ErrorStateMatcher} from '@angular/material/core';
-import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from '@angular/material/dialog';
-import {Store} from '@ngrx/store';
-import {AppState} from '@core/core.state';
+import { Component, Inject, SkipSelf, ViewChild } from '@angular/core';
+import { ErrorStateMatcher } from '@angular/material/core';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
 import {
   AbstractControl,
   FormBuilder,
@@ -28,20 +28,20 @@ import {
   NgForm,
   Validators
 } from '@angular/forms';
-import {Router} from '@angular/router';
-import {DialogComponent} from '@app/shared/components/dialog.component';
-import {UtilsService} from '@core/services/utils.service';
-import {TranslateService} from '@ngx-translate/core';
-import {DashboardLayoutId, DashboardStateLayouts, LayoutDimension} from '@app/shared/models/dashboard.models';
-import {deepClone, isDefined} from '@core/utils';
-import {DashboardUtilsService} from '@core/services/dashboard-utils.service';
+import { Router } from '@angular/router';
+import { DialogComponent } from '@app/shared/components/dialog.component';
+import { UtilsService } from '@core/services/utils.service';
+import { TranslateService } from '@ngx-translate/core';
+import { DashboardLayoutId, DashboardStateLayouts, LayoutDimension } from '@app/shared/models/dashboard.models';
+import { deepClone, isDefined } from '@core/utils';
+import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import {
   DashboardSettingsDialogComponent,
   DashboardSettingsDialogData
 } from '@home/components/dashboard-page/dashboard-settings-dialog.component';
-import {LayoutWidthType} from '@home/components/dashboard-page/layout/layout.models';
-import {Subscription} from 'rxjs';
-import {MatTooltip} from "@angular/material/tooltip";
+import { LayoutWidthType } from '@home/components/dashboard-page/layout/layout.models';
+import { Subscription } from 'rxjs';
+import { MatTooltip } from "@angular/material/tooltip";
 
 export interface ManageDashboardLayoutsDialogData {
   layouts: DashboardStateLayouts;
