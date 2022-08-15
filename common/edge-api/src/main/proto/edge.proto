@@ -198,6 +198,8 @@ message DeviceUpdateMsg {
   optional string label = 10;
   optional string additionalInfo = 11;
   optional string conflictName = 12;
+  optional int64 firmwareIdMSB = 13;
+  optional int64 firmwareIdLSB = 14;
 }
 
 message DeviceProfileUpdateMsg {
@@ -216,6 +218,8 @@ message DeviceProfileUpdateMsg {
   bytes profileDataBytes = 13;
   optional string provisionDeviceKey = 14;
   optional bytes image = 15;
+  optional int64 firmwareIdMSB = 16;
+  optional int64 firmwareIdLSB = 17;
 }
 
 message DeviceCredentialsUpdateMsg {

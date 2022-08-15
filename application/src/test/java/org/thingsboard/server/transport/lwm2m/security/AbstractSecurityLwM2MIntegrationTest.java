@@ -57,6 +57,7 @@ import java.security.PublicKey;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -67,7 +68,9 @@ import static org.junit.Assert.assertEquals;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_DEREGISTRATION_STARTED;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_DEREGISTRATION_SUCCESS;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_STARTED;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_SUCCESS;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_UPDATE_SUCCESS;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_ID_1;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_9;
 
@@ -190,15 +193,25 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
                                        boolean isBootstrap,
                                        LwM2MClientState finishState,
                                        boolean isStartLw) throws Exception {
-        createNewClient(security, coapConfig, true, endpoint, isBootstrap, null);
         createDeviceProfile(transportConfiguration);
         final Device device = createDevice(deviceCredentials, endpoint);
         device.getId().getId().toString();
+        createNewClient(security, coapConfig, true, endpoint, isBootstrap, null);
         lwM2MTestClient.start(isStartLw);
+        awaitObserveReadAll(0, isBootstrap, device.getId().getId().toString());
         await(awaitAlias)
-                .atMost(5000, TimeUnit.MILLISECONDS)
-                .until(() -> finishState.equals(lwM2MTestClient.getClientState()));
-        Assert.assertEquals(expectedStatuses, lwM2MTestClient.getClientStates());
+                .atMost(40, TimeUnit.SECONDS)
+                .until(() -> {
+                    log.warn("basicTestConnection started -> finishState: [{}] states: {}", finishState, lwM2MTestClient.getClientStates());
+                    return lwM2MTestClient.getClientStates().contains(finishState) || lwM2MTestClient.getClientStates().contains(ON_REGISTRATION_STARTED);
+                });
+        await(awaitAlias)
+                .atMost(40, TimeUnit.SECONDS)
+                .until(() -> {
+                    log.warn("basicTestConnection -> finishState: [{}] states: {}", finishState, lwM2MTestClient.getClientStates());
+                    return lwM2MTestClient.getClientStates().contains(finishState) || lwM2MTestClient.getClientStates().contains(ON_UPDATE_SUCCESS);
+                });
+        Assert.assertTrue(lwM2MTestClient.getClientStates().containsAll(expectedStatuses));
     }
 
 
@@ -228,27 +241,52 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
                                                             Set<LwM2MClientState> expectedStatusesBs,
                                                             boolean isBootstrap,
                                                             Security securityBs) throws Exception {
-        createNewClient(security, coapConfig, true, endpoint, isBootstrap, securityBs);
+
         createDeviceProfile(transportConfiguration);
         final Device device = createDevice(deviceCredentials, endpoint);
-        String deviceId = device.getId().getId().toString();
+        String deviceIdStr = device.getId().getId().toString();
+        createNewClient(security, coapConfig, true, endpoint, isBootstrap, securityBs);
         lwM2MTestClient.start(true);
+        awaitObserveReadAll(0, isBootstrap, deviceIdStr);
         await(awaitAlias)
-                .atMost(5000, TimeUnit.MILLISECONDS)
-                .until(() -> ON_REGISTRATION_SUCCESS.equals(lwM2MTestClient.getClientState()));
-        Assert.assertEquals(expectedStatusesLwm2m, lwM2MTestClient.getClientStates());
+                .atMost(40, TimeUnit.SECONDS)
+                .until(() -> {
+                    log.warn("basicTest First Connection started -> finishState: [{}] states: {}", ON_REGISTRATION_SUCCESS, lwM2MTestClient.getClientStates());
+                    return lwM2MTestClient.getClientStates().contains(ON_REGISTRATION_SUCCESS) || lwM2MTestClient.getClientStates().contains(ON_REGISTRATION_STARTED);
+                });
+        await(awaitAlias)
+                .atMost(40, TimeUnit.SECONDS)
+                .until(() -> {
+                    log.warn("basicTest First  Connection -> finishState: [{}] states: {}", ON_REGISTRATION_SUCCESS, lwM2MTestClient.getClientStates());
+                    return lwM2MTestClient.getClientStates().contains(ON_REGISTRATION_SUCCESS) || lwM2MTestClient.getClientStates().contains(ON_UPDATE_SUCCESS);
+                });
+        Assert.assertTrue(lwM2MTestClient.getClientStates().containsAll(expectedStatusesLwm2m));
 
         String executedPath = "/" + OBJECT_ID_1 + "_" +  lwM2MTestClient.getLeshanClient().getObjectTree().getModel().getObjectModel(OBJECT_ID_1).version
                 + "/0/" + RESOURCE_ID_9;
-        String actualResult = sendRPCSecurityExecuteById(executedPath, deviceId, endpoint);
+        lwM2MTestClient.setClientStates(new HashSet<>());
+        String actualResult = sendRPCSecurityExecuteById(executedPath, deviceIdStr, endpoint);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        if (!(rpcActualResult.get("result").asText().equals(ResponseCode.CHANGED.getName()))) {
+            actualResult = sendRPCSecurityExecuteById(executedPath, deviceIdStr, endpoint);
+            rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        }
         assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
         expectedStatusesBs.add(ON_DEREGISTRATION_STARTED);
         expectedStatusesBs.add(ON_DEREGISTRATION_SUCCESS);
         await(awaitAlias)
-                .atMost(5000, TimeUnit.MILLISECONDS)
-                .until(() -> ON_REGISTRATION_SUCCESS.equals(lwM2MTestClient.getClientState()));
-        Assert.assertEquals(expectedStatusesBs, lwM2MTestClient.getClientStates());
+                .atMost(40, TimeUnit.SECONDS)
+                .until(() -> {
+                    log.warn("basicTestConnection started -> finishState: [{}] states: {}", ON_REGISTRATION_SUCCESS, lwM2MTestClient.getClientStates());
+                    return lwM2MTestClient.getClientStates().contains(ON_REGISTRATION_SUCCESS) || lwM2MTestClient.getClientStates().contains(ON_REGISTRATION_STARTED);
+                });
+        await(awaitAlias)
+                .atMost(40, TimeUnit.SECONDS)
+                .until(() -> {
+                    log.warn("basicTestConnection -> finishState: [{}] states: {}", ON_REGISTRATION_SUCCESS, lwM2MTestClient.getClientStates());
+                    return lwM2MTestClient.getClientStates().contains(ON_REGISTRATION_SUCCESS) || lwM2MTestClient.getClientStates().contains(ON_UPDATE_SUCCESS);
+                });
+        Assert.assertTrue(lwM2MTestClient.getClientStates().containsAll(expectedStatusesBs));
     }
 
     protected List<LwM2MBootstrapServerCredential> getBootstrapServerCredentialsSecure(LwM2MSecurityMode mode, LwM2MProfileBootstrapConfigType bootstrapConfigType) {
@@ -397,7 +435,7 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
         return doPost("/api/device/credentials", deviceCredentials).andReturn();
     }
 
-    private String sendRPCSecurityExecuteById(String path, String deviceId, String endpoint) throws Exception {
+    protected String sendRPCSecurityExecuteById(String path, String deviceId, String endpoint) throws Exception {
         log.info("endpoint1: [{}]", endpoint);
 
 

@@ -94,7 +94,7 @@ public class ControllerConstants {
     protected static final String DEVICE_PROFILE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type, transportType, description, isDefault";
     protected static final String ASSET_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type, label, customerTitle";
     protected static final String ALARM_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, startTs, endTs, type, ackTs, clearTs, severity, status";
-    protected static final String EVENT_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, id";
+    protected static final String EVENT_SORT_PROPERTY_ALLOWABLE_VALUES = "ts, id";
     protected static final String EDGE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type, label, customerTitle";
     protected static final String RULE_CHAIN_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, root";
     protected static final String WIDGET_BUNDLE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, title, tenantId";
@@ -112,6 +112,10 @@ public class ControllerConstants {
     protected static final String DEVICE_PROFILE_INFO_DESCRIPTION = "Device Profile Info is a lightweight object that includes main information about Device Profile excluding the heavyweight configuration object. ";
     protected static final String QUEUE_SERVICE_TYPE_DESCRIPTION = "Service type (implemented only for the TB-RULE-ENGINE)";
     protected static final String QUEUE_SERVICE_TYPE_ALLOWABLE_VALUES = "TB-RULE-ENGINE, TB-CORE, TB-TRANSPORT, JS-EXECUTOR";
+    protected static final String QUEUE_QUEUE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'substring' filter based on the queue name.";
+    protected static final String QUEUE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, topic";
+    protected static final String QUEUE_ID_PARAM_DESCRIPTION = "A string value representing the queue id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
+    protected static final String QUEUE_NAME_PARAM_DESCRIPTION = "A string value representing the queue id. For example, 'Main'";
     protected static final String OTA_PACKAGE_INFO_DESCRIPTION = "OTA Package Info is a lightweight object that includes main information about the OTA Package excluding the heavyweight data. ";
     protected static final String OTA_PACKAGE_DESCRIPTION = "OTA Package is a heavyweight object that includes main information about the OTA Package and also data. ";
     protected static final String OTA_PACKAGE_CHECKSUM_ALGORITHM_ALLOWABLE_VALUES = "MD5, SHA256, SHA384, SHA512, CRC32, MURMUR3_32, MURMUR3_128";

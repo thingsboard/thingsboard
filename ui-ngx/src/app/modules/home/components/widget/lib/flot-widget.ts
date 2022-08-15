@@ -28,19 +28,13 @@ import {
   isUndefined
 } from '@app/core/utils';
 import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
-import {
-  DataKey,
-  Datasource,
-  DatasourceData,
-  DatasourceType,
-  JsonSettingsSchema,
-  widgetType
-} from '@app/shared/models/widget.models';
+import { DataKey, Datasource, DatasourceData, DatasourceType, widgetType } from '@app/shared/models/widget.models';
 import {
   ChartType,
   TbFlotAxisOptions,
   TbFlotHoverInfo,
-  TbFlotKeySettings, TbFlotLatestKeySettings,
+  TbFlotKeySettings,
+  TbFlotLatestKeySettings,
   TbFlotPlotAxis,
   TbFlotPlotDataSeries,
   TbFlotPlotItem,
@@ -481,8 +475,11 @@ export class TbFlot {
           for (const threshold of keySettings.thresholds) {
             if (threshold.thresholdValueSource === 'predefinedValue' && isFinite(threshold.thresholdValue)) {
               const colorIndex = this.subscription.data.length + predefinedThresholds.length;
-              this.generateThreshold(predefinedThresholds, series.yaxis, threshold.lineWidth,
+              const predefinedThreshold = this.generateThreshold(predefinedThresholds, series.yaxis, threshold.lineWidth,
                 threshold.color, colorIndex, threshold.thresholdValue);
+              if (predefinedThreshold != null) {
+                predefinedThresholds.push(predefinedThreshold);
+              }
             } else if (threshold.thresholdEntityAlias && threshold.thresholdAttribute) {
               const entityAliasId = this.ctx.aliasController.getEntityAliasId(threshold.thresholdEntityAlias);
               if (!entityAliasId) {
@@ -696,7 +693,7 @@ export class TbFlot {
   private scalingPieRadius() {
       let scalingLine;
       this.ctx.width > this.ctx.height ? scalingLine = this.ctx.height : scalingLine = this.ctx.width;
-      let changeRadius = this.options.series.pie.stroke.width / scalingLine;
+      const changeRadius = this.options.series.pie.stroke.width / scalingLine;
       this.options.series.pie.radius = changeRadius < 1 ? this.settings.radius - changeRadius : 0;
   }
 
@@ -985,8 +982,7 @@ export class TbFlot {
       return item.datasource.entityId === series.datasource.entityId;
     });
     let label = createLabelFromDatasource(series.datasource, series.dataKey.pattern);
-    for (let i = 0; i < seriesLabelPatternsSourcesData.length; i++) {
-      const keyData = seriesLabelPatternsSourcesData[i];
+    seriesLabelPatternsSourcesData.forEach(keyData => {
       if (keyData && keyData.data && keyData.data[0]) {
         const attrValue = keyData.data[0][1];
         const attrName = keyData.dataKey.name;
@@ -994,7 +990,7 @@ export class TbFlot {
           label = insertVariable(label, attrName, attrValue);
         }
       }
-    }
+    });
     if (isDefined(this.subscription.legendData)) {
       const targetLegendKeyIndex = this.subscription.legendData.keys.findIndex((key) => {
         return key.dataIndex === seriesIndex;

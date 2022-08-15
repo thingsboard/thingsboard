@@ -84,7 +84,8 @@ CREATE TABLE IF NOT EXISTS asset (
     tenant_id uuid,
     type varchar(255),
     external_id uuid,
-    CONSTRAINT asset_name_unq_key UNIQUE (tenant_id, name)
+    CONSTRAINT asset_name_unq_key UNIQUE (tenant_id, name),
+    CONSTRAINT asset_external_id_unq_key UNIQUE (tenant_id, external_id)
 );
 
 CREATE TABLE IF NOT EXISTS audit_log (
@@ -144,7 +145,8 @@ CREATE TABLE IF NOT EXISTS customer (
     tenant_id uuid,
     title varchar(255),
     zip varchar(255),
-    external_id uuid
+    external_id uuid,
+    CONSTRAINT customer_external_id_unq_key UNIQUE (tenant_id, external_id)
 );
 
 CREATE TABLE IF NOT EXISTS dashboard (
@@ -158,7 +160,8 @@ CREATE TABLE IF NOT EXISTS dashboard (
     mobile_hide boolean DEFAULT false,
     mobile_order int,
     image varchar(1000000),
-    external_id uuid
+    external_id uuid,
+    CONSTRAINT dashboard_external_id_unq_key UNIQUE (tenant_id, external_id)
 );
 
 CREATE TABLE IF NOT EXISTS rule_chain (
@@ -173,7 +176,8 @@ CREATE TABLE IF NOT EXISTS rule_chain (
     debug_mode boolean,
     search_text varchar(255),
     tenant_id uuid,
-    external_id uuid
+    external_id uuid,
+    CONSTRAINT rule_chain_external_id_unq_key UNIQUE (tenant_id, external_id)
 );
 
 CREATE TABLE IF NOT EXISTS rule_node (
@@ -221,7 +225,7 @@ CREATE TABLE IF NOT EXISTS ota_package (
     CONSTRAINT ota_package_tenant_title_version_unq_key UNIQUE (tenant_id, title, version)
 );
 
-CREATE TABLE IF NOT EXISTS queue(
+CREATE TABLE IF NOT EXISTS queue (
     id uuid NOT NULL CONSTRAINT queue_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     tenant_id uuid,
@@ -258,6 +262,7 @@ CREATE TABLE IF NOT EXISTS device_profile (
     external_id uuid,
     CONSTRAINT device_profile_name_unq_key UNIQUE (tenant_id, name),
     CONSTRAINT device_provision_key_unq_key UNIQUE (provision_device_key),
+    CONSTRAINT device_profile_external_id_unq_key UNIQUE (tenant_id, external_id),
     CONSTRAINT fk_default_rule_chain_device_profile FOREIGN KEY (default_rule_chain_id) REFERENCES rule_chain(id),
     CONSTRAINT fk_default_dashboard_device_profile FOREIGN KEY (default_dashboard_id) REFERENCES dashboard(id),
     CONSTRAINT fk_firmware_device_profile FOREIGN KEY (firmware_id) REFERENCES ota_package(id),
@@ -301,6 +306,7 @@ CREATE TABLE IF NOT EXISTS device (
     software_id uuid,
     external_id uuid,
     CONSTRAINT device_name_unq_key UNIQUE (tenant_id, name),
+    CONSTRAINT device_external_id_unq_key UNIQUE (tenant_id, external_id),
     CONSTRAINT fk_device_profile FOREIGN KEY (device_profile_id) REFERENCES device_profile(id),
     CONSTRAINT fk_firmware_device FOREIGN KEY (firmware_id) REFERENCES ota_package(id),
     CONSTRAINT fk_software_device FOREIGN KEY (software_id) REFERENCES ota_package(id)
@@ -317,18 +323,64 @@ CREATE TABLE IF NOT EXISTS device_credentials (
     CONSTRAINT device_credentials_device_id_unq_key UNIQUE (device_id)
 );
 
-CREATE TABLE IF NOT EXISTS event (
-    id uuid NOT NULL CONSTRAINT event_pkey PRIMARY KEY,
-    created_time bigint NOT NULL,
-    body varchar(10000000),
-    entity_id uuid,
-    entity_type varchar(255),
-    event_type varchar(255),
-    event_uid varchar(255),
-    tenant_id uuid,
+CREATE TABLE IF NOT EXISTS rule_node_debug_event (
+    id uuid NOT NULL,
+    tenant_id uuid NOT NULL ,
     ts bigint NOT NULL,
-    CONSTRAINT event_unq_key UNIQUE (tenant_id, entity_type, entity_id, event_type, event_uid)
-);
+    entity_id uuid NOT NULL,
+    service_id varchar,
+    e_type varchar,
+    e_entity_id uuid,
+    e_entity_type varchar,
+    e_msg_id uuid,
+    e_msg_type varchar,
+    e_data_type varchar,
+    e_relation_type varchar,
+    e_data varchar,
+    e_metadata varchar,
+    e_error varchar
+) PARTITION BY RANGE (ts);
+
+CREATE TABLE IF NOT EXISTS rule_chain_debug_event (
+    id uuid NOT NULL,
+    tenant_id uuid NOT NULL,
+    ts bigint NOT NULL,
+    entity_id uuid NOT NULL,
+    service_id varchar NOT NULL,
+    e_message varchar,
+    e_error varchar
+) PARTITION BY RANGE (ts);
+
+CREATE TABLE IF NOT EXISTS stats_event (
+    id uuid NOT NULL,
+    tenant_id uuid NOT NULL,
+    ts bigint NOT NULL,
+    entity_id uuid NOT NULL,
+    service_id varchar NOT NULL,
+    e_messages_processed bigint NOT NULL,
+    e_errors_occurred bigint NOT NULL
+) PARTITION BY RANGE (ts);
+
+CREATE TABLE IF NOT EXISTS lc_event (
+    id uuid NOT NULL,
+    tenant_id uuid NOT NULL,
+    ts bigint NOT NULL,
+    entity_id uuid NOT NULL,
+    service_id varchar NOT NULL,
+    e_type varchar NOT NULL,
+    e_success boolean NOT NULL,
+    e_error varchar
+) PARTITION BY RANGE (ts);
+
+CREATE TABLE IF NOT EXISTS error_event (
+    id uuid NOT NULL,
+    tenant_id uuid NOT NULL,
+    ts bigint NOT NULL,
+    entity_id uuid NOT NULL,
+    service_id varchar NOT NULL,
+    e_method varchar NOT NULL,
+    e_error varchar
+) PARTITION BY RANGE (ts);
 
 CREATE TABLE IF NOT EXISTS relation (
     from_id uuid,
@@ -424,7 +476,8 @@ CREATE TABLE IF NOT EXISTS widgets_bundle (
     title varchar(255),
     image varchar(1000000),
     description varchar(255),
-    external_id uuid
+    external_id uuid,
+    CONSTRAINT widgets_bundle_external_id_unq_key UNIQUE (tenant_id, external_id)
 );
 
 CREATE TABLE IF NOT EXISTS entity_view (
@@ -441,7 +494,8 @@ CREATE TABLE IF NOT EXISTS entity_view (
     end_ts bigint,
     search_text varchar(255),
     additional_info varchar,
-    external_id uuid
+    external_id uuid,
+    CONSTRAINT entity_view_external_id_unq_key UNIQUE (tenant_id, external_id)
 );
 
 CREATE TABLE IF NOT EXISTS ts_kv_latest

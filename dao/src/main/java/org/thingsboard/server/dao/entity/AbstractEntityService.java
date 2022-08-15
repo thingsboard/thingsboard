@@ -19,7 +19,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.util.Pair;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -31,7 +33,9 @@ import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.relation.RelationService;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
@@ -73,13 +77,36 @@ public abstract class AbstractEntityService {
         alarmService.deleteEntityAlarmRelations(tenantId, entityId);
     }
 
-    protected Optional<ConstraintViolationException> extractConstraintViolationException(Exception t) {
+    protected static Optional<ConstraintViolationException> extractConstraintViolationException(Exception t) {
         if (t instanceof ConstraintViolationException) {
             return Optional.of((ConstraintViolationException) t);
         } else if (t.getCause() instanceof ConstraintViolationException) {
             return Optional.of((ConstraintViolationException) (t.getCause()));
         } else {
             return Optional.empty();
+        }
+    }
+
+    public static final void checkConstraintViolation(Exception t, String constraintName, String constraintMessage) {
+        checkConstraintViolation(t, Collections.singletonMap(constraintName, constraintMessage));
+    }
+
+    public static final void checkConstraintViolation(Exception t, String constraintName1, String constraintMessage1, String constraintName2, String constraintMessage2) {
+        checkConstraintViolation(t, Map.of(constraintName1, constraintMessage1, constraintName2, constraintMessage2));
+    }
+
+    public static final void checkConstraintViolation(Exception t, Map<String, String> constraints) {
+        var exOpt = extractConstraintViolationException(t);
+        if (exOpt.isPresent()) {
+            var ex = exOpt.get();
+            if (StringUtils.isNotEmpty(ex.getConstraintName())) {
+                var constraintName = ex.getConstraintName();
+                for (var constraintMessage : constraints.entrySet()) {
+                    if (constraintName.equals(constraintMessage.getKey())) {
+                        throw new DataValidationException(constraintMessage.getValue());
+                    }
+                }
+            }
         }
     }
 

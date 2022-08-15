@@ -23,7 +23,6 @@ import org.thingsboard.server.dao.util.SqlTsDao;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
-@SqlTsDao
 @Repository
 @Transactional
 public class SqlPartitioningRepository {
@@ -32,8 +31,7 @@ public class SqlPartitioningRepository {
     private EntityManager entityManager;
 
     public void save(SqlPartition partition) {
-        entityManager.createNativeQuery(partition.getQuery())
-                .executeUpdate();
+        entityManager.createNativeQuery(partition.getQuery()).executeUpdate();
     }
 
 }

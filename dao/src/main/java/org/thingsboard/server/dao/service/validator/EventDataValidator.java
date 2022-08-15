@@ -17,7 +17,7 @@ package org.thingsboard.server.dao.service.validator;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.event.Event;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -27,14 +27,14 @@ public class EventDataValidator extends DataValidator<Event> {
 
     @Override
     protected void validateDataImpl(TenantId tenantId, Event event) {
+        if (event.getTenantId() == null) {
+            throw new DataValidationException("Tenant id should be specified!.");
+        }
         if (event.getEntityId() == null) {
             throw new DataValidationException("Entity id should be specified!.");
         }
-        if (StringUtils.isEmpty(event.getType())) {
-            throw new DataValidationException("Event type should be specified!.");
-        }
-        if (event.getBody() == null) {
-            throw new DataValidationException("Event body should be specified!.");
+        if (StringUtils.isEmpty(event.getServiceId())) {
+            throw new DataValidationException("Service id should be specified!.");
         }
     }
 }

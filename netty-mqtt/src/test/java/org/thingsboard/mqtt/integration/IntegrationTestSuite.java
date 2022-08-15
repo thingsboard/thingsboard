@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.event;
+package org.thingsboard.mqtt.integration;
 
-import io.swagger.annotations.ApiModel;
+import org.junit.extensions.cpsuite.ClasspathSuite;
+import org.junit.runner.RunWith;
 
-@ApiModel
-public class DebugRuleChainEventFilter extends DebugEvent {
-    @Override
-    public EventType getEventType() {
-        return EventType.DEBUG_RULE_CHAIN;
-    }
+@RunWith(ClasspathSuite.class)
+@ClasspathSuite.ClassnameFilters({
+        "org.thingsboard.mqtt.integration.*Test",
+})
+public class IntegrationTestSuite {
+
 }

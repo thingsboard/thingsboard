@@ -221,9 +221,6 @@ cassandra:
     ts_key_value_partitioning: "${TS_KV_PARTITIONING:MONTHS}"
     ts_key_value_partitions_max_cache_size: "${TS_KV_PARTITIONS_MAX_CACHE_SIZE:100000}"
     ts_key_value_ttl: "${TS_KV_TTL:0}"
-    events_ttl: "${TS_EVENTS_TTL:0}"
-    # Specify TTL of debug log in seconds. The current value corresponds to one week
-    debug_events_ttl: "${DEBUG_EVENTS_TTL:604800}"
     buffer_size: "${CASSANDRA_QUERY_BUFFER_SIZE:200000}"
     concurrent_limit: "${CASSANDRA_QUERY_CONCURRENT_LIMIT:1000}"
     permit_max_wait_time: "${PERMIT_MAX_WAIT_TIME:120000}"
@@ -262,6 +259,8 @@ sql:
     batch_max_delay: "${SQL_EVENTS_BATCH_MAX_DELAY_MS:100}"
     stats_print_interval_ms: "${SQL_EVENTS_BATCH_STATS_PRINT_MS:10000}"
     batch_threads: "${SQL_EVENTS_BATCH_THREADS:3}" # batch thread count have to be a prime number like 3 or 5 to gain perfect hash distribution
+    partition_size: "${SQL_EVENTS_REGULAR_PARTITION_SIZE_HOURS:168}" # Number of hours to partition the events. The current value corresponds to one week.
+    debug_partition_size: "${SQL_EVENTS_REGULAR_PARTITION_SIZE_HOURS:1}" # Number of hours to partition the debug events. The current value corresponds to one hour.
   edge_events:
     batch_size: "${SQL_EDGE_EVENTS_BATCH_SIZE:1000}"
     batch_max_delay: "${SQL_EDGE_EVENTS_BATCH_MAX_DELAY_MS:100}"
@@ -287,9 +286,11 @@ sql:
       ts_key_value_ttl: "${SQL_TTL_TS_TS_KEY_VALUE_TTL:0}" # Number of seconds
     events:
       enabled: "${SQL_TTL_EVENTS_ENABLED:true}"
-      execution_interval_ms: "${SQL_TTL_EVENTS_EXECUTION_INTERVAL:2220000}" # Number of milliseconds (max random initial delay and fixed period). # 37minutes to avoid common interval spikes
-      events_ttl: "${SQL_TTL_EVENTS_EVENTS_TTL:0}" # Number of seconds
-      debug_events_ttl: "${SQL_TTL_EVENTS_DEBUG_EVENTS_TTL:604800}" # Number of seconds. The current value corresponds to one week
+      execution_interval_ms: "${SQL_TTL_EVENTS_EXECUTION_INTERVAL:3600000}" # Number of milliseconds (max random initial delay and fixed period).
+      # Number of seconds. TTL is disabled by default. Accuracy of the cleanup depends on the sql.events.partition_size parameter.
+      events_ttl: "${SQL_TTL_EVENTS_EVENTS_TTL:0}"
+      # Number of seconds. The current value corresponds to one week. Accuracy of the cleanup depends on the sql.events.debug_partition_size parameter.
+      debug_events_ttl: "${SQL_TTL_EVENTS_DEBUG_EVENTS_TTL:604800}"
     edge_events:
       enabled: "${SQL_TTL_EDGE_EVENTS_ENABLED:true}"
       execution_interval_ms: "${SQL_TTL_EDGE_EVENTS_EXECUTION_INTERVAL:86400000}" # Number of milliseconds. The current value corresponds to one day
@@ -1037,7 +1038,7 @@ queue:
     poll-interval: "${TB_QUEUE_VC_INTERVAL_MS:25}"
     pack-processing-timeout: "${TB_QUEUE_VC_PACK_PROCESSING_TIMEOUT_MS:60000}"
     request-timeout: "${TB_QUEUE_VC_REQUEST_TIMEOUT:60000}"
-    msg-chunk-size: "${TB_QUEUE_VC_MSG_CHUNK_SIZE:500000}"
+    msg-chunk-size: "${TB_QUEUE_VC_MSG_CHUNK_SIZE:250000}"
   js:
     # JS Eval request topic
     request_topic: "${REMOTE_JS_EVAL_REQUEST_TOPIC:js_eval.requests}"

@@ -49,7 +49,7 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
 
     private static final long serialVersionUID = 6998485460273302018L;
 
-    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id that owns the profile.", readOnly = true)
+    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id that owns the profile.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private TenantId tenantId;
     @NoXss
     @Length(fieldName = "name")
@@ -129,7 +129,7 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
         return super.getId();
     }
 
-    @ApiModelProperty(position = 2, value = "Timestamp of the profile creation, in milliseconds", example = "1609459200000", readOnly = true)
+    @ApiModelProperty(position = 2, value = "Timestamp of the profile creation, in milliseconds", example = "1609459200000", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();

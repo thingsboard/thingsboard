@@ -24,9 +24,9 @@ import org.thingsboard.server.common.data.id.AssetId;
 @Data
 public class AssetInfo extends Asset {
 
-    @ApiModelProperty(position = 9, value = "Title of the Customer that owns the asset.", readOnly = true)
+    @ApiModelProperty(position = 9, value = "Title of the Customer that owns the asset.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String customerTitle;
-    @ApiModelProperty(position = 10, value = "Indicates special 'Public' Customer that is auto-generated to use the assets on public dashboards.", readOnly = true)
+    @ApiModelProperty(position = 10, value = "Indicates special 'Public' Customer that is auto-generated to use the assets on public dashboards.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private boolean customerIsPublic;
 
     public AssetInfo() {

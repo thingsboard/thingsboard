@@ -13,14 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.event;
+package org.thingsboard.server.dao.util;
 
-import io.swagger.annotations.ApiModel;
+import lombok.Getter;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
-@ApiModel
-public class DebugRuleNodeEventFilter extends DebugEvent {
+@Component
+public class DefaultDbTypeInfoComponent implements DbTypeInfoComponent {
+
+    @Value("${database.ts_latest.type:sql}")
+    @Getter
+    private String latestTsDbType;
+
     @Override
-    public EventType getEventType() {
-        return EventType.DEBUG_RULE_NODE;
+    public boolean isLatestTsDaoStoredToSql() {
+        return !latestTsDbType.equalsIgnoreCase("cassandra");
     }
 }
