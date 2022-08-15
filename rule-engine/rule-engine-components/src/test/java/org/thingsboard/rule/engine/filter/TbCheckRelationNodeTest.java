@@ -54,10 +54,7 @@ public class TbCheckRelationNodeTest {
 
         String type = "TYPE";
         config.setRelationType(type);
-        node.init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
-        node.onMsg(ctx, msg);
-        verify(relationService, times(1))
-                .checkRelationAsync(any(), any(), any(), eq(type), any());
+        callAndVerifyMsg(msg, type);
     }
 
     @Test
@@ -68,11 +65,7 @@ public class TbCheckRelationNodeTest {
                 JacksonUtil.toString(JacksonUtil.newObjectNode().put("data_key", "data_value")));
 
         config.setRelationType("$[data_key]");
-
-        node.init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
-        node.onMsg(ctx, msg);
-        verify(relationService, times(1))
-                .checkRelationAsync(any(), any(), any(), eq("data_value"), any());
+        callAndVerifyMsg(msg, "data_value");
     }
 
     @Test
@@ -83,9 +76,13 @@ public class TbCheckRelationNodeTest {
 
         config.setRelationType("${metadata_key}");
 
+        callAndVerifyMsg(msg, "metadata_value");
+    }
+
+    private void callAndVerifyMsg(TbMsg msg, String type) throws TbNodeException {
         node.init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
         node.onMsg(ctx, msg);
         verify(relationService, times(1))
-                .checkRelationAsync(any(), any(), any(), eq("metadata_value"), any());
+                .checkRelationAsync(any(), any(), any(), eq(type), any());
     }
 }
