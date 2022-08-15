@@ -25,131 +25,139 @@
       <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-toolbar>
-  <div mat-dialog-content fxLayout="column" fxLayoutGap="8px" style="min-width: 300px;">
-    <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+  <div mat-dialog-content fxLayout="column" fxLayoutGap="20px" style="min-width: 300px; overflow: hidden;">
+    <div fxLayout="row" fxLayoutAlign="start center">
         <mat-slide-toggle formControlName="right">
           {{ 'layout.divider' | translate }}
         </mat-slide-toggle>
     </div>
-    <div fxLayout="column" fxLayoutGap="8px">
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="2%">
-        <button fxFlex="{{buttonFlexValue()}}"
-                type="button"
-                mat-raised-button
-                color="primary"
-                class="tb-layout-button"
-                (click)="openLayoutSettings('main')"
-                >
-          <span >{{ (layoutsFormGroup.value.right ? 'layout.left' : 'layout.main')  | translate }}</span>
-        </button>
-        <button fxFlex
-                [fxShow]="layoutsFormGroup.get('right').value"
-                type="button"
-                mat-raised-button
-                color="primary"
-                class="tb-layout-button"
-                (click)="openLayoutSettings('right')">
-          <span >{{ 'layout.right' | translate }}</span>
-        </button>
+    <div fxLayout="column" fxLayoutAlign="start center" fxLayoutGap="20px">
+      <mat-button-toggle-group aria-label="Select width value type"
+                               formControlName="type"
+                               [fxShow]="layoutsFormGroup.get('right').value">
+        <mat-button-toggle fxFlex value="percentage">
+          {{ 'layout.percentage-width' | translate }}
+        </mat-button-toggle>
+        <mat-button-toggle fxFlex value="fixed">
+          {{ 'layout.fixed-width' | translate }}
+        </mat-button-toggle>
+      </mat-button-toggle-group>
+      <div fxLayout="row" fxLayoutAlign="center center" class="tb-layout-preview">
+        <div fxLayout="row"
+             fxLayoutAlign="start center"
+             class="tb-layout-preview-container"
+             #tooltip="matTooltip"
+             matTooltip=""
+             matTooltipPosition="below">
+          <div fxLayout="column" fxLayoutAlign="start center" fxFlex="{{ buttonFlexValue() }}" class="tb-layout-preview-container-main">
+            <button mat-icon-button
+                    type="button"
+                    matTooltip="{{ 'dashboard.layout-settings' | translate }}"
+                    matTooltipPosition="above"
+                    (click)="openLayoutSettings('main')"
+                    class="tb-layout-preview-element"
+                    aria-label="Layout settings">
+              <mat-icon>settings</mat-icon>
+            </button>
+            <button fxFlex
+                    type="button"
+                    mat-raised-button
+                    color="primary"
+                    class="tb-layout-button"
+                    [matTooltip]="layoutButtonTooltip('main', true)"
+                    matTooltipPosition="above"
+                    (click)="setFixedLayout('main')"
+                    [ngClass]="layoutButtonTooltip('main', false)"
+                    [ngStyle]="layoutsFormGroup.get('right').value ?
+                              {'border-radius': '5px 0 0 5px;'} :
+                              {'border-radius': '5px 5px 5px 5px;'}">
+              <span >{{ (layoutsFormGroup.value.right ? 'layout.left' : 'layout.main')  | translate }}</span>
+            </button>
+            <div fxFlex class="tb-layout-preview-element tb-layout-preview-input" [fxShow]="showPreviewInputs('main')">
+              <input [fxShow]="layoutsFormGroup.get('type').value !== LayoutWidthType.FIXED"
+                     formControlName="leftWidthPercentage"
+                     type="number"
+                     step="1"
+                     min="10"
+                     max="90"
+                     required>
+              <input [fxShow]="layoutsFormGroup.get('type').value === LayoutWidthType.FIXED"
+                     *ngIf="layoutsFormGroup.get('fixedLayout').value === 'main'"
+                     formControlName="fixedWidth"
+                     type="number"
+                     step="1"
+                     min="150"
+                     max="1700"
+                     required>
+            </div>
+          </div>
+          <div fxLayout="column" fxLayoutAlign="start center" fxFlex [fxShow]="layoutsFormGroup.get('right').value" matTooltip="">
+            <button mat-icon-button
+                    type="button"
+                    matTooltip="{{ 'dashboard.layout-settings' | translate }}"
+                    matTooltipPosition="above"
+                    (click)="openLayoutSettings('right')"
+                    class="tb-layout-preview-element"
+                    aria-label="Layout settings">
+              <mat-icon>settings</mat-icon>
+            </button>
+            <button fxFlex
+                    type="button"
+                    mat-raised-button
+                    color="primary"
+                    class="tb-layout-button"
+                    [matTooltip]="layoutButtonTooltip('right', true)"
+                    matTooltipPosition="above"
+                    (click)="setFixedLayout('right')"
+                    [ngClass]="layoutButtonTooltip('right', false)"
+                    style="border-radius: 0 5px 5px 0;">
+              <span >{{ 'layout.right' | translate }}</span>
+            </button>
+            <div fxFlex class="tb-layout-preview-element tb-layout-preview-input" [fxShow]="showPreviewInputs('right')">
+              <input [fxShow]="layoutsFormGroup.get('type').value !== LayoutWidthType.FIXED"
+                     formControlName="rightWidthPercentage"
+                     type="number"
+                     step="1"
+                     min="10"
+                     max="90"
+                     required>
+              <input [fxShow]="layoutsFormGroup.get('type').value === LayoutWidthType.FIXED"
+                     *ngIf="layoutsFormGroup.get('fixedLayout').value === 'right'"
+                     formControlName="fixedWidth"
+                     type="number"
+                     step="1"
+                     min="150"
+                     max="1700"
+                     required>
+            </div>
+          </div>
+        </div>
       </div>
-      <div fxLayout="column" fxLayoutGap="8px" [fxShow]="layoutsFormGroup.get('right').value">
-        <div [fxShow]="layoutsFormGroup.get('type').value === LayoutWidthType.PERCENTAGE">
-          <mat-slider min="10"
+      <div fxLayout="column" fxLayoutAlign="center center" fxLayoutGap="8px" [fxShow]="layoutsFormGroup.get('right').value" style="width: 100%">
+        <div style="width: 80%">
+          <mat-slider [fxShow]="layoutsFormGroup.get('type').value === LayoutWidthType.PERCENTAGE"
+                      min="10"
                       step="1"
                       max="90"
                       style="width: 100%;"
                       formControlName="sliderPercentage"
                       thumbLabel
-                      [displayWith]="formatSliderTooltipLabel">
+                      [displayWith]="formatSliderTooltipLabel.bind(this)">
           </mat-slider>
-          <div fxLayout="row" fxLayoutGap="8px">
-            <mat-form-field fxFlex class="mat-block">
-              <mat-label>{{ 'layout.left-width' | translate }}</mat-label>
-              <input matInput
-                     formControlName="leftWidthPercentage"
-                     type="number"
-                     step="1"
-                     min="10"
-                     max="90">
-              <mat-error *ngIf="layoutsFormGroup.get('leftWidthPercentage').hasError('required')">
-                {{ 'layout.left-width-percentage-required' | translate }}
-              </mat-error>
-              <mat-error *ngIf="layoutsFormGroup.get('leftWidthPercentage').hasError('max')">
-                {{ 'layout.value-max-error' | translate: { max: 90 } }}
-              </mat-error>
-              <mat-error *ngIf="layoutsFormGroup.get('leftWidthPercentage').hasError('min')">
-                {{ 'layout.value-min-error' | translate: { min: 10 } }}
-              </mat-error>
-            </mat-form-field>
-            <mat-form-field fxFlex class="mat-block">
-              <mat-label>{{ 'layout.right-width' | translate }}</mat-label>
-              <input matInput
-                     formControlName="rightWidthPercentage"
-                     type="number"
-                     step="1"
-                     min="10"
-                     max="90">
-              <mat-error *ngIf="layoutsFormGroup.get('rightWidthPercentage').hasError('required')">
-                {{ 'layout.right-width-percentage-required' | translate }}
-              </mat-error>
-              <mat-error *ngIf="layoutsFormGroup.get('rightWidthPercentage').hasError('max')">
-                {{ 'layout.value-max-error' | translate: { max: 90 } }}
-              </mat-error>
-              <mat-error *ngIf="layoutsFormGroup.get('rightWidthPercentage').hasError('min')">
-                {{ 'layout.value-min-error' | translate: { min: 10 } }}
-              </mat-error>
-            </mat-form-field>
+          <mat-slider [fxShow]="layoutsFormGroup.get('type').value !== LayoutWidthType.PERCENTAGE"
+                      min="150"
+                      step="1"
+                      max="1700"
+                      style="width: 100%;"
+                      formControlName="sliderFixed"
+                      thumbLabel
+                      [displayWith]="formatSliderTooltipLabel.bind(this)">
+          </mat-slider>
+          <div fxLayout="row" fxLayoutAlign="space-between center" class="tb-hint tb-hint-group">
+            <label>{{layoutsFormGroup.get('type').value === LayoutWidthType.PERCENTAGE ? '0 %' : '150px'}}</label>
+            <label>{{layoutsFormGroup.get('type').value === LayoutWidthType.PERCENTAGE ? '100 %' : '1700px'}}</label>
           </div>
-          <label [fxShow]="layoutsFormGroup.get('leftWidthPercentage').valid && layoutsFormGroup.get('rightWidthPercentage').valid" class="tb-hint tb-hint-group">
-            {{'layout.layout-min-max' | translate: { min: 10, max: 90, units: "%" } }}
-          </label>
         </div>
-        <div [fxShow]="layoutsFormGroup.get('type').value === LayoutWidthType.FIXED">
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" class="tb-layout-fixed-container">
-            <label>{{ 'layout.pick-fixed-side' | translate }}</label>
-            <mat-radio-group aria-label="Select side"
-                             formControlName="fixedLayout"
-                             fxLayout="row"
-                             fxLayoutGap="8px">
-              <mat-radio-button value="main">
-                {{ 'layout.left' | translate }}
-              </mat-radio-button>
-              <mat-radio-button value="right">
-                {{ 'layout.right' | translate }}
-              </mat-radio-button>
-            </mat-radio-group>
-          </div>
-          <mat-form-field fxFlex class="mat-block" style="min-width: 368px;">
-            <mat-label>{{ 'layout.layout-fixed-width' | translate }}</mat-label>
-            <input matInput
-                   formControlName="fixedWidth"
-                   type="number"
-                   step="1"
-                   min="150"
-                   max="1700">
-            <mat-hint>
-              {{ 'layout.layout-min-max' | translate: {min: 150, max: 1700, units: "px" } }}
-            </mat-hint>
-            <mat-error *ngIf="layoutsFormGroup.get('fixedWidth').hasError('required')">
-              {{ 'layout.layout-fixed-width-required' | translate }}
-            </mat-error>
-            <mat-error *ngIf="layoutsFormGroup.get('fixedWidth').hasError('max')">
-              {{ 'layout.value-max-error' | translate: { max: 1700 } }}
-            </mat-error>
-            <mat-error *ngIf="layoutsFormGroup.get('fixedWidth').hasError('min')">
-              {{ 'layout.value-min-error' | translate: { min: 150 } }}
-            </mat-error>
-          </mat-form-field>
-        </div>
-        <mat-button-toggle-group aria-label="Select width value type"
-                                 formControlName="type">
-          <mat-button-toggle fxFlex value="percentage">
-            {{ 'layout.percentage-width' | translate }}
-          </mat-button-toggle>
-          <mat-button-toggle fxFlex value="fixed">
-            {{ 'layout.fixed-width' | translate }}
-          </mat-button-toggle>
-        </mat-button-toggle-group>
       </div>
     </div>
   </div>

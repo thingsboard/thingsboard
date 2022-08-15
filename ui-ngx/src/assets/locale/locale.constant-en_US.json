@@ -2499,13 +2499,14 @@
         "right-width": "Right column (%)",
         "pick-fixed-side": "Fixed side: ",
         "layout-fixed-width": "Fixed width (px)",
-        "layout-min-max": "Minimum width: {{min}}{{units}}, maximum width: {{max}}{{units}}",
-        "value-min-error": "Value must be more then {{min}}",
-        "value-max-error": "Value must be less then {{max}}",
+        "value-min-error": "Value must be more then {{min}}{{unit}}",
+        "value-max-error": "Value must be less then {{max}}{{unit}}",
         "layout-fixed-width-required": "Fixed width is required",
         "right-width-percentage-required": "Right percentage is required",
         "left-width-percentage-required": "Left percentage is required",
-        "divider": "Divider"
+        "divider": "Divider",
+        "right-side": "Right side layout",
+        "left-side": "Left side layout"
     },
     "legend": {
         "direction": "Legend direction",
