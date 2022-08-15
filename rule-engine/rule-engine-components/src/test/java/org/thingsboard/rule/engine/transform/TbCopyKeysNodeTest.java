@@ -32,8 +32,8 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -60,7 +60,7 @@ public class TbCopyKeysNodeTest {
         callback = mock(TbMsgCallback.class);
         ctx = mock(TbContext.class);
         config = new TbCopyKeysNodeConfiguration().defaultConfiguration();
-        config.setKeys(List.of("TestKey_1", "TestKey_2", "TestKey_3", "(\\w*)Data(\\w*)"));
+        config.setKeys(Set.of("TestKey_1", "TestKey_2", "TestKey_3", "(\\w*)Data(\\w*)"));
         config.setFromMetadata(true);
         nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
         node = spy(new TbCopyKeysNode());
@@ -80,7 +80,7 @@ public class TbCopyKeysNodeTest {
     @Test
     void givenDefaultConfig_whenVerify_thenOK() {
         TbCopyKeysNodeConfiguration defaultConfig = new TbCopyKeysNodeConfiguration().defaultConfiguration();
-        assertThat(defaultConfig.getKeys()).isEqualTo(Collections.emptyList());
+        assertThat(defaultConfig.getKeys()).isEqualTo(Collections.emptySet());
         assertThat(defaultConfig.isFromMetadata()).isEqualTo(false);
     }
 

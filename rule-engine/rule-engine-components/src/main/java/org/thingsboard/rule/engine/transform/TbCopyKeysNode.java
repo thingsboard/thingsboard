@@ -29,8 +29,8 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 
@@ -58,7 +58,7 @@ public class TbCopyKeysNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        List<String> keys = config.getKeys();
+        Set<String> keys = config.getKeys();
         TbMsgMetaData metaData = msg.getMetaData();
         String msgData = msg.getData();
         JsonNode dataNode = JacksonUtil.toJsonNode(msgData);

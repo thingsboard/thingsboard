@@ -19,18 +19,18 @@ import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
 import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 
 @Data
 public class TbCopyKeysNodeConfiguration implements NodeConfiguration<TbCopyKeysNodeConfiguration> {
 
     private boolean fromMetadata;
-    private List<String> keys;
+    private Set<String> keys;
 
     @Override
     public TbCopyKeysNodeConfiguration defaultConfiguration() {
         TbCopyKeysNodeConfiguration configuration = new TbCopyKeysNodeConfiguration();
-        configuration.setKeys(Collections.emptyList());
+        configuration.setKeys(Collections.emptySet());
         configuration.setFromMetadata(false);
         return configuration;
     }
