@@ -32,8 +32,8 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -60,7 +60,7 @@ public class TbDeleteKeysNodeTest {
         callback = mock(TbMsgCallback.class);
         ctx = mock(TbContext.class);
         config = new TbDeleteKeysNodeConfiguration().defaultConfiguration();
-        config.setKeys(List.of("TestKey_1", "TestKey_2", "TestKey_3", "(\\w*)Data(\\w*)"));
+        config.setKeys(Set.of("TestKey_1", "TestKey_2", "TestKey_3", "(\\w*)Data(\\w*)"));
         config.setFromMetadata(true);
         nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
         node = spy(new TbDeleteKeysNode());
@@ -80,7 +80,7 @@ public class TbDeleteKeysNodeTest {
     @Test
     void givenDefaultConfig_whenVerify_thenOK() {
         TbDeleteKeysNodeConfiguration defaultConfig = new TbDeleteKeysNodeConfiguration().defaultConfiguration();
-        assertThat(defaultConfig.getKeys()).isEqualTo(Collections.emptyList());
+        assertThat(defaultConfig.getKeys()).isEqualTo(Collections.emptySet());
         assertThat(defaultConfig.isFromMetadata()).isEqualTo(false);
     }
 
@@ -97,8 +97,8 @@ public class TbDeleteKeysNodeTest {
         assertThat(newMsg).isNotNull();
 
         Map<String, String> metaDataMap = newMsg.getMetaData().getData();
-        assertThat(metaDataMap.containsKey("DigitData")).isEqualTo(false);
-        assertThat(metaDataMap.containsKey("TempDataValue")).isEqualTo(false);
+        assertThat(metaDataMap.containsKey("TestKey_1")).isEqualTo(false);
+        assertThat(metaDataMap.containsKey("voltageDataValue")).isEqualTo(false);
     }
 
     @Test
@@ -128,7 +128,7 @@ public class TbDeleteKeysNodeTest {
         nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(defaultConfig));
         node.init(ctx, nodeConfiguration);
 
-        String data = "{}";
+        String data = "{\"Voltage\":220,\"Humidity\":56}";
         node.onMsg(ctx, getTbMsg(deviceId, data));
 
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);

@@ -18,7 +18,6 @@ package org.thingsboard.rule.engine.transform;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.CollectionUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -33,6 +32,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 
@@ -59,45 +59,41 @@ public class TbDeleteKeysNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        List<String> keys = config.getKeys();
-        if (CollectionUtils.isEmpty(keys)) {
-            ctx.tellSuccess(msg);
+        Set<String> keys = config.getKeys();
+        TbMsgMetaData metaData = msg.getMetaData();
+        String msgData = msg.getData();
+        if (config.isFromMetadata()) {
+            Map<String, String> metaDataMap = metaData.getData();
+            List<String> keysToDelete = new ArrayList<>();
+            keys.forEach(key -> {
+                Pattern pattern = Pattern.compile(key);
+                metaDataMap.forEach((keyMetaData, valueMetaData) -> {
+                    if (pattern.matcher(keyMetaData).matches()) {
+                        keysToDelete.add(keyMetaData);
+                    }
+                });
+            });
+            keysToDelete.forEach(key -> metaDataMap.remove(key));
+            metaData = new TbMsgMetaData(metaDataMap);
         } else {
-            TbMsgMetaData metaData = msg.getMetaData();
-            String msgData = msg.getData();
-            if (config.isFromMetadata()) {
-                Map<String, String> metaDataMap = metaData.getData();
+            JsonNode dataNode = JacksonUtil.toJsonNode(msgData);
+            if (dataNode.isObject()) {
                 List<String> keysToDelete = new ArrayList<>();
+                ObjectNode msgDataObject = (ObjectNode) dataNode;
                 keys.forEach(key -> {
                     Pattern pattern = Pattern.compile(key);
-                    metaDataMap.forEach((keyMetaData, valueMetaData) -> {
-                        if (pattern.matcher(keyMetaData).matches()) {
-                            keysToDelete.add(keyMetaData);
+                    msgDataObject.fields().forEachRemaining(entry -> {
+                        String keyData = entry.getKey();
+                        if (pattern.matcher(keyData).matches()) {
+                            keysToDelete.add(keyData);
                         }
                     });
                 });
-                keysToDelete.forEach(key -> metaDataMap.remove(key));
-                metaData = new TbMsgMetaData(metaDataMap);
-            } else {
-                JsonNode dataNode = JacksonUtil.toJsonNode(msgData);
-                if (dataNode.isObject()) {
-                    List<String> keysToDelete = new ArrayList<>();
-                    ObjectNode msgDataObject = (ObjectNode) dataNode;
-                    keys.forEach(key -> {
-                        Pattern pattern = Pattern.compile(key);
-                        msgDataObject.fields().forEachRemaining(entry -> {
-                            String keyData = entry.getKey();
-                            if (pattern.matcher(keyData).matches()) {
-                                keysToDelete.add(keyData);
-                            }
-                        });
-                    });
-                    msgDataObject.remove(keysToDelete);
-                    msgData = JacksonUtil.toString(msgDataObject);
-                }
+                msgDataObject.remove(keysToDelete);
+                msgData = JacksonUtil.toString(msgDataObject);
             }
-            ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), metaData, msgData));
         }
+        ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), metaData, msgData));
     }
 
     @Override
