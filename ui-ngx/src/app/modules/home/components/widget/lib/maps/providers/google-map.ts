@@ -38,8 +38,7 @@ export class GoogleMap extends LeafletMap {
       const map = L.map($container, {
         attributionControl: false,
         doubleClickZoom: !this.options.disableDoubleClickZooming,
-        zoomControl: !this.options.disableZoomControl,
-        tap: L.Browser.safari && L.Browser.mobile
+        zoomControl: !this.options.disableZoomControl
       }).setView(options?.parsedDefaultCenterPosition, options?.defaultZoomLevel || DEFAULT_ZOOM_LEVEL);
       (L.gridLayer as any).googleMutant({
         type: options?.gmDefaultMapType || 'roadmap'
