@@ -142,7 +142,7 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
         this.getFlagAndPhoneNumberData(value);
         let phoneNumber = this.phoneFormGroup.get('phoneNumber').value;
         if (phoneNumber) {
-          if (code !== this.countryCallingCode && phoneNumber.includes(code)) {
+          if (code !== '+' && code !== this.countryCallingCode && phoneNumber.includes(code)) {
             phoneNumber = phoneNumber.replace(code, this.countryCallingCode);
             this.phoneFormGroup.get('phoneNumber').patchValue(phoneNumber);
           }
