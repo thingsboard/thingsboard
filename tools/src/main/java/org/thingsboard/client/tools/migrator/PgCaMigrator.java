@@ -19,7 +19,7 @@ import com.google.common.collect.Lists;
 import org.apache.cassandra.io.sstable.CQLSSTableWriter;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
-import org.apache.commons.lang3.StringUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import java.io.File;

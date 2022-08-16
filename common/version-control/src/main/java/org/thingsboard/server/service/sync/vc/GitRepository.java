@@ -20,7 +20,7 @@ import com.google.common.collect.Ordering;
 import com.google.common.collect.Streams;
 import lombok.Data;
 import lombok.Getter;
-import org.apache.commons.lang3.StringUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.apache.sshd.common.util.security.SecurityUtils;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;

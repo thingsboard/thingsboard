@@ -26,7 +26,6 @@ import com.google.protobuf.AbstractMessage;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.MessageLite;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Assert;
@@ -48,6 +47,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
@@ -1233,7 +1233,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
 
     @Test
     public void testSendDeviceToCloudWithNameThatAlreadyExistsOnCloud() throws Exception {
-        String deviceOnCloudName = RandomStringUtils.randomAlphanumeric(15);
+        String deviceOnCloudName = StringUtils.randomAlphanumeric(15);
         Device deviceOnCloud = saveDevice(deviceOnCloudName, "Default");
 
         UUID uuid = Uuids.timeBased();
@@ -1878,7 +1878,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         OtaPackageInfo firmwareOtaPackageInfo = saveOtaPackageInfo(thermostatDeviceProfile.getId());
         Assert.assertTrue(edgeImitator.waitForMessages());
 
-        Device savedDevice = saveDevice(RandomStringUtils.randomAlphanumeric(15), thermostatDeviceProfile.getName());
+        Device savedDevice = saveDevice(StringUtils.randomAlphanumeric(15), thermostatDeviceProfile.getName());
         savedDevice.setFirmwareId(firmwareOtaPackageInfo.getId());
         savedDevice = doPost("/api/device", savedDevice, Device.class);
 
@@ -1942,7 +1942,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         SaveOtaPackageInfoRequest firmwareInfo = new SaveOtaPackageInfoRequest();
         firmwareInfo.setDeviceProfileId(deviceProfileId);
         firmwareInfo.setType(FIRMWARE);
-        firmwareInfo.setTitle("Firmware Edge " + RandomStringUtils.randomAlphanumeric(3));
+        firmwareInfo.setTitle("Firmware Edge " + StringUtils.randomAlphanumeric(3));
         firmwareInfo.setVersion("v1.0");
         firmwareInfo.setTag("My firmware #1 v1.0");
         firmwareInfo.setUsesUrl(true);
