@@ -13,28 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge.rpc;
+package org.thingsboard.server.common.msg.edge;
 
-import org.thingsboard.server.common.data.edge.Edge;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.edge.FromEdgeSyncResponse;
-import org.thingsboard.server.common.msg.edge.ToEdgeSyncRequest;
+import org.thingsboard.server.common.msg.MsgType;
+import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
+import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
 
 import java.util.UUID;
-import java.util.function.Consumer;
 
-public interface EdgeRpcService {
+@AllArgsConstructor
+@Getter
+public class FromEdgeSyncResponse implements TenantAwareMsg, ToAllNodesMsg {
 
-    void updateEdge(TenantId tenantId, Edge edge);
+    private final UUID id;
+    private final TenantId tenantId;
+    private final EdgeId edgeId;
+    private final boolean success;
 
-    void deleteEdge(TenantId tenantId, EdgeId edgeId);
-
-    void onEdgeEvent(TenantId tenantId, EdgeId edgeId);
-
-    void startSyncProcess(TenantId tenantId, EdgeId edgeId, UUID requestId);
-
-    void processSyncRequest(ToEdgeSyncRequest request, Consumer<FromEdgeSyncResponse> responseConsumer);
-
-    void processSyncResponse(FromEdgeSyncResponse response);
+    @Override
+    public MsgType getMsgType() {
+        return MsgType.EDGE_SYNC_RESPONSE_FROM_EDGE_SESSION_MSG;
+    }
 }

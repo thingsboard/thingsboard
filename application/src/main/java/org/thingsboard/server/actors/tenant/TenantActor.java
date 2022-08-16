@@ -48,6 +48,8 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.aware.DeviceAwareMsg;
 import org.thingsboard.server.common.msg.aware.RuleChainAwareMsg;
 import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
+import org.thingsboard.server.common.msg.edge.FromEdgeSyncResponse;
+import org.thingsboard.server.common.msg.edge.ToEdgeSyncRequest;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
@@ -167,7 +169,9 @@ public class TenantActor extends RuleChainManagerActor {
                 onRuleChainMsg((RuleChainAwareMsg) msg);
                 break;
             case EDGE_EVENT_UPDATE_TO_EDGE_SESSION_MSG:
-                onToEdgeSessionMsg((EdgeEventUpdateMsg) msg);
+            case EDGE_SYNC_REQUEST_TO_EDGE_SESSION_MSG:
+            case EDGE_SYNC_RESPONSE_FROM_EDGE_SESSION_MSG:
+                onToEdgeSessionMsg(msg);
                 break;
             default:
                 return false;
@@ -271,9 +275,24 @@ public class TenantActor extends RuleChainManagerActor {
                 () -> new DeviceActorCreator(systemContext, tenantId, deviceId));
     }
 
-    private void onToEdgeSessionMsg(EdgeEventUpdateMsg msg) {
-        log.trace("[{}] onToEdgeSessionMsg [{}]", msg.getTenantId(), msg);
-        systemContext.getEdgeRpcService().onEdgeEvent(tenantId, msg.getEdgeId());
+    private void onToEdgeSessionMsg(TbActorMsg msg) {
+        switch (msg.getMsgType()) {
+            case EDGE_EVENT_UPDATE_TO_EDGE_SESSION_MSG:
+                EdgeEventUpdateMsg edgeEventUpdateMsg = (EdgeEventUpdateMsg) msg;
+                log.trace("[{}] onToEdgeSessionMsg [{}]", edgeEventUpdateMsg.getTenantId(), msg);
+                systemContext.getEdgeRpcService().onEdgeEvent(tenantId, edgeEventUpdateMsg.getEdgeId());
+                break;
+            case EDGE_SYNC_REQUEST_TO_EDGE_SESSION_MSG:
+                ToEdgeSyncRequest toEdgeSyncRequest = (ToEdgeSyncRequest) msg;
+                log.trace("[{}] toEdgeSyncRequest [{}]", toEdgeSyncRequest.getTenantId(), msg);
+                systemContext.getEdgeRpcService().startSyncProcess(tenantId, toEdgeSyncRequest.getEdgeId(), toEdgeSyncRequest.getId());
+                break;
+            case EDGE_SYNC_RESPONSE_FROM_EDGE_SESSION_MSG:
+                FromEdgeSyncResponse fromEdgeSyncResponse = (FromEdgeSyncResponse) msg;
+                log.trace("[{}] fromEdgeSyncResponse [{}]", fromEdgeSyncResponse.getTenantId(), msg);
+                systemContext.getEdgeRpcService().processSyncResponse(fromEdgeSyncResponse);
+                break;
+        }
     }
 
     private ApiUsageState getApiUsageState() {
