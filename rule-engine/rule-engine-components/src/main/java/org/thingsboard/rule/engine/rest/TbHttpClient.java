@@ -39,9 +39,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
 import org.springframework.web.client.AsyncRestTemplate;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.client.UnknownHttpStatusCodeException;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
@@ -263,21 +261,11 @@ public class TbHttpClient {
     private TbMsg processException(TbContext ctx, TbMsg origMsg, Throwable e) {
         TbMsgMetaData metaData = origMsg.getMetaData();
         metaData.putValue(ERROR, e.getClass() + ": " + e.getMessage());
-        if (e instanceof HttpClientErrorException) {
-            HttpClientErrorException httpClientErrorException = (HttpClientErrorException) e;
-            metaData.putValue(STATUS, httpClientErrorException.getStatusText());
-            metaData.putValue(STATUS_CODE, httpClientErrorException.getRawStatusCode() + "");
-            metaData.putValue(ERROR_BODY, httpClientErrorException.getResponseBodyAsString());
-        } else if (e instanceof HttpServerErrorException) {
-            HttpServerErrorException httpServerErrorException = (HttpServerErrorException) e;
-            metaData.putValue(STATUS, httpServerErrorException.getStatusText());
-            metaData.putValue(STATUS_CODE, httpServerErrorException.getRawStatusCode() + "");
-            metaData.putValue(ERROR_BODY, httpServerErrorException.getResponseBodyAsString());
-        } else if (e instanceof UnknownHttpStatusCodeException) {
-            UnknownHttpStatusCodeException unknownHttpStatusCodeException = (UnknownHttpStatusCodeException) e;
-            metaData.putValue(STATUS, unknownHttpStatusCodeException.getStatusText());
-            metaData.putValue(STATUS_CODE, unknownHttpStatusCodeException.getRawStatusCode() + "");
-            metaData.putValue(ERROR_BODY, unknownHttpStatusCodeException.getResponseBodyAsString());
+        if (e instanceof RestClientResponseException) {
+            RestClientResponseException restClientResponseException = (RestClientResponseException) e;
+            metaData.putValue(STATUS, restClientResponseException.getStatusText());
+            metaData.putValue(STATUS_CODE, restClientResponseException.getRawStatusCode() + "");
+            metaData.putValue(ERROR_BODY, restClientResponseException.getResponseBodyAsString());
         }
         return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
     }
