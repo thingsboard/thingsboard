@@ -17,6 +17,7 @@ package org.thingsboard.rule.engine.transform;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonArray;
 import com.jayway.jsonpath.PathNotFoundException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,12 +45,12 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-public class TbSplitArrayMsgNodeTest {
+public class TbJsonPathNodeTest {
     final ObjectMapper mapper = new ObjectMapper();
 
     DeviceId deviceId;
-    TbSplitArrayMsgNode node;
-    TbSplitArrayMsgNodeConfiguration config;
+    TbJsonPathNode node;
+    TbJsonPathNodeConfiguration config;
     TbNodeConfiguration nodeConfiguration;
     TbContext ctx;
     TbMsgCallback callback;
@@ -59,10 +60,10 @@ public class TbSplitArrayMsgNodeTest {
         deviceId = new DeviceId(UUID.randomUUID());
         callback = mock(TbMsgCallback.class);
         ctx = mock(TbContext.class);
-        config = new TbSplitArrayMsgNodeConfiguration();
+        config = new TbJsonPathNodeConfiguration();
         config.setJsonPath("$.Attribute_2");
         nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
-        node = spy(new TbSplitArrayMsgNode());
+        node = spy(new TbJsonPathNode());
         node.init(ctx, nodeConfiguration);
     }
 
@@ -85,20 +86,29 @@ public class TbSplitArrayMsgNodeTest {
 
     @Test
     void givenDefaultConfig_whenVerify_thenOK() {
-        TbSplitArrayMsgNodeConfiguration defaultConfig = new TbSplitArrayMsgNodeConfiguration().defaultConfiguration();
+        TbJsonPathNodeConfiguration defaultConfig = new TbJsonPathNodeConfiguration().defaultConfiguration();
         assertThat(defaultConfig.getJsonPath()).isEqualTo("$");
     }
 
     @Test
-    void givenFewMsg_whenOnMsg_thenVerifyOutput() throws Exception {
-        String data = "{\"Attribute_1\":22.5,\"Attribute_2\":[{\"Attribute_3\":22.5,\"Attribute_4\":10.3}, {\"Attribute_5\":22.5,\"Attribute_6\":10.3}]}";
-        VerifyOutputMsg(data, 2);
+    void givenPrimitiveMsg_whenOnMsg_thenVerifyOutput() throws Exception {
+        String data = "{\"Attribute_1\":22.5,\"Attribute_2\":100}";
+        VerifyOutputMsg(data, 1, 100);
+
+        data = "{\"Attribute_1\":22.5,\"Attribute_2\":\"StringValue\"}";
+        VerifyOutputMsg(data, 2, "StringValue");
     }
 
     @Test
-    void givenZeroMsg_whenOnMsg_thenVerifyOutput() throws Exception {
-        String data = "{\"Attribute_1\":22.5,\"Attribute_2\":[]}";
-        VerifyOutputMsg(data, 0);
+    void givenJsonArray_whenOnMsg_thenVerifyOutput() throws Exception {
+        String data = "{\"Attribute_1\":22.5,\"Attribute_2\":[{\"Attribute_3\":22.5,\"Attribute_4\":10.3}, {\"Attribute_5\":22.5,\"Attribute_6\":10.3}]}";
+        VerifyOutputMsg(data, 1, JacksonUtil.toJsonNode(data).get("Attribute_2"));
+    }
+
+    @Test
+    void givenJsonNode_whenOnMsg_thenVerifyOutput() throws Exception {
+        String data = "{\"Attribute_1\":22.5,\"Attribute_2\":{\"Attribute_3\":22.5,\"Attribute_4\":10.3}}";
+        VerifyOutputMsg(data, 1, JacksonUtil.toJsonNode(data).get("Attribute_2"));
     }
 
     @Test
@@ -133,13 +143,15 @@ public class TbSplitArrayMsgNodeTest {
         assertThat(exceptionCaptor.getValue()).isInstanceOf(PathNotFoundException.class);
     }
 
-    private void VerifyOutputMsg(String data, int sizeArray) throws Exception {
+    private void VerifyOutputMsg(String data, int countTellSuccess, Object value) throws Exception {
         JsonNode dataNode = JacksonUtil.toJsonNode(data);
         node.onMsg(ctx, getTbMsg(deviceId, dataNode.toString()));
 
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx, times(sizeArray)).tellSuccess(newMsgCaptor.capture());
+        verify(ctx, times(countTellSuccess)).tellSuccess(newMsgCaptor.capture());
         verify(ctx, never()).tellFailure(any(), any());
+
+        assertThat(newMsgCaptor.getValue().getData()).isEqualTo(JacksonUtil.toString(value));
     }
 
     private TbMsg getTbMsg(EntityId entityId, String data) {

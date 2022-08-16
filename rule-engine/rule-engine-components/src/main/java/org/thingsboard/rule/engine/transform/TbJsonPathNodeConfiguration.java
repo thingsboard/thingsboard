@@ -19,13 +19,13 @@ import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
 @Data
-public class TbSplitArrayMsgNodeConfiguration implements NodeConfiguration<TbSplitArrayMsgNodeConfiguration> {
+public class TbJsonPathNodeConfiguration implements NodeConfiguration<TbJsonPathNodeConfiguration> {
 
     private String jsonPath;
 
     @Override
-    public TbSplitArrayMsgNodeConfiguration defaultConfiguration() {
-        TbSplitArrayMsgNodeConfiguration configuration = new TbSplitArrayMsgNodeConfiguration();
+    public TbJsonPathNodeConfiguration defaultConfiguration() {
+        TbJsonPathNodeConfiguration configuration = new TbJsonPathNodeConfiguration();
         configuration.setJsonPath("$");
         return configuration;
     }
