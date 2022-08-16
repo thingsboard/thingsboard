@@ -33,7 +33,7 @@ import java.util.Map;
 @Data
 public class RuleChainMetaData {
 
-    @ApiModelProperty(position = 1, required = true, value = "JSON object with Rule Chain Id.", readOnly = true)
+    @ApiModelProperty(position = 1, required = true, value = "JSON object with Rule Chain Id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private RuleChainId ruleChainId;
 
     @ApiModelProperty(position = 2, required = true, value = "Index of the first rule node in the 'nodes' list")

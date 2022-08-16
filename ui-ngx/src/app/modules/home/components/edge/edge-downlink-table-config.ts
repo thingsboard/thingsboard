@@ -76,6 +76,7 @@ export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePa
     this.searchEnabled = false;
     this.addEnabled = false;
     this.entitiesDeleteEnabled = false;
+    this.pageMode = false;
 
     this.headerComponent = EdgeDownlinkTableHeaderComponent;
     this.entityTranslations = { noEntities: 'edge.no-downlinks-prompt' };

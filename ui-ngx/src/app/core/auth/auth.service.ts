@@ -268,7 +268,9 @@ export class AuthService {
   public defaultUrl(isAuthenticated: boolean, authState?: AuthState, path?: string, params?: any): UrlTree {
     let result: UrlTree = null;
     if (isAuthenticated) {
-      if (!path || path === 'login' || this.forceDefaultPlace(authState, path, params)) {
+      if (authState.authUser.authority === Authority.PRE_VERIFICATION_TOKEN) {
+        result = this.router.parseUrl('login/mfa');
+      } else if (!path || path === 'login' || this.forceDefaultPlace(authState, path, params)) {
         if (this.redirectUrl) {
           const redirectUrl = this.redirectUrl;
           this.redirectUrl = null;
@@ -468,17 +470,27 @@ export class AuthService {
     return this.http.get<boolean>('/api/edges/enabled', defaultHttpOptions());
   }
 
+  private loadHasRepository(authUser: AuthUser): Observable<boolean> {
+    if (authUser.authority === Authority.TENANT_ADMIN) {
+      return this.http.get<boolean>('/api/admin/repositorySettings/exists', defaultHttpOptions());
+    } else {
+      return of(false);
+    }
+  }
+
   private loadSystemParams(authPayload: AuthPayload): Observable<SysParamsState> {
     const sources = [this.loadIsUserTokenAccessEnabled(authPayload.authUser),
                      this.fetchAllowedDashboardIds(authPayload),
                      this.loadIsEdgesSupportEnabled(),
+                     this.loadHasRepository(authPayload.authUser),
                      this.timeService.loadMaxDatapointsLimit()];
     return forkJoin(sources)
       .pipe(map((data) => {
         const userTokenAccessEnabled: boolean = data[0] as boolean;
         const allowedDashboardIds: string[] = data[1] as string[];
         const edgesSupportEnabled: boolean = data[2] as boolean;
-        return {userTokenAccessEnabled, allowedDashboardIds, edgesSupportEnabled};
+        const hasRepository: boolean = data[3] as boolean;
+        return {userTokenAccessEnabled, allowedDashboardIds, edgesSupportEnabled, hasRepository};
       }, catchError((err) => {
         return of({});
       })));

@@ -105,7 +105,7 @@ public class TbMsgGeneratorNode implements TbNode {
     public void onMsg(TbContext ctx, TbMsg msg) {
         log.trace("onMsg, config {}, msg {}", config, msg);
         if (initialized.get() && msg.getType().equals(TB_MSG_GENERATOR_NODE_MSG) && msg.getId().equals(nextTickId)) {
-            TbStopWatch sw = TbStopWatch.startNew();
+            TbStopWatch sw = TbStopWatch.create();
             withCallback(generate(ctx, msg),
                     m -> {
                         log.trace("onMsg onSuccess callback, took {}ms, config {}, msg {}", sw.stopAndGetTotalTimeMillis(), config, msg);

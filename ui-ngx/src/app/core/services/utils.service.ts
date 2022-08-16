@@ -284,6 +284,11 @@ export class UtilsService {
       if (!datasource.dataKeys) {
         datasource.dataKeys = [];
       }
+      datasource.dataKeys.forEach(dataKey => {
+        if (isUndefined(dataKey.label)) {
+          dataKey.label = dataKey.name;
+        }
+      });
     });
     return datasources;
   }

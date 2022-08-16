@@ -46,12 +46,12 @@ public class ThingsboardErrorResponse {
         return new ThingsboardErrorResponse(message, errorCode, status);
     }
 
-    @ApiModelProperty(position = 1, value = "HTTP Response Status Code", example = "401", readOnly = true)
+    @ApiModelProperty(position = 1, value = "HTTP Response Status Code", example = "401", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     public Integer getStatus() {
         return status.value();
     }
 
-    @ApiModelProperty(position = 2, value = "Error message", example = "Authentication failed", readOnly = true)
+    @ApiModelProperty(position = 2, value = "Error message", example = "Authentication failed", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     public String getMessage() {
         return message;
     }
@@ -69,12 +69,12 @@ public class ThingsboardErrorResponse {
             "\n\n* `34` - Too many updates (Too many updates over Websocket session)" +
             "\n\n* `40` - Subscription violation (HTTP: 403 - Forbidden)",
             example = "10", dataType = "integer",
-            readOnly = true)
+            accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     public ThingsboardErrorCode getErrorCode() {
         return errorCode;
     }
 
-    @ApiModelProperty(position = 4, value = "Timestamp", readOnly = true)
+    @ApiModelProperty(position = 4, value = "Timestamp", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     public Date getTimestamp() {
         return timestamp;
     }

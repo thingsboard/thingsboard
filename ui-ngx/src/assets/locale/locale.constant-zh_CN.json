@@ -2036,29 +2036,7 @@
     "value": "价值"
   },
   "language": {
-    "language": "语言",
-    "locales": {
-      "cs_CZ": "Česky",
-      "de_DE": "Deutsch",
-      "el_GR": "Ελληνικά",
-      "en_US": "English",
-      "es_ES": "Español",
-      "fa_IR": "فارسي",
-      "fr_FR": "Français",
-      "it_IT": "Italiano",
-      "ja_JA": "日本語",
-      "ka_GE": "ქართული",
-      "ko_KR": "한글",
-      "lv_LV": "Latviešu",
-      "pt_BR": "Português do Brasil",
-      "ro_RO": "Română",
-      "ru_RU": "Русский",
-      "sl_SI": "Slovenščina",
-      "tr_TR": "Türkçe",
-      "uk_UA": "Українська",
-      "zh_CN": "简体中文",
-      "zh_TW": "繁體中文"
-    }
+    "language": "语言"
   },
   "layout": {
     "color": "颜色",
@@ -2476,8 +2454,6 @@
     "details": "详情",
     "events": "事件",
     "idCopiedMessage": "租户ID已经复制到粘贴板",
-    "isolated-tb-core": "隔离板芯容器中的加工",
-    "isolated-tb-core-details": "每个独立租户需要单独的微服务",
     "isolated-tb-rule-engine": "在独立的ThingsBoard规则引擎容器中处理",
     "isolated-tb-rule-engine-details": "每个独立租户需要单独的微服务",
     "manage-tenant-admins": "管理租户管理员",

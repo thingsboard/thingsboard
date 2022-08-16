@@ -23,8 +23,8 @@ export class OpenStreetMap extends LeafletMap {
     constructor(ctx: WidgetContext, $container, options: WidgetUnitedMapSettings) {
         super(ctx, $container, options);
         const map =  L.map($container, {
-          zoomControl: !this.options.disableZoomControl,
-          tap: L.Browser.safari && L.Browser.mobile
+          doubleClickZoom: !this.options.disableDoubleClickZooming,
+          zoomControl: !this.options.disableZoomControl
         }).setView(options?.parsedDefaultCenterPosition, options?.defaultZoomLevel || DEFAULT_ZOOM_LEVEL);
         let tileLayer;
         if (options.useCustomProvider) {

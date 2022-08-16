@@ -21,11 +21,12 @@ import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { DefaultTenantProfileConfiguration, TenantProfileConfiguration } from '@shared/models/tenant.model';
 import { isDefinedAndNotNull } from '@core/utils';
+import { RateLimitsType } from './rate-limits/rate-limits.models';
 
 @Component({
   selector: 'tb-default-tenant-profile-configuration',
   templateUrl: './default-tenant-profile-configuration.component.html',
-  styleUrls: [],
+  styleUrls: ['./default-tenant-profile-configuration.component.scss'],
   providers: [{
     provide: NG_VALUE_ACCESSOR,
     useExisting: forwardRef(() => DefaultTenantProfileConfigurationComponent),
@@ -48,6 +49,8 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
   @Input()
   disabled: boolean;
 
+  rateLimitsType = RateLimitsType;
+
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
@@ -67,6 +70,8 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       transportDeviceMsgRateLimit: [null, []],
       transportDeviceTelemetryMsgRateLimit: [null, []],
       transportDeviceTelemetryDataPointsRateLimit: [null, []],
+      tenantEntityExportRateLimit: [null, []],
+      tenantEntityImportRateLimit: [null, []],
       maxTransportMessages: [null, [Validators.required, Validators.min(0)]],
       maxTransportDataPoints: [null, [Validators.required, Validators.min(0)]],
       maxREExecutions: [null, [Validators.required, Validators.min(0)]],
@@ -78,7 +83,20 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       maxCreatedAlarms: [null, [Validators.required, Validators.min(0)]],
       defaultStorageTtlDays: [null, [Validators.required, Validators.min(0)]],
       alarmsTtlDays: [null, [Validators.required, Validators.min(0)]],
-      rpcTtlDays: [null, [Validators.required, Validators.min(0)]]
+      rpcTtlDays: [null, [Validators.required, Validators.min(0)]],
+      tenantServerRestLimitsConfiguration: [null, []],
+      customerServerRestLimitsConfiguration: [null, []],
+      maxWsSessionsPerTenant: [null, [Validators.min(0)]],
+      maxWsSessionsPerCustomer: [null, [Validators.min(0)]],
+      maxWsSessionsPerRegularUser: [null, [Validators.min(0)]],
+      maxWsSessionsPerPublicUser: [null, [Validators.min(0)]],
+      wsMsgQueueLimitPerSession: [null, [Validators.min(0)]],
+      maxWsSubscriptionsPerTenant: [null, [Validators.min(0)]],
+      maxWsSubscriptionsPerCustomer: [null, [Validators.min(0)]],
+      maxWsSubscriptionsPerRegularUser: [null, [Validators.min(0)]],
+      maxWsSubscriptionsPerPublicUser: [null, [Validators.min(0)]],
+      wsUpdatesPerSessionRateLimit: [null, []],
+      cassandraQueryTenantRateLimitsConfiguration: [null, []]
     });
     this.defaultTenantProfileConfigurationFormGroup.valueChanges.subscribe(() => {
       this.updateModel();

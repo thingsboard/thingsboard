@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -162,6 +163,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     @Getter
     private boolean persistActivityToTelemetry;
 
+    @Lazy
     @Autowired
     private QueueService queueService;
 
@@ -193,22 +195,6 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     public void createDefaultTenantProfiles() throws Exception {
         tenantProfileService.findOrCreateDefaultTenantProfile(TenantId.SYS_TENANT_ID);
 
-        TenantProfileData tenantProfileData = new TenantProfileData();
-        tenantProfileData.setConfiguration(new DefaultTenantProfileConfiguration());
-
-        TenantProfile isolatedTbCoreProfile = new TenantProfile();
-        isolatedTbCoreProfile.setDefault(false);
-        isolatedTbCoreProfile.setName("Isolated TB Core");
-        isolatedTbCoreProfile.setDescription("Isolated TB Core tenant profile");
-        isolatedTbCoreProfile.setIsolatedTbCore(true);
-        isolatedTbCoreProfile.setIsolatedTbRuleEngine(false);
-        isolatedTbCoreProfile.setProfileData(tenantProfileData);
-        try {
-            tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, isolatedTbCoreProfile);
-        } catch (DataValidationException e) {
-            log.warn(e.getMessage());
-        }
-
         TenantProfileData isolatedRuleEngineTenantProfileData = new TenantProfileData();
         isolatedRuleEngineTenantProfileData.setConfiguration(new DefaultTenantProfileConfiguration());
 
@@ -237,7 +223,6 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         isolatedTbRuleEngineProfile.setDefault(false);
         isolatedTbRuleEngineProfile.setName("Isolated TB Rule Engine");
         isolatedTbRuleEngineProfile.setDescription("Isolated TB Rule Engine tenant profile");
-        isolatedTbRuleEngineProfile.setIsolatedTbCore(false);
         isolatedTbRuleEngineProfile.setIsolatedTbRuleEngine(true);
         isolatedTbRuleEngineProfile.setProfileData(isolatedRuleEngineTenantProfileData);
 
@@ -246,25 +231,12 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         } catch (DataValidationException e) {
             log.warn(e.getMessage());
         }
-
-        TenantProfile isolatedTbCoreAndTbRuleEngineProfile = new TenantProfile();
-        isolatedTbCoreAndTbRuleEngineProfile.setDefault(false);
-        isolatedTbCoreAndTbRuleEngineProfile.setName("Isolated TB Core and TB Rule Engine");
-        isolatedTbCoreAndTbRuleEngineProfile.setDescription("Isolated TB Core and TB Rule Engine tenant profile");
-        isolatedTbCoreAndTbRuleEngineProfile.setIsolatedTbCore(true);
-        isolatedTbCoreAndTbRuleEngineProfile.setIsolatedTbRuleEngine(true);
-        isolatedTbCoreAndTbRuleEngineProfile.setProfileData(isolatedRuleEngineTenantProfileData);
-
-        try {
-            tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, isolatedTbCoreAndTbRuleEngineProfile);
-        } catch (DataValidationException e) {
-            log.warn(e.getMessage());
-        }
     }
 
     @Override
     public void createAdminSettings() throws Exception {
         AdminSettings generalSettings = new AdminSettings();
+        generalSettings.setTenantId(TenantId.SYS_TENANT_ID);
         generalSettings.setKey("general");
         ObjectNode node = objectMapper.createObjectNode();
         node.put("baseUrl", "http://localhost:8080");
@@ -273,6 +245,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, generalSettings);
 
         AdminSettings mailSettings = new AdminSettings();
+        mailSettings.setTenantId(TenantId.SYS_TENANT_ID);
         mailSettings.setKey("mail");
         node = objectMapper.createObjectNode();
         node.put("mailFrom", "ThingsBoard <sysadmin@localhost.localdomain>");

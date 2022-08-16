@@ -45,6 +45,6 @@ public class CoapAttributesRequestJsonIntegrationTest extends CoapAttributesRequ
 
     @Test
     public void testRequestAttributesValuesFromTheServer() throws Exception {
-        super.testRequestAttributesValuesFromTheServer();
+        processJsonTestRequestAttributesValuesFromTheServer();
     }
 }

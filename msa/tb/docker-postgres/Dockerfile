@@ -36,12 +36,14 @@ ENV PGLOG=/var/log/postgres
 COPY logback.xml ${pkg.name}.conf start-db.sh stop-db.sh start-tb.sh upgrade-tb.sh install-tb.sh ${pkg.name}.deb /tmp/
 
 RUN apt-get update \
-    && apt-get install -y curl gnupg2 \
+    && apt-get install -y --no-install-recommends wget gnupg2 \
     && echo "deb http://apt.postgresql.org/pub/repos/apt/ $(. /etc/os-release && echo -n $VERSION_CODENAME)-pgdg main" | tee --append /etc/apt/sources.list.d/pgdg.list > /dev/null \
-    && curl -L https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
+    && wget -q https://www.postgresql.org/media/keys/ACCC4CF8.asc -O- | apt-key add - \
     && apt-get update \
-    && apt-get install -y postgresql-12 \
+    && apt-get install -y --no-install-recommends postgresql-${PG_MAJOR} \
+    && rm -rf /var/lib/apt/lists/* \
     && update-rc.d postgresql disable \
+    && apt-get purge -y --auto-remove \
     && chmod a+x /tmp/*.sh \
     && mv /tmp/start-tb.sh /usr/bin \
     && mv /tmp/upgrade-tb.sh /usr/bin \
@@ -50,7 +52,7 @@ RUN apt-get update \
     && mv /tmp/stop-db.sh /usr/bin \
     && dpkg -i /tmp/${pkg.name}.deb \
     && rm /tmp/${pkg.name}.deb \
-    && systemctl --no-reload disable --now ${pkg.name}.service > /dev/null 2>&1 || : \
+    && (systemctl --no-reload disable --now ${pkg.name}.service > /dev/null 2>&1 || :) \
     && mv /tmp/logback.xml ${pkg.installFolder}/conf \
     && mv /tmp/${pkg.name}.conf ${pkg.installFolder}/conf \
     && mkdir -p $PGLOG \

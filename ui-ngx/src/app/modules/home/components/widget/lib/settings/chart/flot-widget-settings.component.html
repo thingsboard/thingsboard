@@ -21,7 +21,8 @@
     <mat-checkbox formControlName="stack" style="margin-bottom: 16px;">
       {{ 'widgets.chart.enable-stacking-mode' | translate }}
     </mat-checkbox>
-    <section *ngIf="chartType === 'graph'" fxLayout="column" fxLayout.gt-sm="row" fxLayoutGap="8px">
+    <section *ngIf="chartType === 'graph'" fxLayout="column" fxLayout.gt-xs="row"
+             fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
       <mat-form-field fxFlex class="mat-block">
         <mat-label translate>widgets.chart.line-shadow-size</mat-label>
         <input matInput type="number" min="0" formControlName="shadowSize">
@@ -30,7 +31,8 @@
         {{ 'widgets.chart.display-smooth-lines' | translate }}
       </mat-checkbox>
     </section>
-    <section *ngIf="chartType === 'bar'" fxLayout="column" fxLayout.gt-sm="row" fxLayoutGap="8px">
+    <section *ngIf="chartType === 'bar'" fxLayout="column" fxLayout.gt-xs="row"
+             fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
       <mat-form-field fxFlex class="mat-block">
         <mat-label translate>widgets.chart.default-bar-width</mat-label>
         <input matInput type="number" min="0" formControlName="defaultBarWidth">
@@ -50,7 +52,7 @@
         </mat-select>
       </mat-form-field>
     </section>
-    <section fxLayout="column" fxLayout.gt-sm="row" fxLayoutGap="8px">
+    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px">
       <mat-form-field fxFlex class="mat-block">
         <mat-label translate>widgets.chart.default-font-size</mat-label>
         <input matInput type="number" min="0" formControlName="fontSize">
@@ -166,7 +168,7 @@
       <mat-label translate>widgets.chart.axis-title</mat-label>
       <input matInput formControlName="title">
     </mat-form-field>
-    <section fxLayout="column" fxLayout.gt-sm="row" fxLayoutGap="8px">
+    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px">
       <mat-form-field fxFlex class="mat-block">
         <mat-label translate>widgets.chart.min-scale-value</mat-label>
         <input matInput type="number" formControlName="min">
@@ -196,7 +198,7 @@
                           icon="format_color_fill"
                           label="{{ 'widgets.chart.ticks-color' | translate }}" openOnInput colorClearButton>
           </tb-color-input>
-          <section fxLayout="column" fxLayout.gt-sm="row" fxLayoutGap="8px">
+          <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px">
             <mat-form-field fxFlex class="mat-block">
               <mat-label translate>widgets.chart.tick-step-size</mat-label>
               <input matInput type="number" formControlName="tickSize">
@@ -288,19 +290,19 @@
   <fieldset *ngIf="chartType === 'graph' || chartType === 'bar'" class="fields-group fields-group-slider">
     <legend class="group-title" translate>widgets.chart.custom-legend-settings</legend>
     <mat-expansion-panel class="tb-settings" [expanded]="flotSettingsFormGroup.get('customLegendEnabled').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header fxLayout="row" style="height: 100%; min-height: 48px;">
         <mat-panel-title>
           <mat-slide-toggle formControlName="customLegendEnabled" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+                            fxLayoutAlign="center" style="height: 100%;">
             {{ 'widgets.chart.enable-custom-legend' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
-        <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+        <mat-panel-description style="white-space: nowrap;" fxLayoutAlign="end center" fxHide.xs translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <fieldset [fxShow]="flotSettingsFormGroup.get('customLegendEnabled').value" class="fields-group">
+        <fieldset class="fields-group">
           <legend class="group-title" translate>widgets.chart.label-keys-list</legend>
           <div fxLayout="column">
             <div class="tb-control-list tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
@@ -321,6 +323,7 @@
             <div style="padding-top: 16px;">
               <button mat-raised-button color="primary"
                       type="button"
+                      [disabled]="!flotSettingsFormGroup.get('customLegendEnabled').value"
                       (click)="addLabelDataKey()">
                 <span translate>widgets.chart.add-label-key</span>
               </button>

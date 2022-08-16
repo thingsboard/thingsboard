@@ -21,13 +21,16 @@ import org.thingsboard.server.common.data.id.AdminSettingsId;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 @ApiModel
-public class AdminSettings extends BaseData<AdminSettingsId> {
+public class AdminSettings extends BaseData<AdminSettingsId> implements HasTenantId {
 
     private static final long serialVersionUID = -7670322981725511892L;
+
+    private TenantId tenantId;
 
     @NoXss
     @Length(fieldName = "key")
@@ -44,6 +47,7 @@ public class AdminSettings extends BaseData<AdminSettingsId> {
     
     public AdminSettings(AdminSettings adminSettings) {
         super(adminSettings);
+        this.tenantId = adminSettings.getTenantId();
         this.key = adminSettings.getKey();
         this.jsonValue = adminSettings.getJsonValue();
     }
@@ -54,13 +58,22 @@ public class AdminSettings extends BaseData<AdminSettingsId> {
         return super.getId();
     }
 
-    @ApiModelProperty(position = 2, value = "Timestamp of the settings creation, in milliseconds", example = "1609459200000", readOnly = true)
+    @ApiModelProperty(position = 2, value = "Timestamp of the settings creation, in milliseconds", example = "1609459200000", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();
     }
 
-    @ApiModelProperty(position = 3, value = "The Administration Settings key, (e.g. 'general' or 'mail')", example = "mail")
+    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    public TenantId getTenantId() {
+        return tenantId;
+    }
+
+    public void setTenantId(TenantId tenantId) {
+        this.tenantId = tenantId;
+    }
+
+    @ApiModelProperty(position = 4, value = "The Administration Settings key, (e.g. 'general' or 'mail')", example = "mail")
     public String getKey() {
         return key;
     }
@@ -69,7 +82,7 @@ public class AdminSettings extends BaseData<AdminSettingsId> {
         this.key = key;
     }
 
-    @ApiModelProperty(position = 4, value = "JSON representation of the Administration Settings value")
+    @ApiModelProperty(position = 5, value = "JSON representation of the Administration Settings value")
     public JsonNode getJsonValue() {
         return jsonValue;
     }

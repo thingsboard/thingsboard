@@ -33,6 +33,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.ThingsBoardExecutors;
@@ -42,6 +43,7 @@ import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.objects.AttributesEntityView;
@@ -53,6 +55,7 @@ import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.ArrayList;
@@ -94,7 +97,6 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
     @Before
     public void beforeTest() throws Exception {
-        log.debug("beforeTest");
         executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(8, getClass()));
 
         loginTenantAdmin();
@@ -128,6 +130,9 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
     @Test
     public void testSaveEntityView() throws Exception {
         String name = "Test entity view";
+
+        Mockito.reset(tbClusterService, auditLogService);
+
         EntityView savedView = getNewSavedEntityView(name);
 
         Assert.assertNotNull(savedView);
@@ -142,6 +147,12 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
         assertEquals(savedView, foundEntityView);
 
+        testBroadcastEntityStateChangeEventTime(foundEntityView.getId(), tenantId, 1);
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(foundEntityView, foundEntityView,
+                tenantId, tenantAdminCustomerId, tenantAdminUserId, TENANT_ADMIN_EMAIL,
+                ActionType.ADDED, ActionType.ADDED, 1, 0, 1);
+        Mockito.reset(tbClusterService, auditLogService);
+
         savedView.setName("New test entity view");
 
         doPost("/api/entityView", savedView, EntityView.class);
@@ -149,23 +160,57 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
         assertEquals(savedView, foundEntityView);
 
-        doGet("/api/tenant/entityViews?entityViewName=" + name, EntityView.class, status().isNotFound());
+        testBroadcastEntityStateChangeEventTime(foundEntityView.getId(), tenantId, 1);
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(foundEntityView, foundEntityView,
+                tenantId, tenantAdminCustomerId, tenantAdminUserId, TENANT_ADMIN_EMAIL,
+                ActionType.UPDATED, ActionType.UPDATED, 1, 1, 5);
+
+        doGet("/api/tenant/entityViews?entityViewName=" + name)
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(containsString(msgErrorNotFound)));
     }
 
     @Test
     public void testSaveEntityViewWithViolationOfValidation() throws Exception {
         EntityView entityView = createEntityView(RandomStringUtils.randomAlphabetic(300), 0, 0);
-        doPost("/api/entityView", entityView).andExpect(statusReason(containsString("length of name must be equal or less than 255")));
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        String msgError = msgErrorFieldLength("name");
+        doPost("/api/entityView", entityView)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString(msgError)));
+
+        testNotifyEntityEqualsOneTimeServiceNeverError(entityView,
+                tenantId, tenantAdminUserId, TENANT_ADMIN_EMAIL,
+                ActionType.ADDED, new DataValidationException(msgError));
+        Mockito.reset(tbClusterService, auditLogService);
+
         entityView.setName("Normal name");
+        msgError = msgErrorFieldLength("type");
         entityView.setType(RandomStringUtils.randomAlphabetic(300));
-        doPost("/api/entityView", entityView).andExpect(statusReason(containsString("length of type must be equal or less than 255")));
+        doPost("/api/entityView", entityView)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString(msgError)));
+
+        testNotifyEntityEqualsOneTimeServiceNeverError(entityView,
+                tenantId, tenantAdminUserId, TENANT_ADMIN_EMAIL,
+                ActionType.ADDED, new DataValidationException(msgError));
     }
 
     @Test
     public void testUpdateEntityViewFromDifferentTenant() throws Exception {
         EntityView savedView = getNewSavedEntityView("Test entity view");
         loginDifferentTenant();
-        doPost("/api/entityView", savedView, EntityView.class, status().isForbidden());
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        doPost("/api/entityView", savedView)
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString(msgErrorPermission)));
+
+        testNotifyEntityNever(savedView.getId(), savedView);
+
         deleteDifferentTenant();
     }
 
@@ -176,20 +221,36 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         view.setCustomerId(customer.getId());
         EntityView savedView = doPost("/api/entityView", view, EntityView.class);
 
-        doDelete("/api/entityView/" + savedView.getId().getId().toString())
+        Mockito.reset(tbClusterService, auditLogService);
+
+        String entityIdStr = savedView.getId().getId().toString();
+        doDelete("/api/entityView/" + entityIdStr)
                 .andExpect(status().isOk());
 
-        doGet("/api/entityView/" + savedView.getId().getId().toString())
-                .andExpect(status().isNotFound());
+        testNotifyEntityBroadcastEntityStateChangeEventOneTimeMsgToEdgeServiceNever(savedView, savedView.getId(), savedView.getId(),
+                tenantId, view.getCustomerId(), tenantAdminUserId, TENANT_ADMIN_EMAIL,
+                ActionType.DELETED, entityIdStr);
+
+        doGet("/api/entityView/" + entityIdStr)
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(containsString(msgErrorNoFound("Entity view",entityIdStr))));
     }
 
     @Test
     public void testSaveEntityViewWithEmptyName() throws Exception {
         EntityView entityView = new EntityView();
         entityView.setType("default");
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        String msgError = "Entity view name " + msgErrorShouldBeSpecified;
         doPost("/api/entityView", entityView)
                 .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Entity view name should be specified!")));
+                .andExpect(statusReason(containsString(msgError)));
+
+        testNotifyEntityEqualsOneTimeServiceNeverError(entityView,
+                tenantId, tenantAdminUserId, TENANT_ADMIN_EMAIL,
+                ActionType.ADDED, new DataValidationException(msgError));
     }
 
     @Test
@@ -197,7 +258,16 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         EntityView view = getNewSavedEntityView("Test entity view");
         Customer savedCustomer = doPost("/api/customer", getNewCustomer("My customer"), Customer.class);
         view.setCustomerId(savedCustomer.getId());
+
+        Mockito.reset(tbClusterService, auditLogService);
+
         EntityView savedView = doPost("/api/entityView", view, EntityView.class);
+
+        testBroadcastEntityStateChangeEventTime(savedView.getId(), tenantId, 1);
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(savedView, savedView,
+                tenantId, tenantAdminCustomerId, tenantAdminUserId, TENANT_ADMIN_EMAIL,
+                ActionType.UPDATED, ActionType.UPDATED, 1, 1, 5);
+        Mockito.reset(tbClusterService, auditLogService);
 
         EntityView assignedView = doPost(
                 "/api/customer/" + savedCustomer.getId().getId().toString() + "/entityView/" + savedView.getId().getId().toString(),
@@ -207,18 +277,38 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         EntityView foundView = doGet("/api/entityView/" + savedView.getId().getId().toString(), EntityView.class);
         assertEquals(savedCustomer.getId(), foundView.getCustomerId());
 
+        testBroadcastEntityStateChangeEventNever(foundView.getId());
+        testNotifyEntityAllOneTime(foundView, foundView.getId(), foundView.getId(),
+                tenantId, foundView.getCustomerId(), tenantAdminUserId, TENANT_ADMIN_EMAIL,
+                ActionType.ASSIGNED_TO_CUSTOMER,
+                foundView.getId().getId().toString(), foundView.getCustomerId().getId().toString(), savedCustomer.getTitle());
+
         EntityView unAssignedView = doDelete("/api/customer/entityView/" + savedView.getId().getId().toString(), EntityView.class);
         assertEquals(ModelConstants.NULL_UUID, unAssignedView.getCustomerId().getId());
 
         foundView = doGet("/api/entityView/" + savedView.getId().getId().toString(), EntityView.class);
         assertEquals(ModelConstants.NULL_UUID, foundView.getCustomerId().getId());
+
+        testBroadcastEntityStateChangeEventNever(foundView.getId());
+        testNotifyEntityAllOneTime(unAssignedView, savedView.getId(), savedView.getId(),
+                tenantId, savedView.getCustomerId(), tenantAdminUserId, TENANT_ADMIN_EMAIL,
+                ActionType.UNASSIGNED_FROM_CUSTOMER,
+                savedView.getCustomerId().getId().toString(), savedCustomer.getTitle());
     }
 
     @Test
     public void testAssignEntityViewToNonExistentCustomer() throws Exception {
         EntityView savedView = getNewSavedEntityView("Test entity view");
-        doPost("/api/customer/" + Uuids.timeBased() + "/device/" + savedView.getId().getId().toString())
-                .andExpect(status().isNotFound());
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        String customerIdStr = Uuids.timeBased().toString();
+        String msgError = msgErrorNoFound("Customer", customerIdStr);
+        doPost("/api/customer/" + customerIdStr + "/device/" + savedView.getId().getId().toString())
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(containsString(msgError)));
+
+        testNotifyEntityNever(savedView.getId(), savedView);
     }
 
     @Test
@@ -244,8 +334,13 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
         EntityView savedView = getNewSavedEntityView("Test entity view");
 
+        Mockito.reset(tbClusterService, auditLogService);
+
         doPost("/api/customer/" + savedCustomer.getId().getId().toString() + "/entityView/" + savedView.getId().getId().toString())
-                .andExpect(status().isForbidden());
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString(msgErrorPermission)));
+
+        testNotifyEntityNever(savedView.getId(), savedView);
 
         loginSysAdmin();
 
@@ -259,8 +354,11 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         CustomerId customerId = customer.getId();
         String urlTemplate = "/api/customer/" + customerId.getId().toString() + "/entityViewInfos?";
 
-        List<ListenableFuture<EntityViewInfo>> viewFutures = new ArrayList<>(128);
-        for (int i = 0; i < 128; i++) {
+        Mockito.reset(tbClusterService, auditLogService);
+
+        int cntEntity = 128;
+        List<ListenableFuture<EntityViewInfo>> viewFutures = new ArrayList<>(cntEntity);
+        for (int i = 0; i < cntEntity; i++) {
             String entityName = "Test entity view " + i;
             viewFutures.add(executor.submit(() ->
                     new EntityViewInfo(doPost("/api/customer/" + customerId.getId().toString() + "/entityView/"
@@ -271,6 +369,15 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         List<EntityViewInfo> loadedViews = loadListOfInfo(new PageLink(23), urlTemplate);
 
         assertThat(entityViewInfos).containsExactlyInAnyOrderElementsOf(loadedViews);
+
+        testNotifyEntityBroadcastEntityStateChangeEventMany(new EntityView(), new EntityView(),
+                tenantId, tenantAdminCustomerId, tenantAdminUserId, TENANT_ADMIN_EMAIL,
+                ActionType.ADDED, ActionType.ADDED, cntEntity, 0, cntEntity*2, 0);
+
+        testNotifyEntityBroadcastEntityStateChangeEventMany(new EntityView(), new EntityView(),
+                tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL,
+                ActionType.ASSIGNED_TO_CUSTOMER, ActionType.ASSIGNED_TO_CUSTOMER, cntEntity, cntEntity,
+                cntEntity*2, 3);
     }
 
     @Test
@@ -291,11 +398,20 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         assertThat(namesOfView2).as(name2).containsExactlyInAnyOrderElementsOf(loadedNamesOfView2);
 
         deleteFutures.clear();
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        int cntEntity = loadedNamesOfView1.size();
         for (EntityView view : loadedNamesOfView1) {
             deleteFutures.add(executor.submit(() ->
                     doDelete("/api/customer/entityView/" + view.getId().getId().toString()).andExpect(status().isOk())));
         }
         Futures.allAsList(deleteFutures).get(TIMEOUT, SECONDS);
+
+        testBroadcastEntityStateChangeEventNever(loadedNamesOfView1.get(0).getId());
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAnyAdditionalInfoAny(new EntityView(), new EntityView(),
+                tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL,
+                ActionType.UNASSIGNED_FROM_CUSTOMER, ActionType.UNASSIGNED_FROM_CUSTOMER, cntEntity, cntEntity, 2);
 
         PageData<EntityView> pageData = doGetTypedWithPageLink(urlTemplate, PAGE_DATA_ENTITY_VIEW_TYPE_REF,
                 new PageLink(4, 0, name1));
@@ -371,10 +487,8 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         Set<String> expectedActualAttributesSet = Set.of("caKey1", "caKey2", "caKey3", "caKey4");
         Set<String> actualAttributesSet =
                 putAttributesAndWait("{\"caKey1\":\"value1\", \"caKey2\":true, \"caKey3\":42.0, \"caKey4\":73}", expectedActualAttributesSet);
-        log.debug("got correct actualAttributesSet, saving new entity view...");
         EntityView savedView = getNewSavedEntityView("Test entity view");
 
-        log.debug("fetching entity view telemetry...");
         List<Map<String, Object>> values = await("telemetry/ENTITY_VIEW")
                 .atMost(TIMEOUT, SECONDS)
                 .until(() -> doGetAsyncTyped("/api/plugins/telemetry/ENTITY_VIEW/" + savedView.getId().getId().toString() +
@@ -382,7 +496,6 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
                         }),
                         x -> x.size() >= expectedActualAttributesSet.size());
 
-        log.debug("asserting...");
         assertEquals("value1", getValue(values, "caKey1"));
         assertEquals(true, getValue(values, "caKey2"));
         assertEquals(42.0, getValue(values, "caKey3"));
@@ -526,7 +639,6 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         getWsClient().subscribeLatestUpdate(keysToSubscribe, dtf);
 
         String viewDeviceId = testDevice.getId().getId().toString();
-        log.debug("deviceid {}", viewDeviceId);
         DeviceCredentials deviceCredentials =
                 doGet("/api/device/" + viewDeviceId + "/credentials", DeviceCredentials.class);
         assertEquals(testDevice.getId(), deviceCredentials.getDeviceId());
@@ -549,7 +661,6 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         IMqttToken token = client.publish("v1/devices/me/attributes", message);
         log.debug("publish token.message {}", token.getMessage());
         await("mqtt ack").pollInterval(5, MILLISECONDS).atMost(TIMEOUT, SECONDS).until(() -> token.getMessage() == null);
-        log.debug("token.message delivered {}", token.getMessage());
         assertThat(getWsClient().waitForUpdate()).as("ws update received").isNotBlank();
         return getAttributeKeys("DEVICE", viewDeviceId);
     }

@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -27,33 +28,32 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.device.claim.ClaimResult;
 import org.thingsboard.server.dao.device.claim.ReclaimResult;
-import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface TbDeviceService {
 
-    Device save(TenantId tenantId, Device device, Device oldDevice, String accessToken, SecurityUser user) throws ThingsboardException;
+    Device save(Device device, Device oldDevice, String accessToken, User user) throws Exception;
 
-    Device saveDeviceWithCredentials(TenantId tenantId, Device device, DeviceCredentials deviceCredentials, SecurityUser user) throws ThingsboardException;
+    Device saveDeviceWithCredentials(Device device, DeviceCredentials deviceCredentials, User user) throws ThingsboardException;
 
-    ListenableFuture<Void> delete(Device device, SecurityUser user) throws ThingsboardException;
+    ListenableFuture<Void> delete(Device device, User user);
 
-    Device assignDeviceToCustomer(TenantId tenantId, DeviceId deviceId, Customer customer, SecurityUser user) throws ThingsboardException;
+    Device assignDeviceToCustomer(TenantId tenantId, DeviceId deviceId, Customer customer, User user) throws ThingsboardException;
 
-    Device unassignDeviceFromCustomer(Device device, Customer customer, SecurityUser user) throws ThingsboardException;
+    Device unassignDeviceFromCustomer(Device device, Customer customer, User user) throws ThingsboardException;
 
-    Device assignDeviceToPublicCustomer(TenantId tenantId, DeviceId deviceId, SecurityUser user) throws ThingsboardException;
+    Device assignDeviceToPublicCustomer(TenantId tenantId, DeviceId deviceId, User user) throws ThingsboardException;
 
-    DeviceCredentials getDeviceCredentialsByDeviceId(Device device, SecurityUser user) throws ThingsboardException;
+    DeviceCredentials getDeviceCredentialsByDeviceId(Device device, User user) throws ThingsboardException;
 
-    DeviceCredentials updateDeviceCredentials(Device device, DeviceCredentials deviceCredentials, SecurityUser user) throws ThingsboardException;
+    DeviceCredentials updateDeviceCredentials(Device device, DeviceCredentials deviceCredentials, User user) throws ThingsboardException;
 
-    ListenableFuture<ClaimResult> claimDevice(TenantId tenantId, Device device, CustomerId customerId, String secretKey, SecurityUser user) throws ThingsboardException;
+    ListenableFuture<ClaimResult> claimDevice(TenantId tenantId, Device device, CustomerId customerId, String secretKey, User user);
 
-    ListenableFuture<ReclaimResult> reclaimDevice(TenantId tenantId, Device device, SecurityUser user) throws ThingsboardException;
+    ListenableFuture<ReclaimResult> reclaimDevice(TenantId tenantId, Device device, User user);
 
-    Device assignDeviceToTenant(Device device, Tenant newTenant, SecurityUser user) throws ThingsboardException;
+    Device assignDeviceToTenant(Device device, Tenant newTenant, User user);
 
-    Device assignDeviceToEdge(TenantId tenantId, DeviceId deviceId, Edge edge, SecurityUser user) throws ThingsboardException;
+    Device assignDeviceToEdge(TenantId tenantId, DeviceId deviceId, Edge edge, User user) throws ThingsboardException;
 
-    Device unassignDeviceFromEdge(Device device, Edge edge, SecurityUser user) throws ThingsboardException;
+    Device unassignDeviceFromEdge(Device device, Edge edge, User user) throws ThingsboardException;
 }

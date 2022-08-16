@@ -15,17 +15,18 @@
  */
 package org.thingsboard.server.service.entitiy.alarm;
 
+import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface TbAlarmService {
 
-    Alarm save(Alarm entity, SecurityUser user) throws ThingsboardException;
+    Alarm save(Alarm entity, User user) throws ThingsboardException;
 
-    void ack(Alarm alarm, SecurityUser user) throws ThingsboardException;
+    ListenableFuture<Void> ack(Alarm alarm, User user);
 
-    void clear(Alarm alarm, SecurityUser user) throws ThingsboardException;
+    ListenableFuture<Void> clear(Alarm alarm, User user);
 
-    Boolean delete(Alarm alarm, SecurityUser user) throws ThingsboardException;
+    Boolean delete(Alarm alarm, User user);
 }

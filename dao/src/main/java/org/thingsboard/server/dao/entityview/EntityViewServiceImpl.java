@@ -22,8 +22,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
@@ -53,7 +51,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -68,7 +65,6 @@ import static org.thingsboard.server.dao.service.Validator.validateString;
 public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityViewCacheKey, EntityViewCacheValue, EntityViewEvictEvent> implements EntityViewService {
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
-    public static final String INCORRECT_PAGE_LINK = "Incorrect page link ";
     public static final String INCORRECT_CUSTOMER_ID = "Incorrect customerId ";
     public static final String INCORRECT_ENTITY_VIEW_ID = "Incorrect entityViewId ";
     public static final String INCORRECT_EDGE_ID = "Incorrect edgeId ";
@@ -102,9 +98,15 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
     public EntityView saveEntityView(EntityView entityView) {
         log.trace("Executing save entity view [{}]", entityView);
         EntityView old = entityViewValidator.validate(entityView, EntityView::getTenantId);
-        EntityView saved = entityViewDao.save(entityView.getTenantId(), entityView);
-        publishEvictEvent(new EntityViewEvictEvent(saved.getTenantId(), saved.getId(), saved.getEntityId(), old != null ? old.getEntityId() : null, saved.getName(), old != null ? old.getName() : null));
-        return saved;
+        try {
+            EntityView saved = entityViewDao.save(entityView.getTenantId(), entityView);
+            publishEvictEvent(new EntityViewEvictEvent(saved.getTenantId(), saved.getId(), saved.getEntityId(), old != null ? old.getEntityId() : null, saved.getName(), old != null ? old.getName() : null));
+            return saved;
+        } catch (Exception t) {
+            checkConstraintViolation(t,
+                    "entity_view_external_id_unq_key", "Entity View with such external id already exists!");
+            throw t;
+        }
     }
 
     @Override
@@ -281,6 +283,17 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
     }
 
     @Override
+    public List<EntityView> findEntityViewsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId) {
+        log.trace("Executing findEntityViewsByTenantIdAndEntityId, tenantId [{}], entityId [{}]", tenantId, entityId);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(entityId.getId(), "Incorrect entityId" + entityId);
+
+        return cache.getAndPutInTransaction(EntityViewCacheKey.byEntityId(tenantId, entityId),
+                () -> entityViewDao.findEntityViewsByTenantIdAndEntityId(tenantId.getId(), entityId.getId()),
+                EntityViewCacheValue::getEntityViews, v -> new EntityViewCacheValue(null, v), true);
+    }
+
+    @Override
     public void deleteEntityView(TenantId tenantId, EntityViewId entityViewId) {
         log.trace("Executing deleteEntityView [{}]", entityViewId);
         validateId(entityViewId, INCORRECT_ENTITY_VIEW_ID + entityViewId);
@@ -320,15 +333,10 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
             throw new DataValidationException("Can't assign entityView to edge from different tenant!");
         }
 
-        try {
-            Boolean relationExists = relationService.checkRelation(tenantId, edgeId, entityView.getEntityId(),
-                    EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE).get();
-            if (!relationExists) {
-                throw new DataValidationException("Can't assign entity view to edge because related device/asset doesn't assigned to edge!");
-            }
-        } catch (ExecutionException | InterruptedException e) {
-            log.error("Exception during relation check", e);
-            throw new RuntimeException("Exception during relation check", e);
+        Boolean relationExists = relationService.checkRelation(tenantId, edgeId, entityView.getEntityId(),
+                EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE);
+        if (!relationExists) {
+            throw new DataValidationException("Can't assign entity view to edge because related device/asset doesn't assigned to edge!");
         }
 
         try {

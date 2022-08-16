@@ -13,16 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host ::ng-deep {
+:host {
   .queue-strategy {
     padding-bottom: 16px;
 
-    .mat-expansion-panel-header {
-      height: 50px;
+    .group-label {
+      display: block;
+      padding-bottom: 10px;
     }
 
-    .mat-expansion-panel-body {
-      padding-bottom: 0 !important;
+    .panel-title {
+      font-weight: 500;
+    }
+
+    .hint-icon {
+      width: 15px;
+      height: 15px;
+      vertical-align: top;
+    }
+  }
+
+  ::ng-deep {
+    .mat-form-field-infix {
+      width: 100% !important;
+    }
+    .queue-strategy {
+      .mat-expansion-panel-header {
+        height: 50px;
+      }
+
+      .mat-expansion-panel-body {
+        padding-bottom: 0 !important;
+      }
     }
   }
 }

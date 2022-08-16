@@ -808,7 +808,8 @@ export default abstract class LeafletMap {
           const currentImage: MarkerImageInfo = this.options.useMarkerImageFunction ?
             safeExecute(this.options.parsedMarkerImageFunction,
               [data, this.options.markerImages, markersData, data.dsIndex]) : this.options.currentImage;
-          const style = currentImage ? 'background-image: url(' + currentImage.url + ');' : '';
+          const imageSize = `height: ${this.options.markerImageSize || 34}px; width: ${this.options.markerImageSize || 34}px;`;
+          const style = currentImage ? 'background-image: url(' + currentImage.url + '); ' + imageSize : '';
           this.options.icon = { icon: L.divIcon({
             html: `<div class="arrow"
                style="transform: translate(-10px, -10px)

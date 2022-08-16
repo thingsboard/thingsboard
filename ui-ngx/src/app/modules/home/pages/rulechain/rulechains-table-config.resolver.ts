@@ -50,6 +50,7 @@ import { PageLink } from '@shared/models/page/page-link';
 import { Edge } from '@shared/models/edge.models';
 import { mergeMap } from 'rxjs/operators';
 import { PageData } from '@shared/models/page/page-data';
+import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
 
 @Injectable()
 export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<RuleChain>> {
@@ -63,6 +64,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
               private importExport: ImportExportService,
               private itembuffer: ItemBufferService,
               private edgeService: EdgeService,
+              private homeDialogs: HomeDialogsService,
               private translate: TranslateService,
               private datePipe: DatePipe,
               private router: Router) {
@@ -407,6 +409,31 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     );
   }
 
+  private checkMissingToRelatedRuleChains() {
+    this.edgeService.findMissingToRelatedRuleChains(this.config.componentsData.edgeId).subscribe(
+      (missingRuleChains) => {
+        if (missingRuleChains && Object.keys(missingRuleChains).length > 0) {
+          const formattedMissingRuleChains: Array<string> = new Array<string>();
+          for (const missingRuleChain of Object.keys(missingRuleChains)) {
+            const arrayOfMissingRuleChains = missingRuleChains[missingRuleChain];
+            const tmp = '- \'' + missingRuleChain + '\': \'' + arrayOfMissingRuleChains.join('\', ') + '\'';
+            formattedMissingRuleChains.push(tmp);
+          }
+          const message = this.translate.instant('edge.missing-related-rule-chains-text',
+            {missingRuleChains: formattedMissingRuleChains.join('<br>')});
+          this.dialogService.alert(this.translate.instant('edge.missing-related-rule-chains-title'),
+            message, this.translate.instant('action.close'), true).subscribe(
+            () => {
+              this.config.updateData();
+            }
+          );
+        } else {
+          this.config.updateData();
+        }
+      }
+    );
+  }
+
   addRuleChainsToEdge($event: Event) {
     if ($event) {
       $event.stopPropagation();
@@ -422,28 +449,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     }).afterClosed()
       .subscribe((res) => {
           if (res) {
-            this.edgeService.findMissingToRelatedRuleChains(this.config.componentsData.edgeId).subscribe(
-              (missingRuleChains) => {
-                if (missingRuleChains && Object.keys(missingRuleChains).length > 0) {
-                  const formattedMissingRuleChains: Array<string> = new Array<string>();
-                  for (const missingRuleChain of Object.keys(missingRuleChains)) {
-                    const arrayOfMissingRuleChains = missingRuleChains[missingRuleChain];
-                    const tmp = '- \'' + missingRuleChain + '\': \'' + arrayOfMissingRuleChains.join('\', ') + '\'';
-                    formattedMissingRuleChains.push(tmp);
-                  }
-                  const message = this.translate.instant('edge.missing-related-rule-chains-text',
-                    {missingRuleChains: formattedMissingRuleChains.join('<br>')});
-                  this.dialogService.alert(this.translate.instant('edge.missing-related-rule-chains-title'),
-                    message, this.translate.instant('action.close'), true).subscribe(
-                    () => {
-                      this.config.updateData();
-                    }
-                  );
-                } else {
-                  this.config.updateData();
-                }
-              }
-            );
+            this.checkMissingToRelatedRuleChains();
           }
         }
       );
@@ -463,7 +469,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
         if (res) {
           this.ruleChainService.unassignRuleChainFromEdge(this.config.componentsData.edgeId, ruleChain.id.id).subscribe(
             () => {
-              this.config.updateData(this.config.componentsData.ruleChainScope !== 'tenant');
+              this.checkMissingToRelatedRuleChains();
             }
           );
         }
@@ -491,7 +497,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
           );
           forkJoin(tasks).subscribe(
             () => {
-              this.config.updateData();
+              this.checkMissingToRelatedRuleChains();
             }
           );
         }

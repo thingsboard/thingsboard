@@ -68,6 +68,14 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
     }
 
     @Override
+    @Transactional
+    public D saveAndFlush(TenantId tenantId, D domain) {
+        D d = save(tenantId, domain);
+        getRepository().flush();
+        return d;
+    }
+
+    @Override
     public D findById(TenantId tenantId, UUID key) {
         log.debug("Get entity by key {}", key);
         Optional<E> entity = getRepository().findById(key);

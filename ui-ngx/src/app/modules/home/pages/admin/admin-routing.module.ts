@@ -33,6 +33,8 @@ import { EntityDetailsPageComponent } from '@home/components/entity/entity-detai
 import { entityDetailsPageBreadcrumbLabelFunction } from '@home/pages/home-pages.models';
 import { BreadCrumbConfig } from '@shared/components/breadcrumb';
 import { QueuesTableConfigResolver } from '@home/pages/admin/queue/queues-table-config.resolver';
+import { RepositoryAdminSettingsComponent } from '@home/pages/admin/repository-admin-settings.component';
+import { AutoCommitAdminSettingsComponent } from '@home/pages/admin/auto-commit-admin-settings.component';
 import { TwoFactorAuthSettingsComponent } from '@home/pages/admin/two-factor-auth-settings.component';
 
 @Injectable()
@@ -235,6 +237,32 @@ const routes: Routes = [
             label: 'admin.2fa.2fa',
             icon: 'mdi:two-factor-authentication',
             isMdiIcon: true
+          }
+        }
+      },
+      {
+        path: 'repository',
+        component: RepositoryAdminSettingsComponent,
+        canDeactivate: [ConfirmOnExitGuard],
+        data: {
+          auth: [Authority.TENANT_ADMIN],
+          title: 'admin.repository-settings',
+          breadcrumb: {
+            label: 'admin.repository-settings',
+            icon: 'manage_history'
+          }
+        }
+      },
+      {
+        path: 'auto-commit',
+        component: AutoCommitAdminSettingsComponent,
+        canDeactivate: [ConfirmOnExitGuard],
+        data: {
+          auth: [Authority.TENANT_ADMIN],
+          title: 'admin.auto-commit-settings',
+          breadcrumb: {
+            label: 'admin.auto-commit-settings',
+            icon: 'settings_backup_restore'
           }
         }
       }

@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>3.4.0-SNAPSHOT</version>
+        <version>3.4.1-SNAPSHOT</version>
         <artifactId>thingsboard</artifactId>
     </parent>
     <artifactId>msa</artifactId>
@@ -40,6 +40,8 @@
 
     <modules>
         <module>tb</module>
+        <module>vc-executor</module>
+        <module>vc-executor-docker</module>
         <module>js-executor</module>
         <module>web-ui</module>
         <module>tb-node</module>

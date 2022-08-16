@@ -90,6 +90,8 @@ public class ModelConstants {
      * Cassandra admin_settings constants.
      */
     public static final String ADMIN_SETTINGS_COLUMN_FAMILY_NAME = "admin_settings";
+
+    public static final String ADMIN_SETTINGS_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String ADMIN_SETTINGS_KEY_PROPERTY = "key";
     public static final String ADMIN_SETTINGS_JSON_VALUE_PROPERTY = "json_value";
 
@@ -179,6 +181,7 @@ public class ModelConstants {
     public static final String DEVICE_PROFILE_DEFAULT_RULE_CHAIN_ID_PROPERTY = "default_rule_chain_id";
     public static final String DEVICE_PROFILE_DEFAULT_DASHBOARD_ID_PROPERTY = "default_dashboard_id";
     public static final String DEVICE_PROFILE_DEFAULT_QUEUE_ID_PROPERTY = "default_queue_id";
+    public static final String DEVICE_PROFILE_DEFAULT_QUEUE_NAME_PROPERTY = "default_queue_name";
     public static final String DEVICE_PROFILE_PROVISION_DEVICE_KEY = "provision_device_key";
     public static final String DEVICE_PROFILE_FIRMWARE_ID_PROPERTY = "firmware_id";
     public static final String DEVICE_PROFILE_SOFTWARE_ID_PROPERTY = "software_id";
@@ -365,16 +368,35 @@ public class ModelConstants {
     /**
      * Cassandra event constants.
      */
-    public static final String EVENT_COLUMN_FAMILY_NAME = "event";
+    public static final String ERROR_EVENT_TABLE_NAME = "error_event";
+    public static final String LC_EVENT_TABLE_NAME = "lc_event";
+    public static final String STATS_EVENT_TABLE_NAME = "stats_event";
+    public static final String RULE_NODE_DEBUG_EVENT_TABLE_NAME = "rule_node_debug_event";
+    public static final String RULE_CHAIN_DEBUG_EVENT_TABLE_NAME = "rule_chain_debug_event";
+
     public static final String EVENT_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
-    public static final String EVENT_TYPE_PROPERTY = "event_type";
-    public static final String EVENT_UID_PROPERTY = "event_uid";
-    public static final String EVENT_ENTITY_TYPE_PROPERTY = ENTITY_TYPE_PROPERTY;
+    public static final String EVENT_SERVICE_ID_PROPERTY = "service_id";
     public static final String EVENT_ENTITY_ID_PROPERTY = "entity_id";
     public static final String EVENT_BODY_PROPERTY = "body";
 
-    public static final String EVENT_BY_TYPE_AND_ID_VIEW_NAME = "event_by_type_and_id";
-    public static final String EVENT_BY_ID_VIEW_NAME = "event_by_id";
+    public static final String EVENT_MESSAGES_PROCESSED_COLUMN_NAME = "e_messages_processed";
+    public static final String EVENT_ERRORS_OCCURRED_COLUMN_NAME = "e_errors_occurred";
+
+    public static final String EVENT_METHOD_COLUMN_NAME = "e_method";
+
+    public static final String EVENT_TYPE_COLUMN_NAME = "e_type";
+    public static final String EVENT_ERROR_COLUMN_NAME = "e_error";
+    public static final String EVENT_SUCCESS_COLUMN_NAME = "e_success";
+
+    public static final String EVENT_ENTITY_ID_COLUMN_NAME = "e_entity_id";
+    public static final String EVENT_ENTITY_TYPE_COLUMN_NAME = "e_entity_type";
+    public static final String EVENT_MSG_ID_COLUMN_NAME = "e_msg_id";
+    public static final String EVENT_MSG_TYPE_COLUMN_NAME = "e_msg_type";
+    public static final String EVENT_DATA_TYPE_COLUMN_NAME = "e_data_type";
+    public static final String EVENT_RELATION_TYPE_COLUMN_NAME = "e_relation_type";
+    public static final String EVENT_DATA_COLUMN_NAME = "e_data";
+    public static final String EVENT_METADATA_COLUMN_NAME = "e_metadata";
+    public static final String EVENT_MESSAGE_COLUMN_NAME = "e_message";
 
     public static final String DEBUG_MODE = "debug_mode";
 
@@ -558,6 +580,8 @@ public class ModelConstants {
     public static final String EDGE_EVENT_BODY_PROPERTY = "body";
 
     public static final String EDGE_EVENT_BY_ID_VIEW_NAME = "edge_event_by_id";
+
+    public static final String EXTERNAL_ID_PROPERTY = "external_id";
 
     /**
      * User auth settings constants.
