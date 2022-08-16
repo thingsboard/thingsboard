@@ -21,7 +21,7 @@ import { NativeDatetimeAdapter } from '@mat-datetimepicker/core';
 @Injectable()
 export class CustomDateAdapter extends NativeDatetimeAdapter {
 
-  parse(value: string, parseFormat: any): any {
+  parse(value: string): Date {
     if (typeof value === 'number') {
       return new Date(value);
     }
