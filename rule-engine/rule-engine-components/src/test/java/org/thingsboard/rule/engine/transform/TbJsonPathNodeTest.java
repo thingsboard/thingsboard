@@ -17,7 +17,6 @@ package org.thingsboard.rule.engine.transform;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.JsonArray;
 import com.jayway.jsonpath.PathNotFoundException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -109,6 +108,16 @@ public class TbJsonPathNodeTest {
     void givenJsonNode_whenOnMsg_thenVerifyOutput() throws Exception {
         String data = "{\"Attribute_1\":22.5,\"Attribute_2\":{\"Attribute_3\":22.5,\"Attribute_4\":10.3}}";
         VerifyOutputMsg(data, 1, JacksonUtil.toJsonNode(data).get("Attribute_2"));
+    }
+
+    @Test
+    void givenJsonArrayWithFilter_whenOnMsg_thenVerifyOutput() throws Exception {
+        config.setJsonPath("$.Attribute_2[?(@.voltage > 200)]");
+        nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+        node.init(ctx, nodeConfiguration);
+
+        String data = "{\"Attribute_1\":22.5,\"Attribute_2\":[{\"voltage\":220}, {\"voltage\":250}, {\"voltage\":110}]}";
+        VerifyOutputMsg(data, 1, JacksonUtil.toJsonNode("[{\"voltage\":220}, {\"voltage\":250}]"));
     }
 
     @Test
