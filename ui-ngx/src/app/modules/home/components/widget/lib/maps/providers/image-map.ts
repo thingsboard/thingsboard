@@ -242,8 +242,7 @@ export class ImageMap extends LeafletMap {
           zoomControl: !this.options.disableZoomControl,
           zoom: 1,
           crs: L.CRS.Simple,
-          attributionControl: false,
-          tap: L.Browser.safari && L.Browser.mobile
+          attributionControl: false
         });
         this.updateBounds(updateImage);
       }

@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -294,22 +295,50 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
             if (adq.getPageLink().getTimeWindow() > 0) {
                 TbAlarmDataSubCtx finalCtx = ctx;
                 ScheduledFuture<?> task = scheduler.scheduleWithFixedDelay(
-                        finalCtx::checkAndResetInvocationCounter, dynamicPageLinkRefreshInterval, dynamicPageLinkRefreshInterval, TimeUnit.SECONDS);
+                        () -> refreshAlarmQuery(finalCtx), dynamicPageLinkRefreshInterval, dynamicPageLinkRefreshInterval, TimeUnit.SECONDS);
                 finalCtx.setRefreshTask(task);
             }
         }
     }
 
-    private void refreshDynamicQuery(TbAbstractSubCtx finalCtx) {
+    private boolean validate(TbAbstractSubCtx<?> finalCtx) {
+        if (finalCtx.isStopped()) {
+            log.warn("[{}][{}][{}] Received validation task for already stopped context.", finalCtx.getTenantId(), finalCtx.getSessionId(), finalCtx.getCmdId());
+            return false;
+        }
+        var cmdMap = subscriptionsBySessionId.get(finalCtx.getSessionId());
+        if (cmdMap == null) {
+            log.warn("[{}][{}][{}] Received validation task for already removed session.", finalCtx.getTenantId(), finalCtx.getSessionId(), finalCtx.getCmdId());
+            return false;
+        } else if (!cmdMap.containsKey(finalCtx.getCmdId())) {
+            log.warn("[{}][{}][{}] Received validation task for unregistered cmdId.", finalCtx.getTenantId(), finalCtx.getSessionId(), finalCtx.getCmdId());
+            return false;
+        }
+        return true;
+    }
+
+    private void refreshDynamicQuery(TbAbstractSubCtx<?> finalCtx) {
         try {
-            long start = System.currentTimeMillis();
-            finalCtx.update();
-            long end = System.currentTimeMillis();
-            log.trace("[{}][{}] Executing query: {}", finalCtx.getSessionId(), finalCtx.getCmdId(), finalCtx.getQuery());
-            stats.getDynamicQueryInvocationCnt().incrementAndGet();
-            stats.getDynamicQueryTimeSpent().addAndGet(end - start);
+            if (validate(finalCtx)) {
+                long start = System.currentTimeMillis();
+                finalCtx.update();
+                long end = System.currentTimeMillis();
+                log.trace("[{}][{}] Executing query: {}", finalCtx.getSessionId(), finalCtx.getCmdId(), finalCtx.getQuery());
+                stats.getDynamicQueryInvocationCnt().incrementAndGet();
+                stats.getDynamicQueryTimeSpent().addAndGet(end - start);
+            } else {
+                finalCtx.stop();
+            }
         } catch (Exception e) {
             log.warn("[{}][{}] Failed to refresh query", finalCtx.getSessionId(), finalCtx.getCmdId(), e);
+        }
+    }
+
+    private void refreshAlarmQuery(TbAlarmDataSubCtx finalCtx) {
+        if (validate(finalCtx)) {
+            finalCtx.checkAndResetInvocationCounter();
+        } else {
+            finalCtx.stop();
         }
     }
 
@@ -526,8 +555,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
 
     private void cleanupAndCancel(TbAbstractSubCtx ctx) {
         if (ctx != null) {
-            ctx.cancelTasks();
-            ctx.clearSubscriptions();
+            ctx.stop();
             if (ctx.getSessionId() != null) {
                 Map<Integer, TbAbstractSubCtx> sessionSubs = subscriptionsBySessionId.get(ctx.getSessionId());
                 if (sessionSubs != null) {

@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +38,7 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.DeviceIdInfo;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.device.data.CoapDeviceTransportConfiguration;
@@ -347,6 +347,13 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     }
 
     @Override
+    public PageData<DeviceIdInfo> findDeviceIdInfos(PageLink pageLink) {
+        log.trace("Executing findTenantDeviceIdPairs, pageLink [{}]", pageLink);
+        validatePageLink(pageLink);
+        return deviceDao.findDeviceIdInfos(pageLink);
+    }
+
+    @Override
     public PageData<Device> findDevicesByTenantIdAndType(TenantId tenantId, String type, PageLink pageLink) {
         log.trace("Executing findDevicesByTenantIdAndType, tenantId [{}], type [{}], pageLink [{}]", tenantId, type, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
@@ -400,6 +407,20 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateIds(deviceIds, "Incorrect deviceIds " + deviceIds);
         return deviceDao.findDevicesByTenantIdAndIdsAsync(tenantId.getId(), toUUIDs(deviceIds));
+    }
+
+    @Override
+    public List<Device> findDevicesByIds(List<DeviceId> deviceIds) {
+        log.trace("Executing findDevicesByIdsAsync, deviceIds [{}]", deviceIds);
+        validateIds(deviceIds, "Incorrect deviceIds " + deviceIds);
+        return deviceDao.findDevicesByIds(toUUIDs(deviceIds));
+    }
+
+    @Override
+    public ListenableFuture<List<Device>> findDevicesByIdsAsync(List<DeviceId> deviceIds) {
+        log.trace("Executing findDevicesByIdsAsync, deviceIds [{}]", deviceIds);
+        validateIds(deviceIds, "Incorrect deviceIds " + deviceIds);
+        return deviceDao.findDevicesByIdsAsync(toUUIDs(deviceIds));
     }
 
     @Transactional

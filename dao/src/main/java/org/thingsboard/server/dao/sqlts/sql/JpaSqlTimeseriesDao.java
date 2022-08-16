@@ -132,7 +132,7 @@ public class JpaSqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDao
                 long partitionEndTs = toMills(localDateTimeEnd);
                 ZonedDateTime zonedDateTime = localDateTimeStart.atZone(ZoneOffset.UTC);
                 String partitionDate = zonedDateTime.format(DateTimeFormatter.ofPattern(tsFormat.getPattern()));
-                savePartition(new SqlPartition(partitionStartTs, partitionEndTs, partitionDate));
+                savePartition(new SqlPartition(SqlPartition.TS_KV, partitionStartTs, partitionEndTs, partitionDate));
             }
         }
     }

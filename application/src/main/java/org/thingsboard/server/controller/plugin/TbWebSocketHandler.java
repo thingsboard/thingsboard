@@ -143,7 +143,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
 
             externalSessionMap.put(externalSessionId, internalSessionId);
             processInWebSocketService(sessionRef, SessionEvent.onEstablished());
-            log.info("[{}][{}][{}] Session is opened", sessionRef.getSecurityCtx().getTenantId(), externalSessionId, session.getId());
+            log.info("[{}][{}][{}] Session is opened from address: {}", sessionRef.getSecurityCtx().getTenantId(), externalSessionId, session.getId(), session.getRemoteAddress());
         } catch (InvalidParameterException e) {
             log.warn("[{}] Failed to start session", session.getId(), e);
             session.close(CloseStatus.BAD_DATA.withReason(e.getMessage()));
@@ -173,8 +173,10 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
             cleanupLimits(session, sessionMd.sessionRef);
             externalSessionMap.remove(sessionMd.sessionRef.getSessionId());
             processInWebSocketService(sessionMd.sessionRef, SessionEvent.onClosed());
+            log.info("[{}][{}][{}] Session is closed", sessionMd.sessionRef.getSecurityCtx().getTenantId(), sessionMd.sessionRef.getSessionId(), session.getId());
+        } else {
+            log.info("[{}] Session is closed", session.getId());
         }
-        log.info("[{}] Session is closed", session.getId());
     }
 
     private void processInWebSocketService(TelemetryWebSocketSessionRef sessionRef, SessionEvent event) {
