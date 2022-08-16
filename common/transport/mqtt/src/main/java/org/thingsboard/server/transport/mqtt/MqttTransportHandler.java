@@ -884,8 +884,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         if (cause instanceof IOException) {
-            if (log.isInfoEnabled()) {
-                log.info("[{}][{}] IOException: {}", sessionId,
+            if (log.isDebugEnabled()) {
+                log.debug("[{}][{}] IOException: {}", sessionId,
                         Optional.ofNullable(this.deviceSessionCtx.getDeviceInfo()).map(TransportDeviceInfo::getDeviceName).orElse(""),
                         cause.getMessage());
             }
