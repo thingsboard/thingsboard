@@ -30,7 +30,7 @@ public class TbRenameKeysNodeConfiguration implements NodeConfiguration<TbRename
     @Override
     public TbRenameKeysNodeConfiguration defaultConfiguration() {
         TbRenameKeysNodeConfiguration configuration = new TbRenameKeysNodeConfiguration();
-        configuration.setRenameKeysMapping(Collections.emptyMap());
+        configuration.setRenameKeysMapping(Map.of("temp", "temperature"));
         configuration.setFromMetadata(false);
         return configuration;
     }

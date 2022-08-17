@@ -75,7 +75,7 @@ public class TbRenameKeysNodeTest {
     @Test
     void givenDefaultConfig_whenVerify_thenOK() {
         TbRenameKeysNodeConfiguration defaultConfig = new TbRenameKeysNodeConfiguration().defaultConfiguration();
-        assertThat(defaultConfig.getRenameKeysMapping()).isEqualTo(Collections.emptyMap());
+        assertThat(defaultConfig.getRenameKeysMapping()).isEqualTo(Map.of("temp", "temperature"));
         assertThat(defaultConfig.isFromMetadata()).isEqualTo(false);
     }
 

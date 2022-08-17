@@ -38,8 +38,8 @@ import java.util.concurrent.ExecutionException;
         name = "rename keys",
         configClazz = TbRenameKeysNodeConfiguration.class,
         nodeDescription = "Renames msg data or metadata keys to the new key names selected in the key mapping.",
-        nodeDetails = "If the key that is selected in the key mapping is missed in the msg data or metadata, it will be ignored." +
-                "If the msg data is not a JSON object returns the incoming message as outbound message with <code>Failure</code> chain," +
+        nodeDetails = "If the key that is selected in the key mapping is missed in the selected msg source(data or metadata), it will be ignored." +
+                " If the msg data is not a JSON object returns the incoming message as outbound message with <code>Failure</code> chain," +
                 " otherwise returns transformed messages via <code>Success</code> chain",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbTransformationNodeRenameKeysConfig",
