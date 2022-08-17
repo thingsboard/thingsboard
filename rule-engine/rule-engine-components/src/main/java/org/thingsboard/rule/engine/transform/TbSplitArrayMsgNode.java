@@ -39,8 +39,10 @@ import java.util.concurrent.ExecutionException;
         name = "split array msg",
         configClazz = EmptyNodeConfiguration.class,
         nodeDescription = "Split array message into several msgs",
-        nodeDetails = "",
-        icon = "functions",
+        nodeDetails = "Split the array fetched from the msg body. Returns inner objects of the extracted array as "
+                + "separate messages via <code>Success</code> chain. If msg data is not a JSON array, "
+                + "the incoming message is returned",
+        icon = "content_copy",
         configDirective = "tbNodeEmptyConfig"
 )
 public class TbSplitArrayMsgNode implements TbNode {

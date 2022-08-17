@@ -78,19 +78,19 @@ public class TbSplitArrayMsgNodeTest {
     @Test
     void givenFewMsg_whenOnMsg_thenVerifyOutput() throws Exception {
         String data = "[{\"Attribute_1\":22.5,\"Attribute_2\":10.3}, {\"Attribute_1\":1,\"Attribute_2\":2}]";
-        VerifyOutputMsg(data);
+        VerifyOutputMsg(data, 2);
     }
 
     @Test
     void givenOneMsg_whenOnMsg_thenVerifyOutput() throws Exception {
         String data = "[{\"Attribute_1\":22.5,\"Attribute_2\":10.3}]";
-        VerifyOutputMsg(data);
+        VerifyOutputMsg(data, 1);
     }
 
     @Test
     void givenZeroMsg_whenOnMsg_thenVerifyOutput() throws Exception {
         String data = "[]";
-        VerifyOutputMsg(data);
+        VerifyOutputMsg(data, 0);
     }
 
     @Test
@@ -110,12 +110,13 @@ public class TbSplitArrayMsgNodeTest {
         assertThat(newMsg).isSameAs(msg);
     }
 
-    private void VerifyOutputMsg(String data) throws Exception {
-        ArrayNode dataNode = (ArrayNode) JacksonUtil.toJsonNode(data);
+    private void VerifyOutputMsg(String data, int sizeArray) throws Exception {
+        JsonNode dataNode = JacksonUtil.toJsonNode(data);
         node.onMsg(ctx, getTbMsg(deviceId, dataNode.toString()));
 
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         verify(ctx, times(dataNode.size())).tellSuccess(newMsgCaptor.capture());
+        verify(ctx, times(sizeArray)).tellSuccess(newMsgCaptor.capture());
         verify(ctx, never()).tellFailure(any(), any());
     }
 
