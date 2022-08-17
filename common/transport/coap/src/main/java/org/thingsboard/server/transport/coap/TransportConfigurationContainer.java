@@ -18,7 +18,6 @@ package org.thingsboard.server.transport.coap;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
 import lombok.Data;
-import org.thingsboard.server.common.data.DeviceProfile;
 
 @Data
 public class TransportConfigurationContainer {
@@ -28,19 +27,16 @@ public class TransportConfigurationContainer {
     private Descriptors.Descriptor attributesMsgDescriptor;
     private Descriptors.Descriptor rpcResponseMsgDescriptor;
     private DynamicMessage.Builder rpcRequestDynamicMessageBuilder;
-    private DeviceProfile deviceProfile;
 
-    public TransportConfigurationContainer(boolean jsonPayload, Descriptors.Descriptor telemetryMsgDescriptor, Descriptors.Descriptor attributesMsgDescriptor, Descriptors.Descriptor rpcResponseMsgDescriptor, DynamicMessage.Builder rpcRequestDynamicMessageBuilder, DeviceProfile deviceProfile) {
+    public TransportConfigurationContainer(boolean jsonPayload, Descriptors.Descriptor telemetryMsgDescriptor, Descriptors.Descriptor attributesMsgDescriptor, Descriptors.Descriptor rpcResponseMsgDescriptor, DynamicMessage.Builder rpcRequestDynamicMessageBuilder) {
         this.jsonPayload = jsonPayload;
         this.telemetryMsgDescriptor = telemetryMsgDescriptor;
         this.attributesMsgDescriptor = attributesMsgDescriptor;
         this.rpcResponseMsgDescriptor = rpcResponseMsgDescriptor;
         this.rpcRequestDynamicMessageBuilder = rpcRequestDynamicMessageBuilder;
-        this.deviceProfile = deviceProfile;
     }
 
-    public TransportConfigurationContainer(boolean jsonPayload, DeviceProfile deviceProfile) {
+    public TransportConfigurationContainer(boolean jsonPayload) {
         this.jsonPayload = jsonPayload;
-        this.deviceProfile = deviceProfile;
     }
 }
