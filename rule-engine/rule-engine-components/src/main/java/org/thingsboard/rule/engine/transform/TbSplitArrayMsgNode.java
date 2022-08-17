@@ -39,9 +39,9 @@ import java.util.concurrent.ExecutionException;
         name = "split array msg",
         configClazz = EmptyNodeConfiguration.class,
         nodeDescription = "Split array message into several msgs",
-        nodeDetails = "Split the array fetched from the msg body. Returns inner objects of the extracted array as "
-                + "separate messages via <code>Success</code> chain. If msg data is not a JSON array, "
-                + "the incoming message is returned",
+        nodeDetails = "Split the array fetched from the msg body. If the msg data is not a JSON object returns the "
+                + "incoming message as outbound message with <code>Failure</code> chain, otherwise returns "
+                + "inner objects of the extracted array as separate messages via <code>Success</code> chain.",
         icon = "content_copy",
         configDirective = "tbNodeEmptyConfig"
 )
@@ -72,7 +72,7 @@ public class TbSplitArrayMsgNode implements TbNode {
                 }
             }
         } else {
-            ctx.tellSuccess(msg);
+            ctx.tellFailure(msg, new RuntimeException("Msg data is not a JSON Array!"));
         }
     }
 

@@ -94,15 +94,18 @@ public class TbSplitArrayMsgNodeTest {
     }
 
     @Test
-    void givenNoArrayMsg_whenOnMsg_thenVerifyOutput() throws Exception {
+    void givenNoArrayMsg_whenOnMsg_thenFailure() throws Exception {
         String data = "{\"Attribute_1\":22.5,\"Attribute_2\":10.3}";
         JsonNode dataNode = JacksonUtil.toJsonNode(data);
         TbMsg msg = getTbMsg(deviceId, dataNode.toString());
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx, times(1)).tellSuccess(newMsgCaptor.capture());
-        verify(ctx, never()).tellFailure(any(), any());
+        ArgumentCaptor<Exception> exceptionCaptor = ArgumentCaptor.forClass(Exception.class);
+        verify(ctx, never()).tellSuccess(any());
+        verify(ctx, times(1)).tellFailure(newMsgCaptor.capture(), exceptionCaptor.capture());
+
+        assertThat(exceptionCaptor.getValue()).isInstanceOf(RuntimeException.class);
 
         TbMsg newMsg = newMsgCaptor.getValue();
         assertThat(newMsg).isNotNull();
