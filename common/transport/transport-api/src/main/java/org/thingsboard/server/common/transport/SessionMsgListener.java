@@ -59,4 +59,6 @@ public interface SessionMsgListener {
     default void onResourceUpdate(TransportProtos.ResourceUpdateMsg resourceUpdateMsgOpt) {}
 
     default void onResourceDelete(TransportProtos.ResourceDeleteMsg resourceUpdateMsgOpt) {}
+
+    default SessionMsgListenerType listenerType() {return SessionMsgListenerType.DEFAULT; }
 }

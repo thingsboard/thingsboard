@@ -60,6 +60,7 @@ import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.stats.StatsType;
 import org.thingsboard.server.common.transport.DeviceUpdatedEvent;
 import org.thingsboard.server.common.transport.SessionMsgListener;
+import org.thingsboard.server.common.transport.SessionMsgListenerType;
 import org.thingsboard.server.common.transport.TransportDeviceProfileCache;
 import org.thingsboard.server.common.transport.TransportResourceCache;
 import org.thingsboard.server.common.transport.TransportService;
@@ -993,6 +994,9 @@ public class DefaultTransportService implements TransportService {
                 md.setSessionInfo(newSessionInfo);
                 transportCallbackExecutor.submit(() -> md.getListener().onDeviceProfileUpdate(newSessionInfo, deviceProfile));
             }
+            if (coapRegularSession(md)) {
+                transportCallbackExecutor.submit(() -> md.getListener().onDeviceProfileUpdate(md.getSessionInfo(), deviceProfile));
+            }
         });
     }
 
@@ -1026,7 +1030,16 @@ public class DefaultTransportService implements TransportService {
                 md.setSessionInfo(newSessionInfo);
                 transportCallbackExecutor.submit(() -> md.getListener().onDeviceUpdate(newSessionInfo, device, Optional.ofNullable(newDeviceProfile)));
             }
+            if (coapRegularSession(md)) {
+                DeviceProfile newDeviceProfile = deviceProfileCache.get(new DeviceProfileId(new UUID(deviceProfileIdMSB, deviceProfileIdLSB)));
+                transportCallbackExecutor.submit(() -> md.getListener().onDeviceUpdate(md.getSessionInfo(), device, Optional.ofNullable(newDeviceProfile)));
+            }
         });
+    }
+
+    // todo: consider to add another way to verify the CoAP regular session type.
+    private boolean coapRegularSession(SessionMetaData md) {
+        return md.getListener().listenerType().equals(SessionMsgListenerType.COAP_REGULAR_SESSION);
     }
 
     private void onDeviceDeleted(DeviceId deviceId) {

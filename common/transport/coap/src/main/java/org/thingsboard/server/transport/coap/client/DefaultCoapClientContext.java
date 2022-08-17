@@ -46,6 +46,7 @@ import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.transport.SessionMsgListener;
+import org.thingsboard.server.common.transport.SessionMsgListenerType;
 import org.thingsboard.server.common.transport.TransportDeviceProfileCache;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
@@ -86,6 +87,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
     private final PartitionService partitionService;
     private final ConcurrentMap<DeviceId, TbCoapClientState> clients = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, TbCoapClientState> clientsByToken = new ConcurrentHashMap<>();
+    private TransportProtos.SessionInfoProto regularSessionInfo;
 
     public DefaultCoapClientContext(CoapServerContext config, @Lazy CoapTransportContext transportContext,
                                     TransportService transportService, TransportDeviceProfileCache profileCache,
@@ -352,8 +354,6 @@ public class DefaultCoapClientContext implements CoapClientContext {
         try {
             if (state.getConfiguration() == null || state.getAdaptor() == null) {
                 initStateAdaptor(deviceProfile, state);
-            } else if (!state.getConfiguration().getDeviceProfile().equals(deviceProfile)) {
-                initStateAdaptor(deviceProfile, state);
             }
             if (state.getCredentials() == null) {
                 state.init(deviceCredentials);
@@ -382,7 +382,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
     private TransportConfigurationContainer getTransportConfigurationContainer(DeviceProfile deviceProfile) throws AdaptorException {
         DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
         if (transportConfiguration instanceof DefaultDeviceProfileTransportConfiguration) {
-            return new TransportConfigurationContainer(true, deviceProfile);
+            return new TransportConfigurationContainer(true);
         } else if (transportConfiguration instanceof CoapDeviceProfileTransportConfiguration) {
             CoapDeviceProfileTransportConfiguration coapDeviceProfileTransportConfiguration =
                     (CoapDeviceProfileTransportConfiguration) transportConfiguration;
@@ -394,7 +394,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
                 TransportPayloadTypeConfiguration transportPayloadTypeConfiguration =
                         defaultCoapDeviceTypeConfiguration.getTransportPayloadTypeConfiguration();
                 if (transportPayloadTypeConfiguration instanceof JsonTransportPayloadConfiguration) {
-                    return new TransportConfigurationContainer(true, deviceProfile);
+                    return new TransportConfigurationContainer(true);
                 } else {
                     ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration =
                             (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
@@ -406,8 +406,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
                             protoTransportPayloadConfiguration.getTelemetryDynamicMessageDescriptor(deviceTelemetryProtoSchema),
                             protoTransportPayloadConfiguration.getAttributesDynamicMessageDescriptor(deviceAttributesProtoSchema),
                             protoTransportPayloadConfiguration.getRpcResponseDynamicMessageDescriptor(deviceRpcResponseProtoSchema),
-                            protoTransportPayloadConfiguration.getRpcRequestDynamicMessageBuilder(deviceRpcRequestProtoSchema),
-                            deviceProfile
+                            protoTransportPayloadConfiguration.getRpcRequestDynamicMessageBuilder(deviceRpcRequestProtoSchema)
                     );
                 }
             } else {
@@ -611,6 +610,65 @@ public class DefaultCoapClientContext implements CoapClientContext {
         }
     }
 
+    @RequiredArgsConstructor
+    public class RegularCoapSessionListener implements SessionMsgListener {
+
+        // todo: consider to declare next 5 methods as defaults in the SessionMsgListener?
+
+        @Override
+        public void onGetAttributesResponse(TransportProtos.GetAttributeResponseMsg getAttributesResponse) {}
+
+        @Override
+        public void onAttributeUpdate(UUID sessionId, TransportProtos.AttributeUpdateNotificationMsg attributeUpdateNotification) {}
+
+        @Override
+        public void onToDeviceRpcRequest(UUID sessionId, TransportProtos.ToDeviceRpcRequestMsg toDeviceRequest) {}
+
+        @Override
+        public void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg toServerResponse) {}
+
+        @Override
+        public void onDeviceDeleted(DeviceId deviceId) {}
+
+        @Override
+        public void onRemoteSessionCloseCommand(UUID sessionId, TransportProtos.SessionCloseNotificationProto sessionCloseNotification) {
+            log.trace("[{}] Received the remote command to close regular CoAP session: {}", sessionId, sessionCloseNotification.getMessage());
+            transportService.process(regularSessionInfo, getSessionEventMsg(TransportProtos.SessionEvent.CLOSED), null);
+            transportService.deregisterSession(regularSessionInfo);
+            regularSessionInfo = null;
+        }
+
+        @Override
+        public void onDeviceProfileUpdate(TransportProtos.SessionInfoProto sessionInfo, DeviceProfile deviceProfile) {
+            updateState(null, deviceProfile);
+        }
+
+        @Override
+        public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
+            deviceProfileOpt.ifPresent(deviceProfile -> updateState(device, deviceProfile));
+        }
+
+        @Override
+        public SessionMsgListenerType listenerType() {
+            return SessionMsgListenerType.COAP_REGULAR_SESSION;
+        }
+
+        private void updateState(Device device, DeviceProfile deviceProfile) {
+            clients.forEach((deviceId, state) -> {
+                if (state.getProfileId().equals(deviceProfile.getId()) && !state.hasObservations()) {
+                    try {
+                        initStateAdaptor(deviceProfile, state);
+                    } catch (AdaptorException e) {
+                        log.trace("[{}] Failed to update client state due to: ", state.getDeviceId(), e);
+                    }
+                }
+                if (device != null && deviceId.equals(device.getId())) {
+                    state.onDeviceUpdate(device);
+                }
+            });
+        }
+    }
+
     private boolean asleep(TbCoapClientState client) {
         boolean changed = compareAndSetSleepFlag(client, true);
         if (changed) {
@@ -623,6 +681,16 @@ public class DefaultCoapClientContext implements CoapClientContext {
     @Override
     public boolean awake(TbCoapClientState client) {
         return awake(client, true, System.currentTimeMillis());
+    }
+
+    @Override
+    public void registerRegularSession() {
+        if (regularSessionInfo == null) {
+            regularSessionInfo = SessionInfoCreator.createDeviceLessSession(transportContext, UUID.randomUUID());
+            transportService.registerAsyncSession(regularSessionInfo, new RegularCoapSessionListener());
+        }
+        // todo: consider to create scheduler for report activity, or use existing scheduler that used for other sessions?
+        transportService.reportActivity(regularSessionInfo);
     }
 
     private boolean awake(TbCoapClientState client, boolean notifyOtherServers, long uplinkTs) {
