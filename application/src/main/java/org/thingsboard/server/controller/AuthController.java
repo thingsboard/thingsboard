@@ -86,12 +86,8 @@ public class AuthController extends BaseController {
     @RequestMapping(value = "/auth/user", method = RequestMethod.GET)
     public @ResponseBody
     User getUser() throws ThingsboardException {
-        try {
-            SecurityUser securityUser = getCurrentUser();
-            return userService.findUserById(securityUser.getTenantId(), securityUser.getId());
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        SecurityUser securityUser = getCurrentUser();
+        return userService.findUserById(securityUser.getTenantId(), securityUser.getId());
     }
 
     @ApiOperation(value = "Logout (logout)",
@@ -111,31 +107,27 @@ public class AuthController extends BaseController {
     public ObjectNode changePassword(
             @ApiParam(value = "Change Password Request")
             @RequestBody ChangePasswordRequest changePasswordRequest) throws ThingsboardException {
-        try {
-            String currentPassword = changePasswordRequest.getCurrentPassword();
-            String newPassword = changePasswordRequest.getNewPassword();
-            SecurityUser securityUser = getCurrentUser();
-            UserCredentials userCredentials = userService.findUserCredentialsByUserId(TenantId.SYS_TENANT_ID, securityUser.getId());
-            if (!passwordEncoder.matches(currentPassword, userCredentials.getPassword())) {
-                throw new ThingsboardException("Current password doesn't match!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-            }
-            systemSecurityService.validatePassword(securityUser.getTenantId(), newPassword, userCredentials);
-            if (passwordEncoder.matches(newPassword, userCredentials.getPassword())) {
-                throw new ThingsboardException("New password should be different from existing!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-            }
-            userCredentials.setPassword(passwordEncoder.encode(newPassword));
-            userService.replaceUserCredentials(securityUser.getTenantId(), userCredentials);
-
-            sendEntityNotificationMsg(getTenantId(), userCredentials.getUserId(), EdgeEventActionType.CREDENTIALS_UPDATED);
-
-            eventPublisher.publishEvent(new UserAuthDataChangedEvent(securityUser.getId()));
-            ObjectNode response = JacksonUtil.newObjectNode();
-            response.put("token", tokenFactory.createAccessJwtToken(securityUser).getToken());
-            response.put("refreshToken", tokenFactory.createRefreshToken(securityUser).getToken());
-            return response;
-        } catch (Exception e) {
-            throw handleException(e);
+        String currentPassword = changePasswordRequest.getCurrentPassword();
+        String newPassword = changePasswordRequest.getNewPassword();
+        SecurityUser securityUser = getCurrentUser();
+        UserCredentials userCredentials = userService.findUserCredentialsByUserId(TenantId.SYS_TENANT_ID, securityUser.getId());
+        if (!passwordEncoder.matches(currentPassword, userCredentials.getPassword())) {
+            throw new ThingsboardException("Current password doesn't match!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
+        systemSecurityService.validatePassword(securityUser.getTenantId(), newPassword, userCredentials);
+        if (passwordEncoder.matches(newPassword, userCredentials.getPassword())) {
+            throw new ThingsboardException("New password should be different from existing!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
+        userCredentials.setPassword(passwordEncoder.encode(newPassword));
+        userService.replaceUserCredentials(securityUser.getTenantId(), userCredentials);
+
+        sendEntityNotificationMsg(getTenantId(), userCredentials.getUserId(), EdgeEventActionType.CREDENTIALS_UPDATED);
+
+        eventPublisher.publishEvent(new UserAuthDataChangedEvent(securityUser.getId()));
+        ObjectNode response = JacksonUtil.newObjectNode();
+        response.put("token", tokenFactory.createAccessJwtToken(securityUser).getToken());
+        response.put("refreshToken", tokenFactory.createRefreshToken(securityUser).getToken());
+        return response;
     }
 
     @ApiOperation(value = "Get the current User password policy (getUserPasswordPolicy)",
@@ -143,13 +135,9 @@ public class AuthController extends BaseController {
     @RequestMapping(value = "/noauth/userPasswordPolicy", method = RequestMethod.GET)
     @ResponseBody
     public UserPasswordPolicy getUserPasswordPolicy() throws ThingsboardException {
-        try {
-            SecuritySettings securitySettings =
-                    checkNotNull(systemSecurityService.getSecuritySettings(TenantId.SYS_TENANT_ID));
-            return securitySettings.getPasswordPolicy();
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        SecuritySettings securitySettings =
+                checkNotNull(systemSecurityService.getSecuritySettings(TenantId.SYS_TENANT_ID));
+        return securitySettings.getPasswordPolicy();
     }
 
     @ApiOperation(value = "Check Activate User Token (checkActivateToken)",
@@ -244,37 +232,33 @@ public class AuthController extends BaseController {
             @RequestBody ActivateUserRequest activateRequest,
             @RequestParam(required = false, defaultValue = "true") boolean sendActivationMail,
             HttpServletRequest request) throws ThingsboardException {
-        try {
-            String activateToken = activateRequest.getActivateToken();
-            String password = activateRequest.getPassword();
-            systemSecurityService.validatePassword(TenantId.SYS_TENANT_ID, password, null);
-            String encodedPassword = passwordEncoder.encode(password);
-            UserCredentials credentials = userService.activateUserCredentials(TenantId.SYS_TENANT_ID, activateToken, encodedPassword);
-            User user = userService.findUserById(TenantId.SYS_TENANT_ID, credentials.getUserId());
-            UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
-            SecurityUser securityUser = new SecurityUser(user, credentials.isEnabled(), principal);
-            userService.setUserCredentialsEnabled(user.getTenantId(), user.getId(), true);
-            String baseUrl = systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), request);
-            String loginUrl = String.format("%s/login", baseUrl);
-            String email = user.getEmail();
+        String activateToken = activateRequest.getActivateToken();
+        String password = activateRequest.getPassword();
+        systemSecurityService.validatePassword(TenantId.SYS_TENANT_ID, password, null);
+        String encodedPassword = passwordEncoder.encode(password);
+        UserCredentials credentials = userService.activateUserCredentials(TenantId.SYS_TENANT_ID, activateToken, encodedPassword);
+        User user = userService.findUserById(TenantId.SYS_TENANT_ID, credentials.getUserId());
+        UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
+        SecurityUser securityUser = new SecurityUser(user, credentials.isEnabled(), principal);
+        userService.setUserCredentialsEnabled(user.getTenantId(), user.getId(), true);
+        String baseUrl = systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), request);
+        String loginUrl = String.format("%s/login", baseUrl);
+        String email = user.getEmail();
 
-            if (sendActivationMail) {
-                try {
-                    mailService.sendAccountActivatedEmail(loginUrl, email);
-                } catch (Exception e) {
-                    log.info("Unable to send account activation email [{}]", e.getMessage());
-                }
+        if (sendActivationMail) {
+            try {
+                mailService.sendAccountActivatedEmail(loginUrl, email);
+            } catch (Exception e) {
+                log.info("Unable to send account activation email [{}]", e.getMessage());
             }
-
-            sendEntityNotificationMsg(user.getTenantId(), user.getId(), EdgeEventActionType.CREDENTIALS_UPDATED);
-
-            JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
-            JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);
-
-            return new JwtTokenPair(accessToken.getToken(), refreshToken.getToken());
-        } catch (Exception e) {
-            throw handleException(e);
         }
+
+        sendEntityNotificationMsg(user.getTenantId(), user.getId(), EdgeEventActionType.CREDENTIALS_UPDATED);
+
+        JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
+        JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);
+
+        return new JwtTokenPair(accessToken.getToken(), refreshToken.getToken());
     }
 
     @ApiOperation(value = "Reset password (resetPassword)",
@@ -288,87 +272,78 @@ public class AuthController extends BaseController {
             @ApiParam(value = "Reset password request.")
             @RequestBody ResetPasswordRequest resetPasswordRequest,
             HttpServletRequest request) throws ThingsboardException {
-        try {
-            String resetToken = resetPasswordRequest.getResetToken();
-            String password = resetPasswordRequest.getPassword();
-            UserCredentials userCredentials = userService.findUserCredentialsByResetToken(TenantId.SYS_TENANT_ID, resetToken);
-            if (userCredentials != null) {
-                systemSecurityService.validatePassword(TenantId.SYS_TENANT_ID, password, userCredentials);
-                if (passwordEncoder.matches(password, userCredentials.getPassword())) {
-                    throw new ThingsboardException("New password should be different from existing!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-                }
-                String encodedPassword = passwordEncoder.encode(password);
-                userCredentials.setPassword(encodedPassword);
-                userCredentials.setResetToken(null);
-                userCredentials = userService.replaceUserCredentials(TenantId.SYS_TENANT_ID, userCredentials);
-                User user = userService.findUserById(TenantId.SYS_TENANT_ID, userCredentials.getUserId());
-                UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
-                SecurityUser securityUser = new SecurityUser(user, userCredentials.isEnabled(), principal);
-                String baseUrl = systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), request);
-                String loginUrl = String.format("%s/login", baseUrl);
-                String email = user.getEmail();
-                mailService.sendPasswordWasResetEmail(loginUrl, email);
-
-                eventPublisher.publishEvent(new UserAuthDataChangedEvent(securityUser.getId()));
-                JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
-                JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);
-
-                return new JwtTokenPair(accessToken.getToken(), refreshToken.getToken());
-            } else {
-                throw new ThingsboardException("Invalid reset token!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        String resetToken = resetPasswordRequest.getResetToken();
+        String password = resetPasswordRequest.getPassword();
+        UserCredentials userCredentials = userService.findUserCredentialsByResetToken(TenantId.SYS_TENANT_ID, resetToken);
+        if (userCredentials != null) {
+            systemSecurityService.validatePassword(TenantId.SYS_TENANT_ID, password, userCredentials);
+            if (passwordEncoder.matches(password, userCredentials.getPassword())) {
+                throw new ThingsboardException("New password should be different from existing!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
             }
-        } catch (Exception e) {
-            throw handleException(e);
+            String encodedPassword = passwordEncoder.encode(password);
+            userCredentials.setPassword(encodedPassword);
+            userCredentials.setResetToken(null);
+            userCredentials = userService.replaceUserCredentials(TenantId.SYS_TENANT_ID, userCredentials);
+            User user = userService.findUserById(TenantId.SYS_TENANT_ID, userCredentials.getUserId());
+            UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
+            SecurityUser securityUser = new SecurityUser(user, userCredentials.isEnabled(), principal);
+            String baseUrl = systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), request);
+            String loginUrl = String.format("%s/login", baseUrl);
+            String email = user.getEmail();
+            mailService.sendPasswordWasResetEmail(loginUrl, email);
+
+            eventPublisher.publishEvent(new UserAuthDataChangedEvent(securityUser.getId()));
+            JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
+            JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);
+
+            return new JwtTokenPair(accessToken.getToken(), refreshToken.getToken());
+        } else {
+            throw new ThingsboardException("Invalid reset token!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
     }
 
     private void logLogoutAction(HttpServletRequest request) throws ThingsboardException {
-        try {
-            SecurityUser user = getCurrentUser();
-            RestAuthenticationDetails details = new RestAuthenticationDetails(request);
-            String clientAddress = details.getClientAddress();
-            String browser = "Unknown";
-            String os = "Unknown";
-            String device = "Unknown";
-            if (details.getUserAgent() != null) {
-                Client userAgent = details.getUserAgent();
-                if (userAgent.userAgent != null) {
-                    browser = userAgent.userAgent.family;
-                    if (userAgent.userAgent.major != null) {
-                        browser += " " + userAgent.userAgent.major;
-                        if (userAgent.userAgent.minor != null) {
-                            browser += "." + userAgent.userAgent.minor;
-                            if (userAgent.userAgent.patch != null) {
-                                browser += "." + userAgent.userAgent.patch;
-                            }
+        SecurityUser user = getCurrentUser();
+        RestAuthenticationDetails details = new RestAuthenticationDetails(request);
+        String clientAddress = details.getClientAddress();
+        String browser = "Unknown";
+        String os = "Unknown";
+        String device = "Unknown";
+        if (details.getUserAgent() != null) {
+            Client userAgent = details.getUserAgent();
+            if (userAgent.userAgent != null) {
+                browser = userAgent.userAgent.family;
+                if (userAgent.userAgent.major != null) {
+                    browser += " " + userAgent.userAgent.major;
+                    if (userAgent.userAgent.minor != null) {
+                        browser += "." + userAgent.userAgent.minor;
+                        if (userAgent.userAgent.patch != null) {
+                            browser += "." + userAgent.userAgent.patch;
                         }
                     }
-                }
-                if (userAgent.os != null) {
-                    os = userAgent.os.family;
-                    if (userAgent.os.major != null) {
-                        os += " " + userAgent.os.major;
-                        if (userAgent.os.minor != null) {
-                            os += "." + userAgent.os.minor;
-                            if (userAgent.os.patch != null) {
-                                os += "." + userAgent.os.patch;
-                                if (userAgent.os.patchMinor != null) {
-                                    os += "." + userAgent.os.patchMinor;
-                                }
-                            }
-                        }
-                    }
-                }
-                if (userAgent.device != null) {
-                    device = userAgent.device.family;
                 }
             }
-            auditLogService.logEntityAction(
-                    user.getTenantId(), user.getCustomerId(), user.getId(),
-                    user.getName(), user.getId(), null, ActionType.LOGOUT, null, clientAddress, browser, os, device);
-
-        } catch (Exception e) {
-            throw handleException(e);
+            if (userAgent.os != null) {
+                os = userAgent.os.family;
+                if (userAgent.os.major != null) {
+                    os += " " + userAgent.os.major;
+                    if (userAgent.os.minor != null) {
+                        os += "." + userAgent.os.minor;
+                        if (userAgent.os.patch != null) {
+                            os += "." + userAgent.os.patch;
+                            if (userAgent.os.patchMinor != null) {
+                                os += "." + userAgent.os.patchMinor;
+                            }
+                        }
+                    }
+                }
+            }
+            if (userAgent.device != null) {
+                device = userAgent.device.family;
+            }
         }
+        auditLogService.logEntityAction(
+                user.getTenantId(), user.getCustomerId(), user.getId(),
+                user.getName(), user.getId(), null, ActionType.LOGOUT, null, clientAddress, browser, os, device);
     }
 }
