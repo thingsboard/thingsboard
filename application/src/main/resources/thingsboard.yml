@@ -200,6 +200,14 @@ cassandra:
   username: "${CASSANDRA_USERNAME:}"
   # Specify your password
   password: "${CASSANDRA_PASSWORD:}"
+  # Astra DB connect https://astra.datastax.com/
+  cloud:
+    # /etc/thingsboard/astra/secure-connect-thingsboard.zip
+    secure_connect_bundle_path: "${CASSANDRA_CLOUD_SECURE_BUNDLE_PATH:}"
+    # DucitQPHMzPCBOZqFYexAfKk
+    client_id: "${CASSANDRA_CLOUD_CLIENT_ID:}"
+    # ZnF7FpuHp43FP5BzM+KY8wGmSb4Ql6BhT4Z7sOU13ze+gXQ-n7OkFpNuB,oACUIQObQnK0g4bSPoZhK5ejkcF9F.j6f64j71Sr.tiRe0Fsq2hPS1ZCGSfAaIgg63IydG
+    client_secret: "${CASSANDRA_CLOUD_CLIENT_SECRET:}"
 
   # Cassandra cluster connection socket parameters #
   socket:
