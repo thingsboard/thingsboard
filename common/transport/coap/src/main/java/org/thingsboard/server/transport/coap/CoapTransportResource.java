@@ -232,6 +232,9 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         TbCoapClientState clientState = null;
         try {
             clientState = clients.getOrCreateClient(type, deviceCredentials, deviceProfile);
+            if (!clientState.hasObservations()) {
+                clients.registerRegularSession();
+            }
             clients.awake(clientState);
             switch (type) {
                 case POST_ATTRIBUTES_REQUEST:

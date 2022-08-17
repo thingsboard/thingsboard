@@ -149,4 +149,9 @@ public class TbCoapClientState {
         this.missedAttributeUpdates = null;
         return result;
     }
+
+    public boolean hasObservations() {
+        return !(attrs == null && rpc == null);
+    }
+
 }

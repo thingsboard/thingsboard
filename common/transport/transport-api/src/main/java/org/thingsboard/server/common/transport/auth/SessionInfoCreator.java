@@ -32,6 +32,13 @@ public class SessionInfoCreator {
         return getSessionInfoProto(msg, nodeId, sessionId);
     }
 
+    public static TransportProtos.SessionInfoProto createDeviceLessSession(TransportContext context, UUID sessionId) {
+        return TransportProtos.SessionInfoProto.newBuilder().setNodeId(context.getNodeId())
+                .setSessionIdMSB(sessionId.getMostSignificantBits())
+                .setSessionIdLSB(sessionId.getLeastSignificantBits())
+                .build();
+    }
+
     private static TransportProtos.SessionInfoProto getSessionInfoProto(ValidateDeviceCredentialsResponse msg, String nodeId, UUID sessionId) {
         return TransportProtos.SessionInfoProto.newBuilder().setNodeId(nodeId)
                 .setSessionIdMSB(sessionId.getMostSignificantBits())

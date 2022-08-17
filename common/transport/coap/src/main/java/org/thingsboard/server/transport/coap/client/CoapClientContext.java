@@ -48,4 +48,7 @@ public interface CoapClientContext {
     void deregisterObserveRelation(String token);
 
     boolean awake(TbCoapClientState client);
+
+    void registerRegularSession();
+
 }
