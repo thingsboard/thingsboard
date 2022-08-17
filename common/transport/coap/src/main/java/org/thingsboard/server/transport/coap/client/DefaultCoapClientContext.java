@@ -616,19 +616,24 @@ public class DefaultCoapClientContext implements CoapClientContext {
         // todo: consider to declare next 5 methods as defaults in the SessionMsgListener?
 
         @Override
-        public void onGetAttributesResponse(TransportProtos.GetAttributeResponseMsg getAttributesResponse) {}
+        public void onGetAttributesResponse(TransportProtos.GetAttributeResponseMsg getAttributesResponse) {
+        }
 
         @Override
-        public void onAttributeUpdate(UUID sessionId, TransportProtos.AttributeUpdateNotificationMsg attributeUpdateNotification) {}
+        public void onAttributeUpdate(UUID sessionId, TransportProtos.AttributeUpdateNotificationMsg attributeUpdateNotification) {
+        }
 
         @Override
-        public void onToDeviceRpcRequest(UUID sessionId, TransportProtos.ToDeviceRpcRequestMsg toDeviceRequest) {}
+        public void onToDeviceRpcRequest(UUID sessionId, TransportProtos.ToDeviceRpcRequestMsg toDeviceRequest) {
+        }
 
         @Override
-        public void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg toServerResponse) {}
+        public void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg toServerResponse) {
+        }
 
         @Override
-        public void onDeviceDeleted(DeviceId deviceId) {}
+        public void onDeviceDeleted(DeviceId deviceId) {
+        }
 
         @Override
         public void onRemoteSessionCloseCommand(UUID sessionId, TransportProtos.SessionCloseNotificationProto sessionCloseNotification) {
@@ -655,15 +660,18 @@ public class DefaultCoapClientContext implements CoapClientContext {
 
         private void updateState(Device device, DeviceProfile deviceProfile) {
             clients.forEach((deviceId, state) -> {
-                if (state.getProfileId().equals(deviceProfile.getId()) && !state.hasObservations()) {
-                    try {
+                state.lock();
+                try {
+                    if (state.getProfileId().equals(deviceProfile.getId()) && !state.hasObservations()) {
                         initStateAdaptor(deviceProfile, state);
-                    } catch (AdaptorException e) {
-                        log.trace("[{}] Failed to update client state due to: ", state.getDeviceId(), e);
                     }
-                }
-                if (device != null && deviceId.equals(device.getId())) {
-                    state.onDeviceUpdate(device);
+                    if (device != null && deviceId.equals(device.getId())) {
+                        state.onDeviceUpdate(device);
+                    }
+                } catch (AdaptorException e) {
+                    log.trace("[{}] Failed to update client state due to: ", state.getDeviceId(), e);
+                } finally {
+                    state.unlock();
                 }
             });
         }
