@@ -40,8 +40,8 @@
                       <mat-slide-toggle
                         (click)="toggleExtensionPanel($event, i, provider.get('enable').value)"
                         formControlName="enable">
+                        {{ twoFactorAuthProvidersData.get(provider.value.providerType).name | translate }}
                       </mat-slide-toggle>
-                      {{ twoFactorAuthProvidersData.get(provider.value.providerType).name | translate }}
                     </mat-panel-title>
                   </mat-expansion-panel-header>
 

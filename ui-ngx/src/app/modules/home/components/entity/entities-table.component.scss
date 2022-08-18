@@ -19,6 +19,11 @@
   width: 100%;
   height: 100%;
   display: block;
+
+  mat-drawer-container {
+    overflow: clip;
+  }
+
   .tb-entity-table {
     .tb-entity-table-content {
       width: 100%;

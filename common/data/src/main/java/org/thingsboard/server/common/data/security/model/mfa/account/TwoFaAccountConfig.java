@@ -23,6 +23,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Data;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
 
+import java.io.Serializable;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -34,7 +36,7 @@ import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProvi
         @Type(name = "BACKUP_CODE", value = BackupCodeTwoFaAccountConfig.class)
 })
 @Data
-public abstract class TwoFaAccountConfig {
+public abstract class TwoFaAccountConfig implements Serializable {
 
     private boolean useByDefault;
 

@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.sql.event;
 
 public interface EventCleanupRepository {
 
-    void cleanupEvents(long regularEventStartTs, long regularEventEndTs, long debugEventStartTs, long debugEventEndTs);
+    void cleanupEvents(long eventExpTime, boolean debug);
 
+    void migrateEvents(long regularEventTs, long debugEventTs);
 }

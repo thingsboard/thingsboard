@@ -33,12 +33,15 @@ public class OtaPackageMsgConstructor {
                 .setMsgType(msgType)
                 .setIdMSB(otaPackage.getId().getId().getMostSignificantBits())
                 .setIdLSB(otaPackage.getId().getId().getLeastSignificantBits())
-                .setDeviceProfileIdMSB(otaPackage.getDeviceProfileId().getId().getMostSignificantBits())
-                .setDeviceProfileIdLSB(otaPackage.getDeviceProfileId().getId().getLeastSignificantBits())
                 .setType(otaPackage.getType().name())
                 .setTitle(otaPackage.getTitle())
                 .setVersion(otaPackage.getVersion())
                 .setTag(otaPackage.getTag());
+
+        if (otaPackage.getDeviceProfileId() != null) {
+            builder.setDeviceProfileIdMSB(otaPackage.getDeviceProfileId().getId().getMostSignificantBits())
+                    .setDeviceProfileIdLSB(otaPackage.getDeviceProfileId().getId().getLeastSignificantBits());
+        }
 
         if (otaPackage.getUrl() != null) {
             builder.setUrl(otaPackage.getUrl());

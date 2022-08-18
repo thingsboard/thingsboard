@@ -16,12 +16,12 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -107,7 +107,7 @@ public abstract class BaseRuleChainControllerTest extends AbstractControllerTest
         Mockito.reset(tbClusterService, auditLogService);
 
         RuleChain ruleChain = new RuleChain();
-        ruleChain.setName(RandomStringUtils.randomAlphabetic(300));
+        ruleChain.setName(StringUtils.randomAlphabetic(300));
         String msgError = msgErrorFieldLength("name");
         doPost("/api/ruleChain", ruleChain)
                 .andExpect(status().isBadRequest())

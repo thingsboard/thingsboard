@@ -13,14 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.event;
+:host {
+  padding: 12px 0 12px 0;
 
-import io.swagger.annotations.ApiModel;
+  .fieldset-element {
+    cursor: pointer;
+    padding: 0.5em;
+    border: 1px groove rgba(0, 0, 0, 0.25);
+    border-radius: 4px;
+    width: 100%;
 
-@ApiModel
-public class DebugRuleNodeEventFilter extends DebugEvent {
-    @Override
-    public EventType getEventType() {
-        return EventType.DEBUG_RULE_NODE;
+    .legend-element {
+      color: rgba(0, 0, 0, 0.54);
+      font-size: 12px;
     }
+  }
+
+  .tb-rate-limits-button {
+    margin-top: 0.5em;
+  }
 }
