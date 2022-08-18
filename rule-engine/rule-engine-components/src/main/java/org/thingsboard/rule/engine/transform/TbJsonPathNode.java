@@ -41,6 +41,7 @@ import java.util.concurrent.ExecutionException;
         configClazz = TbJsonPathNodeConfiguration.class,
         nodeDescription = "JSONPath expression from message",
         nodeDetails = "",
+        uiResources = {"static/rulenode/rulenode-core-config.js"},
         icon = "functions",
         configDirective = "tbTransformationNodeJsonPathConfig"
 )
