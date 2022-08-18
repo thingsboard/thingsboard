@@ -67,7 +67,7 @@ public class TbAzureIotHubNode extends TbMqttNode {
     }
 
     protected void prepareMqttClientConfig(MqttClientConfig config) throws SSLException {
-        config.setProtocolVersion(MqttVersion.MQTT_3_1_1);
+        config.setProtocolVersion(MqttVersion.MQTT_5);
         config.setUsername(AzureIotHubUtil.buildUsername(mqttNodeConfiguration.getHost(), config.getClientId()));
         ClientCredentials credentials = mqttNodeConfiguration.getCredentials();
         if (CredentialsType.SAS == credentials.getType()) {

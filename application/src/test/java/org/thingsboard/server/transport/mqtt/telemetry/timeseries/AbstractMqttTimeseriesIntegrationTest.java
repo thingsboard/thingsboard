@@ -20,6 +20,7 @@ import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
@@ -218,19 +219,18 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
     }
 
     private List<String> getActualKeysList(DeviceId deviceId, List<String> expectedKeys) throws Exception {
-        long start = System.currentTimeMillis();
-        long end = System.currentTimeMillis() + 3000;
+        Awaitility.await()
+                .alias("Get actual keys list")
+                .atMost(3000, TimeUnit.MILLISECONDS)
+                .until(() -> {
+                    var keys = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + deviceId + "/keys/timeseries",
+                            new TypeReference<List<String>>() {});
 
-        List<String> actualKeys = null;
-        while (start <= end) {
-            actualKeys = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + deviceId + "/keys/timeseries", new TypeReference<>() {});
-            if (actualKeys.size() == expectedKeys.size()) {
-                break;
-            }
-            Thread.sleep(100);
-            start += 100;
-        }
-        return actualKeys;
+                    return keys.size() == expectedKeys.size();
+                });
+
+        return doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + deviceId + "/keys/timeseries",
+                new TypeReference<>() {});
     }
 
     protected String getGatewayTelemetryJsonPayload(String deviceA, String deviceB, String firstTsValue, String secondTsValue) {

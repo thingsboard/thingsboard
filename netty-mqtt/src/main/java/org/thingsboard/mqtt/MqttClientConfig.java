@@ -32,7 +32,7 @@ public final class MqttClientConfig {
 
     private String clientId;
     private int timeoutSeconds = 60;
-    private MqttVersion protocolVersion = MqttVersion.MQTT_3_1;
+    private MqttVersion protocolVersion = MqttVersion.MQTT_5;
     @Nullable private String username = null;
     @Nullable private String password = null;
     private boolean cleanSession = true;
