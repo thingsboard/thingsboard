@@ -125,10 +125,6 @@ public class TbGetTelemetryNode implements TbNode {
         }
     }
 
-    @Override
-    public void destroy() {
-    }
-
     private List<ReadTsKvQuery> buildQueries(TbMsg msg, List<String> keys) {
         final Interval interval = getInterval(msg);
         final long aggIntervalStep = Aggregation.NONE.equals(aggregation) ? 1 :

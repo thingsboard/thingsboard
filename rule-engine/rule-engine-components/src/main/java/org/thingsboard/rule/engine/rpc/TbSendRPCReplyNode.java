@@ -70,8 +70,4 @@ public class TbSendRPCReplyNode implements TbNode {
         }
     }
 
-    @Override
-    public void destroy() {
-    }
-
 }

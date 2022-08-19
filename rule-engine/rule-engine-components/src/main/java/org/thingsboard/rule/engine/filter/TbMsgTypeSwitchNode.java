@@ -117,8 +117,4 @@ public class TbMsgTypeSwitchNode implements TbNode {
         ctx.tellNext(msg, relationType);
     }
 
-    @Override
-    public void destroy() {
-
-    }
 }
