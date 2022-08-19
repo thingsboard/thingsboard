@@ -18,7 +18,7 @@ package org.thingsboard.server.transport.lwm2m.utils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.JsonElement;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.eclipse.leshan.core.attributes.Attribute;
 import org.eclipse.leshan.core.attributes.AttributeSet;
 import org.eclipse.leshan.core.model.LwM2mModel;

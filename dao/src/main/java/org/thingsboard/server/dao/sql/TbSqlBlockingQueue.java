@@ -66,7 +66,10 @@ public class TbSqlBlockingQueue<E> implements TbSqlQueue<E> {
                     }
                     queue.drainTo(entities, batchSize - 1);
                     boolean fullPack = entities.size() == batchSize;
-                    log.debug("[{}] Going to save {} entities", logName, entities.size());
+                    if (log.isDebugEnabled()) {
+                        log.debug("[{}] Going to save {} entities", logName, entities.size());
+                        log.trace("[{}] Going to save entities: {}", logName, entities);
+                    }
                     Stream<E> entitiesStream = entities.stream().map(TbSqlQueueElement::getEntity);
                     saveFunction.accept(
                             (params.isBatchSortEnabled() ? entitiesStream.sorted(batchUpdateComparator) : entitiesStream)

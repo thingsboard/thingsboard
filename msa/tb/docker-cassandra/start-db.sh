@@ -24,15 +24,22 @@ if [ ! -d ${PGDATA} ]; then
     ${PG_CTL} initdb
 fi
 
-exec setsid nohup postgres >> ${PGLOG}/postgres.log 2>&1 &
+echo "Starting Postgresql..."
+${PG_CTL} start
+
+RETRIES="${PG_ISREADY_RETRIES:-300}"
+until pg_isready -U ${pkg.user} -d postgres --quiet || [ $RETRIES -eq 0 ]
+do
+    echo "Connecting to Postgres, $((RETRIES--)) attempts left..."
+    sleep 1
+done
 
 if [ ! -f ${firstlaunch} ]; then
-    sleep 2
-    while ! psql -U ${pkg.user} -d postgres -c "CREATE DATABASE thingsboard"
-    do
-      sleep 1
-    done
+    echo "Creating database..."
+    psql -U ${pkg.user} -d postgres -c "CREATE DATABASE thingsboard"
 fi
+
+echo "Postgresql is ready"
 
 cassandra_data_dir=${CASSANDRA_DATA}
 cassandra_data_link=/var/lib/cassandra

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { FormattedData, MapProviders, ReplaceInfo } from '@home/components/widget/lib/maps/map-models';
+import { MapProviders } from '@home/components/widget/lib/maps/map-models';
 import {
   createLabelFromDatasource,
   hashCode,
@@ -27,27 +27,8 @@ import {
 } from '@core/utils';
 import { Observable, Observer, of } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Datasource, DatasourceData } from '@shared/models/widget.models';
-import _ from 'lodash';
-import { mapProviderSchema, providerSets } from '@home/components/widget/lib/maps/schemes';
-import { addCondition, mergeSchemes } from '@core/schema-utils';
+import { FormattedData } from '@shared/models/widget.models';
 import L from 'leaflet';
-
-export function getProviderSchema(mapProvider: MapProviders, ignoreImageMap = false) {
-  const providerSchema = _.cloneDeep(mapProviderSchema);
-  if (mapProvider) {
-    providerSchema.schema.properties.provider.default = mapProvider;
-  }
-  if (ignoreImageMap) {
-    providerSchema.form[0].items = providerSchema.form[0]?.items.filter(item => item.value !== 'image-map');
-  }
-  return mergeSchemes([providerSchema,
-    ...Object.keys(providerSets)?.map(
-      (key: string) => {
-        const setting = providerSets[key];
-        return addCondition(setting?.schema, `model.provider === '${setting.name}'`);
-      })]);
-}
 
 export function getRatio(firsMoment: number, secondMoment: number, intermediateMoment: number): number {
   return (intermediateMoment - firsMoment) / (secondMoment - firsMoment);
@@ -76,9 +57,12 @@ export function findAngle(startPoint: FormattedData, endPoint: FormattedData, la
 }
 
 
-export function getDefCenterPosition(position) {
+export function getDefCenterPosition(position): [number, number] {
   if (typeof (position) === 'string') {
-    return position.split(',');
+    const parts = position.split(',');
+    if (parts.length === 2) {
+      return [Number(parts[0]), Number(parts[1])];
+    }
   }
   if (typeof (position) === 'object') {
     return position;
@@ -132,14 +116,14 @@ const linkActionRegex = /<link-act name=['"]([^['"]*)['"]>([^<]*)<\/link-act>/g;
 const buttonActionRegex = /<button-act name=['"]([^['"]*)['"]>([^<]*)<\/button-act>/g;
 
 function createLinkElement(actionName: string, actionText: string): string {
-  return `<a href="javascript:void(0);" class="tb-custom-action" data-action-name=${actionName}>${actionText}</a>`;
+  return `<a href="javascript:void(0);" class="tb-custom-action" data-action-name="${actionName}">${actionText}</a>`;
 }
 
 function createButtonElement(actionName: string, actionText: string) {
-  return `<button mat-button class="tb-custom-action" data-action-name=${actionName}>${actionText}</button>`;
+  return `<button mat-button class="tb-custom-action" data-action-name="${actionName}">${actionText}</button>`;
 }
 
-function parseTemplate(template: string, data: { $datasource?: Datasource, [key: string]: any },
+function parseTemplate(template: string, data: FormattedData,
                        translateFn?: TranslateFunc) {
   let res = '';
   try {
@@ -208,67 +192,6 @@ function parseTemplate(template: string, data: { $datasource?: Datasource, [key:
   return res;
 }
 
-export function processPattern(template: string, data: { $datasource?: Datasource, [key: string]: any }): Array<ReplaceInfo> {
-  const replaceInfo = [];
-  try {
-    const reg = /\${([^}]*)}/g;
-    let match = reg.exec(template);
-    while (match !== null) {
-      const variableInfo: ReplaceInfo = {
-        dataKeyName: '',
-        valDec: 2,
-        variable: ''
-      };
-      const variable = match[0];
-      let label = match[1];
-      let valDec = 2;
-      const splitValues = label.split(':');
-      if (splitValues.length > 1) {
-        label = splitValues[0];
-        valDec = parseFloat(splitValues[1]);
-      }
-
-      variableInfo.variable = variable;
-      variableInfo.valDec = valDec;
-
-      if (label.startsWith('#')) {
-        const keyIndexStr = label.substring(1);
-        const n = Math.floor(Number(keyIndexStr));
-        if (String(n) === keyIndexStr && n >= 0) {
-          variableInfo.dataKeyName = data.$datasource.dataKeys[n].label;
-        }
-      } else {
-        variableInfo.dataKeyName = label;
-      }
-      replaceInfo.push(variableInfo);
-
-      match = reg.exec(template);
-    }
-  } catch (ex) {
-    console.log(ex, template);
-  }
-  return replaceInfo;
-}
-
-export function fillPattern(markerLabelText: string, replaceInfoLabelMarker: Array<ReplaceInfo>, data: FormattedData) {
-  let text = createLabelFromDatasource(data.$datasource, markerLabelText);
-  if (replaceInfoLabelMarker) {
-    for (const variableInfo of replaceInfoLabelMarker) {
-      let txtVal = '';
-      if (variableInfo.dataKeyName && isDefinedAndNotNull(data[variableInfo.dataKeyName])) {
-        const varData = data[variableInfo.dataKeyName];
-        if (isNumber(varData)) {
-          txtVal = padValue(varData, variableInfo.valDec);
-        } else {
-          txtVal = varData;
-        }
-      }
-      text = text.replace(variableInfo.variable, txtVal);
-    }
-  }
-  return text;
-}
-
 function prepareProcessPattern(template: string, translateFn?: TranslateFunc): string {
   if (translateFn) {
     template = translateFn(template);
@@ -308,7 +231,7 @@ export const parseWithTranslation = {
       throw Error('Translate not assigned');
     }
   },
-  parseTemplate(template: string, data: object, forceTranslate = false): string {
+  parseTemplate(template: string, data: FormattedData, forceTranslate = false): string {
     return parseTemplate(forceTranslate ? this.translate(template) : template, data, this.translate.bind(this));
   },
   prepareProcessPattern(template: string, forceTranslate = false): string {
@@ -318,106 +241,6 @@ export const parseWithTranslation = {
     this.translateFn = translateFn;
   }
 };
-
-export function parseData(input: DatasourceData[], dataIndex?: number): FormattedData[] {
-  return _(input).groupBy(el => el?.datasource.entityName + el?.datasource.entityType)
-    .values().value().map((entityArray, i) => {
-      const obj: FormattedData = {
-        entityName: entityArray[0]?.datasource?.entityName,
-        entityId: entityArray[0].datasource.entityId,
-        entityType: entityArray[0].datasource.entityType,
-        $datasource: entityArray[0].datasource,
-        dsIndex: i,
-        deviceType: null
-      };
-      entityArray.filter(el => el.data.length).forEach(el => {
-        const index = isDefined(dataIndex) ? dataIndex : el.data.length - 1;
-        if (!obj.hasOwnProperty(el.dataKey.label) || el.data[index][1] !== '') {
-          obj[el.dataKey.label] = el.data[index][1];
-          obj[el.dataKey.label + '|ts'] = el.data[index][0];
-          if (el.dataKey.label.toLowerCase() === 'type') {
-            obj.deviceType = el.data[index][1];
-          }
-        }
-      });
-      return obj;
-    });
-}
-
-export function flatData(input: FormattedData[]): FormattedData {
-  let result: FormattedData = {} as FormattedData;
-  if (input.length) {
-    for (const toMerge of input) {
-      result = {...result, ...toMerge};
-    }
-    result.entityName =  input[0].entityName;
-    result.entityId =  input[0].entityId;
-    result.entityType =  input[0].entityType;
-    result.$datasource =  input[0].$datasource;
-    result.dsIndex =  input[0].dsIndex;
-    result.deviceType =  input[0].deviceType;
-  }
-  return result;
-}
-
-export function parseArray(input: DatasourceData[]): FormattedData[][] {
-  return _(input).groupBy(el => el.datasource.entityName)
-    .values().value().map((entityArray, dsIndex) => {
-      const timeDataMap: {[time: number]: FormattedData} = {};
-      entityArray.filter(e => e.data.length).forEach(entity => {
-        entity.data.forEach(tsData => {
-          const time = tsData[0];
-          const value = tsData[1];
-          let data = timeDataMap[time];
-          if (!data) {
-            data = {
-              entityName: entity.datasource.entityName,
-              entityId: entity.datasource.entityId,
-              entityType: entity.datasource.entityType,
-              $datasource: entity.datasource,
-              dsIndex,
-              time,
-              deviceType: null
-            };
-            timeDataMap[time] = data;
-          }
-          data[entity.dataKey.label] = value;
-          data[entity.dataKey.label + '|ts'] = time;
-          if (entity.dataKey.label.toLowerCase() === 'type') {
-            data.deviceType = value;
-          }
-        });
-      });
-      return _.values(timeDataMap);
-    });
-}
-
-export function parseFunction(source: any, params: string[] = ['def']): (...args: any[]) => any {
-  let res = null;
-  if (source?.length) {
-    try {
-      res = new Function(...params, source);
-    }
-    catch (err) {
-      res = null;
-    }
-  }
-  return res;
-}
-
-export function safeExecute(func: (...args: any[]) => any, params = []) {
-  let res = null;
-  if (func && typeof (func) === 'function') {
-    try {
-      res = func(...params);
-    }
-    catch (err) {
-      console.log('error in external function:', err);
-      res = null;
-    }
-  }
-  return res;
-}
 
 export function functionValueCalculator(useFunction: boolean, func: (...args: any[]) => any, params = [], defaultValue: any) {
   let res;

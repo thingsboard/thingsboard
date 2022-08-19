@@ -16,22 +16,23 @@
 package org.thingsboard.server.dao.service.validator;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.dao.device.DeviceProfileDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
-import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.util.Objects;
 
 public abstract class BaseOtaPackageDataValidator<D extends BaseData<?>> extends DataValidator<D> {
 
     @Autowired
-    private TenantDao tenantDao;
+    @Lazy
+    private TenantService tenantService;
 
     @Autowired
     private DeviceProfileDao deviceProfileDao;
@@ -40,8 +41,7 @@ public abstract class BaseOtaPackageDataValidator<D extends BaseData<?>> extends
         if (otaPackageInfo.getTenantId() == null) {
             throw new DataValidationException("OtaPackage should be assigned to tenant!");
         } else {
-            Tenant tenant = tenantDao.findById(otaPackageInfo.getTenantId(), otaPackageInfo.getTenantId().getId());
-            if (tenant == null) {
+            if (!tenantService.tenantExists(otaPackageInfo.getTenantId())) {
                 throw new DataValidationException("OtaPackage is referencing to non-existent tenant!");
             }
         }

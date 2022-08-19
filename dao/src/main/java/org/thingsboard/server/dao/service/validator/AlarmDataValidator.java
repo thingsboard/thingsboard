@@ -17,19 +17,18 @@ package org.thingsboard.server.dao.service.validator;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
-import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
-import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.tenant.TenantService;
 
 @Component
 @AllArgsConstructor
 public class AlarmDataValidator extends DataValidator<Alarm> {
 
-    private final TenantDao tenantDao;
+    private final TenantService tenantService;
 
     @Override
     protected void validateDataImpl(TenantId tenantId, Alarm alarm) {
@@ -48,8 +47,7 @@ public class AlarmDataValidator extends DataValidator<Alarm> {
         if (alarm.getTenantId() == null) {
             throw new DataValidationException("Alarm should be assigned to tenant!");
         } else {
-            Tenant tenant = tenantDao.findById(alarm.getTenantId(), alarm.getTenantId().getId());
-            if (tenant == null) {
+            if (!tenantService.tenantExists(alarm.getTenantId())) {
                 throw new DataValidationException("Alarm is referencing to non-existent tenant!");
             }
         }

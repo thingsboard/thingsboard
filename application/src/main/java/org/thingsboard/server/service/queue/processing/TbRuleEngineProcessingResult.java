@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.queue.processing;
 
 import lombok.Getter;
+import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;

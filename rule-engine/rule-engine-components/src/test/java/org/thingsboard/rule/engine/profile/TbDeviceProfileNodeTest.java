@@ -40,6 +40,8 @@ import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.device.profile.AlarmRule;
+import org.thingsboard.server.common.data.device.profile.CustomTimeSchedule;
+import org.thingsboard.server.common.data.device.profile.CustomTimeScheduleItem;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.DurationAlarmConditionSpec;
@@ -68,6 +70,7 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -188,7 +191,7 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(alarmService.createOrUpdateAlarm(Mockito.any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
 
         TbMsg theMsg = TbMsg.newMsg("ALARM", deviceId, new TbMsgMetaData(), "");
-        Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString())).thenReturn(theMsg);
+        Mockito.when(ctx.newMsg(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString())).thenReturn(theMsg);
 
         ObjectNode data = mapper.createObjectNode();
         data.put("temperature", 42);
@@ -200,7 +203,7 @@ public class TbDeviceProfileNodeTest {
         verify(ctx, Mockito.never()).tellFailure(Mockito.any(), Mockito.any());
 
         TbMsg theMsg2 = TbMsg.newMsg("ALARM", deviceId, new TbMsgMetaData(), "2");
-        Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString())).thenReturn(theMsg2);
+        Mockito.when(ctx.newMsg(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString())).thenReturn(theMsg2);
 
 
         TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
@@ -279,7 +282,7 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(attrListListenableFuture);
 
         TbMsg theMsg = TbMsg.newMsg("ALARM", deviceId, new TbMsgMetaData(), "");
-        Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
+        Mockito.when(ctx.newMsg(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
         ObjectNode data = mapper.createObjectNode();
@@ -366,7 +369,7 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(attrListListenableFuture);
 
         TbMsg theMsg = TbMsg.newMsg("ALARM", deviceId, new TbMsgMetaData(), "");
-        Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
+        Mockito.when(ctx.newMsg(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
         ObjectNode data = mapper.createObjectNode();
@@ -435,7 +438,7 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(listListenableFutureWithLess);
 
         TbMsg theMsg = TbMsg.newMsg("ALARM", deviceId, new TbMsgMetaData(), "");
-        Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
+        Mockito.when(ctx.newMsg(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
         ObjectNode data = mapper.createObjectNode();
@@ -529,7 +532,7 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(listListenableFuture);
 
         TbMsg theMsg = TbMsg.newMsg("ALARM", deviceId, new TbMsgMetaData(), "");
-        Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
+        Mockito.when(ctx.newMsg(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
         ObjectNode data = mapper.createObjectNode();
@@ -653,7 +656,7 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(listNoDurationAttribute);
 
         TbMsg theMsg = TbMsg.newMsg("ALARM", deviceId, new TbMsgMetaData(), "");
-        Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
+        Mockito.when(ctx.newMsg(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
         ObjectNode data = mapper.createObjectNode();
@@ -762,7 +765,7 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(listListenableFuture);
 
         TbMsg theMsg = TbMsg.newMsg("ALARM", deviceId, new TbMsgMetaData(), "");
-        Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
+        Mockito.when(ctx.newMsg(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
         ObjectNode data = mapper.createObjectNode();
@@ -878,7 +881,7 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(listNoDurationAttribute);
 
         TbMsg theMsg = TbMsg.newMsg("ALARM", deviceId, new TbMsgMetaData(), "");
-        Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
+        Mockito.when(ctx.newMsg(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
         ObjectNode data = mapper.createObjectNode();
@@ -974,7 +977,7 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(listListenableFuture);
 
         TbMsg theMsg = TbMsg.newMsg("ALARM", deviceId, new TbMsgMetaData(), "");
-        Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
+        Mockito.when(ctx.newMsg(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
         ObjectNode data = mapper.createObjectNode();
@@ -1072,7 +1075,7 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(listListenableFuture);
 
         TbMsg theMsg = TbMsg.newMsg("ALARM", deviceId, new TbMsgMetaData(), "");
-        Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
+        Mockito.when(ctx.newMsg(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
         ObjectNode data = mapper.createObjectNode();
@@ -1086,6 +1089,181 @@ public class TbDeviceProfileNodeTest {
         verify(ctx, Mockito.never()).tellFailure(Mockito.any(), Mockito.any());
     }
 
+    @Test
+    public void testActiveAlarmScheduleFromDynamicValuesWhenDefaultScheduleIsInactive() throws Exception {
+        init();
+
+        DeviceProfile deviceProfile = new DeviceProfile();
+        deviceProfile.setId(deviceProfileId);
+        DeviceProfileData deviceProfileData = new DeviceProfileData();
+
+        Device device = new Device();
+        device.setId(deviceId);
+        device.setCustomerId(customerId);
+
+        AttributeKvCompositeKey compositeKeyActiveSchedule = new AttributeKvCompositeKey(
+                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "dynamicValueActiveSchedule"
+        );
+
+        AttributeKvEntity attributeKvEntityActiveSchedule = new AttributeKvEntity();
+        attributeKvEntityActiveSchedule.setId(compositeKeyActiveSchedule);
+        attributeKvEntityActiveSchedule.setJsonValue(
+                "{\"timezone\":\"Europe/Kiev\",\"items\":[{\"enabled\":true,\"dayOfWeek\":1,\"startsOn\":0,\"endsOn\":8.64e+7},{\"enabled\":true,\"dayOfWeek\":2,\"startsOn\":0,\"endsOn\":8.64e+7},{\"enabled\":true,\"dayOfWeek\":3,\"startsOn\":0,\"endsOn\":8.64e+7},{\"enabled\":true,\"dayOfWeek\":4,\"startsOn\":0,\"endsOn\":8.64e+7},{\"enabled\":true,\"dayOfWeek\":5,\"startsOn\":0,\"endsOn\":8.64e+7},{\"enabled\":true,\"dayOfWeek\":6,\"startsOn\":0,\"endsOn\":8.64e+7},{\"enabled\":true,\"dayOfWeek\":7,\"startsOn\":0,\"endsOn\":8.64e+7}],\"dynamicValue\":null}"
+        );
+        attributeKvEntityActiveSchedule.setLastUpdateTs(0L);
+
+        AttributeKvEntry entryActiveSchedule = attributeKvEntityActiveSchedule.toData();
+
+        ListenableFuture<List<AttributeKvEntry>> listListenableFutureActiveSchedule =
+                Futures.immediateFuture(Collections.singletonList(entryActiveSchedule));
+
+        AlarmConditionFilter highTempFilter = new AlarmConditionFilter();
+        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
+        highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
+        NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
+        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
+        highTemperaturePredicate.setValue(new FilterPredicateValue<>(
+                0.0,
+                null,
+                null
+        ));
+        highTempFilter.setPredicate(highTemperaturePredicate);
+        AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setCondition(Collections.singletonList(highTempFilter));
+
+        CustomTimeSchedule schedule = new CustomTimeSchedule();
+        schedule.setItems(Collections.emptyList());
+        schedule.setDynamicValue(new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "dynamicValueActiveSchedule", false));
+
+        AlarmRule alarmRule = new AlarmRule();
+        alarmRule.setCondition(alarmCondition);
+        alarmRule.setSchedule(schedule);
+        DeviceProfileAlarm deviceProfileAlarmActiveSchedule = new DeviceProfileAlarm();
+        deviceProfileAlarmActiveSchedule.setId("highTemperatureAlarmID");
+        deviceProfileAlarmActiveSchedule.setAlarmType("highTemperatureAlarm");
+        deviceProfileAlarmActiveSchedule.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
+
+        deviceProfileData.setAlarms(Collections.singletonList(deviceProfileAlarmActiveSchedule));
+        deviceProfile.setProfileData(deviceProfileData);
+
+        Mockito.when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
+        Mockito.when(timeseriesService.findLatest(tenantId, deviceId, Collections.singleton("temperature")))
+                .thenReturn(Futures.immediateFuture(Collections.emptyList()));
+        Mockito.when(alarmService.findLatestByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
+                .thenReturn(Futures.immediateFuture(null));
+        Mockito.when(alarmService.createOrUpdateAlarm(Mockito.any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
+        Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+                .thenReturn(listListenableFutureActiveSchedule);
+
+        TbMsg theMsg = TbMsg.newMsg("ALARM", deviceId, new TbMsgMetaData(), "");
+        Mockito.when(ctx.newMsg(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
+                .thenReturn(theMsg);
+
+        ObjectNode data = mapper.createObjectNode();
+        data.put("temperature", 35);
+        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+                TbMsgDataType.JSON, mapper.writeValueAsString(data), null, null);
+
+//        Mockito.reset(ctx);
+
+        node.onMsg(ctx, msg);
+        verify(ctx).tellSuccess(msg);
+        verify(ctx).enqueueForTellNext(theMsg, "Alarm Created");
+        verify(ctx, Mockito.never()).tellFailure(Mockito.any(), Mockito.any());
+    }
+
+    @Test
+    public void testInactiveAlarmScheduleFromDynamicValuesWhenDefaultScheduleIsActive() throws Exception {
+        init();
+
+        DeviceProfile deviceProfile = new DeviceProfile();
+        deviceProfile.setId(deviceProfileId);
+        DeviceProfileData deviceProfileData = new DeviceProfileData();
+
+        Device device = new Device();
+        device.setId(deviceId);
+        device.setCustomerId(customerId);
+
+        AttributeKvCompositeKey compositeKeyInactiveSchedule = new AttributeKvCompositeKey(
+                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "dynamicValueInactiveSchedule"
+        );
+
+        AttributeKvEntity attributeKvEntityInactiveSchedule = new AttributeKvEntity();
+        attributeKvEntityInactiveSchedule.setId(compositeKeyInactiveSchedule);
+        attributeKvEntityInactiveSchedule.setJsonValue(
+                "{\"timezone\":\"Europe/Kiev\",\"items\":[{\"enabled\":false,\"dayOfWeek\":1,\"startsOn\":0,\"endsOn\":0},{\"enabled\":false,\"dayOfWeek\":2,\"startsOn\":0,\"endsOn\":0},{\"enabled\":false,\"dayOfWeek\":3,\"startsOn\":0,\"endsOn\":0},{\"enabled\":false,\"dayOfWeek\":4,\"startsOn\":0,\"endsOn\":0},{\"enabled\":false,\"dayOfWeek\":5,\"startsOn\":0,\"endsOn\":0},{\"enabled\":false,\"dayOfWeek\":6,\"startsOn\":0,\"endsOn\":0},{\"enabled\":false,\"dayOfWeek\":7,\"startsOn\":0,\"endsOn\":0}],\"dynamicValue\":null}"
+        );
+
+        attributeKvEntityInactiveSchedule.setLastUpdateTs(0L);
+
+        AttributeKvEntry entryInactiveSchedule = attributeKvEntityInactiveSchedule.toData();
+
+        ListenableFuture<List<AttributeKvEntry>> listListenableFutureInactiveSchedule =
+                Futures.immediateFuture(Collections.singletonList(entryInactiveSchedule));
+
+        AlarmConditionFilter highTempFilter = new AlarmConditionFilter();
+        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
+        highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
+        NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
+        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
+        highTemperaturePredicate.setValue(new FilterPredicateValue<>(
+                0.0,
+                null,
+                null
+        ));
+
+        highTempFilter.setPredicate(highTemperaturePredicate);
+        AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setCondition(Collections.singletonList(highTempFilter));
+
+        CustomTimeSchedule schedule = new CustomTimeSchedule();
+
+        List<CustomTimeScheduleItem> items = new ArrayList<>();
+        for (int i = 0; i < 7; i++) {
+            CustomTimeScheduleItem item = new CustomTimeScheduleItem();
+            item.setEnabled(true);
+            item.setDayOfWeek(i + 1);
+            item.setEndsOn(0);
+            item.setStartsOn(0);
+            items.add(item);
+        }
+
+        schedule.setItems(items);
+        schedule.setDynamicValue(new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "dynamicValueInactiveSchedule", false));
+
+        AlarmRule alarmRule = new AlarmRule();
+        alarmRule.setCondition(alarmCondition);
+        alarmRule.setSchedule(schedule);
+        DeviceProfileAlarm deviceProfileAlarmNonactiveSchedule = new DeviceProfileAlarm();
+        deviceProfileAlarmNonactiveSchedule.setId("highTemperatureAlarmID");
+        deviceProfileAlarmNonactiveSchedule.setAlarmType("highTemperatureAlarm");
+        deviceProfileAlarmNonactiveSchedule.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
+
+        deviceProfileData.setAlarms(Collections.singletonList(deviceProfileAlarmNonactiveSchedule));
+        deviceProfile.setProfileData(deviceProfileData);
+
+        Mockito.when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
+        Mockito.when(timeseriesService.findLatest(tenantId, deviceId, Collections.singleton("temperature")))
+                .thenReturn(Futures.immediateFuture(Collections.emptyList()));
+        Mockito.when(alarmService.findLatestByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
+                .thenReturn(Futures.immediateFuture(null));
+        Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+                .thenReturn(listListenableFutureInactiveSchedule);
+
+        TbMsg theMsg = TbMsg.newMsg("ALARM", deviceId, new TbMsgMetaData(), "");
+
+        ObjectNode data = mapper.createObjectNode();
+        data.put("temperature", 35);
+        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+                TbMsgDataType.JSON, mapper.writeValueAsString(data), null, null);
+
+        node.onMsg(ctx, msg);
+        verify(ctx).tellSuccess(msg);
+        verify(ctx, Mockito.never()).enqueueForTellNext(theMsg, "Alarm Created");
+        verify(ctx, Mockito.never()).tellFailure(Mockito.any(), Mockito.any());
+    }
 
     @Test
     public void testCurrentCustomersAttributeForDynamicValue() throws Exception {
@@ -1153,7 +1331,7 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(optionalListenableFutureWithLess);
 
         TbMsg theMsg = TbMsg.newMsg("ALARM", deviceId, new TbMsgMetaData(), "");
-        Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
+        Mockito.when(ctx.newMsg(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
         ObjectNode data = mapper.createObjectNode();
@@ -1227,7 +1405,7 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(optionalListenableFutureWithLess);
 
         TbMsg theMsg = TbMsg.newMsg("ALARM", deviceId, new TbMsgMetaData(), "");
-        Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
+        Mockito.when(ctx.newMsg(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
         ObjectNode data = mapper.createObjectNode();
@@ -1311,7 +1489,7 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(optionalListenableFutureWithLess);
 
         TbMsg theMsg = TbMsg.newMsg("ALARM", deviceId, new TbMsgMetaData(), "");
-        Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
+        Mockito.when(ctx.newMsg(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
         ObjectNode data = mapper.createObjectNode();
@@ -1397,7 +1575,7 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(optionalListenableFutureWithLess);
 
         TbMsg theMsg = TbMsg.newMsg("ALARM", deviceId, new TbMsgMetaData(), "");
-        Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
+        Mockito.when(ctx.newMsg(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
         ObjectNode data = mapper.createObjectNode();

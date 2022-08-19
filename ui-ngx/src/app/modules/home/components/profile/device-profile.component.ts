@@ -117,7 +117,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
         }),
         defaultRuleChainId: [entity && entity.defaultRuleChainId ? entity.defaultRuleChainId.id : null, []],
         defaultDashboardId: [entity && entity.defaultDashboardId ? entity.defaultDashboardId.id : null, []],
-        defaultQueueName: [entity ? entity.defaultQueueName : '', []],
+        defaultQueueName: [entity ? entity.defaultQueueName : null, []],
         firmwareId: [entity ? entity.firmwareId : null],
         softwareId: [entity ? entity.softwareId : null],
         description: [entity ? entity.description : '', []],

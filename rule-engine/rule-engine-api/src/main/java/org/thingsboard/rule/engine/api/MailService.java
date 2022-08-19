@@ -24,8 +24,6 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-import java.util.Map;
-
 public interface MailService {
 
     void updateMailConfiguration();
@@ -46,10 +44,13 @@ public interface MailService {
 
     void sendAccountLockoutEmail(String lockoutEmail, String email, Integer maxFailedLoginAttempts) throws ThingsboardException;
 
-    void send(TenantId tenantId, CustomerId customerId, TbEmail tbEmail) throws ThingsboardException;
+    void sendTwoFaVerificationEmail(String email, String verificationCode, int expirationTimeSeconds) throws ThingsboardException;
 
-    void send(TenantId tenantId, CustomerId customerId, TbEmail tbEmail, JavaMailSender javaMailSender) throws ThingsboardException;
+    void send(TenantId tenantId, CustomerId customerId, TbEmail tbEmail) throws ThingsboardException;
+    void send(TenantId tenantId, CustomerId customerId, TbEmail tbEmail, JavaMailSender javaMailSender, long timeout) throws ThingsboardException;
 
     void sendApiFeatureStateEmail(ApiFeature apiFeature, ApiUsageStateValue stateValue, String email, ApiUsageStateMailMessage msg) throws ThingsboardException;
+
+    void testConnection(TenantId tenantId) throws Exception;
 
 }

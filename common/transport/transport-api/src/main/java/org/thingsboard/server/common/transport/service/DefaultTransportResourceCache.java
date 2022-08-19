@@ -24,7 +24,7 @@ import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.transport.TransportResourceCache;
 import org.thingsboard.server.common.transport.TransportService;
-import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
+import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbTransportComponent;
 

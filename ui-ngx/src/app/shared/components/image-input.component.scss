@@ -15,7 +15,9 @@
  */
 @import "../../../scss/constants";
 
-$previewSize: 100px !default;
+$containerHeight: 120px !default;
+$previewContainerWidth: 168px !default;
+$previewSize: 96px !default;
 
 :host {
 
@@ -30,14 +32,35 @@ $previewSize: 100px !default;
   .tb-image-select-container {
     position: relative;
     width: 100%;
+    height: $containerHeight;
+  }
+
+  .image-container {
+    position: relative;
+    float: left;
+    height: $containerHeight;
+    padding: 12px;
+    margin-right: 8px;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 4px;
+  }
+
+  .image-content-container {
+    background: #FFFFFF;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    padding-left: 8px;
     height: $previewSize;
+    &.no-padding {
+      padding-left: 0px;
+    }
   }
 
   .tb-image-preview {
     width: auto;
-    max-width: $previewSize - 2;
+    max-width: $previewSize - 2px;
     height: auto;
-    max-height: $previewSize - 2;
+    max-height: $previewSize  - 2px;
   }
 
   .tb-image-preview-container {
@@ -45,9 +68,9 @@ $previewSize: 100px !default;
     float: left;
     width: $previewSize;
     height: $previewSize;
-    margin-right: 12px;
-    vertical-align: top;
-    border: solid 1px;
+    margin-top: -1px;
+    margin-bottom: -1px;
+    border: 1px solid rgba(0, 0, 0, 0.54);
 
     div {
       width: 100%;
@@ -67,14 +90,12 @@ $previewSize: 100px !default;
   .tb-image-clear-container {
     position: relative;
     float: right;
-    width: 48px;
     height: $previewSize;
-  }
-
-  .tb-image-clear-btn {
-    position: absolute !important;
-    top: 50%;
-    transform: translate(0%, -50%) !important;
+    display: flex;
+    align-items: center;
+    &.full-height {
+      height: $containerHeight;
+    }
   }
 
   .file-input {
@@ -83,26 +104,49 @@ $previewSize: 100px !default;
 
   .tb-flow-drop {
     position: relative;
-    height: $previewSize;
+    height: $containerHeight;
     overflow: hidden;
-    border: dashed 2px;
+    border: 2px dashed rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    box-sizing: border-box;
 
-    label {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
+    &.float-left {
+      float: left;
+    }
+
+    .upload-label {
       width: 100%;
       height: 100%;
+      padding: 0 16px;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
       font-size: 16px;
+      color: rgba(0, 0, 0, 0.54);
       text-align: center;
-
-      @media #{$mat-gt-sm} {
-        font-size: 24px;
+      .mat-icon {
+        margin-right: 17px;
       }
     }
   }
 
   .tb-hint{
     margin-top: 8px;
+  }
+}
+
+:host ::ng-deep {
+  button.browse-file {
+    padding: 0;
+    font-size: 16px;
+    span.mat-button-wrapper {
+      display: block;
+      label {
+        display: block;
+        cursor: pointer;
+        padding: 0 16px;
+      }
+    }
   }
 }

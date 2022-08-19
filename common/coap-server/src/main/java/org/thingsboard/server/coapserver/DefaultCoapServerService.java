@@ -88,6 +88,11 @@ public class DefaultCoapServerService implements CoapServerService {
         return coapServerContext.getTimeout();
     }
 
+    @Override
+    public long getPiggybackTimeout() {
+        return coapServerContext.getPiggybackTimeout();
+    }
+
     private CoapServer createCoapServer() throws UnknownHostException {
         Configuration networkConfig = new Configuration();
         networkConfig.set(CoapConfig.BLOCKWISE_STRICT_BLOCK2_OPTION, true);

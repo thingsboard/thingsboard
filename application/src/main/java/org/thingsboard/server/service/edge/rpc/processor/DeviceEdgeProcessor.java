@@ -22,14 +22,13 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EdgeUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -84,11 +83,11 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                     if (deviceAlreadyExistsForThisEdge) {
                         log.info("[{}] Device with name '{}' already exists on the cloud, and related to this edge [{}]. " +
                                 "deviceUpdateMsg [{}], Updating device", tenantId, deviceName, edge.getId(), deviceUpdateMsg);
-                        updateDevice(tenantId, edge, deviceUpdateMsg);
+                        return updateDevice(tenantId, edge, deviceUpdateMsg);
                     } else {
                         log.info("[{}] Device with name '{}' already exists on the cloud, but not related to this edge [{}]. deviceUpdateMsg [{}]." +
                                 "Creating a new device with random prefix and relate to this edge", tenantId, deviceName, edge.getId(), deviceUpdateMsg);
-                        String newDeviceName = deviceUpdateMsg.getName() + "_" + RandomStringUtils.randomAlphabetic(15);
+                        String newDeviceName = deviceUpdateMsg.getName() + "_" + StringUtils.randomAlphabetic(15);
                         Device newDevice;
                         try {
                             newDevice = createDevice(tenantId, edge, deviceUpdateMsg, newDeviceName);
@@ -99,8 +98,10 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                         }
                         ObjectNode body = mapper.createObjectNode();
                         body.put("conflictName", deviceName);
-                        saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.ENTITY_MERGE_REQUEST, newDevice.getId(), body);
-                        saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.CREDENTIALS_REQUEST, newDevice.getId(), null);
+                        ListenableFuture<Void> input = saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.ENTITY_MERGE_REQUEST, newDevice.getId(), body);
+                        return Futures.transformAsync(input, unused ->
+                                saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.CREDENTIALS_REQUEST, newDevice.getId(), null),
+                                dbCallbackExecutorService);
                     }
                 } else {
                     log.info("[{}] Creating new device and replacing device entity on the edge [{}]", tenantId, deviceUpdateMsg);
@@ -111,24 +112,22 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                         log.error(errMsg, e);
                         return Futures.immediateFuture(null);
                     }
-                    saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.CREDENTIALS_REQUEST, device.getId(), null);
+                    return saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.CREDENTIALS_REQUEST, device.getId(), null);
                 }
-                break;
             case ENTITY_UPDATED_RPC_MESSAGE:
-                updateDevice(tenantId, edge, deviceUpdateMsg);
-                break;
+                return updateDevice(tenantId, edge, deviceUpdateMsg);
             case ENTITY_DELETED_RPC_MESSAGE:
                 DeviceId deviceId = new DeviceId(new UUID(deviceUpdateMsg.getIdMSB(), deviceUpdateMsg.getIdLSB()));
                 Device deviceToDelete = deviceService.findDeviceById(tenantId, deviceId);
                 if (deviceToDelete != null) {
                     deviceService.unassignDeviceFromEdge(tenantId, deviceId, edge.getId());
                 }
-                break;
+                return Futures.immediateFuture(null);
             case UNRECOGNIZED:
+            default:
                 log.error("Unsupported msg type {}", deviceUpdateMsg.getMsgType());
                 return Futures.immediateFailedFuture(new RuntimeException("Unsupported msg type " + deviceUpdateMsg.getMsgType()));
         }
-        return Futures.immediateFuture(null);
     }
 
     private boolean isDeviceAlreadyExistsOnCloudForThisEdge(TenantId tenantId, Edge edge, Device device) {
@@ -174,7 +173,7 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
     }
 
 
-    private void updateDevice(TenantId tenantId, Edge edge, DeviceUpdateMsg deviceUpdateMsg) {
+    private ListenableFuture<Void> updateDevice(TenantId tenantId, Edge edge, DeviceUpdateMsg deviceUpdateMsg) {
         DeviceId deviceId = new DeviceId(new UUID(deviceUpdateMsg.getIdMSB(), deviceUpdateMsg.getIdLSB()));
         Device device = deviceService.findDeviceById(tenantId, deviceId);
         if (device != null) {
@@ -194,9 +193,11 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
             }
             Device savedDevice = deviceService.saveDevice(device);
             tbClusterService.onDeviceUpdated(savedDevice, device);
-            saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.CREDENTIALS_REQUEST, deviceId, null);
+            return saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.CREDENTIALS_REQUEST, deviceId, null);
         } else {
-            log.warn("[{}] can't find device [{}], edge [{}]", tenantId, deviceUpdateMsg, edge.getId());
+            String errMsg = String.format("[%s] can't find device [%s], edge [%s]", tenantId, deviceUpdateMsg, edge.getId());
+            log.warn(errMsg);
+            return Futures.immediateFailedFuture(new RuntimeException(errMsg));
         }
     }
 
@@ -242,7 +243,7 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                 DeviceCredentials deviceCredentials = new DeviceCredentials();
                 deviceCredentials.setDeviceId(new DeviceId(savedDevice.getUuidId()));
                 deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
-                deviceCredentials.setCredentialsId(org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric(20));
+                deviceCredentials.setCredentialsId(StringUtils.randomAlphanumeric(20));
                 deviceCredentialsService.createDeviceCredentials(device.getTenantId(), deviceCredentials);
             }
             createRelationFromEdge(tenantId, edge.getId(), device.getId());

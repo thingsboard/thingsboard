@@ -18,18 +18,16 @@ package org.thingsboard.server.service.resource;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.service.entitiy.SimpleTbEntityService;
 
 import java.util.List;
 
-public interface TbResourceService {
-
-    TbResource saveResource(TbResource resource) throws ThingsboardException;
+public interface TbResourceService extends SimpleTbEntityService<TbResource> {
 
     TbResource getResource(TenantId tenantId, ResourceType resourceType, String resourceKey);
 
@@ -50,8 +48,6 @@ public interface TbResourceService {
                                           String sortProperty,
                                           String sortOrder,
                                           PageLink pageLink);
-
-    void deleteResource(TenantId tenantId, TbResourceId resourceId);
 
     void deleteResourcesByTenantId(TenantId tenantId);
 

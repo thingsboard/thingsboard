@@ -56,6 +56,7 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
     final boolean internalExecutor;
     final ExecutorService executor;
     final long maxRequestTimeoutNs;
+    final long maxRequestTimeout;
     final long maxPendingRequests;
     final long pollInterval;
     volatile boolean stopped = false;
@@ -76,6 +77,7 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
         this.requestTemplate = requestTemplate;
         this.responseTemplate = responseTemplate;
         this.maxRequestTimeoutNs = TimeUnit.MILLISECONDS.toNanos(maxRequestTimeout);
+        this.maxRequestTimeout = maxRequestTimeout;
         this.maxPendingRequests = maxPendingRequests;
         this.pollInterval = pollInterval;
         this.internalExecutor = (executor == null);
@@ -96,7 +98,7 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
 
     void mainLoop() {
         while (!stopped) {
-            TbStopWatch sw = TbStopWatch.startNew();
+            TbStopWatch sw = TbStopWatch.create();
             try {
                 fetchAndProcessResponses();
             } catch (Throwable e) {
@@ -156,9 +158,9 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
 
     void setTimeoutException(UUID key, ResponseMetaData<Response> staleRequest, long currentNs) {
         if (currentNs >= staleRequest.getSubmitTime() + staleRequest.getTimeout()) {
-            log.warn("Request timeout detected, currentNs [{}], {}, key [{}]", currentNs, staleRequest, key);
+            log.debug("Request timeout detected, currentNs [{}], {}, key [{}]", currentNs, staleRequest, key);
         } else {
-            log.error("Request timeout detected, currentNs [{}], {}, key [{}]", currentNs, staleRequest, key);
+            log.info("Request timeout detected, currentNs [{}], {}, key [{}]", currentNs, staleRequest, key);
         }
         staleRequest.future.setException(new TimeoutException());
     }
@@ -170,10 +172,10 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
             log.error("[{}] Missing requestId in header and body", response);
         } else {
             requestId = bytesToUuid(requestIdHeader);
-            log.trace("[{}] Response received: {}", requestId, String.valueOf(response).replace("\n", " ")); //TODO remove overhead
+            log.trace("[{}] Response received: {}", requestId, response);
             ResponseMetaData<Response> expectedResponse = pendingRequests.remove(requestId);
             if (expectedResponse == null) {
-                log.warn("[{}] Invalid or stale request, response: {}", requestId, String.valueOf(response).replace("\n", " "));
+                log.debug("[{}] Invalid or stale request, response: {}", requestId, String.valueOf(response).replace("\n", " "));
             } else {
                 expectedResponse.future.set(response);
             }
@@ -216,7 +218,7 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
         UUID requestId = UUID.randomUUID();
         request.getHeaders().put(REQUEST_ID_HEADER, uuidToBytes(requestId));
         request.getHeaders().put(RESPONSE_TOPIC_HEADER, stringToBytes(responseTemplate.getTopic()));
-        request.getHeaders().put(REQUEST_TIME, longToBytes(getCurrentTimeMs()));
+        request.getHeaders().put(EXPIRE_TS_HEADER, longToBytes(getCurrentTimeMs() + maxRequestTimeout));
         long currentClockNs = getCurrentClockNs();
         SettableFuture<Response> future = SettableFuture.create();
         ResponseMetaData<Response> responseMetaData = new ResponseMetaData<>(currentClockNs + requestTimeoutNs, future, currentClockNs, requestTimeoutNs);

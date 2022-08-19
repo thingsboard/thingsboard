@@ -28,4 +28,6 @@ public interface SmsService {
 
     void sendTestSms(TestSmsRequest testSmsRequest) throws ThingsboardException;
 
+    boolean isConfigured(TenantId tenantId);
+
 }

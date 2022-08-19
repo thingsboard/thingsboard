@@ -15,9 +15,9 @@
  */
 package org.thingsboard.server.dao.sql.attributes;
 
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
@@ -27,7 +27,7 @@ import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
 import java.util.List;
 import java.util.UUID;
 
-public interface AttributeKvRepository extends CrudRepository<AttributeKvEntity, AttributeKvCompositeKey> {
+public interface AttributeKvRepository extends JpaRepository<AttributeKvEntity, AttributeKvCompositeKey> {
 
     @Query("SELECT a FROM AttributeKvEntity a WHERE a.id.entityType = :entityType " +
             "AND a.id.entityId = :entityId " +

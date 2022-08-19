@@ -16,7 +16,7 @@
 package org.thingsboard.server.dao.service.validator;
 
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -30,7 +30,8 @@ public class ClientRegistrationTemplateDataValidator extends DataValidator<OAuth
     }
 
     @Override
-    protected void validateUpdate(TenantId tenantId, OAuth2ClientRegistrationTemplate clientRegistrationTemplate) {
+    protected OAuth2ClientRegistrationTemplate validateUpdate(TenantId tenantId, OAuth2ClientRegistrationTemplate clientRegistrationTemplate) {
+        return null;
     }
 
     @Override

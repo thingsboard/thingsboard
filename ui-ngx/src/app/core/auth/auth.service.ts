@@ -23,7 +23,7 @@ import { catchError, map, mergeMap, tap } from 'rxjs/operators';
 
 import { LoginRequest, LoginResponse, PublicLoginRequest } from '@shared/models/login.models';
 import { ActivatedRoute, Router, UrlTree } from '@angular/router';
-import { defaultHttpOptions } from '../http/http-utils';
+import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from '../http/http-utils';
 import { UserService } from '../http/user.service';
 import { Store } from '@ngrx/store';
 import { AppState } from '../core.state';
@@ -45,7 +45,9 @@ import { ActionNotificationShow } from '@core/notification/notification.actions'
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { AlertDialogComponent } from '@shared/components/dialog/alert-dialog.component';
 import { OAuth2ClientInfo, PlatformType } from '@shared/models/oauth2.models';
-import { isDefinedAndNotNull, isMobileApp } from '@core/utils';
+import { isMobileApp } from '@core/utils';
+import { TwoFactorAuthProviderType, TwoFaProviderInfo } from '@shared/models/two-factor-auth.models';
+import { UserPasswordPolicy } from '@shared/models/settings.models';
 
 @Injectable({
     providedIn: 'root'
@@ -70,6 +72,7 @@ export class AuthService {
 
   redirectUrl: string;
   oauth2Clients: Array<OAuth2ClientInfo> = null;
+  twoFactorAuthProviders: Array<TwoFaProviderInfo> = null;
 
   private refreshTokenSubject: ReplaySubject<LoginResponse> = null;
   private jwtHelper = new JwtHelperService();
@@ -116,6 +119,18 @@ export class AuthService {
     return this.http.post<LoginResponse>('/api/auth/login', loginRequest, defaultHttpOptions()).pipe(
       tap((loginResponse: LoginResponse) => {
           this.setUserFromJwtToken(loginResponse.token, loginResponse.refreshToken, true);
+          if (loginResponse.scope === Authority.PRE_VERIFICATION_TOKEN) {
+            this.router.navigateByUrl(`login/mfa`);
+          }
+        }
+      ));
+  }
+
+  public checkTwoFaVerificationCode(providerType: TwoFactorAuthProviderType, verificationCode: number): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`/api/auth/2fa/verification/check?providerType=${providerType}&verificationCode=${verificationCode}`,
+      null, defaultHttpOptions(false, true)).pipe(
+      tap((loginResponse: LoginResponse) => {
+          this.setUserFromJwtToken(loginResponse.token, loginResponse.refreshToken, true);
         }
       ));
   }
@@ -149,12 +164,16 @@ export class AuthService {
       ));
   }
 
-  public changePassword(currentPassword: string, newPassword: string) {
-    return this.http.post('/api/auth/changePassword', {currentPassword, newPassword}, defaultHttpOptions()).pipe(
+  public changePassword(currentPassword: string, newPassword: string, config?: RequestConfig) {
+    return this.http.post('/api/auth/changePassword', {currentPassword, newPassword}, defaultHttpOptionsFromConfig(config)).pipe(
       tap((loginResponse: LoginResponse) => {
           this.setUserFromJwtToken(loginResponse.token, loginResponse.refreshToken, false);
         }
       ));
+  }
+
+  public getUserPasswordPolicy() {
+    return this.http.get<UserPasswordPolicy>(`/api/noauth/userPasswordPolicy`, defaultHttpOptions());
   }
 
   public activateByEmailCode(emailCode: string): Observable<LoginResponse> {
@@ -215,11 +234,20 @@ export class AuthService {
     );
   }
 
-  private forceDefaultPlace(authState?: AuthState, path?: string, params?: any): boolean {
+  public getAvailableTwoFaLoginProviders(): Observable<Array<TwoFaProviderInfo>> {
+    return this.http.get<Array<TwoFaProviderInfo>>(`/api/auth/2fa/providers`, defaultHttpOptions()).pipe(
+      catchError(() => of([])),
+      tap((providers) => {
+        this.twoFactorAuthProviders = providers;
+      })
+    );
+  }
+
+  public forceDefaultPlace(authState?: AuthState, path?: string, params?: any): boolean {
     if (authState && authState.authUser) {
       if (authState.authUser.authority === Authority.TENANT_ADMIN || authState.authUser.authority === Authority.CUSTOMER_USER) {
         if ((this.userHasDefaultDashboard(authState) && authState.forceFullscreen) || authState.authUser.isPublic) {
-          if (path === 'profile') {
+          if (path === 'profile' || path === 'security') {
             if (this.userHasProfile(authState.authUser)) {
               return false;
             } else {
@@ -240,7 +268,9 @@ export class AuthService {
   public defaultUrl(isAuthenticated: boolean, authState?: AuthState, path?: string, params?: any): UrlTree {
     let result: UrlTree = null;
     if (isAuthenticated) {
-      if (!path || path === 'login' || this.forceDefaultPlace(authState, path, params)) {
+      if (authState.authUser.authority === Authority.PRE_VERIFICATION_TOKEN) {
+        result = this.router.parseUrl('login/mfa');
+      } else if (!path || path === 'login' || this.forceDefaultPlace(authState, path, params)) {
         if (this.redirectUrl) {
           const redirectUrl = this.redirectUrl;
           this.redirectUrl = null;
@@ -382,6 +412,9 @@ export class AuthService {
               loadUserSubject.error(err);
             }
           );
+        } else if (authPayload.authUser.authority === Authority.PRE_VERIFICATION_TOKEN) {
+          loadUserSubject.next(authPayload);
+          loadUserSubject.complete();
         } else if (authPayload.authUser.userId) {
           this.userService.getUser(authPayload.authUser.userId).subscribe(
             (user) => {
@@ -437,17 +470,27 @@ export class AuthService {
     return this.http.get<boolean>('/api/edges/enabled', defaultHttpOptions());
   }
 
+  private loadHasRepository(authUser: AuthUser): Observable<boolean> {
+    if (authUser.authority === Authority.TENANT_ADMIN) {
+      return this.http.get<boolean>('/api/admin/repositorySettings/exists', defaultHttpOptions());
+    } else {
+      return of(false);
+    }
+  }
+
   private loadSystemParams(authPayload: AuthPayload): Observable<SysParamsState> {
     const sources = [this.loadIsUserTokenAccessEnabled(authPayload.authUser),
                      this.fetchAllowedDashboardIds(authPayload),
                      this.loadIsEdgesSupportEnabled(),
+                     this.loadHasRepository(authPayload.authUser),
                      this.timeService.loadMaxDatapointsLimit()];
     return forkJoin(sources)
       .pipe(map((data) => {
         const userTokenAccessEnabled: boolean = data[0] as boolean;
         const allowedDashboardIds: string[] = data[1] as string[];
         const edgesSupportEnabled: boolean = data[2] as boolean;
-        return {userTokenAccessEnabled, allowedDashboardIds, edgesSupportEnabled};
+        const hasRepository: boolean = data[3] as boolean;
+        return {userTokenAccessEnabled, allowedDashboardIds, edgesSupportEnabled, hasRepository};
       }, catchError((err) => {
         return of({});
       })));
@@ -594,8 +637,8 @@ export class AuthService {
   private updateAndValidateToken(token, prefix, notify) {
     let valid = false;
     const tokenData = this.jwtHelper.decodeToken(token);
-    const issuedAt = tokenData.iat;
-    const expTime = tokenData.exp;
+    const issuedAt = tokenData?.iat;
+    const expTime = tokenData?.exp;
     if (issuedAt && expTime) {
       const ttl = expTime - issuedAt;
       if (ttl > 0) {

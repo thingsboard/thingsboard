@@ -167,7 +167,7 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
     }
 
     private TbSubscription createAttrSub(EntityData entityData, int subIdx, EntityKeyType keysType, TbAttributeSubscriptionScope scope, List<EntityKey> subKeys) {
-        Map<String, Long> keyStates = buildKeyStats(entityData, keysType, subKeys);
+        Map<String, Long> keyStates = buildKeyStats(entityData, keysType, subKeys, true);
         log.trace("[{}][{}][{}] Creating attributes subscription for [{}] with keys: {}", serviceId, cmdId, subIdx, entityData.getEntityId(), keyStates);
         return TbAttributeSubscription.builder()
                 .serviceId(serviceId)
@@ -183,7 +183,7 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
     }
 
     private TbSubscription createTsSub(EntityData entityData, int subIdx, List<EntityKey> subKeys, boolean latestValues, long startTs, long endTs) {
-        Map<String, Long> keyStates = buildKeyStats(entityData, EntityKeyType.TIME_SERIES, subKeys);
+        Map<String, Long> keyStates = buildKeyStats(entityData, EntityKeyType.TIME_SERIES, subKeys, latestValues);
         if (!latestValues && entityData.getTimeseries() != null) {
             entityData.getTimeseries().forEach((k, v) -> {
                 long ts = Arrays.stream(v).map(TsValue::getTs).max(Long::compareTo).orElse(0L);
@@ -211,15 +211,17 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
         sendWsMsg(sessionId, subscriptionUpdate, keyType, true);
     }
 
-    private Map<String, Long> buildKeyStats(EntityData entityData, EntityKeyType keysType, List<EntityKey> subKeys) {
+    private Map<String, Long> buildKeyStats(EntityData entityData, EntityKeyType keysType, List<EntityKey> subKeys, boolean latestValues) {
         Map<String, Long> keyStates = new HashMap<>();
         subKeys.forEach(key -> keyStates.put(key.getKey(), 0L));
-        if (entityData.getLatest() != null) {
+        if (latestValues && entityData.getLatest() != null) {
             Map<String, TsValue> currentValues = entityData.getLatest().get(keysType);
             if (currentValues != null) {
                 currentValues.forEach((k, v) -> {
-                    log.trace("[{}][{}] Updating key: {} with ts: {}", serviceId, cmdId, k, v.getTs());
-                    keyStates.put(k, v.getTs());
+                    if (subKeys.contains(new EntityKey(keysType, k))) {
+                        log.trace("[{}][{}] Updating key: {} with ts: {}", serviceId, cmdId, k, v.getTs());
+                        keyStates.put(k, v.getTs());
+                    }
                 });
             }
         }

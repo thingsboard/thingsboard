@@ -21,17 +21,11 @@ import { MarkerClusterGroup, MarkerClusterGroupOptions } from 'leaflet.markerclu
 import '@geoman-io/leaflet-geoman-free';
 
 import {
-  CircleData,
-  defaultSettings,
-  FormattedData,
-  MapSettings,
+  CircleData, defaultMapSettings,
+  MarkerClusteringSettings,
   MarkerIconInfo,
   MarkerImageInfo,
-  MarkerSettings,
-  PolygonSettings,
-  PolylineSettings,
-  ReplaceInfo,
-  UnitedMapSettings
+  WidgetPolygonSettings, WidgetPolylineSettings, WidgetMarkersSettings, WidgetUnitedMapSettings
 } from './map-models';
 import { Marker } from './markers';
 import { Observable, of } from 'rxjs';
@@ -41,13 +35,17 @@ import { Circle } from './circle';
 import { createTooltip, isCutPolygon, isJSON } from '@home/components/widget/lib/maps/maps-utils';
 import {
   checkLngLat,
-  createLoadingDiv,
-  parseArray,
-  parseData,
-  safeExecute
+  createLoadingDiv
 } from '@home/components/widget/lib/maps/common-maps-utils';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { deepClone, isDefinedAndNotNull, isNotEmptyStr, isString } from '@core/utils';
+import {
+  deepClone,
+  formattedDataArrayFromDatasourceData,
+  formattedDataFormDatasourceData,
+  isDefinedAndNotNull,
+  isNotEmptyStr,
+  isString, mergeFormattedData, safeExecute
+} from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import {
   SelectEntityDialogComponent,
@@ -55,6 +53,7 @@ import {
 } from '@home/components/widget/lib/maps/dialogs/select-entity-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
+import { FormattedData, ReplaceInfo } from '@shared/models/widget.models';
 
 export default abstract class LeafletMap {
 
@@ -63,7 +62,7 @@ export default abstract class LeafletMap {
     polygons: Map<string, Polygon> = new Map();
     circles: Map<string, Circle> = new Map();
     map: L.Map;
-    options: UnitedMapSettings;
+    options: WidgetUnitedMapSettings;
     bounds: L.LatLngBounds;
     datasources: FormattedData[];
     markersCluster: MarkerClusterGroup;
@@ -83,12 +82,12 @@ export default abstract class LeafletMap {
     replaceInfoTooltipCircle: Array<ReplaceInfo> = [];
     markerTooltipText: string;
     drawRoutes: boolean;
-    showPolygon: boolean;
     updatePending = false;
     editPolygons = false;
     editCircle = false;
     selectedEntity: FormattedData;
     ignoreUpdateBounds = false;
+    initDragModeIgnoreUpdateBoundsSet = false;
   // tslint:disable-next-line:no-string-literal
     southWest = new L.LatLng(-Projection.SphericalMercator['MAX_LATITUDE'], -180);
   // tslint:disable-next-line:no-string-literal
@@ -101,37 +100,30 @@ export default abstract class LeafletMap {
 
     protected constructor(public ctx: WidgetContext,
                           public $container: HTMLElement,
-                          options: UnitedMapSettings) {
+                          options: WidgetUnitedMapSettings) {
         this.options = options;
+        this.options.tinyColor = tinycolor(this.options.color || defaultMapSettings.color);
         this.editPolygons = options.showPolygon && options.editablePolygon;
         this.editCircle = options.showCircle && options.editableCircle;
         L.Icon.Default.imagePath = '/';
         this.translateService = this.ctx.$injector.get(TranslateService);
+        this.initMarkerClusterSettings();
     }
 
-    public initSettings(options: MapSettings) {
-        this.options.tinyColor = tinycolor(this.options.color || defaultSettings.color);
-        const { useClusterMarkers,
-            zoomOnClick,
-            showCoverageOnHover,
-            removeOutsideVisibleBounds,
-            animate,
-            chunkedLoading,
-            spiderfyOnMaxZoom,
-            maxClusterRadius,
-            maxZoom }: MapSettings = options;
-        if (useClusterMarkers) {
+    private initMarkerClusterSettings() {
+        const markerClusteringSettings: MarkerClusteringSettings = this.options;
+        if (markerClusteringSettings.useClusterMarkers) {
             // disabled marker cluster icon
             (L as any).MarkerCluster = (L as any).MarkerCluster.extend({
               options: { pmIgnore: true, ...L.Icon.prototype.options }
             });
             const clusteringSettings: MarkerClusterGroupOptions = {
-                spiderfyOnMaxZoom,
-                zoomToBoundsOnClick: zoomOnClick,
-                showCoverageOnHover,
-                removeOutsideVisibleBounds,
-                animate,
-                chunkedLoading,
+                spiderfyOnMaxZoom: markerClusteringSettings.spiderfyOnMaxZoom,
+                zoomToBoundsOnClick: markerClusteringSettings.zoomOnClick,
+                showCoverageOnHover: markerClusteringSettings.showCoverageOnHover,
+                removeOutsideVisibleBounds: markerClusteringSettings.removeOutsideVisibleBounds,
+                animate: markerClusteringSettings.animate,
+                chunkedLoading: markerClusteringSettings.chunkedLoading,
                 pmIgnore: true,
                 spiderLegPolylineOptions: {
                   pmIgnore: true
@@ -140,11 +132,11 @@ export default abstract class LeafletMap {
                   pmIgnore: true
                 }
             };
-            if (maxClusterRadius && maxClusterRadius > 0) {
-                clusteringSettings.maxClusterRadius = Math.floor(maxClusterRadius);
+            if (markerClusteringSettings.maxClusterRadius && markerClusteringSettings.maxClusterRadius > 0) {
+                clusteringSettings.maxClusterRadius = Math.floor(markerClusteringSettings.maxClusterRadius);
             }
-            if (maxZoom && maxZoom >= 0 && maxZoom < 19) {
-                clusteringSettings.disableClusteringAtZoom = Math.floor(maxZoom);
+            if (markerClusteringSettings.maxZoom && markerClusteringSettings.maxZoom >= 0 && markerClusteringSettings.maxZoom < 19) {
+                clusteringSettings.disableClusteringAtZoom = Math.floor(markerClusteringSettings.maxZoom);
             }
             this.markersCluster = new MarkerClusterGroup(clusteringSettings);
         }
@@ -352,7 +344,6 @@ export default abstract class LeafletMap {
 
       if (this.options.initDragMode) {
         this.map.pm.enableGlobalDragMode();
-        this.ignoreUpdateBounds = true;
       }
 
       this.map.on('pm:globaldrawmodetoggled', (e) => this.ignoreUpdateBounds = e.enabled);
@@ -465,7 +456,7 @@ export default abstract class LeafletMap {
           });
         });
         if (this.options.useDefaultCenterPosition) {
-          this.map.panTo(this.options.defaultCenterPosition);
+          this.map.panTo(this.options.parsedDefaultCenterPosition);
           this.bounds = map.getBounds();
         } else {
           this.bounds = new L.LatLngBounds(null, null);
@@ -485,7 +476,7 @@ export default abstract class LeafletMap {
         }
         if (this.updatePending) {
           this.updatePending = false;
-          this.updateData(this.drawRoutes, this.showPolygon);
+          this.updateData(this.drawRoutes);
         }
         this.createdControlButtonTooltip();
     }
@@ -562,7 +553,7 @@ export default abstract class LeafletMap {
             if (!this.options.fitMapBounds && this.options.defaultZoomLevel) {
                 this.map.setZoom(this.options.defaultZoomLevel, { animate: false });
                 if (this.options.useDefaultCenterPosition) {
-                    this.map.panTo(this.options.defaultCenterPosition, { animate: false });
+                    this.map.panTo(this.options.parsedDefaultCenterPosition, { animate: false });
                 }
                 else {
                     this.map.panTo(this.bounds.getCenter());
@@ -578,7 +569,7 @@ export default abstract class LeafletMap {
                     }
                 });
                 if (this.options.useDefaultCenterPosition) {
-                    this.bounds = this.bounds.extend(this.options.defaultCenterPosition);
+                    this.bounds = this.bounds.extend(this.options.parsedDefaultCenterPosition);
                 }
                 this.map.fitBounds(this.bounds, { padding: padding || [50, 50], animate: false });
                 this.map.invalidateSize();
@@ -640,23 +631,34 @@ export default abstract class LeafletMap {
       };
     }
 
-    updateData(drawRoutes: boolean, showPolygon: boolean) {
+    updateData(drawRoutes: boolean) {
+      const data = this.ctx.data;
+      let formattedData = formattedDataFormDatasourceData(data);
+      if (this.ctx.latestData && this.ctx.latestData.length) {
+        const formattedLatestData = formattedDataFormDatasourceData(this.ctx.latestData);
+        formattedData = mergeFormattedData(formattedData, formattedLatestData);
+      }
+      let polyData: FormattedData[][] = null;
+      if (drawRoutes) {
+        polyData = formattedDataArrayFromDatasourceData(data);
+      }
+      this.updateFromData(drawRoutes, formattedData, polyData);
+    }
+
+    updateFromData(drawRoutes: boolean, formattedData: FormattedData[],
+                   polyData: FormattedData[][], markerClickCallback?: any) {
       this.drawRoutes = drawRoutes;
-      this.showPolygon = showPolygon;
       if (this.map) {
-        const data = this.ctx.data;
-        const formattedData = parseData(data);
         if (drawRoutes) {
-          const polyData = parseArray(data);
           this.updatePolylines(polyData, formattedData, false);
         }
-        if (showPolygon) {
+        if (this.options.showPolygon) {
           this.updatePolygons(formattedData, false);
         }
         if (this.options.showCircle) {
           this.updateCircle(formattedData, false);
         }
-        this.updateMarkers(formattedData, false);
+        this.updateMarkers(formattedData, false, markerClickCallback);
         this.updateBoundsInternal();
         if (this.options.draggableMarker || this.editPolygons || this.editCircle) {
           let foundEntityWithLocation = false;
@@ -761,7 +763,7 @@ export default abstract class LeafletMap {
         bounds.extend(polyline.leafletPoly.getBounds());
       });
     }
-    if (this.showPolygon) {
+    if (this.options.showPolygon) {
       this.polygons.forEach((polygon) => {
         bounds.extend(polygon.leafletPoly.getBounds());
       });
@@ -771,7 +773,7 @@ export default abstract class LeafletMap {
         bounds.extend(polygon.leafletCircle.getBounds());
       });
     }
-    if ((this.options as MarkerSettings).useClusterMarkers && this.markersCluster.getBounds().isValid()) {
+    if (this.options.useClusterMarkers && this.markersCluster.getBounds().isValid()) {
       bounds.extend(this.markersCluster.getBounds());
     } else {
       this.markers.forEach((marker) => {
@@ -787,6 +789,10 @@ export default abstract class LeafletMap {
         this.fitBounds(bounds);
       }
     }
+    if (this.options.initDragMode && !this.initDragModeIgnoreUpdateBoundsSet) {
+      this.initDragModeIgnoreUpdateBoundsSet = true;
+      this.ignoreUpdateBounds = true;
+    }
   }
 
   // Markers
@@ -800,9 +806,10 @@ export default abstract class LeafletMap {
       rawMarkers.forEach(data => {
         if (data.rotationAngle || data.rotationAngle === 0) {
           const currentImage: MarkerImageInfo = this.options.useMarkerImageFunction ?
-            safeExecute(this.options.markerImageFunction,
+            safeExecute(this.options.parsedMarkerImageFunction,
               [data, this.options.markerImages, markersData, data.dsIndex]) : this.options.currentImage;
-          const style = currentImage ? 'background-image: url(' + currentImage.url + ');' : '';
+          const imageSize = `height: ${this.options.markerImageSize || 34}px; width: ${this.options.markerImageSize || 34}px;`;
+          const style = currentImage ? 'background-image: url(' + currentImage.url + '); ' + imageSize : '';
           this.options.icon = { icon: L.divIcon({
             html: `<div class="arrow"
                style="transform: translate(-10px, -10px)
@@ -818,7 +825,7 @@ export default abstract class LeafletMap {
             updatedMarkers.push(m);
           }
         } else {
-          m = this.createMarker(data.entityName, data, markersData, this.options, updateBounds, callback);
+          m = this.createMarker(data.entityName, data, markersData, this.options, updateBounds, callback, this.options.snappable);
           if (m) {
             createdMarkers.push(m);
           }
@@ -852,9 +859,9 @@ export default abstract class LeafletMap {
         this.saveLocation(data, this.convertToCustomFormat(e.target._latlng)).subscribe();
     }
 
-    private createMarker(key: string, data: FormattedData, dataSources: FormattedData[], settings: UnitedMapSettings,
-                         updateBounds = true, callback?): Marker {
-      const newMarker = new Marker(this, this.convertPosition(data), settings, data, dataSources, this.dragMarker);
+    private createMarker(key: string, data: FormattedData, dataSources: FormattedData[], settings: Partial<WidgetMarkersSettings>,
+                         updateBounds = true, callback?, snappable = false): Marker {
+      const newMarker = new Marker(this, this.convertPosition(data), settings, data, dataSources, this.dragMarker, snappable);
       if (callback) {
         newMarker.leafletMarker.on('click', () => {
           callback(data, true);
@@ -870,7 +877,7 @@ export default abstract class LeafletMap {
       return newMarker;
     }
 
-    private updateMarker(key: string, data: FormattedData, dataSources: FormattedData[], settings: MarkerSettings): Marker {
+    private updateMarker(key: string, data: FormattedData, dataSources: FormattedData[], settings: Partial<WidgetMarkersSettings>): Marker {
         const marker: Marker = this.markers.get(key);
         const location = this.convertPosition(data);
         marker.updateMarkerPosition(location);
@@ -918,7 +925,7 @@ export default abstract class LeafletMap {
         if (!!this.convertPosition(pdata)) {
           const dsData = pointsData.map(ds => ds[tsIndex]);
           if (this.options.useColorPointFunction) {
-            pointColor = safeExecute(this.options.colorPointFunction, [pdata, dsData, pdata.dsIndex]);
+            pointColor = safeExecute(this.options.parsedColorPointFunction, [pdata, dsData, pdata.dsIndex]);
           }
           const point = L.circleMarker(this.convertPosition(pdata), {
             color: pointColor,
@@ -965,7 +972,8 @@ export default abstract class LeafletMap {
         });
     }
 
-    createPolyline(data: FormattedData, tsData: FormattedData[], dsData: FormattedData[], settings: PolylineSettings, updateBounds = true) {
+    createPolyline(data: FormattedData, tsData: FormattedData[], dsData: FormattedData[],
+                   settings: Partial<WidgetPolylineSettings>, updateBounds = true) {
         const poly = new Polyline(this.map,
           tsData.map(el => this.convertPosition(el)).filter(el => !!el), data, dsData, settings);
         if (updateBounds) {
@@ -975,7 +983,8 @@ export default abstract class LeafletMap {
         this.polylines.set(data.entityName, poly);
     }
 
-    updatePolyline(data: FormattedData, tsData: FormattedData[], dsData: FormattedData[], settings: PolylineSettings, updateBounds = true) {
+    updatePolyline(data: FormattedData, tsData: FormattedData[], dsData: FormattedData[],
+                   settings: Partial<WidgetPolylineSettings>, updateBounds = true) {
         const poly = this.polylines.get(data.entityName);
         const oldBounds = poly.leafletPoly.getBounds();
         poly.updatePolyline(tsData.map(el => this.convertPosition(el)).filter(el => !!el), data, dsData, settings);
@@ -1016,7 +1025,7 @@ export default abstract class LeafletMap {
         if (this.polygons.get(data.entityName)) {
           this.updatePolygon(data, polyData, this.options, updateBounds);
         } else {
-          this.createPolygon(data, polyData, this.options, updateBounds);
+          this.createPolygon(data, polyData, this.options, updateBounds, this.options.snappable);
         }
         keys.push(data.entityName);
       }
@@ -1051,8 +1060,9 @@ export default abstract class LeafletMap {
     this.saveLocation(data, this.convertPolygonToCustomFormat(coordinates)).subscribe(() => {});
   }
 
-    createPolygon(polyData: FormattedData, dataSources: FormattedData[], settings: UnitedMapSettings, updateBounds = true) {
-      const polygon = new Polygon(this.map, polyData, dataSources, settings, this.dragPolygonVertex);
+    createPolygon(polyData: FormattedData, dataSources: FormattedData[], settings: Partial<WidgetPolygonSettings>,
+                  updateBounds = true, snappable = false) {
+      const polygon = new Polygon(this, polyData, dataSources, settings, this.dragPolygonVertex, snappable);
       if (updateBounds) {
         const bounds = polygon.leafletPoly.getBounds();
         this.fitBounds(bounds);
@@ -1060,7 +1070,7 @@ export default abstract class LeafletMap {
       this.polygons.set(polyData.entityName, polygon);
     }
 
-    updatePolygon(polyData: FormattedData, dataSources: FormattedData[], settings: PolygonSettings, updateBounds = true) {
+    updatePolygon(polyData: FormattedData, dataSources: FormattedData[], settings: Partial<WidgetPolygonSettings>, updateBounds = true) {
       const poly = this.polygons.get(polyData.entityName);
       const oldBounds = poly.leafletPoly.getBounds();
       poly.updatePolygon(polyData, dataSources, settings);
@@ -1152,7 +1162,7 @@ export default abstract class LeafletMap {
     }
 
     createdCircle(data: FormattedData, dataSources: FormattedData[], updateBounds = true) {
-      const circle = new Circle(this, data, dataSources, this.options, this.dragCircleVertex);
+      const circle = new Circle(this, data, dataSources, this.options, this.dragCircleVertex, this.options.snappable);
       if (updateBounds) {
         const bounds = circle.leafletCircle.getBounds();
         this.fitBounds(bounds);

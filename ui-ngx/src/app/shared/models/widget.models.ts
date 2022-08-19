@@ -25,6 +25,15 @@ import { EntityId } from '@shared/models/id/entity-id';
 import * as moment_ from 'moment';
 import { EntityDataPageLink, EntityFilter, KeyFilter } from '@shared/models/query/query.models';
 import { PopoverPlacement } from '@shared/components/popover.models';
+import { PageComponent } from '@shared/components/page.component';
+import { AfterViewInit, Directive, EventEmitter, Inject, OnInit } from '@angular/core';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { AbstractControl, FormGroup } from '@angular/forms';
+import { Observable } from 'rxjs';
+import { Dashboard } from '@shared/models/dashboard.models';
+import { IAliasController } from '@core/api/widget-api.models';
+import { isEmptyStr } from '@core/utils';
 
 export enum widgetType {
   timeseries = 'timeseries',
@@ -143,6 +152,10 @@ export interface WidgetTypeDescriptor {
   controllerScript: string;
   settingsSchema?: string | any;
   dataKeySettingsSchema?: string | any;
+  latestDataKeySettingsSchema?: string | any;
+  settingsDirective?: string;
+  dataKeySettingsDirective?: string;
+  latestDataKeySettingsDirective?: string;
   defaultConfig: string;
   sizeX: number;
   sizeY: number;
@@ -157,14 +170,17 @@ export interface WidgetTypeParameters {
   stateData?: boolean;
   hasDataPageLink?: boolean;
   singleEntity?: boolean;
+  hasAdditionalLatestDataKeys?: boolean;
   warnOnPageDataOverflow?: boolean;
   ignoreDataUpdateOnIntervalTick?: boolean;
+
 }
 
 export interface WidgetControllerDescriptor {
   widgetTypeFunction?: any;
   settingsSchema?: string | any;
   dataKeySettingsSchema?: string | any;
+  latestDataKeySettingsSchema?: string | any;
   typeParameters?: WidgetTypeParameters;
   actionSources?: {[actionSourceId: string]: WidgetActionSource};
 }
@@ -227,6 +243,7 @@ export interface LegendConfig {
   showMax: boolean;
   showAvg: boolean;
   showTotal: boolean;
+  showLatest: boolean;
 }
 
 export function defaultLegendConfig(wType: widgetType): LegendConfig {
@@ -237,7 +254,8 @@ export function defaultLegendConfig(wType: widgetType): LegendConfig {
     showMin: false,
     showMax: false,
     showAvg: wType === widgetType.timeseries,
-    showTotal: false
+    showTotal: false,
+    showLatest: false
   };
 }
 
@@ -282,6 +300,7 @@ export interface Datasource {
   name?: string;
   aliasName?: string;
   dataKeys?: Array<DataKey>;
+  latestDataKeys?: Array<DataKey>;
   entityType?: EntityType;
   entityId?: string;
   entityName?: string;
@@ -299,7 +318,29 @@ export interface Datasource {
   keyFilters?: Array<KeyFilter>;
   entityFilter?: EntityFilter;
   dataKeyStartIndex?: number;
+  latestDataKeyStartIndex?: number;
   [key: string]: any;
+}
+
+export interface FormattedData {
+  $datasource: Datasource;
+  entityName: string;
+  deviceName: string;
+  entityId: string;
+  entityType: EntityType;
+  entityLabel: string;
+  entityDescription: string;
+  aliasName: string;
+  dsIndex: number;
+  dsName: string;
+  deviceType: string;
+  [key: string]: any;
+}
+
+export interface ReplaceInfo {
+  variable: string;
+  valDec?: number;
+  dataKeyName: string;
 }
 
 export type DataSet = [number, any][];
@@ -323,6 +364,7 @@ export interface LegendKeyData {
   max: string;
   avg: string;
   total: string;
+  latest: string;
   hidden: boolean;
 }
 
@@ -483,6 +525,10 @@ export interface WidgetComparisonSettings {
   comparisonCustomIntervalValue?: number;
 }
 
+export interface WidgetSettings {
+  [key: string]: any;
+}
+
 export interface WidgetConfig {
   title?: string;
   titleIcon?: string;
@@ -511,8 +557,9 @@ export interface WidgetConfig {
   units?: string;
   decimals?: number;
   noDataDisplayMessage?: string;
+  pageSize?: number;
   actions?: {[actionSourceId: string]: Array<WidgetActionDescriptor>};
-  settings?: any;
+  settings?: WidgetSettings;
   alarmSource?: Datasource;
   alarmStatusList?: AlarmSearchStatus[];
   alarmSeverityList?: AlarmSeverity[];
@@ -569,4 +616,152 @@ export interface WidgetPosition {
 export interface WidgetSize {
   sizeX: number;
   sizeY: number;
+}
+
+export interface IWidgetSettingsComponent {
+  aliasController: IAliasController;
+  dashboard: Dashboard;
+  widget: Widget;
+  functionScopeVariables: string[];
+  settings: WidgetSettings;
+  settingsChanged: Observable<WidgetSettings>;
+  validate();
+  [key: string]: any;
+}
+
+function removeEmptyWidgetSettings(settings: WidgetSettings): WidgetSettings {
+  if (settings) {
+    const keys = Object.keys(settings);
+    for (const key of keys) {
+      const val = settings[key];
+      if (val === null || isEmptyStr(val)) {
+        delete settings[key];
+      }
+    }
+  }
+  return settings;
+}
+
+@Directive()
+// tslint:disable-next-line:directive-class-suffix
+export abstract class WidgetSettingsComponent extends PageComponent implements
+  IWidgetSettingsComponent, OnInit, AfterViewInit {
+
+  aliasController: IAliasController;
+
+  dashboard: Dashboard;
+
+  widget: Widget;
+
+  functionScopeVariables: string[];
+
+  settingsValue: WidgetSettings;
+
+  private settingsSet = false;
+
+  set settings(value: WidgetSettings) {
+    if (!value) {
+      this.settingsValue = this.defaultSettings();
+    } else {
+      this.settingsValue = {...this.defaultSettings(), ...value};
+    }
+    if (!this.settingsSet) {
+      this.settingsSet = true;
+      this.setupSettings(this.settingsValue);
+    } else {
+      this.updateSettings(this.settingsValue);
+    }
+  }
+
+  get settings(): WidgetSettings {
+    return this.settingsValue;
+  }
+
+  settingsChangedEmitter = new EventEmitter<WidgetSettings>();
+  settingsChanged = this.settingsChangedEmitter.asObservable();
+
+  protected constructor(@Inject(Store) protected store: Store<AppState>) {
+    super(store);
+  }
+
+  ngOnInit() {}
+
+  ngAfterViewInit(): void {
+    setTimeout(() => {
+      if (!this.validateSettings()) {
+        this.settingsChangedEmitter.emit(null);
+      }
+    }, 0);
+  }
+
+  validate() {
+    this.onValidate();
+  }
+
+  protected setupSettings(settings: WidgetSettings) {
+    this.onSettingsSet(this.prepareInputSettings(settings));
+    this.updateValidators(false);
+    for (const trigger of this.validatorTriggers()) {
+      const path = trigger.split('.');
+      let control: AbstractControl = this.settingsForm();
+      for (const part of path) {
+        control = control.get(part);
+      }
+      control.valueChanges.subscribe(() => {
+        this.updateValidators(true, trigger);
+      });
+    }
+    this.settingsForm().valueChanges.subscribe((updated: any) => {
+      this.onSettingsChanged(this.prepareOutputSettings(updated));
+    });
+  }
+
+  protected updateSettings(settings: WidgetSettings) {
+    settings = this.prepareInputSettings(settings);
+    this.settingsForm().reset(settings, {emitEvent: false});
+    this.doUpdateSettings(this.settingsForm(), settings);
+    this.updateValidators(false);
+  }
+
+  protected updateValidators(emitEvent: boolean, trigger?: string) {
+  }
+
+  protected validatorTriggers(): string[] {
+    return [];
+  }
+
+  protected onSettingsChanged(updated: WidgetSettings) {
+    this.settingsValue = removeEmptyWidgetSettings(updated);
+    if (this.validateSettings()) {
+      this.settingsChangedEmitter.emit(this.settingsValue);
+    } else {
+      this.settingsChangedEmitter.emit(null);
+    }
+  }
+
+  protected doUpdateSettings(settingsForm: FormGroup, settings: WidgetSettings) {
+  }
+
+  protected prepareInputSettings(settings: WidgetSettings): WidgetSettings {
+    return settings;
+  }
+
+  protected prepareOutputSettings(settings: any): WidgetSettings {
+    return settings;
+  }
+
+  protected validateSettings(): boolean {
+    return this.settingsForm().valid;
+  }
+
+  protected onValidate() {}
+
+  protected abstract settingsForm(): FormGroup;
+
+  protected abstract onSettingsSet(settings: WidgetSettings);
+
+  protected defaultSettings(): WidgetSettings {
+    return {};
+  }
+
 }

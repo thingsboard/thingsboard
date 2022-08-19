@@ -16,18 +16,17 @@
 package org.thingsboard.server.dao.service.validator;
 
 import lombok.AllArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.entityview.EntityViewDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
-import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.tenant.TenantService;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
@@ -36,7 +35,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 public class EntityViewDataValidator extends DataValidator<EntityView> {
 
     private final EntityViewDao entityViewDao;
-    private final TenantDao tenantDao;
+    private final TenantService tenantService;
     private final CustomerDao customerDao;
 
     @Override
@@ -48,13 +47,14 @@ public class EntityViewDataValidator extends DataValidator<EntityView> {
     }
 
     @Override
-    protected void validateUpdate(TenantId tenantId, EntityView entityView) {
-        entityViewDao.findEntityViewByTenantIdAndName(entityView.getTenantId().getId(), entityView.getName())
-                .ifPresent(e -> {
-                    if (!e.getUuidId().equals(entityView.getUuidId())) {
-                        throw new DataValidationException("Entity view with such name already exists!");
-                    }
-                });
+    protected EntityView validateUpdate(TenantId tenantId, EntityView entityView) {
+        var opt = entityViewDao.findEntityViewByTenantIdAndName(entityView.getTenantId().getId(), entityView.getName());
+        opt.ifPresent(e -> {
+            if (!e.getUuidId().equals(entityView.getUuidId())) {
+                throw new DataValidationException("Entity view with such name already exists!");
+            }
+        });
+        return opt.orElse(null);
     }
 
     @Override
@@ -68,8 +68,7 @@ public class EntityViewDataValidator extends DataValidator<EntityView> {
         if (entityView.getTenantId() == null) {
             throw new DataValidationException("Entity view should be assigned to tenant!");
         } else {
-            Tenant tenant = tenantDao.findById(tenantId, entityView.getTenantId().getId());
-            if (tenant == null) {
+            if (!tenantService.tenantExists(entityView.getTenantId())) {
                 throw new DataValidationException("Entity view is referencing to non-existent tenant!");
             }
         }

@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.device.profile.AlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpecType;
 import org.thingsboard.server.common.data.device.profile.AlarmRule;
 import org.thingsboard.server.common.data.device.profile.CustomTimeSchedule;
+import org.thingsboard.server.common.data.device.profile.AlarmSchedule;
 import org.thingsboard.server.common.data.device.profile.CustomTimeScheduleItem;
 import org.thingsboard.server.common.data.device.profile.DurationAlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.RepeatingAlarmConditionSpec;
@@ -40,6 +41,7 @@ import org.thingsboard.server.common.data.query.KeyFilterPredicate;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.query.StringFilterPredicate;
 import org.thingsboard.server.common.msg.tools.SchedulerUtils;
+import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -115,7 +117,7 @@ class AlarmRuleState {
     }
 
     public AlarmEvalResult eval(DataSnapshot data) {
-        boolean active = isActive(data.getTs());
+        boolean active = isActive(data, data.getTs());
         switch (spec.getType()) {
             case SIMPLE:
                 return (active && eval(alarmRule.getCondition(), data)) ? AlarmEvalResult.TRUE : AlarmEvalResult.FALSE;
@@ -128,7 +130,7 @@ class AlarmRuleState {
         }
     }
 
-    private boolean isActive(long eventTs) {
+    private boolean isActive(DataSnapshot data, long eventTs) {
         if (eventTs == 0L) {
             eventTs = System.currentTimeMillis();
         }
@@ -139,12 +141,26 @@ class AlarmRuleState {
             case ANY_TIME:
                 return true;
             case SPECIFIC_TIME:
-                return isActiveSpecific((SpecificTimeSchedule) alarmRule.getSchedule(), eventTs);
+                return isActiveSpecific((SpecificTimeSchedule) getSchedule(data, alarmRule), eventTs);
             case CUSTOM:
-                return isActiveCustom((CustomTimeSchedule) alarmRule.getSchedule(), eventTs);
+                return isActiveCustom((CustomTimeSchedule) getSchedule(data, alarmRule), eventTs);
             default:
                 throw new RuntimeException("Unsupported schedule type: " + alarmRule.getSchedule().getType());
         }
+    }
+
+    private AlarmSchedule getSchedule(DataSnapshot data, AlarmRule alarmRule) {
+        AlarmSchedule schedule = alarmRule.getSchedule();
+        EntityKeyValue dynamicValue = getDynamicPredicateValue(data, schedule.getDynamicValue());
+
+        if (dynamicValue != null) {
+            try {
+                return JsonConverter.parse(dynamicValue.getJsonValue(), alarmRule.getSchedule().getClass());
+            } catch (Exception e) {
+                log.trace("Failed to parse AlarmSchedule from dynamicValue: {}", dynamicValue.getJsonValue(), e);
+            }
+        }
+        return schedule;
     }
 
     private boolean isActiveSpecific(SpecificTimeSchedule schedule, long eventTs) {
@@ -156,7 +172,13 @@ class AlarmRuleState {
                 return false;
             }
         }
-        return isActive(eventTs, zoneId, zdt, schedule.getStartsOn(), schedule.getEndsOn());
+        long endsOn = schedule.getEndsOn();
+        if (endsOn == 0) {
+            // 24 hours in milliseconds
+            endsOn = 86400000;
+        }
+
+        return isActive(eventTs, zoneId, zdt, schedule.getStartsOn(), endsOn);
     }
 
     private boolean isActiveCustom(CustomTimeSchedule schedule, long eventTs) {
@@ -166,7 +188,12 @@ class AlarmRuleState {
         for (CustomTimeScheduleItem item : schedule.getItems()) {
             if (item.getDayOfWeek() == dayOfWeek) {
                 if (item.isEnabled()) {
-                    return isActive(eventTs, zoneId, zdt, item.getStartsOn(), item.getEndsOn());
+                    long endsOn = item.getEndsOn();
+                    if (endsOn == 0) {
+                        // 24 hours in milliseconds
+                        endsOn = 86400000;
+                    }
+                    return isActive(eventTs, zoneId, zdt, item.getStartsOn(), endsOn);
                 } else {
                     return false;
                 }
@@ -279,7 +306,7 @@ class AlarmRuleState {
                 long requiredDurationInMs = resolveRequiredDurationInMs(dataSnapshot);
                 if (requiredDurationInMs > 0 && state.getLastEventTs() > 0 && ts > state.getLastEventTs()) {
                     long duration = state.getDuration() + (ts - state.getLastEventTs());
-                    if (isActive(ts)) {
+                    if (isActive(dataSnapshot, ts)) {
                         return duration > requiredDurationInMs ? AlarmEvalResult.TRUE : AlarmEvalResult.NOT_YET_TRUE;
                     } else {
                         return AlarmEvalResult.FALSE;

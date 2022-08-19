@@ -19,7 +19,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.common.util.TbStopWatch;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.ScriptEngine;
@@ -34,7 +34,6 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
-import org.thingsboard.server.common.msg.queue.ServiceQueue;
 
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -106,7 +105,7 @@ public class TbMsgGeneratorNode implements TbNode {
     public void onMsg(TbContext ctx, TbMsg msg) {
         log.trace("onMsg, config {}, msg {}", config, msg);
         if (initialized.get() && msg.getType().equals(TB_MSG_GENERATOR_NODE_MSG) && msg.getId().equals(nextTickId)) {
-            TbStopWatch sw = TbStopWatch.startNew();
+            TbStopWatch sw = TbStopWatch.create();
             withCallback(generate(ctx, msg),
                     m -> {
                         log.trace("onMsg onSuccess callback, took {}ms, config {}, msg {}", sw.stopAndGetTotalTimeMillis(), config, msg);
@@ -135,7 +134,7 @@ public class TbMsgGeneratorNode implements TbNode {
         }
         lastScheduledTs = lastScheduledTs + delay;
         long curDelay = Math.max(0L, (lastScheduledTs - curTs));
-        TbMsg tickMsg = ctx.newMsg(ServiceQueue.MAIN, TB_MSG_GENERATOR_NODE_MSG, ctx.getSelfId(), new TbMsgMetaData(), "");
+        TbMsg tickMsg = ctx.newMsg(null, TB_MSG_GENERATOR_NODE_MSG, ctx.getSelfId(), new TbMsgMetaData(), "");
         nextTickId = tickMsg.getId();
         ctx.tellSelf(tickMsg, curDelay);
     }
@@ -143,14 +142,14 @@ public class TbMsgGeneratorNode implements TbNode {
     private ListenableFuture<TbMsg> generate(TbContext ctx, TbMsg msg) {
         log.trace("generate, config {}", config);
         if (prevMsg == null) {
-            prevMsg = ctx.newMsg(ServiceQueue.MAIN, "", originatorId, msg.getCustomerId(), new TbMsgMetaData(), "{}");
+            prevMsg = ctx.newMsg(null, "", originatorId, msg.getCustomerId(), new TbMsgMetaData(), "{}");
         }
         if (initialized.get()) {
             ctx.logJsEvalRequest();
             return Futures.transformAsync(jsEngine.executeGenerateAsync(prevMsg), generated -> {
                 log.trace("generate process response, generated {}, config {}", generated, config);
                 ctx.logJsEvalResponse();
-                prevMsg = ctx.newMsg(ServiceQueue.MAIN, generated.getType(), originatorId, msg.getCustomerId(), generated.getMetaData(), generated.getData());
+                prevMsg = ctx.newMsg(null, generated.getType(), originatorId, msg.getCustomerId(), generated.getMetaData(), generated.getData());
                 return Futures.immediateFuture(prevMsg);
             }, MoreExecutors.directExecutor()); //usually it runs on js-executor-remote-callback thread pool
         }

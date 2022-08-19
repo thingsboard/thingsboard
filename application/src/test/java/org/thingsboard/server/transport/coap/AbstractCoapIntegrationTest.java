@@ -16,18 +16,15 @@
 package org.thingsboard.server.transport.coap;
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.californium.core.CoapClient;
-import org.junit.Assert;
-import org.springframework.util.StringUtils;
+import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.common.data.CoapDeviceType;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TransportPayloadType;
-import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.device.profile.AllowCreateNewDevicesDeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.device.profile.CheckPreProvisionedDevicesDeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransportConfiguration;
@@ -41,159 +38,118 @@ import org.thingsboard.server.common.data.device.profile.EfentoCoapDeviceTypeCon
 import org.thingsboard.server.common.data.device.profile.JsonTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
-import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
-import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.transport.AbstractTransportIntegrationTest;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+@TestPropertySource(properties = {
+        "transport.coap.enabled=true",
+})
 @Slf4j
 public abstract class AbstractCoapIntegrationTest extends AbstractTransportIntegrationTest {
 
     protected final byte[] EMPTY_PAYLOAD = new byte[0];
+    protected CoapTestClient client;
 
-    protected CoapClient client;
-
-    @Override
     protected void processAfterTest() throws Exception {
         if (client != null) {
-            client.shutdown();
+            client.disconnect();
         }
-        super.processAfterTest();
     }
 
-    protected void processBeforeTest(String deviceName, CoapDeviceType coapDeviceType, TransportPayloadType payloadType) throws Exception {
-        this.processBeforeTest(deviceName, coapDeviceType, payloadType, null, null, null, null, null, null, DeviceProfileProvisionType.DISABLED);
-    }
-
-    protected void processBeforeTest(String deviceName,
-                                     CoapDeviceType coapDeviceType,
-                                     TransportPayloadType payloadType,
-                                     String telemetryProtoSchema,
-                                     String attributesProtoSchema,
-                                     String rpcResponseProtoSchema,
-                                     String rpcRequestProtoSchema,
-                                     String provisionKey,
-                                     String provisionSecret,
-                                     DeviceProfileProvisionType provisionType
-    ) throws Exception {
-        loginSysAdmin();
-
-        Tenant tenant = new Tenant();
-        tenant.setTitle("My tenant");
-        savedTenant = doPost("/api/tenant", tenant, Tenant.class);
-        Assert.assertNotNull(savedTenant);
-
-        tenantAdmin = new User();
-        tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
-        tenantAdmin.setTenantId(savedTenant.getId());
-        tenantAdmin.setEmail("tenant" + atomicInteger.getAndIncrement() + "@thingsboard.org");
-        tenantAdmin.setFirstName("Joe");
-        tenantAdmin.setLastName("Downs");
-
-        tenantAdmin = createUserAndLogin(tenantAdmin, "testPassword1");
-
-        Device device = new Device();
-        device.setName(deviceName);
-        device.setType("default");
-
-        if (coapDeviceType != null) {
-            DeviceProfile coapDeviceProfile = createCoapDeviceProfile(payloadType, coapDeviceType, provisionSecret, provisionType, provisionKey, attributesProtoSchema, telemetryProtoSchema, rpcResponseProtoSchema, rpcRequestProtoSchema);
-            deviceProfile = doPost("/api/deviceProfile", coapDeviceProfile, DeviceProfile.class);
-            device.setType(deviceProfile.getName());
-            device.setDeviceProfileId(deviceProfile.getId());
-        }
-
-        savedDevice = doPost("/api/device", device, Device.class);
-
+    protected void processBeforeTest(CoapTestConfigProperties config) throws Exception {
+        loginTenantAdmin();
+        deviceProfile = createCoapDeviceProfile(config);
+        assertNotNull(deviceProfile);
+        savedDevice = createDevice(config.getDeviceName(), deviceProfile.getName());
         DeviceCredentials deviceCredentials =
                 doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class);
-
+        assertNotNull(deviceCredentials);
         assertEquals(savedDevice.getId(), deviceCredentials.getDeviceId());
         accessToken = deviceCredentials.getCredentialsId();
         assertNotNull(accessToken);
-
     }
 
-    protected DeviceProfile createCoapDeviceProfile(TransportPayloadType transportPayloadType, CoapDeviceType coapDeviceType,
-                                                    String provisionSecret, DeviceProfileProvisionType provisionType,
-                                                    String provisionKey, String attributesProtoSchema,
-                                                    String telemetryProtoSchema, String rpcResponseProtoSchema, String rpcRequestProtoSchema) {
-        DeviceProfile deviceProfile = new DeviceProfile();
-        deviceProfile.setName(transportPayloadType.name());
-        deviceProfile.setType(DeviceProfileType.DEFAULT);
-        deviceProfile.setProvisionType(provisionType);
-        deviceProfile.setProvisionDeviceKey(provisionKey);
-        deviceProfile.setDescription(transportPayloadType.name() + " Test");
-        DeviceProfileData deviceProfileData = new DeviceProfileData();
-        DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
-        deviceProfile.setTransportType(DeviceTransportType.COAP);
-        CoapDeviceProfileTransportConfiguration coapDeviceProfileTransportConfiguration = new CoapDeviceProfileTransportConfiguration();
-        CoapDeviceTypeConfiguration coapDeviceTypeConfiguration;
-        if (CoapDeviceType.DEFAULT.equals(coapDeviceType)) {
-            DefaultCoapDeviceTypeConfiguration defaultCoapDeviceTypeConfiguration = new DefaultCoapDeviceTypeConfiguration();
-            TransportPayloadTypeConfiguration transportPayloadTypeConfiguration;
-            if (TransportPayloadType.PROTOBUF.equals(transportPayloadType)) {
-                ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = new ProtoTransportPayloadConfiguration();
-                if (StringUtils.isEmpty(telemetryProtoSchema)) {
-                    telemetryProtoSchema = DEVICE_TELEMETRY_PROTO_SCHEMA;
-                }
-                if (StringUtils.isEmpty(attributesProtoSchema)) {
-                    attributesProtoSchema = DEVICE_ATTRIBUTES_PROTO_SCHEMA;
-                }
-                if (StringUtils.isEmpty(rpcResponseProtoSchema)) {
-                    rpcResponseProtoSchema = DEVICE_RPC_RESPONSE_PROTO_SCHEMA;
-                }
-                if (StringUtils.isEmpty(rpcRequestProtoSchema)) {
-                    rpcRequestProtoSchema = DEVICE_RPC_REQUEST_PROTO_SCHEMA;
-                }
-                protoTransportPayloadConfiguration.setDeviceTelemetryProtoSchema(telemetryProtoSchema);
-                protoTransportPayloadConfiguration.setDeviceAttributesProtoSchema(attributesProtoSchema);
-                protoTransportPayloadConfiguration.setDeviceRpcResponseProtoSchema(rpcResponseProtoSchema);
-                protoTransportPayloadConfiguration.setDeviceRpcRequestProtoSchema(rpcRequestProtoSchema);
-                transportPayloadTypeConfiguration = protoTransportPayloadConfiguration;
-            } else {
-                transportPayloadTypeConfiguration = new JsonTransportPayloadConfiguration();
-            }
-            defaultCoapDeviceTypeConfiguration.setTransportPayloadTypeConfiguration(transportPayloadTypeConfiguration);
-            coapDeviceTypeConfiguration = defaultCoapDeviceTypeConfiguration;
+    protected DeviceProfile createCoapDeviceProfile(CoapTestConfigProperties config) throws Exception {
+        CoapDeviceType coapDeviceType = config.getCoapDeviceType();
+        if (coapDeviceType == null) {
+            DeviceProfileInfo defaultDeviceProfileInfo = doGet("/api/deviceProfileInfo/default", DeviceProfileInfo.class);
+            return doGet("/api/deviceProfile/" + defaultDeviceProfileInfo.getId().getId(), DeviceProfile.class);
         } else {
-            coapDeviceTypeConfiguration = new EfentoCoapDeviceTypeConfiguration();
+            TransportPayloadType transportPayloadType = config.getTransportPayloadType();
+            DeviceProfile deviceProfile = new DeviceProfile();
+            deviceProfile.setName(transportPayloadType.name());
+            deviceProfile.setType(DeviceProfileType.DEFAULT);
+            DeviceProfileProvisionType provisionType = config.getProvisionType() != null ?
+                    config.getProvisionType() : DeviceProfileProvisionType.DISABLED;
+            deviceProfile.setProvisionType(provisionType);
+            deviceProfile.setProvisionDeviceKey(config.getProvisionKey());
+            deviceProfile.setDescription(transportPayloadType.name() + " Test");
+            DeviceProfileData deviceProfileData = new DeviceProfileData();
+            DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
+            deviceProfile.setTransportType(DeviceTransportType.COAP);
+            CoapDeviceProfileTransportConfiguration coapDeviceProfileTransportConfiguration = new CoapDeviceProfileTransportConfiguration();
+            CoapDeviceTypeConfiguration coapDeviceTypeConfiguration;
+            if (CoapDeviceType.DEFAULT.equals(coapDeviceType)) {
+                DefaultCoapDeviceTypeConfiguration defaultCoapDeviceTypeConfiguration = new DefaultCoapDeviceTypeConfiguration();
+                TransportPayloadTypeConfiguration transportPayloadTypeConfiguration;
+                if (TransportPayloadType.PROTOBUF.equals(transportPayloadType)) {
+                    ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = new ProtoTransportPayloadConfiguration();
+                    String telemetryProtoSchema = config.getTelemetryProtoSchema();
+                    String attributesProtoSchema = config.getAttributesProtoSchema();
+                    String rpcResponseProtoSchema = config.getRpcResponseProtoSchema();
+                    String rpcRequestProtoSchema = config.getRpcRequestProtoSchema();
+                    protoTransportPayloadConfiguration.setDeviceTelemetryProtoSchema(
+                            telemetryProtoSchema != null ? telemetryProtoSchema : DEVICE_TELEMETRY_PROTO_SCHEMA
+                    );
+                    protoTransportPayloadConfiguration.setDeviceAttributesProtoSchema(
+                            attributesProtoSchema != null ? attributesProtoSchema : DEVICE_ATTRIBUTES_PROTO_SCHEMA
+                    );
+                    protoTransportPayloadConfiguration.setDeviceRpcResponseProtoSchema(
+                            rpcResponseProtoSchema != null ? rpcResponseProtoSchema : DEVICE_RPC_RESPONSE_PROTO_SCHEMA
+                    );
+                    protoTransportPayloadConfiguration.setDeviceRpcRequestProtoSchema(
+                            rpcRequestProtoSchema != null ? rpcRequestProtoSchema : DEVICE_RPC_REQUEST_PROTO_SCHEMA
+                    );
+                    transportPayloadTypeConfiguration = protoTransportPayloadConfiguration;
+                } else {
+                    transportPayloadTypeConfiguration = new JsonTransportPayloadConfiguration();
+                }
+                defaultCoapDeviceTypeConfiguration.setTransportPayloadTypeConfiguration(transportPayloadTypeConfiguration);
+                coapDeviceTypeConfiguration = defaultCoapDeviceTypeConfiguration;
+            } else {
+                coapDeviceTypeConfiguration = new EfentoCoapDeviceTypeConfiguration();
+            }
+            coapDeviceProfileTransportConfiguration.setCoapDeviceTypeConfiguration(coapDeviceTypeConfiguration);
+            deviceProfileData.setTransportConfiguration(coapDeviceProfileTransportConfiguration);
+            DeviceProfileProvisionConfiguration provisionConfiguration;
+            switch (provisionType) {
+                case ALLOW_CREATE_NEW_DEVICES:
+                    provisionConfiguration = new AllowCreateNewDevicesDeviceProfileProvisionConfiguration(config.getProvisionSecret());
+                    break;
+                case CHECK_PRE_PROVISIONED_DEVICES:
+                    provisionConfiguration = new CheckPreProvisionedDevicesDeviceProfileProvisionConfiguration(config.getProvisionSecret());
+                    break;
+                case DISABLED:
+                default:
+                    provisionConfiguration = new DisabledDeviceProfileProvisionConfiguration(config.getProvisionSecret());
+                    break;
+            }
+            deviceProfileData.setProvisionConfiguration(provisionConfiguration);
+            deviceProfileData.setConfiguration(configuration);
+            deviceProfile.setProfileData(deviceProfileData);
+            deviceProfile.setDefault(false);
+            deviceProfile.setDefaultRuleChainId(null);
+            return doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
         }
-        coapDeviceProfileTransportConfiguration.setCoapDeviceTypeConfiguration(coapDeviceTypeConfiguration);
-        deviceProfileData.setTransportConfiguration(coapDeviceProfileTransportConfiguration);
-        DeviceProfileProvisionConfiguration provisionConfiguration;
-        switch (provisionType) {
-            case ALLOW_CREATE_NEW_DEVICES:
-                provisionConfiguration = new AllowCreateNewDevicesDeviceProfileProvisionConfiguration(provisionSecret);
-                break;
-            case CHECK_PRE_PROVISIONED_DEVICES:
-                provisionConfiguration = new CheckPreProvisionedDevicesDeviceProfileProvisionConfiguration(provisionSecret);
-                break;
-            case DISABLED:
-            default:
-                provisionConfiguration = new DisabledDeviceProfileProvisionConfiguration(provisionSecret);
-                break;
-        }
-        deviceProfileData.setProvisionConfiguration(provisionConfiguration);
-        deviceProfileData.setConfiguration(configuration);
-        deviceProfile.setProfileData(deviceProfileData);
-        deviceProfile.setDefault(false);
-        deviceProfile.setDefaultRuleChainId(null);
-        return deviceProfile;
     }
 
-    protected CoapClient getCoapClient(FeatureType featureType) {
-        return new CoapClient(getFeatureTokenUrl(accessToken, featureType));
-    }
-
-    protected CoapClient getCoapClient(String featureTokenUrl) {
-        return new CoapClient(featureTokenUrl);
-    }
-
-    protected String getFeatureTokenUrl(String token, FeatureType featureType) {
-        return COAP_BASE_URL + token + "/" + featureType.name().toLowerCase();
+    protected Device createDevice(String name, String type) throws Exception {
+        Device device = new Device();
+        device.setName(name);
+        device.setType(type);
+        return doPost("/api/device", device, Device.class);
     }
 }

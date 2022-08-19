@@ -33,8 +33,9 @@ public class OtaPackageInfoDataValidator extends BaseOtaPackageDataValidator<Ota
     }
 
     @Override
-    protected void validateUpdate(TenantId tenantId, OtaPackageInfo otaPackage) {
+    protected OtaPackageInfo validateUpdate(TenantId tenantId, OtaPackageInfo otaPackage) {
         OtaPackageInfo otaPackageOld = otaPackageInfoDao.findById(tenantId, otaPackage.getUuidId());
         validateUpdate(otaPackage, otaPackageOld);
+        return otaPackageOld;
     }
 }

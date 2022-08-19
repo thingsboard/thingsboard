@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.service;
 
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,6 +25,7 @@ import org.springframework.cache.CacheManager;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceCredentialsId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -43,8 +43,8 @@ import static org.mockito.Mockito.when;
 
 public abstract class BaseDeviceCredentialsCacheTest extends AbstractServiceTest {
 
-    private static final String CREDENTIALS_ID_1 = RandomStringUtils.randomAlphanumeric(20);
-    private static final String CREDENTIALS_ID_2 = RandomStringUtils.randomAlphanumeric(20);
+    private static final String CREDENTIALS_ID_1 = StringUtils.randomAlphanumeric(20);
+    private static final String CREDENTIALS_ID_2 = StringUtils.randomAlphanumeric(20);
 
     @Autowired
     private DeviceCredentialsService deviceCredentialsService;
@@ -70,7 +70,6 @@ public abstract class BaseDeviceCredentialsCacheTest extends AbstractServiceTest
 
         ReflectionTestUtils.setField(unwrapDeviceCredentialsService(), "deviceCredentialsDao", deviceCredentialsDao);
         ReflectionTestUtils.setField(unwrapDeviceCredentialsService(), "credentialsValidator", credentialsValidator);
-
     }
 
     @After
@@ -120,7 +119,10 @@ public abstract class BaseDeviceCredentialsCacheTest extends AbstractServiceTest
         when(deviceCredentialsDao.findById(SYSTEM_TENANT_ID, deviceCredentialsId)).thenReturn(createDummyDeviceCredentialsEntity(CREDENTIALS_ID_1));
         when(deviceService.findDeviceById(SYSTEM_TENANT_ID, new DeviceId(deviceId))).thenReturn(new Device());
 
-        deviceCredentialsService.updateDeviceCredentials(SYSTEM_TENANT_ID, createDummyDeviceCredentials(deviceCredentialsId, CREDENTIALS_ID_2, deviceId));
+        var dummy = createDummyDeviceCredentials(deviceCredentialsId, CREDENTIALS_ID_2, deviceId);
+        when(deviceCredentialsDao.saveAndFlush(SYSTEM_TENANT_ID, dummy)).thenReturn(dummy);
+
+        deviceCredentialsService.updateDeviceCredentials(SYSTEM_TENANT_ID, dummy);
 
         when(deviceCredentialsDao.findByCredentialsId(SYSTEM_TENANT_ID, CREDENTIALS_ID_1)).thenReturn(null);
 
@@ -135,7 +137,7 @@ public abstract class BaseDeviceCredentialsCacheTest extends AbstractServiceTest
             Object target = ((Advised) deviceCredentialsService).getTargetSource().getTarget();
             return (DeviceCredentialsService) target;
         }
-        return null;
+        return deviceCredentialsService;
     }
 
     private DeviceCredentials createDummyDeviceCredentialsEntity(String deviceCredentialsId) {

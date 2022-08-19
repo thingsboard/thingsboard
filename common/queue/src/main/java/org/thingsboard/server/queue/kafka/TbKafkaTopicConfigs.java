@@ -28,40 +28,55 @@ import java.util.Map;
 @Component
 @ConditionalOnProperty(prefix = "queue", value = "type", havingValue = "kafka")
 public class TbKafkaTopicConfigs {
-    @Value("${queue.kafka.topic-properties.core}")
+    public static final String NUM_PARTITIONS_SETTING = "partitions";
+
+    @Value("${queue.kafka.topic-properties.core:}")
     private String coreProperties;
-    @Value("${queue.kafka.topic-properties.rule-engine}")
+    @Value("${queue.kafka.topic-properties.rule-engine:}")
     private String ruleEngineProperties;
-    @Value("${queue.kafka.topic-properties.transport-api}")
+    @Value("${queue.kafka.topic-properties.transport-api:}")
     private String transportApiProperties;
-    @Value("${queue.kafka.topic-properties.notifications}")
+    @Value("${queue.kafka.topic-properties.notifications:}")
     private String notificationsProperties;
-    @Value("${queue.kafka.topic-properties.js-executor}")
+    @Value("${queue.kafka.topic-properties.js-executor:}")
     private String jsExecutorProperties;
     @Value("${queue.kafka.topic-properties.ota-updates:}")
     private String fwUpdatesProperties;
+    @Value("${queue.kafka.topic-properties.version-control:}")
+    private String vcProperties;
 
     @Getter
     private Map<String, String> coreConfigs;
     @Getter
     private Map<String, String> ruleEngineConfigs;
     @Getter
-    private Map<String, String> transportApiConfigs;
+    private Map<String, String> transportApiRequestConfigs;
+    @Getter
+    private Map<String, String> transportApiResponseConfigs;
     @Getter
     private Map<String, String> notificationsConfigs;
     @Getter
-    private Map<String, String> jsExecutorConfigs;
+    private Map<String, String> jsExecutorRequestConfigs;
+    @Getter
+    private Map<String, String> jsExecutorResponseConfigs;
     @Getter
     private Map<String, String> fwUpdatesConfigs;
+    @Getter
+    private Map<String, String> vcConfigs;
 
     @PostConstruct
     private void init() {
         coreConfigs = getConfigs(coreProperties);
         ruleEngineConfigs = getConfigs(ruleEngineProperties);
-        transportApiConfigs = getConfigs(transportApiProperties);
+        transportApiRequestConfigs = getConfigs(transportApiProperties);
+        transportApiResponseConfigs = getConfigs(transportApiProperties);
+        transportApiResponseConfigs.put(NUM_PARTITIONS_SETTING, "1");
         notificationsConfigs = getConfigs(notificationsProperties);
-        jsExecutorConfigs = getConfigs(jsExecutorProperties);
+        jsExecutorRequestConfigs = getConfigs(jsExecutorProperties);
+        jsExecutorResponseConfigs = getConfigs(jsExecutorProperties);
+        jsExecutorResponseConfigs.put(NUM_PARTITIONS_SETTING, "1");
         fwUpdatesConfigs = getConfigs(fwUpdatesProperties);
+        vcConfigs = getConfigs(vcProperties);
     }
 
     private Map<String, String> getConfigs(String properties) {

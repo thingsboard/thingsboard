@@ -119,6 +119,17 @@ export class DashboardFormComponent extends EntityComponent<Dashboard> {
       }));
   }
 
+  onDashboardIdCopied($event) {
+    this.store.dispatch(new ActionNotificationShow(
+      {
+        message: this.translate.instant('dashboard.idCopiedMessage'),
+        type: 'success',
+        duration: 750,
+        verticalPosition: 'bottom',
+        horizontalPosition: 'right'
+      }));
+  }
+
   private updateFields(entity: Dashboard): void {
     if (entity && !isEqual(entity, {})) {
       this.assignedCustomersText = getDashboardAssignedCustomersText(entity);

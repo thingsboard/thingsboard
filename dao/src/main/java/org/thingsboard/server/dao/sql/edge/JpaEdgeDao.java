@@ -18,7 +18,7 @@ package org.thingsboard.server.dao.sql.edge;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
@@ -53,7 +53,7 @@ public class JpaEdgeDao extends JpaAbstractSearchTextDao<EdgeEntity, Edge> imple
     }
 
     @Override
-    protected CrudRepository<EdgeEntity, UUID> getCrudRepository() {
+    protected JpaRepository<EdgeEntity, UUID> getRepository() {
         return edgeRepository;
     }
 
@@ -191,6 +191,11 @@ public class JpaEdgeDao extends JpaAbstractSearchTextDao<EdgeEntity, Edge> imple
             }
         }
         return list;
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.EDGE;
     }
 
 }

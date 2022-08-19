@@ -29,7 +29,6 @@ import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.common.util.JacksonUtil;
@@ -122,6 +121,11 @@ public class DefaultSmsService implements SmsService {
         }
         this.sendSms(testSmsSender, testSmsRequest.getNumberTo(), testSmsRequest.getMessage());
         testSmsSender.destroy();
+    }
+
+    @Override
+    public boolean isConfigured(TenantId tenantId) {
+        return smsSender != null;
     }
 
     private int sendSms(SmsSender smsSender, String numberTo, String message) throws ThingsboardException {

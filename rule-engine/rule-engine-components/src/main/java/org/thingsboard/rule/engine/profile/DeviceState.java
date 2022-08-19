@@ -17,7 +17,7 @@ package org.thingsboard.rule.engine.profile;
 
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.profile.state.PersistedAlarmState;
 import org.thingsboard.rule.engine.profile.state.PersistedDeviceState;
@@ -197,7 +197,8 @@ class DeviceState {
 
     private void processAlarmDeleteNotification(TbContext ctx, TbMsg msg) {
         Alarm alarm = JacksonUtil.fromString(msg.getData(), Alarm.class);
-        alarmStates.values().removeIf(alarmState -> alarmState.getCurrentAlarm().getId().equals(alarm.getId()));
+        alarmStates.values().removeIf(alarmState -> alarmState.getCurrentAlarm() != null
+                && alarmState.getCurrentAlarm().getId().equals(alarm.getId()));
         ctx.tellSuccess(msg);
     }
 
@@ -219,11 +220,15 @@ class DeviceState {
         }
         if (!keys.isEmpty()) {
             EntityKeyType keyType = getKeyTypeFromScope(scope);
-            keys.forEach(key -> latestValues.removeValue(new EntityKey(keyType, key)));
+            Set<AlarmConditionFilterKey> removedKeys = keys.stream().map(key -> new EntityKey(keyType, key))
+                    .peek(latestValues::removeValue)
+                    .map(DataSnapshot::toConditionKey).collect(Collectors.toSet());
+            SnapshotUpdate update = new SnapshotUpdate(AlarmConditionKeyType.ATTRIBUTE, removedKeys);
+
             for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {
                 AlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
                         a -> new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
-                stateChanged |= alarmState.process(ctx, msg, latestValues, null);
+                stateChanged |= alarmState.process(ctx, msg, latestValues, update);
             }
         }
         ctx.tellSuccess(msg);

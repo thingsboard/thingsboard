@@ -15,11 +15,9 @@
  */
 package org.thingsboard.server.service.edge.rpc.processor;
 
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -33,6 +31,8 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -40,7 +40,7 @@ import java.util.UUID;
 @TbCoreComponent
 public class EdgeProcessor extends BaseEdgeProcessor {
 
-    public void processEdgeNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
+    public ListenableFuture<Void> processEdgeNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
         try {
             EdgeEventActionType actionType = EdgeEventActionType.valueOf(edgeNotificationMsg.getAction());
             EdgeId edgeId = new EdgeId(new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB()));
@@ -49,54 +49,43 @@ public class EdgeProcessor extends BaseEdgeProcessor {
                 case ASSIGNED_TO_CUSTOMER:
                     CustomerId customerId = mapper.readValue(edgeNotificationMsg.getBody(), CustomerId.class);
                     edgeFuture = edgeService.findEdgeByIdAsync(tenantId, edgeId);
-                    Futures.addCallback(edgeFuture, new FutureCallback<Edge>() {
-                        @Override
-                        public void onSuccess(@Nullable Edge edge) {
-                            if (edge != null && !customerId.isNullUid()) {
-                                saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.CUSTOMER, EdgeEventActionType.ADDED, customerId, null);
-                                PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
-                                PageData<User> pageData;
-                                do {
-                                    pageData = userService.findCustomerUsers(tenantId, customerId, pageLink);
-                                    if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
-                                        log.trace("[{}] [{}] user(s) are going to be added to edge.", edge.getId(), pageData.getData().size());
-                                        for (User user : pageData.getData()) {
-                                            saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.USER, EdgeEventActionType.ADDED, user.getId(), null);
-                                        }
-                                        if (pageData.hasNext()) {
-                                            pageLink = pageLink.nextPageLink();
-                                        }
-                                    }
-                                } while (pageData != null && pageData.hasNext());
+                    return Futures.transformAsync(edgeFuture, edge -> {
+                        if (edge == null || customerId.isNullUid()) {
+                            return Futures.immediateFuture(null);
+                        }
+                        List<ListenableFuture<Void>> futures = new ArrayList<>();
+                        futures.add(saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.CUSTOMER, EdgeEventActionType.ADDED, customerId, null));
+                        PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
+                        PageData<User> pageData;
+                        do {
+                            pageData = userService.findCustomerUsers(tenantId, customerId, pageLink);
+                            if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
+                                log.trace("[{}] [{}] user(s) are going to be added to edge.", edge.getId(), pageData.getData().size());
+                                for (User user : pageData.getData()) {
+                                    futures.add(saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.USER, EdgeEventActionType.ADDED, user.getId(), null));
+                                }
+                                if (pageData.hasNext()) {
+                                    pageLink = pageLink.nextPageLink();
+                                }
                             }
-                        }
-
-                        @Override
-                        public void onFailure(Throwable t) {
-                            log.error("Can't find edge by id [{}]", edgeNotificationMsg, t);
-                        }
+                        } while (pageData != null && pageData.hasNext());
+                        return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
                     }, dbCallbackExecutorService);
-                    break;
                 case UNASSIGNED_FROM_CUSTOMER:
                     CustomerId customerIdToDelete = mapper.readValue(edgeNotificationMsg.getBody(), CustomerId.class);
                     edgeFuture = edgeService.findEdgeByIdAsync(tenantId, edgeId);
-                    Futures.addCallback(edgeFuture, new FutureCallback<Edge>() {
-                        @Override
-                        public void onSuccess(@Nullable Edge edge) {
-                            if (edge != null && !customerIdToDelete.isNullUid()) {
-                                saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.CUSTOMER, EdgeEventActionType.DELETED, customerIdToDelete, null);
-                            }
+                    return Futures.transformAsync(edgeFuture, edge -> {
+                        if (edge == null || customerIdToDelete.isNullUid()) {
+                            return Futures.immediateFuture(null);
                         }
-
-                        @Override
-                        public void onFailure(Throwable t) {
-                            log.error("Can't find edge by id [{}]", edgeNotificationMsg, t);
-                        }
+                        return saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.CUSTOMER, EdgeEventActionType.DELETED, customerIdToDelete, null);
                     }, dbCallbackExecutorService);
-                    break;
+                default:
+                    return Futures.immediateFuture(null);
             }
         } catch (Exception e) {
             log.error("Exception during processing edge event", e);
+            return Futures.immediateFailedFuture(e);
         }
     }
 }

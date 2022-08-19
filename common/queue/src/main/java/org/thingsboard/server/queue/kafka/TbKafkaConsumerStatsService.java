@@ -25,10 +25,12 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.queue.discovery.PartitionService;
@@ -55,7 +57,10 @@ public class TbKafkaConsumerStatsService {
 
     private final TbKafkaSettings kafkaSettings;
     private final TbKafkaConsumerStatisticConfig statsConfig;
-    private final PartitionService partitionService;
+
+    @Lazy
+    @Autowired
+    private PartitionService partitionService;
 
     private AdminClient adminClient;
     private Consumer<String, byte[]> consumer;

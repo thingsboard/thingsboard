@@ -16,11 +16,9 @@
 package org.thingsboard.server.service.edge.rpc.processor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
@@ -43,6 +41,8 @@ import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -148,49 +148,44 @@ public class AlarmEdgeProcessor extends BaseEdgeProcessor {
         return downlinkMsg;
     }
 
-    public void processAlarmNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) throws JsonProcessingException {
+    public ListenableFuture<Void> processAlarmNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) throws JsonProcessingException {
         EdgeEventActionType actionType = EdgeEventActionType.valueOf(edgeNotificationMsg.getAction());
         AlarmId alarmId = new AlarmId(new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB()));
         switch (actionType) {
             case DELETED:
                 EdgeId edgeId = new EdgeId(new UUID(edgeNotificationMsg.getEdgeIdMSB(), edgeNotificationMsg.getEdgeIdLSB()));
-                Alarm alarm = mapper.readValue(edgeNotificationMsg.getBody(), Alarm.class);
-                saveEdgeEvent(tenantId, edgeId, EdgeEventType.ALARM, actionType, alarmId, mapper.valueToTree(alarm));
-                break;
+                Alarm deletedAlarm = mapper.readValue(edgeNotificationMsg.getBody(), Alarm.class);
+                return saveEdgeEvent(tenantId, edgeId, EdgeEventType.ALARM, actionType, alarmId, mapper.valueToTree(deletedAlarm));
             default:
                 ListenableFuture<Alarm> alarmFuture = alarmService.findAlarmByIdAsync(tenantId, alarmId);
-                Futures.addCallback(alarmFuture, new FutureCallback<Alarm>() {
-                    @Override
-                    public void onSuccess(@Nullable Alarm alarm) {
-                        if (alarm != null) {
-                            EdgeEventType type = EdgeUtils.getEdgeEventTypeByEntityType(alarm.getOriginator().getEntityType());
-                            if (type != null) {
-                                PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
-                                PageData<EdgeId> pageData;
-                                do {
-                                    pageData = edgeService.findRelatedEdgeIdsByEntityId(tenantId, alarm.getOriginator(), pageLink);
-                                    if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
-                                        for (EdgeId edgeId : pageData.getData()) {
-                                            saveEdgeEvent(tenantId,
-                                                    edgeId,
-                                                    EdgeEventType.ALARM,
-                                                    EdgeEventActionType.valueOf(edgeNotificationMsg.getAction()),
-                                                    alarmId,
-                                                    null);
-                                        }
-                                        if (pageData.hasNext()) {
-                                            pageLink = pageLink.nextPageLink();
-                                        }
-                                    }
-                                } while (pageData != null && pageData.hasNext());
+                return Futures.transformAsync(alarmFuture, alarm -> {
+                    if (alarm == null) {
+                        return Futures.immediateFuture(null);
+                    }
+                    EdgeEventType type = EdgeUtils.getEdgeEventTypeByEntityType(alarm.getOriginator().getEntityType());
+                    if (type == null) {
+                        return Futures.immediateFuture(null);
+                    }
+                    PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
+                    PageData<EdgeId> pageData;
+                    List<ListenableFuture<Void>> futures = new ArrayList<>();
+                    do {
+                        pageData = edgeService.findRelatedEdgeIdsByEntityId(tenantId, alarm.getOriginator(), pageLink);
+                        if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
+                            for (EdgeId relatedEdgeId : pageData.getData()) {
+                                futures.add(saveEdgeEvent(tenantId,
+                                        relatedEdgeId,
+                                        EdgeEventType.ALARM,
+                                        EdgeEventActionType.valueOf(edgeNotificationMsg.getAction()),
+                                        alarmId,
+                                        null));
+                            }
+                            if (pageData.hasNext()) {
+                                pageLink = pageLink.nextPageLink();
                             }
                         }
-                    }
-
-                    @Override
-                    public void onFailure(Throwable t) {
-                        log.warn("[{}] can't find alarm by id [{}] {}", tenantId.getId(), alarmId.getId(), t);
-                    }
+                    } while (pageData != null && pageData.hasNext());
+                    return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
                 }, dbCallbackExecutorService);
         }
     }

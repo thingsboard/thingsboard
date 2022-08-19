@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.Collection;
@@ -36,8 +37,12 @@ public interface Dao<T> {
 
     T save(TenantId tenantId, T t);
 
+    T saveAndFlush(TenantId tenantId, T t);
+
     boolean removeById(TenantId tenantId, UUID id);
 
     void removeAllByIds(Collection<UUID> ids);
+
+    default EntityType getEntityType() { return null; }
 
 }

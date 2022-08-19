@@ -1,0 +1,48 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section class="tb-widget-settings" [formGroup]="flotLatestKeySettingsForm" fxLayout="column">
+  <fieldset class="fields-group fields-group-slider">
+    <legend class="group-title" translate>widgets.chart.threshold-settings</legend>
+    <mat-expansion-panel class="tb-settings" [expanded]="flotLatestKeySettingsForm.get('useAsThreshold').value">
+      <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-panel-title>
+          <mat-slide-toggle formControlName="useAsThreshold" (click)="$event.stopPropagation()"
+                            fxLayoutAlign="center">
+            {{ 'widgets.chart.use-as-threshold' | translate }}
+          </mat-slide-toggle>
+        </mat-panel-title>
+        <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+          widget-config.advanced-settings
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px">
+          <mat-form-field fxFlex class="mat-block">
+            <mat-label translate>widgets.chart.threshold-line-width</mat-label>
+            <input type="number" min="0" matInput formControlName="thresholdLineWidth">
+          </mat-form-field>
+          <tb-color-input fxFlex
+                          formControlName="thresholdColor"
+                          icon="format_color_fill"
+                          label="{{ 'widgets.chart.threshold-color' | translate }}" openOnInput colorClearButton>
+          </tb-color-input>
+        </section>
+      </ng-template>
+    </mat-expansion-panel>
+  </fieldset>
+</section>

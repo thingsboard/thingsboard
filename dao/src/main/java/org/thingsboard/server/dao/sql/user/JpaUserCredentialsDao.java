@@ -16,7 +16,7 @@
 package org.thingsboard.server.dao.sql.user;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.UserCredentials;
@@ -42,7 +42,7 @@ public class JpaUserCredentialsDao extends JpaAbstractDao<UserCredentialsEntity,
     }
 
     @Override
-    protected CrudRepository<UserCredentialsEntity, UUID> getCrudRepository() {
+    protected JpaRepository<UserCredentialsEntity, UUID> getRepository() {
         return userCredentialsRepository;
     }
 

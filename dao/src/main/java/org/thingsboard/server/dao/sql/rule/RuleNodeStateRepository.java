@@ -17,16 +17,14 @@ package org.thingsboard.server.dao.sql.rule;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.dao.model.sql.EventEntity;
 import org.thingsboard.server.dao.model.sql.RuleNodeStateEntity;
 
 import java.util.UUID;
 
-public interface RuleNodeStateRepository extends PagingAndSortingRepository<RuleNodeStateEntity, UUID> {
+public interface RuleNodeStateRepository extends JpaRepository<RuleNodeStateEntity, UUID> {
 
     @Query("SELECT e FROM RuleNodeStateEntity e WHERE e.ruleNodeId = :ruleNodeId")
     Page<RuleNodeStateEntity> findByRuleNodeId(@Param("ruleNodeId") UUID ruleNodeId, Pageable pageable);

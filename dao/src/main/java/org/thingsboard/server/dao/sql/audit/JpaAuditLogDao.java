@@ -17,7 +17,7 @@ package org.thingsboard.server.dao.sql.audit;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
@@ -47,7 +47,7 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
     }
 
     @Override
-    protected CrudRepository<AuditLogEntity, UUID> getCrudRepository() {
+    protected JpaRepository<AuditLogEntity, UUID> getRepository() {
         return auditLogRepository;
     }
 

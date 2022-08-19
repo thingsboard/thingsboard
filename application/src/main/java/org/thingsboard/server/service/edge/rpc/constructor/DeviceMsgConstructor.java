@@ -59,6 +59,10 @@ public class DeviceMsgConstructor {
         if (device.getAdditionalInfo() != null) {
             builder.setAdditionalInfo(JacksonUtil.toString(device.getAdditionalInfo()));
         }
+        if (device.getFirmwareId() != null) {
+            builder.setFirmwareIdMSB(device.getFirmwareId().getId().getMostSignificantBits())
+                    .setFirmwareIdLSB(device.getFirmwareId().getId().getLeastSignificantBits());
+        }
         if (conflictName != null) {
             builder.setConflictName(conflictName);
         }

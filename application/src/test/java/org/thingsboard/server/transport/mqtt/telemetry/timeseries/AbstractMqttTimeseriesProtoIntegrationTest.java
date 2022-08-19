@@ -20,30 +20,38 @@ import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
 import com.squareup.wire.schema.internal.parser.ProtoFileElement;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
-import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.transport.mqtt.MqttTestCallback;
+import org.thingsboard.server.transport.mqtt.MqttTestClient;
+import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_TELEMETRY_SHORT_JSON_TOPIC;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_TELEMETRY_SHORT_PROTO_TOPIC;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_TELEMETRY_SHORT_TOPIC;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.GATEWAY_CONNECT_TOPIC;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.GATEWAY_TELEMETRY_TOPIC;
 
 @Slf4j
 public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends AbstractMqttTimeseriesIntegrationTest {
 
     private static final String POST_DATA_TELEMETRY_TOPIC = "proto/telemetry";
+    private static final String MALFORMED_PROTO_PAYLOAD = "invalid proto payload str";
 
     @Before
     @Override
@@ -53,14 +61,25 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
 
     @Test
     public void testPushTelemetry() throws Exception {
-        processBeforeTest("Test Post Telemetry device proto payload", "Test Post Telemetry gateway proto payload", TransportPayloadType.PROTOBUF, POST_DATA_TELEMETRY_TOPIC, null);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Telemetry device proto payload")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .telemetryTopicFilter(POST_DATA_TELEMETRY_TOPIC)
+                .build();
+        processBeforeTest(configProperties);
         DynamicMessage postTelemetryMsg = getDefaultDynamicMessage();
         processTelemetryTest(POST_DATA_TELEMETRY_TOPIC, Arrays.asList("key1", "key2", "key3", "key4", "key5"), postTelemetryMsg.toByteArray(), false, false);
     }
 
     @Test
     public void testPushTelemetryWithEnabledJsonBackwardCompatibility() throws Exception {
-        processBeforeTest("Test Post Telemetry device proto payload", "Test Post Telemetry gateway proto payload", TransportPayloadType.PROTOBUF, POST_DATA_TELEMETRY_TOPIC, null, true, false);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Telemetry device proto payload")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .telemetryTopicFilter(POST_DATA_TELEMETRY_TOPIC)
+                .enableCompatibilityWithJsonPayloadFormat(true)
+                .build();
+        processBeforeTest(configProperties);
         processJsonPayloadTelemetryTest(POST_DATA_TELEMETRY_TOPIC, Arrays.asList("key1", "key2", "key3", "key4", "key5"), PAYLOAD_VALUES_STR.getBytes(), false);
     }
 
@@ -91,7 +110,13 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
                 "    }\n" +
                 "  }\n" +
                 "}";
-        processBeforeTest("Test Post Telemetry device proto payload", "Test Post Telemetry gateway proto payload", TransportPayloadType.PROTOBUF, POST_DATA_TELEMETRY_TOPIC, null, schemaStr, null, null, null, null, null, DeviceProfileProvisionType.DISABLED, false, false);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Telemetry device proto payload")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .telemetryTopicFilter(POST_DATA_TELEMETRY_TOPIC)
+                .telemetryProtoSchema(schemaStr)
+                .build();
+        processBeforeTest(configProperties);
         DynamicSchema telemetrySchema = getDynamicSchema(schemaStr);
 
         DynamicMessage.Builder nestedJsonObjectBuilder = telemetrySchema.newMessageBuilder("PostTelemetry.JsonObject.NestedJsonObject");
@@ -136,7 +161,12 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
 
     @Test
     public void testPushTelemetryWithExplicitPresenceProtoKeys() throws Exception {
-        processBeforeTest("Test Post Telemetry device proto payload", "Test Post Telemetry gateway proto payload", TransportPayloadType.PROTOBUF, POST_DATA_TELEMETRY_TOPIC, null);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Telemetry device proto payload")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .telemetryTopicFilter(POST_DATA_TELEMETRY_TOPIC)
+                .build();
+        processBeforeTest(configProperties);
         DynamicSchema telemetrySchema = getDynamicSchema(DEVICE_TELEMETRY_PROTO_SCHEMA);
 
         DynamicMessage.Builder nestedJsonObjectBuilder = telemetrySchema.newMessageBuilder("PostTelemetry.JsonObject.NestedJsonObject");
@@ -193,7 +223,13 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
                 "    }\n" +
                 "  }\n" +
                 "}";
-        processBeforeTest("Test Post Telemetry device proto payload", "Test Post Telemetry gateway proto payload", TransportPayloadType.PROTOBUF, POST_DATA_TELEMETRY_TOPIC, null, schemaStr, null, null, null, null, null, DeviceProfileProvisionType.DISABLED, false, false);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Telemetry device proto payload")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .telemetryTopicFilter(POST_DATA_TELEMETRY_TOPIC)
+                .telemetryProtoSchema(schemaStr)
+                .build();
+        processBeforeTest(configProperties);
         DynamicSchema telemetrySchema = getDynamicSchema(schemaStr);
 
         DynamicMessage.Builder nestedJsonObjectBuilder = telemetrySchema.newMessageBuilder("PostTelemetry.JsonObject.NestedJsonObject");
@@ -233,27 +269,48 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
 
     @Test
     public void testPushTelemetryOnShortTopic() throws Exception {
-        processBeforeTest("Test Post Telemetry device proto payload", "Test Post Telemetry gateway proto payload", TransportPayloadType.PROTOBUF, POST_DATA_TELEMETRY_TOPIC, null);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Telemetry device proto payload")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .telemetryTopicFilter(POST_DATA_TELEMETRY_TOPIC)
+                .build();
+        processBeforeTest(configProperties);
         DynamicMessage postTelemetryMsg = getDefaultDynamicMessage();
-        processTelemetryTest(MqttTopics.DEVICE_TELEMETRY_SHORT_TOPIC, Arrays.asList("key1", "key2", "key3", "key4", "key5"), postTelemetryMsg.toByteArray(), false, false);
+        processTelemetryTest(DEVICE_TELEMETRY_SHORT_TOPIC, Arrays.asList("key1", "key2", "key3", "key4", "key5"), postTelemetryMsg.toByteArray(), false, false);
     }
 
     @Test
     public void testPushTelemetryOnShortJsonTopic() throws Exception {
-        processBeforeTest("Test Post Telemetry device proto payload", "Test Post Telemetry gateway proto payload", TransportPayloadType.PROTOBUF, POST_DATA_TELEMETRY_TOPIC, null);
-        processJsonPayloadTelemetryTest(MqttTopics.DEVICE_TELEMETRY_SHORT_JSON_TOPIC, Arrays.asList("key1", "key2", "key3", "key4", "key5"), PAYLOAD_VALUES_STR.getBytes(), false);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Telemetry device proto payload")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .telemetryTopicFilter(POST_DATA_TELEMETRY_TOPIC)
+                .build();
+        processBeforeTest(configProperties);
+        processJsonPayloadTelemetryTest(DEVICE_TELEMETRY_SHORT_JSON_TOPIC, Arrays.asList("key1", "key2", "key3", "key4", "key5"), PAYLOAD_VALUES_STR.getBytes(), false);
     }
 
     @Test
     public void testPushTelemetryOnShortProtoTopic() throws Exception {
-        processBeforeTest("Test Post Telemetry device proto payload", "Test Post Telemetry gateway proto payload", TransportPayloadType.PROTOBUF, POST_DATA_TELEMETRY_TOPIC, null);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Telemetry device proto payload")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .telemetryTopicFilter(POST_DATA_TELEMETRY_TOPIC)
+                .build();
+        processBeforeTest(configProperties);
         DynamicMessage postTelemetryMsg = getDefaultDynamicMessage();
-        processTelemetryTest(MqttTopics.DEVICE_TELEMETRY_SHORT_PROTO_TOPIC, Arrays.asList("key1", "key2", "key3", "key4", "key5"), postTelemetryMsg.toByteArray(), false, false);
+        processTelemetryTest(DEVICE_TELEMETRY_SHORT_PROTO_TOPIC, Arrays.asList("key1", "key2", "key3", "key4", "key5"), postTelemetryMsg.toByteArray(), false, false);
     }
 
     @Test
     public void testPushTelemetryGateway() throws Exception {
-        processBeforeTest("Test Post Telemetry device proto payload", "Test Post Telemetry gateway proto payload", TransportPayloadType.PROTOBUF, null, null, null, null, null, null, null, null, DeviceProfileProvisionType.DISABLED, false, false);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Telemetry device proto payload")
+                .gatewayName("Test Post Telemetry gateway proto payload")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .telemetryTopicFilter(POST_DATA_TELEMETRY_TOPIC)
+                .build();
+        processBeforeTest(configProperties);
         TransportApiProtos.GatewayTelemetryMsg.Builder gatewayTelemetryMsgProtoBuilder = TransportApiProtos.GatewayTelemetryMsg.newBuilder();
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
         String deviceName1 = "Device A";
@@ -262,22 +319,143 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
         TransportApiProtos.TelemetryMsg deviceBTelemetryMsgProto = getDeviceTelemetryMsgProto(deviceName2, expectedKeys, 10000, 20000);
         gatewayTelemetryMsgProtoBuilder.addAllMsg(Arrays.asList(deviceATelemetryMsgProto, deviceBTelemetryMsgProto));
         TransportApiProtos.GatewayTelemetryMsg gatewayTelemetryMsg = gatewayTelemetryMsgProtoBuilder.build();
-        processGatewayTelemetryTest(MqttTopics.GATEWAY_TELEMETRY_TOPIC, expectedKeys, gatewayTelemetryMsg.toByteArray(), deviceName1, deviceName2);
+        processGatewayTelemetryTest(GATEWAY_TELEMETRY_TOPIC, expectedKeys, gatewayTelemetryMsg.toByteArray(), deviceName1, deviceName2);
     }
 
     @Test
     public void testGatewayConnect() throws Exception {
-        processBeforeTest("Test Post Telemetry device proto payload", "Test Post Telemetry gateway proto payload", TransportPayloadType.PROTOBUF, POST_DATA_TELEMETRY_TOPIC, null, null, null, null, null, null, null, DeviceProfileProvisionType.DISABLED, false, false);
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Telemetry device proto payload")
+                .gatewayName("Test Post Telemetry gateway proto payload")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .telemetryTopicFilter(POST_DATA_TELEMETRY_TOPIC)
+                .build();
+        processBeforeTest(configProperties);
         String deviceName = "Device A";
         TransportApiProtos.ConnectMsg connectMsgProto = getConnectProto(deviceName);
-        MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
-        publishMqttMsg(client, connectMsgProto.toByteArray(), MqttTopics.GATEWAY_CONNECT_TOPIC);
+        MqttTestClient client = new MqttTestClient();
+        client.connectAndWait(gatewayAccessToken);
+        client.publish(GATEWAY_CONNECT_TOPIC, connectMsgProto.toByteArray());
 
         Device device = doExecuteWithRetriesAndInterval(() -> doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class),
                 20,
                 100);
 
         assertNotNull(device);
+        client.disconnect();
+    }
+
+
+    @Test
+    public void testPushTelemetryWithMalformedPayloadAndSendAckOnErrorEnabled() throws Exception {
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Telemetry device proto payload")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .telemetryTopicFilter(POST_DATA_TELEMETRY_TOPIC)
+                .sendAckOnValidationException(true)
+                .build();
+        processBeforeTest(configProperties);
+        MqttTestClient client = new MqttTestClient();
+        client.connectAndWait(accessToken);
+        MqttTestCallback callback = new MqttTestCallback();
+        client.setCallback(callback);
+        client.publish(POST_DATA_TELEMETRY_TOPIC, MALFORMED_PROTO_PAYLOAD.getBytes());
+        callback.getDeliveryLatch().await(3, TimeUnit.SECONDS);
+        assertTrue(callback.isPubAckReceived());
+        client.disconnect();
+    }
+
+    @Test
+    public void testPushTelemetryWithMalformedPayloadAndSendAckOnErrorDisabled() throws Exception {
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Telemetry device proto payload")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .telemetryTopicFilter(POST_DATA_TELEMETRY_TOPIC)
+                .build();
+        processBeforeTest(configProperties);
+        MqttTestClient client = new MqttTestClient();
+        client.connectAndWait(accessToken);
+        MqttTestCallback callback = new MqttTestCallback();
+        client.setCallback(callback);
+        client.publish(POST_DATA_TELEMETRY_TOPIC, MALFORMED_PROTO_PAYLOAD.getBytes());
+        callback.getDeliveryLatch().await(3, TimeUnit.SECONDS);
+        assertFalse(callback.isPubAckReceived());
+    }
+
+    @Test
+    public void testPushTelemetryWithMalformedPayloadAndSendAckOnErrorEnabledAndBackwardCompatibilityEnabled() throws Exception {
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Telemetry device proto payload")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .telemetryTopicFilter(POST_DATA_TELEMETRY_TOPIC)
+                .enableCompatibilityWithJsonPayloadFormat(true)
+                .sendAckOnValidationException(true)
+                .build();
+        processBeforeTest(configProperties);
+        MqttTestClient client = new MqttTestClient();
+        client.connectAndWait(accessToken);
+        MqttTestCallback callback = new MqttTestCallback();
+        client.setCallback(callback);
+        client.publish(POST_DATA_TELEMETRY_TOPIC, MALFORMED_JSON_PAYLOAD.getBytes());
+        callback.getDeliveryLatch().await(3, TimeUnit.SECONDS);
+        assertTrue(callback.isPubAckReceived());
+        client.disconnect();
+    }
+
+    @Test
+    public void testPushTelemetryWithMalformedPayloadAndSendAckOnErrorDisabledAndBackwardCompatibilityEnabled() throws Exception {
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Telemetry device proto payload")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .telemetryTopicFilter(POST_DATA_TELEMETRY_TOPIC)
+                .enableCompatibilityWithJsonPayloadFormat(true)
+                .build();
+        processBeforeTest(configProperties);
+        MqttTestClient client = new MqttTestClient();
+        client.connectAndWait(accessToken);
+        MqttTestCallback callback = new MqttTestCallback();
+        client.setCallback(callback);
+        client.publish(POST_DATA_TELEMETRY_TOPIC, MALFORMED_JSON_PAYLOAD.getBytes());
+        callback.getDeliveryLatch().await(3, TimeUnit.SECONDS);
+        assertFalse(callback.isPubAckReceived());
+    }
+
+    @Test
+    public void testPushTelemetryGatewayWithMalformedPayloadAndSendAckOnErrorEnabled() throws Exception {
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Telemetry device proto payload")
+                .gatewayName("Test Post Telemetry gateway proto payload")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .telemetryTopicFilter(POST_DATA_TELEMETRY_TOPIC)
+                .sendAckOnValidationException(true)
+                .build();
+        processBeforeTest(configProperties);
+        MqttTestClient client = new MqttTestClient();
+        client.connectAndWait(gatewayAccessToken);
+        MqttTestCallback callback = new MqttTestCallback();
+        client.setCallback(callback);
+        client.publish(POST_DATA_TELEMETRY_TOPIC, MALFORMED_PROTO_PAYLOAD.getBytes());
+        callback.getDeliveryLatch().await(3, TimeUnit.SECONDS);
+        assertTrue(callback.isPubAckReceived());
+        client.disconnect();
+    }
+
+    @Test
+    public void testPushTelemetryGatewayWithMalformedPayloadAndSendAckOnErrorDisabled() throws Exception {
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Telemetry device proto payload")
+                .gatewayName("Test Post Telemetry gateway proto payload")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .telemetryTopicFilter(POST_DATA_TELEMETRY_TOPIC)
+                .build();
+        processBeforeTest(configProperties);
+        MqttTestClient client = new MqttTestClient();
+        client.connectAndWait(gatewayAccessToken);
+        MqttTestCallback callback = new MqttTestCallback();
+        client.setCallback(callback);
+        client.publish(POST_DATA_TELEMETRY_TOPIC, MALFORMED_PROTO_PAYLOAD.getBytes());
+        callback.getDeliveryLatch().await(3, TimeUnit.SECONDS);
+        assertFalse(callback.isPubAckReceived());
     }
 
     private DynamicSchema getDynamicSchema(String deviceTelemetryProtoSchema) {

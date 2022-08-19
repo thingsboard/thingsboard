@@ -1,0 +1,110 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div>
+  <mat-card class="repository-settings" [ngClass]="{'settings-card': !detailsMode}" [ngStyle]="popoverComponent ? {boxShadow: 'none', width: '800px'} : {}">
+    <mat-card-title>
+      <div fxLayout="row">
+        <span class="mat-headline" translate>admin.repository-settings</span>
+        <span fxFlex></span>
+        <div tb-help="repositorySettings"></div>
+      </div>
+    </mat-card-title>
+    <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+    </mat-progress-bar>
+    <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
+    <mat-card-content style="padding-top: 16px;">
+      <form [formGroup]="repositorySettingsForm" #formDirective="ngForm" (ngSubmit)="save()">
+        <fieldset [disabled]="isLoading$ | async">
+          <mat-form-field class="mat-block">
+            <mat-label translate>admin.repository-url</mat-label>
+            <input matInput required formControlName="repositoryUri">
+            <mat-error translate *ngIf="repositorySettingsForm.get('repositoryUri').hasError('required')">
+              admin.repository-url-required
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field class="mat-block">
+            <mat-label translate>admin.default-branch</mat-label>
+            <input matInput formControlName="defaultBranch">
+          </mat-form-field>
+          <fieldset [disabled]="isLoading$ | async" class="fields-group">
+            <legend class="group-title" translate>admin.authentication-settings</legend>
+            <mat-form-field fxFlex class="mat-block">
+              <mat-label translate>admin.auth-method</mat-label>
+              <mat-select required formControlName="authMethod">
+                <mat-option *ngFor="let method of repositoryAuthMethods" [value]="method">
+                  {{repositoryAuthMethodTranslations.get(method) | translate}}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <section [fxShow]="repositorySettingsForm.get('authMethod').value === repositoryAuthMethod.USERNAME_PASSWORD" fxLayout="column">
+              <mat-form-field fxFlex class="mat-block">
+                <mat-label translate>common.username</mat-label>
+                <input matInput formControlName="username" placeholder="{{ 'common.enter-username' | translate }}"
+                       autocomplete="new-username"/>
+              </mat-form-field>
+              <mat-checkbox *ngIf="showChangePassword" (change)="changePasswordChanged()"
+                            [(ngModel)]="changePassword" [ngModelOptions]="{ standalone: true }" style="padding-bottom: 16px;">
+                {{ 'admin.change-password-access-token' | translate }}
+              </mat-checkbox>
+              <mat-form-field class="mat-block" *ngIf="changePassword || !showChangePassword">
+                <mat-label translate>admin.password-access-token</mat-label>
+                <input matInput formControlName="password" type="password"
+                       placeholder="{{ 'common.enter-password' | translate }}" autocomplete="new-password"/>
+                <tb-toggle-password matSuffix></tb-toggle-password>
+              </mat-form-field>
+            </section>
+            <section [fxShow]="repositorySettingsForm.get('authMethod').value === repositoryAuthMethod.PRIVATE_KEY" fxLayout="column">
+              <tb-file-input style="margin-bottom: 16px;"
+                             [existingFileName]="repositorySettingsForm.get('privateKeyFileName').value"
+                             required
+                             formControlName="privateKey"
+                             dropLabel="{{ 'admin.drop-private-key-file-or' | translate }}"
+                             [label]="'admin.private-key' | translate"
+                             (fileNameChanged)="repositorySettingsForm.get('privateKeyFileName').patchValue($event)">
+              </tb-file-input>
+              <mat-checkbox *ngIf="showChangePrivateKeyPassword" (change)="changePrivateKeyPasswordChanged()"
+                            [(ngModel)]="changePrivateKeyPassword" [ngModelOptions]="{ standalone: true }" style="padding-bottom: 16px;">
+                {{ 'admin.change-passphrase' | translate }}
+              </mat-checkbox>
+              <mat-form-field class="mat-block" *ngIf="changePrivateKeyPassword || !showChangePrivateKeyPassword">
+                <mat-label translate>admin.passphrase</mat-label>
+                <input matInput formControlName="privateKeyPassword" type="password"
+                       placeholder="{{ 'admin.enter-passphrase' | translate }}" autocomplete="new-password"/>
+                <tb-toggle-password matSuffix></tb-toggle-password>
+              </mat-form-field>
+            </section>
+          </fieldset>
+          <div fxLayout="row" fxLayoutAlign="end center" fxLayout.xs="column" fxLayoutAlign.xs="end" fxLayoutGap="16px">
+            <button mat-raised-button color="warn" type="button" [fxShow]="settings !== null"
+                    [disabled]="(isLoading$ | async)" (click)="delete(formDirective)">
+              {{'action.delete' | translate}}
+            </button>
+            <span fxFlex></span>
+            <button mat-raised-button type="button"
+                    [disabled]="(isLoading$ | async) || repositorySettingsForm.invalid" (click)="checkAccess()">
+              {{'admin.check-access' | translate}}
+            </button>
+            <button mat-raised-button color="primary" [disabled]="(isLoading$ | async) || repositorySettingsForm.invalid || !repositorySettingsForm.dirty"
+                    type="submit">{{'action.save' | translate}}
+            </button>
+          </div>
+        </fieldset>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

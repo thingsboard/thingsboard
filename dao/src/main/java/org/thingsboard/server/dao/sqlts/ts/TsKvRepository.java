@@ -16,9 +16,9 @@
 package org.thingsboard.server.dao.sqlts.ts;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-public interface TsKvRepository extends CrudRepository<TsKvEntity, TsKvCompositeKey> {
+public interface TsKvRepository extends JpaRepository<TsKvEntity, TsKvCompositeKey> {
 
     @Query("SELECT tskv FROM TsKvEntity tskv WHERE tskv.entityId = :entityId " +
             "AND tskv.key = :entityKey AND tskv.ts >= :startTs AND tskv.ts < :endTs")

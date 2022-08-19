@@ -16,22 +16,29 @@
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import org.apache.commons.lang3.RandomStringUtils;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainMetaData;
+import org.thingsboard.server.common.data.rule.RuleChainType;
+import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -229,7 +236,7 @@ public abstract class BaseEdgeServiceTest extends AbstractServiceTest {
         String title1 = "Edge title 1";
         List<Edge> edgesTitle1 = new ArrayList<>();
         for (int i = 0; i < 143; i++) {
-            String suffix = RandomStringUtils.randomAlphanumeric(15);
+            String suffix = StringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             Edge edge = constructEdge(name, "default");
@@ -238,7 +245,7 @@ public abstract class BaseEdgeServiceTest extends AbstractServiceTest {
         String title2 = "Edge title 2";
         List<Edge> edgesTitle2 = new ArrayList<>();
         for (int i = 0; i < 175; i++) {
-            String suffix = RandomStringUtils.randomAlphanumeric(15);
+            String suffix = StringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             Edge edge = constructEdge(name, "default");
@@ -301,7 +308,7 @@ public abstract class BaseEdgeServiceTest extends AbstractServiceTest {
         String type1 = "typeA";
         List<Edge> edgesType1 = new ArrayList<>();
         for (int i = 0; i < 143; i++) {
-            String suffix = RandomStringUtils.randomAlphanumeric(15);
+            String suffix = StringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             Edge edge = constructEdge(name, type1);
@@ -311,7 +318,7 @@ public abstract class BaseEdgeServiceTest extends AbstractServiceTest {
         String type2 = "typeB";
         List<Edge> edgesType2 = new ArrayList<>();
         for (int i = 0; i < 175; i++) {
-            String suffix = RandomStringUtils.randomAlphanumeric(15);
+            String suffix = StringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             Edge edge = constructEdge(name, type2);
@@ -427,7 +434,7 @@ public abstract class BaseEdgeServiceTest extends AbstractServiceTest {
         String title1 = "Edge title 1";
         List<Edge> edgesTitle1 = new ArrayList<>();
         for (int i = 0; i < 175; i++) {
-            String suffix = RandomStringUtils.randomAlphanumeric(15);
+            String suffix = StringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             Edge edge = constructEdge(name, "default");
@@ -437,7 +444,7 @@ public abstract class BaseEdgeServiceTest extends AbstractServiceTest {
         String title2 = "Edge title 2";
         List<Edge> edgesTitle2 = new ArrayList<>();
         for (int i = 0; i < 143; i++) {
-            String suffix = RandomStringUtils.randomAlphanumeric(15);
+            String suffix = StringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             Edge edge = constructEdge(name, "default");
@@ -509,7 +516,7 @@ public abstract class BaseEdgeServiceTest extends AbstractServiceTest {
         String type1 = "typeC";
         List<Edge> edgesType1 = new ArrayList<>();
         for (int i = 0; i < 175; i++) {
-            String suffix = RandomStringUtils.randomAlphanumeric(15);
+            String suffix = StringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             Edge edge = constructEdge(name, type1);
@@ -520,7 +527,7 @@ public abstract class BaseEdgeServiceTest extends AbstractServiceTest {
         String type2 = "typeD";
         List<Edge> edgesType2 = new ArrayList<>();
         for (int i = 0; i < 143; i++) {
-            String suffix = RandomStringUtils.randomAlphanumeric(15);
+            String suffix = StringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             Edge edge = constructEdge(name, type2);
@@ -585,8 +592,8 @@ public abstract class BaseEdgeServiceTest extends AbstractServiceTest {
 
     @Test
     public void testCleanCacheIfEdgeRenamed() {
-        String edgeNameBeforeRename = RandomStringUtils.randomAlphanumeric(15);
-        String edgeNameAfterRename = RandomStringUtils.randomAlphanumeric(15);
+        String edgeNameBeforeRename = StringUtils.randomAlphanumeric(15);
+        String edgeNameAfterRename = StringUtils.randomAlphanumeric(15);
 
         Edge edge = constructEdge(tenantId, edgeNameBeforeRename, "default");
         edgeService.saveEdge(edge);
@@ -600,6 +607,57 @@ public abstract class BaseEdgeServiceTest extends AbstractServiceTest {
 
         Assert.assertNull("Can't find edge by name in cache if it was renamed", renamedEdge);
         edgeService.deleteEdge(tenantId, savedEdge.getId());
+    }
+
+    @Test
+    public void testFindMissingToRelatedRuleChains() {
+        Edge edge = constructEdge("My edge", "default");
+        Edge savedEdge = edgeService.saveEdge(edge);
+
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setTenantId(tenantId);
+        ruleChain.setName("Rule Chain #1");
+        ruleChain.setType(RuleChainType.EDGE);
+        RuleChain ruleChain1 = ruleChainService.saveRuleChain(ruleChain);
+
+        ruleChain = new RuleChain();
+        ruleChain.setTenantId(tenantId);
+        ruleChain.setName("Rule Chain #2");
+        ruleChain.setType(RuleChainType.EDGE);
+        RuleChain ruleChain2 = ruleChainService.saveRuleChain(ruleChain);
+
+        ruleChain = new RuleChain();
+        ruleChain.setTenantId(tenantId);
+        ruleChain.setName("Rule Chain #3");
+        ruleChain.setType(RuleChainType.EDGE);
+        RuleChain ruleChain3 = ruleChainService.saveRuleChain(ruleChain);
+
+        RuleNode ruleNode1 = new RuleNode();
+        ruleNode1.setName("Input rule node 1");
+        ruleNode1.setType("org.thingsboard.rule.engine.flow.TbRuleChainInputNode");
+        ObjectNode configuration = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        configuration.put("ruleChainId", ruleChain1.getUuidId().toString());
+        ruleNode1.setConfiguration(configuration);
+
+        RuleNode ruleNode2 = new RuleNode();
+        ruleNode2.setName("Input rule node 2");
+        ruleNode2.setType("org.thingsboard.rule.engine.flow.TbRuleChainInputNode");
+        configuration = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        configuration.put("ruleChainId", ruleChain2.getUuidId().toString());
+        ruleNode2.setConfiguration(configuration);
+
+        RuleChainMetaData ruleChainMetaData3 = new RuleChainMetaData();
+        ruleChainMetaData3.setNodes(Arrays.asList(ruleNode1, ruleNode2));
+        ruleChainMetaData3.setFirstNodeIndex(0);
+        ruleChainMetaData3.setRuleChainId(ruleChain3.getId());
+        ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData3);
+
+        ruleChainService.assignRuleChainToEdge(tenantId, ruleChain3.getId(), savedEdge.getId());
+
+        String missingToRelatedRuleChains = edgeService.findMissingToRelatedRuleChains(tenantId,
+                savedEdge.getId(),
+                "org.thingsboard.rule.engine.flow.TbRuleChainInputNode");
+        Assert.assertEquals("{\"Rule Chain #3\":[\"Rule Chain #1\",\"Rule Chain #2\"]}", missingToRelatedRuleChains);
     }
 
 }

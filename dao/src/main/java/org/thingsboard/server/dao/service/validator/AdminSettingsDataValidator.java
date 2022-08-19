@@ -16,9 +16,9 @@
 package org.thingsboard.server.dao.service.validator;
 
 import lombok.AllArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -39,13 +39,14 @@ public class AdminSettingsDataValidator extends DataValidator<AdminSettings> {
     }
 
     @Override
-    protected void validateUpdate(TenantId tenantId, AdminSettings adminSettings) {
+    protected AdminSettings validateUpdate(TenantId tenantId, AdminSettings adminSettings) {
         AdminSettings existentAdminSettings = adminSettingsService.findAdminSettingsById(tenantId, adminSettings.getId());
         if (existentAdminSettings != null) {
             if (!existentAdminSettings.getKey().equals(adminSettings.getKey())) {
                 throw new DataValidationException("Changing key of admin settings entry is prohibited!");
             }
         }
+        return existentAdminSettings;
     }
 
 
