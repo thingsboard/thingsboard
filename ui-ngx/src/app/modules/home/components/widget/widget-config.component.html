@@ -66,9 +66,9 @@
             <mat-label translate>alarm.alarm-type-list</mat-label>
             <mat-chip-list #alarmTypeChipList formControlName="alarmTypeList">
               <mat-chip *ngFor="let type of alarmTypeList()" [selectable]="true"
-              [removable]="true" (removed)="removeAlarmType(type)">
-              {{type}}
-              <mat-icon matChipRemove>cancel</mat-icon>
+                        [removable]="true" (removed)="removeAlarmType(type)">
+                {{type}}
+                <mat-icon matChipRemove>cancel</mat-icon>
               </mat-chip>
               <input placeholder="{{ !dataSettings.get('alarmTypeList').value?.length ? ('alarm.any-type' | translate) : '' }}"
                      [matChipInputFor]="alarmTypeChipList"
@@ -85,12 +85,16 @@
       <mat-accordion multi>
         <mat-expansion-panel class="tb-datasources" *ngIf="widgetType !== widgetTypes.rpc &&
                                     widgetType !== widgetTypes.alarm &&
-                                    modelValue?.isDataEnabled" [expanded]="true">
+                                    modelValue?.isDataEnabled" [expanded]="true"
+                             (opened)="changeTitleFxLayout('column')"
+                             (closed)="changeTitleFxLayout('row')" >
           <mat-expansion-panel-header>
-            <mat-panel-title fxLayout="column">
-              <div class="tb-panel-title" translate>widget-config.datasources</div>
-              <div *ngIf="modelValue?.typeParameters && modelValue?.typeParameters.maxDatasources > -1"
-                   class="tb-panel-hint">{{ 'widget-config.maximum-datasources' | translate:{count: modelValue?.typeParameters.maxDatasources} }}</div>
+            <mat-panel-title [fxLayout]="titleFxLayout">
+              <div fxLayout="column">
+                <div class="tb-panel-title" translate>widget-config.datasources</div>
+                <div *ngIf="modelValue?.typeParameters && modelValue?.typeParameters.maxDatasources > -1"
+                     class="tb-panel-hint">{{ 'widget-config.maximum-datasources' | translate:{count: modelValue?.typeParameters.maxDatasources} }}</div>
+              </div>
               <tb-error [error]="dataError"></tb-error>
             </mat-panel-title>
           </mat-expansion-panel-header>
@@ -252,11 +256,11 @@
           </mat-expansion-panel-header>
           <div [formGroup]="targetDeviceSettings" style="padding: 0 5px;">
             <tb-entity-alias-select fxFlex
-              [tbRequired]="!widgetEditMode"
-              [aliasController]="aliasController"
-              [allowedEntityTypes]="[entityTypes.DEVICE]"
-              [callbacks]="widgetConfigCallbacks"
-              formControlName="targetDeviceAliasId">
+                                    [tbRequired]="!widgetEditMode"
+                                    [aliasController]="aliasController"
+                                    [allowedEntityTypes]="[entityTypes.DEVICE]"
+                                    [callbacks]="widgetConfigCallbacks"
+                                    formControlName="targetDeviceAliasId">
             </tb-entity-alias-select>
           </div>
         </mat-expansion-panel>
@@ -391,14 +395,14 @@
                 widget-config.advanced-settings
               </mat-panel-description>
             </mat-expansion-panel-header>
-              <ng-template matExpansionPanelContent>
-                <tb-json-object-edit
-                  [editorStyle]="{minHeight: '100px'}"
-                  required
-                  label="{{ 'widget-config.title-style' | translate }}"
-                  formControlName="titleStyle"
-                ></tb-json-object-edit>
-              </ng-template>
+            <ng-template matExpansionPanelContent>
+              <tb-json-object-edit
+                [editorStyle]="{minHeight: '100px'}"
+                required
+                label="{{ 'widget-config.title-style' | translate }}"
+                formControlName="titleStyle"
+              ></tb-json-object-edit>
+            </ng-template>
           </mat-expansion-panel>
         </fieldset>
         <fieldset class="fields-group">
@@ -506,12 +510,12 @@
   <mat-tab *ngIf="displayAdvanced()" label="{{ 'widget-config.advanced' | translate }}">
     <div [formGroup]="advancedSettings" class="mat-content mat-padding tb-advanced-widget-config"
          fxLayout="column">
-        <tb-widget-settings
-          [aliasController]="aliasController"
-          [dashboard]="dashboard"
-          [widget]="widget"
-          formControlName="settings">
-        </tb-widget-settings>
+      <tb-widget-settings
+        [aliasController]="aliasController"
+        [dashboard]="dashboard"
+        [widget]="widget"
+        formControlName="settings">
+      </tb-widget-settings>
     </div>
   </mat-tab>
   <mat-tab label="{{ 'widget-config.actions' | translate }}" [formGroup]="actionsSettings">

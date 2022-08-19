@@ -181,6 +181,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   private layoutSettingsSubscription: Subscription;
   private advancedSettingsSubscription: Subscription;
   private actionsSettingsSubscription: Subscription;
+  public titleFxLayout: string;
 
   constructor(protected store: Store<AppState>,
               private utils: UtilsService,
@@ -1001,6 +1002,10 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       }
     }
     return null;
+  }
+
+  changeTitleFxLayout(newFxLayout) {
+    this.titleFxLayout = newFxLayout;
   }
 
 }
