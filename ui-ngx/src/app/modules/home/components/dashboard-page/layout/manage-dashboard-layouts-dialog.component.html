@@ -56,7 +56,8 @@
                     matTooltipPosition="above"
                     (click)="openLayoutSettings('main')"
                     class="tb-layout-preview-element"
-                    aria-label="Layout settings">
+                    aria-label="Layout settings"
+                    [ngClass]="layoutButtonTextAndClass('main', false)">
               <mat-icon>settings</mat-icon>
             </button>
             <button fxFlex
@@ -64,14 +65,15 @@
                     mat-raised-button
                     color="primary"
                     class="tb-layout-button"
-                    [matTooltip]="layoutButtonTooltip('main', true)"
+                    [matTooltip]="layoutButtonTextAndClass('main', true)"
                     matTooltipPosition="above"
+                    matTooltipClass="tb-layout-button-tooltip"
                     (click)="setFixedLayout('main')"
-                    [ngClass]="layoutButtonTooltip('main', false)"
+                    [ngClass]="layoutButtonTextAndClass('main', false)"
                     [ngStyle]="layoutsFormGroup.get('right').value ?
                               {'border-radius': '5px 0 0 5px;'} :
                               {'border-radius': '5px 5px 5px 5px;'}">
-              <span >{{ (layoutsFormGroup.value.right ? 'layout.left' : 'layout.main')  | translate }}</span>
+              <span>{{ (layoutsFormGroup.value.right ? 'layout.left' : 'layout.main')  | translate }}</span>
             </button>
             <div fxFlex class="tb-layout-preview-element tb-layout-preview-input" [fxShow]="showPreviewInputs('main')">
               <input [fxShow]="layoutsFormGroup.get('type').value !== LayoutWidthType.FIXED"
@@ -98,7 +100,8 @@
                     matTooltipPosition="above"
                     (click)="openLayoutSettings('right')"
                     class="tb-layout-preview-element"
-                    aria-label="Layout settings">
+                    aria-label="Layout settings"
+                    [ngClass]="layoutButtonTextAndClass('right', false)">
               <mat-icon>settings</mat-icon>
             </button>
             <button fxFlex
@@ -106,12 +109,13 @@
                     mat-raised-button
                     color="primary"
                     class="tb-layout-button"
-                    [matTooltip]="layoutButtonTooltip('right', true)"
+                    [matTooltip]="layoutButtonTextAndClass('right', true)"
                     matTooltipPosition="above"
+                    matTooltipClass="tb-layout-button-tooltip"
                     (click)="setFixedLayout('right')"
-                    [ngClass]="layoutButtonTooltip('right', false)"
+                    [ngClass]="layoutButtonTextAndClass('right', false)"
                     style="border-radius: 0 5px 5px 0;">
-              <span >{{ 'layout.right' | translate }}</span>
+              <span>{{ 'layout.right' | translate }}</span>
             </button>
             <div fxFlex class="tb-layout-preview-element tb-layout-preview-input" [fxShow]="showPreviewInputs('right')">
               <input [fxShow]="layoutsFormGroup.get('type').value !== LayoutWidthType.FIXED"
@@ -133,30 +137,28 @@
           </div>
         </div>
       </div>
-      <div fxLayout="column" fxLayoutAlign="center center" fxLayoutGap="8px" [fxShow]="layoutsFormGroup.get('right').value" style="width: 100%">
-        <div style="width: 80%">
-          <mat-slider [fxShow]="layoutsFormGroup.get('type').value === LayoutWidthType.PERCENTAGE"
-                      min="10"
-                      step="1"
-                      max="90"
-                      style="width: 100%;"
-                      formControlName="sliderPercentage"
-                      thumbLabel
-                      [displayWith]="formatSliderTooltipLabel.bind(this)">
-          </mat-slider>
-          <mat-slider [fxShow]="layoutsFormGroup.get('type').value !== LayoutWidthType.PERCENTAGE"
-                      min="150"
-                      step="1"
-                      max="1700"
-                      style="width: 100%;"
-                      formControlName="sliderFixed"
-                      thumbLabel
-                      [displayWith]="formatSliderTooltipLabel.bind(this)">
-          </mat-slider>
-          <div fxLayout="row" fxLayoutAlign="space-between center" class="tb-hint tb-hint-group">
-            <label>{{layoutsFormGroup.get('type').value === LayoutWidthType.PERCENTAGE ? '0 %' : '150px'}}</label>
-            <label>{{layoutsFormGroup.get('type').value === LayoutWidthType.PERCENTAGE ? '100 %' : '1700px'}}</label>
-          </div>
+      <div fxLayout="column" fxLayoutAlign="center center" fxLayoutGap="8px" [fxShow]="layoutsFormGroup.get('right').value" style="width: 80%">
+        <mat-slider [fxShow]="layoutsFormGroup.get('type').value === LayoutWidthType.PERCENTAGE"
+                    min="10"
+                    step="1"
+                    max="90"
+                    style="width: 100%;"
+                    formControlName="sliderPercentage"
+                    thumbLabel
+                    [displayWith]="formatSliderTooltipLabel.bind(this)">
+        </mat-slider>
+        <mat-slider [fxShow]="layoutsFormGroup.get('type').value !== LayoutWidthType.PERCENTAGE"
+                    min="150"
+                    step="1"
+                    max="1700"
+                    style="width: 100%;"
+                    formControlName="sliderFixed"
+                    thumbLabel
+                    [displayWith]="formatSliderTooltipLabel.bind(this)">
+        </mat-slider>
+        <div fxLayout="row" fxLayoutAlign="space-between center" class="tb-hint tb-hint-group" style="width: 100%;">
+          <label>{{layoutsFormGroup.get('type').value === LayoutWidthType.PERCENTAGE ? '10 %' : '150px'}}</label>
+          <label>{{layoutsFormGroup.get('type').value === LayoutWidthType.PERCENTAGE ? '90 %' : '1700px'}}</label>
         </div>
       </div>
     </div>

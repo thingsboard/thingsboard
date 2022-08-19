@@ -37,11 +37,15 @@
 
       button.tb-fixed-layout-button {
         background-color: transparent;
-        color: black;
+        color: #000000;
         cursor: pointer;
 
+        .mat-icon {
+          color: rgba(0, 0, 0, 0.38);
+        }
+
         &:hover {
-          background-color: lightgrey;
+          background-color: #d3d3d3;
         }
       }
 
@@ -64,7 +68,7 @@
           width: 20px;
           height: 20px;
           line-height: 20px;
-          color: rgba(0, 0, 0, 0.38);
+          color: rgba(255, 255, 255, 0.76);
 
           &:hover {
             transform: rotate(180deg);
@@ -94,7 +98,7 @@
         color: white;
 
         input {
-          border: 1px solid lightslategray;
+          border: 1px solid #778899;
           background-color: transparent;
           color: white;
           border-radius: 4px;
@@ -105,7 +109,7 @@
           font-size: 14px;
 
           &:invalid {
-            outline: 2px solid red;
+            outline: 2px solid #b71c1c;
             border: 1px solid transparent;
             background-color: rgba(255, 5, 5, 0.2);
           }
@@ -168,5 +172,9 @@
     margin: 5px 105px 0 0;
     width: 160px;
     text-align: center;
+  }
+
+  .tb-layout-button-tooltip {
+    margin: 30px 40px -35px -50px;
   }
 }
