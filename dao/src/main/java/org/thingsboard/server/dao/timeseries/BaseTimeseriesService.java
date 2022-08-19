@@ -47,7 +47,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.thingsboard.server.common.data.StringUtils.isBlank;
 
 /**
  * @author Andrew Shvayka

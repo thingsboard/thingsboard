@@ -18,12 +18,12 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.http.HttpHeaders;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -131,7 +131,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         user.setAuthority(Authority.TENANT_ADMIN);
         user.setTenantId(tenantId);
         user.setEmail(email);
-        user.setFirstName(RandomStringUtils.randomAlphabetic(300));
+        user.setFirstName(StringUtils.randomAlphabetic(300));
         user.setLastName("Downs");
         String msgError = msgErrorFieldLength("first name");
         doPost("/api/user", user)
@@ -145,7 +145,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
         user.setFirstName("Normal name");
         msgError = msgErrorFieldLength("last name");
-        user.setLastName(RandomStringUtils.randomAlphabetic(300));
+        user.setLastName(StringUtils.randomAlphabetic(300));
         doPost("/api/user", user)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
@@ -440,7 +440,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
             User user = new User();
             user.setAuthority(Authority.TENANT_ADMIN);
             user.setTenantId(tenantId);
-            String suffix = RandomStringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
+            String suffix = StringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
             String email = email1 + suffix + "@thingsboard.org";
             email = i % 2 == 0 ? email.toLowerCase() : email.toUpperCase();
             user.setEmail(email);
@@ -454,7 +454,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
             User user = new User();
             user.setAuthority(Authority.TENANT_ADMIN);
             user.setTenantId(tenantId);
-            String suffix = RandomStringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
+            String suffix = StringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
             String email = email2 + suffix + "@thingsboard.org";
             email = i % 2 == 0 ? email.toLowerCase() : email.toUpperCase();
             user.setEmail(email);
@@ -605,7 +605,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
             User user = new User();
             user.setAuthority(Authority.CUSTOMER_USER);
             user.setCustomerId(customerId);
-            String suffix = RandomStringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
+            String suffix = StringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
             String email = email1 + suffix + "@thingsboard.org";
             email = i % 2 == 0 ? email.toLowerCase() : email.toUpperCase();
             user.setEmail(email);
@@ -619,7 +619,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
             User user = new User();
             user.setAuthority(Authority.CUSTOMER_USER);
             user.setCustomerId(customerId);
-            String suffix = RandomStringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
+            String suffix = StringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
             String email = email2 + suffix + "@thingsboard.org";
             email = i % 2 == 0 ? email.toLowerCase() : email.toUpperCase();
             user.setEmail(email);

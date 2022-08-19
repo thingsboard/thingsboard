@@ -37,7 +37,7 @@
     <div fxLayout="column" fxLayoutGap="0.5em">
       <mat-divider></mat-divider>
       <section class="tb-widget-settings" fxLayout="column">
-        <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+        <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
           <mat-form-field fxFlex class="mat-block">
             <mat-label translate>widgets.input-widgets.option-value</mat-label>
             <input required matInput formControlName="value">

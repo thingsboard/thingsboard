@@ -16,12 +16,12 @@
 package org.thingsboard.server.service.install.migrate;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionary;

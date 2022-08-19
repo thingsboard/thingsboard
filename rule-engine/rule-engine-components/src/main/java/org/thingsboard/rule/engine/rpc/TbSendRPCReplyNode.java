@@ -16,7 +16,7 @@
 package org.thingsboard.rule.engine.rpc;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;

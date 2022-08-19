@@ -22,7 +22,6 @@ import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import com.squareup.wire.schema.internal.parser.ProtoFileElement;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -38,6 +37,7 @@ import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -138,7 +138,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        DeviceProfile createDeviceProfile = this.createDeviceProfile(RandomStringUtils.randomAlphabetic(300));
+        DeviceProfile createDeviceProfile = this.createDeviceProfile(StringUtils.randomAlphabetic(300));
         doPost("/api/deviceProfile", createDeviceProfile)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));

@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -31,6 +30,7 @@ import org.mockito.Mockito;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -120,7 +120,7 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
     public void testSaveTenantWithViolationOfValidation() throws Exception {
         loginSysAdmin();
         Tenant tenant = new Tenant();
-        tenant.setTitle(RandomStringUtils.randomAlphanumeric(300));
+        tenant.setTitle(StringUtils.randomAlphanumeric(300));
 
         Mockito.reset(tbClusterService);
 
@@ -259,7 +259,7 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         List<ListenableFuture<Tenant>> createFutures = new ArrayList<>(134);
         for (int i = 0; i < 134; i++) {
             Tenant tenant = new Tenant();
-            String suffix = RandomStringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
+            String suffix = StringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
             String title = title1 + suffix;
             title = i % 2 == 0 ? title.toLowerCase() : title.toUpperCase();
             tenant.setTitle(title);
@@ -274,7 +274,7 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         createFutures = new ArrayList<>(127);
         for (int i = 0; i < 127; i++) {
             Tenant tenant = new Tenant();
-            String suffix = RandomStringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
+            String suffix = StringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
             String title = title2 + suffix;
             title = i % 2 == 0 ? title.toLowerCase() : title.toUpperCase();
             tenant.setTitle(title);
