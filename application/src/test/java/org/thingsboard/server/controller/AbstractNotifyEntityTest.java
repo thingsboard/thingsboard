@@ -659,7 +659,7 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
 
     public void testDeleteEntity_ExistsRelationToEntity_Error_RestoreRelationToEntity_DeleteRelation_DeleteEntity_Ok(
             TenantId tenantId, CustomerId customerId, EntityId testEntityId, HasName savedTestEntity,
-            EntityId entityIdFrom, HasName entityFromWithEntityTo, HasName entityFromWithoutEntityTo,
+            EntityId entityIdFrom, HasName entityFromWithoutEntityTo,
             String urlUpdateEntityFrom, String entityTestNameClass, String name, int cntOtherEntity
     ) throws Exception {
 

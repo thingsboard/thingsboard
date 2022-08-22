@@ -525,7 +525,7 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         entityFromWithoutEntityTo.setId(entityFromWithEntityTo.getId());
         String urlUpdateEntityFrom = "/api/deviceProfile";
         testDeleteEntity_ExistsRelationToEntity_Error_RestoreRelationToEntity_DeleteRelation_DeleteEntity_Ok(
-                savedTenant.getId(), tenantAdmin.getCustomerId(), savedTestEntityId, savedTestEntity, entityIdFrom, entityFromWithEntityTo, entityFromWithoutEntityTo,
-                urlUpdateEntityFrom, entityTestNameClass, name, cntOtherEntity);
+                savedTenant.getId(), tenantAdmin.getCustomerId(), savedTestEntityId, savedTestEntity, entityIdFrom,
+                entityFromWithoutEntityTo, urlUpdateEntityFrom, entityTestNameClass, name, cntOtherEntity);
     }
 }
