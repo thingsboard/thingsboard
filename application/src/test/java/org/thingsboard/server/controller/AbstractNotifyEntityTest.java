@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2022 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,15 +15,31 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.Assert;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
@@ -34,19 +50,31 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.EntityRelationInfo;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
+import org.thingsboard.server.dao.alarm.AlarmOperationResult;
+import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.service.entitiy.DefaultTbNotificationEntityService.edgeTypeByActionType;
 
 @Slf4j
@@ -57,6 +85,9 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
 
     @SpyBean
     protected AuditLogService auditLogService;
+
+    @Autowired
+    protected AlarmService alarmService;
 
     protected final String msgErrorPermission = "You don't have permission to perform this operation!";
     protected final String msgErrorShouldBeSpecified = "should be specified";
@@ -364,7 +395,7 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
 
     protected void testBroadcastEntityStateChangeEventTime(EntityId entityId, TenantId tenantId, int cntTime) {
         ArgumentMatcher<TenantId> matcherTenantIdId = cntTime > 1 || tenantId == null ? argument -> argument.getClass().equals(TenantId.class) :
-                argument -> argument.equals(tenantId) ;
+                argument -> argument.equals(tenantId);
         Mockito.verify(tbClusterService, times(cntTime)).broadcastEntityStateChangeEvent(Mockito.argThat(matcherTenantIdId),
                 Mockito.any(entityId.getClass()), Mockito.any(ComponentLifecycleEvent.class));
     }
@@ -611,8 +642,8 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
     }
 
     private String entityClassToEntityTypeName(HasName entity) {
-        String entityType =  entityClassToString(entity);
-        return "SAVE_OTA_PACKAGE_INFO_REQUEST".equals(entityType) || "OTA_PACKAGE_INFO".equals(entityType)?
+        String entityType = entityClassToString(entity);
+        return "SAVE_OTA_PACKAGE_INFO_REQUEST".equals(entityType) || "OTA_PACKAGE_INFO".equals(entityType) ?
                 EntityType.OTA_PACKAGE.name().toUpperCase(Locale.ENGLISH) : entityType;
     }
 
@@ -623,5 +654,160 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
                 .mapToObj(x -> (Character.isUpperCase(x)) ? "_" + Character.toString(x) : Character.toString(x))
                 .collect(Collectors.toList());
         return String.join("", str).toUpperCase(Locale.ENGLISH).substring(1);
+    }
+
+
+    public void testDeleteEntity_ExistsRelationToEntity_Error_RestoreRelationToEntity_DeleteRelation_DeleteEntity_Ok(
+            TenantId tenantId, CustomerId customerId, EntityId testEntityId, HasName savedTestEntity,
+            EntityId entityIdFrom, HasName entityFromWithEntityTo, HasName entityFromWithoutEntityTo,
+            String urlUpdateEntityFrom, String entityTestNameClass, String name, int cntOtherEntity
+    ) throws Exception {
+
+        Map<EntityId, HasName> entities = createEntities(entityTestNameClass + " " + name, cntOtherEntity);
+
+        Alarm savedAlarmForTestEntity = createAlarm(tenantId, customerId, "Alarm by " + name, entityTestNameClass, testEntityId);
+        // Create Alarms for other entity
+        entities.forEach((k, v) -> createAlarm(tenantId, customerId, "Alarm by " + v.getName() + " " + name, entityTestNameClass, k));
+
+        entities.put(testEntityId, savedTestEntity);
+
+        // Create entityRelations: from -> entityFrom, to -> entities
+        String typeRelation = EntityRelation.CONTAINS_TYPE;
+        Map<EntityRelation, String> entityRelations = createEntityRelations(entityIdFrom, entities, typeRelation);
+        Optional<Map.Entry<EntityRelation, String>> relationMapTestEntityTo = entityRelations.entrySet().stream().filter(e -> e.getKey().getTo().equals(testEntityId)).findFirst();
+        assertTrue("TestEntityRelation is found after dashboard deletion 'success'!", relationMapTestEntityTo.isPresent());
+        String urlRelationTestEntityTo = relationMapTestEntityTo.get().getValue();
+
+        String dashboardIdStr = testEntityId.getId().toString();
+        doDelete("/api/dashboard/" + dashboardIdStr)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("The dashboard referenced by the device profiles cannot be deleted!")));
+
+        Dashboard afterErrorDeleteTestEntity = doGet("/api/dashboard/" + dashboardIdStr, Dashboard.class);
+        assertNotNull(entityTestNameClass + " is not found!", afterErrorDeleteTestEntity);
+        assertEquals(entityTestNameClass + " after delete error is not equals origin!", savedTestEntity, afterErrorDeleteTestEntity);
+
+
+        String urlEntityFroms = String.format("/api/relations?fromId=%s&fromType=%s",
+                entityIdFrom.getId(), EntityType.DEVICE_PROFILE);
+        List<EntityRelationInfo> relationsInfos =
+                JacksonUtil.convertValue(doGet(urlEntityFroms, JsonNode.class), new TypeReference<>() {
+                });
+        int numOfRelations = entityRelations.size();
+        assertNotNull("Relations is not found!", relationsInfos);
+        assertEquals("List of found relations is not equal to number of created relations!",
+                numOfRelations, relationsInfos.size());
+        EntityId expectTestEntityId = afterErrorDeleteTestEntity.getId();
+        Optional<EntityRelationInfo> expectTestEntityRelationInfo = relationsInfos.stream().filter(k -> k.getTo().equals(expectTestEntityId)).findFirst();
+        assertTrue("TestEntityRelation is not found after dashboard deletion 'bad request'!", expectTestEntityRelationInfo.isPresent());
+        String expectTestEntityRelationToIdStr = expectTestEntityRelationInfo.get().getTo().getId().toString();
+
+        AlarmOperationResult afterErrorDeleteDashboardAlarmOperationResult = alarmService.createOrUpdateAlarm(savedAlarmForTestEntity);
+        assertTrue("AfterErrorDeleteDashboardAlarmOperationResult is not success!", afterErrorDeleteDashboardAlarmOperationResult.isSuccessful());
+        assertEquals("List of propagatedEntities is not equal to number of created propagatedEntities!",
+                1, afterErrorDeleteDashboardAlarmOperationResult.getPropagatedEntitiesList().size());
+        assertEquals(entityTestNameClass + "Id in propagatedEntities is not equal savedDashboardId!",
+                testEntityId, afterErrorDeleteDashboardAlarmOperationResult.getPropagatedEntitiesList().get(0));
+
+        doPost(urlUpdateEntityFrom, entityFromWithoutEntityTo)
+                .andExpect(status().isOk());
+
+        doDelete("/api/dashboard/" + dashboardIdStr)
+                .andExpect(status().isOk());
+        doGet("/api/dashboard/" + dashboardIdStr)
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(containsString(msgErrorNoFound(entityTestNameClass, dashboardIdStr))));
+
+        doGet(urlRelationTestEntityTo)
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(containsString(msgErrorNoFound(entityTestNameClass, expectTestEntityRelationToIdStr))));
+        relationsInfos =
+                JacksonUtil.convertValue(doGet(urlEntityFroms, JsonNode.class), new TypeReference<>() {
+                });
+        assertNotNull("Relations is not found!", relationsInfos);
+        assertEquals("List of found relations is not equal to number of relations left!",
+                numOfRelations - 1, relationsInfos.size());
+        expectTestEntityRelationInfo = relationsInfos.stream().filter(k -> k.getTo().equals(expectTestEntityId)).findFirst();
+        assertTrue("TestEntityRelation is found after dashboard deletion 'success'!", expectTestEntityRelationInfo.isEmpty());
+
+        AlarmOperationResult afterSuccessDeleteDashboardAlarmOperationResult = alarmService.createOrUpdateAlarm(savedAlarmForTestEntity);
+        assertTrue("AfterSuccessDeleteDashboardAlarmOperationResult is not success!", afterSuccessDeleteDashboardAlarmOperationResult.isSuccessful());
+        assertEquals("List of propagatedEntities is not equal to number of created propagatedEntities!",
+                0, afterSuccessDeleteDashboardAlarmOperationResult.getPropagatedEntitiesList().size());
+    }
+
+    private Alarm createAlarm(TenantId tenantId, CustomerId customerId, String name, String entityNameClass, EntityId entityId) {
+        Alarm alarm = Alarm.builder()
+                .tenantId(tenantId)
+                .customerId(customerId)
+                .originator(entityId)
+                .status(AlarmStatus.ACTIVE_UNACK)
+                .severity(AlarmSeverity.CRITICAL)
+                .type(name)
+                .propagate(true)
+                .build();
+        AlarmOperationResult alarmOperationResult = alarmService.createOrUpdateAlarm(alarm);
+        assertTrue("AlarmOperationResult is not success!", alarmOperationResult.isSuccessful());
+        assertEquals("List of propagatedEntities is not equal to number of created propagatedEntities!",
+                1, alarmOperationResult.getPropagatedEntitiesList().size());
+        assertEquals(entityNameClass + "Id in propagatedEntities is not equal saved" + entityNameClass + "Id!",
+                entityId, alarmOperationResult.getPropagatedEntitiesList().get(0));
+        Alarm savedAlarm = alarmOperationResult.getAlarm();
+        assertNotNull("SavedAlarm is not found!", savedAlarm);
+
+        return alarm;
+    }
+
+    private EntityRelation createEntityRelation(EntityId entityIdFrom, EntityId entityIdTo, String url, String typeRelation) throws Exception {
+        EntityRelation relation = new EntityRelation(entityIdFrom, entityIdTo, typeRelation);
+        doPost("/api/relation", relation).andExpect(status().isOk());
+
+        EntityRelation foundRelation = doGet(url, EntityRelation.class);
+        Assert.assertNotNull("Relation is not found!", foundRelation);
+        assertEquals("Found relation is not equals origin!", relation, foundRelation);
+
+        return foundRelation;
+    }
+
+    private Map<EntityId, HasName> createEntities(String name, int cntOtherEntity) throws Exception {
+        ListeningExecutorService executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(8, getClass()));
+        List<ListenableFuture<Device>> futures = new ArrayList<>(cntOtherEntity);
+        for (int i = 0; i < cntOtherEntity; i++) {
+            Device device = new Device();
+            device.setName(name + i);
+            device.setType("default");
+            futures.add(executor.submit(() ->
+                    doPost("/api/device", device, Device.class)));
+        }
+        List<Device> devices = Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS);
+        Map<EntityId, Device> deviceMap = Maps.uniqueIndex(devices, Device::getId)
+                .entrySet().stream()
+                .collect(Collectors.toMap(
+                        e -> e.getKey(),
+                        e -> e.getValue()));
+
+        return deviceMap.entrySet().stream()
+                .collect(Collectors.toMap(
+                        e -> e.getKey(),
+                        e -> e.getValue()));
+    }
+
+    private Map<EntityRelation, String> createEntityRelations(EntityId entityIdFrom, Map<EntityId, HasName> entityTos, String typeRelation) {
+        Map<EntityRelation, String> entityRelations = new HashMap<>();
+        entityTos.keySet().forEach(k -> {
+            try {
+                String url = String.format("/api/relation?fromId=%s&fromType=%s&relationType=%s&toId=%s&toType=%s",
+                        entityIdFrom.getId(), entityIdFrom.getEntityType(),
+                        typeRelation,
+                        k.getId(), k.getEntityType()
+                );
+                EntityRelation relation = createEntityRelation(entityIdFrom, k, url, typeRelation);
+                entityRelations.put(relation, url);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+
+        return entityRelations;
     }
 }

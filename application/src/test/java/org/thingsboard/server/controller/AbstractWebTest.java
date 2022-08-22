@@ -51,6 +51,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.context.WebApplicationContext;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
@@ -67,6 +68,7 @@ import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadCo
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
@@ -413,6 +415,18 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         if (this.token != null) {
             request.header(ThingsboardSecurityConfiguration.JWT_TOKEN_HEADER_PARAM, "Bearer " + this.token);
         }
+    }
+
+    protected Dashboard createDashboard(String name) {
+        Dashboard dashboard = new Dashboard();
+        dashboard.setTitle(name);
+        return doPost("/api/dashboard", dashboard, Dashboard.class);
+    }
+
+    protected DeviceProfile savedDeviceProfile(DeviceProfile createDeviceProfile, DashboardId entityId) {
+        DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", createDeviceProfile, DeviceProfile.class);
+        savedDeviceProfile.setDefaultDashboardId(entityId);
+        return doPost("/api/deviceProfile", savedDeviceProfile, DeviceProfile.class);
     }
 
     protected DeviceProfile createDeviceProfile(String name) {

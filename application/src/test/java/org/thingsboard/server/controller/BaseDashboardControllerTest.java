@@ -17,33 +17,27 @@ package org.thingsboard.server.controller;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmSeverity;
-import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.dao.alarm.AlarmOperationResult;
-import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.ArrayList;
@@ -56,15 +50,14 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Slf4j
 public abstract class BaseDashboardControllerTest extends AbstractControllerTest {
 
-    private IdComparator<DashboardInfo> idComparator = new IdComparator<>();
+    private final IdComparator<DashboardInfo> idComparator = new IdComparator<>();
 
     private Tenant savedTenant;
     private User tenantAdmin;
-
-    @Autowired
-    protected AlarmService alarmService;
+    private final String entityClassName = "Dashboard";
 
     @Before
     public void beforeTest() throws Exception {
@@ -186,14 +179,13 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         String dashboardIdStr = savedDashboard.getId().getId().toString();
         doGet("/api/dashboard/" + savedDashboard.getId().getId().toString())
                 .andExpect(status().isNotFound())
-                .andExpect(statusReason(containsString(msgErrorNoFound("Dashboard", dashboardIdStr))));
+                .andExpect(statusReason(containsString(msgErrorNoFound(entityClassName, dashboardIdStr))));
     }
 
     @Test
     public void testSaveDashboardWithEmptyTitle() throws Exception {
         Dashboard dashboard = new Dashboard();
-        String msgError = "Dashboard title " + msgErrorShouldBeSpecified;
-        ;
+        String msgError = entityClassName + " title " + msgErrorShouldBeSpecified;
 
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -318,7 +310,7 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         int cntEntity = 173;
         for (int i = 0; i < cntEntity; i++) {
             Dashboard dashboard = new Dashboard();
-            dashboard.setTitle("Dashboard" + i);
+            dashboard.setTitle(entityClassName + i);
             dashboards.add(new DashboardInfo(doPost("/api/dashboard", dashboard, Dashboard.class)));
         }
 
@@ -347,7 +339,7 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
 
     @Test
     public void testFindTenantDashboardsByTitle() throws Exception {
-        String title1 = "Dashboard title 1";
+        String title1 = entityClassName + " title 1";
         List<DashboardInfo> dashboardsTitle1 = new ArrayList<>();
         int cntEntity = 134;
         for (int i = 0; i < cntEntity; i++) {
@@ -358,7 +350,7 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
             dashboard.setTitle(title);
             dashboardsTitle1.add(new DashboardInfo(doPost("/api/dashboard", dashboard, Dashboard.class)));
         }
-        String title2 = "Dashboard title 2";
+        String title2 = entityClassName + " title 2";
         List<DashboardInfo> dashboardsTitle2 = new ArrayList<>();
 
         for (int i = 0; i < 112; i++) {
@@ -449,7 +441,7 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         List<DashboardInfo> dashboards = new ArrayList<>();
         for (int i = 0; i < cntEntity; i++) {
             Dashboard dashboard = new Dashboard();
-            dashboard.setTitle("Dashboard" + i);
+            dashboard.setTitle(entityClassName + i);
             dashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
             dashboards.add(new DashboardInfo(doPost("/api/customer/" + customerId.getId().toString()
                     + "/dashboard/" + dashboard.getId().getId().toString(), Dashboard.class)));
@@ -513,86 +505,27 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
     }
 
     @Test
-    public void testDeleteDashboard_ExistsOnlyOneRelationToDashboard_Error_RestoreRelation_DeleteRelation_DeleteDashboard_Ok() throws Exception {
-        Dashboard dashboard = new Dashboard();
-        dashboard.setTitle("My dashboard");
-        Dashboard savedDashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
-
-        Alarm savedAlarmForDashboard = createAlarm(savedDashboard.getId());
-
-        DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", createDeviceProfile("Device profile for test Transactional"), DeviceProfile.class);
-
-        savedDeviceProfile.setDefaultDashboardId(savedDashboard.getId());
-        DeviceProfile updatedDeviceProfile = doPost("/api/deviceProfile", savedDeviceProfile, DeviceProfile.class);
-
-        String typeRelation = EntityRelation.CONTAINS_TYPE;
-        EntityRelation relation = new EntityRelation(updatedDeviceProfile.getId(), savedDashboard.getId(), typeRelation);
-        doPost("/api/relation", relation).andExpect(status().isOk());
-        String url = String.format("/api/relation?fromId=%s&fromType=%s&relationType=%s&toId=%s&toType=%s",
-                updatedDeviceProfile.getUuidId(), EntityType.DEVICE_PROFILE,
-                typeRelation, savedDashboard.getUuidId(), EntityType.DASHBOARD
-        );
-        EntityRelation foundRelation = doGet(url, EntityRelation.class);
-        Assert.assertNotNull("Relation is not found!", foundRelation);
-        assertEquals("Found relation is not equals origin!", relation, foundRelation);
-
-        String dashboardIdStr = savedDashboard.getId().getId().toString();
-        doDelete("/api/dashboard/" + dashboardIdStr)
-                .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("The dashboard referenced by the device profiles cannot be deleted!")));
-
-        Dashboard afterErrorDeleteDashboard = doGet("/api/dashboard/" + dashboardIdStr, Dashboard.class);
-        Assert.assertNotNull("Dashboard is not found!", afterErrorDeleteDashboard);
-        assertEquals("Dashboard after delete error is not equals origin!", savedDashboard, afterErrorDeleteDashboard);
-
-        EntityRelation afterErrorDeleteDashboardRelation = doGet(url, EntityRelation.class);
-        Assert.assertNotNull("Relation not found after dashboard deletion bad request'!", afterErrorDeleteDashboardRelation);
-        assertEquals("Relation after delete error Dashboard is not equals origin!", foundRelation, afterErrorDeleteDashboardRelation);
-
-        AlarmOperationResult afterErrorDeleteDashboardAlarmOperationResult = alarmService.createOrUpdateAlarm(savedAlarmForDashboard);
-        assertTrue("AfterErrorDeleteDashboardAlarmOperationResult is not success!", afterErrorDeleteDashboardAlarmOperationResult.isSuccessful());
-        assertEquals("List of propagatedEntities is not equal to number of created propagatedEntities!",
-                1, afterErrorDeleteDashboardAlarmOperationResult.getPropagatedEntitiesList().size());
-        assertEquals("DashboardId in propagatedEntities is not equal savedDashboardId!",
-                savedDashboard.getId(), afterErrorDeleteDashboardAlarmOperationResult.getPropagatedEntitiesList().get(0));
-
-        updatedDeviceProfile.setDefaultDashboardId(null);
-        doPost("/api/deviceProfile", updatedDeviceProfile)
-                .andExpect(status().isOk());
-
-        doDelete("/api/dashboard/" + dashboardIdStr)
-                .andExpect(status().isOk());
-        doGet("/api/dashboard/" + dashboardIdStr)
-                .andExpect(status().isNotFound())
-                .andExpect(statusReason(containsString(msgErrorNoFound("Dashboard", dashboardIdStr))));
-        doGet(url)
-                .andExpect(status().isNotFound())
-                .andExpect(statusReason(containsString(msgErrorNoFound("Dashboard", foundRelation.getTo().getId().toString()))));
-        AlarmOperationResult afterSuccessDeleteDashboardAlarmOperationResult = alarmService.createOrUpdateAlarm(savedAlarmForDashboard);
-        assertTrue("AfterSuccessDeleteDashboardAlarmOperationResult is not success!", afterSuccessDeleteDashboardAlarmOperationResult.isSuccessful());
-        assertEquals("List of propagatedEntities is not equal to number of created propagatedEntities!",
-                0, afterSuccessDeleteDashboardAlarmOperationResult.getPropagatedEntitiesList().size());
+    public void testDeleteDashboard_ExistsOneRelationToDashboardManyRelationOther_Error_RestoreRelationToDashboard_DeleteRelation_DeleteDashboard_Ok() throws Exception {
+        testDeleteEntity_ExistsRelation(3);
     }
 
-    private Alarm createAlarm(EntityId entityId) {
-        Alarm alarm = Alarm.builder()
-                .tenantId(savedTenant.getId())
-                .customerId(tenantAdmin.getCustomerId())
-                .originator(entityId)
-                .status(AlarmStatus.ACTIVE_UNACK)
-                .severity(AlarmSeverity.CRITICAL)
-                .type("Alarm for test Transactional")
-                .propagate(true)
-                .build();
-        AlarmOperationResult alarmOperationResult = alarmService.createOrUpdateAlarm(alarm);
-        assertTrue("AlarmOperationResult is not success!", alarmOperationResult.isSuccessful());
-        assertEquals("List of propagatedEntities is not equal to number of created propagatedEntities!",
-                1, alarmOperationResult.getPropagatedEntitiesList().size());
-        assertEquals("DashboardId in propagatedEntities is not equal savedDashboardId!",
-                entityId, alarmOperationResult.getPropagatedEntitiesList().get(0));
-        Alarm savedAlarm = alarmOperationResult.getAlarm();
-        assertNotNull("SavedAlarm is not found!", savedAlarm);
+    @Test
+    public void testDeleteDashboard_ExistsOnlyOneRelationToDashboard_Error_RestoreRelation_DeleteRelation_DeleteDashboard_Ok() throws Exception {
+        testDeleteEntity_ExistsRelation(0);
+    }
 
-        return alarm;
+    private void testDeleteEntity_ExistsRelation(int cntOtherEntity) throws Exception {
+        final String entityTestNameClass = "Dashboard";
+        final String name = "for test with many relations Transactional " + entityTestNameClass + " after delete error";
+        Dashboard savedTestEntity = createDashboard(entityTestNameClass + " " + name);
+        DashboardId savedTestEntityId = savedTestEntity.getId();
+        DeviceProfile entityFromWithoutEntityTo = createDeviceProfile("Device profile " + name);
+        DeviceProfile entityFromWithEntityTo = savedDeviceProfile(entityFromWithoutEntityTo, savedTestEntityId);
+        EntityId entityIdFrom = entityFromWithEntityTo.getId();
+        entityFromWithoutEntityTo.setId(entityFromWithEntityTo.getId());
+        String urlUpdateEntityFrom = "/api/deviceProfile";
+        testDeleteEntity_ExistsRelationToEntity_Error_RestoreRelationToEntity_DeleteRelation_DeleteEntity_Ok(
+                savedTenant.getId(), tenantAdmin.getCustomerId(), savedTestEntityId, savedTestEntity, entityIdFrom, entityFromWithEntityTo, entityFromWithoutEntityTo,
+                urlUpdateEntityFrom, entityTestNameClass, name, cntOtherEntity);
     }
 }
