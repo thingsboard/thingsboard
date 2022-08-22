@@ -27,8 +27,6 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.DeviceProfileType;
-import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
@@ -37,9 +35,6 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
-import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
-import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -56,6 +51,9 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public abstract class BaseDashboardControllerTest extends AbstractControllerTest {
@@ -109,9 +107,9 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
 
         Assert.assertNotNull(savedDashboard);
         Assert.assertNotNull(savedDashboard.getId());
-        Assert.assertTrue(savedDashboard.getCreatedTime() > 0);
-        Assert.assertEquals(savedTenant.getId(), savedDashboard.getTenantId());
-        Assert.assertEquals(dashboard.getTitle(), savedDashboard.getTitle());
+        assertTrue(savedDashboard.getCreatedTime() > 0);
+        assertEquals(savedTenant.getId(), savedDashboard.getTenantId());
+        assertEquals(dashboard.getTitle(), savedDashboard.getTitle());
 
         savedDashboard.setTitle("My new dashboard");
 
@@ -123,7 +121,7 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
                 tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UPDATED);
 
         Dashboard foundDashboard = doGet("/api/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
-        Assert.assertEquals(foundDashboard.getTitle(), savedDashboard.getTitle());
+        assertEquals(foundDashboard.getTitle(), savedDashboard.getTitle());
     }
 
     @Test
@@ -168,7 +166,7 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         Dashboard savedDashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
         Dashboard foundDashboard = doGet("/api/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
         Assert.assertNotNull(foundDashboard);
-        Assert.assertEquals(savedDashboard, foundDashboard);
+        assertEquals(savedDashboard, foundDashboard);
     }
 
     @Test
@@ -222,14 +220,14 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         Dashboard assignedDashboard = doPost("/api/customer/" + savedCustomer.getId().getId().toString()
                 + "/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
 
-        Assert.assertTrue(assignedDashboard.getAssignedCustomers().contains(savedCustomer.toShortCustomerInfo()));
+        assertTrue(assignedDashboard.getAssignedCustomers().contains(savedCustomer.toShortCustomerInfo()));
 
         testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(assignedDashboard, assignedDashboard.getId(), assignedDashboard.getId(),
                 savedTenant.getId(), savedCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ASSIGNED_TO_CUSTOMER,
                 assignedDashboard.getId().getId().toString(), savedCustomer.getId().getId().toString(), savedCustomer.getTitle());
 
         Dashboard foundDashboard = doGet("/api/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
-        Assert.assertTrue(foundDashboard.getAssignedCustomers().contains(savedCustomer.toShortCustomerInfo()));
+        assertTrue(foundDashboard.getAssignedCustomers().contains(savedCustomer.toShortCustomerInfo()));
 
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -240,11 +238,11 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
                 savedTenant.getId(), savedCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UNASSIGNED_FROM_CUSTOMER,
                 unassignedDashboard.getId().getId().toString(), savedCustomer.getId().getId().toString(), savedCustomer.getTitle());
 
-        Assert.assertTrue(unassignedDashboard.getAssignedCustomers() == null || unassignedDashboard.getAssignedCustomers().isEmpty());
+        assertTrue(unassignedDashboard.getAssignedCustomers() == null || unassignedDashboard.getAssignedCustomers().isEmpty());
 
         foundDashboard = doGet("/api/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
 
-        Assert.assertTrue(foundDashboard.getAssignedCustomers() == null || foundDashboard.getAssignedCustomers().isEmpty());
+        assertTrue(foundDashboard.getAssignedCustomers() == null || foundDashboard.getAssignedCustomers().isEmpty());
     }
 
     @Test
@@ -270,7 +268,7 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         Tenant tenant2 = new Tenant();
         tenant2.setTitle("Different tenant");
         Tenant savedTenant2 = doPost("/api/tenant", tenant2, Tenant.class);
-        Assert.assertNotNull(savedTenant2);
+        assertNotNull(savedTenant2);
 
         User tenantAdmin2 = new User();
         tenantAdmin2.setAuthority(Authority.TENANT_ADMIN);
@@ -344,7 +342,7 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         Collections.sort(dashboards, idComparator);
         Collections.sort(loadedDashboards, idComparator);
 
-        Assert.assertEquals(dashboards, loadedDashboards);
+        assertEquals(dashboards, loadedDashboards);
     }
 
     @Test
@@ -388,7 +386,7 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         Collections.sort(dashboardsTitle1, idComparator);
         Collections.sort(loadedDashboardsTitle1, idComparator);
 
-        Assert.assertEquals(dashboardsTitle1, loadedDashboardsTitle1);
+        assertEquals(dashboardsTitle1, loadedDashboardsTitle1);
 
         List<DashboardInfo> loadedDashboardsTitle2 = new ArrayList<>();
         pageLink = new PageLink(4, 0, title2);
@@ -405,7 +403,7 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         Collections.sort(dashboardsTitle2, idComparator);
         Collections.sort(loadedDashboardsTitle2, idComparator);
 
-        Assert.assertEquals(dashboardsTitle2, loadedDashboardsTitle2);
+        assertEquals(dashboardsTitle2, loadedDashboardsTitle2);
 
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -423,7 +421,7 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
                 new TypeReference<PageData<DashboardInfo>>() {
                 }, pageLink);
         Assert.assertFalse(pageData.hasNext());
-        Assert.assertEquals(0, pageData.getData().size());
+        assertEquals(0, pageData.getData().size());
 
         for (DashboardInfo dashboard : loadedDashboardsTitle2) {
             doDelete("/api/dashboard/" + dashboard.getId().getId().toString())
@@ -435,7 +433,7 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
                 new TypeReference<PageData<DashboardInfo>>() {
                 }, pageLink);
         Assert.assertFalse(pageData.hasNext());
-        Assert.assertEquals(0, pageData.getData().size());
+        assertEquals(0, pageData.getData().size());
     }
 
     @Test
@@ -477,7 +475,7 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         Collections.sort(dashboards, idComparator);
         Collections.sort(loadedDashboards, idComparator);
 
-        Assert.assertEquals(dashboards, loadedDashboards);
+        assertEquals(dashboards, loadedDashboards);
     }
 
     @Test
@@ -502,7 +500,7 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
                 new TypeReference<PageData<Dashboard>>() {
                 }, new PageLink(100));
 
-        Assert.assertEquals(1, pageData.getData().size());
+        assertEquals(1, pageData.getData().size());
 
         doDelete("/api/edge/" + savedEdge.getId().getId().toString()
                 + "/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
@@ -511,26 +509,18 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
                 new TypeReference<PageData<Dashboard>>() {
                 }, new PageLink(100));
 
-        Assert.assertEquals(0, pageData.getData().size());
+        assertEquals(0, pageData.getData().size());
     }
 
     @Test
-    public void testDeleteDashboardExistsRelation_Error_RestoreRelation_DeleteRelation_DeleteDashboard_Ok() throws Exception {
+    public void testDeleteDashboard_ExistsOnlyOneRelationToDashboard_Error_RestoreRelation_DeleteRelation_DeleteDashboard_Ok() throws Exception {
         Dashboard dashboard = new Dashboard();
         dashboard.setTitle("My dashboard");
         Dashboard savedDashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
 
-        Alarm savedAlarm = createAlarm(savedDashboard.getId());
+        Alarm savedAlarmForDashboard = createAlarm(savedDashboard.getId());
 
-        AlarmOperationResult alarmOperationResult = alarmService.createOrUpdateAlarm(savedAlarm);
-        Assert.assertEquals("List of propagatedEntities is not equal to number of created propagatedEntities!",
-                1, alarmOperationResult.getPropagatedEntitiesList().size());
-        Assert.assertEquals("DashboardId in propagatedEntities is not equal savedDashboardId!",
-                savedDashboard.getId(), alarmOperationResult.getPropagatedEntitiesList().get(0));
-
-        DeviceProfile deviceProfile =  createDeviceProfile();
-        deviceProfile.setDefaultDashboardId(savedDashboard.getId());
-        DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", createDeviceProfile(), DeviceProfile.class);
+        DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", createDeviceProfile("Device profile for test Transactional"), DeviceProfile.class);
 
         savedDeviceProfile.setDefaultDashboardId(savedDashboard.getId());
         DeviceProfile updatedDeviceProfile = doPost("/api/deviceProfile", savedDeviceProfile, DeviceProfile.class);
@@ -544,25 +534,26 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         );
         EntityRelation foundRelation = doGet(url, EntityRelation.class);
         Assert.assertNotNull("Relation is not found!", foundRelation);
-        Assert.assertEquals("Found relation is not equals origin!", relation, foundRelation);
+        assertEquals("Found relation is not equals origin!", relation, foundRelation);
 
         String dashboardIdStr = savedDashboard.getId().getId().toString();
         doDelete("/api/dashboard/" + dashboardIdStr)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("The dashboard referenced by the device profiles cannot be deleted!")));
 
-        Dashboard afterErrorDeleteDashboard = doGet("/api/dashboard/" + dashboardIdStr,  Dashboard.class);
+        Dashboard afterErrorDeleteDashboard = doGet("/api/dashboard/" + dashboardIdStr, Dashboard.class);
         Assert.assertNotNull("Dashboard is not found!", afterErrorDeleteDashboard);
-        Assert.assertEquals("Dashboard after delete error is not equals origin!", savedDashboard, afterErrorDeleteDashboard);
+        assertEquals("Dashboard after delete error is not equals origin!", savedDashboard, afterErrorDeleteDashboard);
 
         EntityRelation afterErrorDeleteDashboardRelation = doGet(url, EntityRelation.class);
-        Assert.assertNotNull("Relation is not found!", foundRelation);
-        Assert.assertEquals("Relation after delete error Dashboard is not equals origin!", foundRelation, afterErrorDeleteDashboardRelation);
+        Assert.assertNotNull("Relation not found after dashboard deletion bad request'!", afterErrorDeleteDashboardRelation);
+        assertEquals("Relation after delete error Dashboard is not equals origin!", foundRelation, afterErrorDeleteDashboardRelation);
 
-        AlarmOperationResult afterErrorDeleteDashboardAlarmOperationResult = alarmService.createOrUpdateAlarm(savedAlarm);
-        Assert.assertEquals("List of propagatedEntities is not equal to number of created propagatedEntities!",
+        AlarmOperationResult afterErrorDeleteDashboardAlarmOperationResult = alarmService.createOrUpdateAlarm(savedAlarmForDashboard);
+        assertTrue("AfterErrorDeleteDashboardAlarmOperationResult is not success!", afterErrorDeleteDashboardAlarmOperationResult.isSuccessful());
+        assertEquals("List of propagatedEntities is not equal to number of created propagatedEntities!",
                 1, afterErrorDeleteDashboardAlarmOperationResult.getPropagatedEntitiesList().size());
-        Assert.assertEquals("DashboardId in propagatedEntities is not equal savedDashboardId!",
+        assertEquals("DashboardId in propagatedEntities is not equal savedDashboardId!",
                 savedDashboard.getId(), afterErrorDeleteDashboardAlarmOperationResult.getPropagatedEntitiesList().get(0));
 
         updatedDeviceProfile.setDefaultDashboardId(null);
@@ -577,44 +568,31 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         doGet(url)
                 .andExpect(status().isNotFound())
                 .andExpect(statusReason(containsString(msgErrorNoFound("Dashboard", foundRelation.getTo().getId().toString()))));
-        AlarmOperationResult afterSuccessDeleteDashboardAlarmOperationResult = alarmService.createOrUpdateAlarm(savedAlarm);
-        Assert.assertEquals("List of propagatedEntities is not equal to number of created propagatedEntities!",
+        AlarmOperationResult afterSuccessDeleteDashboardAlarmOperationResult = alarmService.createOrUpdateAlarm(savedAlarmForDashboard);
+        assertTrue("AfterSuccessDeleteDashboardAlarmOperationResult is not success!", afterSuccessDeleteDashboardAlarmOperationResult.isSuccessful());
+        assertEquals("List of propagatedEntities is not equal to number of created propagatedEntities!",
                 0, afterSuccessDeleteDashboardAlarmOperationResult.getPropagatedEntitiesList().size());
     }
 
-    protected DeviceProfile createDeviceProfile() {
-        String name = "My device profile";
-        DeviceProfile deviceProfile = new DeviceProfile();
-        deviceProfile.setName(name);
-        deviceProfile.setType(DeviceProfileType.DEFAULT);
-        deviceProfile.setDescription(name + " Test");
-        DeviceProfileData deviceProfileData = new DeviceProfileData();
-        DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
-        deviceProfileData.setConfiguration(configuration);
-        deviceProfile.setTransportType(DeviceTransportType.DEFAULT);
-        deviceProfileData.setTransportConfiguration(new DefaultDeviceProfileTransportConfiguration());
-        deviceProfile.setProfileData(deviceProfileData);
-        deviceProfile.setDefault(false);
-        deviceProfile.setDefaultRuleChainId(null);
-        return deviceProfile;
-    }
-
-
-    private Alarm createAlarm(EntityId entityId) throws Exception {
+    private Alarm createAlarm(EntityId entityId) {
         Alarm alarm = Alarm.builder()
                 .tenantId(savedTenant.getId())
                 .customerId(tenantAdmin.getCustomerId())
                 .originator(entityId)
                 .status(AlarmStatus.ACTIVE_UNACK)
                 .severity(AlarmSeverity.CRITICAL)
-                .type("Test")
+                .type("Alarm for test Transactional")
                 .propagate(true)
                 .build();
-
-        alarm = doPost("/api/alarm", alarm, Alarm.class);
-        Assert.assertNotNull(alarm);
+        AlarmOperationResult alarmOperationResult = alarmService.createOrUpdateAlarm(alarm);
+        assertTrue("AlarmOperationResult is not success!", alarmOperationResult.isSuccessful());
+        assertEquals("List of propagatedEntities is not equal to number of created propagatedEntities!",
+                1, alarmOperationResult.getPropagatedEntitiesList().size());
+        assertEquals("DashboardId in propagatedEntities is not equal savedDashboardId!",
+                entityId, alarmOperationResult.getPropagatedEntitiesList().get(0));
+        Alarm savedAlarm = alarmOperationResult.getAlarm();
+        assertNotNull("SavedAlarm is not found!", savedAlarm);
 
         return alarm;
     }
-
 }
