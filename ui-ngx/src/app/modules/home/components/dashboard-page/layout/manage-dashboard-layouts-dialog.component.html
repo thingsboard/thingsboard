@@ -27,7 +27,7 @@
   </mat-toolbar>
   <div mat-dialog-content fxLayout="column" fxLayoutGap="20px" style="min-width: 300px; overflow: hidden;">
     <div fxLayout="row" fxLayoutAlign="start center">
-        <mat-slide-toggle formControlName="right">
+        <mat-slide-toggle formControlName="right" color="accent">
           {{ 'layout.divider' | translate }}
         </mat-slide-toggle>
     </div>
@@ -143,6 +143,7 @@
                     step="1"
                     max="90"
                     style="width: 100%;"
+                    color="accent"
                     formControlName="sliderPercentage"
                     thumbLabel
                     [displayWith]="formatSliderTooltipLabel.bind(this)">
@@ -152,6 +153,7 @@
                     step="1"
                     max="1700"
                     style="width: 100%;"
+                    color="accent"
                     formControlName="sliderFixed"
                     thumbLabel
                     [displayWith]="formatSliderTooltipLabel.bind(this)">

@@ -13,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+@use '~@angular/material' as mat;
+@import '../theme.scss';
+
 :host {
   .tb-layout-fixed-container {
     width: 100%;
@@ -29,7 +33,7 @@
 
   .tb-layout-preview {
     width: 120%;
-    background-color: rgba(243,246,251,255);
+    background-color: rgba(mat.get-color-from-palette($tb-primary, 50), 0.6);
     padding: 35px;
 
     &-container {
@@ -45,7 +49,7 @@
         }
 
         &:hover {
-          background-color: #d3d3d3;
+          background-color: rgba(211, 211, 211, 0.6);
         }
       }
 
@@ -95,12 +99,11 @@
 
       .tb-layout-preview-input {
         margin: 80px 0 0;
-        color: white;
 
         input {
           border: 1px solid #778899;
           background-color: transparent;
-          color: white;
+          color: #ffffff;
           border-radius: 4px;
           text-align: center;
           outline: none;
@@ -109,7 +112,7 @@
           font-size: 14px;
 
           &:invalid {
-            outline: 2px solid #b71c1c;
+            outline: 2px solid rgb(221, 44, 0);
             border: 1px solid transparent;
             background-color: rgba(255, 5, 5, 0.2);
           }
@@ -161,14 +164,14 @@
 ::ng-deep {
   /* Alarm tooltip with side-to-side movement */
   .tb-layout-error-tooltip-right {
-    background-color: #b71c1c !important;
+    background-color: rgb(221, 44, 0) !important;
     margin: 5px 0 0 105px;
     width: 160px;
     text-align: center;
   }
 
   .tb-layout-error-tooltip-main {
-    background-color: #b71c1c !important;
+    background-color: rgb(221, 44, 0) !important;
     margin: 5px 105px 0 0;
     width: 160px;
     text-align: center;
