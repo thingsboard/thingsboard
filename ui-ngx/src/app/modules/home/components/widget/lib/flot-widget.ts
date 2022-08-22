@@ -1213,9 +1213,9 @@ export class TbFlot {
     if (this.chartType !== 'pie') {
       this.options.selection = {mode: 'x'};
       this.$element.bind('plotselected', this.flotSelectHandler);
+      this.$element.bind('dblclick', this.dblclickHandler);
     }
     this.$element.bind('plothover', this.flotHoverHandler);
-    this.$element.bind('dblclick', this.dblclickHandler);
     this.$element.bind('mousedown', this.mousedownHandler);
     this.$element.bind('mouseup', this.mouseupHandler);
     this.$element.bind('mouseleave', this.mouseleaveHandler);
@@ -1228,9 +1228,9 @@ export class TbFlot {
     if (this.chartType !== 'pie') {
       this.options.selection = {mode: null};
       this.$element.unbind('plotselected', this.flotSelectHandler);
+      this.$element.unbind('dblclick', this.dblclickHandler);
     }
     this.$element.unbind('plothover', this.flotHoverHandler);
-    this.$element.unbind('dblclick', this.dblclickHandler);
     this.$element.unbind('mousedown', this.mousedownHandler);
     this.$element.unbind('mouseup', this.mouseupHandler);
     this.$element.unbind('mouseleave', this.mouseleaveHandler);
