@@ -18,11 +18,14 @@ package org.thingsboard.server.controller;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.BDDMockito;
 import org.mockito.Mockito;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
@@ -31,16 +34,21 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.dao.dashboard.DashboardDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public abstract class BaseDashboardControllerTest extends AbstractControllerTest {
@@ -49,6 +57,9 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
 
     private Tenant savedTenant;
     private User tenantAdmin;
+
+    @SpyBean
+    private DashboardDao dashboardDao;
 
     @Before
     public void beforeTest() throws Exception {
@@ -71,6 +82,8 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
 
     @After
     public void afterTest() throws Exception {
+        BDDMockito.willCallRealMethod().given(dashboardDao).removeById(any(), any());
+
         loginSysAdmin();
 
         doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
@@ -106,6 +119,30 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
 
         Dashboard foundDashboard = doGet("/api/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
         Assert.assertEquals(foundDashboard.getTitle(), savedDashboard.getTitle());
+    }
+
+    @Test
+    public void testDeleteDashboardWithRelationsOk() throws Exception {
+        DashboardId dashboardId = createDashboard("My dashboard").getId();
+        createEntityRelation(savedTenant.getId(), dashboardId, "TEST_TYPE");
+        assertThat(getRelationsTo(dashboardId)).hasSize(1);
+
+        doDelete("/api/dashboard/" + dashboardId).andExpect(status().isOk());
+
+        assertThat(getRelationsTo(dashboardId)).hasSize(0);
+    }
+
+    @Test
+    public void testDeleteDashboardWithRelationsTransactionalException() throws Exception {
+        BDDMockito.willThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).given(dashboardDao).removeById(any(), any());
+
+        DashboardId dashboardId = createDashboard("My dashboard").getId();
+        createEntityRelation(savedTenant.getId(), dashboardId, "TEST_TYPE");
+        assertThat(getRelationsTo(dashboardId)).hasSize(1);
+
+        doDelete("/api/dashboard/" + dashboardId).andExpect(status().isInternalServerError());
+
+        assertThat(getRelationsTo(dashboardId)).hasSize(1);
     }
 
     @Test

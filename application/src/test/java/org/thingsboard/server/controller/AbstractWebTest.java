@@ -53,6 +53,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.context.WebApplicationContext;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
@@ -68,6 +69,7 @@ import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadCo
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -76,6 +78,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.config.ThingsboardSecurityConfiguration;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
@@ -86,6 +89,7 @@ import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -658,7 +662,11 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     protected <T> T readResponse(ResultActions result, TypeReference<T> type) throws Exception {
-        byte[] content = result.andReturn().getResponse().getContentAsByteArray();
+        return readResponse(result.andReturn(), type);
+    }
+
+    protected <T> T readResponse(MvcResult result, TypeReference<T> type) throws Exception {
+        byte[] content = result.getResponse().getContentAsByteArray();
         return mapper.readerFor(type).readValue(content);
     }
 
@@ -699,6 +707,28 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
                             .andExpect(status().isOk())));
         }
         return Futures.allAsList(futures);
+    }
+
+    protected Dashboard createDashboard(String name) {
+        Dashboard dashboard = new Dashboard();
+        dashboard.setTitle(name);
+        return doPost("/api/dashboard", dashboard, Dashboard.class);
+    }
+
+    protected void createEntityRelation(EntityId entityIdFrom, EntityId entityIdTo, String typeRelation) throws Exception {
+        EntityRelation relation = new EntityRelation(entityIdFrom, entityIdTo, typeRelation);
+        doPost("/api/relation", relation);
+    }
+
+    protected List<EntityRelation> getRelationsTo(EntityId entityId) throws Exception {
+        String url = String.format("/api/relations?toId=%s&toType=%s", entityId.getId(), entityId.getEntityType().name());
+        MvcResult mvcResult = doGet(url).andReturn();
+
+        switch (mvcResult.getResponse().getStatus()) {
+            case 200: return readResponse(mvcResult, new TypeReference<>() {});
+            case 404: return Collections.emptyList();
+        }
+        throw new AssertionError("Unexpected status " + mvcResult.getResponse().getStatus());
     }
 
 }
