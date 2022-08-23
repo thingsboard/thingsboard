@@ -478,16 +478,10 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return alarm;
     }
 
-    protected Alarm createAlarmWithTenant(TenantId tenantId, CustomerId customerId, String name, EntityId entityId) {
+    protected Alarm createAlarm(TenantId tenantId, CustomerId customerId, String name, EntityId entityId) {
         Alarm alarm = createAlarm(name, entityId);
         alarm.setTenantId(tenantId);
         alarm.setCustomerId(customerId);
-        return alarm;
-    }
-
-    protected Alarm createAlarmWithPropagate(TenantId tenantId, CustomerId customerId, String name, EntityId entityId) {
-        Alarm alarm = createAlarmWithTenant(tenantId, customerId, name, entityId);
-        alarm.setPropagate(true);
         return alarm;
     }
 

@@ -257,7 +257,7 @@ public abstract class AbstractControllerTest extends AbstractNotifyEntityTest {
     }
 
     private Alarm getAlarmWithControlPropagated(TenantId tenantId, CustomerId customerId, String name, String entityNameClass, EntityId entityId) {
-        Alarm alarm = createAlarmWithPropagate(tenantId, customerId, name, entityId);
+        Alarm alarm = createAlarmPropagateTrue(tenantId, customerId, name, entityId);
         AlarmOperationResult alarmOperationResult = getAlarmOperationResult(alarm);
 
         assertTrue("AlarmOperationResult is not success!", alarmOperationResult.isSuccessful());
@@ -280,5 +280,11 @@ public abstract class AbstractControllerTest extends AbstractNotifyEntityTest {
         assertNotNull("SavedAlarm is not found!", savedAlarm);
 
         return savedAlarm;
+    }
+
+    private Alarm createAlarmPropagateTrue(TenantId tenantId, CustomerId customerId, String name, EntityId entityId) {
+        Alarm alarm = createAlarm(tenantId, customerId, name, entityId);
+        alarm.setPropagate(true);
+        return alarm;
     }
 }
