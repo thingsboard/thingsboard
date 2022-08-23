@@ -31,7 +31,6 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.cluster.TbClusterService;
-import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
@@ -657,10 +656,10 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
     }
 
 
-    public void testDeleteEntity_ExistsRelationToEntity_Error_RestoreRelationToEntity_DeleteRelation_DeleteEntity_Ok(
-            TenantId tenantId, CustomerId customerId, EntityId testEntityId, HasName savedTestEntity,
-            EntityId entityIdFrom, HasName entityFromWithoutEntityTo,
-            String urlUpdateEntityFrom, String entityTestNameClass, String name, int cntOtherEntity
+    public <T, E> void testDeleteEntity_ExistsRelationToEntity_Error_RestoreRelationToEntity_DeleteRelation_DeleteEntity_Ok(
+            TenantId tenantId, CustomerId customerId, Class<T> clazzTestEntity, EntityId testEntityId, T savedTestEntity,
+            EntityId entityIdFrom, E entityFromWithoutEntityTo, String urlGetTestEntity, String urlDeleteTestEntity,
+            String urlUpdateEntityFrom, String entityTestNameClass, String name, String entityTestMsgNotDelete, int cntOtherEntity
     ) throws Exception {
 
         Map<EntityId, HasName> entities = createEntities(entityTestNameClass + " " + name, cntOtherEntity);
@@ -669,23 +668,23 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
         // Create Alarms for other entity
         entities.forEach((k, v) -> createAlarm(tenantId, customerId, "Alarm by " + v.getName() + " " + name, entityTestNameClass, k));
 
-        entities.put(testEntityId, savedTestEntity);
+        entities.put(testEntityId, (HasName)savedTestEntity);
 
         // Create entityRelations: from -> entityFrom, to -> entities
         String typeRelation = EntityRelation.CONTAINS_TYPE;
         Map<EntityRelation, String> entityRelations = createEntityRelations(entityIdFrom, entities, typeRelation);
         Optional<Map.Entry<EntityRelation, String>> relationMapTestEntityTo = entityRelations.entrySet().stream().filter(e -> e.getKey().getTo().equals(testEntityId)).findFirst();
-        assertTrue("TestEntityRelation is found after dashboard deletion 'success'!", relationMapTestEntityTo.isPresent());
+        assertTrue("TestEntityRelation is found after " + entityTestNameClass + " deletion 'success'!", relationMapTestEntityTo.isPresent());
         String urlRelationTestEntityTo = relationMapTestEntityTo.get().getValue();
 
-        String dashboardIdStr = testEntityId.getId().toString();
-        doDelete("/api/dashboard/" + dashboardIdStr)
+        String testEntityIdStr = testEntityId.getId().toString();
+        doDelete(urlDeleteTestEntity + testEntityIdStr)
                 .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("The dashboard referenced by the device profiles cannot be deleted!")));
+                .andExpect(statusReason(containsString(entityTestMsgNotDelete)));
 
-        Dashboard afterErrorDeleteTestEntity = doGet("/api/dashboard/" + dashboardIdStr, Dashboard.class);
-        assertNotNull(entityTestNameClass + " is not found!", afterErrorDeleteTestEntity);
-        assertEquals(entityTestNameClass + " after delete error is not equals origin!", savedTestEntity, afterErrorDeleteTestEntity);
+        savedTestEntity = doGet(urlGetTestEntity + testEntityIdStr, clazzTestEntity);
+        assertNotNull(entityTestNameClass + " is not found!", savedTestEntity);
+        assertEquals(entityTestNameClass + " after delete error is not equals origin!", savedTestEntity, savedTestEntity);
 
 
         String urlEntityFroms = String.format("/api/relations?fromId=%s&fromType=%s",
@@ -697,26 +696,29 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
         assertNotNull("Relations is not found!", relationsInfos);
         assertEquals("List of found relations is not equal to number of created relations!",
                 numOfRelations, relationsInfos.size());
-        EntityId expectTestEntityId = afterErrorDeleteTestEntity.getId();
+        EntityId expectTestEntityId = testEntityId;
         Optional<EntityRelationInfo> expectTestEntityRelationInfo = relationsInfos.stream().filter(k -> k.getTo().equals(expectTestEntityId)).findFirst();
-        assertTrue("TestEntityRelation is not found after dashboard deletion 'bad request'!", expectTestEntityRelationInfo.isPresent());
+        assertTrue("TestEntityRelation is not found after " + entityTestNameClass + " deletion 'bad request'!", expectTestEntityRelationInfo.isPresent());
         String expectTestEntityRelationToIdStr = expectTestEntityRelationInfo.get().getTo().getId().toString();
 
-        AlarmOperationResult afterErrorDeleteDashboardAlarmOperationResult = alarmService.createOrUpdateAlarm(savedAlarmForTestEntity);
-        assertTrue("AfterErrorDeleteDashboardAlarmOperationResult is not success!", afterErrorDeleteDashboardAlarmOperationResult.isSuccessful());
-        assertEquals("List of propagatedEntities is not equal to number of created propagatedEntities!",
-                1, afterErrorDeleteDashboardAlarmOperationResult.getPropagatedEntitiesList().size());
-        assertEquals(entityTestNameClass + "Id in propagatedEntities is not equal savedDashboardId!",
-                testEntityId, afterErrorDeleteDashboardAlarmOperationResult.getPropagatedEntitiesList().get(0));
+        AlarmOperationResult afterErrorDeleteTestEntityAlarmOperationResult = alarmService.createOrUpdateAlarm(savedAlarmForTestEntity);
+        assertTrue("AfterErrorDelete" + entityTestNameClass + "AlarmOperationResult is not success!", afterErrorDeleteTestEntityAlarmOperationResult.isSuccessful());
+        assertTrue("List of propagatedEntities is not equal to number of created propagatedEntities!",
+                afterErrorDeleteTestEntityAlarmOperationResult.getPropagatedEntitiesList().size() > 0);
+        assertTrue(entityTestNameClass + "Id in propagatedEntities is not equal saved" + entityTestNameClass + "Id!",
+                afterErrorDeleteTestEntityAlarmOperationResult.getPropagatedEntitiesList()
+                .stream().filter(p -> p.equals(testEntityId))
+                .findFirst()
+                .isPresent());
 
         doPost(urlUpdateEntityFrom, entityFromWithoutEntityTo)
                 .andExpect(status().isOk());
 
-        doDelete("/api/dashboard/" + dashboardIdStr)
+        doDelete(urlDeleteTestEntity + testEntityIdStr)
                 .andExpect(status().isOk());
-        doGet("/api/dashboard/" + dashboardIdStr)
+        doGet(urlGetTestEntity + testEntityIdStr)
                 .andExpect(status().isNotFound())
-                .andExpect(statusReason(containsString(msgErrorNoFound(entityTestNameClass, dashboardIdStr))));
+                .andExpect(statusReason(containsString(msgErrorNoFound(entityTestNameClass, testEntityIdStr))));
 
         doGet(urlRelationTestEntityTo)
                 .andExpect(status().isNotFound())
@@ -727,12 +729,15 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
         assertEquals("List of found relations is not equal to number of relations left!",
                 numOfRelations - 1, relationsInfos.size());
         expectTestEntityRelationInfo = relationsInfos.stream().filter(k -> k.getTo().equals(expectTestEntityId)).findFirst();
-        assertTrue("TestEntityRelation is found after dashboard deletion 'success'!", expectTestEntityRelationInfo.isEmpty());
+        assertTrue("TestEntityRelation is found after " + entityTestNameClass + " deletion 'success'!", expectTestEntityRelationInfo.isEmpty());
 
-        AlarmOperationResult afterSuccessDeleteDashboardAlarmOperationResult = alarmService.createOrUpdateAlarm(savedAlarmForTestEntity);
-        assertTrue("AfterSuccessDeleteDashboardAlarmOperationResult is not success!", afterSuccessDeleteDashboardAlarmOperationResult.isSuccessful());
-        assertEquals("List of propagatedEntities is not equal to number of created propagatedEntities!",
-                0, afterSuccessDeleteDashboardAlarmOperationResult.getPropagatedEntitiesList().size());
+        AlarmOperationResult afterSuccessDeleteTestEntityAlarmOperationResult = alarmService.createOrUpdateAlarm(savedAlarmForTestEntity);
+        assertTrue("AfterSuccessDelete" + entityTestNameClass + "AlarmOperationResult is not success!", afterSuccessDeleteTestEntityAlarmOperationResult.isSuccessful());
+        assertTrue(entityTestNameClass + "Id in propagatedEntities is equal saved" + entityTestNameClass + "Id!",
+                afterSuccessDeleteTestEntityAlarmOperationResult.getPropagatedEntitiesList()
+                        .stream().filter(p -> p.equals(testEntityId))
+                        .findFirst()
+                        .isEmpty());
     }
 
     private Alarm createAlarm(TenantId tenantId, CustomerId customerId, String name, String entityNameClass, EntityId entityId) {
@@ -747,10 +752,13 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
                 .build();
         AlarmOperationResult alarmOperationResult = alarmService.createOrUpdateAlarm(alarm);
         assertTrue("AlarmOperationResult is not success!", alarmOperationResult.isSuccessful());
-        assertEquals("List of propagatedEntities is not equal to number of created propagatedEntities!",
-                1, alarmOperationResult.getPropagatedEntitiesList().size());
-        assertEquals(entityNameClass + "Id in propagatedEntities is not equal saved" + entityNameClass + "Id!",
-                entityId, alarmOperationResult.getPropagatedEntitiesList().get(0));
+        assertTrue("List of propagatedEntities is not equal to number of created propagatedEntities!",
+                alarmOperationResult.getPropagatedEntitiesList().size() > 0);
+        assertTrue(entityNameClass + "Id in propagatedEntities is not equal saved" + entityNameClass + "Id!",
+                alarmOperationResult.getPropagatedEntitiesList()
+                        .stream().filter(p -> p.equals(entityId))
+                        .findFirst()
+                        .isPresent());
         Alarm savedAlarm = alarmOperationResult.getAlarm();
         assertNotNull("SavedAlarm is not found!", savedAlarm);
 

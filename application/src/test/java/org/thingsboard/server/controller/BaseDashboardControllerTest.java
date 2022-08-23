@@ -504,6 +504,9 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         assertEquals(0, pageData.getData().size());
     }
 
+    /**
+     * The dashboard referenced by the device profiles cannot be deleted!
+     */
     @Test
     public void testDeleteDashboard_ExistsOneRelationToDashboardManyRelationOther_Error_RestoreRelationToDashboard_DeleteRelation_DeleteDashboard_Ok() throws Exception {
         testDeleteEntity_ExistsRelation(3);
@@ -516,16 +519,20 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
 
     private void testDeleteEntity_ExistsRelation(int cntOtherEntity) throws Exception {
         final String entityTestNameClass = "Dashboard";
+        final String entityTestMsgNotDelete = "The dashboard referenced by the device profiles cannot be deleted!";
         final String name = "for test with many relations Transactional " + entityTestNameClass + " after delete error";
+        final String urlGetTestEntity = "/api/dashboard/";
+        final String urlDeleteTestEntity = "/api/dashboard/";
         Dashboard savedTestEntity = createDashboard(entityTestNameClass + " " + name);
-        DashboardId savedTestEntityId = savedTestEntity.getId();
+        final DashboardId savedTestEntityId = savedTestEntity.getId();
         DeviceProfile entityFromWithoutEntityTo = createDeviceProfile("Device profile " + name);
         DeviceProfile entityFromWithEntityTo = savedDeviceProfile(entityFromWithoutEntityTo, savedTestEntityId);
-        EntityId entityIdFrom = entityFromWithEntityTo.getId();
         entityFromWithoutEntityTo.setId(entityFromWithEntityTo.getId());
-        String urlUpdateEntityFrom = "/api/deviceProfile";
+        final EntityId entityIdFrom = entityFromWithEntityTo.getId();
+        final String urlUpdateEntityFrom = "/api/deviceProfile";
         testDeleteEntity_ExistsRelationToEntity_Error_RestoreRelationToEntity_DeleteRelation_DeleteEntity_Ok(
-                savedTenant.getId(), tenantAdmin.getCustomerId(), savedTestEntityId, savedTestEntity, entityIdFrom,
-                entityFromWithoutEntityTo, urlUpdateEntityFrom, entityTestNameClass, name, cntOtherEntity);
+                savedTenant.getId(), tenantAdmin.getCustomerId(), Dashboard.class, savedTestEntityId, savedTestEntity,
+                entityIdFrom, entityFromWithoutEntityTo, urlGetTestEntity, urlDeleteTestEntity, urlUpdateEntityFrom,
+                entityTestNameClass, name, entityTestMsgNotDelete, cntOtherEntity);
     }
 }
