@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
 import org.thingsboard.server.common.data.StringUtils;
@@ -59,6 +60,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.concurrent.TimeUnit.HOURS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.Mockito.never;
@@ -1186,6 +1188,53 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
                 PAGE_DATA_DEVICE_TYPE_REF, new PageLink(100));
 
         Assert.assertEquals(0, pageData.getData().size());
+    }
+
+
+    /**
+     * Can't delete device that has entity views!
+     */
+    @Test
+    public void testDeleteDashboard_ExistsOneRelationToDashboardManyRelationOther_Error_RestoreRelationToDashboard_DeleteRelation_DeleteDashboard_Ok() throws Exception {
+        testDeleteEntity_ExistsRelation(3);
+    }
+
+    @Test
+    public void testDeleteDashboard_ExistsOnlyOneRelationToDashboard_Error_RestoreRelation_DeleteRelation_DeleteDashboard_Ok() throws Exception {
+        testDeleteEntity_ExistsRelation(0);
+    }
+
+    private void testDeleteEntity_ExistsRelation(int cntOtherEntity) throws Exception {
+        final long now = System.currentTimeMillis();
+        final String entityTestNameClass = "Device";
+        final String entityTestMsgNotDelete = "Can't delete device that has entity views!";
+        final String name = "for test with many relations Transactional " + entityTestNameClass + " after delete error";
+        final String urlGetTestEntity = "/api/device/";
+        final String urlDeleteTestEntity = "/api/device/";
+        final String urlUpdateEntityFrom = "/api/entityView/";
+
+        Device device = new Device();
+        device.setName(entityTestNameClass + " " + name);
+        device.setType("default");
+        Device savedTestEntity = doPost("/api/device", device, Device.class);
+        final DeviceId savedTestEntityId = savedTestEntity.getId();
+
+        EntityView view = new EntityView();
+        view.setTenantId(tenantId);
+        view.setName("Test entity view");
+        view.setType("default");
+        view.setStartTimeMs(now - HOURS.toMillis(1));
+        view.setEndTimeMs(now - 1);
+        EntityView entityFromWithoutEntityTo = doPost("/api/entityView", view, EntityView.class);
+        EntityView viewWithEntityTo = new EntityView(entityFromWithoutEntityTo);
+        viewWithEntityTo.setEntityId(savedTestEntityId);
+        EntityView entityFromWithEntityTo = doPost("/api/entityView", viewWithEntityTo, EntityView.class);
+        final EntityId entityIdFrom = entityFromWithEntityTo.getId();
+
+        testDeleteEntity_ExistsRelationToEntity_Error_RestoreRelationToEntity_DeleteRelation_DeleteEntity_Ok(
+                savedTenant.getId(), tenantAdmin.getCustomerId(), Device.class, savedTestEntityId, savedTestEntity,
+                entityIdFrom, entityFromWithoutEntityTo, urlGetTestEntity, urlDeleteTestEntity, urlUpdateEntityFrom,
+                entityTestNameClass, name, entityTestMsgNotDelete, cntOtherEntity);
     }
 
     protected void testNotificationUpdateGatewayOneTime(Device device, Device oldDevice) {

@@ -58,6 +58,9 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
@@ -69,6 +72,7 @@ import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeCon
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
@@ -78,6 +82,8 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.config.ThingsboardSecurityConfiguration;
+import org.thingsboard.server.dao.alarm.AlarmOperationResult;
+import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.service.mail.TestMailService;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRequest;
@@ -125,8 +131,9 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected static final String DIFFERENT_CUSTOMER_USER_EMAIL = "testdifferentcustomer@thingsboard.org";
     private static final String DIFFERENT_CUSTOMER_USER_PASSWORD = "diffcustomer";
 
-    /** See {@link org.springframework.test.web.servlet.DefaultMvcResult#getAsyncResult(long)}
-     *  and {@link org.springframework.mock.web.MockAsyncContext#getTimeout()}
+    /**
+     * See {@link org.springframework.test.web.servlet.DefaultMvcResult#getAsyncResult(long)}
+     * and {@link org.springframework.mock.web.MockAsyncContext#getTimeout()}
      */
     private static final long DEFAULT_TIMEOUT = -1L;
 
@@ -157,6 +164,9 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     @Autowired
     private TenantProfileService tenantProfileService;
+
+    @Autowired
+    private AlarmService alarmService;
 
     @Rule
     public TestRule watcher = new TestWatcher() {
@@ -452,6 +462,33 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         deviceProfile.setDefault(false);
         deviceProfile.setDefaultRuleChainId(null);
         return deviceProfile;
+    }
+
+    protected AlarmOperationResult getAlarmOperationResult(Alarm alarm) {
+        return alarmService.createOrUpdateAlarm(alarm);
+    }
+
+    protected Alarm createAlarm(String name, EntityId entityId) {
+        Alarm alarm = Alarm.builder()
+                .originator(entityId)
+                .status(AlarmStatus.ACTIVE_UNACK)
+                .severity(AlarmSeverity.CRITICAL)
+                .type(name)
+                .build();
+        return alarm;
+    }
+
+    protected Alarm createAlarmWithTenant(TenantId tenantId, CustomerId customerId, String name, EntityId entityId) {
+        Alarm alarm = createAlarm(name, entityId);
+        alarm.setTenantId(tenantId);
+        alarm.setCustomerId(customerId);
+        return alarm;
+    }
+
+    protected Alarm createAlarmWithPropagate(TenantId tenantId, CustomerId customerId, String name, EntityId entityId) {
+        Alarm alarm = createAlarmWithTenant(tenantId, customerId, name, entityId);
+        alarm.setPropagate(true);
+        return alarm;
     }
 
     protected MqttDeviceProfileTransportConfiguration createMqttDeviceProfileTransportConfiguration(TransportPayloadTypeConfiguration transportPayloadTypeConfiguration, boolean sendAckOnValidationException) {
