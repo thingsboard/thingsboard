@@ -1190,7 +1190,6 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         Assert.assertEquals(0, pageData.getData().size());
     }
 
-
     /**
      * Can't delete device that has entity views!
      */

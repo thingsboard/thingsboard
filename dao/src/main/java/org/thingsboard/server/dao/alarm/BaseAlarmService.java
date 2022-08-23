@@ -24,7 +24,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.alarm.Alarm;
@@ -143,7 +142,6 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     @Override
-    @Transactional
     public AlarmOperationResult deleteAlarm(TenantId tenantId, AlarmId alarmId) {
         try {
             log.debug("Deleting Alarm Id: {}", alarmId);

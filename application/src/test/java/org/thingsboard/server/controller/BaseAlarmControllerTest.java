@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.PageData;
 
 import java.util.LinkedList;
@@ -414,6 +415,17 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         AlarmInfo alarmInfo = pageData.getData().get(0);
         boolean equals = alarm.getId().equals(alarmInfo.getId()) && alarm.getType().equals(alarmInfo.getType());
         Assert.assertTrue("Created alarm doesn't match the found one!", equals);
+    }
+
+    @Test
+    public void updateAlarmOriginatorIdToAlarmId_impossible () throws Exception {
+        loginTenantAdmin();
+        Alarm alarm = createAlarm(TEST_ALARM_TYPE);
+        EntityId oldOriginatorId = alarm.getOriginator();
+        alarm.setOriginator(alarm.getId());
+        Alarm updatedAlarm = doPost("/api/alarm", alarm, Alarm.class);
+        Assert.assertNotEquals(updatedAlarm.getId(), updatedAlarm.getOriginator());
+        Assert.assertEquals(oldOriginatorId, updatedAlarm.getOriginator());
     }
 
     private Alarm createAlarm(String type) throws Exception {
