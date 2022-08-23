@@ -138,6 +138,10 @@
         <opensmpp.version>3.0.0</opensmpp.version>
         <jgit.version>6.1.0.202203080745-r</jgit.version>
         <aerogear-otp.version>1.0.0</aerogear-otp.version>
+
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+
     </properties>
 
     <modules>
