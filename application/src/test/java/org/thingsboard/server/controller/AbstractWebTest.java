@@ -711,25 +711,25 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return Futures.allAsList(futures);
     }
 
-    protected void tesEntityDaoWithRelationsOk(EntityId entityIdFrom, EntityId entityTo, String urlDelete) throws Exception {
+    protected void testEntityDaoWithRelationsOk(EntityId entityIdFrom, EntityId entityTo, String urlDelete) throws Exception {
         createEntityRelation(entityIdFrom, entityTo, "TEST_TYPE");
-        assertThat(getRelationsTo(entityTo)).hasSize(1);
+        assertThat(findRelationsByTo(entityTo)).hasSize(1);
 
         doDelete(urlDelete).andExpect(status().isOk());
 
-        assertThat(getRelationsTo(entityTo)).hasSize(0);
+        assertThat(findRelationsByTo(entityTo)).hasSize(0);
     }
 
-    protected <T> void tesEntityDaoWithRelationsTransactionalException(Dao<T> dao, EntityId entityIdFrom, EntityId entityTo,
-                                                                       String urlDelete) throws Exception {
+    protected <T> void testEntityDaoWithRelationsTransactionalException(Dao<T> dao, EntityId entityIdFrom, EntityId entityTo,
+                                                                        String urlDelete) throws Exception {
         entityDaoRemoveByIdWithException (dao);
         createEntityRelation(entityIdFrom, entityTo, "TEST_TRANSACTIONAL_TYPE");
-        assertThat(getRelationsTo(entityTo)).hasSize(1);
+        assertThat(findRelationsByTo(entityTo)).hasSize(1);
 
         doDelete(urlDelete)
                 .andExpect(status().isInternalServerError());
 
-        assertThat(getRelationsTo(entityTo)).hasSize(1);
+        assertThat(findRelationsByTo(entityTo)).hasSize(1);
     }
 
     protected <T> void entityDaoRemoveByIdWithException (Dao<T> dao) {
@@ -746,7 +746,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         doPost("/api/relation", relation);
     }
 
-    protected List<EntityRelation> getRelationsTo(EntityId entityId) throws Exception {
+    protected List<EntityRelation> findRelationsByTo(EntityId entityId) throws Exception {
         String url = String.format("/api/relations?toId=%s&toType=%s", entityId.getId(), entityId.getEntityType().name());
         MvcResult mvcResult = doGet(url).andReturn();
 

@@ -86,35 +86,6 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
     }
 
     @Test
-    public void testSaveDashboard() throws Exception {
-        Mockito.reset(tbClusterService, auditLogService);
-
-        String title = "My dashboard";
-        Dashboard savedDashboard = createDashboard(title);
-
-        testNotifyEntityOneTimeMsgToEdgeServiceNever(savedDashboard, savedDashboard.getId(), savedDashboard.getId(), savedTenant.getId(),
-                tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED);
-
-        Assert.assertNotNull(savedDashboard);
-        Assert.assertNotNull(savedDashboard.getId());
-        Assert.assertTrue(savedDashboard.getCreatedTime() > 0);
-        Assert.assertEquals(savedTenant.getId(), savedDashboard.getTenantId());
-        Assert.assertEquals(title, savedDashboard.getTitle());
-
-        savedDashboard.setTitle("My new dashboard");
-
-        Mockito.reset(tbClusterService, auditLogService);
-
-        doPost("/api/dashboard", savedDashboard, Dashboard.class);
-
-        testNotifyEntityAllOneTime(savedDashboard, savedDashboard.getId(), savedDashboard.getId(), savedTenant.getId(),
-                tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UPDATED);
-
-        Dashboard foundDashboard = doGet("/api/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
-        Assert.assertEquals(foundDashboard.getTitle(), savedDashboard.getTitle());
-    }
-
-    @Test
     public void testSaveDashboardInfoWithViolationOfValidation() throws Exception {
         Dashboard dashboard = new Dashboard();
         dashboard.setTitle(StringUtils.randomAlphabetic(300));
@@ -126,6 +97,7 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
+        dashboard.setTenantId(savedTenant.getId());
         testNotifyEntityEqualsOneTimeServiceNeverError(dashboard, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
         Mockito.reset(tbClusterService, auditLogService);
@@ -133,7 +105,9 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
 
     @Test
     public void testUpdateDashboardFromDifferentTenant() throws Exception {
-        Dashboard savedDashboard = createDashboard();
+        Dashboard dashboard = new Dashboard();
+        dashboard.setTitle("My dashboard");
+        Dashboard savedDashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
 
         loginDifferentTenant();
 
@@ -148,7 +122,9 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
 
     @Test
     public void testFindDashboardById() throws Exception {
-        Dashboard savedDashboard = createDashboard();
+        Dashboard dashboard = new Dashboard();
+        dashboard.setTitle("My dashboard");
+        Dashboard savedDashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
         Dashboard foundDashboard = doGet("/api/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
         Assert.assertNotNull(foundDashboard);
         Assert.assertEquals(savedDashboard, foundDashboard);
@@ -156,7 +132,9 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
 
     @Test
     public void testDeleteDashboard() throws Exception {
-        Dashboard savedDashboard = createDashboard();
+        Dashboard dashboard = new Dashboard();
+        dashboard.setTitle("My dashboard");
+        Dashboard savedDashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
 
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -189,7 +167,9 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
 
     @Test
     public void testAssignUnassignDashboardToCustomer() throws Exception {
-        Dashboard savedDashboard = createDashboard();
+        Dashboard dashboard = new Dashboard();
+        dashboard.setTitle("My dashboard");
+        Dashboard savedDashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
 
         Customer customer = new Customer();
         customer.setTitle("My customer");
@@ -227,7 +207,9 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
 
     @Test
     public void testAssignDashboardToNonExistentCustomer() throws Exception {
-        Dashboard savedDashboard = createDashboard();
+        Dashboard dashboard = new Dashboard();
+        dashboard.setTitle("My dashboard");
+        Dashboard savedDashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
 
         String customerIdStr = Uuids.timeBased().toString();
         doPost("/api/customer/" + customerIdStr
@@ -263,7 +245,9 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
 
         login(tenantAdmin.getEmail(), "testPassword1");
 
-        Dashboard savedDashboard = createDashboard();
+        Dashboard dashboard = new Dashboard();
+        dashboard.setTitle("My dashboard");
+        Dashboard savedDashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
 
         doPost("/api/customer/" + savedCustomer.getId().getId().toString()
                 + "/dashboard/" + savedDashboard.getId().getId().toString())
@@ -293,7 +277,9 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
 
         int cntEntity = 173;
         for (int i = 0; i < cntEntity; i++) {
-            dashboards.add(new DashboardInfo(createDashboard("Dashboard" + i)));
+            Dashboard dashboard = new Dashboard();
+            dashboard.setTitle("Dashboard" + i);
+            dashboards.add(new DashboardInfo(doPost("/api/dashboard", dashboard, Dashboard.class)));
         }
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceNever(new Dashboard(), new Dashboard(),
@@ -325,19 +311,24 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         List<DashboardInfo> dashboardsTitle1 = new ArrayList<>();
         int cntEntity = 134;
         for (int i = 0; i < cntEntity; i++) {
+            Dashboard dashboard = new Dashboard();
             String suffix = StringUtils.randomAlphanumeric((int) (Math.random() * 15));
             String title = title1 + suffix;
             title = i % 2 == 0 ? title.toLowerCase() : title.toUpperCase();
-            dashboardsTitle1.add(new DashboardInfo(createDashboard(title)));
-         }
+            dashboard.setTitle(title);
+            dashboardsTitle1.add(new DashboardInfo(doPost("/api/dashboard", dashboard, Dashboard.class)));
+        }
         String title2 = "Dashboard title 2";
         List<DashboardInfo> dashboardsTitle2 = new ArrayList<>();
 
         for (int i = 0; i < 112; i++) {
+            Dashboard dashboard = new Dashboard();
             String suffix = StringUtils.randomAlphanumeric((int) (Math.random() * 15));
             String title = title2 + suffix;
             title = i % 2 == 0 ? title.toLowerCase() : title.toUpperCase();
-            dashboardsTitle2.add(new DashboardInfo(createDashboard(title)));        }
+            dashboard.setTitle(title);
+            dashboardsTitle2.add(new DashboardInfo(doPost("/api/dashboard", dashboard, Dashboard.class)));
+        }
 
         List<DashboardInfo> loadedDashboardsTitle1 = new ArrayList<>();
         PageLink pageLink = new PageLink(15, 0, title1);
@@ -417,7 +408,9 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         int cntEntity = 173;
         List<DashboardInfo> dashboards = new ArrayList<>();
         for (int i = 0; i < cntEntity; i++) {
-            Dashboard dashboard = createDashboard("Dashboard" + i);
+            Dashboard dashboard = new Dashboard();
+            dashboard.setTitle("Dashboard" + i);
+            dashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
             dashboards.add(new DashboardInfo(doPost("/api/customer/" + customerId.getId().toString()
                     + "/dashboard/" + dashboard.getId().getId().toString(), Dashboard.class)));
         }
@@ -450,7 +443,9 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         Edge edge = constructEdge("My edge", "default");
         Edge savedEdge = doPost("/api/edge", edge, Edge.class);
 
-        Dashboard savedDashboard = createDashboard();
+        Dashboard dashboard = new Dashboard();
+        dashboard.setTitle("My dashboard");
+        Dashboard savedDashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
 
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -479,24 +474,17 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
 
     @Test
     public void testDeleteDashboardWithRelationsOk() throws Exception {
-        DashboardId dashboardId = createDashboard().getId();
-        tesEntityDaoWithRelationsOk(savedTenant.getId(), dashboardId, "/api/dashboard/" + dashboardId);
+        DashboardId dashboardId = createDashboard("Dashboard for Test WithRelationsOk").getId();
+        testEntityDaoWithRelationsOk(savedTenant.getId(), dashboardId, "/api/dashboard/" + dashboardId);
     }
 
     @Test
     public void testDeleteDashboardWithRelationsTransactionalException() throws Exception {
-        DashboardId dashboardId = createDashboard().getId();
-        tesEntityDaoWithRelationsTransactionalException(dashboardDao, savedTenant.getId(), dashboardId, "/api/dashboard/" + dashboardId);
+        DashboardId dashboardId = createDashboard("Dashboard for Test WithRelations Transactional Exception").getId();
+        testEntityDaoWithRelationsTransactionalException(dashboardDao, savedTenant.getId(), dashboardId, "/api/dashboard/" + dashboardId);
     }
 
     private Dashboard createDashboard(String title) {
-        Dashboard dashboard = new Dashboard();
-        dashboard.setTitle(title);
-        return doPost("/api/dashboard", dashboard, Dashboard.class);
-    }
-
-    private Dashboard createDashboard() {
-        String title = "My dashboard";
         Dashboard dashboard = new Dashboard();
         dashboard.setTitle(title);
         return doPost("/api/dashboard", dashboard, Dashboard.class);
