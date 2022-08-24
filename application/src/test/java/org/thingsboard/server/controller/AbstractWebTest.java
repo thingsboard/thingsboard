@@ -27,6 +27,7 @@ import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
 import lombok.extern.slf4j.Slf4j;
 import org.hamcrest.Matcher;
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -34,6 +35,7 @@ import org.junit.Rule;
 import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
+import org.mockito.BDDMockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -67,6 +69,7 @@ import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadCo
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
@@ -74,20 +77,25 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.config.ThingsboardSecurityConfiguration;
+import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.service.mail.TestMailService;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -656,7 +664,11 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     protected <T> T readResponse(ResultActions result, TypeReference<T> type) throws Exception {
-        byte[] content = result.andReturn().getResponse().getContentAsByteArray();
+        return readResponse(result.andReturn(), type);
+    }
+
+    protected <T> T readResponse(MvcResult result, TypeReference<T> type) throws Exception {
+        byte[] content = result.getResponse().getContentAsByteArray();
         return mapper.readerFor(type).readValue(content);
     }
 
@@ -699,4 +711,49 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return Futures.allAsList(futures);
     }
 
+    protected void tesEntityDaoWithRelationsOk(EntityId entityIdFrom, EntityId entityTo, String urlDelete) throws Exception {
+        createEntityRelation(entityIdFrom, entityTo, "TEST_TYPE");
+        assertThat(getRelationsTo(entityTo)).hasSize(1);
+
+        doDelete(urlDelete).andExpect(status().isOk());
+
+        assertThat(getRelationsTo(entityTo)).hasSize(0);
+    }
+
+    protected <T> void tesEntityDaoWithRelationsTransactionalException(Dao<T> dao, EntityId entityIdFrom, EntityId entityTo,
+                                                                       String urlDelete) throws Exception {
+        entityDaoRemoveByIdWithException (dao);
+        createEntityRelation(entityIdFrom, entityTo, "TEST_TRANSACTIONAL_TYPE");
+        assertThat(getRelationsTo(entityTo)).hasSize(1);
+
+        doDelete(urlDelete)
+                .andExpect(status().isInternalServerError());
+
+        assertThat(getRelationsTo(entityTo)).hasSize(1);
+    }
+
+    protected <T> void entityDaoRemoveByIdWithException (Dao<T> dao) {
+        BDDMockito.willThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT"))
+                .given(dao).removeById(any(), any());
+    }
+
+    protected <T> void afterTestEntityDaoRemoveByIdWithException (Dao<T> dao) {
+        BDDMockito.willCallRealMethod().given(dao).removeById(any(), any());
+    }
+
+    protected void createEntityRelation(EntityId entityIdFrom, EntityId entityIdTo, String typeRelation) throws Exception {
+        EntityRelation relation = new EntityRelation(entityIdFrom, entityIdTo, typeRelation);
+        doPost("/api/relation", relation);
+    }
+
+    protected List<EntityRelation> getRelationsTo(EntityId entityId) throws Exception {
+        String url = String.format("/api/relations?toId=%s&toType=%s", entityId.getId(), entityId.getEntityType().name());
+        MvcResult mvcResult = doGet(url).andReturn();
+
+        switch (mvcResult.getResponse().getStatus()) {
+            case 200: return readResponse(mvcResult, new TypeReference<>() {});
+            case 404: return Collections.emptyList();
+        }
+        throw new AssertionError("Unexpected status " + mvcResult.getResponse().getStatus());
+    }
 }
