@@ -17,6 +17,8 @@
 @use '~@angular/material' as mat;
 @import '../theme.scss';
 
+$tb-warn: mat.get-color-from-palette(map-get($tb-theme, warn), text);
+
 :host {
   .tb-layout-fixed-container {
     width: 100%;
@@ -112,9 +114,9 @@
           font-size: 14px;
 
           &:invalid {
-            outline: 2px solid rgb(221, 44, 0);
+            outline: 2px solid $tb-warn;
             border: 1px solid transparent;
-            background-color: rgba(255, 5, 5, 0.2);
+            background-color: rgba($tb-warn, 0.2);
           }
         }
       }
@@ -164,14 +166,14 @@
 ::ng-deep {
   /* Alarm tooltip with side-to-side movement */
   .tb-layout-error-tooltip-right {
-    background-color: rgb(221, 44, 0) !important;
+    background-color: $tb-warn !important;
     margin: 5px 0 0 105px;
     width: 160px;
     text-align: center;
   }
 
   .tb-layout-error-tooltip-main {
-    background-color: rgb(221, 44, 0) !important;
+    background-color: $tb-warn !important;
     margin: 5px 105px 0 0;
     width: 160px;
     text-align: center;
