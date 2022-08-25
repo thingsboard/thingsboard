@@ -61,12 +61,12 @@ public class TbSplitArrayMsgNode implements TbNode {
             ArrayNode data = (ArrayNode) jsonNode;
             List<TbMsg> messages = new ArrayList<>();
             data.forEach(msgNode -> {
-                messages.add(createNewMsg(msg, msgNode));
+                messages.add(createMsg(msg, msgNode, data.size() > 1));
             });
-            ctx.ack(msg);
             if (messages.size() == 1) {
                 ctx.tellSuccess(messages.get(0));
             } else {
+                ctx.ack(msg);
                 for (TbMsg newMsg : messages) {
                     ctx.tellSuccess(newMsg);
                 }
@@ -76,8 +76,12 @@ public class TbSplitArrayMsgNode implements TbNode {
         }
     }
 
-    private TbMsg createNewMsg(TbMsg msg, JsonNode msgNode) {
-        return TbMsg.newMsg(msg.getQueueName(), msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(msgNode));
+    private TbMsg createMsg(TbMsg msg, JsonNode msgNode, boolean newMessage) {
+        if (newMessage) {
+            return TbMsg.newMsg(msg.getQueueName(), msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(msgNode));
+        } else {
+            return TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(msgNode));
+        }
     }
 
     @Override
@@ -85,3 +89,4 @@ public class TbSplitArrayMsgNode implements TbNode {
 
     }
 }
+
