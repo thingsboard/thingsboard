@@ -149,6 +149,7 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     }
 
     @Override
+    @Transactional
     public void deleteDeviceProfile(TenantId tenantId, DeviceProfileId deviceProfileId) {
         log.trace("Executing deleteDeviceProfile [{}]", deviceProfileId);
         Validator.validateId(deviceProfileId, INCORRECT_DEVICE_PROFILE_ID + deviceProfileId);
@@ -159,10 +160,10 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
         this.removeDeviceProfile(tenantId, deviceProfile);
     }
 
-    @Transactional
-    void removeDeviceProfile(TenantId tenantId, DeviceProfile deviceProfile) {
+    private void removeDeviceProfile(TenantId tenantId, DeviceProfile deviceProfile) {
         DeviceProfileId deviceProfileId = deviceProfile.getId();
         try {
+            deleteEntityRelations(tenantId, deviceProfileId);
             deviceProfileDao.removeById(tenantId, deviceProfileId.getId());
             publishEvictEvent(new DeviceProfileEvictEvent(deviceProfile.getTenantId(), deviceProfile.getName(),
                     null, deviceProfile.getId(), deviceProfile.isDefault()));
@@ -174,7 +175,6 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
                 throw t;
             }
         }
-        deleteEntityRelations(tenantId, deviceProfileId);
     }
 
     @Override

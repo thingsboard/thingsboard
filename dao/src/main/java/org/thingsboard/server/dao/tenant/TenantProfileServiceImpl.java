@@ -19,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -111,8 +110,7 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
         this.removeTenantProfile(tenantId, tenantProfileId, false);
     }
 
-    @Transactional
-    void removeTenantProfile(TenantId tenantId, TenantProfileId tenantProfileId, boolean isDefault) {
+    private void removeTenantProfile(TenantId tenantId, TenantProfileId tenantProfileId, boolean isDefault) {
         try {
             tenantProfileDao.removeById(tenantId, tenantProfileId.getId());
         } catch (Exception t) {

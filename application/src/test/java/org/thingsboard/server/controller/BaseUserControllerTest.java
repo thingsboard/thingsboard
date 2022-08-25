@@ -18,9 +18,11 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpHeaders;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.StringUtils;
@@ -29,10 +31,12 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.user.UserDao;
 import org.thingsboard.server.service.mail.TestMailService;
 
 import java.util.ArrayList;
@@ -52,6 +56,16 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
     private IdComparator<User> idComparator = new IdComparator<>();
 
     private CustomerId customerNUULId = (CustomerId) createEntityId_NULL_UUID(new Customer());
+
+    @SpyBean
+    private UserDao userDao;
+
+    @After
+    public void afterTest() throws Exception {
+        loginSysAdmin();
+
+        afterTestEntityDaoRemoveByIdWithException(userDao);
+    }
 
     @Test
     public void testSaveUser() throws Exception {
@@ -687,5 +701,30 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
         doDelete("/api/customer/" + customerId.getId().toString())
                 .andExpect(status().isOk());
+    }
+
+
+    @Test
+    public void testDeleteUserWithDeleteRelationsOk() throws Exception {
+        UserId userId = createUser().getId();
+        testEntityDaoWithRelationsOk(tenantId, userId, "/api/user/" + userId);
+    }
+
+    @Test
+    public void testDeleteUserExceptionWithRelationsTransactional() throws Exception {
+        UserId userId = createUser().getId();
+        testEntityDaoWithRelationsTransactionalException(userDao, tenantId, userId, "/api/user/" + userId);
+    }
+
+    private User createUser() throws Exception {
+        loginSysAdmin();
+        String email = "tenant2@thingsboard.org";
+        User user = new User();
+        user.setAuthority(Authority.TENANT_ADMIN);
+        user.setTenantId(tenantId);
+        user.setEmail(email);
+        user.setFirstName("Joe");
+        user.setLastName("Downs");
+        return doPost("/api/user", user, User.class);
     }
 }

@@ -50,6 +50,7 @@ import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.dao.device.DeviceDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -82,6 +83,10 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
     @SpyBean
     private GatewayNotificationsService gatewayNotificationsService;
 
+    @SpyBean
+    private DeviceDao deviceDao;
+
+
     @Before
     public void beforeTest() throws Exception {
         executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(8, getClass()));
@@ -108,6 +113,8 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         executor.shutdownNow();
 
         loginSysAdmin();
+
+        afterTestEntityDaoRemoveByIdWithException (deviceDao);
 
         doDelete("/api/tenant/" + savedTenant.getId().getId())
                 .andExpect(status().isOk());
@@ -1202,5 +1209,24 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
 
     protected void testNotificationDeleteGatewayNever() {
         Mockito.verify(gatewayNotificationsService, never()).onDeviceDeleted(Mockito.any(Device.class));
+    }
+
+    @Test
+    public void testDeleteDashboardWithDeleteRelationsOk() throws Exception {
+        DeviceId deviceId = createDevice("Device for Test WithRelationsOk").getId();
+        testEntityDaoWithRelationsOk(savedTenant.getId(), deviceId, "/api/device/" + deviceId);
+    }
+
+    @Test
+    public void testDeleteDeviceExceptionWithRelationsTransactional() throws Exception {
+        DeviceId deviceId = createDevice("Device for Test WithRelations Transactional Exception").getId();
+        testEntityDaoWithRelationsTransactionalException(deviceDao, savedTenant.getId(), deviceId, "/api/device/" + deviceId);
+    }
+
+    private Device createDevice(String name) {
+        Device device = new Device();
+        device.setName(name);
+        device.setType("default");
+        return doPost("/api/device", device, Device.class);
     }
 }

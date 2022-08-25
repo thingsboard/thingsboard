@@ -473,13 +473,13 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
     }
 
     @Test
-    public void testDeleteDashboardWithRelationsOk() throws Exception {
+    public void testDeleteDashboardWithDeleteRelationsOk() throws Exception {
         DashboardId dashboardId = createDashboard("Dashboard for Test WithRelationsOk").getId();
         testEntityDaoWithRelationsOk(savedTenant.getId(), dashboardId, "/api/dashboard/" + dashboardId);
     }
 
     @Test
-    public void testDeleteDashboardWithRelationsTransactionalException() throws Exception {
+    public void testDeleteDashboardExceptionWithRelationsTransactional() throws Exception {
         DashboardId dashboardId = createDashboard("Dashboard for Test WithRelations Transactional Exception").getId();
         testEntityDaoWithRelationsTransactionalException(dashboardDao, savedTenant.getId(), dashboardId, "/api/dashboard/" + dashboardId);
     }
