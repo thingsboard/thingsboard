@@ -45,15 +45,17 @@ import java.util.stream.Collectors;
 public class TbMsgDeleteAttributes implements TbNode {
 
     TbMsgDeleteAttributesConfiguration config;
+    List<String> keys;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgDeleteAttributesConfiguration.class);
+        this.keys = config.getKeys();
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        List<String> keysToDelete = config.getKeys().stream()
+        List<String> keysToDelete = keys.stream()
                 .map(keyPattern -> TbNodeUtils.processPattern(keyPattern, msg))
                 .distinct()
                 .filter(StringUtils::isNotBlank)
