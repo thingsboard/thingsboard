@@ -17,8 +17,10 @@ package org.thingsboard.server.common.data.device.data;
 
 import lombok.Data;
 
+import java.io.Serializable;
+
 @Data
-public class PowerSavingConfiguration {
+public class PowerSavingConfiguration implements Serializable {
     private PowerMode powerMode;
     private Long psmActivityTimer;
     private Long edrxCycle;
