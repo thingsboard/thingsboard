@@ -32,7 +32,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 
@@ -51,49 +51,58 @@ import java.util.regex.Pattern;
 public class TbDeleteKeysNode implements TbNode {
 
     TbDeleteKeysNodeConfiguration config;
+    List<Pattern> patternKeys = new ArrayList<>();
+    boolean fromMetadata;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbDeleteKeysNodeConfiguration.class);
+        this.fromMetadata = config.isFromMetadata();
+        config.getKeys().forEach(key -> {
+            this.patternKeys.add(Pattern.compile(key));
+        });
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        Set<String> keys = config.getKeys();
         TbMsgMetaData metaData = msg.getMetaData();
         String msgData = msg.getData();
-        if (config.isFromMetadata()) {
+        List<String> keysToDelete = new ArrayList<>();
+        if (fromMetadata) {
             Map<String, String> metaDataMap = metaData.getData();
-            List<String> keysToDelete = new ArrayList<>();
-            keys.forEach(key -> {
-                Pattern pattern = Pattern.compile(key);
-                metaDataMap.forEach((keyMetaData, valueMetaData) -> {
-                    if (pattern.matcher(keyMetaData).matches()) {
-                        keysToDelete.add(keyMetaData);
-                    }
-                });
+            metaDataMap.forEach((keyMetaData, valueMetaData) -> {
+                if (checkKey(keyMetaData)) {
+                    keysToDelete.add(keyMetaData);
+                }
             });
             keysToDelete.forEach(key -> metaDataMap.remove(key));
             metaData = new TbMsgMetaData(metaDataMap);
         } else {
             JsonNode dataNode = JacksonUtil.toJsonNode(msgData);
             if (dataNode.isObject()) {
-                List<String> keysToDelete = new ArrayList<>();
                 ObjectNode msgDataObject = (ObjectNode) dataNode;
-                keys.forEach(key -> {
-                    Pattern pattern = Pattern.compile(key);
-                    msgDataObject.fields().forEachRemaining(entry -> {
-                        String keyData = entry.getKey();
-                        if (pattern.matcher(keyData).matches()) {
-                            keysToDelete.add(keyData);
-                        }
-                    });
+                dataNode.fields().forEachRemaining(entry -> {
+                    String keyData = entry.getKey();
+                    if (checkKey(keyData)) {
+                        keysToDelete.add(keyData);
+                    }
                 });
                 msgDataObject.remove(keysToDelete);
                 msgData = JacksonUtil.toString(msgDataObject);
             }
         }
-        ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), metaData, msgData));
+        if (keysToDelete.isEmpty()) {
+            ctx.tellSuccess(msg);
+        } else {
+            ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), metaData, msgData));
+        }
+    }
+
+    boolean checkKey(String key) {
+        Optional<Pattern> currentPattern = patternKeys.stream()
+                .filter(pattern -> pattern.matcher(key).matches())
+                .findFirst();
+        return currentPattern.isPresent();
     }
 
     @Override
@@ -101,4 +110,3 @@ public class TbDeleteKeysNode implements TbNode {
 
     }
 }
-

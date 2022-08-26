@@ -75,6 +75,7 @@ public class TbDeleteKeysNodeTest {
     @Test
     void givenDefaultConfig_whenInit_thenOK() {
         assertThat(node.config).isEqualTo(config);
+        assertThat(node.patternKeys.size()).isEqualTo(config.getKeys().size());
     }
 
     @Test
@@ -150,4 +151,5 @@ public class TbDeleteKeysNodeTest {
         );
         return TbMsg.newMsg("POST_ATTRIBUTES_REQUEST", entityId, new TbMsgMetaData(mdMap), data, callback);
     }
+
 }

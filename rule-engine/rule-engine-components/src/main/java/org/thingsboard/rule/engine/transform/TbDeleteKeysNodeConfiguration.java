@@ -19,7 +19,6 @@ import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 
 @Data
@@ -37,6 +36,3 @@ public class TbDeleteKeysNodeConfiguration implements NodeConfiguration<TbDelete
     }
 
 }
-
-
-
