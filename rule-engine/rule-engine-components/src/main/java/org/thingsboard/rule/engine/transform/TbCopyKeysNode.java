@@ -54,10 +54,12 @@ public class TbCopyKeysNode implements TbNode {
 
     TbCopyKeysNodeConfiguration config;
     List<Pattern> patternKeys = new ArrayList<>();
+    boolean fromMetadata;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbCopyKeysNodeConfiguration.class);
+        this.fromMetadata = config.isFromMetadata();
         config.getKeys().forEach(key -> {
             this.patternKeys.add(Pattern.compile(key));
         });
@@ -70,7 +72,7 @@ public class TbCopyKeysNode implements TbNode {
         AtomicBoolean msgChanged = new AtomicBoolean(false);
         JsonNode dataNode = JacksonUtil.toJsonNode(msgData);
         if (dataNode.isObject()) {
-            if (config.isFromMetadata()) {
+            if (fromMetadata) {
                 ObjectNode msgDataNode = (ObjectNode) dataNode;
                 Map<String, String> metaDataMap = metaData.getData();
                 metaDataMap.forEach((keyMetaData, valueMetaData) -> {
