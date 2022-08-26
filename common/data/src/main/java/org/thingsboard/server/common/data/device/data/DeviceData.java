@@ -19,9 +19,11 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import java.io.Serializable;
+
 @ApiModel
 @Data
-public class DeviceData {
+public class DeviceData implements Serializable {
 
     @ApiModelProperty(position = 1, value = "Device configuration for device profile type. DEFAULT is only supported value for now")
     private DeviceConfiguration configuration;
