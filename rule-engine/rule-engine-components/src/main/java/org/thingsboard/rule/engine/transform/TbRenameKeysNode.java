@@ -31,6 +31,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 @RuleNode(
@@ -48,21 +49,26 @@ import java.util.concurrent.ExecutionException;
 public class TbRenameKeysNode implements TbNode {
 
     TbRenameKeysNodeConfiguration config;
+    Map<String, String> renameKeysMapping;
+    boolean fromMetadata;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbRenameKeysNodeConfiguration.class);
+        this.renameKeysMapping = config.getRenameKeysMapping();
+        this.fromMetadata = config.isFromMetadata();
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        Map<String, String> renameKeysMapping = config.getRenameKeysMapping();
         TbMsgMetaData metaData = msg.getMetaData();
         String data = msg.getData();
-        if (config.isFromMetadata()) {
+        AtomicBoolean msgChanged = new AtomicBoolean(false);
+        if (fromMetadata) {
             Map<String, String> metaDataMap = metaData.getData();
             renameKeysMapping.forEach((nameKey, newNameKey) -> {
                 if (metaDataMap.containsKey(nameKey)) {
+                    msgChanged.set(true);
                     metaDataMap.put(newNameKey, metaDataMap.get(nameKey));
                     metaDataMap.remove(nameKey);
                 }
@@ -74,17 +80,19 @@ public class TbRenameKeysNode implements TbNode {
                 ObjectNode msgData = (ObjectNode) dataNode;
                 renameKeysMapping.forEach((nameKey, newNameKey) -> {
                     if (msgData.has(nameKey)) {
+                        msgChanged.set(true);
                         msgData.set(newNameKey, msgData.get(nameKey));
                         msgData.remove(nameKey);
                     }
                 });
                 data = JacksonUtil.toString(msgData);
-            } else {
-                ctx.tellFailure(msg, new RuntimeException("Msg data is not a JSON Object!"));
-                return;
             }
         }
-        ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), metaData, data));
+        if (msgChanged.get()) {
+            ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), metaData, data));
+        } else {
+            ctx.tellSuccess(msg);
+        }
     }
 
     @Override

@@ -36,6 +36,3 @@ public class TbRenameKeysNodeConfiguration implements NodeConfiguration<TbRename
     }
 
 }
-
-
-
