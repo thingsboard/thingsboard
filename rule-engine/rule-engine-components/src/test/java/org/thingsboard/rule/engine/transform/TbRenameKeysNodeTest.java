@@ -30,7 +30,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
 

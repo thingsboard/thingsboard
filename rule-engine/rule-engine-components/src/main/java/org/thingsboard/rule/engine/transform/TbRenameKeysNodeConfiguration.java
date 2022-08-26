@@ -18,7 +18,6 @@ package org.thingsboard.rule.engine.transform;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
-import java.util.Collections;
 import java.util.Map;
 
 @Data
