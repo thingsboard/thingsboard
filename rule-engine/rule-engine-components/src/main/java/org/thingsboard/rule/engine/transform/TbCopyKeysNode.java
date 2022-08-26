@@ -29,9 +29,12 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 @Slf4j
@@ -50,47 +53,55 @@ import java.util.regex.Pattern;
 public class TbCopyKeysNode implements TbNode {
 
     TbCopyKeysNodeConfiguration config;
+    List<Pattern> patternKeys = new ArrayList<>();
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbCopyKeysNodeConfiguration.class);
+        config.getKeys().forEach(key -> {
+            this.patternKeys.add(Pattern.compile(key));
+        });
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        Set<String> keys = config.getKeys();
         TbMsgMetaData metaData = msg.getMetaData();
         String msgData = msg.getData();
+        AtomicBoolean msgChanged = new AtomicBoolean(false);
         JsonNode dataNode = JacksonUtil.toJsonNode(msgData);
-        if (!dataNode.isObject()) {
-            ctx.tellFailure(msg, new RuntimeException("Msg data is not a JSON Object!"));
-            return;
-        }
-
-        if (config.isFromMetadata()) {
-            ObjectNode msgDataNode = (ObjectNode) dataNode;
-            Map<String, String> metaDataMap = metaData.getData();
-            keys.forEach(key -> {
-                Pattern pattern = Pattern.compile(key);
+        if (dataNode.isObject()) {
+            if (config.isFromMetadata()) {
+                ObjectNode msgDataNode = (ObjectNode) dataNode;
+                Map<String, String> metaDataMap = metaData.getData();
                 metaDataMap.forEach((keyMetaData, valueMetaData) -> {
-                    if (pattern.matcher(keyMetaData).matches()) {
+                    if (checkKey(keyMetaData)) {
+                        msgChanged.set(true);
                         msgDataNode.put(keyMetaData, valueMetaData);
                     }
                 });
-            });
-            msgData = JacksonUtil.toString(msgDataNode);
-        } else {
-            keys.forEach(key -> {
-                Pattern pattern = Pattern.compile(key);
+                msgData = JacksonUtil.toString(msgDataNode);
+            } else {
                 dataNode.fields().forEachRemaining(entry -> {
                     String keyData = entry.getKey();
-                    if (pattern.matcher(keyData).matches()) {
+                    if (checkKey(keyData)) {
+                        msgChanged.set(true);
                         metaData.putValue(keyData, JacksonUtil.toString(entry.getValue()));
                     }
                 });
-            });
+            }
         }
-        ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), metaData, msgData));
+        if (msgChanged.get()) {
+            ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), metaData, msgData));
+        } else {
+            ctx.tellSuccess(msg);
+        }
+    }
+
+    boolean checkKey(String key) {
+        Optional<Pattern> currentPattern = patternKeys.stream()
+                .filter(pattern -> pattern.matcher(key).matches())
+                .findFirst();
+        return currentPattern.isPresent();
     }
 
     @Override
@@ -98,4 +109,3 @@ public class TbCopyKeysNode implements TbNode {
 
     }
 }
-

@@ -75,6 +75,7 @@ public class TbCopyKeysNodeTest {
     @Test
     void givenDefaultConfig_whenInit_thenOK() {
         assertThat(node.config).isEqualTo(config);
+        assertThat(node.patternKeys.size()).isEqualTo(config.getKeys().size());
     }
 
     @Test
@@ -143,16 +144,19 @@ public class TbCopyKeysNodeTest {
     }
 
     @Test
-    void givenMsgDataNotJSONObject_whenOnMsg_thenTellFailure() throws Exception {
+    void givenMsgDataNotJSONObject_whenOnMsg_thenTVerifyOutput() throws Exception {
         String data = "[]";
-        node.onMsg(ctx, getTbMsg(deviceId, data));
+        TbMsg msg = getTbMsg(deviceId, data);
+        node.onMsg(ctx, msg);
 
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        ArgumentCaptor<Exception> exceptionCaptor = ArgumentCaptor.forClass(Exception.class);
-        verify(ctx, never()).tellSuccess(any());
-        verify(ctx, times(1)).tellFailure(newMsgCaptor.capture(), exceptionCaptor.capture());
+        verify(ctx, times(1)).tellSuccess(newMsgCaptor.capture());
+        verify(ctx, never()).tellFailure(any(), any());
 
-        assertThat(exceptionCaptor.getValue()).isInstanceOf(RuntimeException.class);
+        TbMsg newMsg = newMsgCaptor.getValue();
+        assertThat(newMsg).isNotNull();
+
+        assertThat(newMsg).isSameAs(msg);
     }
 
     private TbMsg getTbMsg(EntityId entityId, String data) {
@@ -164,4 +168,5 @@ public class TbCopyKeysNodeTest {
         );
         return TbMsg.newMsg("POST_ATTRIBUTES_REQUEST", entityId, new TbMsgMetaData(mdMap), data, callback);
     }
+
 }
