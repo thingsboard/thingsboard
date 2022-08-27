@@ -732,12 +732,12 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         assertThat(findRelationsByTo(entityTo)).hasSize(1);
     }
 
-    protected <T> void entityDaoRemoveByIdWithException (Dao<T> dao) {
-        BDDMockito.willThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT"))
-                .given(dao).removeById(any(), any());
+    protected <T> void entityDaoRemoveByIdWithException (Dao<T> dao) throws Exception {
+            BDDMockito.willThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT"))
+                    .given(dao).removeById(any(), any());
     }
 
-    protected <T> void afterTestEntityDaoRemoveByIdWithException (Dao<T> dao) {
+    protected <T> void afterTestEntityDaoRemoveByIdWithException (Dao<T> dao) throws Exception {
         BDDMockito.willCallRealMethod().given(dao).removeById(any(), any());
     }
 
