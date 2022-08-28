@@ -91,7 +91,7 @@ public class JpaAuditLogDaoTest extends AbstractJpaDaoTest {
 
     @After
     public void tearDown() {
-        //test cleanUp by avgCreatedTime
+        //test cleanUp by middleCreatedTime
         assertEquals(getNeedDeleted(), auditLogDao.cleanUp(middleCreatedTime));
         clearAuditLogs();
     }
