@@ -55,17 +55,26 @@ public class JpaAuditLogDaoTest extends AbstractJpaDaoTest {
     @Autowired
     private AuditLogDao auditLogDao;
 
+    Long middleCreatedTime;
+
     @Before
     public void setUp() {
         setUpIds();
+        middleCreatedTime = 0L;
+        long minCreatedTime = Long.MAX_VALUE;
+        long maxCreatedTime = Long.MIN_VALUE;
         for (int i = 0; i < COUNT_AUDIT; i++) {
             ActionType actionType = i % 2 == 0 ? ActionType.ADDED : ActionType.DELETED;
             CustomerId customerId = i % 4 == 0 ? customerId1 : customerId2;
             UserId userId = i % 6 == 0 ? userId1 : userId2;
             EntityId entityId = i % 10 == 0 ? entityId1 : entityId2;
-            auditLogList.add(createAuditLog(i, actionType, customerId, userId, entityId));
+            AuditLog auditLog = createAuditLog(i, actionType, customerId, userId, entityId);
+            minCreatedTime = Math.min(minCreatedTime, auditLog.getCreatedTime());
+            maxCreatedTime = Math.max(maxCreatedTime, auditLog.getCreatedTime());
+            auditLogList.add(auditLog);
         }
         assertEquals(auditLogList.size(), auditLogDao.find(TenantId.fromUUID(tenantId)).size());
+        middleCreatedTime = minCreatedTime / 2 + maxCreatedTime / 2;
         neededFoundedAuditLog = auditLogList.get(0);
         assertNotNull(neededFoundedAuditLog);
     }
@@ -82,7 +91,20 @@ public class JpaAuditLogDaoTest extends AbstractJpaDaoTest {
 
     @After
     public void tearDown() {
-        assertEquals(COUNT_AUDIT, auditLogDao.cleanUp(Long.MAX_VALUE));
+        //test cleanUp by avgCreatedTime
+        assertEquals(getNeedDeleted(), auditLogDao.cleanUp(middleCreatedTime));
+        clearAuditLogs();
+    }
+
+    private Long getNeedDeleted() {
+        return auditLogList.stream().filter(auditLog -> auditLog.getCreatedTime() < middleCreatedTime).count();
+    }
+
+    private void clearAuditLogs() {
+        auditLogList.stream()
+                .filter(auditLog -> auditLog.getCreatedTime() >= middleCreatedTime)
+                .forEach(auditLog -> auditLogDao.removeById(TenantId.fromUUID(tenantId), auditLog.getUuidId()));
+        auditLogList.clear();
     }
 
     @Test
@@ -90,7 +112,7 @@ public class JpaAuditLogDaoTest extends AbstractJpaDaoTest {
         AuditLog foundedAuditLogById = auditLogDao.findById(TenantId.fromUUID(tenantId), neededFoundedAuditLog.getUuidId());
         checkFoundedAuditLog(foundedAuditLogById);
     }
-    
+
     @Test
     public void testFindByIdAsync() throws ExecutionException, InterruptedException, TimeoutException {
         AuditLog foundedAuditLogById = auditLogDao
