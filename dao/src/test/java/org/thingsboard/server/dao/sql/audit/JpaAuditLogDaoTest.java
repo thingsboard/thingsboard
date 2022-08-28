@@ -42,6 +42,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 public class JpaAuditLogDaoTest extends AbstractJpaDaoTest {
+    public static final Long COUNT_AUDIT = 60L;
     List<AuditLog> auditLogList = new ArrayList<>();
     UUID tenantId;
     CustomerId customerId1;
@@ -57,7 +58,7 @@ public class JpaAuditLogDaoTest extends AbstractJpaDaoTest {
     @Before
     public void setUp() {
         setUpIds();
-        for (int i = 0; i < 60; i++) {
+        for (int i = 0; i < COUNT_AUDIT; i++) {
             ActionType actionType = i % 2 == 0 ? ActionType.ADDED : ActionType.DELETED;
             CustomerId customerId = i % 4 == 0 ? customerId1 : customerId2;
             UserId userId = i % 6 == 0 ? userId1 : userId2;
@@ -81,10 +82,7 @@ public class JpaAuditLogDaoTest extends AbstractJpaDaoTest {
 
     @After
     public void tearDown() {
-        for (AuditLog auditLog : auditLogList) {
-            auditLogDao.removeById(TenantId.fromUUID(tenantId), auditLog.getUuidId());
-        }
-        auditLogList.clear();
+        assertEquals(COUNT_AUDIT, auditLogDao.cleanUp(Long.MAX_VALUE));
     }
 
     @Test

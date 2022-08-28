@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.dao.model.sql.AuditLogEntity;
@@ -106,5 +107,11 @@ public interface AuditLogRepository extends JpaRepository<AuditLogEntity, UUID> 
                                                           @Param("endTime") Long endTime,
                                                           @Param("actionTypes") List<ActionType> actionTypes,
                                                           Pageable pageable);
+
+    @Transactional(timeout = 3600) // 1h in sec
+    @Query(value = "WITH deleted AS (DELETE FROM audit_log " +
+            "WHERE created_time < :ttl RETURNING *) SELECT count(*) FROM deleted",
+            nativeQuery = true)
+    Long cleanUp(@Param("ttl") Long ttl);
 
 }

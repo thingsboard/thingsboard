@@ -113,4 +113,9 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
                         actionTypes,
                         DaoUtil.toPageable(pageLink)));
     }
+
+    @Override
+    public Long cleanUp(long ttl) {
+        return auditLogRepository.cleanUp(ttl);
+    }
 }

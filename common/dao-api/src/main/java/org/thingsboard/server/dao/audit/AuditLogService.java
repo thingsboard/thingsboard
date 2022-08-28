@@ -47,4 +47,6 @@ public interface AuditLogService {
             E entity,
             ActionType actionType,
             Exception e, Object... additionalInfo);
+
+    long cleanUp(long ttl);
 }

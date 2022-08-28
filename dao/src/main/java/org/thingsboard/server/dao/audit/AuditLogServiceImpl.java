@@ -25,7 +25,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.common.util.JacksonUtil;
@@ -55,6 +54,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.service.Validator.validateEntityId;
@@ -155,6 +155,18 @@ public class AuditLogServiceImpl implements AuditLogService {
         } else {
             return null;
         }
+    }
+
+    @Override
+    public long cleanUp(long ttl) {
+        log.info("Going to cleanUp audit log data using {} ttl", ttl);
+        Long deleted = auditLogDao.cleanUp(getExpirationTime(ttl));
+        log.info("Total audit log removed by TTL: {}", deleted);
+        return deleted;
+    }
+
+    private long getExpirationTime(long ttl) {
+        return System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(ttl);
     }
 
     private <E extends HasName, I extends EntityId> JsonNode constructActionData(I entityId, E entity,
