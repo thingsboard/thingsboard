@@ -16,10 +16,10 @@ public class AuditLogCleanUpService extends AbstractCleanUpService{
     public static final String RANDOM_DELAY_INTERVAL_MS_EXPRESSION =
             "#{T(org.apache.commons.lang3.RandomUtils).nextLong(0, ${sql.ttl.audit_log.execution_interval_ms})}";
 
-    @Value("${sql.ttl.audit_log.enabled}")
+    @Value("${sql.ttl.audit_log.enabled:false}")
     private boolean ttlTaskExecutionEnabled;
 
-    @Value("${sql.ttl.audit_log.events_ttl}")
+    @Value("${sql.ttl.audit_log.events_ttl:0}")
     private long ttl;
 
     private final AuditLogService auditLogService;
