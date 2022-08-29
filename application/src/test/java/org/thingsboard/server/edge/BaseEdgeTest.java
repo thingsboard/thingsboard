@@ -57,6 +57,9 @@ import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
+import org.thingsboard.server.common.data.device.data.DeviceData;
+import org.thingsboard.server.common.data.device.data.MqttDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.PowerMode;
 import org.thingsboard.server.common.data.device.data.PowerSavingConfiguration;
 import org.thingsboard.server.common.data.device.profile.AlarmCondition;
@@ -162,6 +165,7 @@ import org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -2152,6 +2156,14 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
 
         Device savedDevice = saveDevice(StringUtils.randomAlphanumeric(15), thermostatDeviceProfile.getName());
         savedDevice.setFirmwareId(firmwareOtaPackageInfo.getId());
+
+        DeviceData deviceData = new DeviceData();
+        deviceData.setConfiguration(new DefaultDeviceConfiguration());
+        MqttDeviceTransportConfiguration transportConfiguration = new MqttDeviceTransportConfiguration();
+        transportConfiguration.getProperties().put("topic", "tb_rule_engine.thermostat");
+        deviceData.setTransportConfiguration(transportConfiguration);
+        savedDevice.setDeviceData(deviceData);
+
         savedDevice = doPost("/api/device", savedDevice, Device.class);
 
         // wait until device UPDATED event is sent to edge notification service
@@ -2171,6 +2183,14 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(deviceUpdateMsg.getType(), savedDevice.getType());
         Assert.assertEquals(firmwareOtaPackageInfo.getUuidId().getMostSignificantBits(), deviceUpdateMsg.getFirmwareIdMSB());
         Assert.assertEquals(firmwareOtaPackageInfo.getUuidId().getLeastSignificantBits(), deviceUpdateMsg.getFirmwareIdLSB());
+        Optional<DeviceData> deviceDataOpt =
+                dataDecodingEncodingService.decode(deviceUpdateMsg.getDeviceDataBytes().toByteArray());
+        Assert.assertTrue(deviceDataOpt.isPresent());
+        deviceData = deviceDataOpt.get();
+        Assert.assertTrue(deviceData.getTransportConfiguration() instanceof MqttDeviceTransportConfiguration);
+        MqttDeviceTransportConfiguration mqttDeviceTransportConfiguration =
+                (MqttDeviceTransportConfiguration) deviceData.getTransportConfiguration();
+        Assert.assertEquals("tb_rule_engine.thermostat", mqttDeviceTransportConfiguration.getProperties().get("topic"));
         return savedDevice;
     }
 
