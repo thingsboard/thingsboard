@@ -300,6 +300,10 @@ sql:
     rpc:
       enabled: "${SQL_TTL_RPC_ENABLED:true}"
       checking_interval: "${SQL_RPC_TTL_CHECKING_INTERVAL:7200000}" # Number of milliseconds. The current value corresponds to two hours
+    audit_log:
+      enabled: "${SQL_TTL_AUDIT_LOG_ENABLED:true}"
+      execution_interval_ms: "${SQL_TTL_AUDIT_LOG_EXECUTION_INTERVAL:86400000}" # Number of milliseconds. The current value corresponds to one day
+      events_ttl: "${SQL_TTL_AUDIT_LOG_EVENTS_TTL:2628000}" # Number of seconds. The current value corresponds to one month
   relations:
     max_level: "${SQL_RELATIONS_MAX_LEVEL:50}" # //This value has to be reasonable small to prevent infinite recursion as early as possible
 
