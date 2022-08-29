@@ -75,6 +75,11 @@ import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTrans
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.lwm2m.OtherConfiguration;
+import org.thingsboard.server.common.data.device.profile.lwm2m.TelemetryMappingConfiguration;
+import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.AbstractLwM2MBootstrapServerCredential;
+import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MBootstrapServerCredential;
+import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.NoSecLwM2MBootstrapServerCredential;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -151,7 +156,9 @@ import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetTypeUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetsBundleUpdateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.transport.AbstractTransportIntegrationTest;
+import org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -184,6 +191,9 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
 
     @Autowired
     private EdgeEventService edgeEventService;
+
+    @Autowired
+    private DataDecodingEncodingService dataDecodingEncodingService;
 
     @Autowired
     private TbClusterService clusterService;
@@ -462,7 +472,31 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(deviceProfileUpdateMsg.getIdLSB(), deviceProfile.getUuidId().getLeastSignificantBits());
         Assert.assertEquals(DeviceTransportType.SNMP.name(), deviceProfileUpdateMsg.getTransportType());
 
-        // TODO: add custom validation
+        Optional<DeviceProfileData> deviceProfileDataOpt =
+                dataDecodingEncodingService.decode(deviceProfileUpdateMsg.getProfileDataBytes().toByteArray());
+
+        Assert.assertTrue(deviceProfileDataOpt.isPresent());
+        DeviceProfileData deviceProfileData = deviceProfileDataOpt.get();
+
+        Assert.assertTrue(deviceProfileData.getTransportConfiguration() instanceof SnmpDeviceProfileTransportConfiguration);
+        SnmpDeviceProfileTransportConfiguration transportConfiguration =
+                (SnmpDeviceProfileTransportConfiguration) deviceProfileData.getTransportConfiguration();
+        Assert.assertEquals(Integer.valueOf(1000), transportConfiguration.getTimeoutMs());
+        Assert.assertEquals(Integer.valueOf(3), transportConfiguration.getRetries());
+
+        Assert.assertFalse(transportConfiguration.getCommunicationConfigs().isEmpty());
+        SnmpCommunicationConfig communicationConfig = transportConfiguration.getCommunicationConfigs().get(0);
+        Assert.assertTrue(communicationConfig instanceof TelemetryQueryingSnmpCommunicationConfig);
+        TelemetryQueryingSnmpCommunicationConfig snmpCommunicationConfig =
+                (TelemetryQueryingSnmpCommunicationConfig) communicationConfig;
+
+        Assert.assertEquals(Long.valueOf(500L), snmpCommunicationConfig.getQueryingFrequencyMs());
+        Assert.assertFalse(snmpCommunicationConfig.getMappings().isEmpty());
+
+        SnmpMapping snmpMapping = snmpCommunicationConfig.getMappings().get(0);
+        Assert.assertEquals("temperature", snmpMapping.getKey());
+        Assert.assertEquals("1.3.3.5.6.7.8.9.1", snmpMapping.getOid());
+        Assert.assertEquals(DataType.DOUBLE, snmpMapping.getDataType());
 
         removeDeviceProfileAndDoBasicAssert(deviceProfile);
     }
@@ -479,7 +513,42 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(deviceProfileUpdateMsg.getIdLSB(), deviceProfile.getUuidId().getLeastSignificantBits());
         Assert.assertEquals(DeviceTransportType.LWM2M.name(), deviceProfileUpdateMsg.getTransportType());
 
-        // TODO: add custom validation
+        Optional<DeviceProfileData> deviceProfileDataOpt =
+                dataDecodingEncodingService.decode(deviceProfileUpdateMsg.getProfileDataBytes().toByteArray());
+
+        Assert.assertTrue(deviceProfileDataOpt.isPresent());
+        DeviceProfileData deviceProfileData = deviceProfileDataOpt.get();
+
+        Assert.assertTrue(deviceProfileData.getTransportConfiguration() instanceof Lwm2mDeviceProfileTransportConfiguration);
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration =
+                (Lwm2mDeviceProfileTransportConfiguration) deviceProfileData.getTransportConfiguration();
+
+        OtherConfiguration clientLwM2mSettings = transportConfiguration.getClientLwM2mSettings();
+        Assert.assertEquals(PowerMode.DRX, clientLwM2mSettings.getPowerMode());
+        Assert.assertEquals(Integer.valueOf(1), clientLwM2mSettings.getFwUpdateStrategy());
+        Assert.assertEquals(Integer.valueOf(1), clientLwM2mSettings.getSwUpdateStrategy());
+        Assert.assertEquals(Integer.valueOf(1), clientLwM2mSettings.getClientOnlyObserveAfterConnect());
+
+        Assert.assertTrue(transportConfiguration.isBootstrapServerUpdateEnable());
+
+        Assert.assertFalse(transportConfiguration.getBootstrap().isEmpty());
+        LwM2MBootstrapServerCredential lwM2MBootstrapServerCredential = transportConfiguration.getBootstrap().get(0);
+        Assert.assertTrue(lwM2MBootstrapServerCredential instanceof NoSecLwM2MBootstrapServerCredential);
+        NoSecLwM2MBootstrapServerCredential noSecLwM2MBootstrapServerCredential = (NoSecLwM2MBootstrapServerCredential) lwM2MBootstrapServerCredential;
+
+        Assert.assertEquals("PUBLIC_KEY", noSecLwM2MBootstrapServerCredential.getServerPublicKey());
+        Assert.assertEquals(Integer.valueOf(123), noSecLwM2MBootstrapServerCredential.getShortServerId());
+        Assert.assertTrue(noSecLwM2MBootstrapServerCredential.isBootstrapServerIs());
+        Assert.assertEquals("localhost", noSecLwM2MBootstrapServerCredential.getHost());
+        Assert.assertEquals(Integer.valueOf(5687), noSecLwM2MBootstrapServerCredential.getPort());
+
+        TelemetryMappingConfiguration observeAttr = transportConfiguration.getObserveAttr();
+        Assert.assertEquals("batteryLevel", observeAttr.getKeyName().get("/3_1.0/0/9"));
+        Assert.assertTrue(observeAttr.getObserve().isEmpty());
+        Assert.assertTrue(observeAttr.getAttribute().isEmpty());
+        Assert.assertFalse(observeAttr.getTelemetry().isEmpty());
+        Assert.assertTrue(observeAttr.getTelemetry().contains("/3_1.0/0/9"));
+        Assert.assertTrue(observeAttr.getAttributeLwm2m().isEmpty());
 
         removeDeviceProfileAndDoBasicAssert(deviceProfile);
     }
@@ -496,7 +565,36 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(deviceProfileUpdateMsg.getIdLSB(), deviceProfile.getUuidId().getLeastSignificantBits());
         Assert.assertEquals(DeviceTransportType.COAP.name(), deviceProfileUpdateMsg.getTransportType());
 
-        // TODO: add custom validation
+        Optional<DeviceProfileData> deviceProfileDataOpt =
+                dataDecodingEncodingService.decode(deviceProfileUpdateMsg.getProfileDataBytes().toByteArray());
+
+        Assert.assertTrue(deviceProfileDataOpt.isPresent());
+        DeviceProfileData deviceProfileData = deviceProfileDataOpt.get();
+
+        Assert.assertTrue(deviceProfileData.getTransportConfiguration() instanceof CoapDeviceProfileTransportConfiguration);
+        CoapDeviceProfileTransportConfiguration transportConfiguration =
+                (CoapDeviceProfileTransportConfiguration) deviceProfileData.getTransportConfiguration();
+
+        PowerSavingConfiguration clientSettings = transportConfiguration.getClientSettings();
+
+        Assert.assertEquals(PowerMode.DRX, clientSettings.getPowerMode());
+        Assert.assertEquals(Long.valueOf(1L), clientSettings.getEdrxCycle());
+        Assert.assertEquals(Long.valueOf(1L), clientSettings.getPsmActivityTimer());
+        Assert.assertEquals(Long.valueOf(1L), clientSettings.getPagingTransmissionWindow());
+
+        Assert.assertTrue(transportConfiguration.getCoapDeviceTypeConfiguration() instanceof DefaultCoapDeviceTypeConfiguration);
+        DefaultCoapDeviceTypeConfiguration coapDeviceTypeConfiguration =
+                (DefaultCoapDeviceTypeConfiguration) transportConfiguration.getCoapDeviceTypeConfiguration();
+
+        Assert.assertTrue(coapDeviceTypeConfiguration.getTransportPayloadTypeConfiguration() instanceof ProtoTransportPayloadConfiguration);
+
+        ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration =
+                (ProtoTransportPayloadConfiguration) coapDeviceTypeConfiguration.getTransportPayloadTypeConfiguration();
+
+        Assert.assertEquals(AbstractTransportIntegrationTest.DEVICE_TELEMETRY_PROTO_SCHEMA, protoTransportPayloadConfiguration.getDeviceTelemetryProtoSchema());
+        Assert.assertEquals(AbstractTransportIntegrationTest.DEVICE_ATTRIBUTES_PROTO_SCHEMA, protoTransportPayloadConfiguration.getDeviceAttributesProtoSchema());
+        Assert.assertEquals(AbstractTransportIntegrationTest.DEVICE_RPC_RESPONSE_PROTO_SCHEMA, protoTransportPayloadConfiguration.getDeviceRpcResponseProtoSchema());
+        Assert.assertEquals(AbstractTransportIntegrationTest.DEVICE_RPC_REQUEST_PROTO_SCHEMA, protoTransportPayloadConfiguration.getDeviceRpcRequestProtoSchema());
 
         removeDeviceProfileAndDoBasicAssert(deviceProfile);
     }
@@ -539,8 +637,27 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
     }
 
     private Lwm2mDeviceProfileTransportConfiguration createLwm2mDeviceProfileTransportConfiguration() {
-        // TODO: add custom configuration
         Lwm2mDeviceProfileTransportConfiguration transportConfiguration = new Lwm2mDeviceProfileTransportConfiguration();
+
+        OtherConfiguration clientLwM2mSettings = JacksonUtil.fromString(AbstractLwM2MIntegrationTest.CLIENT_LWM2M_SETTINGS, OtherConfiguration.class);
+        transportConfiguration.setClientLwM2mSettings(clientLwM2mSettings);
+
+        transportConfiguration.setBootstrapServerUpdateEnable(true);
+
+        TelemetryMappingConfiguration observeAttrConfiguration =
+                JacksonUtil.fromString(AbstractLwM2MIntegrationTest.OBSERVE_ATTRIBUTES_WITH_PARAMS, TelemetryMappingConfiguration.class);
+        transportConfiguration.setObserveAttr(observeAttrConfiguration);
+
+        List<LwM2MBootstrapServerCredential> bootstrap = new ArrayList<>();
+        AbstractLwM2MBootstrapServerCredential bootstrapServerCredential = new NoSecLwM2MBootstrapServerCredential();
+        bootstrapServerCredential.setServerPublicKey("PUBLIC_KEY");
+        bootstrapServerCredential.setShortServerId(123);
+        bootstrapServerCredential.setBootstrapServerIs(true);
+        bootstrapServerCredential.setHost("localhost");
+        bootstrapServerCredential.setPort(5687);
+        bootstrap.add(bootstrapServerCredential);
+        transportConfiguration.setBootstrap(bootstrap);
+
         return transportConfiguration;
     }
 
