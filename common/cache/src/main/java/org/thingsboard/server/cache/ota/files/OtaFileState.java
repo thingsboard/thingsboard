@@ -15,16 +15,33 @@
  */
 package org.thingsboard.server.cache.ota.files;
 
+import lombok.Data;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.util.Optional;
-import java.util.function.Supplier;
+import java.nio.file.Path;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
-public interface FileCacheService {
+@Data
+public class OtaFileState {
 
-    File findOrLoad(OtaPackageId otaPackageId, Supplier<InputStream> data);
+    private final Lock lock = new ReentrantLock();
+    private final OtaPackageId otaId;
+    private final Path filePath;
 
+    private long lastActivityTime;
+
+    public void updateLastActivityTime() {
+        lastActivityTime = System.currentTimeMillis();
+    }
+
+    public boolean exists(){
+        return filePath.toFile().exists();
+    }
+
+    public File getFile() {
+        return filePath.toFile();
+    }
 }

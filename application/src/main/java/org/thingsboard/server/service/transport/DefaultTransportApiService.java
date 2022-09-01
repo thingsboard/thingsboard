@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2022 The Thingsboard Authors
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -604,6 +604,7 @@ public class DefaultTransportApiService implements TransportApiService {
                 if (!otaPackageDataCache.has(otaPackageId.toString())) {
                     OtaPackage otaPackage = otaPackageService.findOtaPackageById(tenantId, otaPackageId);
                     try {
+                        //TODO: Do not put to Redis/InMem Cache and use File system on the Transport service instead.
                         otaPackageDataCache.put(otaPackageId.toString(), otaPackage.getData().readAllBytes());
                     } catch (IOException e) {
                         log.error("Failed to cache ota package with id {}",otaPackage.getId(), e);

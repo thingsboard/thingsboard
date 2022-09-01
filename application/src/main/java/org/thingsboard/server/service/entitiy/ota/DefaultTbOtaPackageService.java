@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2022 The Thingsboard Authors
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.ota.util.ChecksumUtil;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
-import org.thingsboard.server.service.ota.TbMultipartFileImp;
+import org.thingsboard.server.service.ota.DefaultTbMultipartFile;
 
 import java.io.IOException;
 
@@ -89,7 +89,7 @@ public class DefaultTbOtaPackageService extends AbstractTbEntityService implemen
             otaPackage.setContentType(file.getContentType());
             otaPackage.setData(file.getInputStream());
             otaPackage.setDataSize(file.getSize());
-            OtaPackageInfo savedOtaPackage = otaPackageService.saveOtaPackage(otaPackage, new TbMultipartFileImp(file));
+            OtaPackageInfo savedOtaPackage = otaPackageService.saveOtaPackage(otaPackage, new DefaultTbMultipartFile(file));
             notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, savedOtaPackage.getId(),
                     savedOtaPackage, user, ActionType.UPDATED, true, null);
             return savedOtaPackage;

@@ -185,13 +185,17 @@ public class OtaPackageController extends BaseController {
         OtaPackageId otaPackageId = new OtaPackageId(toUUID(strOtaPackageId));
         OtaPackageInfo info = checkOtaPackageInfoId(otaPackageId, Operation.READ);
         ChecksumAlgorithm checksumAlgorithm = ChecksumAlgorithm.valueOf(checksumAlgorithmStr.toUpperCase());
-        return tbOtaPackageService.saveOtaPackageData(info, checksum, checksumAlgorithm, file, getCurrentUser());
+        try {
+            return tbOtaPackageService.saveOtaPackageData(info, checksum, checksumAlgorithm, file, getCurrentUser());
+        }catch (Exception e){
+            throw e;
+        }
     }
 
     @ApiOperation(value = "Get OTA Package Infos (getOtaPackages)",
             notes = "Returns a page of OTA Package Info objects owned by tenant. " +
                     PAGE_DATA_PARAMETERS + OTA_PACKAGE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
-            produces = "application/json")
+            produces = APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/otaPackages", method = RequestMethod.GET)
     @ResponseBody

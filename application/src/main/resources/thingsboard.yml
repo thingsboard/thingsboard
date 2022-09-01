@@ -518,8 +518,8 @@ spring.resources.chain:
     content:
       enabled: "true"
 
-spring.servlet.multipart.max-file-size: "50MB"
-spring.servlet.multipart.max-request-size: "50MB"
+spring.servlet.multipart.max-file-size: "512MB"
+spring.servlet.multipart.max-request-size: "512MB"
 
 spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation: "true"
 spring.jpa.properties.hibernate.order_by.default_null_ordering: "${SPRING_JPA_PROPERTIES_HIBERNATE_ORDER_BY_DEFAULT_NULL_ORDERING:last}"
@@ -1150,4 +1150,4 @@ management:
         include: '${METRICS_ENDPOINTS_EXPOSE:info}'
 
 files:
-  temporary_files_directory: "${TEMPORARY_FILES_DIRECTORY: ${java.io.tmpdir}}"
+  temporary_files_directory: "${TEMPORARY_FILES_DIRECTORY:}"

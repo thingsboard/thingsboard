@@ -18,7 +18,6 @@ package org.thingsboard.server.cache.ota.service;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.thingsboard.server.cache.ota.files.BaseFileCacheService;
-import org.thingsboard.server.cache.ota.files.TemporaryFileCleaner;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 
 import java.io.ByteArrayInputStream;
@@ -39,17 +38,17 @@ class BaseFileCacheServiceTest {
     private static final int ONE_MEGA_BYTE = 1_000_000;
     private final static OtaPackageId OTA_PACKAGE_ID = new OtaPackageId(UUID.randomUUID());
     private final static InputStream DATA = new ByteArrayInputStream(FILE_FILLING.getBytes());
-    BaseFileCacheService baseFileCacheService = new BaseFileCacheService(new TemporaryFileCleaner());
+    BaseFileCacheService baseFileCacheService = new BaseFileCacheService();
 
 
     @Test
     void testDataSavingWithNullInputStream() {
-        assertThrows(RuntimeException.class, () -> baseFileCacheService.loadToFile(OTA_PACKAGE_ID, null));
+        assertThrows(RuntimeException.class, () -> baseFileCacheService.findOrLoad(OTA_PACKAGE_ID, null));
     }
 
     @Test
     void testDataSavingWithNullOtaPackageId() {
-        assertThrows(RuntimeException.class, () -> baseFileCacheService.loadToFile(null, DATA));
+        assertThrows(RuntimeException.class, () -> baseFileCacheService.findOrLoad(null, () -> DATA));
     }
 
     @Test
@@ -57,8 +56,8 @@ class BaseFileCacheServiceTest {
     void testMultiSavingDataToFile() {
         File directory = new File(PATH);
         int beginning = Objects.requireNonNull(directory.list()).length;
-        Thread thread1 = new Thread(() -> baseFileCacheService.loadToFile(OTA_PACKAGE_ID, DATA));
-        Thread thread2 = new Thread(() -> baseFileCacheService.loadToFile(OTA_PACKAGE_ID, DATA));
+        Thread thread1 = new Thread(() -> baseFileCacheService.findOrLoad(OTA_PACKAGE_ID, () -> DATA));
+        Thread thread2 = new Thread(() -> baseFileCacheService.findOrLoad(OTA_PACKAGE_ID, () -> DATA));
         thread1.start();
         thread2.start();
         thread1.join();
@@ -72,7 +71,7 @@ class BaseFileCacheServiceTest {
     @SneakyThrows
     void testCorrectDataSavingToFile() {
         String sha256 = calculateChecksumSHA256(new ByteArrayInputStream(FILE_FILLING.getBytes()));
-        File file = baseFileCacheService.loadToFile(OTA_PACKAGE_ID, DATA);
+        File file = baseFileCacheService.findOrLoad(OTA_PACKAGE_ID, () -> DATA);
         assertEquals(sha256, calculateChecksumSHA256(new FileInputStream(file)));
     }
 

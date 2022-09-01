@@ -68,6 +68,7 @@ public class OtaPackageMsgConstructor {
         }
         if (otaPackage.getData() != null) {
             try {
+                //TODO: Refactor to avoid OOM on events to Edge
                 builder.setData(ByteString.copyFrom(otaPackage.getData().readAllBytes()));
             } catch (IOException e){
                 throw new RuntimeException(e);
