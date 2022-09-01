@@ -170,6 +170,11 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         return savedTenant;
     }
 
+    /**
+     * We intentionally leave this method without "Transactional" annotation due to complexity of the method.
+     * Ideally we should delete related entites without "paginatedRemover" logic. But in such a case we can't clear cache and send events.
+     * We will create separate task to make "deleteTenant" transactional.
+     */
     @Override
     public void deleteTenant(TenantId tenantId) {
         log.trace("Executing deleteTenant [{}]", tenantId);
