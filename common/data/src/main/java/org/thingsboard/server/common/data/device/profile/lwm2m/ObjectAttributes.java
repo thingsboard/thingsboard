@@ -24,6 +24,8 @@ import java.io.Serializable;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ObjectAttributes implements Serializable {
 
+    private static final long serialVersionUID = 4765123984733721312L;
+
     private Long dim;
     private String ver;
     private Long pmin;

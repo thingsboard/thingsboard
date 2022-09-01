@@ -29,6 +29,9 @@ import java.util.regex.Pattern;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SnmpMapping implements Serializable {
+
+    private static final long serialVersionUID = 2042438869374145944L;
+
     private String oid;
     private String key;
     private DataType dataType;

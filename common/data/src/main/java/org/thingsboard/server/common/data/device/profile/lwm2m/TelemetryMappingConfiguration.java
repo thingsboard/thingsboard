@@ -28,6 +28,8 @@ import java.util.Set;
 @AllArgsConstructor
 public class TelemetryMappingConfiguration implements Serializable {
 
+    private static final long serialVersionUID = -7594999741305410419L;
+
     private Map<String, String> keyName;
     private Set<String> observe;
     private Set<String> attribute;

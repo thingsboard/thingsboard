@@ -23,6 +23,8 @@ import org.thingsboard.server.common.data.DeviceProfileType;
 @Data
 public class DefaultDeviceConfiguration implements DeviceConfiguration {
 
+    private static final long serialVersionUID = -2225378639573611325L;
+
     @Override
     public DeviceProfileType getType() {
         return DeviceProfileType.DEFAULT;

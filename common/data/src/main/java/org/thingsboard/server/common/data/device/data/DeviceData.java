@@ -25,6 +25,8 @@ import java.io.Serializable;
 @Data
 public class DeviceData implements Serializable {
 
+    private static final long serialVersionUID = -3771567735290681274L;
+
     @ApiModelProperty(position = 1, value = "Device configuration for device profile type. DEFAULT is only supported value for now")
     private DeviceConfiguration configuration;
     @ApiModelProperty(position = 2, value = "Device transport configuration used to connect the device")
