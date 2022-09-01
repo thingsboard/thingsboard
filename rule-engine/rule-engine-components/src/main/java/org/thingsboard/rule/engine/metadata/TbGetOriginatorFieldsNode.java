@@ -70,7 +70,7 @@ public class TbGetOriginatorFieldsNode implements TbNode {
                     data -> {
                         config.getFieldsMapping().forEach((field, metaKey) -> {
                             String val = data.getFieldValue(field);
-                            if (val != null) {
+                            if (val != null && !val.equals("null")) {
                                 msg.getMetaData().putValue(metaKey, val);
                             }
                         });
