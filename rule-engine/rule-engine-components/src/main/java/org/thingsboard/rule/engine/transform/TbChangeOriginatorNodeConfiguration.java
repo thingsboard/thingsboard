@@ -30,11 +30,14 @@ public class TbChangeOriginatorNodeConfiguration extends TbTransformNodeConfigur
     private String originatorSource;
 
     private RelationsQuery relationsQuery;
+    private String entityType;
+    private String entityNamePattern;
 
     @Override
     public TbChangeOriginatorNodeConfiguration defaultConfiguration() {
         TbChangeOriginatorNodeConfiguration configuration = new TbChangeOriginatorNodeConfiguration();
         configuration.setOriginatorSource(TbChangeOriginatorNode.CUSTOMER_SOURCE);
+        configuration.setEntityNamePattern("");
 
         RelationsQuery relationsQuery = new RelationsQuery();
         relationsQuery.setDirection(EntitySearchDirection.FROM);
