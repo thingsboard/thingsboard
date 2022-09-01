@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.service.validator;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -24,20 +25,17 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.ota.OtaPackageDao;
-import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.dao.ota.util.ChecksumUtil;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 
 import static org.thingsboard.server.common.data.EntityType.OTA_PACKAGE;
 
 @Component
+@Slf4j
 public class OtaPackageDataValidator extends BaseOtaPackageDataValidator<OtaPackage> {
 
     @Autowired
     private OtaPackageDao otaPackageDao;
-
-    @Autowired
-    @Lazy
-    private OtaPackageService otaPackageService;
 
     @Autowired
     @Lazy
@@ -70,11 +68,7 @@ public class OtaPackageDataValidator extends BaseOtaPackageDataValidator<OtaPack
             if (StringUtils.isEmpty(otaPackage.getChecksum())) {
                 throw new DataValidationException("OtaPackage checksum should be specified!");
             }
-
-            String currentChecksum;
-
-            currentChecksum = otaPackageService.generateChecksum(otaPackage.getChecksumAlgorithm(), otaPackage.getData());
-
+            String currentChecksum = ChecksumUtil.generateChecksum(otaPackage.getChecksumAlgorithm(), otaPackage.getData());
             if (!currentChecksum.equals(otaPackage.getChecksum())) {
                 throw new DataValidationException("Wrong otaPackage file!");
             }

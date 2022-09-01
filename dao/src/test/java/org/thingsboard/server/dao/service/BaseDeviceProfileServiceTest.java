@@ -19,11 +19,13 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import org.hibernate.engine.jdbc.BlobProxy;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.springframework.mock.web.MockMultipartFile;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -36,11 +38,16 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.ota.TbMultipartFile;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -111,9 +118,10 @@ public abstract class BaseDeviceProfileServiceTest extends AbstractServiceTest {
         firmware.setContentType("text/plain");
         firmware.setChecksumAlgorithm(ChecksumAlgorithm.SHA256);
         firmware.setChecksum("4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a");
-        firmware.setData(ByteBuffer.wrap(new byte[]{1}));
+        firmware.setData(new ByteArrayInputStream(new byte[]{1}));
         firmware.setDataSize(1L);
-        OtaPackage savedFirmware = otaPackageService.saveOtaPackage(firmware);
+        MockMultipartFile file = new MockMultipartFile("test.txt", new byte[]{1});
+        OtaPackage savedFirmware = otaPackageService.saveOtaPackage(firmware, new TestTbMultipartFile(file));
 
         deviceProfile.setFirmwareId(savedFirmware.getId());
 
@@ -259,7 +267,8 @@ public abstract class BaseDeviceProfileServiceTest extends AbstractServiceTest {
         DeviceProfile deviceProfile = this.createDeviceProfile(tenantId, "Device Profile");
         deviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
         OtaPackage otaPackage = constructDefaultOtaPackage(tenantId, deviceProfile.getId());
-        otaPackage = otaPackageService.saveOtaPackage(otaPackage);
+        MockMultipartFile file = new MockMultipartFile("filename.txt", new byte[]{1});
+        otaPackage = otaPackageService.saveOtaPackage(otaPackage, new TestTbMultipartFile(file));
 
         assertThat(deviceProfileService.findDeviceProfileById(tenantId, deviceProfile.getId())).isNotNull();
         assertThat(otaPackageService.findOtaPackageById(tenantId, otaPackage.getId())).isNotNull();
@@ -370,4 +379,36 @@ public abstract class BaseDeviceProfileServiceTest extends AbstractServiceTest {
         Assert.assertEquals(1, pageData.getTotalElements());
     }
 
+    private class TestTbMultipartFile implements TbMultipartFile {
+        private final MockMultipartFile file;
+
+        private TestTbMultipartFile(MockMultipartFile file) {
+            this.file = file;
+        }
+
+        @Override
+        public Optional<InputStream> getInputStream() {
+            try {
+                return Optional.of(file.getInputStream());
+            } catch (IOException e) {
+                return Optional.empty();
+            }
+        }
+
+        @Override
+        public String getFileName() {
+            return file.getName();
+        }
+
+        @Override
+        public long getFileSize() {
+            return file.getSize();
+
+        }
+
+        @Override
+        public String getContentType() {
+            return file.getContentType();
+        }
+    }
 }

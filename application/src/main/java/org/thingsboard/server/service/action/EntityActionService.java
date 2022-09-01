@@ -269,5 +269,4 @@ public class EntityActionService {
             entityNode.put(kvEntry.getKey(), kvEntry.getValueAsString());
         }
     }
-
 }

@@ -15,23 +15,28 @@
  */
 package org.thingsboard.server.common.data;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 
-import java.nio.ByteBuffer;
+import java.io.InputStream;
 
 @ApiModel
 @Data
 @EqualsAndHashCode(callSuper = true)
+@JsonIgnoreProperties(value = { "data" })
 public class OtaPackage extends OtaPackageInfo {
 
     private static final long serialVersionUID = 3091601761339422546L;
 
-    @ApiModelProperty(position = 16, value = "OTA Package data.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
-    private transient ByteBuffer data;
+    @ApiModelProperty(position = 16, value = "OTA Package data.", readOnly = true)
+    private transient InputStream data;
 
     public OtaPackage() {
         super();

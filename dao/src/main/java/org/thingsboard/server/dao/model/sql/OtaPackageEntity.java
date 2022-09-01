@@ -18,8 +18,14 @@ package org.thingsboard.server.dao.model.sql;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.SneakyThrows;
+import org.apache.commons.io.FileUtils;
+import org.aspectj.util.FileUtil;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
+import org.hibernate.engine.jdbc.BlobProxy;
+import org.postgresql.largeobject.BlobInputStream;
+import org.springframework.beans.factory.annotation.Value;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
@@ -31,30 +37,13 @@ import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Lob;
-import javax.persistence.Table;
-import java.nio.ByteBuffer;
+import javax.persistence.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.sql.Blob;
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_CHECKSUM_ALGORITHM_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_CHECKSUM_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_CONTENT_TYPE_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_DATA_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_DATA_SIZE_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_DEVICE_PROFILE_ID_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_FILE_NAME_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_TABLE_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_TAG_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_TENANT_ID_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_TILE_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_TYPE_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_URL_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_VERSION_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -100,7 +89,7 @@ public class OtaPackageEntity extends BaseSqlEntity<OtaPackage> implements Searc
 
     @Lob
     @Column(name = OTA_PACKAGE_DATA_COLUMN, columnDefinition = "BINARY")
-    private byte[] data;
+    private Blob data;
 
     @Column(name = OTA_PACKAGE_DATA_SIZE_COLUMN)
     private Long dataSize;
@@ -132,7 +121,7 @@ public class OtaPackageEntity extends BaseSqlEntity<OtaPackage> implements Searc
         this.contentType = otaPackage.getContentType();
         this.checksumAlgorithm = otaPackage.getChecksumAlgorithm();
         this.checksum = otaPackage.getChecksum();
-        this.data = otaPackage.getData().array();
+        this.data = BlobProxy.generateProxy(otaPackage.getData(), otaPackage.getDataSize());
         this.dataSize = otaPackage.getDataSize();
         this.additionalInfo = otaPackage.getAdditionalInfo();
     }
@@ -148,6 +137,7 @@ public class OtaPackageEntity extends BaseSqlEntity<OtaPackage> implements Searc
     }
 
     @Override
+    @SneakyThrows
     public OtaPackage toData() {
         OtaPackage otaPackage = new OtaPackage(new OtaPackageId(id));
         otaPackage.setCreatedTime(createdTime);
@@ -166,7 +156,7 @@ public class OtaPackageEntity extends BaseSqlEntity<OtaPackage> implements Searc
         otaPackage.setChecksum(checksum);
         otaPackage.setDataSize(dataSize);
         if (data != null) {
-            otaPackage.setData(ByteBuffer.wrap(data));
+            otaPackage.setData(data.getBinaryStream());
             otaPackage.setHasData(true);
         }
         otaPackage.setAdditionalInfo(additionalInfo);

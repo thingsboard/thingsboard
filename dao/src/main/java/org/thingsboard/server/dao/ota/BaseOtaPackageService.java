@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2022 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.dao.ota;
 
-import com.google.common.hash.HashFunction;
-import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,13 +22,13 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
+import org.thingsboard.server.cache.ota.files.BaseFileCacheService;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -39,7 +37,10 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 
-import java.nio.ByteBuffer;
+import javax.transaction.Transactional;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.InputStream;
 import java.util.Optional;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -57,6 +58,7 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
     private final OtaPackageDataCache otaPackageDataCache;
     private final DataValidator<OtaPackageInfo> otaPackageInfoValidator;
     private final DataValidator<OtaPackage> otaPackageValidator;
+    private final BaseFileCacheService baseFileCacheService;
 
     @TransactionalEventListener(classes = OtaPackageCacheEvictEvent.class)
     @Override
@@ -93,57 +95,30 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
     }
 
     @Override
-    public OtaPackage saveOtaPackage(OtaPackage otaPackage) {
+    public OtaPackage saveOtaPackage(OtaPackage otaPackage, TbMultipartFile file) {
         log.trace("Executing saveOtaPackage [{}]", otaPackage);
-        otaPackageValidator.validate(otaPackage, OtaPackageInfo::getTenantId);
-        OtaPackageId otaPackageId = otaPackage.getId();
         try {
-            var result = otaPackageDao.save(otaPackage.getTenantId(), otaPackage);
+            otaPackageValidator.validate(otaPackage, OtaPackageInfo::getTenantId);
+            Optional<InputStream> optionalStream = file.getInputStream();
+            if (optionalStream.isEmpty()) {
+                log.error("Failed to get input stream from file {}", file.getFileName());
+                throw new RuntimeException("Failed to save ota package file");
+            }
+            BufferedInputStream stream = new BufferedInputStream(optionalStream.get());
+            stream.mark(0);
+            otaPackage.setData(stream);
+            OtaPackageId otaPackageId = otaPackage.getId();
             if (otaPackageId != null) {
                 publishEvictEvent(new OtaPackageCacheEvictEvent(otaPackageId));
             }
-            return result;
+            return otaPackageDao.save(otaPackage.getTenantId(), otaPackage);
         } catch (Exception t) {
-            if (otaPackageId != null) {
-                handleEvictEvent(new OtaPackageCacheEvictEvent(otaPackageId));
-            }
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("ota_package_tenant_title_version_unq_key")) {
                 throw new DataValidationException("OtaPackage with such title and version already exists!");
             } else {
                 throw t;
             }
-        }
-    }
-
-    @Override
-    public String generateChecksum(ChecksumAlgorithm checksumAlgorithm, ByteBuffer data) {
-        if (data == null || !data.hasArray() || data.array().length == 0) {
-            throw new DataValidationException("OtaPackage data should be specified!");
-        }
-
-        return getHashFunction(checksumAlgorithm).hashBytes(data.array()).toString();
-    }
-
-    @SuppressWarnings("deprecation")
-    private HashFunction getHashFunction(ChecksumAlgorithm checksumAlgorithm) {
-        switch (checksumAlgorithm) {
-            case MD5:
-                return Hashing.md5();
-            case SHA256:
-                return Hashing.sha256();
-            case SHA384:
-                return Hashing.sha384();
-            case SHA512:
-                return Hashing.sha512();
-            case CRC32:
-                return Hashing.crc32();
-            case MURMUR3_32:
-                return Hashing.murmur3_32();
-            case MURMUR3_128:
-                return Hashing.murmur3_128();
-            default:
-                throw new DataValidationException("Unknown checksum algorithm!");
         }
     }
 
@@ -234,4 +209,19 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
                 }
             };
 
+    @Override
+    @Transactional
+    public File getOtaDataFile(TenantId tenantId, OtaPackageId otaPackageId) {
+        validateId(otaPackageId, INCORRECT_OTA_PACKAGE_ID + otaPackageId);
+        Optional<File> otaDataFile = baseFileCacheService.getOtaDataFile(otaPackageId);
+        if (otaDataFile.isPresent()) {
+            return otaDataFile.get();
+        }
+        OtaPackage otaPackage = findOtaPackageById(tenantId, otaPackageId);
+        if (otaPackage == null) {
+            log.error("Can't find otaPackage to download file  {}", otaPackageId);
+            throw new RuntimeException("No such OtaPackageId");
+        }
+        return baseFileCacheService.loadToFile(otaPackageId, otaPackage.getData());
+    }
 }

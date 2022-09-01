@@ -606,7 +606,7 @@ public class DeviceApiController implements TbTransportService {
         @Override
         public void onDeviceDeleted(DeviceId deviceId) {
             UUID sessionId = new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB());
-            log.trace("[{}] Received device deleted notification for device with id: {}",sessionId, deviceId);
+            log.trace("[{}] Received device deleted notification for device with id: {}", sessionId, deviceId);
             responseWriter.setResult(new ResponseEntity<>("Device was deleted!", HttpStatus.FORBIDDEN));
         }
 

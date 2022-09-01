@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.mock.web.MockMultipartFile;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.common.data.Customer;
@@ -56,12 +57,12 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.ota.TbMultipartFile;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -584,9 +585,10 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
     }
 
     private OtaPackage createAndSaveOtaPackageFor(Tenant tenant, DeviceProfile deviceProfile) {
+        MockMultipartFile file = new MockMultipartFile("filename.txt", new byte[]{1});
         return otaPackageService.saveOtaPackage(
                 BaseOtaPackageServiceTest.createFirmware(
-                        tenant.getId(), "2", deviceProfile.getId())
+                        tenant.getId(), "2", deviceProfile.getId()), new TestTbMultipartFile(file)
         );
     }
 
@@ -694,5 +696,38 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         TenantProfile tenantProfile = new TenantProfile();
         tenantProfile.setName("Test tenant profile");
         return tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
+    }
+
+    private class TestTbMultipartFile implements TbMultipartFile {
+        private final MockMultipartFile file;
+
+        private TestTbMultipartFile(MockMultipartFile file) {
+            this.file = file;
+        }
+
+        @Override
+        public Optional<InputStream> getInputStream() {
+            try {
+                return Optional.of(file.getInputStream());
+            } catch (IOException e) {
+                return Optional.empty();
+            }
+        }
+
+        @Override
+        public String getFileName() {
+            return file.getName();
+        }
+
+        @Override
+        public long getFileSize() {
+            return file.getSize();
+
+        }
+
+        @Override
+        public String getContentType() {
+            return file.getContentType();
+        }
     }
 }

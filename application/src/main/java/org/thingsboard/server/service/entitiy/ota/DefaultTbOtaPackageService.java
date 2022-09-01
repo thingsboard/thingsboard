@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2022 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,22 +18,25 @@ package org.thingsboard.server.service.entitiy.ota;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.OtaPackage;
+import org.springframework.web.multipart.MultipartFile;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.dao.ota.util.ChecksumUtil;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
+import org.thingsboard.server.service.ota.TbMultipartFileImp;
 
-import java.nio.ByteBuffer;
+import java.io.IOException;
 
 @Service
 @TbCoreComponent
@@ -64,12 +67,12 @@ public class DefaultTbOtaPackageService extends AbstractTbEntityService implemen
 
     @Override
     public OtaPackageInfo saveOtaPackageData(OtaPackageInfo otaPackageInfo, String checksum, ChecksumAlgorithm checksumAlgorithm,
-                                             byte[] data, String filename, String contentType, User user) throws ThingsboardException {
+                                             MultipartFile file, User user) {
         TenantId tenantId = otaPackageInfo.getTenantId();
         OtaPackageId otaPackageId = otaPackageInfo.getId();
         try {
             if (StringUtils.isEmpty(checksum)) {
-                checksum = otaPackageService.generateChecksum(checksumAlgorithm, ByteBuffer.wrap(data));
+                checksum = ChecksumUtil.generateChecksum(checksumAlgorithm, file.getInputStream());
             }
             OtaPackage otaPackage = new OtaPackage(otaPackageId);
             otaPackage.setCreatedTime(otaPackageInfo.getCreatedTime());
@@ -82,14 +85,18 @@ public class DefaultTbOtaPackageService extends AbstractTbEntityService implemen
             otaPackage.setAdditionalInfo(otaPackageInfo.getAdditionalInfo());
             otaPackage.setChecksumAlgorithm(checksumAlgorithm);
             otaPackage.setChecksum(checksum);
-            otaPackage.setFileName(filename);
-            otaPackage.setContentType(contentType);
-            otaPackage.setData(ByteBuffer.wrap(data));
-            otaPackage.setDataSize((long) data.length);
-            OtaPackageInfo savedOtaPackage = otaPackageService.saveOtaPackage(otaPackage);
+            otaPackage.setFileName(file.getOriginalFilename());
+            otaPackage.setContentType(file.getContentType());
+            otaPackage.setData(file.getInputStream());
+            otaPackage.setDataSize(file.getSize());
+            OtaPackageInfo savedOtaPackage = otaPackageService.saveOtaPackage(otaPackage, new TbMultipartFileImp(file));
             notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, savedOtaPackage.getId(),
                     savedOtaPackage, user, ActionType.UPDATED, true, null);
             return savedOtaPackage;
+        } catch (IOException e){
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.OTA_PACKAGE), ActionType.UPDATED,
+                    user, e, otaPackageId.toString());
+            throw new RuntimeException(e);
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.OTA_PACKAGE), ActionType.UPDATED,
                     user, e, otaPackageId.toString());
