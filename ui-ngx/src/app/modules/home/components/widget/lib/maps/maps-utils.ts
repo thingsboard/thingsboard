@@ -45,6 +45,9 @@ export function createTooltip(target: L.Layer,
     }
     target.on('popupopen', () => {
       bindPopupActions(popup, settings, datasource);
+      (target as any)._popup._closeButton.addEventListener('click', (event: Event) => {
+        event.preventDefault();
+      });
     });
     return popup;
 }
