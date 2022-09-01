@@ -334,6 +334,7 @@ export default abstract class LeafletMap {
           drawRectangle: false,
           drawPolyline: false,
           drawPolygon: false,
+          drawText: false,
           dragMode: !this.options.hideEditControlButton,
           editMode: (this.editPolygons || this.editCircle) && !this.options.hideEditControlButton,
           cutPolygon: false,
@@ -493,12 +494,12 @@ export default abstract class LeafletMap {
           .find('a[role="button"]:not(.leaflet-pm-action)')
           .each((index, element) => {
             let title;
-            if (element.children.length) {
-              title = (element.children[0] as HTMLElement).title;
-              $(element).children().removeAttr('title');
-            } else {
+            if (element.title) {
               title = element.title;
               $(element).removeAttr('title');
+            } else if (element.parentElement.title) {
+              title = element.parentElement.title;
+              $(element).parent().removeAttr('title');
             }
             const tooltip =  $(element).tooltipster(
               {
