@@ -120,7 +120,6 @@ export class PhotoCameraInputWidgetComponent extends PageComponent implements On
   updatePhoto = false;
   previewPhoto: SafeUrl;
   lastPhoto: SafeUrl;
-  datasourceDetected = false;
   noDataMessage: string;
 
   private static hasGetUserMedia(): boolean {
@@ -144,13 +143,6 @@ export class PhotoCameraInputWidgetComponent extends PageComponent implements On
     this.isLoading = true;
     this.settings = this.ctx.settings;
 
-    const noDataDisplayMessage = this.ctx.widgetConfig.noDataDisplayMessage;
-    if (isNotEmptyStr(noDataDisplayMessage)) {
-      this.noDataMessage = this.utils.customTranslation(noDataDisplayMessage, noDataDisplayMessage);
-    } else {
-      this.noDataMessage = this.translate.instant('widgets.input-widgets.no-entity-selected');
-    }
-
     if (this.settings.widgetTitle && this.settings.widgetTitle.length) {
       this.ctx.widgetTitle = this.utils.customTranslation(this.settings.widgetTitle, this.settings.widgetTitle);
     } else {
@@ -159,7 +151,7 @@ export class PhotoCameraInputWidgetComponent extends PageComponent implements On
 
     const pageLink: EntityDataPageLink = {
       page: 0,
-      pageSize: 16384,
+      pageSize: 1,
       textSearch: null,
       dynamic: true
     };
@@ -178,9 +170,10 @@ export class PhotoCameraInputWidgetComponent extends PageComponent implements On
 
   private updateWidgetData(data: Array<DatasourceData>) {
     this.datasource = this.ctx.datasources[0];
-    this.datasourceDetected = this.ctx.datasources?.length !== 0;
-    if (this.datasourceDetected) {
-      if (this.datasource.type === DatasourceType.entity) {
+    this.isEntityDetected = false;
+    this.dataKeyDetected = false;
+    if (this.ctx.datasources?.length !== 0) {
+      if (this.datasource?.type === DatasourceType.entity) {
         if (this.datasource.entityType && this.datasource.entityId) {
           this.isEntityDetected = true;
         }
@@ -188,9 +181,6 @@ export class PhotoCameraInputWidgetComponent extends PageComponent implements On
       if (this.datasource.dataKeys.length) {
         this.dataKeyDetected = true;
       }
-    } else {
-      this.isEntityDetected = false;
-      this.dataKeyDetected = false;
     }
     if (this.dataKeyDetected) {
       const keyData = data[0].data;
@@ -337,19 +327,24 @@ export class PhotoCameraInputWidgetComponent extends PageComponent implements On
       return '';
     }
     if (!this.isProtocolHttps) {
-      return 'widgets.input-widgets.enable-https-use-widget';
+      return this.translate.instant('widgets.input-widgets.enable-https-use-widget');
     }
     if (!this.isCameraSupport) {
-      return 'widgets.input-widgets.no-support-web-camera';
+      return this.translate.instant('widgets.input-widgets.no-support-web-camera');
+    }
+    if (!this.isEntityDetected) {
+      const noDataDisplayMessage = this.ctx.widgetConfig.noDataDisplayMessage;
+      return isNotEmptyStr(noDataDisplayMessage) ? this.utils.customTranslation(noDataDisplayMessage, noDataDisplayMessage)
+        : this.translate.instant('widgets.input-widgets.no-entity-selected');
     }
     if (!this.dataKeyDetected) {
-      return 'widgets.input-widgets.no-datakey-selected';
+      return this.translate.instant('widgets.input-widgets.no-datakey-selected');
     }
     if (!this.isDeviceDetect) {
-      return 'widgets.input-widgets.no-found-your-camera';
+      return this.translate.instant('widgets.input-widgets.no-found-your-camera');
     }
     if (!this.isHavePermissionCamera) {
-      return 'widgets.input-widgets.no-permission-camera';
+      return this.translate.instant('widgets.input-widgets.no-permission-camera');
     }
     return null;
   }

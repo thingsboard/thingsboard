@@ -148,7 +148,6 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   noDataMessage: string;
 
   entityDetected = false;
-  datasourceDetected = false;
   isAllParametersValid = true;
 
   multipleInputFormGroup: FormGroup;
@@ -194,7 +193,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
 
     const pageLink: EntityDataPageLink = {
       page: 0,
-      pageSize: 16384,
+      pageSize: this.ctx.widgetConfig.pageSize ? this.ctx.widgetConfig.pageSize : 1024,
       textSearch: null,
       dynamic: true
     };
@@ -251,8 +250,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
 
   private updateDatasources() {
     this.sources = [];
-    this.datasourceDetected = this.datasources?.length !== 0;
-    if (this.datasourceDetected) {
+    this.entityDetected = false;
+    if (this.datasources?.length !== 0) {
       let keyIndex = 0;
       this.datasources.forEach((datasource) => {
         const source: MultipleInputWidgetSource = {
@@ -335,13 +334,9 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
 
             source.keys.push(dataKey);
           });
-        } else {
-          this.entityDetected = false;
         }
         this.sources.push(source);
       });
-    } else {
-      this.entityDetected = false;
     }
   }
 
@@ -407,7 +402,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   }
 
   private updateWidgetData(data: Array<DatasourceData>) {
-    if (this.datasourceDetected && this.entityDetected) {
+    if (this.entityDetected) {
       let dataIndex = 0;
       this.sources.forEach((source) => {
         source.keys.forEach((key) => {

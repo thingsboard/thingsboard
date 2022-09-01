@@ -59,10 +59,7 @@
       </div>
     </div>
   </div>
-  <div class="message-text" *ngIf="!isEntityDetected">
-    {{ noDataMessage }}
-  </div>
-  <div class="message-text" *ngIf="textMessage && isEntityDetected">
-    {{ textMessage | translate }}
+  <div class="message-text" *ngIf="textMessage">
+    {{ textMessage }}
   </div>
 </div>

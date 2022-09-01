@@ -28,7 +28,7 @@ import { AttributeService } from '@core/http/attribute.service';
 import { AttributeData, AttributeScope, DataKeyType, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType } from '@shared/models/entity-type.models';
-import { createLabelFromDatasource, isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
+import { createLabelFromDatasource, isNotEmptyStr } from '@core/utils';
 import { Observable } from 'rxjs';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
 
@@ -64,7 +64,6 @@ export class JsonInputWidgetComponent extends PageComponent implements OnInit {
 
   labelValue: string;
 
-  datasourceDetected = false;
   entityDetected = false;
   errorMessage: string;
   noDataMessage: string;
@@ -96,7 +95,7 @@ export class JsonInputWidgetComponent extends PageComponent implements OnInit {
   private initializeConfig() {
     const pageLink: EntityDataPageLink = {
       page: 0,
-      pageSize: 16384,
+      pageSize: 1,
       textSearch: null,
       dynamic: true
     };
@@ -126,28 +125,22 @@ export class JsonInputWidgetComponent extends PageComponent implements OnInit {
   }
 
   private validateDatasources() {
-    this.datasourceDetected = isDefinedAndNotNull(this.datasource);
-    if (this.datasourceDetected) {
-      if (this.datasource.type === DatasourceType.entity) {
-        this.entityDetected = true;
-        if (this.settings.widgetMode === JsonInputWidgetMode.ATTRIBUTE) {
-          if (this.datasource.dataKeys[0].type === DataKeyType.attribute) {
-            if (this.settings.attributeScope !== AttributeScope.SERVER_SCOPE && this.datasource.entityType !== EntityType.DEVICE) {
-              this.errorMessage = 'widgets.input-widgets.not-allowed-entity';
-            }
-          } else {
-            this.errorMessage = 'widgets.input-widgets.no-attribute-selected';
+    this.entityDetected = false;
+    if (this.datasource?.type === DatasourceType.entity) {
+      this.entityDetected = true;
+      if (this.settings.widgetMode === JsonInputWidgetMode.ATTRIBUTE) {
+        if (this.datasource.dataKeys[0].type === DataKeyType.attribute) {
+          if (this.settings.attributeScope !== AttributeScope.SERVER_SCOPE && this.datasource.entityType !== EntityType.DEVICE) {
+            this.errorMessage = 'widgets.input-widgets.not-allowed-entity';
           }
         } else {
-          if (this.datasource.dataKeys[0].type !== DataKeyType.timeseries) {
-            this.errorMessage = 'widgets.input-widgets.no-timeseries-selected';
-          }
+          this.errorMessage = 'widgets.input-widgets.no-attribute-selected';
         }
       } else {
-        this.entityDetected = false;
+        if (this.datasource.dataKeys[0].type !== DataKeyType.timeseries) {
+          this.errorMessage = 'widgets.input-widgets.no-timeseries-selected';
+        }
       }
-    } else {
-      this.entityDetected = false;
     }
   }
 
@@ -165,7 +158,7 @@ export class JsonInputWidgetComponent extends PageComponent implements OnInit {
   }
 
   private updateWidgetData(data: Array<DatasourceData>) {
-    if (!this.errorMessage && this.datasourceDetected && this.entityDetected) {
+    if (!this.errorMessage && this.entityDetected) {
       let value = {};
       if (data[0].data[0][1] !== '') {
         try {
