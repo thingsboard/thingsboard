@@ -24,6 +24,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 
@@ -47,7 +48,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
-@Component
+@Service
 public class BaseFileCacheService implements FileCacheService {
 
     @Value("${files.temporary_files_directory:}")
@@ -64,6 +65,9 @@ public class BaseFileCacheService implements FileCacheService {
         if (StringUtils.isEmpty(tmpDir)) {
             tmpDir = defaultTmpDir;
         }
+        createTempDirectoryIfNotExist();
+        cleanDirectory();
+        log.info("Directory {} with temporary ota files cleaned", tmpDir);
     }
 
     @Override
@@ -85,13 +89,6 @@ public class BaseFileCacheService implements FileCacheService {
         } finally {
             lock.unlock();
         }
-    }
-
-    @EventListener(ApplicationReadyEvent.class)
-    public void cleanDirectoryWithTemporaryFiles() {
-        createTempDirectoryIfNotExist();
-        cleanDirectory();
-        log.info("Directory {} with temporary ota files cleaned", tmpDir);
     }
 
     private void createTempDirectoryIfNotExist() {
