@@ -17,7 +17,12 @@ package org.thingsboard.rule.engine.filter;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.rule.engine.data.RelationsQuery;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
+
+import java.util.Collections;
 
 /**
  * Created by ashvayka on 19.01.18.
@@ -30,6 +35,7 @@ public class TbCheckRelationNodeConfiguration implements NodeConfiguration<TbChe
     private String entityType;
     private String relationType;
     private boolean checkForSingleEntity;
+    private RelationsQuery relationsQuery;
 
     @Override
     public TbCheckRelationNodeConfiguration defaultConfiguration() {
@@ -37,6 +43,14 @@ public class TbCheckRelationNodeConfiguration implements NodeConfiguration<TbChe
         configuration.setDirection(EntitySearchDirection.FROM.name());
         configuration.setRelationType("Contains");
         configuration.setCheckForSingleEntity(true);
+
+        RelationsQuery relationsQuery = new RelationsQuery();
+        relationsQuery.setDirection(EntitySearchDirection.FROM);
+        relationsQuery.setMaxLevel(1);
+        RelationEntityTypeFilter relationEntityTypeFilter = new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.emptyList());
+        relationsQuery.setFilters(Collections.singletonList(relationEntityTypeFilter));
+        configuration.setRelationsQuery(relationsQuery);
+
         return configuration;
     }
 }

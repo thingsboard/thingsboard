@@ -25,15 +25,13 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.rule.engine.util.EntitiesRelatedEntityIdAsyncLoader;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.msg.TbMsg;
-
-import java.util.List;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
@@ -67,7 +65,7 @@ public class TbCheckRelationNode implements TbNode {
         if (config.isCheckForSingleEntity()) {
             checkRelationFuture = processSingle(ctx, msg);
         } else {
-            checkRelationFuture = processList(ctx, msg);
+            checkRelationFuture = processRelationsQuery(ctx, msg);
         }
         withCallback(checkRelationFuture, filterResult -> ctx.tellNext(msg, filterResult ? "True" : "False"), t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
@@ -85,22 +83,9 @@ public class TbCheckRelationNode implements TbNode {
         return ctx.getRelationService().checkRelationAsync(ctx.getTenantId(), from, to, config.getRelationType(), RelationTypeGroup.COMMON);
     }
 
-    private ListenableFuture<Boolean> processList(TbContext ctx, TbMsg msg) {
-        if (EntitySearchDirection.FROM.name().equals(config.getDirection())) {
-            return Futures.transformAsync(ctx.getRelationService()
-                    .findByToAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), config.getRelationType(), RelationTypeGroup.COMMON), this::isEmptyList, MoreExecutors.directExecutor());
-        } else {
-            return Futures.transformAsync(ctx.getRelationService()
-                    .findByFromAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), config.getRelationType(), RelationTypeGroup.COMMON), this::isEmptyList, MoreExecutors.directExecutor());
-        }
-    }
-
-    private ListenableFuture<Boolean> isEmptyList(List<EntityRelation> entityRelations) {
-        if (entityRelations.isEmpty()) {
-            return Futures.immediateFuture(false);
-        } else {
-            return Futures.immediateFuture(true);
-        }
+    private ListenableFuture<Boolean> processRelationsQuery(TbContext ctx, TbMsg msg) {
+        return Futures.transformAsync(EntitiesRelatedEntityIdAsyncLoader
+                .findEntityAsync(ctx, msg.getOriginator(), config.getRelationsQuery()), entityId -> Futures.immediateFuture(entityId != null), MoreExecutors.directExecutor());
     }
 
     @Override
