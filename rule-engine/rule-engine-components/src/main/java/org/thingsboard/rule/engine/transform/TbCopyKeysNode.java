@@ -30,11 +30,10 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 @Slf4j
@@ -44,8 +43,7 @@ import java.util.regex.Pattern;
         configClazz = TbCopyKeysNodeConfiguration.class,
         nodeDescription = "Copies the msg or metadata keys with specified key names selected in the list",
         nodeDetails = "Will fetch fields values specified in list. If specified field is not part of msg or metadata fields it will be ignored." +
-                "If the msg is not a JSON object returns the incoming message as outbound message with <code>Failure</code> chain, " +
-                "otherwise returns transformed messages via <code>Success</code> chain",
+                "Returns transformed messages via <code>Success</code> chain",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbTransformationNodeCopyKeysConfig",
         icon = "content_copy"
@@ -53,13 +51,14 @@ import java.util.regex.Pattern;
 public class TbCopyKeysNode implements TbNode {
 
     TbCopyKeysNodeConfiguration config;
-    List<Pattern> patternKeys = new ArrayList<>();
+    List<Pattern> patternKeys;
     boolean fromMetadata;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbCopyKeysNodeConfiguration.class);
         this.fromMetadata = config.isFromMetadata();
+        this.patternKeys = new ArrayList<>();
         config.getKeys().forEach(key -> {
             this.patternKeys.add(Pattern.compile(key));
         });
@@ -69,30 +68,33 @@ public class TbCopyKeysNode implements TbNode {
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
         TbMsgMetaData metaData = msg.getMetaData();
         String msgData = msg.getData();
-        AtomicBoolean msgChanged = new AtomicBoolean(false);
+        boolean msgChanged = false;
         JsonNode dataNode = JacksonUtil.toJsonNode(msgData);
         if (dataNode.isObject()) {
             if (fromMetadata) {
                 ObjectNode msgDataNode = (ObjectNode) dataNode;
                 Map<String, String> metaDataMap = metaData.getData();
-                metaDataMap.forEach((keyMetaData, valueMetaData) -> {
-                    if (checkKey(keyMetaData)) {
-                        msgChanged.set(true);
-                        msgDataNode.put(keyMetaData, valueMetaData);
-                    }
-                });
-                msgData = JacksonUtil.toString(msgDataNode);
-            } else {
-                dataNode.fields().forEachRemaining(entry -> {
+                for (Map.Entry<String, String> entry : metaDataMap.entrySet()) {
                     String keyData = entry.getKey();
                     if (checkKey(keyData)) {
-                        msgChanged.set(true);
+                        msgChanged = true;
+                        msgDataNode.put(keyData, entry.getValue());
+                    }
+                }
+                msgData = JacksonUtil.toString(msgDataNode);
+            } else {
+                Iterator<Map.Entry<String, JsonNode>> iteratorNode = dataNode.fields();
+                while (iteratorNode.hasNext()) {
+                    Map.Entry<String, JsonNode> entry = iteratorNode.next();
+                    String keyData = entry.getKey();
+                    if (checkKey(keyData)) {
+                        msgChanged = true;
                         metaData.putValue(keyData, JacksonUtil.toString(entry.getValue()));
                     }
-                });
+                }
             }
         }
-        if (msgChanged.get()) {
+        if (msgChanged) {
             ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), metaData, msgData));
         } else {
             ctx.tellSuccess(msg);
@@ -100,10 +102,7 @@ public class TbCopyKeysNode implements TbNode {
     }
 
     boolean checkKey(String key) {
-        Optional<Pattern> currentPattern = patternKeys.stream()
-                .filter(pattern -> pattern.matcher(key).matches())
-                .findFirst();
-        return currentPattern.isPresent();
+        return patternKeys.stream().anyMatch(pattern -> pattern.matcher(key).matches());
     }
 
     @Override
