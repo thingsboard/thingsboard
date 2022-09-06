@@ -20,14 +20,12 @@ import lombok.Getter;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
-import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
 
 import java.util.UUID;
 
 @AllArgsConstructor
 @Getter
-public class ToEdgeSyncRequest implements TenantAwareMsg, ToAllNodesMsg {
+public class ToEdgeSyncRequest implements EdgeSessionMsg {
     private final UUID id;
     private final TenantId tenantId;
     private final EdgeId edgeId;
