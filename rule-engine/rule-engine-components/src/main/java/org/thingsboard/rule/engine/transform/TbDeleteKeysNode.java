@@ -51,13 +51,14 @@ import java.util.regex.Pattern;
 public class TbDeleteKeysNode implements TbNode {
 
     TbDeleteKeysNodeConfiguration config;
-    List<Pattern> patternKeys = new ArrayList<>();
+    List<Pattern> patternKeys;
     boolean fromMetadata;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbDeleteKeysNodeConfiguration.class);
         this.fromMetadata = config.isFromMetadata();
+        this.patternKeys = new ArrayList<>();
         config.getKeys().forEach(key -> {
             this.patternKeys.add(Pattern.compile(key));
         });
@@ -99,10 +100,7 @@ public class TbDeleteKeysNode implements TbNode {
     }
 
     boolean checkKey(String key) {
-        Optional<Pattern> currentPattern = patternKeys.stream()
-                .filter(pattern -> pattern.matcher(key).matches())
-                .findFirst();
-        return currentPattern.isPresent();
+        return patternKeys.stream().anyMatch(pattern -> pattern.matcher(key).matches());
     }
 
     @Override
