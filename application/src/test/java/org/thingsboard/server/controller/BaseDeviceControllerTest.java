@@ -114,8 +114,6 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
 
         loginSysAdmin();
 
-        afterTestEntityDaoRemoveByIdWithException (deviceDao);
-
         doDelete("/api/tenant/" + savedTenant.getId().getId())
                 .andExpect(status().isOk());
     }

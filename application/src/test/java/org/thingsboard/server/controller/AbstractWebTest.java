@@ -730,6 +730,9 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
                 .andExpect(status().isInternalServerError());
 
         assertThat(findRelationsByTo(entityTo)).hasSize(1);
+
+        afterTestEntityDaoRemoveByIdWithException (dao);
+        doDelete(urlDelete).andExpect(status().isOk());
     }
 
     protected <T> void entityDaoRemoveByIdWithException (Dao<T> dao) throws Exception {

@@ -79,8 +79,6 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
     public void afterTest() throws Exception {
         loginSysAdmin();
 
-        afterTestEntityDaoRemoveByIdWithException (dashboardDao);
-
         doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
                 .andExpect(status().isOk());
     }

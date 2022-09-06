@@ -63,8 +63,6 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
     @After
     public void afterTest() throws Exception {
         loginSysAdmin();
-
-        afterTestEntityDaoRemoveByIdWithException(userDao);
     }
 
     @Test

@@ -120,9 +120,6 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
     @After
     public void afterTest() throws Exception {
-
-        afterTestEntityDaoRemoveByIdWithException (entityViewDao);
-
         executor.shutdownNow();
     }
 

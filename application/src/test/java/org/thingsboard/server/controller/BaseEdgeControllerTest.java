@@ -102,8 +102,6 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
     public void afterTest() throws Exception {
         loginSysAdmin();
 
-        afterTestEntityDaoRemoveByIdWithException (edgeDao);
-
         doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
                 .andExpect(status().isOk());
     }

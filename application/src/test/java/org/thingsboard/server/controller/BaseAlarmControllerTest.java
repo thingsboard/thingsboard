@@ -72,8 +72,6 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     public void teardown() throws Exception {
         loginSysAdmin();
 
-        afterTestEntityDaoRemoveByIdWithException (alarmDao);
-
         deleteDifferentTenant();
     }
 
