@@ -40,6 +40,7 @@ import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import javax.annotation.PreDestroy;
 import java.security.cert.X509Certificate;
+import java.util.concurrent.TimeUnit;
 
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CURVES_ONLY;
@@ -132,6 +133,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder(getCoapConfig(config.getPort(), config.getSecurePort(), config));
 
         dtlsConfig.set(DtlsConfig.DTLS_ROLE, DtlsConfig.DtlsRole.SERVER_ONLY);
+        dtlsConfig.set(DtlsConfig.DTLS_RETRANSMISSION_TIMEOUT, config.getDtlsRetransmissionTimeoutInSec(), TimeUnit.SECONDS);
         dtlsConfig.set(DTLS_RECOMMENDED_CURVES_ONLY, config.isRecommendedSupportedGroups());
         dtlsConfig.set(DTLS_RECOMMENDED_CIPHER_SUITES_ONLY, config.isRecommendedCiphers());
 
