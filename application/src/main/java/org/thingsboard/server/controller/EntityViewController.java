@@ -161,7 +161,7 @@ public class EntityViewController extends BaseController {
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteEntityView(
             @ApiParam(value = ENTITY_VIEW_ID_PARAM_DESCRIPTION)
-            @PathVariable(ENTITY_VIEW_ID) String strEntityViewId) throws ThingsboardException {
+            @PathVariable(ENTITY_VIEW_ID) String strEntityViewId) throws Exception {
         checkParameter(ENTITY_VIEW_ID, strEntityViewId);
         EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
         EntityView entityView = checkEntityViewId(entityViewId, Operation.DELETE);

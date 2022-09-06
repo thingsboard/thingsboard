@@ -125,7 +125,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
     }
 
     @Override
-    public void delete(EntityView entityView, User user) throws ThingsboardException {
+    public void delete(EntityView entityView, User user) throws Exception {
         TenantId tenantId = entityView.getTenantId();
         EntityViewId entityViewId = entityView.getId();
         try {
