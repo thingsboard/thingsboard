@@ -103,6 +103,10 @@ transport:
     enabled: "${TB_TRANSPORT_LOG_ENABLED:true}"
     max_length: "${TB_TRANSPORT_LOG_MAX_LENGTH:1024}"
   # Local LwM2M transport parameters
+  coap:
+    dtls:
+      # RFC7925_RETRANSMISSION_TIMEOUT_IN_MILLISECONDS = 9000
+      retransmission_timeout_in_sec: "${DTLS_RETRANSMISSION_TIMEOUT:9}"
   lwm2m:
     # Enable/disable lvm2m transport protocol.
     enabled: "${LWM2M_ENABLED:true}"
