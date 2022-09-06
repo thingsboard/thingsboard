@@ -28,7 +28,6 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -39,8 +38,10 @@ import java.util.concurrent.ExecutionException;
         type = ComponentType.TRANSFORMATION,
         name = "json path",
         configClazz = TbJsonPathNodeConfiguration.class,
-        nodeDescription = "JSONPath expression from message",
-        nodeDetails = "",
+        nodeDescription = "Extracts json element or set of elements from a message by JSONPath expression.",
+        nodeDetails = "JSONPath expression specifies a path to an element or a set of elements in a JSON structure. <br/>"
+                + "<b>'$'</b> represents the root object or array. If JSONPath expression evaluation failed, incoming "
+                + "age routes via <code>Failure</code> chain, otherwise <code>Success</code> chain is used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         icon = "functions",
         configDirective = "tbTransformationNodeJsonPathConfig"
@@ -57,9 +58,6 @@ public class TbJsonPathNode implements TbNode {
         this.configurationJsonPath = Configuration.builder()
                 .jsonProvider(new JacksonJsonNodeJsonProvider())
                 .build();
-        if (StringUtils.isEmpty(config.getJsonPath())) {
-            throw new IllegalArgumentException("JsonPath expression is not specified");
-        }
         this.jsonPath = JsonPath.compile(config.getJsonPath());
     }
 
@@ -67,14 +65,10 @@ public class TbJsonPathNode implements TbNode {
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
         try {
             JsonNode jsonPathData = jsonPath.read(msg.getData(), this.configurationJsonPath);
-            ctx.tellSuccess(createNewMsg(msg, jsonPathData));
+            ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(jsonPathData)));
         } catch (PathNotFoundException e) {
             ctx.tellFailure(msg, e);
         }
-    }
-
-    private TbMsg createNewMsg(TbMsg msg, JsonNode msgNode) {
-        return TbMsg.newMsg(msg.getQueueName(), msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(msgNode));
     }
 
     @Override
