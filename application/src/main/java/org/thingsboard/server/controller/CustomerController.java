@@ -158,7 +158,7 @@ public class CustomerController extends BaseController {
     @RequestMapping(value = "/customer/{customerId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteCustomer(@ApiParam(value = CUSTOMER_ID_PARAM_DESCRIPTION)
-                               @PathVariable(CUSTOMER_ID) String strCustomerId) throws ThingsboardException {
+                               @PathVariable(CUSTOMER_ID) String strCustomerId) throws Exception {
         checkParameter(CUSTOMER_ID, strCustomerId);
         CustomerId customerId = new CustomerId(toUUID(strCustomerId));
         Customer customer = checkCustomerId(customerId, Operation.DELETE);

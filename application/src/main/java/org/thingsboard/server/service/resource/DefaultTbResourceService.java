@@ -195,7 +195,7 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
     }
 
     @Override
-    public void delete(TbResource tbResource, User user) {
+    public void delete(TbResource tbResource, User user) throws Exception {
         TbResourceId resourceId = tbResource.getId();
         TenantId tenantId = tbResource.getTenantId();
         try {

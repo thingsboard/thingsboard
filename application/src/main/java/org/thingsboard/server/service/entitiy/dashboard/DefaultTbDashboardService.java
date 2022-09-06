@@ -61,7 +61,7 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
     }
 
     @Override
-    public void delete(Dashboard dashboard, User user) {
+    public void delete(Dashboard dashboard, User user) throws Exception {
         DashboardId dashboardId = dashboard.getId();
         TenantId tenantId = dashboard.getTenantId();
         try {

@@ -194,7 +194,7 @@ public class DashboardController extends BaseController {
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteDashboard(
             @ApiParam(value = DASHBOARD_ID_PARAM_DESCRIPTION)
-            @PathVariable(DASHBOARD_ID) String strDashboardId) throws ThingsboardException {
+            @PathVariable(DASHBOARD_ID) String strDashboardId) throws Exception {
         checkParameter(DASHBOARD_ID, strDashboardId);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
         Dashboard dashboard = checkDashboardId(dashboardId, Operation.DELETE);

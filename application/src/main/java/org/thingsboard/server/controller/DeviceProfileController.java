@@ -215,7 +215,7 @@ public class DeviceProfileController extends BaseController {
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteDeviceProfile(
             @ApiParam(value = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
-            @PathVariable(DEVICE_PROFILE_ID) String strDeviceProfileId) throws ThingsboardException {
+            @PathVariable(DEVICE_PROFILE_ID) String strDeviceProfileId) throws Exception {
         checkParameter(DEVICE_PROFILE_ID, strDeviceProfileId);
         DeviceProfileId deviceProfileId = new DeviceProfileId(toUUID(strDeviceProfileId));
         DeviceProfile deviceProfile = checkDeviceProfileId(deviceProfileId, Operation.DELETE);

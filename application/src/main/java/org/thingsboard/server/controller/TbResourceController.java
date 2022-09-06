@@ -234,7 +234,7 @@ public class TbResourceController extends BaseController {
     @RequestMapping(value = "/resource/{resourceId}", method = RequestMethod.DELETE)
     @ResponseBody
     public void deleteResource(@ApiParam(value = RESOURCE_ID_PARAM_DESCRIPTION)
-                               @PathVariable("resourceId") String strResourceId) throws ThingsboardException {
+                               @PathVariable("resourceId") String strResourceId) throws Exception {
         checkParameter(RESOURCE_ID, strResourceId);
         TbResourceId resourceId = new TbResourceId(toUUID(strResourceId));
         TbResource tbResource = checkResourceId(resourceId, Operation.DELETE);

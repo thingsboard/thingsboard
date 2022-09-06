@@ -49,7 +49,7 @@ public class DefaultTbCustomerService extends AbstractTbEntityService implements
     }
 
     @Override
-    public void delete(Customer customer, User user) {
+    public void delete(Customer customer, User user) throws Exception {
         TenantId tenantId = customer.getTenantId();
         CustomerId customerId = customer.getId();
         try {

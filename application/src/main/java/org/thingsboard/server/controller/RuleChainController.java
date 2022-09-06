@@ -331,7 +331,7 @@ public class RuleChainController extends BaseController {
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteRuleChain(
             @ApiParam(value = RULE_CHAIN_ID_PARAM_DESCRIPTION)
-            @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
+            @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws Exception {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
         RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.DELETE);

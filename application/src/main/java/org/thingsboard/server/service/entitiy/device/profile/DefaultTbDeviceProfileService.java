@@ -77,7 +77,7 @@ public class DefaultTbDeviceProfileService extends AbstractTbEntityService imple
     }
 
     @Override
-    public void delete(DeviceProfile deviceProfile, User user) {
+    public void delete(DeviceProfile deviceProfile, User user) throws Exception {
         DeviceProfileId deviceProfileId = deviceProfile.getId();
         TenantId tenantId = deviceProfile.getTenantId();
         try {

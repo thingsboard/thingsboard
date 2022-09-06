@@ -193,7 +193,7 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
     }
 
     @Override
-    public void delete(RuleChain ruleChain, User user) {
+    public void delete(RuleChain ruleChain, User user) throws Exception {
         TenantId tenantId = ruleChain.getTenantId();
         RuleChainId ruleChainId = ruleChain.getId();
         try {
