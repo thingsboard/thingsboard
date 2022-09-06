@@ -76,4 +76,3 @@ public class TbSplitArrayMsgNode implements TbNode {
 
     }
 }
-
