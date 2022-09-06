@@ -192,11 +192,10 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
           if (!this.workFromFileObj) {
             fileContent = reader.result;
             if (fileContent && fileContent.length > 0) {
-                if (this.contentConvertFunction) {
-                  fileContent = this.contentConvertFunction(fileContent);
-                }
-                fileName = file.name;
-                files = file.file;
+              if (this.contentConvertFunction) {
+                fileContent = this.contentConvertFunction(fileContent);
+              }
+              fileName = fileContent ? file.name : null;
             }
           } else if (file.name || file.file){
             files = file.file;
