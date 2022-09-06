@@ -29,8 +29,6 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 @Slf4j
@@ -42,6 +40,7 @@ import java.util.concurrent.ExecutionException;
         nodeDetails = "Split the array fetched from the msg body. If the msg data is not a JSON object returns the "
                 + "incoming message as outbound message with <code>Failure</code> chain, otherwise returns "
                 + "inner objects of the extracted array as separate messages via <code>Success</code> chain.",
+        uiResources = {"static/rulenode/rulenode-core-config.js"},
         icon = "content_copy",
         configDirective = "tbNodeEmptyConfig"
 )
@@ -59,28 +58,16 @@ public class TbSplitArrayMsgNode implements TbNode {
         JsonNode jsonNode = JacksonUtil.toJsonNode(msg.getData());
         if (jsonNode.isArray()) {
             ArrayNode data = (ArrayNode) jsonNode;
-            List<TbMsg> messages = new ArrayList<>();
-            data.forEach(msgNode -> {
-                messages.add(createMsg(msg, msgNode, data.size() > 1));
-            });
-            if (messages.size() == 1) {
-                ctx.tellSuccess(messages.get(0));
+            if (data.size() == 1) {
+                ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(data.get(0))));
             } else {
                 ctx.ack(msg);
-                for (TbMsg newMsg : messages) {
-                    ctx.tellSuccess(newMsg);
-                }
+                data.forEach(msgNode -> {
+                    ctx.tellSuccess(TbMsg.newMsg(msg.getQueueName(), msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(msgNode)));
+                });
             }
         } else {
             ctx.tellFailure(msg, new RuntimeException("Msg data is not a JSON Array!"));
-        }
-    }
-
-    private TbMsg createMsg(TbMsg msg, JsonNode msgNode, boolean newMessage) {
-        if (newMessage) {
-            return TbMsg.newMsg(msg.getQueueName(), msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(msgNode));
-        } else {
-            return TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(msgNode));
         }
     }
 
