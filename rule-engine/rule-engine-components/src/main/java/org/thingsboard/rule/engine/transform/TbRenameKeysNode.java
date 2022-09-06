@@ -31,7 +31,6 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 @RuleNode(
@@ -40,8 +39,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
         configClazz = TbRenameKeysNodeConfiguration.class,
         nodeDescription = "Renames msg data or metadata keys to the new key names selected in the key mapping.",
         nodeDetails = "If the key that is selected in the key mapping is missed in the selected msg source(data or metadata), it will be ignored." +
-                " If the msg data is not a JSON object returns the incoming message as outbound message with <code>Failure</code> chain," +
-                " otherwise returns transformed messages via <code>Success</code> chain",
+                " Returns transformed messages via <code>Success</code> chain",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbTransformationNodeRenameKeysConfig",
         icon = "find_replace"
@@ -63,32 +61,34 @@ public class TbRenameKeysNode implements TbNode {
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
         TbMsgMetaData metaData = msg.getMetaData();
         String data = msg.getData();
-        AtomicBoolean msgChanged = new AtomicBoolean(false);
+        boolean msgChanged = false;
         if (fromMetadata) {
             Map<String, String> metaDataMap = metaData.getData();
-            renameKeysMapping.forEach((nameKey, newNameKey) -> {
+            for (Map.Entry<String, String> entry : renameKeysMapping.entrySet()) {
+                String nameKey = entry.getKey();
                 if (metaDataMap.containsKey(nameKey)) {
-                    msgChanged.set(true);
-                    metaDataMap.put(newNameKey, metaDataMap.get(nameKey));
+                    msgChanged = true;
+                    metaDataMap.put(entry.getValue(), metaDataMap.get(nameKey));
                     metaDataMap.remove(nameKey);
                 }
-            });
+            }
             metaData = new TbMsgMetaData(metaDataMap);
         } else {
             JsonNode dataNode = JacksonUtil.toJsonNode(msg.getData());
             if (dataNode.isObject()) {
                 ObjectNode msgData = (ObjectNode) dataNode;
-                renameKeysMapping.forEach((nameKey, newNameKey) -> {
+                for (Map.Entry<String, String> entry : renameKeysMapping.entrySet()) {
+                    String nameKey = entry.getKey();
                     if (msgData.has(nameKey)) {
-                        msgChanged.set(true);
-                        msgData.set(newNameKey, msgData.get(nameKey));
+                        msgChanged = true;
+                        msgData.set(entry.getValue(), msgData.get(nameKey));
                         msgData.remove(nameKey);
                     }
-                });
+                }
                 data = JacksonUtil.toString(msgData);
             }
         }
-        if (msgChanged.get()) {
+        if (msgChanged) {
             ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), metaData, data));
         } else {
             ctx.tellSuccess(msg);
@@ -99,4 +99,3 @@ public class TbRenameKeysNode implements TbNode {
     public void destroy() {
     }
 }
-
