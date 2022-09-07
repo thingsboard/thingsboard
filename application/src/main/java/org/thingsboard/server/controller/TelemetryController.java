@@ -35,7 +35,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -49,6 +48,7 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -888,48 +888,29 @@ public class TelemetryController extends BaseController {
     }
 
     private void logTimeseriesDeleted(SecurityUser user, EntityId entityId, List<String> keys, long startTs, long endTs, Throwable e) {
-        try {
-            logEntityAction(user, (UUIDBased & EntityId) entityId, null, null, ActionType.TIMESERIES_DELETED, toException(e),
-                    keys, startTs, endTs);
-        } catch (ThingsboardException te) {
-            log.warn("Failed to log timeseries delete", te);
-        }
+        notificationEntityService.logEntityAction(user.getTenantId(), entityId, ActionType.TIMESERIES_DELETED, user,
+                toException(e), keys, startTs, endTs);
     }
 
     private void logTelemetryUpdated(SecurityUser user, EntityId entityId, List<TsKvEntry> telemetry, Throwable e) {
-        try {
-            logEntityAction(user, (UUIDBased & EntityId) entityId, null, null, ActionType.TIMESERIES_UPDATED, toException(e), telemetry);
-        } catch (ThingsboardException te) {
-            log.warn("Failed to log telemetry update");
-        }
+        notificationEntityService.logEntityAction(user.getTenantId(), entityId, ActionType.TIMESERIES_UPDATED, user,
+                toException(e), telemetry);
     }
 
     private void logAttributesDeleted(SecurityUser user, EntityId entityId, String scope, List<String> keys, Throwable e) {
-        try {
-            logEntityAction(user, (UUIDBased & EntityId) entityId, null, null, ActionType.ATTRIBUTES_DELETED, toException(e),
-                    scope, keys);
-        } catch (ThingsboardException te) {
-            log.warn("Failed to log attributes delete", te);
-        }
+        notificationEntityService.logEntityAction(user.getTenantId(), (UUIDBased & EntityId) entityId,
+                ActionType.ATTRIBUTES_DELETED, user, toException(e), scope, keys);
     }
 
     private void logAttributesUpdated(SecurityUser user, EntityId entityId, String scope, List<AttributeKvEntry> attributes, Throwable e) {
-        try {
-            logEntityAction(user, (UUIDBased & EntityId) entityId, null, null, ActionType.ATTRIBUTES_UPDATED, toException(e),
-                    scope, attributes);
-        } catch (ThingsboardException te) {
-            log.warn("Failed to log attributes update", te);
-        }
+        notificationEntityService.logEntityAction(user.getTenantId(), entityId, ActionType.ATTRIBUTES_UPDATED, user,
+                toException(e), scope, attributes);
     }
 
 
     private void logAttributesRead(SecurityUser user, EntityId entityId, String scope, List<String> keys, Throwable e) {
-        try {
-            logEntityAction(user, (UUIDBased & EntityId) entityId, null, null, ActionType.ATTRIBUTES_READ, toException(e),
-                    scope, keys);
-        } catch (ThingsboardException te) {
-            log.warn("Failed to log attributes read", te);
-        }
+        notificationEntityService.logEntityAction(user.getTenantId(), entityId, ActionType.ATTRIBUTES_READ, user,
+                toException(e), scope, keys);
     }
 
     private ListenableFuture<List<AttributeKvEntry>> mergeAllAttributesFutures(List<ListenableFuture<List<AttributeKvEntry>>> futures) {

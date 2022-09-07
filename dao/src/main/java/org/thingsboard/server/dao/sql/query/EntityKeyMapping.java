@@ -16,9 +16,9 @@
 package org.thingsboard.server.dao.sql.query;
 
 import lombok.Data;
-import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
@@ -102,6 +102,7 @@ public class EntityKeyMapping {
         allowedEntityFieldMap.put(EntityType.WIDGET_TYPE, new HashSet<>(widgetEntityFields));
         allowedEntityFieldMap.put(EntityType.WIDGETS_BUNDLE, new HashSet<>(widgetEntityFields));
         allowedEntityFieldMap.put(EntityType.API_USAGE_STATE, apiUsageStateEntityFields);
+        allowedEntityFieldMap.put(EntityType.DEVICE_PROFILE, Set.of(CREATED_TIME, NAME, TYPE));
 
         entityFieldColumnMap.put(CREATED_TIME, ModelConstants.CREATED_TIME_PROPERTY);
         entityFieldColumnMap.put(ENTITY_TYPE, ModelConstants.ENTITY_TYPE_PROPERTY);

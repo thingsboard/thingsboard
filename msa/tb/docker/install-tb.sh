@@ -46,6 +46,8 @@ source "${CONF_FOLDER}/${configfile}"
 
 echo "Starting ThingsBoard installation ..."
 
+set -e
+
 java -cp ${jarfile} $JAVA_OPTS -Dloader.main=org.thingsboard.server.ThingsboardInstallApplication \
                     -Dinstall.load_demo=${loadDemo} \
                     -Dspring.jpa.hibernate.ddl-auto=none \

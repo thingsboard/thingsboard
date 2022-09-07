@@ -36,7 +36,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class EntityView extends SearchTextBasedWithAdditionalInfo<EntityViewId>
-        implements HasName, HasTenantId, HasCustomerId {
+        implements HasName, HasTenantId, HasCustomerId, ExportableEntity<EntityViewId> {
 
     private static final long serialVersionUID = 5582010124562018986L;
 
@@ -59,6 +59,8 @@ public class EntityView extends SearchTextBasedWithAdditionalInfo<EntityViewId>
     @ApiModelProperty(position = 10, value = "Represents the end time of the interval that is used to limit access to target device telemetry. Customer will not be able to see entity telemetry that is outside the specified interval;")
     private long endTimeMs;
 
+    private EntityViewId externalId;
+
     public EntityView() {
         super();
     }
@@ -77,6 +79,7 @@ public class EntityView extends SearchTextBasedWithAdditionalInfo<EntityViewId>
         this.keys = entityView.getKeys();
         this.startTimeMs = entityView.getStartTimeMs();
         this.endTimeMs = entityView.getEndTimeMs();
+        this.externalId = entityView.getExternalId();
     }
 
     @Override
@@ -84,7 +87,7 @@ public class EntityView extends SearchTextBasedWithAdditionalInfo<EntityViewId>
         return getName() /*What the ...*/;
     }
 
-    @ApiModelProperty(position = 4, value = "JSON object with Customer Id. Use 'assignEntityViewToCustomer' to change the Customer Id.", readOnly = true)
+    @ApiModelProperty(position = 4, value = "JSON object with Customer Id. Use 'assignEntityViewToCustomer' to change the Customer Id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     @Override
     public CustomerId getCustomerId() {
         return customerId;
@@ -95,7 +98,7 @@ public class EntityView extends SearchTextBasedWithAdditionalInfo<EntityViewId>
         return name;
     }
 
-    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id.", readOnly = true)
+    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     @Override
     public TenantId getTenantId() {
         return tenantId;
@@ -110,7 +113,7 @@ public class EntityView extends SearchTextBasedWithAdditionalInfo<EntityViewId>
         return super.getId();
     }
 
-    @ApiModelProperty(position = 2, value = "Timestamp of the Entity View creation, in milliseconds", example = "1609459200000", readOnly = true)
+    @ApiModelProperty(position = 2, value = "Timestamp of the Entity View creation, in milliseconds", example = "1609459200000", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();

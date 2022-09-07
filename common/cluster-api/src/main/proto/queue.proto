@@ -20,21 +20,12 @@ package transport;
 option java_package = "org.thingsboard.server.gen.transport";
 option java_outer_classname = "TransportProtos";
 
-message QueueInfo {
-  string name = 1;
-  string topic = 2;
-  int32 partitions = 3;
-}
-
 /**
  * Service Discovery Data Structures;
  */
 message ServiceInfo {
   string serviceId = 1;
   repeated string serviceTypes = 2;
-  int64 tenantIdMSB = 3;
-  int64 tenantIdLSB = 4;
-  repeated QueueInfo ruleEngineQueues = 5;
   repeated string transports = 6;
 }
 
@@ -92,6 +83,17 @@ message KeyValueProto {
   double double_v = 5;
   string string_v = 6;
   string json_v = 7;
+}
+
+message AttributeValueProto {
+  int64 lastUpdateTs = 1;
+  KeyValueType type = 2;
+  bool has_v = 3;
+  bool bool_v = 4;
+  int64 long_v = 5;
+  double double_v = 6;
+  string string_v = 7;
+  string json_v = 8;
 }
 
 message TsKvProto {
@@ -197,6 +199,37 @@ message GetEntityProfileRequestMsg {
   int64 entityIdLSB = 3;
 }
 
+message GetAllQueueRoutingInfoRequestMsg {
+}
+
+message GetQueueRoutingInfoResponseMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 queueIdMSB = 3;
+  int64 queueIdLSB = 4;
+  string queueName = 5;
+  string queueTopic = 6;
+  int32 partitions = 7;
+}
+
+message QueueUpdateMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 queueIdMSB = 3;
+  int64 queueIdLSB = 4;
+  string queueName = 5;
+  string queueTopic = 6;
+  int32 partitions = 7;
+}
+
+message QueueDeleteMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 queueIdMSB = 3;
+  int64 queueIdLSB = 4;
+  string queueName = 5;
+}
+
 message LwM2MRegistrationRequestMsg {
   string tenantId = 1;
   string endpoint = 2;
@@ -240,7 +273,6 @@ message GetTenantRoutingInfoRequestMsg {
 }
 
 message GetTenantRoutingInfoResponseMsg {
-  bool isolatedTbCore = 1;
   bool isolatedTbRuleEngine = 2;
 }
 
@@ -432,6 +464,14 @@ message GetOtaPackageResponseMsg {
   string fileName = 8;
 }
 
+message DeviceActivityProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  int64 lastActivityTime = 5;
+}
+
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.
 message SubscriptionInfoProto {
   int64 lastActivityTime = 1;
@@ -596,8 +636,8 @@ message TbSubscriptionUpdateValueListProto {
 }
 
 message TbSubscriptionUpdateTsValue {
-   int64 ts = 1;
-   optional string value = 2;
+  int64 ts = 1;
+  optional string value = 2;
 }
 
 /**
@@ -655,6 +695,188 @@ message EdgeNotificationMsgProto {
 }
 
 /**
+   TB Core to Version Control Service
+ */
+message CommitRequestMsg {
+  string txId = 1; // To correlate prepare, add, delete and push messages
+  PrepareMsg prepareMsg = 2;
+  AddMsg addMsg = 3;
+  DeleteMsg deleteMsg = 4;
+  PushMsg pushMsg = 5;
+  AbortMsg abortMsg = 6;
+}
+
+message CommitResponseMsg {
+  int64 ts = 1;
+  string commitId = 2;
+  string name = 3;
+  string author = 4;
+  int32 added = 5;
+  int32 modified = 6;
+  int32 removed = 7;
+}
+
+message PrepareMsg {
+  string commitMsg = 1;
+  string branchName = 2;
+  string authorName = 3;
+  string authorEmail = 4;
+}
+
+message AddMsg {
+  string relativePath = 1;
+  string entityDataJsonChunk = 2;
+  string chunkedMsgId = 3;
+  int32 chunkIndex = 4;
+  int32 chunksCount = 5;
+}
+
+message DeleteMsg {
+  string relativePath = 1;
+}
+
+message PushMsg {
+}
+
+message AbortMsg {
+}
+
+message ListVersionsRequestMsg {
+  string branchName = 1;
+  string entityType = 2;
+  int64 entityIdMSB = 3;
+  int64 entityIdLSB = 4;
+  int32 pageSize = 5;
+  int32 page = 6;
+  string textSearch = 7;
+  string sortProperty = 8;
+  string sortDirection = 9;
+}
+
+message EntityVersionProto {
+  int64 ts = 1;
+  string id = 2;
+  string name = 3;
+  string author = 4;
+}
+
+message ListVersionsResponseMsg {
+  repeated EntityVersionProto versions = 1;
+  int32 totalPages = 2;
+  int64 totalElements = 3;
+  bool hasNext = 4;
+}
+
+message ListEntitiesRequestMsg {
+  string versionId = 1;
+  string entityType = 2;
+}
+
+message VersionedEntityInfoProto {
+  string entityType = 1;
+  int64 entityIdMSB = 2;
+  int64 entityIdLSB = 3;
+}
+
+message ListEntitiesResponseMsg {
+  repeated VersionedEntityInfoProto entities = 1;
+}
+
+message ListBranchesRequestMsg {
+}
+
+message BranchInfoProto {
+  string name = 1;
+  bool isDefault = 2;
+}
+
+message ListBranchesResponseMsg {
+  repeated BranchInfoProto branches = 1;
+}
+
+message EntityContentRequestMsg {
+  string versionId = 1;
+  string entityType = 2;
+  int64 entityIdMSB = 3;
+  int64 entityIdLSB = 4;
+}
+
+message EntityContentResponseMsg {
+  string data = 1;
+  int32 chunkIndex = 2;
+  int32 chunksCount = 3;
+}
+
+message EntitiesContentRequestMsg {
+  string versionId = 1;
+  string entityType = 2;
+  int32 offset = 3;
+  int32 limit = 4;
+}
+
+message EntitiesContentResponseMsg {
+  EntityContentResponseMsg item = 1;
+  int32 itemIdx = 2;
+  int32 itemsCount = 3;
+}
+
+message VersionsDiffRequestMsg {
+  string path = 1;
+  string versionId1 = 2;
+  string versionId2 = 3;
+}
+
+message VersionsDiffResponseMsg {
+  repeated EntityVersionsDiff diff = 1;
+}
+
+message EntityVersionsDiff {
+  string entityType = 1;
+  int64 entityIdMSB = 2;
+  int64 entityIdLSB = 3;
+  string entityDataAtVersion1 = 4;
+  string entityDataAtVersion2 = 5;
+  string rawDiff = 6;
+}
+
+message GenericRepositoryRequestMsg {}
+
+message GenericRepositoryResponseMsg {}
+
+message ToVersionControlServiceMsg {
+  string nodeId = 1;
+  int64 tenantIdMSB = 2;
+  int64 tenantIdLSB = 3;
+  int64 requestIdMSB = 4;
+  int64 requestIdLSB = 5;
+  bytes vcSettings = 6;
+  GenericRepositoryRequestMsg initRepositoryRequest = 7;
+  GenericRepositoryRequestMsg testRepositoryRequest = 8;
+  GenericRepositoryRequestMsg clearRepositoryRequest = 9;
+  CommitRequestMsg commitRequest = 10;
+  ListVersionsRequestMsg listVersionRequest = 11;
+  ListEntitiesRequestMsg listEntitiesRequest = 12;
+  ListBranchesRequestMsg listBranchesRequest = 13;
+  EntityContentRequestMsg entityContentRequest = 14;
+  EntitiesContentRequestMsg entitiesContentRequest = 15;
+  VersionsDiffRequestMsg versionsDiffRequest = 16;
+}
+
+message VersionControlResponseMsg {
+  int64 requestIdMSB = 1;
+  int64 requestIdLSB = 2;
+  string error = 3;
+  GenericRepositoryResponseMsg genericResponse = 4;
+  CommitResponseMsg commitResponse = 5;
+  ListBranchesResponseMsg listBranchesResponse = 6;
+  ListEntitiesResponseMsg listEntitiesResponse = 7;
+  ListVersionsResponseMsg listVersionsResponse = 8;
+  EntityContentResponseMsg entityContentResponse = 9;
+  EntitiesContentResponseMsg entitiesContentResponse = 10;
+  VersionsDiffResponseMsg versionsDiffResponse = 11;
+}
+
+/**
  * Main messages;
  */
 
@@ -673,6 +895,7 @@ message TransportApiRequestMsg {
   GetSnmpDevicesRequestMsg snmpDevicesRequestMsg = 11;
   GetDeviceRequestMsg deviceRequestMsg = 12;
   GetDeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 13;
+  GetAllQueueRoutingInfoRequestMsg getAllQueueRoutingInfoRequestMsg = 14;
 }
 
 /* Response from ThingsBoard Core Service to Transport Service */
@@ -687,6 +910,7 @@ message TransportApiResponseMsg {
   GetOtaPackageResponseMsg otaPackageResponseMsg = 8;
   GetDeviceResponseMsg deviceResponseMsg = 9;
   GetDeviceCredentialsResponseMsg deviceCredentialsResponseMsg = 10;
+  repeated GetQueueRoutingInfoResponseMsg getQueueRoutingInfoResponseMsgs = 11;
 }
 
 /* Messages that are handled by ThingsBoard Core Service */
@@ -696,6 +920,7 @@ message ToCoreMsg {
   SubscriptionMgrMsgProto toSubscriptionMgrMsg = 3;
   bytes toDeviceActorNotificationMsg = 4;
   EdgeNotificationMsgProto edgeNotificationMsg = 5;
+  DeviceActivityProto deviceActivityMsg = 6;
 }
 
 /* High priority messages with low latency are handled by ThingsBoard Core Service separately */
@@ -704,6 +929,9 @@ message ToCoreNotificationMsg {
   FromDeviceRPCResponseProto fromDeviceRpcResponse = 2;
   bytes componentLifecycleMsg = 3;
   bytes edgeEventUpdateMsg = 4;
+  QueueUpdateMsg queueUpdateMsg = 5;
+  QueueDeleteMsg queueDeleteMsg = 6;
+  VersionControlResponseMsg vcResponseMsg = 7;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */
@@ -718,6 +946,8 @@ message ToRuleEngineMsg {
 message ToRuleEngineNotificationMsg {
   bytes componentLifecycleMsg = 1;
   FromDeviceRPCResponseProto fromDeviceRpcResponse = 2;
+  QueueUpdateMsg queueUpdateMsg = 3;
+  QueueDeleteMsg queueDeleteMsg = 4;
 }
 
 /* Messages that are handled by ThingsBoard Transport Service */
@@ -736,6 +966,8 @@ message ToTransportMsg {
   ResourceUpdateMsg resourceUpdateMsg = 12;
   ResourceDeleteMsg resourceDeleteMsg = 13;
   UplinkNotificationMsg uplinkNotificationMsg = 14;
+  QueueUpdateMsg queueUpdateMsg = 15;
+  QueueDeleteMsg queueDeleteMsg = 16;
 }
 
 message UsageStatsKVProto{
@@ -763,3 +995,5 @@ message ToOtaPackageStateServiceMsg {
   int64 otaPackageIdLSB = 7;
   string type = 8;
 }
+
+

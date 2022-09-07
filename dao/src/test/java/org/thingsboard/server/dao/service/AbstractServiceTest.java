@@ -18,7 +18,6 @@ package org.thingsboard.server.dao.service;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -28,17 +27,19 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.OtaPackage;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.event.RuleNodeDebugEvent;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
@@ -49,6 +50,7 @@ import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.audit.AuditLogLevelFilter;
 import org.thingsboard.server.dao.audit.AuditLogLevelMask;
+import org.thingsboard.server.dao.audit.AuditLogLevelProperties;
 import org.thingsboard.server.dao.component.ComponentDescriptorService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -61,8 +63,10 @@ import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.resource.ResourceService;
+import org.thingsboard.server.dao.rpc.RpcService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
@@ -168,6 +172,12 @@ public abstract class AbstractServiceTest {
     @Autowired
     protected OtaPackageService otaPackageService;
 
+    @Autowired
+    protected RpcService rpcService;
+
+    @Autowired
+    protected QueueService queueService;
+
     public class IdComparator<D extends HasId> implements Comparator<D> {
         @Override
         public int compare(D o1, D o2) {
@@ -176,17 +186,16 @@ public abstract class AbstractServiceTest {
     }
 
 
-    protected Event generateEvent(TenantId tenantId, EntityId entityId, String eventType, String eventUid) throws IOException {
+    protected RuleNodeDebugEvent generateEvent(TenantId tenantId, EntityId entityId) throws IOException {
         if (tenantId == null) {
             tenantId = TenantId.fromUUID(Uuids.timeBased());
         }
-        Event event = new Event();
-        event.setTenantId(tenantId);
-        event.setEntityId(entityId);
-        event.setType(eventType);
-        event.setUid(eventUid);
-        event.setBody(readFromResource("TestJsonData.json"));
-        return event;
+        return RuleNodeDebugEvent.builder()
+                .tenantId(tenantId)
+                .entityId(entityId.getId())
+                .serviceId("server A")
+                .data(JacksonUtil.toString(readFromResource("TestJsonData.json")))
+                .build();
     }
 //
 //    private ComponentDescriptor getOrCreateDescriptor(ComponentScope scope, ComponentType type, String clazz, String configurationDescriptorResource) throws IOException {
@@ -218,7 +227,9 @@ public abstract class AbstractServiceTest {
         for (EntityType entityType : EntityType.values()) {
             mask.put(entityType.name().toLowerCase(), AuditLogLevelMask.RW.name());
         }
-        return new AuditLogLevelFilter(mask);
+        var props = new AuditLogLevelProperties();
+        props.setMask(mask);
+        return new AuditLogLevelFilter(props);
     }
 
     protected DeviceProfile createDeviceProfile(TenantId tenantId, String name) {
@@ -252,8 +263,8 @@ public abstract class AbstractServiceTest {
         edge.setTenantId(tenantId);
         edge.setName(name);
         edge.setType(type);
-        edge.setSecret(RandomStringUtils.randomAlphanumeric(20));
-        edge.setRoutingKey(RandomStringUtils.randomAlphanumeric(20));
+        edge.setSecret(StringUtils.randomAlphanumeric(20));
+        edge.setRoutingKey(StringUtils.randomAlphanumeric(20));
         return edge;
     }
 

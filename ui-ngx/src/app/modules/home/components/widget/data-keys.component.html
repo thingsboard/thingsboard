@@ -17,7 +17,7 @@
 -->
 <mat-form-field appearance="standard" [formGroup]="keysListFormGroup" class="mat-block">
   <mat-chip-list #chipList formControlName="keys" tb-chip-draggable (chipDrop)="onChipDrop($event)">
-    <mat-chip
+    <mat-chip class="tb-datakey-chip"
       *ngFor="let key of keys; let $index = index"
       [selectable]="!disabled"
       [removable]="!disabled && !isEntityCountDatasource"
@@ -73,7 +73,7 @@
         <mat-icon matChipRemove *ngIf="!disabled && !isEntityCountDatasource">close</mat-icon>
       </div>
     </mat-chip>
-    <input matInput type="text" placeholder="{{ !disabled ? placeholder : '' }}"
+    <input matInput type="text" placeholder="{{ !disabled ? (keys.length ? secondaryPlaceholder : placeholder) : '' }}"
            style="max-width: 200px;"
            #keyInput
            formControlName="key"

@@ -19,17 +19,17 @@ import { PageComponent } from '@shared/components/page.component';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import {
-  fillPattern, flatData,
-  parseData,
-  parseFunction,
-  processPattern,
-  safeExecute
-} from '@home/components/widget/lib/maps/common-maps-utils';
-import { FormattedData } from '@home/components/widget/lib/maps/map-models';
-import { DatasourceData } from '@shared/models/widget.models';
+import { DatasourceData, FormattedData } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { isNumber, isObject } from '@core/utils';
+import {
+  createLabelFromPattern,
+  flatFormattedData,
+  formattedDataFormDatasourceData,
+  isNumber,
+  isObject,
+  parseFunction,
+  safeExecute
+} from '@core/utils';
 
 interface QrCodeWidgetSettings {
   qrCodeTextPattern: string;
@@ -98,12 +98,11 @@ export class QrCodeWidgetComponent extends PageComponent implements OnInit, Afte
     } else {
       initialData = [];
     }
-    const data = parseData(initialData);
+    const data = formattedDataFormDatasourceData(initialData);
     const pattern = this.settings.useQrCodeTextFunction ?
       safeExecute(this.qrCodeTextFunction, [data]) : this.settings.qrCodeTextPattern;
-    const allData = flatData(data);
-    const replaceInfo = processPattern(pattern, allData);
-    qrCodeText = fillPattern(pattern, replaceInfo, allData);
+    const allData = flatFormattedData(data);
+    qrCodeText = createLabelFromPattern(pattern, allData);
     this.updateQrCodeText(qrCodeText);
   }
 

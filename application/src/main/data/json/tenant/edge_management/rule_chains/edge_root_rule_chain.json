@@ -157,6 +157,21 @@
         "type": "Attributes Updated"
       },
       {
+        "fromIndex": 3,
+        "toIndex": 7,
+        "type": "Attributes Deleted"
+      },
+      {
+        "fromIndex": 3,
+        "toIndex": 7,
+        "type": "Timeseries Deleted"
+      },
+      {
+        "fromIndex": 3,
+        "toIndex": 7,
+        "type": "Timeseries Updated"
+      },
+      {
         "fromIndex": 4,
         "toIndex": 7,
         "type": "Success"

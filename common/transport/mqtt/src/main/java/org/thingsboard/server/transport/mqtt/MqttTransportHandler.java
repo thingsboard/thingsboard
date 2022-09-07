@@ -41,7 +41,7 @@ import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -362,7 +362,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             ctx.close();
         } catch (AdaptorException e) {
             log.debug("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
-            ctx.close();
+            sendAckOrCloseSession(ctx, topicName, msgId);
         }
     }
 
@@ -451,6 +451,15 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             }
         } catch (AdaptorException e) {
             log.debug("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
+            sendAckOrCloseSession(ctx, topicName, msgId);
+        }
+    }
+
+    private void sendAckOrCloseSession(ChannelHandlerContext ctx, String topicName, int msgId) {
+        if (deviceSessionCtx.isSendAckOnValidationException() && msgId > 0) {
+            log.debug("[{}] Send pub ack on invalid publish msg [{}][{}]", sessionId, topicName, msgId);
+            ctx.writeAndFlush(createMqttPubAckMsg(msgId));
+        } else {
             log.info("[{}] Closing current session due to invalid publish msg [{}][{}]", sessionId, topicName, msgId);
             ctx.close();
         }

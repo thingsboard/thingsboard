@@ -19,9 +19,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -94,9 +94,13 @@ public class TbNodeUtils {
     }
 
     public static String processPattern(String pattern, TbMsgMetaData metaData) {
-        String result = pattern;
-        for (Map.Entry<String, String> keyVal : metaData.values().entrySet()) {
-            result = processVar(result, keyVal.getKey(), keyVal.getValue());
+        return processTemplate(pattern, metaData.values());
+    }
+
+    public static String processTemplate(String template, Map<String, String> data) {
+        String result = template;
+        for (Map.Entry<String, String> kv : data.entrySet()) {
+            result = processVar(result, kv.getKey(), kv.getValue());
         }
         return result;
     }

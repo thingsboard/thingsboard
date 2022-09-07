@@ -44,6 +44,21 @@
     margin: 0 6px;
     z-index: 2;
   }
+
+  button.mat-button.mat-icon-button.version-control-button {
+    position: absolute;
+    top: 10px;
+    right: 60px;
+    opacity: .85;
+    margin: 0 6px;
+    z-index: 2;
+    &.mat-fab {
+      .mat-button-wrapper {
+        padding: 0;
+      }
+    }
+  }
+
   section.tb-header-buttons.tb-library-open {
     position: absolute;
     top: 0;

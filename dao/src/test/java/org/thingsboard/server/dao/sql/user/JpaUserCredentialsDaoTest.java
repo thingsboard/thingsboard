@@ -15,13 +15,17 @@
  */
 package org.thingsboard.server.dao.sql.user;
 
-import com.github.springtestdbunit.annotation.DatabaseSetup;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.user.UserCredentialsDao;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,41 +38,66 @@ import static org.thingsboard.server.dao.service.AbstractServiceTest.SYSTEM_TENA
  */
 public class JpaUserCredentialsDaoTest extends AbstractJpaDaoTest {
 
+    public static final String ACTIVATE_TOKEN = "ACTIVATE_TOKEN_0";
+    public static final String RESET_TOKEN = "RESET_TOKEN_0";
+    public static final int COUNT_USER_CREDENTIALS = 2;
+    List<UserCredentials> userCredentialsList;
+    UserCredentials neededUserCredentials;
+
     @Autowired
     private UserCredentialsDao userCredentialsDao;
 
+    @Before
+    public void setUp() {
+        userCredentialsList = new ArrayList<>();
+        for (int i=0; i<COUNT_USER_CREDENTIALS; i++) {
+            userCredentialsList.add(createUserCredentials(i));
+        }
+        neededUserCredentials = userCredentialsList.get(0);
+        assertNotNull(neededUserCredentials);
+    }
+
+    UserCredentials createUserCredentials(int number) {
+        UserCredentials userCredentials = new UserCredentials();
+        userCredentials.setEnabled(true);
+        userCredentials.setUserId(new UserId(UUID.randomUUID()));
+        userCredentials.setPassword("password");
+        userCredentials.setActivateToken("ACTIVATE_TOKEN_" + number);
+        userCredentials.setResetToken("RESET_TOKEN_" + number);
+        return userCredentialsDao.save(SYSTEM_TENANT_ID, userCredentials);
+    }
+
+    @After
+    public void after() {
+        for (UserCredentials userCredentials : userCredentialsList) {
+            userCredentialsDao.removeById(TenantId.SYS_TENANT_ID, userCredentials.getUuidId());
+        }
+    }
+
     @Test
-    @DatabaseSetup("classpath:dbunit/user_credentials.xml")
     public void testFindAll() {
         List<UserCredentials> userCredentials = userCredentialsDao.find(SYSTEM_TENANT_ID);
-        assertEquals(2, userCredentials.size());
+        assertEquals(COUNT_USER_CREDENTIALS + 1, userCredentials.size());
     }
 
     @Test
-    @DatabaseSetup("classpath:dbunit/user_credentials.xml")
     public void testFindByUserId() {
-        UserCredentials userCredentials = userCredentialsDao.findByUserId(SYSTEM_TENANT_ID, UUID.fromString("787827e6-27d7-11e7-93ae-92361f002671"));
-        assertNotNull(userCredentials);
-        assertEquals("4b9e010c-27d5-11e7-93ae-92361f002671", userCredentials.getId().toString());
-        assertEquals(true, userCredentials.isEnabled());
-        assertEquals("password", userCredentials.getPassword());
-        assertEquals("ACTIVATE_TOKEN_2", userCredentials.getActivateToken());
-        assertEquals("RESET_TOKEN_2", userCredentials.getResetToken());
+        UserCredentials foundedUserCredentials = userCredentialsDao.findByUserId(SYSTEM_TENANT_ID, neededUserCredentials.getUserId().getId());
+        assertNotNull(foundedUserCredentials);
+        assertEquals(neededUserCredentials, foundedUserCredentials);
     }
 
     @Test
-    @DatabaseSetup("classpath:dbunit/user_credentials.xml")
     public void testFindByActivateToken() {
-        UserCredentials userCredentials = userCredentialsDao.findByActivateToken(SYSTEM_TENANT_ID, "ACTIVATE_TOKEN_1");
-        assertNotNull(userCredentials);
-        assertEquals("3ed10af0-27d5-11e7-93ae-92361f002671", userCredentials.getId().toString());
+        UserCredentials foundedUserCredentials = userCredentialsDao.findByActivateToken(SYSTEM_TENANT_ID, ACTIVATE_TOKEN);
+        assertNotNull(foundedUserCredentials);
+        assertEquals(neededUserCredentials.getId(), foundedUserCredentials.getId());
     }
 
     @Test
-    @DatabaseSetup("classpath:dbunit/user_credentials.xml")
     public void testFindByResetToken() {
-        UserCredentials userCredentials = userCredentialsDao.findByResetToken(SYSTEM_TENANT_ID, "RESET_TOKEN_2");
-        assertNotNull(userCredentials);
-        assertEquals("4b9e010c-27d5-11e7-93ae-92361f002671", userCredentials.getId().toString());
+        UserCredentials foundedUserCredentials = userCredentialsDao.findByResetToken(SYSTEM_TENANT_ID, RESET_TOKEN);
+        assertNotNull(foundedUserCredentials);
+        assertEquals(neededUserCredentials.getId(), foundedUserCredentials.getId());
     }
 }

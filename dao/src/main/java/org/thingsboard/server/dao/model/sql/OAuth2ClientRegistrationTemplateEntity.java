@@ -21,16 +21,21 @@ import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationTemplateId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.oauth2.*;
+import org.thingsboard.server.common.data.oauth2.MapperType;
+import org.thingsboard.server.common.data.oauth2.OAuth2BasicMapperConfig;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
+import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
+import org.thingsboard.server.common.data.oauth2.TenantNameStrategyType;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
-import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.Table;
 import java.util.Arrays;
-import java.util.UUID;
 
 @Data
 @EqualsAndHashCode(callSuper = true)

@@ -57,7 +57,8 @@
     "download": "İndir",
     "next-with-label": "Sonraki: {{label}}",
     "read-more": "Devamını Oku",
-    "hide": "Gizle"
+    "hide": "Gizle",
+    "done": "Tamamlandı"
   },
   "aggregation": {
     "aggregation": "Aggregation",
@@ -2184,8 +2185,7 @@
       "select-file": "Bir dosya seçin",
       "configuration": "Yapılandırmayı içe aktar",
       "column-type": "Sütun türünü seçin",
-      "creat-entities": "Yeni varlıklar oluşturma",
-      "done": "Tamamlandı"
+      "creat-entities": "Yeni varlıklar oluşturma"
     },
     "message": {
       "create-entities": "{{count}} yeni öğe başarıyla oluşturuldu.",
@@ -2569,9 +2569,7 @@
     "tenant-required": "Tenant gerekli",
     "search": "Tenantları ara",
     "selected-tenants": "{ count, plural, 1 {1 tenant} other {# tenant} } seçildi",
-    "isolated-tb-core": "ThingsBoard soyutlanmış merkezi konteynerda işlensin",
     "isolated-tb-rule-engine": "ThingsBoard soyutlanmış kural yönetimi konteynerda işlensin",
-    "isolated-tb-core-details": "Her soyutlanmış tenant ayrı bir mikro servis gerektirir",
     "isolated-tb-rule-engine-details": "Her soyutlanmış tenant ayrı bir mikro servis gerektirir"
   },
   "tenant-profile": {

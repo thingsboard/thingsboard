@@ -110,7 +110,7 @@ export class AddDeviceProfileDialogComponent extends
         image: [null, []],
         defaultRuleChainId: [null, []],
         defaultDashboardId: [null, []],
-        defaultQueueName: ['', []],
+        defaultQueueName: [null, []],
         description: ['', []]
       }
     );

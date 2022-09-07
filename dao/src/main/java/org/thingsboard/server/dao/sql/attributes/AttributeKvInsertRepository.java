@@ -28,7 +28,6 @@ import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.SQLType;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;

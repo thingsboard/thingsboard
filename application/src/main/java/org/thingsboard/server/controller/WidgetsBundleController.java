@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,7 +28,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.entitiy.widgets.bundle.TbWidgetsBundleService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
@@ -57,7 +58,10 @@ import static org.thingsboard.server.controller.ControllerConstants.WIDGET_BUNDL
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
+@RequiredArgsConstructor
 public class WidgetsBundleController extends BaseController {
+
+    private final TbWidgetsBundleService tbWidgetsBundleService;
 
     private static final String WIDGET_BUNDLE_DESCRIPTION = "Widget Bundle represents a group(bundle) of widgets. Widgets are grouped into bundle by type or use case. ";
 
@@ -85,31 +89,25 @@ public class WidgetsBundleController extends BaseController {
                     "Specify existing Widget Bundle id to update the Widget Bundle. " +
                     "Referencing non-existing Widget Bundle Id will cause 'Not Found' error." +
                     "\n\nWidget Bundle alias is unique in the scope of tenant. " +
-                    "Special Tenant Id '13814000-1dd2-11b2-8080-808080808080' is automatically used if the create bundle request is sent by user with 'SYS_ADMIN' authority."
-                    + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+                    "Special Tenant Id '13814000-1dd2-11b2-8080-808080808080' is automatically used if the create bundle request is sent by user with 'SYS_ADMIN' authority." +
+                    "Remove 'id', 'tenantId' from the request body example (below) to create new Widgets Bundle entity." +
+                    SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/widgetsBundle", method = RequestMethod.POST)
     @ResponseBody
     public WidgetsBundle saveWidgetsBundle(
             @ApiParam(value = "A JSON value representing the Widget Bundle.", required = true)
-            @RequestBody WidgetsBundle widgetsBundle) throws ThingsboardException {
-        try {
-            if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
-                widgetsBundle.setTenantId(TenantId.SYS_TENANT_ID);
-            } else {
-                widgetsBundle.setTenantId(getCurrentUser().getTenantId());
-            }
-
-            checkEntity(widgetsBundle.getId(), widgetsBundle, Resource.WIDGETS_BUNDLE);
-            WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
-
-            sendEntityNotificationMsg(getTenantId(), savedWidgetsBundle.getId(),
-                    widgetsBundle.getId() == null ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
-
-            return checkNotNull(savedWidgetsBundle);
-        } catch (Exception e) {
-            throw handleException(e);
+            @RequestBody WidgetsBundle widgetsBundle) throws Exception {
+        var currentUser = getCurrentUser();
+        if (Authority.SYS_ADMIN.equals(currentUser.getAuthority())) {
+            widgetsBundle.setTenantId(TenantId.SYS_TENANT_ID);
+        } else {
+            widgetsBundle.setTenantId(currentUser.getTenantId());
         }
+
+        checkEntity(widgetsBundle.getId(), widgetsBundle, Resource.WIDGETS_BUNDLE);
+
+        return tbWidgetsBundleService.save(widgetsBundle, currentUser);
     }
 
     @ApiOperation(value = "Delete widgets bundle (deleteWidgetsBundle)",
@@ -121,16 +119,9 @@ public class WidgetsBundleController extends BaseController {
             @ApiParam(value = WIDGET_BUNDLE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable("widgetsBundleId") String strWidgetsBundleId) throws ThingsboardException {
         checkParameter("widgetsBundleId", strWidgetsBundleId);
-        try {
-            WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
-            checkWidgetsBundleId(widgetsBundleId, Operation.DELETE);
-            widgetsBundleService.deleteWidgetsBundle(getTenantId(), widgetsBundleId);
-
-            sendEntityNotificationMsg(getTenantId(), widgetsBundleId, EdgeEventActionType.DELETED);
-
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
+        WidgetsBundle widgetsBundle = checkWidgetsBundleId(widgetsBundleId, Operation.DELETE);
+        tbWidgetsBundleService.delete(widgetsBundle);
     }
 
     @ApiOperation(value = "Get Widget Bundles (getWidgetsBundles)",

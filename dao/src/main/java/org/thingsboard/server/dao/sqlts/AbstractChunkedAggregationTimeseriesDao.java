@@ -21,12 +21,12 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.Aggregation;
+import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -42,7 +42,11 @@ import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -119,14 +123,17 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
         if (query.getAggregation() == Aggregation.NONE) {
             return findAllAsyncWithLimit(entityId, query);
         } else {
-            long stepTs = query.getStartTs();
             List<ListenableFuture<Optional<TsKvEntry>>> futures = new ArrayList<>();
-            while (stepTs < query.getEndTs()) {
-                long startTs = stepTs;
-                long endTs = stepTs + query.getInterval();
+            long endPeriod = query.getEndTs();
+            long startPeriod = query.getStartTs();
+            long step = query.getInterval();
+            while (startPeriod <= endPeriod) {
+                long startTs = startPeriod;
+                long endTs = Math.min(startPeriod + step, endPeriod + 1);
                 long ts = startTs + (endTs - startTs) / 2;
-                futures.add(findAndAggregateAsync(entityId, query.getKey(), startTs, endTs, ts, query.getAggregation()));
-                stepTs = endTs;
+                ListenableFuture<Optional<TsKvEntry>> aggregateTsKvEntry = findAndAggregateAsync(entityId, query.getKey(), startTs, endTs, ts,  query.getAggregation());
+                futures.add(aggregateTsKvEntry);
+                startPeriod = endTs;
             }
             return getTskvEntriesFuture(Futures.allAsList(futures));
         }
@@ -145,7 +152,7 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
         return Futures.immediateFuture(DaoUtil.convertDataList(tsKvEntities));
     }
 
-    private ListenableFuture<Optional<TsKvEntry>> findAndAggregateAsync(EntityId entityId, String key, long startTs, long endTs, long ts, Aggregation aggregation) {
+    ListenableFuture<Optional<TsKvEntry>> findAndAggregateAsync(EntityId entityId, String key, long startTs, long endTs, long ts, Aggregation aggregation) {
         List<CompletableFuture<TsKvEntity>> entitiesFutures = new ArrayList<>();
         switchAggregation(entityId, key, startTs, endTs, aggregation, entitiesFutures);
         return Futures.transform(setFutures(entitiesFutures), entity -> {

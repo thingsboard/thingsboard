@@ -17,7 +17,6 @@ package org.thingsboard.server.dao.sql.query;
 
 import org.apache.commons.lang3.math.NumberUtils;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.page.PageData;
@@ -27,7 +26,6 @@ import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.TsValue;
 
-import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -83,7 +81,10 @@ public class EntityDataAdapter {
         if (value != null) {
             String strVal = value.toString();
             // check number
-            if (strVal.length() > 0 && NumberUtils.isParsable(strVal)) {
+            if (NumberUtils.isParsable(strVal)) {
+                if (strVal.startsWith("0") && !strVal.startsWith("0.")) {
+                    return strVal;
+                }
                 try {
                     long longVal = Long.parseLong(strVal);
                     return Long.toString(longVal);

@@ -1,0 +1,55 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div fxLayout="column">
+  <div class="tb-tenant-profile-queues"
+       *ngFor="let queuesControl of queuesFormArray.controls; trackBy: trackByQueue;
+       let $index = index; last as isLast;"
+       [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
+    <mat-expansion-panel fxFlex [expanded]="true">
+      <mat-expansion-panel-header>
+        <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+          <mat-panel-title>
+            {{ getTitle(queuesControl.value.name) }}
+          </mat-panel-title>
+          <span fxFlex></span>
+          <button *ngIf="!($index === 0) && !disabled" mat-icon-button style="min-width: 40px;"
+                  type="button"
+                  (click)="removeQueue($index)"
+                  matTooltip="{{ 'action.remove' | translate }}"
+                  matTooltipPosition="above">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <tb-queue-form [formControl]="queuesControl" [newQueue]="newQueue"></tb-queue-form>
+      </ng-template>
+    </mat-expansion-panel>
+  </div>
+  <div *ngIf="!queuesFormArray.controls.length">
+      <span translate fxLayoutAlign="center center"
+            class="tb-prompt">tenant-profile.no-queue</span>
+  </div>
+  <div *ngIf="!disabled" style="padding-top: 16px;">
+    <button mat-raised-button color="primary"
+            type="button"
+            (click)="addQueue()">
+      <span translate>tenant-profile.add-queue</span>
+    </button>
+  </div>
+</div>

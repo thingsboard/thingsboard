@@ -16,10 +16,10 @@
 package org.thingsboard.server.dao.ota;
 
 import org.thingsboard.server.common.data.OtaPackageInfo;
-import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;

@@ -24,9 +24,9 @@ import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
-import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
@@ -78,6 +78,9 @@ public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements S
     @Column(name = ModelConstants.DASHBOARD_CONFIGURATION_PROPERTY)
     private JsonNode configuration;
 
+    @Column(name = ModelConstants.EXTERNAL_ID_PROPERTY)
+    private UUID externalId;
+
     public DashboardEntity() {
         super();
     }
@@ -102,6 +105,9 @@ public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements S
         this.mobileHide = dashboard.isMobileHide();
         this.mobileOrder = dashboard.getMobileOrder();
         this.configuration = dashboard.getConfiguration();
+        if (dashboard.getExternalId() != null) {
+            this.externalId = dashboard.getExternalId().getId();
+        }
     }
 
     @Override
@@ -133,6 +139,9 @@ public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements S
         dashboard.setMobileHide(mobileHide);
         dashboard.setMobileOrder(mobileOrder);
         dashboard.setConfiguration(configuration);
+        if (externalId != null) {
+            dashboard.setExternalId(new DashboardId(externalId));
+        }
         return dashboard;
     }
 }

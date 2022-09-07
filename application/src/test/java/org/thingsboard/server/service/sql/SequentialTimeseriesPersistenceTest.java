@@ -17,7 +17,6 @@ package org.thingsboard.server.service.sql;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -55,8 +54,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @DaoSqlTest
 public class SequentialTimeseriesPersistenceTest extends AbstractControllerTest {
-
-    static final int TIMEOUT = 30;
 
     final String TOTALIZER = "Totalizer";
     final int TTL = 99999;
@@ -182,7 +179,6 @@ public class SequentialTimeseriesPersistenceTest extends AbstractControllerTest 
         saveTimeseries(asset.getId(), saveTsKvEntry);
     }
 
-    @NotNull
     JsonObject getJsonObject(String key, long value, Optional<String> tsKvEntryOpt) {
         JsonObject jsonObject = new JsonObject();
         if (tsKvEntryOpt.isPresent()) {

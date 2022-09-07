@@ -15,18 +15,16 @@
 ///
 
 import { GridsterComponent, GridsterConfig, GridsterItem, GridsterItemComponentInterface } from 'angular-gridster2';
-import { Widget, WidgetPosition, widgetType } from '@app/shared/models/widget.models';
+import { FormattedData, Widget, WidgetPosition, widgetType } from '@app/shared/models/widget.models';
 import { WidgetLayout, WidgetLayouts } from '@app/shared/models/dashboard.models';
 import { IDashboardWidget, WidgetAction, WidgetContext, WidgetHeaderAction } from './widget-component.models';
 import { Timewindow } from '@shared/models/time/time.models';
 import { Observable, of, Subject } from 'rxjs';
-import { guid, isDefined, isEqual, isUndefined } from '@app/core/utils';
+import { formattedDataFormDatasourceData, guid, isDefined, isEqual, isUndefined } from '@app/core/utils';
 import { IterableDiffer, KeyValueDiffer } from '@angular/core';
 import { IAliasController, IStateController } from '@app/core/api/widget-api.models';
 import { enumerable } from '@shared/decorators/enumerable';
 import { UtilsService } from '@core/services/utils.service';
-import { FormattedData } from '@home/components/widget/lib/maps/map-models';
-import { parseData } from '@home/components/widget/lib/maps/common-maps-utils';
 
 export interface WidgetsData {
   widgets: Array<Widget>;
@@ -430,7 +428,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
 
     this.hasAggregation = this.widget.type === widgetType.timeseries;
 
-    this.style = {cursor: 'pointer',
+    this.style = {
       color: this.color,
       backgroundColor: this.backgroundColor,
       padding: this.padding,
@@ -456,7 +454,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     if (this.widgetContext.customHeaderActions) {
       let data: FormattedData[] = [];
       if (this.widgetContext.customHeaderActions.some(action => action.useShowWidgetHeaderActionFunction)) {
-        data = parseData(this.widgetContext.data || []);
+        data = formattedDataFormDatasourceData(this.widgetContext.data || []);
       }
       customHeaderActions = this.widgetContext.customHeaderActions.filter(action => this.filterCustomHeaderAction(action, data));
     } else {

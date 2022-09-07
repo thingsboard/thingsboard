@@ -27,12 +27,13 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public class InMemoryTbQueueConsumer<T extends TbQueueMsg> implements TbQueueConsumer<T> {
-    private final InMemoryStorage storage = InMemoryStorage.getInstance();
+    private final InMemoryStorage storage;
     private volatile Set<TopicPartitionInfo> partitions;
     private volatile boolean stopped;
     private volatile boolean subscribed;
 
-    public InMemoryTbQueueConsumer(String topic) {
+    public InMemoryTbQueueConsumer(InMemoryStorage storage, String topic) {
+        this.storage = storage;
         this.topic = topic;
         stopped = false;
     }

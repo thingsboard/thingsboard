@@ -19,15 +19,16 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -51,6 +52,7 @@ import static org.thingsboard.server.dao.service.Validator.validateString;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class UserServiceImpl extends AbstractEntityService implements UserService {
 
     public static final String USER_PASSWORD_HISTORY = "userPasswordHistory";
@@ -69,21 +71,10 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
 
     private final UserDao userDao;
     private final UserCredentialsDao userCredentialsDao;
+    private final UserAuthSettingsDao userAuthSettingsDao;
     private final DataValidator<User> userValidator;
     private final DataValidator<UserCredentials> userCredentialsValidator;
     private final ApplicationEventPublisher eventPublisher;
-
-    public UserServiceImpl(UserDao userDao,
-                           UserCredentialsDao userCredentialsDao,
-                           DataValidator<User> userValidator,
-                           DataValidator<UserCredentials> userCredentialsValidator,
-                           ApplicationEventPublisher eventPublisher) {
-        this.userDao = userDao;
-        this.userCredentialsDao = userCredentialsDao;
-        this.userValidator = userValidator;
-        this.userCredentialsValidator = userCredentialsValidator;
-        this.eventPublisher = eventPublisher;
-    }
 
     @Override
     public User findUserByEmail(TenantId tenantId, String email) {
@@ -121,7 +112,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         if (user.getId() == null) {
             UserCredentials userCredentials = new UserCredentials();
             userCredentials.setEnabled(false);
-            userCredentials.setActivateToken(RandomStringUtils.randomAlphanumeric(DEFAULT_TOKEN_LENGTH));
+            userCredentials.setActivateToken(StringUtils.randomAlphanumeric(DEFAULT_TOKEN_LENGTH));
             userCredentials.setUserId(new UserId(savedUser.getUuidId()));
             saveUserCredentialsAndPasswordHistory(user.getTenantId(), userCredentials);
         }
@@ -187,7 +178,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         if (!userCredentials.isEnabled()) {
             throw new DisabledException(String.format("User credentials not enabled [%s]", email));
         }
-        userCredentials.setResetToken(RandomStringUtils.randomAlphanumeric(DEFAULT_TOKEN_LENGTH));
+        userCredentials.setResetToken(StringUtils.randomAlphanumeric(DEFAULT_TOKEN_LENGTH));
         return saveUserCredentials(tenantId, userCredentials);
     }
 
@@ -197,7 +188,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         if (!userCredentials.isEnabled()) {
             throw new IncorrectParameterException("Unable to reset password for inactive user");
         }
-        userCredentials.setResetToken(RandomStringUtils.randomAlphanumeric(DEFAULT_TOKEN_LENGTH));
+        userCredentials.setResetToken(StringUtils.randomAlphanumeric(DEFAULT_TOKEN_LENGTH));
         return saveUserCredentials(tenantId, userCredentials);
     }
 
@@ -211,11 +202,13 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     }
 
     @Override
+    @Transactional
     public void deleteUser(TenantId tenantId, UserId userId) {
         log.trace("Executing deleteUser [{}]", userId);
         validateId(userId, INCORRECT_USER_ID + userId);
         UserCredentials userCredentials = userCredentialsDao.findByUserId(tenantId, userId.getId());
         userCredentialsDao.removeById(tenantId, userCredentials.getUuidId());
+        userAuthSettingsDao.removeByUserId(userId);
         deleteEntityRelations(tenantId, userId);
         userDao.removeById(tenantId, userId.getId());
         eventPublisher.publishEvent(new UserAuthDataChangedEvent(userId));
@@ -284,21 +277,11 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
 
 
     @Override
-    public void onUserLoginSuccessful(TenantId tenantId, UserId userId) {
+    public void resetFailedLoginAttempts(TenantId tenantId, UserId userId) {
         log.trace("Executing onUserLoginSuccessful [{}]", userId);
         User user = findUserById(tenantId, userId);
-        setLastLoginTs(user);
         resetFailedLoginAttempts(user);
         saveUser(user);
-    }
-
-    private void setLastLoginTs(User user) {
-        JsonNode additionalInfo = user.getAdditionalInfo();
-        if (!(additionalInfo instanceof ObjectNode)) {
-            additionalInfo = JacksonUtil.newObjectNode();
-        }
-        ((ObjectNode) additionalInfo).put(LAST_LOGIN_TS, System.currentTimeMillis());
-        user.setAdditionalInfo(additionalInfo);
     }
 
     private void resetFailedLoginAttempts(User user) {
@@ -311,7 +294,19 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     }
 
     @Override
-    public int onUserLoginIncorrectCredentials(TenantId tenantId, UserId userId) {
+    public void setLastLoginTs(TenantId tenantId, UserId userId) {
+        User user = findUserById(tenantId, userId);
+        JsonNode additionalInfo = user.getAdditionalInfo();
+        if (!(additionalInfo instanceof ObjectNode)) {
+            additionalInfo = JacksonUtil.newObjectNode();
+        }
+        ((ObjectNode) additionalInfo).put(LAST_LOGIN_TS, System.currentTimeMillis());
+        user.setAdditionalInfo(additionalInfo);
+        saveUser(user);
+    }
+
+    @Override
+    public int increaseFailedLoginAttempts(TenantId tenantId, UserId userId) {
         log.trace("Executing onUserLoginIncorrectCredentials [{}]", userId);
         User user = findUserById(tenantId, userId);
         int failedLoginAttempts = increaseFailedLoginAttempts(user);
