@@ -153,13 +153,13 @@ export class TbFlot {
         autoHighlight: this.tooltipIndividual === true,
         markings: []
       },
-      selection : { mode : 'x' },
       legend : {
         show: false
       }
     };
 
     if (this.chartType === 'line' || this.chartType === 'bar' || this.chartType === 'state') {
+      this.options.selection = { mode : 'x' };
       this.options.xaxes = [];
       this.xaxis = {
         mode: 'time',
@@ -1206,10 +1206,12 @@ export class TbFlot {
   private enableMouseEvents() {
     this.$element.css('pointer-events', '');
     this.$element.addClass('mouse-events');
-    this.options.selection = { mode : 'x' };
+    if (this.chartType !== 'pie') {
+      this.options.selection = {mode: 'x'};
+      this.$element.bind('plotselected', this.flotSelectHandler);
+      this.$element.bind('dblclick', this.dblclickHandler);
+    }
     this.$element.bind('plothover', this.flotHoverHandler);
-    this.$element.bind('plotselected', this.flotSelectHandler);
-    this.$element.bind('dblclick', this.dblclickHandler);
     this.$element.bind('mousedown', this.mousedownHandler);
     this.$element.bind('mouseup', this.mouseupHandler);
     this.$element.bind('mouseleave', this.mouseleaveHandler);
@@ -1219,10 +1221,12 @@ export class TbFlot {
   private disableMouseEvents() {
     this.$element.css('pointer-events', 'none');
     this.$element.removeClass('mouse-events');
-    this.options.selection = { mode : null };
+    if (this.chartType !== 'pie') {
+      this.options.selection = {mode: null};
+      this.$element.unbind('plotselected', this.flotSelectHandler);
+      this.$element.unbind('dblclick', this.dblclickHandler);
+    }
     this.$element.unbind('plothover', this.flotHoverHandler);
-    this.$element.unbind('plotselected', this.flotSelectHandler);
-    this.$element.unbind('dblclick', this.dblclickHandler);
     this.$element.unbind('mousedown', this.mousedownHandler);
     this.$element.unbind('mouseup', this.mouseupHandler);
     this.$element.unbind('mouseleave', this.mouseleaveHandler);
