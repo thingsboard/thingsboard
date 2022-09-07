@@ -61,11 +61,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
     private UserDao userDao;
 
     @After
-    public void afterTest() throws Exception {
-        loginSysAdmin();
-
-        afterTestEntityDaoRemoveByIdWithException(userDao);
-    }
+    public void afterTest() throws Exception {}
 
     @Test
     public void testSaveUser() throws Exception {

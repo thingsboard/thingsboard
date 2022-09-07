@@ -120,9 +120,6 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
     @After
     public void afterTest() throws Exception {
-
-        afterTestEntityDaoRemoveByIdWithException (entityViewDao);
-
         executor.shutdownNow();
     }
 
@@ -355,6 +352,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
                 .andExpect(status().isOk());
     }
 
+    @Deprecated
     @Test
     public void testGetCustomerEntityViews() throws Exception {
         Customer customer = doPost("/api/customer", getNewCustomer("Test customer"), Customer.class);
@@ -802,8 +800,11 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         testEntityDaoWithRelationsOk(tenantId, entityViewId, "/api/entityView/" + entityViewId);
     }
 
+    /**
+     * testDeleteEntityViewExceptionWithRelationsTransactional
+     */
     @Test
-    public void testDeleteEntityViewExceptionWithRelationsTransactional() throws Exception {
+    public void testDeleteExceptionTransactional() throws Exception {
         EntityViewId entityViewId = getNewSavedEntityView("EntityView for Test WithRelations Transactional Exception").getId();
         testEntityDaoWithRelationsTransactionalException(entityViewDao, tenantId, entityViewId, "/api/entityView/" + entityViewId);
     }

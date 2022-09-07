@@ -239,7 +239,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     @After
     public void teardownWebTest() throws Exception {
-        log.info("Executing web test teardown");
+        log.warn("Executing web test teardown");
 
         loginSysAdmin();
         doDelete("/api/tenant/" + tenantId.getId().toString())
@@ -730,6 +730,12 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
                 .andExpect(status().isInternalServerError());
 
         assertThat(findRelationsByTo(entityTo)).hasSize(1);
+
+        afterTestEntityDaoRemoveByIdWithException (dao);
+        doDelete(urlDelete).andExpect(status().isOk());
+        doGet(urlDelete)
+                .andExpect(status().isNotFound());
+
     }
 
     protected <T> void entityDaoRemoveByIdWithException (Dao<T> dao) throws Exception {
