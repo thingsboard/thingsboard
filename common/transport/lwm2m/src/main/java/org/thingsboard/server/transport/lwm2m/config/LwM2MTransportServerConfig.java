@@ -38,8 +38,8 @@ import java.util.List;
 public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
 
     @Getter
-    @Value("${transport.coap.dtls.retransmission_timeout_in_sec}")
-    private Integer dtlsRetransmissionTimeoutInSec;
+    @Value("${transport.coap.dtls.retransmission_timeout}")
+    private int dtlsRetransmissionTimeout;
 
     @Getter
     @Value("${transport.lwm2m.timeout:}")
