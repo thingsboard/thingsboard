@@ -305,7 +305,6 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
           this.textSearchMode = true;
           this.pageLink.textSearch = decodeURI(params.textSearch);
         } else {
-          this.textSearchMode = false;
           this.pageLink.textSearch = null;
         }
         this.updateData();

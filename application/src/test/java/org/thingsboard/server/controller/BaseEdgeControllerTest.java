@@ -22,6 +22,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
@@ -33,10 +34,12 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.dao.edge.EdgeDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.edge.imitator.EdgeImitator;
@@ -72,6 +75,9 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
     private TenantId tenantId;
     private User tenantAdmin;
 
+    @SpyBean
+    private EdgeDao edgeDao;
+
     @Before
     public void beforeTest() throws Exception {
         loginSysAdmin();
@@ -95,6 +101,8 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
     @After
     public void afterTest() throws Exception {
         loginSysAdmin();
+
+        afterTestEntityDaoRemoveByIdWithException (edgeDao);
 
         doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
                 .andExpect(status().isOk());
@@ -837,4 +845,20 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
                 .andExpect(status().isOk());
     }
 
+    @Test
+    public void testDeleteEdgeWithDeleteRelationsOk() throws Exception {
+        EdgeId edgeId = savedEdge("Edge for Test WithRelationsOk").getId();
+        testEntityDaoWithRelationsOk(savedTenant.getId(), edgeId, "/api/edge/" + edgeId);
+    }
+
+    @Test
+    public void testDeleteEdgeExceptionWithRelationsTransactional() throws Exception {
+        EdgeId edgeId = savedEdge("Edge for Test WithRelations Transactional Exception").getId();
+        testEntityDaoWithRelationsTransactionalException(edgeDao, savedTenant.getId(), edgeId, "/api/edge/" + edgeId);
+    }
+
+    private Edge savedEdge(String name) {
+        Edge edge = constructEdge(name, "default");
+        return doPost("/api/edge", edge, Edge.class);
+    }
 }
