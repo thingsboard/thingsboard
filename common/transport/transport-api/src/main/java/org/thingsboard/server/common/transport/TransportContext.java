@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
+import org.thingsboard.server.common.transport.ota.TransportOtaPackageService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 
@@ -53,7 +54,7 @@ public abstract class TransportContext {
 
     @Getter
     @Autowired
-    private OtaPackageDataCache otaPackageDataCache;
+    private TransportOtaPackageService otaPackageService;
 
     @Autowired
     private TransportResourceCache transportResourceCache;

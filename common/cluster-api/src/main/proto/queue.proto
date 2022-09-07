@@ -462,6 +462,27 @@ message GetOtaPackageResponseMsg {
   string version = 6;
   string contentType = 7;
   string fileName = 8;
+  int64 fileSize = 9;
+}
+
+message SendOtaPackageBodyRequestMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 otaPackageIdMSB = 3;
+  int64 otaPackageIdLSB = 4;
+  string serviceId = 5;
+}
+
+message SendOtaPackageBodyResponseMsg {
+  ResponseStatus responseStatus = 1;
+}
+
+message OtaPackageBodyChunkMsg {
+  int64 otaPackageIdMSB = 1;
+  int64 otaPackageIdLSB = 2;
+  int32 chunkIndex = 3;
+  int32 chunkCount = 4;
+  bytes data = 5;
 }
 
 message DeviceActivityProto {
@@ -896,6 +917,7 @@ message TransportApiRequestMsg {
   GetDeviceRequestMsg deviceRequestMsg = 12;
   GetDeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 13;
   GetAllQueueRoutingInfoRequestMsg getAllQueueRoutingInfoRequestMsg = 14;
+  SendOtaPackageBodyRequestMsg sendOtaPackageBodyRequestMsg = 15;
 }
 
 /* Response from ThingsBoard Core Service to Transport Service */
@@ -911,6 +933,7 @@ message TransportApiResponseMsg {
   GetDeviceResponseMsg deviceResponseMsg = 9;
   GetDeviceCredentialsResponseMsg deviceCredentialsResponseMsg = 10;
   repeated GetQueueRoutingInfoResponseMsg getQueueRoutingInfoResponseMsgs = 11;
+  SendOtaPackageBodyResponseMsg sendOtaPackageBodyResponseMsg = 12;
 }
 
 /* Messages that are handled by ThingsBoard Core Service */

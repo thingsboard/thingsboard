@@ -13,34 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.cache.ota.files;
+package org.thingsboard.server.transport.mqtt.ota;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.id.OtaPackageId;
-
-import java.io.File;
-import java.nio.file.Path;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
 
 @Data
-public class OtaFileState {
+public class OtaPackageShortInfo {
 
-    private final Lock lock = new ReentrantLock();
-    private final OtaPackageId otaId;
-    private final Path filePath;
+    private final TenantId tenantId;
+    private final OtaPackageId id;
+    private final OtaPackageType type;
+    private final long size;
 
-    private long lastActivityTime;
-
-    public void updateLastActivityTime() {
-        lastActivityTime = System.currentTimeMillis();
-    }
-
-    public boolean exists(){
-        return filePath.toFile().exists();
-    }
-
-    public File getFile() {
-        return filePath.toFile();
-    }
 }

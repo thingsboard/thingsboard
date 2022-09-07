@@ -69,6 +69,7 @@ import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGateway
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
+import org.thingsboard.server.common.transport.ota.TransportOtaPackageService;
 import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -157,6 +158,10 @@ public class DefaultTransportService implements TransportService {
     @Autowired
     @Lazy
     private TbApiUsageClient apiUsageClient;
+    @Autowired
+    @Lazy
+    private TransportOtaPackageService otaPackageService;
+
     private final Map<String, Number> statsMap = new LinkedHashMap<>();
 
     private final Gson gson = new Gson();
@@ -725,6 +730,16 @@ public class DefaultTransportService implements TransportService {
                 callback.onSuccess(response.getValue().getOtaPackageResponseMsg());
             }, callback::onError, transportCallbackExecutor);
         }
+    }
+
+    @Override
+    public void process(TransportProtos.SendOtaPackageBodyRequestMsg msg, TransportServiceCallback<TransportProtos.SendOtaPackageBodyResponseMsg> callback) {
+        TbProtoQueueMsg<TransportProtos.TransportApiRequestMsg> protoMsg =
+                new TbProtoQueueMsg<>(UUID.randomUUID(), TransportProtos.TransportApiRequestMsg.newBuilder().setSendOtaPackageBodyRequestMsg(msg).build());
+
+        AsyncCallbackTemplate.withCallback(transportApiRequestTemplate.send(protoMsg), response -> {
+            callback.onSuccess(response.getValue().getSendOtaPackageBodyResponseMsg());
+        }, callback::onError, transportCallbackExecutor);
     }
 
     @Override

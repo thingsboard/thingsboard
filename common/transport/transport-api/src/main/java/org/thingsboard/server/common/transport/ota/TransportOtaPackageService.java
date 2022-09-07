@@ -13,20 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.cache.ota;
+package org.thingsboard.server.common.transport.ota;
 
-public interface OtaPackageDataCache {
+import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.id.OtaPackageId;
+import org.thingsboard.server.common.data.id.TenantId;
 
-    byte[] get(String key);
+public interface TransportOtaPackageService {
 
-    byte[] get(String key, int chunkSize, int chunk);
+    ListenableFuture<byte[]> get(TenantId tenantId, OtaPackageId packageId, int chunkSize, int chunk);
 
-    void put(String key, byte[] value);
-
-    void evict(String key);
-
-    default boolean has(String otaPackageId) {
-        byte[] data = get(otaPackageId, 1, 0);
-        return data != null && data.length > 0;
-    }
 }

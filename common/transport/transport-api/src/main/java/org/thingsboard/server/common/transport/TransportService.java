@@ -56,6 +56,8 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateBasicMqttCre
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.SendOtaPackageBodyRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.SendOtaPackageBodyResponseMsg;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -126,6 +128,8 @@ public interface TransportService {
     void process(TransportToDeviceActorMsg msg, TransportServiceCallback<Void> callback);
 
     void process(SessionInfoProto sessionInfoProto, GetOtaPackageRequestMsg msg, TransportServiceCallback<GetOtaPackageResponseMsg> callback);
+
+    void process(SendOtaPackageBodyRequestMsg msg, TransportServiceCallback<SendOtaPackageBodyResponseMsg> callback);
 
     SessionMetaData registerAsyncSession(SessionInfoProto sessionInfo, SessionMsgListener listener);
 

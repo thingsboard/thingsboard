@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.cache.ota.files;
+package org.thingsboard.server.common.transport.ota;
 
+import com.google.common.util.concurrent.SettableFuture;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.OtaPackageId;
+import org.thingsboard.server.common.data.id.TenantId;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -24,11 +26,15 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Data
-public class OtaFileState {
+public class TransportOtaFileState {
 
     private final Lock lock = new ReentrantLock();
+    private final TenantId tenantId;
     private final OtaPackageId otaId;
     private final Path filePath;
+
+    private boolean loaded;
+    private SettableFuture<Void> loadFuture;
 
     private long lastActivityTime;
 
@@ -36,11 +42,12 @@ public class OtaFileState {
         lastActivityTime = System.currentTimeMillis();
     }
 
-    public boolean exists(){
+    public boolean exists() {
         return filePath.toFile().exists();
     }
 
     public File getFile() {
         return filePath.toFile();
     }
+
 }

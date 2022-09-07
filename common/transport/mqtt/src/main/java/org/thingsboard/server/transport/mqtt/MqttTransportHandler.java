@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.mqtt;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.JsonParseException;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
@@ -40,8 +41,10 @@ import io.netty.util.CharsetUtil;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -50,6 +53,7 @@ import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.msg.EncryptionUtil;
@@ -69,6 +73,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRespo
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
+import org.thingsboard.server.transport.mqtt.ota.OtaPackageShortInfo;
 import org.thingsboard.server.transport.mqtt.session.DeviceSessionCtx;
 import org.thingsboard.server.transport.mqtt.session.GatewaySessionHandler;
 import org.thingsboard.server.transport.mqtt.session.MqttTopicMatcher;
@@ -129,7 +134,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     volatile InetSocketAddress address;
     volatile GatewaySessionHandler gatewaySessionHandler;
 
-    private final ConcurrentHashMap<String, String> otaPackSessions;
+    private final ConcurrentHashMap<String, OtaPackageShortInfo> otaPackSessions;
     private final ConcurrentHashMap<String, Integer> chunkSizes;
     private final ConcurrentMap<Integer, TransportProtos.ToDeviceRpcRequestMsg> rpcAwaitingAck;
 
@@ -482,10 +487,10 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             return;
         }
 
-        String otaPackageId = otaPackSessions.get(requestId);
+        OtaPackageShortInfo otaPackageInfo = otaPackSessions.get(requestId);
 
-        if (otaPackageId != null) {
-            sendOtaPackage(ctx, mqttMsg.variableHeader().packetId(), otaPackageId, requestId, chunkSize, chunk, type);
+        if (otaPackageInfo != null) {
+            sendOtaPackage(ctx, mqttMsg.variableHeader().packetId(), otaPackageInfo, requestId, chunkSize, chunk);
         } else {
             TransportProtos.SessionInfoProto sessionInfo = deviceSessionCtx.getSessionInfo();
             TransportProtos.GetOtaPackageRequestMsg getOtaPackageRequestMsg = TransportProtos.GetOtaPackageRequestMsg.newBuilder()
@@ -576,9 +581,12 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         @Override
         public void onSuccess(TransportProtos.GetOtaPackageResponseMsg response) {
             if (TransportProtos.ResponseStatus.SUCCESS.equals(response.getResponseStatus())) {
-                OtaPackageId firmwareId = new OtaPackageId(new UUID(response.getOtaPackageIdMSB(), response.getOtaPackageIdLSB()));
-                otaPackSessions.put(requestId, firmwareId.toString());
-                sendOtaPackage(ctx, msgId, firmwareId.toString(), requestId, chunkSize, chunk, OtaPackageType.valueOf(response.getType()));
+                OtaPackageShortInfo info = new OtaPackageShortInfo(
+                        new TenantId(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB())),
+                        new OtaPackageId(new UUID(response.getOtaPackageIdMSB(), response.getOtaPackageIdLSB())),
+                        OtaPackageType.valueOf(response.getType()), response.getFileSize());
+                otaPackSessions.put(requestId, info);
+                sendOtaPackage(ctx, msgId, info, requestId, chunkSize, chunk);
             } else {
                 sendOtaPackageError(ctx, response.getResponseStatus().toString());
             }
@@ -591,17 +599,26 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
-    private void sendOtaPackage(ChannelHandlerContext ctx, int msgId, String firmwareId, String requestId, int chunkSize, int chunk, OtaPackageType type) {
-        log.trace("[{}] Send firmware [{}] to device!", sessionId, firmwareId);
+    private void sendOtaPackage(ChannelHandlerContext ctx, int msgId, OtaPackageShortInfo otaPackageInfo, String requestId, int chunkSize, int chunk) {
+        log.trace("[{}] Send firmware [{}] to device!", sessionId, otaPackageInfo.getId());
         ack(ctx, msgId);
         try {
-            byte[] firmwareChunk = context.getOtaPackageDataCache().get(firmwareId, chunkSize, chunk);
-            deviceSessionCtx.getPayloadAdaptor()
-                    .convertToPublish(deviceSessionCtx, firmwareChunk, requestId, chunk, type)
-                    .ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
+            DonAsynchron.withCallback(context.getOtaPackageService().get(otaPackageInfo.getTenantId(), otaPackageInfo.getId(), chunkSize, chunk),
+                    firmwareChunk -> {
+                        pushChunk(otaPackageInfo, requestId, chunk, firmwareChunk);
+                    }, e -> {
+                        log.trace("[{}] Failed to send firmware response!", sessionId, e);
+                    }, context.getExecutor());
         } catch (Exception e) {
             log.trace("[{}] Failed to send firmware response!", sessionId, e);
         }
+    }
+
+    @SneakyThrows
+    private void pushChunk(OtaPackageShortInfo otaPackageInfo, String requestId, int chunk, byte[] firmwareChunk) {
+        deviceSessionCtx.getPayloadAdaptor()
+                .convertToPublish(deviceSessionCtx, firmwareChunk, requestId, chunk, otaPackageInfo.getType())
+                .ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
     }
 
     private void sendOtaPackageError(ChannelHandlerContext ctx, String error) {

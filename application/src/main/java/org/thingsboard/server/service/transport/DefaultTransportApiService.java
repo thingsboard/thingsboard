@@ -101,7 +101,9 @@ import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.resource.TbResourceService;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -137,7 +139,6 @@ public class DefaultTransportApiService implements TransportApiService {
     private final DeviceProvisionService deviceProvisionService;
     private final TbResourceService resourceService;
     private final OtaPackageService otaPackageService;
-    private final OtaPackageDataCache otaPackageDataCache;
     private final QueueService queueService;
 
     private final ConcurrentMap<String, ReentrantLock> deviceCreationLocks = new ConcurrentHashMap<>();
@@ -181,6 +182,8 @@ public class DefaultTransportApiService implements TransportApiService {
             result = handle(transportApiRequestMsg.getDeviceCredentialsRequestMsg());
         } else if (transportApiRequestMsg.hasOtaPackageRequestMsg()) {
             result = handle(transportApiRequestMsg.getOtaPackageRequestMsg());
+        } else if (transportApiRequestMsg.hasSendOtaPackageBodyRequestMsg()) {
+            result = handle(transportApiRequestMsg.getSendOtaPackageBodyRequestMsg());
         } else if (transportApiRequestMsg.hasGetAllQueueRoutingInfoRequestMsg()) {
             return Futures.transform(handle(transportApiRequestMsg.getGetAllQueueRoutingInfoRequestMsg()), value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
         }
@@ -600,22 +603,56 @@ public class DefaultTransportApiService implements TransportApiService {
                 builder.setTitle(otaPackageInfo.getTitle());
                 builder.setVersion(otaPackageInfo.getVersion());
                 builder.setFileName(otaPackageInfo.getFileName());
+                builder.setFileSize(otaPackageInfo.getDataSize());
                 builder.setContentType(otaPackageInfo.getContentType());
-                if (!otaPackageDataCache.has(otaPackageId.toString())) {
-                    OtaPackage otaPackage = otaPackageService.findOtaPackageById(tenantId, otaPackageId);
-                    try {
-                        //TODO: Do not put to Redis/InMem Cache and use File system on the Transport service instead.
-                        otaPackageDataCache.put(otaPackageId.toString(), otaPackage.getData().readAllBytes());
-                    } catch (IOException e) {
-                        log.error("Failed to cache ota package with id {}",otaPackage.getId(), e);
-                    }
-                }
             }
         }
 
         return Futures.immediateFuture(
                 TransportApiResponseMsg.newBuilder()
                         .setOtaPackageResponseMsg(builder.build())
+                        .build());
+    }
+
+    private ListenableFuture<TransportApiResponseMsg> handle(TransportProtos.SendOtaPackageBodyRequestMsg requestMsg) {
+        TenantId tenantId = new TenantId(new UUID(requestMsg.getTenantIdMSB(), requestMsg.getTenantIdLSB()));
+        OtaPackageId otaPackageId = new OtaPackageId(new UUID(requestMsg.getOtaPackageIdMSB(), requestMsg.getOtaPackageIdLSB()));
+        OtaPackageInfo otaPackageInfo = otaPackageService.findOtaPackageInfoById(tenantId, otaPackageId);
+
+        TransportProtos.SendOtaPackageBodyResponseMsg.Builder builder = TransportProtos.SendOtaPackageBodyResponseMsg.newBuilder();
+
+        if (otaPackageInfo == null) {
+            builder.setResponseStatus(TransportProtos.ResponseStatus.NOT_FOUND);
+        } else if (otaPackageInfo.hasUrl()) {
+            builder.setResponseStatus(TransportProtos.ResponseStatus.FAILURE);
+            log.trace("[{}] Can`t send OtaPackage with URL data!", otaPackageInfo.getId());
+        } else {
+            builder.setResponseStatus(TransportProtos.ResponseStatus.SUCCESS);
+
+            dbCallbackExecutorService.submit(() -> {
+                try {
+                    OtaPackage otaPackage = otaPackageService.findOtaPackageById(tenantId, otaPackageId);
+                    var br = new BufferedReader(new InputStreamReader(otaPackage.getData()));
+                    br.read()
+                } catch (Throwable e) {
+                    log.warn("[{}][{}] Failed to publish ota package to the service [{}] queue: ", tenantId, otaPackageId, );
+                }
+            });
+
+            if (!otaPackageDataCache.has(otaPackageId.toString())) {
+
+                try {
+                    //TODO: Do not put to Redis/InMem Cache and use File system on the Transport service instead.
+                    otaPackageDataCache.put(otaPackageId.toString(), otaPackage.getData().readAllBytes());
+                } catch (IOException e) {
+                    log.error("Failed to cache ota package with id {}", otaPackage.getId(), e);
+                }
+            }
+        }
+
+        return Futures.immediateFuture(
+                TransportApiResponseMsg.newBuilder()
+                        .setSendOtaPackageBodyResponseMsg(builder.build())
                         .build());
     }
 
