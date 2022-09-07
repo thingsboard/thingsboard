@@ -540,6 +540,9 @@ export class WidgetComponentService {
       if (isUndefined(result.typeParameters.stateData)) {
         result.typeParameters.stateData = false;
       }
+      if (isUndefined(result.typeParameters.processNoDataByWidget)) {
+        result.typeParameters.processNoDataByWidget = false;
+      }
       if (isFunction(widgetTypeInstance.actionSources)) {
         result.actionSources = widgetTypeInstance.actionSources();
       } else {
