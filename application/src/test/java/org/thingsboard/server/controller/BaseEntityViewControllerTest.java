@@ -30,7 +30,9 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
@@ -84,6 +86,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
         "js.evaluator=mock",
 })
 @Slf4j
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public abstract class BaseEntityViewControllerTest extends AbstractControllerTest {
     static final TypeReference<PageData<EntityView>> PAGE_DATA_ENTITY_VIEW_TYPE_REF = new TypeReference<>() {
     };
@@ -800,11 +803,8 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         testEntityDaoWithRelationsOk(tenantId, entityViewId, "/api/entityView/" + entityViewId);
     }
 
-    /**
-     * testDeleteEntityViewExceptionWithRelationsTransactional
-     */
     @Test
-    public void testDeleteExceptionTransactional() throws Exception {
+    public void testDeleteEntityViewExceptionWithRelationsTransactional() throws Exception {
         EntityViewId entityViewId = getNewSavedEntityView("EntityView for Test WithRelations Transactional Exception").getId();
         testEntityDaoWithRelationsTransactionalException(entityViewDao, tenantId, entityViewId, "/api/entityView/" + entityViewId);
     }
