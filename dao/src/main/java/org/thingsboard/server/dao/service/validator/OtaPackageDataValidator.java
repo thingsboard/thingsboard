@@ -68,6 +68,9 @@ public class OtaPackageDataValidator extends BaseOtaPackageDataValidator<OtaPack
             if (StringUtils.isEmpty(otaPackage.getChecksum())) {
                 throw new DataValidationException("OtaPackage checksum should be specified!");
             }
+            if(otaPackage.getData()==null){
+                throw new DataValidationException("OtaPackage data should be specified!");
+            }
             String currentChecksum = ChecksumUtil.generateChecksum(otaPackage.getChecksumAlgorithm(), otaPackage.getData());
             if (!currentChecksum.equals(otaPackage.getChecksum())) {
                 throw new DataValidationException("Wrong otaPackage file!");

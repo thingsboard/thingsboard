@@ -123,6 +123,7 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
     }
 
     @Override
+    @Transactional
     public OtaPackage findOtaPackageById(TenantId tenantId, OtaPackageId otaPackageId) {
         log.trace("Executing findOtaPackageById [{}]", otaPackageId);
         validateId(otaPackageId, INCORRECT_OTA_PACKAGE_ID + otaPackageId);
