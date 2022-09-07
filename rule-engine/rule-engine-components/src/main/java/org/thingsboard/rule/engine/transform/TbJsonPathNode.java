@@ -41,7 +41,7 @@ import java.util.concurrent.ExecutionException;
         nodeDescription = "Extracts json element or set of elements from a message by JSONPath expression.",
         nodeDetails = "JSONPath expression specifies a path to an element or a set of elements in a JSON structure. <br/>"
                 + "<b>'$'</b> represents the root object or array. If JSONPath expression evaluation failed, incoming "
-                + "age routes via <code>Failure</code> chain, otherwise <code>Success</code> chain is used.",
+                + "message routes via <code>Failure</code> chain, otherwise <code>Success</code> chain is used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         icon = "functions",
         configDirective = "tbTransformationNodeJsonPathConfig"
@@ -51,23 +51,31 @@ public class TbJsonPathNode implements TbNode {
     TbJsonPathNodeConfiguration config;
     Configuration configurationJsonPath;
     JsonPath jsonPath;
+    String jsonPathValue;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbJsonPathNodeConfiguration.class);
-        this.configurationJsonPath = Configuration.builder()
-                .jsonProvider(new JacksonJsonNodeJsonProvider())
-                .build();
-        this.jsonPath = JsonPath.compile(config.getJsonPath());
+        this.jsonPathValue = config.getJsonPath();
+        if (this.jsonPathValue != "$") {
+            this.configurationJsonPath = Configuration.builder()
+                    .jsonProvider(new JacksonJsonNodeJsonProvider())
+                    .build();
+            this.jsonPath = JsonPath.compile(config.getJsonPath());
+        }
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        try {
-            JsonNode jsonPathData = jsonPath.read(msg.getData(), this.configurationJsonPath);
-            ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(jsonPathData)));
-        } catch (PathNotFoundException e) {
-            ctx.tellFailure(msg, e);
+        if (jsonPathValue != "$") {
+            try {
+                JsonNode jsonPathData = jsonPath.read(msg.getData(), this.configurationJsonPath);
+                ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(jsonPathData)));
+            } catch (PathNotFoundException e) {
+                ctx.tellFailure(msg, e);
+            }
+        } else {
+            ctx.tellSuccess(msg);
         }
     }
 
