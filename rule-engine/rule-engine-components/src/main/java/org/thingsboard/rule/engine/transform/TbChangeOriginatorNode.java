@@ -26,27 +26,18 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.util.EntitiesAlarmOriginatorIdAsyncLoader;
 import org.thingsboard.rule.engine.util.EntitiesCustomerIdAsyncLoader;
+import org.thingsboard.rule.engine.util.EntitiesEntitySourceAsyncLoader;
 import org.thingsboard.rule.engine.util.EntitiesRelatedEntityIdAsyncLoader;
 import org.thingsboard.rule.engine.util.EntitiesTenantIdAsyncLoader;
-import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.DashboardInfo;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @RuleNode(
@@ -80,7 +71,7 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode {
 
     @Override
     protected ListenableFuture<List<TbMsg>> transform(TbContext ctx, TbMsg msg) {
-        ListenableFuture<? extends EntityId> newOriginator = getNewOriginator(ctx, msg.getOriginator(), msg);
+        ListenableFuture<? extends EntityId> newOriginator = getNewOriginator(ctx, msg);
         return Futures.transform(newOriginator, n -> {
             if (n == null || n.isNullUid()) {
                 return null;
@@ -89,84 +80,22 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode {
         }, ctx.getDbCallbackExecutor());
     }
 
-    private ListenableFuture<? extends EntityId> getNewOriginator(TbContext ctx, EntityId original, TbMsg msg) {
+    private ListenableFuture<? extends EntityId> getNewOriginator(TbContext ctx, TbMsg msg) {
         switch (config.getOriginatorSource()) {
             case CUSTOMER_SOURCE:
-                return EntitiesCustomerIdAsyncLoader.findEntityIdAsync(ctx, original);
+                return EntitiesCustomerIdAsyncLoader.findEntityIdAsync(ctx, msg.getOriginator());
             case TENANT_SOURCE:
-                return EntitiesTenantIdAsyncLoader.findEntityIdAsync(ctx, original);
+                return EntitiesTenantIdAsyncLoader.findEntityIdAsync(ctx, msg.getOriginator());
             case RELATED_SOURCE:
-                return EntitiesRelatedEntityIdAsyncLoader.findEntityAsync(ctx, original, config.getRelationsQuery());
+                return EntitiesRelatedEntityIdAsyncLoader.findEntityAsync(ctx, msg.getOriginator(), config.getRelationsQuery());
             case ALARM_ORIGINATOR_SOURCE:
-                return EntitiesAlarmOriginatorIdAsyncLoader.findEntityIdAsync(ctx, original);
+                return EntitiesAlarmOriginatorIdAsyncLoader.findEntityIdAsync(ctx, msg.getOriginator());
             case ENTITY_SOURCE:
-                return getEntity(ctx, original, msg);
+                EntityType entityType = EntityType.valueOf(config.getEntityType());
+                String entityName = TbNodeUtils.processPattern(config.getEntityNamePattern(), msg);
+                return EntitiesEntitySourceAsyncLoader.findEntityIdAsync(ctx, entityType, entityName);
             default:
                 return Futures.immediateFailedFuture(new IllegalStateException("Unexpected originator source " + config.getOriginatorSource()));
-        }
-    }
-
-    private ListenableFuture<? extends EntityId> getEntity(TbContext ctx, EntityId original, TbMsg msg) {
-        EntityType entityType = EntityType.valueOf(config.getEntityType());
-        String entityName = TbNodeUtils.processPattern(config.getEntityNamePattern(), msg);
-        EntityId targetEntity = null;
-        switch (entityType) {
-            case DEVICE:
-                Device device = ctx.getDeviceService().findDeviceByTenantIdAndName(ctx.getTenantId(), entityName);
-                if (device != null) {
-                    targetEntity = device.getId();
-                }
-                break;
-            case ASSET:
-                Asset asset = ctx.getAssetService().findAssetByTenantIdAndName(ctx.getTenantId(), entityName);
-                if (asset != null) {
-                    targetEntity = asset.getId();
-                }
-                break;
-            case CUSTOMER:
-                Optional<Customer> customerOptional = ctx.getCustomerService().findCustomerByTenantIdAndTitle(ctx.getTenantId(), entityName);
-                if (customerOptional.isPresent()) {
-                    targetEntity = customerOptional.get().getId();
-                }
-                break;
-            case TENANT:
-                targetEntity = ctx.getTenantId();
-                break;
-            case ENTITY_VIEW:
-                EntityView entityView = ctx.getEntityViewService().findEntityViewByTenantIdAndName(ctx.getTenantId(), entityName);
-                if (entityView != null) {
-                    targetEntity = entityView.getId();
-                }
-                break;
-            case EDGE:
-                Edge edge = ctx.getEdgeService().findEdgeByTenantIdAndName(ctx.getTenantId(), entityName);
-                if (edge != null) {
-                    targetEntity = edge.getId();
-                }
-                break;
-            case DASHBOARD:
-                PageData<DashboardInfo> dashboardInfoTextPageData = ctx.getDashboardService().findDashboardsByTenantId(ctx.getTenantId(), new PageLink(200, 0, entityName));
-                Optional<DashboardInfo> currentDashboardInfo = dashboardInfoTextPageData.getData().stream()
-                        .filter(dashboardInfo -> dashboardInfo.getTitle().equals(entityName))
-                        .findFirst();
-                if (currentDashboardInfo.isPresent()) {
-                    targetEntity = currentDashboardInfo.get().getId();
-                }
-                break;
-            case USER:
-                User user = ctx.getUserService().findUserByEmail(ctx.getTenantId(), entityName);
-                if (user != null) {
-                    targetEntity = user.getId();
-                }
-                break;
-            default:
-                return Futures.immediateFailedFuture(new IllegalStateException("Unexpected entity type " + config.getEntityType()));
-        }
-
-        if (targetEntity != null) {
-            return Futures.immediateFuture(targetEntity);
-        } else {
-            return Futures.immediateFailedFuture(new IllegalStateException("Entity '" + config.getEntityType() + "' not found by name '" + entityName + "'!"));
         }
     }
 
