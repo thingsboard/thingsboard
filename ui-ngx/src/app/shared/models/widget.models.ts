@@ -17,7 +17,7 @@
 import { BaseData } from '@shared/models/base-data';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { WidgetTypeId } from '@shared/models/id/widget-type-id';
-import { Timewindow } from '@shared/models/time/time.models';
+import { AggregationType, Timewindow } from '@shared/models/time/time.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AlarmSearchStatus, AlarmSeverity } from '@shared/models/alarm.models';
 import { DataKeyType } from './telemetry/telemetry.models';
@@ -261,6 +261,7 @@ export function defaultLegendConfig(wType: widgetType): LegendConfig {
 
 export interface KeyInfo {
   name: string;
+  aggregationType?: AggregationType;
   label?: string;
   color?: string;
   funcBody?: string;
@@ -268,6 +269,18 @@ export interface KeyInfo {
   units?: string;
   decimals?: number;
 }
+
+export const dataKeyAggregationTypeHintTranslationMap = new Map<AggregationType, string>(
+  [
+    [AggregationType.MIN, 'datakey.aggregation-type-min-hint'],
+    [AggregationType.MAX, 'datakey.aggregation-type-max-hint'],
+    [AggregationType.AVG, 'datakey.aggregation-type-avg-hint'],
+    [AggregationType.SUM, 'datakey.aggregation-type-sum-hint'],
+    [AggregationType.COUNT, 'datakey.aggregation-type-count-hint'],
+    [AggregationType.NONE, 'datakey.aggregation-type-none-hint'],
+  ]
+);
+
 
 export interface DataKey extends KeyInfo {
   type: DataKeyType;
@@ -320,6 +333,20 @@ export interface Datasource {
   dataKeyStartIndex?: number;
   latestDataKeyStartIndex?: number;
   [key: string]: any;
+}
+
+export function datasourcesHasAggregation(datasources?: Array<Datasource>): boolean {
+  if (datasources) {
+    const foundDatasource = datasources.find(datasource => {
+      const found = datasource.dataKeys.find(key => key.type === DataKeyType.timeseries &&
+        key.aggregationType && key.aggregationType !== AggregationType.NONE);
+      return !!found;
+    });
+    if (foundDatasource) {
+      return true;
+    }
+  }
+  return false;
 }
 
 export interface FormattedData {

@@ -15,16 +15,24 @@
 ///
 
 import { GridsterComponent, GridsterConfig, GridsterItem, GridsterItemComponentInterface } from 'angular-gridster2';
-import { FormattedData, Widget, WidgetPosition, widgetType } from '@app/shared/models/widget.models';
+import {
+  Datasource,
+  datasourcesHasAggregation,
+  FormattedData,
+  Widget,
+  WidgetPosition,
+  widgetType
+} from '@app/shared/models/widget.models';
 import { WidgetLayout, WidgetLayouts } from '@app/shared/models/dashboard.models';
 import { IDashboardWidget, WidgetAction, WidgetContext, WidgetHeaderAction } from './widget-component.models';
-import { Timewindow } from '@shared/models/time/time.models';
+import { AggregationType, Timewindow } from '@shared/models/time/time.models';
 import { Observable, of, Subject } from 'rxjs';
 import { formattedDataFormDatasourceData, guid, isDefined, isEqual, isUndefined } from '@app/core/utils';
 import { IterableDiffer, KeyValueDiffer } from '@angular/core';
 import { IAliasController, IStateController } from '@app/core/api/widget-api.models';
 import { enumerable } from '@shared/decorators/enumerable';
 import { UtilsService } from '@core/services/utils.service';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 
 export interface WidgetsData {
   widgets: Array<Widget>;
@@ -420,7 +428,14 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     this.dropShadow = isDefined(this.widget.config.dropShadow) ? this.widget.config.dropShadow : true;
     this.enableFullscreen = isDefined(this.widget.config.enableFullscreen) ? this.widget.config.enableFullscreen : true;
 
-    this.hasTimewindow = (this.widget.type === widgetType.timeseries || this.widget.type === widgetType.alarm) ?
+    let canHaveTimewindow = false;
+    if (this.widget.type === widgetType.timeseries || this.widget.type === widgetType.alarm) {
+      canHaveTimewindow = true;
+    } else if (this.widget.type === widgetType.latest) {
+      canHaveTimewindow = datasourcesHasAggregation(this.widget.config.datasources);
+    }
+
+    this.hasTimewindow = canHaveTimewindow ?
       (isDefined(this.widget.config.useDashboardTimewindow) ?
         (!this.widget.config.useDashboardTimewindow && (isUndefined(this.widget.config.displayTimewindow)
           || this.widget.config.displayTimewindow)) : false)

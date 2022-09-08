@@ -1039,7 +1039,14 @@
         "value-description": "the current value;",
         "prev-value-description": "result of the previous function call;",
         "time-prev-description": "timestamp of the previous value;",
-        "prev-orig-value-description": "original previous value;"
+        "prev-orig-value-description": "original previous value;",
+        "aggregation-type": "Aggregation type",
+        "aggregation-type-none-hint": "Take latest value",
+        "aggregation-type-min-hint": "Take min value",
+        "aggregation-type-max-hint": "Take max value",
+        "aggregation-type-avg-hint": "Calculate average value",
+        "aggregation-type-sum-hint": "Calculate sum value",
+        "aggregation-type-count-hint": "Calculate count value"
     },
     "datasource": {
         "type": "Datasource type",

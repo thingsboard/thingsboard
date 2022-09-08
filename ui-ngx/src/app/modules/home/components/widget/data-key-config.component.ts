@@ -18,7 +18,12 @@ import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@an
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { DataKey, Widget } from '@shared/models/widget.models';
+import {
+  DataKey,
+  dataKeyAggregationTypeHintTranslationMap,
+  Widget,
+  widgetType
+} from '@shared/models/widget.models';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -43,6 +48,7 @@ import { JsonFormComponentData } from '@shared/components/json-form/json-form-co
 import { WidgetService } from '@core/http/widget.service';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { IAliasController } from '@core/api/widget-api.models';
+import { aggregationTranslations, AggregationType } from '@shared/models/time/time.models';
 
 @Component({
   selector: 'tb-data-key-config',
@@ -65,6 +71,16 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
 
   dataKeyTypes = DataKeyType;
 
+  widgetTypes = widgetType;
+
+  aggregations = [AggregationType.NONE, ...Object.keys(AggregationType).filter(type => type !== AggregationType.NONE)];
+
+  aggregationTypes = AggregationType;
+
+  aggregationTypesTranslations = aggregationTranslations;
+
+  dataKeyAggregationTypeHintTranslations = dataKeyAggregationTypeHintTranslationMap;
+
   @Input()
   entityAliasId: string;
 
@@ -79,6 +95,9 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
 
   @Input()
   widget: Widget;
+
+  @Input()
+  widgetType: widgetType;
 
   @Input()
   dataKeySettingsSchema: any;
@@ -155,6 +174,7 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
     }
     this.dataKeyFormGroup = this.fb.group({
       name: [null, []],
+      aggregationType: [null, []],
       label: [null, [Validators.required]],
       color: [null, [Validators.required]],
       units: [null, []],
@@ -198,6 +218,9 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
     this.modelValue = value;
     if (this.modelValue.postFuncBody && this.modelValue.postFuncBody.length) {
       this.modelValue.usePostProcessing = true;
+    }
+    if (this.widgetType === widgetType.latest && this.modelValue.type === DataKeyType.timeseries && !this.modelValue.aggregationType) {
+      this.modelValue.aggregationType = AggregationType.NONE;
     }
     this.dataKeyFormGroup.patchValue(this.modelValue, {emitEvent: false});
     this.dataKeyFormGroup.get('name').setValidators(this.modelValue.type !== DataKeyType.function &&

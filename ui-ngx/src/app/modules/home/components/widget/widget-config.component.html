@@ -18,7 +18,7 @@
 <mat-tab-group class="tb-widget-config tb-absolute-fill" [(selectedIndex)]="selectedTab">
   <mat-tab label="{{ 'widget-config.data' | translate }}" *ngIf="widgetType !== widgetTypes.static">
     <div [formGroup]="dataSettings" class="mat-content mat-padding" fxLayout="column" fxLayoutGap="8px">
-      <div *ngIf="widgetType === widgetTypes.timeseries || widgetType === widgetTypes.alarm" fxFlex="100"
+      <div *ngIf="displayTimewindowConfig()" fxFlex="100"
            fxLayout.xs="column" fxLayoutGap="8px" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center">
         <div fxLayout="column" fxLayoutGap="8px" fxFlex.gt-xs>
           <mat-checkbox formControlName="useDashboardTimewindow">

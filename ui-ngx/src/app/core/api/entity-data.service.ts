@@ -31,6 +31,7 @@ import { Observable, of } from 'rxjs';
 
 export interface EntityDataListener {
   subscriptionType: widgetType;
+  useTimewindow?: boolean;
   subscriptionTimewindow?: SubscriptionTimewindow;
   latestTsOffset?: number;
   configDatasource: Datasource;
@@ -93,10 +94,10 @@ export class EntityDataService {
 
   public startSubscription(listener: EntityDataListener) {
     if (listener.subscription) {
-      if (listener.subscriptionType === widgetType.timeseries) {
+      if (listener.useTimewindow) {
         listener.subscriptionOptions.subscriptionTimewindow = deepClone(listener.subscriptionTimewindow);
-        listener.subscriptionOptions.latestTsOffset = listener.latestTsOffset;
-      } else if (listener.subscriptionType === widgetType.latest) {
+      }
+      if (listener.subscriptionType === widgetType.timeseries || listener.subscriptionType === widgetType.latest) {
         listener.subscriptionOptions.latestTsOffset = listener.latestTsOffset;
       }
       listener.subscription.start();
@@ -122,10 +123,10 @@ export class EntityDataService {
       return of(null);
     }
     listener.subscription = new EntityDataSubscription(listener, this.telemetryService, this.utils);
-    if (listener.subscriptionType === widgetType.timeseries) {
+    if (listener.useTimewindow) {
       listener.subscriptionOptions.subscriptionTimewindow = deepClone(listener.subscriptionTimewindow);
-      listener.subscriptionOptions.latestTsOffset = listener.latestTsOffset;
-    } else if (listener.subscriptionType === widgetType.latest) {
+    }
+    if (listener.subscriptionType === widgetType.timeseries || listener.subscriptionType === widgetType.latest) {
       listener.subscriptionOptions.latestTsOffset = listener.latestTsOffset;
     }
     return listener.subscription.subscribe();
@@ -176,6 +177,7 @@ export class EntityDataService {
     return {
       name: dataKey.name,
       type: dataKey.type,
+      aggregationType: dataKey.aggregationType,
       funcBody: dataKey.funcBody,
       postFuncBody: dataKey.postFuncBody,
       latest

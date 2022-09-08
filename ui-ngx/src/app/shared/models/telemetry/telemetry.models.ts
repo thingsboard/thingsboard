@@ -173,12 +173,31 @@ export interface TimeSeriesCmd {
   fetchLatestPreviousPoint?: boolean;
 }
 
+export interface AggKey {
+  key: string;
+  agg: AggregationType;
+}
+
+export interface AggEntityHistoryCmd {
+  keys: Array<AggKey>;
+  startTs: number;
+  endTs: number;
+}
+
+export interface AggTimeSeriesCmd {
+  keys: Array<AggKey>;
+  startTs: number;
+  timeWindow: number;
+}
+
 export class EntityDataCmd implements WebsocketCmd {
   cmdId: number;
   query?: EntityDataQuery;
   historyCmd?: EntityHistoryCmd;
   latestCmd?: LatestValueCmd;
   tsCmd?: TimeSeriesCmd;
+  aggHistoryCmd?: AggEntityHistoryCmd;
+  aggTsCmd?: AggTimeSeriesCmd;
 
   public isEmpty(): boolean {
     return !this.query && !this.historyCmd && !this.latestCmd && !this.tsCmd;

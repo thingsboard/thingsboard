@@ -20,7 +20,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
   DataKey,
-  Datasource,
+  Datasource, datasourcesHasAggregation,
   DatasourceType,
   datasourceTypeTranslationMap,
   defaultLegendConfig,
@@ -42,7 +42,7 @@ import {
   Validators
 } from '@angular/forms';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
-import { deepClone, isDefined, isObject, isUndefined } from '@app/core/utils';
+import { deepClone, isDefined, isObject } from '@app/core/utils';
 import {
   alarmFields,
   AlarmSearchStatus,
@@ -51,7 +51,7 @@ import {
   alarmSeverityTranslations
 } from '@shared/models/alarm.models';
 import { IAliasController } from '@core/api/widget-api.models';
-import { EntityAlias, EntityAliases } from '@shared/models/alias.models';
+import { EntityAlias } from '@shared/models/alias.models';
 import { UtilsService } from '@core/services/utils.service';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { TranslateService } from '@ngx-translate/core';
@@ -67,13 +67,14 @@ import { MatDialog } from '@angular/material/dialog';
 import { EntityService } from '@core/http/entity.service';
 import { JsonFormComponentData } from '@shared/components/json-form/json-form-component.models';
 import { WidgetActionsData } from './action/manage-widget-actions.component.models';
-import { Dashboard, DashboardState } from '@shared/models/dashboard.models';
+import { Dashboard } from '@shared/models/dashboard.models';
 import { entityFields } from '@shared/models/entity.models';
-import { Filter, Filters } from '@shared/models/query/query.models';
+import { Filter } from '@shared/models/query/query.models';
 import { FilterDialogComponent, FilterDialogData } from '@home/components/filter/filter-dialog.component';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
+import { AggregationType } from '@shared/models/time/time.models';
 
 const emptySettingsSchema: JsonSchema = {
   type: 'object',
@@ -334,10 +335,10 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     this.targetDeviceSettings = this.fb.group({});
     this.alarmSourceSettings = this.fb.group({});
     this.advancedSettings = this.fb.group({});
-    if (this.widgetType === widgetType.timeseries || this.widgetType === widgetType.alarm) {
-      this.dataSettings.addControl('useDashboardTimewindow', this.fb.control(null));
-      this.dataSettings.addControl('displayTimewindow', this.fb.control(null));
-      this.dataSettings.addControl('timewindow', this.fb.control(null));
+    if (this.widgetType === widgetType.timeseries || this.widgetType === widgetType.alarm || this.widgetType === widgetType.latest) {
+      this.dataSettings.addControl('useDashboardTimewindow', this.fb.control(true));
+      this.dataSettings.addControl('displayTimewindow', this.fb.control({value: true, disabled: true}));
+      this.dataSettings.addControl('timewindow', this.fb.control({value: null, disabled: true}));
       this.dataSettings.get('useDashboardTimewindow').valueChanges.subscribe((value: boolean) => {
         if (value) {
           this.dataSettings.get('displayTimewindow').disable({emitEvent: false});
@@ -467,7 +468,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
           },
           {emitEvent: false}
         );
-        if (this.widgetType === widgetType.timeseries || this.widgetType === widgetType.alarm) {
+        if (this.widgetType === widgetType.timeseries || this.widgetType === widgetType.alarm || this.widgetType === widgetType.latest) {
           const useDashboardTimewindow = isDefined(config.useDashboardTimewindow) ?
             config.useDashboardTimewindow : true;
           this.dataSettings.patchValue(
@@ -731,6 +732,15 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   public displayAdvanced(): boolean {
     return !!this.modelValue && (!!this.modelValue.settingsSchema && !!this.modelValue.settingsSchema.schema ||
         !!this.modelValue.settingsDirective && !!this.modelValue.settingsDirective.length);
+  }
+
+  public displayTimewindowConfig(): boolean {
+    if (this.widgetType === widgetType.timeseries || this.widgetType === widgetType.alarm) {
+      return true;
+    } else if (this.widgetType === widgetType.latest) {
+      const datasources = this.dataSettings.get('datasources').value;
+      return datasourcesHasAggregation(datasources);
+    }
   }
 
   public onDatasourceDrop(event: CdkDragDrop<string[]>) {

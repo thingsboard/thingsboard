@@ -28,6 +28,7 @@ import {
   TsValue
 } from '@shared/models/query/query.models';
 import {
+  AggKey,
   DataKeyType,
   EntityCountCmd,
   EntityDataCmd,
@@ -55,6 +56,7 @@ declare type DataUpdatedCb = (data: DataSetHolder, dataIndex: number,
 export interface SubscriptionDataKey {
   name: string;
   type: DataKeyType;
+  aggregationType?: AggregationType;
   funcBody: string;
   func?: DataKeyFunction;
   postFuncBody: string;
@@ -95,6 +97,7 @@ export class EntityDataSubscription {
   private attrFields: Array<EntityKey>;
   private tsFields: Array<EntityKey>;
   private latestValues: Array<EntityKey>;
+  private aggTsValues: Array<AggKey>;
 
   private entityDataResolveSubject: Subject<EntityDataLoadResult>;
   private pageData: PageData<EntityData>;
@@ -142,7 +145,8 @@ export class EntityDataSubscription {
         if (this.datasourceType === DatasourceType.function) {
           key = `${dataKey.name}_${dataKey.index}_${dataKey.type}${dataKey.latest ? '_latest' : ''}`;
         } else {
-          key = `${dataKey.name}_${dataKey.type}${dataKey.latest ? '_latest' : ''}`;
+          const aggSuffix = dataKey.aggregationType && dataKey.aggregationType !== AggregationType.NONE ? `_${dataKey.aggregationType.toLowerCase()}` : '';
+          key = `${dataKey.name}_${dataKey.type}${aggSuffix}${dataKey.latest ? '_latest' : ''}`;
         }
         let dataKeysList = this.dataKeys[key] as Array<SubscriptionDataKey>;
         if (!dataKeysList) {
@@ -224,19 +228,27 @@ export class EntityDataSubscription {
       );
 
       this.tsFields = this.entityDataSubscriptionOptions.dataKeys.
-        filter(dataKey => dataKey.type === DataKeyType.timeseries && !dataKey.latest).map(
+        filter(dataKey => dataKey.type === DataKeyType.timeseries &&
+            (!dataKey.aggregationType || dataKey.aggregationType === AggregationType.NONE) && !dataKey.latest).map(
           dataKey => ({ type: EntityKeyType.TIME_SERIES, key: dataKey.name })
       );
 
       if (this.entityDataSubscriptionOptions.type === widgetType.timeseries) {
         const latestTsFields = this.entityDataSubscriptionOptions.dataKeys.
-        filter(dataKey => dataKey.type === DataKeyType.timeseries && dataKey.latest).map(
+        filter(dataKey => dataKey.type === DataKeyType.timeseries && dataKey.latest &&
+          (!dataKey.aggregationType || dataKey.aggregationType === AggregationType.NONE)).map(
           dataKey => ({ type: EntityKeyType.TIME_SERIES, key: dataKey.name })
         );
         this.latestValues = this.attrFields.concat(latestTsFields);
       } else {
         this.latestValues = this.attrFields.concat(this.tsFields);
       }
+
+      this.aggTsValues = this.entityDataSubscriptionOptions.dataKeys.
+          filter(dataKey => dataKey.type === DataKeyType.timeseries &&
+            dataKey.aggregationType && dataKey.aggregationType !== AggregationType.NONE).map(
+            dataKey => ({ key: dataKey.name, agg: dataKey.aggregationType })
+          );
 
       this.subscriber = new TelemetrySubscriber(this.telemetryService);
       this.dataCommand = new EntityDataCmd();
@@ -495,6 +507,21 @@ export class EntityDataSubscription {
       if (this.latestValues.length > 0) {
         cmd.latestCmd = {
           keys: this.latestValues
+        };
+      }
+    }
+    if (this.aggTsValues.length > 0) {
+      if (this.history) {
+        cmd.aggHistoryCmd = {
+          keys: this.aggTsValues,
+          startTs: this.subsTw.fixedWindow.startTimeMs,
+          endTs: this.subsTw.fixedWindow.endTimeMs
+        };
+      } else {
+        cmd.aggTsCmd = {
+          keys: this.aggTsValues,
+          startTs: this.subsTw.startTs,
+          timeWindow: this.subsTw.aggregation.timeWindow
         };
       }
     }
