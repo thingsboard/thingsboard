@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
+import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
@@ -83,6 +84,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("UnstableApiUsage")
 @Slf4j
 @TbCoreComponent
 @Service
@@ -429,23 +431,34 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         } else {
             finalTsKvQueryList = tsKvQueryList;
         }
-        Map<EntityData, ListenableFuture<List<TsKvEntry>>> fetchResultMap = new HashMap<>();
-        ctx.getData().getData().forEach(entityData -> fetchResultMap.put(entityData,
-                tsService.findAll(ctx.getTenantId(), entityData.getEntityId(), finalTsKvQueryList)));
+        Map<EntityData, ListenableFuture<List<ReadTsKvQueryResult>>> fetchResultMap = new HashMap<>();
+        List<EntityData> entityDataList = ctx.getData().getData();
+        entityDataList.forEach(entityData -> fetchResultMap.put(entityData,
+                tsService.findAllByQueries(ctx.getTenantId(), entityData.getEntityId(), finalTsKvQueryList)));
         return Futures.transform(Futures.allAsList(fetchResultMap.values()), f -> {
+            // Map that holds last ts for each key for each entity.
+            Map<EntityData, Map<String, Long>> lastTsEntityMap = new HashMap<>();
             fetchResultMap.forEach((entityData, future) -> {
-                Map<String, List<TsValue>> keyData = new LinkedHashMap<>();
-                cmd.getKeys().forEach(key -> keyData.put(key, new ArrayList<>()));
                 try {
-                    List<TsKvEntry> entityTsData = future.get();
-                    if (entityTsData != null) {
-                        entityTsData.forEach(entry -> keyData.get(entry.getKey()).add(new TsValue(entry.getTs(), entry.getValueAsString())));
+                    Map<String, Long> lastTsMap = new HashMap<>();
+                    lastTsEntityMap.put(entityData, lastTsMap);
+
+                    List<ReadTsKvQueryResult> queryResults = future.get();
+                    if (queryResults != null) {
+                        for (ReadTsKvQueryResult queryResult : queryResults) {
+                            entityData.getTimeseries().put(queryResult.getKey(), queryResult.toTsValues());
+                            lastTsMap.put(queryResult.getKey(), queryResult.getLastEntryTs());
+                        }
                     }
-                    keyData.forEach((k, v) -> entityData.getTimeseries().put(k, v.toArray(new TsValue[v.size()])));
+                    // Populate with empty values if no data found.
+                    cmd.getKeys().forEach(key -> {
+                        if (!entityData.getTimeseries().containsKey(key)) {
+                            entityData.getTimeseries().put(key, new TsValue[0]);
+                        }
+                    });
+
                     if (cmd.isFetchLatestPreviousPoint()) {
-                        entityData.getTimeseries().values().forEach(dataArray -> {
-                            Arrays.sort(dataArray, (o1, o2) -> Long.compare(o2.getTs(), o1.getTs()));
-                        });
+                        entityData.getTimeseries().values().forEach(dataArray -> Arrays.sort(dataArray, (o1, o2) -> Long.compare(o2.getTs(), o1.getTs())));
                     }
                 } catch (InterruptedException | ExecutionException e) {
                     log.warn("[{}][{}][{}] Failed to fetch historical data", ctx.getSessionId(), ctx.getCmdId(), entityData.getEntityId(), e);
@@ -459,13 +472,13 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                     update = new EntityDataUpdate(ctx.getCmdId(), ctx.getData(), null, ctx.getMaxEntitiesPerDataSubscription());
                     ctx.setInitialDataSent(true);
                 } else {
-                    update = new EntityDataUpdate(ctx.getCmdId(), null, ctx.getData().getData(), ctx.getMaxEntitiesPerDataSubscription());
+                    update = new EntityDataUpdate(ctx.getCmdId(), null, entityDataList, ctx.getMaxEntitiesPerDataSubscription());
                 }
                 if (subscribe) {
-                    ctx.createTimeseriesSubscriptions(keys.stream().map(key -> new EntityKey(EntityKeyType.TIME_SERIES, key)).collect(Collectors.toList()), cmd.getStartTs(), cmd.getEndTs());
+                    ctx.createTimeseriesSubscriptions(lastTsEntityMap, cmd.getStartTs(), cmd.getEndTs());
                 }
                 ctx.sendWsMsg(update);
-                ctx.getData().getData().forEach(ed -> ed.getTimeseries().clear());
+                entityDataList.forEach(ed -> ed.getTimeseries().clear());
             } finally {
                 ctx.getWsLock().unlock();
             }

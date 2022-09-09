@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.kv.AggTsKvEntry;
 import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
@@ -28,6 +29,7 @@ import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.kv.TsKvEntryAggWrapper;
 import org.thingsboard.server.dao.nosql.TbResultSet;
 
 import javax.annotation.Nullable;
@@ -40,7 +42,7 @@ import java.util.stream.Collectors;
  * Created by ashvayka on 20.02.17.
  */
 @Slf4j
-public class AggregatePartitionsFunction implements com.google.common.util.concurrent.AsyncFunction<List<TbResultSet>, Optional<TsKvEntry>> {
+public class AggregatePartitionsFunction implements com.google.common.util.concurrent.AsyncFunction<List<TbResultSet>, Optional<TsKvEntryAggWrapper>> {
 
     private static final int LONG_CNT_POS = 0;
     private static final int DOUBLE_CNT_POS = 1;
@@ -52,6 +54,7 @@ public class AggregatePartitionsFunction implements com.google.common.util.concu
     private static final int BOOL_POS = 7;
     private static final int STR_POS = 8;
     private static final int JSON_POS = 9;
+    private static final int MAX_TS_POS = 10;
 
     private final Aggregation aggregation;
     private final String key;
@@ -66,29 +69,29 @@ public class AggregatePartitionsFunction implements com.google.common.util.concu
     }
 
     @Override
-    public ListenableFuture<Optional<TsKvEntry>> apply(@Nullable List<TbResultSet> rsList) {
-    log.trace("[{}][{}][{}] Going to aggregate data", key, ts, aggregation);
-    if (rsList == null || rsList.isEmpty()) {
-        return Futures.immediateFuture(Optional.empty());
-    }
-    return Futures.transform(
-        Futures.allAsList(
-            rsList.stream().map(rs -> rs.allRows(this.executor))
-                .collect(Collectors.toList())),
-        rowsList -> {
-            try {
-                AggregationResult aggResult = new AggregationResult();
-                for (List<Row> rs : rowsList) {
-                    for (Row row : rs) {
-                        processResultSetRow(row, aggResult);
+    public ListenableFuture<Optional<TsKvEntryAggWrapper>> apply(@Nullable List<TbResultSet> rsList) {
+        log.trace("[{}][{}][{}] Going to aggregate data", key, ts, aggregation);
+        if (rsList == null || rsList.isEmpty()) {
+            return Futures.immediateFuture(Optional.empty());
+        }
+        return Futures.transform(
+                Futures.allAsList(
+                        rsList.stream().map(rs -> rs.allRows(this.executor))
+                                .collect(Collectors.toList())),
+                rowsList -> {
+                    try {
+                        AggregationResult aggResult = new AggregationResult();
+                        for (List<Row> rs : rowsList) {
+                            for (Row row : rs) {
+                                processResultSetRow(row, aggResult);
+                            }
+                        }
+                        return processAggregationResult(aggResult);
+                    } catch (Exception e) {
+                        log.error("[{}][{}][{}] Failed to aggregate data", key, ts, aggregation, e);
+                        return Optional.empty();
                     }
-                }
-                return processAggregationResult(aggResult);
-            } catch (Exception e) {
-                log.error("[{}][{}][{}] Failed to aggregate data", key, ts, aggregation, e);
-                return Optional.empty();
-            }
-        }, this.executor);
+                }, this.executor);
     }
 
     private void processResultSetRow(Row row, AggregationResult aggResult) {
@@ -105,6 +108,7 @@ public class AggregatePartitionsFunction implements com.google.common.util.concu
         long boolCount = row.getLong(BOOL_CNT_POS);
         long strCount = row.getLong(STR_CNT_POS);
         long jsonCount = row.getLong(JSON_CNT_POS);
+        long aggValuesLastTs = row.getLong(MAX_TS_POS);
 
         if (longCount > 0 || doubleCount > 0) {
             if (longCount > 0) {
@@ -133,6 +137,8 @@ public class AggregatePartitionsFunction implements com.google.common.util.concu
         } else {
             return;
         }
+
+        aggResult.aggValuesLastTs = Math.max(aggResult.aggValuesLastTs, aggValuesLastTs);
 
         if (aggregation == Aggregation.COUNT) {
             aggResult.count += curCount;
@@ -231,34 +237,37 @@ public class AggregatePartitionsFunction implements com.google.common.util.concu
         }
     }
 
-    private Optional<TsKvEntry> processAggregationResult(AggregationResult aggResult) {
+    private Optional<TsKvEntryAggWrapper> processAggregationResult(AggregationResult aggResult) {
         Optional<TsKvEntry> result;
         if (aggResult.dataType == null) {
             result = Optional.empty();
         } else if (aggregation == Aggregation.COUNT) {
             result = Optional.of(new BasicTsKvEntry(ts, new LongDataEntry(key, aggResult.count)));
         } else if (aggregation == Aggregation.AVG || aggregation == Aggregation.SUM) {
-            result = processAvgOrSumResult(aggResult);
+            result = processAvgOrSumResult(aggregation, aggResult);
         } else if (aggregation == Aggregation.MIN || aggregation == Aggregation.MAX) {
             result = processMinOrMaxResult(aggResult);
         } else {
             result = Optional.empty();
         }
-        if (!result.isPresent()) {
+        if (result.isEmpty()) {
             log.trace("[{}][{}][{}] Aggregated data is empty.", key, ts, aggregation);
         }
-        return result;
+        return result.map(tsKvEntry -> new TsKvEntryAggWrapper(tsKvEntry, aggResult.aggValuesLastTs));
     }
 
-    private Optional<TsKvEntry> processAvgOrSumResult(AggregationResult aggResult) {
+    private Optional<TsKvEntry> processAvgOrSumResult(Aggregation aggregation, AggregationResult aggResult) {
         if (aggResult.count == 0 || (aggResult.dataType == DataType.DOUBLE && aggResult.dValue == null) || (aggResult.dataType == DataType.LONG && aggResult.lValue == null)) {
             return Optional.empty();
         } else if (aggResult.dataType == DataType.DOUBLE || aggResult.dataType == DataType.LONG) {
             if (aggregation == Aggregation.AVG || aggResult.hasDouble) {
                 double sum = Optional.ofNullable(aggResult.dValue).orElse(0.0d) + Optional.ofNullable(aggResult.lValue).orElse(0L);
-                return Optional.of(new BasicTsKvEntry(ts, new DoubleDataEntry(key, aggregation == Aggregation.SUM ? sum : (sum / aggResult.count))));
+                DoubleDataEntry doubleDataEntry = new DoubleDataEntry(key, aggregation == Aggregation.SUM ? sum : (sum / aggResult.count));
+                TsKvEntry result = aggregation == Aggregation.AVG ? new AggTsKvEntry(ts, doubleDataEntry, aggResult.count) : new BasicTsKvEntry(ts, doubleDataEntry);
+                return Optional.of(result);
             } else {
-                return Optional.of(new BasicTsKvEntry(ts, new LongDataEntry(key, aggregation == Aggregation.SUM ? aggResult.lValue : (aggResult.lValue / aggResult.count))));
+                LongDataEntry longDataEntry = new LongDataEntry(key, aggregation == Aggregation.SUM ? aggResult.lValue : (aggResult.lValue / aggResult.count));
+                return Optional.of(new BasicTsKvEntry(ts, longDataEntry));
             }
         }
         return Optional.empty();
@@ -291,5 +300,6 @@ public class AggregatePartitionsFunction implements com.google.common.util.concu
         Long lValue = null;
         long count = 0;
         boolean hasDouble = false;
+        long aggValuesLastTs = 0;
     }
 }

@@ -21,6 +21,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
+import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 
 import java.util.Optional;
@@ -48,9 +49,9 @@ public class AbstractChunkedAggregationTimeseriesDaoTest {
     @Before
     public void setUp() throws Exception {
         tsDao = spy(AbstractChunkedAggregationTimeseriesDao.class);
-        ListenableFuture<Optional<TsKvEntry>> optionalListenableFuture = Futures.immediateFuture(Optional.of(mock(TsKvEntry.class)));
+        Optional<TsKvEntry> optionalListenableFuture = Optional.of(mock(TsKvEntry.class));
         willReturn(optionalListenableFuture).given(tsDao).findAndAggregateAsync(any(), anyString(), anyLong(), anyLong(), anyLong(), any());
-        willReturn(Futures.immediateFuture(mock(TsKvEntry.class))).given(tsDao).getTskvEntriesFuture(any());
+        willReturn(Futures.immediateFuture(mock(ReadTsKvQueryResult.class))).given(tsDao).getReadTsKvQueryResultFuture(any(), any());
     }
 
     @Test
