@@ -120,9 +120,6 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
     @After
     public void afterTest() throws Exception {
-
-        afterTestEntityDaoRemoveByIdWithException (entityViewDao);
-
         executor.shutdownNow();
     }
 
@@ -806,5 +803,8 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
     public void testDeleteEntityViewExceptionWithRelationsTransactional() throws Exception {
         EntityViewId entityViewId = getNewSavedEntityView("EntityView for Test WithRelations Transactional Exception").getId();
         testEntityDaoWithRelationsTransactionalException(entityViewDao, tenantId, entityViewId, "/api/entityView/" + entityViewId);
+        afterTestEntityDaoRemoveByIdWithException (entityViewDao);
+        doDelete("/api/entityView/" + entityViewId.getId().toString())
+                .andExpect(status().isOk());
     }
 }
