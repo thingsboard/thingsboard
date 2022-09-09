@@ -66,7 +66,7 @@
         <mat-label translate>datakey.aggregation-type</mat-label>
         <mat-select formControlName="aggregationType" style="min-width: 150px;">
           <mat-option *ngFor="let aggregation of aggregations" [value]="aggregation">
-            {{ aggregationTypesTranslations.get(aggregationTypes[aggregation]) | translate }}
+            {{ (aggregation === aggregationTypes.NONE ? 'datakey.latest-value' : aggregationTypesTranslations.get(aggregationTypes[aggregation])) | translate }}
           </mat-option>
         </mat-select>
         <mat-hint>{{ dataKeyFormGroup.get('aggregationType').value ? (dataKeyAggregationTypeHintTranslations.get(aggregationTypes[dataKeyFormGroup.get('aggregationType').value]) | translate) : '' }}</mat-hint>
