@@ -521,7 +521,8 @@ export class EntityDataSubscription {
         cmd.aggTsCmd = {
           keys: this.aggTsValues,
           startTs: this.subsTw.startTs,
-          timeWindow: this.subsTw.aggregation.timeWindow
+          timeWindow: this.subsTw.aggregation.timeWindow,
+          floating: !this.subsTw.quickInterval
         };
       }
     }

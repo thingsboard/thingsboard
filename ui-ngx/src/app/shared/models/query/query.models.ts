@@ -761,12 +761,15 @@ export interface AlarmDataQuery extends AbstractDataQuery<AlarmDataPageLink> {
 export interface TsValue {
   ts: number;
   value: string;
+  count?: number;
 }
 
 export interface EntityData {
   entityId: EntityId;
   latest: {[entityKeyType: string]: {[key: string]: TsValue}};
   timeseries: {[key: string]: Array<TsValue>};
+  aggLatest?: {[aggType: string]: {[key: string]: TsValue}};
+  aggFloating?: {[aggType: string]: {[key: string]: Array<TsValue>}};
 }
 
 export interface AlarmData extends AlarmInfo {

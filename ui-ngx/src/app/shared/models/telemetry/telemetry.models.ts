@@ -188,6 +188,7 @@ export interface AggTimeSeriesCmd {
   keys: Array<AggKey>;
   startTs: number;
   timeWindow: number;
+  floating: boolean;
 }
 
 export class EntityDataCmd implements WebsocketCmd {
