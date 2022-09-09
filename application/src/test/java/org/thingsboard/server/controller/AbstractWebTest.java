@@ -239,6 +239,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     @After
     public void teardownWebTest() throws Exception {
+        log.error("after");
         log.info("Executing web test teardown");
 
         loginSysAdmin();

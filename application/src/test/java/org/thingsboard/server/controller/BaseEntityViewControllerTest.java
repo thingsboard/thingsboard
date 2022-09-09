@@ -27,10 +27,12 @@ import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.BDDMockito;
 import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
@@ -60,6 +62,7 @@ import org.thingsboard.server.dao.entityview.EntityViewDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -76,6 +79,7 @@ import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
@@ -120,6 +124,9 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
     @After
     public void afterTest() throws Exception {
+        log.error("after");
+        BDDMockito.willCallRealMethod().given(entityViewDao).removeById(any(), any());
+
         executor.shutdownNow();
     }
 
@@ -802,9 +809,14 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
     @Test
     public void testDeleteEntityViewExceptionWithRelationsTransactional() throws Exception {
         EntityViewId entityViewId = getNewSavedEntityView("EntityView for Test WithRelations Transactional Exception").getId();
-        testEntityDaoWithRelationsTransactionalException(entityViewDao, tenantId, entityViewId, "/api/entityView/" + entityViewId);
-        afterTestEntityDaoRemoveByIdWithException (entityViewDao);
-        doDelete("/api/entityView/" + entityViewId.getId().toString())
-                .andExpect(status().isOk());
+        BDDMockito.willThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT"))
+                .given(entityViewDao).removeById(any(), any());
+        createEntityRelation(tenantId, entityViewId, "TEST_TRANSACTIONAL_TYPE");
+        assertThat(findRelationsByTo(entityViewId)).hasSize(1);
+
+        doDelete("/api/entityView/" + entityViewId)
+                .andExpect(status().isInternalServerError());
+
+        assertThat(findRelationsByTo(entityViewId)).hasSize(1);
     }
 }

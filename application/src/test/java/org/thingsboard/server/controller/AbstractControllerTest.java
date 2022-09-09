@@ -76,6 +76,7 @@ public abstract class AbstractControllerTest extends AbstractNotifyEntityTest {
 
     @After
     public void afterWsTest() throws Exception {
+        log.error("after");
         if (wsClient != null) {
             wsClient.close();
         }
