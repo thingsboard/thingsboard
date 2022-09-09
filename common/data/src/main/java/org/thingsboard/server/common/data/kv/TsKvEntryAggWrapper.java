@@ -15,25 +15,12 @@
  */
 package org.thingsboard.server.common.data.kv;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.thingsboard.server.common.data.query.TsValue;
+import lombok.Data;
 
-/**
- * Represents time series KV data entry
- *
- * @author ashvayka
- *
- */
-public interface TsKvEntry extends KvEntry {
+@Data
+public class TsKvEntryAggWrapper {
 
-    long getTs();
-
-    @JsonIgnore
-    int getDataPoints();
-
-    @JsonIgnore
-    default TsValue toTsValue() {
-        return new TsValue(getTs(), getValueAsString());
-    }
+    private final TsKvEntry entry;
+    private final long lastEntryTs;
 
 }

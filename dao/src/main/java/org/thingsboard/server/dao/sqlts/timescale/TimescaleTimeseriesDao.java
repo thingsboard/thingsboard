@@ -30,11 +30,13 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
+import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
 import org.thingsboard.server.dao.model.sqlts.timescale.ts.TimescaleTsKvEntity;
+import org.thingsboard.server.dao.model.sqlts.ts.TsKvEntity;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
 import org.thingsboard.server.dao.sqlts.AbstractSqlTimeseriesDao;
@@ -101,13 +103,13 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
     }
 
     @Override
-    public ListenableFuture<List<TsKvEntry>> findAllAsync(TenantId tenantId, EntityId entityId, List<ReadTsKvQuery> queries) {
+    public ListenableFuture<List<ReadTsKvQueryResult>> findAllAsync(TenantId tenantId, EntityId entityId, List<ReadTsKvQuery> queries) {
         return processFindAllAsync(tenantId, entityId, queries);
     }
 
     @Override
     public ListenableFuture<Integer> save(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry, long ttl) {
-        int dataPointDays = getDataPointDays(tsKvEntry,  computeTtl(ttl));
+        int dataPointDays = getDataPointDays(tsKvEntry, computeTtl(ttl));
         String strKey = tsKvEntry.getKey();
         Integer keyId = getOrSaveKeyId(strKey);
         TimescaleTsKvEntity entity = new TimescaleTsKvEntity();
@@ -148,15 +150,15 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
     }
 
     @Override
-    public ListenableFuture<List<TsKvEntry>> findAllAsync(TenantId tenantId, EntityId entityId, ReadTsKvQuery query) {
+    public ListenableFuture<ReadTsKvQueryResult> findAllAsync(TenantId tenantId, EntityId entityId, ReadTsKvQuery query) {
         if (query.getAggregation() == Aggregation.NONE) {
-            return findAllAsyncWithLimit(entityId, query);
+            return Futures.immediateFuture(findAllAsyncWithLimit(entityId, query));
         } else {
             long startTs = query.getStartTs();
             long endTs = query.getEndTs();
             long timeBucket = query.getInterval();
-            ListenableFuture<List<Optional<TsKvEntry>>> future = findAllAndAggregateAsync(entityId, query.getKey(), startTs, endTs, timeBucket, query.getAggregation());
-            return getTskvEntriesFuture(future);
+            List<Optional<? extends AbstractTsKvEntity>> data = findAllAndAggregateAsync(entityId, query.getKey(), startTs, endTs, timeBucket, query.getAggregation());
+            return getReadTsKvQueryResultFuture(query, Futures.immediateFuture(data));
         }
     }
 
@@ -165,7 +167,7 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
         super.cleanup(systemTtl);
     }
 
-    private ListenableFuture<List<TsKvEntry>> findAllAsyncWithLimit(EntityId entityId, ReadTsKvQuery query) {
+    private ReadTsKvQueryResult findAllAsyncWithLimit(EntityId entityId, ReadTsKvQuery query) {
         String strKey = query.getKey();
         Integer keyId = getOrSaveKeyId(strKey);
         List<TimescaleTsKvEntity> timescaleTsKvEntities = tsKvRepository.findAllWithLimit(
@@ -174,105 +176,49 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
                 query.getStartTs(),
                 query.getEndTs(),
                 PageRequest.of(0, query.getLimit(),
-                        Sort.by(new Sort.Order(Sort.Direction.fromString(query.getOrder()),  "ts").nullsNative())));;
+                        Sort.by(new Sort.Order(Sort.Direction.fromString(query.getOrder()), "ts").nullsNative())));
+        ;
         timescaleTsKvEntities.forEach(tsKvEntity -> tsKvEntity.setStrKey(strKey));
-        return Futures.immediateFuture(DaoUtil.convertDataList(timescaleTsKvEntities));
+        var tsKvEntries = DaoUtil.convertDataList(timescaleTsKvEntities);
+        long lastTs = tsKvEntries.stream().map(TsKvEntry::getTs).max(Long::compare).orElse(query.getStartTs());
+        return new ReadTsKvQueryResult(query.getKey(), tsKvEntries, lastTs);
     }
 
-    private ListenableFuture<List<Optional<TsKvEntry>>> findAllAndAggregateAsync(EntityId entityId, String key, long startTs, long endTs, long timeBucket, Aggregation aggregation) {
-        CompletableFuture<List<TimescaleTsKvEntity>> listCompletableFuture = switchAggregation(key, startTs, endTs, timeBucket, aggregation, entityId.getId());
-        SettableFuture<List<TimescaleTsKvEntity>> listenableFuture = SettableFuture.create();
-        listCompletableFuture.whenComplete((timescaleTsKvEntities, throwable) -> {
-            if (throwable != null) {
-                listenableFuture.setException(throwable);
-            } else {
-                listenableFuture.set(timescaleTsKvEntities);
-            }
-        });
-        return Futures.transform(listenableFuture, timescaleTsKvEntities -> {
-            if (!CollectionUtils.isEmpty(timescaleTsKvEntities)) {
-                List<Optional<TsKvEntry>> result = new ArrayList<>();
-                timescaleTsKvEntities.forEach(entity -> {
-                    if (entity != null && entity.isNotEmpty()) {
-                        entity.setEntityId(entityId.getId());
-                        entity.setStrKey(key);
-                        result.add(Optional.of(DaoUtil.getData(entity)));
-                    } else {
-                        result.add(Optional.empty());
-                    }
-                });
-                return result;
-            } else {
-                return Collections.emptyList();
-            }
-        }, MoreExecutors.directExecutor());
-    }
-
-    private CompletableFuture<List<TimescaleTsKvEntity>> switchAggregation(String key, long startTs, long endTs, long timeBucket, Aggregation aggregation, UUID entityId) {
-        switch (aggregation) {
-            case AVG:
-                return findAvg(key, startTs, endTs, timeBucket, entityId);
-            case MAX:
-                return findMax(key, startTs, endTs, timeBucket, entityId);
-            case MIN:
-                return findMin(key, startTs, endTs, timeBucket, entityId);
-            case SUM:
-                return findSum(key, startTs, endTs, timeBucket, entityId);
-            case COUNT:
-                return findCount(key, startTs, endTs, timeBucket, entityId);
-            default:
-                throw new IllegalArgumentException("Not supported aggregation type: " + aggregation);
+    private List<Optional<? extends AbstractTsKvEntity>> findAllAndAggregateAsync(EntityId entityId, String key, long startTs, long endTs, long timeBucket, Aggregation aggregation) {
+        List<TimescaleTsKvEntity> timescaleTsKvEntities = switchAggregation(key, startTs, endTs, timeBucket, aggregation, entityId.getId());
+        if (!CollectionUtils.isEmpty(timescaleTsKvEntities)) {
+            List<Optional<? extends AbstractTsKvEntity>> result = new ArrayList<>();
+            timescaleTsKvEntities.forEach(entity -> {
+                if (entity != null && entity.isNotEmpty()) {
+                    entity.setEntityId(entityId.getId());
+                    entity.setStrKey(key);
+                    result.add(Optional.of(entity));
+                } else {
+                    result.add(Optional.empty());
+                }
+            });
+            return result;
+        } else {
+            return Collections.emptyList();
         }
     }
 
-    private CompletableFuture<List<TimescaleTsKvEntity>> findCount(String key, long startTs, long endTs, long timeBucket, UUID entityId) {
+    private List<TimescaleTsKvEntity> switchAggregation(String key, long startTs, long endTs, long timeBucket, Aggregation aggregation, UUID entityId) {
         Integer keyId = getOrSaveKeyId(key);
-        return aggregationRepository.findCount(
-                entityId,
-                keyId,
-                timeBucket,
-                startTs,
-                endTs);
-    }
-
-    private CompletableFuture<List<TimescaleTsKvEntity>> findSum(String key, long startTs, long endTs, long timeBucket, UUID entityId) {
-        Integer keyId = getOrSaveKeyId(key);
-        return aggregationRepository.findSum(
-                entityId,
-                keyId,
-                timeBucket,
-                startTs,
-                endTs);
-    }
-
-    private CompletableFuture<List<TimescaleTsKvEntity>> findMin(String key, long startTs, long endTs, long timeBucket, UUID entityId) {
-        Integer keyId = getOrSaveKeyId(key);
-        return aggregationRepository.findMin(
-                entityId,
-                keyId,
-                timeBucket,
-                startTs,
-                endTs);
-    }
-
-    private CompletableFuture<List<TimescaleTsKvEntity>> findMax(String key, long startTs, long endTs, long timeBucket, UUID entityId) {
-        Integer keyId = getOrSaveKeyId(key);
-        return aggregationRepository.findMax(
-                entityId,
-                keyId,
-                timeBucket,
-                startTs,
-                endTs);
-    }
-
-    private CompletableFuture<List<TimescaleTsKvEntity>> findAvg(String key, long startTs, long endTs, long timeBucket, UUID entityId) {
-        Integer keyId = getOrSaveKeyId(key);
-        return aggregationRepository.findAvg(
-                entityId,
-                keyId,
-                timeBucket,
-                startTs,
-                endTs);
+        switch (aggregation) {
+            case AVG:
+                return aggregationRepository.findAvg(entityId, keyId, timeBucket, startTs, endTs);
+            case MAX:
+                return aggregationRepository.findMax(entityId, keyId, timeBucket, startTs, endTs);
+            case MIN:
+                return aggregationRepository.findMin(entityId, keyId, timeBucket, startTs, endTs);
+            case SUM:
+                return aggregationRepository.findSum(entityId, keyId, timeBucket, startTs, endTs);
+            case COUNT:
+                return aggregationRepository.findCount(entityId, keyId, timeBucket, startTs, endTs);
+            default:
+                throw new IllegalArgumentException("Not supported aggregation type: " + aggregation);
+        }
     }
 
 }
