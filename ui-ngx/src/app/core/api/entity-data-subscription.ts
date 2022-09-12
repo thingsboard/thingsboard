@@ -606,7 +606,7 @@ export class EntityDataSubscription {
     if (this.aggTsValues && this.aggTsValues.length) {
       const aggLatestTimewindow = deepClone(this.subsTw);
       aggLatestTimewindow.aggregation.stateData = false;
-      const isFloatingLatestDataAgg = !aggLatestTimewindow.quickInterval;
+      const isFloatingLatestDataAgg = !aggLatestTimewindow.quickInterval && !this.history;
       if (!isFloatingLatestDataAgg) {
         aggLatestTimewindow.aggregation.interval = aggLatestTimewindow.aggregation.timeWindow;
       }
@@ -739,40 +739,6 @@ export class EntityDataSubscription {
                             dataUpdatedCb: DataUpdatedCb) {
     if (this.entityDataSubscriptionOptions.type === widgetType.latest ||
         this.entityDataSubscriptionOptions.type === widgetType.timeseries) {
-      if (entityData.latest) {
-        for (const type of Object.keys(entityData.latest)) {
-          const subscriptionData = this.toSubscriptionData(entityData.latest[type], false);
-          const dataKeyType = entityKeyTypeToDataKeyType(EntityKeyType[type]);
-          if (isUpdate && EntityKeyType[type] === EntityKeyType.TIME_SERIES) {
-            const keys: string[] = Object.keys(subscriptionData);
-            const latestTsKeys = this.latestValues.filter(key => key.type === EntityKeyType.TIME_SERIES && keys.includes(key.key));
-            if (latestTsKeys.length) {
-              const latestTsSubsciptionData: SubscriptionData = {};
-              for (const latestTsKey of latestTsKeys) {
-                latestTsSubsciptionData[latestTsKey.key] = subscriptionData[latestTsKey.key];
-              }
-              this.onData(null, latestTsSubsciptionData, dataKeyType, dataIndex, true,
-                this.entityDataSubscriptionOptions.type === widgetType.timeseries, dataUpdatedCb);
-            }
-            const aggTsKeys = this.aggTsValues.filter(key => keys.includes(key.key));
-            if (aggTsKeys.length && this.tsLatestDataAggregators && this.tsLatestDataAggregators[dataIndex]) {
-              const dataAggregator = this.tsLatestDataAggregators[dataIndex];
-              const tsKeysByAggType = _.groupBy(aggTsKeys, value => value.agg);
-              for (const aggTypeString of Object.keys(tsKeysByAggType)) {
-                const tsKeys = tsKeysByAggType[aggTypeString];
-                const latestTsAggSubsciptionData: SubscriptionData = {};
-                for (const tsKey of tsKeys) {
-                  latestTsAggSubsciptionData[tsKey.key] = subscriptionData[tsKey.key];
-                }
-                dataAggregator.onData(AggregationType[aggTypeString], {data: latestTsAggSubsciptionData}, true, false, true);
-              }
-            }
-          } else {
-            this.onData(null, subscriptionData, dataKeyType, dataIndex, true,
-              this.entityDataSubscriptionOptions.type === widgetType.timeseries, dataUpdatedCb);
-          }
-        }
-      }
       if (entityData.aggLatest) {
         for (const aggTypeString of Object.keys(entityData.aggLatest)) {
           const subscriptionData = this.toSubscriptionData(entityData.aggLatest[aggTypeString], false);
@@ -816,6 +782,40 @@ export class EntityDataSubscription {
           }
           if (prevDataCb) {
             dataAggregator.updateOnDataCb(prevDataCb);
+          }
+        }
+      }
+      if (entityData.latest) {
+        for (const type of Object.keys(entityData.latest)) {
+          const subscriptionData = this.toSubscriptionData(entityData.latest[type], false);
+          const dataKeyType = entityKeyTypeToDataKeyType(EntityKeyType[type]);
+          if (isUpdate && EntityKeyType[type] === EntityKeyType.TIME_SERIES) {
+            const keys: string[] = Object.keys(subscriptionData);
+            const latestTsKeys = this.latestValues.filter(key => key.type === EntityKeyType.TIME_SERIES && keys.includes(key.key));
+            if (latestTsKeys.length) {
+              const latestTsSubsciptionData: SubscriptionData = {};
+              for (const latestTsKey of latestTsKeys) {
+                latestTsSubsciptionData[latestTsKey.key] = subscriptionData[latestTsKey.key];
+              }
+              this.onData(null, latestTsSubsciptionData, dataKeyType, dataIndex, true,
+                this.entityDataSubscriptionOptions.type === widgetType.timeseries, dataUpdatedCb);
+            }
+            const aggTsKeys = this.aggTsValues.filter(key => keys.includes(key.key));
+            if (aggTsKeys.length && this.tsLatestDataAggregators && this.tsLatestDataAggregators[dataIndex]) {
+              const dataAggregator = this.tsLatestDataAggregators[dataIndex];
+              const tsKeysByAggType = _.groupBy(aggTsKeys, value => value.agg);
+              for (const aggTypeString of Object.keys(tsKeysByAggType)) {
+                const tsKeys = tsKeysByAggType[aggTypeString];
+                const latestTsAggSubsciptionData: SubscriptionData = {};
+                for (const tsKey of tsKeys) {
+                  latestTsAggSubsciptionData[tsKey.key] = subscriptionData[tsKey.key];
+                }
+                dataAggregator.onData(AggregationType[aggTypeString], {data: latestTsAggSubsciptionData}, true, false, true);
+              }
+            }
+          } else {
+            this.onData(null, subscriptionData, dataKeyType, dataIndex, true,
+              this.entityDataSubscriptionOptions.type === widgetType.timeseries, dataUpdatedCb);
           }
         }
       }
