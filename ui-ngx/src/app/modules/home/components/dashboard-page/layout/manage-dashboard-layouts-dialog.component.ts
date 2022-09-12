@@ -41,7 +41,7 @@ import {
 } from '@home/components/dashboard-page/dashboard-settings-dialog.component';
 import { LayoutWidthType } from '@home/components/dashboard-page/layout/layout.models';
 import { Subscription } from 'rxjs';
-import { MatTooltip } from "@angular/material/tooltip";
+import { MatTooltip } from '@angular/material/tooltip';
 
 export interface ManageDashboardLayoutsDialogData {
   layouts: DashboardStateLayouts;
@@ -56,23 +56,23 @@ export interface ManageDashboardLayoutsDialogData {
 export class ManageDashboardLayoutsDialogComponent extends DialogComponent<ManageDashboardLayoutsDialogComponent, DashboardStateLayouts>
   implements ErrorStateMatcher {
 
-  @ViewChild('tooltip') tooltip: MatTooltip;
+  @ViewChild('tooltip', {static: true}) tooltip: MatTooltip;
 
   layoutsFormGroup: FormGroup;
 
-  layouts: DashboardStateLayouts;
-
   LayoutWidthType = LayoutWidthType;
 
-  subscriptions: Array<Subscription> = [];
+  private readonly layouts: DashboardStateLayouts;
 
-  submitted = false;
+  private subscriptions: Array<Subscription> = [];
+
+  private submitted = false;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
-              @Inject(MAT_DIALOG_DATA) public data: ManageDashboardLayoutsDialogData,
+              @Inject(MAT_DIALOG_DATA) private data: ManageDashboardLayoutsDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
-              public dialogRef: MatDialogRef<ManageDashboardLayoutsDialogComponent, DashboardStateLayouts>,
+              protected dialogRef: MatDialogRef<ManageDashboardLayoutsDialogComponent, DashboardStateLayouts>,
               private fb: FormBuilder,
               private utils: UtilsService,
               private dashboardUtils: DashboardUtilsService,
@@ -128,7 +128,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
             fixedLayout: this.layouts.main.gridSettings.layoutDimension.fixedLayout,
             type: LayoutWidthType.FIXED,
             fixedWidth: this.layouts.main.gridSettings.layoutDimension.fixedWidth,
-            sliderFixed: this.layouts.right.gridSettings.layoutDimension.fixedWidth
+            sliderFixed: this.layouts.main.gridSettings.layoutDimension.fixedWidth
           }, {emitEvent: false});
         } else {
           const leftWidthPercentage: number = Number(this.layouts.main.gridSettings.layoutDimension.leftWidthPercentage);
@@ -157,7 +157,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
       this.layoutsFormGroup.get('sliderFixed').valueChanges
         .subscribe(
           (value) => {
-            this.layoutsFormGroup.get('fixedWidth').patchValue(value)
+            this.layoutsFormGroup.get('fixedWidth').patchValue(value);
           }
         ));
     this.subscriptions.push(
@@ -180,7 +180,8 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
       this.layoutsFormGroup.get('fixedWidth').valueChanges
         .subscribe(
           (value) => {
-            this.showTooltip(this.layoutsFormGroup.get('fixedWidth'), LayoutWidthType.FIXED, this.layoutsFormGroup.get('fixedLayout').value);
+            this.showTooltip(this.layoutsFormGroup.get('fixedWidth'), LayoutWidthType.FIXED,
+              this.layoutsFormGroup.get('fixedLayout').value);
             this.layoutsFormGroup.get('sliderFixed').setValue(value, {emitEvent: false});
           }
         ));
@@ -302,7 +303,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
     }
   }
 
-  private showTooltip(control: AbstractControl, layoutType: LayoutWidthType, layoutSide: string): void {
+  private showTooltip(control: AbstractControl, layoutType: LayoutWidthType, layoutSide: DashboardLayoutId): void {
     if (control.errors) {
       let message: string;
       const unit = layoutType === LayoutWidthType.FIXED ? 'px' : '%';
@@ -318,9 +319,9 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
           }
         }
       } else if (control.errors.min) {
-        message = this.translate.instant('layout.value-min-error', {min: control.errors.min.min, unit: unit});
+        message = this.translate.instant('layout.value-min-error', {min: control.errors.min.min, unit});
       } else if (control.errors.max) {
-        message = this.translate.instant('layout.value-max-error', {max: control.errors.max.max, unit: unit});
+        message = this.translate.instant('layout.value-max-error', {max: control.errors.max.max, unit});
       }
 
       if (layoutSide === 'main') {
@@ -352,12 +353,8 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
     }
   }
 
-  showPreviewInputs(side: string): boolean {
+  showPreviewInputs(side: DashboardLayoutId): boolean {
     const formValues = this.layoutsFormGroup.value;
-    return formValues.right &&
-      (
-        formValues.type === LayoutWidthType.PERCENTAGE ||
-        (formValues.fixedLayout === side && formValues.type === LayoutWidthType.FIXED)
-      );
+    return formValues.right && (formValues.type === LayoutWidthType.PERCENTAGE || formValues.fixedLayout === side);
   }
 }
