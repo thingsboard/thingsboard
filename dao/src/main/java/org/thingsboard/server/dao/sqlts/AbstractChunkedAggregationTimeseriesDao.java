@@ -149,7 +149,7 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
         tsKvEntities.forEach(tsKvEntity -> tsKvEntity.setStrKey(query.getKey()));
         List<TsKvEntry> tsKvEntries = DaoUtil.convertDataList(tsKvEntities);
         long lastTs = tsKvEntries.stream().map(TsKvEntry::getTs).max(Long::compare).orElse(query.getStartTs());
-        return new ReadTsKvQueryResult(query.getKey(), tsKvEntries, lastTs);
+        return new ReadTsKvQueryResult(query.getKey(), query.getAggregation(), tsKvEntries, lastTs);
     }
 
     Optional<TsKvEntity> findAndAggregateAsync(EntityId entityId, String key, long startTs, long endTs, long ts, Aggregation aggregation) {
