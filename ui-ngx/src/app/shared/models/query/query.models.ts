@@ -738,7 +738,6 @@ export function createDefaultEntityDataPageLink(pageSize: number): EntityDataPag
 }
 
 export const singleEntityDataPageLink: EntityDataPageLink = createDefaultEntityDataPageLink(1);
-export const defaultEntityDataPageLink: EntityDataPageLink = createDefaultEntityDataPageLink(1024);
 
 export interface EntityCountQuery {
   entityFilter: EntityFilter;
@@ -769,7 +768,7 @@ export interface EntityData {
   latest: {[entityKeyType: string]: {[key: string]: TsValue}};
   timeseries: {[key: string]: Array<TsValue>};
   aggLatest?: {[aggType: string]: {[key: string]: TsValue}};
-  aggFloating?: {[aggType: string]: {[key: string]: Array<TsValue>}};
+  aggFloating?: {[key: string]: Array<TsValue>};
 }
 
 export interface AlarmData extends AlarmInfo {
