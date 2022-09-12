@@ -285,7 +285,7 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
                 @Override
                 public ReadTsKvQueryResult apply(@Nullable List<Optional<TsKvEntryAggWrapper>> input) {
                     if (input == null) {
-                        return new ReadTsKvQueryResult(query.getKey(), Collections.emptyList(), query.getStartTs());
+                        return new ReadTsKvQueryResult(query.getKey(), query.getAggregation(), Collections.emptyList(), query.getStartTs());
                     } else {
                         long maxTs = query.getStartTs();
                         List<TsKvEntry> data = new ArrayList<>();
@@ -296,7 +296,7 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
                                 data.add(tsKvEntryAggWrapper.getEntry());
                             }
                         }
-                        return new ReadTsKvQueryResult(query.getKey(), data, maxTs);
+                        return new ReadTsKvQueryResult(query.getKey(), query.getAggregation(), data, maxTs);
                     }
 
                 }
@@ -333,7 +333,7 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
             if (tsKvEntries != null) {
                 lastTs = tsKvEntries.stream().map(TsKvEntry::getTs).max(Long::compare).orElse(query.getStartTs());
             }
-            return new ReadTsKvQueryResult(query.getKey(), tsKvEntries, lastTs);
+            return new ReadTsKvQueryResult(query.getKey(), query.getAggregation(), tsKvEntries, lastTs);
         }, MoreExecutors.directExecutor());
     }
 

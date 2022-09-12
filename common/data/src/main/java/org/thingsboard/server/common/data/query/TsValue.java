@@ -24,6 +24,8 @@ import lombok.RequiredArgsConstructor;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class TsValue {
 
+    public static final TsValue EMPTY = new TsValue(0, "");
+
     private final long ts;
     private final String value;
     private final Long count;

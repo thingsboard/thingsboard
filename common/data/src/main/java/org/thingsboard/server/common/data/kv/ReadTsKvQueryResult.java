@@ -25,11 +25,12 @@ import java.util.List;
 public class ReadTsKvQueryResult {
 
     private final String key;
+    // Holds the aggregation from the query
+    private final Aggregation agg;
     // Holds the data list;
     private final List<TsKvEntry> data;
     // Holds the max ts of the records that match aggregation intervals (not the ts of the aggregation window, but the ts of the last record among all the intervals)
     private final long lastEntryTs;
-
 
     public TsValue[] toTsValues() {
         if (data != null && !data.isEmpty()) {
@@ -41,6 +42,16 @@ public class ReadTsKvQueryResult {
         } else {
             return new TsValue[0];
         }
+    }
+
+    public TsValue toTsValue() {
+        if (data == null || data.isEmpty()) {
+            return TsValue.EMPTY;
+        }
+        if (data.size() > 1) {
+            throw new RuntimeException("Query Result has multiple data points!");
+        }
+        return data.get(0).toTsValue();
     }
 
 }

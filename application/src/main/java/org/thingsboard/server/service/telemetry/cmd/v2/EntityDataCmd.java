@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.telemetry.cmd.v2;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
@@ -55,4 +56,22 @@ public class EntityDataCmd extends DataCmd {
         this.aggHistoryCmd = aggHistoryCmd;
         this.aggTsCmd = aggTsCmd;
     }
+
+    @JsonIgnore
+    public boolean hasAnyCmd() {
+        return historyCmd != null || latestCmd != null || tsCmd != null || aggHistoryCmd != null || aggTsCmd != null;
+    }
+
+    @JsonIgnore
+    public boolean hasRegularCmds() {
+        return historyCmd != null || latestCmd != null || tsCmd != null;
+    }
+
+    @JsonIgnore
+    public boolean hasAggCmds() {
+        return aggHistoryCmd != null || aggTsCmd != null;
+    }
+
+
+
 }
