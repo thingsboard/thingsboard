@@ -247,6 +247,21 @@
         </mat-error>
       </mat-form-field>
     </div>
+    <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+      <mat-form-field fxFlex class="mat-block" appearance="fill">
+        <mat-label translate>tenant-profile.audit-log-ttl-days</mat-label>
+        <input matInput required min="0" step="1"
+               formControlName="auditLogTtlDays"
+               type="number">
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('auditLogTtlDays').hasError('required')">
+          {{ 'tenant-profile.audit-log-ttl-days-required' | translate}}
+        </mat-error>
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('auditLogTtlDays').hasError('min')">
+          {{ 'audit-log-ttl-days-days-range' | translate}}
+        </mat-error>
+      </mat-form-field>
+      <div fxFlex></div>
+    </div>
   </fieldset>
 
   <fieldset class="fields-group">
@@ -293,7 +308,7 @@
         </mat-error>
       </mat-form-field>
       <div fxFlex></div>
-  </div>
+    </div>
   </fieldset>
 
   <fieldset class="fields-group">

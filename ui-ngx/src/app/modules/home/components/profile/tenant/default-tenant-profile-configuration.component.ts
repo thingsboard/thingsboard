@@ -82,6 +82,7 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       defaultStorageTtlDays: [null, [Validators.required, Validators.min(0)]],
       alarmsTtlDays: [null, [Validators.required, Validators.min(0)]],
       rpcTtlDays: [null, [Validators.required, Validators.min(0)]],
+      auditLogTtlDays: [null, [Validators.required, Validators.min(0)]],
       tenantServerRestLimitsConfiguration: [null, [Validators.pattern(this.rateLimitsPattern)]],
       customerServerRestLimitsConfiguration: [null, [Validators.pattern(this.rateLimitsPattern)]],
       maxWsSessionsPerTenant: [null, [Validators.min(0)]],

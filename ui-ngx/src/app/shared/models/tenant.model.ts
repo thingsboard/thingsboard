@@ -73,6 +73,7 @@ export interface DefaultTenantProfileConfiguration {
   defaultStorageTtlDays: number;
   alarmsTtlDays: number;
   rpcTtlDays: number;
+  auditLogTtlDays: number;
 }
 
 export type TenantProfileConfigurations = DefaultTenantProfileConfiguration;
@@ -120,6 +121,7 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
           defaultStorageTtlDays: 0,
           alarmsTtlDays: 0,
           rpcTtlDays: 0,
+          auditLogTtlDays: 0,
         };
         configuration = {...defaultConfiguration, type: TenantProfileType.DEFAULT};
         break;
