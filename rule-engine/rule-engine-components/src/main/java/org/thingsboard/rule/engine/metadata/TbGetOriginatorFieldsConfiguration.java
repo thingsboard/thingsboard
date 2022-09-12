@@ -25,6 +25,7 @@ import java.util.Map;
 public class TbGetOriginatorFieldsConfiguration implements NodeConfiguration<TbGetOriginatorFieldsConfiguration> {
 
     private Map<String, String> fieldsMapping;
+    private boolean ignoreStringNull;
 
     @Override
     public TbGetOriginatorFieldsConfiguration defaultConfiguration() {
@@ -33,6 +34,7 @@ public class TbGetOriginatorFieldsConfiguration implements NodeConfiguration<TbG
         fieldsMapping.put("name", "originatorName");
         fieldsMapping.put("type", "originatorType");
         configuration.setFieldsMapping(fieldsMapping);
+        configuration.setIgnoreStringNull(false);
         return configuration;
     }
 }

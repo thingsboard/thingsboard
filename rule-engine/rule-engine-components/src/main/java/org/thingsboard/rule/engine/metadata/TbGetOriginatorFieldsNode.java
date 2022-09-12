@@ -46,10 +46,12 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
 public class TbGetOriginatorFieldsNode implements TbNode {
 
     private TbGetOriginatorFieldsConfiguration config;
+    private boolean ignoreStringNull;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         config = TbNodeUtils.convert(configuration, TbGetOriginatorFieldsConfiguration.class);
+        ignoreStringNull = config.isIgnoreStringNull();
     }
 
     @Override
@@ -70,7 +72,7 @@ public class TbGetOriginatorFieldsNode implements TbNode {
                     data -> {
                         config.getFieldsMapping().forEach((field, metaKey) -> {
                             String val = data.getFieldValue(field);
-                            if (val != null && !val.equals("null")) {
+                            if (val != null && (!val.equals("null") || !ignoreStringNull)) {
                                 msg.getMetaData().putValue(metaKey, val);
                             }
                         });
