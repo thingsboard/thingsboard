@@ -26,6 +26,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.data.RelationsQuery;
+import org.thingsboard.rule.engine.filter.TbCheckRelationNode;
+import org.thingsboard.rule.engine.filter.TbCheckRelationNodeConfiguration;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNode;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNode;
@@ -37,17 +40,27 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
-import org.thingsboard.server.common.data.id.*;
+import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
-import org.thingsboard.server.common.data.queue.*;
+import org.thingsboard.server.common.data.queue.ProcessingStrategy;
+import org.thingsboard.server.common.data.queue.ProcessingStrategyType;
+import org.thingsboard.server.common.data.queue.Queue;
+import org.thingsboard.server.common.data.queue.SubmitStrategy;
+import org.thingsboard.server.common.data.queue.SubmitStrategyType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
@@ -74,7 +87,6 @@ import org.thingsboard.server.service.install.TbRuleEngineQueueConfigService;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -169,6 +181,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
                     log.info("Updating data from version 3.4.0 to 3.4.1 ...");
                     eventService.migrateEvents();
                 }
+                updateCheckRelationNode();
                 break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
@@ -320,6 +333,34 @@ public class DefaultDataUpdateService implements DataUpdateService {
         } catch (Exception e) {
             log.error("Unable to update Tenant", e);
         }
+    }
+
+    private void updateCheckRelationNode() {
+        PageDataIterable<RuleNode> ruleNodesIterator = new PageDataIterable<>(
+                link -> ruleChainService.findAllRuleNodesByType(TbCheckRelationNode.class.getName(), link), 1024);
+        ruleNodesIterator.forEach(ruleNode -> {
+            TbCheckRelationNodeConfiguration configNode = JacksonUtil.convertValue(ruleNode.getConfiguration(), TbCheckRelationNodeConfiguration.class);
+            RuleChain targetRuleChain = ruleChainService.findRuleChainById(TenantId.SYS_TENANT_ID, ruleNode.getRuleChainId());
+            if (targetRuleChain != null) {
+                TenantId tenantId = targetRuleChain.getTenantId();
+                String directionNode = configNode.getDirection();
+                if (configNode.isCheckForSingleEntity()) {
+                    configNode.setDirection(directionNode.equals(EntitySearchDirection.FROM.name())
+                            ? EntitySearchDirection.TO.name() : EntitySearchDirection.FROM.name());
+                } else {
+                    RelationsQuery relationsQuery = new RelationsQuery();
+                    relationsQuery.setDirection(EntitySearchDirection.FROM);
+                    relationsQuery.setDirection(directionNode.equals(EntitySearchDirection.FROM.name())
+                            ? EntitySearchDirection.TO : EntitySearchDirection.FROM);
+                    relationsQuery.setMaxLevel(1);
+                    RelationEntityTypeFilter relationEntityTypeFilter = new RelationEntityTypeFilter(configNode.getRelationType(), Collections.emptyList());
+                    relationsQuery.setFilters(Collections.singletonList(relationEntityTypeFilter));
+                    configNode.setRelationsQuery(relationsQuery);
+                }
+                ruleNode.setConfiguration(JacksonUtil.valueToTree(configNode));
+                ruleChainService.saveRuleNode(tenantId, ruleNode);
+            }
+        });
     }
 
     private final PaginatedUpdater<String, Tenant> tenantsDefaultEdgeRuleChainUpdater =

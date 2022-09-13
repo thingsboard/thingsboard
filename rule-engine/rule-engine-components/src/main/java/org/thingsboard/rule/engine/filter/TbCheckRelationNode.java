@@ -74,11 +74,11 @@ public class TbCheckRelationNode implements TbNode {
         EntityId from;
         EntityId to;
         if (EntitySearchDirection.FROM.name().equals(config.getDirection())) {
-            from = EntityIdFactory.getByTypeAndId(config.getEntityType(), config.getEntityId());
-            to = msg.getOriginator();
-        } else {
             to = EntityIdFactory.getByTypeAndId(config.getEntityType(), config.getEntityId());
             from = msg.getOriginator();
+        } else {
+            from = EntityIdFactory.getByTypeAndId(config.getEntityType(), config.getEntityId());
+            to = msg.getOriginator();
         }
         return ctx.getRelationService().checkRelationAsync(ctx.getTenantId(), from, to, config.getRelationType(), RelationTypeGroup.COMMON);
     }
