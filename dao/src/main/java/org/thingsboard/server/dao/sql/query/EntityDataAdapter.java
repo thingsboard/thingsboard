@@ -55,7 +55,7 @@ public class EntityDataAdapter {
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, id);
         Map<EntityKeyType, Map<String, TsValue>> latest = new HashMap<>();
         //Maybe avoid empty hashmaps?
-        EntityData entityData = new EntityData(entityId, latest, new HashMap<>(), new HashMap<>(), new HashMap<>());
+        EntityData entityData = new EntityData(entityId, latest, new HashMap<>(), new HashMap<>());
         for (EntityKeyMapping mapping : selectionMapping) {
             if (!mapping.isIgnore()) {
                 EntityKey entityKey = mapping.getEntityKey();

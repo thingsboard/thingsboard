@@ -25,6 +25,5 @@ public class AggTimeSeriesCmd {
     private List<AggKey> keys;
     private long startTs;
     private long timeWindow;
-    private boolean floating;
 
 }

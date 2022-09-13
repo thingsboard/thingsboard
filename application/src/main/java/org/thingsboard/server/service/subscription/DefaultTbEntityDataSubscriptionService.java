@@ -70,6 +70,7 @@ import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -209,20 +210,20 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
             }
         }
         if (cmd.getAggHistoryCmd() != null) {
-            handleAggHistoryCmd(session, ctx, cmd.getAggHistoryCmd());
+            handleAggHistoryCmd(ctx, cmd.getAggHistoryCmd(), cmd.getLatestCmd());
         } else if (cmd.getAggTsCmd() != null) {
-            handleAggTsCmd(session, ctx, cmd.getAggTsCmd());
+            handleAggTsCmd(ctx, cmd.getAggTsCmd(), cmd.getLatestCmd());
         } else if (cmd.hasRegularCmds()) {
-            handleRegularCommands(session, ctx, cmd);
+            handleRegularCommands(ctx, cmd);
         } else {
             checkAndSendInitialData(ctx);
         }
     }
 
-    private void handleRegularCommands(TelemetryWebSocketSessionRef session, TbEntityDataSubCtx ctx, EntityDataCmd cmd) {
+    private void handleRegularCommands(TbEntityDataSubCtx ctx, EntityDataCmd cmd) {
         ListenableFuture<TbEntityDataSubCtx> historyFuture;
         if (cmd.getHistoryCmd() != null) {
-            log.trace("[{}][{}] Going to process history command: {}", session.getSessionId(), cmd.getCmdId(), cmd.getHistoryCmd());
+            log.trace("[{}][{}] Going to process history command: {}", ctx.getSessionId(), cmd.getCmdId(), cmd.getHistoryCmd());
             try {
                 historyFuture = handleHistoryCmd(ctx, cmd.getHistoryCmd());
             } catch (RuntimeException e) {
@@ -253,7 +254,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
 
             @Override
             public void onFailure(Throwable t) {
-                log.warn("[{}][{}] Failed to process command", session.getSessionId(), cmd.getCmdId());
+                log.warn("[{}][{}] Failed to process command", ctx.getSessionId(), cmd.getCmdId());
             }
         }, wsCallBackExecutor);
     }
@@ -266,34 +267,30 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         }
     }
 
-    private void handleAggHistoryCmd(TelemetryWebSocketSessionRef session, TbEntityDataSubCtx ctx, AggHistoryCmd cmd) {
+    private void handleAggHistoryCmd(TbEntityDataSubCtx ctx, AggHistoryCmd cmd, LatestValueCmd latestCmd) {
         var keys = cmd.getKeys();
         long interval = cmd.getEndTs() - cmd.getStartTs();
         List<ReadTsKvQuery> queries = keys.stream().map(key -> new BaseReadTsKvQuery(
                 key.getKey(), cmd.getStartTs(), cmd.getEndTs(), interval, 1, key.getAgg()
         )).distinct().collect(Collectors.toList());
-        handleAggCmd(session, ctx, cmd.getKeys(), queries, cmd.getStartTs(), cmd.getEndTs(), false, false);
+        handleAggCmd(ctx, cmd.getKeys(), queries, cmd.getStartTs(), cmd.getEndTs(), latestCmd, false);
     }
 
-    private void handleAggTsCmd(TelemetryWebSocketSessionRef session, TbEntityDataSubCtx ctx, AggTimeSeriesCmd cmd) {
+    private void handleAggTsCmd(TbEntityDataSubCtx ctx, AggTimeSeriesCmd cmd, LatestValueCmd latestCmd) {
         long endTs = cmd.getStartTs() + cmd.getTimeWindow();
-        List<ReadTsKvQuery> queries = cmd.getKeys().stream().map(key -> {
-            if (cmd.isFloating()) {
-                return new BaseReadTsKvQuery(key.getKey(), cmd.getStartTs(), endTs, cmd.getTimeWindow(), getLimit(maxDatapointLimit), Aggregation.NONE);
-            } else {
-                return new BaseReadTsKvQuery(key.getKey(), cmd.getStartTs(), endTs, cmd.getTimeWindow(), 1, key.getAgg());
-            }
-        }).distinct().collect(Collectors.toList());
-        handleAggCmd(session, ctx, cmd.getKeys(), queries, cmd.getStartTs(), endTs, cmd.isFloating(), true);
+        List<ReadTsKvQuery> queries = cmd.getKeys().stream()
+                .map(key -> new BaseReadTsKvQuery(key.getKey(), cmd.getStartTs(), endTs, cmd.getTimeWindow(), 1, key.getAgg()))
+                .distinct().collect(Collectors.toList());
+        handleAggCmd(ctx, cmd.getKeys(), queries, cmd.getStartTs(), endTs, latestCmd, true);
     }
 
-    private void handleAggCmd(TelemetryWebSocketSessionRef session, TbEntityDataSubCtx ctx, List<AggKey> keys, List<ReadTsKvQuery> queries,
-                              long startTs, long endTs, boolean floating, boolean subscribe) {
+    private void handleAggCmd(TbEntityDataSubCtx ctx, List<AggKey> keys, List<ReadTsKvQuery> queries,
+                              long startTs, long endTs, LatestValueCmd latestCmd, boolean subscribe) {
         Map<EntityData, ListenableFuture<List<ReadTsKvQueryResult>>> fetchResultMap = new HashMap<>();
         List<EntityData> entityDataList = ctx.getData().getData();
         entityDataList.forEach(entityData -> fetchResultMap.put(entityData,
                 tsService.findAllByQueries(ctx.getTenantId(), entityData.getEntityId(), queries)));
-        Futures.transform(Futures.allAsList(fetchResultMap.values()), f -> {
+        var mainFuture = Futures.transform(Futures.allAsList(fetchResultMap.values()), f -> {
             // Map that holds last ts for each key for each entity.
             Map<EntityData, Map<String, Long>> lastTsEntityMap = new HashMap<>();
             fetchResultMap.forEach((entityData, future) -> {
@@ -304,21 +301,13 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                     List<ReadTsKvQueryResult> queryResults = future.get();
                     if (queryResults != null) {
                         for (ReadTsKvQueryResult queryResult : queryResults) {
-                            if (floating) {
-                                entityData.getAggFloating().put(queryResult.getKey(), queryResult.toTsValues());
-                            } else {
-                                entityData.getAggLatest().computeIfAbsent(queryResult.getAgg(), agg -> new HashMap<>()).put(queryResult.getKey(), queryResult.toTsValue());
-                            }
+                            entityData.getAggLatest().computeIfAbsent(queryResult.getAgg(), agg -> new HashMap<>()).put(queryResult.getKey(), queryResult.toTsValue());
                             lastTsMap.put(queryResult.getKey(), queryResult.getLastEntryTs());
                         }
                     }
                     // Populate with empty values if no data found.
                     keys.forEach(key -> {
-                        if (floating) {
-                            entityData.getAggFloating().putIfAbsent(key.getKey(), new TsValue[]{TsValue.EMPTY});
-                        } else {
-                            entityData.getAggLatest().computeIfAbsent(key.getAgg(), agg -> new HashMap<>()).putIfAbsent(key.getKey(), TsValue.EMPTY);
-                        }
+                        entityData.getAggLatest().computeIfAbsent(key.getAgg(), agg -> new HashMap<>()).putIfAbsent(key.getKey(), TsValue.EMPTY);
                     });
                 } catch (InterruptedException | ExecutionException e) {
                     log.warn("[{}][{}][{}] Failed to fetch historical data", ctx.getSessionId(), ctx.getCmdId(), entityData.getEntityId(), e);
@@ -343,6 +332,28 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                 ctx.getWsLock().unlock();
             }
             return ctx;
+        }, wsCallBackExecutor);
+
+        Futures.addCallback(mainFuture, new FutureCallback<>() {
+
+            @Override
+            public void onSuccess(@Nullable TbEntityDataSubCtx theCtx) {
+                if (latestCmd != null) {
+                    if (subscribe) {
+                        var commandEntityKeys = new HashSet<>(latestCmd.getKeys());
+                        var alreadySubscribedKeys = keys.stream().map(key -> new EntityKey(EntityKeyType.TIME_SERIES, key.getKey())).collect(Collectors.toList());
+                        if (commandEntityKeys.removeAll(alreadySubscribedKeys)) {
+                            latestCmd.setKeys(new ArrayList<>(commandEntityKeys));
+                        }
+                    }
+                    handleLatestCmd(ctx, latestCmd);
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.warn("[{}][{}] Failed to process command", ctx.getSessionId(), ctx.getCmdId());
+            }
         }, wsCallBackExecutor);
     }
 

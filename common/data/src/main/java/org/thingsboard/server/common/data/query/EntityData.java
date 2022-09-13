@@ -31,9 +31,8 @@ public class EntityData {
     private final Map<EntityKeyType, Map<String, TsValue>> latest;
     private final Map<String, TsValue[]> timeseries;
     private final Map<Aggregation, Map<String, TsValue>> aggLatest;
-    private final Map<String, TsValue[]> aggFloating;
 
     public EntityData(EntityId entityId, Map<EntityKeyType, Map<String, TsValue>> latest, Map<String, TsValue[]> timeseries) {
-        this(entityId, latest, timeseries, null, null);
+        this(entityId, latest, timeseries, null);
     }
 }
