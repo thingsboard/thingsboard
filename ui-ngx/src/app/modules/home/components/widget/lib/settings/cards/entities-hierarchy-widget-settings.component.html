@@ -20,13 +20,13 @@
     <legend class="group-title" translate>widgets.entities-hierarchy.hierarchy-data-settings</legend>
     <tb-js-func formControlName="nodeRelationQueryFunction"
                 [globalVariables]="functionScopeVariables"
-                [functionArgs]="['nodeCtx']"
+                [functionArgs]="['widgetCtx', 'nodeCtx']"
                 functionTitle="{{ 'widgets.entities-hierarchy.relations-query-function' | translate }}"
                 helpId="widget/lib/entities_hierarchy/node_relation_query_fn">
     </tb-js-func>
     <tb-js-func formControlName="nodeHasChildrenFunction"
                 [globalVariables]="functionScopeVariables"
-                [functionArgs]="['nodeCtx']"
+                [functionArgs]="['widgetCtx', 'nodeCtx']"
                 functionTitle="{{ 'widgets.entities-hierarchy.has-children-function' | translate }}"
                 helpId="widget/lib/entities_hierarchy/node_has_children_fn">
     </tb-js-func>
@@ -35,13 +35,13 @@
     <legend class="group-title" translate>widgets.entities-hierarchy.node-state-settings</legend>
     <tb-js-func formControlName="nodeOpenedFunction"
                 [globalVariables]="functionScopeVariables"
-                [functionArgs]="['nodeCtx']"
+                [functionArgs]="['widgetCtx', 'nodeCtx']"
                 functionTitle="{{ 'widgets.entities-hierarchy.node-opened-function' | translate }}"
                 helpId="widget/lib/entities_hierarchy/node_opened_fn">
     </tb-js-func>
     <tb-js-func formControlName="nodeDisabledFunction"
                 [globalVariables]="functionScopeVariables"
-                [functionArgs]="['nodeCtx']"
+                [functionArgs]="['widgetCtx', 'nodeCtx']"
                 functionTitle="{{ 'widgets.entities-hierarchy.node-disabled-function' | translate }}"
                 helpId="widget/lib/entities_hierarchy/node_disabled_fn">
     </tb-js-func>
@@ -50,13 +50,13 @@
     <legend class="group-title" translate>widgets.entities-hierarchy.display-settings</legend>
     <tb-js-func formControlName="nodeIconFunction"
                 [globalVariables]="functionScopeVariables"
-                [functionArgs]="['nodeCtx']"
+                [functionArgs]="['widgetCtx', 'nodeCtx']"
                 functionTitle="{{ 'widgets.entities-hierarchy.node-icon-function' | translate }}"
                 helpId="widget/lib/entities_hierarchy/node_icon_fn">
     </tb-js-func>
     <tb-js-func formControlName="nodeTextFunction"
                 [globalVariables]="functionScopeVariables"
-                [functionArgs]="['nodeCtx']"
+                [functionArgs]="['widgetCtx', 'nodeCtx']"
                 functionTitle="{{ 'widgets.entities-hierarchy.node-text-function' | translate }}"
                 helpId="widget/lib/entities_hierarchy/node_text_fn">
     </tb-js-func>
@@ -65,7 +65,7 @@
     <legend class="group-title" translate>widgets.entities-hierarchy.sort-settings</legend>
     <tb-js-func formControlName="nodesSortFunction"
                 [globalVariables]="functionScopeVariables"
-                [functionArgs]="['nodeCtx1', 'nodeCtx2']"
+                [functionArgs]="['widgetCtx', 'nodeCtx1', 'nodeCtx2']"
                 functionTitle="{{ 'widgets.entities-hierarchy.nodes-sort-function' | translate }}"
                 helpId="widget/lib/entities_hierarchy/nodes_sort_fn">
     </tb-js-func>
