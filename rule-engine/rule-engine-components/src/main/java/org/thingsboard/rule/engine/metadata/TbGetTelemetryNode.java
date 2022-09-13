@@ -91,7 +91,9 @@ public class TbGetTelemetryNode implements TbNode {
             orderByFetchAll = ASC_ORDER;
         }
         aggregation = parseAggregationConfig(config.getAggregation());
-
+        if (!fetchMode.equals(FETCH_MODE_ALL)) {
+            aggregation = Aggregation.NONE;
+        }
         mapper = new ObjectMapper();
         mapper.configure(JsonWriteFeature.QUOTE_FIELD_NAMES.mappedFeature(), false);
         mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
@@ -236,16 +238,16 @@ public class TbGetTelemetryNode implements TbNode {
     }
 
     private void isUndefined(TbMsg msg, String startIntervalPattern, String endIntervalPattern) {
-        if (getMetadataValue(msg, startIntervalPattern) == null && getMetadataValue(msg, endIntervalPattern) == null) {
+        if (getValuePattern(msg, startIntervalPattern) == null && getValuePattern(msg, endIntervalPattern) == null) {
             throw new IllegalArgumentException("Message metadata values: '" +
                     replaceRegex(startIntervalPattern) + "' and '" +
                     replaceRegex(endIntervalPattern) + "' are undefined");
         } else {
-            if (getMetadataValue(msg, startIntervalPattern) == null) {
+            if (getValuePattern(msg, startIntervalPattern) == null) {
                 throw new IllegalArgumentException("Message metadata value: '" +
                         replaceRegex(startIntervalPattern) + "' is undefined");
             }
-            if (getMetadataValue(msg, endIntervalPattern) == null) {
+            if (getValuePattern(msg, endIntervalPattern) == null) {
                 throw new IllegalArgumentException("Message metadata value: '" +
                         replaceRegex(endIntervalPattern) + "' is undefined");
             }
@@ -269,8 +271,9 @@ public class TbGetTelemetryNode implements TbNode {
         }
     }
 
-    private String getMetadataValue(TbMsg msg, String pattern) {
-        return msg.getMetaData().getValue(replaceRegex(pattern));
+    private String getValuePattern(TbMsg msg, String pattern) {
+        String valuePattern = TbNodeUtils.processPattern(pattern, msg);
+        return valuePattern.equals(pattern) ? null : valuePattern;
     }
 
     private String replaceRegex(String pattern) {
