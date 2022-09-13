@@ -19,7 +19,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.thingsboard.server.common.data.StringUtils;
@@ -43,6 +45,7 @@ import java.util.List;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public abstract class BaseRuleChainControllerTest extends AbstractControllerTest {
 
     private IdComparator<RuleChain> idComparator = new IdComparator<>();
@@ -246,4 +249,5 @@ public abstract class BaseRuleChainControllerTest extends AbstractControllerTest
         ruleChain.setName(name);
         return doPost("/api/ruleChain", ruleChain, RuleChain.class);
     }
+
 }

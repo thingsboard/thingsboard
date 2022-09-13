@@ -36,6 +36,7 @@ import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.mockito.BDDMockito;
+import org.mockito.exceptions.misusing.UnfinishedStubbingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -723,6 +724,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected <T> void testEntityDaoWithRelationsTransactionalException(Dao<T> dao, EntityId entityIdFrom, EntityId entityTo,
                                                                         String urlDelete) throws Exception {
         entityDaoRemoveByIdWithException (dao);
+        Thread.sleep(200);
         createEntityRelation(entityIdFrom, entityTo, "TEST_TRANSACTIONAL_TYPE");
         assertThat(findRelationsByTo(entityTo)).hasSize(1);
 
@@ -732,6 +734,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         assertThat(findRelationsByTo(entityTo)).hasSize(1);
 
         afterTestEntityDaoRemoveByIdWithException (dao);
+        Thread.sleep(200);
         doDelete(urlDelete).andExpect(status().isOk());
         doGet(urlDelete)
                 .andExpect(status().isNotFound());
@@ -739,8 +742,13 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     protected <T> void entityDaoRemoveByIdWithException (Dao<T> dao) throws Exception {
+        try {
             BDDMockito.willThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT"))
                     .given(dao).removeById(any(), any());
+        } catch (UnfinishedStubbingException e) {
+            log.error("BDDMockito: UnfinishedStubbingException");
+            log.error("", e);
+        }
     }
 
     protected <T> void afterTestEntityDaoRemoveByIdWithException (Dao<T> dao) throws Exception {
