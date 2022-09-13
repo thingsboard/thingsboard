@@ -95,6 +95,7 @@ export class WidgetSubscription implements IWidgetSubscription {
   timezone: string;
   subscriptionTimewindow: SubscriptionTimewindow;
   useDashboardTimewindow: boolean;
+  onTimewindowChangeFunction: (timewindow: Timewindow) => Timewindow;
   tsOffset = 0;
 
   hasDataPageLink: boolean;
@@ -244,6 +245,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.originalTimewindow = null;
       this.timeWindow = {};
       this.useDashboardTimewindow = options.useDashboardTimewindow;
+      this.onTimewindowChangeFunction = options.onTimewindowChangeFunction || ((timewindow) => timewindow);
       this.stateData = options.stateData;
       if (this.type === widgetType.latest) {
         this.timezone = options.dashboardTimewindow.timezone;
