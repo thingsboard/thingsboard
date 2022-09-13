@@ -135,7 +135,7 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
         logEntityAction(tenantId, entityId, entity, customerId, actionType, user, additionalInfo);
 
         if (sendToEdge) {
-            sendEntityAssignToCustomerNotificationMsg(tenantId, entityId, customerId, edgeTypeByActionType(actionType));
+            sendEntityNotificationMsg(tenantId, entityId, edgeTypeByActionType(actionType));
         }
     }
 
@@ -203,24 +203,17 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
     }
 
     @Override
-    public void notifyEdge(TenantId tenantId, EdgeId edgeId, CustomerId customerId, Edge edge,
-                           ActionType actionType, User user, Object... additionalInfo) {
+    public void notifyCreateOrUpdateOrDeleteEdge(TenantId tenantId, EdgeId edgeId, CustomerId customerId, Edge edge,
+                                                 ActionType actionType, User user, Object... additionalInfo) {
         ComponentLifecycleEvent lifecycleEvent;
-        EdgeEventActionType edgeEventActionType = null;
         switch (actionType) {
             case ADDED:
                 lifecycleEvent = ComponentLifecycleEvent.CREATED;
                 break;
             case UPDATED:
-                lifecycleEvent = ComponentLifecycleEvent.UPDATED;
-                break;
             case ASSIGNED_TO_CUSTOMER:
-                lifecycleEvent = ComponentLifecycleEvent.UPDATED;
-                edgeEventActionType = EdgeEventActionType.ASSIGNED_TO_CUSTOMER;
-                break;
             case UNASSIGNED_FROM_CUSTOMER:
                 lifecycleEvent = ComponentLifecycleEvent.UPDATED;
-                edgeEventActionType = EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER;
                 break;
             case DELETED:
                 lifecycleEvent = ComponentLifecycleEvent.DELETED;
@@ -228,14 +221,8 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
             default:
                 throw new IllegalArgumentException("Unknown actionType: " + actionType);
         }
-
         tbClusterService.broadcastEntityStateChangeEvent(tenantId, edgeId, lifecycleEvent);
         logEntityAction(tenantId, edgeId, edge, customerId, actionType, user, additionalInfo);
-
-        //Send notification to edge
-        if (edgeEventActionType != null) {
-            sendEntityAssignToCustomerNotificationMsg(tenantId, edgeId, customerId, edgeEventActionType);
-        }
     }
 
     @Override
@@ -272,14 +259,6 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
 
     private void sendEntityNotificationMsg(TenantId tenantId, EntityId entityId, EdgeEventActionType action) {
         sendNotificationMsgToEdge(tenantId, null, entityId, null, null, action);
-    }
-
-    private void sendEntityAssignToCustomerNotificationMsg(TenantId tenantId, EntityId entityId, CustomerId customerId, EdgeEventActionType action) {
-        try {
-            sendNotificationMsgToEdge(tenantId, null, entityId, JacksonUtil.toString(customerId), null, action);
-        } catch (Exception e) {
-            log.warn("Failed to push assign/unassign to/from customer to core: {}", customerId, e);
-        }
     }
 
     private void sendAlarmDeleteNotificationMsg(TenantId tenantId, Alarm alarm, List<EdgeId> edgeIds, String body) {

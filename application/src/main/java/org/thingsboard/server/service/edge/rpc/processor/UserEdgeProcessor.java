@@ -43,10 +43,9 @@ public class UserEdgeProcessor extends BaseEdgeProcessor {
             case UPDATED:
                 User user = userService.findUserById(edgeEvent.getTenantId(), userId);
                 if (user != null) {
-                    CustomerId customerId = getCustomerIdIfEdgeAssignedToCustomer(user, edge);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                            .addUserUpdateMsg(userMsgConstructor.constructUserUpdatedMsg(msgType, user, customerId))
+                            .addUserUpdateMsg(userMsgConstructor.constructUserUpdatedMsg(msgType, user))
                             .build();
                 }
                 break;

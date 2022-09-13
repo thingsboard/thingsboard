@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -57,13 +58,12 @@ public class EntityEdgeProcessor extends BaseEdgeProcessor {
         if (EdgeEventType.DEVICE.equals(edgeEvent.getType())) {
             DeviceId deviceId = new DeviceId(edgeEvent.getEntityId());
             Device device = deviceService.findDeviceById(edge.getTenantId(), deviceId);
-            CustomerId customerId = getCustomerIdIfEdgeAssignedToCustomer(device, edge);
             String conflictName = null;
             if(edgeEvent.getBody() != null) {
                 conflictName = edgeEvent.getBody().get("conflictName").asText();
             }
             DeviceUpdateMsg deviceUpdateMsg = deviceMsgConstructor
-                    .constructDeviceUpdatedMsg(UpdateMsgType.ENTITY_MERGE_RPC_MESSAGE, device, customerId, conflictName);
+                    .constructDeviceUpdatedMsg(UpdateMsgType.ENTITY_MERGE_RPC_MESSAGE, device, conflictName);
             downlinkMsg = DownlinkMsg.newBuilder()
                     .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                     .addDeviceUpdateMsg(deviceUpdateMsg)
@@ -98,10 +98,9 @@ public class EntityEdgeProcessor extends BaseEdgeProcessor {
             case ADDED: // used only for USER entity
             case UPDATED:
             case CREDENTIALS_UPDATED:
-                return pushNotificationToAllRelatedEdges(tenantId, entityId, type, actionType);
             case ASSIGNED_TO_CUSTOMER:
             case UNASSIGNED_FROM_CUSTOMER:
-                return pushNotificationToAllRelatedCustomerEdges(tenantId, edgeNotificationMsg, entityId, actionType, type);
+                return pushNotificationToAllRelatedEdges(tenantId, entityId, type, actionType);
             case DELETED:
                 if (edgeId != null) {
                     return saveEdgeEvent(tenantId, edgeId, type, actionType, entityId, null);
@@ -121,42 +120,6 @@ public class EntityEdgeProcessor extends BaseEdgeProcessor {
             default:
                 return Futures.immediateFuture(null);
         }
-    }
-
-    private ListenableFuture<Void> pushNotificationToAllRelatedCustomerEdges(TenantId tenantId,
-                                                                             TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg,
-                                                                             EntityId entityId,
-                                                                             EdgeEventActionType actionType,
-                                                                             EdgeEventType type) {
-        PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
-        PageData<EdgeId> pageData;
-        List<ListenableFuture<Void>> futures = new ArrayList<>();
-        do {
-            pageData = edgeService.findRelatedEdgeIdsByEntityId(tenantId, entityId, pageLink);
-            if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
-                for (EdgeId relatedEdgeId : pageData.getData()) {
-                    try {
-                        CustomerId customerId = mapper.readValue(edgeNotificationMsg.getBody(), CustomerId.class);
-                        ListenableFuture<Edge> future = edgeService.findEdgeByIdAsync(tenantId, relatedEdgeId);
-                        futures.add(Futures.transformAsync(future, edge -> {
-                            if (edge != null && edge.getCustomerId() != null &&
-                                    !edge.getCustomerId().isNullUid() && edge.getCustomerId().equals(customerId)) {
-                                return saveEdgeEvent(tenantId, relatedEdgeId, type, actionType, entityId, null);
-                            } else {
-                                return Futures.immediateFuture(null);
-                            }
-                        }, dbCallbackExecutorService));
-                    } catch (Exception e) {
-                        log.error("Can't parse customer id from entity body [{}]", edgeNotificationMsg, e);
-                        return Futures.immediateFailedFuture(e);
-                    }
-                }
-                if (pageData.hasNext()) {
-                    pageLink = pageLink.nextPageLink();
-                }
-            }
-        } while (pageData != null && pageData.hasNext());
-        return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
     }
 
     private EdgeId safeGetEdgeId(TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {

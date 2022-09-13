@@ -183,6 +183,7 @@ message DashboardUpdateMsg {
   optional int64 customerIdLSB = 5;
   string title = 6;
   string configuration = 7;
+  optional string assignedCustomers = 8;
 }
 
 message DeviceUpdateMsg {

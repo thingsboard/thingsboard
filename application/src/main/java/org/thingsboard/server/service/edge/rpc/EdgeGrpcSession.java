@@ -184,7 +184,7 @@ public final class EdgeGrpcSession implements Closeable {
     public void startSyncProcess(TenantId tenantId, EdgeId edgeId) {
         log.trace("[{}][{}] Staring edge sync process", tenantId, edgeId);
         syncCompleted = false;
-        doSync(new EdgeSyncCursor(ctx, edge));
+        doSync(new EdgeSyncCursor(ctx));
     }
 
     private void doSync(EdgeSyncCursor cursor) {
@@ -514,11 +514,11 @@ public final class EdgeGrpcSession implements Closeable {
             case DEVICE_PROFILE:
                 return ctx.getDeviceProfileProcessor().processDeviceProfileToEdge(edgeEvent, msgType, action);
             case ASSET:
-                return ctx.getAssetProcessor().processAssetToEdge(edge, edgeEvent, msgType, action);
+                return ctx.getAssetProcessor().processAssetToEdge(edgeEvent, msgType, action);
             case ENTITY_VIEW:
-                return ctx.getEntityViewProcessor().processEntityViewToEdge(edge, edgeEvent, msgType, action);
+                return ctx.getEntityViewProcessor().processEntityViewToEdge(edgeEvent, msgType, action);
             case DASHBOARD:
-                return ctx.getDashboardProcessor().processDashboardToEdge(edge, edgeEvent, msgType, action);
+                return ctx.getDashboardProcessor().processDashboardToEdge(edgeEvent, msgType, action);
             case CUSTOMER:
                 return ctx.getCustomerProcessor().processCustomerToEdge(edgeEvent, msgType, action);
             case RULE_CHAIN:

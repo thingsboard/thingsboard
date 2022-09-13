@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.edge.rpc.processor;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -25,12 +24,10 @@ import org.springframework.context.annotation.Lazy;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EdgeUtils;
-import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -84,9 +81,7 @@ import java.util.List;
 @Slf4j
 public abstract class BaseEdgeProcessor {
 
-    protected static final ObjectMapper mapper = new ObjectMapper();
-
-    protected static final int DEFAULT_PAGE_SIZE = 1000;
+    protected static final int DEFAULT_PAGE_SIZE = 100;
 
     @Autowired
     protected RuleChainService ruleChainService;
@@ -231,14 +226,6 @@ public abstract class BaseEdgeProcessor {
             tbClusterService.onEdgeEventUpdate(tenantId, edgeId);
             return null;
         }, dbCallbackExecutorService);
-    }
-
-    protected CustomerId getCustomerIdIfEdgeAssignedToCustomer(HasCustomerId hasCustomerIdEntity, Edge edge) {
-        if (!edge.getCustomerId().isNullUid() && edge.getCustomerId().equals(hasCustomerIdEntity.getCustomerId())) {
-            return edge.getCustomerId();
-        } else {
-            return null;
-        }
     }
 
     protected ListenableFuture<Void> processActionForAllEdges(TenantId tenantId, EdgeEventType type, EdgeEventActionType actionType, EntityId entityId) {
