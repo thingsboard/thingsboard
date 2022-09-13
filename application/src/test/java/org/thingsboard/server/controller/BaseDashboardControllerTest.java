@@ -22,6 +22,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
@@ -31,9 +32,11 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.dao.dashboard.DashboardDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.ArrayList;
@@ -49,6 +52,9 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
 
     private Tenant savedTenant;
     private User tenantAdmin;
+
+    @SpyBean
+    private DashboardDao dashboardDao;
 
     @Before
     public void beforeTest() throws Exception {
@@ -73,39 +79,10 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
     public void afterTest() throws Exception {
         loginSysAdmin();
 
+        afterTestEntityDaoRemoveByIdWithException (dashboardDao);
+
         doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
                 .andExpect(status().isOk());
-    }
-
-    @Test
-    public void testSaveDashboard() throws Exception {
-        Dashboard dashboard = new Dashboard();
-        dashboard.setTitle("My dashboard");
-
-        Mockito.reset(tbClusterService, auditLogService);
-
-        Dashboard savedDashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
-
-        testNotifyEntityOneTimeMsgToEdgeServiceNever(savedDashboard, savedDashboard.getId(), savedDashboard.getId(), savedTenant.getId(),
-                tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED);
-
-        Assert.assertNotNull(savedDashboard);
-        Assert.assertNotNull(savedDashboard.getId());
-        Assert.assertTrue(savedDashboard.getCreatedTime() > 0);
-        Assert.assertEquals(savedTenant.getId(), savedDashboard.getTenantId());
-        Assert.assertEquals(dashboard.getTitle(), savedDashboard.getTitle());
-
-        savedDashboard.setTitle("My new dashboard");
-
-        Mockito.reset(tbClusterService, auditLogService);
-
-        doPost("/api/dashboard", savedDashboard, Dashboard.class);
-
-        testNotifyEntityAllOneTime(savedDashboard, savedDashboard.getId(), savedDashboard.getId(), savedTenant.getId(),
-                tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UPDATED);
-
-        Dashboard foundDashboard = doGet("/api/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
-        Assert.assertEquals(foundDashboard.getTitle(), savedDashboard.getTitle());
     }
 
     @Test
@@ -495,4 +472,21 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         Assert.assertEquals(0, pageData.getData().size());
     }
 
+    @Test
+    public void testDeleteDashboardWithDeleteRelationsOk() throws Exception {
+        DashboardId dashboardId = createDashboard("Dashboard for Test WithRelationsOk").getId();
+        testEntityDaoWithRelationsOk(savedTenant.getId(), dashboardId, "/api/dashboard/" + dashboardId);
+    }
+
+    @Test
+    public void testDeleteDashboardExceptionWithRelationsTransactional() throws Exception {
+        DashboardId dashboardId = createDashboard("Dashboard for Test WithRelations Transactional Exception").getId();
+        testEntityDaoWithRelationsTransactionalException(dashboardDao, savedTenant.getId(), dashboardId, "/api/dashboard/" + dashboardId);
+    }
+
+    private Dashboard createDashboard(String title) {
+        Dashboard dashboard = new Dashboard();
+        dashboard.setTitle(title);
+        return doPost("/api/dashboard", dashboard, Dashboard.class);
+    }
 }

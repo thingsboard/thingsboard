@@ -102,7 +102,7 @@ export class Circle {
       const circleLabelText = fillDataPattern(this.map.circleLabelText, this.map.replaceInfoTooltipCircle, this.data);
       const labelColor = this.map.ctx.widgetConfig.color;
       this.leafletCircle.bindTooltip(`<div style="color: ${labelColor};"><b>${circleLabelText}</b></div>`,
-        { className: 'tb-polygon-label', permanent: true, sticky: true, direction: 'center'})
+        { className: 'tb-polygon-label', permanent: true, direction: 'center'})
         .openTooltip(this.leafletCircle.getLatLng());
     }
   }

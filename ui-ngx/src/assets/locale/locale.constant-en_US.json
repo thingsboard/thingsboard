@@ -4671,6 +4671,14 @@
             "row-double-click": "On row double click"
         }
     },
+    "paginator" : {
+        "items-per-page": "Items per page:",
+        "first-page-label": "First page",
+        "last-page-label": "Last page",
+        "next-page-label": "Next page",
+        "previous-page-label": "Previous page",
+        "items-per-page-separator": "of"
+    },
     "language": {
         "language": "Language",
         "locales": {
@@ -4683,6 +4691,7 @@
             "ko_KR": "한국어",
             "ru_RU": "Русский",
             "es_ES": "Español",
+            "es_CA": "Catalan",
             "ja_JP": "日本語",
             "tr_TR": "Türkçe",
             "fa_IR": "فارسي",
