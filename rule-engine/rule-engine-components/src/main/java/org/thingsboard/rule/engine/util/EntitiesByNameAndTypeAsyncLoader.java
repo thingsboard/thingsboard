@@ -32,7 +32,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 
 import java.util.Optional;
 
-public class EntitiesEntitySourceAsyncLoader {
+public class EntitiesByNameAndTypeAsyncLoader {
 
     public static ListenableFuture<? extends EntityId> findEntityIdAsync(TbContext ctx, EntityType entityType, String entityName) {
         EntityId targetEntity = null;
@@ -92,7 +92,7 @@ public class EntitiesEntitySourceAsyncLoader {
         if (targetEntity != null) {
             return Futures.immediateFuture(targetEntity);
         } else {
-            return Futures.immediateFailedFuture(new IllegalStateException("Entity '" + entityType.name() + "' not found by name '" + entityName + "'!"));
+            return Futures.immediateFailedFuture(new IllegalStateException("Failed to found entity " + entityType.name() + " by name '" + entityName + "'!"));
         }
     }
 

@@ -26,7 +26,7 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.util.EntitiesAlarmOriginatorIdAsyncLoader;
 import org.thingsboard.rule.engine.util.EntitiesCustomerIdAsyncLoader;
-import org.thingsboard.rule.engine.util.EntitiesEntitySourceAsyncLoader;
+import org.thingsboard.rule.engine.util.EntitiesByNameAndTypeAsyncLoader;
 import org.thingsboard.rule.engine.util.EntitiesRelatedEntityIdAsyncLoader;
 import org.thingsboard.rule.engine.util.EntitiesTenantIdAsyncLoader;
 import org.thingsboard.server.common.data.EntityType;
@@ -93,7 +93,7 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode {
             case ENTITY_SOURCE:
                 EntityType entityType = EntityType.valueOf(config.getEntityType());
                 String entityName = TbNodeUtils.processPattern(config.getEntityNamePattern(), msg);
-                return EntitiesEntitySourceAsyncLoader.findEntityIdAsync(ctx, entityType, entityName);
+                return EntitiesByNameAndTypeAsyncLoader.findEntityIdAsync(ctx, entityType, entityName);
             default:
                 return Futures.immediateFailedFuture(new IllegalStateException("Unexpected originator source " + config.getOriginatorSource()));
         }
