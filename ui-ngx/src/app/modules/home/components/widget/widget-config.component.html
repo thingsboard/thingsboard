@@ -34,6 +34,7 @@
                 style="padding-right: 8px;">widget-config.timewindow</span>
           <tb-timewindow asButton="true"
                          isEdit="true"
+                         quickIntervalOnly="{{ widgetType === widgetTypes.latest }}"
                          aggregation="{{ widgetType === widgetTypes.timeseries }}"
                          fxFlex formControlName="timewindow"></tb-timewindow>
         </section>

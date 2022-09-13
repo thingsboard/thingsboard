@@ -768,7 +768,6 @@ export interface EntityData {
   latest: {[entityKeyType: string]: {[key: string]: TsValue}};
   timeseries: {[key: string]: Array<TsValue>};
   aggLatest?: {[aggType: string]: {[key: string]: TsValue}};
-  aggFloating?: {[key: string]: Array<TsValue>};
 }
 
 export interface AlarmData extends AlarmInfo {

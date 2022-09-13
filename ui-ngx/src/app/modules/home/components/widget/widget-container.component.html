@@ -46,6 +46,7 @@
               </span>
       <tb-timewindow *ngIf="widget.hasTimewindow"
                      aggregation="{{widget.hasAggregation}}"
+                     quickIntervalOnly="{{widget.onlyQuickInterval}}"
                      timezone="true"
                      [isEdit]="isEdit"
                      [(ngModel)]="widgetComponent.widget.config.timewindow"

@@ -18,12 +18,7 @@ import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@an
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import {
-  DataKey,
-  dataKeyAggregationTypeHintTranslationMap,
-  Widget,
-  widgetType
-} from '@shared/models/widget.models';
+import { DataKey, dataKeyAggregationTypeHintTranslationMap, Widget, widgetType } from '@shared/models/widget.models';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -183,6 +178,19 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
       usePostProcessing: [null, []],
       postFuncBody: [null, []]
     });
+
+    this.dataKeyFormGroup.get('aggregationType').valueChanges.subscribe(
+      (aggType) => {
+        if (!this.dataKeyFormGroup.get('label').dirty) {
+          let newLabel = this.dataKeyFormGroup.get('name').value;
+          if (aggType !== AggregationType.NONE) {
+            const prefix = this.translate.instant(aggregationTranslations.get(aggType));
+            newLabel = prefix + ' ' + newLabel;
+          }
+          this.dataKeyFormGroup.get('label').patchValue(newLabel);
+        }
+      }
+    );
 
     this.dataKeyFormGroup.valueChanges.subscribe(() => {
       this.updateModel();

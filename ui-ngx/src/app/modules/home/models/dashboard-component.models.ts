@@ -333,6 +333,8 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
 
   hasAggregation: boolean;
 
+  onlyQuickInterval: boolean;
+
   style: {[klass: string]: any};
 
   showWidgetTitlePanel: boolean;
@@ -429,10 +431,12 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     this.enableFullscreen = isDefined(this.widget.config.enableFullscreen) ? this.widget.config.enableFullscreen : true;
 
     let canHaveTimewindow = false;
+    let onlyQuickInterval = false;
     if (this.widget.type === widgetType.timeseries || this.widget.type === widgetType.alarm) {
       canHaveTimewindow = true;
     } else if (this.widget.type === widgetType.latest) {
       canHaveTimewindow = datasourcesHasAggregation(this.widget.config.datasources);
+      onlyQuickInterval = canHaveTimewindow;
     }
 
     this.hasTimewindow = canHaveTimewindow ?
@@ -440,6 +444,8 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
         (!this.widget.config.useDashboardTimewindow && (isUndefined(this.widget.config.displayTimewindow)
           || this.widget.config.displayTimewindow)) : false)
       : false;
+
+    this.onlyQuickInterval = onlyQuickInterval;
 
     this.hasAggregation = this.widget.type === widgetType.timeseries;
 

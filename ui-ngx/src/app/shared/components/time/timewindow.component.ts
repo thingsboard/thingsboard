@@ -82,6 +82,17 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
     return this.historyOnlyValue;
   }
 
+  quickIntervalOnlyValue = false;
+
+  @Input()
+  set quickIntervalOnly(val) {
+    this.quickIntervalOnlyValue = coerceBooleanProperty(val);
+  }
+
+  get quickIntervalOnly() {
+    return this.quickIntervalOnlyValue;
+  }
+
   aggregationValue = false;
 
   @Input()
@@ -240,6 +251,7 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
       {
         timewindow: deepClone(this.innerValue),
         historyOnly: this.historyOnly,
+        quickIntervalOnly: this.quickIntervalOnly,
         aggregation: this.aggregation,
         timezone: this.timezone,
         isEdit: this.isEdit
@@ -278,7 +290,7 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
   }
 
   writeValue(obj: Timewindow): void {
-    this.innerValue = initModelFromDefaultTimewindow(obj, this.timeService);
+    this.innerValue = initModelFromDefaultTimewindow(obj, this.quickIntervalOnly, this.timeService);
     this.timewindowDisabled = this.isTimewindowDisabled();
     this.updateDisplayValue();
   }
