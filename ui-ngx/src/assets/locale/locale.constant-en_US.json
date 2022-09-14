@@ -1047,7 +1047,11 @@
         "aggregation-type-max-hint": "Take max value",
         "aggregation-type-avg-hint": "Calculate average value",
         "aggregation-type-sum-hint": "Calculate sum value",
-        "aggregation-type-count-hint": "Calculate count value"
+        "aggregation-type-count-hint": "Calculate count value",
+        "comparison-result": "Comparison result",
+        "comparison-result-previous-value": "Previous value",
+        "comparison-result-delta-absolute": "Delta (absolute)",
+        "comparison-result-delta-percent": "Delta (percent)"
     },
     "datasource": {
         "type": "Datasource type",

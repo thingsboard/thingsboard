@@ -763,11 +763,16 @@ export interface TsValue {
   count?: number;
 }
 
+export interface ComparisonTsValue {
+  current?: TsValue;
+  previous?: TsValue;
+}
+
 export interface EntityData {
   entityId: EntityId;
   latest: {[entityKeyType: string]: {[key: string]: TsValue}};
   timeseries: {[key: string]: Array<TsValue>};
-  aggLatest?: {[aggType: string]: {[key: string]: TsValue}};
+  aggLatest?: {[id: number]: ComparisonTsValue};
 }
 
 export interface AlarmData extends AlarmInfo {

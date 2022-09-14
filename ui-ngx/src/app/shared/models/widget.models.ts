@@ -17,7 +17,7 @@
 import { BaseData } from '@shared/models/base-data';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { WidgetTypeId } from '@shared/models/id/widget-type-id';
-import { AggregationType, Timewindow } from '@shared/models/time/time.models';
+import { AggregationType, ComparisonDuration, Timewindow } from '@shared/models/time/time.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AlarmSearchStatus, AlarmSeverity } from '@shared/models/alarm.models';
 import { DataKeyType } from './telemetry/telemetry.models';
@@ -259,9 +259,27 @@ export function defaultLegendConfig(wType: widgetType): LegendConfig {
   };
 }
 
+export enum ComparisonResultType {
+  PREVIOUS_VALUE = 'PREVIOUS_VALUE',
+  DELTA_ABSOLUTE = 'DELTA_ABSOLUTE',
+  DELTA_PERCENT = 'DELTA_PERCENT'
+}
+
+export const comparisonResultTypeTranslationMap = new Map<ComparisonResultType, string>(
+  [
+    [ComparisonResultType.PREVIOUS_VALUE, 'datakey.comparison-result-previous-value'],
+    [ComparisonResultType.DELTA_ABSOLUTE, 'datakey.comparison-result-delta-absolute'],
+    [ComparisonResultType.DELTA_PERCENT, 'datakey.comparison-result-delta-percent']
+  ]
+);
+
 export interface KeyInfo {
   name: string;
   aggregationType?: AggregationType;
+  comparisonEnabled?: boolean;
+  timeForComparison?: ComparisonDuration;
+  comparisonCustomIntervalValue?: number;
+  comparisonResultType?: ComparisonResultType;
   label?: string;
   color?: string;
   funcBody?: string;

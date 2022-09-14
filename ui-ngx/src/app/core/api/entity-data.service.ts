@@ -74,6 +74,21 @@ export class EntityDataService {
     }
   }
 
+  private static toSubscriptionDataKey(dataKey: DataKey, latest: boolean): SubscriptionDataKey {
+    return {
+      name: dataKey.name,
+      type: dataKey.type,
+      aggregationType: dataKey.aggregationType,
+      comparisonEnabled: dataKey.comparisonEnabled,
+      timeForComparison: dataKey.timeForComparison,
+      comparisonCustomIntervalValue: dataKey.comparisonCustomIntervalValue,
+      comparisonResultType: dataKey.comparisonResultType,
+      funcBody: dataKey.funcBody,
+      postFuncBody: dataKey.postFuncBody,
+      latest
+    };
+  }
+
   public prepareSubscription(listener: EntityDataListener,
                              ignoreDataUpdateOnIntervalTick = false): Observable<EntityDataLoadResult> {
     const datasource = listener.configDatasource;
@@ -147,11 +162,11 @@ export class EntityDataService {
                                     ignoreDataUpdateOnIntervalTick: boolean): EntityDataSubscriptionOptions {
     const subscriptionDataKeys: Array<SubscriptionDataKey> = [];
     datasource.dataKeys.forEach((dataKey) => {
-      subscriptionDataKeys.push(this.toSubscriptionDataKey(dataKey, false));
+      subscriptionDataKeys.push(EntityDataService.toSubscriptionDataKey(dataKey, false));
     });
     if (datasource.latestDataKeys) {
       datasource.latestDataKeys.forEach((dataKey) => {
-        subscriptionDataKeys.push(this.toSubscriptionDataKey(dataKey, true));
+        subscriptionDataKeys.push(EntityDataService.toSubscriptionDataKey(dataKey, true));
       });
     }
     const entityDataSubscriptionOptions: EntityDataSubscriptionOptions = {
@@ -171,16 +186,5 @@ export class EntityDataService {
     entityDataSubscriptionOptions.isPaginatedDataSubscription = isPaginatedDataSubscription;
     entityDataSubscriptionOptions.ignoreDataUpdateOnIntervalTick = ignoreDataUpdateOnIntervalTick;
     return entityDataSubscriptionOptions;
-  }
-
-  private toSubscriptionDataKey(dataKey: DataKey, latest: boolean): SubscriptionDataKey {
-    return {
-      name: dataKey.name,
-      type: dataKey.type,
-      aggregationType: dataKey.aggregationType,
-      funcBody: dataKey.funcBody,
-      postFuncBody: dataKey.postFuncBody,
-      latest
-    };
   }
 }

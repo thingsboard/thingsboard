@@ -174,8 +174,12 @@ export interface TimeSeriesCmd {
 }
 
 export interface AggKey {
+  id: number;
   key: string;
   agg: AggregationType;
+  previousStartTs?: number;
+  previousEndTs?: number;
+  previousValueOnly?: boolean;
 }
 
 export interface AggEntityHistoryCmd {
@@ -314,8 +318,8 @@ export interface SubscriptionData {
   [key: string]: [number, any, number?][];
 }
 
-export interface AggSubscriptionData {
-  [aggType: string]: SubscriptionData;
+export interface IndexedSubscriptionData {
+  [id: number]: [number, any, number?][];
 }
 
 export interface SubscriptionDataHolder {

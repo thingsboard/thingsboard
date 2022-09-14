@@ -18,7 +18,13 @@ import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@an
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { DataKey, dataKeyAggregationTypeHintTranslationMap, Widget, widgetType } from '@shared/models/widget.models';
+import {
+  ComparisonResultType, comparisonResultTypeTranslationMap,
+  DataKey,
+  dataKeyAggregationTypeHintTranslationMap,
+  Widget,
+  widgetType
+} from '@shared/models/widget.models';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -43,7 +49,7 @@ import { JsonFormComponentData } from '@shared/components/json-form/json-form-co
 import { WidgetService } from '@core/http/widget.service';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { IAliasController } from '@core/api/widget-api.models';
-import { aggregationTranslations, AggregationType } from '@shared/models/time/time.models';
+import { aggregationTranslations, AggregationType, ComparisonDuration } from '@shared/models/time/time.models';
 
 @Component({
   selector: 'tb-data-key-config',
@@ -75,6 +81,12 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
   aggregationTypesTranslations = aggregationTranslations;
 
   dataKeyAggregationTypeHintTranslations = dataKeyAggregationTypeHintTranslationMap;
+
+  comparisonResultTypes = ComparisonResultType;
+
+  comparisonResults = Object.keys(ComparisonResultType);
+
+  comparisonResultTypeTranslations = comparisonResultTypeTranslationMap;
 
   @Input()
   entityAliasId: string;
@@ -170,6 +182,10 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
     this.dataKeyFormGroup = this.fb.group({
       name: [null, []],
       aggregationType: [null, []],
+      comparisonEnabled: [null, []],
+      timeForComparison: [null, [Validators.required]],
+      comparisonCustomIntervalValue: [null, [Validators.required, Validators.min(1000)]],
+      comparisonResultType: [null, [Validators.required]],
       label: [null, [Validators.required]],
       color: [null, [Validators.required]],
       units: [null, []],
@@ -189,6 +205,19 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
           }
           this.dataKeyFormGroup.get('label').patchValue(newLabel);
         }
+        this.updateComparisonValidators();
+      }
+    );
+
+    this.dataKeyFormGroup.get('comparisonEnabled').valueChanges.subscribe(
+      () => {
+        this.updateComparisonValues();
+      }
+    );
+
+    this.dataKeyFormGroup.get('timeForComparison').valueChanges.subscribe(
+      () => {
+        this.updateComparisonValues();
       }
     );
 
@@ -231,21 +260,82 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
       this.modelValue.aggregationType = AggregationType.NONE;
     }
     this.dataKeyFormGroup.patchValue(this.modelValue, {emitEvent: false});
-    this.dataKeyFormGroup.get('name').setValidators(this.modelValue.type !== DataKeyType.function &&
-                                                    this.modelValue.type !== DataKeyType.count
-                                                    ? [Validators.required] : []);
-    if (this.modelValue.type === DataKeyType.count) {
-      this.dataKeyFormGroup.get('name').disable({emitEvent: false});
-    } else {
-      this.dataKeyFormGroup.get('name').enable({emitEvent: false});
-    }
-    this.dataKeyFormGroup.get('name').updateValueAndValidity({emitEvent: false});
+    this.updateValidators();
     if (this.displayAdvanced) {
       this.dataKeySettingsData.model = this.modelValue.settings;
       this.dataKeySettingsFormGroup.patchValue({
         settings: this.dataKeySettingsData
       }, {emitEvent: false});
     }
+  }
+
+  private updateValidators() {
+    this.dataKeyFormGroup.get('name').setValidators(this.modelValue.type !== DataKeyType.function &&
+    this.modelValue.type !== DataKeyType.count
+      ? [Validators.required] : []);
+    if (this.modelValue.type === DataKeyType.count) {
+      this.dataKeyFormGroup.get('name').disable({emitEvent: false});
+    } else {
+      this.dataKeyFormGroup.get('name').enable({emitEvent: false});
+    }
+    this.dataKeyFormGroup.get('name').updateValueAndValidity({emitEvent: false});
+    this.updateComparisonValidators();
+  }
+
+  private updateComparisonValues() {
+    const comparisonEnabled = this.dataKeyFormGroup.get('comparisonEnabled').value;
+    if (comparisonEnabled) {
+      const timeForComparison: ComparisonDuration = this.dataKeyFormGroup.get('timeForComparison').value;
+      if (!timeForComparison) {
+        this.dataKeyFormGroup.get('timeForComparison').patchValue('previousInterval', {emitEvent: false});
+      } else if (timeForComparison === 'customInterval') {
+        const comparisonCustomIntervalValue = this.dataKeyFormGroup.get('comparisonCustomIntervalValue').value;
+        if (!comparisonCustomIntervalValue) {
+          this.dataKeyFormGroup.get('comparisonCustomIntervalValue').patchValue(7200000, {emitEvent: false});
+        }
+      }
+      const comparisonResultType: ComparisonResultType = this.dataKeyFormGroup.get('comparisonResultType').value;
+      if (!comparisonResultType) {
+        this.dataKeyFormGroup.get('comparisonResultType').patchValue(ComparisonResultType.DELTA_ABSOLUTE, {emitEvent: false});
+      }
+    }
+    this.updateComparisonValidators();
+  }
+
+  private updateComparisonValidators() {
+    const aggregationType: AggregationType = this.dataKeyFormGroup.get('aggregationType').value;
+    if (aggregationType && aggregationType !== AggregationType.NONE) {
+      this.dataKeyFormGroup.get('comparisonEnabled').enable({emitEvent: false});
+      const comparisonEnabled = this.dataKeyFormGroup.get('comparisonEnabled').value;
+      if (comparisonEnabled) {
+        this.dataKeyFormGroup.get('timeForComparison').enable({emitEvent: false});
+        const timeForComparison: ComparisonDuration = this.dataKeyFormGroup.get('timeForComparison').value;
+        if (timeForComparison) {
+          this.dataKeyFormGroup.get('comparisonResultType').enable({emitEvent: false});
+          if (timeForComparison === 'customInterval') {
+            this.dataKeyFormGroup.get('comparisonCustomIntervalValue').enable({emitEvent: false});
+          } else {
+            this.dataKeyFormGroup.get('comparisonCustomIntervalValue').disable({emitEvent: false});
+          }
+        } else {
+          this.dataKeyFormGroup.get('comparisonResultType').disable({emitEvent: false});
+          this.dataKeyFormGroup.get('comparisonCustomIntervalValue').disable({emitEvent: false});
+        }
+      } else {
+        this.dataKeyFormGroup.get('timeForComparison').disable({emitEvent: false});
+        this.dataKeyFormGroup.get('comparisonResultType').disable({emitEvent: false});
+        this.dataKeyFormGroup.get('comparisonCustomIntervalValue').disable({emitEvent: false});
+      }
+    } else {
+      this.dataKeyFormGroup.get('comparisonEnabled').disable({emitEvent: false});
+      this.dataKeyFormGroup.get('timeForComparison').disable({emitEvent: false});
+      this.dataKeyFormGroup.get('comparisonResultType').disable({emitEvent: false});
+      this.dataKeyFormGroup.get('comparisonCustomIntervalValue').disable({emitEvent: false});
+    }
+    this.dataKeyFormGroup.get('comparisonEnabled').updateValueAndValidity({emitEvent: false});
+    this.dataKeyFormGroup.get('timeForComparison').updateValueAndValidity({emitEvent: false});
+    this.dataKeyFormGroup.get('comparisonResultType').updateValueAndValidity({emitEvent: false});
+    this.dataKeyFormGroup.get('comparisonCustomIntervalValue').updateValueAndValidity({emitEvent: false});
   }
 
   private updateModel() {

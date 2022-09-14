@@ -16,8 +16,7 @@
 
 import {
   AggKey,
-  AggSubscriptionData,
-  SubscriptionData
+  IndexedSubscriptionData,
 } from '@app/shared/models/telemetry/telemetry.models';
 import {
   AggregationType,
@@ -32,7 +31,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { deepClone, isDefinedAndNotNull, isNumber, isNumeric } from '@core/utils';
 import Timeout = NodeJS.Timeout;
 
-export declare type onAggregatedData = (data: AggSubscriptionData, detectChanges: boolean) => void;
+export declare type onAggregatedData = (data: IndexedSubscriptionData, detectChanges: boolean) => void;
 
 interface AggData {
   count: number;
@@ -71,12 +70,12 @@ class AggDataMap {
 }
 
 class AggregationMap {
-  aggMap: {[aggKey: string]: AggDataMap} = {};
+  aggMap: {[id: number]: AggDataMap} = {};
 
   detectRangeChanged(): boolean {
     let changed = false;
-    for (const aggKey of Object.keys(this.aggMap)) {
-      const aggDataMap = this.aggMap[aggKey];
+    for (const id of Object.keys(this.aggMap)) {
+      const aggDataMap = this.aggMap[id];
       if (aggDataMap.rangeChanged) {
         changed = true;
         aggDataMap.rangeChanged = false;
@@ -86,8 +85,8 @@ class AggregationMap {
   }
 
   clearRangeChangedFlags() {
-    for (const aggKey of Object.keys(this.aggMap)) {
-      this.aggMap[aggKey].rangeChanged = false;
+    for (const id of Object.keys(this.aggMap)) {
+      this.aggMap[id].rangeChanged = false;
     }
   }
 }
@@ -146,19 +145,18 @@ export class DataAggregator {
               private utils: UtilsService,
               private ignoreDataUpdateOnIntervalTick: boolean) {
     this.tsKeys.forEach((key) => {
-      if (!this.dataBuffer[key.agg]) {
-        this.dataBuffer[key.agg] = {};
+      if (!this.dataBuffer[key.id]) {
+        this.dataBuffer[key.id] = [];
       }
-      this.dataBuffer[key.agg][key.key] = [];
     });
     if (this.subsTw.aggregation.stateData) {
       this.lastPrevKvPairData = {};
     }
   }
 
-  private dataBuffer: AggSubscriptionData = {};
-  private data: AggSubscriptionData;
-  private readonly lastPrevKvPairData: {[aggKey: string]: [number, any]};
+  private dataBuffer: IndexedSubscriptionData = [];
+  private data: IndexedSubscriptionData;
+  private readonly lastPrevKvPairData: {[id: number]: [number, any]};
 
   private aggregationMap: AggregationMap;
 
@@ -201,17 +199,6 @@ export class DataAggregator {
     }
   }
 
-  private static aggKeyToString(aggKey: AggKey): string {
-    return `${aggKey.key}_${aggKey.agg}`;
-  }
-
-  private static aggKeyFromString(aggKeyString: string): AggKey {
-    const separatorIndex = aggKeyString.lastIndexOf('_');
-    const key = aggKeyString.substring(0, separatorIndex);
-    const agg = AggregationType[aggKeyString.substring(separatorIndex + 1)];
-    return { key, agg };
-  }
-
   public updateOnDataCb(newOnDataCb: onAggregatedData): onAggregatedData {
     const prevOnDataCb = this.onDataCb;
     this.onDataCb = newOnDataCb;
@@ -241,7 +228,7 @@ export class DataAggregator {
     this.aggregationMap = null;
   }
 
-  public onData(data: AggSubscriptionData, update: boolean, history: boolean, detectChanges: boolean) {
+  public onData(data: IndexedSubscriptionData, update: boolean, history: boolean, detectChanges: boolean) {
     this.updatedData = true;
     if (!this.dataReceived || this.resetPending) {
       let updateIntervalScheduledTime = true;
@@ -330,24 +317,24 @@ export class DataAggregator {
     }
   }
 
-  private updateData(): {[aggType: string]: SubscriptionData} {
-    this.dataBuffer = {};
+  private updateData(): IndexedSubscriptionData {
+    this.dataBuffer = [];
     this.tsKeys.forEach((key) => {
-      if (!this.dataBuffer[key.agg]) {
-        this.dataBuffer[key.agg] = {};
+      if (!this.dataBuffer[key.id]) {
+        this.dataBuffer[key.id] = [];
       }
-      this.dataBuffer[key.agg][key.key] = [];
     });
-    for (const aggKeyString of Object.keys(this.aggregationMap.aggMap)) {
-      const aggKeyData = this.aggregationMap.aggMap[aggKeyString];
-      const aggKey = DataAggregator.aggKeyFromString(aggKeyString);
+    for (const idStr of Object.keys(this.aggregationMap.aggMap)) {
+      const id = Number(idStr);
+      const aggKeyData = this.aggregationMap.aggMap[id];
+      const aggKey = this.aggKeyById(id);
       const noAggregation = aggKey.agg === AggregationType.NONE;
-      let keyData = this.dataBuffer[aggKey.agg][aggKey.key];
+      let keyData = this.dataBuffer[id];
       aggKeyData.forEach((aggData, aggTimestamp) => {
         if (aggTimestamp < this.startTs) {
           if (this.subsTw.aggregation.stateData &&
-            (!this.lastPrevKvPairData[aggKeyString] || this.lastPrevKvPairData[aggKeyString][0] < aggTimestamp)) {
-            this.lastPrevKvPairData[aggKeyString] = [aggTimestamp, aggData.aggValue];
+            (!this.lastPrevKvPairData[id] || this.lastPrevKvPairData[id][0] < aggTimestamp)) {
+            this.lastPrevKvPairData[id] = [aggTimestamp, aggData.aggValue];
           }
           aggKeyData.delete(aggTimestamp);
           this.updatedData = true;
@@ -358,12 +345,12 @@ export class DataAggregator {
       });
       keyData.sort((set1, set2) => set1[0] - set2[0]);
       if (this.subsTw.aggregation.stateData) {
-        this.updateStateBounds(keyData, deepClone(this.lastPrevKvPairData[aggKeyString]));
+        this.updateStateBounds(keyData, deepClone(this.lastPrevKvPairData[id]));
       }
       if (keyData.length > this.subsTw.aggregation.limit) {
         keyData = keyData.slice(keyData.length - this.subsTw.aggregation.limit);
       }
-      this.dataBuffer[aggKey.agg][aggKey.key] = keyData;
+      this.dataBuffer[id] = keyData;
     }
     return this.dataBuffer;
   }
@@ -396,69 +383,71 @@ export class DataAggregator {
     }
   }
 
-  private processAggregatedData(data: AggSubscriptionData): AggregationMap {
+  private processAggregatedData(data: IndexedSubscriptionData): AggregationMap {
     const aggregationMap = new AggregationMap();
-    for (const aggTypeString of Object.keys(data)) {
-      const aggType = AggregationType[aggTypeString];
+    for (const idStr of Object.keys(data)) {
+      const id = Number(idStr);
+      const aggKey = this.aggKeyById(id);
+      const aggType = aggKey.agg;
       const isCount = aggType === AggregationType.COUNT;
       const noAggregation = aggType === AggregationType.NONE;
-      for (const key of Object.keys(data[aggType])) {
-        const aggKey = DataAggregator.aggKeyToString({key, agg: aggType});
-        let aggKeyData = aggregationMap.aggMap[aggKey];
-        if (!aggKeyData) {
-          aggKeyData = new AggDataMap();
-          aggregationMap.aggMap[aggKey] = aggKeyData;
-        }
-        const keyData = data[aggType][key];
-        keyData.forEach((kvPair) => {
-          const timestamp = kvPair[0];
-          const value = DataAggregator.convertValue(kvPair[1], noAggregation);
-          const tsKey = timestamp;
-          const aggData = {
-            count: isCount ? value : isDefinedAndNotNull(kvPair[2]) ? kvPair[2] : 1,
-            sum: value,
-            aggValue: value
-          };
-          aggKeyData.set(tsKey, aggData);
-        });
+      let aggKeyData = aggregationMap.aggMap[id];
+      if (!aggKeyData) {
+        aggKeyData = new AggDataMap();
+        aggregationMap.aggMap[id] = aggKeyData;
       }
+      const keyData = data[id];
+      keyData.forEach((kvPair) => {
+        const timestamp = kvPair[0];
+        const value = DataAggregator.convertValue(kvPair[1], noAggregation);
+        const tsKey = timestamp;
+        const aggData = {
+          count: isCount ? value : isDefinedAndNotNull(kvPair[2]) ? kvPair[2] : 1,
+          sum: value,
+          aggValue: value
+        };
+        aggKeyData.set(tsKey, aggData);
+      });
     }
     return aggregationMap;
   }
 
-  private updateAggregatedData(data: AggSubscriptionData) {
-    for (const aggTypeString of Object.keys(data)) {
-      const aggType = AggregationType[aggTypeString];
+  private updateAggregatedData(data: IndexedSubscriptionData) {
+    for (const idStr of Object.keys(data)) {
+      const id = Number(idStr);
+      const aggKey = this.aggKeyById(id);
+      const aggType = aggKey.agg;
       const isCount = aggType === AggregationType.COUNT;
       const noAggregation = aggType === AggregationType.NONE;
-      for (const key of Object.keys(data[aggType])) {
-        const aggKey = DataAggregator.aggKeyToString({key, agg: aggType});
-        let aggKeyData = this.aggregationMap.aggMap[aggKey];
-        if (!aggKeyData) {
-          aggKeyData = new AggDataMap();
-          this.aggregationMap.aggMap[aggKey] = aggKeyData;
-        }
-        const keyData = data[aggType][key];
-        keyData.forEach((kvPair) => {
-          const timestamp = kvPair[0];
-          const value = DataAggregator.convertValue(kvPair[1], noAggregation);
-          const aggTimestamp = noAggregation ? timestamp : (this.startTs +
-            Math.floor((timestamp - this.startTs) / this.subsTw.aggregation.interval) *
-            this.subsTw.aggregation.interval + this.subsTw.aggregation.interval / 2);
-          let aggData = aggKeyData.get(aggTimestamp);
-          if (!aggData) {
-            aggData = {
-              count: isDefinedAndNotNull(kvPair[2]) ? kvPair[2] : 1,
-              sum: value,
-              aggValue: isCount ? 1 : value
-            };
-            aggKeyData.set(aggTimestamp, aggData);
-          } else {
-            DataAggregator.getAggFunction(aggType)(aggData, value);
-          }
-        });
+      let aggKeyData = this.aggregationMap.aggMap[id];
+      if (!aggKeyData) {
+        aggKeyData = new AggDataMap();
+        this.aggregationMap.aggMap[id] = aggKeyData;
       }
+      const keyData = data[id];
+      keyData.forEach((kvPair) => {
+        const timestamp = kvPair[0];
+        const value = DataAggregator.convertValue(kvPair[1], noAggregation);
+        const aggTimestamp = noAggregation ? timestamp : (this.startTs +
+          Math.floor((timestamp - this.startTs) / this.subsTw.aggregation.interval) *
+          this.subsTw.aggregation.interval + this.subsTw.aggregation.interval / 2);
+        let aggData = aggKeyData.get(aggTimestamp);
+        if (!aggData) {
+          aggData = {
+            count: isDefinedAndNotNull(kvPair[2]) ? kvPair[2] : 1,
+            sum: value,
+            aggValue: isCount ? 1 : value
+          };
+          aggKeyData.set(aggTimestamp, aggData);
+        } else {
+          DataAggregator.getAggFunction(aggType)(aggData, value);
+        }
+      });
     }
+  }
+
+  private aggKeyById(id: number): AggKey {
+    return this.tsKeys.find(key => key.id === id);
   }
 
 }
