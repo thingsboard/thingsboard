@@ -385,9 +385,9 @@ public final class EdgeGrpcSession implements Closeable {
 
     private ListenableFuture<Void> sendDownlinkMsgsPack(List<DownlinkMsg> downlinkMsgsPack) {
         if (sessionState.getSendDownlinkMsgsFuture() != null && !sessionState.getSendDownlinkMsgsFuture().isDone()) {
-            String erroMsg = "[" + this.sessionId + "] Previous send downdlink future was not properly completed, stopping it now";
-            log.error(erroMsg);
-            sessionState.getSendDownlinkMsgsFuture().setException(new RuntimeException(erroMsg));
+            String errorMsg = "[" + this.sessionId + "] Previous send downlink future was not properly completed, stopping it now";
+            log.error(errorMsg);
+            sessionState.getSendDownlinkMsgsFuture().setException(new RuntimeException(errorMsg));
         }
         sessionState.setSendDownlinkMsgsFuture(SettableFuture.create());
         sessionState.getPendingMsgsMap().clear();

@@ -95,7 +95,7 @@ public class EntityEdgeProcessor extends BaseEdgeProcessor {
                 new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB()));
         EdgeId edgeId = safeGetEdgeId(edgeNotificationMsg);
         switch (actionType) {
-            case ADDED: // used only for USER entity
+            case ADDED:
             case UPDATED:
             case CREDENTIALS_UPDATED:
             case ASSIGNED_TO_CUSTOMER:
@@ -189,6 +189,7 @@ public class EntityEdgeProcessor extends BaseEdgeProcessor {
             case ADDED:
             case UPDATED:
             case DELETED:
+            case CREDENTIALS_UPDATED: // used by USER entity
                 return processActionForAllEdges(tenantId, type, actionType, entityId);
             default:
                 return Futures.immediateFuture(null);

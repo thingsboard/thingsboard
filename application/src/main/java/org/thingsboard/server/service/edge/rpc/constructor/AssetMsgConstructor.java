@@ -30,8 +30,8 @@ public class AssetMsgConstructor {
     public AssetUpdateMsg constructAssetUpdatedMsg(UpdateMsgType msgType, Asset asset) {
         AssetUpdateMsg.Builder builder = AssetUpdateMsg.newBuilder()
                 .setMsgType(msgType)
-                .setIdMSB(asset.getId().getId().getMostSignificantBits())
-                .setIdLSB(asset.getId().getId().getLeastSignificantBits())
+                .setIdMSB(asset.getUuidId().getMostSignificantBits())
+                .setIdLSB(asset.getUuidId().getLeastSignificantBits())
                 .setName(asset.getName())
                 .setType(asset.getType());
         if (asset.getLabel() != null) {

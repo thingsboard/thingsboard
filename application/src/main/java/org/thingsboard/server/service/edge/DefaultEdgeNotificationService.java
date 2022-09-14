@@ -40,7 +40,6 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.processor.AlarmEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.CustomerEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.EdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.EntityEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.RelationEdgeProcessor;
@@ -76,9 +75,6 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
 
     @Autowired
     private RelationEdgeProcessor relationProcessor;
-
-    @Autowired
-    private CustomerEdgeProcessor customerProcessor;
 
     private ExecutorService dbCallBackExecutor;
 
@@ -130,19 +126,17 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                 case EDGE:
                     future = edgeProcessor.processEdgeNotification(tenantId, edgeNotificationMsg);
                     break;
-                case USER:
                 case ASSET:
                 case DEVICE:
-                case DEVICE_PROFILE:
                 case ENTITY_VIEW:
                 case DASHBOARD:
                 case RULE_CHAIN:
-                case OTA_PACKAGE:
                     future = entityProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
                     break;
+                case USER:
                 case CUSTOMER:
-                    future = customerProcessor.processCustomerNotification(tenantId, edgeNotificationMsg);
-                    break;
+                case DEVICE_PROFILE:
+                case OTA_PACKAGE:
                 case WIDGETS_BUNDLE:
                 case WIDGET_TYPE:
                 case QUEUE:
