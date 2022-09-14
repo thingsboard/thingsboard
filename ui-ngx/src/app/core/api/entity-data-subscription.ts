@@ -457,7 +457,7 @@ export class EntityDataSubscription {
     }
     this.prepareSubscriptionTimewindow();
 
-    this.prepareData();
+    this.prepareData(true);
 
     if (this.datasourceType === DatasourceType.entity) {
       this.subsCommand = new EntityDataCmd();
@@ -567,7 +567,7 @@ export class EntityDataSubscription {
     this.generateData(true);
   }
 
-  private prepareData() {
+  private prepareData(isUpdate: boolean) {
     if (this.timeseriesTimer) {
       clearTimeout(this.timeseriesTimer);
       this.timeseriesTimer = null;
@@ -641,11 +641,14 @@ export class EntityDataSubscription {
         for (let dataIndex = 0; dataIndex < this.pageData.data.length; dataIndex++) {
           this.onAggData(aggSubscriptionData, DataKeyType.timeseries, dataIndex, true,
             this.entityDataSubscriptionOptions.type === widgetType.timeseries, true,
-            (data1, dataIndex1, dataKeyIndex) => {
+            (data, dataIndex1, dataKeyIndex, detectChanges, isLatest) => {
               if (!this.data[dataIndex1]) {
                 this.data[dataIndex1] = [];
               }
-              this.data[dataIndex1][dataKeyIndex] = data1;
+              this.data[dataIndex1][dataKeyIndex] = data;
+              if (isUpdate) {
+                this.notifyListener(data, dataIndex1, dataKeyIndex, detectChanges, isLatest);
+              }
             });
         }
       }
@@ -706,7 +709,7 @@ export class EntityDataSubscription {
     this.pageData = pageData;
 
     if (this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
-      this.prepareData();
+      this.prepareData(false);
     } else if (isInitialData) {
       this.resetData();
     }
