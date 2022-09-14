@@ -16,6 +16,7 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -29,6 +30,8 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -45,6 +48,7 @@ import java.util.List;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Slf4j
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public abstract class BaseRuleChainControllerTest extends AbstractControllerTest {
 
@@ -240,8 +244,16 @@ public abstract class BaseRuleChainControllerTest extends AbstractControllerTest
 
     @Test
     public void testDeleteRuleChainExceptionWithRelationsTransactional() throws Exception {
-        RuleChainId ruleChainId = createRuleChain("RuleChain for Test WithRelations Transactional Exception").getId();
-        testEntityDaoWithRelationsTransactionalException(ruleChainDao, savedTenant.getId(), ruleChainId, "/api/ruleChain/" + ruleChainId);
+        try {
+            log.warn("BDDMockito: testRuleChainExceptionWithRelationsTransactional start");
+            RuleChainId ruleChainId = createRuleChain("RuleChain for Test WithRelations Transactional Exception").getId();
+            testEntityDaoWithRelationsTransactionalException(ruleChainDao, savedTenant.getId(), ruleChainId, "/api/ruleChain/" + ruleChainId);
+            log.warn("BDDMockito: testRuleChainExceptionWithRelationsTransactional finished successful");
+        } catch (Exception e) {
+            throw new ThingsboardException(
+                    "BDDMockito: testRuleChainExceptionWithRelationsTransactional finished is bad [" + e.getMessage() + "]",
+                    ThingsboardErrorCode.TOO_MANY_UPDATES);
+        }
     }
 
     private RuleChain createRuleChain(String name) {

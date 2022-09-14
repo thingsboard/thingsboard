@@ -36,6 +36,7 @@ import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.mockito.BDDMockito;
+import org.mockito.Mockito;
 import org.mockito.exceptions.misusing.UnfinishedStubbingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -242,6 +243,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     public void teardownWebTest() throws Exception {
         log.warn("Executing web test teardown");
 
+        logout();
         loginSysAdmin();
         doDelete("/api/tenant/" + tenantId.getId().toString())
                 .andExpect(status().isOk());
@@ -268,6 +270,62 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         } while (pageData.hasNext());
 
         assertThat(loadedTenants).as("All tenants expected to be deleted, but some tenants left in the database").isEmpty();
+    }
+
+    void verifyNoTenantsLeftWithDelete() throws Exception {
+        List<Tenant> loadedTenants = new ArrayList<>();
+        PageLink pageLink = new PageLink(10);
+        PageData<Tenant> pageData;
+        do {
+            pageData = doGetTypedWithPageLink("/api/tenants?", new TypeReference<PageData<Tenant>>() {
+            }, pageLink);
+            loadedTenants.addAll(pageData.getData());
+            if (pageData.hasNext()) {
+                pageLink = pageLink.nextPageLink();
+            }
+        } while (pageData.hasNext());
+
+        if (!loadedTenants.isEmpty()) {
+            loadedTenants.forEach(u -> {
+                try {
+                    doDelete("/api/tenant/" + u.getId().getId().toString());
+                    loadedTenants.remove(u);
+                } catch (Exception e) {
+                    log.error("Error delete tenant [{}]", u);
+                    log.error("", e);
+                }
+            });
+        }
+
+        assertThat(loadedTenants).as("All tenants expected to be deleted, but some tenants left in the database").isEmpty();
+    }
+
+    void verifyNoUsersLeft() throws Exception {
+        List<Tenant> loadedUsers = new ArrayList<>();
+        PageLink pageLink = new PageLink(10);
+        PageData<Tenant> pageData;
+        do {
+            pageData = doGetTypedWithPageLink("/api/tenant/" + tenantId.getId().toString() + "/users?",
+                    new TypeReference<>() {
+                    }, pageLink);
+            loadedUsers.addAll(pageData.getData());
+            if (pageData.hasNext()) {
+                pageLink = pageLink.nextPageLink();
+            }
+        } while (pageData.hasNext());
+
+        if (!loadedUsers.isEmpty()) {
+            loadedUsers.forEach(u -> {
+                try {
+                    doDelete("/api/user/" + u.getId().getId().toString());
+                    loadedUsers.remove(u);
+                } catch (Exception e) {
+                    log.error("Error delete user [{}]", u);
+                    log.error("", e);
+                }
+            });
+        }
+        assertThat(loadedUsers).as("All users expected to be deleted, but some users left in the database").isEmpty();
     }
 
     protected void loginSysAdmin() throws Exception {
@@ -714,7 +772,6 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected void testEntityDaoWithRelationsOk(EntityId entityIdFrom, EntityId entityTo, String urlDelete) throws Exception {
         createEntityRelation(entityIdFrom, entityTo, "TEST_TYPE");
-        assertThat(findRelationsByTo(entityTo)).hasSize(1);
 
         doDelete(urlDelete).andExpect(status().isOk());
 
@@ -723,41 +780,76 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected <T> void testEntityDaoWithRelationsTransactionalException(Dao<T> dao, EntityId entityIdFrom, EntityId entityTo,
                                                                         String urlDelete) throws Exception {
-        entityDaoRemoveByIdWithException (dao);
-        Thread.sleep(200);
-        createEntityRelation(entityIdFrom, entityTo, "TEST_TRANSACTIONAL_TYPE");
-        assertThat(findRelationsByTo(entityTo)).hasSize(1);
+        int startTestError = 2;
+        while (startTestError-- != 0) {
+            try {
+                log.info("BDDMockito: entityDaoRemoveByIdWithException start. EntityType: [{}], EntityId:  [{}].",
+                        dao.getEntityType(), entityTo);
+                createEntityRelation(entityIdFrom, entityTo, "TEST_TRANSACTIONAL_TYPE");
 
-        doDelete(urlDelete)
-                .andExpect(status().isInternalServerError());
+                entityDaoRemoveByIdWithException(dao, urlDelete);
+                Thread.sleep(200);
 
-        assertThat(findRelationsByTo(entityTo)).hasSize(1);
+                doDelete(urlDelete)
+                        .andExpect(status().isInternalServerError());
 
-        afterTestEntityDaoRemoveByIdWithException (dao);
-        Thread.sleep(200);
-        doDelete(urlDelete).andExpect(status().isOk());
-        doGet(urlDelete)
-                .andExpect(status().isNotFound());
+                List<EntityRelation> entityRelations = findRelationsByTo(entityTo);
+                if (entityRelations.isEmpty()) {
+                    throw new AssertionError("BDDMockito: entityRelations.isEmpty()");
+                }
 
+                afterTestEntityDaoRemoveByIdWithException(dao, urlDelete);
+                break;
+            } catch (UnfinishedStubbingException | AssertionError e) {
+                log.error("BDDMockito: UnfinishedStubbingException_repeat. Last repeat [{}]", startTestError);
+                log.error("", e);
+                if (startTestError <= 0)  {
+                    throw new AssertionError(
+                            "BDDMockito: UnfinishedStubbingException_repeat. Last repeat [" + startTestError + "]");
+                } else {
+                    restartSetupWebTest();
+                }
+            }
+        }
     }
 
-    protected <T> void entityDaoRemoveByIdWithException (Dao<T> dao) throws Exception {
+    protected <T> void entityDaoRemoveByIdWithException (Dao<T> dao, String urlDelete) throws Exception {
         try {
             BDDMockito.willThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT"))
                     .given(dao).removeById(any(), any());
         } catch (UnfinishedStubbingException e) {
-            log.error("BDDMockito: UnfinishedStubbingException");
+            log.error("BDDMockito: UnfinishedStubbingException_start");
             log.error("", e);
+            afterTestEntityDaoRemoveByIdWithException (dao, urlDelete);
+            throw new AssertionError(e.getMessage());
+
         }
     }
 
-    protected <T> void afterTestEntityDaoRemoveByIdWithException (Dao<T> dao) throws Exception {
+    protected <T> void afterTestEntityDaoRemoveByIdWithException (Dao<T> dao, String urlDelete) throws Exception {
         BDDMockito.willCallRealMethod().given(dao).removeById(any(), any());
+        Mockito.reset();
+        Thread.sleep(200);
+        MvcResult mvcResult = doDelete(urlDelete).andReturn();
+        if (mvcResult.getResponse().getStatus() == 200) {
+            doGet(urlDelete)
+                    .andExpect(status().isNotFound());
+        } else {
+            throw new AssertionError("BDDMockito: result delete dao after test is bad");
+        }
     }
 
     protected void createEntityRelation(EntityId entityIdFrom, EntityId entityIdTo, String typeRelation) throws Exception {
         EntityRelation relation = new EntityRelation(entityIdFrom, entityIdTo, typeRelation);
-        doPost("/api/relation", relation);
+        MvcResult mvcResult = doPost("/api/relation", relation).andReturn();
+        if (mvcResult.getResponse().getStatus() == 200) {
+            List<EntityRelation> entityRelations = findRelationsByTo(entityIdTo);
+            if (entityRelations.isEmpty()) {
+                throw new AssertionError("BDDMockito: entityRelations.isEmpty()");
+            }
+        } else {
+            throw new AssertionError("BDDMockito: entityRelations created is bad");
+        }
     }
 
     protected List<EntityRelation> findRelationsByTo(EntityId entityId) throws Exception {
@@ -769,5 +861,16 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
             case 404: return Collections.emptyList();
         }
         throw new AssertionError("Unexpected status " + mvcResult.getResponse().getStatus());
+    }
+
+    protected void restartSetupWebTest () throws Exception {
+        log.warn("BDDMockito: UnfinishedStubbingException_repeat. Restart setup Web test.");
+        logout();
+        loginSysAdmin();
+        verifyNoTenantsLeftWithDelete();
+        verifyNoUsersLeft();
+
+        logout();
+        setupWebTest();
     }
 }

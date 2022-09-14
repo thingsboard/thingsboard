@@ -47,6 +47,8 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.objects.AttributesEntityView;
@@ -805,7 +807,15 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
     @Test
     public void testDeleteEntityViewExceptionWithRelationsTransactional() throws Exception {
-        EntityViewId entityViewId = getNewSavedEntityView("EntityView for Test WithRelations Transactional Exception").getId();
-        testEntityDaoWithRelationsTransactionalException(entityViewDao, tenantId, entityViewId, "/api/entityView/" + entityViewId);
+        try {
+            log.warn("BDDMockito: testEntityViewExceptionWithRelationsTransactional start");
+            EntityViewId entityViewId = getNewSavedEntityView("EntityView for Test WithRelations Transactional Exception").getId();
+            testEntityDaoWithRelationsTransactionalException(entityViewDao, tenantId, entityViewId, "/api/entityView/" + entityViewId);
+            log.warn("BDDMockito: testEntityViewExceptionWithRelationsTransactional finished successful");
+        } catch (Exception e) {
+            throw new ThingsboardException(
+                    "BDDMockito: testEntityViewExceptionWithRelationsTransactional finished is bad [" + e.getMessage() + "]",
+                    ThingsboardErrorCode.TOO_MANY_UPDATES);
+        }
     }
 }
