@@ -43,6 +43,15 @@ import { WidgetInfo } from '@home/models/widget-component.models';
 import jsonSchemaDefaults from 'json-schema-defaults';
 import materialIconsCodepoints from '!raw-loader!./material-icons-codepoints.raw';
 import { Observable, of, ReplaySubject } from 'rxjs';
+import { publishReplay, refCount } from 'rxjs/operators';
+import { WidgetContext } from '@app/modules/home/models/widget-component.models';
+import {
+  AttributeData,
+  TelemetrySubscriber,
+  TelemetryType,
+  LatestTelemetry
+} from '@shared/models/telemetry/telemetry.models';
+import { EntityId } from '@shared/models/id/entity-id';
 
 const i18nRegExp = new RegExp(`{${i18nPrefix}:[^{}]+}`, 'g');
 
@@ -478,5 +487,31 @@ export class UtilsService {
     } else {
       return defaultValue;
     }
+  }
+
+  public getEntityIdFromDatasource(dataSource: Datasource) {
+    return { id: dataSource.entityId, entityType: dataSource.entityType};
+  }
+
+  public createTelemetrySubscriber(ctx: WidgetContext,
+                                   entityId?: EntityId,
+                                   type: TelemetryType = LatestTelemetry.LATEST_TELEMETRY,
+                                   keys: string[] = null): TelemetrySubscriber {
+    if (!entityId && ctx.datasources.length > 0) {
+        entityId = this.getEntityIdFromDatasource(ctx.datasources[0]);
+    }
+    return TelemetrySubscriber.createEntityAttributesSubscription(ctx.telemetryWsService, entityId, type, ctx.ngZone, keys);
+  }
+
+  public subscribeToEntityTelemetry(ctx: WidgetContext,
+                                    entityId?: EntityId,
+                                    type: TelemetryType = LatestTelemetry.LATEST_TELEMETRY,
+                                    keys: string[] = null): Observable<Array<AttributeData>> {
+    ctx.telemetrySubscriber = this.createTelemetrySubscriber(ctx, entityId, type, keys);
+    ctx.telemetrySubscriber.subscribe();
+    return ctx.telemetrySubscriber.attributeData$().pipe(
+      publishReplay(1),
+      refCount()
+    );
   }
 }
