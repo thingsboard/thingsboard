@@ -13,26 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.kv;
+package org.thingsboard.server.service.subscription;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
+import org.thingsboard.server.service.telemetry.cmd.v2.AggKey;
 
 @Data
-public class BaseTsKvQuery implements TsKvQuery {
+public class ReadTsKvQueryInfo {
 
-    private static final ThreadLocal<Integer> idSeq = ThreadLocal.withInitial(() -> 0);
-
-    private final int id;
-    private final String key;
-    private final long startTs;
-    private final long endTs;
-
-    public BaseTsKvQuery(String key, long startTs, long endTs) {
-        this.id = idSeq.get();
-        idSeq.set(id + 1);
-        this.key = key;
-        this.startTs = startTs;
-        this.endTs = endTs;
-    }
+    private final AggKey key;
+    private final ReadTsKvQuery query;
+    private final boolean previous;
 
 }

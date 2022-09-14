@@ -24,9 +24,7 @@ import java.util.List;
 @Data
 public class ReadTsKvQueryResult {
 
-    private final String key;
-    // Holds the aggregation from the query
-    private final Aggregation agg;
+    private final int queryId;
     // Holds the data list;
     private final List<TsKvEntry> data;
     // Holds the max ts of the records that match aggregation intervals (not the ts of the aggregation window, but the ts of the last record among all the intervals)

@@ -13,26 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.kv;
+package org.thingsboard.server.common.data.query;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
-public class BaseTsKvQuery implements TsKvQuery {
+@NoArgsConstructor
+@AllArgsConstructor
+public class ComparisonTsValue {
 
-    private static final ThreadLocal<Integer> idSeq = ThreadLocal.withInitial(() -> 0);
-
-    private final int id;
-    private final String key;
-    private final long startTs;
-    private final long endTs;
-
-    public BaseTsKvQuery(String key, long startTs, long endTs) {
-        this.id = idSeq.get();
-        idSeq.set(id + 1);
-        this.key = key;
-        this.startTs = startTs;
-        this.endTs = endTs;
-    }
-
+    private TsValue current;
+    private TsValue previous;
 }

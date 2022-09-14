@@ -99,7 +99,7 @@ public abstract class BaseAbstractSqlTimeseriesDao extends JpaAbstractDaoListeni
                 if (lastTs.isEmpty()) {
                     lastTs = data.stream().map(AbstractTsKvEntity::getTs).filter(Objects::nonNull).max(Long::compare);
                 }
-                return new ReadTsKvQueryResult(query.getKey(), query.getAggregation(), DaoUtil.convertDataList(data), lastTs.orElse(query.getStartTs()));
+                return new ReadTsKvQueryResult(query.getId(), DaoUtil.convertDataList(data), lastTs.orElse(query.getStartTs()));
             }
         }, service);
     }

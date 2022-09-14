@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
+import org.thingsboard.server.common.data.query.ComparisonTsValue;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityKey;
@@ -74,6 +75,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -268,28 +270,36 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     }
 
     private ListenableFuture<TbEntityDataSubCtx> handleAggHistoryCmd(TbEntityDataSubCtx ctx, AggHistoryCmd cmd) {
-        var keys = cmd.getKeys();
-        long interval = cmd.getEndTs() - cmd.getStartTs();
-        List<ReadTsKvQuery> queries = keys.stream().map(key -> new BaseReadTsKvQuery(
-                key.getKey(), cmd.getStartTs(), cmd.getEndTs(), interval, 1, key.getAgg()
-        )).distinct().collect(Collectors.toList());
+        ConcurrentMap<Integer, ReadTsKvQueryInfo> queries = new ConcurrentHashMap<>();
+        for (AggKey key : cmd.getKeys()) {
+            if (key.getPreviousValueOnly() == null || !key.getPreviousValueOnly()) {
+                var query = new BaseReadTsKvQuery(key.getKey(), cmd.getStartTs(), cmd.getEndTs(), cmd.getEndTs() - cmd.getStartTs(), 1, key.getAgg());
+                queries.put(query.getId(), new ReadTsKvQueryInfo(key, query, false));
+            }
+            if (key.getPreviousStartTs() != null && key.getPreviousEndTs() != null && key.getPreviousEndTs() >= key.getPreviousStartTs()) {
+                var query = new BaseReadTsKvQuery(key.getKey(), key.getPreviousStartTs(), key.getPreviousEndTs(), key.getPreviousEndTs() - key.getPreviousStartTs(), 1, key.getAgg());
+                queries.put(query.getId(), new ReadTsKvQueryInfo(key, query, true));
+            }
+        }
         return handleAggCmd(ctx, cmd.getKeys(), queries, cmd.getStartTs(), cmd.getEndTs(), false);
     }
 
     private ListenableFuture<TbEntityDataSubCtx> handleAggTsCmd(TbEntityDataSubCtx ctx, AggTimeSeriesCmd cmd) {
-        long endTs = cmd.getStartTs() + cmd.getTimeWindow();
-        List<ReadTsKvQuery> queries = cmd.getKeys().stream()
-                .map(key -> new BaseReadTsKvQuery(key.getKey(), cmd.getStartTs(), endTs, cmd.getTimeWindow(), 1, key.getAgg()))
-                .distinct().collect(Collectors.toList());
-        return handleAggCmd(ctx, cmd.getKeys(), queries, cmd.getStartTs(), endTs, true);
+        ConcurrentMap<Integer, ReadTsKvQueryInfo> queries = new ConcurrentHashMap<>();
+        for (AggKey key : cmd.getKeys()) {
+            var query = new BaseReadTsKvQuery(key.getKey(), cmd.getStartTs(), cmd.getStartTs() + cmd.getTimeWindow(), cmd.getTimeWindow(), 1, key.getAgg());
+            queries.put(query.getId(), new ReadTsKvQueryInfo(key, query, false));
+        }
+        return handleAggCmd(ctx, cmd.getKeys(), queries, cmd.getStartTs(), cmd.getStartTs() + cmd.getTimeWindow(), true);
     }
 
-    private ListenableFuture<TbEntityDataSubCtx> handleAggCmd(TbEntityDataSubCtx ctx, List<AggKey> keys, List<ReadTsKvQuery> queries,
+    private ListenableFuture<TbEntityDataSubCtx> handleAggCmd(TbEntityDataSubCtx ctx, List<AggKey> keys, ConcurrentMap<Integer, ReadTsKvQueryInfo> queries,
                                                               long startTs, long endTs, boolean subscribe) {
         Map<EntityData, ListenableFuture<List<ReadTsKvQueryResult>>> fetchResultMap = new HashMap<>();
         List<EntityData> entityDataList = ctx.getData().getData();
+        List<ReadTsKvQuery> queryList = queries.values().stream().map(ReadTsKvQueryInfo::getQuery).collect(Collectors.toList());
         entityDataList.forEach(entityData -> fetchResultMap.put(entityData,
-                tsService.findAllByQueries(ctx.getTenantId(), entityData.getEntityId(), queries)));
+                tsService.findAllByQueries(ctx.getTenantId(), entityData.getEntityId(), queryList)));
         return Futures.transform(Futures.allAsList(fetchResultMap.values()), f -> {
             // Map that holds last ts for each key for each entity.
             Map<EntityData, Map<String, Long>> lastTsEntityMap = new HashMap<>();
@@ -301,13 +311,19 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                     List<ReadTsKvQueryResult> queryResults = future.get();
                     if (queryResults != null) {
                         for (ReadTsKvQueryResult queryResult : queryResults) {
-                            entityData.getAggLatest().computeIfAbsent(queryResult.getAgg(), agg -> new HashMap<>()).put(queryResult.getKey(), queryResult.toTsValue());
-                            lastTsMap.put(queryResult.getKey(), queryResult.getLastEntryTs());
+                            ReadTsKvQueryInfo queryInfo = queries.get(queryResult.getQueryId());
+                            ComparisonTsValue comparisonTsValue = entityData.getAggLatest().computeIfAbsent(queryInfo.getKey().getId(), agg -> new ComparisonTsValue());
+                            if (queryInfo.isPrevious()) {
+                                comparisonTsValue.setPrevious(queryResult.toTsValue());
+                            } else {
+                                comparisonTsValue.setCurrent(queryResult.toTsValue());
+                                lastTsMap.put(queryInfo.getQuery().getKey(), queryResult.getLastEntryTs());
+                            }
                         }
                     }
                     // Populate with empty values if no data found.
                     keys.forEach(key -> {
-                        entityData.getAggLatest().computeIfAbsent(key.getAgg(), agg -> new HashMap<>()).putIfAbsent(key.getKey(), TsValue.EMPTY);
+                        entityData.getAggLatest().putIfAbsent(key.getId(), new ComparisonTsValue(TsValue.EMPTY, TsValue.EMPTY));
                     });
                 } catch (InterruptedException | ExecutionException e) {
                     log.warn("[{}][{}][{}] Failed to fetch historical data", ctx.getSessionId(), ctx.getCmdId(), entityData.getEntityId(), e);
@@ -507,16 +523,26 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     }
 
     private ListenableFuture<TbEntityDataSubCtx> handleGetTsCmd(TbEntityDataSubCtx ctx, GetTsCmd cmd, boolean subscribe) {
+        Map<Integer, String> queriesKeys = new ConcurrentHashMap<>();
+
         List<String> keys = cmd.getKeys();
         List<ReadTsKvQuery> finalTsKvQueryList;
-        List<ReadTsKvQuery> tsKvQueryList = keys.stream().map(key -> new BaseReadTsKvQuery(
-                key, cmd.getStartTs(), cmd.getEndTs(), cmd.getInterval(), getLimit(cmd.getLimit()), cmd.getAgg()
-        )).collect(Collectors.toList());
+        List<ReadTsKvQuery> tsKvQueryList = keys.stream().map(key -> {
+            var query = new BaseReadTsKvQuery(
+                    key, cmd.getStartTs(), cmd.getEndTs(), cmd.getInterval(), getLimit(cmd.getLimit()), cmd.getAgg()
+            );
+            queriesKeys.put(query.getId(), query.getKey());
+            return query;
+        }).collect(Collectors.toList());
         if (cmd.isFetchLatestPreviousPoint()) {
             finalTsKvQueryList = new ArrayList<>(tsKvQueryList);
-            finalTsKvQueryList.addAll(keys.stream().map(key -> new BaseReadTsKvQuery(
-                    key, cmd.getStartTs() - TimeUnit.DAYS.toMillis(365), cmd.getStartTs(), cmd.getInterval(), 1, cmd.getAgg()
-            )).collect(Collectors.toList()));
+            finalTsKvQueryList.addAll(keys.stream().map(key -> {
+                        var query = new BaseReadTsKvQuery(
+                                key, cmd.getStartTs() - TimeUnit.DAYS.toMillis(365), cmd.getStartTs(), cmd.getInterval(), 1, cmd.getAgg());
+                        queriesKeys.put(query.getId(), query.getKey());
+                        return query;
+                    }
+            ).collect(Collectors.toList()));
         } else {
             finalTsKvQueryList = tsKvQueryList;
         }
@@ -535,8 +561,9 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                     List<ReadTsKvQueryResult> queryResults = future.get();
                     if (queryResults != null) {
                         for (ReadTsKvQueryResult queryResult : queryResults) {
-                            entityData.getTimeseries().put(queryResult.getKey(), queryResult.toTsValues());
-                            lastTsMap.put(queryResult.getKey(), queryResult.getLastEntryTs());
+                            String queryKey = queriesKeys.get(queryResult.getQueryId());
+                            entityData.getTimeseries().put(queryKey, queryResult.toTsValues());
+                            lastTsMap.put(queryKey, queryResult.getLastEntryTs());
                         }
                     }
                     // Populate with empty values if no data found.
