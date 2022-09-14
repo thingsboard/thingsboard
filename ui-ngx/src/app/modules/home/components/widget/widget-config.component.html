@@ -91,7 +91,6 @@
               <div class="tb-panel-title" translate>widget-config.datasources</div>
               <div *ngIf="modelValue?.typeParameters && modelValue?.typeParameters.maxDatasources > -1"
                    class="tb-panel-hint">{{ 'widget-config.maximum-datasources' | translate:{count: modelValue?.typeParameters.maxDatasources} }}</div>
-              <tb-error [error]="dataError"></tb-error>
             </mat-panel-title>
           </mat-expansion-panel-header>
           <div *ngIf="datasourcesFormArray().length === 0; else datasourcesTemplate">

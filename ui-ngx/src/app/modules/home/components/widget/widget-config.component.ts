@@ -170,8 +170,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   public advancedSettings: FormGroup;
   public actionsSettings: FormGroup;
 
-  public dataError = '';
-
   public datasourceError: string[] = [];
 
   private dataSettingsChangesSubscription: Subscription;
@@ -574,7 +572,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
 
   public dataKeysOptional(datasource?: Datasource): boolean {
     if (this.widgetType === widgetType.timeseries && this.modelValue?.typeParameters?.hasAdditionalLatestDataKeys) {
-      return true;
+      return false;
     } else {
       return this.modelValue.typeParameters && this.modelValue.typeParameters.dataKeysOptional
         && datasource?.type !== DatasourceType.entityCount;
@@ -920,7 +918,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   }
 
   public validate(c: FormControl) {
-    this.dataError = '';
     this.datasourceError = [];
     if (!this.dataSettings.valid) {
       return {
@@ -971,32 +968,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
               valid: false
             }
           };
-        }
-        if (this.widgetType === widgetType.timeseries && this.modelValue?.typeParameters?.hasAdditionalLatestDataKeys) {
-          let valid = config.datasources.filter(datasource => datasource?.dataKeys?.length).length > 0;
-          if (!valid) {
-            this.dataError = 'At least one timeseries data key should be specified';
-            return {
-              timeseriesDataKeys: {
-                valid: false
-              }
-            };
-          } else {
-            const emptyDatasources = config.datasources.filter(datasource => !datasource?.dataKeys?.length &&
-              !datasource?.latestDataKeys?.length);
-            valid = emptyDatasources.length === 0;
-            if (!valid) {
-              for (const emptyDatasource of emptyDatasources) {
-                const i = config.datasources.indexOf(emptyDatasource);
-                this.datasourceError[i] = 'At least one data key should be specified';
-              }
-              return {
-                dataKeys: {
-                  valid: false
-                }
-              };
-            }
-          }
         }
       }
     }
