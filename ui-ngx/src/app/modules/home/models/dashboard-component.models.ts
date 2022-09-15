@@ -17,7 +17,7 @@
 import { GridsterComponent, GridsterConfig, GridsterItem, GridsterItemComponentInterface } from 'angular-gridster2';
 import {
   Datasource,
-  datasourcesHasAggregation,
+  datasourcesHasAggregation, datasourcesHasOnlyComparisonAggregation,
   FormattedData,
   Widget,
   WidgetPosition,
@@ -335,6 +335,8 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
 
   onlyQuickInterval: boolean;
 
+  onlyHistoryTimewindow: boolean;
+
   style: {[klass: string]: any};
 
   showWidgetTitlePanel: boolean;
@@ -432,11 +434,15 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
 
     let canHaveTimewindow = false;
     let onlyQuickInterval = false;
+    let onlyHistoryTimewindow = false;
     if (this.widget.type === widgetType.timeseries || this.widget.type === widgetType.alarm) {
       canHaveTimewindow = true;
     } else if (this.widget.type === widgetType.latest) {
       canHaveTimewindow = datasourcesHasAggregation(this.widget.config.datasources);
       onlyQuickInterval = canHaveTimewindow;
+      if (canHaveTimewindow) {
+        onlyHistoryTimewindow = datasourcesHasOnlyComparisonAggregation(this.widget.config.datasources);
+      }
     }
 
     this.hasTimewindow = canHaveTimewindow ?
@@ -446,6 +452,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
       : false;
 
     this.onlyQuickInterval = onlyQuickInterval;
+    this.onlyHistoryTimewindow = onlyHistoryTimewindow;
 
     this.hasAggregation = this.widget.type === widgetType.timeseries;
 

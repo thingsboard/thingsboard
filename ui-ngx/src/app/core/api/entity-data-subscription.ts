@@ -1033,7 +1033,7 @@ export class EntityDataSubscription {
       isLatestDataAgg,
       subsTw,
       this.utils,
-      this.entityDataSubscriptionOptions.ignoreDataUpdateOnIntervalTick
+      this.entityDataSubscriptionOptions.ignoreDataUpdateOnIntervalTick || isLatestDataAgg
     );
   }
 

@@ -367,6 +367,23 @@ export function datasourcesHasAggregation(datasources?: Array<Datasource>): bool
   return false;
 }
 
+export function datasourcesHasOnlyComparisonAggregation(datasources?: Array<Datasource>): boolean {
+  if (!datasourcesHasAggregation(datasources)) {
+    return false;
+  }
+  if (datasources) {
+    const foundDatasource = datasources.find(datasource => {
+      const found = datasource.dataKeys && datasource.dataKeys.find(key => key.type === DataKeyType.timeseries &&
+        key.aggregationType && key.aggregationType !== AggregationType.NONE && !key.comparisonEnabled);
+      return !!found;
+    });
+    if (foundDatasource) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export interface FormattedData {
   $datasource: Datasource;
   entityName: string;

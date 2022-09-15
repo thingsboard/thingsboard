@@ -20,7 +20,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
   DataKey,
-  Datasource, datasourcesHasAggregation,
+  Datasource, datasourcesHasAggregation, datasourcesHasOnlyComparisonAggregation,
   DatasourceType,
   datasourceTypeTranslationMap,
   defaultLegendConfig,
@@ -740,6 +740,15 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     } else if (this.widgetType === widgetType.latest) {
       const datasources = this.dataSettings.get('datasources').value;
       return datasourcesHasAggregation(datasources);
+    }
+  }
+
+  public onlyHistoryTimewindow(): boolean {
+    if (this.widgetType === widgetType.latest) {
+      const datasources = this.dataSettings.get('datasources').value;
+      return datasourcesHasOnlyComparisonAggregation(datasources);
+    } else {
+      return false;
     }
   }
 
