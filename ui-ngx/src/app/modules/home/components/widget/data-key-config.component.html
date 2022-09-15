@@ -63,24 +63,30 @@
         </mat-form-field>
       </div>
       <section *ngIf="widgetType === widgetTypes.latest && modelValue.type === dataKeyTypes.timeseries" fxLayout="column">
-        <mat-form-field style="padding-bottom: 16px;">
-          <mat-label translate>datakey.aggregation-type</mat-label>
+        <mat-form-field style="padding-bottom: 46px;">
+          <mat-label translate>datakey.aggregation</mat-label>
           <mat-select formControlName="aggregationType" style="min-width: 150px;">
             <mat-option *ngFor="let aggregation of aggregations" [value]="aggregation">
-              {{ (aggregation === aggregationTypes.NONE ? 'datakey.latest-value' : aggregationTypesTranslations.get(aggregationTypes[aggregation])) | translate }}
+              {{ aggregationTypesTranslations.get(aggregationTypes[aggregation]) | translate }}
             </mat-option>
           </mat-select>
-          <mat-hint>{{ dataKeyFormGroup.get('aggregationType').value ? (dataKeyAggregationTypeHintTranslations.get(aggregationTypes[dataKeyFormGroup.get('aggregationType').value]) | translate) : '' }}</mat-hint>
+          <mat-hint style="line-height: 15px;">
+            {{ dataKeyFormGroup.get('aggregationType').value ? (dataKeyAggregationTypeHintTranslations.get(aggregationTypes[dataKeyFormGroup.get('aggregationType').value]) | translate) : '' }}
+            <section *ngIf="dataKeyFormGroup.get('aggregationType').value !== aggregationTypes.NONE">
+              {{ 'datakey.aggregation-type-hint-common' | translate }}
+            </section>
+          </mat-hint>
         </mat-form-field>
         <fieldset *ngIf="dataKeyFormGroup.get('aggregationType').value && dataKeyFormGroup.get('aggregationType').value !== aggregationTypes.NONE" class="fields-group fields-group-slider">
-          <legend class="group-title" translate>widgets.chart.comparison-settings</legend>
+          <legend class="group-title" translate>datakey.delta-calculation</legend>
           <mat-expansion-panel class="tb-settings" [expanded]="dataKeyFormGroup.get('comparisonEnabled').value" [disabled]="!dataKeyFormGroup.get('comparisonEnabled').value">
             <mat-expansion-panel-header fxLayout="row wrap">
-              <mat-panel-title>
+              <mat-panel-title fxLayout="column">
                 <mat-slide-toggle formControlName="comparisonEnabled" (click)="$event.stopPropagation()"
                                   fxLayoutAlign="center">
-                  {{ 'widgets.chart.enable-comparison' | translate }}
+                  {{ 'datakey.enable-delta-calculation' | translate }}
                 </mat-slide-toggle>
+                <mat-hint class="tb-hint" style="line-height: 15px; padding-left: 45px;">{{ 'datakey.enable-delta-calculation-hint' | translate }}</mat-hint>
               </mat-panel-title>
             </mat-expansion-panel-header>
             <ng-template matExpansionPanelContent>
@@ -113,7 +119,7 @@
                   <input required matInput type="number" min="0" formControlName="comparisonCustomIntervalValue">
                 </mat-form-field>
                 <mat-form-field style="padding-bottom: 16px;">
-                  <mat-label translate>datakey.comparison-result</mat-label>
+                  <mat-label translate>datakey.delta-calculation-result</mat-label>
                   <mat-select formControlName="comparisonResultType" style="min-width: 150px;">
                     <mat-option *ngFor="let comparisonResultType of comparisonResults" [value]="comparisonResultType">
                       {{ comparisonResultTypeTranslations.get(comparisonResultTypes[comparisonResultType]) | translate }}

@@ -267,9 +267,9 @@ export enum ComparisonResultType {
 
 export const comparisonResultTypeTranslationMap = new Map<ComparisonResultType, string>(
   [
-    [ComparisonResultType.PREVIOUS_VALUE, 'datakey.comparison-result-previous-value'],
-    [ComparisonResultType.DELTA_ABSOLUTE, 'datakey.comparison-result-delta-absolute'],
-    [ComparisonResultType.DELTA_PERCENT, 'datakey.comparison-result-delta-percent']
+    [ComparisonResultType.PREVIOUS_VALUE, 'datakey.delta-calculation-result-previous-value'],
+    [ComparisonResultType.DELTA_ABSOLUTE, 'datakey.delta-calculation-result-delta-absolute'],
+    [ComparisonResultType.DELTA_PERCENT, 'datakey.delta-calculation-result-delta-percent']
   ]
 );
 
