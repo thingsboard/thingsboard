@@ -49,7 +49,7 @@
              #tooltip="matTooltip"
              matTooltip=""
              matTooltipPosition="below">
-          <div fxLayout="column" fxLayoutAlign="start center" fxFlex="{{ buttonFlexValue() }}" class="tb-layout-preview-container-main">
+          <div fxLayout="column" fxLayoutAlign="start center" [fxFlex]="buttonFlexValue()" class="tb-layout-preview-container-main">
             <button mat-icon-button
                     type="button"
                     matTooltip="{{ 'dashboard.layout-settings' | translate }}"
@@ -126,7 +126,6 @@
                      max="90"
                      required>
               <input [fxShow]="layoutsFormGroup.get('type').value === LayoutWidthType.FIXED"
-                     *ngIf="layoutsFormGroup.get('fixedLayout').value === 'right'"
                      formControlName="fixedWidth"
                      type="number"
                      step="1"
