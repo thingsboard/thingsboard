@@ -371,8 +371,7 @@ export enum MessageType {
   ENTITY_ASSIGNED_FROM_TENANT = 'ENTITY_ASSIGNED_FROM_TENANT',
   ENTITY_ASSIGNED_TO_TENANT = 'ENTITY_ASSIGNED_TO_TENANT',
   TIMESERIES_UPDATED = 'TIMESERIES_UPDATED',
-  TIMESERIES_DELETED = 'TIMESERIES_DELETED',
-  FAILURE = 'FAILURE'
+  TIMESERIES_DELETED = 'TIMESERIES_DELETED'
 }
 
 export const messageTypeNames = new Map<MessageType, string>(
@@ -405,8 +404,7 @@ export const messageTypeNames = new Map<MessageType, string>(
     [MessageType.ENTITY_ASSIGNED_FROM_TENANT, 'Entity Assigned From Tenant'],
     [MessageType.ENTITY_ASSIGNED_TO_TENANT, 'Entity Assigned To Tenant'],
     [MessageType.TIMESERIES_UPDATED, 'Timeseries Updated'],
-    [MessageType.TIMESERIES_DELETED, 'Timeseries Deleted'],
-    [MessageType.FAILURE, 'Failure']
+    [MessageType.TIMESERIES_DELETED, 'Timeseries Deleted']
   ]
 );
 
