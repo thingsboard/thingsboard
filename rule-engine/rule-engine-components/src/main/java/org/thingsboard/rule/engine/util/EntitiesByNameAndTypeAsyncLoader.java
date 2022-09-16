@@ -92,7 +92,7 @@ public class EntitiesByNameAndTypeAsyncLoader {
         if (targetEntity != null) {
             return Futures.immediateFuture(targetEntity);
         } else {
-            return Futures.immediateFailedFuture(new IllegalStateException("Failed to found entity " + entityType.name() + " by name '" + entityName + "'!"));
+            return Futures.immediateFailedFuture(new IllegalStateException("Failed to found " + entityType.name() + "  entity by name: '" + entityName + "'!"));
         }
     }
 
