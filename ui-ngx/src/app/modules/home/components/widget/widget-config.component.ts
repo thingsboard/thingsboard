@@ -230,7 +230,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
         this.widgetSettings.get('titleTooltip').disable({emitEvent: false});
         this.widgetSettings.get('showTitleIcon').patchValue(false);
         this.widgetSettings.get('showTitleIcon').disable({emitEvent: false});
-        this.widgetSettings.get('showTitleIcon').disable({emitEvent: false});
       }
     });
 
