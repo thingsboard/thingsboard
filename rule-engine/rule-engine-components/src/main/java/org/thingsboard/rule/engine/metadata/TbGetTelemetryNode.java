@@ -91,16 +91,14 @@ public class TbGetTelemetryNode implements TbNode {
             orderByFetchAll = ASC_ORDER;
         }
         aggregation = parseAggregationConfig(config.getAggregation());
-        if (!fetchMode.equals(FETCH_MODE_ALL)) {
-            aggregation = Aggregation.NONE;
-        }
+
         mapper = new ObjectMapper();
         mapper.configure(JsonWriteFeature.QUOTE_FIELD_NAMES.mappedFeature(), false);
         mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
     }
 
     Aggregation parseAggregationConfig(String aggName) {
-        if (StringUtils.isEmpty(aggName)) {
+        if (StringUtils.isEmpty(aggName) || !fetchMode.equals(FETCH_MODE_ALL)) {
             return Aggregation.NONE;
         }
         return Aggregation.valueOf(aggName);
@@ -113,7 +111,7 @@ public class TbGetTelemetryNode implements TbNode {
         } else {
             try {
                 if (config.isUseMetadataIntervalPatterns()) {
-                    checkMetadataKeyPatterns(msg);
+                    checkKeyPatterns(msg);
                 }
                 List<String> keys = TbNodeUtils.processPatterns(tsKeyNames, msg);
                 ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), buildQueries(msg, keys));
@@ -232,23 +230,23 @@ public class TbGetTelemetryNode implements TbNode {
         return NumberUtils.isParsable(TbNodeUtils.processPattern(pattern, msg));
     }
 
-    private void checkMetadataKeyPatterns(TbMsg msg) {
+    private void checkKeyPatterns(TbMsg msg) {
         isUndefined(msg, config.getStartIntervalPattern(), config.getEndIntervalPattern());
         isInvalid(msg, config.getStartIntervalPattern(), config.getEndIntervalPattern());
     }
 
     private void isUndefined(TbMsg msg, String startIntervalPattern, String endIntervalPattern) {
         if (getValuePattern(msg, startIntervalPattern) == null && getValuePattern(msg, endIntervalPattern) == null) {
-            throw new IllegalArgumentException("Message metadata values: '" +
+            throw new IllegalArgumentException("Message values: '" +
                     replaceRegex(startIntervalPattern) + "' and '" +
                     replaceRegex(endIntervalPattern) + "' are undefined");
         } else {
             if (getValuePattern(msg, startIntervalPattern) == null) {
-                throw new IllegalArgumentException("Message metadata value: '" +
+                throw new IllegalArgumentException("Message value: '" +
                         replaceRegex(startIntervalPattern) + "' is undefined");
             }
             if (getValuePattern(msg, endIntervalPattern) == null) {
-                throw new IllegalArgumentException("Message metadata value: '" +
+                throw new IllegalArgumentException("Message value: '" +
                         replaceRegex(endIntervalPattern) + "' is undefined");
             }
         }
@@ -256,16 +254,16 @@ public class TbGetTelemetryNode implements TbNode {
 
     private void isInvalid(TbMsg msg, String startIntervalPattern, String endIntervalPattern) {
         if (getInterval(msg).getStartTs() == null && getInterval(msg).getEndTs() == null) {
-            throw new IllegalArgumentException("Message metadata values: '" +
+            throw new IllegalArgumentException("Message values: '" +
                     replaceRegex(startIntervalPattern) + "' and '" +
                     replaceRegex(endIntervalPattern) + "' have invalid format");
         } else {
             if (getInterval(msg).getStartTs() == null) {
-                throw new IllegalArgumentException("Message metadata value: '" +
+                throw new IllegalArgumentException("Message value: '" +
                         replaceRegex(startIntervalPattern) + "' has invalid format");
             }
             if (getInterval(msg).getEndTs() == null) {
-                throw new IllegalArgumentException("Message metadata value: '" +
+                throw new IllegalArgumentException("Message value: '" +
                         replaceRegex(endIntervalPattern) + "' has invalid format");
             }
         }
