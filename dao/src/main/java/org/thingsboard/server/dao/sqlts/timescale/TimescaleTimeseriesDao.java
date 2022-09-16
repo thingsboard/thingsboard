@@ -155,7 +155,7 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
             return Futures.immediateFuture(findAllAsyncWithLimit(entityId, query));
         } else {
             long startTs = query.getStartTs();
-            long endTs = query.getEndTs();
+            long endTs = Math.max(query.getStartTs() + 1, query.getEndTs());
             long timeBucket = query.getInterval();
             List<Optional<? extends AbstractTsKvEntity>> data = findAllAndAggregateAsync(entityId, query.getKey(), startTs, endTs, timeBucket, query.getAggregation());
             return getReadTsKvQueryResultFuture(query, Futures.immediateFuture(data));
@@ -185,7 +185,18 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
     }
 
     private List<Optional<? extends AbstractTsKvEntity>> findAllAndAggregateAsync(EntityId entityId, String key, long startTs, long endTs, long timeBucket, Aggregation aggregation) {
-        List<TimescaleTsKvEntity> timescaleTsKvEntities = switchAggregation(key, startTs, endTs, timeBucket, aggregation, entityId.getId());
+        long interval = endTs - startTs;
+        long remainingPart = interval % timeBucket;
+        List<TimescaleTsKvEntity> timescaleTsKvEntities;
+        if (remainingPart == 0) {
+            timescaleTsKvEntities = switchAggregation(key, startTs, endTs, timeBucket, aggregation, entityId.getId());
+        } else {
+            interval = interval - remainingPart;
+            timescaleTsKvEntities = new ArrayList<>();
+            timescaleTsKvEntities.addAll(switchAggregation(key, startTs, startTs + interval, timeBucket, aggregation, entityId.getId()));
+            timescaleTsKvEntities.addAll(switchAggregation(key, startTs + interval, endTs, remainingPart, aggregation, entityId.getId()));
+        }
+
         if (!CollectionUtils.isEmpty(timescaleTsKvEntities)) {
             List<Optional<? extends AbstractTsKvEntity>> result = new ArrayList<>();
             timescaleTsKvEntities.forEach(entity -> {

@@ -79,7 +79,6 @@ import static org.thingsboard.server.dao.sqlts.timescale.AggregationRepository.F
                                         @ColumnResult(name = "longValueCount", type = Long.class),
                                         @ColumnResult(name = "doubleValueCount", type = Long.class),
                                         @ColumnResult(name = "jsonValueCount", type = Long.class),
-                                        @ColumnResult(name = "jsonValueCount", type = Long.class),
                                         @ColumnResult(name = "maxAggTs", type = Long.class),
                                 }
                         )

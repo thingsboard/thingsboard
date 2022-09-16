@@ -268,12 +268,12 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
             return findAllAsyncWithLimit(tenantId, entityId, query);
         } else {
             long startPeriod = query.getStartTs();
-            long endPeriod = query.getEndTs();
+            long endPeriod = Math.max(query.getStartTs() + 1, query.getEndTs());
             long step = Math.max(query.getInterval(), MIN_AGGREGATION_STEP_MS);
             List<ListenableFuture<Optional<TsKvEntryAggWrapper>>> futures = new ArrayList<>();
-            while (startPeriod <= endPeriod) {
+            while (startPeriod < endPeriod) {
                 long startTs = startPeriod;
-                long endTs = Math.min(startPeriod + step, endPeriod + 1);
+                long endTs = Math.min(startPeriod + step, endPeriod);
                 long ts = endTs - startTs;
                 ReadTsKvQuery subQuery = new BaseReadTsKvQuery(query.getKey(), startTs, endTs, ts, 1, query.getAggregation(), query.getOrder());
                 futures.add(findAndAggregateAsync(tenantId, entityId, subQuery, toPartitionTs(startTs), toPartitionTs(endTs)));

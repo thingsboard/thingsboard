@@ -121,15 +121,14 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
             return Futures.immediateFuture(findAllAsyncWithLimit(entityId, query));
         } else {
             List<ListenableFuture<Optional<TsKvEntity>>> futures = new ArrayList<>();
-            long endPeriod = query.getEndTs();
             long startPeriod = query.getStartTs();
+            long endPeriod = Math.max(query.getStartTs() + 1, query.getEndTs());
             long step = query.getInterval();
-            while (startPeriod <= endPeriod) {
+            while (startPeriod < endPeriod) {
                 long startTs = startPeriod;
-                long endTs = Math.min(startPeriod + step, endPeriod + 1);
+                long endTs = Math.min(startPeriod + step, endPeriod);
                 long ts = startTs + (endTs - startTs) / 2;
-                ListenableFuture<Optional<TsKvEntity>> aggregateTsKvEntry =
-                        service.submit(() -> findAndAggregateAsync(entityId, query.getKey(), startTs, endTs, ts, query.getAggregation()));
+                ListenableFuture<Optional<TsKvEntity>> aggregateTsKvEntry = findAndAggregateAsync(entityId, query.getKey(), startTs, endTs, ts, query.getAggregation());
                 futures.add(aggregateTsKvEntry);
                 startPeriod = endTs;
             }
@@ -152,16 +151,18 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
         return new ReadTsKvQueryResult(query.getId(), tsKvEntries, lastTs);
     }
 
-    Optional<TsKvEntity> findAndAggregateAsync(EntityId entityId, String key, long startTs, long endTs, long ts, Aggregation aggregation) {
-        TsKvEntity entity = switchAggregation(entityId, key, startTs, endTs, aggregation);
-        if (entity != null && entity.isNotEmpty()) {
-            entity.setEntityId(entityId.getId());
-            entity.setStrKey(key);
-            entity.setTs(ts);
-            return Optional.of(entity);
-        } else {
-            return Optional.empty();
-        }
+    ListenableFuture<Optional<TsKvEntity>> findAndAggregateAsync(EntityId entityId, String key, long startTs, long endTs, long ts, Aggregation aggregation) {
+        return service.submit(() -> {
+            TsKvEntity entity = switchAggregation(entityId, key, startTs, endTs, aggregation);
+            if (entity != null && entity.isNotEmpty()) {
+                entity.setEntityId(entityId.getId());
+                entity.setStrKey(key);
+                entity.setTs(ts);
+                return Optional.of(entity);
+            } else {
+                return Optional.empty();
+            }
+        });
     }
 
     protected TsKvEntity switchAggregation(EntityId entityId, String key, long startTs, long endTs, Aggregation aggregation) {

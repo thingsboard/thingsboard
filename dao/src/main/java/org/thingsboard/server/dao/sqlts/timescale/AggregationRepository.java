@@ -39,7 +39,7 @@ public class AggregationRepository {
     public static final String FROM_WHERE_CLAUSE = "FROM ts_kv tskv WHERE " +
             "tskv.entity_id = cast(:entityId AS uuid) " +
             "AND tskv.key= cast(:entityKey AS int) " +
-            "AND tskv.ts > :startTs AND tskv.ts <= :endTs " +
+            "AND tskv.ts >= :startTs AND tskv.ts < :endTs " +
             "GROUP BY tskv.entity_id, tskv.key, tsBucket " +
             "ORDER BY tskv.entity_id, tskv.key, tsBucket";
 
