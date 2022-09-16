@@ -83,16 +83,24 @@
         </div>
       </div>
       <mat-accordion multi>
-        <mat-expansion-panel class="tb-datasources" *ngIf="widgetType !== widgetTypes.rpc &&
+        <mat-expansion-panel (opened)="extensionPanelIsOpen(true)" (closed)="extensionPanelIsOpen(false)" class="tb-datasources" *ngIf="widgetType !== widgetTypes.rpc &&
                                     widgetType !== widgetTypes.alarm &&
                                     modelValue?.isDataEnabled" [expanded]="true">
           <mat-expansion-panel-header>
-            <mat-panel-title fxLayout="column">
-              <div class="tb-panel-title" translate>widget-config.datasources</div>
-              <div *ngIf="modelValue?.typeParameters && modelValue?.typeParameters.maxDatasources > -1"
-                   class="tb-panel-hint">{{ 'widget-config.maximum-datasources' | translate:{count: modelValue?.typeParameters.maxDatasources} }}</div>
-              <tb-error [error]="dataError"></tb-error>
+            <mat-panel-title fxLayout="row">
+              <div fxLayout="column">
+                <div class="tb-panel-title" translate>widget-config.datasources</div>
+                <div *ngIf="modelValue?.typeParameters && modelValue?.typeParameters.maxDatasources > -1"
+                     class="tb-panel-hint">{{ 'widget-config.maximum-datasources' | translate:{count: modelValue?.typeParameters.maxDatasources} }}</div>
+              </div>
+              <mat-icon *ngIf = '(datasourceError.length > 0 || !datasourcesFormArray().valid) && !openExtensionPanel'
+                        style = "color: red; font-size: 18px; margin-left: 5px;">
+                report_gmailerrorred
+              </mat-icon>
             </mat-panel-title>
+            <mat-panel-description *ngIf = "timeseriesKeyError">
+              <mat-error >{{ 'widget-config.timeseries-key-error' | translate }}</mat-error>
+            </mat-panel-description>
           </mat-expansion-panel-header>
           <div *ngIf="datasourcesFormArray().length === 0; else datasourcesTemplate">
                 <span translate fxLayoutAlign="center center"
