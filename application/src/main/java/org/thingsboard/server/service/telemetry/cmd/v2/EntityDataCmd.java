@@ -62,16 +62,4 @@ public class EntityDataCmd extends DataCmd {
         return historyCmd != null || latestCmd != null || tsCmd != null || aggHistoryCmd != null || aggTsCmd != null;
     }
 
-    @JsonIgnore
-    public boolean hasRegularCmds() {
-        return historyCmd != null || latestCmd != null || tsCmd != null;
-    }
-
-    @JsonIgnore
-    public boolean hasAggCmds() {
-        return aggHistoryCmd != null || aggTsCmd != null;
-    }
-
-
-
 }

@@ -49,12 +49,13 @@ public class AggregatePartitionsFunction implements com.google.common.util.concu
     private static final int BOOL_CNT_POS = 2;
     private static final int STR_CNT_POS = 3;
     private static final int JSON_CNT_POS = 4;
-    private static final int LONG_POS = 5;
-    private static final int DOUBLE_POS = 6;
-    private static final int BOOL_POS = 7;
-    private static final int STR_POS = 8;
-    private static final int JSON_POS = 9;
-    private static final int MAX_TS_POS = 10;
+    private static final int MAX_TS_POS = 5;
+    private static final int LONG_POS = 6;
+    private static final int DOUBLE_POS = 7;
+    private static final int BOOL_POS = 8;
+    private static final int STR_POS = 9;
+    private static final int JSON_POS = 10;
+
 
     private final Aggregation aggregation;
     private final String key;

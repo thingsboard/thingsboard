@@ -27,7 +27,6 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Andrew Shvayka
