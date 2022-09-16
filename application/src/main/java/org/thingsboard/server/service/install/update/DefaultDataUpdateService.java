@@ -34,6 +34,7 @@ import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNode;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNodeConfiguration;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.alarm.Alarm;
@@ -343,14 +344,16 @@ public class DefaultDataUpdateService implements DataUpdateService {
             RuleChain targetRuleChain = ruleChainService.findRuleChainById(TenantId.SYS_TENANT_ID, ruleNode.getRuleChainId());
             if (targetRuleChain != null) {
                 TenantId tenantId = targetRuleChain.getTenantId();
-                String directionNode = configNode.getDirection();
+                String directionStr = configNode.getDirection();
+                if (StringUtils.isEmpty(directionStr)) {
+                    directionStr = EntitySearchDirection.TO.name();
+                }
                 if (configNode.isCheckForSingleEntity()) {
-                    configNode.setDirection(directionNode.equals(EntitySearchDirection.FROM.name())
+                    configNode.setDirection(directionStr.equals(EntitySearchDirection.FROM.name())
                             ? EntitySearchDirection.TO.name() : EntitySearchDirection.FROM.name());
                 } else {
                     RelationsQuery relationsQuery = new RelationsQuery();
-                    relationsQuery.setDirection(EntitySearchDirection.FROM);
-                    relationsQuery.setDirection(directionNode.equals(EntitySearchDirection.FROM.name())
+                    relationsQuery.setDirection(directionStr.equals(EntitySearchDirection.FROM.name())
                             ? EntitySearchDirection.TO : EntitySearchDirection.FROM);
                     relationsQuery.setMaxLevel(1);
                     RelationEntityTypeFilter relationEntityTypeFilter = new RelationEntityTypeFilter(configNode.getRelationType(), Collections.emptyList());

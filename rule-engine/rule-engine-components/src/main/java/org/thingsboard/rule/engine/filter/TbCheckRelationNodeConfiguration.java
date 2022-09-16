@@ -43,14 +43,6 @@ public class TbCheckRelationNodeConfiguration implements NodeConfiguration<TbChe
         configuration.setDirection(EntitySearchDirection.FROM.name());
         configuration.setRelationType("Contains");
         configuration.setCheckForSingleEntity(true);
-
-        RelationsQuery relationsQuery = new RelationsQuery();
-        relationsQuery.setDirection(EntitySearchDirection.FROM);
-        relationsQuery.setMaxLevel(1);
-        RelationEntityTypeFilter relationEntityTypeFilter = new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.emptyList());
-        relationsQuery.setFilters(Collections.singletonList(relationEntityTypeFilter));
-        configuration.setRelationsQuery(relationsQuery);
-
         return configuration;
     }
 }
