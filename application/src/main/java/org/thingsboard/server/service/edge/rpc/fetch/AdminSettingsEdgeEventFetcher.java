@@ -54,10 +54,10 @@ public class AdminSettingsEdgeEventFetcher implements EdgeEventFetcher {
     private final AdminSettingsService adminSettingsService;
     private final Configuration freemarkerConfig;
 
-    private static Pattern startPattern = Pattern.compile("<div class=\"content\".*?>");
-    private static Pattern endPattern = Pattern.compile("<div class=\"footer\".*?>");
+    private static final Pattern startPattern = Pattern.compile("<div class=\"content\".*?>");
+    private static final Pattern endPattern = Pattern.compile("<div class=\"footer\".*?>");
 
-    private static List<String> templatesNames = Arrays.asList(
+    private static final List<String> templatesNames = Arrays.asList(
             "account.activated.ftl",
             "account.lockout.ftl",
             "activation.ftl",
@@ -65,7 +65,7 @@ public class AdminSettingsEdgeEventFetcher implements EdgeEventFetcher {
             "reset.password.ftl",
             "test.ftl");
 
-    // TODO: fix format of next templates
+    // TODO: @voba fix format of next templates
     // "state.disabled.ftl",
     // "state.enabled.ftl",
     // "state.warning.ftl",
@@ -95,7 +95,7 @@ public class AdminSettingsEdgeEventFetcher implements EdgeEventFetcher {
         result.add(EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.ADMIN_SETTINGS,
                 EdgeEventActionType.UPDATED, null, mapper.valueToTree(tenantMailTemplates)));
 
-        // @voba - returns PageData object to be in sync with other fetchers
+        // return PageData object to be in sync with other fetchers
         return new PageData<>(result, 1, result.size(), false);
     }
 
