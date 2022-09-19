@@ -456,8 +456,8 @@ export class TbFlot {
         const units = series.dataKey.units && series.dataKey.units.length ? series.dataKey.units : this.trackUnits;
         let yaxis: TbFlotAxisOptions;
         if (keySettings.showSeparateAxis) {
-            yaxis = this.createYAxis(keySettings, units);
-            this.yaxes.push(yaxis);
+          yaxis = this.createYAxis(keySettings, units);
+          this.yaxes.push(yaxis);
         } else {
           yaxis = yaxesMap[units];
           if (!yaxis) {
@@ -515,7 +515,6 @@ export class TbFlot {
           }
         }
       }
-
       if (this.labelPatternsSourcesData?.length) {
         this.substituteLabelPatterns(series, i);
       }
