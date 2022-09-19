@@ -33,6 +33,7 @@ import org.thingsboard.server.service.install.migrate.EntitiesMigrateService;
 import org.thingsboard.server.service.install.migrate.TsLatestMigrateService;
 import org.thingsboard.server.service.install.update.CacheCleanupService;
 import org.thingsboard.server.service.install.update.DataUpdateService;
+import org.thingsboard.server.service.install.ConditionValidatorUpgradeService;
 
 @Service
 @Profile("install")
@@ -84,10 +85,16 @@ public class ThingsboardInstallService {
     @Autowired(required = false)
     private TsLatestMigrateService latestMigrateService;
 
+    @Autowired
+    private ConditionValidatorUpgradeService conditionValidatorUpgradeService;
+
+
     public void performInstall() {
         try {
             if (isUpgrade) {
                 log.info("Starting ThingsBoard Upgrade from version {} ...", upgradeFromVersion);
+
+                conditionValidatorUpgradeService.validateConditionsBeforeUpgrade(upgradeFromVersion);
 
                 cacheCleanupService.clearCache(upgradeFromVersion);
 
@@ -224,6 +231,10 @@ public class ThingsboardInstallService {
                             log.info("Updating system data...");
                             systemDataLoaderService.updateSystemWidgets();
                             break;
+                        case "3.4.0":
+                            log.info("Upgrading ThingsBoard from version 3.4.0 to 3.5.0 ...");
+                            dataUpdateService.updateData("3.4.0");
+                            break;
 
                         //TODO update CacheCleanupService on the next version upgrade
 
@@ -257,6 +268,7 @@ public class ThingsboardInstallService {
                 systemDataLoaderService.createSysAdmin();
                 systemDataLoaderService.createDefaultTenantProfiles();
                 systemDataLoaderService.createAdminSettings();
+                systemDataLoaderService.createJwtAdminSettings();
                 systemDataLoaderService.loadSystemWidgets();
                 systemDataLoaderService.createOAuth2Templates();
                 systemDataLoaderService.createQueues();

@@ -107,7 +107,7 @@ plugins:
 # Security parameters
 security:
   # JWT Token parameters
-  jwt:
+  jwt: # Since 3.5.0 values are persisted to the database during install or upgrade. On Install, the key will be generated randomly if no custom value set.
     tokenExpirationTime: "${JWT_TOKEN_EXPIRATION_TIME:9000}" # Number of seconds (2.5 hours)
     refreshTokenExpTime: "${JWT_REFRESH_TOKEN_EXPIRATION_TIME:604800}" # Number of seconds (1 week)
     tokenIssuer: "${JWT_TOKEN_ISSUER:thingsboard.io}"

@@ -159,6 +159,10 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 tenantsProfileQueueConfigurationUpdater.updateEntities();
                 rateLimitsUpdater.updateEntities();
                 break;
+            case "3.4.0":
+                log.info("Updating data from version 3.4.0 to 3.5.0 ...");
+                systemDataLoaderService.createJwtAdminSettings();
+                break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
         }

@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -29,6 +30,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.Customer;
@@ -82,6 +84,7 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.config.JwtSettings;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
@@ -100,12 +103,17 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import static org.thingsboard.server.config.JwtSettings.ADMIN_SETTINGS_JWT_KEY;
 
 @Service
 @Profile("install")
@@ -166,6 +174,9 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     @Lazy
     @Autowired
     private QueueService queueService;
+
+    @Autowired
+    private JwtSettings jwtSettings;
 
     @Bean
     protected BCryptPasswordEncoder passwordEncoder() {
@@ -656,4 +667,26 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
             queueService.saveQueue(sequentialByOriginatorQueue);
         }
     }
+
+    @Override
+    public void createJwtAdminSettings() throws Exception {
+        Objects.requireNonNull(jwtSettings,"JWT settings is null");
+        AdminSettings adminJwtSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, ADMIN_SETTINGS_JWT_KEY);
+        if (adminJwtSettings == null) {
+            if (jwtSettings.hasDefaultTokenSigningKey()) {
+                String allowDefaultJwtSigningKey = System.getenv("TB_ALLOW_DEFAULT_JWT_SIGNING_KEY");
+                if (!"true".equalsIgnoreCase(allowDefaultJwtSigningKey)) {
+                    log.warn("JWT token signing key is default. Generating a new random key");
+                    jwtSettings.setTokenSigningKey(Base64.getEncoder().encodeToString(RandomStringUtils.randomAlphanumeric(64).getBytes(StandardCharsets.UTF_8)));
+                }
+            }
+            adminJwtSettings = new AdminSettings();
+            adminJwtSettings.setTenantId(TenantId.SYS_TENANT_ID);
+            adminJwtSettings.setKey(ADMIN_SETTINGS_JWT_KEY);
+            adminJwtSettings.setJsonValue(JacksonUtil.valueToTree(jwtSettings));
+            log.info("Saving new JWT admin settings. From this moment, the JWT parameters from YAML and ENV will be ignored");
+            adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminJwtSettings);
+        }
+    }
+
 }

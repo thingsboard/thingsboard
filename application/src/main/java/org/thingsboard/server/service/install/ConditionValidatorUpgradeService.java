@@ -15,25 +15,8 @@
  */
 package org.thingsboard.server.service.install;
 
-public interface SystemDataLoaderService {
+public interface ConditionValidatorUpgradeService {
 
-    void createSysAdmin() throws Exception;
+    void validateConditionsBeforeUpgrade(String fromVersion) throws Exception;
 
-    void createDefaultTenantProfiles() throws Exception;
-
-    void createAdminSettings() throws Exception;
-
-    void createJwtAdminSettings() throws Exception;
-
-    void createOAuth2Templates() throws Exception;
-
-    void loadSystemWidgets() throws Exception;
-
-    void updateSystemWidgets() throws Exception;
-
-    void loadDemoData() throws Exception;
-
-    void deleteSystemWidgetBundle(String bundleAlias) throws Exception;
-
-    void createQueues();
 }
