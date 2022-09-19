@@ -348,13 +348,13 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 if (StringUtils.isEmpty(directionStr)) {
                     directionStr = EntitySearchDirection.TO.name();
                 }
+                EntitySearchDirection direction = directionStr.equals(EntitySearchDirection.FROM.name())
+                        ? EntitySearchDirection.TO : EntitySearchDirection.FROM;
                 if (configNode.isCheckForSingleEntity()) {
-                    configNode.setDirection(directionStr.equals(EntitySearchDirection.FROM.name())
-                            ? EntitySearchDirection.TO.name() : EntitySearchDirection.FROM.name());
+                    configNode.setDirection(direction.name());
                 } else {
                     RelationsQuery relationsQuery = new RelationsQuery();
-                    relationsQuery.setDirection(directionStr.equals(EntitySearchDirection.FROM.name())
-                            ? EntitySearchDirection.TO : EntitySearchDirection.FROM);
+                    relationsQuery.setDirection(direction);
                     relationsQuery.setMaxLevel(1);
                     RelationEntityTypeFilter relationEntityTypeFilter = new RelationEntityTypeFilter(configNode.getRelationType(), Collections.emptyList());
                     relationsQuery.setFilters(Collections.singletonList(relationEntityTypeFilter));

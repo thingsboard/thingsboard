@@ -85,7 +85,7 @@ public class TbCheckRelationNode implements TbNode {
 
     private ListenableFuture<Boolean> processRelationsQuery(TbContext ctx, TbMsg msg) {
         return Futures.transformAsync(EntitiesRelatedEntityIdAsyncLoader
-                .findEntityAsync(ctx, msg.getOriginator(), config.getRelationsQuery()), entityId -> Futures.immediateFuture(entityId != null), MoreExecutors.directExecutor());
+                .findEntityAsync(ctx, msg.getOriginator(), config.getRelationsQuery()), entityId -> Futures.immediateFuture(entityId != null), ctx.getDbCallbackExecutor());
     }
 
     @Override
