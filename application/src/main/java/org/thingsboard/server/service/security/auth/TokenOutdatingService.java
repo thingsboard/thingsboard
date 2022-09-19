@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.event.UserAuthDataChangedEvent;
 import org.thingsboard.server.common.data.security.model.JwtToken;
-import org.thingsboard.server.config.JwtSettings;
+import org.thingsboard.server.config.JwtSettingsService;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 
 import javax.annotation.PostConstruct;
@@ -39,7 +39,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public class TokenOutdatingService {
     private final CacheManager cacheManager;
     private final JwtTokenFactory tokenFactory;
-    private final JwtSettings jwtSettings;
+    private final JwtSettingsService jwtSettingsService;
     private Cache usersUpdateTimeCache;
 
     @PostConstruct
@@ -58,7 +58,7 @@ public class TokenOutdatingService {
 
         return Optional.ofNullable(usersUpdateTimeCache.get(toKey(userId), Long.class))
                 .map(outdatageTime -> {
-                    if (System.currentTimeMillis() - outdatageTime <= SECONDS.toMillis(jwtSettings.getRefreshTokenExpTime())) {
+                    if (System.currentTimeMillis() - outdatageTime <= SECONDS.toMillis(jwtSettingsService.getJwtSettings().getRefreshTokenExpTime())) {
                         return MILLISECONDS.toSeconds(issueTime) < MILLISECONDS.toSeconds(outdatageTime);
                     } else {
                         /*

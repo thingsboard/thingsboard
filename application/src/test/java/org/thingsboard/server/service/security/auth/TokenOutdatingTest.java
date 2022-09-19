@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.event.UserAuthDataChangedEvent;
 import org.thingsboard.server.common.data.security.model.JwtToken;
 import org.thingsboard.server.config.JwtSettings;
+import org.thingsboard.server.config.JwtSettingsService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.service.security.auth.jwt.JwtAuthenticationProvider;
@@ -50,6 +51,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -71,10 +73,14 @@ public class TokenOutdatingTest {
         jwtSettings.setTokenExpirationTime((int) MINUTES.toSeconds(10));
         jwtSettings.setRefreshTokenExpTime((int) DAYS.toSeconds(7));
         jwtSettings.setTokenSigningKey("secret");
-        tokenFactory = new JwtTokenFactory(jwtSettings);
+
+        JwtSettingsService jwtSettingsService = mock(JwtSettingsService.class);
+        willReturn(jwtSettings).given(jwtSettingsService).getJwtSettings();
+
+        tokenFactory = new JwtTokenFactory(jwtSettingsService);
 
         cacheManager = new ConcurrentMapCacheManager();
-        tokenOutdatingService = new TokenOutdatingService(cacheManager, tokenFactory, jwtSettings);
+        tokenOutdatingService = new TokenOutdatingService(cacheManager, tokenFactory, jwtSettingsService);
         tokenOutdatingService.initCache();
 
         userId = new UserId(UUID.randomUUID());

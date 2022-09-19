@@ -24,7 +24,6 @@ import org.thingsboard.server.common.data.security.model.JwtToken;
 @ConfigurationProperties(prefix = "security.jwt")
 @Data
 public class JwtSettings {
-
     /**
      * {@link JwtToken} will expire after this time.
      */

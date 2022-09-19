@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.model.JwtToken;
 import org.thingsboard.server.config.JwtSettings;
+import org.thingsboard.server.config.JwtSettingsService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.model.token.AccessJwtToken;
@@ -36,6 +37,8 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.willReturn;
+import static org.mockito.Mockito.mock;
 
 public class JwtTokenFactoryTest {
 
@@ -50,7 +53,10 @@ public class JwtTokenFactoryTest {
         jwtSettings.setTokenExpirationTime((int) TimeUnit.HOURS.toSeconds(2));
         jwtSettings.setRefreshTokenExpTime((int) TimeUnit.DAYS.toSeconds(7));
 
-        tokenFactory = new JwtTokenFactory(jwtSettings);
+        JwtSettingsService jwtSettingsService = mock(JwtSettingsService.class);
+        willReturn(jwtSettings).given(jwtSettingsService).getJwtSettings();
+
+        tokenFactory = new JwtTokenFactory(jwtSettingsService);
     }
 
     @Test

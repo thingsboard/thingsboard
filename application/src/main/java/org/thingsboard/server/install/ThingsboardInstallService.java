@@ -88,7 +88,6 @@ public class ThingsboardInstallService {
     @Autowired
     private ConditionValidatorUpgradeService conditionValidatorUpgradeService;
 
-
     public void performInstall() {
         try {
             if (isUpgrade) {
