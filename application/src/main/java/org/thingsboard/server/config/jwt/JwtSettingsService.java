@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.config;
+package org.thingsboard.server.config.jwt;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
@@ -67,11 +68,12 @@ public class JwtSettingsService {
     }
 
     public void createJwtAdminSettings() {
+        log.debug("Creating JWT admin settings...");
         Objects.requireNonNull(jwtSettings, "JWT settings is null");
-        if (!isJwtAdminSettingsExists()) {
+        if (isJwtAdminSettingsNotExists()) {
             if (hasDefaultTokenSigningKey()) {
                 if (!isAllowedDefaultJwtSigningKey()) {
-                    log.warn("JWT token signing key is default. Generating a new random key");
+                    log.info("JWT token signing key is default. Generating a new random key");
                     jwtSettings.setTokenSigningKey(Base64.getEncoder().encodeToString(RandomStringUtils.randomAlphanumeric(64).getBytes(StandardCharsets.UTF_8)));
                 }
             }
@@ -84,12 +86,17 @@ public class JwtSettingsService {
         }
     }
 
-    public boolean isJwtAdminSettingsExists() {
+    public boolean isJwtAdminSettingsNotExists() {
         return findJwtAdminSettings() == null;
     }
 
     AdminSettings findJwtAdminSettings() {
-        return adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, ADMIN_SETTINGS_JWT_KEY);
+        try {
+            return adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, ADMIN_SETTINGS_JWT_KEY);
+        } catch (InvalidDataAccessResourceUsageException ignored) {
+            log.debug("findAdminSettingsByKey is returning InvalidDataAccessResourceUsageException. This is an installation case when the database is not initialized yet");
+            return null;
+        }
     }
 
     /*
@@ -101,15 +108,13 @@ public class JwtSettingsService {
     }
 
     public void validateJwtTokenSigningKey() {
-        if (!isJwtAdminSettingsExists()) {
-            if (hasDefaultTokenSigningKey()) {
-                if (isAllowedDefaultJwtSigningKey()) {
-                    log.warn("Default JWT signing key is allowed. This is a security issue. Please, consider to set a strong key in admin settings");
-                } else {
-                    String message = "Please, set a unique signing key with env variable JWT_TOKEN_SIGNING_KEY. Key is a Base64 encoded phrase. This will require to generate new tokens for all users and API that uses JWT tokens. To allow insecure JWS use TB_ALLOW_DEFAULT_JWT_SIGNING_KEY=true";
-                    log.error(message);
-                    throw new ValidationException(message);
-                }
+        if (isJwtAdminSettingsNotExists() && hasDefaultTokenSigningKey()) {
+            if (isAllowedDefaultJwtSigningKey()) {
+                log.warn("Default JWT signing key is allowed. This is a security issue. Please, consider to set a strong key in admin settings");
+            } else {
+                String message = "Please, set a unique signing key with env variable JWT_TOKEN_SIGNING_KEY. Key is a Base64 encoded phrase. This will require to generate new tokens for all users and API that uses JWT tokens. To allow insecure JWS use TB_ALLOW_DEFAULT_JWT_SIGNING_KEY=true";
+                log.error(message);
+                throw new ValidationException(message);
             }
         }
     }

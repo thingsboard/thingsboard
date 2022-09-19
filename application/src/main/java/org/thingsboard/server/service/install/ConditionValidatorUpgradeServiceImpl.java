@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.config.JwtSettingsService;
+import org.thingsboard.server.config.jwt.JwtSettingsService;
 
 @Service
 @Profile("install")
@@ -31,7 +31,7 @@ public class ConditionValidatorUpgradeServiceImpl implements ConditionValidatorU
 
     @Override
     public void validateConditionsBeforeUpgrade(String fromVersion) throws Exception {
-        log.info("Validating conditions before upgrade..");
+        log.info("Validating conditions before upgrade...");
         jwtSettingsService.validateJwtTokenSigningKey();
     }
 

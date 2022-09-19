@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.event.UserAuthDataChangedEvent;
 import org.thingsboard.server.common.data.security.model.JwtToken;
-import org.thingsboard.server.config.JwtSettingsService;
+import org.thingsboard.server.config.jwt.JwtSettingsService;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 
 import javax.annotation.PostConstruct;
