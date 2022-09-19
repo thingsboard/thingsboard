@@ -452,12 +452,12 @@ export class TbFlot {
         series.xaxis = 1;
       }
 
-      if (this.yaxis) {
+      if (this.yaxis && !this.yaxes.find(element => element.label === keySettings.axisTitle)) {
         const units = series.dataKey.units && series.dataKey.units.length ? series.dataKey.units : this.trackUnits;
         let yaxis: TbFlotAxisOptions;
         if (keySettings.showSeparateAxis) {
-          yaxis = this.createYAxis(keySettings, units);
-          this.yaxes.push(yaxis);
+            yaxis = this.createYAxis(keySettings, units);
+            this.yaxes.push(yaxis);
         } else {
           yaxis = yaxesMap[units];
           if (!yaxis) {
@@ -515,6 +515,7 @@ export class TbFlot {
           }
         }
       }
+
       if (this.labelPatternsSourcesData?.length) {
         this.substituteLabelPatterns(series, i);
       }
@@ -581,7 +582,7 @@ export class TbFlot {
             for (let i = 0; i < this.subscription.data.length; i++) {
               const series = this.subscription.data[i] as TbFlotSeries;
               const yaxisIndex = series.yaxisIndex;
-              if (this.yaxes[yaxisIndex].keysInfo[i].hidden !== series.dataKey.hidden) {
+              if (this.yaxes[yaxisIndex] && this.yaxes[yaxisIndex].keysInfo[i].hidden !== series.dataKey.hidden) {
                 this.yaxes[yaxisIndex].keysInfo[i].hidden = series.dataKey.hidden;
                 axisVisibilityChanged = true;
               }
