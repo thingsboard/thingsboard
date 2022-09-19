@@ -15,8 +15,6 @@
  */
 package org.thingsboard.rule.engine.util;
 
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DashboardInfo;
@@ -32,9 +30,9 @@ import org.thingsboard.server.common.data.page.PageLink;
 
 import java.util.Optional;
 
-public class EntitiesByNameAndTypeAsyncLoader {
+public class EntitiesByNameAndTypeLoader {
 
-    public static ListenableFuture<? extends EntityId> findEntityIdAsync(TbContext ctx, EntityType entityType, String entityName) {
+    public static EntityId findEntityId(TbContext ctx, EntityType entityType, String entityName) {
         EntityId targetEntity = null;
         switch (entityType) {
             case DEVICE:
@@ -85,15 +83,8 @@ public class EntitiesByNameAndTypeAsyncLoader {
                     targetEntity = user.getId();
                 }
                 break;
-            default:
-                return Futures.immediateFailedFuture(new IllegalStateException("Unexpected entity type " + entityType.name()));
         }
-
-        if (targetEntity != null) {
-            return Futures.immediateFuture(targetEntity);
-        } else {
-            return Futures.immediateFailedFuture(new IllegalStateException("Failed to found " + entityType.name() + "  entity by name: '" + entityName + "'!"));
-        }
+        return targetEntity;
     }
 
 }
