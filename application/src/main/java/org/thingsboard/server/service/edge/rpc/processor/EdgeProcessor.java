@@ -15,43 +15,39 @@
  */
 package org.thingsboard.server.service.edge.rpc.processor;
 
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
-import org.thingsboard.server.common.data.edge.EdgeEventType;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
+import org.thingsboard.server.gen.edge.v1.EdgeConfiguration;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 
 @Component
 @Slf4j
 @TbCoreComponent
 public class EdgeProcessor extends BaseEdgeProcessor {
 
-    public ListenableFuture<Void> processEdgeNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
-        try {
-            EdgeEventActionType actionType = EdgeEventActionType.valueOf(edgeNotificationMsg.getAction());
-            switch (actionType) {
-                // TODO: add support for edge update
-                default:
-                    return Futures.immediateFuture(null);
-            }
-        } catch (Exception e) {
-            log.error("Exception during processing edge event", e);
-            return Futures.immediateFailedFuture(e);
+    public DownlinkMsg processEdgeToEdge(EdgeEvent edgeEvent, EdgeEventActionType action) {
+        EdgeId edgeId = new EdgeId(edgeEvent.getEntityId());
+        DownlinkMsg downlinkMsg = null;
+        switch (action) {
+            case ASSIGNED_TO_CUSTOMER:
+            case UNASSIGNED_FROM_CUSTOMER:
+                Edge edge = edgeService.findEdgeById(edgeEvent.getTenantId(), edgeId);
+                if (edge != null) {
+                    EdgeConfiguration edgeConfigMsg =
+                            edgeMsgConstructor.constructEdgeConfiguration(edge);
+                    downlinkMsg = DownlinkMsg.newBuilder()
+                            .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
+                            .setEdgeConfiguration(edgeConfigMsg)
+                            .build();
+                }
+                break;
         }
+        return downlinkMsg;
     }
 }

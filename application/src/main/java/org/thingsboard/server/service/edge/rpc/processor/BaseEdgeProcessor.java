@@ -62,6 +62,7 @@ import org.thingsboard.server.service.edge.rpc.constructor.CustomerMsgConstructo
 import org.thingsboard.server.service.edge.rpc.constructor.DashboardMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.DeviceMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.DeviceProfileMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.EdgeMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.EntityDataMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.EntityViewMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.OtaPackageMsgConstructor;
@@ -158,6 +159,9 @@ public abstract class BaseEdgeProcessor {
 
     @Autowired
     protected DataValidator<Device> deviceValidator;
+
+    @Autowired
+    protected EdgeMsgConstructor edgeMsgConstructor;
 
     @Autowired
     protected EntityDataMsgConstructor entityDataMsgConstructor;

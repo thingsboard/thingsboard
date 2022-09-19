@@ -211,8 +211,6 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
                 lifecycleEvent = ComponentLifecycleEvent.CREATED;
                 break;
             case UPDATED:
-            case ASSIGNED_TO_CUSTOMER:
-            case UNASSIGNED_FROM_CUSTOMER:
                 lifecycleEvent = ComponentLifecycleEvent.UPDATED;
                 break;
             case DELETED:

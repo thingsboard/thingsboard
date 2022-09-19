@@ -36,6 +36,7 @@ import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.EdgeEventStorageSettings;
+import org.thingsboard.server.service.edge.rpc.constructor.EdgeMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.processor.AdminSettingsEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.AlarmEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.AssetEdgeProcessor;
@@ -43,6 +44,7 @@ import org.thingsboard.server.service.edge.rpc.processor.CustomerEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.DashboardEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.DeviceEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.DeviceProfileEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.EdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.EntityEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.EntityViewEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.OtaPackageEdgeProcessor;
@@ -118,6 +120,9 @@ public class EdgeContextComponent {
     private DeviceProfileEdgeProcessor deviceProfileProcessor;
 
     @Autowired
+    private EdgeProcessor edgeProcessor;
+
+    @Autowired
     private DeviceEdgeProcessor deviceProcessor;
 
     @Autowired
@@ -161,6 +166,9 @@ public class EdgeContextComponent {
 
     @Autowired
     private QueueEdgeProcessor queueEdgeProcessor;
+
+    @Autowired
+    private EdgeMsgConstructor edgeMsgConstructor;
 
     @Autowired
     private EdgeEventStorageSettings edgeEventStorageSettings;

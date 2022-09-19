@@ -82,11 +82,12 @@ public class DefaultTbEdgeService extends AbstractTbEntityService implements TbE
 
     @Override
     public Edge assignEdgeToCustomer(TenantId tenantId, EdgeId edgeId, Customer customer, User user) throws ThingsboardException {
+        ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER;
         CustomerId customerId = customer.getId();
         try {
             Edge savedEdge = checkNotNull(edgeService.assignEdgeToCustomer(tenantId, edgeId, customerId));
-            notificationEntityService.notifyCreateOrUpdateOrDeleteEdge(tenantId, edgeId, customerId, savedEdge, ActionType.ASSIGNED_TO_CUSTOMER, user,
-                    edgeId.toString(), customerId.toString(), customer.getName());
+            notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, edgeId, customerId, savedEdge,
+                    actionType, user, true, edgeId.toString(), customerId.toString(), customer.getName());
 
             return savedEdge;
         } catch (Exception e) {
@@ -98,14 +99,14 @@ public class DefaultTbEdgeService extends AbstractTbEntityService implements TbE
 
     @Override
     public Edge unassignEdgeFromCustomer(Edge edge, Customer customer, User user) throws ThingsboardException {
+        ActionType actionType = ActionType.UNASSIGNED_FROM_CUSTOMER;
         TenantId tenantId = edge.getTenantId();
         EdgeId edgeId = edge.getId();
         CustomerId customerId = customer.getId();
         try {
             Edge savedEdge = checkNotNull(edgeService.unassignEdgeFromCustomer(tenantId, edgeId));
-
-            notificationEntityService.notifyCreateOrUpdateOrDeleteEdge(tenantId, edgeId, customerId, savedEdge, ActionType.UNASSIGNED_FROM_CUSTOMER, user,
-                    edgeId.toString(), customerId.toString(), customer.getName());
+            notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, edgeId, customerId, savedEdge,
+                    actionType, user, true, edgeId.toString(), customerId.toString(), customer.getName());
             return savedEdge;
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.EDGE),

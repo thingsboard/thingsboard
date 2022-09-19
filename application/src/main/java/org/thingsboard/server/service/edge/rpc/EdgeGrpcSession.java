@@ -24,7 +24,6 @@ import io.grpc.stub.StreamObserver;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -289,7 +288,7 @@ public final class EdgeGrpcSession implements Closeable {
         log.debug("[{}] onConfigurationUpdate [{}]", this.sessionId, edge);
         this.edge = edge;
         EdgeUpdateMsg edgeConfig = EdgeUpdateMsg.newBuilder()
-                .setConfiguration(constructEdgeConfigProto(edge)).build();
+                .setConfiguration(ctx.getEdgeMsgConstructor().constructEdgeConfiguration(edge)).build();
         ResponseMsg edgeConfigMsg = ResponseMsg.newBuilder()
                 .setEdgeUpdateMsg(edgeConfig)
                 .build();
@@ -509,6 +508,8 @@ public final class EdgeGrpcSession implements Closeable {
         UpdateMsgType msgType = getResponseMsgType(edgeEvent.getAction());
         log.trace("Executing processEntityMessage, edgeEvent [{}], action [{}], msgType [{}]", edgeEvent, action, msgType);
         switch (edgeEvent.getType()) {
+            case EDGE:
+                return ctx.getEdgeProcessor().processEdgeToEdge(edgeEvent, action);
             case DEVICE:
                 return ctx.getDeviceProcessor().processDeviceToEdge(edge, edgeEvent, msgType, action);
             case DEVICE_PROFILE:
@@ -664,7 +665,7 @@ public final class EdgeGrpcSession implements Closeable {
                     return ConnectResponseMsg.newBuilder()
                             .setResponseCode(ConnectResponseCode.ACCEPTED)
                             .setErrorMsg("")
-                            .setConfiguration(constructEdgeConfigProto(edge)).build();
+                            .setConfiguration(ctx.getEdgeMsgConstructor().constructEdgeConfiguration(edge)).build();
                 }
                 return ConnectResponseMsg.newBuilder()
                         .setResponseCode(ConnectResponseCode.BAD_CREDENTIALS)
@@ -682,26 +683,6 @@ public final class EdgeGrpcSession implements Closeable {
                 .setResponseCode(ConnectResponseCode.BAD_CREDENTIALS)
                 .setErrorMsg("Failed to find the edge! Routing key: " + request.getEdgeRoutingKey())
                 .setConfiguration(EdgeConfiguration.getDefaultInstance()).build();
-    }
-
-    private EdgeConfiguration constructEdgeConfigProto(Edge edge) {
-        EdgeConfiguration.Builder builder = EdgeConfiguration.newBuilder()
-                .setEdgeIdMSB(edge.getId().getId().getMostSignificantBits())
-                .setEdgeIdLSB(edge.getId().getId().getLeastSignificantBits())
-                .setTenantIdMSB(edge.getTenantId().getId().getMostSignificantBits())
-                .setTenantIdLSB(edge.getTenantId().getId().getLeastSignificantBits())
-                .setName(edge.getName())
-                .setType(edge.getType())
-                .setRoutingKey(edge.getRoutingKey())
-                .setSecret(edge.getSecret())
-                .setAdditionalInfo(JacksonUtil.toString(edge.getAdditionalInfo()))
-                .setCloudType("CE");
-        if (edge.getCustomerId() != null) {
-            builder.setCustomerIdMSB(edge.getCustomerId().getId().getMostSignificantBits())
-                    .setCustomerIdLSB(edge.getCustomerId().getId().getLeastSignificantBits());
-        }
-        return builder
-                .build();
     }
 
     @Override
