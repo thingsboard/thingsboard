@@ -13,27 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.kv;
+package org.thingsboard.server.dao.service;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.thingsboard.server.common.data.query.TsValue;
+import org.springframework.test.context.TestPropertySource;
 
-/**
- * Represents time series KV data entry
- *
- * @author ashvayka
- *
- */
-public interface TsKvEntry extends KvEntry {
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-    long getTs();
-
-    @JsonIgnore
-    int getDataPoints();
-
-    @JsonIgnore
-    default TsValue toTsValue() {
-        return new TsValue(getTs(), getValueAsString());
-    }
-
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Inherited
+@Documented
+@TestPropertySource(locations = {"classpath:application-test.properties", "classpath:timescale-test.properties"})
+public @interface DaoTimescaleTest {
 }

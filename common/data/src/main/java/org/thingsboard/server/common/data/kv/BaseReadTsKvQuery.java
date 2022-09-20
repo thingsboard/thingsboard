@@ -31,8 +31,7 @@ public class BaseReadTsKvQuery extends BaseTsKvQuery implements ReadTsKvQuery {
         this(key, startTs, endTs, interval, limit, aggregation, "DESC");
     }
 
-    public BaseReadTsKvQuery(String key, long startTs, long endTs, long interval, int limit, Aggregation aggregation,
-                             String order) {
+    public BaseReadTsKvQuery(String key, long startTs, long endTs, long interval, int limit, Aggregation aggregation, String order) {
         super(key, startTs, endTs);
         this.interval = interval;
         this.limit = limit;

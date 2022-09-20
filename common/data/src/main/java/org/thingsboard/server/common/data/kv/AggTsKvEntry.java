@@ -15,25 +15,23 @@
  */
 package org.thingsboard.server.common.data.kv;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.ToString;
 import org.thingsboard.server.common.data.query.TsValue;
 
-/**
- * Represents time series KV data entry
- *
- * @author ashvayka
- *
- */
-public interface TsKvEntry extends KvEntry {
+@ToString
+public class AggTsKvEntry extends BasicTsKvEntry {
 
-    long getTs();
+    private static final long serialVersionUID = -1933884317450255935L;
 
-    @JsonIgnore
-    int getDataPoints();
+    private final long count;
 
-    @JsonIgnore
-    default TsValue toTsValue() {
-        return new TsValue(getTs(), getValueAsString());
+    public AggTsKvEntry(long ts, KvEntry kv, long count) {
+        super(ts, kv);
+        this.count = count;
     }
 
+    @Override
+    public TsValue toTsValue() {
+        return new TsValue(ts, getValueAsString(), count);
+    }
 }

@@ -1039,7 +1039,22 @@
         "value-description": "the current value;",
         "prev-value-description": "result of the previous function call;",
         "time-prev-description": "timestamp of the previous value;",
-        "prev-orig-value-description": "original previous value;"
+        "prev-orig-value-description": "original previous value;",
+        "aggregation": "Aggregation",
+        "aggregation-type-hint-common": "For performance reasons, the aggregated values calculation is available only for fixed time intervals like \"current day\", \"current month\", etc, and is not available for sliding window intervals like 'last 30 minutes' or 'last 24 hours'.",
+        "aggregation-type-none-hint": "Take latest value.",
+        "aggregation-type-min-hint": "Find minimum value among data points within a selected time window.",
+        "aggregation-type-max-hint": "Find maximum value among data points within a selected time window.",
+        "aggregation-type-avg-hint": "Calculate an average value among data points within a selected time window.",
+        "aggregation-type-sum-hint": "Sum all values of the data points within a selected time window.",
+        "aggregation-type-count-hint": "Total number of the data points within a selected time window.",
+        "delta-calculation": "Delta calculation",
+        "enable-delta-calculation": "Enable delta calculation",
+        "enable-delta-calculation-hint": "When enabled, the data key value is calculated based on the aggregated values for a selected time window and a specified comparison period. For performance reasons, the delta calculation is available only for history time windows and not for real-time values. For example, you may calculate the delta between the energy consumption for yesterday compared to the energy consumption for the day before yesterday.",
+        "delta-calculation-result": "Delta calculation result",
+        "delta-calculation-result-previous-value": "Previous value",
+        "delta-calculation-result-delta-absolute": "Delta (absolute)",
+        "delta-calculation-result-delta-percent": "Delta (percent)"
     },
     "datasource": {
         "type": "Datasource type",

@@ -716,7 +716,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                     "Cmd id is negative value!");
             sendWsMsg(sessionRef, update);
             return false;
-        } else if (cmd.getQuery() == null && cmd.getLatestCmd() == null && cmd.getHistoryCmd() == null && cmd.getTsCmd() == null) {
+        } else if (cmd.getQuery() == null && !cmd.hasAnyCmd()) {
             TelemetrySubscriptionUpdate update = new TelemetrySubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.BAD_REQUEST,
                     "Query is empty!");
             sendWsMsg(sessionRef, update);
