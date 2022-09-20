@@ -19,6 +19,15 @@
     height: 100%;
     padding: 40px 10px;
     cursor: default;
+    border-radius: 5px;
+
+    &-right {
+      border-radius: 0 5px 5px 0;
+    }
+
+    &-main {
+      border-radius: 5px 0 0 5px;
+    }
   }
 
   &::ng-deep {

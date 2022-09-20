@@ -39,7 +39,11 @@ import {
   DashboardSettingsDialogComponent,
   DashboardSettingsDialogData
 } from '@home/components/dashboard-page/dashboard-settings-dialog.component';
-import { LayoutWidthType } from '@home/components/dashboard-page/layout/layout.models';
+import {
+  LayoutFixedSize,
+  LayoutPercentageSize,
+  LayoutWidthType
+} from '@home/components/dashboard-page/layout/layout.models';
 import { Subscription } from 'rxjs';
 import { MatTooltip } from '@angular/material/tooltip';
 
@@ -60,7 +64,11 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
 
   layoutsFormGroup: FormGroup;
 
-  LayoutWidthType = LayoutWidthType;
+  layoutWidthType = LayoutWidthType;
+
+  layoutPercentageSize = LayoutPercentageSize;
+
+  layoutFixedSize = LayoutFixedSize;
 
   private readonly layouts: DashboardStateLayouts;
 
@@ -87,11 +95,11 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
         main: [{value: isDefined(this.layouts.main), disabled: true}],
         right: [isDefined(this.layouts.right)],
         sliderPercentage: [50],
-        sliderFixed: [150],
-        leftWidthPercentage: [50, [Validators.min(10), Validators.max(90), Validators.required]],
-        rightWidthPercentage: [50, [Validators.min(10), Validators.max(90), Validators.required]],
+        sliderFixed: [this.layoutFixedSize.MIN],
+        leftWidthPercentage: [50, [Validators.min(this.layoutPercentageSize.MIN), Validators.max(this.layoutPercentageSize.MAX), Validators.required]],
+        rightWidthPercentage: [50, [Validators.min(this.layoutPercentageSize.MIN), Validators.max(this.layoutPercentageSize.MAX), Validators.required]],
         type: [LayoutWidthType.PERCENTAGE],
-        fixedWidth: [150, [Validators.min(150), Validators.max(1700), Validators.required]],
+        fixedWidth: [this.layoutFixedSize.MIN, [Validators.min(this.layoutFixedSize.MIN), Validators.max(this.layoutFixedSize.MAX), Validators.required]],
         fixedLayout: ['main', []]
       }
     );
@@ -233,7 +241,9 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
       }
     }
     delete this.layouts.main.gridSettings.layoutDimension;
-    delete this.layouts.right.gridSettings.layoutDimension;
+    if (this.layouts.right?.gridSettings) {
+      delete this.layouts.right.gridSettings.layoutDimension;
+    }
     if (this.layoutsFormGroup.value.right) {
       const formValues = this.layoutsFormGroup.value;
       const widthType = formValues.type;
@@ -338,17 +348,24 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
     }
   }
 
-  layoutButtonTextAndClass(side: string, isText: boolean): string {
+  layoutButtonClass(side: DashboardLayoutId, border: boolean = false): string {
+    const formValues = this.layoutsFormGroup.value;
+    if (formValues.right) {
+      let classString = border ? 'tb-layout-button-main ' : '';
+      if (!(formValues.fixedLayout === side || formValues.type === LayoutWidthType.PERCENTAGE)) {
+        classString += 'tb-fixed-layout-button';
+      }
+      return classString;
+    }
+  }
+
+  layoutButtonText(side: DashboardLayoutId): string {
     const formValues = this.layoutsFormGroup.value;
     if (!(formValues.fixedLayout === side || !formValues.right || formValues.type === LayoutWidthType.PERCENTAGE)) {
-      if (isText) {
-        if (side === 'main') {
-          return this.translate.instant('layout.left-side');
-        } else {
-          return this.translate.instant('layout.right-side');
-        }
+      if (side === 'main') {
+        return this.translate.instant('layout.left-side');
       } else {
-        return 'tb-fixed-layout-button';
+        return this.translate.instant('layout.right-side');
       }
     }
   }

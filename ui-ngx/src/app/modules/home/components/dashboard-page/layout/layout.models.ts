@@ -28,3 +28,13 @@ export enum LayoutWidthType {
   FIXED = 'fixed'
 }
 
+export enum LayoutPercentageSize {
+  MIN = 10,
+  MAX = 90
+}
+
+export enum LayoutFixedSize {
+  MIN = 150,
+  MAX = 4000
+}
+
