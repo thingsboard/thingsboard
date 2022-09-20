@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
+import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -145,9 +146,10 @@ public class CassandraBaseTimeseriesLatestDao extends AbstractCassandraBaseTimes
         long endTs = query.getStartTs() - 1;
         ReadTsKvQuery findNewLatestQuery = new BaseReadTsKvQuery(query.getKey(), startTs, endTs, endTs - startTs, 1,
                 Aggregation.NONE, DESC_ORDER);
-        ListenableFuture<List<TsKvEntry>> future = aggregationTimeseriesDao.findAllAsync(tenantId, entityId, findNewLatestQuery);
+        ListenableFuture<ReadTsKvQueryResult> future = aggregationTimeseriesDao.findAllAsync(tenantId, entityId, findNewLatestQuery);
 
-        return Futures.transformAsync(future, entryList -> {
+        return Futures.transformAsync(future, result -> {
+            var entryList = result.getData();
             if (entryList.size() == 1) {
                 TsKvEntry entry = entryList.get(0);
                 return Futures.transform(saveLatest(tenantId, entityId, entryList.get(0)), v -> new TsKvLatestRemovingResult(entry), MoreExecutors.directExecutor());

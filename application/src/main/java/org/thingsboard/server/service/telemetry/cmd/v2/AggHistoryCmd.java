@@ -13,27 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.kv;
+package org.thingsboard.server.service.telemetry.cmd.v2;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.thingsboard.server.common.data.query.TsValue;
+import lombok.Data;
 
-/**
- * Represents time series KV data entry
- *
- * @author ashvayka
- *
- */
-public interface TsKvEntry extends KvEntry {
+import java.util.List;
 
-    long getTs();
+@Data
+public class AggHistoryCmd {
 
-    @JsonIgnore
-    int getDataPoints();
-
-    @JsonIgnore
-    default TsValue toTsValue() {
-        return new TsValue(getTs(), getValueAsString());
-    }
+    private List<AggKey> keys;
+    private long startTs;
+    private long endTs;
 
 }

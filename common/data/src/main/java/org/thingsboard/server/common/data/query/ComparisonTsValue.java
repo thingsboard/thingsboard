@@ -13,27 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.kv;
+package org.thingsboard.server.common.data.query;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.thingsboard.server.common.data.query.TsValue;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-/**
- * Represents time series KV data entry
- *
- * @author ashvayka
- *
- */
-public interface TsKvEntry extends KvEntry {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class ComparisonTsValue {
 
-    long getTs();
-
-    @JsonIgnore
-    int getDataPoints();
-
-    @JsonIgnore
-    default TsValue toTsValue() {
-        return new TsValue(getTs(), getValueAsString());
-    }
-
+    private TsValue current;
+    private TsValue previous;
 }

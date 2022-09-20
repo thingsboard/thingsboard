@@ -13,27 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.kv;
+@import '../../../../scss/constants';
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.thingsboard.server.common.data.query.TsValue;
+:host {
+  min-width: 355px;
 
-/**
- * Represents time series KV data entry
- *
- * @author ashvayka
- *
- */
-public interface TsKvEntry extends KvEntry {
-
-    long getTs();
-
-    @JsonIgnore
-    int getDataPoints();
-
-    @JsonIgnore
-    default TsValue toTsValue() {
-        return new TsValue(getTs(), getValueAsString());
-    }
-
+  @media #{$mat-xs} {
+    min-width: 0;
+    width: 100%;
+  }
 }
