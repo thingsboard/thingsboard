@@ -17,7 +17,6 @@
 import { Datasource, FormattedData } from '@app/shared/models/widget.models';
 import tinycolor from 'tinycolor2';
 import { BaseIconOptions, Icon } from 'leaflet';
-import { DeviceProfileType } from '@shared/models/device.models';
 
 export const DEFAULT_MAP_PAGE_SIZE = 16384;
 export const DEFAULT_ZOOM_LEVEL = 8;
@@ -602,6 +601,12 @@ export interface MarkerClusteringSettings {
   showCoverageOnHover: boolean;
   chunkedLoading: boolean;
   removeOutsideVisibleBounds: boolean;
+  useIconCreateFunction: boolean;
+  clusterMarkerFunction?: string;
+}
+
+export interface WidgetMarkerClusteringSettings extends MarkerClusteringSettings {
+  parsedClusterMarkerFunction?: GenericFunction;
 }
 
 export const defaultMarkerClusteringSettings: MarkerClusteringSettings = {
@@ -613,7 +618,9 @@ export const defaultMarkerClusteringSettings: MarkerClusteringSettings = {
   spiderfyOnMaxZoom: false,
   showCoverageOnHover: true,
   chunkedLoading: false,
-  removeOutsideVisibleBounds: true
+  removeOutsideVisibleBounds: true,
+  useIconCreateFunction: false,
+  clusterMarkerFunction: null
 };
 
 export interface MapEditorSettings {
@@ -635,7 +642,7 @@ export const defaultMapEditorSettings: MapEditorSettings = {
 };
 
 export type UnitedMapSettings = MapProviderSettings & CommonMapSettings & MarkersSettings &
-  PolygonSettings & CircleSettings & PolylineSettings & PointsSettings & MarkerClusteringSettings & MapEditorSettings;
+  PolygonSettings & CircleSettings & PolylineSettings & PointsSettings & WidgetMarkerClusteringSettings & MapEditorSettings;
 
 export const defaultMapSettings: UnitedMapSettings = {
   ...defaultMapProviderSettings,
