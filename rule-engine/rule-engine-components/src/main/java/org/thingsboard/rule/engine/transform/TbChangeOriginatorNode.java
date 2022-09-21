@@ -93,11 +93,11 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode {
             case ENTITY_SOURCE:
                 EntityType entityType = EntityType.valueOf(config.getEntityType());
                 String entityName = TbNodeUtils.processPattern(config.getEntityNamePattern(), msg);
-                EntityId targetEntity = EntitiesByNameAndTypeLoader.findEntityId(ctx, entityType, entityName);
-                if (targetEntity != null) {
+                try {
+                    EntityId targetEntity = EntitiesByNameAndTypeLoader.findEntityId(ctx, entityType, entityName);
                     return Futures.immediateFuture(targetEntity);
-                } else {
-                    return Futures.immediateFailedFuture(new IllegalStateException("Failed to found " + entityType.name() + "  entity by name: '" + entityName + "'!"));
+                } catch (IllegalStateException e) {
+                    return Futures.immediateFailedFuture(e);
                 }
             default:
                 return Futures.immediateFailedFuture(new IllegalStateException("Unexpected originator source " + config.getOriginatorSource()));

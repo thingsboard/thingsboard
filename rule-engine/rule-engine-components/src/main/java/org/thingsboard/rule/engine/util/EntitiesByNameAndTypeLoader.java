@@ -83,6 +83,11 @@ public class EntitiesByNameAndTypeLoader {
                     targetEntity = user.getId();
                 }
                 break;
+            default:
+                throw new IllegalStateException("Unexpected entity type " + entityType.name());
+        }
+        if (targetEntity == null) {
+            throw new IllegalStateException("Failed to found " + entityType.name() + "  entity by name: '" + entityName + "'!");
         }
         return targetEntity;
     }
