@@ -119,8 +119,7 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
     const data = formattedDataFormDatasourceData(initialData);
     let markdownText = this.settings.useMarkdownTextFunction ?
       safeExecute(this.markdownTextFunction, [data]) : this.settings.markdownTextPattern;
-    const allData = flatFormattedData(data);
-    markdownText = createLabelFromPattern(markdownText, allData);
+    markdownText = createLabelFromPattern(markdownText, data[0]);
     if (this.markdownText !== markdownText) {
       this.markdownText = this.utils.customTranslation(markdownText, markdownText);
       this.cd.detectChanges();

@@ -58,20 +58,27 @@
     overflow: auto;
     height: 100%;
   }
-  .buttons-panel {
-    position: absolute;
-    top: 5px;
-    right: 24px;
-    z-index: 1;
-    button.edit-toggle {
-      min-width: 32px;
-      min-height: 15px;
-      padding: 4px;
-      margin: 0;
-      font-size: .8rem;
-      line-height: 15px;
+  button.edit-toggle {
+    min-width: 32px;
+    min-height: 15px;
+    padding: 4px;
+    margin-right: 4px;
+    font-size: .8rem;
+    line-height: 15px;
+    color: #7b7b7b;
+    background: rgba(220, 220, 220, .35);
+  }
+  button.mat-button, button.mat-icon-button, button.mat-icon-button.tb-mat-32 {
+    background: rgba(220, 220, 220, .35);
+    align-items: center;
+    vertical-align: middle;
+    min-width: 32px;
+    min-height: 15px;
+    padding: 4px;
+    font-size: .8rem;
+    line-height: 15px;
+    &:not(.tb-help-popup-button) {
       color: #7b7b7b;
-      background: rgba(220, 220, 220, .35);
     }
   }
 }
