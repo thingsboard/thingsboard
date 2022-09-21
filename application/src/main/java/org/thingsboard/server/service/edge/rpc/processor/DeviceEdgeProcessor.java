@@ -198,13 +198,14 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                                 deviceUpdateMsg.getDeviceProfileIdLSB()));
                 device.setDeviceProfileId(deviceProfileId);
             }
+            device.setCustomerId(getCustomerId(deviceUpdateMsg));
             Optional<DeviceData> deviceDataOpt =
                     dataDecodingEncodingService.decode(deviceUpdateMsg.getDeviceDataBytes().toByteArray());
             if (deviceDataOpt.isPresent()) {
                 device.setDeviceData(deviceDataOpt.get());
             }
             Device savedDevice = deviceService.saveDevice(device);
-            tbClusterService.onDeviceUpdated(savedDevice, device);
+            tbClusterService.onDeviceUpdated(savedDevice, device, false);
             return saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.CREDENTIALS_REQUEST, deviceId, null);
         } else {
             String errMsg = String.format("[%s] can't find device [%s], edge [%s]", tenantId, deviceUpdateMsg, edge.getId());
@@ -227,8 +228,6 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                 device.setCreatedTime(Uuids.unixTimestamp(deviceId.getId()));
                 created = true;
             }
-            // make device private, if edge is public
-            device.setCustomerId(getCustomerId(edge));
             device.setName(deviceName);
             device.setType(deviceUpdateMsg.getType());
             if (deviceUpdateMsg.hasLabel()) {
@@ -243,6 +242,7 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                                 deviceUpdateMsg.getDeviceProfileIdLSB()));
                 device.setDeviceProfileId(deviceProfileId);
             }
+            device.setCustomerId(getCustomerId(deviceUpdateMsg));
             Optional<DeviceData> deviceDataOpt =
                     dataDecodingEncodingService.decode(deviceUpdateMsg.getDeviceDataBytes().toByteArray());
             if (deviceDataOpt.isPresent()) {
@@ -272,15 +272,11 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
         return device;
     }
 
-    private CustomerId getCustomerId(Edge edge) {
-        if (edge.getCustomerId() == null || edge.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
-            return edge.getCustomerId();
-        }
-        Customer publicCustomer = customerService.findOrCreatePublicCustomer(edge.getTenantId());
-        if (publicCustomer.getId().equals(edge.getCustomerId())) {
-            return null;
+    private CustomerId getCustomerId(DeviceUpdateMsg deviceUpdateMsg) {
+        if (deviceUpdateMsg.hasCustomerIdMSB() && deviceUpdateMsg.hasCustomerIdLSB()) {
+            return new CustomerId(new UUID(deviceUpdateMsg.getCustomerIdMSB(), deviceUpdateMsg.getCustomerIdLSB()));
         } else {
-            return edge.getCustomerId();
+            return null;
         }
     }
 
