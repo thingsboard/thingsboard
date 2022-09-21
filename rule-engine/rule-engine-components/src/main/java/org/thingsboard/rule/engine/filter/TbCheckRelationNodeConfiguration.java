@@ -17,7 +17,6 @@ package org.thingsboard.rule.engine.filter;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
-import org.thingsboard.rule.engine.data.RelationsQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 
 /**
