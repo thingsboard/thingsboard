@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Data;
 import org.apache.commons.lang3.ClassUtils;
-import org.apache.commons.lang3.StringUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 
 import java.io.Serializable;

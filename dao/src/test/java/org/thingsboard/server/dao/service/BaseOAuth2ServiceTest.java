@@ -16,12 +16,12 @@
 package org.thingsboard.server.dao.service;
 
 import com.google.common.collect.Lists;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.oauth2.MapperType;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2CustomMapperConfig;
@@ -654,7 +654,7 @@ public abstract class BaseOAuth2ServiceTest extends AbstractServiceTest {
 
     private OAuth2MobileInfo validMobileInfo(String pkgName, String appSecret) {
         return OAuth2MobileInfo.builder().pkgName(pkgName)
-                .appSecret(appSecret != null ? appSecret : RandomStringUtils.randomAlphanumeric(24))
+                .appSecret(appSecret != null ? appSecret : StringUtils.randomAlphanumeric(24))
                 .build();
     }
 }

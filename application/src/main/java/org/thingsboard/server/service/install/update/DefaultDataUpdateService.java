@@ -92,7 +92,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
-import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.thingsboard.server.common.data.StringUtils.isBlank;
 
 @Service
 @Profile("install")

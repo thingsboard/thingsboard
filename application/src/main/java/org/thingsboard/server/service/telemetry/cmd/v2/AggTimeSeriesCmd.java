@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap;
+package org.thingsboard.server.service.telemetry.cmd.v2;
 
 import lombok.Data;
 
 import java.util.List;
 
 @Data
-public class LwM2MBootstrapServersConfiguration {
+public class AggTimeSeriesCmd {
 
-    List<LwM2MBootstrapServerCredential> bootstrap;
+    private List<AggKey> keys;
+    private long startTs;
+    private long timeWindow;
 
 }
