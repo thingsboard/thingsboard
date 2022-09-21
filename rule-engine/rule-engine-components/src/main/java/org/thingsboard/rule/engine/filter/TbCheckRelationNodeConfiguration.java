@@ -31,7 +31,6 @@ public class TbCheckRelationNodeConfiguration implements NodeConfiguration<TbChe
     private String entityType;
     private String relationType;
     private boolean checkForSingleEntity;
-    private RelationsQuery relationsQuery;
 
     @Override
     public TbCheckRelationNodeConfiguration defaultConfiguration() {

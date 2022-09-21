@@ -182,6 +182,9 @@ public class DefaultDataUpdateService implements DataUpdateService {
                     log.info("Updating data from version 3.4.0 to 3.4.1 ...");
                     eventService.migrateEvents();
                 }
+                break;
+            case "3.4.1":
+                log.info("Updating data from version 3.4.1 to 3.4.2 ...");
                 updateCheckRelationNode();
                 break;
             default:
@@ -350,16 +353,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 }
                 EntitySearchDirection direction = directionStr.equals(EntitySearchDirection.FROM.name())
                         ? EntitySearchDirection.TO : EntitySearchDirection.FROM;
-                if (configNode.isCheckForSingleEntity()) {
-                    configNode.setDirection(direction.name());
-                } else {
-                    RelationsQuery relationsQuery = new RelationsQuery();
-                    relationsQuery.setDirection(direction);
-                    relationsQuery.setMaxLevel(1);
-                    RelationEntityTypeFilter relationEntityTypeFilter = new RelationEntityTypeFilter(configNode.getRelationType(), Collections.emptyList());
-                    relationsQuery.setFilters(Collections.singletonList(relationEntityTypeFilter));
-                    configNode.setRelationsQuery(relationsQuery);
-                }
+                configNode.setDirection(direction.name());
                 ruleNode.setConfiguration(JacksonUtil.valueToTree(configNode));
                 ruleChainService.saveRuleNode(tenantId, ruleNode);
             }
