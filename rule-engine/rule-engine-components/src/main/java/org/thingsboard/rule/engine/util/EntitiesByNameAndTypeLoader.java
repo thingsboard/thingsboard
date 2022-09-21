@@ -25,71 +25,66 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
 
 import java.util.Optional;
 
 public class EntitiesByNameAndTypeLoader {
 
     public static EntityId findEntityId(TbContext ctx, EntityType entityType, String entityName) {
-        EntityId targetEntity = null;
+        EntityId targetEntityId = null;
         switch (entityType) {
             case DEVICE:
                 Device device = ctx.getDeviceService().findDeviceByTenantIdAndName(ctx.getTenantId(), entityName);
                 if (device != null) {
-                    targetEntity = device.getId();
+                    targetEntityId = device.getId();
                 }
                 break;
             case ASSET:
                 Asset asset = ctx.getAssetService().findAssetByTenantIdAndName(ctx.getTenantId(), entityName);
                 if (asset != null) {
-                    targetEntity = asset.getId();
+                    targetEntityId = asset.getId();
                 }
                 break;
             case CUSTOMER:
                 Optional<Customer> customerOptional = ctx.getCustomerService().findCustomerByTenantIdAndTitle(ctx.getTenantId(), entityName);
                 if (customerOptional.isPresent()) {
-                    targetEntity = customerOptional.get().getId();
+                    targetEntityId = customerOptional.get().getId();
                 }
                 break;
             case TENANT:
-                targetEntity = ctx.getTenantId();
+                targetEntityId = ctx.getTenantId();
                 break;
             case ENTITY_VIEW:
                 EntityView entityView = ctx.getEntityViewService().findEntityViewByTenantIdAndName(ctx.getTenantId(), entityName);
                 if (entityView != null) {
-                    targetEntity = entityView.getId();
+                    targetEntityId = entityView.getId();
                 }
                 break;
             case EDGE:
                 Edge edge = ctx.getEdgeService().findEdgeByTenantIdAndName(ctx.getTenantId(), entityName);
                 if (edge != null) {
-                    targetEntity = edge.getId();
+                    targetEntityId = edge.getId();
                 }
                 break;
             case DASHBOARD:
-                PageData<DashboardInfo> dashboardInfoTextPageData = ctx.getDashboardService().findDashboardsByTenantId(ctx.getTenantId(), new PageLink(200, 0, entityName));
-                Optional<DashboardInfo> currentDashboardInfo = dashboardInfoTextPageData.getData().stream()
-                        .filter(dashboardInfo -> dashboardInfo.getTitle().equals(entityName))
-                        .findFirst();
-                if (currentDashboardInfo.isPresent()) {
-                    targetEntity = currentDashboardInfo.get().getId();
+                DashboardInfo dashboardInfo = ctx.getDashboardService().findFirstDashboardInfoByTenantIdAndName(ctx.getTenantId(), entityName);
+                if (dashboardInfo != null) {
+                    targetEntityId = dashboardInfo.getId();
                 }
                 break;
             case USER:
                 User user = ctx.getUserService().findUserByEmail(ctx.getTenantId(), entityName);
                 if (user != null) {
-                    targetEntity = user.getId();
+                    targetEntityId = user.getId();
                 }
                 break;
             default:
                 throw new IllegalStateException("Unexpected entity type " + entityType.name());
         }
-        if (targetEntity == null) {
+        if (targetEntityId == null) {
             throw new IllegalStateException("Failed to found " + entityType.name() + "  entity by name: '" + entityName + "'!");
         }
-        return targetEntity;
+        return targetEntityId;
     }
 
 }
