@@ -28,7 +28,6 @@ import org.thingsboard.rule.engine.util.EntitiesAlarmOriginatorIdAsyncLoader;
 import org.thingsboard.rule.engine.util.EntitiesByNameAndTypeLoader;
 import org.thingsboard.rule.engine.util.EntitiesCustomerIdAsyncLoader;
 import org.thingsboard.rule.engine.util.EntitiesRelatedEntityIdAsyncLoader;
-import org.thingsboard.rule.engine.util.EntitiesTenantIdAsyncLoader;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
