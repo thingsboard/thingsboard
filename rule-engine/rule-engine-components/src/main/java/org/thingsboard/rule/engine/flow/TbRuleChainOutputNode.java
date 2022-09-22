@@ -51,7 +51,4 @@ public class TbRuleChainOutputNode implements TbNode {
         ctx.output(msg, ctx.getSelf().getName());
     }
 
-    @Override
-    public void destroy() {
-    }
 }

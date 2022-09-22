@@ -127,10 +127,6 @@ public class TbSendRPCRequestNode implements TbNode {
         }
     }
 
-    @Override
-    public void destroy() {
-    }
-
     private String wrap(String name, String body) {
         JsonObject json = new JsonObject();
         json.addProperty(name, body);

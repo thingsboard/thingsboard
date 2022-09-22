@@ -123,10 +123,6 @@ public class TbGetTelemetryNode implements TbNode {
         }
     }
 
-    @Override
-    public void destroy() {
-    }
-
     private List<ReadTsKvQuery> buildQueries(Interval interval, List<String> keys) {
         final long aggIntervalStep = Aggregation.NONE.equals(aggregation) ? 1 :
                 // exact how it validates on BaseTimeseriesService.validate()
