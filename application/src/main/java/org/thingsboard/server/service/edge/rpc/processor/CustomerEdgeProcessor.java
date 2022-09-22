@@ -20,7 +20,6 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.gen.edge.v1.CustomerUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
@@ -32,14 +31,15 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 @TbCoreComponent
 public class CustomerEdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg processCustomerToEdge(EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeEventActionType action) {
+    public DownlinkMsg processCustomerToEdge(EdgeEvent edgeEvent) {
         CustomerId customerId = new CustomerId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
-        switch (action) {
+        switch (edgeEvent.getAction()) {
             case ADDED:
             case UPDATED:
                 Customer customer = customerService.findCustomerById(edgeEvent.getTenantId(), customerId);
                 if (customer != null) {
+                    UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     CustomerUpdateMsg customerUpdateMsg =
                             customerMsgConstructor.constructCustomerUpdatedMsg(msgType, customer);
                     downlinkMsg = DownlinkMsg.newBuilder()

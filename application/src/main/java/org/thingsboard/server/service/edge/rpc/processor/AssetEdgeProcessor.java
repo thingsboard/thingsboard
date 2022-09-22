@@ -20,7 +20,6 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
@@ -32,10 +31,10 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 @TbCoreComponent
 public class AssetEdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg processAssetToEdge(EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeEventActionType action) {
+    public DownlinkMsg processAssetToEdge(EdgeEvent edgeEvent) {
         AssetId assetId = new AssetId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
-        switch (action) {
+        switch (edgeEvent.getAction()) {
             case ADDED:
             case UPDATED:
             case ASSIGNED_TO_EDGE:
@@ -43,6 +42,7 @@ public class AssetEdgeProcessor extends BaseEdgeProcessor {
             case UNASSIGNED_FROM_CUSTOMER:
                 Asset asset = assetService.findAssetById(edgeEvent.getTenantId(), assetId);
                 if (asset != null) {
+                    UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     AssetUpdateMsg assetUpdateMsg =
                             assetMsgConstructor.constructAssetUpdatedMsg(msgType, asset);
                     downlinkMsg = DownlinkMsg.newBuilder()

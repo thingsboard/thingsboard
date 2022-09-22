@@ -20,7 +20,6 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
@@ -36,15 +35,16 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 @TbCoreComponent
 public class RuleChainEdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg processRuleChainToEdge(Edge edge, EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeEventActionType action) {
+    public DownlinkMsg processRuleChainToEdge(Edge edge, EdgeEvent edgeEvent) {
         RuleChainId ruleChainId = new RuleChainId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
-        switch (action) {
+        switch (edgeEvent.getAction()) {
             case ADDED:
             case UPDATED:
             case ASSIGNED_TO_EDGE:
                 RuleChain ruleChain = ruleChainService.findRuleChainById(edgeEvent.getTenantId(), ruleChainId);
                 if (ruleChain != null) {
+                    UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     RuleChainUpdateMsg ruleChainUpdateMsg =
                             ruleChainMsgConstructor.constructRuleChainUpdatedMsg(edge.getRootRuleChainId(), msgType, ruleChain);
                     downlinkMsg = DownlinkMsg.newBuilder()
@@ -64,12 +64,13 @@ public class RuleChainEdgeProcessor extends BaseEdgeProcessor {
         return downlinkMsg;
     }
 
-    public DownlinkMsg processRuleChainMetadataToEdge(EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeVersion edgeVersion) {
+    public DownlinkMsg processRuleChainMetadataToEdge(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         RuleChainId ruleChainId = new RuleChainId(edgeEvent.getEntityId());
         RuleChain ruleChain = ruleChainService.findRuleChainById(edgeEvent.getTenantId(), ruleChainId);
         DownlinkMsg downlinkMsg = null;
         if (ruleChain != null) {
             RuleChainMetaData ruleChainMetaData = ruleChainService.loadRuleChainMetaData(edgeEvent.getTenantId(), ruleChainId);
+            UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
             RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg =
                     ruleChainMsgConstructor.constructRuleChainMetadataUpdatedMsg(edgeEvent.getTenantId(), msgType, ruleChainMetaData, edgeVersion);
             if (ruleChainMetadataUpdateMsg != null) {

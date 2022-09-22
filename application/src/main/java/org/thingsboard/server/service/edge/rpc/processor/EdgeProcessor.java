@@ -20,7 +20,6 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeConfiguration;
@@ -31,10 +30,10 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 @TbCoreComponent
 public class EdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg processEdgeToEdge(EdgeEvent edgeEvent, EdgeEventActionType action) {
+    public DownlinkMsg processEdgeToEdge(EdgeEvent edgeEvent) {
         EdgeId edgeId = new EdgeId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
-        switch (action) {
+        switch (edgeEvent.getAction()) {
             case ASSIGNED_TO_CUSTOMER:
             case UNASSIGNED_FROM_CUSTOMER:
                 Edge edge = edgeService.findEdgeById(edgeEvent.getTenantId(), edgeId);

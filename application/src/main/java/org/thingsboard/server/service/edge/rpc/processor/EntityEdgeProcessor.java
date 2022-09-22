@@ -100,7 +100,6 @@ public class EntityEdgeProcessor extends BaseEdgeProcessor {
             case CREDENTIALS_UPDATED:
             case ASSIGNED_TO_CUSTOMER:
             case UNASSIGNED_FROM_CUSTOMER:
-                return pushNotificationToAllRelatedEdges(tenantId, entityId, type, actionType);
             case DELETED:
                 if (edgeId != null) {
                     return saveEdgeEvent(tenantId, edgeId, type, actionType, entityId, null);

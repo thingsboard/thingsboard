@@ -448,7 +448,7 @@ public final class EdgeGrpcSession implements Closeable {
                 case RELATION_DELETED:
                 case ASSIGNED_TO_CUSTOMER:
                 case UNASSIGNED_FROM_CUSTOMER:
-                    downlinkMsg = processEntityMessage(edgeEvent, edgeEvent.getAction());
+                    downlinkMsg = processEntityMessage(edgeEvent);
                     log.trace("[{}][{}] entity message processed [{}]", edgeEvent.getTenantId(), this.sessionId, downlinkMsg);
                     break;
                 case ATTRIBUTES_UPDATED:
@@ -504,71 +504,46 @@ public final class EdgeGrpcSession implements Closeable {
         return ctx.getAttributesService().save(edge.getTenantId(), edge.getId(), DataConstants.SERVER_SCOPE, attributes);
     }
 
-    private DownlinkMsg processEntityMessage(EdgeEvent edgeEvent, EdgeEventActionType action) {
-        UpdateMsgType msgType = getResponseMsgType(edgeEvent.getAction());
-        log.trace("Executing processEntityMessage, edgeEvent [{}], action [{}], msgType [{}]", edgeEvent, action, msgType);
+    private DownlinkMsg processEntityMessage(EdgeEvent edgeEvent) {
+        log.trace("Executing processEntityMessage, edgeEvent [{}], action [{}]", edgeEvent, edgeEvent.getAction());
         switch (edgeEvent.getType()) {
             case EDGE:
-                return ctx.getEdgeProcessor().processEdgeToEdge(edgeEvent, action);
+                return ctx.getEdgeProcessor().processEdgeToEdge(edgeEvent);
             case DEVICE:
-                return ctx.getDeviceProcessor().processDeviceToEdge(edge, edgeEvent, msgType, action);
+                return ctx.getDeviceProcessor().processDeviceToEdge(edgeEvent);
             case DEVICE_PROFILE:
-                return ctx.getDeviceProfileProcessor().processDeviceProfileToEdge(edgeEvent, msgType, action);
+                return ctx.getDeviceProfileProcessor().processDeviceProfileToEdge(edgeEvent);
             case ASSET:
-                return ctx.getAssetProcessor().processAssetToEdge(edgeEvent, msgType, action);
+                return ctx.getAssetProcessor().processAssetToEdge(edgeEvent);
             case ENTITY_VIEW:
-                return ctx.getEntityViewProcessor().processEntityViewToEdge(edgeEvent, msgType, action);
+                return ctx.getEntityViewProcessor().processEntityViewToEdge(edgeEvent);
             case DASHBOARD:
-                return ctx.getDashboardProcessor().processDashboardToEdge(edgeEvent, msgType, action);
+                return ctx.getDashboardProcessor().processDashboardToEdge(edgeEvent);
             case CUSTOMER:
-                return ctx.getCustomerProcessor().processCustomerToEdge(edgeEvent, msgType, action);
+                return ctx.getCustomerProcessor().processCustomerToEdge(edgeEvent);
             case RULE_CHAIN:
-                return ctx.getRuleChainProcessor().processRuleChainToEdge(edge, edgeEvent, msgType, action);
+                return ctx.getRuleChainProcessor().processRuleChainToEdge(edge, edgeEvent);
             case RULE_CHAIN_METADATA:
-                return ctx.getRuleChainProcessor().processRuleChainMetadataToEdge(edgeEvent, msgType, this.edgeVersion);
+                return ctx.getRuleChainProcessor().processRuleChainMetadataToEdge(edgeEvent, this.edgeVersion);
             case ALARM:
-                return ctx.getAlarmProcessor().processAlarmToEdge(edge, edgeEvent, msgType, action);
+                return ctx.getAlarmProcessor().processAlarmToEdge(edgeEvent);
             case USER:
-                return ctx.getUserProcessor().processUserToEdge(edge, edgeEvent, msgType, action);
+                return ctx.getUserProcessor().processUserToEdge(edgeEvent);
             case RELATION:
-                return ctx.getRelationProcessor().processRelationToEdge(edgeEvent, msgType);
+                return ctx.getRelationProcessor().processRelationToEdge(edgeEvent);
             case WIDGETS_BUNDLE:
-                return ctx.getWidgetBundleProcessor().processWidgetsBundleToEdge(edgeEvent, msgType, action);
+                return ctx.getWidgetBundleProcessor().processWidgetsBundleToEdge(edgeEvent);
             case WIDGET_TYPE:
-                return ctx.getWidgetTypeProcessor().processWidgetTypeToEdge(edgeEvent, msgType, action);
+                return ctx.getWidgetTypeProcessor().processWidgetTypeToEdge(edgeEvent);
             case ADMIN_SETTINGS:
                 return ctx.getAdminSettingsProcessor().processAdminSettingsToEdge(edgeEvent);
             case OTA_PACKAGE:
-                return ctx.getOtaPackageEdgeProcessor().processOtaPackageToEdge(edgeEvent, msgType, action);
+                return ctx.getOtaPackageEdgeProcessor().processOtaPackageToEdge(edgeEvent);
             case QUEUE:
-                return ctx.getQueueEdgeProcessor().processQueueToEdge(edgeEvent, msgType, action);
+                return ctx.getQueueEdgeProcessor().processQueueToEdge(edgeEvent);
             default:
                 log.warn("Unsupported edge event type [{}]", edgeEvent);
                 return null;
-        }
-    }
-
-    private UpdateMsgType getResponseMsgType(EdgeEventActionType actionType) {
-        switch (actionType) {
-            case UPDATED:
-            case CREDENTIALS_UPDATED:
-            case ASSIGNED_TO_CUSTOMER:
-            case UNASSIGNED_FROM_CUSTOMER:
-                return UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE;
-            case ADDED:
-            case ASSIGNED_TO_EDGE:
-            case RELATION_ADD_OR_UPDATE:
-                return UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE;
-            case DELETED:
-            case UNASSIGNED_FROM_EDGE:
-            case RELATION_DELETED:
-                return UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE;
-            case ALARM_ACK:
-                return UpdateMsgType.ALARM_ACK_RPC_MESSAGE;
-            case ALARM_CLEAR:
-                return UpdateMsgType.ALARM_CLEAR_RPC_MESSAGE;
-            default:
-                throw new RuntimeException("Unsupported actionType [" + actionType + "]");
         }
     }
 

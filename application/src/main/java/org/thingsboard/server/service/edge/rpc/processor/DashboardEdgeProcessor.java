@@ -19,27 +19,22 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.EdgeUtils;
-import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.gen.edge.v1.DashboardUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
-import java.util.Collections;
-
 @Component
 @Slf4j
 @TbCoreComponent
 public class DashboardEdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg processDashboardToEdge(EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeEventActionType action) {
+    public DownlinkMsg processDashboardToEdge(EdgeEvent edgeEvent) {
         DashboardId dashboardId = new DashboardId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
-        switch (action) {
+        switch (edgeEvent.getAction()) {
             case ADDED:
             case UPDATED:
             case ASSIGNED_TO_EDGE:
@@ -47,6 +42,7 @@ public class DashboardEdgeProcessor extends BaseEdgeProcessor {
             case UNASSIGNED_FROM_CUSTOMER:
                 Dashboard dashboard = dashboardService.findDashboardById(edgeEvent.getTenantId(), dashboardId);
                 if (dashboard != null) {
+                    UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     DashboardUpdateMsg dashboardUpdateMsg =
                             dashboardMsgConstructor.constructDashboardUpdatedMsg(msgType, dashboard);
                     downlinkMsg = DownlinkMsg.newBuilder()

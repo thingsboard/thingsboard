@@ -25,7 +25,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EdgeUtils;
@@ -53,7 +52,6 @@ import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.gen.edge.v1.DeviceCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceRpcCallMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
@@ -358,11 +356,10 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
         return futureToSet;
     }
 
-    public DownlinkMsg processDeviceToEdge(Edge edge, EdgeEvent edgeEvent,
-                                           UpdateMsgType msgType, EdgeEventActionType edgeEdgeEventActionType) {
+    public DownlinkMsg processDeviceToEdge(EdgeEvent edgeEvent) {
         DeviceId deviceId = new DeviceId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
-        switch (edgeEdgeEventActionType) {
+        switch (edgeEvent.getAction()) {
             case ADDED:
             case UPDATED:
             case ASSIGNED_TO_EDGE:
@@ -370,6 +367,7 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
             case UNASSIGNED_FROM_CUSTOMER:
                 Device device = deviceService.findDeviceById(edgeEvent.getTenantId(), deviceId);
                 if (device != null) {
+                    UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     DeviceUpdateMsg deviceUpdateMsg =
                             deviceMsgConstructor.constructDeviceUpdatedMsg(msgType, device, null);
                     downlinkMsg = DownlinkMsg.newBuilder()
@@ -388,7 +386,7 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                         .build();
                 break;
             case CREDENTIALS_UPDATED:
-                DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(edge.getTenantId(), deviceId);
+                DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(edgeEvent.getTenantId(), deviceId);
                 if (deviceCredentials != null) {
                     DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg =
                             deviceMsgConstructor.constructDeviceCredentialsUpdatedMsg(deviceCredentials);

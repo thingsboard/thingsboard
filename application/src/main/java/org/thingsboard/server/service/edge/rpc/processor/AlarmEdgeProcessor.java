@@ -26,7 +26,6 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
-import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
@@ -117,10 +116,11 @@ public class AlarmEdgeProcessor extends BaseEdgeProcessor {
         }
     }
 
-    public DownlinkMsg processAlarmToEdge(Edge edge, EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeEventActionType action) {
+    public DownlinkMsg processAlarmToEdge(EdgeEvent edgeEvent) {
         AlarmId alarmId = new AlarmId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
-        switch (action) {
+        UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
+        switch (edgeEvent.getAction()) {
             case ADDED:
             case UPDATED:
             case ALARM_ACK:
@@ -130,7 +130,7 @@ public class AlarmEdgeProcessor extends BaseEdgeProcessor {
                     if (alarm != null) {
                         downlinkMsg = DownlinkMsg.newBuilder()
                                 .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                                .addAlarmUpdateMsg(alarmMsgConstructor.constructAlarmUpdatedMsg(edge.getTenantId(), msgType, alarm))
+                                .addAlarmUpdateMsg(alarmMsgConstructor.constructAlarmUpdatedMsg(edgeEvent.getTenantId(), msgType, alarm))
                                 .build();
                     }
                 } catch (Exception e) {
@@ -140,7 +140,7 @@ public class AlarmEdgeProcessor extends BaseEdgeProcessor {
             case DELETED:
                 Alarm alarm = JacksonUtil.OBJECT_MAPPER.convertValue(edgeEvent.getBody(), Alarm.class);
                 AlarmUpdateMsg alarmUpdateMsg =
-                        alarmMsgConstructor.constructAlarmUpdatedMsg(edge.getTenantId(), msgType, alarm);
+                        alarmMsgConstructor.constructAlarmUpdatedMsg(edgeEvent.getTenantId(), msgType, alarm);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addAlarmUpdateMsg(alarmUpdateMsg)

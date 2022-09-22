@@ -20,7 +20,6 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.EntityViewUpdateMsg;
@@ -32,10 +31,10 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 @TbCoreComponent
 public class EntityViewEdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg processEntityViewToEdge(EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeEventActionType action) {
+    public DownlinkMsg processEntityViewToEdge(EdgeEvent edgeEvent) {
         EntityViewId entityViewId = new EntityViewId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
-        switch (action) {
+        switch (edgeEvent.getAction()) {
             case ADDED:
             case UPDATED:
             case ASSIGNED_TO_EDGE:
@@ -43,6 +42,7 @@ public class EntityViewEdgeProcessor extends BaseEdgeProcessor {
             case UNASSIGNED_FROM_CUSTOMER:
                 EntityView entityView = entityViewService.findEntityViewById(edgeEvent.getTenantId(), entityViewId);
                 if (entityView != null) {
+                    UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     EntityViewUpdateMsg entityViewUpdateMsg =
                             entityViewMsgConstructor.constructEntityViewUpdatedMsg(msgType, entityView);
                     downlinkMsg = DownlinkMsg.newBuilder()

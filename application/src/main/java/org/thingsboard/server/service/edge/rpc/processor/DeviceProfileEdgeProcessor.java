@@ -20,7 +20,6 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
@@ -32,14 +31,15 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 @TbCoreComponent
 public class DeviceProfileEdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg processDeviceProfileToEdge(EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeEventActionType action) {
+    public DownlinkMsg processDeviceProfileToEdge(EdgeEvent edgeEvent) {
         DeviceProfileId deviceProfileId = new DeviceProfileId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
-        switch (action) {
+        switch (edgeEvent.getAction()) {
             case ADDED:
             case UPDATED:
                 DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileById(edgeEvent.getTenantId(), deviceProfileId);
                 if (deviceProfile != null) {
+                    UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     DeviceProfileUpdateMsg deviceProfileUpdateMsg =
                             deviceProfileMsgConstructor.constructDeviceProfileUpdatedMsg(msgType, deviceProfile);
                     downlinkMsg = DownlinkMsg.newBuilder()
