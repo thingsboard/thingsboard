@@ -31,7 +31,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 
 public class EntitiesTenantIdAsyncLoader {
-
+    // TODO: consider to remove since tenantId is already defined in the TbContext.
     public static ListenableFuture<TenantId> findEntityIdAsync(TbContext ctx, EntityId original) {
 
         switch (original.getEntityType()) {

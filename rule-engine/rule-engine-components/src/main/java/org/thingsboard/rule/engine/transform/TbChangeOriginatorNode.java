@@ -85,7 +85,7 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode {
             case CUSTOMER_SOURCE:
                 return EntitiesCustomerIdAsyncLoader.findEntityIdAsync(ctx, msg.getOriginator());
             case TENANT_SOURCE:
-                return EntitiesTenantIdAsyncLoader.findEntityIdAsync(ctx, msg.getOriginator());
+                return Futures.immediateFuture(ctx.getTenantId());
             case RELATED_SOURCE:
                 return EntitiesRelatedEntityIdAsyncLoader.findEntityAsync(ctx, msg.getOriginator(), config.getRelationsQuery());
             case ALARM_ORIGINATOR_SOURCE:
