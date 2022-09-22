@@ -88,10 +88,10 @@ public class TbCheckRelationNode implements TbNode {
     private ListenableFuture<Boolean> processList(TbContext ctx, TbMsg msg) {
         if (EntitySearchDirection.FROM.name().equals(config.getDirection())) {
             return Futures.transformAsync(ctx.getRelationService()
-                    .findByFromAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), config.getRelationType(), RelationTypeGroup.COMMON), this::isEmptyList, MoreExecutors.directExecutor());
+                    .findByFromAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), config.getRelationType(), RelationTypeGroup.COMMON), this::isEmptyList, ctx.getDbCallbackExecutor());
         } else {
             return Futures.transformAsync(ctx.getRelationService()
-                    .findByToAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), config.getRelationType(), RelationTypeGroup.COMMON), this::isEmptyList, MoreExecutors.directExecutor());
+                    .findByToAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), config.getRelationType(), RelationTypeGroup.COMMON), this::isEmptyList, ctx.getDbCallbackExecutor());
         }
     }
 
