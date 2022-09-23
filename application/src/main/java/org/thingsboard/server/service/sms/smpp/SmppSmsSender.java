@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.sms.smpp;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.smpp.Connection;
 import org.smpp.Data;
@@ -34,6 +33,7 @@ import org.smpp.pdu.PDUException;
 import org.smpp.pdu.SubmitSM;
 import org.smpp.pdu.SubmitSMResp;
 import org.thingsboard.rule.engine.api.sms.exception.SmsException;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.sms.config.SmppSmsProviderConfiguration;
 import org.thingsboard.server.service.sms.AbstractSmsSender;
 

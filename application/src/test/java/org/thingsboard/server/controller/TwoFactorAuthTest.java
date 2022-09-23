@@ -17,8 +17,6 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.jboss.aerogear.security.otp.Totp;
 import org.junit.After;
 import org.junit.Before;
@@ -28,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.thingsboard.rule.engine.api.SmsService;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -178,7 +177,7 @@ public abstract class TwoFactorAuthTest extends AbstractControllerTest {
 
         logInWithPreVerificationToken(username, password);
 
-        Stream.generate(() -> RandomStringUtils.randomNumeric(6))
+        Stream.generate(() -> StringUtils.randomNumeric(6))
                 .limit(9)
                 .forEach(incorrectVerificationCode -> {
                     try {
@@ -190,11 +189,11 @@ public abstract class TwoFactorAuthTest extends AbstractControllerTest {
                     }
                 });
 
-        String errorMessage = getErrorMessage(doPost("/api/auth/2fa/verification/check?providerType=TOTP&verificationCode=" + RandomStringUtils.randomNumeric(6))
+        String errorMessage = getErrorMessage(doPost("/api/auth/2fa/verification/check?providerType=TOTP&verificationCode=" + StringUtils.randomNumeric(6))
                 .andExpect(status().isUnauthorized()));
         assertThat(errorMessage).containsIgnoringCase("account was locked due to exceeded 2fa verification attempts");
 
-        errorMessage = getErrorMessage(doPost("/api/auth/2fa/verification/check?providerType=TOTP&verificationCode=" + RandomStringUtils.randomNumeric(6))
+        errorMessage = getErrorMessage(doPost("/api/auth/2fa/verification/check?providerType=TOTP&verificationCode=" + StringUtils.randomNumeric(6))
                 .andExpect(status().isUnauthorized()));
         assertThat(errorMessage).containsIgnoringCase("user is disabled");
     }

@@ -144,7 +144,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractControllerTes
                     "    \"attributeLwm2m\": {}\n" +
                     "  }";
 
-    protected final String OBSERVE_ATTRIBUTES_WITH_PARAMS =
+    public static final String OBSERVE_ATTRIBUTES_WITH_PARAMS =
 
             "    {\n" +
                     "    \"keyName\": {\n" +
@@ -159,7 +159,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractControllerTes
                     "    \"attributeLwm2m\": {}\n" +
                     "  }";
 
-    protected final String CLIENT_LWM2M_SETTINGS =
+    public static final String CLIENT_LWM2M_SETTINGS =
             "     {\n" +
                     "    \"edrxCycle\": null,\n" +
                     "    \"powerMode\": \"DRX\",\n" +

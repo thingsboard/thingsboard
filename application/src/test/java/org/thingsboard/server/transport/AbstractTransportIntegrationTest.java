@@ -33,7 +33,7 @@ public abstract class AbstractTransportIntegrationTest extends AbstractControlle
 
     protected static final AtomicInteger atomicInteger = new AtomicInteger(2);
 
-    protected static final String DEVICE_TELEMETRY_PROTO_SCHEMA = "syntax =\"proto3\";\n" +
+    public static final String DEVICE_TELEMETRY_PROTO_SCHEMA = "syntax =\"proto3\";\n" +
             "\n" +
             "package test;\n" +
             "\n" +
@@ -54,7 +54,7 @@ public abstract class AbstractTransportIntegrationTest extends AbstractControlle
             "  }\n" +
             "}";
 
-    protected static final String DEVICE_ATTRIBUTES_PROTO_SCHEMA = "syntax =\"proto3\";\n" +
+    public static final String DEVICE_ATTRIBUTES_PROTO_SCHEMA = "syntax =\"proto3\";\n" +
             "\n" +
             "package test;\n" +
             "\n" +
@@ -75,14 +75,14 @@ public abstract class AbstractTransportIntegrationTest extends AbstractControlle
             "  }\n" +
             "}";
 
-    protected static final String DEVICE_RPC_RESPONSE_PROTO_SCHEMA = "syntax =\"proto3\";\n" +
+    public static final String DEVICE_RPC_RESPONSE_PROTO_SCHEMA = "syntax =\"proto3\";\n" +
             "package rpc;\n" +
             "\n" +
             "message RpcResponseMsg {\n" +
             "  optional string payload = 1;\n" +
             "}";
 
-    protected static final String DEVICE_RPC_REQUEST_PROTO_SCHEMA = "syntax =\"proto3\";\n" +
+    public static final String DEVICE_RPC_REQUEST_PROTO_SCHEMA = "syntax =\"proto3\";\n" +
             "package rpc;\n" +
             "\n" +
             "message RpcRequestMsg {\n" +

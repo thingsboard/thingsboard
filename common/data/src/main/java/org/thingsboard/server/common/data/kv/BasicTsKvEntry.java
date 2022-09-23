@@ -20,7 +20,7 @@ import java.util.Optional;
 
 public class BasicTsKvEntry implements TsKvEntry {
     private static final int MAX_CHARS_PER_DATA_POINT = 512;
-    private final long ts;
+    protected final long ts;
     private final KvEntry kv;
 
     public BasicTsKvEntry(long ts, KvEntry kv) {

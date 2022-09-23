@@ -21,6 +21,8 @@ import org.thingsboard.server.common.data.CoapDeviceType;
 @Data
 public class DefaultCoapDeviceTypeConfiguration implements CoapDeviceTypeConfiguration {
 
+    private static final long serialVersionUID = -4287100699186773773L;
+
     private TransportPayloadTypeConfiguration transportPayloadTypeConfiguration;
 
     @Override
