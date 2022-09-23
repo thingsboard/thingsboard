@@ -104,9 +104,4 @@ public class TbCopyKeysNode implements TbNode {
     boolean checkKey(String key) {
         return patternKeys.stream().anyMatch(pattern -> pattern.matcher(key).matches());
     }
-
-    @Override
-    public void destroy() {
-
-    }
 }
