@@ -353,7 +353,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
                             ? EntitySearchDirection.TO : EntitySearchDirection.FROM;
                     configNode.put("tbCheckRelationNodeV2", true);
                     configNode.put("direction", direction.name());
-                    ruleNode.setConfiguration(JacksonUtil.valueToTree(configNode));
+                    ruleNode.setConfiguration(configNode);
                     ruleChainService.saveRuleNode(tenantId, ruleNode);
                 }
             }
