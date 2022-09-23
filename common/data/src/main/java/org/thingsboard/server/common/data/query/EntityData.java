@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.query;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -32,5 +33,15 @@ public class EntityData {
 
     public EntityData(EntityId entityId, Map<EntityKeyType, Map<String, TsValue>> latest, Map<String, TsValue[]> timeseries) {
         this(entityId, latest, timeseries, null);
+    }
+
+    @JsonIgnore
+    public void clearTsAndAggData() {
+        if (timeseries != null) {
+            timeseries.clear();
+        }
+        if (aggLatest != null) {
+            aggLatest.clear();
+        }
     }
 }

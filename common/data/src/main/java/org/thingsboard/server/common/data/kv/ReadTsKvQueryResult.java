@@ -42,9 +42,14 @@ public class ReadTsKvQueryResult {
         }
     }
 
-    public TsValue toTsValue() {
+    public TsValue toTsValue(ReadTsKvQuery query) {
         if (data == null || data.isEmpty()) {
-            return TsValue.EMPTY;
+            if (Aggregation.SUM.equals(query.getAggregation()) || Aggregation.COUNT.equals(query.getAggregation())) {
+                long ts = query.getStartTs() + (query.getEndTs() - query.getStartTs()) / 2;
+                return new TsValue(ts, "0");
+            } else {
+                return TsValue.EMPTY;
+            }
         }
         if (data.size() > 1) {
             throw new RuntimeException("Query Result has multiple data points!");

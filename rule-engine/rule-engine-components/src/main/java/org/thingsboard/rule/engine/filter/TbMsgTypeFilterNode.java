@@ -52,8 +52,4 @@ public class TbMsgTypeFilterNode implements TbNode {
         ctx.tellNext(msg, config.getMessageTypes().contains(msg.getType()) ? "True" : "False");
     }
 
-    @Override
-    public void destroy() {
-
-    }
 }

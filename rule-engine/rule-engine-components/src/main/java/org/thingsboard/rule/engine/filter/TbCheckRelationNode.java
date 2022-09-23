@@ -103,8 +103,4 @@ public class TbCheckRelationNode implements TbNode {
         }
     }
 
-    @Override
-    public void destroy() {
-
-    }
 }
