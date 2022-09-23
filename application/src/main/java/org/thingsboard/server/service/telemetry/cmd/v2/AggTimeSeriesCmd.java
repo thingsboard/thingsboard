@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.event;
+package org.thingsboard.server.service.telemetry.cmd.v2;
 
-import io.swagger.annotations.ApiModel;
+import lombok.Data;
 
-@ApiModel
-public class DebugRuleNodeEventFilter extends DebugEvent {
-    @Override
-    public EventType getEventType() {
-        return EventType.DEBUG_RULE_NODE;
-    }
+import java.util.List;
+
+@Data
+public class AggTimeSeriesCmd {
+
+    private List<AggKey> keys;
+    private long startTs;
+    private long timeWindow;
+
 }

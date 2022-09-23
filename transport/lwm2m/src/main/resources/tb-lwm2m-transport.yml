@@ -129,7 +129,7 @@ transport:
             key_password: "${LWM2M_SERVER_PEM_KEY_PASSWORD:server_key_password}"
           # Keystore server credentials
           keystore:
-            # Type of the key store
+            # Type of the key store (JKS or PKCS12)
             type: "${LWM2M_SERVER_KEY_STORE_TYPE:JKS}"
             # Path to the key store that holds the SSL certificate
             store_file: "${LWM2M_SERVER_KEY_STORE:lwm2mserver.jks}"
@@ -165,7 +165,7 @@ transport:
             key_password: "${LWM2M_BS_PEM_KEY_PASSWORD:server_key_password}"
           # Keystore server credentials
           keystore:
-            # Type of the key store
+            # Type of the key store (JKS or PKCS12)
             type: "${LWM2M_BS_KEY_STORE_TYPE:JKS}"
             # Path to the key store that holds the SSL certificate
             store_file: "${LWM2M_BS_KEY_STORE:lwm2mserver.jks}"
@@ -188,7 +188,7 @@ transport:
           cert_file: "${LWM2M_TRUST_PEM_CERT:lwm2mtruststorechain.pem}"
         # Keystore with trust certificates
         keystore:
-          # Type of the key store
+          # Type of the key store (JKS or PKCS12)
           type: "${LWM2M_TRUST_KEY_STORE_TYPE:JKS}"
           # Path to the key store that holds the X509 certificates
           store_file: "${LWM2M_TRUST_KEY_STORE:lwm2mtruststorechain.jks}"
@@ -288,7 +288,6 @@ queue:
       notifications: "${TB_QUEUE_RABBIT_MQ_NOTIFICATIONS_QUEUE_PROPERTIES:x-max-length-bytes:1048576000;x-message-ttl:604800000}"
   partitions:
     hash_function_name: "${TB_QUEUE_PARTITIONS_HASH_FUNCTION_NAME:murmur3_128}"
-    virtual_nodes_size: "${TB_QUEUE_PARTITIONS_VIRTUAL_NODES_SIZE:16}"
   transport_api:
     requests_topic: "${TB_QUEUE_TRANSPORT_API_REQUEST_TOPIC:tb_transport.api.requests}"
     responses_topic: "${TB_QUEUE_TRANSPORT_API_RESPONSE_TOPIC:tb_transport.api.responses}"

@@ -75,7 +75,7 @@ export class EventFilterPanelComponent {
   }
 
   isNumberFields(key: string): string {
-    return ['messagesProcessed', 'errorsOccurred'].includes(key) ? key : '';
+    return ['minMessagesProcessed', 'maxMessagesProcessed', 'minErrorsOccurred', 'maxErrorsOccurred'].includes(key) ? key : '';
   }
 
   selectorValues(key: string): string[] {

@@ -63,7 +63,4 @@ public class TbRuleChainInputNode implements TbNode {
         ctx.input(msg, ruleChainId);
     }
 
-    @Override
-    public void destroy() {
-    }
 }

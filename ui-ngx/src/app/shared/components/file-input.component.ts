@@ -188,20 +188,18 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
         let fileName = null;
         let fileContent = null;
         let files = null;
-        if (typeof reader.result === 'string') {
-          fileContent = reader.result;
-          if (fileContent && fileContent.length > 0) {
-            if (!this.workFromFileObj) {
+        if (reader.readyState === reader.DONE) {
+          if (!this.workFromFileObj) {
+            fileContent = reader.result;
+            if (fileContent && fileContent.length > 0) {
               if (this.contentConvertFunction) {
                 fileContent = this.contentConvertFunction(fileContent);
               }
-              if (fileContent) {
-                fileName = file.name;
-              }
-            } else {
-              files = file.file;
-              fileName = file.name;
+              fileName = fileContent ? file.name : null;
             }
+          } else if (file.name || file.file){
+            files = file.file;
+            fileName = file.name;
           }
         }
         resolve({fileContent, fileName, files});

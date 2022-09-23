@@ -2036,29 +2036,7 @@
     "value": "价值"
   },
   "language": {
-    "language": "语言",
-    "locales": {
-      "cs_CZ": "Česky",
-      "de_DE": "Deutsch",
-      "el_GR": "Ελληνικά",
-      "en_US": "English",
-      "es_ES": "Español",
-      "fa_IR": "فارسي",
-      "fr_FR": "Français",
-      "it_IT": "Italiano",
-      "ja_JA": "日本語",
-      "ka_GE": "ქართული",
-      "ko_KR": "한글",
-      "lv_LV": "Latviešu",
-      "pt_BR": "Português do Brasil",
-      "ro_RO": "Română",
-      "ru_RU": "Русский",
-      "sl_SI": "Slovenščina",
-      "tr_TR": "Türkçe",
-      "uk_UA": "Українська",
-      "zh_CN": "简体中文",
-      "zh_TW": "繁體中文"
-    }
+    "language": "语言"
   },
   "layout": {
     "color": "颜色",
