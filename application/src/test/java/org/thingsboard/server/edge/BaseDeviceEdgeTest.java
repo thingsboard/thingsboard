@@ -146,7 +146,6 @@ abstract public class BaseDeviceEdgeTest extends AbstractEdgeTest {
 
     }
 
-
     @Test
     public void testUpdateDeviceCredentials() throws Exception {
         // create device and assign to edge; update device
@@ -266,7 +265,6 @@ abstract public class BaseDeviceEdgeTest extends AbstractEdgeTest {
         Assert.assertTrue(edgeImitator.waitForResponses());
     }
 
-
     @Test
     public void testSendDeviceCredentialsRequestToCloud() throws Exception {
         Device device = findDeviceByName("Edge Device 1");
@@ -305,7 +303,6 @@ abstract public class BaseDeviceEdgeTest extends AbstractEdgeTest {
         sendAttributesRequestAndVerify(device, DataConstants.SHARED_SCOPE, "{\"key2\":\"value2\"}",
                 "key2", "value2");
     }
-
 
     @Test
     public void testSendDeleteDeviceOnEdgeToCloud() throws Exception {
@@ -487,7 +484,6 @@ abstract public class BaseDeviceEdgeTest extends AbstractEdgeTest {
         Assert.assertNotNull(device);
         Assert.assertEquals("Edge Device 2", device.getName());
     }
-
 
     @Test
     public void testRpcCall() throws Exception {
