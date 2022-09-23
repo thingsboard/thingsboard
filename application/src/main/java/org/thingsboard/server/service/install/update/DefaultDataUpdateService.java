@@ -26,9 +26,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.data.RelationsQuery;
 import org.thingsboard.rule.engine.filter.TbCheckRelationNode;
-import org.thingsboard.rule.engine.filter.TbCheckRelationNodeConfiguration;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNode;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNode;
@@ -61,7 +59,6 @@ import org.thingsboard.server.common.data.queue.SubmitStrategy;
 import org.thingsboard.server.common.data.queue.SubmitStrategyType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
-import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
@@ -343,19 +340,22 @@ public class DefaultDataUpdateService implements DataUpdateService {
         PageDataIterable<RuleNode> ruleNodesIterator = new PageDataIterable<>(
                 link -> ruleChainService.findAllRuleNodesByType(TbCheckRelationNode.class.getName(), link), 1024);
         ruleNodesIterator.forEach(ruleNode -> {
-            TbCheckRelationNodeConfiguration configNode = JacksonUtil.convertValue(ruleNode.getConfiguration(), TbCheckRelationNodeConfiguration.class);
-            RuleChain targetRuleChain = ruleChainService.findRuleChainById(TenantId.SYS_TENANT_ID, ruleNode.getRuleChainId());
-            if (targetRuleChain != null) {
-                TenantId tenantId = targetRuleChain.getTenantId();
-                String directionStr = configNode.getDirection();
-                if (StringUtils.isEmpty(directionStr)) {
-                    directionStr = EntitySearchDirection.TO.name();
+            ObjectNode configNode = (ObjectNode) ruleNode.getConfiguration();
+            if (!configNode.has("tbCheckRelationNodeV2")) {
+                RuleChain targetRuleChain = ruleChainService.findRuleChainById(TenantId.SYS_TENANT_ID, ruleNode.getRuleChainId());
+                if (targetRuleChain != null) {
+                    TenantId tenantId = targetRuleChain.getTenantId();
+                    String directionStr = configNode.get("direction").asText();
+                    if (StringUtils.isEmpty(directionStr)) {
+                        directionStr = EntitySearchDirection.TO.name();
+                    }
+                    EntitySearchDirection direction = directionStr.equals(EntitySearchDirection.FROM.name())
+                            ? EntitySearchDirection.TO : EntitySearchDirection.FROM;
+                    configNode.put("tbCheckRelationNodeV2", true);
+                    configNode.put("direction", direction.name());
+                    ruleNode.setConfiguration(JacksonUtil.valueToTree(configNode));
+                    ruleChainService.saveRuleNode(tenantId, ruleNode);
                 }
-                EntitySearchDirection direction = directionStr.equals(EntitySearchDirection.FROM.name())
-                        ? EntitySearchDirection.TO : EntitySearchDirection.FROM;
-                configNode.setDirection(direction.name());
-                ruleNode.setConfiguration(JacksonUtil.valueToTree(configNode));
-                ruleChainService.saveRuleNode(tenantId, ruleNode);
             }
         });
     }

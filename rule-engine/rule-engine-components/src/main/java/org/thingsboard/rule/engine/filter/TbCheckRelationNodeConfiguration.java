@@ -30,6 +30,7 @@ public class TbCheckRelationNodeConfiguration implements NodeConfiguration<TbChe
     private String entityType;
     private String relationType;
     private boolean checkForSingleEntity;
+    private boolean tbCheckRelationNodeV2;
 
     @Override
     public TbCheckRelationNodeConfiguration defaultConfiguration() {
@@ -37,6 +38,7 @@ public class TbCheckRelationNodeConfiguration implements NodeConfiguration<TbChe
         configuration.setDirection(EntitySearchDirection.FROM.name());
         configuration.setRelationType("Contains");
         configuration.setCheckForSingleEntity(true);
+        configuration.setTbCheckRelationNodeV2(true);
         return configuration;
     }
 }
