@@ -70,9 +70,4 @@ public class TbSplitArrayMsgNode implements TbNode {
             ctx.tellFailure(msg, new RuntimeException("Msg data is not a JSON Array!"));
         }
     }
-
-    @Override
-    public void destroy() {
-
-    }
 }
