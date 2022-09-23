@@ -13,15 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap;
+:host {
+  padding: 12px 0 12px 0;
 
-import lombok.Data;
+  .fieldset-element {
+    cursor: pointer;
+    padding: 0.5em;
+    border: 1px groove rgba(0, 0, 0, 0.25);
+    border-radius: 4px;
+    width: 100%;
 
-import java.util.List;
+    .legend-element {
+      color: rgba(0, 0, 0, 0.54);
+      font-size: 12px;
+    }
+  }
 
-@Data
-public class LwM2MBootstrapServersConfiguration {
-
-    List<LwM2MBootstrapServerCredential> bootstrap;
-
+  .tb-rate-limits-button {
+    margin-top: 0.5em;
+  }
 }

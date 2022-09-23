@@ -18,7 +18,7 @@
 <section class="tb-widget-settings" [formGroup]="digitalGaugeWidgetSettingsForm" fxLayout="column">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.gauge.common-settings</legend>
-    <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+    <section class="row-fill" fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
       <mat-form-field fxFlex class="mat-block">
         <mat-label translate>widgets.gauge.min-value</mat-label>
         <input matInput type="number" formControlName="minValue">
@@ -65,7 +65,7 @@
       <mat-label translate>widgets.gauge.neon-glow-brightness</mat-label>
       <input matInput type="number" min="0" max="100" formControlName="neonGlowBrightness">
     </mat-form-field>
-    <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
       <mat-form-field fxFlex class="mat-block">
         <mat-label translate>widgets.gauge.stripes-thickness</mat-label>
         <input matInput type="number" min="0" formControlName="dashThickness">

@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.service;
 
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,13 +25,13 @@ import org.springframework.cache.CacheManager;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceCredentialsId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.device.DeviceCredentialsDao;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
-import org.thingsboard.server.dao.device.DeviceDao;
 import org.thingsboard.server.dao.device.DeviceService;
 
 import java.util.UUID;
@@ -44,8 +43,8 @@ import static org.mockito.Mockito.when;
 
 public abstract class BaseDeviceCredentialsCacheTest extends AbstractServiceTest {
 
-    private static final String CREDENTIALS_ID_1 = RandomStringUtils.randomAlphanumeric(20);
-    private static final String CREDENTIALS_ID_2 = RandomStringUtils.randomAlphanumeric(20);
+    private static final String CREDENTIALS_ID_1 = StringUtils.randomAlphanumeric(20);
+    private static final String CREDENTIALS_ID_2 = StringUtils.randomAlphanumeric(20);
 
     @Autowired
     private DeviceCredentialsService deviceCredentialsService;

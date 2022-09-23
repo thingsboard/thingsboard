@@ -242,8 +242,7 @@ export class ImageMap extends LeafletMap {
           zoomControl: !this.options.disableZoomControl,
           zoom: 1,
           crs: L.CRS.Simple,
-          attributionControl: false,
-          tap: L.Browser.safari && L.Browser.mobile
+          attributionControl: false
         });
         this.updateBounds(updateImage);
       }
@@ -354,7 +353,7 @@ export class ImageMap extends LeafletMap {
     }
 
     convertToCircleFormat(circle: CircleData, width = this.width, height = this.height): CircleData {
-      const centerPoint = this.pointToLatLng(circle.longitude * width, circle.latitude * height);
+      const centerPoint = this.pointToLatLng(circle.latitude * width, circle.longitude * height);
       circle.latitude = centerPoint.lat;
       circle.longitude = centerPoint.lng;
       circle.radius = circle.radius * width;
