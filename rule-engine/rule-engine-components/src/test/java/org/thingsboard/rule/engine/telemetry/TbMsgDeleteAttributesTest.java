@@ -111,8 +111,7 @@ public class TbMsgDeleteAttributesTest {
         TbMsg msg = TbMsg.newMsg("POST_ATTRIBUTES_REQUEST", deviceId, metaData, data, callback);
         node.onMsg(ctx, msg);
 
-        ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx, times(1)).tellSuccess(newMsgCaptor.capture());
+        verify(ctx, times(1)).attributeDeleteActionMsg(any(), any(), anyString(), anyList());
         verify(ctx, never()).tellFailure(any(), any());
         verify(telemetryService, times(1)).deleteAndNotify(any(), any(), anyString(), anyList(), any());
     }
