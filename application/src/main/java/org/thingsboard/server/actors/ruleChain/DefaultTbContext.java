@@ -17,8 +17,11 @@ package org.thingsboard.server.actors.ruleChain;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.netty.channel.EventLoopGroup;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
@@ -49,6 +52,9 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.DataType;
+import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleNode;
@@ -84,6 +90,7 @@ import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -360,6 +367,57 @@ class DefaultTbContext implements TbContext {
         return entityActionMsg(alarm, alarm.getId(), ruleNodeId, action, queueName, ruleChainId);
     }
 
+    public TbMsg attributeUpdateActionMsg(EntityId originator, RuleNodeId ruleNodeId, String scope, List<AttributeKvEntry> attributes) {
+        ObjectNode entityNode = JacksonUtil.newObjectNode();
+        if (attributes != null) {
+            attributes.forEach(attributeKvEntry -> addKvEntry(entityNode, attributeKvEntry));
+        }
+        return attributeActionMsg(originator, ruleNodeId, scope, DataConstants.ATTRIBUTES_UPDATED, JacksonUtil.toString(entityNode));
+    }
+
+    public TbMsg attributeDeleteActionMsg(EntityId originator, RuleNodeId ruleNodeId, String scope, List<String> keys) {
+        ObjectNode entityNode = JacksonUtil.newObjectNode();
+        ArrayNode attrsArrayNode = entityNode.putArray("attributes");
+        if (keys != null) {
+            keys.forEach(attrsArrayNode::add);
+        }
+        return attributeActionMsg(originator, ruleNodeId, scope, DataConstants.ATTRIBUTES_DELETED, JacksonUtil.toString(entityNode));
+    }
+
+    private TbMsg attributeActionMsg(EntityId originator, RuleNodeId ruleNodeId, String scope, String action, String msgData) {
+        RuleChainId ruleChainId = null;
+        String queueName = null;
+        if (EntityType.DEVICE.equals(originator.getEntityType())) {
+            DeviceId deviceId = new DeviceId(originator.getId());
+            DeviceProfile deviceProfile = mainCtx.getDeviceProfileCache().get(getTenantId(), deviceId);
+            if (deviceProfile == null) {
+                log.warn("[{}] Device profile is null!", deviceId);
+            } else {
+                ruleChainId = deviceProfile.getDefaultRuleChainId();
+                queueName = deviceProfile.getDefaultQueueName();
+            }
+        }
+        TbMsgMetaData tbMsgMetaData = getActionMetaData(ruleNodeId);
+        tbMsgMetaData.putValue("scope", scope);
+        return entityActionMsg(originator, tbMsgMetaData, msgData, action, queueName, ruleChainId);
+    }
+
+    private void addKvEntry(ObjectNode entityNode, KvEntry kvEntry) {
+        if (kvEntry.getDataType() == DataType.BOOLEAN) {
+            kvEntry.getBooleanValue().ifPresent(value -> entityNode.put(kvEntry.getKey(), value));
+        } else if (kvEntry.getDataType() == DataType.DOUBLE) {
+            kvEntry.getDoubleValue().ifPresent(value -> entityNode.put(kvEntry.getKey(), value));
+        } else if (kvEntry.getDataType() == DataType.LONG) {
+            kvEntry.getLongValue().ifPresent(value -> entityNode.put(kvEntry.getKey(), value));
+        } else if (kvEntry.getDataType() == DataType.JSON) {
+            if (kvEntry.getJsonValue().isPresent()) {
+                entityNode.set(kvEntry.getKey(), JacksonUtil.valueToTree(kvEntry.getJsonValue().get()));
+            }
+        } else {
+            entityNode.put(kvEntry.getKey(), kvEntry.getValueAsString());
+        }
+    }
+
     @Override
     public void onEdgeEventUpdate(TenantId tenantId, EdgeId edgeId) {
         mainCtx.getClusterService().onEdgeEventUpdate(tenantId, edgeId);
@@ -371,10 +429,14 @@ class DefaultTbContext implements TbContext {
 
     public <E, I extends EntityId> TbMsg entityActionMsg(E entity, I id, RuleNodeId ruleNodeId, String action, String queueName, RuleChainId ruleChainId) {
         try {
-            return TbMsg.newMsg(queueName, action, id, getActionMetaData(ruleNodeId), mapper.writeValueAsString(mapper.valueToTree(entity)), ruleChainId, null);
+            return entityActionMsg(id, getActionMetaData(ruleNodeId), mapper.writeValueAsString(mapper.valueToTree(entity)), action, queueName, ruleChainId);
         } catch (JsonProcessingException | IllegalArgumentException e) {
             throw new RuntimeException("Failed to process " + id.getEntityType().name().toLowerCase() + " " + action + " msg: " + e);
         }
+    }
+
+    public <I extends EntityId> TbMsg entityActionMsg(I id, TbMsgMetaData msgMetaData, String msgData, String action, String queueName, RuleChainId ruleChainId) {
+        return TbMsg.newMsg(queueName, action, id, msgMetaData, msgData, ruleChainId, null);
     }
 
     @Override

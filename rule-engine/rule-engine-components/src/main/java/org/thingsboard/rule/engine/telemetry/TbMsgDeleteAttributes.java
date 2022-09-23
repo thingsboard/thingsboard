@@ -45,11 +45,13 @@ import java.util.stream.Collectors;
 public class TbMsgDeleteAttributes implements TbNode {
 
     TbMsgDeleteAttributesConfiguration config;
+    String scope;
     List<String> keys;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgDeleteAttributesConfiguration.class);
+        this.scope = config.getScope();
         this.keys = config.getKeys();
     }
 
@@ -63,12 +65,7 @@ public class TbMsgDeleteAttributes implements TbNode {
         if (keysToDelete.isEmpty()) {
             ctx.tellSuccess(msg);
         } else {
-            ctx.getTelemetryService().deleteAndNotify(ctx.getTenantId(), msg.getOriginator(), config.getScope(), keysToDelete, new TelemetryNodeCallback(ctx, msg));
+            ctx.getTelemetryService().deleteAndNotify(ctx.getTenantId(), msg.getOriginator(), scope, keysToDelete, new AttributeDeleteNodeCallback(ctx, msg, scope, keys));
         }
-    }
-
-    @Override
-    public void destroy() {
-
     }
 }
