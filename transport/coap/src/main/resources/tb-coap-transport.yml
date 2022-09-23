@@ -115,7 +115,7 @@ transport:
           key_password: "${COAP_DTLS_PEM_KEY_PASSWORD:server_key_password}"
         # Keystore server credentials
         keystore:
-          # Type of the key store
+          # Type of the key store (JKS or PKCS12)
           type: "${COAP_DTLS_KEY_STORE_TYPE:JKS}"
           # Path to the key store that holds the SSL certificate
           store_file: "${COAP_DTLS_KEY_STORE:coapserver.jks}"

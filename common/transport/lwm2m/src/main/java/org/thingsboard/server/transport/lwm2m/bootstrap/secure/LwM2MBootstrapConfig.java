@@ -37,6 +37,8 @@ import java.util.List;
 @Data
 public class LwM2MBootstrapConfig implements Serializable {
 
+    private static final long serialVersionUID = -4729088085817468640L;
+
     List<LwM2MBootstrapServerCredential> serverConfiguration;
 
     /** -bootstrapServer, lwm2mServer

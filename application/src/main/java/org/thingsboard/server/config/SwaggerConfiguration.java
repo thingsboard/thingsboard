@@ -17,7 +17,6 @@ package org.thingsboard.server.config;
 
 import com.fasterxml.classmate.TypeResolver;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -333,7 +332,7 @@ public class SwaggerConfiguration {
                 errorResponse("401 ", "Unauthorized (**Expired credentials**)",
                         List.of(
                                 errorExample("credentials-expired", "Expired credentials",
-                                        ThingsboardCredentialsExpiredResponse.of("User password expired!", RandomStringUtils.randomAlphanumeric(30)))
+                                        ThingsboardCredentialsExpiredResponse.of("User password expired!", StringUtils.randomAlphanumeric(30)))
                         ), ThingsboardCredentialsExpiredResponse.class
                 )
         );

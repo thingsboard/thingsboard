@@ -1039,7 +1039,22 @@
         "value-description": "the current value;",
         "prev-value-description": "result of the previous function call;",
         "time-prev-description": "timestamp of the previous value;",
-        "prev-orig-value-description": "original previous value;"
+        "prev-orig-value-description": "original previous value;",
+        "aggregation": "Aggregation",
+        "aggregation-type-hint-common": "For performance reasons, the aggregated values calculation is available only for fixed time intervals like \"current day\", \"current month\", etc, and is not available for sliding window intervals like 'last 30 minutes' or 'last 24 hours'.",
+        "aggregation-type-none-hint": "Take latest value.",
+        "aggregation-type-min-hint": "Find minimum value among data points within a selected time window.",
+        "aggregation-type-max-hint": "Find maximum value among data points within a selected time window.",
+        "aggregation-type-avg-hint": "Calculate an average value among data points within a selected time window.",
+        "aggregation-type-sum-hint": "Sum all values of the data points within a selected time window.",
+        "aggregation-type-count-hint": "Total number of the data points within a selected time window.",
+        "delta-calculation": "Delta calculation",
+        "enable-delta-calculation": "Enable delta calculation",
+        "enable-delta-calculation-hint": "When enabled, the data key value is calculated based on the aggregated values for a selected time window and a specified comparison period. For performance reasons, the delta calculation is available only for history time windows and not for real-time values. For example, you may calculate the delta between the energy consumption for yesterday compared to the energy consumption for the day before yesterday.",
+        "delta-calculation-result": "Delta calculation result",
+        "delta-calculation-result-previous-value": "Previous value",
+        "delta-calculation-result-delta-absolute": "Delta (absolute)",
+        "delta-calculation-result-delta-percent": "Delta (percent)"
     },
     "datasource": {
         "type": "Datasource type",
@@ -3191,7 +3206,43 @@
         "ws-limit-max-subscriptions-per-customer": "Subscriptions per customer maximum number",
         "ws-limit-max-subscriptions-per-regular-user": "Subscriptions per regular user maximum number",
         "ws-limit-max-subscriptions-per-public-user": "Subscriptions per public user maximum number",
-        "ws-limit-updates-per-session": "WS updates per session"
+        "ws-limit-updates-per-session": "WS updates per session",
+        "rate-limits": {
+            "add-limit": "Add limit",
+            "advanced-settings": "Advanced settings",
+            "edit-limit": "Edit limit",
+            "but-less-than": "but less than",
+            "edit-transport-tenant-msg-title": "Edit transport tenant messages rate limits",
+            "edit-transport-tenant-telemetry-msg-title": "Edit transport tenant telemetry messages rate limits",
+            "edit-transport-tenant-telemetry-data-points-title": "Edit transport tenant telemetry data points rate limits",
+            "edit-transport-device-msg-title": "Edit transport device messages rate limits",
+            "edit-transport-device-telemetry-msg-title": "Edit transport device telemetry messages rate limits",
+            "edit-transport-device-telemetry-data-points-title": "Edit transport device telemetry data points rate limits",
+            "edit-transport-tenant-msg-rate-limit-title": "Edit transport tenant messages rate limits",
+            "edit-customer-rest-limits-title": "Edit REST requests for customer rate limits",
+            "edit-ws-limit-updates-per-session-title": "Edit WS updates per session rate limits",
+            "edit-cassandra-tenant-limits-configuration-title": "Edit Cassandra query for tenant rate limits",
+            "edit-tenant-entity-export-rate-limit-title": "Edit entity version creation rate limits",
+            "edit-tenant-entity-import-rate-limit-title": "Edit entity version load rate limits",
+            "messages-per": "messages per",
+            "not-set": "Not set",
+            "number-of-messages": "Number of messages",
+            "number-of-messages-required": "Number of messages is required.",
+            "number-of-messages-min": "Minimum value is 1.",
+            "preview": "Preview",
+            "per-seconds": "Per seconds",
+            "per-seconds-required": "Time rate is required.",
+            "per-seconds-min": "Minimum value is 1.",
+            "rate-limits": "Rate limits",
+            "remove-limit": "Remove limit",
+            "transport-tenant-msg": "Transport tenant messages",
+            "transport-tenant-telemetry-msg": "Transport tenant telemetry messages",
+            "transport-tenant-telemetry-data-points": "Transport tenant telemetry data points",
+            "transport-device-msg": "Transport device messages",
+            "transport-device-telemetry-msg": "Transport device telemetry messages",
+            "transport-device-telemetry-data-points": "Transport device telemetry data points",
+            "sec": "sec"
+        }
     },
     "timeinterval": {
         "seconds-interval": "{ seconds, plural, 1 {1 second} other {# seconds} }",
@@ -4620,6 +4671,14 @@
             "row-double-click": "On row double click"
         }
     },
+    "paginator" : {
+        "items-per-page": "Items per page:",
+        "first-page-label": "First page",
+        "last-page-label": "Last page",
+        "next-page-label": "Next page",
+        "previous-page-label": "Previous page",
+        "items-per-page-separator": "of"
+    },
     "language": {
         "language": "Language",
         "locales": {
@@ -4632,7 +4691,8 @@
             "ko_KR": "한국어",
             "ru_RU": "Русский",
             "es_ES": "Español",
-            "ja_JA": "日本語",
+            "es_CA": "Catalan",
+            "ja_JP": "日本語",
             "tr_TR": "Türkçe",
             "fa_IR": "فارسي",
             "uk_UA": "Українська",

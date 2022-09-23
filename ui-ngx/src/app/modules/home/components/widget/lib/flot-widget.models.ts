@@ -17,7 +17,7 @@
 // tslint:disable-next-line:no-reference
 /// <reference path="../../../../../../../src/typings/jquery.flot.typings.d.ts" />
 
-import { DataKey, Datasource, DatasourceData, JsonSettingsSchema } from '@shared/models/widget.models';
+import { DataKey, Datasource, DatasourceData, FormattedData, JsonSettingsSchema } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { ComparisonDuration } from '@shared/models/time/time.models';
 
@@ -25,7 +25,7 @@ export declare type ChartType = 'line' | 'pie' | 'bar' | 'state' | 'graph';
 
 export declare type TbFlotSettings = TbFlotBaseSettings & TbFlotGraphSettings & TbFlotBarSettings & TbFlotPieSettings;
 
-export declare type TooltipValueFormatFunction = (value: any) => string;
+export declare type TooltipValueFormatFunction = (value: any, latestData: FormattedData) => string;
 
 export declare type TbFlotTicksFormatterFunction = (t: number, a?: TbFlotPlotAxis) => string;
 

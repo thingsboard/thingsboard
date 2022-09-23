@@ -148,8 +148,11 @@ public class EventController extends BaseController {
         return checkNotNull(eventService.findEvents(tenantId, entityId, resolveEventType(eventType), pageLink));
     }
 
-    @ApiOperation(value = "Get Events (getEvents)",
-            notes = "Returns a page of events for specified entity. " +
+    @ApiOperation(value = "Get Events (Deprecated)",
+            notes = "Returns a page of events for specified entity. Deprecated and will be removed in next minor release. " +
+                    "The call was deprecated to improve the performance of the system. " +
+                    "Current implementation will return 'Lifecycle' events only. " +
+                    "Use 'Get events by type' or 'Get events by filter' instead. " +
                     PAGE_DATA_PARAMETERS, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/events/{entityType}/{entityId}", method = RequestMethod.GET)

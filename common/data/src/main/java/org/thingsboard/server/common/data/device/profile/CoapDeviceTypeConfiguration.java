@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.thingsboard.server.common.data.CoapDeviceType;
 
+import java.io.Serializable;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -29,7 +31,7 @@ import org.thingsboard.server.common.data.CoapDeviceType;
 @JsonSubTypes({
         @JsonSubTypes.Type(value = DefaultCoapDeviceTypeConfiguration.class, name = "DEFAULT"),
         @JsonSubTypes.Type(value = EfentoCoapDeviceTypeConfiguration.class, name = "EFENTO")})
-public interface CoapDeviceTypeConfiguration {
+public interface CoapDeviceTypeConfiguration extends Serializable {
 
     @JsonIgnore
     CoapDeviceType getCoapDeviceType();

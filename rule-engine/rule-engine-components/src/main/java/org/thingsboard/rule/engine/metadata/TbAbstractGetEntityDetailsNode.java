@@ -63,10 +63,6 @@ public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEnti
                 t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
 
-    @Override
-    public void destroy() {
-    }
-
     protected abstract C loadGetEntityDetailsNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException;
 
     protected abstract ListenableFuture<TbMsg> getDetails(TbContext ctx, TbMsg msg);

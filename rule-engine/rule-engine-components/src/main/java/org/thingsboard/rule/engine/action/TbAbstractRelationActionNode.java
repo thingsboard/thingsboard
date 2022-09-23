@@ -88,6 +88,9 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
 
     @Override
     public void destroy() {
+        if (entityIdCache != null) {
+            entityIdCache.invalidateAll();
+        }
     }
 
     protected ListenableFuture<RelationContainer> processEntityRelationAction(TbContext ctx, TbMsg msg, String relationType) {

@@ -228,3 +228,7 @@ BEGIN
     ON CONFLICT DO NOTHING;
 END
 $$;
+
+UPDATE tb_user
+    SET additional_info = REPLACE(additional_info, '"lang":"ja_JA"', '"lang":"ja_JP"')
+    WHERE additional_info LIKE '%"lang":"ja_JA"%';

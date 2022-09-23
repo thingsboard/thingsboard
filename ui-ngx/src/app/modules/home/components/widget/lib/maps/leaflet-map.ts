@@ -334,6 +334,7 @@ export default abstract class LeafletMap {
           drawRectangle: false,
           drawPolyline: false,
           drawPolygon: false,
+          drawText: false,
           dragMode: !this.options.hideEditControlButton,
           editMode: (this.editPolygons || this.editCircle) && !this.options.hideEditControlButton,
           cutPolygon: false,
@@ -493,12 +494,12 @@ export default abstract class LeafletMap {
           .find('a[role="button"]:not(.leaflet-pm-action)')
           .each((index, element) => {
             let title;
-            if (element.children.length) {
-              title = (element.children[0] as HTMLElement).title;
-              $(element).children().removeAttr('title');
-            } else {
+            if (element.title) {
               title = element.title;
               $(element).removeAttr('title');
+            } else if (element.parentElement.title) {
+              title = element.parentElement.title;
+              $(element).parent().removeAttr('title');
             }
             const tooltip =  $(element).tooltipster(
               {
@@ -808,7 +809,8 @@ export default abstract class LeafletMap {
           const currentImage: MarkerImageInfo = this.options.useMarkerImageFunction ?
             safeExecute(this.options.parsedMarkerImageFunction,
               [data, this.options.markerImages, markersData, data.dsIndex]) : this.options.currentImage;
-          const style = currentImage ? 'background-image: url(' + currentImage.url + ');' : '';
+          const imageSize = `height: ${this.options.markerImageSize || 34}px; width: ${this.options.markerImageSize || 34}px;`;
+          const style = currentImage ? 'background-image: url(' + currentImage.url + '); ' + imageSize : '';
           this.options.icon = { icon: L.divIcon({
             html: `<div class="arrow"
                style="transform: translate(-10px, -10px)

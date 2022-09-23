@@ -23,7 +23,7 @@ import org.eclipse.leshan.core.node.ObjectLink;
 import org.eclipse.leshan.core.node.codec.CodecException;
 import org.eclipse.leshan.core.node.codec.LwM2mValueConverter;
 import org.eclipse.leshan.core.util.Hex;
-import org.eclipse.leshan.core.util.StringUtils;
+import org.thingsboard.server.common.data.StringUtils;
 
 import java.math.BigInteger;
 import java.text.DateFormat;
