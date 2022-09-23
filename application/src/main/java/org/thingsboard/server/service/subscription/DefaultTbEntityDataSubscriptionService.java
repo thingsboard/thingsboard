@@ -314,9 +314,9 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                             ReadTsKvQueryInfo queryInfo = queries.get(queryResult.getQueryId());
                             ComparisonTsValue comparisonTsValue = entityData.getAggLatest().computeIfAbsent(queryInfo.getKey().getId(), agg -> new ComparisonTsValue());
                             if (queryInfo.isPrevious()) {
-                                comparisonTsValue.setPrevious(queryResult.toTsValue());
+                                comparisonTsValue.setPrevious(queryResult.toTsValue(queryInfo.getQuery()));
                             } else {
-                                comparisonTsValue.setCurrent(queryResult.toTsValue());
+                                comparisonTsValue.setCurrent(queryResult.toTsValue(queryInfo.getQuery()));
                                 lastTsMap.put(queryInfo.getQuery().getKey(), queryResult.getLastEntryTs());
                             }
                         }

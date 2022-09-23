@@ -165,7 +165,11 @@ export class EntityDataSubscription {
           if (key.comparisonResultType === ComparisonResultType.DELTA_ABSOLUTE) {
             value = currentVal - prevVal;
           } else {
-            value = (currentVal - prevVal) / prevVal * 100;
+            if(prevVal === 0){
+              value = 100;
+            } else {
+              value = (currentVal - prevVal) / prevVal * 100;
+            }
           }
         } else {
           value = '';
