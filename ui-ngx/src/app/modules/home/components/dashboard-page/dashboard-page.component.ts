@@ -1062,7 +1062,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
             dataKeys: config.alarmSource.dataKeys || []
           };
         }
-        const newWidget: Widget = {
+        let newWidget: Widget = {
           isSystemType: widget.isSystemType,
           bundleAlias: widget.bundleAlias,
           typeAlias: widgetTypeInfo.alias,
@@ -1076,6 +1076,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
           row: 0,
           col: 0
         };
+        newWidget = this.dashboardUtils.validateAndUpdateWidget(newWidget);
         if (widgetTypeInfo.typeParameters.useCustomDatasources) {
           this.addWidgetToDashboard(newWidget);
         } else {

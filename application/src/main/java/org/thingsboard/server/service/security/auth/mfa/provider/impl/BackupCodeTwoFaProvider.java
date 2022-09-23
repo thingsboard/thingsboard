@@ -15,11 +15,11 @@
  */
 package org.thingsboard.server.service.security.auth.mfa.provider.impl;
 
-import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.CollectionsUtil;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.security.model.mfa.account.BackupCodeTwoFaAccountConfig;
 import org.thingsboard.server.common.data.security.model.mfa.provider.BackupCodeTwoFaProviderConfig;
@@ -49,7 +49,7 @@ public class BackupCodeTwoFaProvider implements TwoFaProvider<BackupCodeTwoFaPro
     }
 
     private static Set<String> generateCodes(int count, int length) {
-        return Stream.generate(() -> RandomStringUtils.random(length, "0123456789abcdef"))
+        return Stream.generate(() -> StringUtils.random(length, "0123456789abcdef"))
                 .distinct().limit(count)
                 .collect(Collectors.toSet());
     }

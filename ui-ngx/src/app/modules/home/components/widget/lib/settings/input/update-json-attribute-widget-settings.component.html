@@ -22,11 +22,11 @@
       <mat-label translate>widgets.input-widgets.widget-title</mat-label>
       <input matInput formControlName="widgetTitle">
     </mat-form-field>
-    <section fxLayout="column" fxLayout.gt-sm="row" fxLayoutGap="8px" fxLayoutAlign.gt-sm="start center">
-      <mat-slide-toggle fxFlex fxFlex.gt-sm="20" formControlName="showLabel">
+    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
+      <mat-slide-toggle fxFlex fxFlex.gt-xs="25" formControlName="showLabel">
         {{ 'widgets.input-widgets.show-label' | translate }}
       </mat-slide-toggle>
-      <mat-form-field fxFlex fxFlex.gt-sm="80" class="mat-block">
+      <mat-form-field fxFlex class="mat-block">
         <mat-label translate>widgets.input-widgets.label</mat-label>
         <input matInput formControlName="labelValue">
       </mat-form-field>
@@ -37,7 +37,7 @@
   </fieldset>
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.attribute-settings</legend>
-    <section fxLayout="column" fxLayout.gt-sm="row" fxLayoutGap="8px" fxLayoutAlign.gt-sm="start center">
+    <section class="row-fill" fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
       <mat-form-field fxFlex class="mat-block">
         <mat-label translate>widgets.input-widgets.widget-mode</mat-label>
         <mat-select formControlName="widgetMode">

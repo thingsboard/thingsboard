@@ -27,6 +27,8 @@ import java.util.Map;
 @Data
 public class CoapDeviceTransportConfiguration extends PowerSavingConfiguration implements DeviceTransportConfiguration {
 
+    private static final long serialVersionUID = 6061442236008925609L;
+
     @JsonIgnore
     private Map<String, Object> properties = new HashMap<>();
 

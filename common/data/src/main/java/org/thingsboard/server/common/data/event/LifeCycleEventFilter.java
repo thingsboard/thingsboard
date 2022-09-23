@@ -39,7 +39,7 @@ public class LifeCycleEventFilter implements EventFilter {
     }
 
     @Override
-    public boolean hasFilterForJsonBody() {
+    public boolean isNotEmpty() {
         return !StringUtils.isEmpty(server) || !StringUtils.isEmpty(event) || !StringUtils.isEmpty(status) || !StringUtils.isEmpty(errorStr);
     }
 }

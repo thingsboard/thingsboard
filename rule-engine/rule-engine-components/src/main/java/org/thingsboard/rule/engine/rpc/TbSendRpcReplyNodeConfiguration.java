@@ -16,7 +16,7 @@
 package org.thingsboard.rule.engine.rpc;
 
 import lombok.Data;
-import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.server.common.data.DataConstants;
 

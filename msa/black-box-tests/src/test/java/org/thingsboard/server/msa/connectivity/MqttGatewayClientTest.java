@@ -28,7 +28,6 @@ import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -39,6 +38,7 @@ import org.thingsboard.mqtt.MqttClient;
 import org.thingsboard.mqtt.MqttClientConfig;
 import org.thingsboard.mqtt.MqttHandler;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -226,7 +226,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         WsClient wsClient = subscribeToWebSocket(createdDevice.getId(), "CLIENT_SCOPE", CmdsType.ATTR_SUB_CMDS);
         // Add a new client attribute
         JsonObject clientAttributes = new JsonObject();
-        String clientAttributeValue = RandomStringUtils.randomAlphanumeric(8);
+        String clientAttributeValue = StringUtils.randomAlphanumeric(8);
         clientAttributes.addProperty("clientAttr", clientAttributeValue);
 
         JsonObject gatewayClientAttributes = new JsonObject();
@@ -245,7 +245,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
 
         // Add a new shared attribute
         JsonObject sharedAttributes = new JsonObject();
-        String sharedAttributeValue = RandomStringUtils.randomAlphanumeric(8);
+        String sharedAttributeValue = StringUtils.randomAlphanumeric(8);
         sharedAttributes.addProperty("sharedAttr", sharedAttributeValue);
 
         // Subscribe for attribute update event
@@ -281,7 +281,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         // Add a new shared attribute
 
         JsonObject sharedAttributes = new JsonObject();
-        String sharedAttributeValue = RandomStringUtils.randomAlphanumeric(8);
+        String sharedAttributeValue = StringUtils.randomAlphanumeric(8);
         sharedAttributes.addProperty(sharedAttributeName, sharedAttributeValue);
 
         JsonObject gatewaySharedAttributeValue = new JsonObject();
@@ -300,7 +300,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
 
         // Update the shared attribute value
         JsonObject updatedSharedAttributes = new JsonObject();
-        String updatedSharedAttributeValue = RandomStringUtils.randomAlphanumeric(8);
+        String updatedSharedAttributeValue = StringUtils.randomAlphanumeric(8);
         updatedSharedAttributes.addProperty(sharedAttributeName, updatedSharedAttributeValue);
 
         JsonObject gatewayUpdatedSharedAttributeValue = new JsonObject();
