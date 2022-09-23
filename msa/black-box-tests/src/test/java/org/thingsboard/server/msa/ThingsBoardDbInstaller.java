@@ -16,9 +16,9 @@
 package org.thingsboard.server.msa;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.rules.ExternalResource;
 import org.testcontainers.utility.Base58;
+import org.thingsboard.server.common.data.StringUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -215,7 +215,7 @@ public class ThingsBoardDbInstaller extends ExternalResource {
         File tbLogsDir = new File(targetDir);
         tbLogsDir.mkdirs();
 
-        String logsContainerName = "tb-logs-container-" + RandomStringUtils.randomAlphanumeric(10);
+        String logsContainerName = "tb-logs-container-" + StringUtils.randomAlphanumeric(10);
 
         dockerCompose.withCommand("run -d --rm --name " + logsContainerName + " -v " + volumeName + ":/root alpine tail -f /dev/null");
         dockerCompose.invokeDocker();

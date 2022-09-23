@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
 
+import java.io.Serializable;
+
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         property = "securityMode")
@@ -31,7 +33,7 @@ import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurity
         @JsonSubTypes.Type(value = X509LwM2MBootstrapServerCredential.class, name = "X509")
 })
 @JsonIgnoreProperties(ignoreUnknown = true)
-public interface LwM2MBootstrapServerCredential {
+public interface LwM2MBootstrapServerCredential extends Serializable {
     @JsonIgnore
     LwM2MSecurityMode getSecurityMode();
 }

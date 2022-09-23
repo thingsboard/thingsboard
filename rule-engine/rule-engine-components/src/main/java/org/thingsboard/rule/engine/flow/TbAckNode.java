@@ -51,7 +51,4 @@ public class TbAckNode implements TbNode {
         ctx.tellSuccess(msg);
     }
 
-    @Override
-    public void destroy() {
-    }
 }

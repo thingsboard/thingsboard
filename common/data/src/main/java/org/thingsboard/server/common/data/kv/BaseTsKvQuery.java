@@ -20,11 +20,16 @@ import lombok.Data;
 @Data
 public class BaseTsKvQuery implements TsKvQuery {
 
+    private static final ThreadLocal<Integer> idSeq = ThreadLocal.withInitial(() -> 0);
+
+    private final int id;
     private final String key;
     private final long startTs;
     private final long endTs;
 
     public BaseTsKvQuery(String key, long startTs, long endTs) {
+        this.id = idSeq.get();
+        idSeq.set(id + 1);
         this.key = key;
         this.startTs = startTs;
         this.endTs = endTs;

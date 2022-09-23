@@ -46,7 +46,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <section fxFlex fxLayout="column" fxLayout.gt-sm="row" fxLayoutGap="8px">
+        <section class="row-fill" fxFlex fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
           <mat-form-field fxFlex class="mat-block">
             <mat-label translate>widgets.chart.line-width</mat-label>
             <input matInput type="number" min="0" formControlName="lineWidth">
@@ -74,7 +74,7 @@
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
         <section fxLayout="column">
-          <section fxFlex fxLayout="column" fxLayout.gt-sm="row" fxLayoutGap="8px">
+          <section class="row-fill" fxFlex fxLayout="row" fxLayoutGap="8px">
             <mat-form-field fxFlex class="mat-block">
               <mat-label translate>widgets.chart.points-line-width</mat-label>
               <input matInput type="number" min="0" formControlName="showPointsLineWidth">
@@ -123,7 +123,7 @@
     <tb-js-func
       formControlName="tooltipValueFormatter"
       [globalVariables]="functionScopeVariables"
-      [functionArgs]="['value']"
+      [functionArgs]="['value', 'latestData']"
       functionTitle="{{ 'widgets.chart.tooltip-value-format-function' | translate }}"
       helpId="widget/lib/flot/tooltip_value_format_fn">
     </tb-js-func>
@@ -137,7 +137,7 @@
       <mat-label translate>widgets.chart.axis-title</mat-label>
       <input matInput formControlName="axisTitle">
     </mat-form-field>
-    <section fxLayout="column" fxLayout.gt-sm="row" fxLayoutGap="8px">
+    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px">
       <mat-form-field fxFlex class="mat-block">
         <mat-label translate>widgets.chart.min-scale-value</mat-label>
         <input matInput type="number" formControlName="axisMin">
@@ -160,7 +160,7 @@
     </mat-form-field>
     <fieldset class="fields-group">
       <legend class="group-title" translate>widgets.chart.yaxis-tick-labels-settings</legend>
-      <section fxLayout="column" fxLayout.gt-sm="row" fxLayoutGap="8px">
+      <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px">
         <mat-form-field fxFlex class="mat-block">
           <mat-label translate>widgets.chart.tick-step-size</mat-label>
           <input matInput type="number" formControlName="axisTickSize">
@@ -222,7 +222,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <section fxFlex fxLayout="column" fxLayout.gt-sm="row" fxLayoutGap="8px">
+        <section fxFlex fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px">
           <mat-form-field fxFlex class="mat-block">
             <mat-label translate>widgets.chart.comparison-values-label</mat-label>
             <input matInput formControlName="comparisonValuesLabel">

@@ -110,7 +110,7 @@ export class Polygon {
             const polygonLabelText = fillDataPattern(this.map.polygonLabelText, this.map.replaceInfoLabelPolygon, this.data);
             const labelColor = this.map.ctx.widgetConfig.color;
             this.leafletPoly.bindTooltip(`<div style="color: ${labelColor};"><b>${polygonLabelText}</b></div>`,
-              { className: 'tb-polygon-label', permanent: true, sticky: true, direction: 'center' })
+              { className: 'tb-polygon-label', permanent: true, direction: 'center' })
               .openTooltip(this.leafletPoly.getBounds().getCenter());
         }
     }

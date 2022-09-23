@@ -68,10 +68,6 @@ public class TbCheckMessageNode implements TbNode {
         }
     }
 
-    @Override
-    public void destroy() {
-    }
-
     private boolean allKeysData(TbMsg msg) {
         if (!messageNamesList.isEmpty()) {
             Map<String, String> dataMap = dataToMap(msg);

@@ -16,22 +16,25 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.rule.RuleChainDao;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,6 +49,9 @@ public abstract class BaseRuleChainControllerTest extends AbstractControllerTest
 
     private Tenant savedTenant;
     private User tenantAdmin;
+
+    @SpyBean
+    private RuleChainDao ruleChainDao;
 
     @Before
     public void beforeTest() throws Exception {
@@ -69,6 +75,8 @@ public abstract class BaseRuleChainControllerTest extends AbstractControllerTest
     @After
     public void afterTest() throws Exception {
         loginSysAdmin();
+
+        afterTestEntityDaoRemoveByIdWithException(ruleChainDao);
 
         doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
                 .andExpect(status().isOk());
@@ -107,7 +115,7 @@ public abstract class BaseRuleChainControllerTest extends AbstractControllerTest
         Mockito.reset(tbClusterService, auditLogService);
 
         RuleChain ruleChain = new RuleChain();
-        ruleChain.setName(RandomStringUtils.randomAlphabetic(300));
+        ruleChain.setName(StringUtils.randomAlphabetic(300));
         String msgError = msgErrorFieldLength("name");
         doPost("/api/ruleChain", ruleChain)
                 .andExpect(status().isBadRequest())
@@ -223,4 +231,21 @@ public abstract class BaseRuleChainControllerTest extends AbstractControllerTest
         Assert.assertEquals(1, pageData.getTotalElements());
     }
 
+    @Test
+    public void testDeleteRuleChainWithDeleteRelationsOk() throws Exception {
+        RuleChainId ruleChainId = createRuleChain("RuleChain for Test WithRelationsOk").getId();
+        testEntityDaoWithRelationsOk(savedTenant.getId(), ruleChainId, "/api/ruleChain/" + ruleChainId);
+    }
+
+    @Test
+    public void testDeleteRuleChainExceptionWithRelationsTransactional() throws Exception {
+        RuleChainId ruleChainId = createRuleChain("RuleChain for Test WithRelations Transactional Exception").getId();
+        testEntityDaoWithRelationsTransactionalException(ruleChainDao, savedTenant.getId(), ruleChainId, "/api/ruleChain/" + ruleChainId);
+    }
+
+    private RuleChain createRuleChain(String name) {
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setName(name);
+        return doPost("/api/ruleChain", ruleChain, RuleChain.class);
+    }
 }
