@@ -28,7 +28,6 @@ import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 
 @Service
@@ -37,7 +36,6 @@ import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 public class AssetProfileImportService extends BaseEntityImportService<AssetProfileId, AssetProfile, EntityExportData<AssetProfile>> {
 
     private final AssetProfileService assetProfileService;
-    private final OtaPackageStateService otaPackageStateService;
 
     @Override
     protected void setOwner(TenantId tenantId, AssetProfile assetProfile, IdProvider idProvider) {

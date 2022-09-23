@@ -15,9 +15,9 @@
 --
 
 CREATE TABLE IF NOT EXISTS asset_profile (
-                                             id uuid NOT NULL CONSTRAINT asset_profile_pkey PRIMARY KEY,
-                                             created_time bigint NOT NULL,
-                                             name varchar(255),
+    id uuid NOT NULL CONSTRAINT asset_profile_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    name varchar(255),
     image varchar(1000000),
     description varchar,
     search_text varchar(255),
