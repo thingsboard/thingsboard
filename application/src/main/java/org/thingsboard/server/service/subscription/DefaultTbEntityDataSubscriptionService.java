@@ -343,7 +343,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                     ctx.createTimeSeriesSubscriptions(lastTsEntityMap, startTs, endTs, true);
                 }
                 ctx.sendWsMsg(update);
-                entityDataList.forEach(ed -> ed.getTimeseries().clear());
+                entityDataList.forEach(EntityData::clearTsAndAggData);
             } finally {
                 ctx.getWsLock().unlock();
             }
@@ -594,7 +594,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                     ctx.createTimeSeriesSubscriptions(lastTsEntityMap, cmd.getStartTs(), cmd.getEndTs());
                 }
                 ctx.sendWsMsg(update);
-                entityDataList.forEach(ed -> ed.getTimeseries().clear());
+                entityDataList.forEach(EntityData::clearTsAndAggData);
             } finally {
                 ctx.getWsLock().unlock();
             }
