@@ -406,6 +406,9 @@ cache:
     deviceProfiles:
       timeToLiveInMinutes: "${CACHE_SPECS_DEVICE_PROFILES_TTL:1440}"
       maxSize: "${CACHE_SPECS_DEVICE_PROFILES_MAX_SIZE:10000}"
+    assetProfiles:
+      timeToLiveInMinutes: "${CACHE_SPECS_ASSET_PROFILES_TTL:1440}"
+      maxSize: "${CACHE_SPECS_ASSET_PROFILES_MAX_SIZE:10000}"
     attributes:
       timeToLiveInMinutes: "${CACHE_SPECS_ATTRIBUTES_TTL:1440}"
       maxSize: "${CACHE_SPECS_ATTRIBUTES_MAX_SIZE:100000}"
@@ -561,6 +564,7 @@ audit-log:
       "alarm": "${AUDIT_LOG_MASK_ALARM:W}"
       "entity_view": "${AUDIT_LOG_MASK_ENTITY_VIEW:W}"
       "device_profile": "${AUDIT_LOG_MASK_DEVICE_PROFILE:W}"
+      "asset_profile": "${AUDIT_LOG_MASK_ASSET_PROFILE:W}"
       "edge": "${AUDIT_LOG_MASK_EDGE:W}"
       "tb_resource": "${AUDIT_LOG_MASK_RESOURCE:W}"
       "ota_package": "${AUDIT_LOG_MASK_OTA_PACKAGE:W}"

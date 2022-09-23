@@ -73,21 +73,6 @@ CREATE TABLE IF NOT EXISTS entity_alarm (
     CONSTRAINT fk_entity_alarm_id FOREIGN KEY (alarm_id) REFERENCES alarm(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS asset (
-    id uuid NOT NULL CONSTRAINT asset_pkey PRIMARY KEY,
-    created_time bigint NOT NULL,
-    additional_info varchar,
-    customer_id uuid,
-    name varchar(255),
-    label varchar(255),
-    search_text varchar(255),
-    tenant_id uuid,
-    type varchar(255),
-    external_id uuid,
-    CONSTRAINT asset_name_unq_key UNIQUE (tenant_id, name),
-    CONSTRAINT asset_external_id_unq_key UNIQUE (tenant_id, external_id)
-);
-
 CREATE TABLE IF NOT EXISTS audit_log (
     id uuid NOT NULL CONSTRAINT audit_log_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
@@ -238,6 +223,42 @@ CREATE TABLE IF NOT EXISTS queue (
     submit_strategy varchar(255),
     processing_strategy varchar(255),
     additional_info varchar
+);
+
+CREATE TABLE IF NOT EXISTS asset_profile (
+                                             id uuid NOT NULL CONSTRAINT asset_profile_pkey PRIMARY KEY,
+                                             created_time bigint NOT NULL,
+                                             name varchar(255),
+    image varchar(1000000),
+    description varchar,
+    search_text varchar(255),
+    is_default boolean,
+    tenant_id uuid,
+    default_rule_chain_id uuid,
+    default_dashboard_id uuid,
+    default_queue_name varchar(255),
+    external_id uuid,
+    CONSTRAINT asset_profile_name_unq_key UNIQUE (tenant_id, name),
+    CONSTRAINT asset_profile_external_id_unq_key UNIQUE (tenant_id, external_id),
+    CONSTRAINT fk_default_rule_chain_asset_profile FOREIGN KEY (default_rule_chain_id) REFERENCES rule_chain(id),
+    CONSTRAINT fk_default_dashboard_asset_profile FOREIGN KEY (default_dashboard_id) REFERENCES dashboard(id)
+    );
+
+CREATE TABLE IF NOT EXISTS asset (
+                                     id uuid NOT NULL CONSTRAINT asset_pkey PRIMARY KEY,
+                                     created_time bigint NOT NULL,
+                                     additional_info varchar,
+                                     customer_id uuid,
+                                     asset_profile_id uuid NOT NULL,
+                                     name varchar(255),
+    label varchar(255),
+    search_text varchar(255),
+    tenant_id uuid,
+    type varchar(255),
+    external_id uuid,
+    CONSTRAINT asset_name_unq_key UNIQUE (tenant_id, name),
+    CONSTRAINT asset_external_id_unq_key UNIQUE (tenant_id, external_id),
+    CONSTRAINT fk_asset_profile FOREIGN KEY (asset_profile_id) REFERENCES asset_profile(id)
 );
 
 CREATE TABLE IF NOT EXISTS device_profile (
