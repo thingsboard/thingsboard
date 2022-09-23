@@ -200,6 +200,7 @@ message DeviceUpdateMsg {
   optional string conflictName = 12;
   optional int64 firmwareIdMSB = 13;
   optional int64 firmwareIdLSB = 14;
+  optional bytes deviceDataBytes = 15;
 }
 
 message DeviceProfileUpdateMsg {

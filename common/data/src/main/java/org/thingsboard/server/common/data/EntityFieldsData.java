@@ -50,6 +50,10 @@ public class EntityFieldsData {
     }
 
     public String getFieldValue(String field) {
+        return getFieldValue(field, false);
+    }
+
+    public String getFieldValue(String field, boolean ignoreNullStrings) {
         String[] fieldsTree = field.split("\\.");
         JsonNode current = fieldsData;
         for (String key : fieldsTree) {
@@ -61,6 +65,9 @@ public class EntityFieldsData {
             }
         }
         if (current != null) {
+            if(current.isNull() && ignoreNullStrings){
+                return null;
+            }
             if (current.isValueNode()) {
                 return current.asText();
             } else {
