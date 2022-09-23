@@ -78,9 +78,4 @@ public class TbJsonPathNode implements TbNode {
             ctx.tellSuccess(msg);
         }
     }
-
-    @Override
-    public void destroy() {
-
-    }
 }
