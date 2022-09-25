@@ -544,6 +544,12 @@ spring:
     hikari:
       maximumPoolSize: "${SPRING_DATASOURCE_MAXIMUM_POOL_SIZE:16}"
 
+# spring configuration for caching static resources (1 year by default)
+spring.mvc.cache:
+  enabled: "${SPRING_MVC_CACHE_ENABLED:true}"
+  public: "${SPRING_MVC_CACHE_PUBLIC:true}"
+  period: "${SPRING_MVC_CACHE_PERIOD:31536000}"
+
 # Audit log parameters
 audit-log:
   # Enable/disable audit log functionality.
