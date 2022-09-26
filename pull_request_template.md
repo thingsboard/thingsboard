@@ -11,7 +11,7 @@ Put your PR description here instead of this sentence.
 - [ ] Description contains brief notes about what needs to be added to the documentation.
 - [ ] No merge conflicts, commented blocks of code, code formatting issues.
 - [ ] Changes are backward compatible or upgrade script is provided.
-- [ ] Similar PR is opened for PE version to simplify merge. Required for internal contributors only.
+- [ ] Similar PR is opened for PE version to simplify merge. Crosslinks between PRs added. Required for internal contributors only.
   
 ## Front-End feature checklist
 
