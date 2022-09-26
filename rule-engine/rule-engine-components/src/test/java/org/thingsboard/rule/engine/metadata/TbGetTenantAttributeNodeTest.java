@@ -76,7 +76,7 @@ public class TbGetTenantAttributeNodeTest extends AbstractAttributeNodeTest {
     }
 
     @Test
-    public void failedChainUsedIfCustomerCannotBeFound() {
+    public void failedChainUsedIfTenantIdFromCtxCannotBeFound() {
         when(ctx.getTenantId()).thenReturn(null);
         failedChainUsedIfCustomerCannotBeFound(user);
     }
