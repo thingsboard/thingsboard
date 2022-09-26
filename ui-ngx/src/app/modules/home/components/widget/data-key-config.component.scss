@@ -57,6 +57,10 @@
           padding: 0 16px 8px;
         }
       }
+
+      @media #{$mat-xs} {
+        margin-top: 30px;
+      }
     }
   }
 }
@@ -83,7 +87,6 @@
         .mat-expansion-panel-header {
           padding: 0;
           color: rgba(0, 0, 0, 0.87);
-          height: 140px;
 
           &:hover {
             background: none;

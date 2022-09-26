@@ -80,7 +80,7 @@
         <fieldset *ngIf="dataKeyFormGroup.get('aggregationType').value && dataKeyFormGroup.get('aggregationType').value !== aggregationTypes.NONE" class="fields-group fields-group-slider">
           <legend class="group-title" translate>datakey.delta-calculation</legend>
           <mat-expansion-panel class="tb-settings" [expanded]="dataKeyFormGroup.get('comparisonEnabled').value" [disabled]="!dataKeyFormGroup.get('comparisonEnabled').value">
-            <mat-expansion-panel-header fxLayout="row wrap">
+            <mat-expansion-panel-header fxLayout="row wrap" style="height:100%">
               <mat-panel-title fxLayout="column">
                 <mat-slide-toggle formControlName="comparisonEnabled" (click)="$event.stopPropagation()"
                                   fxLayoutAlign="center">
@@ -90,7 +90,7 @@
               </mat-panel-title>
             </mat-expansion-panel-header>
             <ng-template matExpansionPanelContent>
-              <section fxLayout="column" *ngIf="dataKeyFormGroup.get('comparisonEnabled').value">
+              <section fxLayout="column" fxLayoutGap="8px" *ngIf="dataKeyFormGroup.get('comparisonEnabled').value">
                 <mat-form-field fxFlex class="mat-block">
                   <mat-label translate>widgets.chart.time-for-comparison</mat-label>
                   <mat-select formControlName="timeForComparison">
