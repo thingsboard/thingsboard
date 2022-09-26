@@ -22,18 +22,18 @@ import java.util.Arrays;
 import java.util.List;
 
 @Data
-public class TbMathFormulaConfiguration implements NodeConfiguration<TbMathFormulaConfiguration> {
+public class TbMathNodeConfiguration implements NodeConfiguration<TbMathNodeConfiguration> {
 
     private TbRuleNodeMathFunctionType operation;
     private List<TbMathArgument> arguments;
     private TbMathResult result;
 
     @Override
-    public TbMathFormulaConfiguration defaultConfiguration() {
-        TbMathFormulaConfiguration configuration = new TbMathFormulaConfiguration();
+    public TbMathNodeConfiguration defaultConfiguration() {
+        TbMathNodeConfiguration configuration = new TbMathNodeConfiguration();
         configuration.setOperation(TbRuleNodeMathFunctionType.ADD);
         configuration.setArguments(Arrays.asList(new TbMathArgument(TbMathArgumentType.CONSTANT, "2"), new TbMathArgument(TbMathArgumentType.CONSTANT, "2")));
-        configuration.setResult(new TbMathResult(TbMathArgumentType.MESSAGE_BODY, "result", false, false, null));
+        configuration.setResult(new TbMathResult(TbMathArgumentType.MESSAGE_BODY, "result", 2, false, false, null));
         return configuration;
     }
 }

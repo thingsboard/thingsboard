@@ -25,7 +25,9 @@ import lombok.NoArgsConstructor;
 public class TbMathResult {
 
     private TbMathArgumentType type;
-    private String value;
+    private String key;
+    // 0 means integer, x > 0 means x decimal points after ".";
+    private int resultValuePrecision;
     private boolean addToBody;
     private boolean addToMetadata;
     private String attributeScope;

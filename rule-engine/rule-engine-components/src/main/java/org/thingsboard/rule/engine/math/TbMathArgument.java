@@ -25,11 +25,12 @@ import lombok.NoArgsConstructor;
 public class TbMathArgument {
 
     private TbMathArgumentType type;
-    private String value;
+    private String key;
     private String attributeScope;
+    private Double defaultValue;
 
-    public TbMathArgument(TbMathArgumentType type, String value) {
+    public TbMathArgument(TbMathArgumentType type, String key) {
         this.type = type;
-        this.value = value;
+        this.key = key;
     }
 }

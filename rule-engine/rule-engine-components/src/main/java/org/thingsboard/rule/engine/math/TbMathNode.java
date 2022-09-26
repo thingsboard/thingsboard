@@ -19,7 +19,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.common.util.DonAsynchron;
@@ -39,9 +38,10 @@ import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -53,24 +53,34 @@ import java.util.stream.Collectors;
 @Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
-        name = "math formula",
-        configClazz = TbMathFormulaConfiguration.class,
-        nodeDescription = "Calculates the mathematics formula based on message and/or database values",
-        nodeDetails = "Transform incoming Message with configured JS function to String and log final value into Thingsboard log file. " +
-                "Message payload can be accessed via <code>msg</code> property. For example <code>'temperature = ' + msg.temperature ;</code>. " +
-                "Message metadata can be accessed via <code>metadata</code> property. For example <code>'name = ' + metadata.customerName;</code>.",
+        name = "math function",
+        configClazz = TbMathNodeConfiguration.class,
+        nodeDescription = "Apply math function and save the result into the message and/or database",
+        nodeDetails = "Supports math operations like: ADD, SUB, MULT, DIV, etc and functions: SIN, COS, TAN, SEC, etc. " +
+                "<br/><br/>" +
+                "You may use constant, message field, metadata field, attribute, and latest time-series as an arguments values. " +
+                "The result of the function may be also stored to message field, metadata field, attribute or time-series value." +
+                "<br/><br/>" +
+                "Primary use case for this rule node is to take one or more values from the database and modify them based on data from the message. " +
+                "For example, you may increase `totalWaterConsumption` based on the `deltaWaterConsumption` reported by device." +
+                "<br/><br/>" +
+                "Alternative use case is the replacement of simple JS `script` nodes with more light-weight and performant implementation. " +
+                "For example, you may transform Fahrenheit to Celsius (C = (F - 32) / 1.8) using combination of two math node functions: SUB 32 and DIV 1.8." +
+                "<br/><br/>" +
+                "The execution is synchronized in scope of message originator (e.g. device) and server node. " +
+                "If you have rule nodes in different rule chains, they will process messages from the same originator synchronously in the scope of the server node.",
         icon = "functions"
 )
 public class TbMathNode implements TbNode {
 
-    private static ConcurrentMap<EntityId, Semaphore> semaphores = new ConcurrentReferenceHashMap<>();
+    private static final ConcurrentMap<EntityId, Semaphore> semaphores = new ConcurrentReferenceHashMap<>();
 
-    private TbMathFormulaConfiguration config;
+    private TbMathNodeConfiguration config;
     private boolean msgBodyToJsonConversionRequired;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbMathFormulaConfiguration.class);
+        this.config = TbNodeUtils.convert(configuration, TbMathNodeConfiguration.class);
         var operation = config.getOperation();
         var argsCount = config.getArguments().size();
         if (argsCount < operation.getMinArgs() || argsCount > operation.getMaxArgs()) {
@@ -84,14 +94,49 @@ public class TbMathNode implements TbNode {
     public void onMsg(TbContext ctx, TbMsg msg) {
         var originator = msg.getOriginator();
         var originatorSemaphore = semaphores.computeIfAbsent(originator, tmp -> new Semaphore(1, true));
+        boolean acquired = tryAcquire(originator, originatorSemaphore);
 
-        var arguments = config.getArguments();
-        Optional<ObjectNode> msgBodyOpt = convertMsgBodyIfRequired(msg);
-        var argumentValues = Futures.allAsList(arguments.stream()
-                .map(arg -> resolveArguments(ctx, msg, msgBodyOpt, arg)).collect(Collectors.toList()));
-        ListenableFuture<TbMsg> resultMsgFuture = Futures.transformAsync(argumentValues, args ->
-                updateMsgAndDb(ctx, msg, msgBodyOpt, calculateResult(ctx, msg, args)), ctx.getDbCallbackExecutor());
-        DonAsynchron.withCallback(resultMsgFuture, ctx::tellSuccess, t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
+        if (!acquired) {
+            ctx.tellFailure(msg, new RuntimeException("Failed to process message for originator synchronously"));
+            return;
+        }
+
+        try {
+            var arguments = config.getArguments();
+            Optional<ObjectNode> msgBodyOpt = convertMsgBodyIfRequired(msg);
+            var argumentValues = Futures.allAsList(arguments.stream()
+                    .map(arg -> resolveArguments(ctx, msg, msgBodyOpt, arg)).collect(Collectors.toList()));
+            ListenableFuture<TbMsg> resultMsgFuture = Futures.transformAsync(argumentValues, args ->
+                    updateMsgAndDb(ctx, msg, msgBodyOpt, calculateResult(ctx, msg, args)), ctx.getDbCallbackExecutor());
+            DonAsynchron.withCallback(resultMsgFuture, resultMsg -> {
+                try {
+                    ctx.tellSuccess(resultMsg);
+                } finally {
+                    originatorSemaphore.release();
+                }
+            }, t -> {
+                try {
+                    ctx.tellFailure(msg, t);
+                } finally {
+                    originatorSemaphore.release();
+                }
+            }, ctx.getDbCallbackExecutor());
+        } catch (Throwable e) {
+            originatorSemaphore.release();
+            log.warn("[{}] Failed to process message: {}", originator, msg, e);
+            throw e;
+        }
+    }
+
+    private boolean tryAcquire(EntityId originator, Semaphore originatorSemaphore) {
+        boolean acquired;
+        try {
+            acquired = originatorSemaphore.tryAcquire(20, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            acquired = false;
+            log.debug("[{}] Failed to acquire semaphore", originator, e);
+        }
+        return acquired;
     }
 
     private ListenableFuture<TbMsg> updateMsgAndDb(TbContext ctx, TbMsg msg, Optional<ObjectNode> msgBodyOpt, double result) {
@@ -102,16 +147,45 @@ public class TbMathNode implements TbNode {
             case MESSAGE_METADATA:
                 return Futures.immediateFuture(addToMeta(msg, mathResultDef, result));
             case ATTRIBUTE:
-                ListenableFuture<Void> attrSave = ctx.getTelemetryService().saveAttrAndNotify(
-                        ctx.getTenantId(), msg.getOriginator(), getAttributeScope(mathResultDef.getAttributeScope()), mathResultDef.getValue(), result);
+                ListenableFuture<Void> attrSave = saveAttribute(ctx, msg, result, mathResultDef);
                 return Futures.transform(attrSave, attr -> addToBodyAndMeta(msg, msgBodyOpt, result, mathResultDef), ctx.getDbCallbackExecutor());
             case TIME_SERIES:
-                ListenableFuture<Void> tsSave = ctx.getTelemetryService().saveAndNotify(ctx.getTenantId(), msg.getOriginator(),
-                        new BasicTsKvEntry(System.currentTimeMillis(), new DoubleDataEntry(mathResultDef.getValue(), result)));
+                ListenableFuture<Void> tsSave = saveTimeSeries(ctx, msg, result, mathResultDef);
                 return Futures.transform(tsSave, ts -> addToBodyAndMeta(msg, msgBodyOpt, result, mathResultDef), ctx.getDbCallbackExecutor());
             default:
                 throw new RuntimeException("Result type is not supported: " + mathResultDef.getType() + "!");
         }
+    }
+
+    private ListenableFuture<Void> saveTimeSeries(TbContext ctx, TbMsg msg, double result, TbMathResult mathResultDef) {
+
+        return ctx.getTelemetryService().saveAndNotify(ctx.getTenantId(), msg.getOriginator(),
+                new BasicTsKvEntry(System.currentTimeMillis(), new DoubleDataEntry(mathResultDef.getKey(), result)));
+    }
+
+    private ListenableFuture<Void> saveAttribute(TbContext ctx, TbMsg msg, double result, TbMathResult mathResultDef) {
+        String attributeScope = getAttributeScope(mathResultDef.getAttributeScope());
+        if (isIntegerResult(mathResultDef, config.getOperation())) {
+            var value = toIntValue(mathResultDef, result);
+            return ctx.getTelemetryService().saveAttrAndNotify(
+                    ctx.getTenantId(), msg.getOriginator(), attributeScope, mathResultDef.getKey(), value);
+        } else {
+            var value = toDoubleValue(mathResultDef, result);
+            return ctx.getTelemetryService().saveAttrAndNotify(
+                    ctx.getTenantId(), msg.getOriginator(), attributeScope, mathResultDef.getKey(), value);
+        }
+    }
+
+    private boolean isIntegerResult(TbMathResult mathResultDef, TbRuleNodeMathFunctionType function) {
+        return function.isIntegerResult() || mathResultDef.getResultValuePrecision() == 0;
+    }
+
+    private long toIntValue(TbMathResult mathResultDef, double value) {
+        return (long) value;
+    }
+
+    private double toDoubleValue(TbMathResult mathResultDef, double value) {
+        return BigDecimal.valueOf(value).setScale(mathResultDef.getResultValuePrecision(), RoundingMode.HALF_UP).doubleValue();
     }
 
     private Optional<ObjectNode> convertMsgBodyIfRequired(TbMsg msg) {
@@ -142,13 +216,21 @@ public class TbMathNode implements TbNode {
 
     private TbMsg addToBody(TbMsg msg, TbMathResult mathResultDef, Optional<ObjectNode> msgBodyOpt, double result) {
         ObjectNode body = msgBodyOpt.get();
-        body.put(mathResultDef.getValue(), result);
+        if (isIntegerResult(mathResultDef, config.getOperation())) {
+            body.put(mathResultDef.getKey(), toIntValue(mathResultDef, result));
+        } else {
+            body.put(mathResultDef.getKey(), toDoubleValue(mathResultDef, result));
+        }
         return TbMsg.transformMsgData(msg, JacksonUtil.toString(body));
     }
 
     private TbMsg addToMeta(TbMsg msg, TbMathResult mathResultDef, double result) {
         var md = msg.getMetaData();
-        md.putValue(mathResultDef.getValue(), Double.toString(result));
+        if (isIntegerResult(mathResultDef, config.getOperation())) {
+            md.putValue(mathResultDef.getKey(), Long.toString(toIntValue(mathResultDef, result)));
+        } else {
+            md.putValue(mathResultDef.getKey(), Double.toString(toDoubleValue(mathResultDef, result)));
+        }
         return TbMsg.transformMsg(msg, md);
     }
 
@@ -164,12 +246,64 @@ public class TbMathNode implements TbNode {
                 return apply(args.get(0), args.get(1), (a, b) -> a / b);
             case SIN:
                 return apply(args.get(0), Math::sin);
+            case SINH:
+                return apply(args.get(0), Math::sinh);
             case COS:
                 return apply(args.get(0), Math::cos);
+            case COSH:
+                return apply(args.get(0), Math::cosh);
+            case TAN:
+                return apply(args.get(0), Math::tan);
+            case TANH:
+                return apply(args.get(0), Math::tanh);
+            case ACOS:
+                return apply(args.get(0), Math::acos);
+            case ASIN:
+                return apply(args.get(0), Math::asin);
+            case ATAN:
+                return apply(args.get(0), Math::atan);
+            case ATAN2:
+                return apply(args.get(0), args.get(1), Math::atan2);
+            case EXP:
+                return apply(args.get(0), Math::exp);
+            case EXPM1:
+                return apply(args.get(0), Math::expm1);
             case SQRT:
                 return apply(args.get(0), Math::sqrt);
+            case CBRT:
+                return apply(args.get(0), Math::cbrt);
+            case GET_EXP:
+                return apply(args.get(0), (x) -> (double) Math.getExponent(x));
+            case HYPOT:
+                return apply(args.get(0), args.get(1), Math::hypot);
+            case LOG:
+                return apply(args.get(0), Math::log);
+            case LOG10:
+                return apply(args.get(0), Math::log10);
+            case LOG1P:
+                return apply(args.get(0), Math::log1p);
+            case CEIL:
+                return apply(args.get(0), Math::ceil);
+            case FLOOR:
+                return apply(args.get(0), Math::floor);
+            case FLOOR_DIV:
+                return apply(args.get(0), args.get(1), (a, b) -> (double) Math.floorDiv(a.longValue(), b.longValue()));
+            case FLOOR_MOD:
+                return apply(args.get(0), args.get(1), (a, b) -> (double) Math.floorMod(a.longValue(), b.longValue()));
             case ABS:
                 return apply(args.get(0), Math::abs);
+            case MIN:
+                return apply(args.get(0), args.get(1), Math::min);
+            case MAX:
+                return apply(args.get(0), args.get(1), Math::max);
+            case POW:
+                return apply(args.get(0), args.get(1), Math::pow);
+            case SIGNUM:
+                return apply(args.get(0), Math::signum);
+            case RAD:
+                return apply(args.get(0), Math::toRadians);
+            case DEG:
+                return apply(args.get(0), Math::toDegrees);
             default:
                 throw new RuntimeException("Not supported operation: " + config.getOperation());
         }
@@ -188,19 +322,17 @@ public class TbMathNode implements TbNode {
             case CONSTANT:
                 return Futures.immediateFuture(TbMathArgumentValue.constant(arg));
             case MESSAGE_BODY:
-                return Futures.immediateFuture(TbMathArgumentValue.fromMessageBody(arg.getValue(), msgBodyOpt));
+                return Futures.immediateFuture(TbMathArgumentValue.fromMessageBody(arg, msgBodyOpt));
             case MESSAGE_METADATA:
-                return Futures.immediateFuture(TbMathArgumentValue.fromMessageMetadata(arg.getValue(), msg.getMetaData()));
+                return Futures.immediateFuture(TbMathArgumentValue.fromMessageMetadata(arg, msg.getMetaData()));
             case ATTRIBUTE:
                 String scope = getAttributeScope(arg.getAttributeScope());
-                return Futures.transform(ctx.getAttributesService().find(ctx.getTenantId(), msg.getOriginator(), scope, arg.getValue()),
-                        opt -> getTbMathArgumentValue(opt.orElseThrow(() ->
-                                new RuntimeException("Attribute: " + arg.getValue() + " with scope: " + scope + " not found for entity: " + msg.getOriginator())))
-                        , MoreExecutors.directExecutor());
+                return Futures.transform(ctx.getAttributesService().find(ctx.getTenantId(), msg.getOriginator(), scope, arg.getKey()),
+                        opt -> getTbMathArgumentValue(arg, opt, "Attribute: " + arg.getKey() + " with scope: " + scope + " not found for entity: " + msg.getOriginator())
+                        ,MoreExecutors.directExecutor());
             case TIME_SERIES:
-                return Futures.transform(ctx.getTimeseriesService().findLatest(ctx.getTenantId(), msg.getOriginator(), arg.getValue()),
-                        opt -> getTbMathArgumentValue(opt.orElseThrow(() ->
-                                new RuntimeException("Time-series: " + arg.getValue() + " not found for entity: " + msg.getOriginator())))
+                return Futures.transform(ctx.getTimeseriesService().findLatest(ctx.getTenantId(), msg.getOriginator(), arg.getKey()),
+                        opt -> getTbMathArgumentValue(arg, opt, "Time-series: " + arg.getKey() + " not found for entity: " + msg.getOriginator())
                         , MoreExecutors.directExecutor());
             default:
                 throw new RuntimeException("Unsupported argument type: " + arg.getType() + "!");
@@ -212,14 +344,23 @@ public class TbMathNode implements TbNode {
         return StringUtils.isEmpty(attrScope) ? DataConstants.SERVER_SCOPE : attrScope;
     }
 
-    private TbMathArgumentValue getTbMathArgumentValue(KvEntry kv) {
-        switch (kv.getDataType()) {
-            case LONG:
-                return TbMathArgumentValue.fromLong(kv.getLongValue().get());
-            case DOUBLE:
-                return TbMathArgumentValue.fromDouble(kv.getDoubleValue().get());
-            default:
-                return TbMathArgumentValue.fromString(kv.getValueAsString());
+    private TbMathArgumentValue getTbMathArgumentValue(TbMathArgument arg, Optional<? extends KvEntry> kvOpt, String error) {
+        if (kvOpt != null && kvOpt.isPresent()) {
+            var kv = kvOpt.get();
+            switch (kv.getDataType()) {
+                case LONG:
+                    return TbMathArgumentValue.fromLong(kv.getLongValue().get());
+                case DOUBLE:
+                    return TbMathArgumentValue.fromDouble(kv.getDoubleValue().get());
+                default:
+                    return TbMathArgumentValue.fromString(kv.getValueAsString());
+            }
+        } else {
+            if (arg.getDefaultValue() != null) {
+                return TbMathArgumentValue.fromDouble(arg.getDefaultValue());
+            } else {
+                throw new RuntimeException(error);
+            }
         }
     }
 
