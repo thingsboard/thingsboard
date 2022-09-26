@@ -23,12 +23,12 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 @Slf4j
-public class AttributeDeleteNodeCallback extends TelemetryNodeCallback {
+public class AttributesDeleteNodeCallback extends TelemetryNodeCallback {
 
     private String scope;
     private List<String> keys;
 
-    public AttributeDeleteNodeCallback(TbContext ctx, TbMsg msg, String scope, List<String> keys) {
+    public AttributesDeleteNodeCallback(TbContext ctx, TbMsg msg, String scope, List<String> keys) {
         super(ctx, msg);
         this.scope = scope;
         this.keys = keys;
@@ -38,7 +38,7 @@ public class AttributeDeleteNodeCallback extends TelemetryNodeCallback {
     public void onSuccess(@Nullable Void result) {
         TbContext ctx = this.getCtx();
         TbMsg tbMsg = this.getMsg();
-        ctx.enqueue(ctx.attributeDeleteActionMsg(tbMsg.getOriginator(), ctx.getSelfId(), scope, keys),
+        ctx.enqueue(ctx.attributesDeletedActionMsg(tbMsg.getOriginator(), ctx.getSelfId(), scope, keys),
                 () -> ctx.tellSuccess(tbMsg),
                 throwable -> ctx.tellFailure(tbMsg, throwable));
     }

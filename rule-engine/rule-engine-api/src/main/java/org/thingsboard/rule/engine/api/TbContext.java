@@ -181,9 +181,9 @@ public interface TbContext {
     // TODO: Does this changes the message?
     TbMsg alarmActionMsg(Alarm alarm, RuleNodeId ruleNodeId, String action);
 
-    TbMsg attributeUpdateActionMsg(EntityId originator, RuleNodeId ruleNodeId, String scope, List<AttributeKvEntry> attributes);
+    TbMsg attributesUpdatedActionMsg(EntityId originator, RuleNodeId ruleNodeId, String scope, List<AttributeKvEntry> attributes);
 
-    TbMsg attributeDeleteActionMsg(EntityId originator, RuleNodeId ruleNodeId, String scope, List<String> keys);
+    TbMsg attributesDeletedActionMsg(EntityId originator, RuleNodeId ruleNodeId, String scope, List<String> keys);
 
     void onEdgeEventUpdate(TenantId tenantId, EdgeId edgeId);
 

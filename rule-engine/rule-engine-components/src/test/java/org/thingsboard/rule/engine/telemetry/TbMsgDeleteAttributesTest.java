@@ -20,7 +20,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -35,6 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -111,7 +115,15 @@ public class TbMsgDeleteAttributesTest {
         TbMsg msg = TbMsg.newMsg("POST_ATTRIBUTES_REQUEST", deviceId, metaData, data, callback);
         node.onMsg(ctx, msg);
 
-        verify(ctx, times(1)).attributeDeleteActionMsg(any(), any(), anyString(), anyList());
+        ArgumentCaptor<Runnable> successCaptor = ArgumentCaptor.forClass(Runnable.class);
+        ArgumentCaptor<Consumer<Throwable>> failureCaptor = ArgumentCaptor.forClass(Consumer.class);
+        ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+
+        verify(ctx, times(1)).enqueue(any(), successCaptor.capture(), failureCaptor.capture());
+        successCaptor.getValue().run();
+        verify(ctx, times(1)).tellSuccess(newMsgCaptor.capture());
+
+        verify(ctx, times(1)).attributesDeletedActionMsg(any(), any(), anyString(), anyList());
         verify(ctx, never()).tellFailure(any(), any());
         verify(telemetryService, times(1)).deleteAndNotify(any(), any(), anyString(), anyList(), any());
     }

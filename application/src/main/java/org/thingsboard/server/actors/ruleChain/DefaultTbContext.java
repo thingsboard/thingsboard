@@ -367,24 +367,24 @@ class DefaultTbContext implements TbContext {
         return entityActionMsg(alarm, alarm.getId(), ruleNodeId, action, queueName, ruleChainId);
     }
 
-    public TbMsg attributeUpdateActionMsg(EntityId originator, RuleNodeId ruleNodeId, String scope, List<AttributeKvEntry> attributes) {
+    public TbMsg attributesUpdatedActionMsg(EntityId originator, RuleNodeId ruleNodeId, String scope, List<AttributeKvEntry> attributes) {
         ObjectNode entityNode = JacksonUtil.newObjectNode();
         if (attributes != null) {
             attributes.forEach(attributeKvEntry -> addKvEntry(entityNode, attributeKvEntry));
         }
-        return attributeActionMsg(originator, ruleNodeId, scope, DataConstants.ATTRIBUTES_UPDATED, JacksonUtil.toString(entityNode));
+        return attributesActionMsg(originator, ruleNodeId, scope, DataConstants.ATTRIBUTES_UPDATED, JacksonUtil.toString(entityNode));
     }
 
-    public TbMsg attributeDeleteActionMsg(EntityId originator, RuleNodeId ruleNodeId, String scope, List<String> keys) {
+    public TbMsg attributesDeletedActionMsg(EntityId originator, RuleNodeId ruleNodeId, String scope, List<String> keys) {
         ObjectNode entityNode = JacksonUtil.newObjectNode();
         ArrayNode attrsArrayNode = entityNode.putArray("attributes");
         if (keys != null) {
             keys.forEach(attrsArrayNode::add);
         }
-        return attributeActionMsg(originator, ruleNodeId, scope, DataConstants.ATTRIBUTES_DELETED, JacksonUtil.toString(entityNode));
+        return attributesActionMsg(originator, ruleNodeId, scope, DataConstants.ATTRIBUTES_DELETED, JacksonUtil.toString(entityNode));
     }
 
-    private TbMsg attributeActionMsg(EntityId originator, RuleNodeId ruleNodeId, String scope, String action, String msgData) {
+    private TbMsg attributesActionMsg(EntityId originator, RuleNodeId ruleNodeId, String scope, String action, String msgData) {
         RuleChainId ruleChainId = null;
         String queueName = null;
         if (EntityType.DEVICE.equals(originator.getEntityType())) {

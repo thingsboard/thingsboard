@@ -22,12 +22,12 @@ import org.thingsboard.server.common.msg.TbMsg;
 import javax.annotation.Nullable;
 import java.util.List;
 
-public class AttributeUpdateNodeCallback extends TelemetryNodeCallback {
+public class AttributesUpdateNodeCallback extends TelemetryNodeCallback {
 
     private String scope;
     private List<AttributeKvEntry> attributes;
 
-    public AttributeUpdateNodeCallback(TbContext ctx, TbMsg msg, String scope, List<AttributeKvEntry> attributes) {
+    public AttributesUpdateNodeCallback(TbContext ctx, TbMsg msg, String scope, List<AttributeKvEntry> attributes) {
         super(ctx, msg);
         this.scope = scope;
         this.attributes = attributes;
@@ -37,7 +37,7 @@ public class AttributeUpdateNodeCallback extends TelemetryNodeCallback {
     public void onSuccess(@Nullable Void result) {
         TbContext ctx = this.getCtx();
         TbMsg tbMsg = this.getMsg();
-        ctx.enqueue(ctx.attributeUpdateActionMsg(tbMsg.getOriginator(), ctx.getSelfId(), scope, attributes),
+        ctx.enqueue(ctx.attributesUpdatedActionMsg(tbMsg.getOriginator(), ctx.getSelfId(), scope, attributes),
                 () -> ctx.tellSuccess(tbMsg),
                 throwable -> ctx.tellFailure(tbMsg, throwable));
     }
