@@ -17,27 +17,22 @@
 import { Component } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { EntityTableHeaderComponent } from '../../components/entity/entity-table-header.component';
-import { EntityType } from '@shared/models/entity-type.models';
-import { AssetInfo } from '@shared/models/asset.models';
-import { AssetProfileId } from '@shared/models/id/asset-profile-id';
+import { EntityTabsComponent } from '../../components/entity/entity-tabs.component';
+import { AssetProfile } from '@shared/models/asset.models';
 
 @Component({
-  selector: 'tb-asset-table-header',
-  templateUrl: './asset-table-header.component.html',
-  styleUrls: ['./asset-table-header.component.scss']
+  selector: 'tb-asset-profile-tabs',
+  templateUrl: './asset-profile-tabs.component.html',
+  styleUrls: []
 })
-export class AssetTableHeaderComponent extends EntityTableHeaderComponent<AssetInfo> {
-
-  entityType = EntityType;
+export class AssetProfileTabsComponent extends EntityTabsComponent<AssetProfile> {
 
   constructor(protected store: Store<AppState>) {
     super(store);
   }
 
-  assetProfileChanged(assetProfileId: AssetProfileId) {
-    this.entitiesTableConfig.componentsData.assetProfileId = assetProfileId;
-    this.entitiesTableConfig.getTable().resetSortAndFilter(true);
+  ngOnInit() {
+    super.ngOnInit();
   }
 
 }

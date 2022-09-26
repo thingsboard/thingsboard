@@ -36,3 +36,4 @@ export * from './user-id';
 export * from './widget-type-id';
 export * from './widgets-bundle-id';
 export * from './edge-id';
+export * from './asset-id';

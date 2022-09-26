@@ -67,9 +67,6 @@ public class AssetProfileController extends BaseController {
 
     private final TbAssetProfileService tbAssetProfileService;
 
-    @Autowired
-    private TimeseriesService timeseriesService;
-
     @ApiOperation(value = "Get Asset Profile (getAssetProfileById)",
             notes = "Fetch the Asset Profile object based on the provided Asset Profile Id. " +
                     "The server checks that the asset profile is owned by the same tenant. " + TENANT_AUTHORITY_PARAGRAPH,

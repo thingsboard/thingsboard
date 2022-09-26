@@ -44,7 +44,7 @@ public class DefaultTbAssetProfileService extends AbstractTbEntityService implem
         TenantId tenantId = assetProfile.getTenantId();
         try {
             AssetProfile savedAssetProfile = checkNotNull(assetProfileService.saveAssetProfile(assetProfile));
-            autoCommit(user, assetProfile.getId());
+            autoCommit(user, savedAssetProfile.getId());
             tbClusterService.broadcastEntityStateChangeEvent(tenantId, savedAssetProfile.getId(),
                     actionType.equals(ActionType.ADDED) ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
 
