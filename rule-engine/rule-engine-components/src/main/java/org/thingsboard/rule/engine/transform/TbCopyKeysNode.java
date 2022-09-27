@@ -50,9 +50,9 @@ import java.util.regex.Pattern;
 )
 public class TbCopyKeysNode implements TbNode {
 
-    TbCopyKeysNodeConfiguration config;
-    List<Pattern> patternKeys;
-    boolean fromMetadata;
+    private TbCopyKeysNodeConfiguration config;
+    private List<Pattern> patternKeys;
+    private boolean fromMetadata;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
