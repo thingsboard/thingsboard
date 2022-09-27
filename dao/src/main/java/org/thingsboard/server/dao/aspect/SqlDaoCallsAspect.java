@@ -22,11 +22,13 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.hibernate.exception.JDBCConnectionException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -153,26 +155,29 @@ public class SqlDaoCallsAspect {
                         new FutureCallback<>() {
                             @Override
                             public void onSuccess(@Nullable Object result) {
-                                logTenantMethodExecution(tenantId, methodName, true, startTime);
+                                logTenantMethodExecution(tenantId, methodName, true, startTime, null);
                             }
 
                             @Override
                             public void onFailure(Throwable t) {
-                                logTenantMethodExecution(tenantId, methodName, false, startTime);
+                                logTenantMethodExecution(tenantId, methodName, false, startTime, t);
                             }
                         },
                         MoreExecutors.directExecutor());
             } else {
-                logTenantMethodExecution(tenantId, methodName, true, startTime);
+                logTenantMethodExecution(tenantId, methodName, true, startTime, null);
             }
             return result;
         } catch (Throwable t) {
-            logTenantMethodExecution(tenantId, methodName, false, startTime);
+            logTenantMethodExecution(tenantId, methodName, false, startTime, t);
             throw t;
         }
     }
 
-    private void logTenantMethodExecution(TenantId tenantId, String method, boolean success, long startTime) {
+    private void logTenantMethodExecution(TenantId tenantId, String method, boolean success, long startTime, Throwable t) {
+        if (!success && ExceptionUtils.indexOfThrowable(t, JDBCConnectionException.class) >= 0) {
+            return;
+        }
         statsMap.computeIfAbsent(tenantId, DbCallStats::new)
                 .onMethodCall(method, success, System.currentTimeMillis() - startTime);
     }
