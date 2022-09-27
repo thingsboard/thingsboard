@@ -67,11 +67,6 @@ public class TbRenameKeysNodeTest {
     }
 
     @Test
-    void givenDefaultConfig_whenInit_thenOK() {
-        assertThat(node.config).isEqualTo(config);
-    }
-
-    @Test
     void givenDefaultConfig_whenVerify_thenOK() {
         TbRenameKeysNodeConfiguration defaultConfig = new TbRenameKeysNodeConfiguration().defaultConfiguration();
         assertThat(defaultConfig.getRenameKeysMapping()).isEqualTo(Map.of("temp", "temperature"));

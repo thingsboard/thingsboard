@@ -46,9 +46,9 @@ import java.util.concurrent.ExecutionException;
 )
 public class TbRenameKeysNode implements TbNode {
 
-    TbRenameKeysNodeConfiguration config;
-    Map<String, String> renameKeysMapping;
-    boolean fromMetadata;
+    private TbRenameKeysNodeConfiguration config;
+    private Map<String, String> renameKeysMapping;
+    private boolean fromMetadata;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
