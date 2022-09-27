@@ -86,7 +86,7 @@ public class TbJsonPathNodeTest {
     @Test
     void givenDefaultConfig_whenVerify_thenOK() {
         TbJsonPathNodeConfiguration defaultConfig = new TbJsonPathNodeConfiguration().defaultConfiguration();
-        assertThat(defaultConfig.getJsonPath()).isEqualTo("$");
+        assertThat(defaultConfig.getJsonPath()).isEqualTo(TbJsonPathNodeConfiguration.DEFAULT_JSON_PATH);
     }
 
     @Test
