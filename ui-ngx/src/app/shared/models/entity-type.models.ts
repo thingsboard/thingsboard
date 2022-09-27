@@ -26,6 +26,7 @@ export enum EntityType {
   ASSET = 'ASSET',
   DEVICE = 'DEVICE',
   DEVICE_PROFILE = 'DEVICE_PROFILE',
+  ASSET_PROFILE = 'ASSET_PROFILE',
   ALARM = 'ALARM',
   RULE_CHAIN = 'RULE_CHAIN',
   RULE_NODE = 'RULE_NODE',
@@ -148,6 +149,20 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
         noEntities: 'device-profile.no-device-profiles-text',
         search: 'device-profile.search',
         selectedEntities: 'device-profile.selected-device-profiles'
+      }
+    ],
+    [
+      EntityType.ASSET_PROFILE,
+      {
+        type: 'entity.type-asset-profile',
+        typePlural: 'entity.type-asset-profiles',
+        list: 'entity.list-of-asset-profiles',
+        nameStartsWith: 'entity.asset-profile-name-starts-with',
+        details: 'asset-profile.asset-profile-details',
+        add: 'asset-profile.add',
+        noEntities: 'asset-profile.no-asset-profiles-text',
+        search: 'asset-profile.search',
+        selectedEntities: 'asset-profile.selected-asset-profiles'
       }
     ],
     [
@@ -362,6 +377,12 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource<BaseDa
       }
     ],
     [
+      EntityType.ASSET_PROFILE,
+      {
+        helpLinkId: 'assetProfiles'
+      }
+    ],
+    [
       EntityType.ASSET,
       {
         helpLinkId: 'assets'
@@ -426,7 +447,8 @@ export const baseDetailsPageByEntityType = new Map<EntityType, string>([
   [EntityType.DASHBOARD, '/dashboards'],
   [EntityType.ASSET, '/assets'],
   [EntityType.DEVICE, '/devices'],
-  [EntityType.DEVICE_PROFILE, '/deviceProfiles'],
+  [EntityType.DEVICE_PROFILE, '/profiles/deviceProfiles'],
+  [EntityType.ASSET_PROFILE, '/profiles/assetProfiles'],
   [EntityType.RULE_CHAIN, '/ruleChains'],
   [EntityType.EDGE, '/edgeInstances'],
   [EntityType.ENTITY_VIEW, '/entityViews'],

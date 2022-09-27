@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -75,6 +76,9 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
 
     @Autowired
     private AssetService assetService;
+
+    @Autowired
+    private AssetProfileService assetProfileService;
 
     @Autowired
     private DeviceService deviceService;
@@ -165,6 +169,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         publishEvictEvent(new TenantEvictEvent(savedTenant.getId(), create));
         if (tenant.getId() == null) {
             deviceProfileService.createDefaultDeviceProfile(savedTenant.getId());
+            assetProfileService.createDefaultAssetProfile(savedTenant.getId());
             apiUsageStateService.createDefaultApiUsageState(savedTenant.getId(), null);
         }
         return savedTenant;
@@ -182,6 +187,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         entityViewService.deleteEntityViewsByTenantId(tenantId);
         widgetsBundleService.deleteWidgetsBundlesByTenantId(tenantId);
         assetService.deleteAssetsByTenantId(tenantId);
+        assetProfileService.deleteAssetProfilesByTenantId(tenantId);
         deviceService.deleteDevicesByTenantId(tenantId);
         deviceProfileService.deleteDeviceProfilesByTenantId(tenantId);
         dashboardService.deleteDashboardsByTenantId(tenantId);

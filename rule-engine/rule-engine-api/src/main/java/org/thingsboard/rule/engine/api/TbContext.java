@@ -237,6 +237,8 @@ public interface TbContext {
 
     RuleEngineDeviceProfileCache getDeviceProfileCache();
 
+    RuleEngineAssetProfileCache getAssetProfileCache();
+
     EdgeService getEdgeService();
 
     EdgeEventService getEdgeEventService();
