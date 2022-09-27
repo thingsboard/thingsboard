@@ -24,13 +24,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class TbMathArgument {
 
+    private String name;
     private TbMathArgumentType type;
     private String key;
     private String attributeScope;
     private Double defaultValue;
 
     public TbMathArgument(TbMathArgumentType type, String key) {
-        this.type = type;
-        this.key = key;
+       this(key, type, key, null, null);
     }
+
 }

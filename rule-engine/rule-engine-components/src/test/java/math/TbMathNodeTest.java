@@ -33,8 +33,8 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.math.TbMathArgument;
 import org.thingsboard.rule.engine.math.TbMathArgumentType;
-import org.thingsboard.rule.engine.math.TbMathNodeConfiguration;
 import org.thingsboard.rule.engine.math.TbMathNode;
+import org.thingsboard.rule.engine.math.TbMathNodeConfiguration;
 import org.thingsboard.rule.engine.math.TbMathResult;
 import org.thingsboard.rule.engine.math.TbRuleNodeMathFunctionType;
 import org.thingsboard.server.common.data.DataConstants;
@@ -79,6 +79,15 @@ public class TbMathNodeTest {
             }
         };
         dbExecutor.init();
+        initMocks();
+    }
+
+    @After
+    public void after() {
+        dbExecutor.destroy();
+    }
+
+    private void initMocks() {
         Mockito.reset(ctx);
         Mockito.reset(attributesService);
         Mockito.reset(tsService);
@@ -88,16 +97,21 @@ public class TbMathNodeTest {
         lenient().when(ctx.getDbCallbackExecutor()).thenReturn(dbExecutor);
     }
 
-    @After
-    public void after() {
-        dbExecutor.destroy();
+    private TbMathNode initNode(TbRuleNodeMathFunctionType operation, TbMathResult result, TbMathArgument... arguments) {
+        return initNode(operation, null, result, arguments);
     }
 
+    private TbMathNode initNodeWithCustomFunction(String expression, TbMathResult result, TbMathArgument... arguments) {
+        return initNode(TbRuleNodeMathFunctionType.CUSTOM, expression, result, arguments);
+    }
 
-    private TbMathNode initNode(TbRuleNodeMathFunctionType operation, TbMathResult result, TbMathArgument... arguments) {
+    private TbMathNode initNode(TbRuleNodeMathFunctionType operation, String expression, TbMathResult result, TbMathArgument... arguments) {
         try {
             TbMathNodeConfiguration configuration = new TbMathNodeConfiguration();
             configuration.setOperation(operation);
+            if (TbRuleNodeMathFunctionType.CUSTOM.equals(operation)) {
+                configuration.setCustomFunction(expression);
+            }
             configuration.setResult(result);
             configuration.setArguments(Arrays.asList(arguments));
             TbMathNode node = new TbMathNode();
@@ -106,6 +120,100 @@ public class TbMathNodeTest {
         } catch (TbNodeException ex) {
             throw new IllegalStateException(ex);
         }
+    }
+
+    @Test
+    public void testExp4j() {
+        var node = initNodeWithCustomFunction("2a+3b",
+                new TbMathResult(TbMathArgumentType.MESSAGE_BODY, "result", 2, false, false, null),
+                new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "a"),
+                new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "b")
+        );
+
+        TbMsg msg = TbMsg.newMsg("TEST", originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 2).put("b", 2).toString());
+
+        node.onMsg(ctx, msg);
+
+        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        Mockito.verify(ctx, Mockito.timeout(5000)).tellSuccess(msgCaptor.capture());
+
+        TbMsg resultMsg = msgCaptor.getValue();
+        Assert.assertNotNull(resultMsg);
+        Assert.assertNotNull(resultMsg.getData());
+        var resultJson = JacksonUtil.toJsonNode(resultMsg.getData());
+        Assert.assertTrue(resultJson.has("result"));
+        Assert.assertEquals(10, resultJson.get("result").asInt());
+    }
+
+    @Test
+    public void testSimpleFunctions() {
+        testSimpleTwoArgumentFunction(TbRuleNodeMathFunctionType.ADD, 2.1, 2.2, 4.3);
+        testSimpleTwoArgumentFunction(TbRuleNodeMathFunctionType.SUB, 2.1, 2.2, -0.1);
+        testSimpleTwoArgumentFunction(TbRuleNodeMathFunctionType.MULT, 2.1, 2.0, 4.2);
+        testSimpleTwoArgumentFunction(TbRuleNodeMathFunctionType.DIV, 4.2, 2.0, 2.1);
+
+        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.SIN, Math.toRadians(30), 0.5);
+        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.SIN, Math.toRadians(90), 1.0);
+
+        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.SINH, Math.toRadians(0), 0.0);
+        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.COSH, Math.toRadians(0), 1.0);
+
+        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.COS, Math.toRadians(60), 0.5);
+        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.COS, Math.toRadians(0), 1.0);
+
+        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.TAN, Math.toRadians(45), 1);
+        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.TAN, Math.toRadians(0), 0);
+
+        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.ABS, -1, 1);
+        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.SQRT, 4, 2);
+        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.CBRT, 8, 2);
+    }
+
+    private void testSimpleTwoArgumentFunction(TbRuleNodeMathFunctionType function, double arg1, double arg2, double result) {
+        initMocks();
+
+        var node = initNode(function,
+                new TbMathResult(TbMathArgumentType.MESSAGE_BODY, "result", 2, false, false, null),
+                new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "a"),
+                new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "b")
+        );
+
+        TbMsg msg = TbMsg.newMsg("TEST", originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", arg1).put("b", arg2).toString());
+
+        node.onMsg(ctx, msg);
+
+        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        Mockito.verify(ctx, Mockito.timeout(5000).times(1)).tellSuccess(msgCaptor.capture());
+
+        TbMsg resultMsg = msgCaptor.getValue();
+        Assert.assertNotNull(resultMsg);
+        Assert.assertNotNull(resultMsg.getData());
+        var resultJson = JacksonUtil.toJsonNode(resultMsg.getData());
+        Assert.assertTrue(resultJson.has("result"));
+        Assert.assertEquals(result, resultJson.get("result").asDouble(), 0d);
+    }
+
+    private void testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType function, double arg1, double result) {
+        initMocks();
+
+        var node = initNode(function,
+                new TbMathResult(TbMathArgumentType.MESSAGE_BODY, "result", 2, false, false, null),
+                new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "a")
+        );
+
+        TbMsg msg = TbMsg.newMsg("TEST", originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", arg1).toString());
+
+        node.onMsg(ctx, msg);
+
+        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        Mockito.verify(ctx, Mockito.timeout(5000)).tellSuccess(msgCaptor.capture());
+
+        TbMsg resultMsg = msgCaptor.getValue();
+        Assert.assertNotNull(resultMsg);
+        Assert.assertNotNull(resultMsg.getData());
+        var resultJson = JacksonUtil.toJsonNode(resultMsg.getData());
+        Assert.assertTrue(resultJson.has("result"));
+        Assert.assertEquals(result, resultJson.get("result").asDouble(), 0d);
     }
 
     @Test

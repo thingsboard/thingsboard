@@ -26,6 +26,7 @@ public class TbMathNodeConfiguration implements NodeConfiguration<TbMathNodeConf
 
     private TbRuleNodeMathFunctionType operation;
     private List<TbMathArgument> arguments;
+    private String customFunction;
     private TbMathResult result;
 
     @Override

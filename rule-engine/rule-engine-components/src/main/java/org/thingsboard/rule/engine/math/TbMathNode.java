@@ -20,6 +20,8 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import net.objecthunter.exp4j.Expression;
+import net.objecthunter.exp4j.ExpressionBuilder;
 import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.JacksonUtil;
@@ -57,6 +59,7 @@ import java.util.stream.Collectors;
         configClazz = TbMathNodeConfiguration.class,
         nodeDescription = "Apply math function and save the result into the message and/or database",
         nodeDetails = "Supports math operations like: ADD, SUB, MULT, DIV, etc and functions: SIN, COS, TAN, SEC, etc. " +
+                "Use 'CUSTOM' operation to specify complex math expressions." +
                 "<br/><br/>" +
                 "You may use constant, message field, metadata field, attribute, and latest time-series as an arguments values. " +
                 "The result of the function may be also stored to message field, metadata field, attribute or time-series value." +
@@ -65,15 +68,17 @@ import java.util.stream.Collectors;
                 "For example, you may increase `totalWaterConsumption` based on the `deltaWaterConsumption` reported by device." +
                 "<br/><br/>" +
                 "Alternative use case is the replacement of simple JS `script` nodes with more light-weight and performant implementation. " +
-                "For example, you may transform Fahrenheit to Celsius (C = (F - 32) / 1.8) using combination of two math node functions: SUB 32 and DIV 1.8." +
+                "For example, you may transform Fahrenheit to Celsius (C = (F - 32) / 1.8) using CUSTOM operation and expression: (x - 32) / 1.8)." +
                 "<br/><br/>" +
                 "The execution is synchronized in scope of message originator (e.g. device) and server node. " +
                 "If you have rule nodes in different rule chains, they will process messages from the same originator synchronously in the scope of the server node.",
         icon = "functions"
+
 )
 public class TbMathNode implements TbNode {
 
     private static final ConcurrentMap<EntityId, Semaphore> semaphores = new ConcurrentReferenceHashMap<>();
+    private final ThreadLocal<Expression> customExpression = new ThreadLocal<>();
 
     private TbMathNodeConfiguration config;
     private boolean msgBodyToJsonConversionRequired;
@@ -85,6 +90,13 @@ public class TbMathNode implements TbNode {
         var argsCount = config.getArguments().size();
         if (argsCount < operation.getMinArgs() || argsCount > operation.getMaxArgs()) {
             throw new RuntimeException("Args count: " + argsCount + " does not match operation: " + operation.name());
+        }
+        if (TbRuleNodeMathFunctionType.CUSTOM.equals(operation)) {
+            if (StringUtils.isBlank(config.getCustomFunction())) {
+                throw new RuntimeException("Custom function is blank!");
+            } else if (config.getCustomFunction().length() > 256) {
+                throw new RuntimeException("Custom function is too complex (length > 256)!");
+            }
         }
         msgBodyToJsonConversionRequired = config.getArguments().stream().anyMatch(arg -> TbMathArgumentType.MESSAGE_BODY.equals(arg.getType()));
         msgBodyToJsonConversionRequired = msgBodyToJsonConversionRequired || TbMathArgumentType.MESSAGE_BODY.equals(config.getResult().getType());
@@ -304,6 +316,19 @@ public class TbMathNode implements TbNode {
                 return apply(args.get(0), Math::toRadians);
             case DEG:
                 return apply(args.get(0), Math::toDegrees);
+            case CUSTOM:
+                var expr = customExpression.get();
+                if (expr == null) {
+                    expr = new ExpressionBuilder(config.getCustomFunction())
+                            .implicitMultiplication(true)
+                            .variables(config.getArguments().stream().map(TbMathArgument::getName).collect(Collectors.toSet()))
+                            .build();
+                    customExpression.set(expr);
+                }
+                for (int i = 0; i < config.getArguments().size(); i++) {
+                    expr.setVariable(config.getArguments().get(i).getName(), args.get(i).getValue());
+                }
+                return expr.evaluate();
             default:
                 throw new RuntimeException("Not supported operation: " + config.getOperation());
         }
@@ -329,7 +354,7 @@ public class TbMathNode implements TbNode {
                 String scope = getAttributeScope(arg.getAttributeScope());
                 return Futures.transform(ctx.getAttributesService().find(ctx.getTenantId(), msg.getOriginator(), scope, arg.getKey()),
                         opt -> getTbMathArgumentValue(arg, opt, "Attribute: " + arg.getKey() + " with scope: " + scope + " not found for entity: " + msg.getOriginator())
-                        ,MoreExecutors.directExecutor());
+                        , MoreExecutors.directExecutor());
             case TIME_SERIES:
                 return Futures.transform(ctx.getTimeseriesService().findLatest(ctx.getTenantId(), msg.getOriginator(), arg.getKey()),
                         opt -> getTbMathArgumentValue(arg, opt, "Time-series: " + arg.getKey() + " not found for entity: " + msg.getOriginator())
