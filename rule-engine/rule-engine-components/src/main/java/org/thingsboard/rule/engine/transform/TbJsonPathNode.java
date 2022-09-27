@@ -57,7 +57,7 @@ public class TbJsonPathNode implements TbNode {
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbJsonPathNodeConfiguration.class);
         this.jsonPathValue = config.getJsonPath();
-        if (this.jsonPathValue != "$") {
+        if (!TbJsonPathNodeConfiguration.DEFAULT_JSON_PATH.equals(this.jsonPathValue)) {
             this.configurationJsonPath = Configuration.builder()
                     .jsonProvider(new JacksonJsonNodeJsonProvider())
                     .build();
@@ -67,7 +67,7 @@ public class TbJsonPathNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        if (jsonPathValue != "$") {
+        if (!TbJsonPathNodeConfiguration.DEFAULT_JSON_PATH.equals(this.jsonPathValue)) {
             try {
                 JsonNode jsonPathData = jsonPath.read(msg.getData(), this.configurationJsonPath);
                 ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(jsonPathData)));
