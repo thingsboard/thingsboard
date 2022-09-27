@@ -53,8 +53,6 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.DataType;
-import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleNode;
@@ -370,7 +368,7 @@ class DefaultTbContext implements TbContext {
     public TbMsg attributesUpdatedActionMsg(EntityId originator, RuleNodeId ruleNodeId, String scope, List<AttributeKvEntry> attributes) {
         ObjectNode entityNode = JacksonUtil.newObjectNode();
         if (attributes != null) {
-            attributes.forEach(attributeKvEntry -> addKvEntry(entityNode, attributeKvEntry));
+            attributes.forEach(attributeKvEntry -> JacksonUtil.addKvEntry(entityNode, attributeKvEntry));
         }
         return attributesActionMsg(originator, ruleNodeId, scope, DataConstants.ATTRIBUTES_UPDATED, JacksonUtil.toString(entityNode));
     }
@@ -400,22 +398,6 @@ class DefaultTbContext implements TbContext {
         TbMsgMetaData tbMsgMetaData = getActionMetaData(ruleNodeId);
         tbMsgMetaData.putValue("scope", scope);
         return entityActionMsg(originator, tbMsgMetaData, msgData, action, queueName, ruleChainId);
-    }
-
-    private void addKvEntry(ObjectNode entityNode, KvEntry kvEntry) {
-        if (kvEntry.getDataType() == DataType.BOOLEAN) {
-            kvEntry.getBooleanValue().ifPresent(value -> entityNode.put(kvEntry.getKey(), value));
-        } else if (kvEntry.getDataType() == DataType.DOUBLE) {
-            kvEntry.getDoubleValue().ifPresent(value -> entityNode.put(kvEntry.getKey(), value));
-        } else if (kvEntry.getDataType() == DataType.LONG) {
-            kvEntry.getLongValue().ifPresent(value -> entityNode.put(kvEntry.getKey(), value));
-        } else if (kvEntry.getDataType() == DataType.JSON) {
-            if (kvEntry.getJsonValue().isPresent()) {
-                entityNode.set(kvEntry.getKey(), JacksonUtil.valueToTree(kvEntry.getJsonValue().get()));
-            }
-        } else {
-            entityNode.put(kvEntry.getKey(), kvEntry.getValueAsString());
-        }
     }
 
     @Override

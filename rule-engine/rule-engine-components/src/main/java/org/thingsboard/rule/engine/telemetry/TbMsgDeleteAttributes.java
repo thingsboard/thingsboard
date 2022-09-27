@@ -46,9 +46,9 @@ import java.util.stream.Collectors;
 )
 public class TbMsgDeleteAttributes implements TbNode {
 
-    TbMsgDeleteAttributesConfiguration config;
-    String scope;
-    List<String> keys;
+    private TbMsgDeleteAttributesConfiguration config;
+    private String scope;
+    private List<String> keys;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {

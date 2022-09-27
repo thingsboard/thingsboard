@@ -92,11 +92,6 @@ public class TbMsgDeleteAttributesTest {
     }
 
     @Test
-    void givenDefaultConfig_whenInit_thenOK() {
-        assertThat(node.config).isEqualTo(config);
-    }
-
-    @Test
     void givenDefaultConfig_whenVerify_thenOK() {
         TbMsgDeleteAttributesConfiguration defaultConfig = new TbMsgDeleteAttributesConfiguration().defaultConfiguration();
         assertThat(defaultConfig.getScope()).isEqualTo(DataConstants.SERVER_SCOPE);
