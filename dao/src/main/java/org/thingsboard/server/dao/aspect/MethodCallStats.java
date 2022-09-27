@@ -13,15 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.util;
+package org.thingsboard.server.dao.aspect;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import lombok.Data;
 
-@Target(ElementType.METHOD)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface TenantDbCall {
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+
+@Data
+public class MethodCallStats {
+    private final AtomicInteger executions = new AtomicInteger();
+    private final AtomicInteger failures = new AtomicInteger();
+    private final AtomicLong timing = new AtomicLong();
+
+    public MethodCallStatsSnapshot snapshot() {
+        return new MethodCallStatsSnapshot(executions.get(), failures.get(), timing.get());
+    }
 
 }

@@ -30,19 +30,19 @@ import java.util.stream.Collectors;
 public class DbCallStats {
 
     private final TenantId tenantId;
-    private final ConcurrentMap<String, Pair<AtomicInteger, AtomicLong>> methodStats = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, MethodCallStats> methodStats = new ConcurrentHashMap<>();
     private final AtomicInteger successCalls = new AtomicInteger();
     private final AtomicInteger failureCalls = new AtomicInteger();
 
     public void onMethodCall(String methodName, boolean success, long executionTime) {
-        var pair = methodStats.computeIfAbsent(methodName,
-                m -> Pair.of(new AtomicInteger(0), new AtomicLong(0L)));
-        pair.getFirst().incrementAndGet();
-        pair.getSecond().addAndGet(executionTime);
+        var methodCallStats = methodStats.computeIfAbsent(methodName, m -> new MethodCallStats());
+        methodCallStats.getExecutions().incrementAndGet();
+        methodCallStats.getTiming().addAndGet(executionTime);
         if (success) {
             successCalls.incrementAndGet();
         } else {
             failureCalls.incrementAndGet();
+            methodCallStats.getFailures().incrementAndGet();
         }
     }
 
@@ -51,9 +51,8 @@ public class DbCallStats {
                 .tenantId(tenantId)
                 .totalSuccess(successCalls.get())
                 .totalFailure(failureCalls.get())
-                .methodExecutions(methodStats.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getFirst().get())))
-                .methodTimings(methodStats.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getSecond().get())))
-                .totalTiming(methodStats.values().stream().map(Pair::getSecond).map(AtomicLong::get).reduce(0L, Long::sum))
+                .methodStats(methodStats.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().snapshot())))
+                .totalTiming(methodStats.values().stream().map(MethodCallStats::getTiming).map(AtomicLong::get).reduce(0L, Long::sum))
                 .build();
     }
 

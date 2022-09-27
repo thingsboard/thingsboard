@@ -24,11 +24,13 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.UserAuthSettingsEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.user.UserAuthSettingsDao;
+import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
+@SqlDao
 public class JpaUserAuthSettingsDao extends JpaAbstractDao<UserAuthSettingsEntity, UserAuthSettings> implements UserAuthSettingsDao {
 
     private final UserAuthSettingsRepository repository;

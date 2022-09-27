@@ -28,6 +28,7 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.QueueEntity;
 import org.thingsboard.server.dao.queue.QueueDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
+import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
 import java.util.Objects;
@@ -35,6 +36,7 @@ import java.util.UUID;
 
 @Slf4j
 @Component
+@SqlDao
 public class JpaQueueDao extends JpaAbstractDao<QueueEntity, Queue> implements QueueDao {
 
     @Autowired

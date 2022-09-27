@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.BaseEntity;
-import org.thingsboard.server.dao.util.TenantDbCall;
+import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Collection;
 import java.util.List;
@@ -36,6 +36,7 @@ import java.util.UUID;
  * @author Valerii Sosliuk
  */
 @Slf4j
+@SqlDao
 public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
         extends JpaAbstractDaoListeningExecutorService
         implements Dao<D> {
@@ -76,7 +77,6 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
         return d;
     }
 
-    @TenantDbCall
     @Override
     public D findById(TenantId tenantId, UUID key) {
         log.debug("Get entity by key {}", key);
@@ -84,7 +84,6 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
         return DaoUtil.getData(entity);
     }
 
-    @TenantDbCall
     @Override
     public ListenableFuture<D> findByIdAsync(TenantId tenantId, UUID key) {
         log.debug("Get entity by key async {}", key);

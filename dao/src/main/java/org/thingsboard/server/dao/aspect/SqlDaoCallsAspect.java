@@ -20,9 +20,12 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.reflect.MethodSignature;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -31,70 +34,87 @@ import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Aspect
 @ConditionalOnProperty(prefix = "sql", value = "log_tenant_stats", havingValue = "true")
 @Component
 @Slf4j
-public class TenantDbCallAspect {
+public class SqlDaoCallsAspect {
 
     private final Set<String> invalidTenantDbCallMethods = ConcurrentHashMap.newKeySet();
     private final ConcurrentMap<TenantId, DbCallStats> statsMap = new ConcurrentHashMap<>();
 
-    @Scheduled(fixedDelayString = "${sql.log_tenant_stats.log_tenant_stats_interval:60000}")
+    @Scheduled(initialDelayString = "${sql.log_tenant_stats.log_tenant_stats_interval:60000}",
+            fixedDelayString = "${sql.log_tenant_stats.log_tenant_stats_interval:60000}")
     public void printStats() {
+        List<DbCallStatsSnapshot> snapshots = snapshot();
+        if (snapshots.isEmpty()) return;
         try {
             if (log.isTraceEnabled()) {
-                List<DbCallStatsSnapshot> snapshots = snapshot();
                 logTopNTenants(snapshots, Comparator.comparing(DbCallStatsSnapshot::getTotalTiming).reversed(), 0, snapshot -> {
-                    log.trace("[{}]: calls: {}, exec time: {} ", snapshot.getTenantId(), snapshot.getTotalCalls(), snapshot.getTotalTiming());
-                    snapshot.getMethodExecutions().forEach((method, count) -> {
-                        log.trace("[{}]: method: {}, count: {}, exec time: {}",
-                                snapshot.getTenantId(), method, count, snapshot.getMethodTimings().getOrDefault(method, 0L));
-                    });
+                    logSnapshot(snapshot, 0, Comparator.comparing(MethodCallStatsSnapshot::getTiming).reversed(), log::trace);
                 });
-                // todo: log top 10 tenants for each method sorted by number of execution.
+
+                Map<String, Map<TenantId, MethodCallStatsSnapshot>> byMethodStats = new HashMap<>();
+                for (DbCallStatsSnapshot snapshot : snapshots) {
+                    snapshot.getMethodStats().forEach((method, stats) -> {
+                        byMethodStats.computeIfAbsent(method, m -> new HashMap<>())
+                                .put(snapshot.getTenantId(), stats);
+                    });
+                }
+                byMethodStats.forEach((method, byTenantStats) -> {
+                    log.trace("Top tenants for method {} by calls:", method);
+                    byTenantStats.entrySet().stream()
+                            .sorted(Map.Entry.comparingByValue(Comparator.comparing(MethodCallStatsSnapshot::getExecutions).reversed()))
+                            .limit(10)
+                            .forEach(e -> {
+                                TenantId tenantId = e.getKey();
+                                MethodCallStatsSnapshot methodStats = e.getValue();
+                                log.trace("[{}] calls: {}, failures: {}, timing: {}", tenantId,
+                                        methodStats.getExecutions(), methodStats.getFailures(), methodStats.getTiming());
+                            });
+                });
             } else if (log.isDebugEnabled()) {
-                List<DbCallStatsSnapshot> snapshots = snapshot();
                 log.debug("Total calls statistics below:");
-                logTopNTenants(snapshots, Comparator.comparingInt(DbCallStatsSnapshot::getTotalCalls).reversed(),
-                        10, s -> logSnapshotWithDebugLevel(s, 10));
+                logTopNTenants(snapshots, Comparator.comparingInt(DbCallStatsSnapshot::getTotalCalls).reversed(), 10,
+                        s -> logSnapshot(s, 10, Comparator.comparing(MethodCallStatsSnapshot::getExecutions).reversed(), log::debug));
                 log.debug("Total timing statistics below:");
                 logTopNTenants(snapshots, Comparator.comparingLong(DbCallStatsSnapshot::getTotalTiming).reversed(),
-                        10, s -> logSnapshotWithDebugLevel(s, 10));
+                        10, s -> logSnapshot(s, 10, Comparator.comparing(MethodCallStatsSnapshot::getTiming).reversed(), log::debug));
                 log.debug("Total errors statistics below:");
                 logTopNTenants(snapshots, Comparator.comparingInt(DbCallStatsSnapshot::getTotalFailure).reversed(),
-                        10, s -> logSnapshotWithDebugLevel(s, 10));
+                        10, s -> logSnapshot(s, 10, Comparator.comparing(MethodCallStatsSnapshot::getFailures).reversed(), log::debug));
             } else if (log.isInfoEnabled()) {
-                log.debug("Total calls statistics below:");
-                List<DbCallStatsSnapshot> snapshots = snapshot();
+                log.info("Total calls statistics below:");
                 logTopNTenants(snapshots, Comparator.comparingInt(DbCallStatsSnapshot::getTotalFailure).reversed(),
-                        3, s -> logSnapshotWithDebugLevel(s, 3));
+                        3, s -> logSnapshot(s, 3, Comparator.comparing(MethodCallStatsSnapshot::getFailures).reversed(), log::info));
             }
         } finally {
             statsMap.clear();
         }
     }
 
-    private void logSnapshotWithDebugLevel(DbCallStatsSnapshot snapshot, int limit) {
-        log.debug("[{}]: calls: {}, failures: {}, exec time: {} ",
-                snapshot.getTenantId(), snapshot.getTotalCalls(), snapshot.getTotalFailure(), snapshot.getTotalTiming());
-        var stream = snapshot.getMethodTimings().entrySet().stream()
-                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()));
+    private void logSnapshot(DbCallStatsSnapshot snapshot, int limit, Comparator<MethodCallStatsSnapshot> methodStatsComparator, Consumer<String> logger) {
+        logger.accept(String.format("[%s]: calls: %s, failures: %s, exec time: %s ",
+                snapshot.getTenantId(), snapshot.getTotalCalls(), snapshot.getTotalFailure(), snapshot.getTotalTiming()));
+        var stream = snapshot.getMethodStats().entrySet().stream()
+                .sorted(Map.Entry.comparingByValue(methodStatsComparator));
         if (limit > 0) {
             stream = stream.limit(limit);
         }
         stream.forEach(e -> {
-            long timing = snapshot.getMethodTimings().getOrDefault(e.getKey(), 0L);
-            log.debug("[{}]: method: {}, count: {}, exec time: {}", snapshot.getTenantId(), e.getKey(), e.getValue(), timing);
+            MethodCallStatsSnapshot methodStats = e.getValue();
+            logger.accept(String.format("[%s]: method: %s, calls: %s, failures: %s, exec time: %s", snapshot.getTenantId(), e.getKey(),
+                    methodStats.getExecutions(), methodStats.getFailures(), methodStats.getTiming()));
         });
     }
 
@@ -102,19 +122,9 @@ public class TenantDbCallAspect {
         return statsMap.values().stream().map(DbCallStats::snapshot).collect(Collectors.toList());
     }
 
-//    private void logTopNMethods(List<DbCallStatsSnapshot> snapshots, Comparator<DbCallStatsSnapshot> comparator,
-//                                int n, Consumer<DbCallStatsSnapshot> logFunction) {
-////        var stream = snapshots.stream().sorted(comparator).sorted();
-//        // find top methods by execution time and then top
-//        if (n > 0) {
-//            stream = stream.limit(n);
-//        }
-//        stream.forEach(logFunction);
-//    }
-
     private void logTopNTenants(List<DbCallStatsSnapshot> snapshots, Comparator<DbCallStatsSnapshot> comparator,
                                 int n, Consumer<DbCallStatsSnapshot> logFunction) {
-        var stream = snapshots.stream().sorted(comparator).sorted();
+        var stream = snapshots.stream().sorted(comparator);
         if (n > 0) {
             stream = stream.limit(n);
         }
@@ -122,16 +132,16 @@ public class TenantDbCallAspect {
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    @Around("@annotation(org.thingsboard.server.dao.util.TenantDbCall)")
+    @Around("@within(org.thingsboard.server.dao.util.SqlDao)")
     public Object logExecutionTime(ProceedingJoinPoint joinPoint) throws Throwable {
-        var signature = joinPoint.getSignature();
-        var method = signature.toShortString();
-        if (invalidTenantDbCallMethods.contains(method)) {
+        MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+        var methodName = signature.toShortString();
+        if (invalidTenantDbCallMethods.contains(methodName)) {
             //Simply call the method if tenant is not found
             return joinPoint.proceed();
         }
-        var tenantId = getTenantId(method, joinPoint.getArgs());
-        if (tenantId == null) {
+        var tenantId = getTenantId(signature, methodName, joinPoint.getArgs());
+        if (tenantId == null || tenantId.isNullUid()) {
             //Simply call the method if tenant is null
             return joinPoint.proceed();
         }
@@ -143,21 +153,21 @@ public class TenantDbCallAspect {
                         new FutureCallback<>() {
                             @Override
                             public void onSuccess(@Nullable Object result) {
-                                logTenantMethodExecution(tenantId, method, true, startTime);
+                                logTenantMethodExecution(tenantId, methodName, true, startTime);
                             }
 
                             @Override
                             public void onFailure(Throwable t) {
-                                logTenantMethodExecution(tenantId, method, false, startTime);
+                                logTenantMethodExecution(tenantId, methodName, false, startTime);
                             }
                         },
                         MoreExecutors.directExecutor());
             } else {
-                logTenantMethodExecution(tenantId, method, true, startTime);
+                logTenantMethodExecution(tenantId, methodName, true, startTime);
             }
             return result;
         } catch (Throwable t) {
-            logTenantMethodExecution(tenantId, method, false, startTime);
+            logTenantMethodExecution(tenantId, methodName, false, startTime);
             throw t;
         }
     }
@@ -167,23 +177,32 @@ public class TenantDbCallAspect {
                 .onMethodCall(method, success, System.currentTimeMillis() - startTime);
     }
 
-    TenantId getTenantId(String methodName, Object[] args) {
+    TenantId getTenantId(MethodSignature signature, String methodName, Object[] args) {
         if (args == null || args.length == 0) {
             addAndLogInvalidMethods(methodName);
             return null;
         }
-        for (Object arg : args) {
+        for (int i = 0; i < args.length; i++) {
+            Object arg = args[i];
             if (arg instanceof TenantId) {
-                log.debug("Method: {} is annotated with @TenantDbCall but the TenantId is null. Args: {}", methodName, Arrays.toString(args));
                 return (TenantId) arg;
+            } else if (arg instanceof UUID) {
+                if (signature.getParameterNames() != null && StringUtils.equals(signature.getParameterNames()[i], "tenantId")) {
+                    log.trace("Method {} uses UUID for tenantId param instead of TenantId class", methodName);
+                    return TenantId.fromUUID((UUID) arg);
+                }
             }
         }
-        addAndLogInvalidMethods(methodName);
+        if (ArrayUtils.contains(signature.getParameterTypes(), TenantId.class) ||
+                ArrayUtils.contains(signature.getParameterNames(), "tenantId")) {
+            log.debug("Null was submitted as tenantId to method {}. Args: {}", methodName, Arrays.toString(args));
+        } else {
+            addAndLogInvalidMethods(methodName);
+        }
         return null;
     }
 
     private void addAndLogInvalidMethods(String methodName) {
-        log.warn("Method: {} is annotated with @TenantDbCall but no TenantId in args", methodName);
         invalidTenantDbCallMethods.add(methodName);
     }
 

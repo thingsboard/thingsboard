@@ -13,26 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.aspect;
+package org.thingsboard.server.dao.util;
 
-import lombok.Builder;
-import lombok.Data;
-import org.thingsboard.server.common.data.id.TenantId;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import java.util.Map;
-
-@Data
-@Builder
-public class DbCallStatsSnapshot {
-
-    private final TenantId tenantId;
-    private final int totalSuccess;
-    private final int totalFailure;
-    private final long totalTiming;
-    private final Map<String, MethodCallStatsSnapshot> methodStats;
-
-    public int getTotalCalls() {
-        return totalSuccess + totalFailure;
-    }
-
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface SqlDao {
 }
