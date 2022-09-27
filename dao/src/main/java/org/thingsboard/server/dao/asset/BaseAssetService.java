@@ -30,9 +30,11 @@ import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.asset.AssetSearchQuery;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -64,12 +66,17 @@ import static org.thingsboard.server.dao.service.Validator.validateString;
 public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey, Asset, AssetCacheEvictEvent> implements AssetService {
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
+
+    public static final String INCORRECT_ASSET_PROFILE_ID = "Incorrect assetProfileId ";
     public static final String INCORRECT_CUSTOMER_ID = "Incorrect customerId ";
     public static final String INCORRECT_ASSET_ID = "Incorrect assetId ";
     public static final String TB_SERVICE_QUEUE = "TbServiceQueue";
 
     @Autowired
     private AssetDao assetDao;
+
+    @Autowired
+    private AssetProfileService assetProfileService;
 
     @Autowired
     private DataValidator<Asset> assetValidator;
@@ -122,6 +129,24 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
         Asset savedAsset;
         AssetCacheEvictEvent evictEvent = new AssetCacheEvictEvent(asset.getTenantId(), asset.getName(), oldAsset != null ? oldAsset.getName() : null);
         try {
+            AssetProfile assetProfile;
+            if (asset.getAssetProfileId() == null) {
+                if (!StringUtils.isEmpty(asset.getType())) {
+                    assetProfile = this.assetProfileService.findOrCreateAssetProfile(asset.getTenantId(), asset.getType());
+                } else {
+                    assetProfile = this.assetProfileService.findDefaultAssetProfile(asset.getTenantId());
+                }
+                asset.setAssetProfileId(new AssetProfileId(assetProfile.getId().getId()));
+            } else {
+                assetProfile = this.assetProfileService.findAssetProfileById(asset.getTenantId(), asset.getAssetProfileId());
+                if (assetProfile == null) {
+                    throw new DataValidationException("Asset is referencing non existing asset profile!");
+                }
+                if (!assetProfile.getTenantId().equals(asset.getTenantId())) {
+                    throw new DataValidationException("Asset can`t be referencing to asset profile from different tenant!");
+                }
+            }
+            asset.setType(assetProfile.getName());
             savedAsset = assetDao.saveAndFlush(asset.getTenantId(), asset);
             publishEvictEvent(evictEvent);
         } catch (Exception t) {
@@ -201,6 +226,15 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     }
 
     @Override
+    public PageData<AssetInfo> findAssetInfosByTenantIdAndAssetProfileId(TenantId tenantId, AssetProfileId assetProfileId, PageLink pageLink) {
+        log.trace("Executing findAssetInfosByTenantIdAndAssetProfileId, tenantId [{}], assetProfileId [{}], pageLink [{}]", tenantId, assetProfileId, pageLink);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(assetProfileId, INCORRECT_ASSET_PROFILE_ID + assetProfileId);
+        validatePageLink(pageLink);
+        return assetDao.findAssetInfosByTenantIdAndAssetProfileId(tenantId.getId(), assetProfileId.getId(), pageLink);
+    }
+
+    @Override
     public ListenableFuture<List<Asset>> findAssetsByTenantIdAndIdsAsync(TenantId tenantId, List<AssetId> assetIds) {
         log.trace("Executing findAssetsByTenantIdAndIdsAsync, tenantId [{}], assetIds [{}]", tenantId, assetIds);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
@@ -251,6 +285,16 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
         validateString(type, "Incorrect type " + type);
         validatePageLink(pageLink);
         return assetDao.findAssetInfosByTenantIdAndCustomerIdAndType(tenantId.getId(), customerId.getId(), type, pageLink);
+    }
+
+    @Override
+    public PageData<AssetInfo> findAssetInfosByTenantIdAndCustomerIdAndAssetProfileId(TenantId tenantId, CustomerId customerId, AssetProfileId assetProfileId, PageLink pageLink) {
+        log.trace("Executing findAssetInfosByTenantIdAndCustomerIdAndAssetProfileId, tenantId [{}], customerId [{}], assetProfileId [{}], pageLink [{}]", tenantId, customerId, assetProfileId, pageLink);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
+        validateId(assetProfileId, INCORRECT_ASSET_PROFILE_ID + assetProfileId);
+        validatePageLink(pageLink);
+        return assetDao.findAssetInfosByTenantIdAndCustomerIdAndAssetProfileId(tenantId.getId(), customerId.getId(), assetProfileId.getId(), pageLink);
     }
 
     @Override

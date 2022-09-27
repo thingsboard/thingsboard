@@ -41,6 +41,7 @@ public class AssetImportService extends BaseEntityImportService<AssetId, Asset, 
 
     @Override
     protected Asset prepare(EntitiesImportCtx ctx, Asset asset, Asset old, EntityExportData<Asset> exportData, IdProvider idProvider) {
+        asset.setAssetProfileId(idProvider.getInternalId(asset.getAssetProfileId()));
         return asset;
     }
 

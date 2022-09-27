@@ -87,6 +87,7 @@ import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.executors.ExternalCallExecutorService;
 import org.thingsboard.server.service.executors.SharedEventLoopGroupService;
 import org.thingsboard.server.service.mail.MailExecutorService;
+import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
 import org.thingsboard.server.service.rpc.TbRpcService;
@@ -186,6 +187,10 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private TbDeviceProfileCache deviceProfileCache;
+
+    @Autowired
+    @Getter
+    private TbAssetProfileCache assetProfileCache;
 
     @Autowired
     @Getter

@@ -42,6 +42,8 @@ public final class EdgeUtils {
                 return EdgeEventType.DEVICE_PROFILE;
             case ASSET:
                 return EdgeEventType.ASSET;
+            case ASSET_PROFILE:
+                return EdgeEventType.ASSET_PROFILE;
             case ENTITY_VIEW:
                 return EdgeEventType.ENTITY_VIEW;
             case DASHBOARD:

@@ -39,6 +39,8 @@ import org.thingsboard.server.common.data.queue.SubmitStrategy;
 import org.thingsboard.server.common.data.queue.SubmitStrategyType;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
+import org.thingsboard.server.dao.asset.AssetProfileService;
+import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -118,7 +120,13 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
     private DeviceService deviceService;
 
     @Autowired
+    private AssetService assetService;
+
+    @Autowired
     private DeviceProfileService deviceProfileService;
+
+    @Autowired
+    private AssetProfileService assetProfileService;
 
     @Autowired
     private ApiUsageStateService apiUsageStateService;
@@ -604,6 +612,53 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     loadSql(schemaUpdateFile, conn);
                     log.info("Updating schema settings...");
                     conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3004001;");
+                    log.info("Schema updated.");
+                } catch (Exception e) {
+                    log.error("Failed updating schema!!!", e);
+                }
+                break;
+            case "3.4.1":
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    log.info("Updating schema ...");
+                    if (isOldSchema(conn, 3004001)) {
+
+                        try {
+                            conn.createStatement().execute("ALTER TABLE asset ADD COLUMN asset_profile_id uuid");
+                        } catch (Exception e) {
+                        }
+
+                        schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.4.1", "schema_update_before.sql");
+                        loadSql(schemaUpdateFile, conn);
+
+                        log.info("Creating default asset profiles...");
+                        PageLink pageLink = new PageLink(100);
+                        PageData<Tenant> pageData;
+                        do {
+                            pageData = tenantService.findTenants(pageLink);
+                            for (Tenant tenant : pageData.getData()) {
+                                List<EntitySubtype> assetTypes = assetService.findAssetTypesByTenantId(tenant.getId()).get();
+                                try {
+                                    assetProfileService.createDefaultAssetProfile(tenant.getId());
+                                } catch (Exception e) {
+                                }
+                                for (EntitySubtype assetType : assetTypes) {
+                                    try {
+                                        assetProfileService.findOrCreateAssetProfile(tenant.getId(), assetType.getType());
+                                    } catch (Exception e) {
+                                    }
+                                }
+                            }
+                            pageLink = pageLink.nextPageLink();
+                        } while (pageData.hasNext());
+
+                        log.info("Updating asset profiles...");
+                        conn.createStatement().execute("call update_asset_profiles()");
+
+                        schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.4.1", "schema_update_after.sql");
+                        loadSql(schemaUpdateFile, conn);
+
+                        conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3004002;");
+                    }
                     log.info("Schema updated.");
                 } catch (Exception e) {
                     log.error("Failed updating schema!!!", e);

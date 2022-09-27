@@ -28,6 +28,7 @@ import org.thingsboard.edge.rpc.EdgeGrpcClient;
 import org.thingsboard.edge.rpc.EdgeRpcClient;
 import org.thingsboard.server.gen.edge.v1.AdminSettingsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.CustomerUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DashboardUpdateMsg;
@@ -194,6 +195,11 @@ public class EdgeImitator {
         if (downlinkMsg.getDeviceCredentialsUpdateMsgCount() > 0) {
             for (DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg : downlinkMsg.getDeviceCredentialsUpdateMsgList()) {
                 result.add(saveDownlinkMsg(deviceCredentialsUpdateMsg));
+            }
+        }
+        if (downlinkMsg.getAssetProfileUpdateMsgCount() > 0) {
+            for (AssetProfileUpdateMsg assetProfileUpdateMsg : downlinkMsg.getAssetProfileUpdateMsgList()) {
+                result.add(saveDownlinkMsg(assetProfileUpdateMsg));
             }
         }
         if (downlinkMsg.getAssetUpdateMsgCount() > 0) {

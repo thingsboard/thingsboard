@@ -33,10 +33,13 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -57,6 +60,8 @@ import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.dao.asset.AssetProfileService;
+import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -64,6 +69,7 @@ import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
+import org.thingsboard.server.gen.edge.v1.AssetProfileAssetsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.AttributesRequestMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceProfileDevicesRequestMsg;
@@ -104,12 +110,18 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
     @Autowired
     private DeviceService deviceService;
 
+    @Autowired
+    private AssetService assetService;
+
     @Lazy
     @Autowired
     private TbEntityViewService entityViewService;
 
     @Autowired
     private DeviceProfileService deviceProfileService;
+
+    @Autowired
+    private AssetProfileService assetProfileService;
 
     @Autowired
     private WidgetsBundleService widgetsBundleService;
@@ -347,6 +359,44 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
             } while (pageData != null && pageData.hasNext());
         } catch (Exception e) {
             log.error("Exception during loading edge device(s) on sync!", e);
+        }
+        return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
+    }
+
+    @Override
+    public ListenableFuture<Void> processAssetProfileAssetsRequestMsg(TenantId tenantId, Edge edge, AssetProfileAssetsRequestMsg assetProfileAssetsRequestMsg) {
+        log.trace("[{}] processAssetProfileAssetsRequestMsg [{}][{}]", tenantId, edge.getName(), assetProfileAssetsRequestMsg);
+        if (assetProfileAssetsRequestMsg.getAssetProfileIdMSB() == 0 || assetProfileAssetsRequestMsg.getAssetProfileIdLSB() == 0) {
+            return Futures.immediateFuture(null);
+        }
+        AssetProfileId assetProfileId = new AssetProfileId(new UUID(assetProfileAssetsRequestMsg.getAssetProfileIdMSB(), assetProfileAssetsRequestMsg.getAssetProfileIdLSB()));
+        AssetProfile assetProfileById = assetProfileService.findAssetProfileById(tenantId, assetProfileId);
+        if (assetProfileById == null) {
+            return Futures.immediateFuture(null);
+        }
+        return syncAssets(tenantId, edge, assetProfileById.getName());
+    }
+
+    private ListenableFuture<Void> syncAssets(TenantId tenantId, Edge edge, String assetType) {
+        log.trace("[{}] syncAssets [{}][{}]", tenantId, edge.getName(), assetType);
+        List<ListenableFuture<Void>> futures = new ArrayList<>();
+        try {
+            PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
+            PageData<Asset> pageData;
+            do {
+                pageData = assetService.findAssetsByTenantIdAndEdgeIdAndType(tenantId, edge.getId(), assetType, pageLink);
+                if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
+                    log.trace("[{}] [{}] asset(s) are going to be pushed to edge.", edge.getId(), pageData.getData().size());
+                    for (Asset asset : pageData.getData()) {
+                        futures.add(saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.ASSET, EdgeEventActionType.ADDED, asset.getId(), null));
+                    }
+                    if (pageData.hasNext()) {
+                        pageLink = pageLink.nextPageLink();
+                    }
+                }
+            } while (pageData != null && pageData.hasNext());
+        } catch (Exception e) {
+            log.error("Exception during loading edge asset(s) on sync!", e);
         }
         return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
     }
