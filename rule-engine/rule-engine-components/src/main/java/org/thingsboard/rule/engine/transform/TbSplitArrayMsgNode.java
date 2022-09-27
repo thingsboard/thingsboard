@@ -25,9 +25,12 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.queue.RuleEngineException;
+import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
 import java.util.concurrent.ExecutionException;
 
@@ -46,7 +49,7 @@ import java.util.concurrent.ExecutionException;
 )
 public class TbSplitArrayMsgNode implements TbNode {
 
-    EmptyNodeConfiguration config;
+    private EmptyNodeConfiguration config;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -61,10 +64,19 @@ public class TbSplitArrayMsgNode implements TbNode {
             if (data.size() == 1) {
                 ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(data.get(0))));
             } else {
-                ctx.ack(msg);
-                data.forEach(msgNode -> {
-                    ctx.tellSuccess(TbMsg.newMsg(msg.getQueueName(), msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(msgNode)));
+                TbMsgCallbackWrapper wrapper = new MultipleTbMsgsCallbackWrapper(data.size(), new TbMsgCallback() {
+                    @Override
+                    public void onSuccess() {
+                        ctx.ack(msg);
+                    }
+
+                    @Override
+                    public void onFailure(RuleEngineException e) {
+                        ctx.tellFailure(msg, e);
+                    }
                 });
+                data.forEach(msgNode -> ctx.enqueueForTellNext(TbMsg.newMsg(msg.getQueueName(), msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(msgNode)),
+                        TbRelationTypes.SUCCESS, wrapper::onSuccess, wrapper::onFailure));
             }
         } else {
             ctx.tellFailure(msg, new RuntimeException("Msg data is not a JSON Array!"));

@@ -17,7 +17,6 @@ package org.thingsboard.rule.engine.transform;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,9 +34,11 @@ import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -71,26 +72,21 @@ public class TbSplitArrayMsgNodeTest {
     }
 
     @Test
-    void givenDefaultConfig_whenInit_thenOK() {
-        assertThat(node.config).isEqualTo(config);
-    }
-
-    @Test
     void givenFewMsg_whenOnMsg_thenVerifyOutput() throws Exception {
         String data = "[{\"Attribute_1\":22.5,\"Attribute_2\":10.3}, {\"Attribute_1\":1,\"Attribute_2\":2}]";
-        VerifyOutputMsg(data, 2);
+        VerifyOutputMsg(data);
     }
 
     @Test
     void givenOneMsg_whenOnMsg_thenVerifyOutput() throws Exception {
         String data = "[{\"Attribute_1\":22.5,\"Attribute_2\":10.3}]";
-        VerifyOutputMsg(data, 1);
+        VerifyOutputMsg(data);
     }
 
     @Test
     void givenZeroMsg_whenOnMsg_thenVerifyOutput() throws Exception {
         String data = "[]";
-        VerifyOutputMsg(data, 0);
+        VerifyOutputMsg(data);
     }
 
     @Test
@@ -113,13 +109,23 @@ public class TbSplitArrayMsgNodeTest {
         assertThat(newMsg).isSameAs(msg);
     }
 
-    private void VerifyOutputMsg(String data, int sizeArray) throws Exception {
+    private void VerifyOutputMsg(String data) throws Exception {
         JsonNode dataNode = JacksonUtil.toJsonNode(data);
-        node.onMsg(ctx, getTbMsg(deviceId, dataNode.toString()));
+        TbMsg tbMsg = getTbMsg(deviceId, dataNode.toString());
+        node.onMsg(ctx, tbMsg);
 
-        ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx, times(dataNode.size())).tellSuccess(newMsgCaptor.capture());
-        verify(ctx, times(sizeArray)).tellSuccess(newMsgCaptor.capture());
+        if (dataNode.size() > 1) {
+            ArgumentCaptor<Runnable> successCaptor = ArgumentCaptor.forClass(Runnable.class);
+            ArgumentCaptor<Consumer<Throwable>> failureCaptor = ArgumentCaptor.forClass(Consumer.class);
+            verify(ctx, times(dataNode.size())).enqueueForTellNext(any(), anyString(), successCaptor.capture(), failureCaptor.capture());
+            for (Runnable valueCaptor : successCaptor.getAllValues()) {
+                valueCaptor.run();
+            }
+            verify(ctx, times(1)).ack(tbMsg);
+        } else {
+            ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+            verify(ctx, times(dataNode.size())).tellSuccess(newMsgCaptor.capture());
+        }
         verify(ctx, never()).tellFailure(any(), any());
     }
 
