@@ -73,12 +73,6 @@ public class TbDeleteKeysNodeTest {
     }
 
     @Test
-    void givenDefaultConfig_whenInit_thenOK() {
-        assertThat(node.config).isEqualTo(config);
-        assertThat(node.patternKeys.size()).isEqualTo(config.getKeys().size());
-    }
-
-    @Test
     void givenDefaultConfig_whenVerify_thenOK() {
         TbDeleteKeysNodeConfiguration defaultConfig = new TbDeleteKeysNodeConfiguration().defaultConfiguration();
         assertThat(defaultConfig.getKeys()).isEqualTo(Collections.emptySet());
