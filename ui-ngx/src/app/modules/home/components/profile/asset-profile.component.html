@@ -31,7 +31,7 @@
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'setDefault')"
-          [fxShow]="!isEdit && !entity?.default">
+          [fxShow]="!isEdit && !entity?.default && entity?.name !== TB_SERVICE_QUEUE">
     {{'asset-profile.set-default' | translate }}
   </button>
   <button mat-raised-button color="primary"

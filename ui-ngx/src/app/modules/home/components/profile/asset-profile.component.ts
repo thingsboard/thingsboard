@@ -27,7 +27,7 @@ import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { ServiceType } from '@shared/models/queue.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { DashboardId } from '@shared/models/id/dashboard-id';
-import { AssetProfile } from '@shared/models/asset.models';
+import { AssetProfile, TB_SERVICE_QUEUE } from '@shared/models/asset.models';
 
 @Component({
   selector: 'tb-asset-profile',
@@ -42,6 +42,8 @@ export class AssetProfileComponent extends EntityComponent<AssetProfile> {
   entityType = EntityType;
 
   serviceType = ServiceType.TB_RULE_ENGINE;
+
+  TB_SERVICE_QUEUE = TB_SERVICE_QUEUE;
 
   assetProfileId: EntityId;
 
