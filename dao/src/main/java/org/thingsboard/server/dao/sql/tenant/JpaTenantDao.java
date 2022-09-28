@@ -30,6 +30,7 @@ import org.thingsboard.server.dao.model.sql.TenantEntity;
 import org.thingsboard.server.dao.model.sql.TenantInfoEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
 import java.util.Objects;
@@ -41,6 +42,7 @@ import java.util.stream.Collectors;
  * Created by Valerii Sosliuk on 4/30/2017.
  */
 @Component
+@SqlDao
 public class JpaTenantDao extends JpaAbstractSearchTextDao<TenantEntity, Tenant> implements TenantDao {
 
     @Autowired

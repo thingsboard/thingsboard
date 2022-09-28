@@ -30,12 +30,14 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.RpcEntity;
 import org.thingsboard.server.dao.rpc.RpcDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
+import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.UUID;
 
 @Slf4j
 @Component
 @AllArgsConstructor
+@SqlDao
 public class JpaRpcDao extends JpaAbstractDao<RpcEntity, Rpc> implements RpcDao {
 
     private final RpcRepository rpcRepository;
