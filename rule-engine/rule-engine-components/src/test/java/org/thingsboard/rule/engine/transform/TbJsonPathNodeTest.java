@@ -72,11 +72,6 @@ public class TbJsonPathNodeTest {
     }
 
     @Test
-    void givenDefaultConfig_whenInit_thenOK() {
-        assertThat(node.config).isEqualTo(config);
-    }
-
-    @Test
     void givenDefaultConfig_whenInit_thenFail() {
         config.setJsonPath("");
         nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));

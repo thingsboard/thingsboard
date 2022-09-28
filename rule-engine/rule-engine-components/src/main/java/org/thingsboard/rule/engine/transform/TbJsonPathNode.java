@@ -49,10 +49,10 @@ import java.util.concurrent.ExecutionException;
 )
 public class TbJsonPathNode implements TbNode {
 
-    TbJsonPathNodeConfiguration config;
-    Configuration configurationJsonPath;
-    JsonPath jsonPath;
-    String jsonPathValue;
+    private TbJsonPathNodeConfiguration config;
+    private Configuration configurationJsonPath;
+    private JsonPath jsonPath;
+    private String jsonPathValue;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
