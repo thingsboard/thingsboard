@@ -448,8 +448,4 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
     public ListenableFuture<Void> processDeviceNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
         return processEntityNotification(tenantId, edgeNotificationMsg);
     }
-
-    public ListenableFuture<Void> processDashboardNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
-        return processDeviceNotification(tenantId, edgeNotificationMsg);
-    }
 }

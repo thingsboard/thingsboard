@@ -42,6 +42,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.processor.AlarmEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.AssetEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.CustomerEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.DashboardEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.DeviceEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.DeviceProfileEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.EdgeProcessor;
@@ -87,7 +88,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     private EntityViewEdgeProcessor entityViewProcessor;
 
     @Autowired
-    private DeviceEdgeProcessor dashboardProcessor;
+    private DashboardEdgeProcessor dashboardProcessor;
 
     @Autowired
     private RuleChainEdgeProcessor ruleChainProcessor;
