@@ -38,10 +38,11 @@ import java.util.concurrent.ExecutionException;
         type = ComponentType.TRANSFORMATION,
         name = "json path",
         configClazz = TbJsonPathNodeConfiguration.class,
-        nodeDescription = "Extracts json element or set of elements from a message by JSONPath expression.",
+        nodeDescription = "Transforms incoming message body using JSONPath expression.",
         nodeDetails = "JSONPath expression specifies a path to an element or a set of elements in a JSON structure. <br/>"
-                + "<b>'$'</b> represents the root object or array. If JSONPath expression evaluation failed, incoming "
-                + "message routes via <code>Failure</code> chain, otherwise <code>Success</code> chain is used.",
+                + "<b>'$'</b> represents the root object or array. <br/>"
+                + "If JSONPath expression evaluation failed, incoming message routes via <code>Failure</code> chain, "
+                + "otherwise <code>Success</code> chain is used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         icon = "functions",
         configDirective = "tbTransformationNodeJsonPathConfig"
