@@ -193,6 +193,8 @@ public interface TbContext {
 
     boolean isLocalEntity(EntityId entityId);
 
+    void checkTenantEntity(EntityId entityId);
+
     RuleNodeId getSelfId();
 
     RuleNode getSelf();

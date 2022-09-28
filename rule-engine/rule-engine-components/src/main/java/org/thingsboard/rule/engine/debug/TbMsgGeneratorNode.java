@@ -80,6 +80,7 @@ public class TbMsgGeneratorNode implements TbNode {
         } else {
             originatorId = ctx.getSelfId();
         }
+        ctx.checkTenantEntity(originatorId);
         updateGeneratorState(ctx);
     }
 

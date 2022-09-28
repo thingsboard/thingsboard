@@ -59,6 +59,7 @@ public class TbCheckRelationNode implements TbNode {
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbCheckRelationNodeConfiguration.class);
+        ctx.checkTenantEntity(EntityIdFactory.getByTypeAndId(config.getEntityType(), config.getEntityId()));
     }
 
     @Override

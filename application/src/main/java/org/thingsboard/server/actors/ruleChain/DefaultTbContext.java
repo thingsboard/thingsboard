@@ -31,6 +31,7 @@ import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
+import org.thingsboard.rule.engine.util.EntitiesTenantIdAsyncLoader;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.cluster.TbClusterService;
@@ -89,6 +90,7 @@ import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -702,6 +704,20 @@ class DefaultTbContext implements TbContext {
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("ruleNodeId", ruleNodeId.toString());
         return metaData;
+    }
+
+    public void checkTenantEntity(EntityId entityId) {
+        try {
+            TenantId entityTenantId = EntitiesTenantIdAsyncLoader.findTenantIdByEntityId(this, entityId).get();
+            if (entityTenantId == null) {
+                throw new RuntimeException("Entity with id '" + entityId + "'not found!");
+            }
+            if (!entityTenantId.equals(this.getTenantId())) {
+                throw new RuntimeException("Entity with id: '" + entityId + "' specified in the configuration doesn't belong to the current tenant.");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private class SimpleTbQueueCallback implements TbQueueCallback {
