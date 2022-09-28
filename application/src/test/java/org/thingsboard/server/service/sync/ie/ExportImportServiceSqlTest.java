@@ -32,12 +32,13 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -60,7 +61,6 @@ import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
 import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
 import org.thingsboard.server.common.data.sync.ie.RuleChainExportData;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
-import org.thingsboard.server.dao.device.DeviceProfileDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
@@ -77,7 +77,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.verify;
 
 @DaoSqlTest
@@ -91,18 +90,30 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
     private OtaPackageStateService otaPackageStateService;
 
     @Test
-    public void testExportImportAsset_betweenTenants() throws Exception {
-        Asset asset = createAsset(tenantId1, null, "AB", "Asset of tenant 1");
-        EntityExportData<Asset> exportData = exportEntity(tenantAdmin1, asset.getId());
+    public void testExportImportAssetWithProfile_betweenTenants() throws Exception {
+        AssetProfile assetProfile = createAssetProfile(tenantId1, null, null, "Asset profile of tenant 1");
+        Asset asset = createAsset(tenantId1, null, assetProfile.getId(), "Asset of tenant 1");
 
-        EntityImportResult<Asset> importResult = importEntity(tenantAdmin2, exportData);
-        checkImportedEntity(tenantId1, asset, tenantId2, importResult.getSavedEntity());
-        checkImportedAssetData(asset, importResult.getSavedEntity());
+        EntityExportData<AssetProfile> profileExportData = exportEntity(tenantAdmin1, assetProfile.getId());
+
+        EntityExportData<Asset> assetExportData = exportEntity(tenantAdmin1, asset.getId());
+
+        EntityImportResult<AssetProfile> profileImportResult = importEntity(tenantAdmin2, profileExportData);
+        checkImportedEntity(tenantId1, assetProfile, tenantId2, profileImportResult.getSavedEntity());
+        checkImportedAssetProfileData(assetProfile, profileImportResult.getSavedEntity());
+
+        EntityImportResult<Asset> assetImportResult = importEntity(tenantAdmin2, assetExportData);
+        Asset importedAsset = assetImportResult.getSavedEntity();
+        checkImportedEntity(tenantId1, asset, tenantId2, importedAsset);
+        checkImportedAssetData(asset, importedAsset);
+
+        assertThat(importedAsset.getAssetProfileId()).isEqualTo(profileImportResult.getSavedEntity().getId());
     }
 
     @Test
     public void testExportImportAsset_sameTenant() throws Exception {
-        Asset asset = createAsset(tenantId1, null, "AB", "Asset v1.0");
+        AssetProfile assetProfile = createAssetProfile(tenantId1, null, null, "Asset profile v1.0");
+        Asset asset = createAsset(tenantId1, null, assetProfile.getId(), "Asset v1.0");
         EntityExportData<Asset> exportData = exportEntity(tenantAdmin1, asset.getId());
 
         EntityImportResult<Asset> importResult = importEntity(tenantAdmin1, exportData);
@@ -112,8 +123,9 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
 
     @Test
     public void testExportImportAsset_sameTenant_withCustomer() throws Exception {
+        AssetProfile assetProfile = createAssetProfile(tenantId1, null, null, "Asset profile v1.0");
         Customer customer = createCustomer(tenantId1, "My customer");
-        Asset asset = createAsset(tenantId1, customer.getId(), "AB", "My asset");
+        Asset asset = createAsset(tenantId1, customer.getId(), assetProfile.getId(), "My asset");
 
         Asset importedAsset = importEntity(tenantAdmin1, this.<Asset, AssetId>exportEntity(tenantAdmin1, asset.getId())).getSavedEntity();
         assertThat(importedAsset.getCustomerId()).isEqualTo(asset.getCustomerId());
@@ -238,8 +250,9 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
 
     @Test
     public void testExportImportDashboard_betweenTenants_withEntityAliases() throws Exception {
-        Asset asset1 = createAsset(tenantId1, null, "A", "Asset 1");
-        Asset asset2 = createAsset(tenantId1, null, "A", "Asset 2");
+        AssetProfile assetProfile = createAssetProfile(tenantId1, null, null, "A");
+        Asset asset1 = createAsset(tenantId1, null, assetProfile.getId(), "Asset 1");
+        Asset asset2 = createAsset(tenantId1, null, assetProfile.getId(), "Asset 2");
         Dashboard dashboard = createDashboard(tenantId1, null, "Dashboard 1");
 
         String entityAliases = "{\n" +
@@ -263,10 +276,13 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
         dashboard.setConfiguration(dashboardConfiguration);
         dashboard = dashboardService.saveDashboard(dashboard);
 
+        EntityExportData<AssetProfile> profileExportData = exportEntity(tenantAdmin1, assetProfile.getId());
+
         EntityExportData<Asset> asset1ExportData = exportEntity(tenantAdmin1, asset1.getId());
         EntityExportData<Asset> asset2ExportData = exportEntity(tenantAdmin1, asset2.getId());
         EntityExportData<Dashboard> dashboardExportData = exportEntity(tenantAdmin1, dashboard.getId());
 
+        AssetProfile importedProfile = importEntity(tenantAdmin2, profileExportData).getSavedEntity();
         Asset importedAsset1 = importEntity(tenantAdmin2, asset1ExportData).getSavedEntity();
         Asset importedAsset2 = importEntity(tenantAdmin2, asset2ExportData).getSavedEntity();
         Dashboard importedDashboard = importEntity(tenantAdmin2, dashboardExportData).getSavedEntity();
@@ -310,7 +326,7 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
 
     @Test
     public void testExportImportWithInboundRelations_betweenTenants() throws Exception {
-        Asset asset = createAsset(tenantId1, null, "A", "Asset 1");
+        Asset asset = createAsset(tenantId1, null, null, "Asset 1");
         Device device = createDevice(tenantId1, null, null, "Device 1");
         EntityRelation relation = createRelation(asset.getId(), device.getId());
 
@@ -324,6 +340,7 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
         assertThat(deviceExportData.getRelations().get(0)).matches(entityRelation -> {
             return entityRelation.getFrom().equals(asset.getId()) && entityRelation.getTo().equals(device.getId());
         });
+        ((Asset) assetExportData.getEntity()).setAssetProfileId(null);
         ((Device) deviceExportData.getEntity()).setDeviceProfileId(null);
 
         Asset importedAsset = importEntity(tenantAdmin2, assetExportData).getSavedEntity();
@@ -344,7 +361,7 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
 
     @Test
     public void testExportImportWithRelations_betweenTenants() throws Exception {
-        Asset asset = createAsset(tenantId1, null, "A", "Asset 1");
+        Asset asset = createAsset(tenantId1, null, null, "Asset 1");
         Device device = createDevice(tenantId1, null, null, "Device 1");
         EntityRelation relation = createRelation(asset.getId(), device.getId());
 
@@ -353,6 +370,7 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
                 .exportRelations(true)
                 .exportCredentials(false)
                 .build());
+        assetExportData.getEntity().setAssetProfileId(null);
         deviceExportData.getEntity().setDeviceProfileId(null);
 
         Asset importedAsset = importEntity(tenantAdmin2, assetExportData).getSavedEntity();
@@ -371,7 +389,7 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
 
     @Test
     public void testExportImportWithRelations_sameTenant() throws Exception {
-        Asset asset = createAsset(tenantId1, null, "A", "Asset 1");
+        Asset asset = createAsset(tenantId1, null, null, "Asset 1");
         Device device1 = createDevice(tenantId1, null, null, "Device 1");
         EntityRelation relation1 = createRelation(asset.getId(), device1.getId());
 
@@ -394,7 +412,7 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
 
     @Test
     public void textExportImportWithRelations_sameTenant_removeExisting() throws Exception {
-        Asset asset1 = createAsset(tenantId1, null, "A", "Asset 1");
+        Asset asset1 = createAsset(tenantId1, null, null, "Asset 1");
         Device device = createDevice(tenantId1, null, null, "Device 1");
         EntityRelation relation1 = createRelation(asset1.getId(), device.getId());
 
@@ -403,7 +421,7 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
                 .build());
         assertThat(deviceExportData.getRelations()).size().isOne();
 
-        Asset asset2 = createAsset(tenantId1, null, "A", "Asset 2");
+        Asset asset2 = createAsset(tenantId1, null, null, "Asset 2");
         EntityRelation relation2 = createRelation(asset2.getId(), device.getId());
 
         importEntity(tenantAdmin1, deviceExportData, EntityImportSettings.builder()
@@ -443,14 +461,15 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
     @Test
     public void testEntityEventsOnImport() throws Exception {
         Customer customer = createCustomer(tenantId1, "Customer 1");
-        Asset asset = createAsset(tenantId1, null, "A", "Asset 1");
         RuleChain ruleChain = createRuleChain(tenantId1, "Rule chain 1");
         Dashboard dashboard = createDashboard(tenantId1, null, "Dashboard 1");
+        AssetProfile assetProfile = createAssetProfile(tenantId1, ruleChain.getId(), dashboard.getId(), "Asset profile 1");
+        Asset asset = createAsset(tenantId1, null, assetProfile.getId(), "Asset 1");
         DeviceProfile deviceProfile = createDeviceProfile(tenantId1, ruleChain.getId(), dashboard.getId(), "Device profile 1");
         Device device = createDevice(tenantId1, null, deviceProfile.getId(), "Device 1");
 
         Map<EntityType, EntityExportData> entitiesExportData = Stream.of(customer.getId(), asset.getId(), device.getId(),
-                ruleChain.getId(), dashboard.getId(), deviceProfile.getId())
+                ruleChain.getId(), dashboard.getId(), assetProfile.getId(), deviceProfile.getId())
                 .map(entityId -> {
                     try {
                         return exportEntity(tenantAdmin1, entityId, EntityExportSettings.builder()
@@ -480,6 +499,21 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
 
         Mockito.reset(entityActionService);
 
+        RuleChain importedRuleChain = (RuleChain) importEntity(tenantAdmin2, getAndClone(entitiesExportData, EntityType.RULE_CHAIN)).getSavedEntity();
+        verify(entityActionService).logEntityAction(any(), eq(importedRuleChain.getId()), eq(importedRuleChain),
+                any(), eq(ActionType.ADDED), isNull());
+        verify(tbClusterService).broadcastEntityStateChangeEvent(any(), eq(importedRuleChain.getId()), eq(ComponentLifecycleEvent.CREATED));
+
+        Dashboard importedDashboard = (Dashboard) importEntity(tenantAdmin2, getAndClone(entitiesExportData, EntityType.DASHBOARD)).getSavedEntity();
+        verify(entityActionService).logEntityAction(any(), eq(importedDashboard.getId()), eq(importedDashboard),
+                any(), eq(ActionType.ADDED), isNull());
+
+        AssetProfile importedAssetProfile = (AssetProfile) importEntity(tenantAdmin2, getAndClone(entitiesExportData, EntityType.ASSET_PROFILE)).getSavedEntity();
+        verify(entityActionService).logEntityAction(any(), eq(importedAssetProfile.getId()), eq(importedAssetProfile),
+                any(), eq(ActionType.ADDED), isNull());
+        verify(tbClusterService).broadcastEntityStateChangeEvent(any(), eq(importedAssetProfile.getId()), eq(ComponentLifecycleEvent.CREATED));
+        verify(tbClusterService).sendNotificationMsgToEdge(any(), any(), eq(importedAssetProfile.getId()), any(), any(), eq(EdgeEventActionType.ADDED));
+
         Asset importedAsset = (Asset) importEntity(tenantAdmin2, getAndClone(entitiesExportData, EntityType.ASSET)).getSavedEntity();
         verify(entityActionService).logEntityAction(any(), eq(importedAsset.getId()), eq(importedAsset),
                 any(), eq(ActionType.ADDED), isNull());
@@ -495,15 +529,6 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
         verify(entityActionService).logEntityAction(any(), eq(importedAsset.getId()), eq(updatedAsset),
                 any(), eq(ActionType.UPDATED), isNull());
         verify(tbClusterService).sendNotificationMsgToEdge(any(), any(), eq(importedAsset.getId()), any(), any(), eq(EdgeEventActionType.UPDATED));
-
-        RuleChain importedRuleChain = (RuleChain) importEntity(tenantAdmin2, getAndClone(entitiesExportData, EntityType.RULE_CHAIN)).getSavedEntity();
-        verify(entityActionService).logEntityAction(any(), eq(importedRuleChain.getId()), eq(importedRuleChain),
-                any(), eq(ActionType.ADDED), isNull());
-        verify(tbClusterService).broadcastEntityStateChangeEvent(any(), eq(importedRuleChain.getId()), eq(ComponentLifecycleEvent.CREATED));
-
-        Dashboard importedDashboard = (Dashboard) importEntity(tenantAdmin2, getAndClone(entitiesExportData, EntityType.DASHBOARD)).getSavedEntity();
-        verify(entityActionService).logEntityAction(any(), eq(importedDashboard.getId()), eq(importedDashboard),
-                any(), eq(ActionType.ADDED), isNull());
 
         DeviceProfile importedDeviceProfile = (DeviceProfile) importEntity(tenantAdmin2, getAndClone(entitiesExportData, EntityType.DEVICE_PROFILE)).getSavedEntity();
         verify(entityActionService).logEntityAction(any(), eq(importedDeviceProfile.getId()), eq(importedDeviceProfile),
@@ -529,15 +554,21 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
     @Test
     public void testExternalIdsInExportData() throws Exception {
         Customer customer = createCustomer(tenantId1, "Customer 1");
-        Asset asset = createAsset(tenantId1, customer.getId(), "A", "Asset 1");
+        AssetProfile assetProfile = createAssetProfile(tenantId1, null, null, "Asset profile 1");
+        Asset asset = createAsset(tenantId1, customer.getId(), assetProfile.getId(), "Asset 1");
         RuleChain ruleChain = createRuleChain(tenantId1, "Rule chain 1", asset.getId());
         Dashboard dashboard = createDashboard(tenantId1, customer.getId(), "Dashboard 1", asset.getId());
+
+        assetProfile.setDefaultRuleChainId(ruleChain.getId());
+        assetProfile.setDefaultDashboardId(dashboard.getId());
+        assetProfile = assetProfileService.saveAssetProfile(assetProfile);
+
         DeviceProfile deviceProfile = createDeviceProfile(tenantId1, ruleChain.getId(), dashboard.getId(), "Device profile 1");
         Device device = createDevice(tenantId1, customer.getId(), deviceProfile.getId(), "Device 1");
         EntityView entityView = createEntityView(tenantId1, customer.getId(), device.getId(), "Entity view 1");
 
         Map<EntityId, EntityId> ids = new HashMap<>();
-        for (EntityId entityId : List.of(customer.getId(), asset.getId(), ruleChain.getId(), dashboard.getId(),
+        for (EntityId entityId : List.of(customer.getId(), ruleChain.getId(), dashboard.getId(), assetProfile.getId(), asset.getId(),
                 deviceProfile.getId(), device.getId(), entityView.getId(), ruleChain.getId(), dashboard.getId())) {
             EntityExportData exportData = exportEntity(getSecurityUser(tenantAdmin1), entityId);
             EntityImportResult importResult = importEntity(getSecurityUser(tenantAdmin2), exportData, EntityImportSettings.builder()
@@ -545,6 +576,10 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
                     .build());
             ids.put(entityId, (EntityId) importResult.getSavedEntity().getId());
         }
+
+        AssetProfile exportedAssetProfile = (AssetProfile) exportEntity(tenantAdmin2, (AssetProfileId) ids.get(assetProfile.getId())).getEntity();
+        assertThat(exportedAssetProfile.getDefaultRuleChainId()).isEqualTo(ruleChain.getId());
+        assertThat(exportedAssetProfile.getDefaultDashboardId()).isEqualTo(dashboard.getId());
 
         Asset exportedAsset = (Asset) exportEntity(tenantAdmin2, (AssetId) ids.get(asset.getId())).getEntity();
         assertThat(exportedAsset.getCustomerId()).isEqualTo(customer.getId());

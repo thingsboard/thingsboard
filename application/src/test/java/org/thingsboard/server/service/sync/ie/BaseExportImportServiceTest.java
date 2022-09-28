@@ -37,12 +37,14 @@ import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -64,6 +66,7 @@ import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
 import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
 import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
 import org.thingsboard.server.controller.AbstractControllerTest;
+import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -96,6 +99,8 @@ public abstract class BaseExportImportServiceTest extends AbstractControllerTest
     protected OtaPackageService otaPackageService;
     @Autowired
     protected DeviceProfileService deviceProfileService;
+    @Autowired
+    protected AssetProfileService assetProfileService;
     @Autowired
     protected AssetService assetService;
     @Autowired
@@ -206,11 +211,26 @@ public abstract class BaseExportImportServiceTest extends AbstractControllerTest
         assertThat(initialProfile.getDescription()).isEqualTo(importedProfile.getDescription());
     }
 
-    protected Asset createAsset(TenantId tenantId, CustomerId customerId, String type, String name) {
+    protected AssetProfile createAssetProfile(TenantId tenantId, RuleChainId defaultRuleChainId, DashboardId defaultDashboardId, String name) {
+        AssetProfile assetProfile = new AssetProfile();
+        assetProfile.setTenantId(tenantId);
+        assetProfile.setName(name);
+        assetProfile.setDescription("dscrptn");
+        assetProfile.setDefaultRuleChainId(defaultRuleChainId);
+        assetProfile.setDefaultDashboardId(defaultDashboardId);
+        return assetProfileService.saveAssetProfile(assetProfile);
+    }
+
+    protected void checkImportedAssetProfileData(AssetProfile initialProfile, AssetProfile importedProfile) {
+        assertThat(initialProfile.getName()).isEqualTo(importedProfile.getName());
+        assertThat(initialProfile.getDescription()).isEqualTo(importedProfile.getDescription());
+    }
+
+    protected Asset createAsset(TenantId tenantId, CustomerId customerId, AssetProfileId assetProfileId, String name) {
         Asset asset = new Asset();
         asset.setTenantId(tenantId);
         asset.setCustomerId(customerId);
-        asset.setType(type);
+        asset.setAssetProfileId(assetProfileId);
         asset.setName(name);
         asset.setLabel("lbl");
         asset.setAdditionalInfo(JacksonUtil.newObjectNode().set("a", new TextNode("b")));

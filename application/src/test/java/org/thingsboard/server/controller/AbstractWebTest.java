@@ -59,6 +59,7 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
@@ -446,6 +447,15 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         deviceProfile.setDefault(false);
         deviceProfile.setDefaultRuleChainId(null);
         return deviceProfile;
+    }
+
+    protected AssetProfile createAssetProfile(String name) {
+        AssetProfile assetProfile = new AssetProfile();
+        assetProfile.setName(name);
+        assetProfile.setDescription(name + " Test");
+        assetProfile.setDefault(false);
+        assetProfile.setDefaultRuleChainId(null);
+        return assetProfile;
     }
 
     protected MqttDeviceProfileTransportConfiguration createMqttDeviceProfileTransportConfiguration(TransportPayloadTypeConfiguration transportPayloadTypeConfiguration, boolean sendAckOnValidationException) {
