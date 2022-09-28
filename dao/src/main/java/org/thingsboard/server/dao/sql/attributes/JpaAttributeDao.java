@@ -37,6 +37,7 @@ import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
 import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
+import org.thingsboard.server.dao.util.SqlDao;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -50,6 +51,7 @@ import java.util.stream.Collectors;
 
 @Component
 @Slf4j
+@SqlDao
 public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService implements AttributesDao {
 
     @Autowired
