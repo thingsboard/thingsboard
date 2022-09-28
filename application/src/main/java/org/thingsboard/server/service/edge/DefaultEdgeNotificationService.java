@@ -112,7 +112,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     private WidgetTypeEdgeProcessor widgetTypeProcessor;
 
     @Autowired
-    private QueueEdgeProcessor queueEdgeProcessor;
+    private QueueEdgeProcessor queueProcessor;
 
     @Autowired
     private AlarmEdgeProcessor alarmProcessor;
@@ -204,7 +204,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                     future = widgetTypeProcessor.processWidgetTypeNotification(tenantId, edgeNotificationMsg);
                     break;
                 case QUEUE:
-                    future = queueEdgeProcessor.processQueueNotification(tenantId, edgeNotificationMsg);
+                    future = queueProcessor.processQueueNotification(tenantId, edgeNotificationMsg);
                     break;
                 case ALARM:
                     future = alarmProcessor.processAlarmNotification(tenantId, edgeNotificationMsg);
