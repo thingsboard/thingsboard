@@ -118,7 +118,7 @@ public class RelationEdgeProcessor extends BaseEdgeProcessor {
         }
     }
 
-    public DownlinkMsg processRelationToEdge(EdgeEvent edgeEvent) {
+    public DownlinkMsg convertRelationEventToDownlink(EdgeEvent edgeEvent) {
         EntityRelation entityRelation = JacksonUtil.OBJECT_MAPPER.convertValue(edgeEvent.getBody(), EntityRelation.class);
         UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
         RelationUpdateMsg relationUpdateMsg = relationMsgConstructor.constructRelationUpdatedMsg(msgType, entityRelation);

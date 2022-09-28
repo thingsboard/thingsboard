@@ -30,7 +30,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 @TbCoreComponent
 public class AdminSettingsEdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg processAdminSettingsToEdge(EdgeEvent edgeEvent) {
+    public DownlinkMsg convertAdminSettingsEventToDownlink(EdgeEvent edgeEvent) {
         AdminSettings adminSettings = JacksonUtil.OBJECT_MAPPER.convertValue(edgeEvent.getBody(), AdminSettings.class);
         AdminSettingsUpdateMsg adminSettingsUpdateMsg = adminSettingsMsgConstructor.constructAdminSettingsUpdateMsg(adminSettings);
         return DownlinkMsg.newBuilder()

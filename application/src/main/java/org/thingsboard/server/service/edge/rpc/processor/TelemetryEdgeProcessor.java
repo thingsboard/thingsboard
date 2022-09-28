@@ -304,7 +304,7 @@ public class TelemetryEdgeProcessor extends BaseEdgeProcessor {
         }
     }
 
-    public DownlinkMsg processTelemetryMessageToEdge(EdgeEvent edgeEvent) throws JsonProcessingException {
+    public DownlinkMsg convertTelemetryEventToDownlink(EdgeEvent edgeEvent) throws JsonProcessingException {
         EntityId entityId;
         switch (edgeEvent.getType()) {
             case DEVICE:

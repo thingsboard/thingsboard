@@ -45,7 +45,6 @@ import org.thingsboard.server.service.edge.rpc.processor.DashboardEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.DeviceEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.DeviceProfileEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.EdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.EntityEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.EntityViewEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.OtaPackageEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.QueueEdgeProcessor;
@@ -124,9 +123,6 @@ public class EdgeContextComponent {
 
     @Autowired
     private DeviceEdgeProcessor deviceProcessor;
-
-    @Autowired
-    private EntityEdgeProcessor entityProcessor;
 
     @Autowired
     private AssetEdgeProcessor assetProcessor;

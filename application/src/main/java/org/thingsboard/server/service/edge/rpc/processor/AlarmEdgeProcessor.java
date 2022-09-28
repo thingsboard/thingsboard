@@ -116,7 +116,7 @@ public class AlarmEdgeProcessor extends BaseEdgeProcessor {
         }
     }
 
-    public DownlinkMsg processAlarmToEdge(EdgeEvent edgeEvent) {
+    public DownlinkMsg convertAlarmEventToDownlink(EdgeEvent edgeEvent) {
         AlarmId alarmId = new AlarmId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());

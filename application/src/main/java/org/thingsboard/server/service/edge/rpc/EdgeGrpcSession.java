@@ -28,7 +28,6 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -60,7 +59,6 @@ import org.thingsboard.server.gen.edge.v1.RequestMsgType;
 import org.thingsboard.server.gen.edge.v1.ResponseMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataRequestMsg;
 import org.thingsboard.server.gen.edge.v1.SyncCompletedMsg;
-import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UplinkResponseMsg;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsRequestMsg;
@@ -428,7 +426,6 @@ public final class EdgeGrpcSession implements Closeable {
                             TimeUnit.MILLISECONDS)
             );
         }
-
     }
 
     private DownlinkMsg convertToDownlinkMsg(EdgeEvent edgeEvent) {
@@ -448,23 +445,17 @@ public final class EdgeGrpcSession implements Closeable {
                 case RELATION_DELETED:
                 case ASSIGNED_TO_CUSTOMER:
                 case UNASSIGNED_FROM_CUSTOMER:
-                    downlinkMsg = processEntityMessage(edgeEvent);
+                case CREDENTIALS_REQUEST:
+                case ENTITY_MERGE_REQUEST:
+                case RPC_CALL:
+                    downlinkMsg = convertEntityEventToDownlink(edgeEvent);
                     log.trace("[{}][{}] entity message processed [{}]", edgeEvent.getTenantId(), this.sessionId, downlinkMsg);
                     break;
                 case ATTRIBUTES_UPDATED:
                 case POST_ATTRIBUTES:
                 case ATTRIBUTES_DELETED:
                 case TIMESERIES_UPDATED:
-                    downlinkMsg = ctx.getTelemetryProcessor().processTelemetryMessageToEdge(edgeEvent);
-                    break;
-                case CREDENTIALS_REQUEST:
-                    downlinkMsg = ctx.getEntityProcessor().processCredentialsRequestMessageToEdge(edgeEvent);
-                    break;
-                case ENTITY_MERGE_REQUEST:
-                    downlinkMsg = ctx.getEntityProcessor().processEntityMergeRequestMessageToEdge(edge, edgeEvent);
-                    break;
-                case RPC_CALL:
-                    downlinkMsg = ctx.getDeviceProcessor().processRpcCallMsgToEdge(edgeEvent);
+                    downlinkMsg = ctx.getTelemetryProcessor().convertTelemetryEventToDownlink(edgeEvent);
                     break;
                 default:
                     log.warn("[{}][{}] Unsupported action type [{}]", edge.getTenantId(), this.sessionId, edgeEvent.getAction());
@@ -504,43 +495,43 @@ public final class EdgeGrpcSession implements Closeable {
         return ctx.getAttributesService().save(edge.getTenantId(), edge.getId(), DataConstants.SERVER_SCOPE, attributes);
     }
 
-    private DownlinkMsg processEntityMessage(EdgeEvent edgeEvent) {
-        log.trace("Executing processEntityMessage, edgeEvent [{}], action [{}]", edgeEvent, edgeEvent.getAction());
+    private DownlinkMsg convertEntityEventToDownlink(EdgeEvent edgeEvent) {
+        log.trace("Executing convertEntityEventToDownlink, edgeEvent [{}], action [{}]", edgeEvent, edgeEvent.getAction());
         switch (edgeEvent.getType()) {
             case EDGE:
-                return ctx.getEdgeProcessor().processEdgeToEdge(edgeEvent);
+                return ctx.getEdgeProcessor().convertEdgeEventToDownlink(edgeEvent);
             case DEVICE:
-                return ctx.getDeviceProcessor().processDeviceToEdge(edgeEvent);
+                return ctx.getDeviceProcessor().convertDeviceEventToDownlink(edgeEvent);
             case DEVICE_PROFILE:
-                return ctx.getDeviceProfileProcessor().processDeviceProfileToEdge(edgeEvent);
+                return ctx.getDeviceProfileProcessor().convertDeviceProfileEventToDownlink(edgeEvent);
             case ASSET:
-                return ctx.getAssetProcessor().processAssetToEdge(edgeEvent);
+                return ctx.getAssetProcessor().convertAssetEventToDownlink(edgeEvent);
             case ENTITY_VIEW:
-                return ctx.getEntityViewProcessor().processEntityViewToEdge(edgeEvent);
+                return ctx.getEntityViewProcessor().convertEntityViewEventToDownlink(edgeEvent);
             case DASHBOARD:
-                return ctx.getDashboardProcessor().processDashboardToEdge(edgeEvent);
+                return ctx.getDashboardProcessor().convertDashboardEventToDownlink(edgeEvent);
             case CUSTOMER:
-                return ctx.getCustomerProcessor().processCustomerToEdge(edgeEvent);
+                return ctx.getCustomerProcessor().convertCustomerEventToDownlink(edgeEvent);
             case RULE_CHAIN:
-                return ctx.getRuleChainProcessor().processRuleChainToEdge(edge, edgeEvent);
+                return ctx.getRuleChainProcessor().convertRuleChainEventToDownlink(edge, edgeEvent);
             case RULE_CHAIN_METADATA:
-                return ctx.getRuleChainProcessor().processRuleChainMetadataToEdge(edgeEvent, this.edgeVersion);
+                return ctx.getRuleChainProcessor().convertRuleChainMetadataEventToDownlink(edgeEvent, this.edgeVersion);
             case ALARM:
-                return ctx.getAlarmProcessor().processAlarmToEdge(edgeEvent);
+                return ctx.getAlarmProcessor().convertAlarmEventToDownlink(edgeEvent);
             case USER:
-                return ctx.getUserProcessor().processUserToEdge(edgeEvent);
+                return ctx.getUserProcessor().convertUserEventToDownlink(edgeEvent);
             case RELATION:
-                return ctx.getRelationProcessor().processRelationToEdge(edgeEvent);
+                return ctx.getRelationProcessor().convertRelationEventToDownlink(edgeEvent);
             case WIDGETS_BUNDLE:
-                return ctx.getWidgetBundleProcessor().processWidgetsBundleToEdge(edgeEvent);
+                return ctx.getWidgetBundleProcessor().convertWidgetsBundleEventToDownlink(edgeEvent);
             case WIDGET_TYPE:
-                return ctx.getWidgetTypeProcessor().processWidgetTypeToEdge(edgeEvent);
+                return ctx.getWidgetTypeProcessor().convertWidgetTypeEventToDownlink(edgeEvent);
             case ADMIN_SETTINGS:
-                return ctx.getAdminSettingsProcessor().processAdminSettingsToEdge(edgeEvent);
+                return ctx.getAdminSettingsProcessor().convertAdminSettingsEventToDownlink(edgeEvent);
             case OTA_PACKAGE:
-                return ctx.getOtaPackageEdgeProcessor().processOtaPackageToEdge(edgeEvent);
+                return ctx.getOtaPackageEdgeProcessor().convertOtaPackageEventToDownlink(edgeEvent);
             case QUEUE:
-                return ctx.getQueueEdgeProcessor().processQueueToEdge(edgeEvent);
+                return ctx.getQueueEdgeProcessor().convertQueueEventToDownlink(edgeEvent);
             default:
                 log.warn("Unsupported edge event type [{}]", edgeEvent);
                 return null;

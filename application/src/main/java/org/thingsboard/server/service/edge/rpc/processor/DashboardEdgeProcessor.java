@@ -31,7 +31,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 @TbCoreComponent
 public class DashboardEdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg processDashboardToEdge(EdgeEvent edgeEvent) {
+    public DownlinkMsg convertDashboardEventToDownlink(EdgeEvent edgeEvent) {
         DashboardId dashboardId = new DashboardId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {

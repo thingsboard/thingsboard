@@ -52,11 +52,13 @@ import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.gen.edge.v1.DeviceCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceRpcCallMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.util.DataDecodingEncodingService;
@@ -356,7 +358,7 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
         return futureToSet;
     }
 
-    public DownlinkMsg processDeviceToEdge(EdgeEvent edgeEvent) {
+    public DownlinkMsg convertDeviceEventToDownlink(EdgeEvent edgeEvent) {
         DeviceId deviceId = new DeviceId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
@@ -396,17 +398,58 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                             .build();
                 }
                 break;
+            case RPC_CALL:
+                return convertRpcCallEventToDownlink(edgeEvent);
+            case CREDENTIALS_REQUEST:
+                return convertCredentialsRequestEventToDownlink(edgeEvent);
+            case ENTITY_MERGE_REQUEST:
+                return convertEntityMergeRequestEventToDownlink(edgeEvent);
         }
         return downlinkMsg;
     }
 
-    public DownlinkMsg processRpcCallMsgToEdge(EdgeEvent edgeEvent) {
-        log.trace("Executing processRpcCall, edgeEvent [{}]", edgeEvent);
+    private DownlinkMsg convertRpcCallEventToDownlink(EdgeEvent edgeEvent) {
+        log.trace("Executing convertRpcCallEventToDownlink, edgeEvent [{}]", edgeEvent);
         DeviceRpcCallMsg deviceRpcCallMsg =
                 deviceMsgConstructor.constructDeviceRpcCallMsg(edgeEvent.getEntityId(), edgeEvent.getBody());
         return DownlinkMsg.newBuilder()
                 .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                 .addDeviceRpcCallMsg(deviceRpcCallMsg)
                 .build();
+    }
+
+    private DownlinkMsg convertCredentialsRequestEventToDownlink(EdgeEvent edgeEvent) {
+        DeviceId deviceId = new DeviceId(edgeEvent.getEntityId());
+        DeviceCredentialsRequestMsg deviceCredentialsRequestMsg = DeviceCredentialsRequestMsg.newBuilder()
+                .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
+                .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
+                .build();
+        DownlinkMsg.Builder builder = DownlinkMsg.newBuilder()
+                .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
+                .addDeviceCredentialsRequestMsg(deviceCredentialsRequestMsg);
+        return builder.build();
+    }
+
+    public DownlinkMsg convertEntityMergeRequestEventToDownlink(EdgeEvent edgeEvent) {
+        DeviceId deviceId = new DeviceId(edgeEvent.getEntityId());
+        Device device = deviceService.findDeviceById(edgeEvent.getTenantId(), deviceId);
+        String conflictName = null;
+        if(edgeEvent.getBody() != null) {
+            conflictName = edgeEvent.getBody().get("conflictName").asText();
+        }
+        DeviceUpdateMsg deviceUpdateMsg = deviceMsgConstructor
+                .constructDeviceUpdatedMsg(UpdateMsgType.ENTITY_MERGE_RPC_MESSAGE, device, conflictName);
+        return DownlinkMsg.newBuilder()
+                .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
+                .addDeviceUpdateMsg(deviceUpdateMsg)
+                .build();
+    }
+
+    public ListenableFuture<Void> processDeviceNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
+        return processEntityNotification(tenantId, edgeNotificationMsg);
+    }
+
+    public ListenableFuture<Void> processDashboardNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
+        return processDeviceNotification(tenantId, edgeNotificationMsg);
     }
 }
