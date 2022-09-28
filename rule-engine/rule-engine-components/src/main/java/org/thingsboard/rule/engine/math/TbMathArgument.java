@@ -34,4 +34,8 @@ public class TbMathArgument {
        this(key, type, key, null, null);
     }
 
+    public TbMathArgument(String name, TbMathArgumentType type, String key) {
+       this(name, type, key, null, null);
+    }
+
 }

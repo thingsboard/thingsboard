@@ -33,7 +33,7 @@ public class TbMathNodeConfiguration implements NodeConfiguration<TbMathNodeConf
     public TbMathNodeConfiguration defaultConfiguration() {
         TbMathNodeConfiguration configuration = new TbMathNodeConfiguration();
         configuration.setOperation(TbRuleNodeMathFunctionType.ADD);
-        configuration.setArguments(Arrays.asList(new TbMathArgument(TbMathArgumentType.CONSTANT, "2"), new TbMathArgument(TbMathArgumentType.CONSTANT, "2")));
+        configuration.setArguments(Arrays.asList(new TbMathArgument("x", TbMathArgumentType.CONSTANT, "2"), new TbMathArgument("y", TbMathArgumentType.CONSTANT, "2")));
         configuration.setResult(new TbMathResult(TbMathArgumentType.MESSAGE_BODY, "result", 2, false, false, null));
         return configuration;
     }
