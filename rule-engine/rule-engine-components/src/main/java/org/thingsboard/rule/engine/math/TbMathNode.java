@@ -72,6 +72,8 @@ import java.util.stream.Collectors;
                 "<br/><br/>" +
                 "The execution is synchronized in scope of message originator (e.g. device) and server node. " +
                 "If you have rule nodes in different rule chains, they will process messages from the same originator synchronously in the scope of the server node.",
+        uiResources = {"static/rulenode/rulenode-core-config.js"},
+        configDirective = "tbActionNodeMathFunctionConfig",
         icon = "functions"
 
 )
