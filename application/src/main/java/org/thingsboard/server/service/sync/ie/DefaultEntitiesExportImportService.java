@@ -64,7 +64,7 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
     private final TbNotificationEntityService entityNotificationService;
 
     protected static final List<EntityType> SUPPORTED_ENTITY_TYPES = List.of(
-            EntityType.CUSTOMER, EntityType.ASSET, EntityType.RULE_CHAIN,
+            EntityType.CUSTOMER, EntityType.ASSET_PROFILE, EntityType.ASSET, EntityType.RULE_CHAIN,
             EntityType.DASHBOARD, EntityType.DEVICE_PROFILE, EntityType.DEVICE,
             EntityType.ENTITY_VIEW, EntityType.WIDGETS_BUNDLE
     );

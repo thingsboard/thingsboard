@@ -25,7 +25,7 @@
          (keypress)="deviceProfileEnter($event)"
          [matAutocomplete]="deviceProfileAutocomplete"
          [fxShow]="!showDetailsPageLink || !disabled || !selectDeviceProfileFormGroup.get('deviceProfile').value">
-  <a *ngIf="showDetailsPageLink && selectDeviceProfileFormGroup.get('deviceProfile').value && disabled" aria-label="Open tenant profile" [routerLink]=deviceProfileURL>
+  <a *ngIf="showDetailsPageLink && selectDeviceProfileFormGroup.get('deviceProfile').value && disabled" aria-label="Open device profile" [routerLink]=deviceProfileURL>
     {{ displayDeviceProfileFn(selectDeviceProfileFormGroup.get('deviceProfile').value) }}
   </a>
   <button *ngIf="selectDeviceProfileFormGroup.get('deviceProfile').value && !disabled"

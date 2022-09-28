@@ -215,8 +215,8 @@ public class TbDeviceProfileNode implements TbNode {
                 if (!currentProfileId.equals(device.getDeviceProfileId())) {
                     removeDeviceState(deviceId);
                 }
-            } catch (IllegalArgumentException ex) {
-                log.trace("[{}] Received device update notification with non-device msg body: [{}][{}]", ctx.getSelfId(), deviceId, ex.getMessage());
+            } catch (IllegalArgumentException e) {
+                log.debug("[{}] Received device update notification with non-device msg body: [{}][{}]", ctx.getSelfId(), deviceId, e);
             }
         }
     }
