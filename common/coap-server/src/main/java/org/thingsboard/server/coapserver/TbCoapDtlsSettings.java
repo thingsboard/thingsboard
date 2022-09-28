@@ -56,7 +56,7 @@ public class TbCoapDtlsSettings {
     @Value("${transport.coap.dtls.bind_port}")
     private Integer port;
 
-    @Value("${transport.coap.dtls.retransmission_timeout}")
+    @Value("${transport.coap.dtls.retransmission_timeout:9000}")
     private int dtlsRetransmissionTimeout;
 
     @Bean
