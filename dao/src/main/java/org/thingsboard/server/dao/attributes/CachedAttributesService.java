@@ -206,6 +206,14 @@ public class CachedAttributesService implements AttributesService {
     }
 
     @Override
+    public ListenableFuture<String> save(TenantId tenantId, EntityId entityId, String scope, AttributeKvEntry attribute) {
+        validate(entityId, scope);
+        AttributeUtils.validate(attribute);
+        ListenableFuture<String> future = attributesDao.save(tenantId, entityId, scope, attribute);
+        return Futures.transform(future, key -> evict(entityId, scope, attribute, key), cacheExecutor);
+    }
+
+    @Override
     public ListenableFuture<List<String>> save(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
         validate(entityId, scope);
         attributes.forEach(AttributeUtils::validate);
@@ -213,15 +221,17 @@ public class CachedAttributesService implements AttributesService {
         List<ListenableFuture<String>> futures = new ArrayList<>(attributes.size());
         for (var attribute : attributes) {
             ListenableFuture<String> future = attributesDao.save(tenantId, entityId, scope, attribute);
-            futures.add(Futures.transform(future, key -> {
-                log.trace("[{}][{}][{}] Before cache evict: {}", entityId, scope, key, attribute);
-                cache.evictOrPut(new AttributeCacheKey(scope, entityId, key), attribute);
-                log.trace("[{}][{}][{}] after cache evict.", entityId, scope, key);
-                return key;
-            }, cacheExecutor));
+            futures.add(Futures.transform(future, key -> evict(entityId, scope, attribute, key), cacheExecutor));
         }
 
         return Futures.allAsList(futures);
+    }
+
+    private String evict(EntityId entityId, String scope, AttributeKvEntry attribute, String key) {
+        log.trace("[{}][{}][{}] Before cache evict: {}", entityId, scope, key, attribute);
+        cache.evictOrPut(new AttributeCacheKey(scope, entityId, key), attribute);
+        log.trace("[{}][{}][{}] after cache evict.", entityId, scope, key);
+        return key;
     }
 
     @Override

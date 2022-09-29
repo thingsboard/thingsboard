@@ -47,6 +47,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.StringUtils.isBlank;
@@ -115,6 +116,12 @@ public class BaseTimeseriesService implements TimeseriesService {
                     }
                     return Collections.emptyList();
                 }, MoreExecutors.directExecutor());
+    }
+
+    @Override
+    public ListenableFuture<Optional<TsKvEntry>> findLatest(TenantId tenantId, EntityId entityId, String key) {
+        validate(entityId);
+        return timeseriesLatestDao.findLatestOpt(tenantId, entityId, key);
     }
 
     @Override
