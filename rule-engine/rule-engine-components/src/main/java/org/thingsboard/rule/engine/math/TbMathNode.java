@@ -74,7 +74,7 @@ import java.util.stream.Collectors;
                 "If you have rule nodes in different rule chains, they will process messages from the same originator synchronously in the scope of the server node.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeMathFunctionConfig",
-        icon = "functions"
+        icon = "calculate"
 
 )
 public class TbMathNode implements TbNode {
