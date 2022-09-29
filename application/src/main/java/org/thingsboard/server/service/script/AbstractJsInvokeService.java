@@ -17,6 +17,7 @@ package org.thingsboard.server.service.script;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
@@ -30,8 +31,9 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static java.lang.String.format;
 
 /**
  * Created by ashvayka on 26.09.18.
@@ -65,33 +67,45 @@ public abstract class AbstractJsInvokeService implements JsInvokeService {
     @Override
     public ListenableFuture<UUID> eval(TenantId tenantId, JsScriptType scriptType, String scriptBody, String... argNames) {
         if (apiUsageStateService.getApiUsageState(tenantId).isJsExecEnabled()) {
+            if (scriptBodySizeExceeded(scriptBody)) {
+                return error(format("Script body exceeds maximum allowed size of %s symbols", getMaxScriptBodySize()));
+            }
             UUID scriptId = UUID.randomUUID();
             String functionName = "invokeInternal_" + scriptId.toString().replace('-', '_');
             String jsScript = generateJsScript(scriptType, functionName, scriptBody, argNames);
             return doEval(scriptId, functionName, jsScript);
         } else {
-            return Futures.immediateFailedFuture(new RuntimeException("JS Execution is disabled due to API limits!"));
+            return error("JS Execution is disabled due to API limits!");
         }
     }
 
     @Override
-    public ListenableFuture<Object> invokeFunction(TenantId tenantId, CustomerId customerId, UUID scriptId, Object... args) {
+    public ListenableFuture<String> invokeFunction(TenantId tenantId, CustomerId customerId, UUID scriptId, Object... args) {
         if (apiUsageStateService.getApiUsageState(tenantId).isJsExecEnabled()) {
             String functionName = scriptIdToNameMap.get(scriptId);
             if (functionName == null) {
-                return Futures.immediateFailedFuture(new RuntimeException("No compiled script found for scriptId: [" + scriptId + "]!"));
+                return error("No compiled script found for scriptId: [" + scriptId + "]!");
             }
             if (!isDisabled(scriptId)) {
+                if (argsSizeExceeded(args)) {
+                    return scriptExecutionError(scriptId, format("Script input arguments exceed maximum allowed total args size of %s symbols", getMaxTotalArgsSize()));
+                }
                 apiUsageClient.report(tenantId, customerId, ApiUsageRecordKey.JS_EXEC_COUNT, 1);
-                return doInvokeFunction(scriptId, functionName, args);
+                return Futures.transformAsync(doInvokeFunction(scriptId, functionName, args), output -> {
+                    String result = output.toString();
+                    if (resultSizeExceeded(result)) {
+                        return scriptExecutionError(scriptId, format("Script invocation result exceeds maximum allowed size of %s symbols", getMaxResultSize()));
+                    }
+                    return Futures.immediateFuture(result);
+                }, MoreExecutors.directExecutor());
             } else {
                 String message = "Script invocation is blocked due to maximum error count "
                         + getMaxErrors() + ", scriptId " + scriptId + "!";
                 log.warn(message);
-                return Futures.immediateFailedFuture(new RuntimeException(message));
+                return error(message);
             }
         } else {
-            return Futures.immediateFailedFuture(new RuntimeException("JS Execution is disabled due to API limits!"));
+            return error("JS Execution is disabled due to API limits!");
         }
     }
 
@@ -120,11 +134,38 @@ public abstract class AbstractJsInvokeService implements JsInvokeService {
 
     protected abstract long getMaxBlacklistDuration();
 
+    protected abstract long getMaxTotalArgsSize();
+
+    protected abstract long getMaxResultSize();
+
+    protected abstract long getMaxScriptBodySize();
+
     protected void onScriptExecutionError(UUID scriptId, Throwable t, String scriptBody) {
         DisableListInfo disableListInfo = disabledFunctions.computeIfAbsent(scriptId, key -> new DisableListInfo());
         log.warn("Script has exception and will increment counter {} on disabledFunctions for id {}, exception {}, cause {}, scriptBody {}",
                 disableListInfo.get(), scriptId, t, t.getCause(), scriptBody);
         disableListInfo.incrementAndGet();
+    }
+
+    private boolean scriptBodySizeExceeded(String scriptBody) {
+        if (getMaxScriptBodySize() <= 0) return false;
+        return scriptBody.length() > getMaxScriptBodySize();
+    }
+
+    private boolean argsSizeExceeded(Object[] args) {
+        if (getMaxTotalArgsSize() <= 0) return false;
+        long totalArgsSize = 0;
+        for (Object arg : args) {
+            if (arg instanceof CharSequence) {
+                totalArgsSize += ((CharSequence) arg).length();
+            }
+        }
+        return totalArgsSize > getMaxTotalArgsSize();
+    }
+
+    private boolean resultSizeExceeded(String result) {
+        if (getMaxResultSize() <= 0) return false;
+        return result.length() > getMaxResultSize();
     }
 
     private String generateJsScript(JsScriptType scriptType, String functionName, String scriptBody, String... argNames) {
@@ -146,6 +187,16 @@ public abstract class AbstractJsInvokeService implements JsInvokeService {
         } else {
             return false;
         }
+    }
+
+    private <T> ListenableFuture<T> error(String message) {
+        return Futures.immediateFailedFuture(new RuntimeException(message));
+    }
+
+    private <T> ListenableFuture<T> scriptExecutionError(UUID scriptId, String errorMsg) {
+        RuntimeException error = new RuntimeException(errorMsg);
+        onScriptExecutionError(scriptId, error, null);
+        return Futures.immediateFailedFuture(error);
     }
 
     private class DisableListInfo {

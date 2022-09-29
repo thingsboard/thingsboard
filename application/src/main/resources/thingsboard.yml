@@ -603,6 +603,9 @@ js:
     max_requests_timeout: "${LOCAL_JS_MAX_REQUEST_TIMEOUT:0}"
     # Maximum time in seconds for black listed function to stay in the list.
     max_black_list_duration_sec: "${LOCAL_JS_SANDBOX_MAX_BLACKLIST_DURATION_SEC:60}"
+    max_total_args_size: "${LOCAL_JS_SANDBOX_MAX_TOTAL_ARGS_SIZE:100000}"
+    max_result_size: "${LOCAL_JS_SANDBOX_MAX_RESULT_SIZE:300000}"
+    max_script_body_size: "${LOCAL_JS_SANDBOX_MAX_SCRIPT_BODY_SIZE:50000}"
     stats:
       enabled: "${TB_JS_LOCAL_STATS_ENABLED:false}"
       print_interval_ms: "${TB_JS_LOCAL_STATS_PRINT_INTERVAL_MS:10000}"
@@ -612,6 +615,9 @@ js:
     max_errors: "${REMOTE_JS_SANDBOX_MAX_ERRORS:3}"
     # Maximum time in seconds for black listed function to stay in the list.
     max_black_list_duration_sec: "${REMOTE_JS_SANDBOX_MAX_BLACKLIST_DURATION_SEC:60}"
+    max_total_args_size: "${REMOTE_JS_SANDBOX_MAX_TOTAL_ARGS_SIZE:100000}"
+    max_result_size: "${REMOTE_JS_SANDBOX_MAX_RESULT_SIZE:300000}"
+    max_script_body_size: "${REMOTE_JS_SANDBOX_MAX_SCRIPT_BODY_SIZE:50000}"
     stats:
       enabled: "${TB_JS_REMOTE_STATS_ENABLED:false}"
       print_interval_ms: "${TB_JS_REMOTE_STATS_PRINT_INTERVAL_MS:10000}"

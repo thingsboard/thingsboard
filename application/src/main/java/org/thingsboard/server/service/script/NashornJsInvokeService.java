@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.script;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -32,17 +33,32 @@ public class NashornJsInvokeService extends AbstractNashornJsInvokeService {
     @Value("${js.local.use_js_sandbox}")
     private boolean useJsSandbox;
 
+    @Getter
     @Value("${js.local.monitor_thread_pool_size}")
     private int monitorThreadPoolSize;
 
+    @Getter
     @Value("${js.local.max_cpu_time}")
     private long maxCpuTime;
 
+    @Getter
     @Value("${js.local.max_errors}")
     private int maxErrors;
 
     @Value("${js.local.max_black_list_duration_sec:60}")
     private int maxBlackListDurationSec;
+
+    @Getter
+    @Value("${js.local.max_total_args_size:100000}")
+    private long maxTotalArgsSize;
+
+    @Getter
+    @Value("${js.local.max_result_size:300000}")
+    private long maxResultSize;
+
+    @Getter
+    @Value("${js.local.max_script_body_size:50000}")
+    private long maxScriptBodySize;
 
     public NashornJsInvokeService(TbApiUsageStateService apiUsageStateService, TbApiUsageClient apiUsageClient, JsExecutorService jsExecutor) {
         super(apiUsageStateService, apiUsageClient, jsExecutor);
@@ -51,21 +67,6 @@ public class NashornJsInvokeService extends AbstractNashornJsInvokeService {
     @Override
     protected boolean useJsSandbox() {
         return useJsSandbox;
-    }
-
-    @Override
-    protected int getMonitorThreadPoolSize() {
-        return monitorThreadPoolSize;
-    }
-
-    @Override
-    protected long getMaxCpuTime() {
-        return maxCpuTime;
-    }
-
-    @Override
-    protected int getMaxErrors() {
-        return maxErrors;
     }
 
     @Override
