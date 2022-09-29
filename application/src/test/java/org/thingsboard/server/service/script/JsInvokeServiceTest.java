@@ -54,15 +54,6 @@ class JsInvokeServiceTest extends AbstractControllerTest {
     }
 
     @Test
-    void givenTooBigScriptForEval_whenMaxScriptBodySizeSetToZero_thenDoNothing() {
-        String script = "var a = 'a'; return { a: a };";
-
-        assertDoesNotThrow(() -> {
-            evalScript(script);
-        });
-    }
-
-    @Test
     void givenTooBigScriptInputArgs_thenReturnErrorAndReportScriptExecutionError() throws Exception {
         String script = "return { msg: msg };";
         String hugeMsg = "{\"input\":\"123456781234349\"}";
