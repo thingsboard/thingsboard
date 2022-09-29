@@ -55,8 +55,8 @@ public class SqlDaoCallsAspect {
     private final Set<String> invalidTenantDbCallMethods = ConcurrentHashMap.newKeySet();
     private final ConcurrentMap<TenantId, DbCallStats> statsMap = new ConcurrentHashMap<>();
 
-    @Scheduled(initialDelayString = "${sql.log_tenant_stats.log_tenant_stats_interval:60000}",
-            fixedDelayString = "${sql.log_tenant_stats.log_tenant_stats_interval:60000}")
+    @Scheduled(initialDelayString = "${sql.log_tenant_stats_interval_ms:60000}",
+            fixedDelayString = "${sql.log_tenant_stats_interval_ms:60000}")
     public void printStats() {
         List<DbCallStatsSnapshot> snapshots = snapshot();
         if (snapshots.isEmpty()) return;
