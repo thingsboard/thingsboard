@@ -500,4 +500,5 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         dashboard.setTitle(title);
         return doPost("/api/dashboard", dashboard, Dashboard.class);
     }
+
 }
