@@ -60,7 +60,14 @@
     </mat-toolbar>
     <div fxFlex class="table-container">
       <table mat-table [dataSource]="dataSource"
-                 matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
+             matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear
+             cdkDropList [cdkDropListData]="dataSource" (cdkDropListDropped)="dropAction($event)">
+        <ng-container matColumnDef="actionSourceId">
+          <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 40px"> {{ 'widget-config.action-source-order' | translate }} </mat-header-cell>
+          <mat-cell *matCellDef="let action">
+            <mat-icon cdkDragHandle>reorder</mat-icon>
+          </mat-cell>
+        </ng-container>
         <ng-container matColumnDef="actionSourceName">
           <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 20%"> {{ 'widget-config.action-source' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let action">
@@ -109,7 +116,8 @@
         </ng-container>
         <mat-header-row [ngClass]="{'mat-row-select': true}" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
         <mat-row [ngClass]="{'mat-row-select': true}"
-                 *matRowDef="let action; columns: displayedColumns;"></mat-row>
+                 *matRowDef="let action; columns: displayedColumns;"
+                 cdkDrag [cdkDragData]="action"></mat-row>
       </table>
       <span [fxShow]="dataSource.isEmpty() | async"
             fxLayoutAlign="center center"

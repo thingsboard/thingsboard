@@ -54,6 +54,7 @@ import {
 import { deepClone } from '@core/utils';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
+import {CdkDragDrop, moveItemInArray, CdkDragHandle} from '@angular/cdk/drag-drop';
 
 @Component({
   selector: 'tb-manage-widget-actions',
@@ -106,7 +107,7 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
     const sortOrder: SortOrder = { property: 'actionSourceName', direction: Direction.ASC };
     this.pageLink = new PageLink(10, 0, null, sortOrder);
     this.dataSource = new WidgetActionsDatasource(this.translate, this.utils);
-    this.displayedColumns = ['actionSourceName', 'name', 'icon', 'typeName', 'actions'];
+    this.displayedColumns = ['actionSourceId', 'actionSourceName', 'name', 'icon', 'typeName', 'actions'];
   }
 
   ngOnInit(): void {
@@ -161,6 +162,46 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
     this.pageLink.sortOrder.property = this.sort.active;
     this.pageLink.sortOrder.direction = Direction[this.sort.direction.toUpperCase()];
     this.dataSource.loadActions(this.pageLink, reload);
+  }
+
+  dropAction(event: CdkDragDrop<WidgetActionDescriptorInfo[]>) {
+    const droppedAction = event.item.data;
+    this.dataSource.getAllActions().subscribe(
+      (actions) => {
+        moveItemInArray(actions, event.previousIndex, event.currentIndex);
+
+        const isBackward = event.currentIndex > event.previousIndex;
+        let nearestNeighbourAction: WidgetActionDescriptorInfo = null;
+        for (let i: number = isBackward ? actions.length - 1 : 0;
+             isBackward ? i >= 0 : i < actions.length; isBackward ? --i : ++i) {
+          if (actions[i].id === droppedAction.id) {
+            break;
+          }
+          if (actions[i].actionSourceId === droppedAction.actionSourceId) {
+            nearestNeighbourAction = actions[i];
+          }
+        }
+
+        const targetActions = this.getOrCreateTargetActions(droppedAction.actionSourceId);
+        let oldIndex: number = -1;
+        let newIndex: number = nearestNeighbourAction ? -1 : (isBackward ? targetActions.length - 1 : 0);
+
+        for (let i: number = isBackward ? targetActions.length - 1 : 0;
+          isBackward ? i >= 0 : i < targetActions.length; isBackward ? --i : ++i) {
+          if (targetActions[i].id === droppedAction.id) {
+            oldIndex = i;
+          }
+          if (nearestNeighbourAction && targetActions[i].id === nearestNeighbourAction.id) {
+            newIndex = isBackward ? i - 1 : i + 1;
+          }
+          if (oldIndex !== -1 && newIndex !== -1) {
+            moveItemInArray(targetActions, oldIndex, newIndex);
+            this.onActionsUpdated();
+            return;
+          }
+        }
+      }
+    );
   }
 
   addAction($event: Event) {

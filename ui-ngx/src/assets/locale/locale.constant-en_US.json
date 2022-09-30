@@ -3686,6 +3686,7 @@
         "add-action": "Add action",
         "search-actions": "Search actions",
         "no-actions-text": "No actions found",
+        "action-source-order": "Order",
         "action-source": "Action source",
         "action-source-required": "Action source is required.",
         "action-name": "Name",

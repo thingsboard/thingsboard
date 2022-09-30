@@ -173,6 +173,7 @@ import { RateLimitsDetailsDialogComponent } from '@home/components/profile/tenan
 import { AssetProfileComponent } from '@home/components/profile/asset-profile.component';
 import { AssetProfileDialogComponent } from '@home/components/profile/asset-profile-dialog.component';
 import { AssetProfileAutocompleteComponent } from '@home/components/profile/asset-profile-autocomplete.component';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 
 @NgModule({
   declarations:
@@ -321,6 +322,7 @@ import { AssetProfileAutocompleteComponent } from '@home/components/profile/asse
   imports: [
     CommonModule,
     SharedModule,
+    DragDropModule,
     SharedHomeComponentsModule,
     WidgetSettingsModule,
     Lwm2mProfileComponentsModule,
@@ -453,7 +455,8 @@ import { AssetProfileAutocompleteComponent } from '@home/components/profile/asse
     RateLimitsListComponent,
     RateLimitsComponent,
     RateLimitsTextComponent,
-    RateLimitsDetailsDialogComponent
+    RateLimitsDetailsDialogComponent,
+    DragDropModule
   ],
   providers: [
     WidgetComponentService,
