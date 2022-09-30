@@ -25,8 +25,13 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
@@ -69,6 +74,7 @@ import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.SOFTWARE;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
+@ContextConfiguration(classes = {BaseDeviceControllerTest.Config.class})
 public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
     static final TypeReference<PageData<Device>> PAGE_DATA_DEVICE_TYPE_REF = new TypeReference<>() {};
 
@@ -83,9 +89,16 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
     @SpyBean
     private GatewayNotificationsService gatewayNotificationsService;
 
-    @SpyBean
+    @Autowired
     private DeviceDao deviceDao;
 
+    static class Config {
+        @Bean
+        @Primary
+        public DeviceDao deviceDao(DeviceDao deviceDao) {
+            return Mockito.mock(DeviceDao.class, AdditionalAnswers.delegatesTo(deviceDao));
+        }
+    }
 
     @Before
     public void beforeTest() throws Exception {
@@ -113,8 +126,6 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         executor.shutdownNow();
 
         loginSysAdmin();
-
-        afterTestEntityDaoRemoveByIdWithException (deviceDao);
 
         doDelete("/api/tenant/" + savedTenant.getId().getId())
                 .andExpect(status().isOk());

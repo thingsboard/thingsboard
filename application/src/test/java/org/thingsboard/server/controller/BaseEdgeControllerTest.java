@@ -21,8 +21,12 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
@@ -65,6 +69,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 @TestPropertySource(properties = {
         "edges.enabled=true",
 })
+@ContextConfiguration(classes = {BaseEdgeControllerTest.Config.class})
 public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
 
     public static final String EDGE_HOST = "localhost";
@@ -76,10 +81,18 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
     private TenantId tenantId;
     private User tenantAdmin;
 
-    @SpyBean
+    @Autowired
     private EdgeDao edgeDao;
 
-    @Before
+    static class Config {
+        @Bean
+        @Primary
+        public EdgeDao edgeDao(EdgeDao edgeDao) {
+            return Mockito.mock(EdgeDao.class, AdditionalAnswers.delegatesTo(edgeDao));
+        }
+    }
+
+   @Before
     public void beforeTest() throws Exception {
         loginSysAdmin();
 
@@ -102,8 +115,6 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
     @After
     public void afterTest() throws Exception {
         loginSysAdmin();
-
-        afterTestEntityDaoRemoveByIdWithException (edgeDao);
 
         doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
                 .andExpect(status().isOk());
