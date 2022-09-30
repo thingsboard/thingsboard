@@ -76,8 +76,6 @@ public abstract class BaseRuleChainControllerTest extends AbstractControllerTest
     public void afterTest() throws Exception {
         loginSysAdmin();
 
-        afterTestEntityDaoRemoveByIdWithException(ruleChainDao);
-
         doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
                 .andExpect(status().isOk());
     }

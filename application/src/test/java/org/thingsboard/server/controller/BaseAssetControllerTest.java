@@ -84,8 +84,6 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
     public void afterTest() throws Exception {
         loginSysAdmin();
 
-        afterTestEntityDaoRemoveByIdWithException (assetDao);
-
         doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
                 .andExpect(status().isOk());
     }

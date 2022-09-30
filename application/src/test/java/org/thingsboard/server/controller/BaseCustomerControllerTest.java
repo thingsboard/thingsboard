@@ -87,8 +87,6 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
 
         loginSysAdmin();
 
-        afterTestEntityDaoRemoveByIdWithException (customerDao);
-
         doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
                 .andExpect(status().isOk());
     }
