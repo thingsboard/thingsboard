@@ -79,11 +79,6 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
-    public Boolean deleteAlarm(TenantId tenantId, Alarm alarm) {
-        return removeById(tenantId, alarm.getUuidId());
-    }
-
-    @Override
     public ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
         return service.submit(() -> {
             List<AlarmEntity> latest = alarmRepository.findLatestByOriginatorAndType(
