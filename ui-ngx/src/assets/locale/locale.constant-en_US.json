@@ -4190,6 +4190,7 @@
         "qr-code": {
             "use-qr-code-text-function": "Use QR code text function",
             "qr-code-text-pattern": "QR code text pattern (for ex. '${entityName} | ${keyName} - some text.')",
+            "qr-code-text-pattern-hint": "QR code text pattern get keys only from the first entity in the entity alias.",
             "qr-code-text-pattern-required": "QR code text pattern is required.",
             "qr-code-text-function": "QR code text function"
         },
