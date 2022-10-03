@@ -43,6 +43,7 @@ const useSandbox = config.get('script.use_sandbox') === 'true';
 const maxActiveScripts = Number(config.get('script.max_active_scripts'));
 const slowQueryLogMs = Number(config.get('script.slow_query_log_ms'));
 const slowQueryLogBody = config.get('script.slow_query_log_body') === 'true';
+const maxResultSize = Number(config.get('js.max_result_size'));
 
 export class JsInvokeMessageProcessor {
 
@@ -164,9 +165,19 @@ export class JsInvokeMessageProcessor {
             (script) => {
                 this.executor.executeScript(script, invokeRequest.args, invokeRequest.timeout).then(
                     (result) => {
-                        const invokeResponse = JsInvokeMessageProcessor.createInvokeResponse(result, true);
-                        this.logger.debug('[%s] Sending success invoke response, scriptId: [%s]', requestId, scriptId);
-                        this.sendResponse(requestId, responseTopic, headers, scriptId, undefined, invokeResponse);
+                        if (result.length <= maxResultSize) {
+                            const invokeResponse = JsInvokeMessageProcessor.createInvokeResponse(result, true);
+                            this.logger.debug('[%s] Sending success invoke response, scriptId: [%s]', requestId, scriptId);
+                            this.sendResponse(requestId, responseTopic, headers, scriptId, undefined, invokeResponse);
+                        } else {
+                            let err = {
+                                name: 'Error',
+                                message: 'script invocation result exceeds maximum allowed size of ' + maxResultSize + ' symbols'
+                            }
+                            const invokeResponse = JsInvokeMessageProcessor.createInvokeResponse("", false, RUNTIME_ERROR, err);
+                            this.logger.debug('[%s] Script invocation result exceeds maximum allowed size of %s symbols, scriptId: [%s]', requestId, maxResultSize, scriptId);
+                            this.sendResponse(requestId, responseTopic, headers, scriptId, undefined, invokeResponse);
+                        }
                     },
                     (err: any) => {
                         let errorCode;
