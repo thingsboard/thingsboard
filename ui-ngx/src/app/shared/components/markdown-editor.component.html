@@ -17,25 +17,6 @@
 -->
 <div class="markdown-content" [ngClass]="{'tb-edit-mode': !readonly}"
      tb-fullscreen [fullscreen]="fullscreen" (fullscreenChanged)="onFullscreen()">
-<!--  <div *ngIf="label" fxLayout="row" fxLayoutAlign="space-between center" style="height: 40px;">-->
-<!--    <label class="tb-title no-padding" [ngClass]="{'tb-error': !disabled && required && !markdownValue, 'tb-required': !disabled && required}">{{ label }}</label>-->
-<!--    <div class="buttons-panel">-->
-<!--      <button [fxShow]="!editorMode"-->
-<!--              class="edit-toggle"-->
-<!--              type="button"-->
-<!--              mat-button (click)="toggleEditMode()">{{ 'markdown.edit' | translate }}</button>-->
-<!--      <div *ngIf = "helpId" [tb-help-popup]="helpId"></div>-->
-<!--      <button [fxShow]="editorMode"-->
-<!--              class="edit-toggle"-->
-<!--              type="button"-->
-<!--              mat-button (click)="toggleEditMode()">{{ 'markdown.preview' | translate }}</button>-->
-<!--      <button mat-button mat-icon-button (click)="fullscreen = !fullscreen"-->
-<!--              matTooltip="{{(fullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"-->
-<!--              matTooltipPosition="above">-->
-<!--        <mat-icon class="material-icons">{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>-->
-<!--      </button>-->
-<!--    </div>-->
-<!--  </div>-->
   <div fxLayout="row" fxLayoutAlign="start center" style="height: 40px;">
     <label class="tb-title no-padding" [ngClass]="{'tb-error': !disabled && required && !markdownValue, 'tb-required': !disabled && required}">{{ label }}</label>
     <span fxFlex></span>
