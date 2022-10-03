@@ -48,18 +48,6 @@ public class NashornJsInvokeService extends AbstractNashornJsInvokeService {
     @Value("${js.local.max_black_list_duration_sec:60}")
     private int maxBlackListDurationSec;
 
-    @Getter
-    @Value("${js.local.max_total_args_size:100000}")
-    private long maxTotalArgsSize;
-
-    @Getter
-    @Value("${js.local.max_result_size:300000}")
-    private long maxResultSize;
-
-    @Getter
-    @Value("${js.local.max_script_body_size:50000}")
-    private long maxScriptBodySize;
-
     public NashornJsInvokeService(TbApiUsageStateService apiUsageStateService, TbApiUsageClient apiUsageClient, JsExecutorService jsExecutor) {
         super(apiUsageStateService, apiUsageClient, jsExecutor);
     }

@@ -27,13 +27,12 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @DaoSqlTest
 @TestPropertySource(properties = {
-        "js.local.max_script_body_size=50",
-        "js.local.max_total_args_size=50",
-        "js.local.max_result_size=50",
+        "js.max_script_body_size=50",
+        "js.max_total_args_size=50",
+        "js.max_result_size=50",
         "js.local.max_errors=2"
 })
 class JsInvokeServiceTest extends AbstractControllerTest {

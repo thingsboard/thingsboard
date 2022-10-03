@@ -70,18 +70,6 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     @Value("${js.remote.stats.enabled:false}")
     private boolean statsEnabled;
 
-    @Getter
-    @Value("${js.remote.max_total_args_size:100000}")
-    private long maxTotalArgsSize;
-
-    @Getter
-    @Value("${js.remote.max_result_size:300000}")
-    private long maxResultSize;
-
-    @Getter
-    @Value("${js.remote.max_script_body_size:50000}")
-    private long maxScriptBodySize;
-
     private final AtomicInteger queuePushedMsgs = new AtomicInteger(0);
     private final AtomicInteger queueInvokeMsgs = new AtomicInteger(0);
     private final AtomicInteger queueEvalMsgs = new AtomicInteger(0);
