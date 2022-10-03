@@ -127,6 +127,7 @@ export const HelpLinks = {
     ruleNodeRestApiCall: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#rest-api-call-node',
     ruleNodeSendEmail: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#send-email-node',
     ruleNodeSendSms: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#send-sms-node',
+    ruleNodeMath: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#math-function-node',
     tenants: helpBaseUrl + '/docs/user-guide/ui/tenants',
     tenantProfiles: helpBaseUrl + '/docs/user-guide/ui/tenant-profiles',
     customers: helpBaseUrl + '/docs/user-guide/ui/customers',

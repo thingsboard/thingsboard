@@ -132,8 +132,9 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected static final String DIFFERENT_CUSTOMER_USER_EMAIL = "testdifferentcustomer@thingsboard.org";
     private static final String DIFFERENT_CUSTOMER_USER_PASSWORD = "diffcustomer";
 
-    /** See {@link org.springframework.test.web.servlet.DefaultMvcResult#getAsyncResult(long)}
-     *  and {@link org.springframework.mock.web.MockAsyncContext#getTimeout()}
+    /**
+     * See {@link org.springframework.test.web.servlet.DefaultMvcResult#getAsyncResult(long)}
+     * and {@link org.springframework.mock.web.MockAsyncContext#getTimeout()}
      */
     private static final long DEFAULT_TIMEOUT = -1L;
 
@@ -764,4 +765,5 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         }
         throw new AssertionError("Unexpected status " + mvcResult.getResponse().getStatus());
     }
+
 }

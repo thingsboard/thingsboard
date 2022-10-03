@@ -24,8 +24,12 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.StringUtils;
@@ -48,6 +52,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@ContextConfiguration(classes = {BaseCustomerControllerTest.Config.class})
 public abstract class BaseCustomerControllerTest extends AbstractControllerTest {
     static final TypeReference<PageData<Customer>> PAGE_DATA_CUSTOMER_TYPE_REFERENCE = new TypeReference<>() {
     };
@@ -57,8 +62,17 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
     private Tenant savedTenant;
     private User tenantAdmin;
 
-    @SpyBean
+    @Autowired
     private CustomerDao customerDao;
+
+    static class Config {
+        @Bean
+        @Primary
+        public CustomerDao customerDao(CustomerDao customerDao) {
+            return Mockito.mock(CustomerDao.class, AdditionalAnswers.delegatesTo(customerDao));
+        }
+    }
+
 
     @Before
     public void beforeTest() throws Exception {

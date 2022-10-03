@@ -31,8 +31,12 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.ThingsBoardExecutors;
@@ -84,6 +88,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
         "js.evaluator=mock",
 })
 @Slf4j
+@ContextConfiguration(classes = {BaseEntityViewControllerTest.Config.class})
 public abstract class BaseEntityViewControllerTest extends AbstractControllerTest {
     static final TypeReference<PageData<EntityView>> PAGE_DATA_ENTITY_VIEW_TYPE_REF = new TypeReference<>() {
     };
@@ -96,8 +101,16 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
     List<ListenableFuture<ResultActions>> deleteFutures = new ArrayList<>();
     ListeningExecutorService executor;
 
-    @SpyBean
+    @Autowired
     private EntityViewDao entityViewDao;
+
+    static class Config {
+        @Bean
+        @Primary
+        public EntityViewDao entityViewDao(EntityViewDao entityViewDao) {
+            return Mockito.mock(EntityViewDao.class, AdditionalAnswers.delegatesTo(entityViewDao));
+        }
+    }
 
     @Before
     public void beforeTest() throws Exception {
@@ -801,6 +814,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
     @Test
     public void testDeleteEntityViewExceptionWithRelationsTransactional() throws Exception {
+        Thread.sleep(1000);
         EntityViewId entityViewId = getNewSavedEntityView("EntityView for Test WithRelations Transactional Exception").getId();
         testEntityDaoWithRelationsTransactionalException(entityViewDao, tenantId, entityViewId, "/api/entityView/" + entityViewId);
     }

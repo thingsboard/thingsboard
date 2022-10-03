@@ -21,9 +21,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpHeaders;
+import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
@@ -51,14 +55,23 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.model.ModelConstants.SYSTEM_TENANT;
 
+@ContextConfiguration(classes = {BaseUserControllerTest.Config.class})
 public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
     private IdComparator<User> idComparator = new IdComparator<>();
 
     private CustomerId customerNUULId = (CustomerId) createEntityId_NULL_UUID(new Customer());
 
-    @SpyBean
+    @Autowired
     private UserDao userDao;
+
+    static class Config {
+        @Bean
+        @Primary
+        public UserDao userDao(UserDao userDao) {
+            return Mockito.mock(UserDao.class, AdditionalAnswers.delegatesTo(userDao));
+        }
+    }
 
     @After
     public void afterTest() throws Exception {

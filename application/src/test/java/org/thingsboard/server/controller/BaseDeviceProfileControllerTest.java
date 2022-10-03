@@ -26,8 +26,12 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
@@ -69,6 +73,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.SOFTWARE;
 
+@ContextConfiguration(classes = {BaseDeviceProfileControllerTest.Config.class})
 public abstract class BaseDeviceProfileControllerTest extends AbstractControllerTest {
 
     private IdComparator<DeviceProfile> idComparator = new IdComparator<>();
@@ -77,8 +82,16 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
     private Tenant savedTenant;
     private User tenantAdmin;
 
-    @SpyBean
+    @Autowired
     private DeviceProfileDao deviceProfileDao;
+
+    static class Config {
+        @Bean
+        @Primary
+        public DeviceProfileDao deviceProfileDao(DeviceProfileDao deviceProfileDao) {
+            return Mockito.mock(DeviceProfileDao.class, AdditionalAnswers.delegatesTo(deviceProfileDao));
+        }
+    }
 
     @Before
     public void beforeTest() throws Exception {
@@ -1147,4 +1160,5 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         DeviceProfile deviceProfile = createDeviceProfile(name);
         return doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
     }
+
 }
