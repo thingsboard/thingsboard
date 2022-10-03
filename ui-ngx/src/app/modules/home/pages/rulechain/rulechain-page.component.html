@@ -40,6 +40,8 @@
                     fxLayout="column">
           <mat-toolbar color="primary" class="tb-dark" fxLayout="column" fxLayoutAlign="space-evenly center">
             <tb-rulechain-select
+              *ngIf="!isImport"
+              [disabled]="isDirtyValue"
               [(ngModel)]="ruleChain.id.id"
               (ngModelChange)="currentRuleChainIdChanged(ruleChain.id?.id)">
             </tb-rulechain-select>

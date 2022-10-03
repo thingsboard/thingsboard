@@ -17,13 +17,7 @@
 import {
   Component,
   forwardRef,
-  Inject,
-  Injector,
-  Input,
   OnInit,
-  StaticProvider,
-  ViewChild,
-  ViewContainerRef
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, of } from 'rxjs';
@@ -32,14 +26,6 @@ import { map, share } from 'rxjs/operators';
 import { PageData } from '@shared/models/page/page-data';
 import { RuleChain, RuleChainType } from '@app/shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
-import { Store } from '@ngrx/store';
-import { AppState } from '@app/core/core.state';
-import { TooltipPosition } from '@angular/material/tooltip';
-import { CdkOverlayOrigin, ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
-import { BreakpointObserver } from '@angular/cdk/layout';
-import { DOCUMENT } from '@angular/common';
-import { WINDOW } from '@core/services/window.service';
-import { ComponentPortal } from '@angular/cdk/portal';
 
 // @dynamic
 @Component({
@@ -53,25 +39,15 @@ import { ComponentPortal } from '@angular/cdk/portal';
   }]
 })
 export class RuleChainSelectComponent implements ControlValueAccessor, OnInit {
-  @Input()
-  tooltipPosition: TooltipPosition = 'above';
 
   ruleChains$: Observable<Array<RuleChain>>;
-
   ruleChainId: string | null;
 
-  @ViewChild('ruleChainSelectPanelOrigin') ruleChainSelectPanelOrigin: CdkOverlayOrigin;
+  disabled: boolean;
 
   private propagateChange = (v: any) => { };
 
-  constructor(private store: Store<AppState>,
-              private ruleChainService: RuleChainService,
-              private overlay: Overlay,
-              private breakpointObserver: BreakpointObserver,
-              private viewContainerRef: ViewContainerRef,
-              @Inject(DOCUMENT) private document: Document,
-              @Inject(WINDOW) private window: Window) {
-  }
+  constructor(private ruleChainService: RuleChainService) {}
 
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
@@ -81,13 +57,16 @@ export class RuleChainSelectComponent implements ControlValueAccessor, OnInit {
   }
 
   ngOnInit() {
-
     const pageLink = new PageLink(100);
-
     this.ruleChains$ = this.getRuleChains(pageLink).pipe(
       map((pageData) => pageData.data),
       share()
     );
+    this.disabled = false;
+  }
+
+  setDisabledState(isDisabled: boolean) {
+    this.disabled = isDisabled;
   }
 
   writeValue(value: string | null): void {

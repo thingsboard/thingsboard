@@ -15,8 +15,7 @@
     limitations under the License.
 
 -->
-<mat-select [(ngModel)]="ruleChainId"
-            (ngModelChange)="ruleChainIdChanged()">
+<mat-select [disabled]="disabled" [(ngModel)]="ruleChainId" (ngModelChange)="ruleChainIdChanged()">
   <mat-option *ngFor="let ruleChain of ruleChains$ | async" [value]="ruleChain.id?.id">
     {{ruleChain.name}}
   </mat-option>
