@@ -16,8 +16,11 @@
 package org.thingsboard.server.dao.sql.audit;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
@@ -28,18 +31,31 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.audit.AuditLogDao;
+import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.sql.AuditLogEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
+import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Component
+@RequiredArgsConstructor
+@Slf4j
 public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> implements AuditLogDao {
 
-    @Autowired
-    private AuditLogRepository auditLogRepository;
+    private final AuditLogRepository auditLogRepository;
+    private final SqlPartitioningRepository partitioningRepository;
+    private final JdbcTemplate jdbcTemplate;
+
+    @Value("${sql.audit_logs.partition_size:168}")
+    private int partitionSizeInHours;
+    @Value("${sql.ttl.audit_logs.ttl:0}")
+    private long ttlInSec;
+
+    private static final String TABLE_NAME = ModelConstants.AUDIT_LOG_COLUMN_FAMILY_NAME;
 
     @Override
     protected Class<AuditLogEntity> getEntityClass() {
@@ -54,6 +70,7 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
     @Override
     public ListenableFuture<Void> saveByTenantId(AuditLog auditLog) {
         return service.submit(() -> {
+            partitioningRepository.createPartitionIfNotExists(TABLE_NAME, auditLog.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
             save(auditLog.getTenantId(), auditLog);
             return null;
         });
@@ -113,4 +130,44 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
                         actionTypes,
                         DaoUtil.toPageable(pageLink)));
     }
+
+    @Override
+    public void cleanUpAuditLogs(long expTime) {
+        partitioningRepository.dropPartitionsBefore(TABLE_NAME, expTime, TimeUnit.HOURS.toMillis(partitionSizeInHours));
+    }
+
+    @Override
+    public void migrateAuditLogs() {
+        long startTime = ttlInSec > 0 ? System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(ttlInSec) : 1480982400000L;
+
+        long currentTime = System.currentTimeMillis();
+        var partitionStepInMs = TimeUnit.HOURS.toMillis(partitionSizeInHours);
+        long numberOfPartitions = (currentTime - startTime) / partitionStepInMs;
+
+        if (numberOfPartitions > 1000) {
+            String error = "Please adjust your audit logs partitioning configuration. Configuration with partition size " +
+                    "of " + partitionSizeInHours + " hours and corresponding TTL will use " + numberOfPartitions + " " +
+                    "(> 1000) partitions which is not recommended!";
+            log.error(error);
+            throw new RuntimeException(error);
+        }
+
+        jdbcTemplate.execute("CALL rename_old_audit_logs_partitions()");
+        while (startTime < currentTime) {
+            var endTime = startTime + partitionStepInMs;
+            log.info("Migrating audit logs for time period: {} - {}", startTime, endTime);
+            callMigrationFunction(startTime, endTime, partitionStepInMs);
+            startTime = endTime;
+        }
+        log.info("Audit logs migration finished");
+
+        jdbcTemplate.execute("DROP TABLE IF EXISTS audit_log");
+        jdbcTemplate.execute("ALTER TABLE tmp_audit_log RENAME TO audit_log");
+        jdbcTemplate.execute("ALTER INDEX IF EXISTS idx_tmp_audit_log_tenant_id_and_created_time RENAME TO idx_audit_log_tenant_id_and_created_time");
+    }
+
+    private void callMigrationFunction(long startTime, long endTime, long partitionSizeInMs) {
+        jdbcTemplate.update("CALL migrate_audit_logs(?, ?, ?)", startTime, endTime, partitionSizeInMs);
+    }
+
 }

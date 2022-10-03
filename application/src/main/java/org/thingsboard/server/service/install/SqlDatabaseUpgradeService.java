@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.service.install;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,11 +22,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.ThrowingConsumer;
 import org.thingsboard.server.common.data.EntitySubtype;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -37,8 +33,6 @@ import org.thingsboard.server.common.data.queue.ProcessingStrategyType;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.queue.SubmitStrategy;
 import org.thingsboard.server.common.data.queue.SubmitStrategyType;
-import org.thingsboard.server.common.data.rule.RuleNode;
-import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -61,11 +55,8 @@ import java.sql.SQLException;
 import java.sql.SQLSyntaxErrorException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static org.thingsboard.server.service.install.DatabaseHelper.ADDITIONAL_INFO;
 import static org.thingsboard.server.service.install.DatabaseHelper.ASSIGNED_CUSTOMERS;
@@ -609,9 +600,30 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     log.error("Failed updating schema!!!", e);
                 }
                 break;
+            case "3.4.1":
+                execute(connection -> {
+                    log.info("Updating schema ...");
+                    runSchemaUpdateScript(connection, "3.4.1");
+                    connection.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3004002;");
+                    log.info("Schema updated.");
+                });
+                break;
             default:
                 throw new RuntimeException("Unable to upgrade SQL database, unsupported fromVersion: " + fromVersion);
         }
+    }
+
+    private void execute(ThrowingConsumer<Connection> function) {
+        try (Connection connection = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+            function.accept(connection);
+        } catch (Exception e) {
+            log.error("Failed to update schema!", e);
+        }
+    }
+
+    private void runSchemaUpdateScript(Connection connection, String version) throws Exception {
+        Path schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", version, SCHEMA_UPDATE_SQL);
+        loadSql(schemaUpdateFile, connection);
     }
 
     private void loadSql(Path sqlFile, Connection conn) throws Exception {
