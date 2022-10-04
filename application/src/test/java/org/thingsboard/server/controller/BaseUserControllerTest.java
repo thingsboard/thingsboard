@@ -714,7 +714,6 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
                 .andExpect(status().isOk());
     }
 
-
     @Test
     public void testDeleteUserWithDeleteRelationsOk() throws Exception {
         UserId userId = createUser().getId();
@@ -738,4 +737,5 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         user.setLastName("Downs");
         return doPost("/api/user", user, User.class);
     }
+
 }
