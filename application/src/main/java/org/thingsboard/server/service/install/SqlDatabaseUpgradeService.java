@@ -22,7 +22,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.ThrowingConsumer;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -33,6 +32,8 @@ import org.thingsboard.server.common.data.queue.ProcessingStrategyType;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.queue.SubmitStrategy;
 import org.thingsboard.server.common.data.queue.SubmitStrategyType;
+import org.thingsboard.server.dao.asset.AssetProfileService;
+import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -109,7 +110,13 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
     private DeviceService deviceService;
 
     @Autowired
+    private AssetService assetService;
+
+    @Autowired
     private DeviceProfileService deviceProfileService;
+
+    @Autowired
+    private AssetProfileService assetProfileService;
 
     @Autowired
     private ApiUsageStateService apiUsageStateService;
@@ -601,23 +608,54 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                 }
                 break;
             case "3.4.1":
-                execute(connection -> {
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
                     log.info("Updating schema ...");
-                    runSchemaUpdateScript(connection, "3.4.1");
-                    connection.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3004002;");
+                    runSchemaUpdateScript(conn, "3.4.1");
+                    if (isOldSchema(conn, 3004001)) {
+                        try {
+                            conn.createStatement().execute("ALTER TABLE asset ADD COLUMN asset_profile_id uuid");
+                        } catch (Exception e) {
+                        }
+
+                        schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.4.1", "schema_update_before.sql");
+                        loadSql(schemaUpdateFile, conn);
+
+                        log.info("Creating default asset profiles...");
+                        PageLink pageLink = new PageLink(100);
+                        PageData<Tenant> pageData;
+                        do {
+                            pageData = tenantService.findTenants(pageLink);
+                            for (Tenant tenant : pageData.getData()) {
+                                List<EntitySubtype> assetTypes = assetService.findAssetTypesByTenantId(tenant.getId()).get();
+                                try {
+                                    assetProfileService.createDefaultAssetProfile(tenant.getId());
+                                } catch (Exception e) {
+                                }
+                                for (EntitySubtype assetType : assetTypes) {
+                                    try {
+                                        assetProfileService.findOrCreateAssetProfile(tenant.getId(), assetType.getType());
+                                    } catch (Exception e) {
+                                    }
+                                }
+                            }
+                            pageLink = pageLink.nextPageLink();
+                        } while (pageData.hasNext());
+
+                        log.info("Updating asset profiles...");
+                        conn.createStatement().execute("call update_asset_profiles()");
+
+                        schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.4.1", "schema_update_after.sql");
+                        loadSql(schemaUpdateFile, conn);
+
+                        conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3004002;");
+                    }
                     log.info("Schema updated.");
-                });
+                } catch (Exception e) {
+                    log.error("Failed updating schema!!!", e);
+                }
                 break;
             default:
                 throw new RuntimeException("Unable to upgrade SQL database, unsupported fromVersion: " + fromVersion);
-        }
-    }
-
-    private void execute(ThrowingConsumer<Connection> function) {
-        try (Connection connection = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
-            function.accept(connection);
-        } catch (Exception e) {
-            log.error("Failed to update schema!", e);
         }
     }
 

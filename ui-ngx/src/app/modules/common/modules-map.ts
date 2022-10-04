@@ -290,6 +290,9 @@ import * as DashboardImageDialogComponent from '@home/components/dashboard-page/
 import * as WidgetContainerComponent from '@home/components/widget/widget-container.component';
 import * as TenantProfileQueuesComponent from '@home/components/profile/queue/tenant-profile-queues.component';
 import * as QueueFormComponent from '@home/components/queue/queue-form.component';
+import * as AssetProfileComponent from '@home/components/profile/asset-profile.component';
+import * as AssetProfileDialogComponent from '@home/components/profile/asset-profile-dialog.component';
+import * as AssetProfileAutocompleteComponent from '@home/components/profile/asset-profile-autocomplete.component';
 
 import { IModulesMap } from '@modules/common/modules-map.models';
 
@@ -537,6 +540,9 @@ class ModulesMap implements IModulesMap {
     MqttDeviceProfileTransportConfigurationComponent,
     '@home/components/profile/device/coap-device-profile-transport-configuration.component':
     CoapDeviceProfileTransportConfigurationComponent,
+    '@home/components/profile/asset-profile.component': AssetProfileComponent,
+    '@home/components/profile/asset-profile-dialog.component': AssetProfileDialogComponent,
+    '@home/components/profile/asset-profile-autocomplete.component': AssetProfileAutocompleteComponent,
     '@home/components/profile/alarm/device-profile-alarms.component': DeviceProfileAlarmsComponent,
     '@home/components/profile/alarm/device-profile-alarm.component': DeviceProfileAlarmComponent,
     '@home/components/profile/alarm/create-alarm-rules.component': CreateAlarmRulesComponent,

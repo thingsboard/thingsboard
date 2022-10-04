@@ -70,6 +70,9 @@ public class SqlPartitioningRepository {
                 partitions.put(partition.getStart(), partition);
             } catch (Exception ex) { // fixme: check
                 log.trace("Error occurred during partition save:", ex);
+                // todo: if partitions накладаються, потестити (ConstraintViolationException)
+                // todo: SKIP_MIGRATION тільки для того щоб не переносити данні, таблицю треба створити partitioned.
+                // fixme: update script
 //                if (ExceptionUtils.indexOfThrowable(ex, ConstraintViolationException.class) >= 0) {
 //                    log.warn("Saving partition [{}] rejected. Data will be saved to the DEFAULT partition.", partition.getPartitionDate());
 //                    partitions.put(partition.getStart(), partition);

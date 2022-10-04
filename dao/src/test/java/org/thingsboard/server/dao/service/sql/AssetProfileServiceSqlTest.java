@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.common.util;
+package org.thingsboard.server.dao.service.sql;
 
-public interface ThrowingConsumer<T> {
+import org.thingsboard.server.dao.service.BaseAssetProfileServiceTest;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 
-    void accept(T t) throws Exception;
-
+@DaoSqlTest
+public class AssetProfileServiceSqlTest extends BaseAssetProfileServiceTest {
 }

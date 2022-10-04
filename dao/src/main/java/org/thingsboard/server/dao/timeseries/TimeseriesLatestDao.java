@@ -24,9 +24,20 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface TimeseriesLatestDao {
 
+    /**
+     * Optional TsKvEntry if the value is present in the DB
+     *
+     */
+    ListenableFuture<Optional<TsKvEntry>> findLatestOpt(TenantId tenantId, EntityId entityId, String key);
+
+    /**
+     * Returns new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry(key, null)) if the value is NOT present in the DB
+     *
+     */
     ListenableFuture<TsKvEntry> findLatest(TenantId tenantId, EntityId entityId, String key);
 
     ListenableFuture<List<TsKvEntry>> findAllLatest(TenantId tenantId, EntityId entityId);

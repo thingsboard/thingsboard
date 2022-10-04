@@ -42,6 +42,7 @@ import org.thingsboard.server.dao.model.sql.AlarmEntity;
 import org.thingsboard.server.dao.model.sql.EntityAlarmEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.sql.query.AlarmQueryRepository;
+import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -55,6 +56,7 @@ import java.util.UUID;
  */
 @Slf4j
 @Component
+@SqlDao
 public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements AlarmDao {
 
     @Autowired
@@ -74,11 +76,6 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     @Override
     protected JpaRepository<AlarmEntity, UUID> getRepository() {
         return alarmRepository;
-    }
-
-    @Override
-    public Boolean deleteAlarm(TenantId tenantId, Alarm alarm) {
-        return removeById(tenantId, alarm.getUuidId());
     }
 
     @Override
