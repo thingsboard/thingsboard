@@ -35,7 +35,7 @@ import java.util.concurrent.locks.ReentrantLock;
 @Repository
 @Slf4j
 public class SqlPartitioningRepository {
-    // todo: check INSTALL  , compare to events
+
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -127,7 +127,6 @@ public class SqlPartitioningRepository {
     }
 
     private List<Long> fetchPartitions(String table) {
-        // todo: test
         List<Long> partitions = new ArrayList<>();
         List<String> partitionsTables = jdbcTemplate.queryForList(SELECT_PARTITIONS_STMT, new Object[]{table}, String.class);
         for (String partitionTableName : partitionsTables) {
