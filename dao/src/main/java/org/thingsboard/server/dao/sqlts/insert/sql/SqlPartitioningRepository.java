@@ -63,6 +63,7 @@ public class SqlPartitioningRepository {
             SqlPartition partition = new SqlPartition(table, partitionStartTs, partitionStartTs + partitionDurationMs, Long.toString(partitionStartTs));
             partitionCreationLock.lock();
             try {
+                if (partitions.containsKey(partitionStartTs)) return;
                 log.trace("Saving partition: {}", partition);
                 save(partition);
                 log.trace("Adding partition to map: {}", partition);
