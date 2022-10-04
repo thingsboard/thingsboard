@@ -17,7 +17,6 @@ package org.thingsboard.server.dao.sqlts.insert.sql;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -68,17 +67,16 @@ public class SqlPartitioningRepository {
                 save(partition);
                 log.trace("Adding partition to map: {}", partition);
                 partitions.put(partition.getStart(), partition);
-            } catch (Exception ex) { // fixme: check
-                log.trace("Error occurred during partition save:", ex);
-                // todo: if partitions накладаються, потестити (ConstraintViolationException)
-                // todo: SKIP_MIGRATION тільки для того щоб не переносити данні, таблицю треба створити partitioned.
-                // fixme: update script
-//                if (ExceptionUtils.indexOfThrowable(ex, ConstraintViolationException.class) >= 0) {
-//                    log.warn("Saving partition [{}] rejected. Data will be saved to the DEFAULT partition.", partition.getPartitionDate());
-//                    partitions.put(partition.getStart(), partition);
-//                } else {
-//                    throw ex;
-//                }
+            } catch (RuntimeException e) {
+                log.trace("Error occurred during partition save:", e);
+                String msg = ExceptionUtils.getRootCauseMessage(e);
+                if (msg.contains("would overlap partition")) {
+                    log.warn("Couldn't save {} partition for {}, data will be saved to the default partition. SQL error: {}",
+                            partition.getPartitionDate(), table, msg);
+                    partitions.put(partition.getStart(), partition);
+                } else {
+                    throw e;
+                }
             } finally {
                 partitionCreationLock.unlock();
             }

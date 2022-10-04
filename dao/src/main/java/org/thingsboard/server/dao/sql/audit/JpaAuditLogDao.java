@@ -154,7 +154,6 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
             throw new RuntimeException(error);
         }
 
-        jdbcTemplate.execute("CALL rename_old_audit_logs_partitions()");
         while (startTime < currentTime) {
             var endTime = startTime + partitionStepInMs;
             log.info("Migrating audit logs for time period: {} - {}", startTime, endTime);
@@ -163,9 +162,7 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
         }
         log.info("Audit logs migration finished");
 
-        jdbcTemplate.execute("DROP TABLE IF EXISTS audit_log");
-        jdbcTemplate.execute("ALTER TABLE tmp_audit_log RENAME TO audit_log");
-        jdbcTemplate.execute("ALTER INDEX IF EXISTS idx_tmp_audit_log_tenant_id_and_created_time RENAME TO idx_audit_log_tenant_id_and_created_time");
+        jdbcTemplate.execute("DROP TABLE IF EXISTS old_audit_log");
     }
 
     private void callMigrationFunction(long startTime, long endTime, long partitionSizeInMs) {
