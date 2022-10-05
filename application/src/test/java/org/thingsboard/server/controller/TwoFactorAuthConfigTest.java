@@ -15,16 +15,23 @@
  */
 package org.thingsboard.server.controller;
 
+import io.jsonwebtoken.lang.Assert;
+import org.hibernate.exception.ConstraintViolationException;
 import org.jboss.aerogear.security.otp.Totp;
 import org.jboss.aerogear.security.otp.api.Base32;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.AdditionalAnswers;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.rule.engine.api.SmsService;
@@ -39,17 +46,20 @@ import org.thingsboard.server.common.data.security.model.mfa.provider.SmsTwoFaPr
 import org.thingsboard.server.common.data.security.model.mfa.provider.TotpTwoFaProviderConfig;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderConfig;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
+import org.thingsboard.server.dao.settings.AdminSettingsDao;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFaConfigManager;
 import org.thingsboard.server.service.security.auth.mfa.provider.impl.OtpBasedTwoFaProvider;
 import org.thingsboard.server.service.security.auth.mfa.provider.impl.TotpTwoFaProvider;
 
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.ThrowableAssert.catchThrowable;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -58,6 +68,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@ContextConfiguration(classes = {TwoFactorAuthConfigTest.Config.class})
 public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
     @SpyBean
@@ -70,6 +81,16 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
     private TwoFaConfigManager twoFaConfigManager;
     @SpyBean
     private TwoFactorAuthService twoFactorAuthService;
+    @Autowired
+    AdminSettingsDao adminSettingsDao;
+
+    static class Config {
+        @Bean
+        @Primary
+        public AdminSettingsDao adminSettingsDao(AdminSettingsDao adminSettingsDao) {
+            return Mockito.mock(AdminSettingsDao.class, AdditionalAnswers.delegatesTo(adminSettingsDao));
+        }
+    }
 
     @Before
     public void beforeEach() throws Exception {
@@ -470,6 +491,47 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
         assertThat(readResponse(doGet("/api/2fa/account/settings").andExpect(status().isOk()), AccountTwoFaSettings.class).getConfigs())
                 .doesNotContainKey(TwoFaProviderType.SMS);
+    }
+
+    @Test
+    public void testDeleteAdminSettingsWithTransactionalOk() throws Exception {
+        AccountTwoFaSettings accountTwoFaSettings = createAccountTwoFaSettings();
+        Assert.isTrue(accountTwoFaSettings.getConfigs().size() > 0);
+
+        twoFaConfigManager.deletePlatformTwoFaSettings(tenantId);
+
+        AccountTwoFaSettings accountTwoFaSettingsAfter = readResponse(doGet("/api/2fa/account/settings").andExpect(status().isOk()), AccountTwoFaSettings.class);
+        Assert.isTrue(accountTwoFaSettingsAfter.getConfigs().size() == 0);
+    }
+
+    @Test
+    public void testDeleteAdminSettingsWithTransactionalException() throws Exception {
+        Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(adminSettingsDao).removeById(any(), any());
+        try {
+            AccountTwoFaSettings accountTwoFaSettings = createAccountTwoFaSettings();
+            Assert.isTrue(accountTwoFaSettings.getConfigs().size() > 0);
+
+            final Throwable raisedException = catchThrowable(() -> twoFaConfigManager.deletePlatformTwoFaSettings(tenantId));
+            assertThat(raisedException).isInstanceOf(ConstraintViolationException.class)
+                    .hasMessageContaining("mock message");
+
+            AccountTwoFaSettings accountTwoFaSettingsAfter = readResponse(doGet("/api/2fa/account/settings").andExpect(status().isOk()), AccountTwoFaSettings.class);
+            Assert.isTrue(accountTwoFaSettingsAfter.getConfigs().size() > 0);
+        } finally {
+            Mockito.reset(adminSettingsDao);
+        }
+    }
+
+    private AccountTwoFaSettings createAccountTwoFaSettings() throws Exception {
+        configureSmsTwoFaProvider("${code}");
+        SmsTwoFaAccountConfig accountConfig = new SmsTwoFaAccountConfig();
+        accountConfig.setPhoneNumber("+38050505050");
+
+        loginTenantAdmin();
+
+        twoFaConfigManager.saveTwoFaAccountConfig(tenantId, tenantAdminUserId, accountConfig);
+
+        return readResponse(doGet("/api/2fa/account/settings").andExpect(status().isOk()), AccountTwoFaSettings.class);
     }
 
 }
