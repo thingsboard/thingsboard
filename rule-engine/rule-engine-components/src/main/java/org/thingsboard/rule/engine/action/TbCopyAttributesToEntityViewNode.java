@@ -74,6 +74,7 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
         if (DataConstants.ATTRIBUTES_UPDATED.equals(msg.getType()) ||
                 DataConstants.ATTRIBUTES_DELETED.equals(msg.getType()) ||
                 DataConstants.ACTIVITY_EVENT.equals(msg.getType()) ||
+                DataConstants.INACTIVITY_EVENT.equals(msg.getType()) ||
                 SessionMsgType.POST_ATTRIBUTES_REQUEST.name().equals(msg.getType())) {
             if (!msg.getMetaData().getData().isEmpty()) {
                 long now = System.currentTimeMillis();
@@ -91,6 +92,7 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
                                 if ((endTime != 0 && endTime > now && startTime < now) || (endTime == 0 && startTime < now)) {
                                     if (DataConstants.ATTRIBUTES_UPDATED.equals(msg.getType()) ||
                                             DataConstants.ACTIVITY_EVENT.equals(msg.getType()) ||
+                                            DataConstants.INACTIVITY_EVENT.equals(msg.getType()) ||
                                             SessionMsgType.POST_ATTRIBUTES_REQUEST.name().equals(msg.getType())) {
                                         Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(new JsonParser().parse(msg.getData()));
                                         List<AttributeKvEntry> filteredAttributes =
