@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -112,6 +113,15 @@ public class EntityActionService {
                 break;
             case UNASSIGNED_FROM_EDGE:
                 msgType = DataConstants.ENTITY_UNASSIGNED_FROM_EDGE;
+                break;
+            case RELATION_ADD_OR_UPDATE:
+                msgType = DataConstants.RELATION_ADD_OR_UPDATE;
+                break;
+            case RELATION_DELETED:
+                msgType = DataConstants.RELATION_DELETED;
+                break;
+            case RELATIONS_DELETED:
+                msgType = DataConstants.RELATIONS_DELETED;
                 break;
         }
         if (!StringUtils.isEmpty(msgType)) {
@@ -195,6 +205,8 @@ public class EntityActionService {
                         }
                         entityNode.put("startTs", extractParameter(Long.class, 1, additionalInfo));
                         entityNode.put("endTs", extractParameter(Long.class, 2, additionalInfo));
+                    } else if (ActionType.RELATION_ADD_OR_UPDATE.equals(actionType) || ActionType.RELATION_DELETED.equals(actionType)) {
+                        entityNode = json.valueToTree(extractParameter(EntityRelation.class, 0, additionalInfo));
                     }
                 }
                 TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, customerId, metaData, TbMsgDataType.JSON, json.writeValueAsString(entityNode));
