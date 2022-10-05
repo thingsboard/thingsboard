@@ -142,10 +142,11 @@ export class EntityDataSubscription {
   private started = false;
 
   private static convertValue(val: string): any {
-    if (val && isNumeric(val) && Number(val).toString() === val) {
-      return Number(val);
+    try {
+      return JSON.parse(val);
+    } catch(e) {
+      return val;
     }
-    return val;
   }
 
   private static calculateComparisonValue(key: SubscriptionDataKey, comparisonTsValue: ComparisonTsValue): [number, any, number?][] {
