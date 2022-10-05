@@ -20,17 +20,24 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,12 +47,24 @@ import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.model.ModelConstants.SYSTEM_TENANT;
 
+@ContextConfiguration(classes = {BaseWidgetsBundleControllerTest.Config.class})
 public abstract class BaseWidgetsBundleControllerTest extends AbstractControllerTest {
 
     private IdComparator<WidgetsBundle> idComparator = new IdComparator<>();
 
     private Tenant savedTenant;
     private User tenantAdmin;
+
+    @Autowired
+    private WidgetsBundleDao widgetsBundleDao;
+
+    static class Config {
+        @Bean
+        @Primary
+        public WidgetsBundleDao widgetsBundleDao(WidgetsBundleDao widgetsBundleDao) {
+            return Mockito.mock(WidgetsBundleDao.class, AdditionalAnswers.delegatesTo(widgetsBundleDao));
+        }
+    }
 
     @Before
     public void beforeTest() throws Exception {
@@ -394,6 +413,25 @@ public abstract class BaseWidgetsBundleControllerTest extends AbstractController
         Collections.sort(loadedWidgetsBundles, idComparator);
 
         Assert.assertEquals(sysWidgetsBundles, loadedWidgetsBundles);
+    }
+
+    @Test
+    public void testDeleteWidgetsBundleWithDeleteRelationsOk() throws Exception {
+        WidgetsBundleId widgetsBundleId = createWidgetsBundleId().getId();
+        testEntityDaoWithRelationsOk(tenantId, widgetsBundleId, "/api/widgetsBundle/" + widgetsBundleId);
+    }
+
+    @Test
+    public void testDeleteWidgetsBundleExceptionWithRelationsTransactional() throws Exception {
+        WidgetsBundleId widgetsBundleId = createWidgetsBundleId().getId();
+        testEntityDaoWithRelationsTransactionalException(widgetsBundleDao, tenantId,  widgetsBundleId, "/api/widgetsBundle/" +  widgetsBundleId);
+    }
+
+    private WidgetsBundle createWidgetsBundleId() throws Exception {
+        loginSysAdmin();
+        WidgetsBundle widgetsBundle = new WidgetsBundle();
+        widgetsBundle.setTitle("My widgets bundle");
+        return doPost("/api/widgetsBundle", widgetsBundle, WidgetsBundle.class);
     }
 
 }

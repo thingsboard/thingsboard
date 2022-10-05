@@ -133,7 +133,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     private static final String DIFFERENT_CUSTOMER_USER_PASSWORD = "diffcustomer";
 
     /**
-     * See {@link org.springframework.test.web.servlet.DefaultMvcResult#getAsyncResult(long)}
+     * See {@link org.springframework.test.web.servlet.MvcResult#getAsyncResult(long)}
      * and {@link org.springframework.mock.web.MockAsyncContext#getTimeout()}
      */
     private static final long DEFAULT_TIMEOUT = -1L;
@@ -734,17 +734,16 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected <T> void testEntityDaoWithRelationsTransactionalException(Dao<T> dao, EntityId entityIdFrom, EntityId entityTo,
                                                                         String urlDelete) throws Exception {
         Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(dao).removeById(any(), any());
-        try {
-            createEntityRelation(entityIdFrom, entityTo, "TEST_TRANSACTIONAL_TYPE");
-            assertThat(findRelationsByTo(entityTo)).hasSize(1);
 
-            doDelete(urlDelete)
-                    .andExpect(status().isInternalServerError());
+        createEntityRelation(entityIdFrom, entityTo, "TEST_TRANSACTIONAL_TYPE");
+        assertThat(findRelationsByTo(entityTo)).hasSize(1);
 
-            assertThat(findRelationsByTo(entityTo)).hasSize(1);
-        } finally {
-            Mockito.reset(dao);
-        }
+        doDelete(urlDelete)
+                .andExpect(status().isInternalServerError());
+
+        assertThat(findRelationsByTo(entityTo)).hasSize(1);
+        Mockito.doReturn(true).when(dao).removeById(any(), any());
+        Mockito.reset(dao);
     }
 
     protected void createEntityRelation(EntityId entityIdFrom, EntityId entityIdTo, String typeRelation) throws Exception {
