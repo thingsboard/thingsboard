@@ -416,13 +416,13 @@ public abstract class BaseWidgetsBundleControllerTest extends AbstractController
     }
 
     @Test
-    public void testDeleteUserWithDeleteRelationsOk() throws Exception {
+    public void testDeleteWidgetsBundleWithDeleteRelationsOk() throws Exception {
         WidgetsBundleId widgetsBundleId = createWidgetsBundleId().getId();
         testEntityDaoWithRelationsOk(tenantId, widgetsBundleId, "/api/widgetsBundle/" + widgetsBundleId);
     }
 
     @Test
-    public void testDeleteUserExceptionWithRelationsTransactional() throws Exception {
+    public void testDeleteWidgetsBundleExceptionWithRelationsTransactional() throws Exception {
         WidgetsBundleId widgetsBundleId = createWidgetsBundleId().getId();
         testEntityDaoWithRelationsTransactionalException(widgetsBundleDao, tenantId,  widgetsBundleId, "/api/widgetsBundle/" +  widgetsBundleId);
     }
