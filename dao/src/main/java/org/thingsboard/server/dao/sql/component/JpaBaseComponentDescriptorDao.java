@@ -105,12 +105,6 @@ public class JpaBaseComponentDescriptorDao extends JpaAbstractSearchTextDao<Comp
 
     @Override
     @Transactional
-    public void deleteById(TenantId tenantId, ComponentDescriptorId componentId) {
-        removeById(tenantId, componentId.getId());
-    }
-
-    @Override
-    @Transactional
     public void deleteByClazz(TenantId tenantId, String clazz) {
         componentDescriptorRepository.deleteByClazz(clazz);
     }
