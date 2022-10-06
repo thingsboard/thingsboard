@@ -90,7 +90,6 @@ import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 
 import java.util.Collections;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -708,7 +707,7 @@ class DefaultTbContext implements TbContext {
 
     public void checkTenantEntity(EntityId entityId) {
         try {
-            TenantId entityTenantId = EntitiesTenantIdAsyncLoader.findTenantIdByEntityId(this, entityId).get();
+            TenantId entityTenantId = EntitiesTenantIdAsyncLoader.findEntityIdAsync(this, entityId).get();
             if (entityTenantId == null) {
                 throw new RuntimeException("Entity with id '" + entityId + "'not found!");
             }
