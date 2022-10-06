@@ -360,7 +360,7 @@ class DefaultTbContext implements TbContext {
             AssetId assetId = new AssetId(alarm.getOriginator().getId());
             profile = mainCtx.getAssetProfileCache().get(getTenantId(), assetId);
         }
-        return entityActionMsg(alarm, alarm.getId(), ruleNodeId, action, profile);
+        return entityActionMsg(alarm, alarm.getOriginator(), ruleNodeId, action, profile);
     }
 
     public TbMsg attributesUpdatedActionMsg(EntityId originator, RuleNodeId ruleNodeId, String scope, List<AttributeKvEntry> attributes) {
