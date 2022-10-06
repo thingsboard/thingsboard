@@ -19,6 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
@@ -82,9 +83,11 @@ public class OAuth2ConfigTemplateServiceImpl extends AbstractEntityService imple
     }
 
     @Override
+    @Transactional
     public void deleteClientRegistrationTemplateById(OAuth2ClientRegistrationTemplateId templateId) {
         log.trace("Executing deleteClientRegistrationTemplateById [{}]", templateId);
         validateId(templateId, INCORRECT_CLIENT_REGISTRATION_TEMPLATE_ID + templateId);
         clientRegistrationTemplateDao.removeById(TenantId.SYS_TENANT_ID, templateId.getId());
     }
+
 }
