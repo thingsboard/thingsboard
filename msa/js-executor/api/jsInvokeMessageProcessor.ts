@@ -36,6 +36,7 @@ import Long from 'long';
 const COMPILATION_ERROR = 0;
 const RUNTIME_ERROR = 1;
 const TIMEOUT_ERROR = 2;
+const NOT_FOUND_ERROR = 3;
 
 const statFrequency = Number(config.get('script.stat_print_frequency'));
 const scriptBodyTraceFrequency = Number(config.get('script.script_body_trace_frequency'));
@@ -182,8 +183,12 @@ export class JsInvokeMessageProcessor {
                 )
             },
             (err: any) => {
-                const invokeResponse = JsInvokeMessageProcessor.createInvokeResponse("", false, COMPILATION_ERROR, err);
-                this.logger.debug('[%s] Sending failed invoke response, scriptId: [%s], errorCode: [%s]', requestId, scriptId, COMPILATION_ERROR);
+                let errorCode = COMPILATION_ERROR;
+                if (err && isString(err.name) && err.name.includes('script body not found')) {
+                    errorCode = NOT_FOUND_ERROR;
+                }
+                const invokeResponse = JsInvokeMessageProcessor.createInvokeResponse("", false, errorCode, err);
+                this.logger.debug('[%s] Sending failed invoke response, scriptId: [%s], errorCode: [%s]', requestId, scriptId, errorCode);
                 this.sendResponse(requestId, responseTopic, headers, scriptId, undefined, invokeResponse);
             }
         );
@@ -231,7 +236,7 @@ export class JsInvokeMessageProcessor {
             if (script) {
                 self.incrementUseScriptId(scriptId);
                 resolve(script);
-            } else {
+            } else if (scriptBody) {
                 const startTime = performance.now();
                 self.executor.compileScript(scriptBody).then(
                     (compiledScript) => {
@@ -244,6 +249,12 @@ export class JsInvokeMessageProcessor {
                         reject(err);
                     }
                 );
+            } else {
+                const err = {
+                    name: 'script body not found',
+                    message: ''
+                }
+                reject(err);
             }
         });
     }

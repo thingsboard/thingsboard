@@ -18,6 +18,7 @@ package org.thingsboard.server.service.script;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StopWatch;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
+import org.thingsboard.server.gen.js.JsInvokeProtos.JsInvokeErrorCode;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.TbProtoJsQueueMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
@@ -40,6 +42,7 @@ import javax.annotation.PreDestroy;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -98,9 +101,9 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     }
 
     @Autowired
-    private TbQueueRequestTemplate<TbProtoJsQueueMsg<JsInvokeProtos.RemoteJsRequest>, TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> requestTemplate;
+    protected TbQueueRequestTemplate<TbProtoJsQueueMsg<JsInvokeProtos.RemoteJsRequest>, TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> requestTemplate;
 
-    private Map<UUID, String> scriptIdToBodysMap = new ConcurrentHashMap<>();
+    protected Map<UUID, String> scriptIdToBodysMap = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void init() {
@@ -129,25 +132,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 .build();
 
         log.trace("Post compile request for scriptId [{}]", scriptId);
-        ListenableFuture<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> future = requestTemplate.send(new TbProtoJsQueueMsg<>(UUID.randomUUID(), jsRequestWrapper));
-        if (maxEvalRequestsTimeout > 0) {
-            future = Futures.withTimeout(future, maxEvalRequestsTimeout, TimeUnit.MILLISECONDS, timeoutExecutorService);
-        }
-        queuePushedMsgs.incrementAndGet();
-        Futures.addCallback(future, new FutureCallback<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>>() {
-            @Override
-            public void onSuccess(@Nullable TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse> result) {
-                queueEvalMsgs.incrementAndGet();
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                if (t instanceof TimeoutException || (t.getCause() != null && t.getCause() instanceof TimeoutException)) {
-                    queueTimeoutMsgs.incrementAndGet();
-                }
-                queueFailedMsgs.incrementAndGet();
-            }
-        }, callbackExecutor);
+        ListenableFuture<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> future = sendRequest(jsRequestWrapper, maxEvalRequestsTimeout, queueEvalMsgs);
         return Futures.transform(future, response -> {
             JsInvokeProtos.JsCompileResponse compilationResult = response.getValue().getCompileResponse();
             UUID compiledScriptId = new UUID(compilationResult.getScriptIdMSB(), compilationResult.getScriptIdLSB());
@@ -169,33 +154,66 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
         if (scriptBody == null) {
             return Futures.immediateFailedFuture(new RuntimeException("No script body found for scriptId: [" + scriptId + "]!"));
         }
-        JsInvokeProtos.JsInvokeRequest.Builder jsRequestBuilder = JsInvokeProtos.JsInvokeRequest.newBuilder()
-                .setScriptIdMSB(scriptId.getMostSignificantBits())
-                .setScriptIdLSB(scriptId.getLeastSignificantBits())
-                .setFunctionName(functionName)
-                .setTimeout((int) maxExecRequestsTimeout)
-                .setScriptBody(scriptBody);
-
-        for (Object arg : args) {
-            jsRequestBuilder.addArgs(arg.toString());
-        }
-
-        JsInvokeProtos.RemoteJsRequest jsRequestWrapper = JsInvokeProtos.RemoteJsRequest.newBuilder()
-                .setInvokeRequest(jsRequestBuilder.build())
-                .build();
+        JsInvokeProtos.RemoteJsRequest jsRequestWrapper = buildJsInvokeRequest(scriptId, functionName, args, false, null);
 
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
 
+        ListenableFuture<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> future = sendRequest(jsRequestWrapper, maxRequestsTimeout, queueInvokeMsgs);
+        return Futures.transformAsync(future, response -> {
+            stopWatch.stop();
+            log.trace("doInvokeFunction js-response took {}ms for uuid {}", stopWatch.getTotalTimeMillis(), response.getKey());
+            JsInvokeProtos.JsInvokeResponse invokeResult = response.getValue().getInvokeResponse();
+            if (invokeResult.getSuccess()) {
+                return Futures.immediateFuture(invokeResult.getResult());
+            } else {
+                return handleInvokeError(scriptId, invokeResult.getErrorCode(), invokeResult.getErrorDetails(), functionName, args, scriptBody);
+            }
+        }, callbackExecutor);
+    }
+
+    private ListenableFuture<Object> handleInvokeError(UUID scriptId, JsInvokeErrorCode errorCode, String errorDetails,
+                                                       String functionName, Object[] args, String scriptBody) {
+        log.debug("[{}] Failed to invoke function due to [{}]: {}", scriptId, errorCode.name(), errorDetails);
+        RuntimeException e = new RuntimeException(errorDetails);
+        if (JsInvokeErrorCode.TIMEOUT_ERROR.equals(errorCode)) {
+            onScriptExecutionError(scriptId, e, scriptBody);
+            queueTimeoutMsgs.incrementAndGet();
+        } else if (JsInvokeErrorCode.COMPILATION_ERROR.equals(errorCode)) {
+            onScriptExecutionError(scriptId, e, scriptBody);
+        } else if (JsInvokeErrorCode.NOT_FOUND_ERROR.equals(errorCode)) {
+            log.debug("[{}] Remote JS executor couldn't find the script", scriptId);
+            if (scriptBody != null) {
+                JsInvokeProtos.RemoteJsRequest invokeRequestWithScriptBody = buildJsInvokeRequest(scriptId, functionName, args, true, scriptBody);
+                log.debug("[{}] Sending invoke request again with script body", scriptId);
+                return Futures.transformAsync(sendJsRequest(invokeRequestWithScriptBody, maxRequestsTimeout, queueInvokeMsgs, MoreExecutors.directExecutor()), r -> {
+                    JsInvokeProtos.JsInvokeResponse result = r.getValue().getInvokeResponse();
+                    if (result.getSuccess()) {
+                        return Futures.immediateFuture(result.getResult());
+                    } else {
+                        return handleInvokeError(scriptId, result.getErrorCode(), result.getErrorDetails(), functionName, args, null);
+                    }
+                }, MoreExecutors.directExecutor());
+            }
+        }
+        queueFailedMsgs.incrementAndGet();
+        return Futures.immediateFailedFuture(e);
+    }
+
+    private ListenableFuture<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> sendRequest(JsInvokeProtos.RemoteJsRequest jsRequestWrapper, long maxRequestsTimeout, AtomicInteger msgsCounter) {
+        return sendJsRequest(jsRequestWrapper, maxRequestsTimeout, msgsCounter, callbackExecutor);
+    }
+
+    private ListenableFuture<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> sendJsRequest(JsInvokeProtos.RemoteJsRequest jsRequestWrapper, long maxRequestsTimeout, AtomicInteger msgsCounter, Executor callbackExecutor) {
         ListenableFuture<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> future = requestTemplate.send(new TbProtoJsQueueMsg<>(UUID.randomUUID(), jsRequestWrapper));
         if (maxRequestsTimeout > 0) {
             future = Futures.withTimeout(future, maxRequestsTimeout, TimeUnit.MILLISECONDS, timeoutExecutorService);
         }
         queuePushedMsgs.incrementAndGet();
-        Futures.addCallback(future, new FutureCallback<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>>() {
+        Futures.addCallback(future, new FutureCallback<>() {
             @Override
             public void onSuccess(@Nullable TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse> result) {
-                queueInvokeMsgs.incrementAndGet();
+                msgsCounter.incrementAndGet();
             }
 
             @Override
@@ -206,25 +224,24 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 queueFailedMsgs.incrementAndGet();
             }
         }, callbackExecutor);
-        return Futures.transform(future, response -> {
-            stopWatch.stop();
-            log.trace("doInvokeFunction js-response took {}ms for uuid {}", stopWatch.getTotalTimeMillis(), response.getKey());
-            JsInvokeProtos.JsInvokeResponse invokeResult = response.getValue().getInvokeResponse();
-            if (invokeResult.getSuccess()) {
-                return invokeResult.getResult();
-            } else {
-                final RuntimeException e = new RuntimeException(invokeResult.getErrorDetails());
-                if (JsInvokeProtos.JsInvokeErrorCode.TIMEOUT_ERROR.equals(invokeResult.getErrorCode())) {
-                    onScriptExecutionError(scriptId, e, scriptBody);
-                    queueTimeoutMsgs.incrementAndGet();
-                } else if (JsInvokeProtos.JsInvokeErrorCode.COMPILATION_ERROR.equals(invokeResult.getErrorCode())) {
-                    onScriptExecutionError(scriptId, e, scriptBody);
-                }
-                queueFailedMsgs.incrementAndGet();
-                log.debug("[{}] Failed to invoke function due to [{}]: {}", scriptId, invokeResult.getErrorCode().name(), invokeResult.getErrorDetails());
-                throw e;
-            }
-        }, callbackExecutor);
+        return future;
+    }
+
+    private JsInvokeProtos.RemoteJsRequest buildJsInvokeRequest(UUID scriptId, String functionName, Object[] args, boolean includeScriptBody, String scriptBody) {
+        JsInvokeProtos.JsInvokeRequest.Builder jsRequestBuilder = JsInvokeProtos.JsInvokeRequest.newBuilder()
+                .setScriptIdMSB(scriptId.getMostSignificantBits())
+                .setScriptIdLSB(scriptId.getLeastSignificantBits())
+                .setFunctionName(functionName)
+                .setTimeout((int) maxExecRequestsTimeout);
+        if (includeScriptBody) jsRequestBuilder.setScriptBody(scriptBody);
+        for (Object arg : args) {
+            jsRequestBuilder.addArgs(arg.toString());
+        }
+
+        JsInvokeProtos.RemoteJsRequest jsRequestWrapper = JsInvokeProtos.RemoteJsRequest.newBuilder()
+                .setInvokeRequest(jsRequestBuilder.build())
+                .build();
+        return jsRequestWrapper;
     }
 
     @Override

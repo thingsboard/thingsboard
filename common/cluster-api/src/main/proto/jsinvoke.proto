@@ -23,6 +23,7 @@ enum JsInvokeErrorCode {
   COMPILATION_ERROR = 0;
   RUNTIME_ERROR = 1;
   TIMEOUT_ERROR = 2;
+  NOT_FOUND_ERROR = 3;
 }
 
 message RemoteJsRequest {
