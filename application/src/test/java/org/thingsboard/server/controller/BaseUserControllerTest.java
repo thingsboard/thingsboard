@@ -18,6 +18,7 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -40,16 +41,20 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.user.UserCredentialsDao;
 import org.thingsboard.server.dao.user.UserDao;
 import org.thingsboard.server.service.mail.TestMailService;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.ThrowableAssert.catchThrowable;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -64,12 +69,20 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
     @Autowired
     private UserDao userDao;
+    @Autowired
+    private UserCredentialsDao userCredentialsDao;
 
     static class Config {
         @Bean
         @Primary
         public UserDao userDao(UserDao userDao) {
             return Mockito.mock(UserDao.class, AdditionalAnswers.delegatesTo(userDao));
+        }
+
+        @Bean
+        @Primary
+        public UserCredentialsDao userCredentialsDao(UserCredentialsDao userCredentialsDao) {
+            return Mockito.mock(UserCredentialsDao.class, AdditionalAnswers.delegatesTo(userCredentialsDao));
         }
     }
 
@@ -390,7 +403,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         String userIdStr = savedUser.getId().getId().toString();
         doGet("/api/user/" + userIdStr)
                 .andExpect(status().isNotFound())
-                .andExpect(statusReason(containsString( msgErrorNoFound("User",userIdStr))));
+                .andExpect(statusReason(containsString(msgErrorNoFound("User", userIdStr))));
     }
 
     @Test
@@ -725,6 +738,58 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
     public void testDeleteUserExceptionWithRelationsTransactional() throws Exception {
         UserId userId = createUser().getId();
         testEntityDaoWithRelationsTransactionalException(userDao, tenantId, userId, "/api/user/" + userId);
+    }
+
+    @Test
+    public void testDeleteUserCredentialsExceptionWithRelationsTransactional() throws Exception {
+        UserId userId = createUser().getId();
+        testEntityDaoWithRelationsTransactionalException(userCredentialsDao, tenantId, userId, "/api/user/" + userId);
+    }
+
+    @Test
+    public void testDeleteUserCredentialsExceptionTransactionalAfterResetPassword() throws Exception {
+        String email = "tenant2@thingsboard.org";
+        String passwordStart = "testPasswordStartTransactional";
+        String passwordReset = "testPasswordResetTransactional";
+        loginSysAdmin();
+
+        User user = createUser();
+
+        User savedUser = createUserAndLogin(user, passwordStart);
+        logout();
+
+        JsonNode resetPasswordByEmailRequest = new ObjectMapper().createObjectNode()
+                .put("email", email);
+
+        doPost("/api/noauth/resetPasswordByEmail", resetPasswordByEmailRequest)
+                .andExpect(status().isOk());
+        JsonNode resetPasswordRequest = new ObjectMapper().createObjectNode()
+                .put("resetToken", TestMailService.currentResetPasswordToken)
+                .put("password", passwordReset);
+
+        Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(userCredentialsDao).removeById(any(), any());
+        try {
+            doPost("/api/noauth/resetPassword", resetPasswordRequest).andExpect(status().isInternalServerError());
+
+        } finally {
+            Mockito.reset(userCredentialsDao);
+        }
+
+        logout();
+
+        final Throwable raisedException = catchThrowable(() -> login(email, passwordReset));
+        assertThat(raisedException).isInstanceOf(AssertionError.class)
+                .hasMessageContaining("Status expected:<200> but was:<401>");
+
+        login(email, passwordStart);
+        doGet("/api/auth/user")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.authority", is(Authority.TENANT_ADMIN.name())))
+                .andExpect(jsonPath("$.email", is(email)));
+
+        loginSysAdmin();
+        doDelete("/api/user/" + savedUser.getId().getId().toString())
+                .andExpect(status().isOk());
     }
 
     private User createUser() throws Exception {

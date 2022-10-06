@@ -193,6 +193,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     }
 
     @Override
+    @Transactional
     public UserCredentials replaceUserCredentials(TenantId tenantId, UserCredentials userCredentials) {
         log.trace("Executing replaceUserCredentials [{}]", userCredentials);
         userCredentialsValidator.validate(userCredentials, data -> tenantId);
