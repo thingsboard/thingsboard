@@ -15,26 +15,49 @@
  */
 package org.thingsboard.server.dao.service;
 
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.AdditionalAnswers;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.server.common.data.oauth2.MapperType;
 import org.thingsboard.server.common.data.oauth2.OAuth2BasicMapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
 import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.oauth2.OAuth2ClientRegistrationTemplateDao;
 import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
 
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.ThrowableAssert.catchThrowable;
+import static org.mockito.ArgumentMatchers.any;
+
+@ContextConfiguration(classes = {BaseOAuth2ConfigTemplateServiceTest.Config.class})
 public abstract class BaseOAuth2ConfigTemplateServiceTest extends AbstractServiceTest {
 
     @Autowired
     protected OAuth2ConfigTemplateService oAuth2ConfigTemplateService;
+
+    @Autowired
+    protected OAuth2ClientRegistrationTemplateDao oAuth2ClientRegistrationTemplateDao;
+
+    static class Config {
+        @Bean
+        @Primary
+        public OAuth2ClientRegistrationTemplateDao oAuth2ClientRegistrationTemplateDao(OAuth2ClientRegistrationTemplateDao oAuth2ClientRegistrationTemplateDao) {
+            return Mockito.mock(OAuth2ClientRegistrationTemplateDao.class, AdditionalAnswers.delegatesTo(oAuth2ClientRegistrationTemplateDao));
+        }
+    }
 
     @Before
     public void beforeRun() throws Exception {
@@ -82,16 +105,14 @@ public abstract class BaseOAuth2ConfigTemplateServiceTest extends AbstractServic
 
     @Test
     public void testFindAll() {
-        oAuth2ConfigTemplateService.saveClientRegistrationTemplate(validClientRegistrationTemplate(UUID.randomUUID().toString()));
-        oAuth2ConfigTemplateService.saveClientRegistrationTemplate(validClientRegistrationTemplate(UUID.randomUUID().toString()));
+        savedTwoValidClientRegistrationTemplate();
 
         Assert.assertEquals(2, oAuth2ConfigTemplateService.findAllClientRegistrationTemplates().size());
     }
 
     @Test
     public void testDeleteTemplate() {
-        oAuth2ConfigTemplateService.saveClientRegistrationTemplate(validClientRegistrationTemplate(UUID.randomUUID().toString()));
-        oAuth2ConfigTemplateService.saveClientRegistrationTemplate(validClientRegistrationTemplate(UUID.randomUUID().toString()));
+        savedTwoValidClientRegistrationTemplate();
         OAuth2ClientRegistrationTemplate saved = oAuth2ConfigTemplateService.saveClientRegistrationTemplate(validClientRegistrationTemplate(UUID.randomUUID().toString()));
 
         Assert.assertEquals(3, oAuth2ConfigTemplateService.findAllClientRegistrationTemplates().size());
@@ -101,6 +122,48 @@ public abstract class BaseOAuth2ConfigTemplateServiceTest extends AbstractServic
 
         Assert.assertEquals(2, oAuth2ConfigTemplateService.findAllClientRegistrationTemplates().size());
         Assert.assertNull(oAuth2ConfigTemplateService.findClientRegistrationTemplateById(saved.getId()));
+    }
+
+    @Test
+    public void testDeleteOAuth2ClientRegistrationTemplateWithTransactionalOk() {
+        OAuth2ClientRegistrationTemplate saved = savedThreeValidClientRegistrationTemplate();
+
+        oAuth2ConfigTemplateService.deleteClientRegistrationTemplateById(saved.getId());
+
+        Assert.assertEquals(2, oAuth2ConfigTemplateService.findAllClientRegistrationTemplates().size());
+        Assert.assertNull(oAuth2ConfigTemplateService.findClientRegistrationTemplateById(saved.getId()));
+    }
+
+
+    @Test
+    public void testDeleteOAuth2ClientRegistrationTemplateWithTransactionalException() throws Exception {
+        Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(oAuth2ClientRegistrationTemplateDao).removeById(any(), any());
+        try {
+            OAuth2ClientRegistrationTemplate saved = savedThreeValidClientRegistrationTemplate();
+
+            final Throwable raisedException = catchThrowable(() -> oAuth2ConfigTemplateService.deleteClientRegistrationTemplateById(saved.getId()));
+            assertThat(raisedException).isInstanceOf(ConstraintViolationException.class)
+                    .hasMessageContaining("mock message");
+
+            Assert.assertEquals(3, oAuth2ConfigTemplateService.findAllClientRegistrationTemplates().size());
+            Assert.assertNotNull(oAuth2ConfigTemplateService.findClientRegistrationTemplateById(saved.getId()));
+        } finally {
+            Mockito.reset(oAuth2ClientRegistrationTemplateDao);
+        }
+    }
+
+    private OAuth2ClientRegistrationTemplate savedThreeValidClientRegistrationTemplate() {
+        savedTwoValidClientRegistrationTemplate();
+        OAuth2ClientRegistrationTemplate saved = oAuth2ConfigTemplateService.saveClientRegistrationTemplate(validClientRegistrationTemplate(UUID.randomUUID().toString()));
+
+        Assert.assertEquals(3, oAuth2ConfigTemplateService.findAllClientRegistrationTemplates().size());
+        Assert.assertNotNull(oAuth2ConfigTemplateService.findClientRegistrationTemplateById(saved.getId()));
+        return saved;
+    }
+
+    private void savedTwoValidClientRegistrationTemplate() {
+        oAuth2ConfigTemplateService.saveClientRegistrationTemplate(validClientRegistrationTemplate(UUID.randomUUID().toString()));
+        oAuth2ConfigTemplateService.saveClientRegistrationTemplate(validClientRegistrationTemplate(UUID.randomUUID().toString()));
     }
 
     private OAuth2ClientRegistrationTemplate validClientRegistrationTemplate(String providerId) {
@@ -132,4 +195,5 @@ public abstract class BaseOAuth2ConfigTemplateServiceTest extends AbstractServic
         clientRegistrationTemplate.setHelpLink("helpLink");
         return clientRegistrationTemplate;
     }
+
 }
