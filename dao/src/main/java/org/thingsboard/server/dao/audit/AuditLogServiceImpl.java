@@ -382,7 +382,11 @@ public class AuditLogServiceImpl implements AuditLogService {
         AuditLog auditLogEntry = createAuditLogEntry(tenantId, entityId, entityName, customerId, userId, userName,
                 actionType, actionData, actionStatus, actionFailureDetails);
         log.trace("Executing logAction [{}]", auditLogEntry);
-        auditLogValidator.validate(auditLogEntry, AuditLog::getTenantId);
+        try {
+            auditLogValidator.validate(auditLogEntry, AuditLog::getTenantId);
+        } catch (Exception e) {
+            return Futures.immediateFailedFuture(e);
+        }
         List<ListenableFuture<Void>> futures = Lists.newArrayListWithExpectedSize(INSERTS_PER_ENTRY);
         futures.add(auditLogDao.saveByTenantId(auditLogEntry));
 
