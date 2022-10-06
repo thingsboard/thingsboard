@@ -251,6 +251,7 @@ public abstract class BaseRuleChainControllerTest extends AbstractControllerTest
     @Test
     public void testDeleteRuleChainExceptionWithRelationsTransactional() throws Exception {
         RuleChainId ruleChainId = createRuleChain("RuleChain for Test WithRelations Transactional Exception").getId();
+        Thread.sleep(1000);
         testEntityDaoWithRelationsTransactionalException(ruleChainDao, savedTenant.getId(), ruleChainId, "/api/ruleChain/" + ruleChainId);
     }
 
