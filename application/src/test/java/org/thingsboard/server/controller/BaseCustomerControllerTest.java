@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -31,6 +32,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
@@ -43,13 +45,17 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.usagerecord.ApiUsageStateDao;
+import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ContextConfiguration(classes = {BaseCustomerControllerTest.Config.class})
@@ -65,11 +71,23 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
     @Autowired
     private CustomerDao customerDao;
 
+    @Autowired
+    private ApiUsageStateService apiUsageStateService;
+
+    @Autowired
+    private ApiUsageStateDao apiUsageStateDao;
+
     static class Config {
         @Bean
         @Primary
         public CustomerDao customerDao(CustomerDao customerDao) {
             return Mockito.mock(CustomerDao.class, AdditionalAnswers.delegatesTo(customerDao));
+        }
+
+        @Bean
+        @Primary
+        public ApiUsageStateDao apiUsageStateDao(ApiUsageStateDao apiUsageStateDao) {
+            return Mockito.mock(ApiUsageStateDao.class, AdditionalAnswers.delegatesTo(apiUsageStateDao));
         }
     }
 
@@ -151,7 +169,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
                 .andExpect(statusReason(containsString(msgError)));
 
         customer.setTenantId(savedTenant.getId());
-        testNotifyEntityEqualsOneTimeServiceNeverError(customer,savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -162,7 +180,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeServiceNeverError(customer,savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -173,7 +191,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeServiceNeverError(customer,savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -184,7 +202,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeServiceNeverError(customer,savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -195,7 +213,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeServiceNeverError(customer,savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -206,7 +224,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeServiceNeverError(customer,savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
     }
 
@@ -290,7 +308,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeServiceNeverError(customer,savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
     }
 
@@ -434,9 +452,47 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         testEntityDaoWithRelationsTransactionalException(customerDao, savedTenant.getId(), customerId, "/api/customer/" + customerId);
     }
 
+    @Test
+    public void testDeleteApiUsageStateWitsTransactionalOk() throws Exception {
+        Customer customerExpected = createCustomer("Customer for Test WithRelations Transactional Exception");
+        CustomerId customerId = customerExpected.getId();
+
+        apiUsageStateService.createDefaultApiUsageState(tenantId, customerId);
+        ApiUsageState storedStateBefore = apiUsageStateService.findApiUsageStateByEntityId(customerId);
+        Assert.assertNotNull(storedStateBefore);
+
+        doDelete("/api/customer/" + customerId.getId().toString()).andExpect(status().isOk());
+
+        ApiUsageState storedStateAfter = apiUsageStateDao.findApiUsageStateByEntityId(customerId);
+        Assert.assertNull(storedStateAfter);
+        doGet("/api/customer/" + customerExpected.getId().getId().toString()).andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void testDeleteApiUsageStateWithTransactionalException() throws Exception {
+        Customer customerExpected = createCustomer("Customer for Test WithRelations Transactional Exception");
+        CustomerId customerId = customerExpected.getId();
+
+        apiUsageStateService.createDefaultApiUsageState(tenantId, customerId);
+        ApiUsageState storedStateExpected = apiUsageStateService.findApiUsageStateByEntityId(customerId);
+
+        Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(apiUsageStateDao).deleteApiUsageStateByEntityId(any());
+        try {
+            doDelete("/api/customer/" + customerId.getId().toString()).andExpect(status().isInternalServerError());
+        } finally {
+            Mockito.reset(apiUsageStateDao);
+        }
+        ApiUsageState storedStateActual = apiUsageStateDao.findApiUsageStateByEntityId(customerId);
+        Assert.assertEquals(storedStateExpected, storedStateActual);
+        Customer customerActual = doGet("/api/customer/" + customerExpected.getId().getId().toString(), Customer.class);
+        Assert.assertEquals(customerExpected, customerActual);
+        doDelete("/api/customer/" + customerId.getId().toString()).andExpect(status().isOk());
+    }
+
     private Customer createCustomer(String title) {
         Customer customer = new Customer();
         customer.setTitle(title);
         return doPost("/api/customer", customer, Customer.class);
     }
+
 }
