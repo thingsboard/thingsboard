@@ -55,6 +55,7 @@ import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.dao.device.DeviceCredentialsDao;
 import org.thingsboard.server.dao.device.DeviceDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
@@ -93,11 +94,20 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
     @Autowired
     private DeviceDao deviceDao;
 
+    @Autowired
+    private DeviceCredentialsDao deviceCredentialsDao;
+
     static class Config {
         @Bean
         @Primary
         public DeviceDao deviceDao(DeviceDao deviceDao) {
             return Mockito.mock(DeviceDao.class, AdditionalAnswers.delegatesTo(deviceDao));
+        }
+
+       @Bean
+        @Primary
+        public DeviceCredentialsDao deviceCredentialsDao(DeviceCredentialsDao deviceCredentialsDao) {
+            return Mockito.mock(DeviceCredentialsDao.class, AdditionalAnswers.delegatesTo(deviceCredentialsDao));
         }
     }
 
@@ -1233,6 +1243,12 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
     public void testDeleteDeviceExceptionWithRelationsTransactional() throws Exception {
         DeviceId deviceId = createDevice("Device for Test WithRelations Transactional Exception").getId();
         testEntityDaoWithRelationsTransactionalException(deviceDao, savedTenant.getId(), deviceId, "/api/device/" + deviceId);
+    }
+
+    @Test
+    public void testDeleteDeviceCredentialsExceptionWithRelationsTransactional() throws Exception {
+        DeviceId deviceId = createDevice("DeviceCredentials for Test WithRelations Transactional Exception").getId();
+        testEntityDaoWithRelationsTransactionalException(deviceCredentialsDao, savedTenant.getId(), deviceId, "/api/device/" + deviceId);
     }
 
     private Device createDevice(String name) {
