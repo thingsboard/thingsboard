@@ -80,6 +80,16 @@ public class RateLimitProcessingFilter extends OncePerRequestFilter {
         chain.doFilter(request, response);
     }
 
+    @Override
+    protected boolean shouldNotFilterAsyncDispatch() {
+        return false;
+    }
+
+    @Override
+    protected boolean shouldNotFilterErrorDispatch() {
+        return false;
+    }
+
     private <I extends EntityId> boolean checkRateLimits(I ownerId, String rateLimitConfig, Map<I, TbRateLimits> rateLimitsMap, ServletResponse response) {
         if (StringUtils.isNotEmpty(rateLimitConfig)) {
             TbRateLimits rateLimits = rateLimitsMap.get(ownerId);

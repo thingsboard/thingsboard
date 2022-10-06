@@ -16,11 +16,17 @@
 package org.thingsboard.server.system;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.Uninterruptibles;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -32,6 +38,10 @@ import org.thingsboard.server.controller.AbstractControllerTest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -47,6 +57,8 @@ public abstract class BaseRestApiLimitsTest extends AbstractControllerTest {
 
     TenantProfile tenantProfile;
 
+    ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
+
     @Before
     public void before() throws Exception {
         loginSysAdmin();
@@ -60,6 +72,7 @@ public abstract class BaseRestApiLimitsTest extends AbstractControllerTest {
         loginSysAdmin();
         saveTenantProfileWitConfiguration(tenantProfile, new DefaultTenantProfileConfiguration());
         logout();
+        service.shutdown();
     }
 
     @Test
@@ -80,7 +93,6 @@ public abstract class BaseRestApiLimitsTest extends AbstractControllerTest {
             doGet("/api/device/types").andExpect(status().isOk());
         }
         doGet("/api/device/types").andExpect(status().is4xxClientError());
-        logout();
     }
 
     @Test
@@ -101,7 +113,38 @@ public abstract class BaseRestApiLimitsTest extends AbstractControllerTest {
             doGet("/api/device/types").andExpect(status().isOk());
         }
         doGet("/api/device/types").andExpect(status().is4xxClientError());
+    }
+
+    @Test
+    public void testCustomerRestApiLimitsWithAsyncMethod() throws Exception {
+        loginSysAdmin();
+
+        String tenantRestLimit = MESSAGES_LIMIT + ":" + TIME_FOR_LIMIT;
+
+        DefaultTenantProfileConfiguration configurationWithTenantRestLimits = createTenantProfileConfigurationWithRestLimits(tenantRestLimit, null);
+
+        saveTenantProfileWitConfiguration(tenantProfile, configurationWithTenantRestLimits);
+
         logout();
+
+        loginTenantAdmin();
+
+        List<ListenableFuture<ResultActions>> attributesRequests = new ArrayList<>();
+
+        doGet("/api/plugins/telemetry/" + tenantId.getEntityType() + "/" + tenantId.getId().toString() + "/values/attributes").andExpect(status().isOk());
+        Thread.sleep(TimeUnit.SECONDS.toMillis(TIME_FOR_LIMIT)); // Wait to initialization for bucket4j
+
+        for (int i = 0; i < MESSAGES_LIMIT; i++) {
+            attributesRequests.add(service.submit(() -> doGet("/api/plugins/telemetry/" + tenantId.getEntityType() + "/" + tenantId.getId().toString() + "/values/attributes")));
+        }
+
+        List<ResultActions> lists = blockForResponses(attributesRequests);
+
+        for (ResultActions resultActions : lists) {
+            resultActions.andExpect(status().isOk());
+        }
+
+        doGet("/api/plugins/telemetry/" + tenantId.getEntityType() + "/" + tenantId.getId().toString() + "/values/attributes").andExpect(status().is4xxClientError());
     }
 
     private TenantProfile getDefaultTenantProfile() throws Exception {
@@ -117,6 +160,22 @@ public abstract class BaseRestApiLimitsTest extends AbstractControllerTest {
         Assert.assertTrue(optionalDefaultProfile.isPresent());
 
         return optionalDefaultProfile.get();
+    }
+
+    List<ResultActions> blockForResponses(List<ListenableFuture<ResultActions>> futures) throws ExecutionException {
+        ListenableFuture<List<ResultActions>> futureOfList = Futures.allAsList(futures);
+        List<ResultActions> responses;
+        try {
+            responses = futureOfList.get(20, TimeUnit.SECONDS);
+        } catch (TimeoutException | InterruptedException | ExecutionException e) {
+            responses = new ArrayList<>();
+            for (ListenableFuture<ResultActions> future : futures) {
+                if (future.isDone()) {
+                    responses.add(Uninterruptibles.getUninterruptibly(future));
+                }
+            }
+        }
+        return responses;
     }
 
     private DefaultTenantProfileConfiguration createTenantProfileConfigurationWithRestLimits(String tenantLimits, String customerLimits) {
