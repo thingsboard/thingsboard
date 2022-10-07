@@ -34,13 +34,19 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -60,11 +66,15 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
 
     protected C config;
     private boolean fetchToData;
+    private boolean isTellFailureIfAbsent;
+    private boolean getLatestValueWithTs;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = loadGetAttributesNodeConfig(configuration);
         this.fetchToData = config.isFetchToData();
+        this.isTellFailureIfAbsent = BooleanUtils.toBooleanDefaultIfNull(this.config.isTellFailureIfAbsent(), true);
+        this.getLatestValueWithTs = BooleanUtils.toBooleanDefaultIfNull(this.config.isGetLatestValueWithTs(), false);
         mapper.configure(JsonWriteFeature.QUOTE_FIELD_NAMES.mappedFeature(), false);
         mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
     }
@@ -90,28 +100,38 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
             ctx.tellNext(msg, FAILURE);
             return;
         }
-        ObjectNode msgNewData = JacksonUtil.newObjectNode();
+        JsonNode msgDataNode = JacksonUtil.toJsonNode(msg.getData());
         if (fetchToData) {
-            JsonNode msgDataNode = JacksonUtil.toJsonNode(msg.getData());
             if (!msgDataNode.isObject()) {
                 ctx.tellFailure(msg, new IllegalArgumentException("Msg body is not object!"));
                 return;
             }
         }
         ConcurrentHashMap<String, List<String>> failuresMap = new ConcurrentHashMap<>();
-        ListenableFuture<List<Void>> allFutures = Futures.allAsList(
-                putLatestTelemetry(ctx, entityId, msg, LATEST_TS, TbNodeUtils.processPatterns(config.getLatestTsKeyNames(), msg), failuresMap, msgNewData),
-                putAttrAsync(ctx, entityId, msg, CLIENT_SCOPE, TbNodeUtils.processPatterns(config.getClientAttributeNames(), msg), failuresMap, "cs_", msgNewData),
-                putAttrAsync(ctx, entityId, msg, SHARED_SCOPE, TbNodeUtils.processPatterns(config.getSharedAttributeNames(), msg), failuresMap, "shared_", msgNewData),
-                putAttrAsync(ctx, entityId, msg, SERVER_SCOPE, TbNodeUtils.processPatterns(config.getServerAttributeNames(), msg), failuresMap, "ss_", msgNewData)
+        ListenableFuture<List<Map<String, List<? extends KvEntry>>>> allFutures = Futures.allAsList(
+                getLatestTelemetry(ctx, entityId, msg, LATEST_TS, TbNodeUtils.processPatterns(config.getLatestTsKeyNames(), msg), failuresMap),
+                getAttrAsync(ctx, entityId, CLIENT_SCOPE, TbNodeUtils.processPatterns(config.getClientAttributeNames(), msg), failuresMap),
+                getAttrAsync(ctx, entityId, SHARED_SCOPE, TbNodeUtils.processPatterns(config.getSharedAttributeNames(), msg), failuresMap),
+                getAttrAsync(ctx, entityId, SERVER_SCOPE, TbNodeUtils.processPatterns(config.getServerAttributeNames(), msg), failuresMap)
         );
-        withCallback(allFutures, i -> {
+        withCallback(allFutures, futuresList -> {
             if (!failuresMap.isEmpty()) {
                 throw reportFailures(failuresMap);
             }
+            TbMsgMetaData msgMetaData = msg.getMetaData();
+            futuresList.stream().filter(Objects::nonNull).forEach(kvEntriesMap -> {
+                kvEntriesMap.forEach((keyScope, kvEntryList) -> {
+                    String prefix = getPrefix(keyScope);
+                    kvEntryList.forEach(kvEntry -> {
+                        if (fetchToData) {
+                            JacksonUtil.addKvEntry((ObjectNode) msgDataNode, kvEntry, prefix);
+                        } else {
+                            msgMetaData.putValue(prefix + kvEntry.getKey(), kvEntry.getValueAsString());
+                        }
+                    });
+                });
+            });
             if (fetchToData) {
-                ObjectNode msgDataNode = (ObjectNode) JacksonUtil.toJsonNode(msg.getData());
-                msgDataNode.setAll(msgNewData);
                 ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(msgDataNode)));
             } else {
                 ctx.tellSuccess(msg);
@@ -119,100 +139,86 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         }, t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
 
-    private ListenableFuture<Void> putAttrAsync(TbContext ctx, EntityId entityId, TbMsg msg, String scope, List<String> keys, ConcurrentHashMap<String, List<String>> failuresMap, String prefix, ObjectNode msgData) {
+    private ListenableFuture<Map<String, List<? extends KvEntry>>> getAttrAsync(TbContext ctx, EntityId entityId, String scope, List<String> keys, ConcurrentHashMap<String, List<String>> failuresMap) {
         if (CollectionUtils.isEmpty(keys)) {
             return Futures.immediateFuture(null);
         }
         ListenableFuture<List<AttributeKvEntry>> attributeKvEntryListFuture = ctx.getAttributesService().find(ctx.getTenantId(), entityId, scope, keys);
         return Futures.transform(attributeKvEntryListFuture, attributeKvEntryList -> {
-            if (!CollectionUtils.isEmpty(attributeKvEntryList)) {
-                List<AttributeKvEntry> existingAttributesKvEntry = attributeKvEntryList.stream().filter(attributeKvEntry -> keys.contains(attributeKvEntry.getKey())).collect(Collectors.toList());
-                existingAttributesKvEntry.forEach(kvEntry -> {
-                    if (fetchToData) {
-                        msgData.put(prefix + kvEntry.getKey(), kvEntry.getValueAsString());
-                    } else {
-                        msg.getMetaData().putValue(prefix + kvEntry.getKey(), kvEntry.getValueAsString());
-                    }
-                });
-                if (existingAttributesKvEntry.size() != keys.size() && BooleanUtils.toBooleanDefaultIfNull(this.config.isTellFailureIfAbsent(), true)) {
-                    getNotExistingKeys(existingAttributesKvEntry, keys).forEach(key -> computeFailuresMap(scope, failuresMap, key));
-                }
-            } else {
-                if (BooleanUtils.toBooleanDefaultIfNull(this.config.isTellFailureIfAbsent(), true)) {
-                    keys.forEach(key -> computeFailuresMap(scope, failuresMap, key));
-                }
+            if (isTellFailureIfAbsent && attributeKvEntryList.size() != keys.size()) {
+                getNotExistingKeys(attributeKvEntryList, keys).forEach(key -> computeFailuresMap(scope, failuresMap, key));
             }
-            return null;
+            Map<String, List<? extends KvEntry>> mapAttributeKvEntry = new HashMap<>();
+            mapAttributeKvEntry.put(scope, attributeKvEntryList);
+            return mapAttributeKvEntry;
         }, MoreExecutors.directExecutor());
     }
 
-    private ListenableFuture<Void> putLatestTelemetry(TbContext ctx, EntityId entityId, TbMsg msg, String scope, List<String> keys, ConcurrentHashMap<String, List<String>> failuresMap, ObjectNode msgData) {
+    private ListenableFuture<Map<String, List<? extends KvEntry>>> getLatestTelemetry(TbContext ctx, EntityId entityId, TbMsg msg, String scope, List<String> keys, ConcurrentHashMap<String, List<String>> failuresMap) {
         if (CollectionUtils.isEmpty(keys)) {
             return Futures.immediateFuture(null);
         }
-        ListenableFuture<List<TsKvEntry>> latest = ctx.getTimeseriesService().findLatest(ctx.getTenantId(), entityId, keys);
-        return Futures.transform(latest, l -> {
-            l.forEach(r -> {
-                boolean getLatestValueWithTs = BooleanUtils.toBooleanDefaultIfNull(this.config.isGetLatestValueWithTs(), false);
-                if (BooleanUtils.toBooleanDefaultIfNull(this.config.isTellFailureIfAbsent(), true)) {
-                    if (r.getValue() == null) {
-                        computeFailuresMap(scope, failuresMap, r.getKey());
-                    } else if (getLatestValueWithTs) {
-                        putValueWithTs(msg, r, msgData);
-                    } else {
-                        if (fetchToData) {
-                            msgData.put(r.getKey(), r.getValueAsString());
-                        } else {
-                            msg.getMetaData().putValue(r.getKey(), r.getValueAsString());
-                        }
+        ListenableFuture<List<TsKvEntry>> latestTelemetryFutures = ctx.getTimeseriesService().findLatest(ctx.getTenantId(), entityId, keys);
+        return Futures.transform(latestTelemetryFutures, tsKvEntries -> {
+            List<TsKvEntry> listTsKvEntry = new ArrayList<>();
+            tsKvEntries.forEach(tsKvEntry -> {
+                if (tsKvEntry.getValue() == null) {
+                    if (isTellFailureIfAbsent) {
+                        computeFailuresMap(scope, failuresMap, tsKvEntry.getKey());
                     }
+                } else if (getLatestValueWithTs) {
+                    listTsKvEntry.add(getValueWithTs(tsKvEntry));
                 } else {
-                    if (r.getValue() != null) {
-                        if (getLatestValueWithTs) {
-                            putValueWithTs(msg, r, msgData);
-                        } else {
-                            if (fetchToData) {
-                                msgData.put(r.getKey(), r.getValueAsString());
-                            } else {
-                                msg.getMetaData().putValue(r.getKey(), r.getValueAsString());
-                            }
-                        }
-                    }
+                    listTsKvEntry.add(new BasicTsKvEntry(tsKvEntry.getTs(), tsKvEntry));
                 }
             });
-            return null;
+            Map<String, List<? extends KvEntry>> mapTsKvEntry = new HashMap<>();
+            mapTsKvEntry.put(scope, listTsKvEntry);
+            return mapTsKvEntry;
         }, MoreExecutors.directExecutor());
     }
 
-    private void putValueWithTs(TbMsg msg, TsKvEntry r, ObjectNode msgData) {
-        ObjectNode value = mapper.createObjectNode();
-        value.put(TS, r.getTs());
-        switch (r.getDataType()) {
+    private TsKvEntry getValueWithTs(TsKvEntry tsKvEntry) {
+        ObjectNode value = JacksonUtil.newObjectNode();
+        value.put(TS, tsKvEntry.getTs());
+        switch (tsKvEntry.getDataType()) {
             case STRING:
-                value.put(VALUE, r.getValueAsString());
+                value.put(VALUE, tsKvEntry.getValueAsString());
                 break;
             case LONG:
-                value.put(VALUE, r.getLongValue().get());
+                value.put(VALUE, tsKvEntry.getLongValue().get());
                 break;
             case BOOLEAN:
-                value.put(VALUE, r.getBooleanValue().get());
+                value.put(VALUE, tsKvEntry.getBooleanValue().get());
                 break;
             case DOUBLE:
-                value.put(VALUE, r.getDoubleValue().get());
+                value.put(VALUE, tsKvEntry.getDoubleValue().get());
                 break;
             case JSON:
                 try {
-                    value.set(VALUE, mapper.readTree(r.getJsonValue().get()));
+                    value.set(VALUE, mapper.readTree(tsKvEntry.getJsonValue().get()));
                 } catch (IOException e) {
-                    throw new JsonParseException("Can't parse jsonValue: " + r.getJsonValue().get(), e);
+                    throw new JsonParseException("Can't parse jsonValue: " + tsKvEntry.getJsonValue().get(), e);
                 }
                 break;
         }
-        if (fetchToData) {
-            msgData.putIfAbsent(r.getKey(), value);
-        } else {
-            msg.getMetaData().putValue(r.getKey(), value.toString());
+        return new BasicTsKvEntry(tsKvEntry.getTs(), new JsonDataEntry(tsKvEntry.getKey(), value.toString()));
+    }
+
+    private String getPrefix(String scope) {
+        String prefix = "";
+        switch (scope) {
+            case CLIENT_SCOPE:
+                prefix = "cs_";
+                break;
+            case SHARED_SCOPE:
+                prefix = "shared_";
+                break;
+            case SERVER_SCOPE:
+                prefix = "ss_";
+                break;
         }
+        return prefix;
     }
 
     private List<String> getNotExistingKeys(List<AttributeKvEntry> existingAttributesKvEntry, List<String> allKeys) {
