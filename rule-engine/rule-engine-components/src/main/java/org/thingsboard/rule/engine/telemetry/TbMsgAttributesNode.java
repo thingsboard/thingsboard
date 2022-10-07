@@ -66,6 +66,10 @@ public class TbMsgAttributesNode implements TbNode {
         }
         String src = msg.getData();
         List<AttributeKvEntry> attributes = new ArrayList<>(JsonConverter.convertToAttributes(new JsonParser().parse(src)));
+        if (attributes.isEmpty()) {
+            ctx.tellSuccess(msg);
+            return;
+        }
         String notifyDeviceStr = msg.getMetaData().getValue("notifyDevice");
         ctx.getTelemetryService().saveAndNotify(
                 ctx.getTenantId(),
