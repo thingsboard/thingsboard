@@ -27,11 +27,13 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.TenantProfileEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.tenant.TenantProfileDao;
+import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Objects;
 import java.util.UUID;
 
 @Component
+@SqlDao
 public class JpaTenantProfileDao extends JpaAbstractSearchTextDao<TenantProfileEntity, TenantProfile> implements TenantProfileDao {
 
     @Autowired

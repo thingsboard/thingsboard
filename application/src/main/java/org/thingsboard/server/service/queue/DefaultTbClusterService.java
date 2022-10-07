@@ -35,13 +35,15 @@ import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
@@ -53,7 +55,6 @@ import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.FromDeviceRPCResponseProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
@@ -68,11 +69,12 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.NotificationsTopicService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
+import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
+import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -110,6 +112,7 @@ public class DefaultTbClusterService implements TbClusterService {
     private final NotificationsTopicService notificationsTopicService;
     private final DataDecodingEncodingService encodingService;
     private final TbDeviceProfileCache deviceProfileCache;
+    private final TbAssetProfileCache assetProfileCache;
     private final GatewayNotificationsService gatewayNotificationsService;
 
     @Override
@@ -167,7 +170,7 @@ public class DefaultTbClusterService implements TbClusterService {
 
     @Override
     public void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, TbMsg tbMsg, TbQueueCallback callback) {
-        if (tenantId.isNullUid()) {
+        if (tenantId == null || tenantId.isNullUid()) {
             if (entityId.getEntityType().equals(EntityType.TENANT)) {
                 tenantId = TenantId.fromUUID(entityId.getId());
             } else {
@@ -179,6 +182,10 @@ public class DefaultTbClusterService implements TbClusterService {
                 tbMsg = transformMsg(tbMsg, deviceProfileCache.get(tenantId, new DeviceId(entityId.getId())));
             } else if (entityId.getEntityType().equals(EntityType.DEVICE_PROFILE)) {
                 tbMsg = transformMsg(tbMsg, deviceProfileCache.get(tenantId, new DeviceProfileId(entityId.getId())));
+            } else if (entityId.getEntityType().equals(EntityType.ASSET)) {
+                tbMsg = transformMsg(tbMsg, assetProfileCache.get(tenantId, new AssetId(entityId.getId())));
+            } else if (entityId.getEntityType().equals(EntityType.ASSET_PROFILE)) {
+                tbMsg = transformMsg(tbMsg, assetProfileCache.get(tenantId, new AssetProfileId(entityId.getId())));
             }
         }
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, tbMsg.getQueueName(), tenantId, entityId);
@@ -195,16 +202,30 @@ public class DefaultTbClusterService implements TbClusterService {
         if (deviceProfile != null) {
             RuleChainId targetRuleChainId = deviceProfile.getDefaultRuleChainId();
             String targetQueueName = deviceProfile.getDefaultQueueName();
-            boolean isRuleChainTransform = targetRuleChainId != null && !targetRuleChainId.equals(tbMsg.getRuleChainId());
-            boolean isQueueTransform = targetQueueName != null && !targetQueueName.equals(tbMsg.getQueueName());
+            tbMsg = transformMsg(tbMsg, targetRuleChainId, targetQueueName);
+        }
+        return tbMsg;
+    }
 
-            if (isRuleChainTransform && isQueueTransform) {
-                tbMsg = TbMsg.transformMsg(tbMsg, targetRuleChainId, targetQueueName);
-            } else if (isRuleChainTransform) {
-                tbMsg = TbMsg.transformMsg(tbMsg, targetRuleChainId);
-            } else if (isQueueTransform) {
-                tbMsg = TbMsg.transformMsg(tbMsg, targetQueueName);
-            }
+    private TbMsg transformMsg(TbMsg tbMsg, AssetProfile assetProfile) {
+        if (assetProfile != null) {
+            RuleChainId targetRuleChainId = assetProfile.getDefaultRuleChainId();
+            String targetQueueName = assetProfile.getDefaultQueueName();
+            tbMsg = transformMsg(tbMsg, targetRuleChainId, targetQueueName);
+        }
+        return tbMsg;
+    }
+
+    private TbMsg transformMsg(TbMsg tbMsg, RuleChainId targetRuleChainId, String targetQueueName) {
+        boolean isRuleChainTransform = targetRuleChainId != null && !targetRuleChainId.equals(tbMsg.getRuleChainId());
+        boolean isQueueTransform = targetQueueName != null && !targetQueueName.equals(tbMsg.getQueueName());
+
+        if (isRuleChainTransform && isQueueTransform) {
+            tbMsg = TbMsg.transformMsg(tbMsg, targetRuleChainId, targetQueueName);
+        } else if (isRuleChainTransform) {
+            tbMsg = TbMsg.transformMsg(tbMsg, targetRuleChainId);
+        } else if (isQueueTransform) {
+            tbMsg = TbMsg.transformMsg(tbMsg, targetQueueName);
         }
         return tbMsg;
     }
@@ -369,6 +390,7 @@ public class DefaultTbClusterService implements TbClusterService {
         if (entityType.equals(EntityType.TENANT)
                 || entityType.equals(EntityType.TENANT_PROFILE)
                 || entityType.equals(EntityType.DEVICE_PROFILE)
+                || entityType.equals(EntityType.ASSET_PROFILE)
                 || entityType.equals(EntityType.API_USAGE_STATE)
                 || (entityType.equals(EntityType.DEVICE) && msg.getEvent() == ComponentLifecycleEvent.UPDATED)
                 || entityType.equals(EntityType.ENTITY_VIEW)

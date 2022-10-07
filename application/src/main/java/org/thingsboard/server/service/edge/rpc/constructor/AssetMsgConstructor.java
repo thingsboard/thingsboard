@@ -41,6 +41,10 @@ public class AssetMsgConstructor {
             builder.setCustomerIdMSB(asset.getCustomerId().getId().getMostSignificantBits());
             builder.setCustomerIdLSB(asset.getCustomerId().getId().getLeastSignificantBits());
         }
+        if (asset.getAssetProfileId() != null) {
+            builder.setAssetProfileIdMSB(asset.getAssetProfileId().getId().getMostSignificantBits());
+            builder.setAssetProfileIdLSB(asset.getAssetProfileId().getId().getLeastSignificantBits());
+        }
         if (asset.getAdditionalInfo() != null) {
             builder.setAdditionalInfo(JacksonUtil.toString(asset.getAdditionalInfo()));
         }

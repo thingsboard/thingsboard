@@ -25,7 +25,7 @@ public interface JsInvokeService {
 
     ListenableFuture<UUID> eval(TenantId tenantId, JsScriptType scriptType, String scriptBody, String... argNames);
 
-    ListenableFuture<Object> invokeFunction(TenantId tenantId, CustomerId customerId, UUID scriptId, Object... args);
+    ListenableFuture<String> invokeFunction(TenantId tenantId, CustomerId customerId, UUID scriptId, Object... args);
 
     ListenableFuture<Void> release(UUID scriptId);
 

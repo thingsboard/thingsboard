@@ -262,7 +262,7 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             asset.setName(name);
             asset.setType("default");
-            assetsTitle1.add(new AssetInfo(assetService.saveAsset(asset), null, false));
+            assetsTitle1.add(new AssetInfo(assetService.saveAsset(asset), null, false, "default"));
         }
         String title2 = "Asset title 2";
         List<AssetInfo> assetsTitle2 = new ArrayList<>();
@@ -274,7 +274,7 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             asset.setName(name);
             asset.setType("default");
-            assetsTitle2.add(new AssetInfo(assetService.saveAsset(asset), null, false));
+            assetsTitle2.add(new AssetInfo(assetService.saveAsset(asset), null, false, "default"));
         }
 
         List<AssetInfo> loadedAssetsTitle1 = new ArrayList<>();
@@ -427,7 +427,7 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
             asset.setName("Asset"+i);
             asset.setType("default");
             asset = assetService.saveAsset(asset);
-            assets.add(new AssetInfo(assetService.assignAssetToCustomer(tenantId, asset.getId(), customerId), customer.getTitle(), customer.isPublic()));
+            assets.add(new AssetInfo(assetService.assignAssetToCustomer(tenantId, asset.getId(), customerId), customer.getTitle(), customer.isPublic(), "default"));
         }
 
         List<AssetInfo> loadedAssets = new ArrayList<>();
@@ -653,4 +653,158 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
         Assert.assertNull("Can't find asset by name in cache if it was renamed", renamedAsset);
         assetService.deleteAsset(tenantId, savedAsset.getId());
     }
+
+    @Test
+    public void testFindAssetInfoByTenantId() {
+        Customer customer = new Customer();
+        customer.setTitle("Customer X");
+        customer.setTenantId(tenantId);
+        Customer savedCustomer = customerService.saveCustomer(customer);
+
+        Asset asset = new Asset();
+        asset.setTenantId(tenantId);
+        asset.setName("default");
+        asset.setType("default");
+        asset.setLabel("label");
+        asset.setCustomerId(savedCustomer.getId());
+
+        Asset savedAsset = assetService.saveAsset(asset);
+
+        PageLink pageLinkWithLabel = new PageLink(100, 0, "label");
+        List<AssetInfo> assetInfosWithLabel = assetService
+                .findAssetInfosByTenantId(tenantId, pageLinkWithLabel).getData();
+
+        Assert.assertFalse(assetInfosWithLabel.isEmpty());
+        Assert.assertTrue(
+                assetInfosWithLabel.stream()
+                        .anyMatch(
+                                d -> d.getId().equals(savedAsset.getId())
+                                        && d.getTenantId().equals(tenantId)
+                                        && d.getLabel().equals(savedAsset.getLabel())
+                        )
+        );
+
+        PageLink pageLinkWithCustomer = new PageLink(100, 0, savedCustomer.getSearchText());
+        List<AssetInfo> assetInfosWithCustomer = assetService
+                .findAssetInfosByTenantId(tenantId, pageLinkWithCustomer).getData();
+
+        Assert.assertFalse(assetInfosWithCustomer.isEmpty());
+        Assert.assertTrue(
+                assetInfosWithCustomer.stream()
+                        .anyMatch(
+                                d -> d.getId().equals(savedAsset.getId())
+                                        && d.getTenantId().equals(tenantId)
+                                        && d.getCustomerId().equals(savedCustomer.getId())
+                                        && d.getCustomerTitle().equals(savedCustomer.getTitle())
+                        )
+        );
+
+        PageLink pageLinkWithType = new PageLink(100, 0, asset.getType());
+        List<AssetInfo> assetInfosWithType = assetService
+                .findAssetInfosByTenantId(tenantId, pageLinkWithType).getData();
+
+        Assert.assertFalse(assetInfosWithType.isEmpty());
+        Assert.assertTrue(
+                assetInfosWithType.stream()
+                        .anyMatch(
+                                d -> d.getId().equals(savedAsset.getId())
+                                        && d.getTenantId().equals(tenantId)
+                                        && d.getType().equals(asset.getType())
+                        )
+        );
+    }
+
+    @Test
+    public void testFindAssetInfoByTenantIdAndType() {
+        Customer customer = new Customer();
+        customer.setTitle("Customer X");
+        customer.setTenantId(tenantId);
+        Customer savedCustomer = customerService.saveCustomer(customer);
+
+        Asset asset = new Asset();
+        asset.setTenantId(tenantId);
+        asset.setName("default");
+        asset.setType("default");
+        asset.setLabel("label");
+        asset.setCustomerId(savedCustomer.getId());
+        Asset savedAsset = assetService.saveAsset(asset);
+
+        PageLink pageLinkWithLabel = new PageLink(100, 0, "label");
+        List<AssetInfo> assetInfosWithLabel = assetService
+                .findAssetInfosByTenantIdAndType(tenantId, asset.getType(), pageLinkWithLabel).getData();
+
+        Assert.assertFalse(assetInfosWithLabel.isEmpty());
+        Assert.assertTrue(
+                assetInfosWithLabel.stream()
+                        .anyMatch(
+                                d -> d.getId().equals(savedAsset.getId())
+                                        && d.getTenantId().equals(tenantId)
+                                        && d.getAssetProfileName().equals(savedAsset.getType())
+                                        && d.getLabel().equals(savedAsset.getLabel())
+                        )
+        );
+
+        PageLink pageLinkWithCustomer = new PageLink(100, 0, savedCustomer.getSearchText());
+        List<AssetInfo> assetInfosWithCustomer = assetService
+                .findAssetInfosByTenantIdAndType(tenantId, asset.getType(), pageLinkWithCustomer).getData();
+
+        Assert.assertFalse(assetInfosWithCustomer.isEmpty());
+        Assert.assertTrue(
+                assetInfosWithCustomer.stream()
+                        .anyMatch(
+                                d -> d.getId().equals(savedAsset.getId())
+                                        && d.getTenantId().equals(tenantId)
+                                        && d.getAssetProfileName().equals(savedAsset.getType())
+                                        && d.getCustomerId().equals(savedCustomer.getId())
+                                        && d.getCustomerTitle().equals(savedCustomer.getTitle())
+                        )
+        );
+    }
+
+    @Test
+    public void testFindAssetInfoByTenantIdAndAssetProfileId() {
+        Customer customer = new Customer();
+        customer.setTitle("Customer X");
+        customer.setTenantId(tenantId);
+        Customer savedCustomer = customerService.saveCustomer(customer);
+
+        Asset asset = new Asset();
+        asset.setTenantId(tenantId);
+        asset.setName("default");
+        asset.setLabel("label");
+        asset.setCustomerId(savedCustomer.getId());
+        Asset savedAsset = assetService.saveAsset(asset);
+
+        PageLink pageLinkWithLabel = new PageLink(100, 0, "label");
+        List<AssetInfo> assetInfosWithLabel = assetService
+                .findAssetInfosByTenantIdAndAssetProfileId(tenantId, savedAsset.getAssetProfileId(), pageLinkWithLabel).getData();
+
+        Assert.assertFalse(assetInfosWithLabel.isEmpty());
+        Assert.assertTrue(
+                assetInfosWithLabel.stream()
+                        .anyMatch(
+                                d -> d.getId().equals(savedAsset.getId())
+                                        && d.getTenantId().equals(tenantId)
+                                        && d.getAssetProfileId().equals(savedAsset.getAssetProfileId())
+                                        && d.getLabel().equals(savedAsset.getLabel())
+                        )
+        );
+
+        PageLink pageLinkWithCustomer = new PageLink(100, 0, savedCustomer.getSearchText());
+        List<AssetInfo> assetInfosWithCustomer = assetService
+                .findAssetInfosByTenantIdAndAssetProfileId(tenantId, savedAsset.getAssetProfileId(), pageLinkWithCustomer).getData();
+
+        Assert.assertFalse(assetInfosWithCustomer.isEmpty());
+        Assert.assertTrue(
+                assetInfosWithCustomer.stream()
+                        .anyMatch(
+                                d -> d.getId().equals(savedAsset.getId())
+                                        && d.getTenantId().equals(tenantId)
+                                        && d.getAssetProfileId().equals(savedAsset.getAssetProfileId())
+                                        && d.getCustomerId().equals(savedCustomer.getId())
+                                        && d.getCustomerTitle().equals(savedCustomer.getTitle())
+                        )
+        );
+    }
+
 }

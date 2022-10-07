@@ -33,6 +33,7 @@ import org.thingsboard.server.dao.asset.AssetDao;
 import org.thingsboard.server.dao.model.sql.AssetEntity;
 import org.thingsboard.server.dao.model.sql.AssetInfoEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
+import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -47,6 +48,7 @@ import static org.thingsboard.server.dao.asset.BaseAssetService.TB_SERVICE_QUEUE
  * Created by Valerii Sosliuk on 5/19/2017.
  */
 @Component
+@SqlDao
 @Slf4j
 public class JpaAssetDao extends JpaAbstractSearchTextDao<AssetEntity, Asset> implements AssetDao {
 
@@ -145,6 +147,16 @@ public class JpaAssetDao extends JpaAbstractSearchTextDao<AssetEntity, Asset> im
     }
 
     @Override
+    public PageData<AssetInfo> findAssetInfosByTenantIdAndAssetProfileId(UUID tenantId, UUID assetProfileId, PageLink pageLink) {
+        return DaoUtil.toPageData(
+                assetRepository.findAssetInfosByTenantIdAndAssetProfileId(
+                        tenantId,
+                        assetProfileId,
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        DaoUtil.toPageable(pageLink, AssetInfoEntity.assetInfoColumnMap)));
+    }
+
+    @Override
     public PageData<Asset> findAssetsByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, PageLink pageLink) {
         return DaoUtil.toPageData(assetRepository
                 .findByTenantIdAndCustomerIdAndType(
@@ -167,8 +179,34 @@ public class JpaAssetDao extends JpaAbstractSearchTextDao<AssetEntity, Asset> im
     }
 
     @Override
+    public PageData<AssetInfo> findAssetInfosByTenantIdAndCustomerIdAndAssetProfileId(UUID tenantId, UUID customerId, UUID assetProfileId, PageLink pageLink) {
+        return DaoUtil.toPageData(
+                assetRepository.findAssetInfosByTenantIdAndCustomerIdAndAssetProfileId(
+                        tenantId,
+                        customerId,
+                        assetProfileId,
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        DaoUtil.toPageable(pageLink, AssetInfoEntity.assetInfoColumnMap)));
+    }
+
+    @Override
     public ListenableFuture<List<EntitySubtype>> findTenantAssetTypesAsync(UUID tenantId) {
         return service.submit(() -> convertTenantAssetTypesToDto(tenantId, assetRepository.findTenantAssetTypes(tenantId)));
+    }
+
+    @Override
+    public Long countAssetsByAssetProfileId(TenantId tenantId, UUID assetProfileId) {
+        return assetRepository.countByAssetProfileId(assetProfileId);
+    }
+
+    @Override
+    public PageData<Asset> findAssetsByTenantIdAndProfileId(UUID tenantId, UUID profileId, PageLink pageLink) {
+        return DaoUtil.toPageData(
+                assetRepository.findByTenantIdAndProfileId(
+                        tenantId,
+                        profileId,
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        DaoUtil.toPageable(pageLink)));
     }
 
     private List<EntitySubtype> convertTenantAssetTypesToDto(UUID tenantId, List<String> types) {

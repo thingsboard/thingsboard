@@ -22,8 +22,12 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
@@ -43,15 +47,23 @@ import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
+@ContextConfiguration(classes = {BaseAlarmControllerTest.Config.class})
 public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
 
     public static final String TEST_ALARM_TYPE = "Test";
 
     protected Device customerDevice;
 
-
-    @SpyBean
+    @Autowired
     private AlarmDao alarmDao;
+
+    static class Config {
+        @Bean
+        @Primary
+        public AlarmDao alarmDao(AlarmDao alarmDao) {
+            return Mockito.mock(AlarmDao.class, AdditionalAnswers.delegatesTo(alarmDao));
+        }
+    }
 
     @Before
     public void setup() throws Exception {
@@ -71,8 +83,6 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     @After
     public void teardown() throws Exception {
         loginSysAdmin();
-
-        afterTestEntityDaoRemoveByIdWithException (alarmDao);
 
         deleteDifferentTenant();
     }

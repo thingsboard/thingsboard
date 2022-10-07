@@ -17,6 +17,7 @@ package org.thingsboard.server.service.edge.rpc;
 
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 import org.thingsboard.server.service.edge.rpc.fetch.AdminSettingsEdgeEventFetcher;
+import org.thingsboard.server.service.edge.rpc.fetch.AssetProfilesEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.AssetsEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.CustomerEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.DashboardsEdgeEventFetcher;
@@ -44,6 +45,7 @@ public class EdgeSyncCursor {
         fetchers.add(new RuleChainsEdgeEventFetcher(ctx.getRuleChainService()));
         fetchers.add(new AdminSettingsEdgeEventFetcher(ctx.getAdminSettingsService(), ctx.getFreemarkerConfig()));
         fetchers.add(new DeviceProfilesEdgeEventFetcher(ctx.getDeviceProfileService()));
+        fetchers.add(new AssetProfilesEdgeEventFetcher(ctx.getAssetProfileService()));
         fetchers.add(new CustomerEdgeEventFetcher(ctx.getCustomerService()));
         fetchers.add(new UsersEdgeEventFetcher(ctx.getUserService()));
         fetchers.add(new AssetsEdgeEventFetcher(ctx.getAssetService()));

@@ -158,7 +158,4 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
         return CollectionsUtil.contains(keys, attrKey);
     }
 
-    @Override
-    public void destroy() {
-    }
 }

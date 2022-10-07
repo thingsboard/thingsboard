@@ -35,7 +35,7 @@ import org.junit.Rule;
 import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
-import org.mockito.BDDMockito;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -59,6 +59,7 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
@@ -131,8 +132,9 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected static final String DIFFERENT_CUSTOMER_USER_EMAIL = "testdifferentcustomer@thingsboard.org";
     private static final String DIFFERENT_CUSTOMER_USER_PASSWORD = "diffcustomer";
 
-    /** See {@link org.springframework.test.web.servlet.DefaultMvcResult#getAsyncResult(long)}
-     *  and {@link org.springframework.mock.web.MockAsyncContext#getTimeout()}
+    /**
+     * See {@link org.springframework.test.web.servlet.DefaultMvcResult#getAsyncResult(long)}
+     * and {@link org.springframework.mock.web.MockAsyncContext#getTimeout()}
      */
     private static final long DEFAULT_TIMEOUT = -1L;
 
@@ -446,6 +448,15 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return deviceProfile;
     }
 
+    protected AssetProfile createAssetProfile(String name) {
+        AssetProfile assetProfile = new AssetProfile();
+        assetProfile.setName(name);
+        assetProfile.setDescription(name + " Test");
+        assetProfile.setDefault(false);
+        assetProfile.setDefaultRuleChainId(null);
+        return assetProfile;
+    }
+
     protected MqttDeviceProfileTransportConfiguration createMqttDeviceProfileTransportConfiguration(TransportPayloadTypeConfiguration transportPayloadTypeConfiguration, boolean sendAckOnValidationException) {
         MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration = new MqttDeviceProfileTransportConfiguration();
         mqttDeviceProfileTransportConfiguration.setDeviceTelemetryTopic(MqttTopics.DEVICE_TELEMETRY_TOPIC);
@@ -720,23 +731,18 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected <T> void testEntityDaoWithRelationsTransactionalException(Dao<T> dao, EntityId entityIdFrom, EntityId entityTo,
                                                                         String urlDelete) throws Exception {
-        entityDaoRemoveByIdWithException (dao);
-        createEntityRelation(entityIdFrom, entityTo, "TEST_TRANSACTIONAL_TYPE");
-        assertThat(findRelationsByTo(entityTo)).hasSize(1);
+        Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(dao).removeById(any(), any());
+        try {
+            createEntityRelation(entityIdFrom, entityTo, "TEST_TRANSACTIONAL_TYPE");
+            assertThat(findRelationsByTo(entityTo)).hasSize(1);
 
-        doDelete(urlDelete)
-                .andExpect(status().isInternalServerError());
+            doDelete(urlDelete)
+                    .andExpect(status().isInternalServerError());
 
-        assertThat(findRelationsByTo(entityTo)).hasSize(1);
-    }
-
-    protected <T> void entityDaoRemoveByIdWithException (Dao<T> dao) throws Exception {
-            BDDMockito.willThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT"))
-                    .given(dao).removeById(any(), any());
-    }
-
-    protected <T> void afterTestEntityDaoRemoveByIdWithException (Dao<T> dao) throws Exception {
-        BDDMockito.willCallRealMethod().given(dao).removeById(any(), any());
+            assertThat(findRelationsByTo(entityTo)).hasSize(1);
+        } finally {
+            Mockito.reset(dao);
+        }
     }
 
     protected void createEntityRelation(EntityId entityIdFrom, EntityId entityIdTo, String typeRelation) throws Exception {
@@ -749,9 +755,13 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         MvcResult mvcResult = doGet(url).andReturn();
 
         switch (mvcResult.getResponse().getStatus()) {
-            case 200: return readResponse(mvcResult, new TypeReference<>() {});
-            case 404: return Collections.emptyList();
+            case 200:
+                return readResponse(mvcResult, new TypeReference<>() {
+                });
+            case 404:
+                return Collections.emptyList();
         }
         throw new AssertionError("Unexpected status " + mvcResult.getResponse().getStatus());
     }
+
 }

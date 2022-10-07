@@ -224,6 +224,19 @@ message DeviceProfileUpdateMsg {
   optional int64 firmwareIdLSB = 17;
 }
 
+message AssetProfileUpdateMsg {
+  UpdateMsgType msgType = 1;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string name = 4;
+  optional string description = 5;
+  bool default = 6;
+  int64 defaultRuleChainIdMSB = 7;
+  int64 defaultRuleChainIdLSB = 8;
+  string defaultQueueName = 9;
+  optional bytes image = 10;
+}
+
 message DeviceCredentialsUpdateMsg {
   int64 deviceIdMSB = 1;
   int64 deviceIdLSB = 2;
@@ -238,10 +251,12 @@ message AssetUpdateMsg {
   int64 idLSB = 3;
   optional int64 customerIdMSB = 4;
   optional int64 customerIdLSB = 5;
-  string name = 6;
-  string type = 7;
-  optional string label = 8;
-  optional string additionalInfo = 9;
+  optional int64 assetProfileIdMSB = 6;
+  optional int64 assetProfileIdLSB = 7;
+  string name = 8;
+  string type = 9;
+  optional string label = 10;
+  optional string additionalInfo = 11;
 }
 
 message EntityViewUpdateMsg {
@@ -390,6 +405,11 @@ message DeviceProfileDevicesRequestMsg {
   int64 deviceProfileIdLSB = 2;
 }
 
+message AssetProfileAssetsRequestMsg {
+  int64 assetProfileIdMSB = 1;
+  int64 assetProfileIdLSB = 2;
+}
+
 message WidgetBundleTypesRequestMsg {
   int64 widgetBundleIdMSB = 1;
   int64 widgetBundleIdLSB = 2;
@@ -497,6 +517,7 @@ message UplinkMsg {
   repeated DeviceProfileDevicesRequestMsg deviceProfileDevicesRequestMsg = 13;
   repeated WidgetBundleTypesRequestMsg widgetBundleTypesRequestMsg = 14;
   repeated EntityViewsRequestMsg entityViewsRequestMsg = 15;
+  repeated AssetProfileAssetsRequestMsg assetProfileAssetsRequestMsg = 16;
 }
 
 message UplinkResponseMsg {
@@ -535,6 +556,7 @@ message DownlinkMsg {
   repeated DeviceRpcCallMsg deviceRpcCallMsg = 21;
   repeated OtaPackageUpdateMsg otaPackageUpdateMsg = 22;
   repeated QueueUpdateMsg queueUpdateMsg = 23;
-  EdgeConfiguration edgeConfiguration = 24;
+  repeated AssetProfileUpdateMsg assetProfileUpdateMsg = 24;
+  EdgeConfiguration edgeConfiguration = 25;
 }
 

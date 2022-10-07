@@ -96,6 +96,8 @@ export interface Timewindow {
   displayValue?: string;
   displayTimezoneAbbr?: string;
   hideInterval?: boolean;
+  hideQuickInterval?: boolean;
+  hideLastInterval?: boolean;
   hideAggregation?: boolean;
   hideAggInterval?: boolean;
   hideTimezone?: boolean;
@@ -188,6 +190,8 @@ export function defaultTimewindow(timeService: TimeService): Timewindow {
   return {
     displayValue: '',
     hideInterval: false,
+    hideLastInterval: false,
+    hideQuickInterval: false,
     hideAggregation: false,
     hideAggInterval: false,
     hideTimezone: false,
@@ -223,10 +227,12 @@ function getTimewindowType(timewindow: Timewindow): TimewindowType {
   }
 }
 
-export function initModelFromDefaultTimewindow(value: Timewindow, timeService: TimeService): Timewindow {
+export function initModelFromDefaultTimewindow(value: Timewindow, quickIntervalOnly: boolean, timeService: TimeService): Timewindow {
   const model = defaultTimewindow(timeService);
   if (value) {
     model.hideInterval = value.hideInterval;
+    model.hideLastInterval = value.hideLastInterval;
+    model.hideQuickInterval = value.hideQuickInterval;
     model.hideAggregation = value.hideAggregation;
     model.hideAggInterval = value.hideAggInterval;
     model.hideTimezone = value.hideTimezone;
@@ -281,6 +287,9 @@ export function initModelFromDefaultTimewindow(value: Timewindow, timeService: T
     }
     model.timezone = value.timezone;
   }
+  if (quickIntervalOnly) {
+    model.realtime.realtimeType = RealtimeWindowType.INTERVAL;
+  }
   return model;
 }
 
@@ -304,6 +313,8 @@ export function toHistoryTimewindow(timewindow: Timewindow, startTimeMs: number,
   }
   return {
     hideInterval: timewindow.hideInterval || false,
+    hideLastInterval: timewindow.hideLastInterval || false,
+    hideQuickInterval: timewindow.hideQuickInterval || false,
     hideAggregation: timewindow.hideAggregation || false,
     hideAggInterval: timewindow.hideAggInterval || false,
     hideTimezone: timewindow.hideTimezone || false,
@@ -694,6 +705,8 @@ export function createTimewindowForComparison(subscriptionTimewindow: Subscripti
 export function cloneSelectedTimewindow(timewindow: Timewindow): Timewindow {
   const cloned: Timewindow = {};
   cloned.hideInterval = timewindow.hideInterval || false;
+  cloned.hideLastInterval = timewindow.hideLastInterval || false;
+  cloned.hideQuickInterval = timewindow.hideQuickInterval || false;
   cloned.hideAggregation = timewindow.hideAggregation || false;
   cloned.hideAggInterval = timewindow.hideAggInterval || false;
   cloned.hideTimezone = timewindow.hideTimezone || false;

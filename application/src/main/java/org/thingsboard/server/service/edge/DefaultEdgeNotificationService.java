@@ -41,6 +41,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.processor.AlarmEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.AssetEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.AssetProfileEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.CustomerEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.DashboardEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.DeviceEdgeProcessor;
@@ -101,6 +102,9 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
 
     @Autowired
     private DeviceProfileEdgeProcessor deviceProfileProcessor;
+
+    @Autowired
+    private AssetProfileEdgeProcessor assetProfileProcessor;
 
     @Autowired
     private OtaPackageEdgeProcessor otaPackageProcessor;
@@ -193,6 +197,9 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                     break;
                 case DEVICE_PROFILE:
                     future = deviceProfileProcessor.processDeviceProfileNotification(tenantId, edgeNotificationMsg);
+                    break;
+                case ASSET_PROFILE:
+                    future = assetProfileProcessor.processAssetProfileNotification(tenantId, edgeNotificationMsg);
                     break;
                 case OTA_PACKAGE:
                     future = otaPackageProcessor.processOtaPackageNotification(tenantId, edgeNotificationMsg);

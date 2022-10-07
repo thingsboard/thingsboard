@@ -25,12 +25,14 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.OAuth2RegistrationEntity;
 import org.thingsboard.server.dao.oauth2.OAuth2RegistrationDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
+import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
 import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
+@SqlDao
 public class JpaOAuth2RegistrationDao extends JpaAbstractDao<OAuth2RegistrationEntity, OAuth2Registration> implements OAuth2RegistrationDao {
 
     private final OAuth2RegistrationRepository repository;

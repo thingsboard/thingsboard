@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.AssetProfileAssetsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.AttributesRequestMsg;
 import org.thingsboard.server.gen.edge.v1.ConnectRequestMsg;
 import org.thingsboard.server.gen.edge.v1.ConnectResponseCode;
@@ -504,6 +505,8 @@ public final class EdgeGrpcSession implements Closeable {
                 return ctx.getDeviceProcessor().convertDeviceEventToDownlink(edgeEvent);
             case DEVICE_PROFILE:
                 return ctx.getDeviceProfileProcessor().convertDeviceProfileEventToDownlink(edgeEvent);
+            case ASSET_PROFILE:
+                return ctx.getAssetProfileProcessor().convertAssetProfileEventToDownlink(edgeEvent);
             case ASSET:
                 return ctx.getAssetProcessor().convertAssetEventToDownlink(edgeEvent);
             case ENTITY_VIEW:
@@ -599,6 +602,11 @@ public final class EdgeGrpcSession implements Closeable {
             if (uplinkMsg.getDeviceProfileDevicesRequestMsgCount() > 0) {
                 for (DeviceProfileDevicesRequestMsg deviceProfileDevicesRequestMsg : uplinkMsg.getDeviceProfileDevicesRequestMsgList()) {
                     result.add(ctx.getEdgeRequestsService().processDeviceProfileDevicesRequestMsg(edge.getTenantId(), edge, deviceProfileDevicesRequestMsg));
+                }
+            }
+            if (uplinkMsg.getAssetProfileAssetsRequestMsgCount() > 0) {
+                for (AssetProfileAssetsRequestMsg assetProfileAssetsRequestMsg : uplinkMsg.getAssetProfileAssetsRequestMsgList()) {
+                    result.add(ctx.getEdgeRequestsService().processAssetProfileAssetsRequestMsg(edge.getTenantId(), edge, assetProfileAssetsRequestMsg));
                 }
             }
             if (uplinkMsg.getWidgetBundleTypesRequestMsgCount() > 0) {

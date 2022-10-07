@@ -22,8 +22,11 @@ import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.ie.importing.csv.AbstractBulkImportService;
@@ -40,6 +43,7 @@ import java.util.Optional;
 public class AssetBulkImportService extends AbstractBulkImportService<Asset> {
     private final AssetService assetService;
     private final TbAssetService tbAssetService;
+    private final AssetProfileService assetProfileService;
 
     @Override
     protected void setEntityFields(Asset entity, Map<BulkImportColumnType, String> fields) {
@@ -66,6 +70,13 @@ public class AssetBulkImportService extends AbstractBulkImportService<Asset> {
     @Override
     @SneakyThrows
     protected Asset saveEntity(SecurityUser user, Asset entity, Map<BulkImportColumnType, String> fields) {
+        AssetProfile assetProfile;
+        if (StringUtils.isNotEmpty(entity.getType())) {
+            assetProfile = assetProfileService.findOrCreateAssetProfile(entity.getTenantId(), entity.getType());
+        } else {
+            assetProfile = assetProfileService.findDefaultAssetProfile(entity.getTenantId());
+        }
+        entity.setAssetProfileId(assetProfile.getId());
         return tbAssetService.save(entity, user);
     }
 
