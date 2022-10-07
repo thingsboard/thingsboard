@@ -224,7 +224,7 @@ public class JacksonUtil {
             kvEntry.getLongValue().ifPresent(value -> entityNode.put(key, value));
         } else if (kvEntry.getDataType() == DataType.JSON) {
             if (kvEntry.getJsonValue().isPresent()) {
-                entityNode.set(key, JacksonUtil.valueToTree(kvEntry.getJsonValue().get()));
+                entityNode.set(key, JacksonUtil.toJsonNode(kvEntry.getJsonValue().get()));
             }
         } else {
             entityNode.put(key, kvEntry.getValueAsString());

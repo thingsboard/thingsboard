@@ -171,7 +171,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         ObjectNode value = JacksonUtil.newObjectNode();
         value.put(TS, tsKvEntry.getTs());
         JacksonUtil.addKvEntry(value, tsKvEntry, VALUE);
-        return new BasicTsKvEntry(tsKvEntry.getTs(), new JsonDataEntry(tsKvEntry.getKey(), value.toString()));
+        return new BasicTsKvEntry(tsKvEntry.getTs(), new JsonDataEntry(tsKvEntry.getKey(), JacksonUtil.toString(value)));
     }
 
     private String getPrefix(String scope) {
