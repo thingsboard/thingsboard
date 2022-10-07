@@ -17,6 +17,7 @@ package org.thingsboard.rule.engine.util;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.HasTenantId;
@@ -37,44 +38,45 @@ import org.thingsboard.server.common.data.id.UserId;
 
 public class EntitiesTenantIdAsyncLoader {
 
-    public static ListenableFuture<TenantId> findEntityIdAsync(TbContext ctx, EntityId entityId) {
+    public static ListenableFuture<TenantId> findEntityIdAsync(TbContext ctx, EntityId original) {
 
-        switch (entityId.getEntityType()) {
+        ListeningExecutor executor = ctx.getDbCallbackExecutor();
+        switch (original.getEntityType()) {
             case TENANT:
-                return Futures.immediateFuture((TenantId) entityId);
+                return Futures.immediateFuture((TenantId) original);
             case CUSTOMER:
-                return getTenantAsync(ctx, ctx.getCustomerService().findCustomerByIdAsync(ctx.getTenantId(), (CustomerId) entityId));
+                return getTenantAsync(ctx.getCustomerService().findCustomerByIdAsync(ctx.getTenantId(), (CustomerId) original), executor);
             case USER:
-                return getTenantAsync(ctx, ctx.getUserService().findUserByIdAsync(ctx.getTenantId(), (UserId) entityId));
+                return getTenantAsync(ctx.getUserService().findUserByIdAsync(ctx.getTenantId(), (UserId) original), executor);
             case ASSET:
-                return getTenantAsync(ctx, ctx.getAssetService().findAssetByIdAsync(ctx.getTenantId(), (AssetId) entityId));
+                return getTenantAsync(ctx.getAssetService().findAssetByIdAsync(ctx.getTenantId(), (AssetId) original), executor);
             case DEVICE:
-                return getTenantAsync(ctx, ctx.getDeviceService().findDeviceByIdAsync(ctx.getTenantId(), (DeviceId) entityId));
+                return getTenantAsync(ctx.getDeviceService().findDeviceByIdAsync(ctx.getTenantId(), (DeviceId) original), executor);
             case ALARM:
-                return getTenantAsync(ctx, ctx.getAlarmService().findAlarmByIdAsync(ctx.getTenantId(), (AlarmId) entityId));
+                return getTenantAsync(ctx.getAlarmService().findAlarmByIdAsync(ctx.getTenantId(), (AlarmId) original), executor);
             case RULE_CHAIN:
-                return getTenantAsync(ctx, ctx.getRuleChainService().findRuleChainByIdAsync(ctx.getTenantId(), (RuleChainId) entityId));
+                return getTenantAsync(ctx.getRuleChainService().findRuleChainByIdAsync(ctx.getTenantId(), (RuleChainId) original), executor);
             case ENTITY_VIEW:
-                return getTenantAsync(ctx, ctx.getEntityViewService().findEntityViewByIdAsync(ctx.getTenantId(), (EntityViewId) entityId));
+                return getTenantAsync(ctx.getEntityViewService().findEntityViewByIdAsync(ctx.getTenantId(), (EntityViewId) original), executor);
             case DASHBOARD:
-                return getTenantAsync(ctx, ctx.getDashboardService().findDashboardByIdAsync(ctx.getTenantId(), (DashboardId) entityId));
+                return getTenantAsync(ctx.getDashboardService().findDashboardByIdAsync(ctx.getTenantId(), (DashboardId) original), executor);
             case EDGE:
-                return getTenantAsync(ctx, ctx.getEdgeService().findEdgeByIdAsync(ctx.getTenantId(), (EdgeId) entityId));
+                return getTenantAsync(ctx.getEdgeService().findEdgeByIdAsync(ctx.getTenantId(), (EdgeId) original), executor);
             case OTA_PACKAGE:
-                return getTenantAsync(ctx, ctx.getOtaPackageService().findOtaPackageInfoByIdAsync(ctx.getTenantId(), (OtaPackageId) entityId));
+                return getTenantAsync(ctx.getOtaPackageService().findOtaPackageInfoByIdAsync(ctx.getTenantId(), (OtaPackageId) original), executor);
             case ASSET_PROFILE:
-                return getTenantAsync(ctx, Futures.immediateFuture(ctx.getAssetProfileCache().get(ctx.getTenantId(), (AssetProfileId) entityId)));
+                return getTenantAsync(Futures.immediateFuture(ctx.getAssetProfileCache().get(ctx.getTenantId(), (AssetProfileId) original)), executor);
             case DEVICE_PROFILE:
-                return getTenantAsync(ctx, Futures.immediateFuture(ctx.getDeviceProfileCache().get(ctx.getTenantId(), (DeviceProfileId) entityId)));
+                return getTenantAsync(Futures.immediateFuture(ctx.getDeviceProfileCache().get(ctx.getTenantId(), (DeviceProfileId) original)), executor);
             default:
-                return Futures.immediateFailedFuture(new TbNodeException("Unexpected entityId EntityType " + entityId.getEntityType()));
+                return Futures.immediateFailedFuture(new TbNodeException("Unexpected original EntityType " + original.getEntityType()));
         }
     }
 
-    private static <T extends HasTenantId> ListenableFuture<TenantId> getTenantAsync(TbContext ctx, ListenableFuture<T> future) {
+    private static <T extends HasTenantId> ListenableFuture<TenantId> getTenantAsync(ListenableFuture<T> future, ListeningExecutor executor) {
         return Futures.transformAsync(future, in -> {
             return in != null ? Futures.immediateFuture(in.getTenantId())
                     : Futures.immediateFuture(null);
-        }, ctx.getDbCallbackExecutor());
+        }, executor);
     }
 }

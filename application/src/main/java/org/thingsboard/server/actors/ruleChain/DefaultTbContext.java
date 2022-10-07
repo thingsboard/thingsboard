@@ -705,7 +705,7 @@ class DefaultTbContext implements TbContext {
         return metaData;
     }
 
-    public void checkTenantEntity(EntityId entityId) {
+    public void isTenantEntity(EntityId entityId) {
         try {
             TenantId entityTenantId = EntitiesTenantIdAsyncLoader.findEntityIdAsync(this, entityId).get();
             if (entityTenantId == null) {
