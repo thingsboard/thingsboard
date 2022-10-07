@@ -16,8 +16,8 @@
 
 import { GridsterComponent, GridsterConfig, GridsterItem, GridsterItemComponentInterface } from 'angular-gridster2';
 import {
-  Datasource,
-  datasourcesHasAggregation, datasourcesHasOnlyComparisonAggregation,
+  datasourcesHasAggregation,
+  datasourcesHasOnlyComparisonAggregation,
   FormattedData,
   Widget,
   WidgetPosition,
@@ -25,14 +25,14 @@ import {
 } from '@app/shared/models/widget.models';
 import { WidgetLayout, WidgetLayouts } from '@app/shared/models/dashboard.models';
 import { IDashboardWidget, WidgetAction, WidgetContext, WidgetHeaderAction } from './widget-component.models';
-import { AggregationType, Timewindow } from '@shared/models/time/time.models';
+import { Timewindow } from '@shared/models/time/time.models';
 import { Observable, of, Subject } from 'rxjs';
 import { formattedDataFormDatasourceData, guid, isDefined, isEqual, isUndefined } from '@app/core/utils';
 import { IterableDiffer, KeyValueDiffer } from '@angular/core';
 import { IAliasController, IStateController } from '@app/core/api/widget-api.models';
 import { enumerable } from '@shared/decorators/enumerable';
 import { UtilsService } from '@core/services/utils.service';
-import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { TbPopoverComponent } from '@shared/components/popover.component';
 
 export interface WidgetsData {
   widgets: Array<Widget>;
@@ -109,6 +109,8 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
 
   parentDashboard?: IDashboardComponent;
 
+  popoverComponent?: TbPopoverComponent;
+
   [Symbol.iterator](): Iterator<DashboardWidget> {
     return this.activeDashboardWidgets[Symbol.iterator]();
   }
@@ -174,7 +176,7 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
         switch (record.operation) {
           case 'add':
             this.dashboardWidgets.push(
-              new DashboardWidget(this.dashboard, record.widget, record.widgetLayout, this.parentDashboard)
+              new DashboardWidget(this.dashboard, record.widget, record.widgetLayout, this.parentDashboard, this.popoverComponent)
             );
             break;
           case 'remove':
@@ -190,7 +192,7 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
               if (!isEqual(prevDashboardWidget.widget, record.widget) ||
                   !isEqual(prevDashboardWidget.widgetLayout, record.widgetLayout)) {
                 this.dashboardWidgets[index] = new DashboardWidget(this.dashboard, record.widget, record.widgetLayout,
-                  this.parentDashboard);
+                  this.parentDashboard, this.popoverComponent);
                 this.dashboardWidgets[index].highlighted = prevDashboardWidget.highlighted;
                 this.dashboardWidgets[index].selected = prevDashboardWidget.selected;
               } else {
@@ -345,7 +347,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
   customHeaderActions: Array<WidgetHeaderAction>;
   widgetActions: Array<WidgetAction>;
 
-  widgetContext = new WidgetContext(this.dashboard, this, this.widget, this.parentDashboard);
+  widgetContext = new WidgetContext(this.dashboard, this, this.widget, this.parentDashboard, this.popoverComponent);
 
   widgetId: string;
 
@@ -388,7 +390,8 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     private dashboard: IDashboardComponent,
     public widget: Widget,
     public widgetLayout?: WidgetLayout,
-    private parentDashboard?: IDashboardComponent) {
+    private parentDashboard?: IDashboardComponent,
+    private popoverComponent?: TbPopoverComponent) {
     if (!widget.id) {
       widget.id = guid();
     }
