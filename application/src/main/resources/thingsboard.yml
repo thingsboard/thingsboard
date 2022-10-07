@@ -595,6 +595,9 @@ state:
 
 js:
   evaluator: "${JS_EVALUATOR:local}" # local/remote
+  max_total_args_size: "${JS_MAX_TOTAL_ARGS_SIZE:100000}"
+  max_result_size: "${JS_MAX_RESULT_SIZE:300000}"
+  max_script_body_size: "${JS_MAX_SCRIPT_BODY_SIZE:50000}"
   # Built-in JVM JavaScript environment properties
   local:
     # Use Sandboxed (secured) JVM JavaScript environment
