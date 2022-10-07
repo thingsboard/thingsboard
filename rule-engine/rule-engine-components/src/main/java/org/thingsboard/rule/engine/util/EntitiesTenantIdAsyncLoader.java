@@ -39,7 +39,6 @@ import org.thingsboard.server.common.data.id.UserId;
 public class EntitiesTenantIdAsyncLoader {
 
     public static ListenableFuture<TenantId> findEntityIdAsync(TbContext ctx, EntityId original) {
-
         ListeningExecutor executor = ctx.getDbCallbackExecutor();
         switch (original.getEntityType()) {
             case TENANT:
