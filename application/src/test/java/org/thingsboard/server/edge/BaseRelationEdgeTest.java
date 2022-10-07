@@ -39,7 +39,6 @@ abstract public class BaseRelationEdgeTest extends AbstractEdgeTest {
     @Test
     public void testRelations() throws Exception {
         // create relation
-        edgeImitator.expectMessageAmount(1);
         Device device = findDeviceByName("Edge Device 1");
         Asset asset = findAssetByName("Edge Asset 1");
         EntityRelation relation = new EntityRelation();
@@ -47,6 +46,7 @@ abstract public class BaseRelationEdgeTest extends AbstractEdgeTest {
         relation.setFrom(device.getId());
         relation.setTo(asset.getId());
         relation.setTypeGroup(RelationTypeGroup.COMMON);
+        edgeImitator.expectMessageAmount(1);
         doPost("/api/relation", relation);
         Assert.assertTrue(edgeImitator.waitForMessages());
         AbstractMessage latestMessage = edgeImitator.getLatestMessage();
