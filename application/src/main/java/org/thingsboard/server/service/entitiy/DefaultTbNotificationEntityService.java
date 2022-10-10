@@ -280,8 +280,6 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
             for (EdgeId edgeId : edgeIds) {
                 sendNotificationMsgToEdge(tenantId, edgeId, entityId, body, null, EdgeEventActionType.DELETED);
             }
-        } else {
-            sendNotificationMsgToEdge(tenantId, null, entityId, body, null, EdgeEventActionType.DELETED);
         }
     }
 
