@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
 
     Copyright © 2016-2022 The Thingsboard Authors
@@ -14,9 +15,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 
--->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+--><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thingsboard</groupId>
     <artifactId>thingsboard</artifactId>
@@ -53,7 +52,7 @@
         <rat.version>0.10</rat.version>
         <cassandra.version>4.10.0</cassandra.version>
         <metrics.version>4.0.5</metrics.version>
-        <cassandra-all.version>3.11.10</cassandra-all.version>
+        <cassandra-all.version>3.11.12</cassandra-all.version>
         <cassandra-driver-core.version>3.11.0</cassandra-driver-core.version>
         <guava.version>30.0-jre</guava.version>
         <caffeine.version>2.6.1</caffeine.version>
@@ -762,7 +761,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore></ignore>
+                                        <ignore/>
                                     </action>
                                 </pluginExecution>
                             </pluginExecutions>
