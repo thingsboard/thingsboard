@@ -130,7 +130,12 @@ export class JsInvokeMessageProcessor {
     processCompileRequest(requestId: string, responseTopic: string, headers: any, compileRequest: JsCompileRequest) {
         const scriptId = JsInvokeMessageProcessor.getScriptId(compileRequest);
         this.logger.debug('[%s] Processing compile request, scriptId: [%s]', requestId, scriptId);
-
+        if (this.scriptMap.has(scriptId)) {
+            const compileResponse = JsInvokeMessageProcessor.createCompileResponse(scriptId, true);
+            this.logger.debug('[%s] Script was already compiled, scriptId: [%s]', requestId, scriptId);
+            this.sendResponse(requestId, responseTopic, headers, scriptId, compileResponse);
+            return;
+        }
         this.executor.compileScript(compileRequest.scriptBody).then(
             (script) => {
                 this.cacheScript(scriptId, script);
@@ -227,7 +232,7 @@ export class JsInvokeMessageProcessor {
         const remoteResponse = JsInvokeMessageProcessor.createRemoteResponse(requestId, compileResponse, invokeResponse, releaseResponse);
         const rawResponse = Buffer.from(JSON.stringify(remoteResponse), 'utf8');
         this.logger.debug('[%s] Sending response to queue, scriptId: [%s]', requestId, scriptId);
-        this.producer.send(responseTopic, scriptId, rawResponse, headers).then(
+        this.producer.send(responseTopic, requestId, rawResponse, headers).then(
             () => {
                 this.logger.debug('[%s] Response sent to queue, took [%s]ms, scriptId: [%s]', requestId, (performance.now() - tStartSending), scriptId);
             },
@@ -296,13 +301,11 @@ export class JsInvokeMessageProcessor {
     }
 
     private static createCompileResponse(scriptId: string, success: boolean, errorCode?: number, err?: any): JsCompileResponse {
-        const scriptIdBits = UUIDToBits(scriptId);
         return {
             errorCode: errorCode,
             success: success,
             errorDetails: parseJsErrorDetails(err),
-            scriptIdMSB: scriptIdBits[0],
-            scriptIdLSB: scriptIdBits[1]
+            scriptHash: scriptId,
         };
     }
 
@@ -316,16 +319,14 @@ export class JsInvokeMessageProcessor {
     }
 
     private static createReleaseResponse(scriptId: string, success: boolean): JsReleaseResponse {
-        const scriptIdBits = UUIDToBits(scriptId);
         return {
             success: success,
-            scriptIdMSB: scriptIdBits[0],
-            scriptIdLSB: scriptIdBits[1]
+            scriptHash: scriptId,
         };
     }
 
     private static getScriptId(request: TbMessage): string {
-        return toUUIDString(request.scriptIdMSB, request.scriptIdLSB);
+        return request.scriptHash;
     }
 
     private incrementUseScriptId(scriptId: string) {

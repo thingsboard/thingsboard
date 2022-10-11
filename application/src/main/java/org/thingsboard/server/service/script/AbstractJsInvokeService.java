@@ -15,12 +15,14 @@
  */
 package org.thingsboard.server.service.script;
 
+import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.util.Pair;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -41,13 +43,15 @@ import static java.lang.String.format;
  * Created by ashvayka on 26.09.18.
  */
 @Slf4j
+@SuppressWarnings("UnstableApiUsage")
 public abstract class AbstractJsInvokeService implements JsInvokeService {
 
     private final TbApiUsageStateService apiUsageStateService;
     private final TbApiUsageClient apiUsageClient;
     protected ScheduledExecutorService timeoutExecutorService;
-    protected Map<UUID, String> scriptIdToNameMap = new ConcurrentHashMap<>();
-    protected Map<UUID, DisableListInfo> disabledFunctions = new ConcurrentHashMap<>();
+
+    protected final Map<UUID, Pair<String, String>> scriptIdToNameAndHashMap = new ConcurrentHashMap<>();
+    protected final Map<UUID, DisableListInfo> disabledFunctions = new ConcurrentHashMap<>();
 
     @Getter
     @Value("${js.max_total_args_size:100000}")
@@ -83,27 +87,34 @@ public abstract class AbstractJsInvokeService implements JsInvokeService {
                 return error(format("Script body exceeds maximum allowed size of %s symbols", getMaxScriptBodySize()));
             }
             UUID scriptId = UUID.randomUUID();
-            String functionName = "invokeInternal_" + scriptId.toString().replace('-', '_');
+            String scriptHash = hash(tenantId, scriptBody);
+            String functionName = constructFunctionName(scriptId, scriptHash);
             String jsScript = generateJsScript(scriptType, functionName, scriptBody, argNames);
-            return doEval(scriptId, functionName, jsScript);
+            return doEval(scriptId, scriptHash, functionName, jsScript);
         } else {
             return error("JS Execution is disabled due to API limits!");
         }
     }
 
+    protected String constructFunctionName(UUID scriptId, String scriptHash) {
+        return "invokeInternal_" + scriptId.toString().replace('-', '_');
+    }
+
     @Override
     public ListenableFuture<String> invokeFunction(TenantId tenantId, CustomerId customerId, UUID scriptId, Object... args) {
         if (apiUsageStateService.getApiUsageState(tenantId).isJsExecEnabled()) {
-            String functionName = scriptIdToNameMap.get(scriptId);
-            if (functionName == null) {
+            Pair<String, String> nameAndHash = scriptIdToNameAndHashMap.get(scriptId);
+            if (nameAndHash == null) {
                 return error("No compiled script found for scriptId: [" + scriptId + "]!");
             }
+            String functionName = nameAndHash.getFirst();
+            String scriptHash = nameAndHash.getSecond();
             if (!isDisabled(scriptId)) {
                 if (argsSizeExceeded(args)) {
                     return scriptExecutionError(scriptId, format("Script input arguments exceed maximum allowed total args size of %s symbols", getMaxTotalArgsSize()));
                 }
                 apiUsageClient.report(tenantId, customerId, ApiUsageRecordKey.JS_EXEC_COUNT, 1);
-                return Futures.transformAsync(doInvokeFunction(scriptId, functionName, args), output -> {
+                return Futures.transformAsync(doInvokeFunction(scriptId, scriptHash, functionName, args), output -> {
                     String result = output.toString();
                     if (resultSizeExceeded(result)) {
                         return scriptExecutionError(scriptId, format("Script invocation result exceeds maximum allowed size of %s symbols", getMaxResultSize()));
@@ -123,12 +134,12 @@ public abstract class AbstractJsInvokeService implements JsInvokeService {
 
     @Override
     public ListenableFuture<Void> release(UUID scriptId) {
-        String functionName = scriptIdToNameMap.get(scriptId);
-        if (functionName != null) {
+        Pair<String, String> nameAndHash = scriptIdToNameAndHashMap.get(scriptId);
+        if (nameAndHash != null) {
             try {
-                scriptIdToNameMap.remove(scriptId);
+                scriptIdToNameAndHashMap.remove(scriptId);
                 disabledFunctions.remove(scriptId);
-                doRelease(scriptId, functionName);
+                doRelease(scriptId, nameAndHash.getSecond(), nameAndHash.getFirst());
             } catch (Exception e) {
                 return Futures.immediateFailedFuture(e);
             }
@@ -136,15 +147,23 @@ public abstract class AbstractJsInvokeService implements JsInvokeService {
         return Futures.immediateFuture(null);
     }
 
-    protected abstract ListenableFuture<UUID> doEval(UUID scriptId, String functionName, String scriptBody);
+    protected abstract ListenableFuture<UUID> doEval(UUID scriptId, String scriptHash, String functionName, String scriptBody);
 
-    protected abstract ListenableFuture<Object> doInvokeFunction(UUID scriptId, String functionName, Object[] args);
+    protected abstract ListenableFuture<Object> doInvokeFunction(UUID scriptId, String scriptHash, String functionName, Object[] args);
 
-    protected abstract void doRelease(UUID scriptId, String functionName) throws Exception;
+    protected abstract void doRelease(UUID scriptId, String scriptHash, String functionName) throws Exception;
 
     protected abstract int getMaxErrors();
 
     protected abstract long getMaxBlacklistDuration();
+
+    protected String hash(TenantId tenantId, String scriptBody) {
+        return Hashing.murmur3_128().newHasher()
+                .putLong(tenantId.getId().getMostSignificantBits())
+                .putLong(tenantId.getId().getLeastSignificantBits())
+                .putUnencodedChars(scriptBody)
+                .hash().toString();
+    }
 
     protected void onScriptExecutionError(UUID scriptId, Throwable t, String scriptBody) {
         DisableListInfo disableListInfo = disabledFunctions.computeIfAbsent(scriptId, key -> new DisableListInfo());
