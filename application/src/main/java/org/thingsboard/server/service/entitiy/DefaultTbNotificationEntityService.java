@@ -102,7 +102,7 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
                                                                            List<EdgeId> relatedEdgeIds,
                                                                            User user, Object... additionalInfo) {
         logEntityAction(tenantId, entityId, entity, customerId, actionType, user, additionalInfo);
-        sendDeleteNotificationMsg(tenantId, entityId, entity, relatedEdgeIds);
+        sendDeleteNotificationMsg(tenantId, entityId, relatedEdgeIds, null);
     }
 
     @Override
@@ -245,13 +245,9 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
                                ActionType actionType, Object... additionalInfo) {
         logEntityAction(tenantId, relation.getFrom(), null, customerId, actionType, user, additionalInfo);
         logEntityAction(tenantId, relation.getTo(), null, customerId, actionType, user, additionalInfo);
-        try {
-            if (!relation.getFrom().getEntityType().equals(EntityType.EDGE) && !relation.getTo().getEntityType().equals(EntityType.EDGE)) {
-                sendNotificationMsgToEdge(tenantId, null, null, JacksonUtil.toString(relation),
-                        EdgeEventType.RELATION, edgeTypeByActionType(actionType));
-            }
-        } catch (Exception e) {
-            log.warn("Failed to push relation to core: {}", relation, e);
+        if (!EntityType.EDGE.equals(relation.getFrom().getEntityType()) && !EntityType.EDGE.equals(relation.getTo().getEntityType())) {
+            sendNotificationMsgToEdge(tenantId, null, null, JacksonUtil.toString(relation),
+                    EdgeEventType.RELATION, edgeTypeByActionType(actionType));
         }
     }
 
@@ -260,19 +256,7 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
     }
 
     private void sendAlarmDeleteNotificationMsg(TenantId tenantId, Alarm alarm, List<EdgeId> edgeIds, String body) {
-        try {
-            sendDeleteNotificationMsg(tenantId, alarm.getId(), edgeIds, body);
-        } catch (Exception e) {
-            log.warn("Failed to push delete msg to core: {}", alarm, e);
-        }
-    }
-
-    private <E extends HasName, I extends EntityId> void sendDeleteNotificationMsg(TenantId tenantId, I entityId, E entity, List<EdgeId> edgeIds) {
-        try {
-            sendDeleteNotificationMsg(tenantId, entityId, edgeIds, null);
-        } catch (Exception e) {
-            log.warn("Failed to push delete msg to core: {}", entity, e);
-        }
+        sendDeleteNotificationMsg(tenantId, alarm.getId(), edgeIds, body);
     }
 
     private void sendDeleteNotificationMsg(TenantId tenantId, EntityId entityId, List<EdgeId> edgeIds, String body) {
