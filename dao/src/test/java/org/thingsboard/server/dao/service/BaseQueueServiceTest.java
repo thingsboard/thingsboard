@@ -15,10 +15,17 @@
  */
 package org.thingsboard.server.dao.service;
 
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.AdditionalAnswers;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -33,17 +40,35 @@ import org.thingsboard.server.common.data.queue.SubmitStrategyType;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.queue.QueueDao;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.ThrowableAssert.catchThrowable;
+import static org.mockito.ArgumentMatchers.any;
+
+@ContextConfiguration(classes = {BaseQueueServiceTest.Config.class})
 public abstract class BaseQueueServiceTest extends AbstractServiceTest {
 
     private IdComparator<Queue> idComparator = new IdComparator<>();
 
     private TenantId tenantId;
     private TenantProfileId tenantProfileId;
+
+    @Autowired
+    protected QueueDao queueDao;
+
+    static class Config {
+        @Bean
+        @Primary
+        public QueueDao queueDao(QueueDao queueDao) {
+            return Mockito.mock(QueueDao.class, AdditionalAnswers.delegatesTo(queueDao));
+        }
+    }
 
     @Before
     public void before() throws NoSuchFieldException, IllegalAccessException {
@@ -112,15 +137,7 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
 
     @Test
     public void testSaveQueue() {
-        Queue queue = new Queue();
-        queue.setTenantId(tenantId);
-        queue.setName("Test");
-        queue.setTopic("tb_rule_engine.test");
-        queue.setPollInterval(25);
-        queue.setPartitions(1);
-        queue.setPackProcessingTimeout(2000);
-        queue.setSubmitStrategy(createTestSubmitStrategy());
-        queue.setProcessingStrategy(createTestProcessingStrategy());
+        Queue queue = createQueue();
         Queue savedQueue = queueService.saveQueue(queue);
 
         Assert.assertNotNull(savedQueue);
@@ -140,225 +157,109 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
 
     @Test(expected = DataValidationException.class)
     public void testSaveQueueWithEmptyName() {
-        Queue queue = new Queue();
-        queue.setTenantId(tenantId);
-        queue.setTopic("tb_rule_engine.test");
-        queue.setPollInterval(25);
-        queue.setPartitions(1);
-        queue.setPackProcessingTimeout(2000);
-        queue.setSubmitStrategy(createTestSubmitStrategy());
-        queue.setProcessingStrategy(createTestProcessingStrategy());
+        Queue queue = createQueue ("", "tb_rule_engine.test");
         queueService.saveQueue(queue);
     }
 
     @Test(expected = DataValidationException.class)
     public void testSaveQueueWithInvalidName() {
-        Queue queue = new Queue();
-        queue.setTenantId(tenantId);
-        queue.setName("Test 1");
-        queue.setTopic("tb_rule_engine.test");
-        queue.setPollInterval(25);
-        queue.setPartitions(1);
-        queue.setPackProcessingTimeout(2000);
-        queue.setSubmitStrategy(createTestSubmitStrategy());
-        queue.setProcessingStrategy(createTestProcessingStrategy());
+        Queue queue = createQueue ("Test 1", "tb_rule_engine.test");
         queueService.saveQueue(queue);
     }
 
     @Test(expected = DataValidationException.class)
     public void testSaveQueueWithEmptyTopic() {
-        Queue queue = new Queue();
-        queue.setTenantId(tenantId);
-        queue.setName("Test");
-        queue.setPollInterval(25);
-        queue.setPartitions(1);
-        queue.setPackProcessingTimeout(2000);
-        queue.setSubmitStrategy(createTestSubmitStrategy());
-        queue.setProcessingStrategy(createTestProcessingStrategy());
+        Queue queue = createQueue ("Test", "");
         queueService.saveQueue(queue);
     }
 
     @Test(expected = DataValidationException.class)
     public void testSaveQueueWithInvalidTopic() {
-        Queue queue = new Queue();
-        queue.setTenantId(tenantId);
-        queue.setName("Test");
-        queue.setTopic("tb rule engine test");
-        queue.setPollInterval(25);
-        queue.setPartitions(1);
-        queue.setPackProcessingTimeout(2000);
-        queue.setSubmitStrategy(createTestSubmitStrategy());
-        queue.setProcessingStrategy(createTestProcessingStrategy());
+        Queue queue = createQueue ("Test", "tb rule engine test");
         queueService.saveQueue(queue);
     }
 
     @Test(expected = DataValidationException.class)
     public void testSaveQueueWithEmptyPollInterval() {
-        Queue queue = new Queue();
-        queue.setTenantId(tenantId);
-        queue.setName("Test");
-        queue.setTopic("tb_rule_engine.test");
-        queue.setPartitions(1);
-        queue.setPackProcessingTimeout(2000);
-        queue.setSubmitStrategy(createTestSubmitStrategy());
-        queue.setProcessingStrategy(createTestProcessingStrategy());
+        Queue queue = createQueue();
+        queue.setPollInterval(0);
         queueService.saveQueue(queue);
     }
 
     @Test(expected = DataValidationException.class)
     public void testSaveQueueWithEmptyPartitions() {
-        Queue queue = new Queue();
-        queue.setTenantId(tenantId);
-        queue.setName("Test");
-        queue.setTopic("tb_rule_engine.test");
-        queue.setPollInterval(25);
-        queue.setPackProcessingTimeout(2000);
-        queue.setSubmitStrategy(createTestSubmitStrategy());
-        queue.setProcessingStrategy(createTestProcessingStrategy());
+        Queue queue = createQueue();
+        queue.setPartitions(0);
         queueService.saveQueue(queue);
     }
 
     @Test(expected = DataValidationException.class)
     public void testSaveQueueWithEmptyPackProcessingTimeout() {
-        Queue queue = new Queue();
-        queue.setTenantId(tenantId);
-        queue.setName("Test");
-        queue.setTopic("tb_rule_engine.test");
-        queue.setPollInterval(25);
-        queue.setPartitions(1);
-        queue.setSubmitStrategy(createTestSubmitStrategy());
-        queue.setProcessingStrategy(createTestProcessingStrategy());
+        Queue queue = createQueue();
+        queue.setPackProcessingTimeout(0);
         queueService.saveQueue(queue);
     }
 
     @Test(expected = DataValidationException.class)
     public void testSaveQueueWithEmptySubmitStrategy() {
-        Queue queue = new Queue();
-        queue.setTenantId(tenantId);
-        queue.setName("Test");
-        queue.setTopic("tb_rule_engine.test");
-        queue.setPollInterval(25);
-        queue.setPartitions(1);
-        queue.setPackProcessingTimeout(2000);
-        queue.setProcessingStrategy(createTestProcessingStrategy());
+        Queue queue = createQueue();
+        queue.setSubmitStrategy(null);
         queueService.saveQueue(queue);
     }
 
     @Test(expected = DataValidationException.class)
     public void testSaveQueueWithEmptyProcessingStrategy() {
-        Queue queue = new Queue();
-        queue.setTenantId(tenantId);
-        queue.setName("Test");
-        queue.setTopic("tb_rule_engine.test");
-        queue.setPollInterval(25);
-        queue.setPartitions(1);
-        queue.setPackProcessingTimeout(2000);
-        queue.setSubmitStrategy(createTestSubmitStrategy());
+        Queue queue = createQueue();
+        queue.setProcessingStrategy(null);
         queueService.saveQueue(queue);
     }
 
     @Test(expected = DataValidationException.class)
     public void testSaveQueueWithEmptySubmitStrategyType() {
-        Queue queue = new Queue();
-        queue.setTenantId(tenantId);
-        queue.setName("Test");
-        queue.setTopic("tb_rule_engine.test");
-        queue.setPollInterval(25);
-        queue.setPartitions(1);
-        queue.setPackProcessingTimeout(2000);
-        queue.setSubmitStrategy(createTestSubmitStrategy());
+        Queue queue = createQueue();
         queue.getSubmitStrategy().setType(null);
-        queue.setProcessingStrategy(createTestProcessingStrategy());
         queueService.saveQueue(queue);
     }
 
     @Test(expected = DataValidationException.class)
     public void testSaveQueueWithEmptySubmitStrategyBatchSize() {
-        Queue queue = new Queue();
-        queue.setTenantId(tenantId);
-        queue.setName("Test");
-        queue.setTopic("tb_rule_engine.test");
-        queue.setPollInterval(25);
-        queue.setPartitions(1);
-        queue.setPackProcessingTimeout(2000);
-        queue.setSubmitStrategy(createTestSubmitStrategy());
+        Queue queue = createQueue();
         queue.getSubmitStrategy().setType(SubmitStrategyType.BATCH);
         queue.getSubmitStrategy().setBatchSize(0);
-        queue.setProcessingStrategy(createTestProcessingStrategy());
         queueService.saveQueue(queue);
     }
 
     @Test(expected = DataValidationException.class)
     public void testSaveQueueWithEmptyProcessingStrategyType() {
-        Queue queue = new Queue();
-        queue.setTenantId(tenantId);
-        queue.setName("Test");
-        queue.setTopic("tb_rule_engine.test");
-        queue.setPollInterval(25);
-        queue.setPartitions(1);
-        queue.setPackProcessingTimeout(2000);
-        queue.setSubmitStrategy(createTestSubmitStrategy());
-        queue.setProcessingStrategy(createTestProcessingStrategy());
+        Queue queue = createQueue();
         queue.getProcessingStrategy().setType(null);
         queueService.saveQueue(queue);
     }
 
     @Test(expected = DataValidationException.class)
     public void testSaveQueueWithNegativeProcessingStrategyRetries() {
-        Queue queue = new Queue();
-        queue.setTenantId(tenantId);
-        queue.setName("Test");
-        queue.setTopic("tb_rule_engine.test");
-        queue.setPollInterval(25);
-        queue.setPartitions(1);
-        queue.setPackProcessingTimeout(2000);
-        queue.setSubmitStrategy(createTestSubmitStrategy());
-        queue.setProcessingStrategy(createTestProcessingStrategy());
+        Queue queue = createQueue();
         queue.getProcessingStrategy().setRetries(-1);
         queueService.saveQueue(queue);
     }
 
     @Test(expected = DataValidationException.class)
     public void testSaveQueueWithNegativeProcessingStrategyFailurePercentage() {
-        Queue queue = new Queue();
-        queue.setTenantId(tenantId);
-        queue.setName("Test");
-        queue.setTopic("tb_rule_engine.test");
-        queue.setPollInterval(25);
-        queue.setPartitions(1);
-        queue.setPackProcessingTimeout(2000);
-        queue.setSubmitStrategy(createTestSubmitStrategy());
-        queue.setProcessingStrategy(createTestProcessingStrategy());
+        Queue queue = createQueue();
         queue.getProcessingStrategy().setFailurePercentage(-1);
         queueService.saveQueue(queue);
     }
 
     @Test(expected = DataValidationException.class)
     public void testSaveQueueWithNegativeProcessingStrategyPauseBetweenRetries() {
-        Queue queue = new Queue();
-        queue.setTenantId(tenantId);
-        queue.setName("Test");
-        queue.setTopic("tb_rule_engine.test");
-        queue.setPollInterval(25);
-        queue.setPartitions(1);
-        queue.setPackProcessingTimeout(2000);
-        queue.setSubmitStrategy(createTestSubmitStrategy());
-        queue.setProcessingStrategy(createTestProcessingStrategy());
+        Queue queue = createQueue();
         queue.getProcessingStrategy().setPauseBetweenRetries(-1);
         queueService.saveQueue(queue);
     }
 
     @Test(expected = DataValidationException.class)
     public void testSaveQueueWithProcessingStrategyPauseBetweenRetriesBiggerThenMaxPauseBetweenRetries() {
-        Queue queue = new Queue();
-        queue.setTenantId(tenantId);
-        queue.setName("Test");
-        queue.setTopic("tb_rule_engine.test");
-        queue.setPollInterval(25);
-        queue.setPartitions(1);
-        queue.setPackProcessingTimeout(2000);
-        queue.setSubmitStrategy(createTestSubmitStrategy());
-        queue.setProcessingStrategy(createTestProcessingStrategy());
+        Queue queue = createQueue();
         queue.getProcessingStrategy().setPauseBetweenRetries(100);
         queueService.saveQueue(queue);
     }
@@ -370,15 +271,8 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
         Tenant savedTenant = tenantService.saveTenant(tenant);
         Assert.assertNotNull(savedTenant);
 
-        Queue queue = new Queue();
+        Queue queue = createQueue();
         queue.setTenantId(savedTenant.getId());
-        queue.setName("Test");
-        queue.setTopic("tb_rule_engine.test");
-        queue.setPollInterval(25);
-        queue.setPartitions(1);
-        queue.setPackProcessingTimeout(2000);
-        queue.setSubmitStrategy(createTestSubmitStrategy());
-        queue.setProcessingStrategy(createTestProcessingStrategy());
         try {
             queueService.saveQueue(queue);
         } finally {
@@ -388,15 +282,7 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
 
     @Test
     public void testUpdateQueue() {
-        Queue queue = new Queue();
-        queue.setTenantId(tenantId);
-        queue.setName("Test");
-        queue.setTopic("tb_rule_engine.test");
-        queue.setPollInterval(25);
-        queue.setPartitions(1);
-        queue.setPackProcessingTimeout(2000);
-        queue.setSubmitStrategy(createTestSubmitStrategy());
-        queue.setProcessingStrategy(createTestProcessingStrategy());
+        Queue queue = createQueue();
         Queue savedQueue = queueService.saveQueue(queue);
 
         Assert.assertNotNull(savedQueue);
@@ -413,16 +299,7 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindQueueById() {
-        Queue queue = new Queue();
-        queue.setTenantId(tenantId);
-        queue.setName("Test");
-        queue.setTopic("tb_rule_engine.test");
-        queue.setPollInterval(25);
-        queue.setPartitions(1);
-        queue.setPackProcessingTimeout(2000);
-        queue.setSubmitStrategy(createTestSubmitStrategy());
-        queue.setProcessingStrategy(createTestProcessingStrategy());
-        Queue savedQueue = queueService.saveQueue(queue);
+        Queue savedQueue = savedQueue();
         Queue foundQueue = queueService.findQueueById(tenantId, savedQueue.getId());
         Assert.assertNotNull(foundQueue);
         Assert.assertEquals(savedQueue, foundQueue);
@@ -430,16 +307,7 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
 
     @Test
     public void testDeleteQueue() {
-        Queue queue = new Queue();
-        queue.setTenantId(tenantId);
-        queue.setName("Test");
-        queue.setTopic("tb_rule_engine.test");
-        queue.setPollInterval(25);
-        queue.setPartitions(1);
-        queue.setPackProcessingTimeout(2000);
-        queue.setSubmitStrategy(createTestSubmitStrategy());
-        queue.setProcessingStrategy(createTestProcessingStrategy());
-        Queue savedQueue = queueService.saveQueue(queue);
+        Queue savedQueue = savedQueue();
         Queue foundQueue = queueService.findQueueById(tenantId, savedQueue.getId());
         Assert.assertNotNull(foundQueue);
         queueService.deleteQueue(tenantId, savedQueue.getId());
@@ -449,16 +317,7 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindQueueByTenantIdAndName() {
-        Queue queue = new Queue();
-        queue.setTenantId(tenantId);
-        queue.setName("Test");
-        queue.setTopic("tb_rule_engine.test");
-        queue.setPollInterval(25);
-        queue.setPartitions(1);
-        queue.setPackProcessingTimeout(2000);
-        queue.setSubmitStrategy(createTestSubmitStrategy());
-        queue.setProcessingStrategy(createTestProcessingStrategy());
-        Queue savedQueue = queueService.saveQueue(queue);
+        Queue savedQueue = savedQueue();
         Queue foundQueue = queueService.findQueueByTenantIdAndName(tenantId, savedQueue.getName());
 
         Assert.assertNotNull(foundQueue);
@@ -469,17 +328,7 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
     public void testFindQueuesByTenantId() {
         List<Queue> queues = new ArrayList<>();
         for (int i = 1; i < 10; i++) {
-            Queue queue = new Queue();
-            queue.setTenantId(tenantId);
-            queue.setName("Test" + i);
-            queue.setTopic("tb_rule_engine.test" + i);
-            queue.setPollInterval(25);
-            queue.setPartitions(1);
-            queue.setPackProcessingTimeout(2000);
-            queue.setSubmitStrategy(createTestSubmitStrategy());
-            queue.setProcessingStrategy(createTestProcessingStrategy());
-
-            queues.add(queueService.saveQueue(queue));
+            queues.add(savedQueue("Test" + i, "tb_rule_engine.test" + i));
         }
 
         List<Queue> loadedQueues = new ArrayList<>();
@@ -512,6 +361,56 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
         pageData = queueService.findQueuesByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
+    }
+
+
+    @Test
+    public void testDeleteOAuth2ClientRegistrationTemplateWithTransactionalOk() {
+        Queue savedQueue = savedQueue("MOCK_Ok" , "tb_rule_engine.test");
+        Queue foundQueue = queueService.findQueueById(tenantId, savedQueue.getId());
+        Assert.assertNotNull(foundQueue);
+        queueService.deleteQueue(tenantId, savedQueue.getId());
+        foundQueue = queueService.findQueueById(tenantId, savedQueue.getId());
+        Assert.assertNull(foundQueue);
+    }
+
+
+    @Test
+    public void testDeleteOAuth2ClientRegistrationTemplateWithTransactionalException() throws Exception {
+        Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(queueDao).removeById(any(), any());
+        try {
+            Queue savedQueue = savedQueue("MOCK_CONSTRAINT", "tb_rule_engine.test");
+
+            final Throwable raisedException = catchThrowable(() -> queueService.deleteQueue(tenantId, savedQueue.getId()));
+            assertThat(raisedException).isInstanceOf(ConstraintViolationException.class)
+                    .hasMessageContaining("mock message");
+
+            Queue foundQueue = queueService.findQueueById(tenantId, savedQueue.getId());
+            Assert.assertNotNull(foundQueue);
+        } finally {
+            Mockito.reset(queueDao);
+        }
+    }
+
+    private Queue createQueue(String... args) {
+        String name = args.length == 2 ? args[0] : "Test";
+        String topic = args.length == 2 ? args[1] : "tb_rule_engine.test";
+        Queue queue = new Queue();
+        queue.setTenantId(tenantId);
+        queue.setName(name);
+        queue.setTopic(topic);
+        queue.setPollInterval(25);
+        queue.setPartitions(1);
+        queue.setPackProcessingTimeout(2000);
+        queue.setSubmitStrategy(createTestSubmitStrategy());
+        queue.setProcessingStrategy(createTestProcessingStrategy());
+        return queue;
+    }
+
+    private Queue savedQueue(String... args) {
+        Queue  queue = args.length == 2 ? createQueue(args) : createQueue();
+        Queue savedQueue = queueService.saveQueue(queue);
+        return savedQueue;
     }
 
 }
