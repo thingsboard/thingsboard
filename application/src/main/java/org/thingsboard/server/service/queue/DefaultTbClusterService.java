@@ -51,6 +51,8 @@ import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
+import org.thingsboard.server.common.msg.edge.FromEdgeSyncResponse;
+import org.thingsboard.server.common.msg.edge.ToEdgeSyncRequest;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -372,12 +374,32 @@ public class DefaultTbClusterService implements TbClusterService {
         log.trace("[{}] Processing edge {} event update ", tenantId, edgeId);
         EdgeEventUpdateMsg msg = new EdgeEventUpdateMsg(tenantId, edgeId);
         byte[] msgBytes = encodingService.encode(msg);
+        ToCoreNotificationMsg toCoreMsg = ToCoreNotificationMsg.newBuilder().setEdgeEventUpdateMsg(ByteString.copyFrom(msgBytes)).build();
+        pushEdgeSyncMsgToCore(edgeId, toCoreMsg);
+    }
+
+    @Override
+    public void pushEdgeSyncRequestToCore(ToEdgeSyncRequest toEdgeSyncRequest) {
+        log.trace("[{}] Processing edge sync request {} ", toEdgeSyncRequest.getTenantId(), toEdgeSyncRequest);
+        byte[] msgBytes = encodingService.encode(toEdgeSyncRequest);
+        ToCoreNotificationMsg toCoreMsg = ToCoreNotificationMsg.newBuilder().setToEdgeSyncRequestMsg(ByteString.copyFrom(msgBytes)).build();
+        pushEdgeSyncMsgToCore(toEdgeSyncRequest.getEdgeId(), toCoreMsg);
+    }
+
+    @Override
+    public void pushEdgeSyncResponseToCore(FromEdgeSyncResponse fromEdgeSyncResponse) {
+        log.trace("[{}] Processing edge sync response {}", fromEdgeSyncResponse.getTenantId(), fromEdgeSyncResponse);
+        byte[] msgBytes = encodingService.encode(fromEdgeSyncResponse);
+        ToCoreNotificationMsg toCoreMsg = ToCoreNotificationMsg.newBuilder().setFromEdgeSyncResponseMsg(ByteString.copyFrom(msgBytes)).build();
+        pushEdgeSyncMsgToCore(fromEdgeSyncResponse.getEdgeId(), toCoreMsg);
+    }
+
+    private void pushEdgeSyncMsgToCore(EdgeId edgeId, ToCoreNotificationMsg toCoreMsg) {
         TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> toCoreNfProducer = producerProvider.getTbCoreNotificationsMsgProducer();
         Set<String> tbCoreServices = partitionService.getAllServiceIds(ServiceType.TB_CORE);
         for (String serviceId : tbCoreServices) {
             TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, serviceId);
-            ToCoreNotificationMsg toCoreMsg = ToCoreNotificationMsg.newBuilder().setEdgeEventUpdateMsg(ByteString.copyFrom(msgBytes)).build();
-            toCoreNfProducer.send(tpi, new TbProtoQueueMsg<>(msg.getEdgeId().getId(), toCoreMsg), null);
+            toCoreNfProducer.send(tpi, new TbProtoQueueMsg<>(edgeId.getId(), toCoreMsg), null);
             toCoreNfs.incrementAndGet();
         }
     }

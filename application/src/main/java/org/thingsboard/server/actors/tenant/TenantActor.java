@@ -47,7 +47,7 @@ import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.aware.DeviceAwareMsg;
 import org.thingsboard.server.common.msg.aware.RuleChainAwareMsg;
-import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
+import org.thingsboard.server.common.msg.edge.EdgeSessionMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
@@ -167,7 +167,9 @@ public class TenantActor extends RuleChainManagerActor {
                 onRuleChainMsg((RuleChainAwareMsg) msg);
                 break;
             case EDGE_EVENT_UPDATE_TO_EDGE_SESSION_MSG:
-                onToEdgeSessionMsg((EdgeEventUpdateMsg) msg);
+            case EDGE_SYNC_REQUEST_TO_EDGE_SESSION_MSG:
+            case EDGE_SYNC_RESPONSE_FROM_EDGE_SESSION_MSG:
+                onToEdgeSessionMsg((EdgeSessionMsg) msg);
                 break;
             default:
                 return false;
@@ -269,9 +271,8 @@ public class TenantActor extends RuleChainManagerActor {
                 () -> new DeviceActorCreator(systemContext, tenantId, deviceId));
     }
 
-    private void onToEdgeSessionMsg(EdgeEventUpdateMsg msg) {
-        log.trace("[{}] onToEdgeSessionMsg [{}]", msg.getTenantId(), msg);
-        systemContext.getEdgeRpcService().onEdgeEvent(tenantId, msg.getEdgeId());
+    private void onToEdgeSessionMsg(EdgeSessionMsg msg) {
+        systemContext.getEdgeRpcService().onToEdgeSessionMsg(tenantId, msg);
     }
 
     private ApiUsageState getApiUsageState() {

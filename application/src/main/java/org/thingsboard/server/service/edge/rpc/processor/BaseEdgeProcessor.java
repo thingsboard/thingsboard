@@ -80,10 +80,12 @@ import org.thingsboard.server.service.edge.rpc.constructor.RuleChainMsgConstruct
 import org.thingsboard.server.service.edge.rpc.constructor.UserMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.WidgetTypeMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.WidgetsBundleMsgConstructor;
+import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.state.DeviceStateService;
+import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -93,6 +95,12 @@ import java.util.UUID;
 public abstract class BaseEdgeProcessor {
 
     protected static final int DEFAULT_PAGE_SIZE = 100;
+
+    @Autowired
+    protected TelemetrySubscriptionService tsSubService;
+
+    @Autowired
+    protected TbNotificationEntityService notificationEntityService;
 
     @Autowired
     protected RuleChainService ruleChainService;
