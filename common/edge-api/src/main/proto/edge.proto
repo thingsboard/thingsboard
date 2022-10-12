@@ -233,7 +233,7 @@ message AssetProfileUpdateMsg {
   bool default = 6;
   int64 defaultRuleChainIdMSB = 7;
   int64 defaultRuleChainIdLSB = 8;
-  string defaultQueueName = 9;
+  optional string defaultQueueName = 9;
   optional bytes image = 10;
 }
 

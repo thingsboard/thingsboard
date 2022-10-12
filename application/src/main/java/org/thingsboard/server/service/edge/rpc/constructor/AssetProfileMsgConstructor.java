@@ -38,10 +38,6 @@ public class AssetProfileMsgConstructor {
                 .setIdLSB(assetProfile.getId().getId().getLeastSignificantBits())
                 .setName(assetProfile.getName())
                 .setDefault(assetProfile.isDefault());
-        if (assetProfile.getDefaultRuleChainId() != null) {
-            builder.setDefaultRuleChainIdMSB(assetProfile.getDefaultRuleChainId().getId().getMostSignificantBits())
-                    .setDefaultRuleChainIdLSB(assetProfile.getDefaultRuleChainId().getId().getLeastSignificantBits());
-        }
         if (assetProfile.getDefaultQueueName() != null) {
             builder.setDefaultQueueName(assetProfile.getDefaultQueueName());
         }
