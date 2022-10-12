@@ -16,11 +16,17 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
@@ -32,14 +38,18 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.resource.TbResourceDao;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@ContextConfiguration(classes = {BaseTbResourceControllerTest.Config.class})
 public abstract class BaseTbResourceControllerTest extends AbstractControllerTest {
 
     private IdComparator<TbResourceInfo> idComparator = new IdComparator<>();
@@ -48,6 +58,17 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
 
     private Tenant savedTenant;
     private User tenantAdmin;
+
+    @Autowired
+    private TbResourceDao tbResourceDao;
+
+    static class Config {
+        @Bean
+        @Primary
+        public TbResourceDao tbResourceDao(TbResourceDao tbResourceDao) {
+            return Mockito.mock(TbResourceDao.class, AdditionalAnswers.delegatesTo(tbResourceDao));
+        }
+    }
 
     @Before
     public void beforeTest() throws Exception {
@@ -81,13 +102,9 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        TbResource resource = new TbResource();
-        resource.setResourceType(ResourceType.JKS);
-        resource.setTitle("My first resource");
-        resource.setFileName(DEFAULT_FILE_NAME);
-        resource.setData("Test Data");
+        TbResource resource = createTbResource();
 
-        TbResource savedResource = save(resource);
+        TbResource savedResource = savedTbResource(resource);
 
         testNotifyEntityOneTimeMsgToEdgeServiceNever(savedResource, savedResource.getId(), savedResource.getId(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
@@ -104,7 +121,7 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
 
         savedResource.setTitle("My new resource");
 
-        save(savedResource);
+        savedTbResource(savedResource);
 
         TbResource foundResource = doGet("/api/resource/" + savedResource.getId().getId().toString(), TbResource.class);
         Assert.assertEquals(foundResource.getTitle(), savedResource.getTitle());
@@ -116,11 +133,7 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
 
     @Test
     public void saveResourceInfoWithViolationOfLengthValidation() throws Exception {
-        TbResource resource = new TbResource();
-        resource.setResourceType(ResourceType.JKS);
-        resource.setTitle(StringUtils.randomAlphabetic(300));
-        resource.setFileName(DEFAULT_FILE_NAME);
-        resource.setData("Test Data");
+        TbResource resource = createTbResource(StringUtils.randomAlphabetic(300), "Test Data");
 
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -135,13 +148,7 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
 
     @Test
     public void testUpdateTbResourceFromDifferentTenant() throws Exception {
-        TbResource resource = new TbResource();
-        resource.setResourceType(ResourceType.JKS);
-        resource.setTitle("My first resource");
-        resource.setFileName(DEFAULT_FILE_NAME);
-        resource.setData("Test Data");
-
-       TbResource savedResource = save(resource);
+       TbResource savedResource = createAndSavedTbResource();
 
         loginDifferentTenant();
 
@@ -164,13 +171,7 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
 
     @Test
     public void testFindTbResourceById() throws Exception {
-        TbResource resource = new TbResource();
-        resource.setResourceType(ResourceType.JKS);
-        resource.setTitle("My first resource");
-        resource.setFileName(DEFAULT_FILE_NAME);
-        resource.setData("Test Data");
-
-        TbResource savedResource = save(resource);
+        TbResource savedResource = createAndSavedTbResource();
 
         TbResource foundResource = doGet("/api/resource/" + savedResource.getId().getId().toString(), TbResource.class);
         Assert.assertNotNull(foundResource);
@@ -179,13 +180,7 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
 
     @Test
     public void testDeleteTbResource() throws Exception {
-        TbResource resource = new TbResource();
-        resource.setResourceType(ResourceType.JKS);
-        resource.setTitle("My first resource");
-        resource.setFileName(DEFAULT_FILE_NAME);
-        resource.setData("Test Data");
-
-        TbResource savedResource = save(resource);
+        TbResource savedResource = createAndSavedTbResource();
 
         Mockito.reset(tbClusterService, auditLogService);
         String resourceIdStr = savedResource.getId().getId().toString();
@@ -210,12 +205,9 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
         List<TbResourceInfo> resources = new ArrayList<>();
         int cntEntity = 173;
         for (int i = 0; i < cntEntity; i++) {
-            TbResource resource = new TbResource();
-            resource.setTitle("Resource" + i);
-            resource.setResourceType(ResourceType.JKS);
+            TbResource resource = createTbResource();
             resource.setFileName(i + DEFAULT_FILE_NAME);
-            resource.setData("Test Data");
-            resources.add(new TbResourceInfo(save(resource)));
+            resources.add(new TbResourceInfo(savedTbResource(resource)));
         }
         List<TbResourceInfo> loadedResources = new ArrayList<>();
         PageLink pageLink = new PageLink(24);
@@ -246,12 +238,9 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
 
         List<TbResourceInfo> resources = new ArrayList<>();
         for (int i = 0; i < 173; i++) {
-            TbResource resource = new TbResource();
-            resource.setTitle("Resource" + i);
-            resource.setResourceType(ResourceType.JKS);
+            TbResource resource = createTbResource("Resource" + i, "Test Data");
             resource.setFileName(i + DEFAULT_FILE_NAME);
-            resource.setData("Test Data");
-            resources.add(new TbResourceInfo(save(resource)));
+            resources.add(new TbResourceInfo(savedTbResource(resource)));
         }
         List<TbResourceInfo> loadedResources = new ArrayList<>();
         PageLink pageLink = new PageLink(24);
@@ -303,23 +292,17 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
         List<TbResourceInfo> systemResources = new ArrayList<>();
         List<TbResourceInfo> expectedResources = new ArrayList<>();
         for (int i = 0; i < 73; i++) {
-            TbResource resource = new TbResource();
-            resource.setTitle("Resource" + i);
-            resource.setResourceType(ResourceType.JKS);
+            TbResource resource = createTbResource("Resource" + i, "Test Data");
             resource.setFileName(i + DEFAULT_FILE_NAME);
-            resource.setData("Test Data");
-            expectedResources.add(new TbResourceInfo(save(resource)));
+            expectedResources.add(new TbResourceInfo(savedTbResource(resource)));
         }
 
         loginSysAdmin();
 
         for (int i = 0; i < 173; i++) {
-            TbResource resource = new TbResource();
-            resource.setTitle("Resource" + i);
-            resource.setResourceType(ResourceType.JKS);
+            TbResource resource = createTbResource("Resource" + i, "Test Data");
             resource.setFileName(i + DEFAULT_FILE_NAME);
-            resource.setData("Test Data");
-            TbResourceInfo savedResource = new TbResourceInfo(save(resource));
+            TbResourceInfo savedResource = new TbResourceInfo(savedTbResource(resource));
             systemResources.add(savedResource);
             if (i >= 73) {
                 expectedResources.add(savedResource);
@@ -354,7 +337,57 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
         }
     }
 
-    private TbResource save(TbResource tbResource) throws Exception {
+
+    @Test
+    public void testDeleteTbResourceWithTransactionalOk() throws Exception {
+        TbResource savedResource = createAndSavedTbResource();
+
+        Mockito.reset(tbClusterService, auditLogService);
+        String resourceIdStr = savedResource.getId().getId().toString();
+        doDelete("/api/resource/" + resourceIdStr)
+                .andExpect(status().isOk());
+
+        doGet("/api/resource/" + savedResource.getId().getId().toString())
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(containsString(msgErrorNoFound("Resource", resourceIdStr))));;
+    }
+
+    @Test
+    public void testDeleteTbResourceWithTransactionalException() throws Exception {
+        TbResource tbResource = createAndSavedTbResource("MOCK_TransactionalException", "Test Data");
+        TbResource foundTbResource = doGet("/api/resource/" + tbResource.getId().getId().toString(), TbResource.class);
+        Assert.assertNotNull(foundTbResource);
+
+        Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(tbResourceDao).removeById(any(), any());
+        try {
+            doDelete("/api/resource/" + foundTbResource.getId().getId().toString())
+                    .andExpect(status().isInternalServerError());
+
+            doGet("/api/resource/" + foundTbResource.getId().getId().toString())
+                    .andExpect(status().isOk());
+        } finally {
+            Mockito.reset(tbResourceDao);
+        }
+    }
+
+    private TbResource createTbResource(String... args) throws Exception {
+        String title = args.length == 2 ? args[0] : "My first resource";
+        String data = args.length == 2 ? args[1] : "Test Data";
+        TbResource tbResource = new TbResource();
+        tbResource.setResourceType(ResourceType.JKS);
+        tbResource.setTitle(title);
+        tbResource.setFileName(DEFAULT_FILE_NAME);
+        tbResource.setData(data);
+        return tbResource;
+    }
+
+    private TbResource createAndSavedTbResource(String... args) throws Exception {
+        TbResource tbResource = createTbResource(args);
+        return savedTbResource(tbResource);
+    }
+
+    private TbResource savedTbResource(TbResource tbResource) throws Exception {
         return doPostWithTypedResponse("/api/resource", tbResource, new TypeReference<>(){});
+
     }
 }
