@@ -18,26 +18,51 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.AdditionalAnswers;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MvcResult;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.*;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.dao.rpc.RpcDao;
 
+import java.sql.SQLException;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@ContextConfiguration(classes = {BaseRpcControllerTest.Config.class})
 public abstract class BaseRpcControllerTest extends AbstractControllerTest {
 
     private Tenant savedTenant;
     private User tenantAdmin;
+
+
+    @Autowired
+    private RpcDao rpcDao;
+
+    static class Config {
+        @Bean
+        @Primary
+        public RpcDao rpcDao(RpcDao rpcDao) {
+            return Mockito.mock(RpcDao.class, AdditionalAnswers.delegatesTo(rpcDao));
+        }
+    }
 
     @Before
     public void beforeTest() throws Exception {
@@ -193,4 +218,61 @@ public abstract class BaseRpcControllerTest extends AbstractControllerTest {
 
         Assert.assertTrue(found);
     }
+
+
+    @Test
+    public void testDeleteRpcWithTransactionalOk() throws Exception {
+        Device device = createDefaultDevice();
+        Device savedDevice = doPost("/api/device", device, Device.class);
+
+        ObjectNode rpc = createDefaultRpc();
+        String result = doPostAsync(
+                "/api/rpc/oneway/" + savedDevice.getId().getId().toString(),
+                JacksonUtil.toString(rpc),
+                String.class,
+                status().isOk()
+        );
+        String rpcId = JacksonUtil.fromString(result, JsonNode.class)
+                .get("rpcId")
+                .asText();
+        Rpc savedRpc = getRpcById(rpcId);
+        Assert.assertNotNull(savedRpc);
+
+        MvcResult mvcResult = removeRpcById(savedRpc.getId().getId().toString());
+        Assert.assertEquals(200, mvcResult.getResponse().getStatus());
+
+        doGet("/api/rpc/persistent/" + rpcId)
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void testDeleteRpcWithTransactionalException() throws Exception {
+        Device device = createDefaultDevice();
+        Device savedDevice = doPost("/api/device", device, Device.class);
+
+        ObjectNode rpc = createDefaultRpc();
+        String result = doPostAsync(
+                "/api/rpc/oneway/" + savedDevice.getId().getId().toString(),
+                JacksonUtil.toString(rpc),
+                String.class,
+                status().isOk()
+        );
+        String rpcId = JacksonUtil.fromString(result, JsonNode.class)
+                .get("rpcId")
+                .asText();
+        Rpc savedRpc = getRpcById(rpcId);
+        Assert.assertNotNull(savedRpc);
+
+        Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(rpcDao).removeById(any(), any());
+        try {
+            MvcResult mvcResult = removeRpcById(savedRpc.getId().getId().toString());
+            Assert.assertEquals(500, mvcResult.getResponse().getStatus());
+
+            doGet("/api/rpc/persistent/" + rpcId)
+                    .andExpect(status().isOk());
+        } finally {
+            Mockito.reset(rpcDao);
+        }
+    }
+
 }
