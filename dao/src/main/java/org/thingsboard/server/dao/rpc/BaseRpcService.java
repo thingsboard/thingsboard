@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.RpcId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -47,6 +48,7 @@ public class BaseRpcService implements RpcService {
     }
 
     @Override
+    @Transactional
     public void deleteRpc(TenantId tenantId, RpcId rpcId) {
         log.trace("Executing deleteRpc, tenantId [{}], rpcId [{}]", tenantId, rpcId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
