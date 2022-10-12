@@ -18,7 +18,6 @@ package org.thingsboard.server.service.ttl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.audit.AuditLogDao;
@@ -30,8 +29,7 @@ import java.util.concurrent.TimeUnit;
 import static org.thingsboard.server.dao.model.ModelConstants.AUDIT_LOG_COLUMN_FAMILY_NAME;
 
 @Service
-@ConditionalOnProperty(name = "sql.ttl.audit_logs.enabled", havingValue = "true")
-@ConditionalOnExpression("${sql.ttl.audit_logs.ttl:0} > 0")
+@ConditionalOnExpression("${sql.ttl.audit_logs.enabled:true} && ${sql.ttl.audit_logs.ttl:0} > 0")
 @Slf4j
 public class AuditLogsCleanUpService extends AbstractCleanUpService {
 

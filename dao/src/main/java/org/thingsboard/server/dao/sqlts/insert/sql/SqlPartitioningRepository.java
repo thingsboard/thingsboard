@@ -129,7 +129,7 @@ public class SqlPartitioningRepository {
 
     public List<Long> fetchPartitions(String table) {
         List<Long> partitions = new ArrayList<>();
-        List<String> partitionsTables = jdbcTemplate.queryForList(SELECT_PARTITIONS_STMT, new Object[]{table}, String.class);
+        List<String> partitionsTables = jdbcTemplate.queryForList(SELECT_PARTITIONS_STMT, String.class, table);
         for (String partitionTableName : partitionsTables) {
             String partitionTsStr = partitionTableName.substring(table.length() + 1);
             try {
