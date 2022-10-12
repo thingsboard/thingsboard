@@ -15,7 +15,14 @@
 ///
 
 import { GridsterComponent, GridsterConfig, GridsterItem, GridsterItemComponentInterface } from 'angular-gridster2';
-import { FormattedData, Widget, WidgetPosition, widgetType } from '@app/shared/models/widget.models';
+import {
+  datasourcesHasAggregation,
+  datasourcesHasOnlyComparisonAggregation,
+  FormattedData,
+  Widget,
+  WidgetPosition,
+  widgetType
+} from '@app/shared/models/widget.models';
 import { WidgetLayout, WidgetLayouts } from '@app/shared/models/dashboard.models';
 import { IDashboardWidget, WidgetAction, WidgetContext, WidgetHeaderAction } from './widget-component.models';
 import { Timewindow } from '@shared/models/time/time.models';
@@ -25,6 +32,7 @@ import { IterableDiffer, KeyValueDiffer } from '@angular/core';
 import { IAliasController, IStateController } from '@app/core/api/widget-api.models';
 import { enumerable } from '@shared/decorators/enumerable';
 import { UtilsService } from '@core/services/utils.service';
+import { TbPopoverComponent } from '@shared/components/popover.component';
 
 export interface WidgetsData {
   widgets: Array<Widget>;
@@ -101,6 +109,8 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
 
   parentDashboard?: IDashboardComponent;
 
+  popoverComponent?: TbPopoverComponent;
+
   [Symbol.iterator](): Iterator<DashboardWidget> {
     return this.activeDashboardWidgets[Symbol.iterator]();
   }
@@ -166,7 +176,7 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
         switch (record.operation) {
           case 'add':
             this.dashboardWidgets.push(
-              new DashboardWidget(this.dashboard, record.widget, record.widgetLayout, this.parentDashboard)
+              new DashboardWidget(this.dashboard, record.widget, record.widgetLayout, this.parentDashboard, this.popoverComponent)
             );
             break;
           case 'remove':
@@ -182,7 +192,7 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
               if (!isEqual(prevDashboardWidget.widget, record.widget) ||
                   !isEqual(prevDashboardWidget.widgetLayout, record.widgetLayout)) {
                 this.dashboardWidgets[index] = new DashboardWidget(this.dashboard, record.widget, record.widgetLayout,
-                  this.parentDashboard);
+                  this.parentDashboard, this.popoverComponent);
                 this.dashboardWidgets[index].highlighted = prevDashboardWidget.highlighted;
                 this.dashboardWidgets[index].selected = prevDashboardWidget.selected;
               } else {
@@ -325,6 +335,10 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
 
   hasAggregation: boolean;
 
+  onlyQuickInterval: boolean;
+
+  onlyHistoryTimewindow: boolean;
+
   style: {[klass: string]: any};
 
   showWidgetTitlePanel: boolean;
@@ -333,7 +347,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
   customHeaderActions: Array<WidgetHeaderAction>;
   widgetActions: Array<WidgetAction>;
 
-  widgetContext = new WidgetContext(this.dashboard, this, this.widget, this.parentDashboard);
+  widgetContext = new WidgetContext(this.dashboard, this, this.widget, this.parentDashboard, this.popoverComponent);
 
   widgetId: string;
 
@@ -376,7 +390,8 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     private dashboard: IDashboardComponent,
     public widget: Widget,
     public widgetLayout?: WidgetLayout,
-    private parentDashboard?: IDashboardComponent) {
+    private parentDashboard?: IDashboardComponent,
+    private popoverComponent?: TbPopoverComponent) {
     if (!widget.id) {
       widget.id = guid();
     }
@@ -420,11 +435,27 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     this.dropShadow = isDefined(this.widget.config.dropShadow) ? this.widget.config.dropShadow : true;
     this.enableFullscreen = isDefined(this.widget.config.enableFullscreen) ? this.widget.config.enableFullscreen : true;
 
-    this.hasTimewindow = (this.widget.type === widgetType.timeseries || this.widget.type === widgetType.alarm) ?
+    let canHaveTimewindow = false;
+    let onlyQuickInterval = false;
+    let onlyHistoryTimewindow = false;
+    if (this.widget.type === widgetType.timeseries || this.widget.type === widgetType.alarm) {
+      canHaveTimewindow = true;
+    } else if (this.widget.type === widgetType.latest) {
+      canHaveTimewindow = datasourcesHasAggregation(this.widget.config.datasources);
+      onlyQuickInterval = canHaveTimewindow;
+      if (canHaveTimewindow) {
+        onlyHistoryTimewindow = datasourcesHasOnlyComparisonAggregation(this.widget.config.datasources);
+      }
+    }
+
+    this.hasTimewindow = canHaveTimewindow ?
       (isDefined(this.widget.config.useDashboardTimewindow) ?
         (!this.widget.config.useDashboardTimewindow && (isUndefined(this.widget.config.displayTimewindow)
           || this.widget.config.displayTimewindow)) : false)
       : false;
+
+    this.onlyQuickInterval = onlyQuickInterval;
+    this.onlyHistoryTimewindow = onlyHistoryTimewindow;
 
     this.hasAggregation = this.widget.type === widgetType.timeseries;
 

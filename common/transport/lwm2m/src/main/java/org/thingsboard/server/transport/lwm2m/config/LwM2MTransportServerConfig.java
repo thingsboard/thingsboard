@@ -38,6 +38,10 @@ import java.util.List;
 public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
 
     @Getter
+    @Value("${transport.lwm2m.dtls.retransmission_timeout:9000}")
+    private int dtlsRetransmissionTimeout;
+
+    @Getter
     @Value("${transport.lwm2m.timeout:}")
     private Long timeout;
 

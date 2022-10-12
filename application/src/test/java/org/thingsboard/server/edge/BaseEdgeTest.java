@@ -232,7 +232,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         installation();
 
         edgeImitator = new EdgeImitator("localhost", 7070, edge.getRoutingKey(), edge.getSecret());
-        edgeImitator.expectMessageAmount(15);
+        edgeImitator.expectMessageAmount(17);
         edgeImitator.connect();
 
         requestEdgeRuleChainMetadata();

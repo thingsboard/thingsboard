@@ -62,6 +62,75 @@
           <input matInput formControlName="decimals" type="number" min="0" max="15" step="1">
         </mat-form-field>
       </div>
+      <section *ngIf="widgetType === widgetTypes.latest && modelValue.type === dataKeyTypes.timeseries" fxLayout="column">
+        <mat-form-field style="padding-bottom: 46px;">
+          <mat-label translate>datakey.aggregation</mat-label>
+          <mat-select formControlName="aggregationType" style="min-width: 150px;">
+            <mat-option *ngFor="let aggregation of aggregations" [value]="aggregation">
+              {{ aggregationTypesTranslations.get(aggregationTypes[aggregation]) | translate }}
+            </mat-option>
+          </mat-select>
+          <mat-hint style="line-height: 15px;">
+            {{ dataKeyFormGroup.get('aggregationType').value ? (dataKeyAggregationTypeHintTranslations.get(aggregationTypes[dataKeyFormGroup.get('aggregationType').value]) | translate) : '' }}
+            <section *ngIf="dataKeyFormGroup.get('aggregationType').value !== aggregationTypes.NONE">
+              {{ 'datakey.aggregation-type-hint-common' | translate }}
+            </section>
+          </mat-hint>
+        </mat-form-field>
+        <fieldset *ngIf="dataKeyFormGroup.get('aggregationType').value && dataKeyFormGroup.get('aggregationType').value !== aggregationTypes.NONE" class="fields-group fields-group-slider">
+          <legend class="group-title" translate>datakey.delta-calculation</legend>
+          <mat-expansion-panel class="tb-settings comparison" [expanded]="dataKeyFormGroup.get('comparisonEnabled').value" [disabled]="!dataKeyFormGroup.get('comparisonEnabled').value">
+            <mat-expansion-panel-header fxLayout="row wrap">
+              <mat-panel-title fxLayout="column">
+                <mat-slide-toggle formControlName="comparisonEnabled" (click)="$event.stopPropagation()"
+                                  fxLayoutAlign="center">
+                  {{ 'datakey.enable-delta-calculation' | translate }}
+                </mat-slide-toggle>
+                <mat-hint class="tb-hint" style="line-height: 15px; padding-left: 45px;">{{ 'datakey.enable-delta-calculation-hint' | translate }}</mat-hint>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <ng-template matExpansionPanelContent>
+              <section fxLayout="column" *ngIf="dataKeyFormGroup.get('comparisonEnabled').value">
+                <mat-form-field fxFlex class="mat-block">
+                  <mat-label translate>widgets.chart.time-for-comparison</mat-label>
+                  <mat-select formControlName="timeForComparison">
+                    <mat-option [value]="'previousInterval'">
+                      {{ 'widgets.chart.time-for-comparison-previous-interval' | translate }}
+                    </mat-option>
+                    <mat-option [value]="'days'">
+                      {{ 'widgets.chart.time-for-comparison-days' | translate }}
+                    </mat-option>
+                    <mat-option [value]="'weeks'">
+                      {{ 'widgets.chart.time-for-comparison-weeks' | translate }}
+                    </mat-option>
+                    <mat-option [value]="'months'">
+                      {{ 'widgets.chart.time-for-comparison-months' | translate }}
+                    </mat-option>
+                    <mat-option [value]="'years'">
+                      {{ 'widgets.chart.time-for-comparison-years' | translate }}
+                    </mat-option>
+                    <mat-option [value]="'customInterval'">
+                      {{ 'widgets.chart.time-for-comparison-custom-interval' | translate }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field *ngIf="dataKeyFormGroup.get('timeForComparison').value === 'customInterval'" fxFlex class="mat-block">
+                  <mat-label translate>widgets.chart.custom-interval-value</mat-label>
+                  <input required matInput type="number" min="0" formControlName="comparisonCustomIntervalValue">
+                </mat-form-field>
+                <mat-form-field style="padding-bottom: 16px;">
+                  <mat-label translate>datakey.delta-calculation-result</mat-label>
+                  <mat-select formControlName="comparisonResultType" style="min-width: 150px;">
+                    <mat-option *ngFor="let comparisonResultType of comparisonResults" [value]="comparisonResultType">
+                      {{ comparisonResultTypeTranslations.get(comparisonResultTypes[comparisonResultType]) | translate }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </section>
+            </ng-template>
+          </mat-expansion-panel>
+        </fieldset>
+      </section>
       <section fxLayout="column" *ngIf="modelValue.type === dataKeyTypes.function">
         <span translate>datakey.data-generation-func</span>
         <br/>

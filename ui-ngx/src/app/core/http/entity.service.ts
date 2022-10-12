@@ -87,6 +87,7 @@ import { RuleChainMetaData, RuleChainType } from '@shared/models/rule-chain.mode
 import { WidgetService } from '@core/http/widget.service';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { QueueService } from '@core/http/queue.service';
+import { AssetProfileService } from '@core/http/asset-profile.service';
 
 @Injectable({
   providedIn: 'root'
@@ -110,6 +111,7 @@ export class EntityService {
     private otaPackageService: OtaPackageService,
     private widgetService: WidgetService,
     private deviceProfileService: DeviceProfileService,
+    private assetProfileService: AssetProfileService,
     private utils: UtilsService,
     private queueService: QueueService
   ) { }
@@ -235,6 +237,11 @@ export class EntityService {
       case EntityType.DEVICE_PROFILE:
         observable = this.getEntitiesByIdsObservable(
           (id) => this.deviceProfileService.getDeviceProfileInfo(id, config),
+          entityIds);
+        break;
+      case EntityType.ASSET_PROFILE:
+        observable = this.getEntitiesByIdsObservable(
+          (id) => this.assetProfileService.getAssetProfileInfo(id, config),
           entityIds);
         break;
     }
@@ -381,6 +388,10 @@ export class EntityService {
       case EntityType.DEVICE_PROFILE:
         pageLink.sortOrder.property = 'name';
         entitiesObservable = this.deviceProfileService.getDeviceProfileInfos(pageLink, null, config);
+        break;
+      case EntityType.ASSET_PROFILE:
+        pageLink.sortOrder.property = 'name';
+        entitiesObservable = this.assetProfileService.getAssetProfileInfos(pageLink, config);
         break;
     }
     return entitiesObservable;
@@ -1408,6 +1419,9 @@ export class EntityService {
         break;
       case EdgeEventType.DEVICE_PROFILE:
         entityObservable = this.deviceProfileService.getDeviceProfile(entityId);
+        break;
+      case EdgeEventType.ASSET_PROFILE:
+        entityObservable = this.assetProfileService.getAssetProfile(entityId);
         break;
       case EdgeEventType.RELATION:
         entityObservable = of(entity.body);

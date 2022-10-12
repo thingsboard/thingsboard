@@ -402,6 +402,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
         switch (entityId.getEntityType()) {
             case TENANT:
             case DEVICE_PROFILE:
+            case ASSET_PROFILE:
             case OTA_PACKAGE:
                 return convertToEdgeIds(findEdgesByTenantId(tenantId, pageLink));
             case CUSTOMER:

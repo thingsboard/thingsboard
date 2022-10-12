@@ -80,6 +80,13 @@ public class BaseAttributesService implements AttributesService {
     }
 
     @Override
+    public ListenableFuture<String> save(TenantId tenantId, EntityId entityId, String scope, AttributeKvEntry attribute) {
+        validate(entityId, scope);
+        AttributeUtils.validate(attribute);
+        return attributesDao.save(tenantId, entityId, scope, attribute);
+    }
+
+    @Override
     public ListenableFuture<List<String>> save(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
         validate(entityId, scope);
         attributes.forEach(AttributeUtils::validate);

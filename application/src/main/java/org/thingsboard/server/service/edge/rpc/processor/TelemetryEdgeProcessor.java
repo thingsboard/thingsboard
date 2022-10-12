@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -45,7 +46,6 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
-import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -161,23 +161,26 @@ public class TelemetryEdgeProcessor extends BaseEdgeProcessor {
     }
 
     private Pair<String, RuleChainId> getDefaultQueueNameAndRuleChainId(TenantId tenantId, EntityId entityId) {
+        RuleChainId ruleChainId = null;
+        String queueName = null;
         if (EntityType.DEVICE.equals(entityId.getEntityType())) {
             DeviceProfile deviceProfile = deviceProfileCache.get(tenantId, new DeviceId(entityId.getId()));
-            RuleChainId ruleChainId;
-            String queueName;
-
             if (deviceProfile == null) {
                 log.warn("[{}] Device profile is null!", entityId);
-                ruleChainId = null;
-                queueName = null;
             } else {
                 ruleChainId = deviceProfile.getDefaultRuleChainId();
                 queueName = deviceProfile.getDefaultQueueName();
             }
-            return new ImmutablePair<>(queueName, ruleChainId);
-        } else {
-            return new ImmutablePair<>(null, null);
+        } else if (EntityType.ASSET.equals(entityId.getEntityType())) {
+            AssetProfile assetProfile = assetProfileCache.get(tenantId, new AssetId(entityId.getId()));
+            if (assetProfile == null) {
+                log.warn("[{}] Asset profile is null!", entityId);
+            } else {
+                ruleChainId = assetProfile.getDefaultRuleChainId();
+                queueName = assetProfile.getDefaultQueueName();
+            }
         }
+        return new ImmutablePair<>(queueName, ruleChainId);
     }
 
     private ListenableFuture<Void> processPostTelemetry(TenantId tenantId, CustomerId customerId, EntityId entityId, TransportProtos.PostTelemetryMsg msg, TbMsgMetaData metaData) {

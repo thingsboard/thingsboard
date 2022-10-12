@@ -25,6 +25,8 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -44,6 +46,7 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
@@ -210,6 +213,8 @@ public interface TbContext {
 
     DeviceService getDeviceService();
 
+    DeviceCredentialsService getDeviceCredentialsService();
+
     TbClusterService getClusterService();
 
     DashboardService getDashboardService();
@@ -233,6 +238,8 @@ public interface TbContext {
     OtaPackageService getOtaPackageService();
 
     RuleEngineDeviceProfileCache getDeviceProfileCache();
+
+    RuleEngineAssetProfileCache getAssetProfileCache();
 
     EdgeService getEdgeService();
 
@@ -285,6 +292,8 @@ public interface TbContext {
     void addTenantProfileListener(Consumer<TenantProfile> listener);
 
     void addDeviceProfileListeners(Consumer<DeviceProfile> listener, BiConsumer<DeviceId, DeviceProfile> deviceListener);
+
+    void addAssetProfileListeners(Consumer<AssetProfile> listener, BiConsumer<AssetId, AssetProfile> assetListener);
 
     void removeListeners();
 
