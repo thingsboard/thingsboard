@@ -604,11 +604,6 @@ public final class EdgeGrpcSession implements Closeable {
                     result.add(ctx.getEdgeRequestsService().processDeviceProfileDevicesRequestMsg(edge.getTenantId(), edge, deviceProfileDevicesRequestMsg));
                 }
             }
-            if (uplinkMsg.getAssetProfileAssetsRequestMsgCount() > 0) {
-                for (AssetProfileAssetsRequestMsg assetProfileAssetsRequestMsg : uplinkMsg.getAssetProfileAssetsRequestMsgList()) {
-                    result.add(ctx.getEdgeRequestsService().processAssetProfileAssetsRequestMsg(edge.getTenantId(), edge, assetProfileAssetsRequestMsg));
-                }
-            }
             if (uplinkMsg.getWidgetBundleTypesRequestMsgCount() > 0) {
                 for (WidgetBundleTypesRequestMsg widgetBundleTypesRequestMsg : uplinkMsg.getWidgetBundleTypesRequestMsgList()) {
                     result.add(ctx.getEdgeRequestsService().processWidgetBundleTypesRequestMsg(edge.getTenantId(), edge, widgetBundleTypesRequestMsg));

@@ -251,12 +251,12 @@ message AssetUpdateMsg {
   int64 idLSB = 3;
   optional int64 customerIdMSB = 4;
   optional int64 customerIdLSB = 5;
-  optional int64 assetProfileIdMSB = 6;
-  optional int64 assetProfileIdLSB = 7;
-  string name = 8;
-  string type = 9;
-  optional string label = 10;
-  optional string additionalInfo = 11;
+  string name = 6;
+  string type = 7;
+  optional string label = 8;
+  optional string additionalInfo = 9;
+  optional int64 assetProfileIdMSB = 10;
+  optional int64 assetProfileIdLSB = 11;
 }
 
 message EntityViewUpdateMsg {
@@ -405,11 +405,6 @@ message DeviceProfileDevicesRequestMsg {
   int64 deviceProfileIdLSB = 2;
 }
 
-message AssetProfileAssetsRequestMsg {
-  int64 assetProfileIdMSB = 1;
-  int64 assetProfileIdLSB = 2;
-}
-
 message WidgetBundleTypesRequestMsg {
   int64 widgetBundleIdMSB = 1;
   int64 widgetBundleIdLSB = 2;
@@ -517,7 +512,6 @@ message UplinkMsg {
   repeated DeviceProfileDevicesRequestMsg deviceProfileDevicesRequestMsg = 13;
   repeated WidgetBundleTypesRequestMsg widgetBundleTypesRequestMsg = 14;
   repeated EntityViewsRequestMsg entityViewsRequestMsg = 15;
-  repeated AssetProfileAssetsRequestMsg assetProfileAssetsRequestMsg = 16;
 }
 
 message UplinkResponseMsg {

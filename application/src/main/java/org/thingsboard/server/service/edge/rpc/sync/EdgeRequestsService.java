@@ -42,8 +42,6 @@ public interface EdgeRequestsService {
 
     ListenableFuture<Void> processDeviceProfileDevicesRequestMsg(TenantId tenantId, Edge edge, DeviceProfileDevicesRequestMsg deviceProfileDevicesRequestMsg);
 
-    ListenableFuture<Void> processAssetProfileAssetsRequestMsg(TenantId tenantId, Edge edge, AssetProfileAssetsRequestMsg assetProfileAssetsRequestMsg);
-
     ListenableFuture<Void> processWidgetBundleTypesRequestMsg(TenantId tenantId, Edge edge, WidgetBundleTypesRequestMsg widgetBundleTypesRequestMsg);
 
     ListenableFuture<Void> processEntityViewsRequestMsg(TenantId tenantId, Edge edge, EntityViewsRequestMsg entityViewsRequestMsg);
