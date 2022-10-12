@@ -16,12 +16,18 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.thingsboard.common.util.JacksonUtil;
@@ -38,16 +44,20 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.ota.OtaPackageDao;
 
 import java.nio.ByteBuffer;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 
+@ContextConfiguration(classes = {BaseOtaPackageControllerTest.Config.class})
 public abstract class BaseOtaPackageControllerTest extends AbstractControllerTest {
 
     private IdComparator<OtaPackageInfo> idComparator = new IdComparator<>();
@@ -63,6 +73,17 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
     private Tenant savedTenant;
     private User tenantAdmin;
     private DeviceProfileId deviceProfileId;
+
+    @Autowired
+    private OtaPackageDao otaPackageDao;
+
+    static class Config {
+        @Bean
+        @Primary
+        public OtaPackageDao otaPackageDao(OtaPackageDao otaPackageDao) {
+            return Mockito.mock(OtaPackageDao.class, AdditionalAnswers.delegatesTo(otaPackageDao));
+        }
+    }
 
     @Before
     public void beforeTest() throws Exception {
@@ -416,6 +437,50 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
 
         Assert.assertEquals(otaPackagesWithData, loadedOtaPackagesWithData);
         Assert.assertEquals(allOtaPackages, allLoadedOtaPackages);
+    }
+
+    @Test
+    public void testDeleteOtaPackageWithTransactionalOk() throws Exception {
+        SaveOtaPackageInfoRequest firmwareInfo = new SaveOtaPackageInfoRequest();
+        firmwareInfo.setDeviceProfileId(deviceProfileId);
+        firmwareInfo.setType(FIRMWARE);
+        firmwareInfo.setTitle("MOCK_TransactionalOk");
+        firmwareInfo.setVersion(VERSION);
+        firmwareInfo.setUsesUrl(false);
+
+        OtaPackageInfo savedFirmwareInfo = save(firmwareInfo);
+
+        doDelete("/api/otaPackage/" + savedFirmwareInfo.getId().getId().toString())
+                .andExpect(status().isOk());
+
+        doGet("/api/otaPackage/info/" + savedFirmwareInfo.getId().getId().toString())
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(containsString(msgErrorNotFound)));
+    }
+
+    @Test
+    public void testDeleteOtaPackageWithTransactionalException() throws Exception {
+        SaveOtaPackageInfoRequest firmwareInfo = new SaveOtaPackageInfoRequest();
+        firmwareInfo.setDeviceProfileId(deviceProfileId);
+        firmwareInfo.setType(FIRMWARE);
+        firmwareInfo.setTitle("MOCK_TransactionalOk");
+        firmwareInfo.setVersion(VERSION);
+        firmwareInfo.setUsesUrl(false);
+
+        OtaPackageInfo savedFirmwareInfo = save(firmwareInfo);
+        OtaPackageInfo foundFirmwareInfo = doGet("/api/otaPackage/info/" + savedFirmwareInfo.getId().getId().toString(), OtaPackageInfo.class);
+        Assert.assertEquals(foundFirmwareInfo.getTitle(), savedFirmwareInfo.getTitle());
+
+        Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(otaPackageDao).removeById(any(), any());
+        try {
+            doDelete("/api/otaPackage/" + savedFirmwareInfo.getId().getId().toString())
+                    .andExpect(status().isInternalServerError());
+
+            OtaPackageInfo foundFirmwareInfoAfter = doGet("/api/otaPackage/info/" + savedFirmwareInfo.getId().getId().toString(), OtaPackageInfo.class);
+            Assert.assertEquals(foundFirmwareInfoAfter.getTitle(), savedFirmwareInfo.getTitle());
+        } finally {
+            Mockito.reset(otaPackageDao);
+        }
     }
 
     private OtaPackageInfo save(SaveOtaPackageInfoRequest firmwareInfo) throws Exception {
