@@ -551,7 +551,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     private void forwardToAppActor(UUID id, Optional<TbActorMsg> actorMsg, TbCallback callback) {
         if (actorMsg.isPresent()) {
             log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg.get());
-            actorContext.tellWithHighPriority(actorMsg.get());
+            actorContext.tell(actorMsg.get());
         }
         callback.onSuccess();
     }

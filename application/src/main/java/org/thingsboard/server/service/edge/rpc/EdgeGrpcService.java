@@ -296,7 +296,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 log.trace("[{}] timeout for processing sync edge request.", requestId);
                 consumer.accept(new FromEdgeSyncResponse(requestId, request.getTenantId(), request.getEdgeId(), false));
             }
-        }, 10, TimeUnit.SECONDS);
+        }, 20, TimeUnit.SECONDS);
     }
 
     private void processSyncResponse(FromEdgeSyncResponse response) {
