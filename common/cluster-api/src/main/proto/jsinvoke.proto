@@ -41,34 +41,34 @@ message RemoteJsResponse {
 }
 
 message JsCompileRequest {
-  string scriptHash = 1;
-  string functionName = 2;
-  string scriptBody = 3;
+  string functionName = 3;
+  string scriptBody = 4;
+  string scriptHash = 5;
 }
 
 message JsReleaseRequest {
-  string scriptHash = 1;
-  string functionName = 2;
+  string functionName = 3;
+  string scriptHash = 4;
 }
 
 message JsReleaseResponse {
   bool success = 1;
-  string scriptHash = 2;
+  string scriptHash = 4;
 }
 
 message JsCompileResponse {
   bool success = 1;
-  string scriptHash = 2;
-  JsInvokeErrorCode errorCode = 3;
-  string errorDetails = 4;
+  JsInvokeErrorCode errorCode = 4;
+  string errorDetails = 5;
+  string scriptHash = 6;
 }
 
 message JsInvokeRequest {
-  string scriptHash = 1;
-  string functionName = 2;
-  string scriptBody = 3;
-  int32 timeout = 4;
-  repeated string args = 5;
+  string functionName = 3;
+  string scriptBody = 4;
+  int32 timeout = 5;
+  repeated string args = 6;
+  string scriptHash = 7;
 }
 
 message JsInvokeResponse {

@@ -16,6 +16,8 @@
 
 
 export interface TbMessage {
+    scriptIdMSB: string; // deprecated
+    scriptIdLSB: string; // deprecated
     scriptHash: string;
 }
 
