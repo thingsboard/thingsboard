@@ -16,13 +16,11 @@
 package org.thingsboard.server.service.edge.rpc.constructor;
 
 import com.google.protobuf.ByteString;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.nio.charset.StandardCharsets;
@@ -38,6 +36,10 @@ public class AssetProfileMsgConstructor {
                 .setIdLSB(assetProfile.getId().getId().getLeastSignificantBits())
                 .setName(assetProfile.getName())
                 .setDefault(assetProfile.isDefault());
+        if (assetProfile.getDefaultDashboardId() != null) {
+            builder.setDefaultDashboardIdMSB(assetProfile.getDefaultDashboardId().getId().getMostSignificantBits())
+                    .setDefaultDashboardIdLSB(assetProfile.getDefaultDashboardId().getId().getLeastSignificantBits());
+        }
         if (assetProfile.getDefaultQueueName() != null) {
             builder.setDefaultQueueName(assetProfile.getDefaultQueueName());
         }

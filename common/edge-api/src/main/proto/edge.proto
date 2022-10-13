@@ -233,8 +233,10 @@ message AssetProfileUpdateMsg {
   bool default = 6;
   int64 defaultRuleChainIdMSB = 7;
   int64 defaultRuleChainIdLSB = 8;
-  optional string defaultQueueName = 9;
-  optional bytes image = 10;
+  int64 defaultDashboardIdMSB = 9;
+  int64 defaultDashboardIdLSB = 10;
+  optional string defaultQueueName = 11;
+  optional bytes image = 12;
 }
 
 message DeviceCredentialsUpdateMsg {
