@@ -328,6 +328,7 @@
         "repository-url": "Repository URL",
         "repository-url-required": "Repository URL is required.",
         "default-branch": "Default branch name",
+        "repository-read-only": "Read-only",
         "authentication-settings": "Authentication settings",
         "auth-method": "Authentication method",
         "auth-method-username-password": "Password / access token",

@@ -41,6 +41,9 @@
             <mat-label translate>admin.default-branch</mat-label>
             <input matInput formControlName="defaultBranch">
           </mat-form-field>
+          <mat-checkbox formControlName="readOnly" style="margin-bottom: 16px;">
+            {{ 'admin.repository-read-only' | translate }}
+          </mat-checkbox>
           <fieldset [disabled]="isLoading$ | async" class="fields-group">
             <legend class="group-title" translate>admin.authentication-settings</legend>
             <mat-form-field fxFlex class="mat-block">
