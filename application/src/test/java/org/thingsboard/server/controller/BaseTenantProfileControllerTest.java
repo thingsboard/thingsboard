@@ -16,10 +16,16 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.AdditionalAnswers;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
@@ -35,21 +41,37 @@ import org.thingsboard.server.common.data.queue.SubmitStrategyType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
+import org.thingsboard.server.dao.tenant.TenantProfileDao;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@ContextConfiguration(classes = {BaseTenantProfileControllerTest.Config.class})
 public abstract class BaseTenantProfileControllerTest extends AbstractControllerTest {
 
     private IdComparator<TenantProfile> idComparator = new IdComparator<>();
     private IdComparator<EntityInfo> tenantProfileInfoIdComparator = new IdComparator<>();
+
+
+    @Autowired
+    private TenantProfileDao tenantProfileDao;
+
+    static class Config {
+        @Bean
+        @Primary
+        public TenantProfileDao tenantProfileDao(TenantProfileDao tenantProfileDao) {
+            return Mockito.mock(TenantProfileDao.class, AdditionalAnswers.delegatesTo(tenantProfileDao));
+        }
+    }
 
     @Test
     public void testSaveTenantProfile() throws Exception {
@@ -325,6 +347,42 @@ public abstract class BaseTenantProfileControllerTest extends AbstractController
                 new TypeReference<PageData<EntityInfo>>(){}, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(1, pageData.getTotalElements());
+    }
+
+
+    @Test
+    public void testDeleteTenantProfileWithTransactionalOk() throws Exception {
+        loginSysAdmin();
+        TenantProfile tenantProfile = this.createTenantProfile("MOCK_TransactionalOk");
+        TenantProfile savedTenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
+        Assert.assertNotNull(savedTenantProfile);
+
+        doDelete("/api/tenantProfile/" + savedTenantProfile.getId().getId().toString())
+                .andExpect(status().isOk());
+
+        doGet("/api/tenantProfile/" + savedTenantProfile.getId().getId().toString())
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(containsString(msgErrorNoFound("Tenant profile", savedTenantProfile.getId().getId().toString()))));
+    }
+
+    @Test
+    public void testDeleteTenantProfileWithTransactionalException() throws Exception {
+        loginSysAdmin();
+        TenantProfile tenantProfile = this.createTenantProfile("MOCK_TransactionalException");
+        TenantProfile savedTenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
+        doGet("/api/tenantProfile/" + savedTenantProfile.getId().getId().toString())
+                .andExpect(status().isOk());
+
+        Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(tenantProfileDao).removeById(any(), any());
+        try {
+            doDelete("/api/tenantProfile/" + savedTenantProfile.getId().getId().toString())
+                    .andExpect(status().isInternalServerError());
+
+            doGet("/api/tenantProfile/" + savedTenantProfile.getId().getId().toString())
+                    .andExpect(status().isOk());
+        } finally {
+            Mockito.reset(tenantProfileDao);
+        }
     }
 
     private TenantProfile createTenantProfile(String name) {
