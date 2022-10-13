@@ -162,14 +162,18 @@ public class JpaAuditLogDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void testDeleteAuditLogWithTransactionalOk() throws Exception {
-        neededFoundedAuditLog = createAAuditLogTransactional();
+        ActionType actionType = ActionType.ADDED;
+        CustomerId customerId = customerId1;
+        UserId userId = userId1;
+        EntityId entityId = entityId1;
+        neededFoundedAuditLog = createAuditLog(1, actionType, customerId, userId, entityId);
         AuditLog foundedAuditLogById = auditLogDao.findById(TenantId.fromUUID(tenantId), neededFoundedAuditLog.getUuidId());
         checkFoundedAuditLog(foundedAuditLogById);
 
         auditLogDao.removeById(TenantId.fromUUID(tenantId), foundedAuditLogById.getUuidId());
 
-        AuditLog foundedAuditLogByIdAfter = auditLogDao.findById(TenantId.fromUUID(tenantId), neededFoundedAuditLog.getUuidId());
-        Assert.isTrue(foundedAuditLogByIdAfter == null);
+        Assert.isNull(auditLogDao.findById(TenantId.fromUUID(tenantId), neededFoundedAuditLog.getUuidId()),
+                "RemoveById is not success!");
     }
 
     @Test
@@ -194,14 +198,6 @@ public class JpaAuditLogDaoTest extends AbstractJpaDaoTest {
     private void checkFoundedAuditLogsList(List<AuditLog> foundedAuditLogs, int neededSizeForFoundedList) {
         assertNotNull(foundedAuditLogs);
         assertEquals(neededSizeForFoundedList, foundedAuditLogs.size());
-    }
-
-    private AuditLog createAAuditLogTransactional () {
-        ActionType actionType = ActionType.ADDED;
-        CustomerId customerId = customerId1;
-        UserId userId = userId1;
-        EntityId entityId = entityId1;
-        return createAuditLog(1, actionType, customerId, userId, entityId);
     }
 
     private AuditLog createAuditLog(int number, ActionType actionType, CustomerId customerId, UserId userId, EntityId entityId) {

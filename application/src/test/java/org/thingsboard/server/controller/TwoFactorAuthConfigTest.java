@@ -509,14 +509,14 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
         Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(adminSettingsDao).removeById(any(), any());
         try {
             AccountTwoFaSettings accountTwoFaSettings = createAccountTwoFaSettings();
-            Assert.isTrue(accountTwoFaSettings.getConfigs().size() > 0);
+            Assert.isTrue(accountTwoFaSettings.getConfigs().size() == 1);
 
             final Throwable raisedException = catchThrowable(() -> twoFaConfigManager.deletePlatformTwoFaSettings(tenantId));
             assertThat(raisedException).isInstanceOf(ConstraintViolationException.class)
                     .hasMessageContaining("mock message");
 
             AccountTwoFaSettings accountTwoFaSettingsAfter = readResponse(doGet("/api/2fa/account/settings").andExpect(status().isOk()), AccountTwoFaSettings.class);
-            Assert.isTrue(accountTwoFaSettingsAfter.getConfigs().size() > 0);
+            Assert.isTrue(accountTwoFaSettingsAfter.getConfigs().size() == 1);
         } finally {
             Mockito.reset(adminSettingsDao);
         }
