@@ -115,6 +115,7 @@ import { DialogService } from '@core/services/dialog.service';
 import { PopoverPlacement } from '@shared/components/popover.models';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { DASHBOARD_PAGE_COMPONENT_TOKEN } from '@home/components/tokens';
+import { EmbedDashboardDialogData } from '@home/components/widget/dialog/embed-dashboard-dialog.component';
 
 @Component({
   selector: 'tb-widget',
@@ -1436,18 +1437,20 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         title = insertVariable(title, prop + ':entityLabel', params[prop].entityLabel);
       }
     }
+    const dialogData: EmbedDashboardDialogData = {
+      dashboard,
+      state: objToBase64([ stateObject ]),
+      title,
+      hideToolbar: hideDashboardToolbar,
+      initialTimewindow: this.widgetContext.dashboardTimewindow,
+      width: dialogWidth,
+      height: dialogHeight
+    };
     this.dialog.open(this.embedDashboardDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       viewContainerRef: this.widgetContentContainer,
-      data: {
-        dashboard,
-        state: objToBase64([ stateObject ]),
-        title,
-        hideToolbar: hideDashboardToolbar,
-        width: dialogWidth,
-        height: dialogHeight
-      }
+      data: dialogData
     });
     this.cd.markForCheck();
   }

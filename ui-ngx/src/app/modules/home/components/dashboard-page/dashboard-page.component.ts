@@ -146,6 +146,7 @@ import { VersionControlComponent } from '@home/components/vc/version-control.com
 import { TbPopoverService } from '@shared/components/popover.service';
 import { tap } from 'rxjs/operators';
 import { TbPopoverComponent } from '@shared/components/popover.component';
+import { Timewindow } from '@shared/models/time/time.models';
 
 // @dynamic
 @Component({
@@ -196,6 +197,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   @Input()
   parentAliasController?: IAliasController = null;
+
+  @Input()
+  initialTimeWindow?: Timewindow;
 
   @ViewChild('dashboardContainer') dashboardContainer: ElementRef<HTMLElement>;
 
@@ -432,7 +436,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     }
 
     this.dashboardConfiguration = this.dashboard.configuration;
-    this.dashboardCtx.dashboardTimewindow = this.dashboardConfiguration.timewindow;
+    this.dashboardCtx.dashboardTimewindow = this.initialTimeWindow ? this.initialTimeWindow : this.dashboardConfiguration.timewindow;
     this.layouts.main.layoutCtx.widgets = new LayoutWidgetsArray(this.dashboardCtx);
     this.layouts.right.layoutCtx.widgets = new LayoutWidgetsArray(this.dashboardCtx);
     this.widgetEditMode = data.widgetEditMode;

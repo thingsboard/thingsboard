@@ -16,9 +16,7 @@
 
 import {
   Component,
-  ComponentFactoryResolver,
   Inject,
-  Injector,
   OnInit,
   ViewChild,
   ViewContainerRef
@@ -29,12 +27,14 @@ import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Dashboard } from '@shared/models/dashboard.models';
+import { Timewindow } from '@shared/models/time/time.models';
 
 export interface EmbedDashboardDialogData {
   dashboard: Dashboard;
   state: string;
   title: string;
   hideToolbar: boolean;
+  initialTimewindow?: Timewindow;
   width?: number;
   height?: number;
 }
@@ -53,6 +53,7 @@ export class EmbedDashboardDialogComponent extends DialogComponent<EmbedDashboar
   state = this.data.state;
   title = this.data.title;
   hideToolbar = this.data.hideToolbar;
+  initialTimewindow = this.data.initialTimewindow;
 
   dialogStyle: any = {};
 
