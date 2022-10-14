@@ -1442,7 +1442,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       state: objToBase64([ stateObject ]),
       title,
       hideToolbar: hideDashboardToolbar,
-      initialTimewindow: this.widgetContext.dashboardTimewindow,
+      initialTimewindow: deepClone(this.widgetContext.dashboardTimewindow),
       width: dialogWidth,
       height: dialogHeight
     };
