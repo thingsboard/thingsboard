@@ -59,8 +59,9 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
 import org.thingsboard.server.service.security.exception.UserPasswordExpiredException;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.utils.AuthorizationDetails;
 import org.thingsboard.server.utils.MiscUtils;
-import ua_parser.Client;
+import org.thingsboard.server.utils.RestAuthenticationDetailsUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -232,7 +233,8 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
             JsonNode additionalInfo = user.getAdditionalInfo();
             if (additionalInfo instanceof ObjectNode && additionalInfo.has(UserServiceImpl.USER_PASSWORD_HISTORY)) {
                 JsonNode userPasswordHistoryJson = additionalInfo.get(UserServiceImpl.USER_PASSWORD_HISTORY);
-                Map<String, String> userPasswordHistoryMap = JacksonUtil.convertValue(userPasswordHistoryJson, new TypeReference<>() {});
+                Map<String, String> userPasswordHistoryMap = JacksonUtil.convertValue(userPasswordHistoryJson, new TypeReference<>() {
+                });
                 for (Map.Entry<String, String> entry : userPasswordHistoryMap.entrySet()) {
                     if (encoder.matches(password, entry.getValue()) && Long.parseLong(entry.getKey()) > passwordReuseFrequencyTs) {
                         throw new DataValidationException("Password was already used for the last " + passwordPolicy.getPasswordReuseFrequencyDays() + " days");
@@ -262,54 +264,24 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
     }
 
     @Override
-    public void logLoginAction(User user, Object authenticationDetails, ActionType actionType, Exception e) {
+    public void logLoginAction(User user, Object authenticationDetails, ActionType actionType, Exception e, String provider) {
         String clientAddress = "Unknown";
         String browser = "Unknown";
         String os = "Unknown";
         String device = "Unknown";
         if (authenticationDetails instanceof RestAuthenticationDetails) {
-            RestAuthenticationDetails details = (RestAuthenticationDetails) authenticationDetails;
+            AuthorizationDetails details = RestAuthenticationDetailsUtils.getRestAuthenticationDetails((RestAuthenticationDetails) authenticationDetails);
             clientAddress = details.getClientAddress();
-            if (details.getUserAgent() != null) {
-                Client userAgent = details.getUserAgent();
-                if (userAgent.userAgent != null) {
-                    browser = userAgent.userAgent.family;
-                    if (userAgent.userAgent.major != null) {
-                        browser += " " + userAgent.userAgent.major;
-                        if (userAgent.userAgent.minor != null) {
-                            browser += "." + userAgent.userAgent.minor;
-                                if (userAgent.userAgent.patch != null) {
-                                    browser += "." + userAgent.userAgent.patch;
-                                }
-                            }
-                        }
-                    }
-                    if (userAgent.os != null) {
-                        os = userAgent.os.family;
-                        if (userAgent.os.major != null) {
-                            os += " " + userAgent.os.major;
-                            if (userAgent.os.minor != null) {
-                                os += "." + userAgent.os.minor;
-                                if (userAgent.os.patch != null) {
-                                    os += "." + userAgent.os.patch;
-                                    if (userAgent.os.patchMinor != null) {
-                                        os += "." + userAgent.os.patchMinor;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if (userAgent.device != null) {
-                        device = userAgent.device.family;
-                    }
-                }
-            }
+            browser = details.getBrowser();
+            os = details.getOs();
+            device = details.getDevice();
+        }
         if (actionType == ActionType.LOGIN && e == null) {
             userService.setLastLoginTs(user.getTenantId(), user.getId());
         }
         auditLogService.logEntityAction(
                 user.getTenantId(), user.getCustomerId(), user.getId(),
-                user.getName(), user.getId(), null, actionType, e, clientAddress, browser, os, device);
+                user.getName(), user.getId(), null, actionType, e, clientAddress, browser, os, device, provider);
     }
 
     private static boolean isPositiveInteger(Integer val) {

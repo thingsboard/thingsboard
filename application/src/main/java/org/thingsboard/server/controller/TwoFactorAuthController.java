@@ -58,6 +58,8 @@ import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
 @RequiredArgsConstructor
 public class TwoFactorAuthController extends BaseController {
 
+    private static final String TwoFA_PROVIDER = "2FA ";
+
     private final TwoFactorAuthService twoFactorAuthService;
     private final TwoFaConfigManager twoFaConfigManager;
     private final JwtTokenFactory tokenFactory;
@@ -92,12 +94,12 @@ public class TwoFactorAuthController extends BaseController {
         SecurityUser user = getCurrentUser();
         boolean verificationSuccess = twoFactorAuthService.checkVerificationCode(user, providerType, verificationCode, true);
         if (verificationSuccess) {
-            systemSecurityService.logLoginAction(user, new RestAuthenticationDetails(servletRequest), ActionType.LOGIN, null);
+            systemSecurityService.logLoginAction(user, new RestAuthenticationDetails(servletRequest), ActionType.LOGIN, null, TwoFA_PROVIDER + providerType);
             user = new SecurityUser(userService.findUserById(user.getTenantId(), user.getId()), true, user.getUserPrincipal());
             return tokenFactory.createTokenPair(user);
         } else {
             ThingsboardException error = new ThingsboardException("Verification code is incorrect", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-            systemSecurityService.logLoginAction(user, new RestAuthenticationDetails(servletRequest), ActionType.LOGIN, error);
+            systemSecurityService.logLoginAction(user, new RestAuthenticationDetails(servletRequest), ActionType.LOGIN, error, TwoFA_PROVIDER + providerType);
             throw error;
         }
     }

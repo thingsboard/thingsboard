@@ -59,7 +59,6 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
-import ua_parser.Client;
 
 import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
@@ -324,49 +323,7 @@ public class AuthController extends BaseController {
 
     private void logLogoutAction(HttpServletRequest request) throws ThingsboardException {
         try {
-            SecurityUser user = getCurrentUser();
-            RestAuthenticationDetails details = new RestAuthenticationDetails(request);
-            String clientAddress = details.getClientAddress();
-            String browser = "Unknown";
-            String os = "Unknown";
-            String device = "Unknown";
-            if (details.getUserAgent() != null) {
-                Client userAgent = details.getUserAgent();
-                if (userAgent.userAgent != null) {
-                    browser = userAgent.userAgent.family;
-                    if (userAgent.userAgent.major != null) {
-                        browser += " " + userAgent.userAgent.major;
-                        if (userAgent.userAgent.minor != null) {
-                            browser += "." + userAgent.userAgent.minor;
-                            if (userAgent.userAgent.patch != null) {
-                                browser += "." + userAgent.userAgent.patch;
-                            }
-                        }
-                    }
-                }
-                if (userAgent.os != null) {
-                    os = userAgent.os.family;
-                    if (userAgent.os.major != null) {
-                        os += " " + userAgent.os.major;
-                        if (userAgent.os.minor != null) {
-                            os += "." + userAgent.os.minor;
-                            if (userAgent.os.patch != null) {
-                                os += "." + userAgent.os.patch;
-                                if (userAgent.os.patchMinor != null) {
-                                    os += "." + userAgent.os.patchMinor;
-                                }
-                            }
-                        }
-                    }
-                }
-                if (userAgent.device != null) {
-                    device = userAgent.device.family;
-                }
-            }
-            auditLogService.logEntityAction(
-                    user.getTenantId(), user.getCustomerId(), user.getId(),
-                    user.getName(), user.getId(), null, ActionType.LOGOUT, null, clientAddress, browser, os, device);
-
+            systemSecurityService.logLoginAction(getCurrentUser(), new RestAuthenticationDetails(request), ActionType.LOGOUT, null, "REST");
         } catch (Exception e) {
             throw handleException(e);
         }
