@@ -367,6 +367,7 @@ public class AuthController extends BaseController {
                     user.getTenantId(), user.getCustomerId(), user.getId(),
                     user.getName(), user.getId(), null, ActionType.LOGOUT, null, clientAddress, browser, os, device);
 
+            eventPublisher.publishEvent(new UserAuthDataChangedEvent(user.getId()));
         } catch (Exception e) {
             throw handleException(e);
         }
