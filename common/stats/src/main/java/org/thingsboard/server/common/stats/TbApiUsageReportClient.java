@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.script;
+package org.thingsboard.server.common.stats;
 
-import java.util.List;
+import org.thingsboard.server.common.data.ApiUsageRecordKey;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.TenantId;
 
-/**
- * Created by ashvayka on 25.09.18.
- */
-public class JsInvokeRequest {
+public interface TbApiUsageReportClient {
 
-    private String scriptId;
-    private String scriptBody;
-    private List<String> args;
+    void report(TenantId tenantId, CustomerId customerId, ApiUsageRecordKey key, long value);
+
+    void report(TenantId tenantId, CustomerId customerId, ApiUsageRecordKey key);
 
 }

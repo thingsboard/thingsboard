@@ -48,7 +48,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.common.MultipleTbQueueTbMsgCallbackWrapper;
 import org.thingsboard.server.queue.common.TbQueueTbMsgCallbackWrapper;
-import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
+import org.thingsboard.server.queue.usagestats.TbApiUsageReportClient;
 import org.thingsboard.server.cluster.TbClusterService;
 
 import java.util.ArrayList;
@@ -73,7 +73,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     private final Map<RuleNodeId, List<RuleNodeRelation>> nodeRoutes;
     private final RuleChainService service;
     private final TbClusterService clusterService;
-    private final TbApiUsageClient apiUsageClient;
+    private final TbApiUsageReportClient apiUsageClient;
     private String ruleChainName;
 
     private RuleNodeId firstId;

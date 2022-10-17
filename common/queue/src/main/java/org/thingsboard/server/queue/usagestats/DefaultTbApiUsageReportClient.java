@@ -17,9 +17,7 @@ package org.thingsboard.server.queue.usagestats;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.EntityType;
@@ -48,7 +46,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Component
 @Slf4j
-public class DefaultTbApiUsageClient implements TbApiUsageClient {
+public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
 
     @Value("${usage.stats.report.enabled:true}")
     private boolean enabled;
@@ -64,7 +62,7 @@ public class DefaultTbApiUsageClient implements TbApiUsageClient {
     private final TbQueueProducerProvider producerProvider;
     private TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> msgProducer;
 
-    public DefaultTbApiUsageClient(PartitionService partitionService, SchedulerComponent scheduler, TbQueueProducerProvider producerProvider) {
+    public DefaultTbApiUsageReportClient(PartitionService partitionService, SchedulerComponent scheduler, TbQueueProducerProvider producerProvider) {
         this.partitionService = partitionService;
         this.scheduler = scheduler;
         this.producerProvider = producerProvider;

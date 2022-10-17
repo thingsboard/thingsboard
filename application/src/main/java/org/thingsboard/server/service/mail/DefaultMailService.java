@@ -44,7 +44,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
-import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
+import org.thingsboard.server.queue.usagestats.TbApiUsageReportClient;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
 import javax.annotation.PostConstruct;
@@ -70,7 +70,7 @@ public class DefaultMailService implements MailService {
     private final MessageSource messages;
     private final Configuration freemarkerConfig;
     private final AdminSettingsService adminSettingsService;
-    private final TbApiUsageClient apiUsageClient;
+    private final TbApiUsageReportClient apiUsageClient;
 
     private static final long DEFAULT_TIMEOUT = 10_000;
 
@@ -90,7 +90,7 @@ public class DefaultMailService implements MailService {
 
     private long timeout;
 
-    public DefaultMailService(MessageSource messages, Configuration freemarkerConfig, AdminSettingsService adminSettingsService, TbApiUsageClient apiUsageClient) {
+    public DefaultMailService(MessageSource messages, Configuration freemarkerConfig, AdminSettingsService adminSettingsService, TbApiUsageReportClient apiUsageClient) {
         this.messages = messages;
         this.freemarkerConfig = freemarkerConfig;
         this.adminSettingsService = adminSettingsService;

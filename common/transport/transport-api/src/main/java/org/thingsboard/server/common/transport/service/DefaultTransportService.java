@@ -94,7 +94,7 @@ import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.provider.TbTransportQueueFactory;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
-import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
+import org.thingsboard.server.queue.usagestats.TbApiUsageReportClient;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbTransportComponent;
 
@@ -157,7 +157,7 @@ public class DefaultTransportService implements TransportService {
 
     @Autowired
     @Lazy
-    private TbApiUsageClient apiUsageClient;
+    private TbApiUsageReportClient apiUsageClient;
     private final Map<String, Number> statsMap = new LinkedHashMap<>();
 
     private final Gson gson = new Gson();

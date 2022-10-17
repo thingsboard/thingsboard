@@ -15,9 +15,7 @@
  */
 package org.thingsboard.server.actors;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -77,7 +75,7 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
-import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
+import org.thingsboard.server.queue.usagestats.TbApiUsageReportClient;
 import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
@@ -92,7 +90,7 @@ import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
 import org.thingsboard.server.service.rpc.TbRpcService;
 import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
-import org.thingsboard.server.service.script.JsInvokeService;
+import org.thingsboard.script.api.JsInvokeService;
 import org.thingsboard.server.service.session.DeviceSessionCacheService;
 import org.thingsboard.server.service.sms.SmsExecutorService;
 import org.thingsboard.server.service.state.DeviceStateService;
@@ -105,7 +103,6 @@ import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
@@ -152,7 +149,7 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private TbApiUsageClient apiUsageClient;
+    private TbApiUsageReportClient apiUsageClient;
 
     @Autowired
     @Getter

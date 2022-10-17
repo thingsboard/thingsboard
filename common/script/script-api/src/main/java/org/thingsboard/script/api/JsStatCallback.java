@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.script;
+package org.thingsboard.script.api;
 
 import com.google.common.util.concurrent.FutureCallback;
 import lombok.AllArgsConstructor;

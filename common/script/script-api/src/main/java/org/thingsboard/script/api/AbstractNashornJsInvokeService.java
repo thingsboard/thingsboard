@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.script;
+package org.thingsboard.script.api;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import delight.nashornsandbox.NashornSandbox;
 import delight.nashornsandbox.NashornSandboxes;
@@ -26,8 +27,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.thingsboard.common.util.ThingsBoardExecutors;
-import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
-import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
+import org.thingsboard.server.common.stats.TbApiUsageReportClient;
+import org.thingsboard.server.common.stats.TbApiUsageStateClient;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -35,6 +36,7 @@ import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -49,6 +51,7 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
     private NashornSandbox sandbox;
     private ScriptEngine engine;
     private ExecutorService monitorExecutorService;
+    private ListeningExecutorService jsExecutor;
 
     private final AtomicInteger jsPushedMsgs = new AtomicInteger(0);
     private final AtomicInteger jsInvokeMsgs = new AtomicInteger(0);
@@ -60,18 +63,17 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
 
     private final ReentrantLock evalLock = new ReentrantLock();
 
-    @Getter
-    private final JsExecutorService jsExecutor;
-
     @Value("${js.local.max_requests_timeout:0}")
     private long maxRequestsTimeout;
 
     @Value("${js.local.stats.enabled:false}")
     private boolean statsEnabled;
 
-    public AbstractNashornJsInvokeService(TbApiUsageStateService apiUsageStateService, TbApiUsageClient apiUsageClient, JsExecutorService jsExecutor) {
-        super(apiUsageStateService, apiUsageClient);
-        this.jsExecutor = jsExecutor;
+    @Value("${js.local.js_thread_pool_size:50}")
+    private int jsExecutorThreadPoolSize;
+
+    public AbstractNashornJsInvokeService(Optional<TbApiUsageStateClient> apiUsageStateClient, Optional<TbApiUsageReportClient> apiUsageReportClient) {
+        super(apiUsageStateClient, apiUsageReportClient);
     }
 
     @Scheduled(fixedDelayString = "${js.local.stats.print_interval_ms:10000}")
@@ -92,6 +94,7 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
     @PostConstruct
     public void init() {
         super.init(maxRequestsTimeout);
+        jsExecutor = MoreExecutors.listeningDecorator(Executors.newWorkStealingPool(jsExecutorThreadPoolSize));
         if (useJsSandbox()) {
             sandbox = NashornSandboxes.create();
             monitorExecutorService = ThingsBoardExecutors.newWorkStealingPool(getMonitorThreadPoolSize(), "nashorn-js-monitor");
@@ -123,7 +126,7 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
     @Override
     protected ListenableFuture<UUID> doEval(UUID scriptId, String functionName, String jsScript) {
         jsPushedMsgs.incrementAndGet();
-        ListenableFuture<UUID> result = jsExecutor.executeAsync(() -> {
+        ListenableFuture<UUID> result = jsExecutor.submit(() -> {
             try {
                 evalLock.lock();
                 try {
@@ -152,7 +155,7 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
     @Override
     protected ListenableFuture<Object> doInvokeFunction(UUID scriptId, String functionName, Object[] args) {
         jsPushedMsgs.incrementAndGet();
-        ListenableFuture<Object> result = jsExecutor.executeAsync(() -> {
+        ListenableFuture<Object> result = jsExecutor.submit(() -> {
             try {
                 if (useJsSandbox()) {
                     return sandbox.getSandboxedInvocable().invokeFunction(functionName, args);

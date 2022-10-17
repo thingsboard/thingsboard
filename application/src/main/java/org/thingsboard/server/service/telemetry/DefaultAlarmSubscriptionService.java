@@ -44,7 +44,7 @@ import org.thingsboard.server.dao.alarm.AlarmOperationResult;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
+import org.thingsboard.server.queue.usagestats.TbApiUsageReportClient;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.service.subscription.SubscriptionManagerService;
@@ -61,13 +61,13 @@ import java.util.Optional;
 public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService implements AlarmSubscriptionService {
 
     private final AlarmService alarmService;
-    private final TbApiUsageClient apiUsageClient;
+    private final TbApiUsageReportClient apiUsageClient;
     private final TbApiUsageStateService apiUsageStateService;
 
     public DefaultAlarmSubscriptionService(TbClusterService clusterService,
                                            PartitionService partitionService,
                                            AlarmService alarmService,
-                                           TbApiUsageClient apiUsageClient,
+                                           TbApiUsageReportClient apiUsageClient,
                                            TbApiUsageStateService apiUsageStateService) {
         super(clusterService, partitionService);
         this.alarmService = alarmService;

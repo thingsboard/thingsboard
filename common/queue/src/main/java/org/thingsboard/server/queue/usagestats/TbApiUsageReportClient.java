@@ -19,7 +19,7 @@ import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-public interface TbApiUsageClient {
+public interface TbApiUsageReportClient {
 
     void report(TenantId tenantId, CustomerId customerId, ApiUsageRecordKey key, long value);
 

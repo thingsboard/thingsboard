@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.script;
+package org.thingsboard.script.api;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -25,10 +25,11 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
-import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
+import org.thingsboard.server.common.stats.TbApiUsageReportClient;
+import org.thingsboard.server.common.stats.TbApiUsageStateClient;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -43,8 +44,8 @@ import static java.lang.String.format;
 @Slf4j
 public abstract class AbstractJsInvokeService implements JsInvokeService {
 
-    private final TbApiUsageStateService apiUsageStateService;
-    private final TbApiUsageClient apiUsageClient;
+    private final Optional<TbApiUsageStateClient> apiUsageStateClient;
+    private final Optional<TbApiUsageReportClient> apiUsageReportClient;
     protected ScheduledExecutorService timeoutExecutorService;
     protected Map<UUID, String> scriptIdToNameMap = new ConcurrentHashMap<>();
     protected Map<UUID, DisableListInfo> disabledFunctions = new ConcurrentHashMap<>();
@@ -59,9 +60,9 @@ public abstract class AbstractJsInvokeService implements JsInvokeService {
     @Value("${js.max_script_body_size:50000}")
     private long maxScriptBodySize;
 
-    protected AbstractJsInvokeService(TbApiUsageStateService apiUsageStateService, TbApiUsageClient apiUsageClient) {
-        this.apiUsageStateService = apiUsageStateService;
-        this.apiUsageClient = apiUsageClient;
+    protected AbstractJsInvokeService(Optional<TbApiUsageStateClient> apiUsageStateClient, Optional<TbApiUsageReportClient> apiUsageReportClient) {
+        this.apiUsageStateClient = apiUsageStateClient;
+        this.apiUsageReportClient = apiUsageReportClient;
     }
 
     public void init(long maxRequestsTimeout) {
@@ -78,7 +79,7 @@ public abstract class AbstractJsInvokeService implements JsInvokeService {
 
     @Override
     public ListenableFuture<UUID> eval(TenantId tenantId, JsScriptType scriptType, String scriptBody, String... argNames) {
-        if (apiUsageStateService.getApiUsageState(tenantId).isJsExecEnabled()) {
+        if (!apiUsageStateClient.isPresent() || apiUsageStateClient.get().getApiUsageState(tenantId).isJsExecEnabled()) {
             if (scriptBodySizeExceeded(scriptBody)) {
                 return error(format("Script body exceeds maximum allowed size of %s symbols", getMaxScriptBodySize()));
             }
@@ -93,7 +94,7 @@ public abstract class AbstractJsInvokeService implements JsInvokeService {
 
     @Override
     public ListenableFuture<String> invokeFunction(TenantId tenantId, CustomerId customerId, UUID scriptId, Object... args) {
-        if (apiUsageStateService.getApiUsageState(tenantId).isJsExecEnabled()) {
+        if (!apiUsageStateClient.isPresent() || apiUsageStateClient.get().getApiUsageState(tenantId).isJsExecEnabled()) {
             String functionName = scriptIdToNameMap.get(scriptId);
             if (functionName == null) {
                 return error("No compiled script found for scriptId: [" + scriptId + "]!");
@@ -102,7 +103,7 @@ public abstract class AbstractJsInvokeService implements JsInvokeService {
                 if (argsSizeExceeded(args)) {
                     return scriptExecutionError(scriptId, format("Script input arguments exceed maximum allowed total args size of %s symbols", getMaxTotalArgsSize()));
                 }
-                apiUsageClient.report(tenantId, customerId, ApiUsageRecordKey.JS_EXEC_COUNT, 1);
+                apiUsageReportClient.ifPresent(client -> client.report(tenantId, customerId, ApiUsageRecordKey.JS_EXEC_COUNT, 1));
                 return Futures.transformAsync(doInvokeFunction(scriptId, functionName, args), output -> {
                     String result = output.toString();
                     if (resultSizeExceeded(result)) {

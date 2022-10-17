@@ -970,6 +970,16 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.thingsboard.common.script</groupId>
+                <artifactId>script-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.common.script</groupId>
+                <artifactId>remote-js-client</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.thingsboard</groupId>
                 <artifactId>tools</artifactId>
                 <version>${project.version}</version>

@@ -65,7 +65,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.rule.TbRuleChainService;
-import org.thingsboard.server.service.script.JsInvokeService;
+import org.thingsboard.script.api.JsInvokeService;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;

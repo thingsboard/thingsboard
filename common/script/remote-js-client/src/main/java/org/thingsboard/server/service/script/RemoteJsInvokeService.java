@@ -27,17 +27,19 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StopWatch;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.script.api.AbstractJsInvokeService;
+import org.thingsboard.server.common.stats.TbApiUsageReportClient;
+import org.thingsboard.server.common.stats.TbApiUsageStateClient;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.TbProtoJsQueueMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
-import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -78,8 +80,8 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     private final ExecutorService callbackExecutor = Executors.newFixedThreadPool(
             Runtime.getRuntime().availableProcessors(), ThingsBoardThreadFactory.forName("js-executor-remote-callback"));
 
-    public RemoteJsInvokeService(TbApiUsageStateService apiUsageStateService, TbApiUsageClient apiUsageClient) {
-        super(apiUsageStateService, apiUsageClient);
+    public RemoteJsInvokeService(Optional<TbApiUsageStateClient> apiUsageStateClient, Optional<TbApiUsageReportClient> apiUsageClient) {
+        super(apiUsageStateClient, apiUsageClient);
     }
 
     @Scheduled(fixedDelayString = "${js.remote.stats.print_interval_ms}")

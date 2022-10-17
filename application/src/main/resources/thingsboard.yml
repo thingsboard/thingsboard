@@ -599,6 +599,21 @@ state:
   defaultStateCheckIntervalInSec: "${DEFAULT_STATE_CHECK_INTERVAL:60}"
   persistToTelemetry: "${PERSIST_STATE_TO_TELEMETRY:false}"
 
+mvel:
+  enabled: "${MVEL_ENABLED:true}"
+  max_total_args_size: "${MVEL_MAX_TOTAL_ARGS_SIZE:100000}"
+  max_result_size: "${MVEL_MAX_RESULT_SIZE:300000}"
+  max_script_body_size: "${MVEL_MAX_SCRIPT_BODY_SIZE:50000}"
+  # Maximum allowed MVEL script execution errors before it will be blacklisted
+  max_errors: "${MVEL_MAX_ERRORS:3}"
+  # MVEL Eval max request timeout in milliseconds. 0 - no timeout
+  max_requests_timeout: "${MVEL_MAX_REQUEST_TIMEOUT:500}"
+  # Maximum time in seconds for black listed function to stay in the list.
+  max_black_list_duration_sec: "${MVEL_MAX_BLACKLIST_DURATION_SEC:60}"
+  stats:
+    enabled: "${TB_MVEL_STATS_ENABLED:false}"
+    print_interval_ms: "${TB_MVEL_STATS_PRINT_INTERVAL_MS:10000}"
+
 js:
   evaluator: "${JS_EVALUATOR:local}" # local/remote
   max_total_args_size: "${JS_MAX_TOTAL_ARGS_SIZE:100000}"
