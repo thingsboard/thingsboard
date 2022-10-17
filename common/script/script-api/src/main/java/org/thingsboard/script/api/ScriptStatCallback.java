@@ -23,24 +23,23 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @AllArgsConstructor
-public class JsStatCallback<T> implements FutureCallback<T> {
+public class ScriptStatCallback<T> implements FutureCallback<T> {
 
-    private final AtomicInteger jsSuccessMsgs;
-    private final AtomicInteger jsTimeoutMsgs;
-    private final AtomicInteger jsFailedMsgs;
-
+    private final AtomicInteger successMsgs;
+    private final AtomicInteger timeoutMsgs;
+    private final AtomicInteger failedMsgs;
 
     @Override
     public void onSuccess(@Nullable T result) {
-        jsSuccessMsgs.incrementAndGet();
+        successMsgs.incrementAndGet();
     }
 
     @Override
     public void onFailure(Throwable t) {
         if (t instanceof TimeoutException || (t.getCause() != null && t.getCause() instanceof TimeoutException)) {
-            jsTimeoutMsgs.incrementAndGet();
+            timeoutMsgs.incrementAndGet();
         } else {
-            jsFailedMsgs.incrementAndGet();
+            failedMsgs.incrementAndGet();
         }
     }
 }

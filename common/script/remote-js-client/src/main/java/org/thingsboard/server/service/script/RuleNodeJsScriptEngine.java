@@ -22,8 +22,8 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.script.api.JsInvokeService;
-import org.thingsboard.script.api.JsScriptType;
+import org.thingsboard.script.api.ScriptInvokeService;
+import org.thingsboard.script.api.ScriptType;
 import org.thingsboard.script.api.RuleNodeScriptFactory;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -47,18 +47,18 @@ import java.util.concurrent.ExecutionException;
 public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.ScriptEngine {
 
     private static final ObjectMapper mapper = new ObjectMapper();
-    private final JsInvokeService sandboxService;
+    private final ScriptInvokeService sandboxService;
 
     private final UUID scriptId;
     private final TenantId tenantId;
     private final EntityId entityId;
 
-    public RuleNodeJsScriptEngine(TenantId tenantId, JsInvokeService sandboxService, EntityId entityId, String script, String... argNames) {
+    public RuleNodeJsScriptEngine(TenantId tenantId, ScriptInvokeService sandboxService, EntityId entityId, String script, String... argNames) {
         this.tenantId = tenantId;
         this.sandboxService = sandboxService;
         this.entityId = entityId;
         try {
-            this.scriptId = this.sandboxService.eval(tenantId, JsScriptType.RULE_NODE_SCRIPT, script, argNames).get();
+            this.scriptId = this.sandboxService.eval(tenantId, ScriptType.RULE_NODE_SCRIPT, script, argNames).get();
         } catch (Exception e) {
             Throwable t = e;
             if (e instanceof ExecutionException) {
@@ -214,7 +214,7 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
     }
 
     ListenableFuture<JsonNode> executeScriptAsync(CustomerId customerId, String... args) {
-        return Futures.transformAsync(sandboxService.invokeFunction(tenantId, customerId, this.scriptId, args),
+        return Futures.transformAsync(sandboxService.invokeScript(tenantId, customerId, this.scriptId, args),
                 o -> {
                     try {
                         return Futures.immediateFuture(mapper.readTree(o));

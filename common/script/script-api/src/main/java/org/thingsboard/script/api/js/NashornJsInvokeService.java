@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.script.api;
+package org.thingsboard.script.api.js;
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -25,7 +23,9 @@ import delight.nashornsandbox.NashornSandboxes;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.common.stats.TbApiUsageStateClient;
@@ -39,67 +39,79 @@ import javax.script.ScriptException;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
-public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeService {
+@ConditionalOnProperty(prefix = "js", value = "evaluator", havingValue = "local", matchIfMissing = true)
+@Service
+public class NashornJsInvokeService extends AbstractJsInvokeService {
 
     private NashornSandbox sandbox;
     private ScriptEngine engine;
     private ExecutorService monitorExecutorService;
     private ListeningExecutorService jsExecutor;
 
-    private final AtomicInteger jsPushedMsgs = new AtomicInteger(0);
-    private final AtomicInteger jsInvokeMsgs = new AtomicInteger(0);
-    private final AtomicInteger jsEvalMsgs = new AtomicInteger(0);
-    private final AtomicInteger jsFailedMsgs = new AtomicInteger(0);
-    private final AtomicInteger jsTimeoutMsgs = new AtomicInteger(0);
-    private final FutureCallback<UUID> evalCallback = new JsStatCallback<>(jsEvalMsgs, jsTimeoutMsgs, jsFailedMsgs);
-    private final FutureCallback<Object> invokeCallback = new JsStatCallback<>(jsInvokeMsgs, jsTimeoutMsgs, jsFailedMsgs);
-
     private final ReentrantLock evalLock = new ReentrantLock();
 
-    @Value("${js.local.max_requests_timeout:0}")
-    private long maxRequestsTimeout;
+    @Value("${js.local.use_js_sandbox}")
+    private boolean useJsSandbox;
 
+    @Value("${js.local.monitor_thread_pool_size}")
+    private int monitorThreadPoolSize;
+
+    @Value("${js.local.max_cpu_time}")
+    private long maxCpuTime;
+
+    @Getter
+    @Value("${js.local.max_errors}")
+    private int maxErrors;
+
+    @Getter
+    @Value("${js.local.max_black_list_duration_sec:60}")
+    private int maxBlackListDurationSec;
+
+    @Getter
+    @Value("${js.local.max_requests_timeout:0}")
+    private long maxInvokeRequestsTimeout;
+
+    @Getter
     @Value("${js.local.stats.enabled:false}")
     private boolean statsEnabled;
 
     @Value("${js.local.js_thread_pool_size:50}")
     private int jsExecutorThreadPoolSize;
 
-    public AbstractNashornJsInvokeService(Optional<TbApiUsageStateClient> apiUsageStateClient, Optional<TbApiUsageReportClient> apiUsageReportClient) {
+    public NashornJsInvokeService(Optional<TbApiUsageStateClient> apiUsageStateClient, Optional<TbApiUsageReportClient> apiUsageReportClient) {
         super(apiUsageStateClient, apiUsageReportClient);
+    }
+
+    @Override
+    protected String getStatsName() {
+        return "Nashorn JS Invoke Stats";
+    }
+
+    @Override
+    protected Executor getCallbackExecutor() {
+        return MoreExecutors.directExecutor();
     }
 
     @Scheduled(fixedDelayString = "${js.local.stats.print_interval_ms:10000}")
     public void printStats() {
-        if (statsEnabled) {
-            int pushedMsgs = jsPushedMsgs.getAndSet(0);
-            int invokeMsgs = jsInvokeMsgs.getAndSet(0);
-            int evalMsgs = jsEvalMsgs.getAndSet(0);
-            int failed = jsFailedMsgs.getAndSet(0);
-            int timedOut = jsTimeoutMsgs.getAndSet(0);
-            if (pushedMsgs > 0 || invokeMsgs > 0 || evalMsgs > 0 || failed > 0 || timedOut > 0) {
-                log.info("Nashorn JS Invoke Stats: pushed [{}] received [{}] invoke [{}] eval [{}] failed [{}] timedOut [{}]",
-                        pushedMsgs, invokeMsgs + evalMsgs, invokeMsgs, evalMsgs, failed, timedOut);
-            }
-        }
+        super.printStats();
     }
 
     @PostConstruct
     public void init() {
-        super.init(maxRequestsTimeout);
+        super.init();
         jsExecutor = MoreExecutors.listeningDecorator(Executors.newWorkStealingPool(jsExecutorThreadPoolSize));
-        if (useJsSandbox()) {
+        if (useJsSandbox) {
             sandbox = NashornSandboxes.create();
-            monitorExecutorService = ThingsBoardExecutors.newWorkStealingPool(getMonitorThreadPoolSize(), "nashorn-js-monitor");
+            monitorExecutorService = ThingsBoardExecutors.newWorkStealingPool(monitorThreadPoolSize, "nashorn-js-monitor");
             sandbox.setExecutor(monitorExecutorService);
-            sandbox.setMaxCPUTime(getMaxCpuTime());
+            sandbox.setMaxCPUTime(maxCpuTime);
             sandbox.allowNoBraces(false);
             sandbox.allowLoadFunctions(true);
             sandbox.setMaxPreparedStatements(30);
@@ -117,20 +129,13 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
         }
     }
 
-    protected abstract boolean useJsSandbox();
-
-    protected abstract int getMonitorThreadPoolSize();
-
-    protected abstract long getMaxCpuTime();
-
     @Override
     protected ListenableFuture<UUID> doEval(UUID scriptId, String functionName, String jsScript) {
-        jsPushedMsgs.incrementAndGet();
-        ListenableFuture<UUID> result = jsExecutor.submit(() -> {
+        return jsExecutor.submit(() -> {
             try {
                 evalLock.lock();
                 try {
-                    if (useJsSandbox()) {
+                    if (useJsSandbox) {
                         sandbox.eval(jsScript);
                     } else {
                         engine.eval(jsScript);
@@ -145,19 +150,13 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
                 throw new ExecutionException(e);
             }
         });
-        if (maxRequestsTimeout > 0) {
-            result = Futures.withTimeout(result, maxRequestsTimeout, TimeUnit.MILLISECONDS, timeoutExecutorService);
-        }
-        Futures.addCallback(result, evalCallback, MoreExecutors.directExecutor());
-        return result;
     }
 
     @Override
     protected ListenableFuture<Object> doInvokeFunction(UUID scriptId, String functionName, Object[] args) {
-        jsPushedMsgs.incrementAndGet();
-        ListenableFuture<Object> result = jsExecutor.submit(() -> {
+        return jsExecutor.submit(() -> {
             try {
-                if (useJsSandbox()) {
+                if (useJsSandbox) {
                     return sandbox.getSandboxedInvocable().invokeFunction(functionName, args);
                 } else {
                     return ((Invocable) engine).invokeFunction(functionName, args);
@@ -169,16 +168,10 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
                 throw new ExecutionException(e);
             }
         });
-
-        if (maxRequestsTimeout > 0) {
-            result = Futures.withTimeout(result, maxRequestsTimeout, TimeUnit.MILLISECONDS, timeoutExecutorService);
-        }
-        Futures.addCallback(result, invokeCallback, MoreExecutors.directExecutor());
-        return result;
     }
 
     protected void doRelease(UUID scriptId, String functionName) throws ScriptException {
-        if (useJsSandbox()) {
+        if (useJsSandbox) {
             sandbox.eval(functionName + " = undefined;");
         } else {
             engine.eval(functionName + " = undefined;");

@@ -15,6 +15,6 @@
  */
 package org.thingsboard.script.api;
 
-public enum JsScriptType {
+public enum ScriptType {
     RULE_NODE_SCRIPT
 }

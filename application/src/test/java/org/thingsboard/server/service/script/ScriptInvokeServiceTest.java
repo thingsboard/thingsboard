@@ -19,8 +19,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.TestPropertySource;
-import org.thingsboard.script.api.JsScriptType;
-import org.thingsboard.script.api.NashornJsInvokeService;
+import org.thingsboard.script.api.ScriptType;
+import org.thingsboard.script.api.js.NashornJsInvokeService;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -37,7 +37,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
         "js.max_result_size=50",
         "js.local.max_errors=2"
 })
-class JsInvokeServiceTest extends AbstractControllerTest {
+class ScriptInvokeServiceTest extends AbstractControllerTest {
 
     @Autowired
     private NashornJsInvokeService jsInvokeService;
@@ -88,11 +88,11 @@ class JsInvokeServiceTest extends AbstractControllerTest {
     }
 
     private UUID evalScript(String script) throws ExecutionException, InterruptedException {
-        return jsInvokeService.eval(TenantId.SYS_TENANT_ID, JsScriptType.RULE_NODE_SCRIPT, script).get();
+        return jsInvokeService.eval(TenantId.SYS_TENANT_ID, ScriptType.RULE_NODE_SCRIPT, script).get();
     }
 
     private String invokeScript(UUID scriptId, String msg) throws ExecutionException, InterruptedException {
-        return jsInvokeService.invokeFunction(TenantId.SYS_TENANT_ID, null, scriptId, msg, "{}", "POST_TELEMETRY_REQUEST").get();
+        return jsInvokeService.invokeScript(TenantId.SYS_TENANT_ID, null, scriptId, msg, "{}", "POST_TELEMETRY_REQUEST").get();
     }
 
 }

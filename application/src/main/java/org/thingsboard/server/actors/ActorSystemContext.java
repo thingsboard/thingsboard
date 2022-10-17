@@ -90,7 +90,7 @@ import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
 import org.thingsboard.server.service.rpc.TbRpcService;
 import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
-import org.thingsboard.script.api.JsInvokeService;
+import org.thingsboard.script.api.ScriptInvokeService;
 import org.thingsboard.server.service.session.DeviceSessionCacheService;
 import org.thingsboard.server.service.sms.SmsExecutorService;
 import org.thingsboard.server.service.state.DeviceStateService;
@@ -267,7 +267,7 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private JsInvokeService jsSandbox;
+    private ScriptInvokeService jsSandbox;
 
     @Autowired
     @Getter

@@ -21,11 +21,11 @@ import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.UUID;
 
-public interface JsInvokeService {
+public interface ScriptInvokeService {
 
-    ListenableFuture<UUID> eval(TenantId tenantId, JsScriptType scriptType, String scriptBody, String... argNames);
+    ListenableFuture<UUID> eval(TenantId tenantId, ScriptType scriptType, String scriptBody, String... argNames);
 
-    ListenableFuture<String> invokeFunction(TenantId tenantId, CustomerId customerId, UUID scriptId, Object... args);
+    ListenableFuture<String> invokeScript(TenantId tenantId, CustomerId customerId, UUID scriptId, Object... args);
 
     ListenableFuture<Void> release(UUID scriptId);
 

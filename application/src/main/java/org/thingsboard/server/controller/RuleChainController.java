@@ -65,7 +65,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.rule.TbRuleChainService;
-import org.thingsboard.script.api.JsInvokeService;
+import org.thingsboard.script.api.ScriptInvokeService;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
@@ -140,7 +140,7 @@ public class RuleChainController extends BaseController {
     private EventService eventService;
 
     @Autowired
-    private JsInvokeService jsInvokeService;
+    private ScriptInvokeService scriptInvokeService;
 
     @Autowired(required = false)
     private ActorSystemContext actorContext;
@@ -393,7 +393,7 @@ public class RuleChainController extends BaseController {
             String errorText = "";
             ScriptEngine engine = null;
             try {
-                engine = new RuleNodeJsScriptEngine(getTenantId(), jsInvokeService, getCurrentUser().getId(), script, argNames);
+                engine = new RuleNodeJsScriptEngine(getTenantId(), scriptInvokeService, getCurrentUser().getId(), script, argNames);
                 TbMsg inMsg = TbMsg.newMsg(msgType, null, new TbMsgMetaData(metadata), TbMsgDataType.JSON, data);
                 switch (scriptType) {
                     case "update":
