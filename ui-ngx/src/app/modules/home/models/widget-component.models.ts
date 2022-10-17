@@ -394,6 +394,13 @@ export class WidgetContext {
     this.widgetActions = undefined;
   }
 
+  closeDialog(resultData: any = null) {
+    const dialogRef = this.$scope.dialogRef || this.stateController.dashboardCtrl.dashboardCtx.getDashboard().dialogRef;
+    if (dialogRef) {
+      dialogRef.close(resultData);
+    }
+  }
+
   pageLink(pageSize: number, page: number = 0, textSearch: string = null, sortOrder: SortOrder = null): PageLink {
     return new PageLink(pageSize, page, textSearch, sortOrder);
   }

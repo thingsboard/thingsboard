@@ -1436,7 +1436,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         title = insertVariable(title, prop + ':entityLabel', params[prop].entityLabel);
       }
     }
-    this.dialog.open(this.embedDashboardDialogComponent, {
+    dashboard.dialogRef = this.dialog.open(this.embedDashboardDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       viewContainerRef: this.widgetContentContainer,
