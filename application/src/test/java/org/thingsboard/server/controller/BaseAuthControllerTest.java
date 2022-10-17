@@ -60,6 +60,8 @@ public abstract class BaseAuthControllerTest extends AbstractControllerTest {
         logout();
         doGet("/api/auth/user")
         .andExpect(status().isUnauthorized());
+
+        resetTokens();
     }
 
     @Test
