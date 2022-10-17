@@ -411,13 +411,17 @@ export const repositoryAuthMethodTranslationMap = new Map<RepositoryAuthMethod, 
 export interface RepositorySettings {
   repositoryUri: string;
   defaultBranch: string;
-  readOnly: boolean;
   authMethod: RepositoryAuthMethod;
   username: string;
   password: string;
   privateKeyFileName: string;
   privateKey: string;
   privateKeyPassword: string;
+}
+
+export interface RepositorySettingsInfo {
+  configured: boolean;
+  readOnly: boolean;
 }
 
 export interface AutoVersionCreateConfig extends VersionCreateConfig {

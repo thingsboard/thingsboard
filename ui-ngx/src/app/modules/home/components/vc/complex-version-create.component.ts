@@ -121,10 +121,10 @@ export class ComplexVersionCreateComponent extends PageComponent implements OnIn
     }
 
     this.versionCreateResultSubscription = this.versionCreateResult$.subscribe((result) => {
-      let message;
+      let message: string;
       if (!result.error) {
         if (result.done && !result.added && !result.modified && !result.removed) {
-          message = this.translate.instant('version-control.nothing-to-commit')
+          message = this.translate.instant('version-control.nothing-to-commit');
         } else {
           message = this.translate.instant('version-control.version-create-result',
             {added: result.added, modified: result.modified, removed: result.removed});
