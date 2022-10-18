@@ -323,7 +323,7 @@ public class AuthController extends BaseController {
 
     private void logLogoutAction(HttpServletRequest request) throws ThingsboardException {
         try {
-            systemSecurityService.logLoginAction(getCurrentUser(), new RestAuthenticationDetails(request), ActionType.LOGOUT, null, "REST");
+            systemSecurityService.logLoginAction(getCurrentUser(), new RestAuthenticationDetails(request), ActionType.LOGOUT, null);
         } catch (Exception e) {
             throw handleException(e);
         }

@@ -42,6 +42,6 @@ public interface SystemSecurityService {
 
     String getBaseUrl(TenantId tenantId, CustomerId customerId, HttpServletRequest httpServletRequest);
 
-    void logLoginAction(User user, Object authenticationDetails, ActionType actionType, Exception e, String provider);
+    void logLoginAction(User user, Object authenticationDetails, ActionType actionType, Exception e);
 
 }

@@ -53,8 +53,6 @@ import java.util.UUID;
 @TbCoreComponent
 public class RestAuthenticationProvider implements AuthenticationProvider {
 
-    private static final String REST_PROVIDER = "REST";
-
     private final SystemSecurityService systemSecurityService;
     private final UserService userService;
     private final CustomerService customerService;
@@ -89,7 +87,7 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
             if (twoFactorAuthService.isTwoFaEnabled(securityUser.getTenantId(), securityUser.getId())) {
                 return new MfaAuthenticationToken(securityUser);
             } else {
-                systemSecurityService.logLoginAction(securityUser, authentication.getDetails(), ActionType.LOGIN, null, REST_PROVIDER);
+                systemSecurityService.logLoginAction(securityUser, authentication.getDetails(), ActionType.LOGIN, null);
             }
         } else {
             String publicId = userPrincipal.getValue();
@@ -115,7 +113,7 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
             try {
                 systemSecurityService.validateUserCredentials(user.getTenantId(), userCredentials, username, password);
             } catch (LockedException e) {
-                systemSecurityService.logLoginAction(user, authentication.getDetails(), ActionType.LOCKOUT, null, REST_PROVIDER);
+                systemSecurityService.logLoginAction(user, authentication.getDetails(), ActionType.LOCKOUT, null);
                 throw e;
             }
 
@@ -124,7 +122,7 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
 
             return new SecurityUser(user, userCredentials.isEnabled(), userPrincipal);
         } catch (Exception e) {
-            systemSecurityService.logLoginAction(user, authentication.getDetails(), ActionType.LOGIN, e, REST_PROVIDER);
+            systemSecurityService.logLoginAction(user, authentication.getDetails(), ActionType.LOGIN, e);
             throw e;
         }
     }

@@ -59,9 +59,8 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
 import org.thingsboard.server.service.security.exception.UserPasswordExpiredException;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.utils.AuthorizationDetails;
 import org.thingsboard.server.utils.MiscUtils;
-import org.thingsboard.server.utils.RestAuthenticationDetailsUtils;
+import ua_parser.Client;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -264,24 +263,54 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
     }
 
     @Override
-    public void logLoginAction(User user, Object authenticationDetails, ActionType actionType, Exception e, String provider) {
+    public void logLoginAction(User user, Object authenticationDetails, ActionType actionType, Exception e) {
         String clientAddress = "Unknown";
         String browser = "Unknown";
         String os = "Unknown";
         String device = "Unknown";
         if (authenticationDetails instanceof RestAuthenticationDetails) {
-            AuthorizationDetails details = RestAuthenticationDetailsUtils.getRestAuthenticationDetails((RestAuthenticationDetails) authenticationDetails);
+            RestAuthenticationDetails details = (RestAuthenticationDetails) authenticationDetails;
             clientAddress = details.getClientAddress();
-            browser = details.getBrowser();
-            os = details.getOs();
-            device = details.getDevice();
+            if (details.getUserAgent() != null) {
+                Client userAgent = details.getUserAgent();
+                if (userAgent.userAgent != null) {
+                    browser = userAgent.userAgent.family;
+                    if (userAgent.userAgent.major != null) {
+                        browser += " " + userAgent.userAgent.major;
+                        if (userAgent.userAgent.minor != null) {
+                            browser += "." + userAgent.userAgent.minor;
+                            if (userAgent.userAgent.patch != null) {
+                                browser += "." + userAgent.userAgent.patch;
+                            }
+                        }
+                    }
+                }
+                if (userAgent.os != null) {
+                    os = userAgent.os.family;
+                    if (userAgent.os.major != null) {
+                        os += " " + userAgent.os.major;
+                        if (userAgent.os.minor != null) {
+                            os += "." + userAgent.os.minor;
+                            if (userAgent.os.patch != null) {
+                                os += "." + userAgent.os.patch;
+                                if (userAgent.os.patchMinor != null) {
+                                    os += "." + userAgent.os.patchMinor;
+                                }
+                            }
+                        }
+                    }
+                }
+                if (userAgent.device != null) {
+                    device = userAgent.device.family;
+                }
+            }
         }
         if (actionType == ActionType.LOGIN && e == null) {
             userService.setLastLoginTs(user.getTenantId(), user.getId());
         }
         auditLogService.logEntityAction(
                 user.getTenantId(), user.getCustomerId(), user.getId(),
-                user.getName(), user.getId(), null, actionType, e, clientAddress, browser, os, device, provider);
+                user.getName(), user.getId(), null, actionType, e, clientAddress, browser, os, device);
     }
 
     private static boolean isPositiveInteger(Integer val) {
