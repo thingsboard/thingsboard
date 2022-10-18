@@ -420,7 +420,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     protected void logout() throws Exception {
-        doPost("/api/auth/logout");
+        doPost("/api/auth/logout").andExpect(status().isOk());
     }
 
     protected void setJwtToken(MockHttpServletRequestBuilder request) {
