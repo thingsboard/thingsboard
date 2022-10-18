@@ -15,11 +15,14 @@
  */
 package org.thingsboard.server.service.edge.rpc;
 
+import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 import org.thingsboard.server.service.edge.rpc.fetch.AdminSettingsEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.AssetProfilesEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.AssetsEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.CustomerEdgeEventFetcher;
+import org.thingsboard.server.service.edge.rpc.fetch.CustomerUsersEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.DashboardsEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.DeviceProfilesEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.DevicesEdgeEventFetcher;
@@ -28,8 +31,8 @@ import org.thingsboard.server.service.edge.rpc.fetch.OtaPackagesEdgeEventFetcher
 import org.thingsboard.server.service.edge.rpc.fetch.QueuesEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.RuleChainsEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.SystemWidgetsBundlesEdgeEventFetcher;
+import org.thingsboard.server.service.edge.rpc.fetch.TenantAdminUsersEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.TenantWidgetsBundlesEdgeEventFetcher;
-import org.thingsboard.server.service.edge.rpc.fetch.UsersEdgeEventFetcher;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -41,14 +44,17 @@ public class EdgeSyncCursor {
 
     int currentIdx = 0;
 
-    public EdgeSyncCursor(EdgeContextComponent ctx) {
+    public EdgeSyncCursor(EdgeContextComponent ctx, Edge edge) {
         fetchers.add(new QueuesEdgeEventFetcher(ctx.getQueueService()));
         fetchers.add(new RuleChainsEdgeEventFetcher(ctx.getRuleChainService()));
         fetchers.add(new AdminSettingsEdgeEventFetcher(ctx.getAdminSettingsService(), ctx.getFreemarkerConfig()));
         fetchers.add(new DeviceProfilesEdgeEventFetcher(ctx.getDeviceProfileService()));
         fetchers.add(new AssetProfilesEdgeEventFetcher(ctx.getAssetProfileService()));
-        fetchers.add(new CustomerEdgeEventFetcher(ctx.getCustomerService()));
-        fetchers.add(new UsersEdgeEventFetcher(ctx.getUserService()));
+        fetchers.add(new TenantAdminUsersEdgeEventFetcher(ctx.getUserService()));
+        if (edge.getCustomerId() != null && !EntityId.NULL_UUID.equals(edge.getCustomerId().getId())) {
+            fetchers.add(new CustomerEdgeEventFetcher());
+            fetchers.add(new CustomerUsersEdgeEventFetcher(ctx.getUserService(), edge.getCustomerId()));
+        }
         fetchers.add(new DevicesEdgeEventFetcher(ctx.getDeviceService()));
         fetchers.add(new AssetsEdgeEventFetcher(ctx.getAssetService()));
         fetchers.add(new SystemWidgetsBundlesEdgeEventFetcher(ctx.getWidgetsBundleService()));

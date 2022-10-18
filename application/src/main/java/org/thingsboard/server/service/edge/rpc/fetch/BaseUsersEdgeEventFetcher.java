@@ -18,6 +18,7 @@ package org.thingsboard.server.service.edge.rpc.fetch;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.EdgeUtils;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -25,25 +26,24 @@ import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.thingsboard.server.dao.user.UserService;
 
 @Slf4j
 @AllArgsConstructor
-public class CustomerEdgeEventFetcher implements EdgeEventFetcher {
+public abstract class BaseUsersEdgeEventFetcher extends BasePageableEdgeEventFetcher<User> {
+
+    protected final UserService userService;
 
     @Override
-    public PageLink getPageLink(int pageSize) {
-        return null;
+    PageData<User> fetchPageData(TenantId tenantId, Edge edge, PageLink pageLink) {
+        return findUsers(tenantId, pageLink);
     }
 
     @Override
-    public PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, Edge edge, PageLink pageLink) {
-        List<EdgeEvent> result = new ArrayList<>();
-        result.add(EdgeUtils.constructEdgeEvent(edge.getTenantId(), edge.getId(),
-                EdgeEventType.CUSTOMER, EdgeEventActionType.ADDED, edge.getCustomerId(), null));
-        // @voba - returns PageData object to be in sync with other fetchers
-        return new PageData<>(result, 1, result.size(), false);
+    EdgeEvent constructEdgeEvent(TenantId tenantId, Edge edge, User user) {
+        return EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.USER,
+                EdgeEventActionType.ADDED, user.getId(), null);
     }
+
+    protected abstract PageData<User> findUsers(TenantId tenantId, PageLink pageLink);
 }

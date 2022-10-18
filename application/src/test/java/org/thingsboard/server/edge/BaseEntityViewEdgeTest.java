@@ -22,6 +22,7 @@ import org.junit.Test;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.gen.edge.v1.EntityViewUpdateMsg;
@@ -60,7 +61,6 @@ abstract public class BaseEntityViewEdgeTest extends AbstractEdgeTest {
         EntityViewUpdateMsg entityViewUpdateMsg = (EntityViewUpdateMsg) latestMessage;
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, entityViewUpdateMsg.getMsgType());
         Assert.assertEquals(savedEntityView.getName(), entityViewUpdateMsg.getName());
-
 
         // request entity view(s) for device
         UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
@@ -111,10 +111,12 @@ abstract public class BaseEntityViewEdgeTest extends AbstractEdgeTest {
         verifyEntityViewUpdateMsg(savedEntityView, device);
 
         // assign entity view #2 to customer
-        edgeImitator.expectMessageAmount(1);
         Customer customer = new Customer();
         customer.setTitle("Edge Customer");
         Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
+        edgeImitator.expectMessageAmount(2);
+        doPost("/api/customer/" + savedCustomer.getUuidId()
+                + "/edge/" + edge.getUuidId(), Edge.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
 
         edgeImitator.expectMessageAmount(1);

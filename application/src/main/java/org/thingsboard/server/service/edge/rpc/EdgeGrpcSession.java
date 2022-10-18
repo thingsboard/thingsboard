@@ -180,7 +180,7 @@ public final class EdgeGrpcSession implements Closeable {
     public void startSyncProcess(TenantId tenantId, EdgeId edgeId) {
         log.trace("[{}][{}] Staring edge sync process", tenantId, edgeId);
         syncCompleted = false;
-        doSync(new EdgeSyncCursor(ctx));
+        doSync(new EdgeSyncCursor(ctx, edge));
     }
 
     private void doSync(EdgeSyncCursor cursor) {

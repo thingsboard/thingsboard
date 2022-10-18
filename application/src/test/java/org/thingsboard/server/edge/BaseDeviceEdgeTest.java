@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
@@ -119,10 +120,12 @@ abstract public class BaseDeviceEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(savedDevice.getDeviceProfileId().getId().getLeastSignificantBits(), deviceProfileUpdateMsg.getIdLSB());
 
         // assign device #2 to customer
-        edgeImitator.expectMessageAmount(1);
         Customer customer = new Customer();
         customer.setTitle("Edge Customer");
         Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
+        edgeImitator.expectMessageAmount(2);
+        doPost("/api/customer/" + savedCustomer.getUuidId()
+                + "/edge/" + edge.getUuidId(), Edge.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
 
         edgeImitator.expectMessageAmount(1);

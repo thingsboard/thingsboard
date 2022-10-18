@@ -20,6 +20,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
@@ -94,10 +95,12 @@ abstract public class BaseAssetEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(savedAsset.getType(), assetUpdateMsg.getType());
 
         // assign asset #2 to customer
-        edgeImitator.expectMessageAmount(1);
         Customer customer = new Customer();
         customer.setTitle("Edge Customer");
         Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
+        edgeImitator.expectMessageAmount(2);
+        doPost("/api/customer/" + savedCustomer.getUuidId()
+                + "/edge/" + edge.getUuidId(), Edge.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
 
         edgeImitator.expectMessageAmount(1);
