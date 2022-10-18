@@ -56,6 +56,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.rule.RuleNodeState;
+import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -86,6 +87,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
+import org.thingsboard.server.service.script.RuleNodeMvelScriptEngine;
 
 import java.util.Collections;
 import java.util.Set;
@@ -443,7 +445,15 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public ScriptEngine createJsScriptEngine(String script, String... argNames) {
-        return new RuleNodeJsScriptEngine(getTenantId(), mainCtx.getJsSandbox(), nodeCtx.getSelf().getId(), script, argNames);
+        return new RuleNodeJsScriptEngine(getTenantId(), mainCtx.getJsInvokeService(), script, argNames);
+    }
+
+    @Override
+    public ScriptEngine createMvelScriptEngine(String script, String... argNames) {
+        if (mainCtx.getMvelInvokeService() == null) {
+            throw new RuntimeException("MVEL execution is disabled!");
+        }
+        return new RuleNodeMvelScriptEngine(getTenantId(), mainCtx.getMvelInvokeService(), script, argNames);
     }
 
     @Override
@@ -696,6 +706,24 @@ class DefaultTbContext implements TbContext {
     @Override
     public TenantProfile getTenantProfile() {
         return mainCtx.getTenantProfileCache().get(getTenantId());
+    }
+
+    @Override
+    public ScriptEngine createScriptEngine(ScriptLanguage scriptLang, String script) {
+        if (scriptLang == null) {
+            scriptLang = ScriptLanguage.JS;
+        }
+        if (StringUtils.isBlank(script)) {
+            throw new RuntimeException(scriptLang.name() + " script is blank!");
+        }
+        switch (scriptLang) {
+            case JS:
+                return createJsScriptEngine(script);
+            case MVEL:
+                return createMvelScriptEngine(script, "msg", "metadata", "msgType");
+            default:
+                throw new RuntimeException("Unsupported script language: " + scriptLang.name());
+        }
     }
 
     private TbMsgMetaData getActionMetaData(RuleNodeId ruleNodeId) {

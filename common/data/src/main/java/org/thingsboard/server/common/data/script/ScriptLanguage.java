@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.script.api.mvel;
+package org.thingsboard.server.common.data.script;
 
-import org.thingsboard.script.api.ScriptInvokeService;
-
-public interface MvelInvokeService extends ScriptInvokeService {
+public enum ScriptLanguage {
+    JS, MVEL
 }

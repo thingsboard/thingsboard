@@ -20,13 +20,17 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.mvel2.MVEL;
 import org.mvel2.ParserContext;
+import org.mvel2.optimizers.AccessorOptimizer;
+import org.mvel2.optimizers.OptimizerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ReflectionUtils;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.script.api.AbstractScriptInvokeService;
 import org.thingsboard.script.api.ScriptType;
@@ -37,6 +41,7 @@ import org.thingsboard.server.common.stats.TbApiUsageStateClient;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.Serializable;
+import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,9 +50,9 @@ import java.util.concurrent.Executor;
 import java.util.regex.Pattern;
 
 @Slf4j
-@ConditionalOnProperty(prefix = "mvel", value = "enabled", havingValue = "enabled", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "mvel", value = "enabled", havingValue = "true", matchIfMissing = true)
 @Service
-public class DefaultMvelInvokeService extends AbstractScriptInvokeService {
+public class DefaultMvelInvokeService extends AbstractScriptInvokeService implements MvelInvokeService {
 
     protected Map<UUID, MvelScript> scriptMap = new ConcurrentHashMap<>();
     private ParserContext parserContext;
@@ -91,9 +96,15 @@ public class DefaultMvelInvokeService extends AbstractScriptInvokeService {
         super.printStats();
     }
 
+    @SneakyThrows
     @PostConstruct
     public void init() {
         super.init();
+        Field field = ReflectionUtils.findField(OptimizerFactory.class, "accessorCompilers");
+        ReflectionUtils.makeAccessible(field);
+        Map<String, AccessorOptimizer> accessorCompilers = (Map<String, AccessorOptimizer>) field.get(null);
+        accessorCompilers.put(OptimizerFactory.SAFE_REFLECTIVE, new TbReflectiveAccessorOptimizer());
+
         parserContext = new ParserContext(new TbMvelParserConfiguration());
         executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(2, "mvel-executor"));
     }

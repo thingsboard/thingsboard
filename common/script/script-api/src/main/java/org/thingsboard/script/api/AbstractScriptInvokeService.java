@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -135,7 +136,7 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
     }
 
     @Override
-    public ListenableFuture<String> invokeScript(TenantId tenantId, CustomerId customerId, UUID scriptId, Object... args) {
+    public ListenableFuture<Object> invokeScript(TenantId tenantId, CustomerId customerId, UUID scriptId, Object... args) {
         if (!apiUsageStateClient.isPresent() || apiUsageStateClient.get().getApiUsageState(tenantId).isJsExecEnabled()) {
             if (!isScriptPresent(scriptId)) {
                 return error("No compiled script found for scriptId: [" + scriptId + "]!");
@@ -152,13 +153,13 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
                 pushedMsgs.incrementAndGet();
                 log.trace("InvokeScript uuid {} with timeout {}ms", scriptId, getMaxInvokeRequestsTimeout());
                 var resultFuture = Futures.transformAsync(doInvokeFunction(scriptId, args), output -> {
-                    String result = output.toString();
+                    String result = JacksonUtil.toString(output);
                     if (resultSizeExceeded(result)) {
                         throw new TbScriptException(scriptId, TbScriptException.ErrorCode.OTHER, null, new RuntimeException(
                                 format("Script invocation result exceeds maximum allowed size of %s symbols", getMaxResultSize())
                         ));
                     }
-                    return Futures.immediateFuture(result);
+                    return Futures.immediateFuture(output);
                 }, MoreExecutors.directExecutor());
 
                 return withTimeoutAndStatsCallback(scriptId, resultFuture, invokeCallback, getMaxInvokeRequestsTimeout());

@@ -35,7 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Created by ashvayka on 26.09.18.
  */
 @Slf4j
-public abstract class AbstractJsInvokeService extends AbstractScriptInvokeService {
+public abstract class AbstractJsInvokeService extends AbstractScriptInvokeService implements JsInvokeService{
 
     protected Map<UUID, String> scriptIdToNameMap = new ConcurrentHashMap<>();
 

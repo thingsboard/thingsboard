@@ -20,8 +20,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
-import org.thingsboard.script.api.ScriptInvokeService;
 import org.thingsboard.script.api.ScriptType;
+import org.thingsboard.script.api.js.JsInvokeService;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 
@@ -30,7 +30,7 @@ import java.util.UUID;
 @Slf4j
 @Service
 @ConditionalOnProperty(prefix = "js", value = "evaluator", havingValue = "mock")
-public class MockJsInvokeService implements ScriptInvokeService {
+public class MockJsInvokeService implements JsInvokeService {
 
     @Override
     public ListenableFuture<UUID> eval(TenantId tenantId, ScriptType scriptType, String scriptBody, String... argNames) {
@@ -39,7 +39,7 @@ public class MockJsInvokeService implements ScriptInvokeService {
     }
 
     @Override
-    public ListenableFuture<String> invokeScript(TenantId tenantId, CustomerId customerId, UUID scriptId, Object... args) {
+    public ListenableFuture<Object> invokeScript(TenantId tenantId, CustomerId customerId, UUID scriptId, Object... args) {
         log.warn("invokeFunction {} {} {} {}", tenantId, customerId, scriptId, args);
         return Futures.immediateFuture("{}");
     }

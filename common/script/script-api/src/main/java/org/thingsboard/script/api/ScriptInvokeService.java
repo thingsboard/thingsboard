@@ -25,7 +25,7 @@ public interface ScriptInvokeService {
 
     ListenableFuture<UUID> eval(TenantId tenantId, ScriptType scriptType, String scriptBody, String... argNames);
 
-    ListenableFuture<String> invokeScript(TenantId tenantId, CustomerId customerId, UUID scriptId, Object... args);
+    ListenableFuture<Object> invokeScript(TenantId tenantId, CustomerId customerId, UUID scriptId, Object... args);
 
     ListenableFuture<Void> release(UUID scriptId);
 

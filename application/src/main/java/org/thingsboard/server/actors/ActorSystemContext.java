@@ -32,6 +32,8 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
+import org.thingsboard.script.api.js.JsInvokeService;
+import org.thingsboard.script.api.mvel.MvelInvokeService;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.actors.tenant.DebugTbRateLimits;
 import org.thingsboard.server.cluster.TbClusterService;
@@ -90,7 +92,6 @@ import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
 import org.thingsboard.server.service.rpc.TbRpcService;
 import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
-import org.thingsboard.script.api.ScriptInvokeService;
 import org.thingsboard.server.service.session.DeviceSessionCacheService;
 import org.thingsboard.server.service.sms.SmsExecutorService;
 import org.thingsboard.server.service.state.DeviceStateService;
@@ -267,7 +268,11 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private ScriptInvokeService jsSandbox;
+    private JsInvokeService jsInvokeService;
+
+    @Autowired(required = false)
+    @Getter
+    private MvelInvokeService mvelInvokeService;
 
     @Autowired
     @Getter

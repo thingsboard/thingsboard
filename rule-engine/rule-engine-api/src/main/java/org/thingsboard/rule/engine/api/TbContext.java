@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.rule.RuleNodeState;
+import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -263,6 +264,8 @@ public interface TbContext {
 
     ScriptEngine createJsScriptEngine(String script, String... argNames);
 
+    ScriptEngine createMvelScriptEngine(String script, String... argNames);
+
     void logJsEvalRequest();
 
     void logJsEvalResponse();
@@ -298,4 +301,6 @@ public interface TbContext {
     void removeListeners();
 
     TenantProfile getTenantProfile();
+
+    ScriptEngine createScriptEngine(ScriptLanguage scriptLang, String s);
 }

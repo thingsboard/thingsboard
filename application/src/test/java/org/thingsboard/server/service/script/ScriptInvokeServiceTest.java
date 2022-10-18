@@ -92,7 +92,7 @@ class ScriptInvokeServiceTest extends AbstractControllerTest {
     }
 
     private String invokeScript(UUID scriptId, String msg) throws ExecutionException, InterruptedException {
-        return jsInvokeService.invokeScript(TenantId.SYS_TENANT_ID, null, scriptId, msg, "{}", "POST_TELEMETRY_REQUEST").get();
+        return jsInvokeService.invokeScript(TenantId.SYS_TENANT_ID, null, scriptId, msg, "{}", "POST_TELEMETRY_REQUEST").get().toString();
     }
 
 }
