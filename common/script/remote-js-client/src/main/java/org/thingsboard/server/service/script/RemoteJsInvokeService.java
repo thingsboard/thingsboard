@@ -26,6 +26,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StopWatch;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.script.api.TbScriptException;
 import org.thingsboard.script.api.js.AbstractJsInvokeService;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.common.stats.TbApiUsageStateClient;
@@ -44,6 +45,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @Slf4j
 @ConditionalOnExpression("'${js.evaluator:null}'=='remote' && ('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core' || '${service.type:null}'=='tb-rule-engine')")
@@ -137,7 +139,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 return compiledScriptId;
             } else {
                 log.debug("[{}] Failed to compile script due to [{}]: {}", compiledScriptId, compilationResult.getErrorCode().name(), compilationResult.getErrorDetails());
-                throw new RuntimeException(compilationResult.getErrorDetails());
+                throw new TbScriptException(scriptId, TbScriptException.ErrorCode.COMPILATION, scriptBody, new RuntimeException(compilationResult.getErrorDetails()));
             }
         }, callbackExecutor);
     }
@@ -182,15 +184,14 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 return invokeResult.getResult();
             } else {
                 final RuntimeException e = new RuntimeException(invokeResult.getErrorDetails());
-                if (JsInvokeProtos.JsInvokeErrorCode.TIMEOUT_ERROR.equals(invokeResult.getErrorCode())) {
-                    onScriptExecutionError(scriptId, e, scriptBody);
-                    timeoutMsgs.incrementAndGet();
-                } else if (JsInvokeProtos.JsInvokeErrorCode.COMPILATION_ERROR.equals(invokeResult.getErrorCode())) {
-                    onScriptExecutionError(scriptId, e, scriptBody);
-                }
-                failedMsgs.incrementAndGet();
                 log.debug("[{}] Failed to invoke function due to [{}]: {}", scriptId, invokeResult.getErrorCode().name(), invokeResult.getErrorDetails());
-                throw e;
+                if (JsInvokeProtos.JsInvokeErrorCode.TIMEOUT_ERROR.equals(invokeResult.getErrorCode())) {
+                    throw new TbScriptException(scriptId, TbScriptException.ErrorCode.TIMEOUT, scriptBody, new TimeoutException());
+                } else if (JsInvokeProtos.JsInvokeErrorCode.COMPILATION_ERROR.equals(invokeResult.getErrorCode())) {
+                    throw new TbScriptException(scriptId, TbScriptException.ErrorCode.COMPILATION, scriptBody, e);
+                } else {
+                    throw new TbScriptException(scriptId, TbScriptException.ErrorCode.RUNTIME, scriptBody, e);
+                }
             }
         }, callbackExecutor);
     }

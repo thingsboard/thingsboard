@@ -27,6 +27,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.script.api.TbScriptException;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.common.stats.TbApiUsageStateClient;
 
@@ -38,7 +39,6 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -146,8 +146,7 @@ public class NashornJsInvokeService extends AbstractJsInvokeService {
                 scriptIdToNameMap.put(scriptId, functionName);
                 return scriptId;
             } catch (Exception e) {
-                log.debug("Failed to compile JS script: {}", e.getMessage(), e);
-                throw new ExecutionException(e);
+                throw new TbScriptException(scriptId, TbScriptException.ErrorCode.COMPILATION, jsScript, e);
             }
         });
     }
@@ -162,10 +161,9 @@ public class NashornJsInvokeService extends AbstractJsInvokeService {
                     return ((Invocable) engine).invokeFunction(functionName, args);
                 }
             } catch (ScriptException e) {
-                throw new ExecutionException(e);
+                throw new TbScriptException(scriptId, TbScriptException.ErrorCode.RUNTIME, null, e);
             } catch (Exception e) {
-                onScriptExecutionError(scriptId, e, functionName);
-                throw new ExecutionException(e);
+                throw new TbScriptException(scriptId, TbScriptException.ErrorCode.OTHER, null, e);
             }
         });
     }

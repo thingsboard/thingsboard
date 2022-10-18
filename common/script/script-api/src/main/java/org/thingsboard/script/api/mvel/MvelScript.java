@@ -25,6 +25,7 @@ import java.util.Map;
 public class MvelScript {
 
     private final Serializable compiledScript;
+    private final String scriptBody;
     private final String[] argNames;
 
     public Map createVars(Object[] args) {
