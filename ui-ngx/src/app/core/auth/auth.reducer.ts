@@ -24,7 +24,8 @@ const emptyUserAuthState: AuthPayload = {
   forceFullscreen: false,
   allowedDashboardIds: [],
   edgesSupportEnabled: false,
-  hasRepository: false
+  hasRepository: false,
+  mvelEnabled: false
 };
 
 export const initialState: AuthState = {
