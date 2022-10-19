@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -29,9 +28,11 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.hibernate.exception.JDBCConnectionException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.Arrays;
@@ -46,6 +47,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static org.apache.commons.lang3.StringUtils.join;
+
 @Aspect
 @ConditionalOnProperty(prefix = "sql", value = "log_tenant_stats", havingValue = "true")
 @Component
@@ -54,6 +57,12 @@ public class SqlDaoCallsAspect {
 
     private final Set<String> invalidTenantDbCallMethods = ConcurrentHashMap.newKeySet();
     private final ConcurrentMap<TenantId, DbCallStats> statsMap = new ConcurrentHashMap<>();
+
+    @Value("${sql.batch_sort:true}")
+    private boolean batchSortEnabled;
+
+    private static final String DEADLOCK_DETECTED_ERROR = "deadlock detected";
+
 
     @Scheduled(initialDelayString = "${sql.log_tenant_stats_interval_ms:60000}",
             fixedDelayString = "${sql.log_tenant_stats_interval_ms:60000}")
@@ -135,7 +144,7 @@ public class SqlDaoCallsAspect {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Around("@within(org.thingsboard.server.dao.util.SqlDao)")
-    public Object logExecutionTime(ProceedingJoinPoint joinPoint) throws Throwable {
+    public Object handleSqlCall(ProceedingJoinPoint joinPoint) throws Throwable {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         var methodName = signature.toShortString();
         if (invalidTenantDbCallMethods.contains(methodName)) {
@@ -155,29 +164,47 @@ public class SqlDaoCallsAspect {
                         new FutureCallback<>() {
                             @Override
                             public void onSuccess(@Nullable Object result) {
-                                logTenantMethodExecution(tenantId, methodName, true, startTime, null);
+                                reportSuccessfulMethodExecution(tenantId, methodName, startTime);
                             }
 
                             @Override
                             public void onFailure(Throwable t) {
-                                logTenantMethodExecution(tenantId, methodName, false, startTime, t);
+                                reportFailedMethodExecution(tenantId, methodName, startTime, t, joinPoint);
                             }
                         },
                         MoreExecutors.directExecutor());
             } else {
-                logTenantMethodExecution(tenantId, methodName, true, startTime, null);
+                reportSuccessfulMethodExecution(tenantId, methodName, startTime);
             }
             return result;
         } catch (Throwable t) {
-            logTenantMethodExecution(tenantId, methodName, false, startTime, t);
+            reportFailedMethodExecution(tenantId, methodName, startTime, t, joinPoint);
             throw t;
         }
     }
 
-    private void logTenantMethodExecution(TenantId tenantId, String method, boolean success, long startTime, Throwable t) {
-        if (!success && ExceptionUtils.indexOfThrowable(t, JDBCConnectionException.class) >= 0) {
-            return;
+    private void reportFailedMethodExecution(TenantId tenantId, String method, long startTime, Throwable t, ProceedingJoinPoint joinPoint) {
+        if (t != null) {
+            if (ExceptionUtils.indexOfThrowable(t, JDBCConnectionException.class) >= 0) {
+                return;
+            }
+            if (StringUtils.containedByAny(DEADLOCK_DETECTED_ERROR, ExceptionUtils.getRootCauseMessage(t), ExceptionUtils.getMessage(t))) {
+                if (!batchSortEnabled) {
+                    log.warn("Deadlock was detected for method {} (tenant: {}). You might need to enable 'sql.batch_sort' option.", method, tenantId);
+                } else {
+                    log.error("Deadlock was detected for method {} (tenant: {}). Arguments passed: \n{}\n The error: ",
+                            method, tenantId, join(joinPoint.getArgs(), System.lineSeparator()), t);
+                }
+            }
         }
+        reportMethodExecution(tenantId, method, false, startTime);
+    }
+
+    private void reportSuccessfulMethodExecution(TenantId tenantId, String method, long startTime) {
+        reportMethodExecution(tenantId, method, true, startTime);
+    }
+
+    private void reportMethodExecution(TenantId tenantId, String method, boolean success, long startTime) {
         statsMap.computeIfAbsent(tenantId, DbCallStats::new)
                 .onMethodCall(method, success, System.currentTimeMillis() - startTime);
     }
