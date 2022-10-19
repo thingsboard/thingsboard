@@ -2974,6 +2974,8 @@
         "ui-resources-load-error": "Failed to load configuration ui resources.",
         "invalid-target-rulechain": "Unable to resolve target rule chain!",
         "test-script-function": "Test script function",
+        "script-lang-java-script": "Java Script",
+        "script-lang-mvel": "MVEL",
         "message": "Message",
         "message-type": "Message type",
         "select-message-type": "Select message type",

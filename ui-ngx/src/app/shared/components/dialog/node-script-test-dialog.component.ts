@@ -98,6 +98,10 @@ export class NodeScriptTestDialogComponent extends DialogComponent<NodeScriptTes
 
   contentTypes = ContentType;
 
+  scriptLanguage = ScriptLanguage;
+
+  scriptLang = this.data.scriptLang ? this.data.scriptLang : ScriptLanguage.JS;
+
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: NodeScriptTestDialogData,
@@ -192,8 +196,7 @@ export class NodeScriptTestDialogComponent extends DialogComponent<NodeScriptTes
         metadata: this.nodeScriptTestFormGroup.get('metadata').value,
         script: this.nodeScriptTestFormGroup.get('script').value
       };
-      const scriptLang = this.data.scriptLang ? this.data.scriptLang : ScriptLanguage.JS;
-      return this.ruleChainService.testScript(inputParams, scriptLang).pipe(
+      return this.ruleChainService.testScript(inputParams, this.scriptLang).pipe(
         mergeMap((result) => {
           if (result.error) {
             this.store.dispatch(new ActionNotificationShow(
