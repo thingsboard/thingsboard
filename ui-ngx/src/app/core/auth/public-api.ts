@@ -14,12 +14,8 @@
 /// limitations under the License.
 ///
 
-export * from './api/public-api';
-export * from './http/public-api';
-export * from './local-storage/local-storage.service';
-export * from './services/public-api';
-export * from './ws/telemetry-websocket.service';
-export * from './core.state';
-export * from './core.module';
-export * from './utils';
-export * from './auth/public-api';
+export * from './auth.actions';
+export * from './auth.models';
+export * from './auth.reducer';
+export * from './auth.selectors';
+export * from './auth.service';

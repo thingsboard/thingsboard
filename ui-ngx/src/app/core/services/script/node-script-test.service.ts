@@ -24,6 +24,7 @@ import {
   NodeScriptTestDialogData
 } from '@shared/components/dialog/node-script-test-dialog.component';
 import { sortObjectKeys } from '@core/utils';
+import { ScriptLanguage } from '@shared/models/rule-node.models';
 
 @Injectable({
   providedIn: 'root'
@@ -35,7 +36,8 @@ export class NodeScriptTestService {
   }
 
   testNodeScript(script: string, scriptType: string, functionTitle: string,
-                 functionName: string, argNames: string[], ruleNodeId: string, helpId?: string): Observable<string> {
+                 functionName: string, argNames: string[], ruleNodeId: string, helpId?: string,
+                 scriptLang?: ScriptLanguage): Observable<string> {
     if (ruleNodeId) {
       return this.ruleChainService.getLatestRuleNodeDebugInput(ruleNodeId).pipe(
         switchMap((debugIn) => {
@@ -57,13 +59,14 @@ export class NodeScriptTestService {
       );
     } else {
       return this.openTestScriptDialog(script, scriptType, functionTitle,
-        functionName, argNames, null, null, null, helpId);
+        functionName, argNames, null, null, null, helpId, scriptLang);
     }
   }
 
   private openTestScriptDialog(script: string, scriptType: string,
                                functionTitle: string, functionName: string, argNames: string[],
-                               msg?: any, metadata?: {[key: string]: string}, msgType?: string, helpId?: string): Observable<string> {
+                               msg?: any, metadata?: {[key: string]: string}, msgType?: string, helpId?: string,
+                               scriptLang?: ScriptLanguage): Observable<string> {
     if (!msg) {
       msg = {
         temperature: 22.4,
@@ -95,7 +98,8 @@ export class NodeScriptTestService {
           script,
           scriptType,
           argNames,
-          helpId
+          helpId,
+          scriptLang
         }
       }).afterClosed();
   }
