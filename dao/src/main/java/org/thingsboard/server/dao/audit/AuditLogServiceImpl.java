@@ -257,13 +257,13 @@ public class AuditLogServiceImpl implements AuditLogService {
                 String browser = extractParameter(String.class, 1, additionalInfo);
                 String os = extractParameter(String.class, 2, additionalInfo);
                 String device = extractParameter(String.class, 3, additionalInfo);
-                JsonNode provider = extractParameter(JsonNode.class, 4, additionalInfo);
+                String provider = extractParameter(String.class, 4, additionalInfo);
                 actionData.put("clientAddress", clientAddress);
                 actionData.put("browser", browser);
                 actionData.put("os", os);
                 actionData.put("device", device);
-                if (provider != null && provider.has("authProviderName")) {
-                    actionData.put("provider", provider.get("authProviderName").asText());
+                if (org.springframework.util.StringUtils.hasText(provider)) {
+                    actionData.put("provider", provider);
                 }
                 break;
             case PROVISION_SUCCESS:

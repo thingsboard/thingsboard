@@ -268,6 +268,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
         String browser = "Unknown";
         String os = "Unknown";
         String device = "Unknown";
+        String provider = null;
         if (authenticationDetails instanceof RestAuthenticationDetails) {
             RestAuthenticationDetails details = (RestAuthenticationDetails) authenticationDetails;
             clientAddress = details.getClientAddress();
@@ -308,9 +309,12 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
         if (actionType == ActionType.LOGIN && e == null) {
             userService.setLastLoginTs(user.getTenantId(), user.getId());
         }
+        if (user.getAdditionalInfo() != null && user.getAdditionalInfo().has("authProviderName")) {
+            provider = user.getAdditionalInfo().get("authProviderName").asText();
+        }
         auditLogService.logEntityAction(
                 user.getTenantId(), user.getCustomerId(), user.getId(),
-                user.getName(), user.getId(), null, actionType, e, clientAddress, browser, os, device, user.getAdditionalInfo());
+                user.getName(), user.getId(), null, actionType, e, clientAddress, browser, os, device, provider);
     }
 
     private static boolean isPositiveInteger(Integer val) {
