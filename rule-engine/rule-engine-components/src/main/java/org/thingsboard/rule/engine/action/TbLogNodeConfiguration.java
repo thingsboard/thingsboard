@@ -17,16 +17,21 @@ package org.thingsboard.rule.engine.action;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.server.common.data.script.ScriptLanguage;
 
 @Data
 public class TbLogNodeConfiguration implements NodeConfiguration {
 
+    private ScriptLanguage scriptLang;
     private String jsScript;
+    private String mvelScript;
 
     @Override
     public TbLogNodeConfiguration defaultConfiguration() {
         TbLogNodeConfiguration configuration = new TbLogNodeConfiguration();
+        configuration.setScriptLang(ScriptLanguage.MVEL);
         configuration.setJsScript("return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);");
+        configuration.setMvelScript("return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);");
         return configuration;
     }
 }
