@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.channel.EventLoopGroup;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.util.Arrays;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
@@ -443,17 +444,39 @@ class DefaultTbContext implements TbContext {
         return mainCtx.getExternalCallExecutorService();
     }
 
+    @Deprecated
     @Override
     public ScriptEngine createJsScriptEngine(String script, String... argNames) {
         return new RuleNodeJsScriptEngine(getTenantId(), mainCtx.getJsInvokeService(), script, argNames);
     }
 
-    @Override
-    public ScriptEngine createMvelScriptEngine(String script, String... argNames) {
+    private ScriptEngine createMvelScriptEngine(String script, String... argNames) {
         if (mainCtx.getMvelInvokeService() == null) {
             throw new RuntimeException("MVEL execution is disabled!");
         }
         return new RuleNodeMvelScriptEngine(getTenantId(), mainCtx.getMvelInvokeService(), script, argNames);
+    }
+
+    @Override
+    public ScriptEngine createScriptEngine(ScriptLanguage scriptLang, String script, String... argNames) {
+        if (scriptLang == null) {
+            scriptLang = ScriptLanguage.JS;
+        }
+        if (StringUtils.isBlank(script)) {
+            throw new RuntimeException(scriptLang.name() + " script is blank!");
+        }
+        switch (scriptLang) {
+            case JS:
+                return createJsScriptEngine(script, argNames);
+            case MVEL:
+                if (Arrays.isNullOrEmpty(argNames)) {
+                    return createMvelScriptEngine(script, "msg", "metadata", "msgType");
+                } else {
+                    return createMvelScriptEngine(script, argNames);
+                }
+            default:
+                throw new RuntimeException("Unsupported script language: " + scriptLang.name());
+        }
     }
 
     @Override
@@ -706,24 +729,6 @@ class DefaultTbContext implements TbContext {
     @Override
     public TenantProfile getTenantProfile() {
         return mainCtx.getTenantProfileCache().get(getTenantId());
-    }
-
-    @Override
-    public ScriptEngine createScriptEngine(ScriptLanguage scriptLang, String script) {
-        if (scriptLang == null) {
-            scriptLang = ScriptLanguage.JS;
-        }
-        if (StringUtils.isBlank(script)) {
-            throw new RuntimeException(scriptLang.name() + " script is blank!");
-        }
-        switch (scriptLang) {
-            case JS:
-                return createJsScriptEngine(script);
-            case MVEL:
-                return createMvelScriptEngine(script, "msg", "metadata", "msgType");
-            default:
-                throw new RuntimeException("Unsupported script language: " + scriptLang.name());
-        }
     }
 
     private TbMsgMetaData getActionMetaData(RuleNodeId ruleNodeId) {

@@ -262,9 +262,15 @@ public interface TbContext {
 
     SmsSenderFactory getSmsSenderFactory();
 
+    /**
+     * Creates JS Script Engine
+     * @deprecated
+     * <p> Use {@link #createScriptEngine} instead.
+     *
+     */
     ScriptEngine createJsScriptEngine(String script, String... argNames);
 
-    ScriptEngine createMvelScriptEngine(String script, String... argNames);
+    ScriptEngine createScriptEngine(ScriptLanguage scriptLang, String script, String... argNames);
 
     void logJsEvalRequest();
 
@@ -302,5 +308,4 @@ public interface TbContext {
 
     TenantProfile getTenantProfile();
 
-    ScriptEngine createScriptEngine(ScriptLanguage scriptLang, String s);
 }
