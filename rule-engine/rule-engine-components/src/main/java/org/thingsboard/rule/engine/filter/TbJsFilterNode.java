@@ -40,9 +40,9 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
                 "If <b>True</b> - send Message via <b>True</b> chain, otherwise <b>False</b> chain is used." +
                 "Message payload can be accessed via <code>msg</code> property. For example <code>msg.temperature < 10;</code><br/>" +
                 "Message metadata can be accessed via <code>metadata</code> property. For example <code>metadata.customerName === 'John';</code><br/>" +
-                "Message type can be accessed via <code>msgType</code> property."
-//        uiResources = {"static/rulenode/rulenode-core-config.js"},
-//        configDirective = "tbFilterNodeScriptConfig")
+                "Message type can be accessed via <code>msgType</code> property.",
+        uiResources = {"static/rulenode/rulenode-core-config.js"},
+        configDirective = "tbFilterNodeScriptConfig"
 )
 public class TbJsFilterNode implements TbNode {
 
