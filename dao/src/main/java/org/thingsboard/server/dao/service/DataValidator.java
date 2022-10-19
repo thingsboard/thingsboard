@@ -62,7 +62,7 @@ public abstract class DataValidator<D extends BaseData<?>> {
             }
             return old;
         } catch (DataValidationException e) {
-            log.error("Data object is invalid: [{}]", e.getMessage());
+            log.error("{} object is invalid: [{}]", data == null ? "Data" : data.getClass().getSimpleName(), e.getMessage());
             throw e;
         }
     }

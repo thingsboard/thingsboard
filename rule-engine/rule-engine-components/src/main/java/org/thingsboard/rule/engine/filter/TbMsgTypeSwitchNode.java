@@ -36,7 +36,7 @@ import org.thingsboard.server.common.msg.session.SessionMsgType;
         relationTypes = {"Post attributes", "Post telemetry", "RPC Request from Device", "RPC Request to Device", "RPC Queued", "RPC Sent", "RPC Delivered", "RPC Successful", "RPC Timeout", "RPC Expired", "RPC Failed", "RPC Deleted",
                 "Activity Event", "Inactivity Event", "Connect Event", "Disconnect Event", "Entity Created", "Entity Updated", "Entity Deleted", "Entity Assigned",
                 "Entity Unassigned", "Attributes Updated", "Attributes Deleted", "Alarm Acknowledged", "Alarm Cleared", "Other", "Entity Assigned From Tenant", "Entity Assigned To Tenant",
-                "Timeseries Updated", "Timeseries Deleted"},
+                "Relation Added or Updated", "Relation Deleted", "All Relations Deleted", "Timeseries Updated", "Timeseries Deleted"},
         nodeDescription = "Route incoming messages by Message Type",
         nodeDetails = "Sends messages with message types <b>\"Post attributes\", \"Post telemetry\", \"RPC Request\"</b> etc. via corresponding chain, otherwise <b>Other</b> chain is used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
@@ -111,6 +111,12 @@ public class TbMsgTypeSwitchNode implements TbNode {
             relationType = "RPC Failed";
         } else if (msg.getType().equals(DataConstants.RPC_DELETED)) {
             relationType = "RPC Deleted";
+        } else if (msg.getType().equals(DataConstants.RELATION_ADD_OR_UPDATE)) {
+            relationType = "Relation Added or Updated";
+        } else if (msg.getType().equals(DataConstants.RELATION_DELETED)) {
+            relationType = "Relation Deleted";
+        } else if (msg.getType().equals(DataConstants.RELATIONS_DELETED)) {
+            relationType = "All Relations Deleted";
         } else {
             relationType = "Other";
         }
