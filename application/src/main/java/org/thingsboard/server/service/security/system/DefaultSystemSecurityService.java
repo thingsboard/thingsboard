@@ -310,7 +310,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
         }
         auditLogService.logEntityAction(
                 user.getTenantId(), user.getCustomerId(), user.getId(),
-                user.getName(), user.getId(), null, actionType, e, clientAddress, browser, os, device);
+                user.getName(), user.getId(), null, actionType, e, clientAddress, browser, os, device, user.getAdditionalInfo());
     }
 
     private static boolean isPositiveInteger(Integer val) {
