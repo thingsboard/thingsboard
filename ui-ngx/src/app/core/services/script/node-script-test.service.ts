@@ -54,7 +54,7 @@ export class NodeScriptTestService {
             msgType = debugIn.msgType;
           }
           return this.openTestScriptDialog(script, scriptType, functionTitle,
-            functionName, argNames, msg, metadata, msgType, helpId);
+            functionName, argNames, msg, metadata, msgType, helpId, scriptLang);
         })
       );
     } else {

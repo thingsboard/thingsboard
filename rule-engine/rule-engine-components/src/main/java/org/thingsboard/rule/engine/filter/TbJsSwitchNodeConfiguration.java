@@ -25,10 +25,18 @@ import java.util.Set;
 @Data
 public class TbJsSwitchNodeConfiguration implements NodeConfiguration<TbJsSwitchNodeConfiguration> {
 
-    private static final String DEFAULT_SCRIPT = "function nextRelation(metadata, msg) {\n" +
+    private static final String DEFAULT_JS_SCRIPT = "function nextRelation(metadata, msg) {\n" +
             "    return ['one','nine'];\n" +
             "}\n" +
             "if(msgType === 'POST_TELEMETRY_REQUEST') {\n" +
+            "    return ['two'];\n" +
+            "}\n" +
+            "return nextRelation(metadata, msg);";
+
+    private static final String DEFAULT_MVEL_SCRIPT = "function nextRelation(metadata, msg) {\n" +
+            "    return ['one','nine'];\n" +
+            "}\n" +
+            "if(msgType == 'POST_TELEMETRY_REQUEST') {\n" +
             "    return ['two'];\n" +
             "}\n" +
             "return nextRelation(metadata, msg);";
@@ -41,8 +49,8 @@ public class TbJsSwitchNodeConfiguration implements NodeConfiguration<TbJsSwitch
     public TbJsSwitchNodeConfiguration defaultConfiguration() {
         TbJsSwitchNodeConfiguration configuration = new TbJsSwitchNodeConfiguration();
         configuration.setScriptLang(ScriptLanguage.MVEL);
-        configuration.setJsScript(DEFAULT_SCRIPT);
-        configuration.setMvelScript(DEFAULT_SCRIPT);
+        configuration.setJsScript(DEFAULT_JS_SCRIPT);
+        configuration.setMvelScript(DEFAULT_MVEL_SCRIPT);
         return configuration;
     }
 }
