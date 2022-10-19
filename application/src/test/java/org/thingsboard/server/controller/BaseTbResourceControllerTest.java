@@ -366,7 +366,7 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
             doGet("/api/resource/" + foundTbResource.getId().getId().toString())
                     .andExpect(status().isOk());
         } finally {
-            Mockito.reset(tbResourceDao);
+            Mockito.doReturn(true).when(tbResourceDao).removeById(any(), any());
         }
     }
 

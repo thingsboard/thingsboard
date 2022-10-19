@@ -271,7 +271,7 @@ public abstract class BaseRpcControllerTest extends AbstractControllerTest {
             doGet("/api/rpc/persistent/" + rpcId)
                     .andExpect(status().isOk());
         } finally {
-            Mockito.reset(rpcDao);
+            Mockito.doReturn(true).when(rpcDao).removeById(any(), any());
         }
     }
 

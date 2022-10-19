@@ -188,7 +188,7 @@ public class JpaAuditLogDaoTest extends AbstractJpaDaoTest {
                     .hasMessageContaining("mock message");
 
         } finally {
-            Mockito.reset(auditLogDao);
+            Mockito.doReturn(true).when(auditLogDao).removeById(any(), any());
         }
         AuditLog foundedAuditLogById = auditLogDao.findById(TenantId.fromUUID(tenantId), neededFoundedAuditLog.getUuidId());
         checkFoundedAuditLog(foundedAuditLogById);

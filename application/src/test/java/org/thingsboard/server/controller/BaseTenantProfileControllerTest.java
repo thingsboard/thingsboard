@@ -381,7 +381,7 @@ public abstract class BaseTenantProfileControllerTest extends AbstractController
             doGet("/api/tenantProfile/" + savedTenantProfile.getId().getId().toString())
                     .andExpect(status().isOk());
         } finally {
-            Mockito.reset(tenantProfileDao);
+            Mockito.doReturn(true).when(tenantProfileDao).removeById(any(), any());
         }
     }
 

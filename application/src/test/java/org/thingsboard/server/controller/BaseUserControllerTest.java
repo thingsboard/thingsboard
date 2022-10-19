@@ -771,7 +771,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
             doPost("/api/noauth/resetPassword", resetPasswordRequest).andExpect(status().isInternalServerError());
 
         } finally {
-            Mockito.reset(userCredentialsDao);
+            Mockito.doReturn(true).when(userCredentialsDao).removeById(any(), any());
         }
 
         logout();

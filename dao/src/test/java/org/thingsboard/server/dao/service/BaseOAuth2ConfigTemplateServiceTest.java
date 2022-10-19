@@ -148,7 +148,7 @@ public abstract class BaseOAuth2ConfigTemplateServiceTest extends AbstractServic
             Assert.assertEquals(3, oAuth2ConfigTemplateService.findAllClientRegistrationTemplates().size());
             Assert.assertNotNull(oAuth2ConfigTemplateService.findClientRegistrationTemplateById(saved.getId()));
         } finally {
-            Mockito.reset(oAuth2ClientRegistrationTemplateDao);
+            Mockito.doReturn(true).when(oAuth2ClientRegistrationTemplateDao).removeById(any(), any());
         }
     }
 
