@@ -84,6 +84,7 @@ message ConnectResponseMsg {
 
 message SyncRequestMsg {
   bool syncRequired = 1;
+  optional bool fullSync = 2;
 }
 
 message SyncCompletedMsg {

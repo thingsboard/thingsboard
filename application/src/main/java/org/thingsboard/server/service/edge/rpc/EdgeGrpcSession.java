@@ -134,7 +134,11 @@ public final class EdgeGrpcSession implements Closeable {
                 if (connected) {
                     if (requestMsg.getMsgType().equals(RequestMsgType.SYNC_REQUEST_RPC_MESSAGE)) {
                         if (requestMsg.hasSyncRequestMsg() && requestMsg.getSyncRequestMsg().getSyncRequired()) {
-                            startSyncProcess(edge.getTenantId(), edge.getId());
+                            boolean fullSync = true;
+                            if (requestMsg.getSyncRequestMsg().hasFullSync()) {
+                                fullSync = requestMsg.getSyncRequestMsg().getFullSync();
+                            }
+                            startSyncProcess(edge.getTenantId(), edge.getId(), fullSync);
                         } else {
                             syncCompleted = true;
                         }
@@ -177,10 +181,10 @@ public final class EdgeGrpcSession implements Closeable {
         };
     }
 
-    public void startSyncProcess(TenantId tenantId, EdgeId edgeId) {
+    public void startSyncProcess(TenantId tenantId, EdgeId edgeId, boolean fullSync) {
         log.trace("[{}][{}] Staring edge sync process", tenantId, edgeId);
         syncCompleted = false;
-        doSync(new EdgeSyncCursor(ctx, edge));
+        doSync(new EdgeSyncCursor(ctx, edge, fullSync));
     }
 
     private void doSync(EdgeSyncCursor cursor) {
