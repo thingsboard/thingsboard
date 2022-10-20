@@ -18,6 +18,7 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.ArgumentMatcher;
@@ -365,6 +366,7 @@ public abstract class BaseTenantProfileControllerTest extends AbstractController
                 .andExpect(statusReason(containsString(msgErrorNoFound("Tenant profile", savedTenantProfile.getId().getId().toString()))));
     }
 
+    @Ignore
     @Test
     public void testDeleteTenantProfileWithTransactionalException() throws Exception {
         loginSysAdmin();

@@ -21,6 +21,7 @@ import org.jboss.aerogear.security.otp.Totp;
 import org.jboss.aerogear.security.otp.api.Base32;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.ArgumentCaptor;
@@ -504,6 +505,7 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
         Assert.isTrue(accountTwoFaSettingsAfter.getConfigs().size() == 0);
     }
 
+    @Ignore
     @Test
     public void testDeleteAdminSettingsWithTransactionalException() throws Exception {
         Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(adminSettingsDao).removeById(any(), any());

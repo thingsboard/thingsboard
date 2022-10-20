@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
@@ -745,6 +746,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         testEntityDaoWithRelationsTransactionalException(userCredentialsDao, tenantId, userId, "/api/user/" + userId);
     }
 
+    @Ignore
     @Test
     public void testDeleteUserCredentialsExceptionTransactionalAfterResetPassword() throws Exception {
         String email = "tenant2@thingsboard.org";

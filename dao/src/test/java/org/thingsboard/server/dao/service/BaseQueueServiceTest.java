@@ -19,6 +19,7 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
@@ -374,7 +375,7 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
         Assert.assertNull(foundQueue);
     }
 
-
+    @Ignore
     @Test
     public void testDeleteOAuth2ClientRegistrationTemplateWithTransactionalException() throws Exception {
         Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(queueDao).removeById(any(), any());

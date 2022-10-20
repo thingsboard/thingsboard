@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
@@ -176,6 +177,7 @@ public class JpaAuditLogDaoTest extends AbstractJpaDaoTest {
                 "RemoveById is not success!");
     }
 
+    @Ignore
     @Test
     public void testDeleteAuditLogWithTransactionalException() throws Exception {
         Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(auditLogDao).removeById(any(), any());

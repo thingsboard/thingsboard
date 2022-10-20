@@ -20,6 +20,7 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
@@ -352,6 +353,7 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
                 .andExpect(statusReason(containsString(msgErrorNoFound("Resource", resourceIdStr))));;
     }
 
+    @Ignore
     @Test
     public void testDeleteTbResourceWithTransactionalException() throws Exception {
         TbResource tbResource = createAndSavedTbResource("MOCK_TransactionalException", "Test Data");

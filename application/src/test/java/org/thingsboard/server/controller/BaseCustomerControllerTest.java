@@ -24,6 +24,7 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
@@ -468,6 +469,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         doGet("/api/customer/" + customerExpected.getId().getId().toString()).andExpect(status().isNotFound());
     }
 
+    @Ignore
     @Test
     public void testDeleteApiUsageStateWithTransactionalException() throws Exception {
         Customer customerExpected = createCustomer("Customer for Test WithRelations Transactional Exception");

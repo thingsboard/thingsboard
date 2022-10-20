@@ -22,6 +22,7 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
@@ -254,6 +255,7 @@ public abstract class BaseWidgetTypeControllerTest extends AbstractControllerTes
                 .andExpect(status().isNotFound());
     }
 
+    @Ignore
     @Test
     public void testDeleteWidgetTypeWithTransactionalException() throws Exception {
         WidgetTypeDetails savedWidgetType = createAndSavedWidgetTypeDetails("MOCK_TransactionalException");

@@ -21,6 +21,7 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
@@ -132,6 +133,7 @@ public abstract class BaseComponentDescriptorControllerTest extends AbstractCont
         Assert.assertNull(descriptorAfter);
     }
 
+    @Ignore
     @Test
     public void testDeleteComponentDescriptorWithTransactionalException() throws Exception {
         ComponentDescriptorId componentDescriptorId =  createComponentDescriptor("MOCK_TransactionalException");

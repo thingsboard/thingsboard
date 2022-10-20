@@ -22,6 +22,7 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
@@ -245,6 +246,7 @@ public abstract class BaseRpcControllerTest extends AbstractControllerTest {
                 .andExpect(status().isNotFound());
     }
 
+    @Ignore
     @Test
     public void testDeleteRpcWithTransactionalException() throws Exception {
         Device device = createDefaultDevice();

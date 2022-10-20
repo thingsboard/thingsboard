@@ -20,6 +20,7 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
@@ -458,6 +459,7 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
                 .andExpect(statusReason(containsString(msgErrorNotFound)));
     }
 
+    @Ignore
     @Test
     public void testDeleteOtaPackageWithTransactionalException() throws Exception {
         SaveOtaPackageInfoRequest firmwareInfo = new SaveOtaPackageInfoRequest();
