@@ -130,7 +130,7 @@ public class NashornJsInvokeService extends AbstractJsInvokeService {
     }
 
     @Override
-    protected ListenableFuture<UUID> doEval(UUID scriptId, String functionName, String jsScript) {
+    protected ListenableFuture<UUID> doEval(UUID scriptId, JsScriptInfo scriptInfo, String jsScript) {
         return jsExecutor.submit(() -> {
             try {
                 evalLock.lock();
@@ -143,7 +143,7 @@ public class NashornJsInvokeService extends AbstractJsInvokeService {
                 } finally {
                     evalLock.unlock();
                 }
-                scriptIdToNameMap.put(scriptId, functionName);
+                scriptInfoMap.put(scriptId, scriptInfo);
                 return scriptId;
             } catch (Exception e) {
                 throw new TbScriptException(scriptId, TbScriptException.ErrorCode.COMPILATION, jsScript, e);
@@ -152,13 +152,13 @@ public class NashornJsInvokeService extends AbstractJsInvokeService {
     }
 
     @Override
-    protected ListenableFuture<Object> doInvokeFunction(UUID scriptId, String functionName, Object[] args) {
+    protected ListenableFuture<Object> doInvokeFunction(UUID scriptId, JsScriptInfo scriptInfo, Object[] args) {
         return jsExecutor.submit(() -> {
             try {
                 if (useJsSandbox) {
-                    return sandbox.getSandboxedInvocable().invokeFunction(functionName, args);
+                    return sandbox.getSandboxedInvocable().invokeFunction(scriptInfo.getFunctionName(), args);
                 } else {
-                    return ((Invocable) engine).invokeFunction(functionName, args);
+                    return ((Invocable) engine).invokeFunction(scriptInfo.getFunctionName(), args);
                 }
             } catch (ScriptException e) {
                 throw new TbScriptException(scriptId, TbScriptException.ErrorCode.RUNTIME, null, e);
@@ -168,11 +168,11 @@ public class NashornJsInvokeService extends AbstractJsInvokeService {
         });
     }
 
-    protected void doRelease(UUID scriptId, String functionName) throws ScriptException {
+    protected void doRelease(UUID scriptId, JsScriptInfo scriptInfo) throws ScriptException {
         if (useJsSandbox) {
-            sandbox.eval(functionName + " = undefined;");
+            sandbox.eval(scriptInfo.getFunctionName() + " = undefined;");
         } else {
-            engine.eval(functionName + " = undefined;");
+            engine.eval(scriptInfo.getFunctionName() + " = undefined;");
         }
     }
 

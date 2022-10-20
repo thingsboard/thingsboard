@@ -15,13 +15,12 @@
  */
 package org.thingsboard.script.api;
 
-import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.springframework.data.util.Pair;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
@@ -46,7 +45,7 @@ import static java.lang.String.format;
 @Slf4j
 public abstract class AbstractScriptInvokeService implements ScriptInvokeService {
 
-    protected Map<UUID, BlockedScriptInfo> disabledScripts = new ConcurrentHashMap<>();
+    protected final Map<UUID, BlockedScriptInfo> disabledScripts = new ConcurrentHashMap<>();
 
     private final Optional<TbApiUsageStateClient> apiUsageStateClient;
     private final Optional<TbApiUsageReportClient> apiUsageReportClient;
@@ -90,7 +89,7 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
 
     protected abstract boolean isScriptPresent(UUID scriptId);
 
-    protected abstract ListenableFuture<UUID> doEvalScript(ScriptType scriptType, String scriptBody, UUID scriptId, String[] argNames);
+    protected abstract ListenableFuture<UUID> doEvalScript(TenantId tenantId, ScriptType scriptType, String scriptBody, UUID scriptId, String[] argNames);
 
     protected abstract ListenableFuture<Object> doInvokeFunction(UUID scriptId, Object[] args);
 
@@ -130,7 +129,7 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
             }
             UUID scriptId = UUID.randomUUID();
             pushedMsgs.incrementAndGet();
-            return withTimeoutAndStatsCallback(scriptId, doEvalScript(scriptType, scriptBody, scriptId, argNames), evalCallback, getMaxEvalRequestsTimeout());
+            return withTimeoutAndStatsCallback(scriptId, doEvalScript(tenantId, scriptType, scriptBody, scriptId, argNames), evalCallback, getMaxEvalRequestsTimeout());
         } else {
             return error("Script Execution is disabled due to API limits!");
         }

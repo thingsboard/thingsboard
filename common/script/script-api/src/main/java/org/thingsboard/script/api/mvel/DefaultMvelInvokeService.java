@@ -35,6 +35,7 @@ import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.script.api.AbstractScriptInvokeService;
 import org.thingsboard.script.api.ScriptType;
 import org.thingsboard.script.api.TbScriptException;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.common.stats.TbApiUsageStateClient;
 
@@ -132,7 +133,7 @@ public class DefaultMvelInvokeService extends AbstractScriptInvokeService implem
     }
 
     @Override
-    protected ListenableFuture<UUID> doEvalScript(ScriptType scriptType, String scriptBody, UUID scriptId, String[] argNames) {
+    protected ListenableFuture<UUID> doEvalScript(TenantId tenantId, ScriptType scriptType, String scriptBody, UUID scriptId, String[] argNames) {
         if (NEW_KEYWORD_PATTERN.matcher(scriptBody).matches()) {
             //TODO: output line number and char pos.
             return Futures.immediateFailedFuture(new TbScriptException(scriptId, TbScriptException.ErrorCode.COMPILATION, scriptBody,
