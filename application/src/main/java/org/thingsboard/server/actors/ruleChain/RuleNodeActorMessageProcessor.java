@@ -31,7 +31,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.RuleNodeException;
 import org.thingsboard.server.common.msg.queue.RuleNodeInfo;
-import org.thingsboard.server.queue.usagestats.TbApiUsageReportClient;
+import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 
 /**
  * @author Andrew Shvayka
