@@ -81,7 +81,7 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     }
 
     @Override
-    String getExecutorPrefix() {
+    protected String getExecutorPrefix() {
         return "alarm";
     }
 

@@ -43,6 +43,7 @@ public class ModelConstants {
     public static final String CUSTOMER_ID_PROPERTY = "customer_id";
     public static final String DEVICE_ID_PROPERTY = "device_id";
     public static final String TITLE_PROPERTY = "title";
+    public static final String NAME_PROPERTY = "name";
     public static final String ALIAS_PROPERTY = "alias";
     public static final String SEARCH_TEXT_PROPERTY = "search_text";
     public static final String ADDITIONAL_INFO_PROPERTY = "additional_info";
@@ -642,6 +643,14 @@ public class ModelConstants {
     public static final String QUEUE_PROCESSING_STRATEGY_PROPERTY = "processing_strategy";
     public static final String QUEUE_COLUMN_FAMILY_NAME = "queue";
     public static final String QUEUE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+
+
+    /**
+     * Notification constants
+     * */
+
+    public static final String NOTIFICATION_TARGET_TABLE_NAME = "notification_target";
+    public static final String NOTIFICATION_TARGET_CONFIGURATION_PROPERTY = "configuration";
 
 
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};

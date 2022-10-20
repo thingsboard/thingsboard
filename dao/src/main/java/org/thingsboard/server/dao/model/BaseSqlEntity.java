@@ -16,11 +16,13 @@
 package org.thingsboard.server.dao.model;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.id.UUIDBased;
 
 import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
 import java.util.UUID;
+import java.util.function.Function;
 
 /**
  * Created by ashvayka on 13.07.17.
@@ -56,4 +58,21 @@ public abstract class BaseSqlEntity<D> implements BaseEntity<D> {
             this.createdTime = createdTime;
         }
     }
+
+    protected static UUID getUuid(UUIDBased uuidBased) {
+        if (uuidBased != null) {
+            return uuidBased.getId();
+        } else {
+            return null;
+        }
+    }
+
+    protected static <I> I createId(UUID uuid, Function<UUID, I> creator) {
+        if (uuid != null) {
+            return creator.apply(uuid);
+        } else {
+            return null;
+        }
+    }
+
 }

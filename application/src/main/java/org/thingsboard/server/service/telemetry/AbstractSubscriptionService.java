@@ -64,7 +64,7 @@ public abstract class AbstractSubscriptionService extends TbApplicationEventList
         this.subscriptionManagerService = subscriptionManagerService;
     }
 
-    abstract String getExecutorPrefix();
+    protected abstract String getExecutorPrefix();
 
     @PostConstruct
     public void initExecutor() {
