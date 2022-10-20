@@ -166,8 +166,8 @@
     "password-policy": "密码策略",
     "password-reuse-frequency-days": "密码重用频率（天）",
     "password-reuse-frequency-days-range": "天内密码重用频率不能为负",
-    "phone-number-hint": "E.164格式的电话号码，例如+19995550123",
-    "phone-number-pattern": "电话号码无效。应为E.164格式，例如+19995550123。",
+    "phone-number-hint": "E.164格式的手机号码，例如+19995550123",
+    "phone-number-pattern": "手机号码无效。应为E.164格式，例如+19995550123。",
     "prohibit-different-url": "禁止从客户端请求头中使用主机名",
     "prohibit-different-url-hint": "应为生产环境启用此设置。禁用时可能会导致安全问题",
     "proxy-host": "代理主机",
@@ -633,7 +633,7 @@
   },
   "contact": {
     "address": "地址",
-    "address2": "地址2",
+    "address2": "地址二",
     "city": "城市",
     "country": "国家",
     "email": "电子邮件",
@@ -2042,6 +2042,13 @@
     "select-icon": "选择图标",
     "show-all": "显示所有图标"
   },
+  "phone-input": {
+    "phone-input-label": "手机号码",
+    "phone-input-required": "手机号码必填",
+    "phone-input-validation": "手机号码无效或不存在",
+    "phone-input-pattern": "无效的手机号码。应为E.164格式，例如：{{phoneNumber}}",
+    "phone-input-hint": "E.164格式手机号码，例如：{{phoneNumber}}"
+  },
   "import": {
     "column-example": "示例值数据",
     "column-key": "属性/遥测键",
@@ -2160,7 +2167,20 @@
     "request-password-reset": "请求密码重置",
     "reset-password": "重置密码",
     "sign-in": "登录 ",
-    "username": "用户名（电子邮件）"
+    "username": "用户名（电子邮件）",
+    "verify-your-identity": "身份验证",
+    "select-way-to-verify": "选择验证方式",
+    "resend-code": "重发验证码",
+    "resend-code-wait": "{ time, plural, 1 {1 秒} other {# 秒} }后重发验证码",
+    "try-another-way": "尝试其他方法",
+    "totp-auth-description": "请从验证APP中查看验证码。",
+    "totp-auth-placeholder": "验证码",
+    "sms-auth-description": "验证码已发送到手机号码 {{contact}}。",
+    "sms-auth-placeholder": "SMS 验证码",
+    "email-auth-description": "验证码已发送到电子邮箱地址 {{contact}}。",
+    "email-auth-placeholder": "电子邮件验证码",
+    "backup-code-auth-description": "请输入一个备份验证码。",
+    "backup-code-auth-placeholder": "备份验证码"
   },
   "ota-update": {
     "add": "添加包",
@@ -2272,8 +2292,8 @@
         "next": "下一步",
         "scan-qr-code": "使用验证APP扫描二维码",
         "send-code": "发送验证码",
-        "sms-step-description": "输入用作身份验证的电话号码",
-        "sms-step-label": "电话号码",
+        "sms-step-description": "输入用作身份验证的手机号码",
+        "sms-step-label": "手机号码",
         "success": "操作成功!",
         "totp-step-description-install": "可以安装像Google Authenticator、Authy或Duo这样的应用程序。",
         "totp-step-description-open": "在手机上打开验证APP。",
@@ -2297,7 +2317,7 @@
         "totp-hint": "已为您的帐户设置验证APP",
         "backup_code": "备份验证码",
         "backup-code-description": "这些可打印的一次性密码允许您在离开手机时登录，比如正在旅行。",
-        "backup-code-hint": "{{ info }} 一次性代码此时处于激活状态"
+        "backup-code-hint": "{{ info }}个一次性代码处于激活状态"
       }
     },
     "password-requirement": {
