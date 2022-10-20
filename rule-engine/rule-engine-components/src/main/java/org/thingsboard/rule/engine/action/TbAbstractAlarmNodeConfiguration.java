@@ -35,10 +35,10 @@ public abstract class TbAbstractAlarmNodeConfiguration {
 
     static final String ALARM_DETAILS_BUILD_MVEL_TEMPLATE = "" +
             "var details = {};\n" +
-            "if (metadata.prevAlarmDetails) {\n" +
+            "if (metadata.prevAlarmDetails != null) {\n" +
             "    details = JSON.parse(metadata.prevAlarmDetails);\n" +
             "    //remove prevAlarmDetails from metadata\n" +
-            "    delete metadata.prevAlarmDetails;\n" +
+            "    metadata.remove('prevAlarmDetails');\n" +
             "    //now metadata is the same as it comes IN this rule node\n" +
             "}\n" +
             "\n" +

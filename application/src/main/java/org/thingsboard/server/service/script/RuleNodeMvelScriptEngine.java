@@ -128,7 +128,7 @@ public class RuleNodeMvelScriptEngine extends RuleNodeScriptEngine<MvelInvokeSer
         } else {
             args[0] = new HashMap<>();
         }
-        args[1] = msg.getMetaData().getData();
+        args[1] = new HashMap<>(msg.getMetaData().getData());
         args[2] = msg.getType();
         return args;
     }

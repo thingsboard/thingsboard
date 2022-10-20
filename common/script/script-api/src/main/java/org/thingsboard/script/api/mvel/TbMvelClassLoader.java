@@ -46,6 +46,8 @@ public class TbMvelClassLoader extends URLClassLoader {
         AbstractParser.CLASS_LITERALS.remove("Compiler");
         AbstractParser.CLASS_LITERALS.remove("ThreadLocal");
         AbstractParser.CLASS_LITERALS.remove("SecurityManager");
+        AbstractParser.CLASS_LITERALS.put("JSON", TbJson.class);
+        AbstractParser.LITERALS.put("JSON", TbJson.class);
 
         AbstractParser.CLASS_LITERALS.values().forEach(val -> allowedClasses.add(((Class) val).getName()));
     }
