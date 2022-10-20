@@ -21,7 +21,6 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -63,7 +62,7 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     }
 
     @Override
-    @Transactional
+//    @Transactional
     public void deleteQueue(TenantId tenantId, QueueId queueId) {
         log.trace("Executing deleteQueue, queueId: [{}]", queueId);
         try {

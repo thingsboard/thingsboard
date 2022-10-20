@@ -26,7 +26,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
@@ -193,7 +192,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     }
 
     @Override
-    @Transactional
+//    @Transactional
     public UserCredentials replaceUserCredentials(TenantId tenantId, UserCredentials userCredentials) {
         log.trace("Executing replaceUserCredentials [{}]", userCredentials);
         userCredentialsValidator.validate(userCredentials, data -> tenantId);
@@ -203,7 +202,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     }
 
     @Override
-    @Transactional
+//    @Transactional
     public void deleteUser(TenantId tenantId, UserId userId) {
         log.trace("Executing deleteUser [{}]", userId);
         validateId(userId, INCORRECT_USER_ID + userId);
