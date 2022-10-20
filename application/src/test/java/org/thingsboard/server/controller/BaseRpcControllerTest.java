@@ -268,10 +268,10 @@ public abstract class BaseRpcControllerTest extends AbstractControllerTest {
             MvcResult mvcResult = removeRpcById(savedRpc.getId().getId().toString());
             Assert.assertEquals(500, mvcResult.getResponse().getStatus());
 
-            doGet("/api/rpc/persistent/" + rpcId)
-                    .andExpect(status().isOk());
-        } finally {
+            doGet("/api/rpc/persistent/" + rpcId).andExpect(status().isOk());
             Mockito.doReturn(true).when(rpcDao).removeById(any(), any());
+        } finally {
+            Mockito.reset(rpcDao);
         }
     }
 

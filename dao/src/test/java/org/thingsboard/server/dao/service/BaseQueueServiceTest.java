@@ -387,8 +387,9 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
 
             Queue foundQueue = queueService.findQueueById(tenantId, savedQueue.getId());
             Assert.assertNotNull(foundQueue);
-        } finally {
             Mockito.doReturn(true).when(queueDao).removeById(any(), any());
+        } finally {
+            Mockito.reset(queueDao);
         }
     }
 

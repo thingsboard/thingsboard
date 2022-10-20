@@ -378,10 +378,10 @@ public abstract class BaseTenantProfileControllerTest extends AbstractController
             doDelete("/api/tenantProfile/" + savedTenantProfile.getId().getId().toString())
                     .andExpect(status().isInternalServerError());
 
-            doGet("/api/tenantProfile/" + savedTenantProfile.getId().getId().toString())
-                    .andExpect(status().isOk());
-        } finally {
+            doGet("/api/tenantProfile/" + savedTenantProfile.getId().getId().toString()).andExpect(status().isOk());
             Mockito.doReturn(true).when(tenantProfileDao).removeById(any(), any());
+        } finally {
+            Mockito.reset(tenantProfileDao);
         }
     }
 

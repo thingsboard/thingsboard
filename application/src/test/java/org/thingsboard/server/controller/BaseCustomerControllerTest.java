@@ -479,8 +479,9 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(apiUsageStateDao).deleteApiUsageStateByEntityId(any());
         try {
             doDelete("/api/customer/" + customerId.getId().toString()).andExpect(status().isInternalServerError());
-        } finally {
             Mockito.doReturn(true).when(apiUsageStateDao).removeById(any(), any());
+        } finally {
+            Mockito.reset(apiUsageStateDao);
         }
         ApiUsageState storedStateActual = apiUsageStateDao.findApiUsageStateByEntityId(customerId);
         Assert.assertEquals(storedStateExpected, storedStateActual);

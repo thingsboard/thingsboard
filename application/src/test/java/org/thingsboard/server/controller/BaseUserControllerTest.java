@@ -769,9 +769,9 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(userCredentialsDao).removeById(any(), any());
         try {
             doPost("/api/noauth/resetPassword", resetPasswordRequest).andExpect(status().isInternalServerError());
-
-        } finally {
             Mockito.doReturn(true).when(userCredentialsDao).removeById(any(), any());
+        } finally {
+            Mockito.reset(userCredentialsDao);
         }
 
         logout();

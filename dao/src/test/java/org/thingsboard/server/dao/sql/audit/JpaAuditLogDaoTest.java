@@ -186,9 +186,9 @@ public class JpaAuditLogDaoTest extends AbstractJpaDaoTest {
             final Throwable raisedException = catchThrowable(() -> auditLogDao.removeById(TenantId.fromUUID(tenantId), foundedAuditLogById.getUuidId()));
             assertThat(raisedException).isInstanceOf(ConstraintViolationException.class)
                     .hasMessageContaining("mock message");
-
-        } finally {
             Mockito.doReturn(true).when(auditLogDao).removeById(any(), any());
+        } finally {
+            Mockito.reset(auditLogDao);
         }
         AuditLog foundedAuditLogById = auditLogDao.findById(TenantId.fromUUID(tenantId), neededFoundedAuditLog.getUuidId());
         checkFoundedAuditLog(foundedAuditLogById);

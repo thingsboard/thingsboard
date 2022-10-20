@@ -742,8 +742,9 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
                     .andExpect(status().isInternalServerError());
 
             assertThat(findRelationsByTo(entityTo)).hasSize(1);
-        } finally {
             Mockito.doReturn(true).when(dao).removeById(any(), any());
+        } finally {
+            Mockito.reset(dao);
         }
     }
 
