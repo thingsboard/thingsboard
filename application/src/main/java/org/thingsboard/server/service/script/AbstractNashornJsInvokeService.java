@@ -24,6 +24,7 @@ import delight.nashornsandbox.NashornSandboxes;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.util.Pair;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
@@ -38,7 +39,6 @@ import javax.script.ScriptException;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
@@ -121,7 +121,7 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
     protected abstract long getMaxCpuTime();
 
     @Override
-    protected ListenableFuture<UUID> doEval(UUID scriptId, String functionName, String jsScript) {
+    protected ListenableFuture<UUID> doEval(UUID scriptId, String scriptHash, String functionName, String jsScript) {
         jsPushedMsgs.incrementAndGet();
         ListenableFuture<UUID> result = jsExecutor.executeAsync(() -> {
             try {
@@ -135,7 +135,7 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
                 } finally {
                     evalLock.unlock();
                 }
-                scriptIdToNameMap.put(scriptId, functionName);
+                scriptIdToNameAndHashMap.put(scriptId, Pair.of(functionName, scriptHash));
                 return scriptId;
             } catch (Exception e) {
                 log.debug("Failed to compile JS script: {}", e.getMessage(), e);
@@ -150,7 +150,7 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
     }
 
     @Override
-    protected ListenableFuture<Object> doInvokeFunction(UUID scriptId, String functionName, Object[] args) {
+    protected ListenableFuture<Object> doInvokeFunction(UUID scriptId, String scriptHash, String functionName, Object[] args) {
         jsPushedMsgs.incrementAndGet();
         ListenableFuture<Object> result = jsExecutor.executeAsync(() -> {
             try {
@@ -174,7 +174,7 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
         return result;
     }
 
-    protected void doRelease(UUID scriptId, String functionName) throws ScriptException {
+    protected void doRelease(UUID scriptId, String scriptHash, String functionName) throws ScriptException {
         if (useJsSandbox()) {
             sandbox.eval(functionName + " = undefined;");
         } else {

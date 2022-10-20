@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
         "js.max_result_size=50",
         "js.local.max_errors=2"
 })
-class JsInvokeServiceTest extends AbstractControllerTest {
+class LocalJsInvokeServiceTest extends AbstractControllerTest {
 
     @Autowired
     private NashornJsInvokeService jsInvokeService;
