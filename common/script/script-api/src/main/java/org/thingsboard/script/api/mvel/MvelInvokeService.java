@@ -16,6 +16,13 @@
 package org.thingsboard.script.api.mvel;
 
 import org.thingsboard.script.api.ScriptInvokeService;
+import org.thingsboard.server.common.data.script.ScriptLanguage;
 
 public interface MvelInvokeService extends ScriptInvokeService {
+
+    @Override
+    default ScriptLanguage getLanguage() {
+        return ScriptLanguage.MVEL;
+    }
+
 }

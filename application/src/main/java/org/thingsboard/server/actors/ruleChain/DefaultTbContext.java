@@ -444,8 +444,8 @@ class DefaultTbContext implements TbContext {
         return mainCtx.getExternalCallExecutorService();
     }
 
-    @Deprecated
     @Override
+    @Deprecated
     public ScriptEngine createJsScriptEngine(String script, String... argNames) {
         return new RuleNodeJsScriptEngine(getTenantId(), mainCtx.getJsInvokeService(), script, argNames);
     }

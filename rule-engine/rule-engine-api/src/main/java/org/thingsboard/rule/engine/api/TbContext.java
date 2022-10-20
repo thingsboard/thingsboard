@@ -268,6 +268,7 @@ public interface TbContext {
      * <p> Use {@link #createScriptEngine} instead.
      *
      */
+    @Deprecated
     ScriptEngine createJsScriptEngine(String script, String... argNames);
 
     ScriptEngine createScriptEngine(ScriptLanguage scriptLang, String script, String... argNames);
