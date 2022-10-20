@@ -112,7 +112,7 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                                 dbCallbackExecutorService);
                     }
                 } else {
-                    log.info("[{}] Creating new device and replacing device entity on the edge [{}]", tenantId, deviceUpdateMsg);
+                    log.info("[{}] Creating new device on the cloud [{}]", tenantId, deviceUpdateMsg);
                     try {
                         device = createDevice(tenantId, edge, deviceUpdateMsg, deviceUpdateMsg.getName());
                     } catch (DataValidationException e) {
