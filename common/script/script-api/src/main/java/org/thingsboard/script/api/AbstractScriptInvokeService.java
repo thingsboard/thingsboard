@@ -15,6 +15,7 @@
  */
 package org.thingsboard.script.api;
 
+import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -179,18 +180,10 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
             future = Futures.withTimeout(future, timeout, TimeUnit.MILLISECONDS, timeoutExecutorService);
         }
         Futures.addCallback(future, statsCallback, getCallbackExecutor());
-        Futures.addCallback(future, new FutureCallback<T>() {
-            @Override
-            public void onSuccess(@Nullable T result) {
-                //do nothing
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                handleScriptException(scriptId, t);
-            }
-        }, getCallbackExecutor());
-        return future;
+        return Futures.catchingAsync(future, Exception.class, input -> {
+            handleScriptException(scriptId, input);
+            return Futures.immediateFailedFuture(input);
+        }, MoreExecutors.directExecutor());
     }
 
     private void handleScriptException(UUID scriptId, Throwable t) {
@@ -216,14 +209,15 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
         }
         if (blockList) {
             BlockedScriptInfo disableListInfo = disabledScripts.computeIfAbsent(scriptId, key -> new BlockedScriptInfo(getMaxBlackListDurationSec()));
+            int counter = disableListInfo.incrementAndGet();
             if (log.isDebugEnabled()) {
-                log.debug("Script has exception and will increment counter {} on disabledFunctions for id {}, exception {}, cause {}, scriptBody {}",
-                        disableListInfo.get(), scriptId, t, t.getCause(), scriptBody);
+                log.debug("Script has exception counter {} on disabledFunctions for id {}, exception {}, cause {}, scriptBody {}",
+                        counter, scriptId, t, t.getCause(), scriptBody);
             } else {
-                log.warn("Script has exception and will increment counter {} on disabledFunctions for id {}, exception {}",
-                        disableListInfo.get(), scriptId, t.getMessage());
+                log.warn("Script has exception counter {} on disabledFunctions for id {}, exception {}",
+                        counter, scriptId, t.getMessage());
             }
-            disableListInfo.incrementAndGet();
+
         }
     }
 
