@@ -1,0 +1,85 @@
+<!--
+
+    ThingsBoard, Inc. ("COMPANY") CONFIDENTIAL
+
+    Copyright © 2016-2022 ThingsBoard, Inc. All Rights Reserved.
+
+    NOTICE: All information contained herein is, and remains
+    the property of ThingsBoard, Inc. and its suppliers,
+    if any.  The intellectual and technical concepts contained
+    herein are proprietary to ThingsBoard, Inc.
+    and its suppliers and may be covered by U.S. and Foreign Patents,
+    patents in process, and are protected by trade secret or copyright law.
+
+    Dissemination of this information or reproduction of this material is strictly forbidden
+    unless prior written permission is obtained from COMPANY.
+
+    Access to the source code contained herein is hereby forbidden to anyone except current COMPANY employees,
+    managers or contractors who have executed Confidentiality and Non-disclosure agreements
+    explicitly covering such access.
+
+    The copyright notice above does not evidence any actual or intended publication
+    or disclosure  of  this source code, which includes
+    information that is confidential and/or proprietary, and is a trade secret, of  COMPANY.
+    ANY REPRODUCTION, MODIFICATION, DISTRIBUTION, PUBLIC  PERFORMANCE,
+    OR PUBLIC DISPLAY OF OR THROUGH USE  OF THIS  SOURCE CODE  WITHOUT
+    THE EXPRESS WRITTEN CONSENT OF COMPANY IS STRICTLY PROHIBITED,
+    AND IN VIOLATION OF APPLICABLE LAWS AND INTERNATIONAL TREATIES.
+    THE RECEIPT OR POSSESSION OF THIS SOURCE CODE AND/OR RELATED INFORMATION
+    DOES NOT CONVEY OR IMPLY ANY RIGHTS TO REPRODUCE, DISCLOSE OR DISTRIBUTE ITS CONTENTS,
+    OR TO MANUFACTURE, USE, OR SELL ANYTHING THAT IT  MAY DESCRIBE, IN WHOLE OR IN PART.
+
+-->
+<form style="min-width: 400px; position: relative;">
+  <mat-toolbar color="primary">
+    <h2 translate>gateway.command</h2>
+    <span fxFlex></span>
+    <button mat-button mat-icon-button
+            (click)="close()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+  </mat-progress-bar>
+  <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
+  <div mat-dialog-content tb-toast toastTarget="dockerCommandDialogContent">
+    <div class="mat-content" fxLayout="column">
+      <span translate>gateway.linux-macos</span>
+      <div fxLayout="row" fxLayoutAlign="start center">
+        <pre class="tb-highlight" fxFlex><code style="white-space: pre-wrap;">{{ linuxCode }}</code></pre>
+        <button mat-icon-button
+                color="primary"
+                ngxClipboard
+                cbContent="{{ linuxCode }}"
+                (cbOnSuccess)="onDockerCodeCopied()"
+                matTooltip="{{ 'gateway.copy-command' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+        </button>
+      </div>
+      <span translate>gateway.windows</span>
+      <div fxLayout="row" fxLayoutAlign="start center">
+        <pre class="tb-highlight" fxFlex><code style="white-space: pre-wrap;">{{ windowsCode }}</code></pre>
+        <button mat-icon-button
+                color="primary"
+                ngxClipboard
+                cbContent="{{ windowsCode }}"
+                (cbOnSuccess)="onDockerCodeCopied()"
+                matTooltip="{{ 'gateway.copy-command' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div mat-dialog-actions fxLayoutAlign="end center">
+    <button mat-button color="primary"
+            type="button"
+            cdkFocusInitial
+            [disabled]="(isLoading$ | async)"
+            (click)="close()">
+      {{ 'action.ok' | translate }}
+    </button>
+  </div>
+</form>

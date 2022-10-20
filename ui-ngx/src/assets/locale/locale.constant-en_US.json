@@ -2364,6 +2364,8 @@
     },
     "gateway": {
         "add-entry": "Add configuration",
+        "command": "Docker commands",
+        "command-copied-message": "Docker command has been copied to clipboard",
         "connector-add": "Add new connector",
         "connector-enabled": "Enable connector",
         "connector-name": "Connector name",
@@ -2371,8 +2373,10 @@
         "connector-type": "Connector type",
         "connector-type-required": "Connector type is required.",
         "connectors": "Connectors configuration",
+        "copy-command": "Copy docker command",
         "create-new-gateway": "Create a new gateway",
         "create-new-gateway-text": "Are you sure you want create a new gateway with name: '{{gatewayName}}'?",
+        "created-time": "Created time",
         "delete": "Delete configuration",
         "download-tip": "Download configuration file",
         "gateway": "Gateway",
@@ -2380,8 +2384,10 @@
         "gateway-name": "Gateway name",
         "gateway-name-required": "Gateway name is required.",
         "gateway-saved": "Gateway configuration successfully saved.",
+        "gateway-search": "Gateway search",
         "json-parse": "Not valid JSON.",
         "json-required": "Field cannot be empty.",
+        "linux-macos": "Linux/MacOS",
         "no-connectors": "No connectors",
         "no-data": "No configurations",
         "no-gateway-found": "No gateway found.",
@@ -2434,7 +2440,8 @@
         "tls-path-private-key": "Path to private key on gateway",
         "toggle-fullscreen": "Toggle fullscreen",
         "transformer-json-config": "Configuration JSON*",
-        "update-config": "Add/update configuration JSON"
+        "update-config": "Add/update configuration JSON",
+        "windows": "Windows"
     },
     "grid": {
         "delete-item-title": "Are you sure you want to delete this item?",
