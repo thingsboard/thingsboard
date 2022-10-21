@@ -57,7 +57,7 @@ import static org.mockito.ArgumentMatchers.any;
 @ContextConfiguration(classes = {JpaAuditLogDaoTest.Config.class})
 public class JpaAuditLogDaoTest extends AbstractJpaDaoTest {
     List<AuditLog> auditLogList = new ArrayList<>();
-    UUID tenantId;
+    UUID tenantAuditLogId;
     CustomerId customerId1;
     CustomerId customerId2;
     UserId userId1;
@@ -65,6 +65,11 @@ public class JpaAuditLogDaoTest extends AbstractJpaDaoTest {
     EntityId entityId1;
     EntityId entityId2;
     AuditLog neededFoundedAuditLog;
+
+//    private int cntAuditLogs = 60;
+    private int cntAuditLogs = 30;
+    private int cntWithCustomerId1;
+
     @Autowired
     private AuditLogDao auditLogDao;
 
@@ -78,21 +83,29 @@ public class JpaAuditLogDaoTest extends AbstractJpaDaoTest {
 
     @Before
     public void setUp() {
+        log.error("BEFORE TEST");
         setUpIds();
-        for (int i = 0; i < 60; i++) {
+        for (int i = 0; i < cntAuditLogs; i++) {
             ActionType actionType = i % 2 == 0 ? ActionType.ADDED : ActionType.DELETED;
-            CustomerId customerId = i % 4 == 0 ? customerId1 : customerId2;
+//            CustomerId customerId = i % 4 == 0 ? customerId1 : customerId2;
+            CustomerId customerId;
+            if (i % 4 == 0) {
+                customerId = customerId1;
+                cntWithCustomerId1 ++;
+            }  else {
+                customerId = customerId2;
+            }
             UserId userId = i % 6 == 0 ? userId1 : userId2;
             EntityId entityId = i % 10 == 0 ? entityId1 : entityId2;
             auditLogList.add(createAuditLog(i, actionType, customerId, userId, entityId));
         }
-        assertEquals(auditLogList.size(), auditLogDao.find(TenantId.fromUUID(tenantId)).size());
+        assertEquals(auditLogList.size(), auditLogDao.find(TenantId.fromUUID(tenantAuditLogId)).size());
         neededFoundedAuditLog = auditLogList.get(0);
         assertNotNull(neededFoundedAuditLog);
     }
 
     private void setUpIds() {
-        tenantId = Uuids.timeBased();
+        tenantAuditLogId = Uuids.timeBased();
         customerId1 = new CustomerId(Uuids.timeBased());
         customerId2 = new CustomerId(Uuids.timeBased());
         userId1 = new UserId(Uuids.timeBased());
@@ -103,19 +116,28 @@ public class JpaAuditLogDaoTest extends AbstractJpaDaoTest {
 
     @After
     public void tearDown() {
-        deleteAuditLogs();
+
+        log.error("AFTER TEST");
+        try {
+            deleteAuditLogs();
+            log.error("AFTER TEST SUCCESS");
+        }catch (Exception e){
+            log.error("AFTER TEST FAILURE");
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @Test
     public void testFindById() {
-        AuditLog foundedAuditLogById = auditLogDao.findById(TenantId.fromUUID(tenantId), neededFoundedAuditLog.getUuidId());
+        AuditLog foundedAuditLogById = auditLogDao.findById(TenantId.fromUUID(tenantAuditLogId), neededFoundedAuditLog.getUuidId());
         checkFoundedAuditLog(foundedAuditLogById);
     }
     
     @Test
     public void testFindByIdAsync() throws ExecutionException, InterruptedException, TimeoutException {
         AuditLog foundedAuditLogById = auditLogDao
-                .findByIdAsync(TenantId.fromUUID(tenantId), neededFoundedAuditLog.getUuidId()).get(30, TimeUnit.SECONDS);
+                .findByIdAsync(TenantId.fromUUID(tenantAuditLogId), neededFoundedAuditLog.getUuidId()).get(30, TimeUnit.SECONDS);
         checkFoundedAuditLog(foundedAuditLogById);
     }
 
@@ -126,37 +148,42 @@ public class JpaAuditLogDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void testFindAuditLogsByTenantId() {
-        List<AuditLog> foundedAuditLogs = auditLogDao.findAuditLogsByTenantId(tenantId,
+        List<AuditLog> foundedAuditLogs = auditLogDao.findAuditLogsByTenantId(tenantAuditLogId,
                 List.of(ActionType.ADDED),
                 new TimePageLink(40)).getData();
-        checkFoundedAuditLogsList(foundedAuditLogs, 30);
+//        checkFoundedAuditLogsList(foundedAuditLogs, 30);
+        checkFoundedAuditLogsList(foundedAuditLogs, cntAuditLogs/2);
     }
 
     @Test
     public void testFindAuditLogsByTenantIdAndCustomerId() {
-        List<AuditLog> foundedAuditLogs = auditLogDao.findAuditLogsByTenantIdAndCustomerId(tenantId,
+        List<AuditLog> foundedAuditLogs = auditLogDao.findAuditLogsByTenantIdAndCustomerId(tenantAuditLogId,
                 customerId1,
                 List.of(ActionType.ADDED),
                 new TimePageLink(20)).getData();
-        checkFoundedAuditLogsList(foundedAuditLogs, 15);
+//        checkFoundedAuditLogsList(foundedAuditLogs, 15);
+        int cntWithCustomerId1 = (cntAuditLogs/4)*4 == cntAuditLogs ? cntAuditLogs/4 : cntAuditLogs/4 + 1;
+        checkFoundedAuditLogsList(foundedAuditLogs, cntWithCustomerId1);
     }
 
     @Test
     public void testFindAuditLogsByTenantIdAndUserId() {
-        List<AuditLog> foundedAuditLogs = auditLogDao.findAuditLogsByTenantIdAndUserId(tenantId,
+        List<AuditLog> foundedAuditLogs = auditLogDao.findAuditLogsByTenantIdAndUserId(tenantAuditLogId,
                 userId1,
                 List.of(ActionType.ADDED),
                 new TimePageLink(20)).getData();
-        checkFoundedAuditLogsList(foundedAuditLogs, 10);
+//        checkFoundedAuditLogsList(foundedAuditLogs, 10);
+        checkFoundedAuditLogsList(foundedAuditLogs, cntAuditLogs/6);
     }
 
     @Test
     public void testFindAuditLogsByTenantIdAndEntityId() {
-        List<AuditLog> foundedAuditLogs = auditLogDao.findAuditLogsByTenantIdAndEntityId(tenantId,
+        List<AuditLog> foundedAuditLogs = auditLogDao.findAuditLogsByTenantIdAndEntityId(tenantAuditLogId,
                 entityId1,
                 List.of(ActionType.ADDED),
                 new TimePageLink(10)).getData();
-        checkFoundedAuditLogsList(foundedAuditLogs, 6);
+//        checkFoundedAuditLogsList(foundedAuditLogs, 6);
+        checkFoundedAuditLogsList(foundedAuditLogs, cntAuditLogs/10);
     }
 
     @Test
@@ -165,9 +192,9 @@ public class JpaAuditLogDaoTest extends AbstractJpaDaoTest {
         AuditLog foundedAuditLog = createAAuditLogTransactional();
         auditLogList.add(foundedAuditLog);
 
-        auditLogDao.removeById(TenantId.fromUUID(tenantId), foundedAuditLog.getUuidId());
+        auditLogDao.removeById(TenantId.fromUUID(tenantAuditLogId), foundedAuditLog.getUuidId());
 
-        AuditLog foundedAuditLogAfter = auditLogDao.findById(TenantId.fromUUID(tenantId), neededFoundedAuditLog.getUuidId());
+        AuditLog foundedAuditLogAfter = auditLogDao.findById(TenantId.fromUUID(tenantAuditLogId), neededFoundedAuditLog.getUuidId());
         assertNull(foundedAuditLogAfter);
         auditLogList.remove(foundedAuditLog);
     }
@@ -180,13 +207,13 @@ public class JpaAuditLogDaoTest extends AbstractJpaDaoTest {
 
         Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(auditLogDao).removeById(any(), any());
 
-        final Throwable raisedException = catchThrowable(() -> auditLogDao.removeById(TenantId.fromUUID(tenantId), foundedAuditLog.getUuidId()));
+        final Throwable raisedException = catchThrowable(() -> auditLogDao.removeById(TenantId.fromUUID(tenantAuditLogId), foundedAuditLog.getUuidId()));
         assertThat(raisedException).isInstanceOf(ConstraintViolationException.class)
                 .hasMessageContaining("mock message");
 
         Mockito.reset(auditLogDao);
 
-        AuditLog foundedAuditLogAfter = auditLogDao.findById(TenantId.fromUUID(tenantId), foundedAuditLog.getUuidId());
+        AuditLog foundedAuditLogAfter = auditLogDao.findById(TenantId.fromUUID(tenantAuditLogId), foundedAuditLog.getUuidId());
         assertNotNull(foundedAuditLogAfter);
     }
 
@@ -206,19 +233,19 @@ public class JpaAuditLogDaoTest extends AbstractJpaDaoTest {
 
     private AuditLog createAuditLog(int number, ActionType actionType, CustomerId customerId, UserId userId, EntityId entityId) {
         AuditLog auditLog = new AuditLog();
-        auditLog.setTenantId(TenantId.fromUUID(tenantId));
+        auditLog.setTenantId(TenantId.fromUUID(tenantAuditLogId));
         auditLog.setCustomerId(customerId);
         auditLog.setUserId(userId);
         auditLog.setEntityId(entityId);
         auditLog.setUserName("AUDIT_LOG_" + number);
         auditLog.setActionType(actionType);
-        return auditLogDao.save(TenantId.fromUUID(tenantId), auditLog);
+        return auditLogDao.save(TenantId.fromUUID(tenantAuditLogId), auditLog);
     }
 
     private void deleteAuditLogs() {
         auditLogList.forEach(auditLog -> {
             try {
-                auditLogDao.removeById(TenantId.fromUUID(tenantId), auditLog.getUuidId());
+                auditLogDao.removeById(TenantId.fromUUID(tenantAuditLogId), auditLog.getUuidId());
             } catch (Exception e) {
                 log.error("Failed delete  auditLog with id: [{}]", auditLog.getUuidId().toString());
 //                e.printStackTrace();
