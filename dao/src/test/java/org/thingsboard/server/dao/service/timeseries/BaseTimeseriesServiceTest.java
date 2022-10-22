@@ -86,16 +86,7 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
 
     @After
     public void after() {
-//        tenantService.deleteTenant(tenantId);
-        log.error("AFTER TEST");
-        try {
-            tenantService.deleteTenant(tenantId);
-            log.error("AFTER TEST SUCCESS");
-        }catch (Exception e){
-            log.error("AFTER TEST FAILURE");
-            e.printStackTrace();
-            throw e;
-        }
+        tenantService.deleteTenant(tenantId);
     }
 
     @Test
