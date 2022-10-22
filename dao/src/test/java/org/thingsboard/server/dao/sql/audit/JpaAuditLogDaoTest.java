@@ -21,12 +21,8 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
-import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -54,7 +50,7 @@ import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 
 @Slf4j
-@ContextConfiguration(classes = {JpaAuditLogDaoTest.Config.class})
+//@ContextConfiguration(classes = {JpaAuditLogDaoTest.Config.class})
 public class JpaAuditLogDaoTest extends AbstractJpaDaoTest {
     List<AuditLog> auditLogList = new ArrayList<>();
     UUID tenantAuditLogId;
@@ -73,13 +69,13 @@ public class JpaAuditLogDaoTest extends AbstractJpaDaoTest {
     @Autowired
     private AuditLogDao auditLogDao;
 
-    static class Config {
-        @Bean
-        @Primary
-        public AuditLogDao auditLogDao(AuditLogDao auditLogDao) {
-            return Mockito.mock(AuditLogDao.class, AdditionalAnswers.delegatesTo(auditLogDao));
-        }
-    }
+//    static class Config {
+//        @Bean
+//        @Primary
+//        public AuditLogDao auditLogDao(AuditLogDao auditLogDao) {
+//            return Mockito.mock(AuditLogDao.class, AdditionalAnswers.delegatesTo(auditLogDao));
+//        }
+//    }
 
     @Before
     public void setUp() {
@@ -205,13 +201,14 @@ public class JpaAuditLogDaoTest extends AbstractJpaDaoTest {
         AuditLog foundedAuditLog = createAAuditLogTransactional();
         auditLogList.add(foundedAuditLog);
 
-        Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(auditLogDao).removeById(any(), any());
+        AuditLogDao auditLogDaoMock =  Mockito.mock (AuditLogDao.class);
+        Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(auditLogDaoMock).removeById(any(), any());
 
-        final Throwable raisedException = catchThrowable(() -> auditLogDao.removeById(TenantId.fromUUID(tenantAuditLogId), foundedAuditLog.getUuidId()));
+        final Throwable raisedException = catchThrowable(() -> auditLogDaoMock.removeById(TenantId.fromUUID(tenantAuditLogId), foundedAuditLog.getUuidId()));
         assertThat(raisedException).isInstanceOf(ConstraintViolationException.class)
                 .hasMessageContaining("mock message");
 
-        Mockito.reset(auditLogDao);
+//        Mockito.reset(auditLogDao);
 
         AuditLog foundedAuditLogAfter = auditLogDao.findById(TenantId.fromUUID(tenantAuditLogId), foundedAuditLog.getUuidId());
         assertNotNull(foundedAuditLogAfter);
