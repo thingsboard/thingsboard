@@ -21,7 +21,8 @@ public enum Authority {
     TENANT_ADMIN(1),
     CUSTOMER_USER(2),
     REFRESH_TOKEN(10),
-    PRE_VERIFICATION_TOKEN(11);
+    PRE_VERIFICATION_TOKEN(11),
+    TWO_FACTOR_FORCE_SAVE_SETTINGS_TOKEN(12);
 
     private int code;
 

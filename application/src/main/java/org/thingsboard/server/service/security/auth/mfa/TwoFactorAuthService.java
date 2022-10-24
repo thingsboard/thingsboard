@@ -25,6 +25,8 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface TwoFactorAuthService {
 
+    boolean isForceTwoFaEnabled(TenantId tenantId);
+
     boolean isTwoFaEnabled(TenantId tenantId, UserId userId);
 
     void checkProvider(TenantId tenantId, TwoFaProviderType providerType) throws ThingsboardException;

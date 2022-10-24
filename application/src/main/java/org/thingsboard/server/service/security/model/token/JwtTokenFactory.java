@@ -121,7 +121,7 @@ public class JwtTokenFactory {
         }
 
         UserPrincipal principal;
-        if (securityUser.getAuthority() != Authority.PRE_VERIFICATION_TOKEN) {
+        if (securityUser.getAuthority() != Authority.PRE_VERIFICATION_TOKEN && securityUser.getAuthority() != Authority.TWO_FACTOR_FORCE_SAVE_SETTINGS_TOKEN) {
             securityUser.setFirstName(claims.get(FIRST_NAME, String.class));
             securityUser.setLastName(claims.get(LAST_NAME, String.class));
             securityUser.setEnabled(claims.get(ENABLED, Boolean.class));
@@ -166,6 +166,15 @@ public class JwtTokenFactory {
 
     public JwtToken createPreVerificationToken(SecurityUser user, Integer expirationTime) {
         JwtBuilder jwtBuilder = setUpToken(user, Collections.singletonList(Authority.PRE_VERIFICATION_TOKEN.name()), expirationTime)
+                .claim(TENANT_ID, user.getTenantId().toString());
+        if (user.getCustomerId() != null) {
+            jwtBuilder.claim(CUSTOMER_ID, user.getCustomerId().toString());
+        }
+        return new AccessJwtToken(jwtBuilder.compact());
+    }
+
+    public JwtToken createForceSaveTwoFactorToken(SecurityUser user, Integer expirationTime) {
+        JwtBuilder jwtBuilder = setUpToken(user, Collections.singletonList(Authority.TWO_FACTOR_FORCE_SAVE_SETTINGS_TOKEN.name()), expirationTime)
                 .claim(TENANT_ID, user.getTenantId().toString());
         if (user.getCustomerId() != null) {
             jwtBuilder.claim(CUSTOMER_ID, user.getCustomerId().toString());

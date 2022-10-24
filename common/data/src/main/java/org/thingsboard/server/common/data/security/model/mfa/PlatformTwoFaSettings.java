@@ -45,6 +45,8 @@ public class PlatformTwoFaSettings {
     @NotNull
     @Min(value = 60, message = "total amount of time allotted for verification must be greater than or equal 60")
     private Integer totalAllowedTimeForVerification;
+    @NotNull
+    private boolean force2FA;
 
 
     public Optional<TwoFaProviderConfig> getProviderConfig(TwoFaProviderType providerType) {

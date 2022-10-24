@@ -62,6 +62,14 @@ public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
     private final ConcurrentMap<UserId, ConcurrentMap<TwoFaProviderType, TbRateLimits>> verificationCodeCheckingRateLimits = new ConcurrentHashMap<>();
 
     @Override
+    public boolean isForceTwoFaEnabled(TenantId tenantId) {
+        return configManager
+                .getPlatformTwoFaSettings(tenantId, true)
+                .map(PlatformTwoFaSettings::isForce2FA)
+                .orElse(false);
+    }
+
+    @Override
     public boolean isTwoFaEnabled(TenantId tenantId, UserId userId) {
         return configManager.getAccountTwoFaSettings(tenantId, userId)
                 .map(settings -> !settings.getConfigs().isEmpty())

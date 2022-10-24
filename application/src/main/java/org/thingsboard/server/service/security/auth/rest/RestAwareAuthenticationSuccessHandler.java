@@ -25,6 +25,7 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.service.security.auth.MfaAuthenticationToken;
+import org.thingsboard.server.service.security.auth.MfaSaveSettingsAuthenticationToken;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFaConfigManager;
 import org.thingsboard.server.service.security.model.JwtTokenPair;
@@ -61,6 +62,10 @@ public class RestAwareAuthenticationSuccessHandler implements AuthenticationSucc
             tokenPair.setToken(tokenFactory.createPreVerificationToken(securityUser, preVerificationTokenLifetime).getToken());
             tokenPair.setRefreshToken(null);
             tokenPair.setScope(Authority.PRE_VERIFICATION_TOKEN);
+        } else if (authentication instanceof MfaSaveSettingsAuthenticationToken) {
+            tokenPair.setToken(tokenFactory.createForceSaveTwoFactorToken(securityUser, (int) TimeUnit.MINUTES.toSeconds(30)).getToken());
+            tokenPair.setRefreshToken(null);
+            tokenPair.setScope(Authority.TWO_FACTOR_FORCE_SAVE_SETTINGS_TOKEN);
         } else {
             tokenPair.setToken(tokenFactory.createAccessJwtToken(securityUser).getToken());
             tokenPair.setRefreshToken(refreshTokenRepository.requestRefreshToken(securityUser).getToken());

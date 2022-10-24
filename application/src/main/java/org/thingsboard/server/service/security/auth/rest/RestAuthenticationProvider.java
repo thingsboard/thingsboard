@@ -40,6 +40,7 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.MfaAuthenticationToken;
+import org.thingsboard.server.service.security.auth.MfaSaveSettingsAuthenticationToken;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
@@ -78,7 +79,7 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
             throw new BadCredentialsException("Authentication Failed. Bad user principal.");
         }
 
-        UserPrincipal userPrincipal =  (UserPrincipal) principal;
+        UserPrincipal userPrincipal = (UserPrincipal) principal;
         SecurityUser securityUser;
         if (userPrincipal.getType() == UserPrincipal.Type.USER_NAME) {
             String username = userPrincipal.getValue();
@@ -86,6 +87,8 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
             securityUser = authenticateByUsernameAndPassword(authentication, userPrincipal, username, password);
             if (twoFactorAuthService.isTwoFaEnabled(securityUser.getTenantId(), securityUser.getId())) {
                 return new MfaAuthenticationToken(securityUser);
+            } else if (twoFactorAuthService.isForceTwoFaEnabled(securityUser.getTenantId())) {
+                return new MfaSaveSettingsAuthenticationToken(securityUser);
             } else {
                 systemSecurityService.logLoginAction(securityUser, authentication.getDetails(), ActionType.LOGIN, null);
             }
