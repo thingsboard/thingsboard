@@ -60,14 +60,23 @@ public class CassandraBaseTimeseriesLatestDao extends AbstractCassandraBaseTimes
     private PreparedStatement findAllLatestStmt;
 
     @Override
+    public ListenableFuture<Optional<TsKvEntry>> findLatestOpt(TenantId tenantId, EntityId entityId, String key) {
+        return findLatest(tenantId, entityId, key, rs -> convertResultToTsKvEntryOpt(key, rs.one()));
+    }
+
+    @Override
     public ListenableFuture<TsKvEntry> findLatest(TenantId tenantId, EntityId entityId, String key) {
+        return findLatest(tenantId, entityId, key, rs -> convertResultToTsKvEntry(key, rs.one()));
+    }
+
+    private <T> ListenableFuture<T> findLatest(TenantId tenantId, EntityId entityId, String key, java.util.function.Function<TbResultSet, T> function) {
         BoundStatementBuilder stmtBuilder = new BoundStatementBuilder(getFindLatestStmt().bind());
         stmtBuilder.setString(0, entityId.getEntityType().name());
         stmtBuilder.setUuid(1, entityId.getId());
         stmtBuilder.setString(2, key);
         BoundStatement stmt = stmtBuilder.build();
         log.debug(GENERATED_QUERY_FOR_ENTITY_TYPE_AND_ENTITY_ID, stmt, entityId.getEntityType(), entityId.getId());
-        return getFuture(executeAsyncRead(tenantId, stmt), rs -> convertResultToTsKvEntry(key, rs.one()));
+        return getFuture(executeAsyncRead(tenantId, stmt), function);
     }
 
     @Override

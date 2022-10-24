@@ -35,6 +35,8 @@ import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -44,7 +46,6 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
-import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -57,6 +58,7 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.common.transport.util.JsonUtils;
+import org.thingsboard.server.controller.BaseController;
 import org.thingsboard.server.gen.edge.v1.AttributeDeleteMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.EntityDataProto;
@@ -101,7 +103,7 @@ public class TelemetryEdgeProcessor extends BaseEdgeProcessor {
             }
             if (entityData.hasAttributesUpdatedMsg()) {
                 metaData.putValue("scope", entityData.getPostAttributeScope());
-                result.add(processAttributesUpdate(tenantId, customerId, entityId, entityData.getAttributesUpdatedMsg(), metaData));
+                result.add(processAttributesUpdate(tenantId, entityId, entityData.getAttributesUpdatedMsg(), metaData));
             }
             if (entityData.hasPostTelemetryMsg()) {
                 result.add(processPostTelemetry(tenantId, customerId, entityId, entityData.getPostTelemetryMsg(), metaData));
@@ -159,23 +161,26 @@ public class TelemetryEdgeProcessor extends BaseEdgeProcessor {
     }
 
     private Pair<String, RuleChainId> getDefaultQueueNameAndRuleChainId(TenantId tenantId, EntityId entityId) {
+        RuleChainId ruleChainId = null;
+        String queueName = null;
         if (EntityType.DEVICE.equals(entityId.getEntityType())) {
             DeviceProfile deviceProfile = deviceProfileCache.get(tenantId, new DeviceId(entityId.getId()));
-            RuleChainId ruleChainId;
-            String queueName;
-
             if (deviceProfile == null) {
                 log.warn("[{}] Device profile is null!", entityId);
-                ruleChainId = null;
-                queueName = null;
             } else {
                 ruleChainId = deviceProfile.getDefaultRuleChainId();
                 queueName = deviceProfile.getDefaultQueueName();
             }
-            return new ImmutablePair<>(queueName, ruleChainId);
-        } else {
-            return new ImmutablePair<>(null, null);
+        } else if (EntityType.ASSET.equals(entityId.getEntityType())) {
+            AssetProfile assetProfile = assetProfileCache.get(tenantId, new AssetId(entityId.getId()));
+            if (assetProfile == null) {
+                log.warn("[{}] Asset profile is null!", entityId);
+            } else {
+                ruleChainId = assetProfile.getDefaultRuleChainId();
+                queueName = assetProfile.getDefaultQueueName();
+            }
         }
+        return new ImmutablePair<>(queueName, ruleChainId);
     }
 
     private ListenableFuture<Void> processPostTelemetry(TenantId tenantId, CustomerId customerId, EntityId entityId, TransportProtos.PostTelemetryMsg msg, TbMsgMetaData metaData) {
@@ -221,37 +226,34 @@ public class TelemetryEdgeProcessor extends BaseEdgeProcessor {
         return futureToSet;
     }
 
-    private ListenableFuture<Void> processAttributesUpdate(TenantId tenantId, CustomerId customerId, EntityId entityId, TransportProtos.PostAttributeMsg msg, TbMsgMetaData metaData) {
+    private ListenableFuture<Void> processAttributesUpdate(TenantId tenantId,
+                                                           EntityId entityId,
+                                                           TransportProtos.PostAttributeMsg msg,
+                                                           TbMsgMetaData metaData) {
         SettableFuture<Void> futureToSet = SettableFuture.create();
         JsonObject json = JsonUtils.getJsonObject(msg.getKvList());
-        Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(json);
-        ListenableFuture<List<String>> future = attributesService.save(tenantId, entityId, metaData.getValue("scope"), new ArrayList<>(attributes));
-        Futures.addCallback(future, new FutureCallback<>() {
+        List<AttributeKvEntry> attributes = new ArrayList<>(JsonConverter.convertToAttributes(json));
+        String scope = metaData.getValue("scope");
+        tsSubService.saveAndNotify(tenantId, entityId, scope, attributes, new FutureCallback<Void>() {
             @Override
-            public void onSuccess(@Nullable List<String> keys) {
-                var defaultQueueAndRuleChain = getDefaultQueueNameAndRuleChainId(tenantId, entityId);
-                TbMsg tbMsg = TbMsg.newMsg(defaultQueueAndRuleChain.getKey(), DataConstants.ATTRIBUTES_UPDATED, entityId, customerId, metaData, gson.toJson(json), defaultQueueAndRuleChain.getValue(), null);
-                tbClusterService.pushMsgToRuleEngine(tenantId, tbMsg.getOriginator(), tbMsg, new TbQueueCallback() {
-                    @Override
-                    public void onSuccess(TbQueueMsgMetadata metadata) {
-                        futureToSet.set(null);
-                    }
-
-                    @Override
-                    public void onFailure(Throwable t) {
-                        log.error("Can't process attributes update [{}]", msg, t);
-                        futureToSet.setException(t);
-                    }
-                });
+            public void onSuccess(@Nullable Void tmp) {
+                logAttributesUpdated(tenantId, entityId, scope, attributes, null);
+                futureToSet.set(null);
             }
 
             @Override
             public void onFailure(Throwable t) {
                 log.error("Can't process attributes update [{}]", msg, t);
+                logAttributesUpdated(tenantId, entityId, scope, attributes, t);
                 futureToSet.setException(t);
             }
-        }, dbCallbackExecutorService);
+        });
         return futureToSet;
+    }
+
+    private void logAttributesUpdated(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, Throwable e) {
+        notificationEntityService.logEntityAction(tenantId, entityId, ActionType.ATTRIBUTES_UPDATED, null,
+                BaseController.toException(e), scope, attributes);
     }
 
     private ListenableFuture<Void> processAttributeDeleteMsg(TenantId tenantId, EntityId entityId, AttributeDeleteMsg attributeDeleteMsg, String entityType) {

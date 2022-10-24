@@ -26,6 +26,7 @@ import com.google.protobuf.AbstractMessage;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.MessageLite;
+import io.netty.handler.codec.mqtt.MqttQoS;
 import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Assert;
@@ -162,10 +163,11 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.transport.AbstractTransportIntegrationTest;
 import org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest;
+import org.thingsboard.server.transport.mqtt.MqttTestCallback;
+import org.thingsboard.server.transport.mqtt.MqttTestClient;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -174,11 +176,13 @@ import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.assertEquals;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 
 @TestPropertySource(properties = {
         "edges.enabled=true",
+        "transport.mqtt.enabled=true"
 })
 abstract public class BaseEdgeTest extends AbstractControllerTest {
 
@@ -228,7 +232,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         installation();
 
         edgeImitator = new EdgeImitator("localhost", 7070, edge.getRoutingKey(), edge.getSecret());
-        edgeImitator.expectMessageAmount(15);
+        edgeImitator.expectMessageAmount(17);
         edgeImitator.connect();
 
         requestEdgeRuleChainMetadata();
@@ -2145,6 +2149,42 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, queueUpdateMsg.getMsgType());
         Assert.assertEquals(queueUpdateMsg.getIdMSB(), savedQueue.getUuidId().getMostSignificantBits());
         Assert.assertEquals(queueUpdateMsg.getIdLSB(), savedQueue.getUuidId().getLeastSignificantBits());
+    }
+
+    @Test
+    public void sendUpdateSharedAttributeToCloudAndValidateDeviceSubscription() throws Exception {
+        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
+
+        DeviceCredentials deviceCredentials = doGet("/api/device/" + device.getUuidId() + "/credentials", DeviceCredentials.class);
+
+        MqttTestClient client = new MqttTestClient();
+        client.connectAndWait(deviceCredentials.getCredentialsId());
+        MqttTestCallback onUpdateCallback = new MqttTestCallback();
+        client.setCallback(onUpdateCallback);
+        client.subscribeAndWait("v1/devices/me/attributes", MqttQoS.AT_MOST_ONCE);
+
+        edgeImitator.expectResponsesAmount(1);
+
+        JsonObject attributesData = new JsonObject();
+        String attrKey = "sharedAttrName";
+        String attrValue = "sharedAttrValue";
+        attributesData.addProperty(attrKey, attrValue);
+        UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
+        EntityDataProto.Builder entityDataBuilder = EntityDataProto.newBuilder();
+        entityDataBuilder.setEntityType(device.getId().getEntityType().name());
+        entityDataBuilder.setEntityIdMSB(device.getId().getId().getMostSignificantBits());
+        entityDataBuilder.setEntityIdLSB(device.getId().getId().getLeastSignificantBits());
+        entityDataBuilder.setAttributesUpdatedMsg(JsonConverter.convertToAttributesProto(attributesData));
+        entityDataBuilder.setPostAttributeScope(DataConstants.SHARED_SCOPE);
+        uplinkMsgBuilder.addEntityData(entityDataBuilder.build());
+
+        edgeImitator.sendUplinkMsg(uplinkMsgBuilder.build());
+        Assert.assertTrue(edgeImitator.waitForResponses());
+
+        Assert.assertTrue(onUpdateCallback.getSubscribeLatch().await(5, TimeUnit.SECONDS));
+
+        assertEquals(JacksonUtil.OBJECT_MAPPER.createObjectNode().put(attrKey, attrValue),
+                JacksonUtil.fromBytes(onUpdateCallback.getPayloadBytes()));
     }
 
     // Utility methods

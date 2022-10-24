@@ -90,8 +90,4 @@ public class TbOriginatorTypeSwitchNode implements TbNode {
         ctx.tellNext(msg, relationType);
     }
 
-    @Override
-    public void destroy() {
-
-    }
 }

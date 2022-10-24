@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
+import org.thingsboard.rule.engine.api.RuleEngineAssetProfileCache;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
 import org.thingsboard.rule.engine.api.RuleEngineRpcService;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
@@ -42,6 +43,8 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -64,6 +67,7 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
@@ -327,7 +331,7 @@ class DefaultTbContext implements TbContext {
 
     public TbMsg deviceCreatedMsg(Device device, RuleNodeId ruleNodeId) {
         RuleChainId ruleChainId = null;
-         String queueName = null;
+        String queueName = null;
         if (device.getDeviceProfileId() != null) {
             DeviceProfile deviceProfile = mainCtx.getDeviceProfileCache().find(device.getDeviceProfileId());
             if (deviceProfile == null) {
@@ -341,7 +345,18 @@ class DefaultTbContext implements TbContext {
     }
 
     public TbMsg assetCreatedMsg(Asset asset, RuleNodeId ruleNodeId) {
-        return entityActionMsg(asset, asset.getId(), ruleNodeId, DataConstants.ENTITY_CREATED);
+        RuleChainId ruleChainId = null;
+        String queueName = null;
+        if (asset.getAssetProfileId() != null) {
+            AssetProfile assetProfile = mainCtx.getAssetProfileCache().find(asset.getAssetProfileId());
+            if (assetProfile == null) {
+                log.warn("[{}] Asset profile is null!", asset.getAssetProfileId());
+            } else {
+                ruleChainId = assetProfile.getDefaultRuleChainId();
+                queueName = assetProfile.getDefaultQueueName();
+            }
+        }
+        return entityActionMsg(asset, asset.getId(), ruleNodeId, DataConstants.ENTITY_CREATED, queueName, ruleChainId);
     }
 
     public TbMsg alarmActionMsg(Alarm alarm, RuleNodeId ruleNodeId, String action) {
@@ -355,6 +370,15 @@ class DefaultTbContext implements TbContext {
             } else {
                 ruleChainId = deviceProfile.getDefaultRuleChainId();
                 queueName = deviceProfile.getDefaultQueueName();
+            }
+        } else if (EntityType.ASSET.equals(alarm.getOriginator().getEntityType())) {
+            AssetId assetId = new AssetId(alarm.getOriginator().getId());
+            AssetProfile assetProfile = mainCtx.getAssetProfileCache().get(getTenantId(), assetId);
+            if (assetProfile == null) {
+                log.warn("[{}] Asset profile is null!", assetId);
+            } else {
+                ruleChainId = assetProfile.getDefaultRuleChainId();
+                queueName = assetProfile.getDefaultQueueName();
             }
         }
         return entityActionMsg(alarm, alarm.getId(), ruleNodeId, action, queueName, ruleChainId);
@@ -479,6 +503,11 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    public DeviceCredentialsService getDeviceCredentialsService() {
+        return mainCtx.getDeviceCredentialsService();
+    }
+
+    @Override
     public TbClusterService getClusterService() {
         return mainCtx.getClusterService();
     }
@@ -531,6 +560,11 @@ class DefaultTbContext implements TbContext {
     @Override
     public RuleEngineDeviceProfileCache getDeviceProfileCache() {
         return mainCtx.getDeviceProfileCache();
+    }
+
+    @Override
+    public RuleEngineAssetProfileCache getAssetProfileCache() {
+        return mainCtx.getAssetProfileCache();
     }
 
     @Override
@@ -648,8 +682,14 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    public void addAssetProfileListeners(Consumer<AssetProfile> profileListener, BiConsumer<AssetId, AssetProfile> assetListener) {
+        mainCtx.getAssetProfileCache().addListener(getTenantId(), getSelfId(), profileListener, assetListener);
+    }
+
+    @Override
     public void removeListeners() {
         mainCtx.getDeviceProfileCache().removeListener(getTenantId(), getSelfId());
+        mainCtx.getAssetProfileCache().removeListener(getTenantId(), getSelfId());
         mainCtx.getTenantProfileCache().removeListener(getTenantId(), getSelfId());
     }
 

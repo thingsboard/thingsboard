@@ -21,8 +21,12 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityView;
@@ -30,6 +34,7 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -50,6 +55,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
+@ContextConfiguration(classes = {BaseAssetControllerTest.Config.class})
 public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
     private IdComparator<Asset> idComparator = new IdComparator<>();
@@ -57,8 +63,16 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
     private Tenant savedTenant;
     private User tenantAdmin;
 
-    @SpyBean
+    @Autowired
     private AssetDao assetDao;
+
+    static class Config {
+        @Bean
+        @Primary
+        public AssetDao assetDao(AssetDao assetDao) {
+            return Mockito.mock(AssetDao.class, AdditionalAnswers.delegatesTo(assetDao));
+        }
+    }
 
     @Before
     public void beforeTest() throws Exception {
@@ -82,8 +96,6 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
     @After
     public void afterTest() throws Exception {
         loginSysAdmin();
-
-        afterTestEntityDaoRemoveByIdWithException (assetDao);
 
         doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
                 .andExpect(status().isOk());
@@ -185,6 +197,20 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         testNotifyEntityNever(savedAsset.getId(), savedAsset);
 
         deleteDifferentTenant();
+    }
+
+    @Test
+    public void testSaveAssetWithProfileFromDifferentTenant() throws Exception {
+        loginDifferentTenant();
+        AssetProfile differentProfile = createAssetProfile("Different profile");
+        differentProfile = doPost("/api/assetProfile", differentProfile, AssetProfile.class);
+
+        loginTenantAdmin();
+        Asset asset = new Asset();
+        asset.setName("My device");
+        asset.setAssetProfileId(differentProfile.getId());
+        doPost("/api/asset", asset).andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Asset can`t be referencing to asset profile from different tenant!")));
     }
 
     @Test
@@ -310,13 +336,12 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        String msgError = "Asset type " + msgErrorShouldBeSpecified;
-        doPost("/api/asset", asset)
-                .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString(msgError)));
+        Asset savedAsset = doPost("/api/asset", asset, Asset.class);
+        Assert.assertEquals("default", savedAsset.getType());
 
-        testNotifyEntityEqualsOneTimeServiceNeverError(asset, savedTenant.getId(),
-                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+        testNotifyEntityOneTimeMsgToEdgeServiceNever(savedAsset, savedAsset.getId(), savedAsset.getId(),
+                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED);
     }
 
     @Test

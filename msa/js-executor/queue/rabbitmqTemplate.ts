@@ -65,7 +65,7 @@ export class RabbitMqTemplate implements IQueue {
         })
     }
 
-    async send(responseTopic: string, scriptId: string, rawResponse: Buffer, headers: any): Promise<any> {
+    async send(responseTopic: string, msgKey: string, rawResponse: Buffer, headers: any): Promise<any> {
 
         if (!this.topics.includes(responseTopic)) {
             await this.createQueue(responseTopic);
@@ -74,7 +74,7 @@ export class RabbitMqTemplate implements IQueue {
 
         let data = JSON.stringify(
             {
-                key: scriptId,
+                key: msgKey,
                 data: [...rawResponse],
                 headers: headers
             });
