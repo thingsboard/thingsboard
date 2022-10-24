@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.gen.edge.v1.AttributeDeleteMsg;
+import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.EntityDataProto;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
@@ -192,4 +193,38 @@ abstract public class BaseTelemetryEdgeTest extends AbstractEdgeTest {
         return false;
     }
 
+    @Test
+    public void testTimeseriesDeliveryFailuresForever_deliverOnlyDeviceUpdateMsgs() throws Exception {
+        int numberOfMsgsToSend = 100;
+
+        edgeImitator.setRandomFailuresOnTimeseriesDownlink(true);
+        // imitator will generate failure in 100% of timeseries cases
+        edgeImitator.setFailureProbability(100);
+
+        edgeImitator.expectMessageAmount(numberOfMsgsToSend);
+        Device device = findDeviceByName("Edge Device 1");
+        for (int idx = 1; idx <= numberOfMsgsToSend; idx++) {
+            String timeseriesData = "{\"data\":{\"idx\":" + idx + "},\"ts\":" + System.currentTimeMillis() + "}";
+            JsonNode timeseriesEntityData = mapper.readTree(timeseriesData);
+            EdgeEvent failedEdgeEvent = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.TIMESERIES_UPDATED,
+                    device.getId().getId(), EdgeEventType.DEVICE, timeseriesEntityData);
+            edgeEventService.saveAsync(failedEdgeEvent).get();
+
+            EdgeEvent successEdgeEvent = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.UPDATED,
+                    device.getId().getId(), EdgeEventType.DEVICE, null);
+            edgeEventService.saveAsync(successEdgeEvent).get();
+
+            clusterService.onEdgeEventUpdate(tenantId, edge.getId());
+        }
+
+        Assert.assertTrue(edgeImitator.waitForMessages(120));
+
+        List<EntityDataProto> allTelemetryMsgs = edgeImitator.findAllMessagesByType(EntityDataProto.class);
+        Assert.assertTrue(allTelemetryMsgs.isEmpty());
+
+        List<DeviceUpdateMsg> deviceUpdateMsgs = edgeImitator.findAllMessagesByType(DeviceUpdateMsg.class);
+        Assert.assertEquals(numberOfMsgsToSend, deviceUpdateMsgs.size());
+
+        edgeImitator.setRandomFailuresOnTimeseriesDownlink(false);
+    }
 }
