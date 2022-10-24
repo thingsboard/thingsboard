@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettings;
 import org.thingsboard.server.common.data.security.model.mfa.account.AccountTwoFaSettings;
 import org.thingsboard.server.common.data.security.model.mfa.account.TwoFaAccountConfig;
@@ -40,6 +41,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFaConfigManager;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 
 import javax.validation.Valid;
 import java.util.Collections;
@@ -56,6 +58,7 @@ public class TwoFactorAuthConfigController extends BaseController {
 
     private final TwoFaConfigManager twoFaConfigManager;
     private final TwoFactorAuthService twoFactorAuthService;
+    private final JwtTokenFactory tokenFactory;
 
 
     @ApiOperation(value = "Get account 2FA settings (getAccountTwoFaSettings)",
@@ -141,8 +144,8 @@ public class TwoFactorAuthConfigController extends BaseController {
                     ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PostMapping("/account/config")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER', 'TWO_FACTOR_FORCE_SAVE_SETTINGS_TOKEN')")
-    public AccountTwoFaSettings verifyAndSaveTwoFaAccountConfig(@Valid @RequestBody TwoFaAccountConfig accountConfig,
-                                                                @RequestParam(required = false) String verificationCode) throws Exception {
+    public ResponseEntity<?> verifyAndSaveTwoFaAccountConfig(@RequestBody TwoFaAccountConfig accountConfig,
+                                                             @RequestParam(required = false) String verificationCode) throws Exception {
         SecurityUser user = getCurrentUser();
         if (twoFaConfigManager.getTwoFaAccountConfig(user.getTenantId(), user.getId(), accountConfig.getProviderType()).isPresent()) {
             throw new IllegalArgumentException("2FA provider is already configured");
@@ -155,7 +158,10 @@ public class TwoFactorAuthConfigController extends BaseController {
             verificationSuccess = true;
         }
         if (verificationSuccess) {
-            return twoFaConfigManager.saveTwoFaAccountConfig(user.getTenantId(), user.getId(), accountConfig);
+            if (user.getAuthority().equals(Authority.TWO_FACTOR_FORCE_SAVE_SETTINGS_TOKEN)) {
+                return new ResponseEntity<>(tokenFactory.createTokenPair(user), HttpStatus.OK);
+            }
+            return new ResponseEntity<>(twoFaConfigManager.saveTwoFaAccountConfig(user.getTenantId(), user.getId(), accountConfig), HttpStatus.OK);
         } else {
             throw new IllegalArgumentException("Verification code is incorrect");
         }
@@ -261,7 +267,7 @@ public class TwoFactorAuthConfigController extends BaseController {
     @PostMapping("/settings")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     public PlatformTwoFaSettings savePlatformTwoFaSettings(@ApiParam(value = "Settings value", required = true)
-                                          @RequestBody PlatformTwoFaSettings twoFaSettings) throws ThingsboardException {
+                                                           @RequestBody PlatformTwoFaSettings twoFaSettings) throws ThingsboardException {
         return twoFaConfigManager.savePlatformTwoFaSettings(getTenantId(), twoFaSettings);
     }
 
