@@ -246,7 +246,6 @@ public abstract class BaseRpcControllerTest extends AbstractControllerTest {
                 .andExpect(status().isNotFound());
     }
 
-    @Ignore
     @Test
     public void testDeleteRpcWithTransactionalException() throws Exception {
         Device device = createDefaultDevice();

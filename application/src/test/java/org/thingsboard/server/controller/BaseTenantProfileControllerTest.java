@@ -366,7 +366,6 @@ public abstract class BaseTenantProfileControllerTest extends AbstractController
                 .andExpect(statusReason(containsString(msgErrorNoFound("Tenant profile", savedTenantProfile.getId().getId().toString()))));
     }
 
-    @Ignore
     @Test
     public void testDeleteTenantProfileWithTransactionalException() throws Exception {
         loginSysAdmin();

@@ -255,7 +255,6 @@ public abstract class BaseWidgetTypeControllerTest extends AbstractControllerTes
                 .andExpect(status().isNotFound());
     }
 
-    @Ignore
     @Test
     public void testDeleteWidgetTypeWithTransactionalException() throws Exception {
         WidgetTypeDetails savedWidgetType = createAndSavedWidgetTypeDetails("MOCK_TransactionalException");

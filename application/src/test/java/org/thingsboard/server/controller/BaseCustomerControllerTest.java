@@ -469,7 +469,6 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         doGet("/api/customer/" + customerExpected.getId().getId().toString()).andExpect(status().isNotFound());
     }
 
-    @Ignore
     @Test
     public void testDeleteApiUsageStateWithTransactionalException() throws Exception {
         Customer customerExpected = createCustomer("Customer for Test WithRelations Transactional Exception");

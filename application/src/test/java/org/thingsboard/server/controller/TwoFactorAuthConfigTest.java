@@ -505,7 +505,6 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
         Assert.isTrue(accountTwoFaSettingsAfter.getConfigs().size() == 0);
     }
 
-    @Ignore
     @Test
     public void testDeleteAdminSettingsWithTransactionalException() throws Exception {
         Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(adminSettingsDao).removeById(any(), any());

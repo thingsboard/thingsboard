@@ -135,7 +135,6 @@ public abstract class BaseOAuth2ConfigTemplateServiceTest extends AbstractServic
         Assert.assertNull(oAuth2ConfigTemplateService.findClientRegistrationTemplateById(saved.getId()));
     }
 
-    @Ignore
     @Test
     public void testDeleteOAuth2ClientRegistrationTemplateWithTransactionalException() throws Exception {
         Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(oAuth2ClientRegistrationTemplateDao).removeById(any(), any());

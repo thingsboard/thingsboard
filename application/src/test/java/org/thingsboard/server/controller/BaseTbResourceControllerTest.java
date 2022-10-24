@@ -338,7 +338,6 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
         }
     }
 
-
     @Test
     public void testDeleteTbResourceWithTransactionalOk() throws Exception {
         TbResource savedResource = createAndSavedTbResource();
@@ -353,7 +352,6 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
                 .andExpect(statusReason(containsString(msgErrorNoFound("Resource", resourceIdStr))));;
     }
 
-    @Ignore
     @Test
     public void testDeleteTbResourceWithTransactionalException() throws Exception {
         TbResource tbResource = createAndSavedTbResource("MOCK_TransactionalException", "Test Data");

@@ -19,12 +19,7 @@ import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.AdditionalAnswers;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
-import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -46,7 +41,6 @@ import java.util.concurrent.TimeoutException;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-@ContextConfiguration(classes = {JpaAuditLogDaoTest.Config.class})
 public class JpaAuditLogDaoTest extends AbstractJpaDaoTest {
     List<AuditLog> auditLogList = new ArrayList<>();
     UUID tenantId;
@@ -59,14 +53,6 @@ public class JpaAuditLogDaoTest extends AbstractJpaDaoTest {
     AuditLog neededFoundedAuditLog;
     @Autowired
     private AuditLogDao auditLogDao;
-
-    static class Config {
-        @Bean
-        @Primary
-        public AuditLogDao auditLogDao(AuditLogDao auditLogDao) {
-            return Mockito.mock(AuditLogDao.class, AdditionalAnswers.delegatesTo(auditLogDao));
-        }
-    }
 
     @Before
     public void setUp() {
@@ -153,42 +139,6 @@ public class JpaAuditLogDaoTest extends AbstractJpaDaoTest {
                 new TimePageLink(10)).getData();
         checkFoundedAuditLogsList(foundedAuditLogs, 6);
     }
-//
-//    @Test
-//    public void testDeleteAuditLogWithTransactionalOk() throws Exception {
-//        ActionType actionType = ActionType.ADDED;
-//        CustomerId customerId = customerId1;
-//        UserId userId = userId1;
-//        EntityId entityId = entityId1;
-//        neededFoundedAuditLog = createAuditLog(1, actionType, customerId, userId, entityId);
-//        AuditLog foundedAuditLogById = auditLogDao.findById(TenantId.fromUUID(tenantId), neededFoundedAuditLog.getUuidId());
-//        checkFoundedAuditLog(foundedAuditLogById);
-//
-//        auditLogDao.removeById(TenantId.fromUUID(tenantId), foundedAuditLogById.getUuidId());
-//
-//        Assert.isNull(auditLogDao.findById(TenantId.fromUUID(tenantId), neededFoundedAuditLog.getUuidId()),
-//                "RemoveById is not success!");
-//    }
-//
-////    @Ignore
-//    @Test
-//    public void testDeleteAuditLogWithTransactionalException() throws Exception {
-//        Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(auditLogDao).removeById(any(), any());
-//        try {
-//            AuditLog foundedAuditLogById = auditLogDao.findById(TenantId.fromUUID(tenantId), neededFoundedAuditLog.getUuidId());
-//            checkFoundedAuditLog(foundedAuditLogById);
-//
-//            final Throwable raisedException = catchThrowable(() -> auditLogDao.removeById(TenantId.fromUUID(tenantId), foundedAuditLogById.getUuidId()));
-//            assertThat(raisedException).isInstanceOf(ConstraintViolationException.class)
-//                    .hasMessageContaining("mock message");
-//            Mockito.doReturn(true).when(auditLogDao).removeById(any(), any());
-//        } finally {
-//            Mockito.reset(auditLogDao);
-//        }
-//        AuditLog foundedAuditLogById = auditLogDao.findById(TenantId.fromUUID(tenantId), neededFoundedAuditLog.getUuidId());
-//        checkFoundedAuditLog(foundedAuditLogById);
-//    }
-
 
     private void checkFoundedAuditLogsList(List<AuditLog> foundedAuditLogs, int neededSizeForFoundedList) {
         assertNotNull(foundedAuditLogs);

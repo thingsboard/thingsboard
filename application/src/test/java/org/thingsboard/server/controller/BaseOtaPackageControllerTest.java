@@ -459,7 +459,6 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
                 .andExpect(statusReason(containsString(msgErrorNotFound)));
     }
 
-    @Ignore
     @Test
     public void testDeleteOtaPackageWithTransactionalException() throws Exception {
         SaveOtaPackageInfoRequest firmwareInfo = new SaveOtaPackageInfoRequest();

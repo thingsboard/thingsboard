@@ -364,7 +364,6 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
         Assert.assertTrue(pageData.getData().isEmpty());
     }
 
-
     @Test
     public void testDeleteOAuth2ClientRegistrationTemplateWithTransactionalOk() {
         Queue savedQueue = savedQueue("MOCK_Ok" , "tb_rule_engine.test");
@@ -375,7 +374,6 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
         Assert.assertNull(foundQueue);
     }
 
-    @Ignore
     @Test
     public void testDeleteOAuth2ClientRegistrationTemplateWithTransactionalException() throws Exception {
         Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(queueDao).removeById(any(), any());

@@ -133,7 +133,6 @@ public abstract class BaseComponentDescriptorControllerTest extends AbstractCont
         Assert.assertNull(descriptorAfter);
     }
 
-    @Ignore
     @Test
     public void testDeleteComponentDescriptorWithTransactionalException() throws Exception {
         ComponentDescriptorId componentDescriptorId =  createComponentDescriptor("MOCK_TransactionalException");
