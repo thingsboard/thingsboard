@@ -159,6 +159,7 @@ public class TwoFactorAuthConfigController extends BaseController {
         }
         if (verificationSuccess) {
             if (user.getAuthority().equals(Authority.TWO_FACTOR_FORCE_SAVE_SETTINGS_TOKEN)) {
+                twoFaConfigManager.saveTwoFaAccountConfig(user.getTenantId(), user.getId(), accountConfig);
                 return new ResponseEntity<>(tokenFactory.createTokenPair(user), HttpStatus.OK);
             }
             return new ResponseEntity<>(twoFaConfigManager.saveTwoFaAccountConfig(user.getTenantId(), user.getId(), accountConfig), HttpStatus.OK);
