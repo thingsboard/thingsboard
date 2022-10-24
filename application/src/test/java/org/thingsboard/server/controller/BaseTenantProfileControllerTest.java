@@ -18,7 +18,6 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.ArgumentMatcher;
@@ -381,6 +380,7 @@ public abstract class BaseTenantProfileControllerTest extends AbstractController
 
             doGet("/api/tenantProfile/" + savedTenantProfile.getId().getId().toString()).andExpect(status().isOk());
             Mockito.doReturn(true).when(tenantProfileDao).removeById(any(), any());
+            Mockito.reset(tenantProfileDao);
         } finally {
             Mockito.reset(tenantProfileDao);
         }

@@ -19,7 +19,6 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
@@ -387,6 +386,7 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
             Queue foundQueue = queueService.findQueueById(tenantId, savedQueue.getId());
             Assert.assertNotNull(foundQueue);
             Mockito.doReturn(true).when(queueDao).removeById(any(), any());
+            Mockito.reset(queueDao);
         } finally {
             Mockito.reset(queueDao);
         }

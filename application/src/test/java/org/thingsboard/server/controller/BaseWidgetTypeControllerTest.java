@@ -22,7 +22,6 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
@@ -269,6 +268,7 @@ public abstract class BaseWidgetTypeControllerTest extends AbstractControllerTes
             WidgetTypeDetails foundWidgetTypeAfter = doGet("/api/widgetType/" + savedWidgetType.getId().getId().toString(), WidgetTypeDetails.class);
             Assert.assertNotNull(foundWidgetTypeAfter);
             Mockito.doReturn(true).when(widgetTypeDao).removeById(any(), any());
+            Mockito.reset(widgetTypeDao);
         } finally {
             Mockito.reset(widgetTypeDao);
         }

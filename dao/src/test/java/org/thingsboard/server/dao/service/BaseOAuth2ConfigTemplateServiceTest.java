@@ -19,7 +19,6 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
@@ -148,6 +147,7 @@ public abstract class BaseOAuth2ConfigTemplateServiceTest extends AbstractServic
             Assert.assertEquals(3, oAuth2ConfigTemplateService.findAllClientRegistrationTemplates().size());
             Assert.assertNotNull(oAuth2ConfigTemplateService.findClientRegistrationTemplateById(saved.getId()));
             Mockito.doReturn(true).when(oAuth2ClientRegistrationTemplateDao).removeById(any(), any());
+            Mockito.reset(oAuth2ClientRegistrationTemplateDao);
         } finally {
             Mockito.reset(oAuth2ClientRegistrationTemplateDao);
         }

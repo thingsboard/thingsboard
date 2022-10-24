@@ -519,6 +519,7 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
             AccountTwoFaSettings accountTwoFaSettingsAfter = readResponse(doGet("/api/2fa/account/settings").andExpect(status().isOk()), AccountTwoFaSettings.class);
             Assert.isTrue(accountTwoFaSettingsAfter.getConfigs().size() == 1);
             Mockito.doReturn(true).when(adminSettingsDao).removeById(any(), any());
+            Mockito.reset(adminSettingsDao);
         } finally {
             Mockito.reset(adminSettingsDao);
         }

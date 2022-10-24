@@ -481,6 +481,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         try {
             doDelete("/api/customer/" + customerId.getId().toString()).andExpect(status().isInternalServerError());
             Mockito.doReturn(true).when(apiUsageStateDao).removeById(any(), any());
+            Mockito.reset(apiUsageStateDao);
         } finally {
             Mockito.reset(apiUsageStateDao);
         }

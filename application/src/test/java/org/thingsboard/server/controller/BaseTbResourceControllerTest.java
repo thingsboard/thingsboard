@@ -20,7 +20,6 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
@@ -365,6 +364,7 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
 
             doGet("/api/resource/" + foundTbResource.getId().getId().toString()).andExpect(status().isOk());
             Mockito.doReturn(true).when(tbResourceDao).removeById(any(), any());
+            Mockito.reset(tbResourceDao);
         } finally {
             Mockito.reset(tbResourceDao);
         }

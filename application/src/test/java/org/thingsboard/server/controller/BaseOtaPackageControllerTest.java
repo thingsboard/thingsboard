@@ -20,7 +20,6 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
@@ -480,6 +479,7 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
             OtaPackageInfo foundFirmwareInfoAfter = doGet("/api/otaPackage/info/" + savedFirmwareInfo.getId().getId().toString(), OtaPackageInfo.class);
             Assert.assertEquals(foundFirmwareInfoAfter.getTitle(), savedFirmwareInfo.getTitle());
             Mockito.doReturn(true).when(otaPackageDao).removeById(any(), any());
+            Mockito.reset(otaPackageDao);
         } finally {
             Mockito.reset(otaPackageDao);
         }
