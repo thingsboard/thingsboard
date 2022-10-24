@@ -131,7 +131,6 @@ export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettings
 
   protected updateValidators(emitEvent: boolean) {
     const dataKeyHidden: boolean = this.updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value;
-
     const dataKeyValueType: MultipleInputWidgetDataKeyValueType = this.updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value;
     const required: boolean = this.updateMultipleAttributesKeySettingsForm.get('required').value;
     const isEditable: string = this.updateMultipleAttributesKeySettingsForm.get('isEditable').value;

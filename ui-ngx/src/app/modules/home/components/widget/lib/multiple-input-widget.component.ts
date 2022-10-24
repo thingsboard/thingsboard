@@ -91,7 +91,6 @@ interface MultipleInputWidgetDataKeySettings {
   maxValue?: number;
   requiredErrorMessage?: string;
   invalidDateErrorMessage?: string;
-  invalidJSONErrorMessage?: string;
   minValueErrorMessage?: string;
   maxValueErrorMessage?: string;
   useCustomIcon: boolean;
