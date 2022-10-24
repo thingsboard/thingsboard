@@ -84,6 +84,7 @@ export enum OpenStreetMapProvider {
   openStreetHot = 'OpenStreetMap.HOT',
   esriWorldStreetMap = 'Esri.WorldStreetMap',
   esriWorldTopoMap = 'Esri.WorldTopoMap',
+  esriWorldImagery = 'Esri.WorldImagery',
   cartoDbPositron = 'CartoDB.Positron',
   cartoDbDarkMatter = 'CartoDB.DarkMatter'
 }
@@ -94,6 +95,7 @@ export const openStreetMapProviderTranslationMap = new Map<OpenStreetMapProvider
     [OpenStreetMapProvider.openStreetHot, 'widgets.maps.openstreet-provider-hot'],
     [OpenStreetMapProvider.esriWorldStreetMap, 'widgets.maps.openstreet-provider-esri-street'],
     [OpenStreetMapProvider.esriWorldTopoMap, 'widgets.maps.openstreet-provider-esri-topo'],
+    [OpenStreetMapProvider.esriWorldImagery, 'widgets.maps.openstreet-provider-esri-imagery'],
     [OpenStreetMapProvider.cartoDbPositron, 'widgets.maps.openstreet-provider-cartodb-positron'],
     [OpenStreetMapProvider.cartoDbDarkMatter, 'widgets.maps.openstreet-provider-cartodb-dark-matter']
   ]

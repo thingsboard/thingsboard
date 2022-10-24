@@ -20,6 +20,7 @@ http_port: "HTTP_PORT"      # /livenessProbe
 
 js:
   response_poll_interval: "REMOTE_JS_RESPONSE_POLL_INTERVAL_MS"
+  max_result_size: "JS_MAX_RESULT_SIZE"
 
 kafka:
   bootstrap:

@@ -188,6 +188,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
             case WIDGET_TYPE:
             case TENANT_PROFILE:
             case DEVICE_PROFILE:
+            case ASSET_PROFILE:
             case API_USAGE_STATE:
             case TB_RESOURCE:
             case OTA_PACKAGE:

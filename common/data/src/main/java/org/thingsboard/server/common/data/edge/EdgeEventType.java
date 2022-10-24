@@ -20,6 +20,7 @@ public enum EdgeEventType {
     ASSET,
     DEVICE,
     DEVICE_PROFILE,
+    ASSET_PROFILE,
     ENTITY_VIEW,
     ALARM,
     RULE_CHAIN,

@@ -210,11 +210,11 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
         return executeScriptAsync(msg.getCustomerId(), inArgs[0], inArgs[1], inArgs[2]);
     }
 
-    ListenableFuture<JsonNode> executeScriptAsync(CustomerId customerId, Object... args) {
+    ListenableFuture<JsonNode> executeScriptAsync(CustomerId customerId, String... args) {
         return Futures.transformAsync(sandboxService.invokeFunction(tenantId, customerId, this.scriptId, args),
                 o -> {
                     try {
-                        return Futures.immediateFuture(mapper.readTree(o.toString()));
+                        return Futures.immediateFuture(mapper.readTree(o));
                     } catch (Exception e) {
                         if (e.getCause() instanceof ScriptException) {
                             return Futures.immediateFailedFuture(e.getCause());

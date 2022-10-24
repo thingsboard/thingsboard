@@ -79,6 +79,10 @@ public class DataConstants {
     public static final String ENTITY_ASSIGNED_TO_EDGE = "ENTITY_ASSIGNED_TO_EDGE";
     public static final String ENTITY_UNASSIGNED_FROM_EDGE = "ENTITY_UNASSIGNED_FROM_EDGE";
 
+    public static final String RELATION_ADD_OR_UPDATE = "RELATION_ADD_OR_UPDATE";
+    public static final String RELATION_DELETED = "RELATION_DELETED";
+    public static final String RELATIONS_DELETED = "RELATIONS_DELETED";
+
     public static final String RPC_CALL_FROM_SERVER_TO_DEVICE = "RPC_CALL_FROM_SERVER_TO_DEVICE";
 
     public static final String RPC_QUEUED = "RPC_QUEUED";

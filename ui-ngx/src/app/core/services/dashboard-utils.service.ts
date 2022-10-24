@@ -34,6 +34,7 @@ import { Datasource, DatasourceType, Widget, widgetType } from '@app/shared/mode
 import { EntityType } from '@shared/models/entity-type.models';
 import { AliasFilterType, EntityAlias, EntityAliasFilter } from '@app/shared/models/alias.models';
 import { EntityId } from '@app/shared/models/id/entity-id';
+import { initModelFromDefaultTimewindow } from '@shared/models/time/time.models';
 
 @Injectable({
   providedIn: 'root'
@@ -215,6 +216,9 @@ export class DashboardUtilsService {
         delete datasource.deviceAliasId;
       }
     });
+    if (widget.type === widgetType.latest) {
+      widget.config.timewindow = initModelFromDefaultTimewindow(widget.config.timewindow, true, this.timeService);
+    }
     // Temp workaround
     if (widget.isSystemType  && widget.bundleAlias === 'charts' && widget.typeAlias === 'timeseries') {
       widget.typeAlias = 'basic_timeseries';

@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
@@ -47,6 +48,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.dao.alarm.AlarmService;
+import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.audit.AuditLogLevelFilter;
 import org.thingsboard.server.dao.audit.AuditLogLevelMask;
@@ -167,6 +169,9 @@ public abstract class AbstractServiceTest {
     protected DeviceProfileService deviceProfileService;
 
     @Autowired
+    protected AssetProfileService assetProfileService;
+
+    @Autowired
     protected ResourceService resourceService;
 
     @Autowired
@@ -248,6 +253,16 @@ public abstract class AbstractServiceTest {
         deviceProfile.setDefault(false);
         deviceProfile.setDefaultRuleChainId(null);
         return deviceProfile;
+    }
+
+    protected AssetProfile createAssetProfile(TenantId tenantId, String name) {
+        AssetProfile assetProfile = new AssetProfile();
+        assetProfile.setTenantId(tenantId);
+        assetProfile.setName(name);
+        assetProfile.setDescription(name + " Test");
+        assetProfile.setDefault(false);
+        assetProfile.setDefaultRuleChainId(null);
+        return assetProfile;
     }
 
     public TenantId createTenant() {

@@ -153,7 +153,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
             }
             AlarmOperationResult result = new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm)));
             deleteEntityRelations(tenantId, alarm.getId());
-            alarmDao.deleteAlarm(tenantId, alarm);
+            alarmDao.removeById(tenantId, alarm.getUuidId());
             return result;
         } catch (ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
