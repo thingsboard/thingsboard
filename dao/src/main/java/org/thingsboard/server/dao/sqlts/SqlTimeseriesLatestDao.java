@@ -94,7 +94,7 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
     @Value("${sql.ts_latest.batch_threads:4}")
     private int tsLatestBatchThreads;
 
-    @Value("${sql.batch_sort:false}")
+    @Value("${sql.batch_sort:true}")
     protected boolean batchSortEnabled;
 
     @Autowired
