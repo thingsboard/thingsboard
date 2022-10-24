@@ -18,7 +18,6 @@ package org.thingsboard.server.edge;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.protobuf.AbstractMessage;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
