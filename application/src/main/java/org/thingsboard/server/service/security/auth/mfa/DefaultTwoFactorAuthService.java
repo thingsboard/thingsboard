@@ -19,8 +19,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.security.model.mfa.account.TwoFaAccoun
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderConfig;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
+import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFaConfigManager;
@@ -42,7 +43,6 @@ import java.util.Collection;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -54,6 +54,7 @@ public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
     private final TwoFaConfigManager configManager;
     private final SystemSecurityService systemSecurityService;
     private final UserService userService;
+    private final TenantService tenantService;
     private final Map<TwoFaProviderType, TwoFaProvider<TwoFaProviderConfig, TwoFaAccountConfig>> providers = new EnumMap<>(TwoFaProviderType.class);
 
     private static final ThingsboardException ACCOUNT_NOT_CONFIGURED_ERROR = new ThingsboardException("2FA is not configured for account", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
@@ -65,16 +66,8 @@ public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
 
     @Override
     public boolean isForceTwoFaEnabled(TenantId tenantId) {
-        Optional<PlatformTwoFaSettings> platformTwoFaSettings = configManager.getPlatformTwoFaSettings(tenantId, true);
-        if (platformTwoFaSettings.isPresent()) {
-            Map<UUID, Boolean> tenantInfo = platformTwoFaSettings.get().getTenantInfo();
-            if (!CollectionUtils.isEmpty(tenantInfo)) {
-                if (tenantInfo.get(tenantId.getId()) != null) {
-                    return tenantInfo.get(tenantId.getId());
-                }
-            }
-        }
-        return false;
+        Tenant tenant = tenantService.findTenantById(tenantId);
+        return tenant != null && tenant.isForceTwoFactor();
     }
 
     @Override

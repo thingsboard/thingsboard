@@ -78,6 +78,9 @@ public abstract class AbstractTenantEntity<T extends Tenant> extends BaseSqlEnti
     @Column(name = ModelConstants.TENANT_TENANT_PROFILE_ID_PROPERTY, columnDefinition = "uuid")
     private UUID tenantProfileId;
 
+    @Column(name = ModelConstants.FORCE_TWO_FACTOR_PROPERTY)
+    private boolean forceTwoFactor;
+
     public AbstractTenantEntity() {
         super();
     }
@@ -98,6 +101,7 @@ public abstract class AbstractTenantEntity<T extends Tenant> extends BaseSqlEnti
         this.phone = tenant.getPhone();
         this.email = tenant.getEmail();
         this.additionalInfo = tenant.getAdditionalInfo();
+        this.forceTwoFactor = tenant.isForceTwoFactor();
         if (tenant.getTenantProfileId() != null) {
             this.tenantProfileId = tenant.getTenantProfileId().getId();
         }
@@ -117,6 +121,7 @@ public abstract class AbstractTenantEntity<T extends Tenant> extends BaseSqlEnti
         this.phone = tenantEntity.getPhone();
         this.email = tenantEntity.getEmail();
         this.additionalInfo = tenantEntity.getAdditionalInfo();
+        this.forceTwoFactor = tenantEntity.isForceTwoFactor();
         this.tenantProfileId = tenantEntity.getTenantProfileId();
     }
 
@@ -147,6 +152,7 @@ public abstract class AbstractTenantEntity<T extends Tenant> extends BaseSqlEnti
         tenant.setZip(zip);
         tenant.setPhone(phone);
         tenant.setEmail(email);
+        tenant.setForceTwoFactor(forceTwoFactor);
         tenant.setAdditionalInfo(additionalInfo);
         if (tenantProfileId != null) {
             tenant.setTenantProfileId(new TenantProfileId(tenantProfileId));

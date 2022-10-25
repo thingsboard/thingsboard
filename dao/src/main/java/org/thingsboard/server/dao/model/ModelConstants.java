@@ -108,6 +108,7 @@ public class ModelConstants {
     public static final String ZIP_PROPERTY = "zip";
     public static final String PHONE_PROPERTY = "phone";
     public static final String EMAIL_PROPERTY = "email";
+    public static final String FORCE_TWO_FACTOR_PROPERTY = "force_two_factor";
 
     /**
      * Cassandra tenant constants.

@@ -614,6 +614,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     if (isOldSchema(conn, 3004001)) {
                         try {
                             conn.createStatement().execute("ALTER TABLE asset ADD COLUMN asset_profile_id uuid");
+                            conn.createStatement().execute("ALTER TABLE tenant ADD COLUMN force_two_factor boolean NOT NULL DEFAULT false");
                         } catch (Exception e) {
                         }
 

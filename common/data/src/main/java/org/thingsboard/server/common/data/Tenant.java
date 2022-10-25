@@ -44,6 +44,9 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId {
     @ApiModelProperty(position = 6, required = true, value = "JSON object with Tenant Profile Id")
     private TenantProfileId tenantProfileId;
 
+    @ApiModelProperty(position = 16, value = "Enable force two factor authentication", example = "true")
+    private boolean forceTwoFactor;
+
     public Tenant() {
         super();
     }
@@ -57,6 +60,7 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId {
         this.title = tenant.getTitle();
         this.region = tenant.getRegion();
         this.tenantProfileId = tenant.getTenantProfileId();
+        this.forceTwoFactor = tenant.isForceTwoFactor();
     }
 
     public String getTitle() {
@@ -65,6 +69,14 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public boolean isForceTwoFactor() {
+        return forceTwoFactor;
+    }
+
+    public void setForceTwoFactor(boolean forceTwoFactor) {
+        this.forceTwoFactor = forceTwoFactor;
     }
 
     @Override
@@ -195,6 +207,8 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId {
         builder.append(zip);
         builder.append(", phone=");
         builder.append(phone);
+        builder.append(", forceTwoFactor=");
+        builder.append(forceTwoFactor);
         builder.append(", email=");
         builder.append(email);
         builder.append(", createdTime=");
