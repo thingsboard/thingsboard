@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Ignore;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
@@ -86,6 +86,10 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
             return Mockito.mock(UserCredentialsDao.class, AdditionalAnswers.delegatesTo(userCredentialsDao));
         }
     }
+    @Before
+    public void beforeTest() throws Exception {
+        loginSysAdmin();
+    }
 
     @After
     public void afterTest() throws Exception {
@@ -94,8 +98,6 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
     @Test
     public void testSaveUser() throws Exception {
-        loginSysAdmin();
-
         String email = "tenant2@thingsboard.org";
         User user = new User();
         user.setAuthority(Authority.TENANT_ADMIN);
@@ -161,8 +163,6 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
     @Test
     public void testSaveUserWithViolationOfFiledValidation() throws Exception {
-        loginSysAdmin();
-
         Mockito.reset(tbClusterService, auditLogService);
 
         String email = "tenant2@thingsboard.org";
@@ -196,8 +196,6 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
     @Test
     public void testUpdateUserFromDifferentTenant() throws Exception {
-        loginSysAdmin();
-
         User tenantAdmin = new User();
         tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
         tenantAdmin.setTenantId(tenantId);
@@ -221,8 +219,6 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
     @Test
     public void testResetPassword() throws Exception {
-        loginSysAdmin();
-
         String email = "tenant2@thingsboard.org";
         User user = new User();
         user.setAuthority(Authority.TENANT_ADMIN);
@@ -273,8 +269,6 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
     @Test
     public void testFindUserById() throws Exception {
-        loginSysAdmin();
-
         String email = "tenant2@thingsboard.org";
         User user = new User();
         user.setAuthority(Authority.TENANT_ADMIN);
@@ -291,8 +285,6 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
     @Test
     public void testSaveUserWithSameEmail() throws Exception {
-        loginSysAdmin();
-
         Mockito.reset(tbClusterService, auditLogService);
 
         String email = TENANT_ADMIN_EMAIL;
@@ -315,8 +307,6 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
     @Test
     public void testSaveUserWithInvalidEmail() throws Exception {
-        loginSysAdmin();
-
         Mockito.reset(tbClusterService, auditLogService);
 
         String email = "tenant_thingsboard.org";
@@ -339,8 +329,6 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
     @Test
     public void testSaveUserWithEmptyEmail() throws Exception {
-        loginSysAdmin();
-
         Mockito.reset(tbClusterService, auditLogService);
 
         User user = new User();
@@ -361,8 +349,6 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
     @Test
     public void testSaveUserWithoutTenant() throws Exception {
-        loginSysAdmin();
-
         Mockito.reset(tbClusterService, auditLogService);
 
         User user = new User();
@@ -384,8 +370,6 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
     @Test
     public void testDeleteUser() throws Exception {
-        loginSysAdmin();
-
         String email = "tenant2@thingsboard.org";
         User user = new User();
         user.setAuthority(Authority.TENANT_ADMIN);
@@ -409,8 +393,6 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
     @Test
     public void testFindTenantAdmins() throws Exception {
-        loginSysAdmin();
-
         //here created a new tenant despite already created on AbstractWebTest and then delete the tenant properly on the last line
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant with many admins");
@@ -469,9 +451,6 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
     @Test
     public void testFindTenantAdminsByEmail() throws Exception {
-
-        loginSysAdmin();
-
         String email1 = "testEmail1";
         List<User> tenantAdminsEmail1 = new ArrayList<>();
 
@@ -570,8 +549,6 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
     @Test
     public void testFindCustomerUsers() throws Exception {
-        loginSysAdmin();
-
         User tenantAdmin = new User();
         tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
         tenantAdmin.setTenantId(tenantId);
@@ -620,8 +597,6 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
     @Test
     public void testFindCustomerUsersByEmail() throws Exception {
-        loginSysAdmin();
-
         User tenantAdmin = new User();
         tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
         tenantAdmin.setTenantId(tenantId);
@@ -746,13 +721,11 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         testEntityDaoWithRelationsTransactionalException(userCredentialsDao, tenantId, userId, "/api/user/" + userId);
     }
 
-    @Ignore
     @Test
     public void testDeleteUserCredentialsExceptionTransactionalAfterResetPassword() throws Exception {
         String email = "tenant2@thingsboard.org";
         String passwordStart = "testPasswordStartTransactional";
         String passwordReset = "testPasswordResetTransactional";
-        loginSysAdmin();
 
         User user = createUser();
 
@@ -795,7 +768,6 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
     }
 
     private User createUser() throws Exception {
-        loginSysAdmin();
         String email = "tenant2@thingsboard.org";
         User user = new User();
         user.setAuthority(Authority.TENANT_ADMIN);

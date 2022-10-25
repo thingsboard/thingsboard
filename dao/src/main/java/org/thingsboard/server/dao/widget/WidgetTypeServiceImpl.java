@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.widget;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.widget.WidgetType;
@@ -62,7 +63,7 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
     }
 
     @Override
-//    @Transactional
+    @Transactional
     public void deleteWidgetType(TenantId tenantId, WidgetTypeId widgetTypeId) {
         log.trace("Executing deleteWidgetType [{}]", widgetTypeId);
         Validator.validateId(widgetTypeId, "Incorrect widgetTypeId " + widgetTypeId);
