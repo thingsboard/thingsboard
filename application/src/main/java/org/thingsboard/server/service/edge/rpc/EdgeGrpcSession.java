@@ -186,6 +186,10 @@ public final class EdgeGrpcSession implements Closeable {
     public void startSyncProcess(TenantId tenantId, EdgeId edgeId, boolean fullSync) {
         log.trace("[{}][{}] Staring edge sync process", tenantId, edgeId);
         syncCompleted = false;
+        if (sessionState.getSendDownlinkMsgsFuture() != null && sessionState.getSendDownlinkMsgsFuture().isDone()) {
+            String errorMsg = String.format("[%s][%s] Sync process started. General processing interrupted!", tenantId, edgeId);
+            sessionState.getSendDownlinkMsgsFuture().setException(new RuntimeException(errorMsg));
+        }
         doSync(new EdgeSyncCursor(ctx, edge, fullSync));
     }
 
