@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
@@ -41,6 +42,7 @@ import java.util.Collection;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -63,10 +65,16 @@ public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
 
     @Override
     public boolean isForceTwoFaEnabled(TenantId tenantId) {
-        return configManager
-                .getPlatformTwoFaSettings(tenantId, true)
-                .map(PlatformTwoFaSettings::isForce2FA)
-                .orElse(false);
+        Optional<PlatformTwoFaSettings> platformTwoFaSettings = configManager.getPlatformTwoFaSettings(tenantId, true);
+        if (platformTwoFaSettings.isPresent()) {
+            Map<UUID, Boolean> tenantInfo = platformTwoFaSettings.get().getTenantInfo();
+            if (!CollectionUtils.isEmpty(tenantInfo)) {
+                if (tenantInfo.get(tenantId.getId()) != null) {
+                    return tenantInfo.get(tenantId.getId());
+                }
+            }
+        }
+        return false;
     }
 
     @Override

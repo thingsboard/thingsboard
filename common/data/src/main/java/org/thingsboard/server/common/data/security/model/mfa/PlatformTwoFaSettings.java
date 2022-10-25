@@ -25,7 +25,9 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -45,8 +47,8 @@ public class PlatformTwoFaSettings {
     @NotNull
     @Min(value = 60, message = "total amount of time allotted for verification must be greater than or equal 60")
     private Integer totalAllowedTimeForVerification;
-    @NotNull
-    private boolean force2FA;
+
+    private Map<UUID, Boolean> tenantInfo;
 
 
     public Optional<TwoFaProviderConfig> getProviderConfig(TwoFaProviderType providerType) {
