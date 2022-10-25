@@ -332,8 +332,6 @@ actors:
   rule:
     # Specify thread pool size for database request callbacks executor service
     db_callback_thread_pool_size: "${ACTORS_RULE_DB_CALLBACK_THREAD_POOL_SIZE:50}"
-    # Specify thread pool size for javascript executor service
-    js_thread_pool_size: "${ACTORS_RULE_JS_THREAD_POOL_SIZE:50}"
     # Specify thread pool size for mail sender executor service
     mail_thread_pool_size: "${ACTORS_RULE_MAIL_THREAD_POOL_SIZE:40}"
     # Specify thread pool size for password reset emails
@@ -621,6 +619,8 @@ js:
   max_script_body_size: "${JS_MAX_SCRIPT_BODY_SIZE:50000}"
   # Built-in JVM JavaScript environment properties
   local:
+    # Specify thread pool size for javascript executor service
+    js_thread_pool_size: "${LOCAL_JS_THREAD_POOL_SIZE:50}"
     # Use Sandboxed (secured) JVM JavaScript environment
     use_js_sandbox: "${USE_LOCAL_JS_SANDBOX:true}"
     # Specify thread pool size for JavaScript sandbox resource monitor
@@ -638,6 +638,8 @@ js:
       print_interval_ms: "${TB_JS_LOCAL_STATS_PRINT_INTERVAL_MS:10000}"
   # Remote JavaScript environment properties
   remote:
+    # Specify thread pool size for javascript executor service
+    js_thread_pool_size: "${REMOTE_JS_THREAD_POOL_SIZE:50}"
     # Maximum allowed JavaScript execution errors before JavaScript will be blacklisted
     max_errors: "${REMOTE_JS_SANDBOX_MAX_ERRORS:3}"
     # Maximum time in seconds for black listed function to stay in the list.

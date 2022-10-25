@@ -22,7 +22,7 @@ import org.thingsboard.common.util.AbstractListeningExecutor;
 @Component
 public class JsExecutorService extends AbstractListeningExecutor {
 
-    @Value("${actors.rule.js_thread_pool_size}")
+    @Value("${js.remote.js_thread_pool_size:50}")
     private int jsExecutorThreadPoolSize;
 
     @Override
