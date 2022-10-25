@@ -21,7 +21,6 @@ import org.jboss.aerogear.security.otp.Totp;
 import org.jboss.aerogear.security.otp.api.Base32;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.ArgumentCaptor;
@@ -57,10 +56,12 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.ThrowableAssert.catchThrowable;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -518,10 +519,14 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
             AccountTwoFaSettings accountTwoFaSettingsAfter = readResponse(doGet("/api/2fa/account/settings").andExpect(status().isOk()), AccountTwoFaSettings.class);
             Assert.isTrue(accountTwoFaSettingsAfter.getConfigs().size() == 1);
-            Mockito.doReturn(true).when(adminSettingsDao).removeById(any(), any());
-            Mockito.reset(adminSettingsDao);
         } finally {
             Mockito.reset(adminSettingsDao);
+            await("Waiting for Mockito.reset takes effect")
+                    .atMost(40, TimeUnit.SECONDS)
+                    .until(() -> {
+                        final Throwable raisedException = catchThrowable(() -> twoFaConfigManager.deletePlatformTwoFaSettings(tenantId));
+                        return raisedException == null;
+                    });
         }
     }
 

@@ -22,13 +22,13 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MvcResult;
 import org.thingsboard.common.util.JacksonUtil;
@@ -43,7 +43,9 @@ import org.thingsboard.server.dao.rpc.RpcDao;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -267,13 +269,15 @@ public abstract class BaseRpcControllerTest extends AbstractControllerTest {
         Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(rpcDao).removeById(any(), any());
         try {
             MvcResult mvcResult = removeRpcById(savedRpc.getId().getId().toString());
-            Assert.assertEquals(500, mvcResult.getResponse().getStatus());
+            Assert.assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), mvcResult.getResponse().getStatus());
 
             doGet("/api/rpc/persistent/" + rpcId).andExpect(status().isOk());
-            Mockito.doReturn(true).when(rpcDao).removeById(any(), any());
-            Mockito.reset(rpcDao);
         } finally {
             Mockito.reset(rpcDao);
+            await("Waiting for Mockito.reset takes effect")
+                    .atMost(40, TimeUnit.SECONDS)
+                    .until(() -> doDelete("/api/rpc/persistent/" + rpcId)
+                            .andReturn().getResponse().getStatus() != HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
     }
 

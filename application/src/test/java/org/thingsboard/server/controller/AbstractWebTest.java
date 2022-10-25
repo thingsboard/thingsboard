@@ -38,6 +38,7 @@ import org.junit.runner.Description;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
@@ -94,8 +95,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
@@ -738,14 +741,14 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
             createEntityRelation(entityIdFrom, entityTo, "TEST_TRANSACTIONAL_TYPE");
             assertThat(findRelationsByTo(entityTo)).hasSize(1);
 
-            doDelete(urlDelete)
-                    .andExpect(status().isInternalServerError());
+            doDelete(urlDelete).andExpect(status().isInternalServerError());
 
             assertThat(findRelationsByTo(entityTo)).hasSize(1);
-            Mockito.doReturn(true).when(dao).removeById(any(), any());
-            Mockito.reset(dao);
         } finally {
             Mockito.reset(dao);
+            await("Waiting for Mockito.reset takes effect")
+                    .atMost(40, TimeUnit.SECONDS)
+                    .until(() -> doDelete(urlDelete).andReturn().getResponse().getStatus() != HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
     }
 

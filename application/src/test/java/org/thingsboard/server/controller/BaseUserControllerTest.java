@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.StringUtils;
@@ -50,9 +51,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.ThrowableAssert.catchThrowable;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -86,6 +89,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
             return Mockito.mock(UserCredentialsDao.class, AdditionalAnswers.delegatesTo(userCredentialsDao));
         }
     }
+
     @Before
     public void beforeTest() throws Exception {
         loginSysAdmin();
@@ -728,8 +732,8 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         String passwordReset = "testPasswordResetTransactional";
 
         User user = createUser();
-
         User savedUser = createUserAndLogin(user, passwordStart);
+
         logout();
 
         JsonNode resetPasswordByEmailRequest = new ObjectMapper().createObjectNode()
@@ -744,27 +748,28 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(userCredentialsDao).removeById(any(), any());
         try {
             doPost("/api/noauth/resetPassword", resetPasswordRequest).andExpect(status().isInternalServerError());
-            Mockito.doReturn(true).when(userCredentialsDao).removeById(any(), any());
-            Mockito.reset(userCredentialsDao);
         } finally {
             Mockito.reset(userCredentialsDao);
+
+            logout();
+
+            final Throwable raisedException = catchThrowable(() -> login(email, passwordReset));
+            assertThat(raisedException).isInstanceOf(AssertionError.class)
+                    .hasMessageContaining("Status expected:<200> but was:<401>");
+
+            login(email, passwordStart);
+            doGet("/api/auth/user")
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.authority", is(Authority.TENANT_ADMIN.name())))
+                    .andExpect(jsonPath("$.email", is(email)));
+
+            loginSysAdmin();
+
+            await("Waiting for Mockito.reset takes effect")
+                    .atMost(40, TimeUnit.SECONDS)
+                    .until(() -> doDelete("/api/user/" + savedUser.getId().getId().toString())
+                            .andReturn().getResponse().getStatus() != HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
-
-        logout();
-
-        final Throwable raisedException = catchThrowable(() -> login(email, passwordReset));
-        assertThat(raisedException).isInstanceOf(AssertionError.class)
-                .hasMessageContaining("Status expected:<200> but was:<401>");
-
-        login(email, passwordStart);
-        doGet("/api/auth/user")
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.authority", is(Authority.TENANT_ADMIN.name())))
-                .andExpect(jsonPath("$.email", is(email)));
-
-        loginSysAdmin();
-        doDelete("/api/user/" + savedUser.getId().getId().toString())
-                .andExpect(status().isOk());
     }
 
     private User createUser() throws Exception {

@@ -25,6 +25,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.StringUtils;
@@ -47,8 +48,10 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -379,10 +382,12 @@ public abstract class BaseTenantProfileControllerTest extends AbstractController
                     .andExpect(status().isInternalServerError());
 
             doGet("/api/tenantProfile/" + savedTenantProfile.getId().getId().toString()).andExpect(status().isOk());
-            Mockito.doReturn(true).when(tenantProfileDao).removeById(any(), any());
-            Mockito.reset(tenantProfileDao);
         } finally {
             Mockito.reset(tenantProfileDao);
+            await("Waiting for Mockito.reset takes effect")
+                    .atMost(40, TimeUnit.SECONDS)
+                    .until(() -> doDelete("/api/tenantProfile/" + savedTenantProfile.getId().getId().toString())
+                            .andReturn().getResponse().getStatus() != HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
     }
 

@@ -24,13 +24,13 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.ApiUsageState;
@@ -55,6 +55,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -480,16 +481,13 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(apiUsageStateDao).deleteApiUsageStateByEntityId(any());
         try {
             doDelete("/api/customer/" + customerId.getId().toString()).andExpect(status().isInternalServerError());
-            Mockito.doReturn(true).when(apiUsageStateDao).removeById(any(), any());
-            Mockito.reset(apiUsageStateDao);
         } finally {
             Mockito.reset(apiUsageStateDao);
+            await("Waiting for Mockito.reset takes effect")
+                    .atMost(40, TimeUnit.SECONDS)
+                    .until(() -> doDelete("/api/customer/" + customerId.getId().toString())
+                            .andReturn().getResponse().getStatus() != HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
-        ApiUsageState storedStateActual = apiUsageStateDao.findApiUsageStateByEntityId(customerId);
-        Assert.assertEquals(storedStateExpected, storedStateActual);
-        Customer customerActual = doGet("/api/customer/" + customerExpected.getId().getId().toString(), Customer.class);
-        Assert.assertEquals(customerExpected, customerActual);
-        doDelete("/api/customer/" + customerId.getId().toString()).andExpect(status().isOk());
     }
 
     private Customer createCustomer(String title) {

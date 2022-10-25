@@ -46,9 +46,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.ThrowableAssert.catchThrowable;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 
 @ContextConfiguration(classes = {BaseQueueServiceTest.Config.class})
@@ -376,19 +378,22 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
     @Test
     public void testDeleteOAuth2ClientRegistrationTemplateWithTransactionalException() throws Exception {
         Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(queueDao).removeById(any(), any());
+        Queue savedQueue = savedQueue("MOCK_CONSTRAINT", "tb_rule_engine.test");
         try {
-            Queue savedQueue = savedQueue("MOCK_CONSTRAINT", "tb_rule_engine.test");
-
             final Throwable raisedException = catchThrowable(() -> queueService.deleteQueue(tenantId, savedQueue.getId()));
             assertThat(raisedException).isInstanceOf(ConstraintViolationException.class)
                     .hasMessageContaining("mock message");
 
             Queue foundQueue = queueService.findQueueById(tenantId, savedQueue.getId());
             Assert.assertNotNull(foundQueue);
-            Mockito.doReturn(true).when(queueDao).removeById(any(), any());
-            Mockito.reset(queueDao);
         } finally {
             Mockito.reset(queueDao);
+            await("Waiting for Mockito.reset takes effect")
+                    .atMost(40, TimeUnit.SECONDS)
+                    .until(() -> {
+                        final Throwable raisedException = catchThrowable(() -> queueService.deleteQueue(tenantId, savedQueue.getId()));
+                        return raisedException == null;
+                    });
         }
     }
 

@@ -28,6 +28,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
@@ -41,7 +42,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -267,10 +270,12 @@ public abstract class BaseWidgetTypeControllerTest extends AbstractControllerTes
 
             WidgetTypeDetails foundWidgetTypeAfter = doGet("/api/widgetType/" + savedWidgetType.getId().getId().toString(), WidgetTypeDetails.class);
             Assert.assertNotNull(foundWidgetTypeAfter);
-            Mockito.doReturn(true).when(widgetTypeDao).removeById(any(), any());
-            Mockito.reset(widgetTypeDao);
         } finally {
             Mockito.reset(widgetTypeDao);
+            await("Waiting for Mockito.reset takes effect")
+                    .atMost(40, TimeUnit.SECONDS)
+                    .until(() -> doDelete("/api/widgetType/"+savedWidgetType.getId().getId().toString())
+                            .andReturn().getResponse().getStatus() != HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
     }
 

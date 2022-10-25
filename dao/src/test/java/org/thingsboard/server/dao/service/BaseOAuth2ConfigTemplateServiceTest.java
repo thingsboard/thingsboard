@@ -37,9 +37,11 @@ import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.ThrowableAssert.catchThrowable;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 
 @ContextConfiguration(classes = {BaseOAuth2ConfigTemplateServiceTest.Config.class})
@@ -137,19 +139,22 @@ public abstract class BaseOAuth2ConfigTemplateServiceTest extends AbstractServic
     @Test
     public void testDeleteOAuth2ClientRegistrationTemplateWithTransactionalException() throws Exception {
         Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(oAuth2ClientRegistrationTemplateDao).removeById(any(), any());
+        OAuth2ClientRegistrationTemplate saved = savedThreeValidClientRegistrationTemplate();
         try {
-            OAuth2ClientRegistrationTemplate saved = savedThreeValidClientRegistrationTemplate();
-
             final Throwable raisedException = catchThrowable(() -> oAuth2ConfigTemplateService.deleteClientRegistrationTemplateById(saved.getId()));
             assertThat(raisedException).isInstanceOf(ConstraintViolationException.class)
                     .hasMessageContaining("mock message");
 
             Assert.assertEquals(3, oAuth2ConfigTemplateService.findAllClientRegistrationTemplates().size());
             Assert.assertNotNull(oAuth2ConfigTemplateService.findClientRegistrationTemplateById(saved.getId()));
-            Mockito.doReturn(true).when(oAuth2ClientRegistrationTemplateDao).removeById(any(), any());
-            Mockito.reset(oAuth2ClientRegistrationTemplateDao);
         } finally {
             Mockito.reset(oAuth2ClientRegistrationTemplateDao);
+            await("Waiting for Mockito.reset takes effect")
+                    .atMost(40, TimeUnit.SECONDS)
+                    .until(() -> {
+                        final Throwable raisedException = catchThrowable(() -> oAuth2ConfigTemplateService.deleteClientRegistrationTemplateById(saved.getId()));
+                        return raisedException == null;
+                    });
         }
     }
 

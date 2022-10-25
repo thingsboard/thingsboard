@@ -21,7 +21,6 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
@@ -43,9 +42,11 @@ import org.thingsboard.server.dao.service.AbstractServiceTest;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.ThrowableAssert.catchThrowable;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -147,10 +148,11 @@ public abstract class BaseComponentDescriptorControllerTest extends AbstractCont
 
             ComponentDescriptor descriptorAfter = componentDescriptorDao.findById(AbstractServiceTest.SYSTEM_TENANT_ID, componentDescriptorId.getId());
             Assert.assertNotNull(descriptorAfter);
-            Mockito.doReturn(true).when(componentDescriptorDao).removeById(any(), any());
-            Mockito.reset(componentDescriptorDao);
         } finally {
             Mockito.reset(componentDescriptorDao);
+            await("Waiting for Mockito.reset takes effect")
+                    .atMost(40, TimeUnit.SECONDS)
+                    .until(() -> componentDescriptorDao.removeById(AbstractServiceTest.SYSTEM_TENANT_ID, componentDescriptorId.getId()));
         }
     }
 

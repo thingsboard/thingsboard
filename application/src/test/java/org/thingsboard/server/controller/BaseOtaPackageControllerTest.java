@@ -26,6 +26,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
@@ -51,7 +52,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -478,10 +481,12 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
 
             OtaPackageInfo foundFirmwareInfoAfter = doGet("/api/otaPackage/info/" + savedFirmwareInfo.getId().getId().toString(), OtaPackageInfo.class);
             Assert.assertEquals(foundFirmwareInfoAfter.getTitle(), savedFirmwareInfo.getTitle());
-            Mockito.doReturn(true).when(otaPackageDao).removeById(any(), any());
-            Mockito.reset(otaPackageDao);
         } finally {
             Mockito.reset(otaPackageDao);
+            await("Waiting for Mockito.reset takes effect")
+                    .atMost(40, TimeUnit.SECONDS)
+                    .until(() -> doDelete("/api/otaPackage/" + savedFirmwareInfo.getId().getId().toString())
+                            .andReturn().getResponse().getStatus() != HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
     }
 
