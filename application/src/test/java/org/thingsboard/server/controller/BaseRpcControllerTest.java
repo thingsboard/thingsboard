@@ -272,6 +272,7 @@ public abstract class BaseRpcControllerTest extends AbstractControllerTest {
             Assert.assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), mvcResult.getResponse().getStatus());
 
             doGet("/api/rpc/persistent/" + rpcId).andExpect(status().isOk());
+            Mockito.doReturn(true).when(rpcDao).removeById(any(), any());
         } finally {
             Mockito.reset(rpcDao);
             await("Waiting for Mockito.reset takes effect")

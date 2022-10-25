@@ -476,11 +476,11 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         CustomerId customerId = customerExpected.getId();
 
         apiUsageStateService.createDefaultApiUsageState(tenantId, customerId);
-        ApiUsageState storedStateExpected = apiUsageStateService.findApiUsageStateByEntityId(customerId);
 
         Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(apiUsageStateDao).deleteApiUsageStateByEntityId(any());
         try {
             doDelete("/api/customer/" + customerId.getId().toString()).andExpect(status().isInternalServerError());
+            Mockito.doAnswer(invocation -> null).when(apiUsageStateDao).deleteApiUsageStateByEntityId(any());
         } finally {
             Mockito.reset(apiUsageStateDao);
             await("Waiting for Mockito.reset takes effect")

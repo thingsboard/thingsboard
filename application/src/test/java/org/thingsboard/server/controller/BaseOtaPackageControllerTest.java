@@ -481,6 +481,7 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
 
             OtaPackageInfo foundFirmwareInfoAfter = doGet("/api/otaPackage/info/" + savedFirmwareInfo.getId().getId().toString(), OtaPackageInfo.class);
             Assert.assertEquals(foundFirmwareInfoAfter.getTitle(), savedFirmwareInfo.getTitle());
+            Mockito.doReturn(true).when(otaPackageDao).removeById(any(), any());
         } finally {
             Mockito.reset(otaPackageDao);
             await("Waiting for Mockito.reset takes effect")

@@ -138,8 +138,8 @@ public abstract class BaseOAuth2ConfigTemplateServiceTest extends AbstractServic
 
     @Test
     public void testDeleteOAuth2ClientRegistrationTemplateWithTransactionalException() throws Exception {
-        Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(oAuth2ClientRegistrationTemplateDao).removeById(any(), any());
         OAuth2ClientRegistrationTemplate saved = savedThreeValidClientRegistrationTemplate();
+        Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(oAuth2ClientRegistrationTemplateDao).removeById(any(), any());
         try {
             final Throwable raisedException = catchThrowable(() -> oAuth2ConfigTemplateService.deleteClientRegistrationTemplateById(saved.getId()));
             assertThat(raisedException).isInstanceOf(ConstraintViolationException.class)
@@ -147,6 +147,7 @@ public abstract class BaseOAuth2ConfigTemplateServiceTest extends AbstractServic
 
             Assert.assertEquals(3, oAuth2ConfigTemplateService.findAllClientRegistrationTemplates().size());
             Assert.assertNotNull(oAuth2ConfigTemplateService.findClientRegistrationTemplateById(saved.getId()));
+            Mockito.doReturn(true).when(oAuth2ClientRegistrationTemplateDao).removeById(any(), any());
         } finally {
             Mockito.reset(oAuth2ClientRegistrationTemplateDao);
             await("Waiting for Mockito.reset takes effect")

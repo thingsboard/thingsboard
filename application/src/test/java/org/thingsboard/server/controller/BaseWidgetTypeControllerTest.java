@@ -270,6 +270,7 @@ public abstract class BaseWidgetTypeControllerTest extends AbstractControllerTes
 
             WidgetTypeDetails foundWidgetTypeAfter = doGet("/api/widgetType/" + savedWidgetType.getId().getId().toString(), WidgetTypeDetails.class);
             Assert.assertNotNull(foundWidgetTypeAfter);
+            Mockito.doReturn(true).when(widgetTypeDao).removeById(any(), any());
         } finally {
             Mockito.reset(widgetTypeDao);
             await("Waiting for Mockito.reset takes effect")

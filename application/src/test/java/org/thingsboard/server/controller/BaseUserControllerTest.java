@@ -54,7 +54,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.ThrowableAssert.catchThrowable;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
@@ -748,23 +747,9 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(userCredentialsDao).removeById(any(), any());
         try {
             doPost("/api/noauth/resetPassword", resetPasswordRequest).andExpect(status().isInternalServerError());
+            Mockito.doReturn(true).when(userCredentialsDao).removeById(any(), any());
         } finally {
             Mockito.reset(userCredentialsDao);
-
-            logout();
-
-            final Throwable raisedException = catchThrowable(() -> login(email, passwordReset));
-            assertThat(raisedException).isInstanceOf(AssertionError.class)
-                    .hasMessageContaining("Status expected:<200> but was:<401>");
-
-            login(email, passwordStart);
-            doGet("/api/auth/user")
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.authority", is(Authority.TENANT_ADMIN.name())))
-                    .andExpect(jsonPath("$.email", is(email)));
-
-            loginSysAdmin();
-
             await("Waiting for Mockito.reset takes effect")
                     .atMost(40, TimeUnit.SECONDS)
                     .until(() -> doDelete("/api/user/" + savedUser.getId().getId().toString())

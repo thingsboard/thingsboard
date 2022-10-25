@@ -377,8 +377,8 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
 
     @Test
     public void testDeleteOAuth2ClientRegistrationTemplateWithTransactionalException() throws Exception {
-        Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(queueDao).removeById(any(), any());
         Queue savedQueue = savedQueue("MOCK_CONSTRAINT", "tb_rule_engine.test");
+        Mockito.doThrow(new ConstraintViolationException("mock message", new SQLException(), "MOCK_CONSTRAINT")).when(queueDao).removeById(any(), any());
         try {
             final Throwable raisedException = catchThrowable(() -> queueService.deleteQueue(tenantId, savedQueue.getId()));
             assertThat(raisedException).isInstanceOf(ConstraintViolationException.class)
@@ -386,6 +386,7 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
 
             Queue foundQueue = queueService.findQueueById(tenantId, savedQueue.getId());
             Assert.assertNotNull(foundQueue);
+            Mockito.doReturn(true).when(queueDao).removeById(any(), any());
         } finally {
             Mockito.reset(queueDao);
             await("Waiting for Mockito.reset takes effect")

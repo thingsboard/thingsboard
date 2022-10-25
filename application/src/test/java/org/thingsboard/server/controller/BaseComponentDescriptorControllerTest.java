@@ -148,6 +148,7 @@ public abstract class BaseComponentDescriptorControllerTest extends AbstractCont
 
             ComponentDescriptor descriptorAfter = componentDescriptorDao.findById(AbstractServiceTest.SYSTEM_TENANT_ID, componentDescriptorId.getId());
             Assert.assertNotNull(descriptorAfter);
+            Mockito.doReturn(true).when(componentDescriptorDao).removeById(any(), any());
         } finally {
             Mockito.reset(componentDescriptorDao);
             await("Waiting for Mockito.reset takes effect")
