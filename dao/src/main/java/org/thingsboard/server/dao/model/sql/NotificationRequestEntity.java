@@ -15,15 +15,94 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.id.NotificationRequestId;
+import org.thingsboard.server.common.data.id.NotificationTargetId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.notification.NotificationInfo;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
+import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
+import org.thingsboard.server.common.data.notification.NotificationSeverity;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
+import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.Table;
+import java.util.UUID;
 
+@Data
+@EqualsAndHashCode(callSuper = true)
 @Entity
+@TypeDef(name = "json", typeClass = JsonStringType.class)
+@Table(name = ModelConstants.NOTIFICATION_REQUEST_TABLE_NAME)
 public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest> {
+
+    @Column(name = ModelConstants.TENANT_ID_PROPERTY)
+    private UUID tenantId;
+
+    @Column(name = ModelConstants.NOTIFICATION_REQUEST_TARGET_ID_PROPERTY)
+    private UUID targetId;
+
+    @Column(name = ModelConstants.NOTIFICATION_REQUEST_NOTIFICATION_REASON_PROPERTY)
+    private String notificationReason;
+
+    @Column(name = ModelConstants.NOTIFICATION_REQUEST_TEXT_TEMPLATE_PROPERTY)
+    private String textTemplate;
+
+    @Type(type = "json")
+    @Column(name = ModelConstants.NOTIFICATION_REQUEST_NOTIFICATION_INFO_PROPERTY)
+    private JsonNode notificationInfo;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = ModelConstants.NOTIFICATION_REQUEST_NOTIFICATION_SEVERITY_PROPERTY)
+    private NotificationSeverity notificationSeverity;
+
+    @Type(type = "json")
+    @Column(name = ModelConstants.NOTIFICATION_REQUEST_ADDITIONAL_CONFIG_PROPERTY)
+    private JsonNode additionalConfig;
+
+    @Column(name = ModelConstants.NOTIFICATION_REQUEST_SENDER_ID_PROPERTY)
+    private UUID senderId;
+
+    public NotificationRequestEntity() {}
+
+    public NotificationRequestEntity(NotificationRequest notificationRequest) {
+        setId(notificationRequest.getUuidId());
+        setCreatedTime(notificationRequest.getCreatedTime());
+        setTenantId(getUuid(notificationRequest.getTenantId()));
+        setTargetId(getUuid(notificationRequest.getTargetId()));
+        setNotificationReason(notificationRequest.getNotificationReason());
+        setTextTemplate(notificationRequest.getTextTemplate());
+        setNotificationInfo(JacksonUtil.valueToTree(notificationRequest.getNotificationInfo()));
+        setNotificationSeverity(notificationRequest.getNotificationSeverity());
+        setAdditionalConfig(JacksonUtil.valueToTree(notificationRequest.getAdditionalConfig()));
+        setSenderId(getUuid(notificationRequest.getSenderId()));
+    }
+
     @Override
     public NotificationRequest toData() {
-        return null;
+        NotificationRequest notificationRequest = new NotificationRequest();
+        notificationRequest.setId(new NotificationRequestId(id));
+        notificationRequest.setCreatedTime(createdTime);
+        notificationRequest.setTenantId(createId(tenantId, TenantId::new));
+        notificationRequest.setTargetId(createId(targetId, NotificationTargetId::new));
+        notificationRequest.setNotificationReason(notificationReason);
+        notificationRequest.setTextTemplate(textTemplate);
+        notificationRequest.setNotificationInfo(JacksonUtil.treeToValue(notificationInfo, NotificationInfo.class));
+        notificationRequest.setNotificationSeverity(notificationSeverity);
+        notificationRequest.setAdditionalConfig(JacksonUtil.treeToValue(additionalConfig, NotificationRequestConfig.class));
+        notificationRequest.setSenderId(createId(senderId, UserId::new));
+        return notificationRequest;
     }
+
 }

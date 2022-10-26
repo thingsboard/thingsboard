@@ -15,19 +15,19 @@
  */
 package org.thingsboard.server.common.data.notification.targets;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.UserId;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-@JsonSubTypes({
-        @Type(value = SingleUserNotificationTargetConfig.class, name = "SINGLE_USER"),
-        @Type(value = UserListNotificationTargetConfig.class, name = "USER_LIST")
-})
-public interface NotificationTargetConfig {
+import java.util.List;
 
-    NotificationTargetConfigType getType();
+@Data
+public class UserListNotificationTargetConfig implements NotificationTargetConfig {
+
+    private List<UserId> usersIds;
+
+    @Override
+    public NotificationTargetConfigType getType() {
+        return NotificationTargetConfigType.USER_LIST;
+    }
 
 }

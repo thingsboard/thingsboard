@@ -15,11 +15,12 @@
  */
 package org.thingsboard.server.service.notification;
 
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface NotificationProcessingService {
 
-    void processNotificationRequest(SecurityUser user, NotificationRequest notificationRequest);
+    NotificationRequest processNotificationRequest(SecurityUser user, NotificationRequest notificationRequest) throws ThingsboardException;
 
 }

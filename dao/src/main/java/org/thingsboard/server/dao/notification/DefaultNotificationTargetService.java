@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.NotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.SingleUserNotificationTargetConfig;
+import org.thingsboard.server.common.data.notification.targets.UserListNotificationTargetConfig;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -47,12 +48,12 @@ public class DefaultNotificationTargetService implements NotificationTargetServi
 
     @Override
     public NotificationTarget findNotificationTargetById(TenantId tenantId, NotificationTargetId id) {
-        return null;
+        return notificationTargetDao.findById(tenantId, id.getId());
     }
 
     @Override
     public PageData<NotificationTarget> findNotificationTargetsByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink) {
-        return null;
+        return notificationTargetDao.findByTenantIdAndPageLink(tenantId, pageLink);
     }
 
     @Override
@@ -65,8 +66,18 @@ public class DefaultNotificationTargetService implements NotificationTargetServi
                 SingleUserNotificationTargetConfig singleUserNotificationTargetConfig = (SingleUserNotificationTargetConfig) configuration;
                 recipients.add(singleUserNotificationTargetConfig.getUserId());
                 break;
+            case USER_LIST:
+                UserListNotificationTargetConfig userListNotificationTargetConfig = (UserListNotificationTargetConfig) configuration;
+                recipients.addAll(userListNotificationTargetConfig.getUsersIds());
+                break;
         }
         return recipients;
+    }
+
+    @Override
+    public void deleteNotificationTarget(TenantId tenantId, NotificationTargetId notificationTargetId) {
+        notificationTargetDao.removeById(tenantId, notificationTargetId.getId());
+        // todo: delete related notification requests (?)
     }
 
     private static class NotificationTargetValidator extends DataValidator<NotificationTarget> {

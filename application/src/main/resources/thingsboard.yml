@@ -267,6 +267,8 @@ sql:
     stats_print_interval_ms: "${SQL_EDGE_EVENTS_BATCH_STATS_PRINT_MS:10000}"
   audit_logs:
     partition_size: "${SQL_AUDIT_LOGS_PARTITION_SIZE_HOURS:168}" # Default value - 1 week
+  notifications:
+    partition_size: "${SQL_NOTIFICATIONS_PARTITION_SIZE_HOURS:168}"
   # Specify whether to sort entities before batch update. Should be enabled for cluster mode to avoid deadlocks
   batch_sort: "${SQL_BATCH_SORT:false}"
   # Specify whether to remove null characters from strValue of attributes and timeseries before insert

@@ -652,6 +652,21 @@ public class ModelConstants {
     public static final String NOTIFICATION_TARGET_TABLE_NAME = "notification_target";
     public static final String NOTIFICATION_TARGET_CONFIGURATION_PROPERTY = "configuration";
 
+    public static final String NOTIFICATION_TABLE_NAME = "notification";
+    public static final String NOTIFICATION_REQUEST_ID_PROPERTY = "request_id";
+    public static final String NOTIFICATION_RECIPIENT_ID_PROPERTY = "recipient_id";
+    public static final String NOTIFICATION_TEXT_PROPERTY = "text";
+    public static final String NOTIFICATION_SEVERITY_PROPERTY = "severity";
+    public static final String NOTIFICATION_STATUS_PROPERTY = "status";
+
+    public static final String NOTIFICATION_REQUEST_TABLE_NAME = "notification_request";
+    public static final String NOTIFICATION_REQUEST_TARGET_ID_PROPERTY = "target_id";
+    public static final String NOTIFICATION_REQUEST_TEXT_TEMPLATE_PROPERTY = "text_template";
+    public static final String NOTIFICATION_REQUEST_NOTIFICATION_REASON_PROPERTY = "notification_reason";
+    public static final String NOTIFICATION_REQUEST_NOTIFICATION_INFO_PROPERTY = "notification_info";
+    public static final String NOTIFICATION_REQUEST_NOTIFICATION_SEVERITY_PROPERTY = "notification_severity";
+    public static final String NOTIFICATION_REQUEST_ADDITIONAL_CONFIG_PROPERTY = "additional_config";
+    public static final String NOTIFICATION_REQUEST_SENDER_ID_PROPERTY = "sender_id";
 
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 

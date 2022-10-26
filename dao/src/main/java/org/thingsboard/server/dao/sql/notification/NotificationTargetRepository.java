@@ -15,7 +15,11 @@
  */
 package org.thingsboard.server.dao.sql.notification;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.thingsboard.server.dao.model.sql.NotificationTargetEntity;
 
@@ -23,4 +27,7 @@ import java.util.UUID;
 
 @Repository
 public interface NotificationTargetRepository extends JpaRepository<NotificationTargetEntity, UUID> {
+
+    Page<NotificationTargetEntity> findByTenantIdAndNameContainingIgnoreCase(UUID tenantId, String searchText, Pageable pageable);
+
 }

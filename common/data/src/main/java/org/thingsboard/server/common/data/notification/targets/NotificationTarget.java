@@ -17,23 +17,18 @@ package org.thingsboard.server.common.data.notification.targets;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
-import org.thingsboard.server.common.data.SearchTextBased;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class NotificationTarget extends SearchTextBased<NotificationTargetId> implements HasTenantId, HasName {
+public class NotificationTarget extends BaseData<NotificationTargetId> implements HasTenantId, HasName {
 
     private TenantId tenantId;
     private String name;
     private NotificationTargetConfig configuration;
-
-    @Override
-    public String getSearchText() {
-        return name;
-    }
 
 }

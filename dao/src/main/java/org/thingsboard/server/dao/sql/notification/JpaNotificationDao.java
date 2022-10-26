@@ -15,16 +15,28 @@
  */
 package org.thingsboard.server.dao.sql.notification;
 
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.id.NotificationId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
+import org.thingsboard.server.common.data.notification.NotificationStatus;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.sql.NotificationEntity;
 import org.thingsboard.server.dao.notification.NotificationDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
+import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Component
 @SqlDao
@@ -32,6 +44,38 @@ import java.util.UUID;
 public class JpaNotificationDao extends JpaAbstractDao<NotificationEntity, Notification> implements NotificationDao {
 
     private final NotificationRepository notificationRepository;
+    private final SqlPartitioningRepository partitioningRepository;
+
+    @Value("${sql.notifications.partition_size:168}")
+    private int partitionSizeInHours;
+
+    @Override
+    public Notification save(TenantId tenantId, Notification notification) {
+        if (notification.getId() == null) {
+            UUID uuid = Uuids.timeBased();
+            notification.setId(new NotificationId(uuid));
+            notification.setCreatedTime(Uuids.unixTimestamp(uuid));
+            // todo: regarding ttl, it might be better to remove notifications on NotificationRequest level
+            partitioningRepository.createPartitionIfNotExists(ModelConstants.NOTIFICATION_TABLE_NAME,
+                    notification.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
+        }
+        return super.save(tenantId, notification);
+    }
+
+    @Override
+    public PageData<Notification> findUnreadByUserIdAndPageLink(TenantId tenantId, UserId userId, PageLink pageLink) {
+        return DaoUtil.toPageData(notificationRepository.findByRecipientIdAndStatusNot(userId.getId(), NotificationStatus.READ, DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<Notification> findByUserIdAndPageLink(TenantId tenantId, UserId userId, PageLink pageLink) {
+        return DaoUtil.toPageData(notificationRepository.findByRecipientId(userId.getId(), DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public void updateStatus(TenantId tenantId, NotificationId notificationId, NotificationStatus status) {
+        notificationRepository.updateStatus(notificationId.getId(), status);
+    }
 
     @Override
     protected Class<NotificationEntity> getEntityClass() {

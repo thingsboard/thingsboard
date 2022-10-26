@@ -23,11 +23,7 @@ import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.SearchTextBased;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
-import org.thingsboard.server.common.data.id.NotificationTargetId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
-
-import java.util.UUID;
 
 @Data
 @AllArgsConstructor
@@ -37,12 +33,11 @@ import java.util.UUID;
 public class Notification extends SearchTextBased<NotificationId> {
 
     private NotificationRequestId requestId;
-    private TenantId tenantId;
     private UserId recipientId;
     private String text;
     private NotificationSeverity severity;
     private NotificationStatus status;
-    private UserId senderId;
+//    private UserId senderId;
 
     @Override
     public String getSearchText() {

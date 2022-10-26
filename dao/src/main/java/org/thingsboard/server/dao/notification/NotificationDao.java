@@ -15,8 +15,21 @@
  */
 package org.thingsboard.server.dao.notification;
 
+import org.thingsboard.server.common.data.id.NotificationId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
+import org.thingsboard.server.common.data.notification.NotificationStatus;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
 
 public interface NotificationDao extends Dao<Notification> {
+
+    PageData<Notification> findUnreadByUserIdAndPageLink(TenantId tenantId, UserId userId, PageLink pageLink);
+
+    PageData<Notification> findByUserIdAndPageLink(TenantId tenantId, UserId userId, PageLink pageLink);
+
+    void updateStatus(TenantId tenantId, NotificationId notificationId, NotificationStatus status);
+
 }

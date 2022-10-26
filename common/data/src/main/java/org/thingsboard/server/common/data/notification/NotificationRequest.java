@@ -15,39 +15,45 @@
  */
 package org.thingsboard.server.common.data.notification;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.SearchTextBased;
-import org.thingsboard.server.common.data.id.NotificationId;
+import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.validation.NoXss;
 
-import java.util.UUID;
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class NotificationRequest extends SearchTextBased<NotificationRequestId> {
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class NotificationRequest extends BaseData<NotificationRequestId> implements HasTenantId {
 
-    private NotificationTargetId targetId;
-    private String textTemplate; // html with params?
-    private Object notificationType; // ALARM, ADMIN,
-    private Object notificationInfo; // for alarms: alarm details, link to dashboard etc.
-    private NotificationSeverity severity;
     private TenantId tenantId;
+    @NotNull(message = "Target is not specified")
+    private NotificationTargetId targetId;
+    @NoXss
+    private String notificationReason; // "Alarm", "Scheduled event". "General" by default
+    //    @NoXss
+    @NotBlank(message = "Notification text template is missing")
+    private String textTemplate;
+    @Valid
+    private NotificationInfo notificationInfo;
+    private NotificationSeverity notificationSeverity;
+    private NotificationRequestConfig additionalConfig;
     private UserId senderId;
 
-    @Override
-    public String getSearchText() {
-        return textTemplate;
-    }
-
-    // todo: scheduling
+    public static final String GENERAL_NOTIFICATION_REASON = "General";
+    public static final String ALARM_NOTIFICATION_REASON = "Alarm";
 
 }
-
-/*
-* NotificationService - manages NotificationRequest and Notification entities
-* NotificationTargetService - manages NotificationTarget
-* */

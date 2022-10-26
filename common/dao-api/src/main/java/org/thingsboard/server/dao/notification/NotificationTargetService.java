@@ -34,4 +34,6 @@ public interface NotificationTargetService {
 
     List<UserId> findRecipientsForNotificationTarget(TenantId tenantId, NotificationTargetId notificationTargetId);
 
+    void deleteNotificationTarget(TenantId tenantId, NotificationTargetId notificationTargetId);
+
 }

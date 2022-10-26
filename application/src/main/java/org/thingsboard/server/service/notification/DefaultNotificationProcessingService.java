@@ -17,11 +17,15 @@ package org.thingsboard.server.service.notification;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
+import org.thingsboard.server.common.data.notification.NotificationStatus;
 import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.user.UserService;
@@ -29,9 +33,13 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.AccessControlService;
+import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.telemetry.AbstractSubscriptionService;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -57,37 +65,57 @@ public class DefaultNotificationProcessingService extends AbstractSubscriptionSe
     }
 
     @Override
-    public void processNotificationRequest(SecurityUser user, NotificationRequest notificationRequest) {
+    public NotificationRequest processNotificationRequest(SecurityUser user, NotificationRequest notificationRequest) throws ThingsboardException {
         TenantId tenantId = user.getTenantId();
-        notificationRequest = notificationService.createNotificationRequest(tenantId, notificationRequest);
-
-        List<UserId> recipients = notificationTargetService.findRecipientsForNotificationTarget(tenantId, notificationRequest.getTargetId());
-        for (UserId recipientId : recipients) {
-            try {
-                // todo: check read permission for recipientId
-                Notification notification = Notification.builder()
-                        .tenantId(tenantId)
-                        .requestId(notificationRequest.getId())
-                        .status(null)
-                        .recipientId(recipientId)
-                        .text(formatNotificationText(notificationRequest.getTextTemplate(), null))
-                        .severity(notificationRequest.getSeverity())
-                        .senderId(notificationRequest.getSenderId())
-                        .build();
-                notification = notificationService.createNotification(tenantId, notification);
-                onNewNotification(notification);
-            } catch (Exception e) {
-                // fixme: handle
-            }
+        List<UserId> recipientsIds = notificationTargetService.findRecipientsForNotificationTarget(tenantId, notificationRequest.getTargetId());
+        List<User> recipients = new ArrayList<>();
+        for (UserId recipientId : recipientsIds) {
+            User recipient = userService.findUserById(tenantId, recipientId); // todo: add caching
+            accessControlService.checkPermission(user, Resource.USER, Operation.READ, recipientId, recipient);
+            recipients.add(recipient);
         }
 
+        notificationRequest.setTenantId(tenantId);
+        notificationRequest.setSenderId(user.getId());
+        NotificationRequest savedNotificationRequest = notificationService.createNotificationRequest(tenantId, notificationRequest);
+
+        // todo: delayed sending; check all delayed notification requests on start up, schedule send
+
+        for (User recipient : recipients) {
+            dbCallbackExecutorService.submit(() -> {
+                Notification notification = createNotification(recipient, notificationRequest);
+                onNewNotification(notification);
+            });
+        }
+
+        return savedNotificationRequest;
+    }
+
+    private Notification createNotification(User recipient, NotificationRequest notificationRequest) {
+        Notification notification = Notification.builder()
+                .requestId(notificationRequest.getId())
+                .recipientId(recipient.getId())
+                .text(formatNotificationText(notificationRequest.getTextTemplate(), recipient))
+                .severity(notificationRequest.getNotificationSeverity())
+                .status(NotificationStatus.SENT)
+                .build();
+        notification = notificationService.createNotification(recipient.getTenantId(), notification);
+        return notification;
     }
 
     private void onNewNotification(Notification notification) {
+        wsCallBackExecutor.submit(() -> {
+
+        })
     }
 
-    private String formatNotificationText(String template, Object context) {
-        return template;
+    private String formatNotificationText(String template, User recipient) {
+        Map<String, String> context = Map.of(
+                "recipientEmail", recipient.getEmail(),
+                "recipientFirstName", recipient.getFirstName(),
+                "recipientLastName", recipient.getLastName()
+        );
+        return TbNodeUtils.processTemplate(template, context);
     }
 
     @Override

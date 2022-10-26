@@ -15,8 +15,14 @@
  */
 package org.thingsboard.server.dao.notification;
 
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
 
 public interface NotificationRequestDao extends Dao<NotificationRequest> {
+
+    PageData<NotificationRequest> findByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink);
+
 }

@@ -15,10 +15,15 @@
  */
 package org.thingsboard.server.dao.sql.notification;
 
+import com.google.common.base.Strings;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.NotificationTargetEntity;
 import org.thingsboard.server.dao.notification.NotificationTargetDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
@@ -32,6 +37,12 @@ import java.util.UUID;
 public class JpaNotificationTargetDao extends JpaAbstractDao<NotificationTargetEntity, NotificationTarget> implements NotificationTargetDao {
 
     private final NotificationTargetRepository notificationTargetRepository;
+
+    @Override
+    public PageData<NotificationTarget> findByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(notificationTargetRepository.findByTenantIdAndNameContainingIgnoreCase(tenantId.getId(),
+                Strings.nullToEmpty(pageLink.getTextSearch()), DaoUtil.toPageable(pageLink)));
+    }
 
     @Override
     protected Class<NotificationTargetEntity> getEntityClass() {

@@ -15,12 +15,29 @@
  */
 package org.thingsboard.server.dao.sql.notification;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.server.common.data.notification.NotificationStatus;
 import org.thingsboard.server.dao.model.sql.NotificationEntity;
 
 import java.util.UUID;
 
 @Repository
 public interface NotificationRepository extends JpaRepository<NotificationEntity, UUID> {
+
+    Page<NotificationEntity> findByRecipientIdAndStatusNot(UUID recipientId, NotificationStatus status, Pageable pageable);
+
+    Page<NotificationEntity> findByRecipientId(UUID recipientId, Pageable pageable);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE NotificationEntity n SET n.status = :status WHERE n.id = :id")
+    void updateStatus(@Param("id") UUID id, @Param("status") NotificationStatus status);
+
 }

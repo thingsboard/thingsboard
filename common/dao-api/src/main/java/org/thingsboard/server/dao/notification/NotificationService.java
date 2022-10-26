@@ -30,10 +30,13 @@ public interface NotificationService {
 
     PageData<NotificationRequest> findNotificationRequestsByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink);
 
+
     Notification createNotification(TenantId tenantId, Notification notification);
 
     void updateNotificationStatus(TenantId tenantId, NotificationId notificationId, NotificationStatus status);
 
-    PageData<Notification> findNotificationsByUserIdAndPageLink(TenantId tenantId, UserId userId, PageLink pageLink);
+    PageData<Notification> findNotificationsByUserIdAndReadStatusAndPageLink(TenantId tenantId, UserId userId, boolean unreadOnly, PageLink pageLink);
+
+    PageData<Notification> findLatestUnreadNotificationsByUserId(TenantId tenantId, UserId userId, int limit);
 
 }

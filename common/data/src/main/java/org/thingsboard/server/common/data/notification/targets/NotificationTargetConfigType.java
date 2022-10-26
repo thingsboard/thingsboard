@@ -17,7 +17,9 @@ package org.thingsboard.server.common.data.notification.targets;
 
 public enum NotificationTargetConfigType {
     SINGLE_USER,
-    USER_GROUP,
-    USERS_WITH_ROLE,
-    QUERY // ?
+    USER_LIST,
+
+//    USER_GROUP,
+//    USERS_WITH_ROLE,
+//    QUERY // ?
 }
