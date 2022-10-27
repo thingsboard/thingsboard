@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.attributes;
+package org.thingsboard.server.common.data;
 
-import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
-import org.thingsboard.server.dao.util.SqlDao;
+import org.thingsboard.server.common.data.id.RuleChainId;
 
-@Repository
-@Transactional
-@SqlDao
-public class SqlAttributesInsertRepository extends AttributeKvInsertRepository {
+public interface HasRuleEngineProfile {
+
+    RuleChainId getDefaultRuleChainId();
+
+    String getDefaultQueueName();
 
 }

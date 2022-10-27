@@ -13,15 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.attributes;
+package org.thingsboard.script.api.mvel;
 
-import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
-import org.thingsboard.server.dao.util.SqlDao;
+import com.google.common.util.concurrent.ListenableFuture;
+import lombok.Data;
+import lombok.Getter;
+import org.mvel2.ExecutionContext;
+import org.thingsboard.script.api.TbScriptExecutionTask;
 
-@Repository
-@Transactional
-@SqlDao
-public class SqlAttributesInsertRepository extends AttributeKvInsertRepository {
 
+public class MvelScriptExecutionTask extends TbScriptExecutionTask {
+
+    private final ExecutionContext context;
+
+    public MvelScriptExecutionTask(ExecutionContext context, ListenableFuture<Object> resultFuture) {
+        super(resultFuture);
+        this.context = context;
+    }
+
+    @Override
+    public void stop(){
+        context.stop();
+    }
 }

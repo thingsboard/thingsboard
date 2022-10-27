@@ -26,6 +26,7 @@ import org.mvel2.ExecutionContext;
 import org.mvel2.MVEL;
 import org.mvel2.ParserContext;
 import org.mvel2.SandboxedParserContext;
+import org.mvel2.ScriptMemoryOverflowException;
 import org.mvel2.optimizers.OptimizerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -42,7 +43,6 @@ import org.thingsboard.server.common.stats.TbApiUsageStateClient;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.Serializable;
-import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -86,6 +86,12 @@ public class DefaultMvelInvokeService extends AbstractScriptInvokeService implem
     @Value("${mvel.stats.enabled:false}")
     private boolean statsEnabled;
 
+    @Value("${mvel.thread_pool_size:50}")
+    private int threadPoolSize;
+
+    @Value("${mvel.max_memory_limit_mb:8}")
+    private long maxMemoryLimitMb;
+
     private ListeningExecutorService executor;
 
     protected DefaultMvelInvokeService(Optional<TbApiUsageStateClient> apiUsageStateClient, Optional<TbApiUsageReportClient> apiUsageReportClient) {
@@ -104,7 +110,7 @@ public class DefaultMvelInvokeService extends AbstractScriptInvokeService implem
         OptimizerFactory.setDefaultOptimizer(OptimizerFactory.SAFE_REFLECTIVE);
         parserContext = new SandboxedParserContext();
         parserContext.addImport("JSON", TbJson.class);
-        executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(2, "mvel-executor"));
+        executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(threadPoolSize, "mvel-executor"));
     }
 
     @PreDestroy
@@ -149,23 +155,21 @@ public class DefaultMvelInvokeService extends AbstractScriptInvokeService implem
     }
 
     @Override
-    protected ListenableFuture<Object> doInvokeFunction(UUID scriptId, Object[] args) {
-        return executor.submit(() -> {
+    protected MvelScriptExecutionTask doInvokeFunction(UUID scriptId, Object[] args) {
+        ExecutionContext executionContext = new ExecutionContext(maxMemoryLimitMb * 1024 * 1024);
+        return new MvelScriptExecutionTask(executionContext, executor.submit(() -> {
             MvelScript script = scriptMap.get(scriptId);
             if (script == null) {
                 throw new TbScriptException(scriptId, TbScriptException.ErrorCode.OTHER, null, new RuntimeException("Script not found!"));
             }
             try {
-                ExecutionContext executionContext = new ExecutionContext();
-                // TODO:
                 return MVEL.executeExpression(script.getCompiledScript(), executionContext, script.createVars(args));
-            } catch (OutOfMemoryError e) {
-                Runtime.getRuntime().gc();
+            } catch (ScriptMemoryOverflowException e) {
                 throw new TbScriptException(scriptId, TbScriptException.ErrorCode.OTHER, script.getScriptBody(), new RuntimeException("Memory error!"));
             } catch (Exception e) {
                 throw new TbScriptException(scriptId, TbScriptException.ErrorCode.RUNTIME, script.getScriptBody(), e);
             }
-        });
+        }));
     }
 
     @Override
