@@ -36,12 +36,12 @@ abstract public class BaseTelemetryEdgeTest extends AbstractEdgeTest {
     public void testTimeseriesWithFailures() throws Exception {
         int numberOfTimeseriesToSend = 1000;
 
+        Device device = findDeviceByName("Edge Device 1");
+
         edgeImitator.setRandomFailuresOnTimeseriesDownlink(true);
         // imitator will generate failure in 5% of cases
         edgeImitator.setFailureProbability(5.0);
-
         edgeImitator.expectMessageAmount(numberOfTimeseriesToSend);
-        Device device = findDeviceByName("Edge Device 1");
         for (int idx = 1; idx <= numberOfTimeseriesToSend; idx++) {
             String timeseriesData = "{\"data\":{\"idx\":" + idx + "},\"ts\":" + System.currentTimeMillis() + "}";
             JsonNode timeseriesEntityData = mapper.readTree(timeseriesData);
@@ -196,12 +196,12 @@ abstract public class BaseTelemetryEdgeTest extends AbstractEdgeTest {
     public void testTimeseriesDeliveryFailuresForever_deliverOnlyDeviceUpdateMsgs() throws Exception {
         int numberOfMsgsToSend = 100;
 
+        Device device = findDeviceByName("Edge Device 1");
+
         edgeImitator.setRandomFailuresOnTimeseriesDownlink(true);
         // imitator will generate failure in 100% of timeseries cases
         edgeImitator.setFailureProbability(100);
-
         edgeImitator.expectMessageAmount(numberOfMsgsToSend);
-        Device device = findDeviceByName("Edge Device 1");
         for (int idx = 1; idx <= numberOfMsgsToSend; idx++) {
             String timeseriesData = "{\"data\":{\"idx\":" + idx + "},\"ts\":" + System.currentTimeMillis() + "}";
             JsonNode timeseriesEntityData = mapper.readTree(timeseriesData);

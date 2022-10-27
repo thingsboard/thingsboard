@@ -106,6 +106,7 @@ public class EdgeImitator {
         this.routingSecret = routingSecret;
         setEdgeCredentials("rpcHost", host);
         setEdgeCredentials("rpcPort", port);
+        setEdgeCredentials("timeoutSecs", 3);
         setEdgeCredentials("keepAliveTimeSec", 300);
     }
 
