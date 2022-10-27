@@ -158,12 +158,13 @@ public final class EdgeGrpcSession implements Closeable {
 
             @Override
             public void onError(Throwable t) {
-                log.error("Failed to deliver message from client!", t);
+                log.error("[{}] Stream was terminated due to error:", sessionId, t);
                 closeSession();
             }
 
             @Override
             public void onCompleted() {
+                log.info("[{}] Stream was closed and completed successfully!", sessionId);
                 closeSession();
             }
 
