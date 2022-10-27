@@ -274,7 +274,7 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
 
     private boolean resultSizeExceeded(String result) {
         if (getMaxResultSize() <= 0) return false;
-        return result.length() > getMaxResultSize();
+        return result != null && result.length() > getMaxResultSize();
     }
 
     private <T> ListenableFuture<T> error(String message) {

@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.mvel2.ExecutionContext;
 import org.mvel2.MVEL;
 import org.mvel2.ParserContext;
+import org.mvel2.SandboxedParserConfiguration;
 import org.mvel2.SandboxedParserContext;
 import org.mvel2.ScriptMemoryOverflowException;
 import org.mvel2.optimizers.OptimizerFactory;
@@ -56,7 +57,7 @@ import java.util.regex.Pattern;
 public class DefaultMvelInvokeService extends AbstractScriptInvokeService implements MvelInvokeService {
 
     protected Map<UUID, MvelScript> scriptMap = new ConcurrentHashMap<>();
-    private ParserContext parserContext;
+    private SandboxedParserConfiguration parserConfig;
 
     private static final Pattern NEW_KEYWORD_PATTERN = Pattern.compile("new\\s");
 
@@ -108,8 +109,9 @@ public class DefaultMvelInvokeService extends AbstractScriptInvokeService implem
     public void init() {
         super.init();
         OptimizerFactory.setDefaultOptimizer(OptimizerFactory.SAFE_REFLECTIVE);
-        parserContext = new SandboxedParserContext();
-        parserContext.addImport("JSON", TbJson.class);
+        parserConfig = new SandboxedParserConfiguration();
+        parserConfig.addImport("JSON", TbJson.class);
+        TbUtils.register(parserConfig);
         executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(threadPoolSize, "mvel-executor"));
     }
 
@@ -144,7 +146,7 @@ public class DefaultMvelInvokeService extends AbstractScriptInvokeService implem
         }
         return executor.submit(() -> {
             try {
-                Serializable compiledScript = MVEL.compileExpression(scriptBody, parserContext);
+                Serializable compiledScript = MVEL.compileExpression(scriptBody, new SandboxedParserContext(parserConfig));
                 MvelScript script = new MvelScript(compiledScript, scriptBody, argNames);
                 scriptMap.put(scriptId, script);
                 return scriptId;
@@ -163,9 +165,9 @@ public class DefaultMvelInvokeService extends AbstractScriptInvokeService implem
                 throw new TbScriptException(scriptId, TbScriptException.ErrorCode.OTHER, null, new RuntimeException("Script not found!"));
             }
             try {
-                return MVEL.executeExpression(script.getCompiledScript(), executionContext, script.createVars(args));
+                return MVEL.executeTbExpression(script.getCompiledScript(), executionContext, script.createVars(args));
             } catch (ScriptMemoryOverflowException e) {
-                throw new TbScriptException(scriptId, TbScriptException.ErrorCode.OTHER, script.getScriptBody(), new RuntimeException("Memory error!"));
+                throw new TbScriptException(scriptId, TbScriptException.ErrorCode.OTHER, script.getScriptBody(), new RuntimeException("Script memory overflow!"));
             } catch (Exception e) {
                 throw new TbScriptException(scriptId, TbScriptException.ErrorCode.RUNTIME, script.getScriptBody(), e);
             }
