@@ -202,6 +202,8 @@ export interface TbFlotKeyThreshold {
   thresholdValue: number;
   lineWidth: number;
   color: string;
+  usePostProcessing?: boolean;
+  postFuncBody?: string;
 }
 
 export interface TbFlotKeyComparisonSettings {

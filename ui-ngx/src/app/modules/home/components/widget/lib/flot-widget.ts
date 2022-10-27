@@ -501,6 +501,8 @@ export class TbFlot {
                 type: DataKeyType.attribute,
                 name: threshold.thresholdAttribute,
                 label: threshold.thresholdAttribute,
+                usePostProcessing: threshold.usePostProcessing,
+                postFuncBody: threshold.postFuncBody,
                 settings: {
                   yaxis: series.yaxis,
                   lineWidth: threshold.lineWidth,

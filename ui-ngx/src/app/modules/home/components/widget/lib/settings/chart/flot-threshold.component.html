@@ -52,6 +52,26 @@
             label="{{ 'widgets.chart.color' | translate }}" openOnInput colorClearButton>
           </tb-color-input>
         </section>
+        <section fxLayout="column">
+          <mat-checkbox formControlName="usePostProcessing">
+            {{ 'datakey.use-data-post-processing-func' | translate }}
+          </mat-checkbox>
+          <tb-js-func *ngIf="thresholdFormGroup.get('usePostProcessing').value"
+                      [functionArgs]="['time', 'value', 'prevValue', 'timePrev', 'prevOrigValue']"
+                      [globalVariables]="functionScopeVariables"
+                      [validationArgs]="[[1, 1, 1, 1, 1],[1, '1', '1', 1, '1']]"
+                      resultType="any"
+                      helpId="widget/config/datakey_postprocess_fn"
+                      formControlName="postFuncBody">
+          </tb-js-func>
+          <label *ngIf="thresholdFormGroup.get('usePostProcessing').value" class="tb-title" style="margin-left: 15px;">
+            time - {{ 'datakey.time-description' | translate }}<br/>
+            value - {{ 'datakey.value-description' | translate }}<br/>
+            prevValue - {{ 'datakey.prev-value-description' | translate }}<br/>
+            timePrev - {{ 'datakey.time-prev-description' | translate }}<br/>
+            prevOrigValue - {{ 'datakey.prev-orig-value-description' | translate }}
+          </label>
+        </section>
       </section>
     </div>
   </ng-template>

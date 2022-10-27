@@ -24,6 +24,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { isNumber } from '@core/utils';
 import { IAliasController } from '@core/api/widget-api.models';
 import { TbFlotKeyThreshold } from '@home/components/widget/lib/flot-widget.models';
+import { WidgetService } from '@core/http/widget.service';
 
 @Component({
   selector: 'tb-flot-threshold',
@@ -57,20 +58,34 @@ export class FlotThresholdComponent extends PageComponent implements OnInit, Con
 
   public thresholdFormGroup: FormGroup;
 
+  functionScopeVariables: string[];
+
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
+              private widgetService: WidgetService,
               private fb: FormBuilder) {
     super(store);
+    this.functionScopeVariables = this.widgetService.getWidgetScopeVariables();
   }
 
   ngOnInit(): void {
     this.thresholdFormGroup = this.fb.group({
       valueSource: [null, []],
       lineWidth: [null, [Validators.min(0)]],
-      color: [null, []]
+      color: [null, []],
+      usePostProcessing: [null, []],
+      postFuncBody: [null, []]
     });
     this.thresholdFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
+    });
+    this.thresholdFormGroup.get('usePostProcessing').valueChanges.subscribe((usePostProcessing: boolean) => {
+      const postFuncBody: string = this.thresholdFormGroup.get('postFuncBody').value;
+      if (usePostProcessing && (!postFuncBody || !postFuncBody.length)) {
+        this.thresholdFormGroup.get('postFuncBody').patchValue('return value;');
+      } else if (!usePostProcessing && postFuncBody && postFuncBody.length) {
+        this.thresholdFormGroup.get('postFuncBody').patchValue(null);
+      }
     });
   }
 
@@ -98,9 +113,17 @@ export class FlotThresholdComponent extends PageComponent implements OnInit, Con
       attribute: value?.thresholdAttribute,
       value: value?.thresholdValue
     };
-    this.thresholdFormGroup.patchValue(
-      {valueSource, lineWidth: value?.lineWidth, color: value?.color}, {emitEvent: false}
-    );
+    if (this.modelValue.postFuncBody && this.modelValue.postFuncBody.length) {
+      this.modelValue.usePostProcessing = true;
+    }
+    this.thresholdFormGroup.patchValue({
+        valueSource,
+        lineWidth: value?.lineWidth,
+        color: value?.color,
+        usePostProcessing: value?.usePostProcessing,
+        postFuncBody: value?.postFuncBody
+      },
+      {emitEvent: false});
   }
 
   thresholdText(): string {
@@ -122,14 +145,21 @@ export class FlotThresholdComponent extends PageComponent implements OnInit, Con
   }
 
   private updateModel() {
-    const value: {valueSource: ValueSourceProperty, lineWidth: number, color: string} = this.thresholdFormGroup.value;
+    const value: {
+      valueSource: ValueSourceProperty,
+      lineWidth: number,
+      color: string,
+      usePostProcessing?: boolean,
+      postFuncBody?: string} = this.thresholdFormGroup.value;
     this.modelValue = {
       thresholdValueSource: value?.valueSource?.valueSource,
       thresholdEntityAlias: value?.valueSource?.entityAlias,
       thresholdAttribute: value?.valueSource?.attribute,
       thresholdValue: value?.valueSource?.value,
       lineWidth: value?.lineWidth,
-      color: value?.color
+      color: value?.color,
+      usePostProcessing: value?.usePostProcessing,
+      postFuncBody: value?.postFuncBody
     };
     this.propagateChange(this.modelValue);
   }
