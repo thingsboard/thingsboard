@@ -22,15 +22,15 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.mvel2.ExecutionContext;
 import org.mvel2.MVEL;
 import org.mvel2.ParserContext;
-import org.mvel2.optimizers.AccessorOptimizer;
+import org.mvel2.SandboxedParserContext;
 import org.mvel2.optimizers.OptimizerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.util.ReflectionUtils;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.script.api.AbstractScriptInvokeService;
 import org.thingsboard.script.api.ScriptType;
@@ -101,12 +101,9 @@ public class DefaultMvelInvokeService extends AbstractScriptInvokeService implem
     @PostConstruct
     public void init() {
         super.init();
-        Field field = ReflectionUtils.findField(OptimizerFactory.class, "accessorCompilers");
-        ReflectionUtils.makeAccessible(field);
-        Map<String, AccessorOptimizer> accessorCompilers = (Map<String, AccessorOptimizer>) field.get(null);
-        accessorCompilers.put(OptimizerFactory.SAFE_REFLECTIVE, new TbReflectiveAccessorOptimizer());
-
-        parserContext = new ParserContext(new TbMvelParserConfiguration());
+        OptimizerFactory.setDefaultOptimizer(OptimizerFactory.SAFE_REFLECTIVE);
+        parserContext = new SandboxedParserContext();
+        parserContext.addImport("JSON", TbJson.class);
         executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(2, "mvel-executor"));
     }
 
@@ -159,7 +156,9 @@ public class DefaultMvelInvokeService extends AbstractScriptInvokeService implem
                 throw new TbScriptException(scriptId, TbScriptException.ErrorCode.OTHER, null, new RuntimeException("Script not found!"));
             }
             try {
-                return MVEL.executeExpression(script.getCompiledScript(), script.createVars(args));
+                ExecutionContext executionContext = new ExecutionContext();
+                // TODO:
+                return MVEL.executeExpression(script.getCompiledScript(), executionContext, script.createVars(args));
             } catch (OutOfMemoryError e) {
                 Runtime.getRuntime().gc();
                 throw new TbScriptException(scriptId, TbScriptException.ErrorCode.OTHER, script.getScriptBody(), new RuntimeException("Memory error!"));

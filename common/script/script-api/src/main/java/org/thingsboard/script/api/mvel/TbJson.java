@@ -16,6 +16,8 @@
 package org.thingsboard.script.api.mvel;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.mvel2.ExecutionContext;
+import org.mvel2.util.ArgsRepackUtil;
 import org.thingsboard.common.util.JacksonUtil;
 
 import java.io.IOException;
@@ -28,13 +30,13 @@ public class TbJson {
         return value != null ? JacksonUtil.toString(value) : "null";
     }
 
-    public static Object parse(String value) throws IOException {
+    public static Object parse(ExecutionContext ctx, String value) throws IOException {
         if (value != null) {
             JsonNode node = JacksonUtil.toJsonNode(value);
             if (node.isObject()) {
-                return JacksonUtil.convertValue(node, Map.class);
+                return ArgsRepackUtil.repack(ctx, JacksonUtil.convertValue(node, Map.class));
             } else if (node.isArray()) {
-                return JacksonUtil.convertValue(node, List.class);
+                return ArgsRepackUtil.repack(ctx, JacksonUtil.convertValue(node, List.class));
             } else if (node.isDouble()) {
                 return node.doubleValue();
             } else if (node.isLong()) {

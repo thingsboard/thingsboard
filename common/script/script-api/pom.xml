@@ -85,7 +85,7 @@
             <artifactId>commons-lang3</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.mvel</groupId>
+            <groupId>org.thingsboard</groupId>
             <artifactId>mvel2</artifactId>
         </dependency>
         <dependency>
