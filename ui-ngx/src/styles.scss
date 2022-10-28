@@ -1465,32 +1465,4 @@ mat-label {
       pointer-events: none;
     }
   }
-
-  .mat-button-toggle-group.tb-button-toggle-group {
-    &.mat-button-toggle-group-appearance-standard {
-      border: none;
-      .mat-button-toggle+.mat-button-toggle {
-        border-left: none;
-      }
-    }
-    .mat-button-toggle {
-      background: rgba(0, 0, 0, 0.06);
-      height: 32px;
-      align-items: center;
-      display: flex;
-    }
-    .mat-button-toggle-checked .mat-button-toggle-button {
-      background-color: #fff;
-      border-radius: 4px;
-      margin-left: 2px;
-      margin-right: 2px;
-    }
-    .mat-button-toggle-appearance-standard .mat-button-toggle-label-content {
-      line-height: 28px;
-      font-size: 14px;
-    }
-    .mat-button-toggle-checked.mat-button-toggle-appearance-standard:not(.mat-button-toggle-disabled):hover .mat-button-toggle-focus-overlay {
-      opacity: .01;
-    }
-  }
 }
