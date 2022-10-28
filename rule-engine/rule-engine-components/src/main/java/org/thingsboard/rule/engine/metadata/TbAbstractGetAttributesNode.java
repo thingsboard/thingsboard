@@ -93,7 +93,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         JsonNode msgDataNode = JacksonUtil.toJsonNode(msg.getData());
         if (fetchToData) {
             if (!msgDataNode.isObject()) {
-                ctx.tellFailure(msg, new IllegalArgumentException("Msg body is not object!"));
+                ctx.tellFailure(msg, new IllegalArgumentException("Msg body is not an object!"));
                 return;
             }
         }
