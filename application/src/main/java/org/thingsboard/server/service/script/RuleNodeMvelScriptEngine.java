@@ -143,7 +143,8 @@ public class RuleNodeMvelScriptEngine extends RuleNodeScriptEngine<MvelInvokeSer
         if (msgData.containsKey(RuleNodeScriptFactory.METADATA)) {
             Object msgMetadataObj = msgData.get(RuleNodeScriptFactory.METADATA);
             if (msgMetadataObj instanceof Map) {
-                metadata = ((Map<?, ?>) msgMetadataObj).entrySet().stream().collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue().toString()));
+                metadata = ((Map<?, ?>) msgMetadataObj).entrySet().stream().filter(e -> e.getValue() != null)
+                        .collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue().toString()));
             } else {
                 metadata = JacksonUtil.convertValue(msgMetadataObj, new TypeReference<>() {
                 });
