@@ -99,7 +99,7 @@ class MvelInvokeServiceTest extends AbstractControllerTest {
 
     @Test
     void whenScriptInvocationResultIsTooBig_thenReturnErrorAndReportScriptExecutionError() throws Exception {
-        String script = "s = 'a'; for(int i=0; i<50; i++){ s +='a';} return { s: s};";
+        String script = "var s = 'a'; for(int i=0; i<50; i++){ s +='a';} return { s: s};";
         UUID scriptId = evalScript(script);
 
         for (int i = 0; i < maxJsErrors; i++) {
