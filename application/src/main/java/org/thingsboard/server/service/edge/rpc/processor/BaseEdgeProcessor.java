@@ -274,17 +274,21 @@ public abstract class BaseEdgeProcessor {
             do {
                 tenantsIds = tenantService.findTenantsIds(pageLink);
                 for (TenantId tenantId1 : tenantsIds.getData()) {
-                    futures.addAll(processActionForAllEdgesByTenantId(tenantId1, type, actionType, entityId));
+                    futures.addAll(processActionForAllEdgesByTenantId(tenantId1, type, actionType, entityId, null));
                 }
                 pageLink = pageLink.nextPageLink();
             } while (tenantsIds.hasNext());
         } else {
-            futures = processActionForAllEdgesByTenantId(tenantId, type, actionType, entityId);
+            futures = processActionForAllEdgesByTenantId(tenantId, type, actionType, entityId, null);
         }
         return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
     }
 
-    private List<ListenableFuture<Void>> processActionForAllEdgesByTenantId(TenantId tenantId, EdgeEventType type, EdgeEventActionType actionType, EntityId entityId) {
+    protected List<ListenableFuture<Void>> processActionForAllEdgesByTenantId(TenantId tenantId,
+                                                                              EdgeEventType type,
+                                                                              EdgeEventActionType actionType,
+                                                                              EntityId entityId,
+                                                                              JsonNode body) {
         PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
         PageData<Edge> pageData;
         List<ListenableFuture<Void>> futures = new ArrayList<>();
@@ -292,7 +296,7 @@ public abstract class BaseEdgeProcessor {
             pageData = edgeService.findEdgesByTenantId(tenantId, pageLink);
             if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
                 for (Edge edge : pageData.getData()) {
-                    futures.add(saveEdgeEvent(tenantId, edge.getId(), type, actionType, entityId, null));
+                    futures.add(saveEdgeEvent(tenantId, edge.getId(), type, actionType, entityId, body));
                 }
                 if (pageData.hasNext()) {
                     pageLink = pageLink.nextPageLink();
