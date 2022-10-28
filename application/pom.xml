@@ -224,10 +224,7 @@
         <dependency>
 			<groupId>com.aliyun</groupId>
 			<artifactId>aliyun-java-sdk-core</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.aliyun</groupId>
-			<artifactId>aliyun-java-sdk-dysmsapi</artifactId>
+			<version>4.4.6</version>
 		</dependency>
         <dependency>
             <groupId>com.twilio.sdk</groupId>

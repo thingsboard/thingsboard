@@ -15,18 +15,14 @@
  */
 package org.thingsboard.server.service.sms.aliyun;
 
+import com.aliyuncs.CommonRequest;
+import com.aliyuncs.CommonResponse;
 import com.aliyuncs.DefaultAcsClient;
 import com.aliyuncs.IAcsClient;
-import com.aliyuncs.dysmsapi.model.v20170525.QuerySendDetailsRequest;
-import com.aliyuncs.dysmsapi.model.v20170525.QuerySendDetailsResponse;
-import com.aliyuncs.dysmsapi.model.v20170525.SendSmsRequest;
-import com.aliyuncs.dysmsapi.model.v20170525.SendSmsResponse;
-import com.aliyuncs.dysmsapi.transform.v20170525.SendSmsResponseUnmarshaller;
 import com.aliyuncs.exceptions.ClientException;
-import com.aliyuncs.http.FormatType;
-import com.aliyuncs.http.HttpResponse;
+import com.aliyuncs.exceptions.ServerException;
+import com.aliyuncs.http.MethodType;
 import com.aliyuncs.profile.DefaultProfile;
-import com.aliyuncs.profile.IClientProfile;
 
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
@@ -41,67 +37,63 @@ import org.thingsboard.server.service.sms.AbstractSmsSender;
 
 public class AliyunSmsSender extends AbstractSmsSender {
 
-    private String numberFrom;
-    
     private String accessKeyId;
     private String accessKeySecret;
     private String signName;
     private String templateCode;
-    
-    private String product;
-    private String domain;
+
+    private String numberFrom;
+    private String toRegion = "cn";
 
     public AliyunSmsSender(AliyunSmsProviderConfiguration config) {
         if (StringUtils.isEmpty(config.getAccessKeyId()) || StringUtils.isEmpty(config.getAccessKeySecret()) || StringUtils.isEmpty(config.getSignName()) || StringUtils.isEmpty(config.getTemplateCode())) {
             throw new IllegalArgumentException("Invalid aliyun sms provider configuration: accountSid, accountToken and numberFrom should be specified!");
         }
-        this.numberFrom = config.getAccessKeyId();
-        this.accessKeyId = config.getAccessKeySecret();
-        this.accessKeySecret = config.getSignName();
-        this.signName = config.getTemplateCode();
-        
-        //产品名称:云通信短信API产品,开发者无需替换
-        this.product = "Dysmsapi";
-        //产品域名,开发者无需替换
-        this.domain = "dysmsapi.aliyuncs.com";
+        this.accessKeyId = config.getAccessKeyId();
+        this.accessKeySecret = config.getAccessKeySecret();
+        this.signName = config.getSignName();
+        this.templateCode = config.getTemplateCode();
+        this.numberFrom = config.getNumberFrom();
+        this.toRegion = config.getToRegion();
     }
 
     @Override
     public int sendSms(String numberTo, String message) throws SmsException {
         numberTo = this.validatePhoneNumber(numberTo);
         message = this.prepareMessage(message);
-        try {            
-            //可自助调整超时时间
-            System.setProperty("sun.net.client.defaultConnectTimeout", "10000");
-            System.setProperty("sun.net.client.defaultReadTimeout", "10000");
+        //可自助调整超时时间
+        System.setProperty("sun.net.client.defaultConnectTimeout", "10000");
+        System.setProperty("sun.net.client.defaultReadTimeout", "10000");
 
-            //初始化acsClient,暂不支持region化
-            IClientProfile profile = DefaultProfile.getProfile("cn-hangzhou", this.accessKeyId, this.accessKeySecret);
-            DefaultProfile.addEndpoint("cn-hangzhou", "cn-hangzhou", this.product, this.domain);
-            IAcsClient acsClient = new DefaultAcsClient(profile);
+        //初始化acsClient，<accessKeyId>和<accessSecret>在短信控制台查询
+        DefaultProfile profile = DefaultProfile.getProfile("ap-southeast-1", this.accessKeyId, this.accessKeySecret);
+        IAcsClient client = new DefaultAcsClient(profile);
+        CommonRequest request = new CommonRequest();
+        request.setSysMethod(MethodType.POST);
 
-            //组装请求对象-具体描述见控制台-文档部分内容
-            SendSmsRequest request = new SendSmsRequest();
-            //必填:待发送手机号
-            request.setPhoneNumbers(numberTo);
-            //必填:短信签名-可在短信控制台中找到
-            request.setSignName(this.signName);
-            //必填:短信模板-可在短信控制台中找到
-            request.setTemplateCode(this.templateCode);
+        request.setSysMethod(MethodType.POST);
+        request.setSysDomain("dysmsapi.ap-southeast-1.aliyuncs.com");//域名，请勿修改
+        request.setSysVersion("2018-05-01");//API版本号，请勿修改
+        if(this.toRegion == "cn"){
+            request.setSysAction("SendMessageWithTemplate");//API名称
+            request.putQueryParameter("To", numberTo);//接收号码，格式为：国际码+号码("8615200000000")，必填
+            request.putQueryParameter("From", this.signName);//必填:短信签名-可在短信控制台中找到
+            request.putQueryParameter("TemplateCode", this.templateCode);//必填:短信模板-可在短信控制台中找到
             //可选:模板中的变量替换JSON串,如模板内容为"亲爱的${name},您的验证码为${code}"时,此处的值为
-            //request.setTemplateParam("{\"name\":\"Tom\", \"code\":\"123\"}");
-            request.setTemplateParam("{\"msg\":\"" + message + "\"}");
+            //request.putQueryParameter("TemplateParam", "{\"name\":\"Tom\", \"code\":\"123\"}");
+            request.putQueryParameter("TemplateParam", "{\"msg\":\"" + message + "\"}");
+            //request.putQueryParameter("SmsUpExtendCode", this.numberFrom);//选填-上行短信扩展码(无特殊需求用户请忽略此字段)
+        }else{
+            request.setSysAction("SendMessageToGlobe");//API名称
+            request.putQueryParameter("To", numberTo);//接收号码，格式为：国际码+号码，必填
+            //request.putQueryParameter("From", this.numberFrom);//发送方号码，选填
+            request.putQueryParameter("Message", message);//短信内容，必填
+        }
 
-            //选填-上行短信扩展码(无特殊需求用户请忽略此字段)
-            //request.setSmsUpExtendCode("90997");
-
-            //可选:outId为提供给业务方扩展字段,最终在短信回执消息中将此值带回给调用者
-            //request.setOutId("yourOutId");
-
-            //hint 此处可能会抛出异常，注意catch
-            SendSmsResponse sendSmsResponse = acsClient.getAcsResponse(request);
-        	
-            return Integer.valueOf(sendSmsResponse.getCode());
+        try {
+            CommonResponse response = client.getCommonResponse(request);
+            //System.out.println(response.getData());
+            return Integer.valueOf(response.getHttpStatus());
         } catch (Exception e) {
             throw new SmsSendException("Failed to send SMS message - " + e.getMessage(), e);
         }
