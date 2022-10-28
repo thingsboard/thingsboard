@@ -52,7 +52,7 @@
             label="{{ 'widgets.chart.color' | translate }}" openOnInput colorClearButton>
           </tb-color-input>
         </section>
-        <section fxLayout="column">
+        <section fxLayout="column" *ngIf="thresholdFormGroup.get('valueSource').value.valueSource === 'entityAttribute'">
           <mat-checkbox formControlName="usePostProcessing">
             {{ 'datakey.use-data-post-processing-func' | translate }}
           </mat-checkbox>
