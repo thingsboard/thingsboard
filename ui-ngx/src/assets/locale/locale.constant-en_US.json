@@ -4444,6 +4444,7 @@
             "openstreet-provider-hot": "OpenStreetMap.HOT",
             "openstreet-provider-esri-street": "Esri.WorldStreetMap",
             "openstreet-provider-esri-topo": "Esri.WorldTopoMap",
+            "openstreet-provider-esri-imagery": "Esri.WorldImagery",
             "openstreet-provider-cartodb-positron": "CartoDB.Positron",
             "openstreet-provider-cartodb-dark-matter": "CartoDB.DarkMatter",
             "use-custom-provider": "Use custom provider",

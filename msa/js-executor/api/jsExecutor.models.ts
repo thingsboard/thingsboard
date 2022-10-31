@@ -16,8 +16,9 @@
 
 
 export interface TbMessage {
-    scriptIdMSB: string;
-    scriptIdLSB: string;
+    scriptIdMSB: string; // deprecated
+    scriptIdLSB: string; // deprecated
+    scriptHash: string;
 }
 
 export interface RemoteJsRequest {

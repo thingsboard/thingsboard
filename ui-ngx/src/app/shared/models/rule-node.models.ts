@@ -461,6 +461,7 @@ const ruleNodeClazzHelpLinkMap = {
   'org.thingsboard.rule.engine.edge.TbMsgPushToEdgeNode': 'ruleNodePushToEdge',
   'org.thingsboard.rule.engine.flow.TbRuleChainInputNode': 'ruleNodeRuleChain',
   'org.thingsboard.rule.engine.flow.TbRuleChainOutputNode': 'ruleNodeOutputNode',
+  'org.thingsboard.rule.engine.math.TbMathNode': 'ruleNodeMath',
 };
 
 export function getRuleNodeHelpLink(component: RuleNodeComponentDescriptor): string {

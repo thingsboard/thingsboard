@@ -94,7 +94,7 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
     @Value("${sql.ts_latest.batch_threads:4}")
     private int tsLatestBatchThreads;
 
-    @Value("${sql.batch_sort:false}")
+    @Value("${sql.batch_sort:true}")
     protected boolean batchSortEnabled;
 
     @Autowired
@@ -150,8 +150,17 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
     }
 
     @Override
+    public ListenableFuture<Optional<TsKvEntry>> findLatestOpt(TenantId tenantId, EntityId entityId, String key) {
+        return Futures.immediateFuture(Optional.ofNullable(doFindLatest(entityId, key)));
+    }
+
+    @Override
     public ListenableFuture<TsKvEntry> findLatest(TenantId tenantId, EntityId entityId, String key) {
-        return getFindLatestFuture(entityId, key);
+        TsKvEntry latest = doFindLatest(entityId, key);
+        if (latest == null) {
+            latest = new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry(key, null));
+        }
+        return Futures.immediateFuture(latest);
     }
 
     @Override
@@ -195,43 +204,41 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
                 ReadTsKvQueryResult::getData, MoreExecutors.directExecutor());
     }
 
-    protected ListenableFuture<TsKvEntry> getFindLatestFuture(EntityId entityId, String key) {
+   protected TsKvEntry doFindLatest(EntityId entityId, String key) {
         TsKvLatestCompositeKey compositeKey =
                 new TsKvLatestCompositeKey(
                         entityId.getId(),
                         getOrSaveKeyId(key));
         Optional<TsKvLatestEntity> entry = tsKvLatestRepository.findById(compositeKey);
-        TsKvEntry result;
         if (entry.isPresent()) {
             TsKvLatestEntity tsKvLatestEntity = entry.get();
             tsKvLatestEntity.setStrKey(key);
-            result = DaoUtil.getData(tsKvLatestEntity);
+            return DaoUtil.getData(tsKvLatestEntity);
         } else {
-            result = new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry(key, null));
+            return null;
         }
-        return Futures.immediateFuture(result);
     }
 
     protected ListenableFuture<TsKvLatestRemovingResult> getRemoveLatestFuture(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
-        ListenableFuture<TsKvEntry> latestFuture = getFindLatestFuture(entityId, query.getKey());
+        TsKvEntry latest = doFindLatest(entityId, query.getKey());
 
-        ListenableFuture<Boolean> booleanFuture = Futures.transform(latestFuture, tsKvEntry -> {
-            long ts = tsKvEntry.getTs();
-            return ts > query.getStartTs() && ts <= query.getEndTs();
-        }, service);
+        if (latest == null) {
+            return Futures.immediateFuture(new TsKvLatestRemovingResult(query.getKey(), false));
+        }
 
-        ListenableFuture<Boolean> removedLatestFuture = Futures.transformAsync(booleanFuture, isRemove -> {
-            if (isRemove) {
-                TsKvLatestEntity latestEntity = new TsKvLatestEntity();
-                latestEntity.setEntityId(entityId.getId());
-                latestEntity.setKey(getOrSaveKeyId(query.getKey()));
-                return service.submit(() -> {
-                    tsKvLatestRepository.delete(latestEntity);
-                    return true;
-                });
-            }
-            return Futures.immediateFuture(false);
-        }, service);
+        long ts = latest.getTs();
+        ListenableFuture<Boolean> removedLatestFuture;
+        if (ts > query.getStartTs() && ts <= query.getEndTs()) {
+            TsKvLatestEntity latestEntity = new TsKvLatestEntity();
+            latestEntity.setEntityId(entityId.getId());
+            latestEntity.setKey(getOrSaveKeyId(query.getKey()));
+            removedLatestFuture = service.submit(() -> {
+                tsKvLatestRepository.delete(latestEntity);
+                return true;
+            });
+        } else {
+            removedLatestFuture = Futures.immediateFuture(false);
+        }
 
         return Futures.transformAsync(removedLatestFuture, isRemoved -> {
             if (isRemoved && query.getRewriteLatestIfDeleted()) {
