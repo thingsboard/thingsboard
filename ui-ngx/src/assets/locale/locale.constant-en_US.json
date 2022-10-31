@@ -4678,6 +4678,7 @@
             "default-column-visibility": "Default column visibility",
             "column-visibility-visible": "Visible",
             "column-visibility-hidden": "Hidden",
+            "column-visibility-hidden-mobile": "Hidden in mobile mode",
             "column-selection-to-display": "Column selection in 'Columns to Display'",
             "column-selection-to-display-enabled": "Enabled",
             "column-selection-to-display-disabled": "Disabled",
