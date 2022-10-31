@@ -220,7 +220,7 @@ public class TbMathNode implements TbNode {
     private TbMsg addToBodyAndMeta(TbMsg msg, Optional<ObjectNode> msgBodyOpt, double result, TbMathResult mathResultDef) {
         TbMsg tmpMsg = msg;
         if (mathResultDef.isAddToBody()) {
-            tmpMsg = addToBody(msg, mathResultDef, msgBodyOpt, result);
+            tmpMsg = addToBody(tmpMsg, mathResultDef, msgBodyOpt, result);
         }
         if (mathResultDef.isAddToMetadata()) {
             tmpMsg = addToMeta(tmpMsg, mathResultDef, result);
