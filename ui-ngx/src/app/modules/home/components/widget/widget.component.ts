@@ -453,7 +453,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     for (const id of Object.keys(this.widgetContext.subscriptions)) {
       const subscription = this.widgetContext.subscriptions[id];
       if (!subscription.useDashboardTimewindow) {
-        subscription.updateTimewindowConfig(timewindow);
+        subscription.updateTimewindowConfig(subscription.onTimewindowChangeFunction(timewindow));
       }
     }
   }
