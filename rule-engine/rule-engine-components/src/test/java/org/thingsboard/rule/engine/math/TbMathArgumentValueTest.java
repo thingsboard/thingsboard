@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package math;
+package org.thingsboard.rule.engine.math;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Assert;
