@@ -42,6 +42,7 @@ public class DefaultNotificationTargetService implements NotificationTargetServi
 
     @Override
     public NotificationTarget saveNotificationTarget(TenantId tenantId, NotificationTarget notificationTarget) {
+        notificationTarget.setTenantId(tenantId);
         validator.validate(notificationTarget, NotificationTarget::getTenantId);
         return notificationTargetDao.save(tenantId, notificationTarget);
     }
@@ -81,6 +82,11 @@ public class DefaultNotificationTargetService implements NotificationTargetServi
     }
 
     private static class NotificationTargetValidator extends DataValidator<NotificationTarget> {
+
+        @Override
+        protected void validateDataImpl(TenantId tenantId, NotificationTarget notificationTarget) {
+            super.validateDataImpl(tenantId, notificationTarget);
+        }
     }
 
 }

@@ -38,10 +38,11 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
-import org.thingsboard.server.service.telemetry.SessionEvent;
-import org.thingsboard.server.service.telemetry.TelemetryWebSocketMsgEndpoint;
-import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
-import org.thingsboard.server.service.telemetry.TelemetryWebSocketSessionRef;
+import org.thingsboard.server.service.ws.SessionEvent;
+import org.thingsboard.server.service.ws.WebSocketMsgEndpoint;
+import org.thingsboard.server.service.ws.WebSocketSessionType;
+import org.thingsboard.server.service.ws.telemetry.WebSocketService;
+import org.thingsboard.server.service.ws.WebSocketSessionRef;
 
 import javax.websocket.RemoteEndpoint;
 import javax.websocket.SendHandler;
@@ -57,19 +58,19 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import static org.thingsboard.server.service.telemetry.DefaultTelemetryWebSocketService.NUMBER_OF_PING_ATTEMPTS;
+import static org.thingsboard.server.service.telemetry.DefaultWebSocketService.NUMBER_OF_PING_ATTEMPTS;
 
 @Service
 @TbCoreComponent
 @Slf4j
-public class TbWebSocketHandler extends TextWebSocketHandler implements TelemetryWebSocketMsgEndpoint {
+public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocketMsgEndpoint {
 
     private static final ConcurrentMap<String, SessionMetaData> internalSessionMap = new ConcurrentHashMap<>();
     private static final ConcurrentMap<String, String> externalSessionMap = new ConcurrentHashMap<>();
 
 
     @Autowired
-    private TelemetryWebSocketService webSocketService;
+    private WebSocketService webSocketService;
 
     @Autowired
     private TbTenantProfileCache tenantProfileCache;
@@ -79,7 +80,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
     @Value("${server.ws.ping_timeout:30000}")
     private long pingTimeout;
 
-    private ConcurrentMap<String, TelemetryWebSocketSessionRef> blacklistedSessions = new ConcurrentHashMap<>();
+    private ConcurrentMap<String, WebSocketSessionRef> blacklistedSessions = new ConcurrentHashMap<>();
     private ConcurrentMap<String, TbRateLimits> perSessionUpdateLimits = new ConcurrentHashMap<>();
 
     private ConcurrentMap<TenantId, Set<String>> tenantSessionsMap = new ConcurrentHashMap<>();
@@ -130,7 +131,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
                 }
             }
             String internalSessionId = session.getId();
-            TelemetryWebSocketSessionRef sessionRef = toRef(session);
+            WebSocketSessionRef sessionRef = toRef(session);
             String externalSessionId = sessionRef.getSessionId();
 
             if (!checkLimits(session, sessionRef)) {
@@ -178,7 +179,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
         }
     }
 
-    private void processInWebSocketService(TelemetryWebSocketSessionRef sessionRef, SessionEvent event) {
+    private void processInWebSocketService(WebSocketSessionRef sessionRef, SessionEvent event) {
         try {
             webSocketService.handleWebSocketSessionEvent(sessionRef, event);
         } catch (BeanCreationNotAllowedException e) {
@@ -186,7 +187,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
         }
     }
 
-    private TelemetryWebSocketSessionRef toRef(WebSocketSession session) throws IOException {
+    private WebSocketSessionRef toRef(WebSocketSession session) throws IOException {
         URI sessionUri = session.getUri();
         String path = sessionUri.getPath();
         path = path.substring(WebSocketConfiguration.WS_PLUGIN_PREFIX.length());
@@ -195,25 +196,30 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
         }
         String[] pathElements = path.split("/");
         String serviceToken = pathElements[0];
-        if (!"telemetry".equalsIgnoreCase(serviceToken)) {
-            throw new InvalidParameterException("Can't find plugin with specified token!");
-        } else {
-            SecurityUser currentUser = (SecurityUser) ((Authentication) session.getPrincipal()).getPrincipal();
-            return new TelemetryWebSocketSessionRef(UUID.randomUUID().toString(), currentUser, session.getLocalAddress(), session.getRemoteAddress());
-        }
+        WebSocketSessionType sessionType = WebSocketSessionType.forName(serviceToken)
+                .orElseThrow(() -> new InvalidParameterException("Can't find plugin with specified token!"));
+
+        SecurityUser currentUser = (SecurityUser) ((Authentication) session.getPrincipal()).getPrincipal();
+        return WebSocketSessionRef.builder()
+                .sessionId(UUID.randomUUID().toString())
+                .securityCtx(currentUser)
+                .localAddress(session.getLocalAddress())
+                .remoteAddress(session.getRemoteAddress())
+                .sessionType(sessionType)
+                .build();
     }
 
     private class SessionMetaData implements SendHandler {
         private final WebSocketSession session;
         private final RemoteEndpoint.Async asyncRemote;
-        private final TelemetryWebSocketSessionRef sessionRef;
+        private final WebSocketSessionRef sessionRef;
 
         private volatile boolean isSending = false;
         private final Queue<TbWebSocketMsg<?>> msgQueue;
 
         private volatile long lastActivityTime;
 
-        SessionMetaData(WebSocketSession session, TelemetryWebSocketSessionRef sessionRef, int maxMsgQueuePerSession) {
+        SessionMetaData(WebSocketSession session, WebSocketSessionRef sessionRef, int maxMsgQueuePerSession) {
             super();
             this.session = session;
             Session nativeSession = ((NativeWebSocketSession) session).getNativeSession(Session.class);
@@ -309,7 +315,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
     }
 
     @Override
-    public void send(TelemetryWebSocketSessionRef sessionRef, int subscriptionId, String msg) throws IOException {
+    public void send(WebSocketSessionRef sessionRef, int subscriptionId, String msg) throws IOException {
         String externalId = sessionRef.getSessionId();
         log.debug("[{}] Processing {}", externalId, msg);
         String internalId = externalSessionMap.get(externalId);
@@ -343,7 +349,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
     }
 
     @Override
-    public void sendPing(TelemetryWebSocketSessionRef sessionRef, long currentTime) throws IOException {
+    public void sendPing(WebSocketSessionRef sessionRef, long currentTime) throws IOException {
         String externalId = sessionRef.getSessionId();
         String internalId = externalSessionMap.get(externalId);
         if (internalId != null) {
@@ -359,7 +365,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
     }
 
     @Override
-    public void close(TelemetryWebSocketSessionRef sessionRef, CloseStatus reason) throws IOException {
+    public void close(WebSocketSessionRef sessionRef, CloseStatus reason) throws IOException {
         String externalId = sessionRef.getSessionId();
         log.debug("[{}] Processing close request", externalId);
         String internalId = externalSessionMap.get(externalId);
@@ -375,7 +381,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
         }
     }
 
-    private boolean checkLimits(WebSocketSession session, TelemetryWebSocketSessionRef sessionRef) throws Exception {
+    private boolean checkLimits(WebSocketSession session, WebSocketSessionRef sessionRef) throws Exception {
         var tenantProfileConfiguration =
                 tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()).getDefaultProfileConfiguration();
         if (tenantProfileConfiguration == null) {
@@ -443,7 +449,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
         return true;
     }
 
-    private void cleanupLimits(WebSocketSession session, TelemetryWebSocketSessionRef sessionRef) {
+    private void cleanupLimits(WebSocketSession session, WebSocketSessionRef sessionRef) {
         var tenantProfileConfiguration = tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()).getDefaultProfileConfiguration();
 
         String sessionId = session.getId();

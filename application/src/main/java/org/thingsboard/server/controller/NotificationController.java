@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.NotificationId;
+import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationStatus;
@@ -71,7 +73,7 @@ public class NotificationController extends BaseController {
     public void markNotificationAsRead(@PathVariable UUID id,
                                        @AuthenticationPrincipal SecurityUser user) {
         NotificationId notificationId = new NotificationId(id);
-        notificationService.updateNotificationStatus(user.getTenantId(), notificationId, NotificationStatus.READ);
+        notificationProcessingService.markNotificationAsRead(user, notificationId);
     }
 
 
@@ -81,6 +83,14 @@ public class NotificationController extends BaseController {
                                                          @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         accessControlService.checkPermission(user, Resource.NOTIFICATION, Operation.CREATE);
         return notificationProcessingService.processNotificationRequest(user, notificationRequest);
+    }
+
+    @GetMapping("/notification/request/{id}")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    public NotificationRequest getNotificationRequestById(@PathVariable UUID id,
+                                                          @AuthenticationPrincipal SecurityUser user) {
+        NotificationRequestId notificationRequestId = new NotificationRequestId(id);
+        return notificationService.findNotificationRequestById(user.getTenantId(), notificationRequestId);
     }
 
     @GetMapping("/notification/requests")
@@ -96,9 +106,11 @@ public class NotificationController extends BaseController {
         return notificationService.findNotificationRequestsByTenantIdAndPageLink(user.getTenantId(), pageLink);
     }
 
-    // delete request and sent notifications
-    public void deleteNotificationRequest() {
-
+    @DeleteMapping("/notification/request/{id}")
+    public void deleteNotificationRequest(@PathVariable UUID id,
+                                          @AuthenticationPrincipal SecurityUser user) {
+        NotificationRequestId notificationRequestId = new NotificationRequestId(id);
+        notificationProcessingService.deleteNotificationRequest(user, notificationRequestId);
     }
 
 }

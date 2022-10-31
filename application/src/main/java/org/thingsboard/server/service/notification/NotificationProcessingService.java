@@ -16,11 +16,17 @@
 package org.thingsboard.server.service.notification;
 
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.NotificationId;
+import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface NotificationProcessingService {
 
     NotificationRequest processNotificationRequest(SecurityUser user, NotificationRequest notificationRequest) throws ThingsboardException;
+
+    void markNotificationAsRead(SecurityUser user, NotificationId notificationId);
+
+    void deleteNotificationRequest(SecurityUser user, NotificationRequestId notificationRequestId);
 
 }

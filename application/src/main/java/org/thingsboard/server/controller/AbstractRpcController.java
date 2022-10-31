@@ -43,7 +43,7 @@ import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
 import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.telemetry.exception.ToErrorResponseEntity;
+import org.thingsboard.server.exception.ToErrorResponseEntity;
 
 import javax.annotation.Nullable;
 import java.util.Optional;

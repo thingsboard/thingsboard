@@ -547,6 +547,11 @@ message TbAlarmSubscriptionProto {
   int64 ts = 2;
 }
 
+message NotificationsSubscriptionProto {
+  TbSubscriptionProto sub = 1;
+  int32 limit = 2;
+}
+
 message TbSubscriptionUpdateProto {
   string sessionId = 1;
   int32 subscriptionId = 2;
@@ -562,6 +567,27 @@ message TbAlarmSubscriptionUpdateProto {
   string errorMsg = 4;
   string alarm = 5;
   bool deleted = 6;
+}
+
+message NotificationsSubscriptionUpdateProto {
+  string sessionId = 1;
+  int32 subscriptionId = 2;
+  string notification = 3;
+}
+
+message NotificationUpdateProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 recipientIdMSB = 3;
+  int64 recipientIdLSB = 4;
+  string notification = 5;
+}
+
+message NotificationRequestDeleteProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 notificationRequestIdMSB = 3;
+  int64 notificationRequestIdLSB = 4;
 }
 
 message TbAttributeUpdateProto {
@@ -665,11 +691,15 @@ message SubscriptionMgrMsgProto {
   TbAlarmUpdateProto alarmUpdate = 8;
   TbAlarmDeleteProto alarmDelete = 9;
   TbTimeSeriesDeleteProto tsDelete = 10;
+  NotificationsSubscriptionProto notificationsSub = 11;
+  NotificationUpdateProto notificationUpdate = 12;
+  NotificationRequestDeleteProto notificationRequestDelete = 13;
 }
 
 message LocalSubscriptionServiceMsgProto {
   TbSubscriptionUpdateProto subUpdate = 1;
   TbAlarmSubscriptionUpdateProto alarmSubUpdate = 2;
+  NotificationsSubscriptionUpdateProto notificationsSubUpdate = 3;
 }
 
 message FromDeviceRPCResponseProto {

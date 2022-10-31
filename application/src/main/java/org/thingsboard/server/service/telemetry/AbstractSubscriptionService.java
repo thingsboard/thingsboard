@@ -21,8 +21,11 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
@@ -38,12 +41,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * Created by ashvayka on 27.03.18.
  */
 @Slf4j
-public abstract class AbstractSubscriptionService extends TbApplicationEventListener<PartitionChangeEvent>{
+public abstract class AbstractSubscriptionService extends TbApplicationEventListener<PartitionChangeEvent> {
 
     protected final Set<TopicPartitionInfo> currentPartitions = ConcurrentHashMap.newKeySet();
 
@@ -83,6 +87,22 @@ public abstract class AbstractSubscriptionService extends TbApplicationEventList
         if (ServiceType.TB_CORE.equals(partitionChangeEvent.getServiceType())) {
             currentPartitions.clear();
             currentPartitions.addAll(partitionChangeEvent.getPartitions());
+        }
+    }
+
+    protected void forwardToSubscriptionManagerServiceOrSendToCore(TenantId tenantId, EntityId entityId,
+                                                                   Consumer<SubscriptionManagerService> toSubscriptionManagerService,
+                                                                   Supplier<TransportProtos.ToCoreMsg> toCore) {
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
+        if (currentPartitions.contains(tpi)) {
+            if (subscriptionManagerService.isPresent()) {
+                toSubscriptionManagerService.accept(subscriptionManagerService.get());
+            } else {
+                log.warn("Possible misconfiguration because subscriptionManagerService is null!");
+            }
+        } else {
+            TransportProtos.ToCoreMsg toCoreMsg = toCore.get();
+            clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
         }
     }
 

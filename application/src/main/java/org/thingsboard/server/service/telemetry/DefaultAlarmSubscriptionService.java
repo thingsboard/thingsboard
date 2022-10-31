@@ -164,17 +164,11 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
             Alarm alarm = result.getAlarm();
             TenantId tenantId = result.getAlarm().getTenantId();
             for (EntityId entityId : result.getPropagatedEntitiesList()) {
-                TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
-                if (currentPartitions.contains(tpi)) {
-                    if (subscriptionManagerService.isPresent()) {
-                        subscriptionManagerService.get().onAlarmUpdate(tenantId, entityId, alarm, TbCallback.EMPTY);
-                    } else {
-                        log.warn("Possible misconfiguration because subscriptionManagerService is null!");
-                    }
-                } else {
-                    TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAlarmUpdateProto(tenantId, entityId, alarm);
-                    clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
-                }
+                forwardToSubscriptionManagerServiceOrSendToCore(tenantId, entityId, subscriptionManagerService -> {
+                    subscriptionManagerService.onAlarmUpdate(tenantId, entityId, alarm, TbCallback.EMPTY);
+                }, () -> {
+                    return TbSubscriptionUtils.toAlarmUpdateProto(tenantId, entityId, alarm);
+                });
             }
         });
     }
@@ -184,17 +178,11 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
             Alarm alarm = result.getAlarm();
             TenantId tenantId = result.getAlarm().getTenantId();
             for (EntityId entityId : result.getPropagatedEntitiesList()) {
-                TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
-                if (currentPartitions.contains(tpi)) {
-                    if (subscriptionManagerService.isPresent()) {
-                        subscriptionManagerService.get().onAlarmDeleted(tenantId, entityId, alarm, TbCallback.EMPTY);
-                    } else {
-                        log.warn("Possible misconfiguration because subscriptionManagerService is null!");
-                    }
-                } else {
-                    TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAlarmDeletedProto(tenantId, entityId, alarm);
-                    clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
-                }
+                forwardToSubscriptionManagerServiceOrSendToCore(tenantId, entityId, subscriptionManagerService -> {
+                    subscriptionManagerService.onAlarmDeleted(tenantId, entityId, alarm, TbCallback.EMPTY);
+                }, () -> {
+                    return TbSubscriptionUtils.toAlarmDeletedProto(tenantId, entityId, alarm);
+                });
             }
         });
     }

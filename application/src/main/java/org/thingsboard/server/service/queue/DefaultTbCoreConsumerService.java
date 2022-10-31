@@ -27,7 +27,10 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
@@ -77,6 +80,7 @@ import org.thingsboard.server.service.subscription.TbLocalSubscriptionService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 import org.thingsboard.server.service.sync.vc.GitVersionControlQueueService;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
+import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscriptionUpdate;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -456,6 +460,13 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             localSubscriptionService.onSubscriptionUpdate(msg.getSubUpdate().getSessionId(), TbSubscriptionUtils.fromProto(msg.getSubUpdate()), callback);
         } else if (msg.hasAlarmSubUpdate()) {
             localSubscriptionService.onSubscriptionUpdate(msg.getAlarmSubUpdate().getSessionId(), TbSubscriptionUtils.fromProto(msg.getAlarmSubUpdate()), callback);
+        } else if (msg.hasNotificationsSubUpdate()) {
+            TransportProtos.NotificationsSubscriptionUpdateProto notificationsSubUpdateProto = msg.getNotificationsSubUpdate();
+            NotificationsSubscriptionUpdate notificationsSubscriptionUpdate = NotificationsSubscriptionUpdate.builder()
+                    .notification(JacksonUtil.fromString(notificationsSubUpdateProto.getNotification(), Notification.class))
+                    .build();
+            localSubscriptionService.onSubscriptionUpdate(notificationsSubUpdateProto.getSessionId(),
+                    notificationsSubUpdateProto.getSubscriptionId(), notificationsSubscriptionUpdate, callback);
         } else {
             throwNotHandled(msg, callback);
         }
@@ -468,6 +479,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             subscriptionManagerService.addSubscription(TbSubscriptionUtils.fromProto(msg.getTelemetrySub()), callback);
         } else if (msg.hasAlarmSub()) {
             subscriptionManagerService.addSubscription(TbSubscriptionUtils.fromProto(msg.getAlarmSub()), callback);
+        } else if (msg.hasNotificationsSub()) {
+            subscriptionManagerService.addSubscription(TbSubscriptionUtils.fromProto(msg.getNotificationsSub()), callback);
         } else if (msg.hasSubClose()) {
             TbSubscriptionCloseProto closeProto = msg.getSubClose();
             subscriptionManagerService.cancelSubscription(closeProto.getSessionId(), closeProto.getSubscriptionId(), callback);
@@ -507,6 +520,18 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                     TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
                     TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
                     JacksonUtil.fromString(proto.getAlarm(), Alarm.class), callback);
+        } else if (msg.hasNotificationUpdate()) {
+            TransportProtos.NotificationUpdateProto notificationUpdateProto = msg.getNotificationUpdate();
+            TenantId tenantId = TenantId.fromUUID(new UUID(notificationUpdateProto.getTenantIdMSB(), notificationUpdateProto.getTenantIdLSB()));
+            UserId recipientId = new UserId(new UUID(notificationUpdateProto.getRecipientIdMSB(), notificationUpdateProto.getRecipientIdLSB()));
+            Notification notification = JacksonUtil.fromString(notificationUpdateProto.getNotification(), Notification.class);
+            subscriptionManagerService.onNotificationUpdate(tenantId, recipientId, notification, callback);
+        } else if (msg.hasNotificationRequestDelete()) {
+            TransportProtos.NotificationRequestDeleteProto notificationRequestDeleteProto = msg.getNotificationRequestDelete();
+            TenantId tenantId = TenantId.fromUUID(new UUID(notificationRequestDeleteProto.getTenantIdMSB(), notificationRequestDeleteProto.getTenantIdLSB()));
+            NotificationRequestId notificationRequestId = new NotificationRequestId(new UUID(
+                    notificationRequestDeleteProto.getNotificationRequestIdMSB(), notificationRequestDeleteProto.getNotificationRequestIdLSB()));
+            subscriptionManagerService.onNotificationRequestDeleted(tenantId, notificationRequestId, callback);
         } else {
             throwNotHandled(msg, callback);
         }

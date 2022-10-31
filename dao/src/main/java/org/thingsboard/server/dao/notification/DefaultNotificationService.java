@@ -19,7 +19,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.id.NotificationId;
+import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
@@ -56,8 +58,19 @@ public class DefaultNotificationService implements NotificationService {
     }
 
     @Override
+    public NotificationRequest findNotificationRequestById(TenantId tenantId, NotificationRequestId id) {
+        return notificationRequestDao.findById(tenantId, id.getId());
+    }
+
+    @Override
     public PageData<NotificationRequest> findNotificationRequestsByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink) {
         return notificationRequestDao.findByTenantIdAndPageLink(tenantId, pageLink);
+    }
+
+    // ON DELETE CASCADE is used: notifications for request are deleted as well
+    @Override
+    public void deleteNotificationRequest(TenantId tenantId, NotificationRequestId id) {
+        notificationRequestDao.removeById(tenantId, id.getId());
     }
 
     @Override
@@ -68,9 +81,11 @@ public class DefaultNotificationService implements NotificationService {
         return notificationDao.save(tenantId, notification);
     }
 
+    @Transactional
     @Override
-    public void updateNotificationStatus(TenantId tenantId, NotificationId notificationId, NotificationStatus status) {
+    public Notification updateNotificationStatus(TenantId tenantId, NotificationId notificationId, NotificationStatus status) {
         notificationDao.updateStatus(tenantId, notificationId, status);
+        return notificationDao.findById(tenantId, notificationId.getId());
     }
 
     @Override
