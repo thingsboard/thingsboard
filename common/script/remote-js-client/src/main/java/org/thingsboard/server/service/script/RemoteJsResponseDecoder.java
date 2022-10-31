@@ -16,9 +16,9 @@
 package org.thingsboard.server.service.script;
 
 import com.google.protobuf.util.JsonFormat;
+import org.thingsboard.server.gen.js.JsInvokeProtos;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.gen.js.JsInvokeProtos;
 import org.thingsboard.server.queue.kafka.TbKafkaDecoder;
 
 import java.io.IOException;

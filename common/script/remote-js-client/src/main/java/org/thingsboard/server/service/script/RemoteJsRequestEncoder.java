@@ -17,8 +17,8 @@ package org.thingsboard.server.service.script;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
-import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.kafka.TbKafkaEncoder;
 
 import java.nio.charset.StandardCharsets;

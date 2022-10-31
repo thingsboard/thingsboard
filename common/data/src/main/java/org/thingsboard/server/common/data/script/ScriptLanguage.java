@@ -13,16 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.usagestats;
+package org.thingsboard.server.common.data.script;
 
-import org.thingsboard.server.common.data.ApiUsageRecordKey;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.TenantId;
-
-public interface TbApiUsageClient {
-
-    void report(TenantId tenantId, CustomerId customerId, ApiUsageRecordKey key, long value);
-
-    void report(TenantId tenantId, CustomerId customerId, ApiUsageRecordKey key);
-
+public enum ScriptLanguage {
+    JS, MVEL
 }

@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.script;
+package org.thingsboard.script.api.js;
 
-import java.util.List;
+import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.script.api.TbScriptExecutionTask;
 
-/**
- * Created by ashvayka on 25.09.18.
- */
-public class JsInvokeRequest {
+public class JsScriptExecutionTask extends TbScriptExecutionTask {
 
-    private String scriptId;
-    private String scriptBody;
-    private List<String> args;
+    public JsScriptExecutionTask(ListenableFuture<Object> resultFuture) {
+        super(resultFuture);
+    }
 
+    @Override
+    public void stop() {
+        // do nothing
+    }
 }

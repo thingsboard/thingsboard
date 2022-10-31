@@ -118,6 +118,14 @@ public class JacksonUtil {
         }
     }
 
+    public static <T> T treeToValue(JsonNode node, Class<T> clazz) {
+        try {
+            return OBJECT_MAPPER.treeToValue(node, clazz);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Can't convert value: " + node.toString(), e);
+        }
+    }
+
     public static JsonNode toJsonNode(String value) {
         if (value == null || value.isEmpty()) {
             return null;
@@ -126,14 +134,6 @@ public class JacksonUtil {
             return OBJECT_MAPPER.readTree(value);
         } catch (IOException e) {
             throw new IllegalArgumentException(e);
-        }
-    }
-
-    public static <T> T treeToValue(JsonNode node, Class<T> clazz) {
-        try {
-            return OBJECT_MAPPER.treeToValue(node, clazz);
-        } catch (IOException e) {
-            throw new IllegalArgumentException("Can't convert value: " + node.toString(), e);
         }
     }
 

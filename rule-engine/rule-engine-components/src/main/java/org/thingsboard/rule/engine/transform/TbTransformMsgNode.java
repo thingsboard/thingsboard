@@ -22,7 +22,9 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.List;
@@ -40,23 +42,25 @@ import java.util.List;
                 "<code>{ msg: <i style=\"color: #666;\">new payload</i>,<br/>&nbsp&nbsp&nbspmetadata: <i style=\"color: #666;\">new metadata</i>,<br/>&nbsp&nbsp&nbspmsgType: <i style=\"color: #666;\">new msgType</i> }</code><br/>" +
                 "All fields in resulting object are optional and will be taken from original message if not specified.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbTransformationNodeScriptConfig")
+        configDirective = "tbTransformationNodeScriptConfig"
+)
 public class TbTransformMsgNode extends TbAbstractTransformNode {
 
     private TbTransformMsgNodeConfiguration config;
-    private ScriptEngine jsEngine;
+    private ScriptEngine scriptEngine;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbTransformMsgNodeConfiguration.class);
-        this.jsEngine = ctx.createJsScriptEngine(config.getJsScript());
+        scriptEngine = ctx.createScriptEngine(config.getScriptLang(),
+                ScriptLanguage.MVEL.equals(config.getScriptLang()) ? config.getMvelScript() : config.getJsScript());
         setConfig(config);
     }
 
     @Override
     protected ListenableFuture<List<TbMsg>> transform(TbContext ctx, TbMsg msg) {
         ctx.logJsEvalRequest();
-        return jsEngine.executeUpdateAsync(msg);
+        return scriptEngine.executeUpdateAsync(msg);
     }
 
     @Override
@@ -73,8 +77,8 @@ public class TbTransformMsgNode extends TbAbstractTransformNode {
 
     @Override
     public void destroy() {
-        if (jsEngine != null) {
-            jsEngine.destroy();
+        if (scriptEngine != null) {
+            scriptEngine.destroy();
         }
     }
 }

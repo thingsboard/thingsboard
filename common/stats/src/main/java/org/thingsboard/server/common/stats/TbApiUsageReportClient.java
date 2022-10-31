@@ -13,8 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.script;
+package org.thingsboard.server.common.stats;
 
-public enum JsScriptType {
-    RULE_NODE_SCRIPT
+import org.thingsboard.server.common.data.ApiUsageRecordKey;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.TenantId;
+
+public interface TbApiUsageReportClient {
+
+    void report(TenantId tenantId, CustomerId customerId, ApiUsageRecordKey key, long value);
+
+    void report(TenantId tenantId, CustomerId customerId, ApiUsageRecordKey key);
+
 }

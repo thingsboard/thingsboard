@@ -77,6 +77,7 @@
         <zookeeper.version>3.5.5</zookeeper.version>
         <protobuf.version>3.17.2</protobuf.version>
         <grpc.version>1.42.1</grpc.version>
+        <mvel.version>2.4.22TB</mvel.version>
         <lombok.version>1.18.18</lombok.version>
         <paho.client.version>1.2.4</paho.client.version>
         <netty.version>4.1.75.Final</netty.version>
@@ -970,6 +971,16 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.thingsboard.common.script</groupId>
+                <artifactId>script-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.common.script</groupId>
+                <artifactId>remote-js-client</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.thingsboard</groupId>
                 <artifactId>tools</artifactId>
                 <version>${project.version}</version>
@@ -1562,6 +1573,11 @@
                 <groupId>io.grpc</groupId>
                 <artifactId>grpc-api</artifactId>
                 <version>${grpc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard</groupId>
+                <artifactId>mvel2</artifactId>
+                <version>${mvel.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.springframework</groupId>

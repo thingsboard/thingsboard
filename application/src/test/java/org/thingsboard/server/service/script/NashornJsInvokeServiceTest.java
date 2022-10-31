@@ -15,16 +15,22 @@
  */
 package org.thingsboard.server.service.script;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.TestPropertySource;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.script.api.ScriptType;
+import org.thingsboard.script.api.js.NashornJsInvokeService;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -35,13 +41,37 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
         "js.max_result_size=50",
         "js.local.max_errors=2"
 })
-class LocalJsInvokeServiceTest extends AbstractControllerTest {
+class NashornJsInvokeServiceTest extends AbstractControllerTest {
 
     @Autowired
-    private NashornJsInvokeService jsInvokeService;
+    private NashornJsInvokeService invokeService;
 
     @Value("${js.local.max_errors}")
     private int maxJsErrors;
+
+    @Test
+    void givenSimpleScriptTestPerformance() throws ExecutionException, InterruptedException {
+        int iterations = 1000;
+        UUID scriptId = evalScript("return msg.temperature > 20");
+        // warmup
+        ObjectNode msg = JacksonUtil.newObjectNode();
+        for (int i = 0; i < 100; i++) {
+            msg.put("temperature", i);
+            boolean expected = i > 20;
+            boolean result = Boolean.valueOf(invokeScript(scriptId, JacksonUtil.toString(msg)));
+            Assert.assertEquals(expected, result);
+        }
+        long startTs = System.currentTimeMillis();
+        for (int i = 0; i < iterations; i++) {
+            msg.put("temperature", i);
+            boolean expected = i > 20;
+            boolean result = Boolean.valueOf(invokeScript(scriptId, JacksonUtil.toString(msg)));
+            Assert.assertEquals(expected, result);
+        }
+        long duration = System.currentTimeMillis() - startTs;
+        System.out.println(iterations + " invocations took: " + duration + "ms");
+        Assert.assertTrue(duration < TimeUnit.MINUTES.toMillis(1));
+    }
 
     @Test
     void givenTooBigScriptForEval_thenReturnError() {
@@ -86,11 +116,11 @@ class LocalJsInvokeServiceTest extends AbstractControllerTest {
     }
 
     private UUID evalScript(String script) throws ExecutionException, InterruptedException {
-        return jsInvokeService.eval(TenantId.SYS_TENANT_ID, JsScriptType.RULE_NODE_SCRIPT, script).get();
+        return invokeService.eval(TenantId.SYS_TENANT_ID, ScriptType.RULE_NODE_SCRIPT, script).get();
     }
 
     private String invokeScript(UUID scriptId, String msg) throws ExecutionException, InterruptedException {
-        return jsInvokeService.invokeFunction(TenantId.SYS_TENANT_ID, null, scriptId, msg, "{}", "POST_TELEMETRY_REQUEST").get();
+        return invokeService.invokeScript(TenantId.SYS_TENANT_ID, null, scriptId, msg, "{}", "POST_TELEMETRY_REQUEST").get().toString();
     }
 
 }

@@ -13,17 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.script;
+package org.thingsboard.server.common.stats;
 
-import java.util.List;
+import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.id.TenantId;
 
-/**
- * Created by ashvayka on 25.09.18.
- */
-public class JsInvokeResponse {
+public interface TbApiUsageStateClient {
 
-    private String scriptId;
-    private String scriptBody;
-    private List<String> args;
+    ApiUsageState getApiUsageState(TenantId tenantId);
 
 }
