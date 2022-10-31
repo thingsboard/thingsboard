@@ -20,19 +20,18 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportColumnType;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.sync.ie.importing.csv.AbstractBulkImportService;
-import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportColumnType;
 import org.thingsboard.server.service.entitiy.asset.TbAssetService;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.sync.ie.importing.csv.AbstractBulkImportService;
 
 import java.util.Map;
 import java.util.Optional;
@@ -47,7 +46,7 @@ public class AssetBulkImportService extends AbstractBulkImportService<Asset> {
 
     @Override
     protected void setEntityFields(Asset entity, Map<BulkImportColumnType, String> fields) {
-        ObjectNode additionalInfo = (ObjectNode) Optional.ofNullable(entity.getAdditionalInfo()).orElseGet(JacksonUtil::newObjectNode);
+        ObjectNode additionalInfo = getOrCreateAdditionalInfoObj(entity);
         fields.forEach((columnType, value) -> {
             switch (columnType) {
                 case NAME:

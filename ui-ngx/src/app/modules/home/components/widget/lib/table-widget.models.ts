@@ -27,7 +27,7 @@ import { TranslateService } from '@ngx-translate/core';
 
 const tinycolor = tinycolor_;
 
-type ColumnVisibilityOptions = 'visible' | 'hidden';
+type ColumnVisibilityOptions = 'visible' | 'hidden' | 'hidden-mobile';
 
 type ColumnSelectionOptions = 'enabled' | 'disabled';
 
@@ -302,8 +302,9 @@ export function widthStyle(width: string): any {
   return widthStyleObj;
 }
 
-export function getColumnDefaultVisibility(keySettings: TableWidgetDataKeySettings): boolean {
-  return !(isDefined(keySettings.defaultColumnVisibility) && keySettings.defaultColumnVisibility === 'hidden');
+export function getColumnDefaultVisibility(keySettings: TableWidgetDataKeySettings, ctx?: WidgetContext): boolean {
+  return !(isDefined(keySettings.defaultColumnVisibility) && (keySettings.defaultColumnVisibility === 'hidden' ||
+      (ctx && ctx.isMobile && keySettings.defaultColumnVisibility === 'hidden-mobile')));
 }
 
 export function getColumnSelectionAvailability(keySettings: TableWidgetDataKeySettings): boolean {

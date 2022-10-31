@@ -37,12 +37,16 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import java.util.UUID;
+
+import static org.thingsboard.server.service.security.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository.PREV_URI_COOKIE_NAME;
 
 @Slf4j
 @Component(value = "oauth2AuthenticationSuccessHandler")
@@ -85,6 +89,11 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             baseUrl = callbackUrlScheme + ":";
         } else {
             baseUrl = this.systemSecurityService.getBaseUrl(TenantId.SYS_TENANT_ID, new CustomerId(EntityId.NULL_UUID), request);
+            Optional<Cookie> prevUrlOpt = CookieUtils.getCookie(request, PREV_URI_COOKIE_NAME);
+            if (prevUrlOpt.isPresent()) {
+                baseUrl += prevUrlOpt.get().getValue();
+                CookieUtils.deleteCookie(request, response, PREV_URI_COOKIE_NAME);
+            }
         }
         try {
             OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) authentication;
