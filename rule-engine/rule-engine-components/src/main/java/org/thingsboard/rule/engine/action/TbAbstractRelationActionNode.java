@@ -258,7 +258,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                     break;
                 case USER:
                     UserService userService = ctx.getUserService();
-                    User user = userService.findUserByEmail(ctx.getTenantId(), entitykey.getEntityName());
+                    User user = userService.findUserByTenantIdAndEmail(ctx.getTenantId(), entitykey.getEntityName());
                     if (user != null) {
                         targetEntity.setEntityId(user.getId());
                     }
