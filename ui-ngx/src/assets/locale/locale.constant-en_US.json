@@ -3692,6 +3692,7 @@
         "display-legend": "Display legend",
         "datasources": "Datasources",
         "maximum-datasources": "Maximum { count, plural, 1 {1 datasource is allowed.} other {# datasources are allowed} }",
+        "timeseries-key-error": "At least one timeseries data key should be specified",
         "datasource-type": "Type",
         "datasource-parameters": "Parameters",
         "remove-datasource": "Remove datasource",
