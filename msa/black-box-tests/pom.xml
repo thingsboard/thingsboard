@@ -145,6 +145,14 @@
             <artifactId>snmp</artifactId>
             <type>docker-info</type>
         </dependency>
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-java</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.github.bonigarcia</groupId>
+            <artifactId>webdrivermanager</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
