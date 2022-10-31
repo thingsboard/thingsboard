@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.notification;
 
 import org.thingsboard.server.common.data.id.NotificationId;
+import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
@@ -28,12 +29,16 @@ public interface NotificationService {
 
     NotificationRequest createNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest);
 
+    NotificationRequest findNotificationRequestById(TenantId tenantId, NotificationRequestId id);
+
     PageData<NotificationRequest> findNotificationRequestsByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink);
+
+    void deleteNotificationRequest(TenantId tenantId, NotificationRequestId id);
 
 
     Notification createNotification(TenantId tenantId, Notification notification);
 
-    void updateNotificationStatus(TenantId tenantId, NotificationId notificationId, NotificationStatus status);
+    Notification updateNotificationStatus(TenantId tenantId, NotificationId notificationId, NotificationStatus status);
 
     PageData<Notification> findNotificationsByUserIdAndReadStatusAndPageLink(TenantId tenantId, UserId userId, boolean unreadOnly, PageLink pageLink);
 

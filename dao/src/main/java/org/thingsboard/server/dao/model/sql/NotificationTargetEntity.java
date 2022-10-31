@@ -42,14 +42,14 @@ import java.util.UUID;
 @Table(name = ModelConstants.NOTIFICATION_TARGET_TABLE_NAME)
 public class NotificationTargetEntity extends BaseSqlEntity<NotificationTarget> {
 
-    @Column(name = ModelConstants.TENANT_ID_PROPERTY)
+    @Column(name = ModelConstants.TENANT_ID_PROPERTY, nullable = false)
     private UUID tenantId;
 
-    @Column(name = ModelConstants.NAME_PROPERTY)
+    @Column(name = ModelConstants.NAME_PROPERTY, nullable = false)
     private String name;
 
     @Type(type = "json")
-    @Column(name = ModelConstants.NOTIFICATION_TARGET_CONFIGURATION_PROPERTY)
+    @Column(name = ModelConstants.NOTIFICATION_TARGET_CONFIGURATION_PROPERTY, nullable = false)
     private JsonNode configuration;
 
     public NotificationTargetEntity() {}

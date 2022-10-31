@@ -655,7 +655,9 @@ public class ModelConstants {
     public static final String NOTIFICATION_TABLE_NAME = "notification";
     public static final String NOTIFICATION_REQUEST_ID_PROPERTY = "request_id";
     public static final String NOTIFICATION_RECIPIENT_ID_PROPERTY = "recipient_id";
+    public static final String NOTIFICATION_REASON_PROPERTY = "reason";
     public static final String NOTIFICATION_TEXT_PROPERTY = "text";
+    public static final String NOTIFICATION_INFO_PROPERTY = "info";
     public static final String NOTIFICATION_SEVERITY_PROPERTY = "severity";
     public static final String NOTIFICATION_STATUS_PROPERTY = "status";
 

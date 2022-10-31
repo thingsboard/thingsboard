@@ -34,7 +34,9 @@ public class Notification extends SearchTextBased<NotificationId> {
 
     private NotificationRequestId requestId;
     private UserId recipientId;
+    private String reason;
     private String text;
+    private NotificationInfo info;
     private NotificationSeverity severity;
     private NotificationStatus status;
 //    private UserId senderId;

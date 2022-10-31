@@ -15,7 +15,10 @@
  */
 package org.thingsboard.server.dao.model;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.UUIDBased;
 
 import javax.persistence.Column;
@@ -73,6 +76,18 @@ public abstract class BaseSqlEntity<D> implements BaseEntity<D> {
         } else {
             return null;
         }
+    }
+
+    protected JsonNode toJson(Object value) {
+        if (value != null) {
+            return JacksonUtil.valueToTree(value);
+        } else {
+            return null;
+        }
+    }
+
+    protected <T> T fromJson(JsonNode json) {
+        return JacksonUtil.convertValue(json, new TypeReference<T>() {});
     }
 
 }

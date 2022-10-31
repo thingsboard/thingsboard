@@ -47,16 +47,16 @@ import java.util.UUID;
 @Table(name = ModelConstants.NOTIFICATION_REQUEST_TABLE_NAME)
 public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest> {
 
-    @Column(name = ModelConstants.TENANT_ID_PROPERTY)
+    @Column(name = ModelConstants.TENANT_ID_PROPERTY, nullable = false)
     private UUID tenantId;
 
-    @Column(name = ModelConstants.NOTIFICATION_REQUEST_TARGET_ID_PROPERTY)
+    @Column(name = ModelConstants.NOTIFICATION_REQUEST_TARGET_ID_PROPERTY, nullable = false)
     private UUID targetId;
 
-    @Column(name = ModelConstants.NOTIFICATION_REQUEST_NOTIFICATION_REASON_PROPERTY)
+    @Column(name = ModelConstants.NOTIFICATION_REQUEST_NOTIFICATION_REASON_PROPERTY, nullable = false)
     private String notificationReason;
 
-    @Column(name = ModelConstants.NOTIFICATION_REQUEST_TEXT_TEMPLATE_PROPERTY)
+    @Column(name = ModelConstants.NOTIFICATION_REQUEST_TEXT_TEMPLATE_PROPERTY, nullable = false)
     private String textTemplate;
 
     @Type(type = "json")
@@ -83,9 +83,9 @@ public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest
         setTargetId(getUuid(notificationRequest.getTargetId()));
         setNotificationReason(notificationRequest.getNotificationReason());
         setTextTemplate(notificationRequest.getTextTemplate());
-        setNotificationInfo(JacksonUtil.valueToTree(notificationRequest.getNotificationInfo()));
+        setNotificationInfo(toJson(notificationRequest.getNotificationInfo()));
         setNotificationSeverity(notificationRequest.getNotificationSeverity());
-        setAdditionalConfig(JacksonUtil.valueToTree(notificationRequest.getAdditionalConfig()));
+        setAdditionalConfig(toJson(notificationRequest.getAdditionalConfig()));
         setSenderId(getUuid(notificationRequest.getSenderId()));
     }
 
@@ -98,9 +98,9 @@ public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest
         notificationRequest.setTargetId(createId(targetId, NotificationTargetId::new));
         notificationRequest.setNotificationReason(notificationReason);
         notificationRequest.setTextTemplate(textTemplate);
-        notificationRequest.setNotificationInfo(JacksonUtil.treeToValue(notificationInfo, NotificationInfo.class));
+        notificationRequest.setNotificationInfo(fromJson(notificationInfo));
         notificationRequest.setNotificationSeverity(notificationSeverity);
-        notificationRequest.setAdditionalConfig(JacksonUtil.treeToValue(additionalConfig, NotificationRequestConfig.class));
+        notificationRequest.setAdditionalConfig(fromJson(additionalConfig));
         notificationRequest.setSenderId(createId(senderId, UserId::new));
         return notificationRequest;
     }

@@ -18,9 +18,12 @@ package org.thingsboard.server.common.data.notification.targets;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.UserId;
 
+import javax.validation.constraints.NotNull;
+
 @Data
 public class SingleUserNotificationTargetConfig implements NotificationTargetConfig {
 
+    @NotNull
     private UserId userId;
 
     @Override

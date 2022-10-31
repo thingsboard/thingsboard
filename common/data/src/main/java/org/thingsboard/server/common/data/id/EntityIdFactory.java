@@ -81,6 +81,10 @@ public class EntityIdFactory {
                 return new RpcId(uuid);
             case QUEUE:
                 return new QueueId(uuid);
+            case NOTIFICATION_TARGET:
+                return new NotificationTargetId(uuid);
+            case NOTIFICATION_REQUEST:
+                return new NotificationRequestId(uuid);
         }
         throw new IllegalArgumentException("EntityType " + type + " is not supported!");
     }

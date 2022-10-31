@@ -776,3 +776,38 @@ CREATE TABLE IF NOT EXISTS user_auth_settings (
     user_id uuid UNIQUE NOT NULL CONSTRAINT fk_user_auth_settings_user_id REFERENCES tb_user(id),
     two_fa_settings varchar
 );
+
+
+CREATE TABLE IF NOT EXISTS notification_target (
+    id UUID NOT NULL CONSTRAINT notification_target_pkey PRIMARY KEY,
+    created_time BIGINT NOT NULL,
+    tenant_id UUID NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    configuration varchar(1000) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS notification_request (
+    id UUID NOT NULL CONSTRAINT notification_request_pkey PRIMARY KEY,
+    created_time BIGINT NOT NULL,
+    tenant_id UUID NOT NULL,
+    target_id UUID NOT NULL CONSTRAINT fk_notification_request_target_id REFERENCES notification_target(id),
+    notification_reason VARCHAR NOT NULL,
+    text_template VARCHAR NOT NULL,
+    notification_info VARCHAR(1000),
+    notification_severity VARCHAR(32),
+    additional_config VARCHAR(1000),
+    sender_id UUID
+);
+
+CREATE TABLE IF NOT EXISTS notification (
+    id UUID NOT NULL,
+    created_time BIGINT NOT NULL,
+    request_id UUID NOT NULL CONSTRAINT fk_notification_request_id
+        REFERENCES notification_request(id) ON DELETE CASCADE,
+    recipient_id UUID NOT NULL,
+    reason VARCHAR NOT NULL,
+    text VARCHAR NOT NULL,
+    info VARCHAR(1000),
+    severity VARCHAR(32),
+    status VARCHAR(32)
+) PARTITION BY RANGE (created_time);

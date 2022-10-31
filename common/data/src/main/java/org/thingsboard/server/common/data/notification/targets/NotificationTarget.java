@@ -23,12 +23,20 @@ import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class NotificationTarget extends BaseData<NotificationTargetId> implements HasTenantId, HasName {
 
+    @NotNull
     private TenantId tenantId;
+    @NotBlank
     private String name;
+    @NotNull
+    @Valid
     private NotificationTargetConfig configuration;
 
 }

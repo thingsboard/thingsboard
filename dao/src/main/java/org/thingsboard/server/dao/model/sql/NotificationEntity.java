@@ -15,16 +15,22 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
+import org.thingsboard.server.common.data.notification.NotificationInfo;
 import org.thingsboard.server.common.data.notification.NotificationSeverity;
 import org.thingsboard.server.common.data.notification.NotificationStatus;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -36,17 +42,25 @@ import java.util.UUID;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
+@TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.NOTIFICATION_TABLE_NAME)
 public class NotificationEntity extends BaseSqlEntity<Notification> {
 
-    @Column(name = ModelConstants.NOTIFICATION_REQUEST_ID_PROPERTY)
+    @Column(name = ModelConstants.NOTIFICATION_REQUEST_ID_PROPERTY, nullable = false)
     private UUID requestId;
 
-    @Column(name = ModelConstants.NOTIFICATION_RECIPIENT_ID_PROPERTY)
+    @Column(name = ModelConstants.NOTIFICATION_RECIPIENT_ID_PROPERTY, nullable = false)
     private UUID recipientId;
 
-    @Column(name = ModelConstants.NOTIFICATION_TEXT_PROPERTY)
+    @Column(name = ModelConstants.NOTIFICATION_REASON_PROPERTY, nullable = false)
+    private String reason;
+
+    @Column(name = ModelConstants.NOTIFICATION_TEXT_PROPERTY, nullable = false)
     private String text;
+
+    @Type(type = "json")
+    @Column(name = ModelConstants.NOTIFICATION_INFO_PROPERTY)
+    private JsonNode info;
 
     @Column(name = ModelConstants.NOTIFICATION_SEVERITY_PROPERTY)
     private NotificationSeverity severity;
@@ -62,7 +76,12 @@ public class NotificationEntity extends BaseSqlEntity<Notification> {
         setCreatedTime(notification.getCreatedTime());
         setRequestId(getUuid(notification.getRequestId()));
         setRecipientId(getUuid(notification.getRecipientId()));
+        setReason(notification.getReason());
         setText(notification.getText());
+        if (notification.getInfo() != null) {
+            setInfo(JacksonUtil.valueToTree(notification.getInfo()));
+        }
+        setSeverity(notification.getSeverity());
         setStatus(notification.getStatus());
     }
 
@@ -73,7 +92,12 @@ public class NotificationEntity extends BaseSqlEntity<Notification> {
         notification.setCreatedTime(createdTime);
         notification.setRequestId(createId(requestId, NotificationRequestId::new));
         notification.setRecipientId(createId(recipientId, UserId::new));
+        notification.setReason(reason);
         notification.setText(text);
+        if (info != null) {
+            notification.setInfo(JacksonUtil.treeToValue(info, NotificationInfo.class));
+        }
+        notification.setSeverity(severity);
         notification.setStatus(status);
         return notification;
     }

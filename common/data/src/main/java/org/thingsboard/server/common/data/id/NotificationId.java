@@ -16,12 +16,13 @@
 package org.thingsboard.server.common.data.id;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.UUID;
 
 public class NotificationId extends UUIDBased {
     @JsonCreator
-    public NotificationId(UUID id) {
+    public NotificationId(@JsonProperty("id") UUID id) {
         super(id);
     }
 }
