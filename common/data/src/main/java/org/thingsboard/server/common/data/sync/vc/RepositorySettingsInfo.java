@@ -13,32 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  mat-card.repository-settings {
-    margin: 8px;
-  }
-  mat-checkbox {
-    padding-bottom: 16px;
-  }
-  .fields-group {
-    padding: 0 16px 8px;
-    margin-bottom: 10px;
-    border: 1px groove rgba(0, 0, 0, .25);
-    border-radius: 4px;
+package org.thingsboard.server.common.data.sync.vc;
 
-    legend {
-      color: rgba(0, 0, 0, .7);
-      width: fit-content;
-    }
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-    legend + * {
-      display: block;
-      margin-top: 16px;
-    }
-  }
-}
-:host ::ng-deep {
-  .mat-checkbox-layout {
-    white-space: normal !important;
-  }
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class RepositorySettingsInfo {
+    private boolean configured;
+    private Boolean readOnly;
 }
