@@ -140,9 +140,10 @@ export default abstract class LeafletMap {
         if (markerClusteringSettings.useIconCreateFunction && markerClusteringSettings.clusterMarkerFunction) {
           this.clusteringSettings.iconCreateFunction = (cluster) => {
             const childCount = cluster.getChildCount();
+            const formattedData = cluster.getAllChildMarkers().map(clusterMarker => clusterMarker.options.tbMarkerData);
             const markerColor = markerClusteringSettings.clusterMarkerFunction
               ? safeExecute(markerClusteringSettings.parsedClusterMarkerFunction,
-                [cluster.getAllChildMarkers(), childCount])
+                [formattedData, childCount])
               : null;
             if (isDefinedAndNotNull(markerColor) && tinycolor(markerColor).isValid()) {
               const parsedColor = tinycolor(markerColor);

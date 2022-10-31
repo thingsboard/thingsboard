@@ -10,10 +10,11 @@ A JavaScript function used to compute clustering marker color.
 **Parameters:**
 
 <ul>
-  <li><b>data:</b> Array<<code><a href="https://github.com/thingsboard/thingsboard/blob/5bb6403407aa4898084832d6698aa9ea6d484889/ui-ngx/src/app/modules/home/components/widget/lib/maps/map-models.ts#L108" target="_blank">FormattedData</a></code>> - A <a href="https://github.com/thingsboard/thingsboard/blob/5bb6403407aa4898084832d6698aa9ea6d484889/ui-ngx/src/app/modules/home/components/widget/lib/maps/map-models.ts#L108" target="_blank">FormattedData</a> object associated with marker or data point of the route.<br/>
+  <li><b>data:</b> <code><a href="https://github.com/thingsboard/thingsboard/blob/5bb6403407aa4898084832d6698aa9ea6d484889/ui-ngx/src/app/modules/home/components/widget/lib/maps/map-models.ts#L108" target="_blank">FormattedData[]</a></code>
+    - the array of total markers contained within each cluster.<br/>
      Represents basic entity properties (ex. <code>entityId</code>, <code>entityName</code>)<br/>and provides access to other entity attributes/timeseries declared in widget datasource configuration.
   </li>
-  <li><b>childCount:</b> <code>number</code> - number of markers in this cluster
+  <li><b>childCount:</b> <code>number</code> - the total number of markers contained within that cluster
   </li>
 </ul>
 
@@ -36,7 +37,7 @@ Calculate color depending on temperature telemetry value:
 ```javascript
 let customColor;
 for (let markerData of data) {
-  if (markerData.options.tbMarkerData.temperature > 40) {
+  if (markerData.temperature > 40) {
     customColor = 'red'
   }
 }
