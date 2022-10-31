@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<tb-entity-subtype-select
-  [showLabel]="true"
-  [entityType]="entityType.ASSET"
-  [ngModel]="entitiesTableConfig.componentsData.assetType"
-  (ngModelChange)="assetTypeChanged($event)">
-</tb-entity-subtype-select>
+<tb-asset-profile-autocomplete
+  [ngModel]="entitiesTableConfig.componentsData.assetProfileId"
+  (ngModelChange)="assetProfileChanged($event)"
+  [displayAllOnEmpty]="true"
+  [editProfileEnabled]="false">
+</tb-asset-profile-autocomplete>

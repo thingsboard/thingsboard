@@ -76,7 +76,7 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
 
     @Override
     protected void setEntityFields(Device entity, Map<BulkImportColumnType, String> fields) {
-        ObjectNode additionalInfo = (ObjectNode) Optional.ofNullable(entity.getAdditionalInfo()).orElseGet(JacksonUtil::newObjectNode);
+        ObjectNode additionalInfo = getOrCreateAdditionalInfoObj(entity);
         fields.forEach((columnType, value) -> {
             switch (columnType) {
                 case NAME:

@@ -28,6 +28,7 @@ import {
   DataSetHolder,
   Datasource,
   DatasourceData,
+  datasourcesHasAggregation,
   DatasourceType,
   LegendConfig,
   LegendData,
@@ -95,6 +96,7 @@ export class WidgetSubscription implements IWidgetSubscription {
   timezone: string;
   subscriptionTimewindow: SubscriptionTimewindow;
   useDashboardTimewindow: boolean;
+  useTimewindow: boolean;
   onTimewindowChangeFunction: (timewindow: Timewindow) => Timewindow;
   tsOffset = 0;
 
@@ -201,6 +203,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.originalTimewindow = null;
       this.timeWindow = {};
       this.useDashboardTimewindow = options.useDashboardTimewindow;
+      this.useTimewindow = true;
       if (this.useDashboardTimewindow) {
         this.timeWindowConfig = deepClone(options.dashboardTimewindow);
       } else {
@@ -247,14 +250,15 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.useDashboardTimewindow = options.useDashboardTimewindow;
       this.onTimewindowChangeFunction = options.onTimewindowChangeFunction || ((timewindow) => timewindow);
       this.stateData = options.stateData;
-      if (this.type === widgetType.latest) {
-        this.timezone = options.dashboardTimewindow.timezone;
-        this.updateTsOffset();
-      }
+      this.useTimewindow = this.type === widgetType.timeseries || datasourcesHasAggregation(this.configuredDatasources);
       if (this.useDashboardTimewindow) {
         this.timeWindowConfig = deepClone(options.dashboardTimewindow);
       } else {
         this.timeWindowConfig = deepClone(options.timeWindowConfig);
+      }
+      if (this.type === widgetType.latest) {
+        this.timezone = this.useTimewindow ? this.timeWindowConfig.timezone : options.dashboardTimewindow.timezone;
+        this.updateTsOffset();
       }
 
       this.subscriptionTimewindow = null;
@@ -445,6 +449,7 @@ export class WidgetSubscription implements IWidgetSubscription {
     const resolveResultObservables = this.configuredDatasources.map((datasource, index) => {
       const listener: EntityDataListener = {
         subscriptionType: this.type,
+        useTimewindow: this.useTimewindow,
         configDatasource: datasource,
         configDatasourceIndex: index,
         dataLoaded: (pageData, data1, datasourceIndex, pageLink) => {
@@ -628,21 +633,30 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   onDashboardTimewindowChanged(newDashboardTimewindow: Timewindow) {
-    if (this.type === widgetType.timeseries || this.type === widgetType.alarm) {
+    let doUpdate = false;
+    let isTimewindowTypeChanged = false;
+    if (this.useTimewindow) {
       if (this.useDashboardTimewindow) {
+        if (this.type === widgetType.latest) {
+          if (newDashboardTimewindow && this.timezone !== newDashboardTimewindow.timezone) {
+            this.timezone = newDashboardTimewindow.timezone;
+            doUpdate = this.updateTsOffset();
+          }
+        }
         if (!isEqual(this.timeWindowConfig, newDashboardTimewindow) && newDashboardTimewindow) {
-          const isTimewindowTypeChanged = timewindowTypeChanged(this.timeWindowConfig, newDashboardTimewindow);
+          isTimewindowTypeChanged = timewindowTypeChanged(this.timeWindowConfig, newDashboardTimewindow);
           this.timeWindowConfig = deepClone(newDashboardTimewindow);
-          this.update(isTimewindowTypeChanged);
+          doUpdate = true;
         }
       }
     } else if (this.type === widgetType.latest) {
       if (newDashboardTimewindow && this.timezone !== newDashboardTimewindow.timezone) {
         this.timezone = newDashboardTimewindow.timezone;
-        if (this.updateTsOffset()) {
-          this.update();
-        }
+        doUpdate = this.updateTsOffset();
       }
+    }
+    if (doUpdate) {
+      this.update(isTimewindowTypeChanged);
     }
   }
 
@@ -662,6 +676,12 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   updateTimewindowConfig(newTimewindow: Timewindow): void {
     if (!this.useDashboardTimewindow) {
+      if (this.type === widgetType.latest) {
+        if (newTimewindow && this.timezone !== newTimewindow.timezone) {
+          this.timezone = newTimewindow.timezone;
+          this.updateTsOffset();
+        }
+      }
       const isTimewindowTypeChanged = timewindowTypeChanged(this.timeWindowConfig, newTimewindow);
       this.timeWindowConfig = newTimewindow;
       this.update(isTimewindowTypeChanged);
@@ -876,11 +896,12 @@ export class WidgetSubscription implements IWidgetSubscription {
     }
     const datasource = this.configuredDatasources[datasourceIndex];
     if (datasource) {
-      if (this.type === widgetType.timeseries && this.timeWindowConfig) {
+      if (this.useTimewindow && this.timeWindowConfig) {
         this.updateRealtimeSubscription();
       }
       entityDataListener = {
         subscriptionType: this.type,
+        useTimewindow: this.useTimewindow,
         configDatasource: datasource,
         configDatasourceIndex: datasourceIndex,
         subscriptionTimewindow: this.subscriptionTimewindow,
@@ -942,7 +963,7 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   private updateDataTimewindow() {
     if (!this.hasDataPageLink) {
-      if (this.type === widgetType.timeseries && this.timeWindowConfig) {
+      if (this.useTimewindow && this.timeWindowConfig) {
         this.updateRealtimeSubscription();
         if (this.comparisonEnabled) {
           this.updateSubscriptionForComparison();
@@ -954,11 +975,11 @@ export class WidgetSubscription implements IWidgetSubscription {
   private dataSubscribe() {
     this.updateDataTimewindow();
     if (!this.hasDataPageLink) {
-      if (this.type === widgetType.timeseries && this.timeWindowConfig && this.subscriptionTimewindow.fixedWindow) {
+      if (this.useTimewindow && this.timeWindowConfig && this.subscriptionTimewindow.fixedWindow) {
           this.onDataUpdated();
       }
       const forceUpdate = !this.datasources.length;
-      const notifyDataLoaded = !this.entityDataListeners.filter((listener) => listener.subscription ? true : false).length;
+      const notifyDataLoaded = !this.entityDataListeners.filter((listener) => !!listener.subscription).length;
       this.entityDataListeners.forEach((listener) => {
         if (this.comparisonEnabled && listener.configDatasource.isAdditional) {
           listener.subscriptionTimewindow = this.timewindowForComparison;

@@ -20,11 +20,9 @@ import lombok.ToString;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
-import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
 
 @ToString
-public class EdgeEventUpdateMsg implements TenantAwareMsg, ToAllNodesMsg {
+public class EdgeEventUpdateMsg implements EdgeSessionMsg {
     @Getter
     private final TenantId tenantId;
     @Getter

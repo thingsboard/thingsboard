@@ -39,4 +39,9 @@ public interface AuditLogDao extends Dao<AuditLog> {
     PageData<AuditLog> findAuditLogsByTenantIdAndUserId(UUID tenantId, UserId userId, List<ActionType> actionTypes, TimePageLink pageLink);
 
     PageData<AuditLog> findAuditLogsByTenantId(UUID tenantId, List<ActionType> actionTypes, TimePageLink pageLink);
+
+    void cleanUpAuditLogs(long expTime);
+
+    void migrateAuditLogs();
+
 }
