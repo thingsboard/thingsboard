@@ -795,8 +795,7 @@ CREATE TABLE IF NOT EXISTS notification_request (
     text_template VARCHAR NOT NULL,
     notification_info VARCHAR(1000),
     notification_severity VARCHAR(32),
-    additional_config VARCHAR(1000),
-    sender_id UUID
+    additional_config VARCHAR(1000)
 );
 
 CREATE TABLE IF NOT EXISTS notification (

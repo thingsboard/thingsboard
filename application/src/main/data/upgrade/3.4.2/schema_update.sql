@@ -33,8 +33,7 @@ CREATE TABLE IF NOT EXISTS notification_request (
     text_template VARCHAR NOT NULL,
     notification_info VARCHAR(1000),
     notification_severity VARCHAR(32),
-    additional_config VARCHAR(1000),
-    sender_id UUID
+    additional_config VARCHAR(1000)
 );
 CREATE INDEX IF NOT EXISTS idx_notification_request_tenant_id_and_created_time ON notification_request(tenant_id, created_time DESC);
 

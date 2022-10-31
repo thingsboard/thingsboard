@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.notification;
+package org.thingsboard.server.dao.notification;
 
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
-import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface NotificationProcessingService {
 
-    NotificationRequest processNotificationRequest(SecurityUser user, NotificationRequest notificationRequest) throws ThingsboardException;
+    NotificationRequest processNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest);
 
-    void markNotificationAsRead(SecurityUser user, NotificationId notificationId);
+    void markNotificationAsRead(TenantId tenantId, UserId recipientId, NotificationId notificationId);
 
-    void deleteNotificationRequest(SecurityUser user, NotificationRequestId notificationRequestId);
+    void deleteNotificationRequest(TenantId tenantId, NotificationRequestId notificationRequestId);
 
 }

@@ -51,7 +51,6 @@ public class NotificationRequest extends BaseData<NotificationRequestId> impleme
     private NotificationInfo notificationInfo;
     private NotificationSeverity notificationSeverity;
     private NotificationRequestConfig additionalConfig;
-    private UserId senderId;
 
     public static final String GENERAL_NOTIFICATION_REASON = "General";
     public static final String ALARM_NOTIFICATION_REASON = "Alarm";

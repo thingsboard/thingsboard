@@ -71,9 +71,6 @@ public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest
     @Column(name = ModelConstants.NOTIFICATION_REQUEST_ADDITIONAL_CONFIG_PROPERTY)
     private JsonNode additionalConfig;
 
-    @Column(name = ModelConstants.NOTIFICATION_REQUEST_SENDER_ID_PROPERTY)
-    private UUID senderId;
-
     public NotificationRequestEntity() {}
 
     public NotificationRequestEntity(NotificationRequest notificationRequest) {
@@ -86,7 +83,6 @@ public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest
         setNotificationInfo(toJson(notificationRequest.getNotificationInfo()));
         setNotificationSeverity(notificationRequest.getNotificationSeverity());
         setAdditionalConfig(toJson(notificationRequest.getAdditionalConfig()));
-        setSenderId(getUuid(notificationRequest.getSenderId()));
     }
 
     @Override
@@ -101,7 +97,6 @@ public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest
         notificationRequest.setNotificationInfo(fromJson(notificationInfo));
         notificationRequest.setNotificationSeverity(notificationSeverity);
         notificationRequest.setAdditionalConfig(fromJson(additionalConfig));
-        notificationRequest.setSenderId(createId(senderId, UserId::new));
         return notificationRequest;
     }
 

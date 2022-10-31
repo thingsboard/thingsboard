@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.ws.notification.sub;
+package org.thingsboard.server.service.subscription;
 
 import lombok.Builder;
 import lombok.Getter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.Notification;
-import org.thingsboard.server.service.subscription.TbSubscription;
-import org.thingsboard.server.service.subscription.TbSubscriptionType;
 import org.thingsboard.server.service.ws.notification.cmd.UnreadNotificationsUpdate;
+import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscriptionUpdate;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

@@ -53,6 +53,7 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 import org.thingsboard.server.dao.nosql.TbResultSetFuture;
+import org.thingsboard.server.dao.notification.NotificationProcessingService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -265,6 +266,8 @@ public interface TbContext {
     SmsService getSmsService();
 
     SmsSenderFactory getSmsSenderFactory();
+
+    NotificationProcessingService getNotificationProcessingService();
 
     ScriptEngine createJsScriptEngine(String script, String... argNames);
 

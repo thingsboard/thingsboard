@@ -16,66 +16,84 @@
 package org.thingsboard.server.service.notification;
 
 import com.google.common.base.Strings;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
+import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
 import org.thingsboard.server.common.data.notification.NotificationStatus;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.dao.notification.NotificationProcessingService;
 import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.discovery.NotificationsTopicService;
+import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
-import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.permission.AccessControlService;
-import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
-import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscriptionService;
+import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
+import org.thingsboard.server.service.telemetry.AbstractSubscriptionService;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
-public class DefaultNotificationProcessingService implements NotificationProcessingService {
+public class DefaultNotificationProcessingService extends AbstractSubscriptionService implements NotificationProcessingService {
 
     private final NotificationTargetService notificationTargetService;
     private final NotificationService notificationService;
     private final UserService userService;
-    private final AccessControlService accessControlService;
     private final DbCallbackExecutorService dbCallbackExecutorService;
-    private final NotificationsSubscriptionService notificationsSubscriptionService;
+    private final NotificationsTopicService notificationsTopicService;
+
+    public DefaultNotificationProcessingService(TbClusterService clusterService, PartitionService partitionService,
+                                                NotificationTargetService notificationTargetService,
+                                                NotificationService notificationService, UserService userService,
+                                                DbCallbackExecutorService dbCallbackExecutorService,
+                                                NotificationsTopicService notificationsTopicService) {
+        super(clusterService, partitionService);
+        this.notificationTargetService = notificationTargetService;
+        this.notificationService = notificationService;
+        this.userService = userService;
+        this.dbCallbackExecutorService = dbCallbackExecutorService;
+        this.notificationsTopicService = notificationsTopicService;
+    }
 
     @Override
-    public NotificationRequest processNotificationRequest(SecurityUser user, NotificationRequest notificationRequest) throws ThingsboardException {
-        TenantId tenantId = user.getTenantId();
+    public NotificationRequest processNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest) {
         List<UserId> recipientsIds = notificationTargetService.findRecipientsForNotificationTarget(tenantId, notificationRequest.getTargetId());
         List<User> recipients = new ArrayList<>();
         for (UserId recipientId : recipientsIds) {
             User recipient = userService.findUserById(tenantId, recipientId); // todo: add caching
-            accessControlService.checkPermission(user, Resource.USER, Operation.READ, recipientId, recipient);
             recipients.add(recipient);
         }
 
         notificationRequest.setTenantId(tenantId);
-        notificationRequest.setSenderId(user.getId());
         NotificationRequest savedNotificationRequest = notificationService.createNotificationRequest(tenantId, notificationRequest);
 
-        // todo: delayed sending; check all delayed notification requests on start up, schedule send
+        if (notificationRequest.getAdditionalConfig() != null) {
+            NotificationRequestConfig config = notificationRequest.getAdditionalConfig();
+            // todo: delayed sending; check all delayed notification requests on start up, schedule send
+        }
 
         for (User recipient : recipients) {
             dbCallbackExecutorService.submit(() -> {
                 Notification notification = createNotification(recipient, savedNotificationRequest);
-                notificationsSubscriptionService.onNewNotification(recipient.getTenantId(), recipient.getId(), notification);
+                onNotificationUpdate(recipient.getTenantId(), recipient.getId(), notification);
             });
         }
 
@@ -83,15 +101,15 @@ public class DefaultNotificationProcessingService implements NotificationProcess
     }
 
     @Override
-    public void markNotificationAsRead(SecurityUser user, NotificationId notificationId) {
-        Notification notification = notificationService.updateNotificationStatus(user.getTenantId(), notificationId, NotificationStatus.READ);
-        notificationsSubscriptionService.onNotificationUpdated(user.getTenantId(), user.getId(), notification);
+    public void markNotificationAsRead(TenantId tenantId, UserId recipientId, NotificationId notificationId) {
+        Notification notification = notificationService.updateNotificationStatus(tenantId, notificationId, NotificationStatus.READ);
+        onNotificationUpdate(tenantId, recipientId, notification);
     }
 
     @Override
-    public void deleteNotificationRequest(SecurityUser user, NotificationRequestId notificationRequestId) {
-        notificationService.deleteNotificationRequest(user.getTenantId(), notificationRequestId);
-        notificationsSubscriptionService.onNotificationRequestDeleted(user.getTenantId(), notificationRequestId);
+    public void deleteNotificationRequest(TenantId tenantId, NotificationRequestId notificationRequestId) {
+        notificationService.deleteNotificationRequest(tenantId, notificationRequestId);
+        onNotificationRequestDeleted(tenantId, notificationRequestId);
     }
 
     private Notification createNotification(User recipient, NotificationRequest notificationRequest) {
@@ -104,8 +122,7 @@ public class DefaultNotificationProcessingService implements NotificationProcess
                 .severity(notificationRequest.getNotificationSeverity())
                 .status(NotificationStatus.SENT)
                 .build();
-        notification = notificationService.createNotification(recipient.getTenantId(), notification);
-        return notification;
+        return notificationService.createNotification(recipient.getTenantId(), notification);
     }
 
     private String formatNotificationText(String template, User recipient) {
@@ -117,6 +134,26 @@ public class DefaultNotificationProcessingService implements NotificationProcess
         return TbNodeUtils.processTemplate(template, context);
     }
 
-    // handle markAsRead and deleteNotificationRequest - send UnreadNotificationsUpdate with updated list
+    private void onNotificationUpdate(TenantId tenantId, UserId recipientId, Notification notification) {
+        forwardToSubscriptionManagerServiceOrSendToCore(tenantId, recipientId, subscriptionManagerService -> {
+            subscriptionManagerService.onNotificationUpdate(tenantId, recipientId, notification, TbCallback.EMPTY);
+        }, () -> {
+            return TbSubscriptionUtils.notificationUpdateToProto(tenantId, recipientId, notification);
+        });
+    }
+
+    public void onNotificationRequestDeleted(TenantId tenantId, NotificationRequestId notificationRequestId) {
+        TransportProtos.ToCoreMsg notificationRequestDeletedProto = TbSubscriptionUtils.notificationRequestDeletedToProto(tenantId, notificationRequestId);
+        Set<String> coreServices = new HashSet<>(partitionService.getAllServiceIds(ServiceType.TB_CORE));
+        for (String serviceId : coreServices) {
+            TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, serviceId);
+            clusterService.pushMsgToCore(tpi, UUID.randomUUID(), notificationRequestDeletedProto, null);
+        }
+    }
+
+    @Override
+    protected String getExecutorPrefix() {
+        return "notification";
+    }
 
 }

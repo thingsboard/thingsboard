@@ -62,6 +62,7 @@ public class NotificationEntity extends BaseSqlEntity<Notification> {
     @Column(name = ModelConstants.NOTIFICATION_INFO_PROPERTY)
     private JsonNode info;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = ModelConstants.NOTIFICATION_SEVERITY_PROPERTY)
     private NotificationSeverity severity;
 

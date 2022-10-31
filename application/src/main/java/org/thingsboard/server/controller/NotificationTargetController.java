@@ -61,6 +61,7 @@ public class NotificationTargetController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public NotificationTarget saveNotificationTarget(@RequestBody NotificationTarget notificationTarget,
                                                      @AuthenticationPrincipal SecurityUser user) {
+        // fixme: read permission check for users in target
         return notificationTargetService.saveNotificationTarget(user.getTenantId(), notificationTarget);
     }
 

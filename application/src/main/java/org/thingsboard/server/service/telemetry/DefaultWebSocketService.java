@@ -66,11 +66,12 @@ import org.thingsboard.server.service.ws.SessionEvent;
 import org.thingsboard.server.service.ws.WebSocketMsgEndpoint;
 import org.thingsboard.server.service.ws.WebSocketSessionRef;
 import org.thingsboard.server.service.ws.WsSessionMetaData;
+import org.thingsboard.server.service.ws.notification.DefaultNotificationCommandsHandler;
+import org.thingsboard.server.service.ws.notification.NotificationCommandsHandler;
 import org.thingsboard.server.service.ws.notification.cmd.NotificationCmdsWrapper;
 import org.thingsboard.server.service.ws.notification.cmd.MarkNotificationAsReadCmd;
 import org.thingsboard.server.service.ws.notification.cmd.NotificationsSubCmd;
 import org.thingsboard.server.service.ws.notification.cmd.NotificationsUnsubCmd;
-import org.thingsboard.server.service.ws.notification.sub.DefaultNotificationsSubscriptionService;
 import org.thingsboard.server.service.ws.telemetry.WebSocketService;
 import org.thingsboard.server.service.ws.telemetry.cmd.TelemetryPluginCmdsWrapper;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.AttributesSubscriptionCmd;
@@ -136,7 +137,7 @@ public class DefaultWebSocketService implements WebSocketService {
     private TbEntityDataSubscriptionService entityDataSubService;
 
     @Autowired
-    private DefaultNotificationsSubscriptionService notificationsSubService;
+    private NotificationCommandsHandler notificationCmdsHandler;
 
     @Autowired
     private WebSocketMsgEndpoint msgEndpoint;
@@ -286,21 +287,21 @@ public class DefaultWebSocketService implements WebSocketService {
     private void handleUnreadNotificationsSubCmd(WebSocketSessionRef sessionRef, NotificationsSubCmd cmd) {
         String sessionId = sessionRef.getSessionId();
         if (validateSessionMetadata(sessionRef, cmd.getCmdId(), sessionId)) {
-            notificationsSubService.handleUnreadNotificationsSubCmd(sessionRef, cmd);
+            notificationCmdsHandler.handleUnreadNotificationsSubCmd(sessionRef, cmd);
         }
     }
 
     private void handleUnreadNotificationsUnsubCmd(WebSocketSessionRef sessionRef, NotificationsUnsubCmd cmd) {
         String sessionId = sessionRef.getSessionId();
         if (validateSessionMetadata(sessionRef, cmd.getCmdId(), sessionId)) {
-            notificationsSubService.handleUnsubCmd(sessionRef, cmd);
+            notificationCmdsHandler.handleUnsubCmd(sessionRef, cmd);
         }
     }
 
     private void handleMarkNotificationAsReadCmd(WebSocketSessionRef sessionRef, MarkNotificationAsReadCmd cmd) {
         String sessionId = sessionRef.getSessionId();
         if (validateSessionMetadata(sessionRef, cmd.getCmdId(), sessionId)) {
-            notificationsSubService.handleMarkAsReadCmd(sessionRef, cmd);
+            notificationCmdsHandler.handleMarkAsReadCmd(sessionRef, cmd);
         }
     }
 

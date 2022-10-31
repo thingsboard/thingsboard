@@ -13,30 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.ws.notification.sub;
+package org.thingsboard.server.service.ws.notification;
 
-import org.thingsboard.server.common.data.id.NotificationRequestId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.service.ws.WebSocketSessionRef;
 import org.thingsboard.server.service.ws.notification.cmd.MarkNotificationAsReadCmd;
 import org.thingsboard.server.service.ws.notification.cmd.NotificationsSubCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.UnsubscribeCmd;
 
-public interface NotificationsSubscriptionService {
+public interface NotificationCommandsHandler {
 
     void handleUnreadNotificationsSubCmd(WebSocketSessionRef sessionRef, NotificationsSubCmd cmd);
 
     void handleMarkAsReadCmd(WebSocketSessionRef sessionRef, MarkNotificationAsReadCmd cmd);
 
     void handleUnsubCmd(WebSocketSessionRef sessionRef, UnsubscribeCmd cmd);
-
-
-    void onNewNotification(TenantId tenantId, UserId recipientId, Notification notification);
-
-    void onNotificationUpdated(TenantId tenantId, UserId recipientId, Notification notification);
-
-    void onNotificationRequestDeleted(TenantId tenantId, NotificationRequestId notificationRequestId);
 
 }

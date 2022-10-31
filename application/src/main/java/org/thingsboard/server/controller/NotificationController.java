@@ -33,12 +33,11 @@ import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
-import org.thingsboard.server.common.data.notification.NotificationStatus;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.notification.NotificationProcessingService;
+import org.thingsboard.server.dao.notification.NotificationProcessingService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
@@ -73,16 +72,18 @@ public class NotificationController extends BaseController {
     public void markNotificationAsRead(@PathVariable UUID id,
                                        @AuthenticationPrincipal SecurityUser user) {
         NotificationId notificationId = new NotificationId(id);
-        notificationProcessingService.markNotificationAsRead(user, notificationId);
+        notificationProcessingService.markNotificationAsRead(user.getTenantId(), user.getId(), notificationId);
     }
 
+    // delete notification?
 
     @PostMapping("/notification/request")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public NotificationRequest createNotificationRequest(@RequestBody NotificationRequest notificationRequest,
                                                          @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         accessControlService.checkPermission(user, Resource.NOTIFICATION, Operation.CREATE);
-        return notificationProcessingService.processNotificationRequest(user, notificationRequest);
+        // read permission for target's users
+        return notificationProcessingService.processNotificationRequest(user.getTenantId(), notificationRequest);
     }
 
     @GetMapping("/notification/request/{id}")
@@ -110,7 +111,7 @@ public class NotificationController extends BaseController {
     public void deleteNotificationRequest(@PathVariable UUID id,
                                           @AuthenticationPrincipal SecurityUser user) {
         NotificationRequestId notificationRequestId = new NotificationRequestId(id);
-        notificationProcessingService.deleteNotificationRequest(user, notificationRequestId);
+        notificationProcessingService.deleteNotificationRequest(user.getTenantId(), notificationRequestId);
     }
 
 }

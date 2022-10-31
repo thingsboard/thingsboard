@@ -668,7 +668,6 @@ public class ModelConstants {
     public static final String NOTIFICATION_REQUEST_NOTIFICATION_INFO_PROPERTY = "notification_info";
     public static final String NOTIFICATION_REQUEST_NOTIFICATION_SEVERITY_PROPERTY = "notification_severity";
     public static final String NOTIFICATION_REQUEST_ADDITIONAL_CONFIG_PROPERTY = "additional_config";
-    public static final String NOTIFICATION_REQUEST_SENDER_ID_PROPERTY = "sender_id";
 
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 

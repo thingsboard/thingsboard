@@ -111,11 +111,6 @@ public class DefaultNotificationService implements NotificationService {
             if (notificationRequest.getId() != null) {
                 throw new DataValidationException("Notification request cannot be changed once created");
             }
-            if (notificationRequest.getSenderId() != null) {
-                if (notificationRequest.getNotificationReason().equalsIgnoreCase(NotificationRequest.ALARM_NOTIFICATION_REASON)) {
-                    throw new DataValidationException("'Alarm' notification reason is for internal usage");
-                }
-            }
         }
 
     }
