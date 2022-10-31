@@ -295,6 +295,10 @@ public class EdgeImitator {
                 result.add(saveDownlinkMsg(queueUpdateMsg));
             }
         }
+        if (downlinkMsg.hasEdgeConfiguration()) {
+            result.add(saveDownlinkMsg(downlinkMsg.getEdgeConfiguration()));
+        }
+
         return Futures.allAsList(result);
     }
 
