@@ -425,6 +425,36 @@ public class TbMathNodeTest {
     }
 
     @Test
+    public void test_sqrt_5_to_timeseries_and_metadata_and_data() {
+        var node = initNode(TbRuleNodeMathFunctionType.SQRT,
+                new TbMathResult(TbMathArgumentType.TIME_SERIES, "result", 3, true, true, DataConstants.SERVER_SCOPE),
+                new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "a")
+        );
+
+        TbMsg msg = TbMsg.newMsg("TEST", originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 5).toString());
+        Mockito.when(telemetryService.saveAndNotify(any(), any(), any(TsKvEntry.class)))
+                .thenReturn(Futures.immediateFuture(null));
+
+        node.onMsg(ctx, msg);
+
+        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        verify(ctx, Mockito.timeout(5000)).tellSuccess(msgCaptor.capture());
+        Mockito.verify(telemetryService, times(1)).saveAndNotify(any(), any(), any(TsKvEntry.class));
+
+        TbMsg resultMsg = msgCaptor.getValue();
+        Assert.assertNotNull(resultMsg);
+        Assert.assertNotNull(resultMsg.getData());
+        var resultMetadata = resultMsg.getMetaData().getValue("result");
+        var resultData = JacksonUtil.toJsonNode(resultMsg.getData());
+
+        Assert.assertTrue(resultData.has("result"));
+        Assert.assertEquals(2.236, resultData.get("result").asDouble(), 0.0);
+
+        Assert.assertNotNull(resultMetadata);
+        Assert.assertEquals("2.236", resultMetadata);
+    }
+
+    @Test
     public void test_sqrt_5_default_value() {
         TbMathArgument tbMathArgument = new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "TestKey");
         tbMathArgument.setDefaultValue(5.0);

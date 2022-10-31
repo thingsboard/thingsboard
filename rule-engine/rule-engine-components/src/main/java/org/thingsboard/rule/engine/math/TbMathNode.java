@@ -223,7 +223,7 @@ public class TbMathNode implements TbNode {
             tmpMsg = addToBody(msg, mathResultDef, msgBodyOpt, result);
         }
         if (mathResultDef.isAddToMetadata()) {
-            tmpMsg = addToMeta(msg, mathResultDef, result);
+            tmpMsg = addToMeta(tmpMsg, mathResultDef, result);
         }
         return tmpMsg;
     }
