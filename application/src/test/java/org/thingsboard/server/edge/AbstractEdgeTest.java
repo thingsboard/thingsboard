@@ -178,14 +178,14 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
 
     @After
     public void afterTest() throws Exception {
-        try {
-            edgeImitator.disconnect();
-        } catch (Exception ignored) {}
-
         loginSysAdmin();
 
         doDelete("/api/tenant/" + savedTenant.getUuidId())
                 .andExpect(status().isOk());
+
+        try {
+            edgeImitator.disconnect();
+        } catch (Exception ignored) {}
     }
 
     private void installation() {

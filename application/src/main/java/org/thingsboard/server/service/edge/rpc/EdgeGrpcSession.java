@@ -86,6 +86,8 @@ public final class EdgeGrpcSession implements Closeable {
 
     private static final ReentrantLock downlinkMsgLock = new ReentrantLock();
 
+    private static final int MAX_DOWNLINK_ATTEMPTS = 10; // max number of attemps to send downlink message if edge connected
+
     private static final String QUEUE_START_TS_ATTR_KEY = "queueStartTs";
 
     private final UUID sessionId;
@@ -156,12 +158,13 @@ public final class EdgeGrpcSession implements Closeable {
 
             @Override
             public void onError(Throwable t) {
-                log.error("Failed to deliver message from client!", t);
+                log.error("[{}] Stream was terminated due to error:", sessionId, t);
                 closeSession();
             }
 
             @Override
             public void onCompleted() {
+                log.info("[{}] Stream was closed and completed successfully!", sessionId);
                 closeSession();
             }
 
@@ -184,6 +187,10 @@ public final class EdgeGrpcSession implements Closeable {
     public void startSyncProcess(TenantId tenantId, EdgeId edgeId, boolean fullSync) {
         log.trace("[{}][{}] Staring edge sync process", tenantId, edgeId);
         syncCompleted = false;
+        if (sessionState.getSendDownlinkMsgsFuture() != null && sessionState.getSendDownlinkMsgsFuture().isDone()) {
+            String errorMsg = String.format("[%s][%s] Sync process started. General processing interrupted!", tenantId, edgeId);
+            sessionState.getSendDownlinkMsgsFuture().setException(new RuntimeException(errorMsg));
+        }
         doSync(new EdgeSyncCursor(ctx, edge, fullSync));
     }
 
@@ -252,9 +259,9 @@ public final class EdgeGrpcSession implements Closeable {
         try {
             if (msg.getSuccess()) {
                 sessionState.getPendingMsgsMap().remove(msg.getDownlinkMsgId());
-                log.debug("[{}] Msg has been processed successfully! {}", edge.getRoutingKey(), msg);
+                log.debug("[{}] Msg has been processed successfully!Msd Id: [{}], Msg: {}", edge.getRoutingKey(), msg.getDownlinkMsgId(), msg);
             } else {
-                log.error("[{}] Msg processing failed! Error msg: {}", edge.getRoutingKey(), msg.getErrorMsg());
+                log.error("[{}] Msg processing failed! Msd Id: [{}], Error msg: {}", edge.getRoutingKey(), msg.getDownlinkMsgId(), msg.getErrorMsg());
             }
             if (sessionState.getPendingMsgsMap().isEmpty()) {
                 log.debug("[{}] Pending msgs map is empty. Stopping current iteration", edge.getRoutingKey());
@@ -392,17 +399,17 @@ public final class EdgeGrpcSession implements Closeable {
         sessionState.setSendDownlinkMsgsFuture(SettableFuture.create());
         sessionState.getPendingMsgsMap().clear();
         downlinkMsgsPack.forEach(msg -> sessionState.getPendingMsgsMap().put(msg.getDownlinkMsgId(), msg));
-        scheduleDownlinkMsgsPackSend(true);
+        scheduleDownlinkMsgsPackSend(1);
         return sessionState.getSendDownlinkMsgsFuture();
     }
 
-    private void scheduleDownlinkMsgsPackSend(boolean firstRun) {
+    private void scheduleDownlinkMsgsPackSend(int attempt) {
         Runnable sendDownlinkMsgsTask = () -> {
             try {
                 if (isConnected() && sessionState.getPendingMsgsMap().values().size() > 0) {
                     List<DownlinkMsg> copy = new ArrayList<>(sessionState.getPendingMsgsMap().values());
-                    if (!firstRun) {
-                        log.warn("[{}] Failed to deliver the batch: {}", this.sessionId, copy);
+                    if (attempt > 1) {
+                        log.warn("[{}] Failed to deliver the batch: {}, attempt: {}", this.sessionId, copy, attempt);
                     }
                     log.trace("[{}] [{}] downlink msg(s) are going to be send.", this.sessionId, copy.size());
                     for (DownlinkMsg downlinkMsg : copy) {
@@ -410,7 +417,13 @@ public final class EdgeGrpcSession implements Closeable {
                                 .setDownlinkMsg(downlinkMsg)
                                 .build());
                     }
-                    scheduleDownlinkMsgsPackSend(false);
+                    if (attempt < MAX_DOWNLINK_ATTEMPTS) {
+                        scheduleDownlinkMsgsPackSend(attempt + 1);
+                    } else {
+                        log.warn("[{}] Failed to deliver the batch after {} attempts. Next messages are going to be discarded {}",
+                                this.sessionId, MAX_DOWNLINK_ATTEMPTS, copy);
+                        sessionState.getSendDownlinkMsgsFuture().set(null);
+                    }
                 } else {
                     sessionState.getSendDownlinkMsgsFuture().set(null);
                 }
@@ -419,7 +432,7 @@ public final class EdgeGrpcSession implements Closeable {
             }
         };
 
-        if (firstRun) {
+        if (attempt == 1) {
             sendDownlinkExecutorService.submit(sendDownlinkMsgsTask);
         } else {
             sessionState.setScheduledSendDownlinkTask(
@@ -548,7 +561,7 @@ public final class EdgeGrpcSession implements Closeable {
         try {
             if (uplinkMsg.getEntityDataCount() > 0) {
                 for (EntityDataProto entityData : uplinkMsg.getEntityDataList()) {
-                    result.addAll(ctx.getTelemetryProcessor().processTelemetryFromEdge(edge.getTenantId(), edge.getCustomerId(), entityData));
+                    result.addAll(ctx.getTelemetryProcessor().processTelemetryFromEdge(edge.getTenantId(), entityData));
                 }
             }
             if (uplinkMsg.getDeviceUpdateMsgCount() > 0) {
