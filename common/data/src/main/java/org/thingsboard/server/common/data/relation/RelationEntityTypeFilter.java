@@ -29,6 +29,8 @@ import java.util.List;
 @ApiModel
 public class RelationEntityTypeFilter {
 
+    public RelationEntityTypeFilter() {}
+
     public RelationEntityTypeFilter(String relationType, List<EntityType> entityTypes) {
         this(relationType, entityTypes, false);
     }
