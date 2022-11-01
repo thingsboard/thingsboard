@@ -517,6 +517,15 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         doDelete("/api/tenant/" + tenant.getId().getId().toString()).andExpect(status().isOk());
     }
 
+    @Test
+    public void testValidationOnForceTwoFactorWithoutSetupBySysadmin() throws Exception {
+        loginSysAdmin();
+        Tenant tenant = new Tenant();
+        tenant.setTitle("My test tenant");
+        tenant.setForceTwoFactor(true);
+        doPost("/api/tenant", tenant).andExpect(status().isBadRequest());
+    }
+
     private void addQueueConfig(TenantProfile tenantProfile, String queueName) {
         TenantProfileQueueConfiguration queueConfiguration = new TenantProfileQueueConfiguration();
         queueConfiguration.setName(queueName);

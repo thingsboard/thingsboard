@@ -144,7 +144,7 @@ public class TwoFactorAuthConfigController extends BaseController {
                     ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PostMapping("/account/config")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER', 'TWO_FACTOR_FORCE_SAVE_SETTINGS_TOKEN')")
-    public ResponseEntity<?> verifyAndSaveTwoFaAccountConfig(@RequestBody TwoFaAccountConfig accountConfig,
+    public ResponseEntity<?> verifyAndSaveTwoFaAccountConfig(@Valid @RequestBody TwoFaAccountConfig accountConfig,
                                                              @RequestParam(required = false) String verificationCode) throws Exception {
         SecurityUser user = getCurrentUser();
         if (twoFaConfigManager.getTwoFaAccountConfig(user.getTenantId(), user.getId(), accountConfig.getProviderType()).isPresent()) {

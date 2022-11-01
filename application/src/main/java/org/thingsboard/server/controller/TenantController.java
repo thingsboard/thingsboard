@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.tenant.TbTenantService;
+import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
@@ -69,6 +70,7 @@ public class TenantController extends BaseController {
 
     private final TenantService tenantService;
     private final TbTenantService tbTenantService;
+    private final TwoFactorAuthService twoFactorAuthService;
 
     @ApiOperation(value = "Get Tenant (getTenantById)",
             notes = "Fetch the Tenant object based on the provided Tenant Id. " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
@@ -123,6 +125,9 @@ public class TenantController extends BaseController {
     public Tenant saveTenant(@ApiParam(value = "A JSON value representing the tenant.")
                              @RequestBody Tenant tenant) throws Exception {
         checkEntity(tenant.getId(), tenant, Resource.TENANT);
+        if (tenant.isForceTwoFactor()) {
+            twoFactorAuthService.checkPossibilityToEnableForceTwoFactor(tenant.getId());
+        }
         return tbTenantService.save(tenant);
     }
 

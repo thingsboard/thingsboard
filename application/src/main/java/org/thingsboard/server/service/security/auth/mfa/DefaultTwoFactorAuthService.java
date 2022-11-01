@@ -71,6 +71,15 @@ public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
     }
 
     @Override
+    public void checkPossibilityToEnableForceTwoFactor(TenantId tenantId) throws ThingsboardException {
+        Optional<PlatformTwoFaSettings> platformTwoFaSettings = configManager.getPlatformTwoFaSettings(tenantId, true);
+        if (platformTwoFaSettings.isEmpty()) {
+            throw new ThingsboardException("Two factor authentication must be allowed by Sysadmin first!",
+                    ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
+    }
+
+    @Override
     public boolean isTwoFaEnabled(TenantId tenantId, UserId userId) {
         return configManager.getAccountTwoFaSettings(tenantId, userId)
                 .map(settings -> !settings.getConfigs().isEmpty())
