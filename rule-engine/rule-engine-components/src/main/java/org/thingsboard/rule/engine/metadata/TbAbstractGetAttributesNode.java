@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.gson.JsonParseException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.thingsboard.common.util.JacksonUtil;
@@ -221,7 +222,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         try {
             return mapper.readTree(value);
         } catch (IOException e) {
-            throw new IllegalArgumentException(e);
+            throw new JsonParseException("Can't parse jsonValue: " + value, e);
         }
     }
 
