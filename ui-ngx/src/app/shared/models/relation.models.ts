@@ -55,6 +55,7 @@ export const directionTypeTranslations = new Map<EntitySearchDirection, string>(
 export interface RelationEntityTypeFilter {
   relationType: string;
   entityTypes: Array<EntityType>;
+  negate?: boolean;
 }
 
 export interface RelationsSearchParameters {

@@ -185,6 +185,9 @@
                    formControlName="maxLevel">
           </mat-form-field>
         </div>
+        <mat-slide-toggle formControlName="negate" *ngIf="this.filterFormGroup.get('filters').value.length > 1">
+          {{ 'relation.negate-all-relations' | translate }}
+        </mat-slide-toggle>
         <div class="mat-caption" style="padding-bottom: 10px; color: rgba(0,0,0,0.57);" translate>relation.relation-filters</div>
         <tb-relation-filters
           [allowedEntityTypes]="allowedEntityTypes"

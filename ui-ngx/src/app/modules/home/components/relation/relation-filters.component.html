@@ -28,24 +28,29 @@
       <div class="row" fxFlex fxLayout="row"
            fxLayoutAlign="start center" formArrayName="relationFilters"
            *ngFor="let relationFilterControl of relationFiltersFormArray().controls; let $index = index">
-        <div class="mat-elevation-z1" fxFlex fxLayout="row" fxLayoutAlign="start center">
-          <tb-relation-type-autocomplete
-            class="cell" style="width: 200px; min-width: 200px;"
-            [formControl]="relationFilterControl.get('relationType')">
-          </tb-relation-type-autocomplete>
-          <tb-entity-type-list class="cell" fxFlex
-            [allowedEntityTypes]="allowedEntityTypes"
-            [formControl]="relationFilterControl.get('entityTypes')">
-          </tb-entity-type-list>
-          <button mat-icon-button color="primary"
-                  type="button"
-                  style="width: 40px; min-width: 40px;"
-                  (click)="removeFilter($index)"
-                  [disabled]="isLoading$ | async"
-                  matTooltip="{{ 'relation.remove-relation-filter' | translate }}"
-                  matTooltipPosition="above">
-            <mat-icon>close</mat-icon>
-          </button>
+        <div class="mat-elevation-z1" fxFlex fxLayout="column" fxLayoutAlign="space-between start">
+          <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+            <tb-relation-type-autocomplete
+              class="cell" style="width: 200px; min-width: 200px;"
+              [formControl]="relationFilterControl.get('relationType')">
+            </tb-relation-type-autocomplete>
+            <tb-entity-type-list class="cell" fxFlex
+              [allowedEntityTypes]="allowedEntityTypes"
+              [formControl]="relationFilterControl.get('entityTypes')">
+            </tb-entity-type-list>
+            <button mat-icon-button color="primary"
+                    type="button"
+                    style="width: 40px; min-width: 40px;"
+                    (click)="removeFilter($index)"
+                    [disabled]="isLoading$ | async"
+                    matTooltip="{{ 'relation.remove-relation-filter' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+          <mat-slide-toggle [formControl]="relationFilterControl.get('negate')" style="margin-left: 10px;">
+              {{ 'relation.negate-relation' | translate }}
+          </mat-slide-toggle>
         </div>
       </div>
     </div>

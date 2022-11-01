@@ -173,7 +173,8 @@ export class EntityFilterComponent implements ControlValueAccessor, OnInit {
           rootEntity: [filter ? filter.rootEntity : null, (filter && filter.rootStateEntity) ? [] : [Validators.required]],
           direction: [filter ? filter.direction : EntitySearchDirection.FROM, [Validators.required]],
           maxLevel: [filter ? filter.maxLevel : 1, []],
-          fetchLastLevelOnly: [filter ? filter.fetchLastLevelOnly : false, []]
+          fetchLastLevelOnly: [filter ? filter.fetchLastLevelOnly : false, []],
+          negate: [filter ? filter.negate : false, []]
         });
         this.filterFormGroup.get('rootStateEntity').valueChanges.subscribe((rootStateEntity: boolean) => {
           this.filterFormGroup.get('rootEntity').setValidators(rootStateEntity ? [] : [Validators.required]);

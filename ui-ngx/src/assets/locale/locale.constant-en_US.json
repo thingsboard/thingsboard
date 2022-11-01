@@ -2840,7 +2840,9 @@
         "relation-filters": "Relation filters",
         "additional-info": "Additional info (JSON)",
         "invalid-additional-info": "Unable to parse additional info json.",
-        "no-relations-text": "No relations found"
+        "no-relations-text": "No relations found",
+        "negate-all-relations": "Negate all relations (NOT condition)",
+        "negate-relation": "Negate this relation (NOT condition)"
     },
     "resource": {
         "add": "Add Resource",
