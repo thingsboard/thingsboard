@@ -100,8 +100,7 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                         try {
                             newDevice = createDevice(tenantId, edge, deviceUpdateMsg, newDeviceName);
                         } catch (DataValidationException e) {
-                            String errMsg = String.format("[%s] Device update msg can't be processed due to data validation [%s]", tenantId, deviceUpdateMsg);
-                            log.error(errMsg, e);
+                            log.error("[{}] Device update msg can't be processed due to data validation [{}]", tenantId, deviceUpdateMsg, e);
                             return Futures.immediateFuture(null);
                         }
                         ObjectNode body = JacksonUtil.OBJECT_MAPPER.createObjectNode();
@@ -116,8 +115,7 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                     try {
                         device = createDevice(tenantId, edge, deviceUpdateMsg, deviceUpdateMsg.getName());
                     } catch (DataValidationException e) {
-                        String errMsg = String.format("[%s] Device update msg can't be processed due to data validation [%s]", tenantId, deviceUpdateMsg);
-                        log.error(errMsg, e);
+                        log.error("[{}] Device update msg can't be processed due to data validation [{}]", tenantId, deviceUpdateMsg, e);
                         return Futures.immediateFuture(null);
                     }
                     return saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.CREDENTIALS_REQUEST, device.getId(), null);

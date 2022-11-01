@@ -240,8 +240,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     }
 
     private void callBackFailure(TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg, TbCallback callback, Throwable throwable) {
-        String errMsg = String.format("Can't push to edge updates, edgeNotificationMsg [%s]", edgeNotificationMsg);
-        log.error(errMsg, throwable);
+        log.error("Can't push to edge updates, edgeNotificationMsg [{}]", edgeNotificationMsg, throwable);
         callback.onFailure(throwable);
     }
 
