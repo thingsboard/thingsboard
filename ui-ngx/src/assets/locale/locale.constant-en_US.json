@@ -4679,6 +4679,7 @@
             "entity-label-column-title": "Entity label column title",
             "display-entity-type": "Display entity type column",
             "default-sort-order": "Default sort order",
+            "custom-title": "Custom header title",
             "column-width": "Column width (px or %)",
             "default-column-visibility": "Default column visibility",
             "column-visibility-visible": "Visible",
