@@ -17,6 +17,10 @@
 -->
 <section class="tb-widget-settings" [formGroup]="entitiesTableKeySettingsForm" fxLayout="column">
   <mat-form-field fxFlex class="mat-block">
+    <mat-label translate>widgets.table.custom-title</mat-label>
+    <input matInput formControlName="customTitle">
+  </mat-form-field>
+  <mat-form-field fxFlex class="mat-block">
     <mat-label translate>widgets.table.column-width</mat-label>
     <input matInput formControlName="columnWidth">
   </mat-form-field>

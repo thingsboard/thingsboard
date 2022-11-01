@@ -4630,7 +4630,10 @@
             "point-color-function": "Point color function",
             "use-point-as-anchor": "Use point as anchor",
             "point-as-anchor-function": "Point as anchor function",
-            "independent-point-tooltip": "Independent point tooltip"
+            "independent-point-tooltip": "Independent point tooltip",
+            "clustering-markers": "Clustering markers",
+            "use-icon-create-function": "Use markers colour function",
+            "marker-color-function": "Marker color function"
         },
         "markdown": {
             "use-markdown-text-function": "Use markdown/HTML value function",
@@ -4676,6 +4679,7 @@
             "entity-label-column-title": "Entity label column title",
             "display-entity-type": "Display entity type column",
             "default-sort-order": "Default sort order",
+            "custom-title": "Custom header title",
             "column-width": "Column width (px or %)",
             "default-column-visibility": "Default column visibility",
             "column-visibility-visible": "Visible",

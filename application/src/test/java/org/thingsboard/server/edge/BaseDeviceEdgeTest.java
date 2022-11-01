@@ -621,5 +621,7 @@ abstract public class BaseDeviceEdgeTest extends AbstractEdgeTest {
 
         Assert.assertEquals(JacksonUtil.OBJECT_MAPPER.createObjectNode().put(attrKey, attrValue),
                 JacksonUtil.fromBytes(onUpdateCallback.getPayloadBytes()));
+
+        client.disconnect();
     }
 }
