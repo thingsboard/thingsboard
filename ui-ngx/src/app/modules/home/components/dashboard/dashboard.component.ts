@@ -15,7 +15,9 @@
 ///
 
 import {
-  AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef,
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   DoCheck,
   Input,
@@ -56,6 +58,7 @@ import { distinct } from 'rxjs/operators';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetComponentAction, WidgetComponentActionType } from '@home/components/widget/widget-container.component';
+import { TbPopoverComponent } from '@shared/components/popover.component';
 
 @Component({
   selector: 'tb-dashboard',
@@ -136,6 +139,9 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   @Input()
   parentDashboard?: IDashboardComponent = null;
 
+  @Input()
+  popoverComponent?: TbPopoverComponent = null;
+
   dashboardTimewindowChangedSubject: Subject<Timewindow> = new ReplaySubject<Timewindow>();
 
   dashboardTimewindowChanged = this.dashboardTimewindowChangedSubject.asObservable().pipe(
@@ -191,6 +197,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
 
   ngOnInit(): void {
     this.dashboardWidgets.parentDashboard = this.parentDashboard;
+    this.dashboardWidgets.popoverComponent = this.popoverComponent;
     if (!this.dashboardTimewindow) {
       this.dashboardTimewindow = this.timeService.defaultTimewindow();
     }

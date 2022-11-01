@@ -23,6 +23,7 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.OAuth2ClientRegistrationTemplateEntity;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientRegistrationTemplateDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
+import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,7 @@ import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
+@SqlDao
 public class JpaOAuth2ClientRegistrationTemplateDao extends JpaAbstractDao<OAuth2ClientRegistrationTemplateEntity, OAuth2ClientRegistrationTemplate> implements OAuth2ClientRegistrationTemplateDao {
     private final OAuth2ClientRegistrationTemplateRepository repository;
 

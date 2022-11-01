@@ -37,7 +37,7 @@ public class MockJsInvokeService implements JsInvokeService {
     }
 
     @Override
-    public ListenableFuture<Object> invokeFunction(TenantId tenantId, CustomerId customerId, UUID scriptId, Object... args) {
+    public ListenableFuture<String> invokeFunction(TenantId tenantId, CustomerId customerId, UUID scriptId, Object... args) {
         log.warn("invokeFunction {} {} {} {}", tenantId, customerId, scriptId, args);
         return Futures.immediateFuture("{}");
     }

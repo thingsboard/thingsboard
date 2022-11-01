@@ -79,7 +79,7 @@
         </mat-form-field>
         <fieldset *ngIf="dataKeyFormGroup.get('aggregationType').value && dataKeyFormGroup.get('aggregationType').value !== aggregationTypes.NONE" class="fields-group fields-group-slider">
           <legend class="group-title" translate>datakey.delta-calculation</legend>
-          <mat-expansion-panel class="tb-settings" [expanded]="dataKeyFormGroup.get('comparisonEnabled').value" [disabled]="!dataKeyFormGroup.get('comparisonEnabled').value">
+          <mat-expansion-panel class="tb-settings comparison" [expanded]="dataKeyFormGroup.get('comparisonEnabled').value" [disabled]="!dataKeyFormGroup.get('comparisonEnabled').value">
             <mat-expansion-panel-header fxLayout="row wrap">
               <mat-panel-title fxLayout="column">
                 <mat-slide-toggle formControlName="comparisonEnabled" (click)="$event.stopPropagation()"

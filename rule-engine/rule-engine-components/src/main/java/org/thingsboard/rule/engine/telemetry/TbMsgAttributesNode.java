@@ -31,7 +31,7 @@ import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 
 import java.util.ArrayList;
-import java.util.Set;
+import java.util.List;
 
 @Slf4j
 @RuleNode(
@@ -39,7 +39,9 @@ import java.util.Set;
         name = "save attributes",
         configClazz = TbMsgAttributesNodeConfiguration.class,
         nodeDescription = "Saves attributes data",
-        nodeDetails = "Saves entity attributes based on configurable scope parameter. Expects messages with 'POST_ATTRIBUTES_REQUEST' message type",
+        nodeDetails = "Saves entity attributes based on configurable scope parameter. Expects messages with 'POST_ATTRIBUTES_REQUEST' message type. " +
+                      "If upsert(update/insert) operation is completed successfully, rule node will send the \"Attributes Updated\" " +
+                      "event to the root chain of the message originator and send the incoming message via <b>Success</b> chain, otherwise, <b>Failure</b> chain is used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeAttributesConfig",
         icon = "file_upload"
@@ -63,15 +65,19 @@ public class TbMsgAttributesNode implements TbNode {
             return;
         }
         String src = msg.getData();
-        Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(new JsonParser().parse(src));
+        List<AttributeKvEntry> attributes = new ArrayList<>(JsonConverter.convertToAttributes(new JsonParser().parse(src)));
+        if (attributes.isEmpty()) {
+            ctx.tellSuccess(msg);
+            return;
+        }
         String notifyDeviceStr = msg.getMetaData().getValue("notifyDevice");
         ctx.getTelemetryService().saveAndNotify(
                 ctx.getTenantId(),
                 msg.getOriginator(),
                 config.getScope(),
-                new ArrayList<>(attributes),
+                attributes,
                 config.getNotifyDevice() || StringUtils.isEmpty(notifyDeviceStr) || Boolean.parseBoolean(notifyDeviceStr),
-                new TelemetryNodeCallback(ctx, msg)
+                new AttributesUpdateNodeCallback(ctx, msg, config.getScope(), attributes)
         );
     }
 
