@@ -142,6 +142,7 @@ import * as JsonObjectEditComponent from '@shared/components/json-object-edit.co
 import * as JsonObjectViewComponent from '@shared/components/json-object-view.component';
 import * as JsonContentComponent from '@shared/components/json-content.component';
 import * as JsFuncComponent from '@shared/components/js-func.component';
+import * as TbScriptLangComponent from '@shared/components/script-lang.component';
 import * as FabToolbarComponent from '@shared/components/fab-toolbar.component';
 import * as WidgetsBundleSelectComponent from '@shared/components/widgets-bundle-select.component';
 import * as ConfirmDialogComponent from '@shared/components/dialog/confirm-dialog.component';
@@ -430,6 +431,7 @@ class ModulesMap implements IModulesMap {
     '@shared/components/json-object-view.component': JsonObjectViewComponent,
     '@shared/components/json-content.component': JsonContentComponent,
     '@shared/components/js-func.component': JsFuncComponent,
+    '@shared/components/script-lang.component': TbScriptLangComponent,
     '@shared/components/fab-toolbar.component': FabToolbarComponent,
     '@shared/components/widgets-bundle-select.component': WidgetsBundleSelectComponent,
     '@shared/components/dialog/confirm-dialog.component': ConfirmDialogComponent,

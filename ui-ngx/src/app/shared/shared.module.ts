@@ -168,6 +168,7 @@ import { BranchAutocompleteComponent } from '@shared/components/vc/branch-autoco
 import { PhoneInputComponent } from '@shared/components/phone-input.component';
 import { CustomDateAdapter } from '@shared/adapter/custom-datatime-adapter';
 import { CustomPaginatorIntl } from '@shared/services/custom-paginator-intl';
+import { TbScriptLangComponent } from '@shared/components/script-lang.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -293,7 +294,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TogglePasswordComponent,
     ProtobufContentComponent,
     BranchAutocompleteComponent,
-    PhoneInputComponent
+    PhoneInputComponent,
+    TbScriptLangComponent
   ],
   imports: [
     CommonModule,
@@ -497,7 +499,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TogglePasswordComponent,
     ProtobufContentComponent,
     BranchAutocompleteComponent,
-    PhoneInputComponent
+    PhoneInputComponent,
+    TbScriptLangComponent
   ]
 })
 export class SharedModule { }

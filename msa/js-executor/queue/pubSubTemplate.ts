@@ -80,7 +80,7 @@ export class PubSubTemplate implements IQueue {
         subscription.on('message', messageHandler);
     }
 
-    async send(responseTopic: string, scriptId: string, rawResponse: Buffer, headers: any): Promise<any> {
+    async send(responseTopic: string, msgKey: string, rawResponse: Buffer, headers: any): Promise<any> {
         if (!(this.subscriptions.includes(responseTopic) && this.topics.includes(this.requestTopic))) {
             await this.createTopic(this.requestTopic);
             await this.createSubscription(this.requestTopic);
@@ -88,7 +88,7 @@ export class PubSubTemplate implements IQueue {
 
         let data = JSON.stringify(
             {
-                key: scriptId,
+                key: msgKey,
                 data: [...rawResponse],
                 headers: headers
             });

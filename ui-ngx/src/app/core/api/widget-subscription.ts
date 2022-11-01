@@ -97,6 +97,7 @@ export class WidgetSubscription implements IWidgetSubscription {
   subscriptionTimewindow: SubscriptionTimewindow;
   useDashboardTimewindow: boolean;
   useTimewindow: boolean;
+  onTimewindowChangeFunction: (timewindow: Timewindow) => Timewindow;
   tsOffset = 0;
 
   hasDataPageLink: boolean;
@@ -247,6 +248,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.originalTimewindow = null;
       this.timeWindow = {};
       this.useDashboardTimewindow = options.useDashboardTimewindow;
+      this.onTimewindowChangeFunction = options.onTimewindowChangeFunction || ((timewindow) => timewindow);
       this.stateData = options.stateData;
       this.useTimewindow = this.type === widgetType.timeseries || datasourcesHasAggregation(this.configuredDatasources);
       if (this.useDashboardTimewindow) {

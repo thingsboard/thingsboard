@@ -123,10 +123,10 @@ export class AwsSqsTemplate implements IQueue {
         this.timer = setTimeout(() => {this.getAndProcessMessage(messageProcessor, params)}, this.pollInterval);
     }
 
-    async send(responseTopic: string, scriptId: string, rawResponse: Buffer, headers: any): Promise<any> {
+    async send(responseTopic: string, msgKey: string, rawResponse: Buffer, headers: any): Promise<any> {
         let msgBody = JSON.stringify(
             {
-                key: scriptId,
+                key: msgKey,
                 data: [...rawResponse],
                 headers: headers
             });

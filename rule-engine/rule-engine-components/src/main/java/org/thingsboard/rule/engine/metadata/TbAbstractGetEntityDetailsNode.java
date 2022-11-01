@@ -119,6 +119,9 @@ public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEnti
     private JsonElement setProperties(ContactBased entity, JsonElement data, EntityDetails entityDetails, String prefix) {
         JsonObject dataAsObject = data.getAsJsonObject();
         switch (entityDetails) {
+            case ID:
+                dataAsObject.addProperty(prefix + "id", entity.getId().toString());
+                break;
             case TITLE:
                 dataAsObject.addProperty(prefix + "title", entity.getName());
                 break;

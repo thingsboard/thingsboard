@@ -94,6 +94,9 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
   set isLoad(value) {
     if (this.isLoading) {
       this.isLoading = value;
+      if (this.defaultCountry) {
+        this.getFlagAndPhoneNumberData(this.defaultCountry);
+      }
       if (this.phoneFormGroup) {
         this.defineCountryFromNumber(this.phoneFormGroup.get('phoneNumber').value);
       }
@@ -125,11 +128,9 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
       this.validators.push(Validators.required);
     }
     this.phoneFormGroup = this.fb.group({
-      country: [this.defaultCountry, []],
+      country: [null, []],
       phoneNumber: [null, this.validators]
     });
-
-    this.flagIcon = this.getFlagIcon(this.phoneFormGroup.get('country').value);
 
     this.changeSubscriptions.push(this.phoneFormGroup.get('phoneNumber').valueChanges.subscribe(value => {
       this.updateModel();

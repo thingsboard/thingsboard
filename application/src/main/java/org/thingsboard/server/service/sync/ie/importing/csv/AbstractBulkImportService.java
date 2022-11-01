@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.sync.ie.importing.csv;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
@@ -25,8 +26,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.thingsboard.common.util.DonAsynchron;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.HasAdditionalInfo;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -165,6 +168,10 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
 
     protected abstract EntityType getEntityType();
 
+    protected ObjectNode getOrCreateAdditionalInfoObj(HasAdditionalInfo entity) {
+        return entity.getAdditionalInfo() == null || entity.getAdditionalInfo().isNull() ?
+                JacksonUtil.newObjectNode() : (ObjectNode) entity.getAdditionalInfo();
+    }
 
     private void saveKvs(SecurityUser user, E entity, Map<BulkImportRequest.ColumnMapping, ParsedValue> data) {
         Arrays.stream(BulkImportColumnType.values())

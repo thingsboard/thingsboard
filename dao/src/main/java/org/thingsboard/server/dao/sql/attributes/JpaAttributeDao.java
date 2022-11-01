@@ -78,7 +78,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     @Value("${sql.attributes.batch_threads:4}")
     private int batchThreads;
 
-    @Value("${sql.batch_sort:false}")
+    @Value("${sql.batch_sort:true}")
     private boolean batchSortEnabled;
 
     private TbSqlBlockingQueueWrapper<AttributeKvEntity> queue;

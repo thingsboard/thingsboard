@@ -19,7 +19,6 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -28,19 +27,19 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 @TbCoreComponent
 public class AssetMsgConstructor {
 
-    public AssetUpdateMsg constructAssetUpdatedMsg(UpdateMsgType msgType, Asset asset, CustomerId customerId) {
+    public AssetUpdateMsg constructAssetUpdatedMsg(UpdateMsgType msgType, Asset asset) {
         AssetUpdateMsg.Builder builder = AssetUpdateMsg.newBuilder()
                 .setMsgType(msgType)
-                .setIdMSB(asset.getId().getId().getMostSignificantBits())
-                .setIdLSB(asset.getId().getId().getLeastSignificantBits())
+                .setIdMSB(asset.getUuidId().getMostSignificantBits())
+                .setIdLSB(asset.getUuidId().getLeastSignificantBits())
                 .setName(asset.getName())
                 .setType(asset.getType());
         if (asset.getLabel() != null) {
             builder.setLabel(asset.getLabel());
         }
-        if (customerId != null) {
-            builder.setCustomerIdMSB(customerId.getId().getMostSignificantBits());
-            builder.setCustomerIdLSB(customerId.getId().getLeastSignificantBits());
+        if (asset.getCustomerId() != null) {
+            builder.setCustomerIdMSB(asset.getCustomerId().getId().getMostSignificantBits());
+            builder.setCustomerIdLSB(asset.getCustomerId().getId().getLeastSignificantBits());
         }
         if (asset.getAssetProfileId() != null) {
             builder.setAssetProfileIdMSB(asset.getAssetProfileId().getId().getMostSignificantBits());
