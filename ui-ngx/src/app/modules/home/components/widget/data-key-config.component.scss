@@ -58,6 +58,12 @@
         }
       }
     }
+
+    .tb-hint.after-fields {
+      margin-top: -1.25em;
+      max-width: fit-content;
+      line-height: 15px;
+    }
   }
 }
 
@@ -95,7 +101,7 @@
 
         &.comparison {
           .mat-expansion-panel-header {
-            height: 140px;
+            height: 100%;
           }
         }
 
