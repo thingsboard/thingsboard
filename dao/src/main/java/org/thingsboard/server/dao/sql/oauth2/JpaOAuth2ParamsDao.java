@@ -22,11 +22,13 @@ import org.thingsboard.server.common.data.oauth2.OAuth2Params;
 import org.thingsboard.server.dao.model.sql.OAuth2ParamsEntity;
 import org.thingsboard.server.dao.oauth2.OAuth2ParamsDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
+import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
+@SqlDao
 public class JpaOAuth2ParamsDao extends JpaAbstractDao<OAuth2ParamsEntity, OAuth2Params> implements OAuth2ParamsDao {
     private final OAuth2ParamsRepository repository;
 

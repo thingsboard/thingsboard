@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>3.4.1-SNAPSHOT</version>
+        <version>3.4.2-SNAPSHOT</version>
         <artifactId>thingsboard</artifactId>
     </parent>
     <artifactId>application</artifactId>
@@ -110,7 +110,15 @@
             <artifactId>queue</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.common</groupId>
+            <groupId>org.thingsboard.common.script</groupId>
+            <artifactId>script-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.script</groupId>
+            <artifactId>remote-js-client</artifactId>
+        </dependency>
+        <dependency>
+        <groupId>org.thingsboard.common</groupId>
             <artifactId>stats</artifactId>
         </dependency>
         <dependency>
@@ -286,7 +294,6 @@
         <dependency>
             <groupId>com.jayway.jsonpath</groupId>
             <artifactId>json-path</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.jayway.jsonpath</groupId>

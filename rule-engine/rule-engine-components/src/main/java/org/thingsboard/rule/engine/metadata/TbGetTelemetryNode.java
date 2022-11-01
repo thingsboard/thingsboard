@@ -25,7 +25,7 @@ import com.google.gson.JsonParseException;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.rule.engine.api.RuleNode;
@@ -98,7 +98,7 @@ public class TbGetTelemetryNode implements TbNode {
     }
 
     Aggregation parseAggregationConfig(String aggName) {
-        if (StringUtils.isEmpty(aggName)) {
+        if (StringUtils.isEmpty(aggName) || !fetchMode.equals(FETCH_MODE_ALL)) {
             return Aggregation.NONE;
         }
         return Aggregation.valueOf(aggName);
@@ -110,11 +110,9 @@ public class TbGetTelemetryNode implements TbNode {
             ctx.tellFailure(msg, new IllegalStateException("Telemetry is not selected!"));
         } else {
             try {
-                if (config.isUseMetadataIntervalPatterns()) {
-                    checkMetadataKeyPatterns(msg);
-                }
+                Interval interval = getInterval(msg);
                 List<String> keys = TbNodeUtils.processPatterns(tsKeyNames, msg);
-                ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), buildQueries(msg, keys));
+                ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), buildQueries(interval, keys));
                 DonAsynchron.withCallback(list, data -> {
                     process(data, msg, keys);
                     ctx.tellSuccess(ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), msg.getData()));
@@ -125,12 +123,7 @@ public class TbGetTelemetryNode implements TbNode {
         }
     }
 
-    @Override
-    public void destroy() {
-    }
-
-    private List<ReadTsKvQuery> buildQueries(TbMsg msg, List<String> keys) {
-        final Interval interval = getInterval(msg);
+    private List<ReadTsKvQuery> buildQueries(Interval interval, List<String> keys) {
         final long aggIntervalStep = Aggregation.NONE.equals(aggregation) ? 1 :
                 // exact how it validates on BaseTimeseriesService.validate()
                 // see CassandraBaseTimeseriesDao.findAllAsync()
@@ -210,71 +203,45 @@ public class TbGetTelemetryNode implements TbNode {
     }
 
     private Interval getInterval(TbMsg msg) {
-        Interval interval = new Interval();
         if (config.isUseMetadataIntervalPatterns()) {
-            if (isParsable(msg, config.getStartIntervalPattern())) {
-                interval.setStartTs(Long.parseLong(TbNodeUtils.processPattern(config.getStartIntervalPattern(), msg)));
-            }
-            if (isParsable(msg, config.getEndIntervalPattern())) {
-                interval.setEndTs(Long.parseLong(TbNodeUtils.processPattern(config.getEndIntervalPattern(), msg)));
-            }
+            return getIntervalFromPatterns(msg);
         } else {
+            Interval interval = new Interval();
             long ts = System.currentTimeMillis();
             interval.setStartTs(ts - TimeUnit.valueOf(config.getStartIntervalTimeUnit()).toMillis(config.getStartInterval()));
             interval.setEndTs(ts - TimeUnit.valueOf(config.getEndIntervalTimeUnit()).toMillis(config.getEndInterval()));
+            return interval;
         }
+    }
+
+    private Interval getIntervalFromPatterns(TbMsg msg) {
+        Interval interval = new Interval();
+        interval.setStartTs(checkPattern(msg, config.getStartIntervalPattern()));
+        interval.setEndTs(checkPattern(msg, config.getEndIntervalPattern()));
         return interval;
     }
 
-    private boolean isParsable(TbMsg msg, String pattern) {
-        return NumberUtils.isParsable(TbNodeUtils.processPattern(pattern, msg));
-    }
-
-    private void checkMetadataKeyPatterns(TbMsg msg) {
-        isUndefined(msg, config.getStartIntervalPattern(), config.getEndIntervalPattern());
-        isInvalid(msg, config.getStartIntervalPattern(), config.getEndIntervalPattern());
-    }
-
-    private void isUndefined(TbMsg msg, String startIntervalPattern, String endIntervalPattern) {
-        if (getMetadataValue(msg, startIntervalPattern) == null && getMetadataValue(msg, endIntervalPattern) == null) {
-            throw new IllegalArgumentException("Message metadata values: '" +
-                    replaceRegex(startIntervalPattern) + "' and '" +
-                    replaceRegex(endIntervalPattern) + "' are undefined");
-        } else {
-            if (getMetadataValue(msg, startIntervalPattern) == null) {
-                throw new IllegalArgumentException("Message metadata value: '" +
-                        replaceRegex(startIntervalPattern) + "' is undefined");
-            }
-            if (getMetadataValue(msg, endIntervalPattern) == null) {
-                throw new IllegalArgumentException("Message metadata value: '" +
-                        replaceRegex(endIntervalPattern) + "' is undefined");
-            }
+    private long checkPattern(TbMsg msg, String pattern) {
+        String value = getValuePattern(msg, pattern);
+        if (value == null) {
+            throw new IllegalArgumentException("Message value: '" +
+                    replaceRegex(pattern) + "' is undefined");
         }
-    }
-
-    private void isInvalid(TbMsg msg, String startIntervalPattern, String endIntervalPattern) {
-        if (getInterval(msg).getStartTs() == null && getInterval(msg).getEndTs() == null) {
-            throw new IllegalArgumentException("Message metadata values: '" +
-                    replaceRegex(startIntervalPattern) + "' and '" +
-                    replaceRegex(endIntervalPattern) + "' have invalid format");
-        } else {
-            if (getInterval(msg).getStartTs() == null) {
-                throw new IllegalArgumentException("Message metadata value: '" +
-                        replaceRegex(startIntervalPattern) + "' has invalid format");
-            }
-            if (getInterval(msg).getEndTs() == null) {
-                throw new IllegalArgumentException("Message metadata value: '" +
-                        replaceRegex(endIntervalPattern) + "' has invalid format");
-            }
+        boolean parsable = NumberUtils.isParsable(value);
+        if (!parsable) {
+            throw new IllegalArgumentException("Message value: '" +
+                    replaceRegex(pattern) + "' has invalid format");
         }
+        return Long.parseLong(value);
     }
 
-    private String getMetadataValue(TbMsg msg, String pattern) {
-        return msg.getMetaData().getValue(replaceRegex(pattern));
+    private String getValuePattern(TbMsg msg, String pattern) {
+        String value = TbNodeUtils.processPattern(pattern, msg);
+        return value.equals(pattern) ? null : value;
     }
 
     private String replaceRegex(String pattern) {
-        return pattern.replaceAll("[${}]", "");
+        return pattern.replaceAll("[$\\[{}\\]]", "");
     }
 
     private int validateLimit(int limit) {

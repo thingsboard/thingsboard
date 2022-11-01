@@ -84,6 +84,7 @@ message ConnectResponseMsg {
 
 message SyncRequestMsg {
   bool syncRequired = 1;
+  optional bool fullSync = 2;
 }
 
 message SyncCompletedMsg {
@@ -183,6 +184,7 @@ message DashboardUpdateMsg {
   optional int64 customerIdLSB = 5;
   string title = 6;
   string configuration = 7;
+  optional string assignedCustomers = 8;
 }
 
 message DeviceUpdateMsg {
@@ -198,6 +200,9 @@ message DeviceUpdateMsg {
   optional string label = 10;
   optional string additionalInfo = 11;
   optional string conflictName = 12;
+  optional int64 firmwareIdMSB = 13;
+  optional int64 firmwareIdLSB = 14;
+  optional bytes deviceDataBytes = 15;
 }
 
 message DeviceProfileUpdateMsg {
@@ -216,6 +221,23 @@ message DeviceProfileUpdateMsg {
   bytes profileDataBytes = 13;
   optional string provisionDeviceKey = 14;
   optional bytes image = 15;
+  optional int64 firmwareIdMSB = 16;
+  optional int64 firmwareIdLSB = 17;
+}
+
+message AssetProfileUpdateMsg {
+  UpdateMsgType msgType = 1;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string name = 4;
+  optional string description = 5;
+  bool default = 6;
+  int64 defaultRuleChainIdMSB = 7;
+  int64 defaultRuleChainIdLSB = 8;
+  int64 defaultDashboardIdMSB = 9;
+  int64 defaultDashboardIdLSB = 10;
+  optional string defaultQueueName = 11;
+  optional bytes image = 12;
 }
 
 message DeviceCredentialsUpdateMsg {
@@ -236,6 +258,8 @@ message AssetUpdateMsg {
   string type = 7;
   optional string label = 8;
   optional string additionalInfo = 9;
+  optional int64 assetProfileIdMSB = 10;
+  optional int64 assetProfileIdLSB = 11;
 }
 
 message EntityViewUpdateMsg {
@@ -379,6 +403,7 @@ message DeviceCredentialsRequestMsg {
   int64 deviceIdLSB = 2;
 }
 
+// deprecated
 message DeviceProfileDevicesRequestMsg {
   int64 deviceProfileIdMSB = 1;
   int64 deviceProfileIdLSB = 2;
@@ -488,7 +513,7 @@ message UplinkMsg {
   repeated UserCredentialsRequestMsg userCredentialsRequestMsg = 10;
   repeated DeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 11;
   repeated DeviceRpcCallMsg deviceRpcCallMsg = 12;
-  repeated DeviceProfileDevicesRequestMsg deviceProfileDevicesRequestMsg = 13;
+  repeated DeviceProfileDevicesRequestMsg deviceProfileDevicesRequestMsg = 13; // deprecated
   repeated WidgetBundleTypesRequestMsg widgetBundleTypesRequestMsg = 14;
   repeated EntityViewsRequestMsg entityViewsRequestMsg = 15;
 }
@@ -529,5 +554,7 @@ message DownlinkMsg {
   repeated DeviceRpcCallMsg deviceRpcCallMsg = 21;
   repeated OtaPackageUpdateMsg otaPackageUpdateMsg = 22;
   repeated QueueUpdateMsg queueUpdateMsg = 23;
+  repeated AssetProfileUpdateMsg assetProfileUpdateMsg = 24;
+  EdgeConfiguration edgeConfiguration = 25;
 }
 

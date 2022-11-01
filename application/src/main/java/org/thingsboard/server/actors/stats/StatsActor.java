@@ -20,13 +20,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActor;
-import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.TbActorId;
 import org.thingsboard.server.actors.TbStringActorId;
 import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.EventInfo;
+import org.thingsboard.server.common.data.event.StatisticsEvent;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
 
@@ -54,12 +54,14 @@ public class StatsActor extends ContextAwareActor {
         if (msg.isEmpty()) {
             return;
         }
-        Event event = new Event();
-        event.setEntityId(msg.getEntityId());
-        event.setTenantId(msg.getTenantId());
-        event.setType(DataConstants.STATS);
-        event.setBody(toBodyJson(systemContext.getServiceInfoProvider().getServiceId(), msg.getMessagesProcessed(), msg.getErrorsOccurred()));
-        systemContext.getEventService().saveAsync(event);
+        systemContext.getEventService().saveAsync(StatisticsEvent.builder()
+                .tenantId(msg.getTenantId())
+                .entityId(msg.getEntityId().getId())
+                .serviceId(systemContext.getServiceInfoProvider().getServiceId())
+                .messagesProcessed(msg.getMessagesProcessed())
+                .errorsOccurred(msg.getErrorsOccurred())
+                .build()
+        );
     }
 
     private JsonNode toBodyJson(String serviceId, long messagesProcessed, long errorsOccurred) {

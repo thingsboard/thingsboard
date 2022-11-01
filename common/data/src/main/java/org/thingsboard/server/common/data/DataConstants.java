@@ -52,12 +52,6 @@ public class DataConstants {
     }
 
     public static final String ALARM = "ALARM";
-    public static final String ERROR = "ERROR";
-    public static final String LC_EVENT = "LC_EVENT";
-    public static final String STATS = "STATS";
-    public static final String DEBUG_RULE_NODE = "DEBUG_RULE_NODE";
-    public static final String DEBUG_RULE_CHAIN = "DEBUG_RULE_CHAIN";
-
     public static final String IN = "IN";
     public static final String OUT = "OUT";
 
@@ -84,6 +78,10 @@ public class DataConstants {
     public static final String PROVISION_FAILURE = "PROVISION_FAILURE";
     public static final String ENTITY_ASSIGNED_TO_EDGE = "ENTITY_ASSIGNED_TO_EDGE";
     public static final String ENTITY_UNASSIGNED_FROM_EDGE = "ENTITY_UNASSIGNED_FROM_EDGE";
+
+    public static final String RELATION_ADD_OR_UPDATE = "RELATION_ADD_OR_UPDATE";
+    public static final String RELATION_DELETED = "RELATION_DELETED";
+    public static final String RELATIONS_DELETED = "RELATIONS_DELETED";
 
     public static final String RPC_CALL_FROM_SERVER_TO_DEVICE = "RPC_CALL_FROM_SERVER_TO_DEVICE";
 
