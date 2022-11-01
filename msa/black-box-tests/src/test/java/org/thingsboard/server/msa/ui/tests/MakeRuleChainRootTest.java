@@ -17,14 +17,14 @@ package org.thingsboard.server.msa.ui.tests;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.thingsboard.server.msa.ui.base.TestInit;
+import org.thingsboard.server.msa.ui.base.AbstractUiTest;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
 import org.thingsboard.server.msa.ui.pages.RuleChainsPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
 
 import static org.thingsboard.server.msa.ui.utils.Const.URL;
 
-public class MakeRuleChainRootTest extends TestInit {
+public class MakeRuleChainRootTest extends AbstractUiTest {
 
     @Test
     public void makeRuleChainRootByRightCornerBtn() {

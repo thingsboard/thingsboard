@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.msa.ui.base;
+package org.thingsboard.server.msa.ui.utils;
 
 import lombok.SneakyThrows;
 
 import java.util.Random;
 
-abstract public class Base {
+public class TestUtil {
 
     @SneakyThrows
-    protected static void sleep(int seconds) {
+    public static void sleep(int seconds) {
         Thread.sleep(seconds * 1000L);
     }
 

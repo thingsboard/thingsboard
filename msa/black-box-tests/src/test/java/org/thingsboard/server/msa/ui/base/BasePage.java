@@ -31,7 +31,7 @@ import java.time.Duration;
 import java.util.List;
 
 @Slf4j
-abstract public class BasePage extends Base {
+public abstract class BasePage {
     protected WebDriver driver;
     protected WebDriverWait wait;
     protected Actions actions;

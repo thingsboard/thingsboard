@@ -17,15 +17,16 @@ package org.thingsboard.server.msa.ui.tests;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.thingsboard.server.msa.ui.base.TestInit;
+import org.thingsboard.server.msa.ui.base.AbstractUiTest;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
 import org.thingsboard.server.msa.ui.pages.RuleChainsPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
 
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
 import static org.thingsboard.server.msa.ui.utils.Const.URL;
+import static org.thingsboard.server.msa.ui.utils.TestUtil.randomSymbol;
 
-public class SearchRuleChainTest extends TestInit {
+public class SearchRuleChainTest extends AbstractUiTest {
 
     @Test
     public void searchFirstWord() {

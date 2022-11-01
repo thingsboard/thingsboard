@@ -15,9 +15,9 @@
  */
 package org.thingsboard.server.msa.ui.utils;
 
-import org.thingsboard.server.msa.ui.base.Base;
+import static org.thingsboard.server.msa.ui.utils.TestUtil.getRandomNumber;
 
-public class Const extends Base {
+public class Const {
     public static final String URL = "http://localhost/";
     public static final String TENANT_EMAIL = "tenant@thingsboard.org";
     public static final String TENANT_PASSWORD = "tenant";

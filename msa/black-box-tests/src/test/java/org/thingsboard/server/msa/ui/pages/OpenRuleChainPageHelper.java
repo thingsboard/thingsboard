@@ -17,6 +17,8 @@ package org.thingsboard.server.msa.ui.pages;
 
 import org.openqa.selenium.WebDriver;
 
+import static org.thingsboard.server.msa.ui.utils.TestUtil.sleep;
+
 public class OpenRuleChainPageHelper extends OpenRuleChainPageElements {
     public OpenRuleChainPageHelper(WebDriver driver) {
         super(driver);

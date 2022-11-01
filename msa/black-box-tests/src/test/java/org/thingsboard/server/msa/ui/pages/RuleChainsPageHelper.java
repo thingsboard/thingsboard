@@ -26,6 +26,8 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import java.util.Random;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.msa.ui.utils.TestUtil.sleep;
+
 @Slf4j
 public class RuleChainsPageHelper extends RuleChainsPageElements {
     public RuleChainsPageHelper(WebDriver driver) {

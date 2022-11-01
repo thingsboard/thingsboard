@@ -21,6 +21,8 @@ import org.thingsboard.server.msa.ui.base.BasePage;
 
 import java.util.List;
 
+import static org.thingsboard.server.msa.ui.utils.TestUtil.sleep;
+
 public class OtherPageElements extends BasePage {
     public OtherPageElements(WebDriver driver) {
         super(driver);

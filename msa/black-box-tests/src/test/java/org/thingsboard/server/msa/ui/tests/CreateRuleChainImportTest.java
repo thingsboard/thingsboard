@@ -18,7 +18,7 @@ package org.thingsboard.server.msa.ui.tests;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.thingsboard.server.msa.ui.base.TestInit;
+import org.thingsboard.server.msa.ui.base.AbstractUiTest;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
 import org.thingsboard.server.msa.ui.pages.OpenRuleChainPageHelper;
 import org.thingsboard.server.msa.ui.pages.RuleChainsPageHelper;
@@ -30,7 +30,7 @@ import static org.thingsboard.server.msa.ui.utils.Const.IMPORT_RULE_CHAIN_NAME;
 import static org.thingsboard.server.msa.ui.utils.Const.IMPORT_TXT_FILE_NAME;
 import static org.thingsboard.server.msa.ui.utils.Const.URL;
 
-public class CreateRuleChainImportTest extends TestInit {
+public class CreateRuleChainImportTest extends AbstractUiTest {
 
     private String absolutePathToFileImportRuleChain;
     private String absolutePathToFileImportTxt;

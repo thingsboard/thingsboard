@@ -17,7 +17,7 @@ package org.thingsboard.server.msa.ui.tests;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.thingsboard.server.msa.ui.base.TestInit;
+import org.thingsboard.server.msa.ui.base.AbstractUiTest;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
 import org.thingsboard.server.msa.ui.pages.RuleChainsPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
@@ -25,7 +25,7 @@ import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
 import static org.thingsboard.server.msa.ui.utils.Const.URL;
 
-public class RuleChainEditMenuTest extends TestInit {
+public class RuleChainEditMenuTest extends AbstractUiTest {
 
     @Test
     public void changeName() {

@@ -19,6 +19,7 @@ import io.github.bonigarcia.wdm.WebDriverManager;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
@@ -32,7 +33,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import java.time.Duration;
 
 @Slf4j
-public abstract class TestInit extends Base {
+public abstract class AbstractUiTest {
 
     private final String browser = System.getProperty("blackBoxTests.browser", "chrome");
 
@@ -43,6 +44,11 @@ public abstract class TestInit extends Base {
     private static final int WIDTH = 1680;
     private static final int HEIGHT = 1050;
     private static final boolean HEADLESS = true;
+
+    @BeforeClass
+    public static void setUp() {
+        org.junit.Assume.assumeFalse(Boolean.parseBoolean(System.getProperty("blackBoxTests.ui.skip", "true")));
+    }
 
     @Before
     public void openBrowser() throws Exception {

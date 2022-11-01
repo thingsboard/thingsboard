@@ -21,6 +21,8 @@ import org.openqa.selenium.WebElement;
 
 import java.util.List;
 
+import static org.thingsboard.server.msa.ui.utils.TestUtil.sleep;
+
 public class RuleChainsPageElements extends OtherPageElementsHelper {
     public RuleChainsPageElements(WebDriver driver) {
         super(driver);
