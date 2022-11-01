@@ -201,7 +201,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         return prefix;
     }
 
-    public static void addKvEntryToJson(ObjectNode entityNode, KvEntry kvEntry, String key) {
+    private static void addKvEntryToJson(ObjectNode entityNode, KvEntry kvEntry, String key) {
         if (kvEntry.getDataType() == DataType.BOOLEAN) {
             kvEntry.getBooleanValue().ifPresent(value -> entityNode.put(key, value));
         } else if (kvEntry.getDataType() == DataType.DOUBLE) {
@@ -217,7 +217,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         }
     }
 
-    public static JsonNode toJsonNode(String value) {
+    private static JsonNode toJsonNode(String value) {
         try {
             return mapper.readTree(value);
         } catch (IOException e) {
