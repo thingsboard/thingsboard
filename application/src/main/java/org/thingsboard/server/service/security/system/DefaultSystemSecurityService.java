@@ -263,11 +263,15 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
 
     @Override
     public void logLoginAction(User user, Object authenticationDetails, ActionType actionType, Exception e) {
+        logLoginAction(user, authenticationDetails, actionType, null, e);
+    }
+
+    @Override
+    public void logLoginAction(User user, Object authenticationDetails, ActionType actionType, String provider, Exception e) {
         String clientAddress = "Unknown";
         String browser = "Unknown";
         String os = "Unknown";
         String device = "Unknown";
-        String provider = null;
         if (authenticationDetails instanceof RestAuthenticationDetails) {
             RestAuthenticationDetails details = (RestAuthenticationDetails) authenticationDetails;
             clientAddress = details.getClientAddress();
@@ -307,9 +311,6 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
         }
         if (actionType == ActionType.LOGIN && e == null) {
             userService.setLastLoginTs(user.getTenantId(), user.getId());
-        }
-        if (user.getAdditionalInfo() != null && user.getAdditionalInfo().has("authProviderName")) {
-            provider = user.getAdditionalInfo().get("authProviderName").asText();
         }
         auditLogService.logEntityAction(
                 user.getTenantId(), user.getCustomerId(), user.getId(),
