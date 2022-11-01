@@ -4630,7 +4630,10 @@
             "point-color-function": "Point color function",
             "use-point-as-anchor": "Use point as anchor",
             "point-as-anchor-function": "Point as anchor function",
-            "independent-point-tooltip": "Independent point tooltip"
+            "independent-point-tooltip": "Independent point tooltip",
+            "clustering-markers": "Clustering markers",
+            "use-icon-create-function": "Use markers colour function",
+            "marker-color-function": "Marker color function"
         },
         "markdown": {
             "use-markdown-text-function": "Use markdown/HTML value function",
