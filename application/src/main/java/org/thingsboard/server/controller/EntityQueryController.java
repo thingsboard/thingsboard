@@ -61,11 +61,7 @@ public class EntityQueryController extends BaseController {
             @ApiParam(value = "A JSON value representing the entity count query. See API call notes above for more details.")
             @RequestBody EntityCountQuery query) throws ThingsboardException {
         checkNotNull(query);
-        try {
-            return this.entityQueryService.countEntitiesByQuery(getCurrentUser(), query);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        return this.entityQueryService.countEntitiesByQuery(getCurrentUser(), query);
     }
 
     @ApiOperation(value = "Find Entity Data by Query", notes = ENTITY_DATA_QUERY_DESCRIPTION)
@@ -76,11 +72,7 @@ public class EntityQueryController extends BaseController {
             @ApiParam(value = "A JSON value representing the entity data query. See API call notes above for more details.")
             @RequestBody EntityDataQuery query) throws ThingsboardException {
         checkNotNull(query);
-        try {
-            return this.entityQueryService.findEntityDataByQuery(getCurrentUser(), query);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        return this.entityQueryService.findEntityDataByQuery(getCurrentUser(), query);
     }
 
     @ApiOperation(value = "Find Alarms by Query", notes = ALARM_DATA_QUERY_DESCRIPTION)
@@ -91,11 +83,7 @@ public class EntityQueryController extends BaseController {
             @ApiParam(value = "A JSON value representing the alarm data query. See API call notes above for more details.")
             @RequestBody AlarmDataQuery query) throws ThingsboardException {
         checkNotNull(query);
-        try {
-            return this.entityQueryService.findAlarmDataByQuery(getCurrentUser(), query);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        return this.entityQueryService.findAlarmDataByQuery(getCurrentUser(), query);
     }
 
     @ApiOperation(value = "Find Entity Keys by Query",
@@ -112,15 +100,11 @@ public class EntityQueryController extends BaseController {
             @RequestParam("attributes") boolean isAttributes) throws ThingsboardException {
         TenantId tenantId = getTenantId();
         checkNotNull(query);
-        try {
-            EntityDataPageLink pageLink = query.getPageLink();
-            if (pageLink.getPageSize() > MAX_PAGE_SIZE) {
-                pageLink.setPageSize(MAX_PAGE_SIZE);
-            }
-            return entityQueryService.getKeysByQuery(getCurrentUser(), tenantId, query, isTimeseries, isAttributes);
-        } catch (Exception e) {
-            throw handleException(e);
+        EntityDataPageLink pageLink = query.getPageLink();
+        if (pageLink.getPageSize() > MAX_PAGE_SIZE) {
+            pageLink.setPageSize(MAX_PAGE_SIZE);
         }
+        return entityQueryService.getKeysByQuery(getCurrentUser(), tenantId, query, isTimeseries, isAttributes);
     }
 
 }

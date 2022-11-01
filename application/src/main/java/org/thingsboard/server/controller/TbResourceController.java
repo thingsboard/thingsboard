@@ -82,20 +82,16 @@ public class TbResourceController extends BaseController {
     public ResponseEntity<org.springframework.core.io.Resource> downloadResource(@ApiParam(value = RESOURCE_ID_PARAM_DESCRIPTION)
                                                                                  @PathVariable(RESOURCE_ID) String strResourceId) throws ThingsboardException {
         checkParameter(RESOURCE_ID, strResourceId);
-        try {
-            TbResourceId resourceId = new TbResourceId(toUUID(strResourceId));
-            TbResource tbResource = checkResourceId(resourceId, Operation.READ);
+        TbResourceId resourceId = new TbResourceId(toUUID(strResourceId));
+        TbResource tbResource = checkResourceId(resourceId, Operation.READ);
 
-            ByteArrayResource resource = new ByteArrayResource(Base64.getDecoder().decode(tbResource.getData().getBytes()));
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + tbResource.getFileName())
-                    .header("x-filename", tbResource.getFileName())
-                    .contentLength(resource.contentLength())
-                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .body(resource);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        ByteArrayResource resource = new ByteArrayResource(Base64.getDecoder().decode(tbResource.getData().getBytes()));
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + tbResource.getFileName())
+                .header("x-filename", tbResource.getFileName())
+                .contentLength(resource.contentLength())
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
     }
 
     @ApiOperation(value = "Get Resource Info (getResourceInfoById)",
@@ -108,12 +104,8 @@ public class TbResourceController extends BaseController {
     public TbResourceInfo getResourceInfoById(@ApiParam(value = RESOURCE_ID_PARAM_DESCRIPTION)
                                               @PathVariable(RESOURCE_ID) String strResourceId) throws ThingsboardException {
         checkParameter(RESOURCE_ID, strResourceId);
-        try {
-            TbResourceId resourceId = new TbResourceId(toUUID(strResourceId));
-            return checkResourceInfoId(resourceId, Operation.READ);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        TbResourceId resourceId = new TbResourceId(toUUID(strResourceId));
+        return checkResourceInfoId(resourceId, Operation.READ);
     }
 
     @ApiOperation(value = "Get Resource (getResourceById)",
@@ -126,12 +118,8 @@ public class TbResourceController extends BaseController {
     public TbResource getResourceById(@ApiParam(value = RESOURCE_ID_PARAM_DESCRIPTION)
                                       @PathVariable(RESOURCE_ID) String strResourceId) throws ThingsboardException {
         checkParameter(RESOURCE_ID, strResourceId);
-        try {
-            TbResourceId resourceId = new TbResourceId(toUUID(strResourceId));
-            return checkResourceId(resourceId, Operation.READ);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        TbResourceId resourceId = new TbResourceId(toUUID(strResourceId));
+        return checkResourceId(resourceId, Operation.READ);
     }
 
     @ApiOperation(value = "Create Or Update Resource (saveResource)",
@@ -171,15 +159,11 @@ public class TbResourceController extends BaseController {
                                                  @RequestParam(required = false) String sortProperty,
                                                  @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
                                                  @RequestParam(required = false) String sortOrder) throws ThingsboardException {
-        try {
-            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-            if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
-                return checkNotNull(resourceService.findTenantResourcesByTenantId(getTenantId(), pageLink));
-            } else {
-                return checkNotNull(resourceService.findAllTenantResourcesByTenantId(getTenantId(), pageLink));
-            }
-        } catch (Exception e) {
-            throw handleException(e);
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
+            return checkNotNull(resourceService.findTenantResourcesByTenantId(getTenantId(), pageLink));
+        } else {
+            return checkNotNull(resourceService.findAllTenantResourcesByTenantId(getTenantId(), pageLink));
         }
     }
 
@@ -200,12 +184,8 @@ public class TbResourceController extends BaseController {
                                                      @RequestParam(required = false) String sortProperty,
                                                      @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
                                                      @RequestParam(required = false) String sortOrder) throws ThingsboardException {
-        try {
-            PageLink pageLink = new PageLink(pageSize, page, textSearch);
-            return checkNotNull(resourceService.findLwM2mObjectPage(getTenantId(), sortProperty, sortOrder, pageLink));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        PageLink pageLink = new PageLink(pageSize, page, textSearch);
+        return checkNotNull(resourceService.findLwM2mObjectPage(getTenantId(), sortProperty, sortOrder, pageLink));
     }
 
     @ApiOperation(value = "Get LwM2M Objects (getLwm2mListObjects)",
@@ -221,11 +201,7 @@ public class TbResourceController extends BaseController {
                                                  @RequestParam String sortProperty,
                                                  @ApiParam(value = "LwM2M Object ids.", required = true)
                                                  @RequestParam(required = false) String[] objectIds) throws ThingsboardException {
-        try {
-            return checkNotNull(resourceService.findLwM2mObject(getTenantId(), sortOrder, sortProperty, objectIds));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        return checkNotNull(resourceService.findLwM2mObject(getTenantId(), sortOrder, sortProperty, objectIds));
     }
 
     @ApiOperation(value = "Delete Resource (deleteResource)",

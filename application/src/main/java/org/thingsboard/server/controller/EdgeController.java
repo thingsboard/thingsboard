@@ -66,6 +66,7 @@ import org.thingsboard.server.service.security.permission.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID_PARAM_DESCRIPTION;
@@ -116,12 +117,8 @@ public class EdgeController extends BaseController {
     public Edge getEdgeById(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
                             @PathVariable(EDGE_ID) String strEdgeId) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
-        try {
-            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-            return checkEdgeId(edgeId, Operation.READ);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+        return checkEdgeId(edgeId, Operation.READ);
     }
 
     @ApiOperation(value = "Get Edge Info (getEdgeInfoById)",
@@ -133,12 +130,8 @@ public class EdgeController extends BaseController {
     public EdgeInfo getEdgeInfoById(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
                                     @PathVariable(EDGE_ID) String strEdgeId) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
-        try {
-            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-            return checkEdgeInfoId(edgeId, Operation.READ);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+        return checkEdgeInfoId(edgeId, Operation.READ);
     }
 
     @ApiOperation(value = "Create Or Update Edge (saveEdge)",
@@ -203,13 +196,9 @@ public class EdgeController extends BaseController {
                                    @RequestParam(required = false) String sortProperty,
                                    @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
                                    @RequestParam(required = false) String sortOrder) throws ThingsboardException {
-        try {
-            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-            TenantId tenantId = getCurrentUser().getTenantId();
-            return checkNotNull(edgeService.findEdgesByTenantId(tenantId, pageLink));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        TenantId tenantId = getCurrentUser().getTenantId();
+        return checkNotNull(edgeService.findEdgesByTenantId(tenantId, pageLink));
     }
 
     @ApiOperation(value = "Assign edge to customer (assignEdgeToCustomer)",
@@ -285,16 +274,12 @@ public class EdgeController extends BaseController {
             @RequestParam(required = false) String sortProperty,
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
-        try {
-            TenantId tenantId = getCurrentUser().getTenantId();
-            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-            if (type != null && type.trim().length() > 0) {
-                return checkNotNull(edgeService.findEdgesByTenantIdAndType(tenantId, type, pageLink));
-            } else {
-                return checkNotNull(edgeService.findEdgesByTenantId(tenantId, pageLink));
-            }
-        } catch (Exception e) {
-            throw handleException(e);
+        TenantId tenantId = getCurrentUser().getTenantId();
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        if (type != null && type.trim().length() > 0) {
+            return checkNotNull(edgeService.findEdgesByTenantIdAndType(tenantId, type, pageLink));
+        } else {
+            return checkNotNull(edgeService.findEdgesByTenantId(tenantId, pageLink));
         }
     }
 
@@ -318,16 +303,12 @@ public class EdgeController extends BaseController {
             @RequestParam(required = false) String sortProperty,
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
-        try {
-            TenantId tenantId = getCurrentUser().getTenantId();
-            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-            if (type != null && type.trim().length() > 0) {
-                return checkNotNull(edgeService.findEdgeInfosByTenantIdAndType(tenantId, type, pageLink));
-            } else {
-                return checkNotNull(edgeService.findEdgeInfosByTenantId(tenantId, pageLink));
-            }
-        } catch (Exception e) {
-            throw handleException(e);
+        TenantId tenantId = getCurrentUser().getTenantId();
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        if (type != null && type.trim().length() > 0) {
+            return checkNotNull(edgeService.findEdgeInfosByTenantIdAndType(tenantId, type, pageLink));
+        } else {
+            return checkNotNull(edgeService.findEdgeInfosByTenantId(tenantId, pageLink));
         }
     }
 
@@ -340,12 +321,8 @@ public class EdgeController extends BaseController {
     @ResponseBody
     public Edge getTenantEdge(@ApiParam(value = "Unique name of the edge", required = true)
                               @RequestParam String edgeName) throws ThingsboardException {
-        try {
-            TenantId tenantId = getCurrentUser().getTenantId();
-            return checkNotNull(edgeService.findEdgeByTenantIdAndName(tenantId, edgeName));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        TenantId tenantId = getCurrentUser().getTenantId();
+        return checkNotNull(edgeService.findEdgeByTenantIdAndName(tenantId, edgeName));
     }
 
     @ApiOperation(value = "Set root rule chain for provided edge (setEdgeRootRuleChain)",
@@ -391,22 +368,18 @@ public class EdgeController extends BaseController {
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         checkParameter("customerId", strCustomerId);
-        try {
-            SecurityUser user = getCurrentUser();
-            TenantId tenantId = user.getTenantId();
-            CustomerId customerId = new CustomerId(toUUID(strCustomerId));
-            checkCustomerId(customerId, Operation.READ);
-            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-            PageData<Edge> result;
-            if (type != null && type.trim().length() > 0) {
-                result = edgeService.findEdgesByTenantIdAndCustomerIdAndType(tenantId, customerId, type, pageLink);
-            } else {
-                result = edgeService.findEdgesByTenantIdAndCustomerId(tenantId, customerId, pageLink);
-            }
-            return checkNotNull(result);
-        } catch (Exception e) {
-            throw handleException(e);
+        SecurityUser user = getCurrentUser();
+        TenantId tenantId = user.getTenantId();
+        CustomerId customerId = new CustomerId(toUUID(strCustomerId));
+        checkCustomerId(customerId, Operation.READ);
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        PageData<Edge> result;
+        if (type != null && type.trim().length() > 0) {
+            result = edgeService.findEdgesByTenantIdAndCustomerIdAndType(tenantId, customerId, type, pageLink);
+        } else {
+            result = edgeService.findEdgesByTenantIdAndCustomerId(tenantId, customerId, pageLink);
         }
+        return checkNotNull(result);
     }
 
     @ApiOperation(value = "Get Customer Edge Infos (getCustomerEdgeInfos)",
@@ -431,22 +404,18 @@ public class EdgeController extends BaseController {
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         checkParameter("customerId", strCustomerId);
-        try {
-            SecurityUser user = getCurrentUser();
-            TenantId tenantId = user.getTenantId();
-            CustomerId customerId = new CustomerId(toUUID(strCustomerId));
-            checkCustomerId(customerId, Operation.READ);
-            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-            PageData<EdgeInfo> result;
-            if (type != null && type.trim().length() > 0) {
-                result = edgeService.findEdgeInfosByTenantIdAndCustomerIdAndType(tenantId, customerId, type, pageLink);
-            } else {
-                result = edgeService.findEdgeInfosByTenantIdAndCustomerId(tenantId, customerId, pageLink);
-            }
-            return checkNotNull(result);
-        } catch (Exception e) {
-            throw handleException(e);
+        SecurityUser user = getCurrentUser();
+        TenantId tenantId = user.getTenantId();
+        CustomerId customerId = new CustomerId(toUUID(strCustomerId));
+        checkCustomerId(customerId, Operation.READ);
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        PageData<EdgeInfo> result;
+        if (type != null && type.trim().length() > 0) {
+            result = edgeService.findEdgeInfosByTenantIdAndCustomerIdAndType(tenantId, customerId, type, pageLink);
+        } else {
+            result = edgeService.findEdgeInfosByTenantIdAndCustomerId(tenantId, customerId, pageLink);
         }
+        return checkNotNull(result);
     }
 
     @ApiOperation(value = "Get Edges By Ids (getEdgesByIds)",
@@ -457,27 +426,23 @@ public class EdgeController extends BaseController {
     @ResponseBody
     public List<Edge> getEdgesByIds(
             @ApiParam(value = "A list of edges ids, separated by comma ','", required = true)
-            @RequestParam("edgeIds") String[] strEdgeIds) throws ThingsboardException {
+            @RequestParam("edgeIds") String[] strEdgeIds) throws ThingsboardException, ExecutionException, InterruptedException {
         checkArrayParameter("edgeIds", strEdgeIds);
-        try {
-            SecurityUser user = getCurrentUser();
-            TenantId tenantId = user.getTenantId();
-            CustomerId customerId = user.getCustomerId();
-            List<EdgeId> edgeIds = new ArrayList<>();
-            for (String strEdgeId : strEdgeIds) {
-                edgeIds.add(new EdgeId(toUUID(strEdgeId)));
-            }
-            ListenableFuture<List<Edge>> edgesFuture;
-            if (customerId == null || customerId.isNullUid()) {
-                edgesFuture = edgeService.findEdgesByTenantIdAndIdsAsync(tenantId, edgeIds);
-            } else {
-                edgesFuture = edgeService.findEdgesByTenantIdCustomerIdAndIdsAsync(tenantId, customerId, edgeIds);
-            }
-            List<Edge> edges = edgesFuture.get();
-            return checkNotNull(edges);
-        } catch (Exception e) {
-            throw handleException(e);
+        SecurityUser user = getCurrentUser();
+        TenantId tenantId = user.getTenantId();
+        CustomerId customerId = user.getCustomerId();
+        List<EdgeId> edgeIds = new ArrayList<>();
+        for (String strEdgeId : strEdgeIds) {
+            edgeIds.add(new EdgeId(toUUID(strEdgeId)));
         }
+        ListenableFuture<List<Edge>> edgesFuture;
+        if (customerId == null || customerId.isNullUid()) {
+            edgesFuture = edgeService.findEdgesByTenantIdAndIdsAsync(tenantId, edgeIds);
+        } else {
+            edgesFuture = edgeService.findEdgesByTenantIdCustomerIdAndIdsAsync(tenantId, customerId, edgeIds);
+        }
+        List<Edge> edges = edgesFuture.get();
+        return checkNotNull(edges);
     }
 
     @ApiOperation(value = "Find related edges (findByQuery)",
@@ -488,27 +453,23 @@ public class EdgeController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/edges", method = RequestMethod.POST)
     @ResponseBody
-    public List<Edge> findByQuery(@RequestBody EdgeSearchQuery query) throws ThingsboardException {
+    public List<Edge> findByQuery(@RequestBody EdgeSearchQuery query) throws ThingsboardException, ExecutionException, InterruptedException {
         checkNotNull(query);
         checkNotNull(query.getParameters());
         checkNotNull(query.getEdgeTypes());
         checkEntityId(query.getParameters().getEntityId(), Operation.READ);
-        try {
-            SecurityUser user = getCurrentUser();
-            TenantId tenantId = user.getTenantId();
-            List<Edge> edges = checkNotNull(edgeService.findEdgesByQuery(tenantId, query).get());
-            edges = edges.stream().filter(edge -> {
-                try {
-                    accessControlService.checkPermission(user, Resource.EDGE, Operation.READ, edge.getId(), edge);
-                    return true;
-                } catch (ThingsboardException e) {
-                    return false;
-                }
-            }).collect(Collectors.toList());
-            return edges;
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        SecurityUser user = getCurrentUser();
+        TenantId tenantId = user.getTenantId();
+        List<Edge> edges = checkNotNull(edgeService.findEdgesByQuery(tenantId, query).get());
+        edges = edges.stream().filter(edge -> {
+            try {
+                accessControlService.checkPermission(user, Resource.EDGE, Operation.READ, edge.getId(), edge);
+                return true;
+            } catch (ThingsboardException e) {
+                return false;
+            }
+        }).collect(Collectors.toList());
+        return edges;
     }
 
     @ApiOperation(value = "Get Edge Types (getEdgeTypes)",
@@ -518,15 +479,11 @@ public class EdgeController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/edge/types", method = RequestMethod.GET)
     @ResponseBody
-    public List<EntitySubtype> getEdgeTypes() throws ThingsboardException {
-        try {
-            SecurityUser user = getCurrentUser();
-            TenantId tenantId = user.getTenantId();
-            ListenableFuture<List<EntitySubtype>> edgeTypes = edgeService.findEdgeTypesByTenantId(tenantId);
-            return checkNotNull(edgeTypes.get());
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+    public List<EntitySubtype> getEdgeTypes() throws ThingsboardException, ExecutionException, InterruptedException {
+        SecurityUser user = getCurrentUser();
+        TenantId tenantId = user.getTenantId();
+        ListenableFuture<List<EntitySubtype>> edgeTypes = edgeService.findEdgeTypesByTenantId(tenantId);
+        return checkNotNull(edgeTypes.get());
     }
 
     @ApiOperation(value = "Sync edge (syncEdge)",
@@ -537,22 +494,18 @@ public class EdgeController extends BaseController {
     public DeferredResult<ResponseEntity> syncEdge(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
                          @PathVariable("edgeId") String strEdgeId) throws ThingsboardException {
         checkParameter("edgeId", strEdgeId);
-        try {
-            final DeferredResult<ResponseEntity> response = new DeferredResult<>();
-            if (isEdgesEnabled()) {
-                EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-                edgeId = checkNotNull(edgeId);
-                SecurityUser user = getCurrentUser();
-                TenantId tenantId = user.getTenantId();
-                ToEdgeSyncRequest request = new ToEdgeSyncRequest(UUID.randomUUID(), tenantId, edgeId);
-                edgeRpcService.processSyncRequest(request, fromEdgeSyncResponse -> reply(response, fromEdgeSyncResponse));
-            } else {
-                throw new ThingsboardException("Edges support disabled", ThingsboardErrorCode.GENERAL);
-            }
-            return response;
-        } catch (Exception e) {
-            throw handleException(e);
+        final DeferredResult<ResponseEntity> response = new DeferredResult<>();
+        if (isEdgesEnabled()) {
+            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+            edgeId = checkNotNull(edgeId);
+            SecurityUser user = getCurrentUser();
+            TenantId tenantId = user.getTenantId();
+            ToEdgeSyncRequest request = new ToEdgeSyncRequest(UUID.randomUUID(), tenantId, edgeId);
+            edgeRpcService.processSyncRequest(request, fromEdgeSyncResponse -> reply(response, fromEdgeSyncResponse));
+        } else {
+            throw new ThingsboardException("Edges support disabled", ThingsboardErrorCode.GENERAL);
         }
+        return response;
     }
 
     private void reply(DeferredResult<ResponseEntity> response, FromEdgeSyncResponse fromEdgeSyncResponse) {
@@ -570,15 +523,11 @@ public class EdgeController extends BaseController {
     @ResponseBody
     public String findMissingToRelatedRuleChains(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
                                                  @PathVariable("edgeId") String strEdgeId) throws ThingsboardException {
-        try {
-            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-            edgeId = checkNotNull(edgeId);
-            SecurityUser user = getCurrentUser();
-            TenantId tenantId = user.getTenantId();
-            return edgeService.findMissingToRelatedRuleChains(tenantId, edgeId, TbRuleChainInputNode.class.getName());
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+        edgeId = checkNotNull(edgeId);
+        SecurityUser user = getCurrentUser();
+        TenantId tenantId = user.getTenantId();
+        return edgeService.findMissingToRelatedRuleChains(tenantId, edgeId, TbRuleChainInputNode.class.getName());
     }
 
     @ApiOperation(value = "Import the bulk of edges (processEdgesBulkImport)",
