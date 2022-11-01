@@ -51,7 +51,7 @@ export class MarkdownWidgetSettingsComponent extends WidgetSettingsComponent {
     this.markdownWidgetSettingsForm = this.fb.group({
       useMarkdownTextFunction: [settings.useMarkdownTextFunction, []],
       markdownTextPattern: [settings.markdownTextPattern, []],
-      markdownTextFunction: [settings.qrCodeTextFunction, []],
+      markdownTextFunction: [settings.markdownTextFunction, []],
       markdownCss: [settings.markdownCss, []]
     });
   }

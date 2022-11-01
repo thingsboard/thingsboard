@@ -73,23 +73,8 @@ CREATE TABLE IF NOT EXISTS entity_alarm (
     CONSTRAINT fk_entity_alarm_id FOREIGN KEY (alarm_id) REFERENCES alarm(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS asset (
-    id uuid NOT NULL CONSTRAINT asset_pkey PRIMARY KEY,
-    created_time bigint NOT NULL,
-    additional_info varchar,
-    customer_id uuid,
-    name varchar(255),
-    label varchar(255),
-    search_text varchar(255),
-    tenant_id uuid,
-    type varchar(255),
-    external_id uuid,
-    CONSTRAINT asset_name_unq_key UNIQUE (tenant_id, name),
-    CONSTRAINT asset_external_id_unq_key UNIQUE (tenant_id, external_id)
-);
-
 CREATE TABLE IF NOT EXISTS audit_log (
-    id uuid NOT NULL CONSTRAINT audit_log_pkey PRIMARY KEY,
+    id uuid NOT NULL,
     created_time bigint NOT NULL,
     tenant_id uuid,
     customer_id uuid,
@@ -102,7 +87,7 @@ CREATE TABLE IF NOT EXISTS audit_log (
     action_data varchar(1000000),
     action_status varchar(255),
     action_failure_details varchar(1000000)
-);
+) PARTITION BY RANGE (created_time);
 
 CREATE TABLE IF NOT EXISTS attribute_kv (
   entity_type varchar(255),
@@ -238,6 +223,42 @@ CREATE TABLE IF NOT EXISTS queue (
     submit_strategy varchar(255),
     processing_strategy varchar(255),
     additional_info varchar
+);
+
+CREATE TABLE IF NOT EXISTS asset_profile (
+    id uuid NOT NULL CONSTRAINT asset_profile_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    name varchar(255),
+    image varchar(1000000),
+    description varchar,
+    search_text varchar(255),
+    is_default boolean,
+    tenant_id uuid,
+    default_rule_chain_id uuid,
+    default_dashboard_id uuid,
+    default_queue_name varchar(255),
+    external_id uuid,
+    CONSTRAINT asset_profile_name_unq_key UNIQUE (tenant_id, name),
+    CONSTRAINT asset_profile_external_id_unq_key UNIQUE (tenant_id, external_id),
+    CONSTRAINT fk_default_rule_chain_asset_profile FOREIGN KEY (default_rule_chain_id) REFERENCES rule_chain(id),
+    CONSTRAINT fk_default_dashboard_asset_profile FOREIGN KEY (default_dashboard_id) REFERENCES dashboard(id)
+    );
+
+CREATE TABLE IF NOT EXISTS asset (
+    id uuid NOT NULL CONSTRAINT asset_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    additional_info varchar,
+    customer_id uuid,
+    asset_profile_id uuid NOT NULL,
+    name varchar(255),
+    label varchar(255),
+    search_text varchar(255),
+    tenant_id uuid,
+    type varchar(255),
+    external_id uuid,
+    CONSTRAINT asset_name_unq_key UNIQUE (tenant_id, name),
+    CONSTRAINT asset_external_id_unq_key UNIQUE (tenant_id, external_id),
+    CONSTRAINT fk_asset_profile FOREIGN KEY (asset_profile_id) REFERENCES asset_profile(id)
 );
 
 CREATE TABLE IF NOT EXISTS device_profile (
@@ -721,38 +742,6 @@ CREATE TABLE IF NOT EXISTS rpc (
     additional_info varchar(10000000),
     status varchar(255) NOT NULL
 );
-
-CREATE OR REPLACE PROCEDURE cleanup_events_by_ttl(
-    IN regular_events_start_ts bigint,
-    IN regular_events_end_ts bigint,
-    IN debug_events_start_ts bigint,
-    IN debug_events_end_ts bigint,
-    INOUT deleted bigint)
-    LANGUAGE plpgsql AS
-$$
-DECLARE
-    ttl_deleted_count bigint DEFAULT 0;
-    debug_ttl_deleted_count bigint DEFAULT 0;
-BEGIN
-    IF regular_events_start_ts > 0 AND regular_events_end_ts > 0 THEN
-        EXECUTE format(
-                'WITH deleted AS (DELETE FROM event WHERE id in (SELECT id from event WHERE ts > %L::bigint AND ts < %L::bigint AND ' ||
-                '(event_type != %L::varchar AND event_type != %L::varchar)) RETURNING *) ' ||
-                'SELECT count(*) FROM deleted', regular_events_start_ts, regular_events_end_ts,
-                'DEBUG_RULE_NODE', 'DEBUG_RULE_CHAIN') into ttl_deleted_count;
-    END IF;
-    IF debug_events_start_ts > 0 AND debug_events_end_ts > 0 THEN
-        EXECUTE format(
-                'WITH deleted AS (DELETE FROM event WHERE id in (SELECT id from event WHERE ts > %L::bigint AND ts < %L::bigint AND ' ||
-                '(event_type = %L::varchar OR event_type = %L::varchar)) RETURNING *) ' ||
-                'SELECT count(*) FROM deleted', debug_events_start_ts, debug_events_end_ts,
-                'DEBUG_RULE_NODE', 'DEBUG_RULE_CHAIN') into debug_ttl_deleted_count;
-    END IF;
-    RAISE NOTICE 'Events removed by ttl: %', ttl_deleted_count;
-    RAISE NOTICE 'Debug Events removed by ttl: %', debug_ttl_deleted_count;
-    deleted := ttl_deleted_count + debug_ttl_deleted_count;
-END
-$$;
 
 CREATE OR REPLACE FUNCTION to_uuid(IN entity_id varchar, OUT uuid_id uuid) AS
 $$

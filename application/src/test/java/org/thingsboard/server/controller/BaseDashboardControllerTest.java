@@ -17,23 +17,30 @@ package org.thingsboard.server.controller;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.dao.dashboard.DashboardDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.ArrayList;
@@ -43,12 +50,24 @@ import java.util.List;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@ContextConfiguration(classes = {BaseDashboardControllerTest.Config.class})
 public abstract class BaseDashboardControllerTest extends AbstractControllerTest {
 
     private IdComparator<DashboardInfo> idComparator = new IdComparator<>();
 
     private Tenant savedTenant;
     private User tenantAdmin;
+
+    @Autowired
+    private DashboardDao dashboardDao;
+
+    static class Config {
+        @Bean
+        @Primary
+        public DashboardDao dashboardDao(DashboardDao dashboardDao) {
+            return Mockito.mock(DashboardDao.class, AdditionalAnswers.delegatesTo(dashboardDao));
+        }
+    }
 
     @Before
     public void beforeTest() throws Exception {
@@ -78,40 +97,9 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
     }
 
     @Test
-    public void testSaveDashboard() throws Exception {
-        Dashboard dashboard = new Dashboard();
-        dashboard.setTitle("My dashboard");
-
-        Mockito.reset(tbClusterService, auditLogService);
-
-        Dashboard savedDashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
-
-        testNotifyEntityOneTimeMsgToEdgeServiceNever(savedDashboard, savedDashboard.getId(), savedDashboard.getId(), savedTenant.getId(),
-                tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED);
-
-        Assert.assertNotNull(savedDashboard);
-        Assert.assertNotNull(savedDashboard.getId());
-        Assert.assertTrue(savedDashboard.getCreatedTime() > 0);
-        Assert.assertEquals(savedTenant.getId(), savedDashboard.getTenantId());
-        Assert.assertEquals(dashboard.getTitle(), savedDashboard.getTitle());
-
-        savedDashboard.setTitle("My new dashboard");
-
-        Mockito.reset(tbClusterService, auditLogService);
-
-        doPost("/api/dashboard", savedDashboard, Dashboard.class);
-
-        testNotifyEntityAllOneTime(savedDashboard, savedDashboard.getId(), savedDashboard.getId(), savedTenant.getId(),
-                tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UPDATED);
-
-        Dashboard foundDashboard = doGet("/api/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
-        Assert.assertEquals(foundDashboard.getTitle(), savedDashboard.getTitle());
-    }
-
-    @Test
     public void testSaveDashboardInfoWithViolationOfValidation() throws Exception {
         Dashboard dashboard = new Dashboard();
-        dashboard.setTitle(RandomStringUtils.randomAlphabetic(300));
+        dashboard.setTitle(StringUtils.randomAlphabetic(300));
         String msgError = msgErrorFieldLength("title");
 
         Mockito.reset(tbClusterService, auditLogService);
@@ -335,7 +323,7 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         int cntEntity = 134;
         for (int i = 0; i < cntEntity; i++) {
             Dashboard dashboard = new Dashboard();
-            String suffix = RandomStringUtils.randomAlphanumeric((int) (Math.random() * 15));
+            String suffix = StringUtils.randomAlphanumeric((int) (Math.random() * 15));
             String title = title1 + suffix;
             title = i % 2 == 0 ? title.toLowerCase() : title.toUpperCase();
             dashboard.setTitle(title);
@@ -346,7 +334,7 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
 
         for (int i = 0; i < 112; i++) {
             Dashboard dashboard = new Dashboard();
-            String suffix = RandomStringUtils.randomAlphanumeric((int) (Math.random() * 15));
+            String suffix = StringUtils.randomAlphanumeric((int) (Math.random() * 15));
             String title = title2 + suffix;
             title = i % 2 == 0 ? title.toLowerCase() : title.toUpperCase();
             dashboard.setTitle(title);
@@ -493,6 +481,24 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
                 }, new PageLink(100));
 
         Assert.assertEquals(0, pageData.getData().size());
+    }
+
+    @Test
+    public void testDeleteDashboardWithDeleteRelationsOk() throws Exception {
+        DashboardId dashboardId = createDashboard("Dashboard for Test WithRelationsOk").getId();
+        testEntityDaoWithRelationsOk(savedTenant.getId(), dashboardId, "/api/dashboard/" + dashboardId);
+    }
+
+    @Test
+    public void testDeleteDashboardExceptionWithRelationsTransactional() throws Exception {
+        DashboardId dashboardId = createDashboard("Dashboard for Test WithRelations Transactional Exception").getId();
+        testEntityDaoWithRelationsTransactionalException(dashboardDao, savedTenant.getId(), dashboardId, "/api/dashboard/" + dashboardId);
+    }
+
+    private Dashboard createDashboard(String title) {
+        Dashboard dashboard = new Dashboard();
+        dashboard.setTitle(title);
+        return doPost("/api/dashboard", dashboard, Dashboard.class);
     }
 
 }

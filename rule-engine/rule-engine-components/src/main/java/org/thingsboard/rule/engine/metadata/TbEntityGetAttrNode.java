@@ -100,11 +100,6 @@ public abstract class TbEntityGetAttrNode<T extends EntityId> implements TbNode 
         ctx.tellSuccess(msg);
     }
 
-    @Override
-    public void destroy() {
-
-    }
-
     protected abstract ListenableFuture<T> findEntityAsync(TbContext ctx, EntityId originator);
 
     public void setConfig(TbGetEntityAttrNodeConfiguration config) {

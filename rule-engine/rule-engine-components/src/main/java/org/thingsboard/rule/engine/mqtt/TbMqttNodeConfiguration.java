@@ -29,6 +29,7 @@ public class TbMqttNodeConfiguration implements NodeConfiguration<TbMqttNodeConf
     private int connectTimeoutSec;
     private String clientId;
     private boolean appendClientIdSuffix;
+    private boolean retainedMessage;
 
     private boolean cleanSession;
     private boolean ssl;
@@ -42,6 +43,7 @@ public class TbMqttNodeConfiguration implements NodeConfiguration<TbMqttNodeConf
         configuration.setConnectTimeoutSec(10);
         configuration.setCleanSession(true);
         configuration.setSsl(false);
+        configuration.setRetainedMessage(false);
         configuration.setCredentials(new AnonymousCredentials());
         return configuration;
     }

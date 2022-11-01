@@ -106,6 +106,9 @@ transport:
   lwm2m:
     # Enable/disable lvm2m transport protocol.
     enabled: "${LWM2M_ENABLED:true}"
+    dtls:
+      # RFC7925_RETRANSMISSION_TIMEOUT_IN_MILLISECONDS = 9000
+      retransmission_timeout: "${LWM2M_DTLS_RETRANSMISSION_TIMEOUT_MS:9000}"
     server:
       id: "${LWM2M_SERVER_ID:123}"
       bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
@@ -129,7 +132,7 @@ transport:
             key_password: "${LWM2M_SERVER_PEM_KEY_PASSWORD:server_key_password}"
           # Keystore server credentials
           keystore:
-            # Type of the key store
+            # Type of the key store (JKS or PKCS12)
             type: "${LWM2M_SERVER_KEY_STORE_TYPE:JKS}"
             # Path to the key store that holds the SSL certificate
             store_file: "${LWM2M_SERVER_KEY_STORE:lwm2mserver.jks}"
@@ -165,7 +168,7 @@ transport:
             key_password: "${LWM2M_BS_PEM_KEY_PASSWORD:server_key_password}"
           # Keystore server credentials
           keystore:
-            # Type of the key store
+            # Type of the key store (JKS or PKCS12)
             type: "${LWM2M_BS_KEY_STORE_TYPE:JKS}"
             # Path to the key store that holds the SSL certificate
             store_file: "${LWM2M_BS_KEY_STORE:lwm2mserver.jks}"
@@ -188,7 +191,7 @@ transport:
           cert_file: "${LWM2M_TRUST_PEM_CERT:lwm2mtruststorechain.pem}"
         # Keystore with trust certificates
         keystore:
-          # Type of the key store
+          # Type of the key store (JKS or PKCS12)
           type: "${LWM2M_TRUST_KEY_STORE_TYPE:JKS}"
           # Path to the key store that holds the X509 certificates
           store_file: "${LWM2M_TRUST_KEY_STORE:lwm2mtruststorechain.jks}"

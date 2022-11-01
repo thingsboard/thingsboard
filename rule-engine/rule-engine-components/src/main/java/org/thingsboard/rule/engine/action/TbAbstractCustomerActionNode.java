@@ -92,6 +92,9 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
 
     @Override
     public void destroy() {
+        if (customerIdCache != null) {
+            customerIdCache.invalidateAll();
+        }
     }
 
     @Data

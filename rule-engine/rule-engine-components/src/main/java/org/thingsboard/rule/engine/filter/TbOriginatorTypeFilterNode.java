@@ -51,8 +51,4 @@ public class TbOriginatorTypeFilterNode implements TbNode {
         ctx.tellNext(msg, config.getOriginatorTypes().contains(originatorType) ? "True" : "False");
     }
 
-    @Override
-    public void destroy() {
-
-    }
 }

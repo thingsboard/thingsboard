@@ -18,19 +18,17 @@ package org.thingsboard.server.dao.sql.event;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.event.RuleChainDebugEventFilter;
-import org.thingsboard.server.common.data.event.RuleNodeDebugEventFilter;
 import org.thingsboard.server.common.data.event.ErrorEventFilter;
 import org.thingsboard.server.common.data.event.Event;
 import org.thingsboard.server.common.data.event.EventFilter;
 import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.event.LifeCycleEventFilter;
+import org.thingsboard.server.common.data.event.RuleChainDebugEventFilter;
+import org.thingsboard.server.common.data.event.RuleNodeDebugEventFilter;
 import org.thingsboard.server.common.data.event.StatisticsEventFilter;
 import org.thingsboard.server.common.data.id.EventId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -38,13 +36,12 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.event.EventDao;
-import org.thingsboard.server.dao.model.sql.AssetInfoEntity;
 import org.thingsboard.server.dao.model.sql.EventEntity;
 import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
-import org.thingsboard.server.dao.timeseries.SqlPartition;
+import org.thingsboard.server.dao.util.SqlDao;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -54,7 +51,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
 /**
@@ -62,10 +58,8 @@ import java.util.function.Function;
  */
 @Slf4j
 @Component
+@SqlDao
 public class JpaBaseEventDao implements EventDao {
-
-    private final Map<EventType, Map<Long, SqlPartition>> partitionsByEventType = new ConcurrentHashMap<>();
-    private static final ReentrantLock partitionCreationLock = new ReentrantLock();
 
     @Autowired
     private EventPartitionConfiguration partitionConfiguration;
@@ -112,7 +106,7 @@ public class JpaBaseEventDao implements EventDao {
     @Value("${sql.events.batch_threads:3}")
     private int batchThreads;
 
-    @Value("${sql.batch_sort:false}")
+    @Value("${sql.batch_sort:true}")
     private boolean batchSortEnabled;
 
     private TbSqlBlockingQueueWrapper<Event> queue;
@@ -121,9 +115,6 @@ public class JpaBaseEventDao implements EventDao {
 
     @PostConstruct
     private void init() {
-        for (EventType eventType : EventType.values()) {
-            partitionsByEventType.put(eventType, new ConcurrentHashMap<>());
-        }
         TbSqlBlockingQueueParams params = TbSqlBlockingQueueParams.builder()
                 .logName("Events")
                 .batchSize(batchSize)
@@ -164,40 +155,9 @@ public class JpaBaseEventDao implements EventDao {
                 event.setCreatedTime(System.currentTimeMillis());
             }
         }
-        savePartitionIfNotExist(event);
+        partitioningRepository.createPartitionIfNotExists(event.getType().getTable(), event.getCreatedTime(),
+                partitionConfiguration.getPartitionSizeInMs(event.getType()));
         return queue.add(event);
-    }
-
-    private void savePartitionIfNotExist(Event event) {
-        EventType type = event.getType();
-        var partitionsMap = partitionsByEventType.get(type);
-        var partitionDuration = partitionConfiguration.getPartitionSizeInMs(type);
-        long partitionStartTs = event.getCreatedTime() - (event.getCreatedTime() % partitionDuration);
-        if (partitionsMap.get(partitionStartTs) == null) {
-            savePartition(partitionsMap, new SqlPartition(type.getTable(), partitionStartTs, partitionStartTs + partitionDuration, Long.toString(partitionStartTs)));
-        }
-    }
-
-    private void savePartition(Map<Long, SqlPartition> partitionsMap, SqlPartition sqlPartition) {
-        if (!partitionsMap.containsKey(sqlPartition.getStart())) {
-            partitionCreationLock.lock();
-            try {
-                log.trace("Saving partition: {}", sqlPartition);
-                partitioningRepository.save(sqlPartition);
-                log.trace("Adding partition to map: {}", sqlPartition);
-                partitionsMap.put(sqlPartition.getStart(), sqlPartition);
-            } catch (DataIntegrityViolationException ex) {
-                log.trace("Error occurred during partition save:", ex);
-                if (ex.getCause() instanceof ConstraintViolationException) {
-                    log.warn("Saving partition [{}] rejected. Event data will save to the DEFAULT partition.", sqlPartition.getPartitionDate());
-                    partitionsMap.put(sqlPartition.getStart(), sqlPartition);
-                } else {
-                    throw new RuntimeException(ex);
-                }
-            } finally {
-                partitionCreationLock.unlock();
-            }
-        }
     }
 
     @Override
@@ -437,23 +397,24 @@ public class JpaBaseEventDao implements EventDao {
             log.info("Going to cleanup regular events with exp time: {}", regularEventExpTs);
             if (cleanupDb) {
                 eventCleanupRepository.cleanupEvents(regularEventExpTs, false);
+            } else {
+                cleanupPartitionsCache(regularEventExpTs, false);
             }
-            cleanupPartitions(regularEventExpTs, false);
         }
         if (debugEventExpTs > 0) {
             log.info("Going to cleanup debug events with exp time: {}", debugEventExpTs);
             if (cleanupDb) {
                 eventCleanupRepository.cleanupEvents(debugEventExpTs, true);
+            } else {
+                cleanupPartitionsCache(debugEventExpTs, true);
             }
-            cleanupPartitions(debugEventExpTs, true);
         }
     }
 
-    private void cleanupPartitions(long expTime, boolean isDebug) {
+    private void cleanupPartitionsCache(long expTime, boolean isDebug) {
         for (EventType eventType : EventType.values()) {
             if (eventType.isDebug() == isDebug) {
-                Map<Long, SqlPartition> partitions = partitionsByEventType.get(eventType);
-                partitions.keySet().removeIf(startTs -> startTs + partitionConfiguration.getPartitionSizeInMs(eventType) < expTime);
+                partitioningRepository.cleanupPartitionsCache(eventType.getTable(), expTime, partitionConfiguration.getPartitionSizeInMs(eventType));
             }
         }
     }

@@ -28,7 +28,7 @@ import {
   CustomDialogContainerData
 } from '@home/components/widget/dialog/custom-dialog-container.component';
 import { SHARED_MODULE_TOKEN } from '@shared/components/tokens';
-import { SHARED_HOME_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
+import { HOME_COMPONENTS_MODULE_TOKEN, SHARED_HOME_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
 
 @Injectable()
 export class CustomDialogService {
@@ -39,6 +39,7 @@ export class CustomDialogService {
     private dynamicComponentFactoryService: DynamicComponentFactoryService,
     @Inject(SHARED_MODULE_TOKEN) private sharedModule: Type<any>,
     @Inject(SHARED_HOME_COMPONENTS_MODULE_TOKEN) private sharedHomeComponentsModule: Type<any>,
+    @Inject(HOME_COMPONENTS_MODULE_TOKEN) private homeComponentsModule: Type<any>,
     public dialog: MatDialog
   ) {
   }
@@ -47,7 +48,7 @@ export class CustomDialogService {
     return this.dynamicComponentFactoryService.createDynamicComponentFactory(
       class CustomDialogComponentInstance extends CustomDialogComponent {},
       template,
-      [this.sharedModule, CommonModule, this.sharedHomeComponentsModule]).pipe(
+      [this.sharedModule, CommonModule, this.sharedHomeComponentsModule, this.homeComponentsModule]).pipe(
       mergeMap((factory) => {
           const dialogData: CustomDialogContainerData = {
             controller,

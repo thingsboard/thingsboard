@@ -187,8 +187,7 @@ export class TwoFactorAuthLoginComponent extends PageComponent implements OnInit
 
   cancelLogin() {
     if (this.prevProvider) {
-      this.selectedProvider = this.prevProvider;
-      this.prevProvider = null;
+      this.selectProvider(this.prevProvider);
     } else {
       this.authService.logout();
     }
