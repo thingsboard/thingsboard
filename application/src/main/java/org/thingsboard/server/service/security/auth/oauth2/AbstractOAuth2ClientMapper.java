@@ -30,7 +30,6 @@ import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.IdBased;
@@ -48,7 +47,7 @@ import org.thingsboard.server.dao.oauth2.OAuth2User;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
-import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
+import org.thingsboard.server.service.entitiy.user.TbUserService;
 import org.thingsboard.server.service.install.InstallScripts;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
@@ -84,7 +83,7 @@ public abstract class AbstractOAuth2ClientMapper {
     private InstallScripts installScripts;
 
     @Autowired
-    private TbNotificationEntityService notificationEntityService;
+    private TbUserService tbUserService;
 
     @Autowired
     protected TbTenantProfileCache tenantProfileCache;
@@ -151,14 +150,11 @@ public abstract class AbstractOAuth2ClientMapper {
 
                     user.setAdditionalInfo(additionalInfo);
 
-                    user = userService.saveUser(user);
+                    user = tbUserService.save(tenantId, customerId, user, false, null, null);
                     if (config.isActivateUser()) {
                         UserCredentials userCredentials = userService.findUserCredentialsByUserId(user.getTenantId(), user.getId());
                         userService.activateUserCredentials(user.getTenantId(), userCredentials.getActivateToken(), passwordEncoder.encode(""));
                     }
-
-                    notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, customerId, user.getId(),
-                            user, user, ActionType.ADDED, true, null);
                 }
             } catch (Exception e) {
                 log.error("Can't get or create security user from oauth2 user", e);
