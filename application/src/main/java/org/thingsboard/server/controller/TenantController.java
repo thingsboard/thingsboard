@@ -115,6 +115,7 @@ public class TenantController extends BaseController {
                     "The newly created Tenant Id will be present in the response. " +
                     "Specify existing Tenant Id id to update the Tenant. " +
                     "Referencing non-existing Tenant Id will cause 'Not Found' error." +
+                    "Remove 'id', 'tenantId' from the request body example (below) to create new Tenant entity." +
                     SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/tenant", method = RequestMethod.POST)

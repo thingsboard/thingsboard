@@ -76,11 +76,13 @@ import org.thingsboard.server.service.sync.vc.data.VoidGitRequest;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -102,7 +104,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     private final SchedulerComponent scheduler;
 
     private final Map<UUID, PendingGitRequest<?>> pendingRequestMap = new HashMap<>();
-    private final Map<UUID, LinkedHashMap<String, String[]>> chunkedMsgs = new ConcurrentHashMap<>();
+    private final Map<UUID, HashMap<Integer, String[]>> chunkedMsgs = new ConcurrentHashMap<>();
 
     @Value("${queue.vc.request-timeout:60000}")
     private int requestTimeout;
@@ -286,7 +288,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     @SuppressWarnings("rawtypes")
     public ListenableFuture<EntityExportData> getEntity(TenantId tenantId, String versionId, EntityId entityId) {
         EntityContentGitRequest request = new EntityContentGitRequest(tenantId, versionId, entityId);
-        chunkedMsgs.put(request.getRequestId(), new LinkedHashMap<>());
+        chunkedMsgs.put(request.getRequestId(), new HashMap<>());
         registerAndSend(request, builder -> builder.setEntityContentRequest(EntityContentRequestMsg.newBuilder()
                         .setVersionId(versionId)
                         .setEntityType(entityId.getEntityType().name())
@@ -328,7 +330,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     @SuppressWarnings("rawtypes")
     public ListenableFuture<List<EntityExportData>> getEntities(TenantId tenantId, String versionId, EntityType entityType, int offset, int limit) {
         EntitiesContentGitRequest request = new EntitiesContentGitRequest(tenantId, versionId, entityType);
-        chunkedMsgs.put(request.getRequestId(), new LinkedHashMap<>());
+        chunkedMsgs.put(request.getRequestId(), new HashMap<>());
         registerAndSend(request, builder -> builder.setEntitiesContentRequest(EntitiesContentRequestMsg.newBuilder()
                         .setVersionId(versionId)
                         .setEntityType(entityType.name())
@@ -412,10 +414,10 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
                     ((ListVersionsGitRequest) request).getFuture().set(toPageData(listVersionsResponse));
                 } else if (vcResponseMsg.hasEntityContentResponse()) {
                     TransportProtos.EntityContentResponseMsg responseMsg = vcResponseMsg.getEntityContentResponse();
-                    log.trace("[{}] received chunk {} for 'getEntity'", responseMsg.getChunkedMsgId(), responseMsg.getChunkIndex());
-                    var joined = joinChunks(requestId, responseMsg, 1);
+                    log.trace("Received chunk {} for 'getEntity'", responseMsg.getChunkIndex());
+                    var joined = joinChunks(requestId, responseMsg, 0, 1);
                     if (joined.isPresent()) {
-                        log.trace("[{}] collected all chunks for 'getEntity'", responseMsg.getChunkedMsgId());
+                        log.trace("Collected all chunks for 'getEntity'");
                         ((EntityContentGitRequest) request).getFuture().set(joined.get().get(0));
                     } else {
                         completed = false;
@@ -424,7 +426,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
                     TransportProtos.EntitiesContentResponseMsg responseMsg = vcResponseMsg.getEntitiesContentResponse();
                     TransportProtos.EntityContentResponseMsg item = responseMsg.getItem();
                     if (responseMsg.getItemsCount() > 0) {
-                        var joined = joinChunks(requestId, item, responseMsg.getItemsCount());
+                        var joined = joinChunks(requestId, item, responseMsg.getItemIdx(), responseMsg.getItemsCount());
                         if (joined.isPresent()) {
                             ((EntitiesContentGitRequest) request).getFuture().set(joined.get());
                         } else {
@@ -459,16 +461,17 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     }
 
     @SuppressWarnings("rawtypes")
-    private Optional<List<EntityExportData>> joinChunks(UUID requestId, TransportProtos.EntityContentResponseMsg responseMsg, int expectedMsgCount) {
+    private Optional<List<EntityExportData>> joinChunks(UUID requestId, TransportProtos.EntityContentResponseMsg responseMsg, int itemIdx, int expectedMsgCount) {
         var chunksMap = chunkedMsgs.get(requestId);
         if (chunksMap == null) {
             return Optional.empty();
         }
-        String[] msgChunks = chunksMap.computeIfAbsent(responseMsg.getChunkedMsgId(), id -> new String[responseMsg.getChunksCount()]);
+        String[] msgChunks = chunksMap.computeIfAbsent(itemIdx, id -> new String[responseMsg.getChunksCount()]);
         msgChunks[responseMsg.getChunkIndex()] = responseMsg.getData();
         if (chunksMap.size() == expectedMsgCount && chunksMap.values().stream()
                 .allMatch(chunks -> CollectionsUtil.countNonNull(chunks) == chunks.length)) {
-            return Optional.of(chunksMap.values().stream()
+            return Optional.of(chunksMap.entrySet().stream()
+                    .sorted(Comparator.comparingInt(Map.Entry::getKey)).map(Map.Entry::getValue)
                     .map(chunks -> String.join("", chunks))
                     .map(this::toData)
                     .collect(Collectors.toList()));

@@ -213,17 +213,17 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         }
         saveEntries(deviceId, TS + 100L + 1L);
 
-        List<ReadTsKvQuery> queries = List.of(new BaseReadTsKvQuery(LONG_KEY, TS, TS + 100, 101, 1, Aggregation.COUNT, DESC_ORDER));
+        List<ReadTsKvQuery> queries = List.of(new BaseReadTsKvQuery(LONG_KEY, TS, TS + 100, 100, 1, Aggregation.COUNT, DESC_ORDER));
 
         List<TsKvEntry> entries = tsService.findAll(tenantId, deviceId, queries).get();
         Assert.assertEquals(1, entries.size());
-        Assert.assertEquals(toTsEntry(TS + 50, new LongDataEntry(LONG_KEY, 11L)), entries.get(0));
+        Assert.assertEquals(toTsEntry(TS + 50, new LongDataEntry(LONG_KEY, 10L)), entries.get(0));
 
         EntityView entityView = saveAndCreateEntityView(deviceId, List.of(LONG_KEY));
 
         entries = tsService.findAll(tenantId, entityView.getId(), queries).get();
         Assert.assertEquals(1, entries.size());
-        Assert.assertEquals(toTsEntry(TS + 50, new LongDataEntry(LONG_KEY, 11L)), entries.get(0));
+        Assert.assertEquals(toTsEntry(TS + 50, new LongDataEntry(LONG_KEY, 10L)), entries.get(0));
     }
 
     @Test
@@ -240,14 +240,14 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         List<TsKvEntry> entries = tsService.findAll(tenantId, deviceId, queries).get();
         Assert.assertEquals(2, entries.size());
         Assert.assertEquals(toTsEntry(TS + 25000, new LongDataEntry(LONG_KEY, 5L)), entries.get(0));
-        Assert.assertEquals(toTsEntry(TS + 75000, new LongDataEntry(LONG_KEY, 5L)), entries.get(1));
+        Assert.assertEquals(toTsEntry(TS + 75000 - 1, new LongDataEntry(LONG_KEY, 5L)), entries.get(1));
 
         EntityView entityView = saveAndCreateEntityView(deviceId, List.of(LONG_KEY));
 
         entries = tsService.findAll(tenantId, entityView.getId(), queries).get();
         Assert.assertEquals(2, entries.size());
         Assert.assertEquals(toTsEntry(TS + 25000, new LongDataEntry(LONG_KEY, 5L)), entries.get(0));
-        Assert.assertEquals(toTsEntry(TS + 75000, new LongDataEntry(LONG_KEY, 5L)), entries.get(1));
+        Assert.assertEquals(toTsEntry(TS + 75000 - 1, new LongDataEntry(LONG_KEY, 5L)), entries.get(1));
     }
 
     @Test
@@ -264,14 +264,14 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         List<TsKvEntry> entries = tsService.findAll(tenantId, deviceId, queries).get();
         Assert.assertEquals(2, entries.size());
         Assert.assertEquals(toTsEntry(TS + 25000, new LongDataEntry(LONG_KEY, 5L)), entries.get(0));
-        Assert.assertEquals(toTsEntry(TS + 65000, new LongDataEntry(LONG_KEY, 4L)), entries.get(1));
+        Assert.assertEquals(toTsEntry(TS + 65000, new LongDataEntry(LONG_KEY, 3L)), entries.get(1));
 
         EntityView entityView = saveAndCreateEntityView(deviceId, List.of(LONG_KEY));
 
         entries = tsService.findAll(tenantId, entityView.getId(), queries).get();
         Assert.assertEquals(2, entries.size());
         Assert.assertEquals(toTsEntry(TS + 25000, new LongDataEntry(LONG_KEY, 5L)), entries.get(0));
-        Assert.assertEquals(toTsEntry(TS + 65000, new LongDataEntry(LONG_KEY, 4L)), entries.get(1));
+        Assert.assertEquals(toTsEntry(TS + 65000, new LongDataEntry(LONG_KEY, 3L)), entries.get(1));
     }
 
     @Test
@@ -286,14 +286,14 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         List<TsKvEntry> entries = tsService.findAll(tenantId, deviceId, queries).get();
         Assert.assertEquals(2, entries.size());
         Assert.assertEquals(toTsEntry(TS + 25000, new LongDataEntry(LONG_KEY, 5L)), entries.get(0));
-        Assert.assertEquals(toTsEntry(TS + 75000, new LongDataEntry(LONG_KEY, 5L)), entries.get(1));
+        Assert.assertEquals(toTsEntry(TS + 75000 - 1, new LongDataEntry(LONG_KEY, 4L)), entries.get(1));
 
         EntityView entityView = saveAndCreateEntityView(deviceId, List.of(LONG_KEY));
 
         entries = tsService.findAll(tenantId, entityView.getId(), queries).get();
         Assert.assertEquals(2, entries.size());
         Assert.assertEquals(toTsEntry(TS + 25000, new LongDataEntry(LONG_KEY, 5L)), entries.get(0));
-        Assert.assertEquals(toTsEntry(TS + 75000, new LongDataEntry(LONG_KEY, 5L)), entries.get(1));
+        Assert.assertEquals(toTsEntry(TS + 75000 - 1, new LongDataEntry(LONG_KEY, 4L)), entries.get(1));
     }
 
     @Test
@@ -604,6 +604,31 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
 
         assertEquals(50000, list.get(2).getTs());
         assertEquals(java.util.Optional.of(2L), list.get(2).getLongValue());
+    }
+
+    @Test
+    public void testSaveTs_RemoveTs_AndSaveTsAgain() throws Exception {
+        DeviceId deviceId = new DeviceId(Uuids.timeBased());
+
+        save(deviceId, 2000000L, 95);
+        save(deviceId, 4000000L, 100);
+        save(deviceId, 6000000L, 105);
+        List<TsKvEntry> list = tsService.findAll(tenantId, deviceId, Collections.singletonList(new BaseReadTsKvQuery(LONG_KEY, 0L,
+                8000000L, 200000, 3, Aggregation.NONE))).get(MAX_TIMEOUT, TimeUnit.SECONDS);
+        assertEquals(3, list.size());
+
+        tsService.remove(tenantId, deviceId, Collections.singletonList(
+                new BaseDeleteTsKvQuery(LONG_KEY, 0L, 8000000L, false))).get(MAX_TIMEOUT, TimeUnit.SECONDS);
+        list = tsService.findAll(tenantId, deviceId, Collections.singletonList(new BaseReadTsKvQuery(LONG_KEY, 0L,
+                8000000L, 200000, 3, Aggregation.NONE))).get(MAX_TIMEOUT, TimeUnit.SECONDS);
+        assertEquals(0, list.size());
+
+        save(deviceId, 2000000L, 99);
+        save(deviceId, 4000000L, 104);
+        save(deviceId, 6000000L, 109);
+        list = tsService.findAll(tenantId, deviceId, Collections.singletonList(new BaseReadTsKvQuery(LONG_KEY, 0L,
+                8000000L, 200000, 3, Aggregation.NONE))).get(MAX_TIMEOUT, TimeUnit.SECONDS);
+        assertEquals(3, list.size());
     }
 
     private TsKvEntry save(DeviceId deviceId, long ts, long value) throws Exception {

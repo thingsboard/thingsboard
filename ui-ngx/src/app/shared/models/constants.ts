@@ -127,12 +127,14 @@ export const HelpLinks = {
     ruleNodeRestApiCall: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#rest-api-call-node',
     ruleNodeSendEmail: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#send-email-node',
     ruleNodeSendSms: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#send-sms-node',
+    ruleNodeMath: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#math-function-node',
     tenants: helpBaseUrl + '/docs/user-guide/ui/tenants',
     tenantProfiles: helpBaseUrl + '/docs/user-guide/ui/tenant-profiles',
     customers: helpBaseUrl + '/docs/user-guide/ui/customers',
     users: helpBaseUrl + '/docs/user-guide/ui/users',
     devices: helpBaseUrl + '/docs/user-guide/ui/devices',
     deviceProfiles: helpBaseUrl + '/docs/user-guide/ui/device-profiles',
+    assetProfiles: helpBaseUrl + '/docs/user-guide/ui/asset-profiles',
     edges: helpBaseUrl + '/docs/user-guide/ui/edges',
     assets: helpBaseUrl + '/docs/user-guide/ui/assets',
     entityViews: helpBaseUrl + '/docs/user-guide/ui/entity-views',
@@ -151,8 +153,9 @@ export const HelpLinks = {
     ruleNodePushToCloud: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#push-to-cloud',
     ruleNodePushToEdge: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#push-to-edge',
     queue: helpBaseUrl + '/docs/user-guide/queue',
-    repositorySettings: helpBaseUrl + '/docs/user-guide/ui/repository-settings',
-    autoCommitSettings: helpBaseUrl + '/docs/user-guide/ui/auto-commit-settings',
+    repositorySettings: helpBaseUrl + '/docs/user-guide/version-control/#git-settings-configuration',
+    autoCommitSettings: helpBaseUrl + '/docs/user-guide/version-control/#auto-commit',
+    twoFactorAuthentication: helpBaseUrl + '/docs/user-guide/two-factor-authentication'
   }
 };
 

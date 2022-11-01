@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.Length;
@@ -52,6 +53,8 @@ public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements
     @Length(fieldName = "label")
     private String label;
 
+    private AssetProfileId assetProfileId;
+
     @Getter @Setter
     private AssetId externalId;
 
@@ -70,6 +73,7 @@ public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements
         this.name = asset.getName();
         this.type = asset.getType();
         this.label = asset.getLabel();
+        this.assetProfileId = asset.getAssetProfileId();
         this.externalId = asset.getExternalId();
     }
 
@@ -79,6 +83,7 @@ public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements
         this.name = asset.getName();
         this.type = asset.getType();
         this.label = asset.getLabel();
+        this.assetProfileId = asset.getAssetProfileId();
         Optional.ofNullable(asset.getAdditionalInfo()).ifPresent(this::setAdditionalInfo);
         this.externalId = asset.getExternalId();
     }
@@ -92,13 +97,13 @@ public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements
         return super.getId();
     }
 
-    @ApiModelProperty(position = 2, value = "Timestamp of the asset creation, in milliseconds", example = "1609459200000", readOnly = true)
+    @ApiModelProperty(position = 2, value = "Timestamp of the asset creation, in milliseconds", example = "1609459200000", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();
     }
 
-    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id.", readOnly = true)
+    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     public TenantId getTenantId() {
         return tenantId;
     }
@@ -107,7 +112,7 @@ public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements
         this.tenantId = tenantId;
     }
 
-    @ApiModelProperty(position = 4, value = "JSON object with Customer Id. Use 'assignAssetToCustomer' to change the Customer Id.", readOnly = true)
+    @ApiModelProperty(position = 4, value = "JSON object with Customer Id. Use 'assignAssetToCustomer' to change the Customer Id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     public CustomerId getCustomerId() {
         return customerId;
     }
@@ -144,12 +149,22 @@ public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements
         this.label = label;
     }
 
+    @ApiModelProperty(position = 8, required = true, value = "JSON object with Asset Profile Id.")
+    public AssetProfileId getAssetProfileId() {
+        return assetProfileId;
+    }
+
+    public void setAssetProfileId(AssetProfileId assetProfileId) {
+        this.assetProfileId = assetProfileId;
+    }
+
+
     @Override
     public String getSearchText() {
         return getName();
     }
 
-    @ApiModelProperty(position = 8, value = "Additional parameters of the asset", dataType = "com.fasterxml.jackson.databind.JsonNode")
+    @ApiModelProperty(position = 9, value = "Additional parameters of the asset", dataType = "com.fasterxml.jackson.databind.JsonNode")
     @Override
     public JsonNode getAdditionalInfo() {
         return super.getAdditionalInfo();
@@ -168,6 +183,8 @@ public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements
         builder.append(type);
         builder.append(", label=");
         builder.append(label);
+        builder.append(", assetProfileId=");
+        builder.append(assetProfileId);
         builder.append(", additionalInfo=");
         builder.append(getAdditionalInfo());
         builder.append(", createdTime=");

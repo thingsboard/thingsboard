@@ -119,7 +119,7 @@
         </fieldset>
         <fieldset class="fields-group">
           <legend class="group-title" translate>widgets.maps.polygon-color</legend>
-          <section fxLayout="row" fxLayoutGap="8px">
+          <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px">
             <tb-color-input
               fxFlex
               formControlName="polygonColor"
@@ -155,7 +155,7 @@
         </fieldset>
         <fieldset class="fields-group">
           <legend class="group-title" translate>widgets.maps.polygon-stroke</legend>
-          <section fxLayout="row" fxLayoutGap="8px">
+          <section class="row-fill" fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px">
             <tb-color-input
               fxFlex
               formControlName="polygonStrokeColor"

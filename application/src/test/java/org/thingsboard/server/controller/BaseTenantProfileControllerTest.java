@@ -16,12 +16,12 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.thingsboard.server.common.data.EntityInfo;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantProfileId;
@@ -66,7 +66,6 @@ public abstract class BaseTenantProfileControllerTest extends AbstractController
         Assert.assertEquals(tenantProfile.getDescription(), savedTenantProfile.getDescription());
         Assert.assertEquals(tenantProfile.getProfileData(), savedTenantProfile.getProfileData());
         Assert.assertEquals(tenantProfile.isDefault(), savedTenantProfile.isDefault());
-        Assert.assertEquals(tenantProfile.isIsolatedTbCore(), savedTenantProfile.isIsolatedTbCore());
         Assert.assertEquals(tenantProfile.isIsolatedTbRuleEngine(), savedTenantProfile.isIsolatedTbRuleEngine());
 
         testBroadcastEntityStateChangeEventTimeManyTimeTenantProfile(savedTenantProfile, ComponentLifecycleEvent.CREATED, 1);
@@ -85,7 +84,7 @@ public abstract class BaseTenantProfileControllerTest extends AbstractController
 
         Mockito.reset(tbClusterService);
 
-        TenantProfile tenantProfile = this.createTenantProfile(RandomStringUtils.randomAlphabetic(300));
+        TenantProfile tenantProfile = this.createTenantProfile(StringUtils.randomAlphabetic(300));
         doPost("/api/tenantProfile", tenantProfile)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgErrorFieldLength("name"))));
@@ -178,22 +177,6 @@ public abstract class BaseTenantProfileControllerTest extends AbstractController
         doPost("/api/tenantProfile", savedTenantProfile)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("Can't update isolatedTbRuleEngine property")));
-
-        testBroadcastEntityStateChangeEventNeverTenantProfile();
-    }
-
-    @Test
-    public void testSaveSameTenantProfileWithDifferentIsolatedTbCore() throws Exception {
-        loginSysAdmin();
-        TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile");
-        TenantProfile savedTenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
-
-        Mockito.reset(tbClusterService);
-
-        savedTenantProfile.setIsolatedTbCore(true);
-        doPost("/api/tenantProfile", savedTenantProfile)
-                .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Can't update isolatedTbCore property")));
 
         testBroadcastEntityStateChangeEventNeverTenantProfile();
     }
@@ -352,7 +335,6 @@ public abstract class BaseTenantProfileControllerTest extends AbstractController
         tenantProfileData.setConfiguration(new DefaultTenantProfileConfiguration());
         tenantProfile.setProfileData(tenantProfileData);
         tenantProfile.setDefault(false);
-        tenantProfile.setIsolatedTbCore(false);
         tenantProfile.setIsolatedTbRuleEngine(false);
         return tenantProfile;
     }

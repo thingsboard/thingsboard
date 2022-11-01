@@ -48,22 +48,22 @@ public class PageData<T> {
         this.hasNext = hasNext;
     }
 
-    @ApiModelProperty(position = 1, value = "Array of the entities", readOnly = true)
+    @ApiModelProperty(position = 1, value = "Array of the entities", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     public List<T> getData() {
         return data;
     }
 
-    @ApiModelProperty(position = 2, value = "Total number of available pages. Calculated based on the 'pageSize' request parameter and total number of entities that match search criteria", readOnly = true)
+    @ApiModelProperty(position = 2, value = "Total number of available pages. Calculated based on the 'pageSize' request parameter and total number of entities that match search criteria", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     public int getTotalPages() {
         return totalPages;
     }
 
-    @ApiModelProperty(position = 3, value = "Total number of elements in all available pages", readOnly = true)
+    @ApiModelProperty(position = 3, value = "Total number of elements in all available pages", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     public long getTotalElements() {
         return totalElements;
     }
 
-    @ApiModelProperty(position = 4, value = "'false' value indicates the end of the result set", readOnly = true)
+    @ApiModelProperty(position = 4, value = "'false' value indicates the end of the result set", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     @JsonProperty("hasNext")
     public boolean hasNext() {
         return hasNext;

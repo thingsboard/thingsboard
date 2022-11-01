@@ -84,7 +84,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     private static final int DEFAULT_PAGE_SIZE = 1000;
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
-
+    public static final String TB_RULE_CHAIN_INPUT_NODE = "org.thingsboard.rule.engine.flow.TbRuleChainInputNode";
     @Autowired
     private RuleChainDao ruleChainDao;
 
@@ -98,7 +98,12 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     @Transactional
     public RuleChain saveRuleChain(RuleChain ruleChain) {
         ruleChainValidator.validate(ruleChain, RuleChain::getTenantId);
-        return ruleChainDao.save(ruleChain.getTenantId(), ruleChain);
+        try {
+            return ruleChainDao.save(ruleChain.getTenantId(), ruleChain);
+        } catch (Exception e) {
+            checkConstraintViolation(e, "rule_chain_external_id_unq_key", "Rule Chain with such external id already exists!");
+            throw e;
+        }
     }
 
     @Override
@@ -126,7 +131,6 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     @Override
-    @Transactional
     public RuleChainUpdateResult saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData) {
         Validator.validateId(ruleChainMetaData.getRuleChainId(), "Incorrect rule chain id.");
         RuleChain ruleChain = findRuleChainById(tenantId, ruleChainMetaData.getRuleChainId());
@@ -566,6 +570,19 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                     }
                 }
             }
+            if (!CollectionUtils.isEmpty(metaData.getNodes())) {
+                metaData.getNodes().stream()
+                        .filter(ruleNode -> ruleNode.getType().equals(TB_RULE_CHAIN_INPUT_NODE))
+                        .forEach(ruleNode -> {
+                            ObjectNode configuration = (ObjectNode) ruleNode.getConfiguration();
+                            if (configuration.has("ruleChainId")) {
+                                if (configuration.get("ruleChainId").asText().equals(oldRuleChainId.toString())) {
+                                    configuration.put("ruleChainId", newRuleChainId.toString());
+                                    ruleNode.setConfiguration(configuration);
+                                }
+                            }
+                        });
+            }
         }
     }
 
@@ -730,6 +747,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     @Override
+    @Transactional
     public void deleteRuleNodes(TenantId tenantId, RuleChainId ruleChainId) {
         List<EntityRelation> nodeRelations = getRuleChainToNodeRelations(tenantId, ruleChainId);
         for (EntityRelation relation : nodeRelations) {

@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -98,12 +99,19 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
     public Customer saveCustomer(Customer customer) {
         log.trace("Executing saveCustomer [{}]", customer);
         customerValidator.validate(customer, Customer::getTenantId);
-        Customer savedCustomer = customerDao.save(customer.getTenantId(), customer);
-        dashboardService.updateCustomerDashboards(savedCustomer.getTenantId(), savedCustomer.getId());
-        return savedCustomer;
+        try {
+            Customer savedCustomer = customerDao.save(customer.getTenantId(), customer);
+            dashboardService.updateCustomerDashboards(savedCustomer.getTenantId(), savedCustomer.getId());
+            return savedCustomer;
+        } catch (Exception e) {
+            checkConstraintViolation(e, "customer_external_id_unq_key", "Customer with such external id already exists!");
+            throw e;
+        }
+
     }
 
     @Override
+    @Transactional
     public void deleteCustomer(TenantId tenantId, CustomerId customerId) {
         log.trace("Executing deleteCustomer [{}]", customerId);
         Validator.validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);

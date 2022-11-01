@@ -41,20 +41,17 @@ import java.util.UUID;
 )
 public class TbCheckpointNode implements TbNode {
 
-    private QueueId queueId;
+    private String queueName;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         TbCheckpointNodeConfiguration config = TbNodeUtils.convert(configuration, TbCheckpointNodeConfiguration.class);
-        this.queueId = new QueueId(UUID.fromString(config.getQueueId()));
+        this.queueName = config.getQueueName();
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        ctx.enqueueForTellNext(msg, queueId, TbRelationTypes.SUCCESS, () -> ctx.ack(msg), error -> ctx.tellFailure(msg, error));
+        ctx.enqueueForTellNext(msg, queueName, TbRelationTypes.SUCCESS, () -> ctx.ack(msg), error -> ctx.tellFailure(msg, error));
     }
 
-    @Override
-    public void destroy() {
-    }
 }

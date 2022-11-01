@@ -22,12 +22,16 @@ import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import com.squareup.wire.schema.internal.parser.ProtoFileElement;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
@@ -38,8 +42,8 @@ import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
@@ -47,17 +51,12 @@ import org.thingsboard.server.common.data.device.profile.JsonTransportPayloadCon
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.queue.ProcessingStrategy;
-import org.thingsboard.server.common.data.queue.ProcessingStrategyType;
-import org.thingsboard.server.common.data.queue.Queue;
-import org.thingsboard.server.common.data.queue.SubmitStrategy;
-import org.thingsboard.server.common.data.queue.SubmitStrategyType;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
-import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
+import org.thingsboard.server.dao.device.DeviceProfileDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.ArrayList;
@@ -74,6 +73,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.SOFTWARE;
 
+@ContextConfiguration(classes = {BaseDeviceProfileControllerTest.Config.class})
 public abstract class BaseDeviceProfileControllerTest extends AbstractControllerTest {
 
     private IdComparator<DeviceProfile> idComparator = new IdComparator<>();
@@ -81,6 +81,17 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
 
     private Tenant savedTenant;
     private User tenantAdmin;
+
+    @Autowired
+    private DeviceProfileDao deviceProfileDao;
+
+    static class Config {
+        @Bean
+        @Primary
+        public DeviceProfileDao deviceProfileDao(DeviceProfileDao deviceProfileDao) {
+            return Mockito.mock(DeviceProfileDao.class, AdditionalAnswers.delegatesTo(deviceProfileDao));
+        }
+    }
 
     @Before
     public void beforeTest() throws Exception {
@@ -146,7 +157,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        DeviceProfile createDeviceProfile = this.createDeviceProfile(RandomStringUtils.randomAlphabetic(300));
+        DeviceProfile createDeviceProfile = this.createDeviceProfile(StringUtils.randomAlphabetic(300));
         doPost("/api/deviceProfile", createDeviceProfile)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
@@ -387,55 +398,6 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         deviceProfile.setDefaultDashboardId(savedDashboard.getId());
         doPost("/api/deviceProfile", deviceProfile).andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("Can't assign dashboard from different tenant!")));
-    }
-
-    @Test
-    public void testSaveDeviceProfileWithQueueFromDifferentTenant() throws Exception {
-        loginDifferentTenant();
-        loginSysAdmin();
-        TenantProfile tenantProfile = new TenantProfile();
-        tenantProfile.setDefault(false);
-        tenantProfile.setName("Isolated TB Rule Engine");
-        tenantProfile.setDescription("Isolated TB Rule Engine tenant profile");
-        tenantProfile.setIsolatedTbCore(false);
-        tenantProfile.setIsolatedTbRuleEngine(true);
-
-        TenantProfileQueueConfiguration mainQueueConfiguration = new TenantProfileQueueConfiguration();
-        mainQueueConfiguration.setName("Main");
-        mainQueueConfiguration.setTopic("tb_rule_engine.main");
-        mainQueueConfiguration.setPollInterval(25);
-        mainQueueConfiguration.setPartitions(10);
-        mainQueueConfiguration.setConsumerPerPartition(true);
-        mainQueueConfiguration.setPackProcessingTimeout(2000);
-        SubmitStrategy mainQueueSubmitStrategy = new SubmitStrategy();
-        mainQueueSubmitStrategy.setType(SubmitStrategyType.BURST);
-        mainQueueSubmitStrategy.setBatchSize(1000);
-        mainQueueConfiguration.setSubmitStrategy(mainQueueSubmitStrategy);
-        ProcessingStrategy mainQueueProcessingStrategy = new ProcessingStrategy();
-        mainQueueProcessingStrategy.setType(ProcessingStrategyType.SKIP_ALL_FAILURES);
-        mainQueueProcessingStrategy.setRetries(3);
-        mainQueueProcessingStrategy.setFailurePercentage(0);
-        mainQueueProcessingStrategy.setPauseBetweenRetries(3);
-        mainQueueProcessingStrategy.setMaxPauseBetweenRetries(3);
-        mainQueueConfiguration.setProcessingStrategy(mainQueueProcessingStrategy);
-        TenantProfileData profileData = tenantProfile.getProfileData();
-        profileData.setQueueConfiguration(Collections.singletonList(mainQueueConfiguration));
-        tenantProfile.setProfileData(profileData);
-        TenantProfile savedTenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
-        savedDifferentTenant.setTenantProfileId(savedTenantProfile.getId());
-        savedDifferentTenant = doPost("/api/tenant", savedDifferentTenant, Tenant.class);
-        loginDifferentTenant();
-        PageLink pageLink = new PageLink(1);
-        PageData<Queue> pageData = doGetTypedWithPageLink("/api/queues?serviceType=TB_RULE_ENGINE&",
-                new TypeReference<>() {}, pageLink);
-        Queue differentQueue = pageData.getData().get(0);
-
-        loginTenantAdmin();
-
-        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile");
-        deviceProfile.setDefaultQueueId(differentQueue.getId());
-        doPost("/api/deviceProfile", deviceProfile).andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Can't assign queue from different tenant!")));
     }
 
     @Test
@@ -1180,6 +1142,23 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
     private String dynamicMsgToJson(Descriptors.Descriptor descriptor, byte[] payload) throws InvalidProtocolBufferException {
         DynamicMessage dynamicMessage = DynamicMessage.parseFrom(descriptor, payload);
         return JsonFormat.printer().includingDefaultValueFields().print(dynamicMessage);
+    }
+
+    @Test
+    public void testDeleteDeviceProfileWithDeleteRelationsOk() throws Exception {
+        DeviceProfileId deviceProfileId = savedDeviceProfile("DeviceProfile for Test WithRelationsOk").getId();
+        testEntityDaoWithRelationsOk(savedTenant.getId(), deviceProfileId, "/api/deviceProfile/" + deviceProfileId);
+    }
+
+    @Test
+    public void testDeleteDeviceProfileExceptionWithRelationsTransactional() throws Exception {
+        DeviceProfileId deviceProfileId = savedDeviceProfile("DeviceProfile for Test WithRelations Transactional Exception").getId();
+        testEntityDaoWithRelationsTransactionalException(deviceProfileDao, savedTenant.getId(), deviceProfileId, "/api/deviceProfile/" + deviceProfileId);
+    }
+
+    private DeviceProfile savedDeviceProfile(String name) {
+        DeviceProfile deviceProfile = createDeviceProfile(name);
+        return doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
     }
 
 }

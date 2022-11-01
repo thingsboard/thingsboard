@@ -89,8 +89,9 @@ public class WidgetsBundleController extends BaseController {
                     "Specify existing Widget Bundle id to update the Widget Bundle. " +
                     "Referencing non-existing Widget Bundle Id will cause 'Not Found' error." +
                     "\n\nWidget Bundle alias is unique in the scope of tenant. " +
-                    "Special Tenant Id '13814000-1dd2-11b2-8080-808080808080' is automatically used if the create bundle request is sent by user with 'SYS_ADMIN' authority."
-                    + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+                    "Special Tenant Id '13814000-1dd2-11b2-8080-808080808080' is automatically used if the create bundle request is sent by user with 'SYS_ADMIN' authority." +
+                    "Remove 'id', 'tenantId' from the request body example (below) to create new Widgets Bundle entity." +
+                    SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/widgetsBundle", method = RequestMethod.POST)
     @ResponseBody

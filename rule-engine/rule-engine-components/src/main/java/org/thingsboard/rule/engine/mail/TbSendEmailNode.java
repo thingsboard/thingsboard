@@ -17,7 +17,7 @@ package org.thingsboard.rule.engine.mail;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -88,7 +88,7 @@ public class TbSendEmailNode implements TbNode {
         if (this.config.isUseSystemSmtpSettings()) {
             ctx.getMailService(true).send(ctx.getTenantId(), msg.getCustomerId(), email);
         } else {
-            ctx.getMailService(false).send(ctx.getTenantId(), msg.getCustomerId(), email, this.mailSender);
+            ctx.getMailService(false).send(ctx.getTenantId(), msg.getCustomerId(), email, this.mailSender, config.getTimeout());
         }
     }
 
@@ -105,10 +105,6 @@ public class TbSendEmailNode implements TbNode {
             log.warn("Not expected msg type [{}] for SendEmail Node", type);
             throw new IllegalStateException("Not expected msg type " + type + " for SendEmail Node");
         }
-    }
-
-    @Override
-    public void destroy() {
     }
 
     private JavaMailSenderImpl createMailSender() {

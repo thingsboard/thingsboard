@@ -58,12 +58,7 @@
             {{key.label}}
           </div>
           <div class="tb-chip-separator">: </div>
-          <div class="tb-chip-label">
-            <strong *ngIf="datasourceType !== datasourceTypes.function && key.postFuncBody; else simpleChipLabel">f({{key.name}})</strong>
-            <ng-template #simpleChipLabel>
-              <strong>{{key.name}}</strong>
-            </ng-template>
-          </div>
+          <div class="tb-chip-label" [innerHTML]="displayDataKeyNameFn(key)"></div>
         </div>
         <button *ngIf="!disabled"
                 type="button"

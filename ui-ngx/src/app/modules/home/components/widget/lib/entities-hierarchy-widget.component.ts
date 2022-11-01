@@ -159,21 +159,21 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
     parentNodeCtx.level = 1;
     testNodeCtx.parentNodeCtx = parentNodeCtx;
 
-    this.nodeRelationQueryFunction = loadNodeCtxFunction(this.settings.nodeRelationQueryFunction, 'nodeCtx', testNodeCtx);
-    this.nodeIconFunction = loadNodeCtxFunction(this.settings.nodeIconFunction, 'nodeCtx', testNodeCtx);
-    this.nodeTextFunction = loadNodeCtxFunction(this.settings.nodeTextFunction, 'nodeCtx', testNodeCtx);
-    this.nodeDisabledFunction = loadNodeCtxFunction(this.settings.nodeDisabledFunction, 'nodeCtx', testNodeCtx);
-    this.nodeOpenedFunction = loadNodeCtxFunction(this.settings.nodeOpenedFunction, 'nodeCtx', testNodeCtx);
-    this.nodeHasChildrenFunction = loadNodeCtxFunction(this.settings.nodeHasChildrenFunction, 'nodeCtx', testNodeCtx);
+    this.nodeRelationQueryFunction = loadNodeCtxFunction(this.settings.nodeRelationQueryFunction, 'widgetCtx, nodeCtx', this.ctx, testNodeCtx);
+    this.nodeIconFunction = loadNodeCtxFunction(this.settings.nodeIconFunction, 'widgetCtx, nodeCtx', this.ctx, testNodeCtx);
+    this.nodeTextFunction = loadNodeCtxFunction(this.settings.nodeTextFunction, 'widgetCtx, nodeCtx', this.ctx, testNodeCtx);
+    this.nodeDisabledFunction = loadNodeCtxFunction(this.settings.nodeDisabledFunction, 'widgetCtx, nodeCtx', this.ctx, testNodeCtx);
+    this.nodeOpenedFunction = loadNodeCtxFunction(this.settings.nodeOpenedFunction, 'widgetCtx, nodeCtx', this.ctx, testNodeCtx);
+    this.nodeHasChildrenFunction = loadNodeCtxFunction(this.settings.nodeHasChildrenFunction, 'widgetCtx, nodeCtx', this.ctx, testNodeCtx);
 
     const testNodeCtx2 = deepClone(testNodeCtx);
     testNodeCtx2.entity.name = 'TEST DEV2';
 
-    this.nodesSortFunction = loadNodeCtxFunction(this.settings.nodesSortFunction, 'nodeCtx1,nodeCtx2', testNodeCtx, testNodeCtx2);
+    this.nodesSortFunction = loadNodeCtxFunction(this.settings.nodesSortFunction, 'widgetCtx, nodeCtx1,nodeCtx2', this.ctx, testNodeCtx, testNodeCtx2);
 
     this.nodeRelationQueryFunction = this.nodeRelationQueryFunction || defaultNodeRelationQueryFunction;
     this.nodeIconFunction = this.nodeIconFunction || defaultNodeIconFunction;
-    this.nodeTextFunction = this.nodeTextFunction || ((nodeCtx) => nodeCtx.entity.name);
+    this.nodeTextFunction = this.nodeTextFunction || ((widgetCtx, nodeCtx) => nodeCtx.entity.name);
     this.nodeDisabledFunction = this.nodeDisabledFunction || (() => false);
     this.nodeOpenedFunction = this.nodeOpenedFunction || defaultNodeOpenedFunction;
     this.nodeHasChildrenFunction = this.nodeHasChildrenFunction || (() => true);
@@ -322,7 +322,7 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
       node.text = newText;
       this.nodeEditCallbacks.updateNode(node.id, node.text);
     }
-    const newDisabled = this.nodeDisabledFunction(node.data.nodeCtx);
+    const newDisabled = this.nodeDisabledFunction(this.ctx, node.data.nodeCtx);
     if (node.state.disabled !== newDisabled) {
       node.state.disabled = newDisabled;
       if (node.state.disabled) {
@@ -331,7 +331,7 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
         this.nodeEditCallbacks.enableNode(node.id);
       }
     }
-    const newHasChildren = this.nodeHasChildrenFunction(node.data.nodeCtx);
+    const newHasChildren = this.nodeHasChildrenFunction(this.ctx, node.data.nodeCtx);
     if (node.children !== newHasChildren) {
       node.children = newHasChildren;
       this.nodeEditCallbacks.setNodeHasChildren(node.id, node.children);
@@ -340,22 +340,22 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
 
   private prepareNodes(nodes: HierarchyNavTreeNode[]): HierarchyNavTreeNode[] {
     nodes = nodes.filter((node) => node !== null);
-    nodes.sort((node1, node2) => this.nodesSortFunction(node1.data.nodeCtx, node2.data.nodeCtx));
+    nodes.sort((node1, node2) => this.nodesSortFunction(this.ctx, node1.data.nodeCtx, node2.data.nodeCtx));
     return nodes;
   }
 
   private prepareNodeText(node: HierarchyNavTreeNode): string {
     const nodeIcon = this.prepareNodeIcon(node.data.nodeCtx);
-    const nodeText = this.nodeTextFunction(node.data.nodeCtx);
+    const nodeText = this.nodeTextFunction(this.ctx, node.data.nodeCtx);
     node.data.searchText = nodeText ? nodeText.replace(/<[^>]+>/g, '').toLowerCase() : '';
     return nodeIcon + nodeText;
   }
 
   private prepareNodeIcon(nodeCtx: HierarchyNodeContext): string {
-    let iconInfo = this.nodeIconFunction(nodeCtx);
+    let iconInfo = this.nodeIconFunction(this.ctx, nodeCtx);
     if (iconInfo) {
       if (iconInfo === 'default') {
-        iconInfo = defaultNodeIconFunction(nodeCtx);
+        iconInfo = defaultNodeIconFunction(this.ctx, nodeCtx);
       }
       if (iconInfo && iconInfo !== 'default' && (iconInfo.iconUrl || iconInfo.materialIcon)) {
         if (iconInfo.materialIcon) {
@@ -406,11 +406,11 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
       nodeCtx
     };
     node.state = {
-      disabled: this.nodeDisabledFunction(node.data.nodeCtx),
-      opened: this.nodeOpenedFunction(node.data.nodeCtx)
+      disabled: this.nodeDisabledFunction(this.ctx, node.data.nodeCtx),
+      opened: this.nodeOpenedFunction(this.ctx, node.data.nodeCtx)
     };
     node.text = this.prepareNodeText(node);
-    node.children = this.nodeHasChildrenFunction(node.data.nodeCtx);
+    node.children = this.nodeHasChildrenFunction(this.ctx, node.data.nodeCtx);
     return node;
   }
 
@@ -456,9 +456,9 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
   }
 
   private prepareNodeRelationQuery(nodeCtx: HierarchyNodeContext): EntityRelationsQuery {
-    let relationQuery = this.nodeRelationQueryFunction(nodeCtx);
+    let relationQuery = this.nodeRelationQueryFunction(this.ctx, nodeCtx);
     if (relationQuery && relationQuery === 'default') {
-      relationQuery = defaultNodeRelationQueryFunction(nodeCtx);
+      relationQuery = defaultNodeRelationQueryFunction(this.ctx, nodeCtx);
     }
     return relationQuery as EntityRelationsQuery;
   }

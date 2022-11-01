@@ -34,7 +34,7 @@ public class ThingsboardCredentialsExpiredResponse extends ThingsboardErrorRespo
         return new ThingsboardCredentialsExpiredResponse(message, resetToken);
     }
 
-    @ApiModelProperty(position = 5, value = "Password reset token", readOnly = true)
+    @ApiModelProperty(position = 5, value = "Password reset token", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     public String getResetToken() {
         return resetToken;
     }

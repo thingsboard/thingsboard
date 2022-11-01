@@ -15,10 +15,10 @@
  */
 package org.thingsboard.server.dao.service.validator;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.ProcessingStrategy;
@@ -100,8 +100,6 @@ public class TenantProfileDataValidator extends DataValidator<TenantProfile> {
             throw new DataValidationException("Can't update non existing tenant profile!");
         } else if (old.isIsolatedTbRuleEngine() != tenantProfile.isIsolatedTbRuleEngine()) {
             throw new DataValidationException("Can't update isolatedTbRuleEngine property!");
-        } else if (old.isIsolatedTbCore() != tenantProfile.isIsolatedTbCore()) {
-            throw new DataValidationException("Can't update isolatedTbCore property!");
         }
         return old;
     }

@@ -42,7 +42,9 @@ import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
+import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.kv.TsKvEntryAggWrapper;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.nosql.TbResultSet;
 import org.thingsboard.server.dao.nosql.TbResultSetFuture;
@@ -71,6 +73,7 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 /**
  * @author Andrew Shvayka
  */
+@SuppressWarnings("UnstableApiUsage")
 @Component
 @Slf4j
 @NoSqlTsDao
@@ -139,20 +142,10 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     }
 
     @Override
-    public ListenableFuture<List<TsKvEntry>> findAllAsync(TenantId tenantId, EntityId entityId, List<ReadTsKvQuery> queries) {
-        List<ListenableFuture<List<TsKvEntry>>> futures = queries.stream().map(query -> findAllAsync(tenantId, entityId, query)).collect(Collectors.toList());
-        return Futures.transform(Futures.allAsList(futures), new Function<>() {
-            @Nullable
-            @Override
-            public List<TsKvEntry> apply(@Nullable List<List<TsKvEntry>> results) {
-                if (results == null || results.isEmpty()) {
-                    return null;
-                }
-                return results.stream()
-                        .flatMap(List::stream)
-                        .collect(Collectors.toList());
-            }
-        }, readResultsProcessingExecutor);
+    public ListenableFuture<List<ReadTsKvQueryResult>> findAllAsync(TenantId tenantId, EntityId entityId, List<ReadTsKvQuery> queries) {
+        List<ListenableFuture<ReadTsKvQueryResult>> futures = queries.stream()
+                .map(query -> findAllAsync(tenantId, entityId, query)).collect(Collectors.toList());
+        return Futures.allAsList(futures);
     }
 
     @Override
@@ -254,6 +247,10 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
                     }
                     QueryCursor cursor = new QueryCursor(entityId.getEntityType().name(), entityId.getId(), query, partitionsToDelete);
                     deletePartitionAsync(tenantId, cursor, resultFuture);
+
+                    for (Long partition : partitionsToDelete) {
+                        cassandraTsPartitionsCache.invalidate(new CassandraPartitionCacheKey(entityId, query.getKey(), partition));
+                    }
                 }
 
                 @Override
@@ -266,28 +263,42 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     }
 
     @Override
-    public ListenableFuture<List<TsKvEntry>> findAllAsync(TenantId tenantId, EntityId entityId, ReadTsKvQuery query) {
+    public ListenableFuture<ReadTsKvQueryResult> findAllAsync(TenantId tenantId, EntityId entityId, ReadTsKvQuery query) {
         if (query.getAggregation() == Aggregation.NONE) {
             return findAllAsyncWithLimit(tenantId, entityId, query);
         } else {
             long startPeriod = query.getStartTs();
-            long endPeriod = query.getEndTs();
+            long endPeriod = Math.max(query.getStartTs() + 1, query.getEndTs());
             long step = Math.max(query.getInterval(), MIN_AGGREGATION_STEP_MS);
-            List<ListenableFuture<Optional<TsKvEntry>>> futures = new ArrayList<>();
-            while (startPeriod <= endPeriod) {
+            List<ListenableFuture<Optional<TsKvEntryAggWrapper>>> futures = new ArrayList<>();
+            while (startPeriod < endPeriod) {
                 long startTs = startPeriod;
-                long endTs = Math.min(startPeriod + step, endPeriod + 1);
+                long endTs = Math.min(startPeriod + step, endPeriod);
                 long ts = endTs - startTs;
                 ReadTsKvQuery subQuery = new BaseReadTsKvQuery(query.getKey(), startTs, endTs, ts, 1, query.getAggregation(), query.getOrder());
                 futures.add(findAndAggregateAsync(tenantId, entityId, subQuery, toPartitionTs(startTs), toPartitionTs(endTs)));
                 startPeriod = endTs;
             }
-            ListenableFuture<List<Optional<TsKvEntry>>> future = Futures.allAsList(futures);
+            ListenableFuture<List<Optional<TsKvEntryAggWrapper>>> future = Futures.allAsList(futures);
             return Futures.transform(future, new Function<>() {
                 @Nullable
                 @Override
-                public List<TsKvEntry> apply(@Nullable List<Optional<TsKvEntry>> input) {
-                    return input == null ? Collections.emptyList() : input.stream().filter(v -> v.isPresent()).map(v -> v.get()).collect(Collectors.toList());
+                public ReadTsKvQueryResult apply(@Nullable List<Optional<TsKvEntryAggWrapper>> input) {
+                    if (input == null) {
+                        return new ReadTsKvQueryResult(query.getId(), Collections.emptyList(), query.getStartTs());
+                    } else {
+                        long maxTs = query.getStartTs();
+                        List<TsKvEntry> data = new ArrayList<>();
+                        for (var opt : input) {
+                            if (opt.isPresent()) {
+                                TsKvEntryAggWrapper tsKvEntryAggWrapper = opt.get();
+                                maxTs = Math.max(maxTs, tsKvEntryAggWrapper.getLastEntryTs());
+                                data.add(tsKvEntryAggWrapper.getEntry());
+                            }
+                        }
+                        return new ReadTsKvQueryResult(query.getId(), data, maxTs);
+                    }
+
                 }
             }, readResultsProcessingExecutor);
         }
@@ -298,13 +309,13 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         //Cleanup by TTL is native for Cassandra
     }
 
-    private ListenableFuture<List<TsKvEntry>> findAllAsyncWithLimit(TenantId tenantId, EntityId entityId, ReadTsKvQuery query) {
+    private ListenableFuture<ReadTsKvQueryResult> findAllAsyncWithLimit(TenantId tenantId, EntityId entityId, ReadTsKvQuery query) {
         long minPartition = toPartitionTs(query.getStartTs());
         long maxPartition = toPartitionTs(query.getEndTs());
         final ListenableFuture<List<Long>> partitionsListFuture = getPartitionsFuture(tenantId, query, entityId, minPartition, maxPartition);
         final SimpleListenableFuture<List<TsKvEntry>> resultFuture = new SimpleListenableFuture<>();
 
-        Futures.addCallback(partitionsListFuture, new FutureCallback<List<Long>>() {
+        Futures.addCallback(partitionsListFuture, new FutureCallback<>() {
             @Override
             public void onSuccess(@Nullable List<Long> partitions) {
                 TsKvQueryCursor cursor = new TsKvQueryCursor(entityId.getEntityType().name(), entityId.getId(), query, partitions);
@@ -317,7 +328,13 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
             }
         }, readResultsProcessingExecutor);
 
-        return resultFuture;
+        return Futures.transform(resultFuture, tsKvEntries -> {
+            long lastTs = query.getStartTs();
+            if (tsKvEntries != null) {
+                lastTs = tsKvEntries.stream().map(TsKvEntry::getTs).max(Long::compare).orElse(query.getStartTs());
+            }
+            return new ReadTsKvQueryResult(query.getId(), tsKvEntries, lastTs);
+        }, MoreExecutors.directExecutor());
     }
 
     private long toPartitionTs(long ts) {
@@ -375,7 +392,7 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         }
     }
 
-    private ListenableFuture<Optional<TsKvEntry>> findAndAggregateAsync(TenantId tenantId, EntityId entityId, ReadTsKvQuery query, long minPartition, long maxPartition) {
+    private ListenableFuture<Optional<TsKvEntryAggWrapper>> findAndAggregateAsync(TenantId tenantId, EntityId entityId, ReadTsKvQuery query, long minPartition, long maxPartition) {
         final Aggregation aggregation = query.getAggregation();
         final String key = query.getKey();
         final long startTs = query.getStartTs();

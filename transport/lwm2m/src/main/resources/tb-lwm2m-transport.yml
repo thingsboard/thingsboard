@@ -106,6 +106,9 @@ transport:
   lwm2m:
     # Enable/disable lvm2m transport protocol.
     enabled: "${LWM2M_ENABLED:true}"
+    dtls:
+      # RFC7925_RETRANSMISSION_TIMEOUT_IN_MILLISECONDS = 9000
+      retransmission_timeout: "${LWM2M_DTLS_RETRANSMISSION_TIMEOUT_MS:9000}"
     server:
       id: "${LWM2M_SERVER_ID:123}"
       bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
@@ -129,7 +132,7 @@ transport:
             key_password: "${LWM2M_SERVER_PEM_KEY_PASSWORD:server_key_password}"
           # Keystore server credentials
           keystore:
-            # Type of the key store
+            # Type of the key store (JKS or PKCS12)
             type: "${LWM2M_SERVER_KEY_STORE_TYPE:JKS}"
             # Path to the key store that holds the SSL certificate
             store_file: "${LWM2M_SERVER_KEY_STORE:lwm2mserver.jks}"
@@ -165,7 +168,7 @@ transport:
             key_password: "${LWM2M_BS_PEM_KEY_PASSWORD:server_key_password}"
           # Keystore server credentials
           keystore:
-            # Type of the key store
+            # Type of the key store (JKS or PKCS12)
             type: "${LWM2M_BS_KEY_STORE_TYPE:JKS}"
             # Path to the key store that holds the SSL certificate
             store_file: "${LWM2M_BS_KEY_STORE:lwm2mserver.jks}"
@@ -188,7 +191,7 @@ transport:
           cert_file: "${LWM2M_TRUST_PEM_CERT:lwm2mtruststorechain.pem}"
         # Keystore with trust certificates
         keystore:
-          # Type of the key store
+          # Type of the key store (JKS or PKCS12)
           type: "${LWM2M_TRUST_KEY_STORE_TYPE:JKS}"
           # Path to the key store that holds the X509 certificates
           store_file: "${LWM2M_TRUST_KEY_STORE:lwm2mtruststorechain.jks}"
@@ -235,10 +238,10 @@ queue:
       - key: "session.timeout.ms" # refer to https://docs.confluent.io/platform/current/installation/configuration/consumer-configs.html#consumerconfigs_session.timeout.ms
         value: "${TB_QUEUE_KAFKA_SESSION_TIMEOUT_MS:10000}" # (10 seconds)
     topic-properties:
-      rule-engine: "${TB_QUEUE_KAFKA_RE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1}"
-      core: "${TB_QUEUE_KAFKA_CORE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1}"
-      transport-api: "${TB_QUEUE_KAFKA_TA_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1}"
-      notifications: "${TB_QUEUE_KAFKA_NOTIFICATIONS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1}"
+      rule-engine: "${TB_QUEUE_KAFKA_RE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      core: "${TB_QUEUE_KAFKA_CORE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      transport-api: "${TB_QUEUE_KAFKA_TA_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
+      notifications: "${TB_QUEUE_KAFKA_NOTIFICATIONS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
   aws_sqs:
     use_default_credential_provider_chain: "${TB_QUEUE_AWS_SQS_USE_DEFAULT_CREDENTIAL_PROVIDER_CHAIN:false}"
     access_key_id: "${TB_QUEUE_AWS_SQS_ACCESS_KEY_ID:YOUR_KEY}"
@@ -288,7 +291,6 @@ queue:
       notifications: "${TB_QUEUE_RABBIT_MQ_NOTIFICATIONS_QUEUE_PROPERTIES:x-max-length-bytes:1048576000;x-message-ttl:604800000}"
   partitions:
     hash_function_name: "${TB_QUEUE_PARTITIONS_HASH_FUNCTION_NAME:murmur3_128}"
-    virtual_nodes_size: "${TB_QUEUE_PARTITIONS_VIRTUAL_NODES_SIZE:16}"
   transport_api:
     requests_topic: "${TB_QUEUE_TRANSPORT_API_REQUEST_TOPIC:tb_transport.api.requests}"
     responses_topic: "${TB_QUEUE_TRANSPORT_API_RESPONSE_TOPIC:tb_transport.api.responses}"

@@ -22,13 +22,13 @@ import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.squareup.wire.schema.internal.parser.ProtoFileElement;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.californium.core.CoapHandler;
 import org.eclipse.californium.core.CoapObserveRelation;
 import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceTypeConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultCoapDeviceTypeConfiguration;
@@ -43,6 +43,7 @@ import org.thingsboard.server.transport.coap.CoapTestClient;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -75,14 +76,23 @@ public abstract class AbstractCoapServerSideRpcIntegrationTest extends AbstractC
         CoapTestCallback callbackCoap = new TestCoapCallbackForRPC(client, 1, true, protobuf);
 
         CoapObserveRelation observeRelation = client.getObserveRelation(callbackCoap);
-        callbackCoap.getLatch().await(3, TimeUnit.SECONDS);
+        String awaitAlias = "await One Way Rpc (client.getObserveRelation)";
+        await(awaitAlias)
+                .atMost(10, TimeUnit.SECONDS)
+                .until(() -> CoAP.ResponseCode.VALID.equals(callbackCoap.getResponseCode()) &&
+                        callbackCoap.getObserve() != null &&
+                        0 == callbackCoap.getObserve().intValue());
         validateCurrentStateNotification(callbackCoap);
-
-        CountDownLatch latch = new CountDownLatch(1);
+        int expectedObserveCountAfterGpioRequest = callbackCoap.getObserve().intValue() + 1;
         String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"23\",\"value\": 1}}";
         String deviceId = savedDevice.getId().getId().toString();
         String result = doPostAsync("/api/rpc/oneway/" + deviceId, setGpioRequest, String.class, status().isOk());
-        latch.await(3, TimeUnit.SECONDS);
+        awaitAlias = "await One Way Rpc setGpio(method, params, value)";
+        await(awaitAlias)
+                .atMost(10, TimeUnit.SECONDS)
+                .until(() -> CoAP.ResponseCode.CONTENT.equals(callbackCoap.getResponseCode()) &&
+                        callbackCoap.getObserve() != null &&
+                        expectedObserveCountAfterGpioRequest == callbackCoap.getObserve().intValue());
         validateOneWayStateChangedNotification(callbackCoap, result);
 
         observeRelation.proactiveCancel();
@@ -94,23 +104,36 @@ public abstract class AbstractCoapServerSideRpcIntegrationTest extends AbstractC
         CoapTestCallback callbackCoap = new TestCoapCallbackForRPC(client, 1, false, protobuf);
 
         CoapObserveRelation observeRelation = client.getObserveRelation(callbackCoap);
-        callbackCoap.getLatch().await(3, TimeUnit.SECONDS);
-
+        String awaitAlias = "await Two Way Rpc (client.getObserveRelation)";
+        await(awaitAlias)
+                .atMost(10, TimeUnit.SECONDS)
+                .until(() -> CoAP.ResponseCode.VALID.equals(callbackCoap.getResponseCode()) &&
+                        callbackCoap.getObserve() != null &&
+                        0 == callbackCoap.getObserve().intValue());
         validateCurrentStateNotification(callbackCoap);
 
         String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"26\",\"value\": 1}}";
         String deviceId = savedDevice.getId().getId().toString();
-
+        int expectedObserveCountAfterGpioRequest1 = callbackCoap.getObserve().intValue() + 1;
         String actualResult = doPostAsync("/api/rpc/twoway/" + deviceId, setGpioRequest, String.class, status().isOk());
-        callbackCoap.getLatch().await(3, TimeUnit.SECONDS);
+        awaitAlias = "await Two Way Rpc (setGpio(method, params, value) first";
+        await(awaitAlias)
+                .atMost(10, TimeUnit.SECONDS)
+                .until(() -> CoAP.ResponseCode.CONTENT.equals(callbackCoap.getResponseCode()) &&
+                        callbackCoap.getObserve() != null &&
+                        expectedObserveCountAfterGpioRequest1 == callbackCoap.getObserve().intValue());
+        validateTwoWayStateChangedNotification(callbackCoap, expectedResponseResult, actualResult);
 
-        validateTwoWayStateChangedNotification(callbackCoap, 1, expectedResponseResult, actualResult);
-
-        CountDownLatch latch = new CountDownLatch(1);
+        int expectedObserveCountAfterGpioRequest2 = callbackCoap.getObserve().intValue() + 1;
         actualResult = doPostAsync("/api/rpc/twoway/" + deviceId, setGpioRequest, String.class, status().isOk());
-        callbackCoap.getLatch().await(3, TimeUnit.SECONDS);
+        awaitAlias = "await Two Way Rpc (setGpio(method, params, value) first";
+        await(awaitAlias)
+                .atMost(10, TimeUnit.SECONDS)
+                .until(() -> CoAP.ResponseCode.CONTENT.equals(callbackCoap.getResponseCode()) &&
+                        callbackCoap.getObserve() != null &&
+                        expectedObserveCountAfterGpioRequest2 == callbackCoap.getObserve().intValue());
 
-        validateTwoWayStateChangedNotification(callbackCoap, 2, expectedResponseResult, actualResult);
+        validateTwoWayStateChangedNotification(callbackCoap, expectedResponseResult, actualResult);
 
         observeRelation.proactiveCancel();
         assertTrue(observeRelation.isCanceled());
@@ -184,25 +207,16 @@ public abstract class AbstractCoapServerSideRpcIntegrationTest extends AbstractC
 
     private void validateCurrentStateNotification(CoapTestCallback callback) {
         assertArrayEquals(EMPTY_PAYLOAD, callback.getPayloadBytes());
-        assertNotNull(callback.getObserve());
-        assertEquals(callback.getResponseCode(), CoAP.ResponseCode.VALID);
-        assertEquals(0, callback.getObserve().intValue());
     }
 
     private void validateOneWayStateChangedNotification(CoapTestCallback callback, String result) {
         assertTrue(StringUtils.isEmpty(result));
         assertNotNull(callback.getPayloadBytes());
-        assertNotNull(callback.getObserve());
-        assertEquals(CoAP.ResponseCode.CONTENT, callback.getResponseCode());
-        assertEquals(1, callback.getObserve().intValue());
     }
 
-    private void validateTwoWayStateChangedNotification(CoapTestCallback callback, int expectedObserveNumber, String expectedResult, String actualResult) {
+    private void validateTwoWayStateChangedNotification(CoapTestCallback callback, String expectedResult, String actualResult) {
         assertEquals(expectedResult, actualResult);
         assertNotNull(callback.getPayloadBytes());
-        assertNotNull(callback.getObserve());
-        assertEquals(CoAP.ResponseCode.CONTENT, callback.getResponseCode());
-        assertEquals(expectedObserveNumber, callback.getObserve().intValue());
     }
 
     protected class TestCoapCallbackForRPC extends CoapTestCallback {

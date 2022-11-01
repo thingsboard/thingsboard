@@ -17,8 +17,8 @@ package org.thingsboard.server.dao.service.validator;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -49,13 +49,13 @@ public class EdgeDataValidator extends DataValidator<Edge> {
 
     @Override
     protected void validateDataImpl(TenantId tenantId, Edge edge) {
-        if (org.springframework.util.StringUtils.isEmpty(edge.getType())) {
+        if (StringUtils.isEmpty(edge.getType())) {
             throw new DataValidationException("Edge type should be specified!");
         }
-        if (org.springframework.util.StringUtils.isEmpty(edge.getName())) {
+        if (StringUtils.isEmpty(edge.getName())) {
             throw new DataValidationException("Edge name should be specified!");
         }
-        if (org.springframework.util.StringUtils.isEmpty(edge.getSecret())) {
+        if (StringUtils.isEmpty(edge.getSecret())) {
             throw new DataValidationException("Edge secret should be specified!");
         }
         if (StringUtils.isEmpty(edge.getRoutingKey())) {

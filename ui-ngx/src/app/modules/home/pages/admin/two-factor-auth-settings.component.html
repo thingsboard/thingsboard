@@ -21,7 +21,7 @@
       <div fxLayout="row">
         <span class="mat-headline" translate>admin.2fa.2fa</span>
         <span fxFlex></span>
-<!--        <div tb-help="twoFactorAuthSettings"></div>-->
+        <div tb-help="twoFactorAuthentication"></div>
       </div>
     </mat-card-title>
     <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
@@ -40,8 +40,8 @@
                       <mat-slide-toggle
                         (click)="toggleExtensionPanel($event, i, provider.get('enable').value)"
                         formControlName="enable">
+                        {{ twoFactorAuthProvidersData.get(provider.value.providerType).name | translate }}
                       </mat-slide-toggle>
-                      {{ twoFactorAuthProvidersData.get(provider.value.providerType).name | translate }}
                     </mat-panel-title>
                   </mat-expansion-panel-header>
 

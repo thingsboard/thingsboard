@@ -25,18 +25,21 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.rule.RuleNodeState;
+import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -44,6 +47,7 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
@@ -59,6 +63,7 @@ import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 
+import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -142,15 +147,12 @@ public interface TbContext {
      */
     void output(TbMsg msg, String relationType);
 
-    @Deprecated
-    void enqueue(TbMsg tbMsg, String queueName, Runnable onSuccess, Consumer<Throwable> onFailure);
-
     /**
      * Puts new message to custom queue for processing
      *
      * @param msg - message
      */
-    void enqueue(TbMsg msg, QueueId queueId, Runnable onSuccess, Consumer<Throwable> onFailure);
+    void enqueue(TbMsg msg, String queueName, Runnable onSuccess, Consumer<Throwable> onFailure);
 
     void enqueueForTellFailure(TbMsg msg, String failureMessage);
 
@@ -162,15 +164,15 @@ public interface TbContext {
 
     void enqueueForTellNext(TbMsg msg, Set<String> relationTypes, Runnable onSuccess, Consumer<Throwable> onFailure);
 
-    void enqueueForTellNext(TbMsg msg, QueueId queueId, String relationType, Runnable onSuccess, Consumer<Throwable> onFailure);
+    void enqueueForTellNext(TbMsg msg, String queueName, String relationType, Runnable onSuccess, Consumer<Throwable> onFailure);
 
-    void enqueueForTellNext(TbMsg msg, QueueId queueId, Set<String> relationTypes, Runnable onSuccess, Consumer<Throwable> onFailure);
+    void enqueueForTellNext(TbMsg msg, String queueName, Set<String> relationTypes, Runnable onSuccess, Consumer<Throwable> onFailure);
 
     void ack(TbMsg tbMsg);
 
-    TbMsg newMsg(QueueId queueId, String type, EntityId originator, TbMsgMetaData metaData, String data);
+    TbMsg newMsg(String queueName, String type, EntityId originator, TbMsgMetaData metaData, String data);
 
-    TbMsg newMsg(QueueId queueId, String type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, String data);
+    TbMsg newMsg(String queueName, String type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, String data);
 
     TbMsg transformMsg(TbMsg origMsg, String type, EntityId originator, TbMsgMetaData metaData, String data);
 
@@ -182,6 +184,10 @@ public interface TbContext {
 
     // TODO: Does this changes the message?
     TbMsg alarmActionMsg(Alarm alarm, RuleNodeId ruleNodeId, String action);
+
+    TbMsg attributesUpdatedActionMsg(EntityId originator, RuleNodeId ruleNodeId, String scope, List<AttributeKvEntry> attributes);
+
+    TbMsg attributesDeletedActionMsg(EntityId originator, RuleNodeId ruleNodeId, String scope, List<String> keys);
 
     void onEdgeEventUpdate(TenantId tenantId, EdgeId edgeId);
 
@@ -213,6 +219,8 @@ public interface TbContext {
 
     DeviceService getDeviceService();
 
+    DeviceCredentialsService getDeviceCredentialsService();
+
     TbClusterService getClusterService();
 
     DashboardService getDashboardService();
@@ -237,6 +245,8 @@ public interface TbContext {
 
     RuleEngineDeviceProfileCache getDeviceProfileCache();
 
+    RuleEngineAssetProfileCache getAssetProfileCache();
+
     EdgeService getEdgeService();
 
     EdgeEventService getEdgeEventService();
@@ -257,7 +267,16 @@ public interface TbContext {
 
     SmsSenderFactory getSmsSenderFactory();
 
+    /**
+     * Creates JS Script Engine
+     * @deprecated
+     * <p> Use {@link #createScriptEngine} instead.
+     *
+     */
+    @Deprecated
     ScriptEngine createJsScriptEngine(String script, String... argNames);
+
+    ScriptEngine createScriptEngine(ScriptLanguage scriptLang, String script, String... argNames);
 
     void logJsEvalRequest();
 
@@ -289,7 +308,10 @@ public interface TbContext {
 
     void addDeviceProfileListeners(Consumer<DeviceProfile> listener, BiConsumer<DeviceId, DeviceProfile> deviceListener);
 
+    void addAssetProfileListeners(Consumer<AssetProfile> listener, BiConsumer<AssetId, AssetProfile> assetListener);
+
     void removeListeners();
 
     TenantProfile getTenantProfile();
+
 }
