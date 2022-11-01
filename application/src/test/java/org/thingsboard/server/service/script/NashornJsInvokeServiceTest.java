@@ -70,7 +70,7 @@ class NashornJsInvokeServiceTest extends AbstractControllerTest {
         }
         long duration = System.currentTimeMillis() - startTs;
         System.out.println(iterations + " invocations took: " + duration + "ms");
-        Assert.assertTrue(duration < TimeUnit.MINUTES.toMillis(1));
+        Assert.assertTrue(duration < TimeUnit.MINUTES.toMillis(3));
     }
 
     @Test
