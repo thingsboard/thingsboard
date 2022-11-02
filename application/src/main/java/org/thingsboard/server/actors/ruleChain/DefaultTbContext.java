@@ -25,6 +25,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
+import org.thingsboard.rule.engine.api.RuleEngineApiUsageStateService;
 import org.thingsboard.rule.engine.api.RuleEngineAssetProfileCache;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
 import org.thingsboard.rule.engine.api.RuleEngineRpcService;
@@ -88,6 +89,8 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.dao.widget.WidgetTypeService;
+import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
@@ -717,6 +720,26 @@ class DefaultTbContext implements TbContext {
     @Override
     public TenantProfile getTenantProfile() {
         return mainCtx.getTenantProfileCache().get(getTenantId());
+    }
+
+    @Override
+    public TenantProfile getTenantProfile(TenantId tenantId) {
+        return mainCtx.getTenantProfileCache().get(tenantId);
+    }
+
+    @Override
+    public WidgetsBundleService getWidgetBundleService() {
+        return mainCtx.getWidgetsBundleService();
+    }
+
+    @Override
+    public WidgetTypeService getWidgetTypeService() {
+        return mainCtx.getWidgetTypeService();
+    }
+
+    @Override
+    public RuleEngineApiUsageStateService getRuleEngineApiUsageStateService() {
+        return mainCtx.getApiUsageStateService();
     }
 
     private TbMsgMetaData getActionMetaData(RuleNodeId ruleNodeId) {

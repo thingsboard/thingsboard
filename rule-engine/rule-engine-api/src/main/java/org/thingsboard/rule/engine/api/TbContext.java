@@ -61,6 +61,8 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.dao.widget.WidgetTypeService;
+import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
 import java.util.List;
 import java.util.Set;
@@ -305,4 +307,12 @@ public interface TbContext {
     void removeListeners();
 
     TenantProfile getTenantProfile();
+
+    TenantProfile getTenantProfile(TenantId tenantId);
+
+    WidgetsBundleService getWidgetBundleService();
+
+    WidgetTypeService getWidgetTypeService();
+
+    RuleEngineApiUsageStateService getRuleEngineApiUsageStateService();
 }
