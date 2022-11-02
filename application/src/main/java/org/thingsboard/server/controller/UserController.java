@@ -44,10 +44,8 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.event.UserAuthDataChangedEvent;
-import org.thingsboard.server.common.data.security.model.JwtToken;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.user.TbUserService;
-import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
 import org.thingsboard.server.service.security.model.JwtTokenPair;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
@@ -95,7 +93,6 @@ public class UserController extends BaseController {
 
     private final MailService mailService;
     private final JwtTokenFactory tokenFactory;
-    private final RefreshTokenRepository refreshTokenRepository;
     private final SystemSecurityService systemSecurityService;
     private final ApplicationEventPublisher eventPublisher;
     private final TbUserService tbUserService;
@@ -163,9 +160,7 @@ public class UserController extends BaseController {
             UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
             UserCredentials credentials = userService.findUserCredentialsByUserId(authUser.getTenantId(), userId);
             SecurityUser securityUser = new SecurityUser(user, credentials.isEnabled(), principal);
-            JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
-            JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);
-            return new JwtTokenPair(accessToken.getToken(), refreshToken.getToken());
+            return tokenFactory.createTokenPair(securityUser);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -376,7 +371,7 @@ public class UserController extends BaseController {
             userService.setUserCredentialsEnabled(tenantId, userId, userCredentialsEnabled);
 
             if (!userCredentialsEnabled) {
-                eventPublisher.publishEvent(new UserAuthDataChangedEvent(userId));
+                eventPublisher.publishEvent(new UserAuthDataChangedEvent(userId, null, true));
             }
         } catch (Exception e) {
             throw handleException(e);

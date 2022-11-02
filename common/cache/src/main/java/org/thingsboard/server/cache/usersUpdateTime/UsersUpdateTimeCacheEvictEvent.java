@@ -13,25 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.security.event;
+package org.thingsboard.server.cache.usersUpdateTime;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.id.UserId;
 
-import java.io.Serializable;
-
 @Data
-public class UserAuthDataChangedEvent implements Serializable {
+public class UsersUpdateTimeCacheEvictEvent {
     private final UserId userId;
     private final String sessionId;
-    private final long ts;
-    private final boolean dropAllSessions;
-
-    public UserAuthDataChangedEvent(UserId userId, String sessionId, boolean dropAllSessions) {
-        this.userId = userId;
-        this.sessionId = sessionId;
-        this.dropAllSessions = dropAllSessions;
-        this.ts = System.currentTimeMillis();
-    }
-
 }

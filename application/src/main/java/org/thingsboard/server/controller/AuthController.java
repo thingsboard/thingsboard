@@ -43,12 +43,10 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.event.UserAuthDataChangedEvent;
-import org.thingsboard.server.common.data.security.model.JwtToken;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
 import org.thingsboard.server.service.security.model.ActivateUserRequest;
 import org.thingsboard.server.service.security.model.ChangePasswordRequest;
@@ -73,7 +71,6 @@ import java.net.URISyntaxException;
 public class AuthController extends BaseController {
     private final BCryptPasswordEncoder passwordEncoder;
     private final JwtTokenFactory tokenFactory;
-    private final RefreshTokenRepository refreshTokenRepository;
     private final MailService mailService;
     private final SystemSecurityService systemSecurityService;
     private final AuditLogService auditLogService;
@@ -128,7 +125,7 @@ public class AuthController extends BaseController {
 
             sendEntityNotificationMsg(getTenantId(), userCredentials.getUserId(), EdgeEventActionType.CREDENTIALS_UPDATED);
 
-            eventPublisher.publishEvent(new UserAuthDataChangedEvent(securityUser.getId()));
+            eventPublisher.publishEvent(new UserAuthDataChangedEvent(securityUser.getId(), securityUser.getSessionId(), false));
             ObjectNode response = JacksonUtil.newObjectNode();
             response.put("token", tokenFactory.createAccessJwtToken(securityUser).getToken());
             response.put("refreshToken", tokenFactory.createRefreshToken(securityUser).getToken());
@@ -268,10 +265,7 @@ public class AuthController extends BaseController {
 
             sendEntityNotificationMsg(user.getTenantId(), user.getId(), EdgeEventActionType.CREDENTIALS_UPDATED);
 
-            JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
-            JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);
-
-            return new JwtTokenPair(accessToken.getToken(), refreshToken.getToken());
+            return tokenFactory.createTokenPair(securityUser);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -309,11 +303,9 @@ public class AuthController extends BaseController {
                 String email = user.getEmail();
                 mailService.sendPasswordWasResetEmail(loginUrl, email);
 
-                eventPublisher.publishEvent(new UserAuthDataChangedEvent(securityUser.getId()));
-                JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
-                JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);
+                eventPublisher.publishEvent(new UserAuthDataChangedEvent(securityUser.getId(), securityUser.getSessionId(), false));
 
-                return new JwtTokenPair(accessToken.getToken(), refreshToken.getToken());
+                return tokenFactory.createTokenPair(securityUser);
             } else {
                 throw new ThingsboardException("Invalid reset token!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
             }
@@ -367,7 +359,7 @@ public class AuthController extends BaseController {
                     user.getTenantId(), user.getCustomerId(), user.getId(),
                     user.getName(), user.getId(), null, ActionType.LOGOUT, null, clientAddress, browser, os, device);
 
-            eventPublisher.publishEvent(new UserAuthDataChangedEvent(user.getId()));
+            eventPublisher.publishEvent(new UserAuthDataChangedEvent(user.getId(), user.getSessionId(), false));
         } catch (Exception e) {
             throw handleException(e);
         }

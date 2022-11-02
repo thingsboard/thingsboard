@@ -211,7 +211,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         userAuthSettingsDao.removeByUserId(userId);
         deleteEntityRelations(tenantId, userId);
         userDao.removeById(tenantId, userId.getId());
-        eventPublisher.publishEvent(new UserAuthDataChangedEvent(userId));
+        eventPublisher.publishEvent(new UserAuthDataChangedEvent(userId, null, true));
     }
 
     @Override
