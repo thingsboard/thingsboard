@@ -17,18 +17,20 @@ package org.thingsboard.server.cache.usersUpdateTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.cache.CacheManager;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.cache.CaffeineTbTransactionalCache;
+import org.thingsboard.server.cache.CacheSpecsMap;
+import org.thingsboard.server.cache.RedisTbTransactionalCache;
+import org.thingsboard.server.cache.TBRedisCacheConfiguration;
+import org.thingsboard.server.cache.TbFSTRedisSerializer;
 import org.thingsboard.server.common.data.CacheConstants;
 
-
-@ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "caffeine", matchIfMissing = true)
-@Service("UsersUpdateTimeCache")
-public class UsersUpdateTimeCaffeineCache extends CaffeineTbTransactionalCache<String, Long> {
+@ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
+@Service("UsersSessionInvalidation")
+public class UsersSessionInvalidationRedisCache extends RedisTbTransactionalCache<String, Long> {
 
     @Autowired
-    public UsersUpdateTimeCaffeineCache(CacheManager cacheManager) {
-        super(cacheManager, CacheConstants.USERS_UPDATE_TIME_CACHE);
+    public UsersSessionInvalidationRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
+        super(CacheConstants.USERS_SESSION_INVALIDATION_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbFSTRedisSerializer<>());
     }
 }

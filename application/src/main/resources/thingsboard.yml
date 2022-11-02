@@ -421,7 +421,8 @@ cache:
       timeToLiveInMinutes: "${CACHE_SPECS_ATTRIBUTES_TTL:1440}"
       maxSize: "${CACHE_SPECS_ATTRIBUTES_MAX_SIZE:100000}"
     usersUpdateTime:
-      timeToLiveInMinutes: "${CACHE_SPECS_USERS_UPDATE_TIME_TTL:20000}"
+      # MUST be the same as jwt refresh token expiration time, the value here represents 604800 seconds in minutes
+      timeToLiveInMinutes: "${CACHE_SPECS_USERS_UPDATE_TIME_TTL:10080}"
       maxSize: "${CACHE_SPECS_USERS_UPDATE_TIME_MAX_SIZE:10000}"
     otaPackages:
       timeToLiveInMinutes: "${CACHE_SPECS_OTA_PACKAGES_TTL:60}"

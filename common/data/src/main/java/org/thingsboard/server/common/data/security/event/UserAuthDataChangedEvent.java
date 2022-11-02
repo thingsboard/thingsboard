@@ -15,9 +15,6 @@
  */
 package org.thingsboard.server.common.data.security.event;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.id.UserId;
-
 import java.io.Serializable;
 
 public abstract class UserAuthDataChangedEvent implements Serializable {

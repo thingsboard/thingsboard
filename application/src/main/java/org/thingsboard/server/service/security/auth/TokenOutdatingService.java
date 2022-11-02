@@ -19,66 +19,42 @@ import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.cache.TbCacheValueWrapper;
+import org.springframework.util.StringUtils;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.event.UserAuthDataChangedEvent;
 import org.thingsboard.server.common.data.security.model.JwtToken;
-import org.thingsboard.server.config.JwtSettings;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 
 import java.util.Optional;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 @Service
 @RequiredArgsConstructor
 public class TokenOutdatingService {
     private final TbTransactionalCache<String, Long> cache;
     private final JwtTokenFactory tokenFactory;
-    private final JwtSettings jwtSettings;
 
     @EventListener(classes = UserAuthDataChangedEvent.class)
     public void onUserAuthDataChanged(UserAuthDataChangedEvent event) {
-        cache.put(event.getId(), event.getTs());
+        if (StringUtils.hasText(event.getId())) {
+            cache.put(event.getId(), event.getTs());
+        }
     }
 
     public boolean isOutdated(JwtToken token, UserId userId) {
         Claims claims = tokenFactory.parseTokenClaims(token).getBody();
         long issueTime = claims.getIssuedAt().getTime();
-
-        String sessionId = claims.get("sessionId", String.class);
-
-        Boolean isUserIdOutdated = Optional.ofNullable(cache.get(userId.toString()))
-                .map(outdatageTimeByUserId -> {
-                    if (refreshTokenNotExpired(outdatageTimeByUserId.get(), System.currentTimeMillis())) {
-                        return accessTokenNotExpired(issueTime, outdatageTimeByUserId.get());
-                    } else {
-                        return false;
-                    }
-                })
-                .orElse(false);
-
-        if (!isUserIdOutdated) {
-            return Optional.ofNullable(cache.get(sessionId)).map(outdatageTimeBySessionId -> {
-                        if (refreshTokenNotExpired(outdatageTimeBySessionId.get(), System.currentTimeMillis())) {
-                            return accessTokenNotExpired(issueTime, outdatageTimeBySessionId.get());
-                        } else {
-                            return false;
-                        }
-                    }
-            ).orElse(false);
-        }
-
-        return isUserIdOutdated;
+        String sessionId = claims.get("sessionId", String.class) == null ? "" : claims.get("sessionId", String.class);
+        return isTokenOutdated(issueTime, userId.toString()) || isTokenOutdated(issueTime, sessionId);
     }
 
-    private boolean accessTokenNotExpired(long issueTime, Long outdatageTime) {
+    private Boolean isTokenOutdated(long issueTime, String sessionId) {
+        return Optional.ofNullable(cache.get(sessionId)).map(outdatageTime -> isTokenOutdated(issueTime, outdatageTime.get())).orElse(false);
+    }
+
+    private boolean isTokenOutdated(long issueTime, Long outdatageTime) {
         return MILLISECONDS.toSeconds(issueTime) < MILLISECONDS.toSeconds(outdatageTime);
-    }
-
-    private boolean refreshTokenNotExpired(Long outdatageTime, long currentTime) {
-        return currentTime - outdatageTime <= SECONDS.toMillis(jwtSettings.getRefreshTokenExpTime());
     }
 }

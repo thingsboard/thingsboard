@@ -32,7 +32,6 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
-import org.thingsboard.server.common.data.security.event.UserAuthDataChangedEvent;
 import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
 import org.thingsboard.server.common.data.security.event.UserSessionInvalidationEvent;
 import org.thingsboard.server.common.data.security.model.JwtToken;
@@ -70,7 +69,8 @@ import static org.mockito.Mockito.when;
         "security.jwt.tokenIssuer=test.io",
         "security.jwt.tokenSigningKey=secret",
         "security.jwt.tokenExpirationTime=600",
-        "security.jwt.refreshTokenExpTime=10"
+        "security.jwt.refreshTokenExpTime=60",
+        "cache.specs.usersUpdateTime.timeToLiveInMinutes=1"
 })
 public class TokenOutdatingTest {
     private JwtAuthenticationProvider accessTokenAuthenticationProvider;
@@ -160,7 +160,7 @@ public class TokenOutdatingTest {
 
         assertTrue(tokenOutdatingService.isOutdated(jwtToken, securityUser.getId()));
 
-        SECONDS.sleep(10);
+        SECONDS.sleep(60);
 
         assertFalse(tokenOutdatingService.isOutdated(jwtToken, securityUser.getId()));
     }
