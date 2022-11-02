@@ -163,6 +163,29 @@ public class TokenOutdatingTest {
         assertFalse(tokenOutdatingService.isOutdated(jwtToken, securityUser.getId()));
     }
 
+    @Test
+    public void testOnlyOneTokenExpired() throws InterruptedException {
+        JwtToken jwtToken = tokenFactory.createAccessJwtToken(securityUser);
+
+        SecurityUser anotherSecurityUser = new SecurityUser(securityUser, securityUser.isEnabled(), securityUser.getUserPrincipal());
+        JwtToken anotherJwtToken = tokenFactory.createAccessJwtToken(anotherSecurityUser);
+
+        assertDoesNotThrow(() -> {
+            accessTokenAuthenticationProvider.authenticate(new JwtAuthenticationToken(getRawJwtToken(jwtToken)));
+        });
+
+        SECONDS.sleep(1);
+        tokenOutdatingService.onUserAuthDataChanged(new UserAuthDataChangedEvent(securityUser.getId(), securityUser.getSessionId(), false));
+
+        assertThrows(JwtExpiredTokenException.class, () -> {
+            accessTokenAuthenticationProvider.authenticate(new JwtAuthenticationToken(getRawJwtToken(jwtToken)));
+        });
+
+        assertDoesNotThrow(() -> {
+            accessTokenAuthenticationProvider.authenticate(new JwtAuthenticationToken(getRawJwtToken(anotherJwtToken)));
+        });
+    }
+
 
     private RawAccessJwtToken getRawJwtToken(JwtToken token) {
         return new RawAccessJwtToken(token.getToken());
