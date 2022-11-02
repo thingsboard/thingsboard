@@ -43,6 +43,7 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.device.profile.JsonTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -981,6 +982,23 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
 
         testNotifyEntityEqualsOneTimeServiceNeverError(deviceProfile, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(errorMsg));
+    }
+
+    @Test
+    public void testDeleteDeviceProfileWithDeleteRelationsOk() throws Exception {
+        DeviceProfileId deviceProfileId = savedDeviceProfile("DeviceProfile for Test WithRelationsOk").getId();
+        testEntityDaoWithRelationsOk(savedTenant.getId(), deviceProfileId, "/api/deviceProfile/" + deviceProfileId);
+    }
+
+    @Test
+    public void testDeleteDeviceProfileExceptionWithRelationsTransactional() throws Exception {
+        DeviceProfileId deviceProfileId = savedDeviceProfile("DeviceProfile for Test WithRelations Transactional Exception").getId();
+        testEntityDaoWithRelationsTransactionalException(deviceProfileDao, savedTenant.getId(), deviceProfileId, "/api/deviceProfile/" + deviceProfileId);
+    }
+
+    private DeviceProfile savedDeviceProfile(String name) {
+        DeviceProfile deviceProfile = createDeviceProfile(name);
+        return doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
     }
 
 }
