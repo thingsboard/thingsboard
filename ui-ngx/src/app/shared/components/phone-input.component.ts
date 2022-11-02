@@ -94,8 +94,9 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
   set isLoad(value) {
     if (this.isLoading) {
       this.isLoading = value;
-      if (this.phoneFormGroup) {
-        this.defineCountryFromNumber(this.phoneFormGroup.get('phoneNumber').value);
+      if (this.phoneFormGroup && this.phoneFormGroup.get('phoneNumber').value) {
+        const parsedPhoneNumber = this.parsePhoneNumberFromString(this.phoneFormGroup.get('phoneNumber').value);
+        this.defineCountryFromNumber(parsedPhoneNumber);
       }
     }
   }
@@ -132,8 +133,12 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
     this.flagIcon = this.getFlagIcon(this.phoneFormGroup.get('country').value);
 
     this.changeSubscriptions.push(this.phoneFormGroup.get('phoneNumber').valueChanges.subscribe(value => {
-      this.updateModel();
-      this.defineCountryFromNumber(value);
+      let parsedPhoneNumber = null;
+      if (value && this.parsePhoneNumberFromString) {
+        parsedPhoneNumber = this.parsePhoneNumberFromString(value);
+        this.defineCountryFromNumber(parsedPhoneNumber);
+      }
+      this.updateModel(parsedPhoneNumber);
     }));
 
     this.changeSubscriptions.push(this.phoneFormGroup.get('country').valueChanges.subscribe(value => {
@@ -183,7 +188,7 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
     return String.fromCodePoint(...countryCode.split('').map(country => this.baseCode + country.charCodeAt(0)));
   }
 
-  private updateModelValue(parsedPhoneNumber: any) {
+  private updateModelValueInFormat(parsedPhoneNumber: any) {
     this.modelValue = parsedPhoneNumber.format('E.164');
   }
 
@@ -198,21 +203,16 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
               valid: false
             }
           };
-        } else {
-          this.updateModelValue(parsedPhoneNumber);
         }
       }
       return null;
     };
   }
 
-  private defineCountryFromNumber(phoneNumber) {
-    if (phoneNumber && this.parsePhoneNumberFromString) {
-      const parsedPhoneNumber = this.parsePhoneNumberFromString(phoneNumber);
-      const country = this.phoneFormGroup.get('country').value;
-      if (parsedPhoneNumber?.country && parsedPhoneNumber?.country !== country) {
-        this.phoneFormGroup.get('country').patchValue(parsedPhoneNumber.country, {emitEvent: true});
-      }
+  private defineCountryFromNumber(parsedPhoneNumber) {
+    const country = this.phoneFormGroup.get('country').value;
+    if (parsedPhoneNumber?.country && parsedPhoneNumber?.country !== country) {
+      this.phoneFormGroup.get('country').patchValue(parsedPhoneNumber.country, {emitEvent: true});
     }
   }
 
@@ -249,7 +249,7 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
         const parsedPhoneNumber = this.parsePhoneNumberFromString(phoneNumber);
         if (parsedPhoneNumber?.isValid() && parsedPhoneNumber?.isPossible()) {
           country = parsedPhoneNumber?.country || this.defaultCountry;
-          this.updateModelValue(parsedPhoneNumber);
+          this.updateModelValueInFormat(parsedPhoneNumber);
           this.isLegacy = false;
         } else {
           const validators = [Validators.maxLength(255)];
@@ -268,11 +268,14 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
     this.phoneFormGroup.reset({phoneNumber, country}, {emitEvent: false});
   }
 
-  private updateModel() {
+  private updateModel(parsedPhoneNumber?) {
     const phoneNumber = this.phoneFormGroup.get('phoneNumber');
     if (phoneNumber.value === '+' || phoneNumber.value === this.countryCallingCode) {
       this.propagateChange(null);
     } else if (phoneNumber.valid) {
+      if (parsedPhoneNumber) {
+        this.updateModelValueInFormat(parsedPhoneNumber);
+      }
       this.propagateChange(this.modelValue);
     } else {
       this.propagateChange(null);
