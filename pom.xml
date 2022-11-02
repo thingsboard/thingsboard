@@ -1618,6 +1618,11 @@
                 <version>${cassandra-all.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.apache.cassandra</groupId>
+                <artifactId>cassandra-thrift</artifactId>
+                <version>${cassandra-all.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.junit.vintage</groupId>
                 <artifactId>junit-vintage-engine</artifactId>
                 <version>${jupiter.version}</version>
