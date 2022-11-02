@@ -25,6 +25,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { letterSpacing } from 'html2canvas/dist/types/css/property-descriptors/letter-spacing';
 import { TranslateService } from '@ngx-translate/core';
 import { serverErrorCodesTranslations } from '@shared/models/constants';
+import { isNotNullOrUndefined } from 'codelyzer/util/isNotNullOrUndefined';
 
 const varsRegex = /\${([^}]*)}/g;
 
@@ -477,6 +478,19 @@ export function flatFormattedData(input: FormattedData[]): FormattedData {
     result.deviceType =  sourceData.deviceType;
   }
   return result;
+}
+
+export function filteringData(data: FormattedData[]): FormattedData {
+  const processingKeyValue = {};
+  for (const deviceData of data) {
+    Object.keys(deviceData).forEach((valueKey) => {
+      if (!isNotNullOrUndefined(processingKeyValue[valueKey]) && isNotNullOrUndefined(deviceData[valueKey]) &&
+        deviceData[valueKey] !== '') {
+        processingKeyValue[valueKey] = deviceData[valueKey];
+      }
+    });
+  }
+  return processingKeyValue as FormattedData;
 }
 
 export function mergeFormattedData(first: FormattedData[], second: FormattedData[]): FormattedData[] {

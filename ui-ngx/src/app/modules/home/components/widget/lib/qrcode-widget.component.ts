@@ -23,7 +23,7 @@ import { DatasourceData, FormattedData } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import {
   createLabelFromPattern,
-  flatFormattedData,
+  filteringData,
   formattedDataFormDatasourceData,
   isNumber,
   isObject,
@@ -101,7 +101,7 @@ export class QrCodeWidgetComponent extends PageComponent implements OnInit, Afte
     const data = formattedDataFormDatasourceData(initialData);
     const pattern = this.settings.useQrCodeTextFunction ?
       safeExecute(this.qrCodeTextFunction, [data]) : this.settings.qrCodeTextPattern;
-    const allData = flatFormattedData(data);
+    const allData: FormattedData = filteringData(data);
     qrCodeText = createLabelFromPattern(pattern, allData);
     this.updateQrCodeText(qrCodeText);
   }
@@ -132,5 +132,4 @@ export class QrCodeWidgetComponent extends PageComponent implements OnInit, Afte
       this.scheduleUpdateCanvas = true;
     }
   }
-
 }

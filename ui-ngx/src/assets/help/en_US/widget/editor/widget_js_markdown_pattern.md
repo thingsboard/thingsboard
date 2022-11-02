@@ -3,7 +3,7 @@
 <div class="divider"></div>
 <br/>
 
-The Markdown template gets keys only from the first entity in the entity alias.
+The Markdown template displays the value of the first found key in the entities in the entity alias.
 
 <div class="divider"></div>
 <br/>
