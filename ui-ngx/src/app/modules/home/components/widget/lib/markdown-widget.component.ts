@@ -23,7 +23,7 @@ import { DatasourceData, FormattedData } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import {
   createLabelFromPattern,
-  filteringData,
+  flatDataWithoutOverride,
   formattedDataFormDatasourceData,
   hashCode, isDefinedAndNotNull,
   isNotEmptyStr,
@@ -118,7 +118,7 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
     const data = formattedDataFormDatasourceData(initialData);
     let markdownText = this.settings.useMarkdownTextFunction ?
       safeExecute(this.markdownTextFunction, [data]) : this.settings.markdownTextPattern;
-    const allData: FormattedData = filteringData(data);
+    const allData: FormattedData = flatDataWithoutOverride(data);
     markdownText = createLabelFromPattern(markdownText, allData);
     if (this.markdownText !== markdownText) {
       this.markdownText = this.utils.customTranslation(markdownText, markdownText);

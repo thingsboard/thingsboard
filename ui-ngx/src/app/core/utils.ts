@@ -22,10 +22,8 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { EntityType, baseDetailsPageByEntityType } from '@shared/models/entity-type.models';
 import { HttpErrorResponse } from '@angular/common/http';
-import { letterSpacing } from 'html2canvas/dist/types/css/property-descriptors/letter-spacing';
 import { TranslateService } from '@ngx-translate/core';
 import { serverErrorCodesTranslations } from '@shared/models/constants';
-import { isNotNullOrUndefined } from 'codelyzer/util/isNotNullOrUndefined';
 
 const varsRegex = /\${([^}]*)}/g;
 
@@ -480,17 +478,16 @@ export function flatFormattedData(input: FormattedData[]): FormattedData {
   return result;
 }
 
-export function filteringData(data: FormattedData[]): FormattedData {
-  const processingKeyValue = {};
-  for (const deviceData of data) {
-    Object.keys(deviceData).forEach((valueKey) => {
-      if (!isNotNullOrUndefined(processingKeyValue[valueKey]) && isNotNullOrUndefined(deviceData[valueKey]) &&
-        deviceData[valueKey] !== '') {
-        processingKeyValue[valueKey] = deviceData[valueKey];
+export function flatDataWithoutOverride(data: FormattedData[]): FormattedData {
+  const processingKeyValue = data[0];
+  for (let i = 1; i < data.length; i++) {
+    Object.keys(data[i]).forEach((key) => {
+      if (!isDefinedAndNotNull(processingKeyValue[key]) || isEmptyStr(processingKeyValue[key])) {
+        processingKeyValue[key] = data[i][key];
       }
     });
   }
-  return processingKeyValue as FormattedData;
+  return processingKeyValue;
 }
 
 export function mergeFormattedData(first: FormattedData[], second: FormattedData[]): FormattedData[] {
