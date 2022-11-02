@@ -911,8 +911,7 @@ export class TbFlot {
     data.forEach((keyData) => {
       const skip = isLatest && !keyData.dataKey.settings.useAsThreshold;
       if (!skip && keyData && keyData.data && keyData.data[0]) {
-        const value = keyData.data[0][1];
-        const values = Array.isArray(value) ? value : [value];
+        const values = this.parsThresholdData(keyData.data[0][1]);
         values.forEach(v => {
           const threshold = this.processSingleDataValue(v, keyData, keyData.dataKey.settings, existingThresholds, isLatest);
           if (threshold != null) {
@@ -924,7 +923,19 @@ export class TbFlot {
     return thresholds;
   }
 
-  private processSingleDataValue(attrValue: number, keyData: DatasourceData, latestSettings: TbFlotLatestKeySettings, existingThresholds: TbFlotThresholdMarking[], isLatest = false) {
+  private parsThresholdData(value: any): Array<any> {
+    let values;
+    try {
+      const parseData = JSON.parse(value);
+      values = Array.isArray(parseData) ? parseData : [parseData];
+    } catch (e) {
+      values = [value];
+    }
+    return values;
+  }
+
+  private processSingleDataValue(attrValue: number, keyData: DatasourceData, latestSettings: TbFlotLatestKeySettings,
+                                 existingThresholds: TbFlotThresholdMarking[], isLatest = false) {
     if (isNumeric(attrValue) && isFinite(attrValue)) {
       let yaxis: number;
       let lineWidth: number;
@@ -941,7 +952,6 @@ export class TbFlot {
       }
       const colorIndex = this.subscription.data.length + existingThresholds.length;
       return this.generateThreshold(existingThresholds, yaxis, lineWidth, color, colorIndex, attrValue);
-
     }
   }
 
