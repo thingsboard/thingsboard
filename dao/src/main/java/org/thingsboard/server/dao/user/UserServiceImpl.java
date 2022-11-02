@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.event.UserAuthDataChangedEvent;
+import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -211,7 +212,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         userAuthSettingsDao.removeByUserId(userId);
         deleteEntityRelations(tenantId, userId);
         userDao.removeById(tenantId, userId.getId());
-        eventPublisher.publishEvent(new UserAuthDataChangedEvent(userId, null, true));
+        eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(userId));
     }
 
     @Override

@@ -15,12 +15,28 @@
  */
 package org.thingsboard.server.common.data.security.event;
 
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import org.thingsboard.server.common.data.id.UserId;
 
-import java.io.Serializable;
+@Getter
+@EqualsAndHashCode(callSuper = true)
+public class UserCredentialsInvalidationEvent extends UserAuthDataChangedEvent {
+    private final UserId userId;
+    private final long ts;
 
-public abstract class UserAuthDataChangedEvent implements Serializable {
-    public abstract String getId();
-    public abstract long getTs();
+    public UserCredentialsInvalidationEvent(UserId userId) {
+        this.userId = userId;
+        this.ts = System.currentTimeMillis();
+    }
+
+    @Override
+    public String getId() {
+        return userId.toString();
+    }
+
+    @Override
+    public long getTs() {
+        return ts;
+    }
 }

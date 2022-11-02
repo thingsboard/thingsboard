@@ -43,6 +43,8 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.event.UserAuthDataChangedEvent;
+import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
+import org.thingsboard.server.common.data.security.event.UserSessionInvalidationEvent;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
 import org.thingsboard.server.dao.audit.AuditLogService;
@@ -125,7 +127,7 @@ public class AuthController extends BaseController {
 
             sendEntityNotificationMsg(getTenantId(), userCredentials.getUserId(), EdgeEventActionType.CREDENTIALS_UPDATED);
 
-            eventPublisher.publishEvent(new UserAuthDataChangedEvent(securityUser.getId(), securityUser.getSessionId(), false));
+            eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(securityUser.getId()));
             ObjectNode response = JacksonUtil.newObjectNode();
             response.put("token", tokenFactory.createAccessJwtToken(securityUser).getToken());
             response.put("refreshToken", tokenFactory.createRefreshToken(securityUser).getToken());
@@ -303,7 +305,7 @@ public class AuthController extends BaseController {
                 String email = user.getEmail();
                 mailService.sendPasswordWasResetEmail(loginUrl, email);
 
-                eventPublisher.publishEvent(new UserAuthDataChangedEvent(securityUser.getId(), securityUser.getSessionId(), false));
+                eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(securityUser.getId()));
 
                 return tokenFactory.createTokenPair(securityUser);
             } else {
@@ -359,7 +361,7 @@ public class AuthController extends BaseController {
                     user.getTenantId(), user.getCustomerId(), user.getId(),
                     user.getName(), user.getId(), null, ActionType.LOGOUT, null, clientAddress, browser, os, device);
 
-            eventPublisher.publishEvent(new UserAuthDataChangedEvent(user.getId(), user.getSessionId(), false));
+            eventPublisher.publishEvent(new UserSessionInvalidationEvent(user.getSessionId()));
         } catch (Exception e) {
             throw handleException(e);
         }

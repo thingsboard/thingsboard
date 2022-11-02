@@ -120,7 +120,9 @@ public class JwtTokenFactory {
         if (customerId != null) {
             securityUser.setCustomerId(new CustomerId(UUID.fromString(customerId)));
         }
-        securityUser.setSessionId(claims.get(SESSION_ID, String.class));
+        if (claims.get(SESSION_ID, String.class) != null) {
+            securityUser.setSessionId(claims.get(SESSION_ID, String.class));
+        }
 
         UserPrincipal principal;
         if (securityUser.getAuthority() != Authority.PRE_VERIFICATION_TOKEN) {
@@ -163,7 +165,9 @@ public class JwtTokenFactory {
         UserPrincipal principal = new UserPrincipal(isPublic ? UserPrincipal.Type.PUBLIC_ID : UserPrincipal.Type.USER_NAME, subject);
         SecurityUser securityUser = new SecurityUser(new UserId(UUID.fromString(claims.get(USER_ID, String.class))));
         securityUser.setUserPrincipal(principal);
-        securityUser.setSessionId(claims.get(SESSION_ID, String.class));
+        if (claims.get(SESSION_ID, String.class) != null) {
+            securityUser.setSessionId(claims.get(SESSION_ID, String.class));
+        }
         return securityUser;
     }
 

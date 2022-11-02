@@ -66,7 +66,7 @@ public class RefreshTokenAuthenticationProvider implements AuthenticationProvide
         } else {
             securityUser = authenticateByPublicId(principal.getValue());
         }
-
+        securityUser.setSessionId(unsafeUser.getSessionId());
         if (tokenOutdatingService.isOutdated(rawAccessToken, securityUser.getId())) {
             throw new CredentialsExpiredException("Token is outdated");
         }

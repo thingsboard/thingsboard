@@ -21,14 +21,11 @@ import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.CaffeineTbTransactionalCache;
 import org.thingsboard.server.common.data.CacheConstants;
-import org.thingsboard.server.common.data.id.UserId;
-
-import java.util.HashMap;
 
 
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "caffeine", matchIfMissing = true)
 @Service("UsersUpdateTimeCache")
-public class UsersUpdateTimeCaffeineCache extends CaffeineTbTransactionalCache<UserId, HashMap<String, Long>> {
+public class UsersUpdateTimeCaffeineCache extends CaffeineTbTransactionalCache<String, Long> {
 
     @Autowired
     public UsersUpdateTimeCaffeineCache(CacheManager cacheManager) {

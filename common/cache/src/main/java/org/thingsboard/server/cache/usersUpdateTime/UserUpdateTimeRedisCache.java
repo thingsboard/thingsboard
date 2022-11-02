@@ -24,13 +24,10 @@ import org.thingsboard.server.cache.RedisTbTransactionalCache;
 import org.thingsboard.server.cache.TBRedisCacheConfiguration;
 import org.thingsboard.server.cache.TbFSTRedisSerializer;
 import org.thingsboard.server.common.data.CacheConstants;
-import org.thingsboard.server.common.data.id.UserId;
-
-import java.util.HashMap;
 
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
 @Service("UsersUpdateTimeCache")
-public class UserUpdateTimeRedisCache extends RedisTbTransactionalCache<UserId, HashMap<String, Long>> {
+public class UserUpdateTimeRedisCache extends RedisTbTransactionalCache<String, Long> {
 
     @Autowired
     public UserUpdateTimeRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {

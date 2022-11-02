@@ -13,11 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.cache.usersUpdateTime;
+package org.thingsboard.server.common.data.security.event;
 
-import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-@Data
-public class UsersUpdateTimeCacheEvictEvent {
-    private final String key;
+@EqualsAndHashCode(callSuper = true)
+public class UserSessionInvalidationEvent extends UserAuthDataChangedEvent {
+    private final String sessionId;
+    private final long ts;
+
+    public UserSessionInvalidationEvent(String sessionId) {
+        this.sessionId = sessionId;
+        this.ts = System.currentTimeMillis();
+    }
+
+    @Override
+    public String getId() {
+        return sessionId;
+    }
+
+    @Override
+    public long getTs() {
+        return ts;
+    }
 }

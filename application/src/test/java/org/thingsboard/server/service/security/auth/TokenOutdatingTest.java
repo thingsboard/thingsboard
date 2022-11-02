@@ -33,6 +33,8 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.event.UserAuthDataChangedEvent;
+import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
+import org.thingsboard.server.common.data.security.event.UserSessionInvalidationEvent;
 import org.thingsboard.server.common.data.security.model.JwtToken;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -106,7 +108,7 @@ public class TokenOutdatingTest {
         JwtToken jwtToken = tokenFactory.createAccessJwtToken(securityUser);
 
         SECONDS.sleep(1); // need to wait before outdating so that outdatage time is strictly after token issue time
-        tokenOutdatingService.onUserAuthDataChanged(new UserAuthDataChangedEvent(securityUser.getId(), securityUser.getSessionId(), false));
+        tokenOutdatingService.onUserAuthDataChanged(new UserCredentialsInvalidationEvent(securityUser.getId()));
         assertTrue(tokenOutdatingService.isOutdated(jwtToken, securityUser.getId()));
 
         SECONDS.sleep(1);
@@ -124,7 +126,7 @@ public class TokenOutdatingTest {
         });
 
         SECONDS.sleep(1);
-        tokenOutdatingService.onUserAuthDataChanged(new UserAuthDataChangedEvent(securityUser.getId(), securityUser.getSessionId(), false));
+        tokenOutdatingService.onUserAuthDataChanged(new UserCredentialsInvalidationEvent(securityUser.getId()));
 
         assertThrows(JwtExpiredTokenException.class, () -> {
             accessTokenAuthenticationProvider.authenticate(new JwtAuthenticationToken(accessJwtToken));
@@ -140,7 +142,7 @@ public class TokenOutdatingTest {
         });
 
         SECONDS.sleep(1);
-        tokenOutdatingService.onUserAuthDataChanged(new UserAuthDataChangedEvent(securityUser.getId(), securityUser.getSessionId(), false));
+        tokenOutdatingService.onUserAuthDataChanged(new UserCredentialsInvalidationEvent(securityUser.getId()));
 
         assertThrows(CredentialsExpiredException.class, () -> {
             refreshTokenAuthenticationProvider.authenticate(new RefreshAuthenticationToken(refreshJwtToken));
@@ -152,7 +154,7 @@ public class TokenOutdatingTest {
         JwtToken jwtToken = tokenFactory.createAccessJwtToken(securityUser);
 
         SECONDS.sleep(1);
-        tokenOutdatingService.onUserAuthDataChanged(new UserAuthDataChangedEvent(securityUser.getId(), securityUser.getSessionId(), false));
+        tokenOutdatingService.onUserAuthDataChanged(new UserCredentialsInvalidationEvent(securityUser.getId()));
 
         SECONDS.sleep(1);
 
@@ -175,7 +177,8 @@ public class TokenOutdatingTest {
         });
 
         SECONDS.sleep(1);
-        tokenOutdatingService.onUserAuthDataChanged(new UserAuthDataChangedEvent(securityUser.getId(), securityUser.getSessionId(), false));
+
+        tokenOutdatingService.onUserAuthDataChanged(new UserSessionInvalidationEvent(securityUser.getSessionId()));
 
         assertThrows(JwtExpiredTokenException.class, () -> {
             accessTokenAuthenticationProvider.authenticate(new JwtAuthenticationToken(getRawJwtToken(jwtToken)));
@@ -183,6 +186,34 @@ public class TokenOutdatingTest {
 
         assertDoesNotThrow(() -> {
             accessTokenAuthenticationProvider.authenticate(new JwtAuthenticationToken(getRawJwtToken(anotherJwtToken)));
+        });
+    }
+
+    @Test
+    public void testResetAllSessions() throws InterruptedException {
+        JwtToken jwtToken = tokenFactory.createAccessJwtToken(securityUser);
+
+        SecurityUser anotherSecurityUser = new SecurityUser(securityUser, securityUser.isEnabled(), securityUser.getUserPrincipal());
+        JwtToken anotherJwtToken = tokenFactory.createAccessJwtToken(anotherSecurityUser);
+
+        assertDoesNotThrow(() -> {
+            accessTokenAuthenticationProvider.authenticate(new JwtAuthenticationToken(getRawJwtToken(jwtToken)));
+        });
+
+        assertDoesNotThrow(() -> {
+            accessTokenAuthenticationProvider.authenticate(new JwtAuthenticationToken(getRawJwtToken(anotherJwtToken)));
+        });
+
+        SECONDS.sleep(1);
+
+        tokenOutdatingService.onUserAuthDataChanged(new UserCredentialsInvalidationEvent(securityUser.getId()));
+
+        assertThrows(JwtExpiredTokenException.class, () -> {
+           accessTokenAuthenticationProvider.authenticate(new JwtAuthenticationToken(getRawJwtToken(jwtToken)));
+        });
+
+        assertThrows(JwtExpiredTokenException.class, () -> {
+           accessTokenAuthenticationProvider.authenticate(new JwtAuthenticationToken(getRawJwtToken(anotherJwtToken)));
         });
     }
 
