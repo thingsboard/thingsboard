@@ -54,8 +54,11 @@ import {ActionNotificationShow} from "@core/notification/notification.actions";
 import {Store} from "@ngrx/store";
 import {AppState} from "@core/core.state";
 import {map} from "rxjs/operators";
+import {getCurrentAuthUser} from "@core/auth/auth.selectors";
+import {Authority} from "@shared/models/authority.enum";
 
 export class GatewayListTableConfig extends EntityTableConfig<Device, TimePageLink> {
+  private authUser = getCurrentAuthUser(this.store);
 
   constructor(protected store: Store<AppState>,
               private deviceService: DeviceService,
@@ -131,7 +134,11 @@ export class GatewayListTableConfig extends EntityTableConfig<Device, TimePageLi
   }
 
   fetchGateways(pageLink: TimePageLink): Observable<PageData<Device>> {
-    return this.deviceService.getUserDevices(pageLink).pipe(
+    let request = this.deviceService.getTenantDevices(pageLink);
+    if (this.authUser.authority === Authority.CUSTOMER_USER) {
+      request = this.deviceService.getCustomerDeviceInfos(this.authUser.customerId, pageLink);
+    }
+    return request.pipe(
       map(pageData => {
         pageData.data = pageData.data.filter(device => device.additionalInfo.gateway);
         pageData.totalElements = pageData.data.length;
