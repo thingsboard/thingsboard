@@ -18,7 +18,6 @@ package org.thingsboard.server.service.edge.rpc.constructor;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.gen.edge.v1.EdgeEntityType;
 import org.thingsboard.server.gen.edge.v1.EntityViewUpdateMsg;
@@ -29,7 +28,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 @TbCoreComponent
 public class EntityViewMsgConstructor {
 
-    public EntityViewUpdateMsg constructEntityViewUpdatedMsg(UpdateMsgType msgType, EntityView entityView, CustomerId customerId) {
+    public EntityViewUpdateMsg constructEntityViewUpdatedMsg(UpdateMsgType msgType, EntityView entityView) {
         EdgeEntityType entityType;
         switch (entityView.getEntityId().getEntityType()) {
             case DEVICE:
@@ -50,9 +49,9 @@ public class EntityViewMsgConstructor {
                 .setEntityIdMSB(entityView.getEntityId().getId().getMostSignificantBits())
                 .setEntityIdLSB(entityView.getEntityId().getId().getLeastSignificantBits())
                 .setEntityType(entityType);
-        if (customerId != null) {
-            builder.setCustomerIdMSB(customerId.getId().getMostSignificantBits());
-            builder.setCustomerIdLSB(customerId.getId().getLeastSignificantBits());
+        if (entityView.getCustomerId() != null) {
+            builder.setCustomerIdMSB(entityView.getCustomerId().getId().getMostSignificantBits());
+            builder.setCustomerIdLSB(entityView.getCustomerId().getId().getLeastSignificantBits());
         }
         if (entityView.getAdditionalInfo() != null) {
             builder.setAdditionalInfo(JacksonUtil.toString(entityView.getAdditionalInfo()));

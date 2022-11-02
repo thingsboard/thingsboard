@@ -50,9 +50,9 @@ public class DefaultTbOtaPackageService extends AbstractTbEntityService implemen
         try {
             OtaPackageInfo savedOtaPackageInfo = otaPackageService.saveOtaPackageInfo(new OtaPackageInfo(saveOtaPackageInfoRequest), saveOtaPackageInfoRequest.isUsesUrl());
 
-            boolean sendToEdge = savedOtaPackageInfo.hasUrl() || savedOtaPackageInfo.isHasData();
+            boolean sendMsgToEdge = savedOtaPackageInfo.hasUrl() || savedOtaPackageInfo.isHasData();
             notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, savedOtaPackageInfo.getId(),
-                    savedOtaPackageInfo, user, actionType, sendToEdge, null);
+                    savedOtaPackageInfo, user, actionType, sendMsgToEdge, null);
 
             return savedOtaPackageInfo;
         } catch (Exception e) {

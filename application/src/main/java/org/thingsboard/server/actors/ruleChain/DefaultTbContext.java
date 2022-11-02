@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.netty.channel.EventLoopGroup;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.util.Arrays;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.MailService;
@@ -61,6 +62,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.rule.RuleNodeState;
+import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -91,6 +93,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
+import org.thingsboard.server.service.script.RuleNodeMvelScriptEngine;
 
 import java.util.Collections;
 import java.util.List;
@@ -462,8 +465,38 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    @Deprecated
     public ScriptEngine createJsScriptEngine(String script, String... argNames) {
-        return new RuleNodeJsScriptEngine(getTenantId(), mainCtx.getJsSandbox(), nodeCtx.getSelf().getId(), script, argNames);
+        return new RuleNodeJsScriptEngine(getTenantId(), mainCtx.getJsInvokeService(), script, argNames);
+    }
+
+    private ScriptEngine createMvelScriptEngine(String script, String... argNames) {
+        if (mainCtx.getMvelInvokeService() == null) {
+            throw new RuntimeException("MVEL execution is disabled!");
+        }
+        return new RuleNodeMvelScriptEngine(getTenantId(), mainCtx.getMvelInvokeService(), script, argNames);
+    }
+
+    @Override
+    public ScriptEngine createScriptEngine(ScriptLanguage scriptLang, String script, String... argNames) {
+        if (scriptLang == null) {
+            scriptLang = ScriptLanguage.JS;
+        }
+        if (StringUtils.isBlank(script)) {
+            throw new RuntimeException(scriptLang.name() + " script is blank!");
+        }
+        switch (scriptLang) {
+            case JS:
+                return createJsScriptEngine(script, argNames);
+            case MVEL:
+                if (Arrays.isNullOrEmpty(argNames)) {
+                    return createMvelScriptEngine(script, "msg", "metadata", "msgType");
+                } else {
+                    return createMvelScriptEngine(script, argNames);
+                }
+            default:
+                throw new RuntimeException("Unsupported script language: " + scriptLang.name());
+        }
     }
 
     @Override

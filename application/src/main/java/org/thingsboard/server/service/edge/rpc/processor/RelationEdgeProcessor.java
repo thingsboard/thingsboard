@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
@@ -37,8 +38,6 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
@@ -75,7 +74,7 @@ public class RelationEdgeProcessor extends BaseEdgeProcessor {
             if (relationUpdateMsg.hasTypeGroup()) {
                 entityRelation.setTypeGroup(RelationTypeGroup.valueOf(relationUpdateMsg.getTypeGroup()));
             }
-            entityRelation.setAdditionalInfo(mapper.readTree(relationUpdateMsg.getAdditionalInfo()));
+            entityRelation.setAdditionalInfo(JacksonUtil.OBJECT_MAPPER.readTree(relationUpdateMsg.getAdditionalInfo()));
             switch (relationUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
                 case ENTITY_UPDATED_RPC_MESSAGE:
@@ -117,8 +116,9 @@ public class RelationEdgeProcessor extends BaseEdgeProcessor {
         }
     }
 
-    public DownlinkMsg processRelationToEdge(EdgeEvent edgeEvent, UpdateMsgType msgType) {
-        EntityRelation entityRelation = mapper.convertValue(edgeEvent.getBody(), EntityRelation.class);
+    public DownlinkMsg convertRelationEventToDownlink(EdgeEvent edgeEvent) {
+        EntityRelation entityRelation = JacksonUtil.OBJECT_MAPPER.convertValue(edgeEvent.getBody(), EntityRelation.class);
+        UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
         RelationUpdateMsg relationUpdateMsg = relationMsgConstructor.constructRelationUpdatedMsg(msgType, entityRelation);
         return DownlinkMsg.newBuilder()
                 .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
@@ -127,15 +127,15 @@ public class RelationEdgeProcessor extends BaseEdgeProcessor {
     }
 
     public ListenableFuture<Void> processRelationNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) throws JsonProcessingException {
-        EntityRelation relation = mapper.readValue(edgeNotificationMsg.getBody(), EntityRelation.class);
+        EntityRelation relation = JacksonUtil.OBJECT_MAPPER.readValue(edgeNotificationMsg.getBody(), EntityRelation.class);
         if (relation.getFrom().getEntityType().equals(EntityType.EDGE) ||
                 relation.getTo().getEntityType().equals(EntityType.EDGE)) {
             return Futures.immediateFuture(null);
         }
 
         Set<EdgeId> uniqueEdgeIds = new HashSet<>();
-        uniqueEdgeIds.addAll(findRelatedEdgeIds(tenantId, relation.getTo()));
-        uniqueEdgeIds.addAll(findRelatedEdgeIds(tenantId, relation.getFrom()));
+        uniqueEdgeIds.addAll(edgeService.findAllRelatedEdgeIds(tenantId, relation.getTo()));
+        uniqueEdgeIds.addAll(edgeService.findAllRelatedEdgeIds(tenantId, relation.getFrom()));
         if (uniqueEdgeIds.isEmpty()) {
             return Futures.immediateFuture(null);
         }
@@ -146,24 +146,8 @@ public class RelationEdgeProcessor extends BaseEdgeProcessor {
                     EdgeEventType.RELATION,
                     EdgeEventActionType.valueOf(edgeNotificationMsg.getAction()),
                     null,
-                    mapper.valueToTree(relation)));
+                    JacksonUtil.OBJECT_MAPPER.valueToTree(relation)));
         }
         return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
-    }
-
-    private List<EdgeId> findRelatedEdgeIds(TenantId tenantId, EntityId entityId) {
-        List<EdgeId> result = new ArrayList<>();
-        PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
-        PageData<EdgeId> pageData;
-        do {
-            pageData = edgeService.findRelatedEdgeIdsByEntityId(tenantId, entityId, pageLink);
-            if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
-                result.addAll(pageData.getData());
-                if (pageData.hasNext()) {
-                    pageLink = pageLink.nextPageLink();
-                }
-            }
-        } while (pageData != null && pageData.hasNext());
-        return result;
     }
 }

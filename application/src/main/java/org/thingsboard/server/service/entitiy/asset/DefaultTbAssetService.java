@@ -61,7 +61,7 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
         TenantId tenantId = asset.getTenantId();
         AssetId assetId = asset.getId();
         try {
-            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, assetId);
+            List<EdgeId> relatedEdgeIds = edgeService.findAllRelatedEdgeIds(tenantId, assetId);
             assetService.deleteAsset(tenantId, assetId);
             notificationEntityService.notifyDeleteEntity(tenantId, assetId, asset, asset.getCustomerId(),
                     ActionType.DELETED, relatedEdgeIds, user, assetId.toString());

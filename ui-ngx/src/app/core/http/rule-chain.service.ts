@@ -31,7 +31,7 @@ import { ComponentDescriptorService } from './component-descriptor.service';
 import {
   IRuleNodeConfigurationComponent,
   LinkLabel,
-  RuleNodeComponentDescriptor, RuleNodeConfiguration,
+  RuleNodeComponentDescriptor, RuleNodeConfiguration, ScriptLanguage,
   TestScriptInputParams,
   TestScriptResult
 } from '@app/shared/models/rule-node.models';
@@ -170,8 +170,12 @@ export class RuleChainService {
     return this.http.get<DebugRuleNodeEventBody>(`/api/ruleNode/${ruleNodeId}/debugIn`, defaultHttpOptionsFromConfig(config));
   }
 
-  public testScript(inputParams: TestScriptInputParams, config?: RequestConfig): Observable<TestScriptResult> {
-    return this.http.post<TestScriptResult>('/api/ruleChain/testScript', inputParams, defaultHttpOptionsFromConfig(config));
+  public testScript(inputParams: TestScriptInputParams, scriptLang?: ScriptLanguage, config?: RequestConfig): Observable<TestScriptResult> {
+    let url = '/api/ruleChain/testScript';
+    if (scriptLang) {
+      url += `?scriptLang=${scriptLang}`;
+    }
+    return this.http.post<TestScriptResult>(url, inputParams, defaultHttpOptionsFromConfig(config));
   }
 
   private loadRuleNodeComponents(ruleChainType: RuleChainType, config?: RequestConfig): Observable<Array<RuleNodeComponentDescriptor>> {
