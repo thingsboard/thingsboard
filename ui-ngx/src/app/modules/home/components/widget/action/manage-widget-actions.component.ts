@@ -54,7 +54,7 @@ import {
 import { deepClone } from '@core/utils';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
-import {CdkDragDrop, moveItemInArray, CdkDragHandle} from '@angular/cdk/drag-drop';
+import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 
 @Component({
   selector: 'tb-manage-widget-actions',
@@ -86,6 +86,7 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
 
   viewsInited = false;
   dirtyValue = false;
+  dragDisabled = true;
 
   private widgetResize$: ResizeObserver;
 
@@ -164,7 +165,8 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
     this.dataSource.loadActions(this.pageLink, reload);
   }
 
-  dropAction(event: CdkDragDrop<WidgetActionDescriptorInfo[]>) {
+  dropAction(event: CdkDragDrop<WidgetActionsDatasource>) {
+    this.dragDisabled = true;
     const droppedAction = event.item.data;
     this.dataSource.getAllActions().subscribe(
       (actions) => {
@@ -183,7 +185,7 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
         }
 
         const targetActions = this.getOrCreateTargetActions(droppedAction.actionSourceId);
-        let oldIndex: number = -1;
+        let oldIndex = -1;
         let newIndex: number = nearestNeighbourAction ? -1 : (isBackward ? targetActions.length - 1 : 0);
 
         for (let i: number = isBackward ? targetActions.length - 1 : 0;
