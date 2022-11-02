@@ -32,6 +32,7 @@ public class AssetExportService extends BaseEntityExportService<AssetId, Asset, 
     @Override
     protected void setRelatedEntities(EntitiesExportCtx<?> ctx, Asset asset, EntityExportData<Asset> exportData) {
         asset.setCustomerId(getExternalIdOrElseInternal(ctx, asset.getCustomerId()));
+        asset.setAssetProfileId(getExternalIdOrElseInternal(ctx, asset.getAssetProfileId()));
     }
 
     @Override

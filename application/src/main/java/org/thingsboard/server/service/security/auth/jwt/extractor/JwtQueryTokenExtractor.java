@@ -15,9 +15,9 @@
  */
 package org.thingsboard.server.service.security.auth.jwt.extractor;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.config.ThingsboardSecurityConfiguration;
 
 import javax.servlet.http.HttpServletRequest;

@@ -58,3 +58,7 @@ export function parseJsErrorDetails(err: any): string | undefined {
     }
     return details;
 }
+
+export function isNotUUID(candidate: string) {
+    return candidate.length != 36 || !candidate.includes('-');
+}

@@ -16,7 +16,8 @@
 package org.thingsboard.server.service.edge.rpc.constructor;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.protobuf.ByteString;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
@@ -28,6 +29,7 @@ import org.thingsboard.server.gen.edge.v1.DeviceRpcCallMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RpcRequestMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
+import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.UUID;
@@ -36,9 +38,10 @@ import java.util.UUID;
 @TbCoreComponent
 public class DeviceMsgConstructor {
 
-    protected static final ObjectMapper mapper = new ObjectMapper();
+    @Autowired
+    private DataDecodingEncodingService dataDecodingEncodingService;
 
-    public DeviceUpdateMsg constructDeviceUpdatedMsg(UpdateMsgType msgType, Device device, CustomerId customerId, String conflictName) {
+    public DeviceUpdateMsg constructDeviceUpdatedMsg(UpdateMsgType msgType, Device device, String conflictName) {
         DeviceUpdateMsg.Builder builder = DeviceUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(device.getId().getId().getMostSignificantBits())
@@ -48,9 +51,9 @@ public class DeviceMsgConstructor {
         if (device.getLabel() != null) {
             builder.setLabel(device.getLabel());
         }
-        if (customerId != null) {
-            builder.setCustomerIdMSB(customerId.getId().getMostSignificantBits());
-            builder.setCustomerIdLSB(customerId.getId().getLeastSignificantBits());
+        if (device.getCustomerId() != null) {
+            builder.setCustomerIdMSB(device.getCustomerId().getId().getMostSignificantBits());
+            builder.setCustomerIdLSB(device.getCustomerId().getId().getLeastSignificantBits());
         }
         if (device.getDeviceProfileId() != null) {
             builder.setDeviceProfileIdMSB(device.getDeviceProfileId().getId().getMostSignificantBits());
@@ -59,8 +62,15 @@ public class DeviceMsgConstructor {
         if (device.getAdditionalInfo() != null) {
             builder.setAdditionalInfo(JacksonUtil.toString(device.getAdditionalInfo()));
         }
+        if (device.getFirmwareId() != null) {
+            builder.setFirmwareIdMSB(device.getFirmwareId().getId().getMostSignificantBits())
+                    .setFirmwareIdLSB(device.getFirmwareId().getId().getLeastSignificantBits());
+        }
         if (conflictName != null) {
             builder.setConflictName(conflictName);
+        }
+        if (device.getDeviceData() != null) {
+            builder.setDeviceDataBytes(ByteString.copyFrom(dataDecodingEncodingService.encode(device.getDeviceData())));
         }
         return builder.build();
     }

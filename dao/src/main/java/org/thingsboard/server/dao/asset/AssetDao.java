@@ -93,6 +93,16 @@ public interface AssetDao extends Dao<Asset>, TenantEntityDao, ExportableEntityD
     PageData<AssetInfo> findAssetInfosByTenantIdAndType(UUID tenantId, String type, PageLink pageLink);
 
     /**
+     * Find asset infos by tenantId, assetProfileId and page link.
+     *
+     * @param tenantId the tenantId
+     * @param assetProfileId the assetProfileId
+     * @param pageLink the page link
+     * @return the list of asset info objects
+     */
+    PageData<AssetInfo> findAssetInfosByTenantIdAndAssetProfileId(UUID tenantId, UUID assetProfileId, PageLink pageLink);
+
+    /**
      * Find assets by tenantId and assets Ids.
      *
      * @param tenantId the tenantId
@@ -144,6 +154,17 @@ public interface AssetDao extends Dao<Asset>, TenantEntityDao, ExportableEntityD
     PageData<AssetInfo> findAssetInfosByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, PageLink pageLink);
 
     /**
+     * Find asset infos by tenantId, customerId, assetProfileId and page link.
+     *
+     * @param tenantId the tenantId
+     * @param customerId the customerId
+     * @param assetProfileId the assetProfileId
+     * @param pageLink the page link
+     * @return the list of asset info objects
+     */
+    PageData<AssetInfo> findAssetInfosByTenantIdAndCustomerIdAndAssetProfileId(UUID tenantId, UUID customerId, UUID assetProfileId, PageLink pageLink);
+
+    /**
      * Find assets by tenantId, customerId and assets Ids.
      *
      * @param tenantId the tenantId
@@ -168,6 +189,18 @@ public interface AssetDao extends Dao<Asset>, TenantEntityDao, ExportableEntityD
      * @return the list of tenant asset type objects
      */
     ListenableFuture<List<EntitySubtype>> findTenantAssetTypesAsync(UUID tenantId);
+
+    Long countAssetsByAssetProfileId(TenantId tenantId, UUID assetProfileId);
+
+    /**
+     * Find assets by tenantId, profileId and page link.
+     *
+     * @param tenantId the tenantId
+     * @param profileId the profileId
+     * @param pageLink the page link
+     * @return the list of device objects
+     */
+    PageData<Asset> findAssetsByTenantIdAndProfileId(UUID tenantId, UUID profileId, PageLink pageLink);
 
     /**
      * Find assets by tenantId, edgeId and page link.

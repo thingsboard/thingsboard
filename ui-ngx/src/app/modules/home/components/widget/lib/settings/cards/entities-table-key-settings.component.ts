@@ -40,6 +40,7 @@ export class EntitiesTableKeySettingsComponent extends WidgetSettingsComponent {
 
   protected defaultSettings(): WidgetSettings {
     return {
+      customTitle: '',
       columnWidth: '0px',
       useCellStyleFunction: false,
       cellStyleFunction: '',
@@ -52,6 +53,7 @@ export class EntitiesTableKeySettingsComponent extends WidgetSettingsComponent {
 
   protected onSettingsSet(settings: WidgetSettings) {
     this.entitiesTableKeySettingsForm = this.fb.group({
+      customTitle: [settings.customTitle, []],
       columnWidth: [settings.columnWidth, []],
       useCellStyleFunction: [settings.useCellStyleFunction, []],
       cellStyleFunction: [settings.cellStyleFunction, [Validators.required]],

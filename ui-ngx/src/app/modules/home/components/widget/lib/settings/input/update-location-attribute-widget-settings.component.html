@@ -25,7 +25,7 @@
     <mat-slide-toggle formControlName="showResultMessage" class="slide-block">
       {{ 'widgets.input-widgets.show-result-message' | translate }}
     </mat-slide-toggle>
-    <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+    <section class="row-fill" fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
       <mat-form-field fxFlex class="mat-block">
         <mat-label translate>widgets.input-widgets.latitude-key-name</mat-label>
         <input matInput formControlName="latKeyName">
@@ -47,7 +47,7 @@
     <mat-slide-toggle formControlName="showLabel" class="slide-block">
       {{ 'widgets.input-widgets.show-label' | translate }}
     </mat-slide-toggle>
-    <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+    <section class="row-fill" fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
       <mat-form-field fxFlex class="mat-block">
         <mat-label translate>widgets.input-widgets.latitude-label</mat-label>
         <input matInput formControlName="latLabel">
@@ -68,7 +68,7 @@
         </mat-option>
       </mat-select>
     </mat-form-field>
-    <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px" fxLayoutAlign.gt-xs="start center">
       <mat-slide-toggle fxFlex formControlName="isLatRequired">
         {{ 'widgets.input-widgets.latitude-field-required' | translate }}
       </mat-slide-toggle>

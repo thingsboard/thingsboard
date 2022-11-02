@@ -50,6 +50,7 @@
 
     .tb-control-list {
       overflow-y: auto;
+
       &.mat-padding {
         padding: 8px;
         @media #{$mat-gt-sm} {
@@ -58,8 +59,19 @@
       }
     }
 
-    .tb-prompt{
+    .tb-prompt {
       margin: 30px 0;
+    }
+  }
+
+  .flex-gap-xs {
+    margin-bottom: 8px;
+
+    @media #{$mat-xs} {
+      margin-bottom: 16px;
+      &.large {
+        margin-bottom: 24px;
+      }
     }
   }
 }
@@ -68,6 +80,12 @@
   .tb-widget-settings {
     .mat-checkbox-label {
       white-space: normal;
+    }
+
+    .row-fill {
+      .mat-form-field-infix {
+        width: 100%;
+      }
     }
 
     .mat-expansion-panel {
@@ -128,6 +146,12 @@
 
     .mat-slide-toggle-content {
       white-space: normal;
+    }
+
+    .mat-slider-multiline {
+      .mat-slide-toggle-content {
+        line-height: 18px;
+      }
     }
 
   }

@@ -16,10 +16,8 @@
 package org.thingsboard.server.coapserver;
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.californium.elements.config.CertificateAuthenticationMode;
 import org.eclipse.californium.elements.config.Configuration;
 import org.eclipse.californium.elements.util.SslContextUtil;
-import org.eclipse.californium.scandium.config.DtlsConfig;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.californium.scandium.dtls.CertificateType;
 import org.eclipse.californium.scandium.dtls.x509.SingleCertificateProvider;
@@ -40,6 +38,13 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.Collections;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.eclipse.californium.elements.config.CertificateAuthenticationMode.WANTED;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CLIENT_AUTHENTICATION_MODE;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RETRANSMISSION_TIMEOUT;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_ROLE;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DtlsRole.SERVER_ONLY;
+
 @Slf4j
 @ConditionalOnProperty(prefix = "transport.coap.dtls", value = "enabled", havingValue = "true", matchIfMissing = false)
 @Component
@@ -50,6 +55,9 @@ public class TbCoapDtlsSettings {
 
     @Value("${transport.coap.dtls.bind_port}")
     private Integer port;
+
+    @Value("${transport.coap.dtls.retransmission_timeout:9000}")
+    private int dtlsRetransmissionTimeout;
 
     @Bean
     @ConfigurationProperties(prefix = "transport.coap.dtls.credentials")
@@ -82,8 +90,9 @@ public class TbCoapDtlsSettings {
         SslCredentials sslCredentials = this.coapDtlsCredentialsConfig.getCredentials();
         SslContextUtil.Credentials serverCredentials =
                 new SslContextUtil.Credentials(sslCredentials.getPrivateKey(), null, sslCredentials.getCertificateChain());
-        configBuilder.set(DtlsConfig.DTLS_ROLE, DtlsConfig.DtlsRole.SERVER_ONLY);
-        configBuilder.set(DtlsConfig.DTLS_CLIENT_AUTHENTICATION_MODE, CertificateAuthenticationMode.WANTED);
+        configBuilder.set(DTLS_CLIENT_AUTHENTICATION_MODE, WANTED);
+        configBuilder.set(DTLS_RETRANSMISSION_TIMEOUT, dtlsRetransmissionTimeout, MILLISECONDS);
+        configBuilder.set(DTLS_ROLE, SERVER_ONLY);
         configBuilder.setAdvancedCertificateVerifier(
                 new TbCoapDtlsCertificateVerifier(
                         transportService,

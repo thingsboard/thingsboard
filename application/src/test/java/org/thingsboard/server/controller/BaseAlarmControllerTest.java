@@ -22,7 +22,12 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
@@ -31,7 +36,9 @@ import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.dao.alarm.AlarmDao;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -40,11 +47,23 @@ import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
+@ContextConfiguration(classes = {BaseAlarmControllerTest.Config.class})
 public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
 
     public static final String TEST_ALARM_TYPE = "Test";
 
     protected Device customerDevice;
+
+    @Autowired
+    private AlarmDao alarmDao;
+
+    static class Config {
+        @Bean
+        @Primary
+        public AlarmDao alarmDao(AlarmDao alarmDao) {
+            return Mockito.mock(AlarmDao.class, AdditionalAnswers.delegatesTo(alarmDao));
+        }
+    }
 
     @Before
     public void setup() throws Exception {
@@ -64,6 +83,7 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     @After
     public void teardown() throws Exception {
         loginSysAdmin();
+
         deleteDifferentTenant();
     }
 
@@ -419,6 +439,21 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         AlarmInfo alarmInfo = pageData.getData().get(0);
         boolean equals = alarm.getId().equals(alarmInfo.getId()) && alarm.getType().equals(alarmInfo.getType());
         Assert.assertTrue("Created alarm doesn't match the found one!", equals);
+    }
+
+
+    @Test
+    public void testDeleteAlarmWithDeleteRelationsOk() throws Exception {
+        loginCustomerUser();
+        AlarmId alarmId = createAlarm("Alarm for Test WithRelationsOk").getId();
+        testEntityDaoWithRelationsOk(customerDevice.getId(), alarmId, "/api/alarm/" + alarmId);
+    }
+
+    @Test
+    public void testDeleteAlarmExceptionWithRelationsTransactional() throws Exception {
+        loginCustomerUser();
+        AlarmId alarmId = createAlarm("Alarm for Test WithRelations Transactional Exception").getId();
+        testEntityDaoWithRelationsTransactionalException(alarmDao, customerDevice.getId(), alarmId, "/api/alarm/" + alarmId);
     }
 
     private Alarm createAlarm(String type) throws Exception {

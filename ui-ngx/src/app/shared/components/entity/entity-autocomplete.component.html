@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="selectEntityFormGroup" class="mat-block">
+<mat-form-field [formGroup]="selectEntityFormGroup" class="mat-block" [appearance]="appearance">
   <input matInput type="text" placeholder="{{ entityText | translate }}"
          #entityInput
          formControlName="entity"

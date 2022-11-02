@@ -17,7 +17,6 @@ package org.thingsboard.server.service.sql;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -180,7 +179,6 @@ public class SequentialTimeseriesPersistenceTest extends AbstractControllerTest 
         saveTimeseries(asset.getId(), saveTsKvEntry);
     }
 
-    @NotNull
     JsonObject getJsonObject(String key, long value, Optional<String> tsKvEntryOpt) {
         JsonObject jsonObject = new JsonObject();
         if (tsKvEntryOpt.isPresent()) {

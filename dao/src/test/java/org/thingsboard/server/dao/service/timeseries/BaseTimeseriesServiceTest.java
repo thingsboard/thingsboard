@@ -213,17 +213,17 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         }
         saveEntries(deviceId, TS + 100L + 1L);
 
-        List<ReadTsKvQuery> queries = List.of(new BaseReadTsKvQuery(LONG_KEY, TS, TS + 100, 101, 1, Aggregation.COUNT, DESC_ORDER));
+        List<ReadTsKvQuery> queries = List.of(new BaseReadTsKvQuery(LONG_KEY, TS, TS + 100, 100, 1, Aggregation.COUNT, DESC_ORDER));
 
         List<TsKvEntry> entries = tsService.findAll(tenantId, deviceId, queries).get();
         Assert.assertEquals(1, entries.size());
-        Assert.assertEquals(toTsEntry(TS + 50, new LongDataEntry(LONG_KEY, 11L)), entries.get(0));
+        Assert.assertEquals(toTsEntry(TS + 50, new LongDataEntry(LONG_KEY, 10L)), entries.get(0));
 
         EntityView entityView = saveAndCreateEntityView(deviceId, List.of(LONG_KEY));
 
         entries = tsService.findAll(tenantId, entityView.getId(), queries).get();
         Assert.assertEquals(1, entries.size());
-        Assert.assertEquals(toTsEntry(TS + 50, new LongDataEntry(LONG_KEY, 11L)), entries.get(0));
+        Assert.assertEquals(toTsEntry(TS + 50, new LongDataEntry(LONG_KEY, 10L)), entries.get(0));
     }
 
     @Test
@@ -240,14 +240,14 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         List<TsKvEntry> entries = tsService.findAll(tenantId, deviceId, queries).get();
         Assert.assertEquals(2, entries.size());
         Assert.assertEquals(toTsEntry(TS + 25000, new LongDataEntry(LONG_KEY, 5L)), entries.get(0));
-        Assert.assertEquals(toTsEntry(TS + 75000, new LongDataEntry(LONG_KEY, 5L)), entries.get(1));
+        Assert.assertEquals(toTsEntry(TS + 75000 - 1, new LongDataEntry(LONG_KEY, 5L)), entries.get(1));
 
         EntityView entityView = saveAndCreateEntityView(deviceId, List.of(LONG_KEY));
 
         entries = tsService.findAll(tenantId, entityView.getId(), queries).get();
         Assert.assertEquals(2, entries.size());
         Assert.assertEquals(toTsEntry(TS + 25000, new LongDataEntry(LONG_KEY, 5L)), entries.get(0));
-        Assert.assertEquals(toTsEntry(TS + 75000, new LongDataEntry(LONG_KEY, 5L)), entries.get(1));
+        Assert.assertEquals(toTsEntry(TS + 75000 - 1, new LongDataEntry(LONG_KEY, 5L)), entries.get(1));
     }
 
     @Test
@@ -264,14 +264,14 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         List<TsKvEntry> entries = tsService.findAll(tenantId, deviceId, queries).get();
         Assert.assertEquals(2, entries.size());
         Assert.assertEquals(toTsEntry(TS + 25000, new LongDataEntry(LONG_KEY, 5L)), entries.get(0));
-        Assert.assertEquals(toTsEntry(TS + 65000, new LongDataEntry(LONG_KEY, 4L)), entries.get(1));
+        Assert.assertEquals(toTsEntry(TS + 65000, new LongDataEntry(LONG_KEY, 3L)), entries.get(1));
 
         EntityView entityView = saveAndCreateEntityView(deviceId, List.of(LONG_KEY));
 
         entries = tsService.findAll(tenantId, entityView.getId(), queries).get();
         Assert.assertEquals(2, entries.size());
         Assert.assertEquals(toTsEntry(TS + 25000, new LongDataEntry(LONG_KEY, 5L)), entries.get(0));
-        Assert.assertEquals(toTsEntry(TS + 65000, new LongDataEntry(LONG_KEY, 4L)), entries.get(1));
+        Assert.assertEquals(toTsEntry(TS + 65000, new LongDataEntry(LONG_KEY, 3L)), entries.get(1));
     }
 
     @Test
@@ -286,14 +286,14 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         List<TsKvEntry> entries = tsService.findAll(tenantId, deviceId, queries).get();
         Assert.assertEquals(2, entries.size());
         Assert.assertEquals(toTsEntry(TS + 25000, new LongDataEntry(LONG_KEY, 5L)), entries.get(0));
-        Assert.assertEquals(toTsEntry(TS + 75000, new LongDataEntry(LONG_KEY, 5L)), entries.get(1));
+        Assert.assertEquals(toTsEntry(TS + 75000 - 1, new LongDataEntry(LONG_KEY, 4L)), entries.get(1));
 
         EntityView entityView = saveAndCreateEntityView(deviceId, List.of(LONG_KEY));
 
         entries = tsService.findAll(tenantId, entityView.getId(), queries).get();
         Assert.assertEquals(2, entries.size());
         Assert.assertEquals(toTsEntry(TS + 25000, new LongDataEntry(LONG_KEY, 5L)), entries.get(0));
-        Assert.assertEquals(toTsEntry(TS + 75000, new LongDataEntry(LONG_KEY, 5L)), entries.get(1));
+        Assert.assertEquals(toTsEntry(TS + 75000 - 1, new LongDataEntry(LONG_KEY, 4L)), entries.get(1));
     }
 
     @Test

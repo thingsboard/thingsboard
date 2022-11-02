@@ -78,6 +78,7 @@ import {
   getColumnDefaultVisibility,
   getColumnSelectionAvailability,
   getColumnWidth,
+  getHeaderTitle,
   getEntityValue,
   getRowStyleInfo,
   getTableCellButtonActions,
@@ -110,6 +111,7 @@ import { DatePipe } from '@angular/common';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
+import { AggregationType } from '@shared/models/time/time.models';
 
 interface EntitiesTableWidgetSettings extends TableWidgetSettings {
   entitiesTitle: string;
@@ -425,11 +427,11 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         }
         dataKeys.push(dataKey);
 
-        dataKey.label = this.utils.customTranslation(dataKey.label, dataKey.label);
-        dataKey.title = dataKey.label;
-        dataKey.def = 'def' + this.columns.length;
-        dataKey.sortable = !dataKey.usePostProcessing;
         const keySettings: TableWidgetDataKeySettings = dataKey.settings;
+        dataKey.label = this.utils.customTranslation(dataKey.label, dataKey.label);
+        dataKey.title = getHeaderTitle(dataKey, keySettings, this.utils);
+        dataKey.def = 'def' + this.columns.length;
+        dataKey.sortable = !dataKey.usePostProcessing && (!dataKey.aggregationType || dataKey.aggregationType === AggregationType.NONE);
         if (dataKey.type === DataKeyType.entityField &&
           !isDefined(keySettings.columnWidth) || keySettings.columnWidth === '0px') {
           const entityField = entityFields[dataKey.name];
@@ -443,7 +445,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         this.contentsInfo[dataKey.def].units = dataKey.units;
         this.contentsInfo[dataKey.def].decimals = dataKey.decimals;
         this.columnWidth[dataKey.def] = getColumnWidth(keySettings);
-        this.columnDefaultVisibility[dataKey.def] = getColumnDefaultVisibility(keySettings);
+        this.columnDefaultVisibility[dataKey.def] = getColumnDefaultVisibility(keySettings, this.ctx);
         this.columnSelectionAvailability[dataKey.def] = getColumnSelectionAvailability(keySettings);
         this.columns.push(dataKey);
       });

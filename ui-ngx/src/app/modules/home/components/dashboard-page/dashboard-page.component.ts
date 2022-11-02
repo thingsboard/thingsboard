@@ -17,13 +17,18 @@
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
-  Component, ElementRef, EventEmitter, HostBinding,
+  Component,
+  ElementRef,
+  EventEmitter,
+  HostBinding,
   Inject,
   Injector,
   Input,
   NgZone,
   OnDestroy,
-  OnInit, Optional, Renderer2,
+  OnInit,
+  Optional,
+  Renderer2,
   StaticProvider,
   ViewChild,
   ViewContainerRef,
@@ -44,11 +49,12 @@ import {
   DashboardState,
   DashboardStateLayouts,
   GridSettings,
+  LayoutDimension,
   WidgetLayout
 } from '@app/shared/models/dashboard.models';
 import { WINDOW } from '@core/services/window.service';
 import { WindowMessage } from '@shared/models/window-message.model';
-import { deepClone, guid, hashCode, isDefined, isDefinedAndNotNull, isNotEmptyStr } from '@app/core/utils';
+import { deepClone, guid, isDefined, isDefinedAndNotNull, isNotEmptyStr } from '@app/core/utils';
 import {
   DashboardContext,
   DashboardPageLayout,
@@ -129,7 +135,8 @@ import { MobileService } from '@core/services/mobile.service';
 
 import {
   DashboardImageDialogComponent,
-  DashboardImageDialogData, DashboardImageDialogResult
+  DashboardImageDialogData,
+  DashboardImageDialogResult
 } from '@home/components/dashboard-page/dashboard-image-dialog.component';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import cssjs from '@core/css/css';
@@ -139,6 +146,8 @@ import { MatButton } from '@angular/material/button';
 import { VersionControlComponent } from '@home/components/vc/version-control.component';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { tap } from 'rxjs/operators';
+import { LayoutFixedSize, LayoutWidthType } from '@home/components/dashboard-page/layout/layout.models';
+import { TbPopoverComponent } from '@shared/components/popover.component';
 
 // @dynamic
 @Component({
@@ -183,6 +192,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   @Input()
   parentDashboard?: IDashboardComponent = null;
+
+  @Input()
+  popoverComponent?: TbPopoverComponent = null;
 
   @Input()
   parentAliasController?: IAliasController = null;
@@ -662,7 +674,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     if (this.isEditingWidget && this.editingLayoutCtx.id === 'main') {
       return '100%';
     } else {
-      return this.layouts.right.show && !this.isMobile ? '50%' : '100%';
+      return this.layouts.right.show && !this.isMobile ? this.calculateWidth('main') : '100%';
     }
   }
 
@@ -678,7 +690,47 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     if (this.isEditingWidget && this.editingLayoutCtx.id === 'right') {
       return '100%';
     } else {
-      return this.isMobile ? '100%' : '50%';
+      return this.isMobile ? '100%' : this.calculateWidth('right');
+    }
+  }
+
+  private calculateWidth(layout: DashboardLayoutId): string {
+    let layoutDimension: LayoutDimension;
+    const mainLayout = this.dashboard.configuration.states[this.dashboardCtx.state].layouts.main;
+    const rightLayout = this.dashboard.configuration.states[this.dashboardCtx.state].layouts.right;
+    if (rightLayout) {
+      if (mainLayout.gridSettings.layoutDimension) {
+        layoutDimension = mainLayout.gridSettings.layoutDimension;
+      } else {
+        layoutDimension = rightLayout.gridSettings.layoutDimension;
+      }
+    }
+    if (layoutDimension) {
+      if (layoutDimension.type === LayoutWidthType.PERCENTAGE) {
+        if (layout === 'right') {
+          return (100 - layoutDimension.leftWidthPercentage) + '%';
+        } else {
+          return layoutDimension.leftWidthPercentage + '%';
+        }
+      } else {
+        const dashboardWidth = this.dashboardContainer.nativeElement.getBoundingClientRect().width;
+        const minAvailableWidth = dashboardWidth - LayoutFixedSize.MIN;
+        if (layoutDimension.fixedLayout === layout) {
+          if (minAvailableWidth <= layoutDimension.fixedWidth) {
+            return minAvailableWidth + 'px';
+          } else {
+            return layoutDimension.fixedWidth + 'px';
+          }
+        } else {
+          if (minAvailableWidth <= layoutDimension.fixedWidth) {
+            return LayoutFixedSize.MIN + 'px';
+          } else {
+            return (dashboardWidth - layoutDimension.fixedWidth) + 'px';
+          }
+        }
+      }
+    } else {
+      return '50%';
     }
   }
 
@@ -1062,7 +1114,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
             dataKeys: config.alarmSource.dataKeys || []
           };
         }
-        const newWidget: Widget = {
+        let newWidget: Widget = {
           isSystemType: widget.isSystemType,
           bundleAlias: widget.bundleAlias,
           typeAlias: widgetTypeInfo.alias,
@@ -1076,6 +1128,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
           row: 0,
           col: 0
         };
+        newWidget = this.dashboardUtils.validateAndUpdateWidget(newWidget);
         if (widgetTypeInfo.typeParameters.useCustomDatasources) {
           this.addWidgetToDashboard(newWidget);
         } else {

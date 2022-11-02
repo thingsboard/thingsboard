@@ -31,7 +31,8 @@
     <mat-label translate>widgets.value-source.value</mat-label>
     <input matInput type="number" formControlName="value">
   </mat-form-field>
-  <section [fxShow]="valueSourceFormGroup.get('valueSource').value === 'entityAttribute'" fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+  <section [fxShow]="valueSourceFormGroup.get('valueSource').value === 'entityAttribute'"
+           fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px" fxLayoutAlign="start center">
     <mat-form-field fxFlex class="mat-block">
       <mat-label>{{ 'widgets.value-source.source-entity-alias' | translate }}</mat-label>
       <input matInput type="text" placeholder="{{ 'entity.entity-alias' | translate }}"
