@@ -53,6 +53,7 @@
         <rat.version>0.10</rat.version>
         <cassandra.version>4.15.0</cassandra.version>
         <metrics.version>4.0.5</metrics.version>
+        <cassandra-all.version>3.11.14</cassandra-all.version>
         <guava.version>30.0-jre</guava.version>
         <caffeine.version>2.6.1</caffeine.version>
         <commons-lang3.version>3.4</commons-lang3.version>
@@ -1610,6 +1611,11 @@
                         <artifactId>hamcrest-library</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.cassandra</groupId>
+                <artifactId>cassandra-all</artifactId>
+                <version>${cassandra-all.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.junit.vintage</groupId>
