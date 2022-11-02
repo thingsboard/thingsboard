@@ -911,7 +911,7 @@ export class TbFlot {
     data.forEach((keyData) => {
       const skip = isLatest && !keyData.dataKey.settings.useAsThreshold;
       if (!skip && keyData && keyData.data && keyData.data[0]) {
-        const values = this.parsThresholdData(keyData.data[0][1]);
+        const values = this.parseThresholdData(keyData.data[0][1]);
         values.forEach(v => {
           const threshold = this.processSingleDataValue(v, keyData, keyData.dataKey.settings, existingThresholds, isLatest);
           if (threshold != null) {
@@ -923,11 +923,11 @@ export class TbFlot {
     return thresholds;
   }
 
-  private parsThresholdData(value: any): Array<any> {
+  private parseThresholdData(value: any): Array<any> {
     let values;
     try {
-      const parseData = JSON.parse(value);
-      values = Array.isArray(parseData) ? parseData : [parseData];
+      const parsedData = JSON.parse(value);
+      values = Array.isArray(parsedData) ? parsedData : [parsedData];
     } catch (e) {
       values = [value];
     }
