@@ -64,6 +64,24 @@ public class TwoFactorAuthController extends BaseController {
     private final SystemSecurityService systemSecurityService;
     private final UserService userService;
 
+    //TODO: write a good description
+    @ApiOperation(value = "Get regular token pair after successfully saved two factor settings",
+            notes = "Provides an mechanism to authorize to the app after setting up ")
+    @PostMapping("/login")
+    @PreAuthorize("hasAuthority('TWO_FACTOR_FORCE_SAVE_SETTINGS_TOKEN')")
+    public JwtTokenPair authorizeByTwoFactorForceSaveSettingsToken(HttpServletRequest request) throws ThingsboardException {
+        SecurityUser user = getCurrentUser();
+        if (twoFactorAuthService.isTwoFaEnabled(user.getTenantId(), user.getId())) {
+            logLoginAction(request, user, null);
+            user = new SecurityUser(userService.findUserById(user.getTenantId(), user.getId()), true, user.getUserPrincipal());
+            return getJwtTokenPair(user);
+        } else {
+            ThingsboardException error = constructBadRequestException("Two factor settings is not set up!");
+            logLoginAction(request, user, error);
+            throw error;
+        }
+    }
+
 
     @ApiOperation(value = "Request 2FA verification code (requestTwoFaVerificationCode)",
             notes = "Request 2FA verification code." + NEW_LINE +
@@ -92,16 +110,15 @@ public class TwoFactorAuthController extends BaseController {
         SecurityUser user = getCurrentUser();
         boolean verificationSuccess = twoFactorAuthService.checkVerificationCode(user, providerType, verificationCode, true);
         if (verificationSuccess) {
-            systemSecurityService.logLoginAction(user, new RestAuthenticationDetails(servletRequest), ActionType.LOGIN, null);
+            logLoginAction(servletRequest, user, null);
             user = new SecurityUser(userService.findUserById(user.getTenantId(), user.getId()), true, user.getUserPrincipal());
-            return tokenFactory.createTokenPair(user);
+            return getJwtTokenPair(user);
         } else {
-            ThingsboardException error = new ThingsboardException("Verification code is incorrect", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-            systemSecurityService.logLoginAction(user, new RestAuthenticationDetails(servletRequest), ActionType.LOGIN, error);
+            ThingsboardException error = constructBadRequestException("Verification code is incorrect");
+            logLoginAction(servletRequest, user, error);
             throw error;
         }
     }
-
 
     @ApiOperation(value = "Get available 2FA providers (getAvailableTwoFaProviders)", notes =
             "Get the list of 2FA provider infos available for user to use. Example:\n" +
@@ -137,6 +154,18 @@ public class TwoFactorAuthController extends BaseController {
                             .build();
                 })
                 .collect(Collectors.toList());
+    }
+
+    private void logLoginAction(HttpServletRequest servletRequest, SecurityUser user, ThingsboardException e) {
+        systemSecurityService.logLoginAction(user, new RestAuthenticationDetails(servletRequest), ActionType.LOGIN, e);
+    }
+
+    private JwtTokenPair getJwtTokenPair(SecurityUser user) {
+        return tokenFactory.createTokenPair(user);
+    }
+
+    private ThingsboardException constructBadRequestException(String errorMessage) throws ThingsboardException {
+        return new ThingsboardException(errorMessage, ThingsboardErrorCode.BAD_REQUEST_PARAMS);
     }
 
     @Data
