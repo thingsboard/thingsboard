@@ -41,7 +41,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
-import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -51,6 +51,7 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
@@ -76,6 +77,7 @@ public class TbAbstractGetAttributesNodeTest {
     private List<String> serverAttributes;
     private List<String> sharedAttributes;
     private List<String> tsKeys;
+    private long ts;
 
     @Before
     public void before() throws TbNodeException {
@@ -104,20 +106,21 @@ public class TbAbstractGetAttributesNodeTest {
         serverAttributes = getAttributeNames("server");
         sharedAttributes = getAttributeNames("shared");
         tsKeys = List.of("temperature", "humidity", "unknown");
+        ts = System.currentTimeMillis();
 
         Mockito.when(attributesService.find(tenantId, originator, DataConstants.CLIENT_SCOPE, clientAttributes))
-                .thenReturn(Futures.immediateFuture(getListAttributeKvEntry(clientAttributes)));
+                .thenReturn(Futures.immediateFuture(getListAttributeKvEntry(clientAttributes, ts)));
 
 
         Mockito.when(attributesService.find(tenantId, originator, DataConstants.SERVER_SCOPE, serverAttributes))
-                .thenReturn(Futures.immediateFuture(getListAttributeKvEntry(serverAttributes)));
+                .thenReturn(Futures.immediateFuture(getListAttributeKvEntry(serverAttributes, ts)));
 
 
         Mockito.when(attributesService.find(tenantId, originator, DataConstants.SHARED_SCOPE, sharedAttributes))
-                .thenReturn(Futures.immediateFuture(getListAttributeKvEntry(sharedAttributes)));
+                .thenReturn(Futures.immediateFuture(getListAttributeKvEntry(sharedAttributes, ts)));
 
         Mockito.when(tsService.findLatest(tenantId, originator, tsKeys))
-                .thenReturn(Futures.immediateFuture(getListTelemetryKvEntry(tsKeys)));
+                .thenReturn(Futures.immediateFuture(getListTsKvEntry(tsKeys, ts)));
     }
 
     @After
@@ -144,7 +147,43 @@ public class TbAbstractGetAttributesNodeTest {
     }
 
     @Test
+    public void fetchToMetadata_latestWithTs_whenOnMsg_then_success() throws Exception {
+        TbGetAttributesNode node = initNode(false, true, false);
+        TbMsg msg = getTbMsg(originator);
+        node.onMsg(ctx, msg);
+
+        TbMsg resultMsg = checkMsg();
+        TbMsgMetaData msgMetaData = resultMsg.getMetaData();
+
+        //check attributes
+        checkAttributes(clientAttributes, "cs_", false, msgMetaData, null);
+        checkAttributes(serverAttributes, "ss_", false, msgMetaData, null);
+        checkAttributes(sharedAttributes, "shared_", false, msgMetaData, null);
+
+        //check timeseries with ts
+        checkTs(tsKeys, false, true, msgMetaData, null);
+    }
+
+    @Test
     public void fetchToData_whenOnMsg_then_success() throws Exception {
+        TbGetAttributesNode node = initNode(true, false, false);
+        TbMsg msg = getTbMsg(originator);
+        node.onMsg(ctx, msg);
+
+        TbMsg resultMsg = checkMsg();
+        JsonNode msgData = JacksonUtil.toJsonNode(resultMsg.getData());
+
+        //check attributes
+        checkAttributes(clientAttributes, "cs_", true, null, msgData);
+        checkAttributes(serverAttributes, "ss_", true, null, msgData);
+        checkAttributes(sharedAttributes, "shared_", true, null, msgData);
+
+        //check timeseries
+        checkTs(tsKeys, true, false, null, msgData);
+    }
+
+    @Test
+    public void fetchToData_latestWithTs_whenOnMsg_then_success() throws Exception {
         TbGetAttributesNode node = initNode(true, true, false);
         TbMsg msg = getTbMsg(originator);
         node.onMsg(ctx, msg);
@@ -218,28 +257,26 @@ public class TbAbstractGetAttributesNodeTest {
     }
 
     private void checkTs(List<String> tsKeys, boolean fetchToData, boolean getLatestValueWithTs, TbMsgMetaData msgMetaData, JsonNode msgData) {
-        long tsValue = 1L;
+        long value = 1L;
         for (String key : tsKeys) {
             if (key.equals("unknown")) {
                 continue;
             }
-            String result;
-            if (fetchToData) {
-                if (getLatestValueWithTs) {
-                    JsonNode resultTs = msgData.get(key);
-                    Assert.assertNotNull(resultTs);
-                    Assert.assertNotNull(resultTs.get("value"));
-                    Assert.assertNotNull(resultTs.get("ts"));
-                    result = resultTs.get("value").asText();
-                } else {
-                    result = msgData.get(key).asText();
-                }
+            String actualValue;
+            String expectedValue;
+            if (getLatestValueWithTs) {
+                expectedValue = "{\"ts\":" + ts + ",\"value\":{\"data\":" + value + "}}";
             } else {
-                result = msgMetaData.getValue(key);
+                expectedValue = "{\"data\":" + value + "}";
             }
-            Assert.assertNotNull(result);
-            Assert.assertEquals(String.valueOf(tsValue), result);
-            tsValue++;
+            if (fetchToData) {
+                actualValue = JacksonUtil.toString(msgData.get(key));
+            } else {
+                actualValue = msgMetaData.getValue(key);
+            }
+            Assert.assertNotNull(actualValue);
+            Assert.assertEquals(expectedValue, actualValue);
+            value++;
         }
     }
 
@@ -273,20 +310,26 @@ public class TbAbstractGetAttributesNodeTest {
         return List.of(prefix + "_attr_1", prefix + "_attr_2", prefix + "_attr_3", "unknown");
     }
 
-    private List<AttributeKvEntry> getListAttributeKvEntry(List<String> attributes) {
-        List<AttributeKvEntry> attributeKvEntries = new ArrayList<>();
-        attributes.stream().filter(attribute -> !attribute.equals("unknown")).forEach(attribute -> attributeKvEntries.add(new BaseAttributeKvEntry(System.currentTimeMillis(), new StringDataEntry(attribute, attribute + "_value"))));
-        return attributeKvEntries;
+    private List<AttributeKvEntry> getListAttributeKvEntry(List<String> attributes, long ts) {
+        return attributes.stream()
+                .filter(attribute -> !attribute.equals("unknown"))
+                .map(attribute -> toAttributeKvEntry(ts, attribute))
+                .collect(Collectors.toList());
     }
 
-    private List<TsKvEntry> getListTelemetryKvEntry(List<String> keys) {
+    private BaseAttributeKvEntry toAttributeKvEntry(long ts, String attribute) {
+        return new BaseAttributeKvEntry(ts, new StringDataEntry(attribute, attribute + "_value"));
+    }
+
+    private List<TsKvEntry> getListTsKvEntry(List<String> keys, long ts) {
         long value = 1L;
         List<TsKvEntry> kvEntries = new ArrayList<>();
         for (String key : keys) {
             if (key.equals("unknown")) {
                 continue;
             }
-            kvEntries.add(new BasicTsKvEntry(System.currentTimeMillis(), new LongDataEntry(key, value)));
+            String dataValue = "{\"data\":" + value + "}";
+            kvEntries.add(new BasicTsKvEntry(ts, new JsonDataEntry(key, dataValue)));
             value++;
         }
         return kvEntries;
