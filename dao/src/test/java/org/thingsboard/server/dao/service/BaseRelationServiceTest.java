@@ -80,7 +80,7 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
 
         Assert.assertTrue(relationService.deleteRelationAsync(SYSTEM_TENANT_ID, relationA).get());
 
-         Assert.assertFalse(relationService.checkRelation(SYSTEM_TENANT_ID, parentId, childId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON));
+        Assert.assertFalse(relationService.checkRelation(SYSTEM_TENANT_ID, parentId, childId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON));
 
         Assert.assertTrue(relationService.checkRelation(SYSTEM_TENANT_ID, childId, subChildId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON));
 
@@ -288,6 +288,53 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
         Assert.assertTrue(relations.contains(relationBC));
     }
 
+    @Test
+    public void testRecursiveRelationDepth() throws ExecutionException, InterruptedException {
+        int maxLevel = 100;
+        AssetId root = new AssetId(Uuids.timeBased());
+        AssetId left = new AssetId(Uuids.timeBased());
+        AssetId right = new AssetId(Uuids.timeBased());
+
+        List<EntityRelation> expected = new ArrayList<>();
+
+        EntityRelation relationAB = new EntityRelation(root, left, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationBC = new EntityRelation(root, right, EntityRelation.CONTAINS_TYPE);
+        saveRelation(relationAB);
+        expected.add(relationAB);
+
+        saveRelation(relationBC);
+        expected.add(relationBC);
+
+        for (int i = 0; i < maxLevel; i++) {
+            var newLeft = new AssetId(Uuids.timeBased());
+            var newRight = new AssetId(Uuids.timeBased());
+            EntityRelation relationLeft = new EntityRelation(left, newLeft, EntityRelation.CONTAINS_TYPE);
+            EntityRelation relationRight = new EntityRelation(right, newRight, EntityRelation.CONTAINS_TYPE);
+            saveRelation(relationLeft);
+            expected.add(relationLeft);
+            saveRelation(relationRight);
+            expected.add(relationRight);
+            left = newLeft;
+            right = newRight;
+        }
+
+
+        EntityRelationsQuery query = new EntityRelationsQuery();
+        query.setParameters(new RelationsSearchParameters(root, EntitySearchDirection.FROM, -1, false));
+        query.setFilters(Collections.singletonList(new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.singletonList(EntityType.ASSET))));
+        List<EntityRelation> relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        Assert.assertEquals(expected.size(), relations.size());
+        for(EntityRelation r : expected){
+            Assert.assertTrue(relations.contains(r));
+        }
+
+        //Test from cache
+        relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        Assert.assertEquals(expected.size(), relations.size());
+        for(EntityRelation r : expected){
+            Assert.assertTrue(relations.contains(r));
+        }
+    }
 
     @Test(expected = DataValidationException.class)
     public void testSaveRelationWithEmptyFrom() throws ExecutionException, InterruptedException {
