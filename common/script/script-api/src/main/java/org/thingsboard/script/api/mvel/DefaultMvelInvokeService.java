@@ -113,6 +113,12 @@ public class DefaultMvelInvokeService extends AbstractScriptInvokeService implem
         parserConfig.addImport("JSON", TbJson.class);
         TbUtils.register(parserConfig);
         executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(threadPoolSize, "mvel-executor"));
+        try {
+            // Special command to warm up MVEL engine
+            MVEL.compileExpression("var warmUp = {}; warmUp", new SandboxedParserContext(parserConfig));
+        } catch (Exception e) {
+            // do nothing
+        }
     }
 
     @PreDestroy
