@@ -100,7 +100,7 @@ public class EntitiesTenantIdAsyncLoader {
                 hasTenantId = Futures.immediateFuture(ctx.getWidgetBundleService().findWidgetsBundleById(tenantId, new WidgetsBundleId(id)));
                 break;
             case RPC:
-                hasTenantId = ctx.getRpcService().findRpcByIdAsync(ctx.getTenantId(), new RpcId(id));
+                hasTenantId = ctx.getRpcService().findRpcByIdAsync(tenantId, new RpcId(id));
                 break;
             case QUEUE:
                 hasTenantId = Futures.immediateFuture(ctx.getQueueService().findQueueById(tenantId, new QueueId(id)));
@@ -112,16 +112,18 @@ public class EntitiesTenantIdAsyncLoader {
                 hasTenantId = ctx.getResourceService().findResourceInfoByIdAsync(tenantId, new TbResourceId(id));
                 break;
             case RULE_NODE:
-                hasTenantId = null;
                 RuleNode ruleNode = ctx.getRuleChainService().findRuleNodeById(tenantId, new RuleNodeId(id));
                 if (ruleNode != null) {
-                    return Futures.immediateFuture(tenantId);
+                    hasTenantId = ctx.getRuleChainService().findRuleChainByIdAsync(tenantId, ruleNode.getRuleChainId());
+                } else {
+                    hasTenantId = Futures.immediateFuture(null);
                 }
                 break;
             case TENANT_PROFILE:
-                hasTenantId = null;
-                if (ctx.getTenantProfile() == ctx.getTenantProfile(new TenantId(id))) {
+                if (ctx.getTenantProfile().getId().equals(id)) {
                     return Futures.immediateFuture(tenantId);
+                } else {
+                    hasTenantId = Futures.immediateFuture(null);
                 }
                 break;
             default:

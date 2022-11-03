@@ -308,8 +308,6 @@ public interface TbContext {
 
     TenantProfile getTenantProfile();
 
-    TenantProfile getTenantProfile(TenantId tenantId);
-
     WidgetsBundleService getWidgetBundleService();
 
     WidgetTypeService getWidgetTypeService();

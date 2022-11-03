@@ -723,11 +723,6 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public TenantProfile getTenantProfile(TenantId tenantId) {
-        return mainCtx.getTenantProfileCache().get(tenantId);
-    }
-
-    @Override
     public WidgetsBundleService getWidgetBundleService() {
         return mainCtx.getWidgetsBundleService();
     }
