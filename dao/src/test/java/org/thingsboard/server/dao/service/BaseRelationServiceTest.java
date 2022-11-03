@@ -289,8 +289,8 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testRecursiveRelationDepth() throws ExecutionException, InterruptedException {
-        int maxLevel = 100;
+    public void testRecursiveRelationDepth3() throws ExecutionException, InterruptedException {
+        int maxLevel = 1000;
         AssetId root = new AssetId(Uuids.timeBased());
         AssetId left = new AssetId(Uuids.timeBased());
         AssetId right = new AssetId(Uuids.timeBased());
@@ -330,6 +330,54 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
 
         //Test from cache
         relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        Assert.assertEquals(expected.size(), relations.size());
+        for(EntityRelation r : expected){
+            Assert.assertTrue(relations.contains(r));
+        }
+    }
+
+    @Test
+    public void testRecursiveRelationDepth2() throws ExecutionException, InterruptedException {
+        int maxLevel = 1000;
+        AssetId root = new AssetId(Uuids.timeBased());
+        AssetId left = new AssetId(Uuids.timeBased());
+        AssetId right = new AssetId(Uuids.timeBased());
+
+        List<EntityRelation> expected = new ArrayList<>();
+
+        EntityRelation relationAB = new EntityRelation(root, left, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationBC = new EntityRelation(root, right, EntityRelation.CONTAINS_TYPE);
+        saveRelation(relationAB);
+        expected.add(relationAB);
+
+        saveRelation(relationBC);
+        expected.add(relationBC);
+
+        for (int i = 0; i < maxLevel; i++) {
+            var newLeft = new AssetId(Uuids.timeBased());
+            var newRight = new AssetId(Uuids.timeBased());
+            EntityRelation relationLeft = new EntityRelation(left, newLeft, EntityRelation.CONTAINS_TYPE);
+            EntityRelation relationRight = new EntityRelation(right, newRight, EntityRelation.CONTAINS_TYPE);
+            saveRelation(relationLeft);
+            expected.add(relationLeft);
+            saveRelation(relationRight);
+            expected.add(relationRight);
+            left = newLeft;
+            right = newRight;
+        }
+
+
+        EntityRelationsQuery query = new EntityRelationsQuery();
+        query.setParameters(new RelationsSearchParameters(root, EntitySearchDirection.FROM, -1, false));
+        query.setFilters(Collections.singletonList(new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.singletonList(EntityType.ASSET))));
+        List<EntityRelation> relations = relationService.findByQuery2(SYSTEM_TENANT_ID, query).get();
+        Assert.assertEquals(expected.size(), relations.size());
+        for(EntityRelation r : expected){
+            Assert.assertTrue(relations.contains(r));
+        }
+
+        //Test from cache
+        relations = relationService.findByQuery2(SYSTEM_TENANT_ID, query).get();
         Assert.assertEquals(expected.size(), relations.size());
         for(EntityRelation r : expected){
             Assert.assertTrue(relations.contains(r));

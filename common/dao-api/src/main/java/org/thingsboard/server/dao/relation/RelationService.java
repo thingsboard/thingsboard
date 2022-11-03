@@ -79,6 +79,8 @@ public interface RelationService {
 
     ListenableFuture<List<EntityRelation>> findByQuery(TenantId tenantId, EntityRelationsQuery query);
 
+    ListenableFuture<List<EntityRelation>> findByQuery2(TenantId tenantId, EntityRelationsQuery query);
+
     ListenableFuture<List<EntityRelationInfo>> findInfoByQuery(TenantId tenantId, EntityRelationsQuery query);
 
     void removeRelations(TenantId tenantId, EntityId entityId);
