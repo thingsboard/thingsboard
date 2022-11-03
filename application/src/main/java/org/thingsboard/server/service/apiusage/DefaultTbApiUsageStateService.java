@@ -395,6 +395,11 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
         }
     }
 
+    @Override
+    public ApiUsageState findApiUsageStateById(TenantId tenantId, ApiUsageStateId id) {
+        return apiUsageStateService.findApiUsageStateById(tenantId, id);
+    }
+
     private interface StateChecker {
         boolean check(long threshold, long warnThreshold, long value);
     }
