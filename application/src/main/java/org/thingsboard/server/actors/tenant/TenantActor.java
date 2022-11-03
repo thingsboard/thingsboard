@@ -244,11 +244,9 @@ public class TenantActor extends RuleChainManagerActor {
             EdgeRpcService edgeRpcService = systemContext.getEdgeRpcService();
             if (msg.getEvent() == ComponentLifecycleEvent.DELETED) {
                 edgeRpcService.deleteEdge(tenantId, edgeId);
-            } else {
+            } else if (msg.getEvent() == ComponentLifecycleEvent.UPDATED) {
                 Edge edge = systemContext.getEdgeService().findEdgeById(tenantId, edgeId);
-                if (msg.getEvent() == ComponentLifecycleEvent.UPDATED) {
-                    edgeRpcService.updateEdge(tenantId, edge);
-                }
+                edgeRpcService.updateEdge(tenantId, edge);
             }
         } else if (isRuleEngine) {
             TbActorRef target = getEntityActorRef(msg.getEntityId());

@@ -204,7 +204,7 @@ export class EntityDataCmd implements WebsocketCmd {
   aggTsCmd?: AggTimeSeriesCmd;
 
   public isEmpty(): boolean {
-    return !this.query && !this.historyCmd && !this.latestCmd && !this.tsCmd;
+    return !this.query && !this.historyCmd && !this.latestCmd && !this.tsCmd && !this.aggTsCmd && !this.aggHistoryCmd;
   }
 }
 
