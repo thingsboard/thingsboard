@@ -47,9 +47,9 @@ import { publishReplay, refCount } from 'rxjs/operators';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
 import {
   AttributeData,
+  LatestTelemetry,
   TelemetrySubscriber,
-  TelemetryType,
-  LatestTelemetry
+  TelemetryType
 } from '@shared/models/telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
 
@@ -489,25 +489,18 @@ export class UtilsService {
     }
   }
 
-  public getEntityIdFromDatasource(dataSource: Datasource): EntityId {
+  private getEntityIdFromDatasource(dataSource: Datasource): EntityId {
     return {id: dataSource.entityId, entityType: dataSource.entityType};
-  }
-
-  public createTelemetrySubscriber(ctx: WidgetContext,
-                                   entityId?: EntityId,
-                                   type: TelemetryType = LatestTelemetry.LATEST_TELEMETRY,
-                                   keys: string[] = null): TelemetrySubscriber {
-    if (!entityId && ctx.datasources.length > 0) {
-      entityId = this.getEntityIdFromDatasource(ctx.datasources[0]);
-    }
-    return TelemetrySubscriber.createEntityAttributesSubscription(ctx.telemetryWsService, entityId, type, ctx.ngZone, keys);
   }
 
   public subscribeToEntityTelemetry(ctx: WidgetContext,
                                     entityId?: EntityId,
                                     type: TelemetryType = LatestTelemetry.LATEST_TELEMETRY,
                                     keys: string[] = null): Observable<Array<AttributeData>> {
-    const subscription = this.createTelemetrySubscriber(ctx, entityId, type, keys);
+    if (!entityId && ctx.datasources.length > 0) {
+      entityId = this.getEntityIdFromDatasource(ctx.datasources[0]);
+    }
+    const subscription = TelemetrySubscriber.createEntityAttributesSubscription(ctx.telemetryWsService, entityId, type, ctx.ngZone, keys);
     if (!ctx.telemetrySubscribers) {
       ctx.telemetrySubscribers = [];
     }
