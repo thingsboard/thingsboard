@@ -639,21 +639,16 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     }
 
     private PreparedStatement getSaveStmt(DataType dataType) {
-        if (saveStmts == null) {
+        if (saveStmts == null || saveStmts[dataType.ordinal()] == null) {
             stmtCreationLock.lock();
             try {
                 if (saveStmts == null) {
                     saveStmts = new PreparedStatement[DataType.values().length];
                     for (DataType type : DataType.values()) {
-                        saveStmts[type.ordinal()] = prepare(INSERT_INTO + ModelConstants.TS_KV_CF +
-                                "(" + ModelConstants.ENTITY_TYPE_COLUMN +
-                                "," + ModelConstants.ENTITY_ID_COLUMN +
-                                "," + ModelConstants.KEY_COLUMN +
-                                "," + ModelConstants.PARTITION_COLUMN +
-                                "," + ModelConstants.TS_COLUMN +
-                                "," + getColumnName(type) + ")" +
-                                " VALUES(?, ?, ?, ?, ?, ?)");
+                        saveStmts[type.ordinal()] = prepare(getPreparedStatementQuery(type));
                     }
+                } else {
+                    saveStmts[dataType.ordinal()] = prepare(getPreparedStatementQuery(dataType));
                 }
             } finally {
                 stmtCreationLock.unlock();
@@ -663,27 +658,37 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     }
 
     private PreparedStatement getSaveTtlStmt(DataType dataType) {
-        if (saveTtlStmts == null) {
+        if (saveTtlStmts == null || saveTtlStmts[dataType.ordinal()] == null) {
             stmtCreationLock.lock();
             try {
                 if (saveTtlStmts == null) {
                     saveTtlStmts = new PreparedStatement[DataType.values().length];
                     for (DataType type : DataType.values()) {
-                        saveTtlStmts[type.ordinal()] = prepare(INSERT_INTO + ModelConstants.TS_KV_CF +
-                                "(" + ModelConstants.ENTITY_TYPE_COLUMN +
-                                "," + ModelConstants.ENTITY_ID_COLUMN +
-                                "," + ModelConstants.KEY_COLUMN +
-                                "," + ModelConstants.PARTITION_COLUMN +
-                                "," + ModelConstants.TS_COLUMN +
-                                "," + getColumnName(type) + ")" +
-                                " VALUES(?, ?, ?, ?, ?, ?) USING TTL ?");
+                        saveTtlStmts[type.ordinal()] = prepare(getPreparedStatementQueryWithTtl(type));
                     }
+                } else {
+                    saveTtlStmts[dataType.ordinal()] = prepare(getPreparedStatementQueryWithTtl(dataType));
                 }
             } finally {
                 stmtCreationLock.unlock();
             }
         }
         return saveTtlStmts[dataType.ordinal()];
+    }
+
+    private String getPreparedStatementQuery(DataType type) {
+        return INSERT_INTO + ModelConstants.TS_KV_CF +
+                "(" + ModelConstants.ENTITY_TYPE_COLUMN +
+                "," + ModelConstants.ENTITY_ID_COLUMN +
+                "," + ModelConstants.KEY_COLUMN +
+                "," + ModelConstants.PARTITION_COLUMN +
+                "," + ModelConstants.TS_COLUMN +
+                "," + getColumnName(type) + ")" +
+                " VALUES(?, ?, ?, ?, ?, ?)";
+    }
+
+    private String getPreparedStatementQueryWithTtl(DataType type) {
+        return getPreparedStatementQuery(type) + " USING TTL ?";
     }
 
     private PreparedStatement getPartitionInsertStmt() {
@@ -833,4 +838,5 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         }
         return fetchStmts;
     }
+
 }
