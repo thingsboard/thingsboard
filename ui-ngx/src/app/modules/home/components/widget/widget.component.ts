@@ -1446,7 +1446,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         title,
         hideToolbar: hideDashboardToolbar,
         width: dialogWidth,
-        height: dialogHeight
+        height: dialogHeight,
+        parentDashboard: this.widgetContext.parentDashboard ?
+          this.widgetContext.parentDashboard : this.widgetContext.dashboard
       }
     });
     this.cd.markForCheck();
