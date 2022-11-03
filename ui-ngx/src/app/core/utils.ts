@@ -478,16 +478,16 @@ export function flatFormattedData(input: FormattedData[]): FormattedData {
   return result;
 }
 
-export function flatDataWithoutOverride(data: FormattedData[]): FormattedData {
-  const processingKeyValue = data[0];
-  for (let i = 1; i < data.length; i++) {
-    Object.keys(data[i]).forEach((key) => {
-      if (!isDefinedAndNotNull(processingKeyValue[key]) || isEmptyStr(processingKeyValue[key])) {
-        processingKeyValue[key] = data[i][key];
+export function flatDataWithoutOverride(input: FormattedData[]): FormattedData {
+  const result: FormattedData = {} as FormattedData;
+  input.forEach((data) => {
+    Object.keys(data).forEach((key) => {
+      if (!isDefinedAndNotNull(result[key]) || isEmptyStr(result[key])) {
+        result[key] = data[key];
       }
     });
-  }
-  return processingKeyValue;
+  });
+  return result;
 }
 
 export function mergeFormattedData(first: FormattedData[], second: FormattedData[]): FormattedData[] {
