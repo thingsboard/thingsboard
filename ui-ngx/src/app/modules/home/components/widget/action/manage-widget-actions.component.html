@@ -88,7 +88,7 @@
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="name">
-          <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 30%"> {{ 'widget-config.action-name' | translate }} </mat-header-cell>
+          <mat-header-cell *matHeaderCellDef style="width: 30%"> {{ 'widget-config.action-name' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let action" style="width: 30%">
             {{ action.name }}
           </mat-cell>
@@ -100,7 +100,7 @@
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="typeName">
-          <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 50%"> {{ 'widget-config.action-type' | translate }} </mat-header-cell>
+          <mat-header-cell *matHeaderCellDef style="width: 50%"> {{ 'widget-config.action-type' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let action" style="width: 50%">
             {{ action.typeName }}
           </mat-cell>

@@ -37,7 +37,7 @@ import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { fromEvent, merge } from 'rxjs';
-import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, first, tap } from 'rxjs/operators';
 import {
   toWidgetActionDescriptor,
   WidgetActionCallbacks,
@@ -167,43 +167,16 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
 
   dropAction(event: CdkDragDrop<WidgetActionsDatasource>) {
     this.dragDisabled = true;
-    const droppedAction = event.item.data;
-    this.dataSource.getAllActions().subscribe(
-      (actions) => {
-        moveItemInArray(actions, event.previousIndex, event.currentIndex);
-
-        const isBackward = event.currentIndex > event.previousIndex;
-        let nearestNeighbourAction: WidgetActionDescriptorInfo = null;
-        for (let i: number = isBackward ? actions.length - 1 : 0;
-             isBackward ? i >= 0 : i < actions.length; isBackward ? --i : ++i) {
-          if (actions[i].id === droppedAction.id) {
-            break;
-          }
-          if (actions[i].actionSourceId === droppedAction.actionSourceId) {
-            nearestNeighbourAction = actions[i];
-          }
-        }
-
-        const targetActions = this.getOrCreateTargetActions(droppedAction.actionSourceId);
-        let oldIndex = -1;
-        let newIndex: number = nearestNeighbourAction ? -1 : (isBackward ? targetActions.length - 1 : 0);
-
-        for (let i: number = isBackward ? targetActions.length - 1 : 0;
-          isBackward ? i >= 0 : i < targetActions.length; isBackward ? --i : ++i) {
-          if (targetActions[i].id === droppedAction.id) {
-            oldIndex = i;
-          }
-          if (nearestNeighbourAction && targetActions[i].id === nearestNeighbourAction.id) {
-            newIndex = isBackward ? i - 1 : i + 1;
-          }
-          if (oldIndex !== -1 && newIndex !== -1) {
-            moveItemInArray(targetActions, oldIndex, newIndex);
-            this.onActionsUpdated();
-            return;
-          }
-        }
-      }
-    );
+    const droppedAction: WidgetActionDescriptorInfo = event.item.data;
+    this.dataSource.pageData$.pipe(
+      first()
+    ).subscribe((actions) => {
+      const action = actions.data;
+      const startActionSourceIndex = action.findIndex(element => element.actionSourceId === droppedAction.actionSourceId);
+      const targetActions = this.getOrCreateTargetActions(droppedAction.actionSourceId);
+      moveItemInArray(targetActions, event.previousIndex - startActionSourceIndex, event.currentIndex - startActionSourceIndex);
+      this.onActionsUpdated();
+    });
   }
 
   addAction($event: Event) {
