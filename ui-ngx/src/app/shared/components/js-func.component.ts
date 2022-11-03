@@ -228,6 +228,9 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
     if (this.editorResize$) {
       this.editorResize$.disconnect();
     }
+    if (this.jsEditor) {
+      this.jsEditor.destroy();
+    }
   }
 
   private onAceEditorResize() {

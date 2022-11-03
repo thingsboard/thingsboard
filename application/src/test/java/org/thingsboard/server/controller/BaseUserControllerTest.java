@@ -21,9 +21,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpHeaders;
+import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
@@ -51,20 +55,27 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.model.ModelConstants.SYSTEM_TENANT;
 
+@ContextConfiguration(classes = {BaseUserControllerTest.Config.class})
 public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
     private IdComparator<User> idComparator = new IdComparator<>();
 
     private CustomerId customerNUULId = (CustomerId) createEntityId_NULL_UUID(new Customer());
 
-    @SpyBean
+    @Autowired
     private UserDao userDao;
+
+    static class Config {
+        @Bean
+        @Primary
+        public UserDao userDao(UserDao userDao) {
+            return Mockito.mock(UserDao.class, AdditionalAnswers.delegatesTo(userDao));
+        }
+    }
 
     @After
     public void afterTest() throws Exception {
         loginSysAdmin();
-
-        afterTestEntityDaoRemoveByIdWithException(userDao);
     }
 
     @Test
@@ -129,9 +140,9 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         doDelete("/api/user/" + savedUser.getId().getId().toString())
                 .andExpect(status().isOk());
 
-        testNotifyEntityOneTimeMsgToEdgeServiceNever(foundUser, foundUser.getId(), foundUser.getId(),
+        testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(foundUser, foundUser.getId(), foundUser.getId(),
                 SYSTEM_TENANT, customerNUULId, null, SYS_ADMIN_EMAIL,
-                ActionType.DELETED, foundUser.getId().getId().toString());
+                ActionType.DELETED, SYSTEM_TENANT.getId().toString());
     }
 
     @Test
@@ -450,7 +461,9 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         String email1 = "testEmail1";
         List<User> tenantAdminsEmail1 = new ArrayList<>();
 
-        for (int i = 0; i < 124; i++) {
+        final int NUMBER_OF_USERS = 124;
+
+        for (int i = 0; i < NUMBER_OF_USERS; i++) {
             User user = new User();
             user.setAuthority(Authority.TENANT_ADMIN);
             user.setTenantId(tenantId);
@@ -521,7 +534,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         testManyUser.setTenantId(tenantId);
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(testManyUser, testManyUser,
                 SYSTEM_TENANT, customerNUULId, null, SYS_ADMIN_EMAIL,
-                ActionType.DELETED, ActionType.DELETED, cntEntity, 0, cntEntity, new String());
+                ActionType.DELETED, ActionType.DELETED, cntEntity, NUMBER_OF_USERS, cntEntity, new String());
 
         pageLink = new PageLink(4, 0, email1);
         pageData = doGetTypedWithPageLink("/api/tenant/" + tenantId.getId().toString() + "/users?",

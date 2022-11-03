@@ -58,6 +58,12 @@
         }
       }
     }
+
+    .tb-hint.after-fields {
+      margin-top: -1.25em;
+      max-width: fit-content;
+      line-height: 15px;
+    }
   }
 }
 
@@ -83,7 +89,6 @@
         .mat-expansion-panel-header {
           padding: 0;
           color: rgba(0, 0, 0, 0.87);
-          height: 140px;
 
           &:hover {
             background: none;
@@ -91,6 +96,12 @@
 
           .mat-expansion-indicator {
             padding: 2px;
+          }
+        }
+
+        &.comparison {
+          .mat-expansion-panel-header {
+            height: 100%;
           }
         }
 

@@ -69,4 +69,11 @@ export class LoginComponent extends PageComponent implements OnInit {
     }
   }
 
+  getOAuth2Uri(oauth2Client: OAuth2ClientInfo): string {
+    let result = "";
+    if (this.authService.redirectUrl) {
+      result += "?prevUri=" + this.authService.redirectUrl;
+    }
+    return oauth2Client.url + result;
+  }
 }

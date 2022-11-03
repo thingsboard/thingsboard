@@ -43,6 +43,15 @@ public interface UserDao extends Dao<User>, TenantEntityDao {
     User findByEmail(TenantId tenantId, String email);
 
     /**
+     * Find user by tenant id and email.
+     *
+     * @param tenantId the tenant id
+     * @param email the email
+     * @return the user entity
+     */
+    User findByTenantIdAndEmail(TenantId tenantId, String email);
+
+    /**
      * Find users by tenantId and page link.
      *
      * @param tenantId the tenantId
@@ -69,4 +78,5 @@ public interface UserDao extends Dao<User>, TenantEntityDao {
      * @return the list of user entities
      */
     PageData<User> findCustomerUsers(UUID tenantId, UUID customerId, PageLink pageLink);
+
 }

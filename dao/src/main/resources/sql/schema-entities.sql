@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS entity_alarm (
 );
 
 CREATE TABLE IF NOT EXISTS audit_log (
-    id uuid NOT NULL CONSTRAINT audit_log_pkey PRIMARY KEY,
+    id uuid NOT NULL,
     created_time bigint NOT NULL,
     tenant_id uuid,
     customer_id uuid,
@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS audit_log (
     action_data varchar(1000000),
     action_status varchar(255),
     action_failure_details varchar(1000000)
-);
+) PARTITION BY RANGE (created_time);
 
 CREATE TABLE IF NOT EXISTS attribute_kv (
   entity_type varchar(255),

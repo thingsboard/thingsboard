@@ -205,8 +205,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                 saveRpcRequestToEdgeQueue(request, rpcRequest.getRequestId()).get();
                 sent = true;
             } catch (InterruptedException | ExecutionException e) {
-                String errMsg = String.format("[%s][%s][%s] Failed to save rpc request to edge queue %s", tenantId, deviceId, edgeId.getId(), request);
-                log.error(errMsg, e);
+                log.error("[{}][{}][{}] Failed to save rpc request to edge queue {}", tenantId, deviceId, edgeId.getId(), request, e);
             }
         } else if (isSendNewRpcAvailable()) {
             sent = rpcSubscriptions.size() > 0;
