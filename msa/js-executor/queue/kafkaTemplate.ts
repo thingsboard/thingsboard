@@ -149,12 +149,11 @@ export class KafkaTemplate implements IQueue {
         });
 }
 
-    async send(responseTopic: string, scriptId: string, rawResponse: Buffer, headers: any): Promise<any> {
-        this.logger.debug('Pending queue response, scriptId: [%s]', scriptId);
+    async send(responseTopic: string, msgKey: string, rawResponse: Buffer, headers: any): Promise<any> {
         const message = {
             topic: responseTopic,
             messages: [{
-                key: scriptId,
+                key: msgKey,
                 value: rawResponse,
                 headers: headers.data
             }]

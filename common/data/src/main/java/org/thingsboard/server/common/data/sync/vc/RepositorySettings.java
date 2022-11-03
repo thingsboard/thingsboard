@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.data.sync.vc;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -32,6 +31,7 @@ public class RepositorySettings implements Serializable {
     private String privateKey;
     private String privateKeyPassword;
     private String defaultBranch;
+    private boolean readOnly;
 
     public RepositorySettings() {
     }
@@ -45,5 +45,6 @@ public class RepositorySettings implements Serializable {
         this.privateKey = settings.getPrivateKey();
         this.privateKeyPassword = settings.getPrivateKeyPassword();
         this.defaultBranch = settings.getDefaultBranch();
+        this.readOnly = settings.isReadOnly();
     }
 }

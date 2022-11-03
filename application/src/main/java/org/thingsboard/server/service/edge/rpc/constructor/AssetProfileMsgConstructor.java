@@ -16,13 +16,11 @@
 package org.thingsboard.server.service.edge.rpc.constructor;
 
 import com.google.protobuf.ByteString;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.nio.charset.StandardCharsets;
@@ -31,9 +29,6 @@ import java.nio.charset.StandardCharsets;
 @TbCoreComponent
 public class AssetProfileMsgConstructor {
 
-    @Autowired
-    private DataDecodingEncodingService dataDecodingEncodingService;
-
     public AssetProfileUpdateMsg constructAssetProfileUpdatedMsg(UpdateMsgType msgType, AssetProfile assetProfile) {
         AssetProfileUpdateMsg.Builder builder = AssetProfileUpdateMsg.newBuilder()
                 .setMsgType(msgType)
@@ -41,9 +36,9 @@ public class AssetProfileMsgConstructor {
                 .setIdLSB(assetProfile.getId().getId().getLeastSignificantBits())
                 .setName(assetProfile.getName())
                 .setDefault(assetProfile.isDefault());
-        if (assetProfile.getDefaultRuleChainId() != null) {
-            builder.setDefaultRuleChainIdMSB(assetProfile.getDefaultRuleChainId().getId().getMostSignificantBits())
-                    .setDefaultRuleChainIdLSB(assetProfile.getDefaultRuleChainId().getId().getLeastSignificantBits());
+        if (assetProfile.getDefaultDashboardId() != null) {
+            builder.setDefaultDashboardIdMSB(assetProfile.getDefaultDashboardId().getId().getMostSignificantBits())
+                    .setDefaultDashboardIdLSB(assetProfile.getDefaultDashboardId().getId().getLeastSignificantBits());
         }
         if (assetProfile.getDefaultQueueName() != null) {
             builder.setDefaultQueueName(assetProfile.getDefaultQueueName());

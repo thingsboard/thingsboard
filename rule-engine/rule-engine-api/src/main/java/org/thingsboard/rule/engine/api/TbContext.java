@@ -31,14 +31,15 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.rule.RuleNodeState;
+import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -62,6 +63,7 @@ import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 
+import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -183,6 +185,10 @@ public interface TbContext {
     // TODO: Does this changes the message?
     TbMsg alarmActionMsg(Alarm alarm, RuleNodeId ruleNodeId, String action);
 
+    TbMsg attributesUpdatedActionMsg(EntityId originator, RuleNodeId ruleNodeId, String scope, List<AttributeKvEntry> attributes);
+
+    TbMsg attributesDeletedActionMsg(EntityId originator, RuleNodeId ruleNodeId, String scope, List<String> keys);
+
     void onEdgeEventUpdate(TenantId tenantId, EdgeId edgeId);
 
     /*
@@ -261,7 +267,16 @@ public interface TbContext {
 
     SmsSenderFactory getSmsSenderFactory();
 
+    /**
+     * Creates JS Script Engine
+     * @deprecated
+     * <p> Use {@link #createScriptEngine} instead.
+     *
+     */
+    @Deprecated
     ScriptEngine createJsScriptEngine(String script, String... argNames);
+
+    ScriptEngine createScriptEngine(ScriptLanguage scriptLang, String script, String... argNames);
 
     void logJsEvalRequest();
 
@@ -298,4 +313,5 @@ public interface TbContext {
     void removeListeners();
 
     TenantProfile getTenantProfile();
+
 }

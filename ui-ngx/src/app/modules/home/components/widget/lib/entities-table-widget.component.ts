@@ -78,6 +78,7 @@ import {
   getColumnDefaultVisibility,
   getColumnSelectionAvailability,
   getColumnWidth,
+  getHeaderTitle,
   getEntityValue,
   getRowStyleInfo,
   getTableCellButtonActions,
@@ -426,11 +427,11 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         }
         dataKeys.push(dataKey);
 
+        const keySettings: TableWidgetDataKeySettings = dataKey.settings;
         dataKey.label = this.utils.customTranslation(dataKey.label, dataKey.label);
-        dataKey.title = dataKey.label;
+        dataKey.title = getHeaderTitle(dataKey, keySettings, this.utils);
         dataKey.def = 'def' + this.columns.length;
         dataKey.sortable = !dataKey.usePostProcessing && (!dataKey.aggregationType || dataKey.aggregationType === AggregationType.NONE);
-        const keySettings: TableWidgetDataKeySettings = dataKey.settings;
         if (dataKey.type === DataKeyType.entityField &&
           !isDefined(keySettings.columnWidth) || keySettings.columnWidth === '0px') {
           const entityField = entityFields[dataKey.name];
@@ -444,7 +445,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         this.contentsInfo[dataKey.def].units = dataKey.units;
         this.contentsInfo[dataKey.def].decimals = dataKey.decimals;
         this.columnWidth[dataKey.def] = getColumnWidth(keySettings);
-        this.columnDefaultVisibility[dataKey.def] = getColumnDefaultVisibility(keySettings);
+        this.columnDefaultVisibility[dataKey.def] = getColumnDefaultVisibility(keySettings, this.ctx);
         this.columnSelectionAvailability[dataKey.def] = getColumnSelectionAvailability(keySettings);
         this.columns.push(dataKey);
       });

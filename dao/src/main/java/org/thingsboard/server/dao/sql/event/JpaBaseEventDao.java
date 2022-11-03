@@ -106,7 +106,7 @@ public class JpaBaseEventDao implements EventDao {
     @Value("${sql.events.batch_threads:3}")
     private int batchThreads;
 
-    @Value("${sql.batch_sort:false}")
+    @Value("${sql.batch_sort:true}")
     private boolean batchSortEnabled;
 
     private TbSqlBlockingQueueWrapper<Event> queue;

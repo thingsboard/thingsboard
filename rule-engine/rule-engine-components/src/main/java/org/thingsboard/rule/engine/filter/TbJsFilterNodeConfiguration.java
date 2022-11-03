@@ -17,16 +17,21 @@ package org.thingsboard.rule.engine.filter;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.server.common.data.script.ScriptLanguage;
 
 @Data
 public class TbJsFilterNodeConfiguration implements NodeConfiguration<TbJsFilterNodeConfiguration> {
 
+    private ScriptLanguage scriptLang;
     private String jsScript;
+    private String mvelScript;
 
     @Override
     public TbJsFilterNodeConfiguration defaultConfiguration() {
         TbJsFilterNodeConfiguration configuration = new TbJsFilterNodeConfiguration();
+        configuration.setScriptLang(ScriptLanguage.MVEL);
         configuration.setJsScript("return msg.temperature > 20;");
+        configuration.setMvelScript("return msg.temperature > 20;");
         return configuration;
     }
 }
