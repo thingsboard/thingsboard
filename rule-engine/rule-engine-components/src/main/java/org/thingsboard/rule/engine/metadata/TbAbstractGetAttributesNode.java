@@ -175,9 +175,9 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
     }
 
     private TsKvEntry getValueWithTs(TsKvEntry tsKvEntry) {
-        ObjectNode value = JacksonUtil.newObjectNode(JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER);
-        value.put(TS, tsKvEntry.getTs());
         ObjectMapper mapper = fetchToData ? JacksonUtil.OBJECT_MAPPER : JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER;
+        ObjectNode value = JacksonUtil.newObjectNode(mapper);
+        value.put(TS, tsKvEntry.getTs());
         JacksonUtil.addKvEntry(value, tsKvEntry, VALUE, mapper);
         return new BasicTsKvEntry(tsKvEntry.getTs(), new JsonDataEntry(tsKvEntry.getKey(), value.toString()));
     }
