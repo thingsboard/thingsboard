@@ -15,16 +15,15 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.json.JsonWriteFeature;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.gson.JsonParseException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -32,13 +31,18 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -51,18 +55,20 @@ import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
 
 public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeConfiguration, T extends EntityId> implements TbNode {
 
-    private static ObjectMapper mapper = new ObjectMapper();
-
     private static final String VALUE = "value";
     private static final String TS = "ts";
 
     protected C config;
+    private boolean fetchToData;
+    private boolean isTellFailureIfAbsent;
+    private boolean getLatestValueWithTs;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = loadGetAttributesNodeConfig(configuration);
-        mapper.configure(JsonWriteFeature.QUOTE_FIELD_NAMES.mappedFeature(), false);
-        mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
+        this.fetchToData = config.isFetchToData();
+        this.getLatestValueWithTs = config.isGetLatestValueWithTs();
+        this.isTellFailureIfAbsent = BooleanUtils.toBooleanDefaultIfNull(this.config.isTellFailureIfAbsent(), true);
     }
 
     protected abstract C loadGetAttributesNodeConfig(TbNodeConfiguration configuration) throws TbNodeException;
@@ -86,97 +92,110 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
             ctx.tellNext(msg, FAILURE);
             return;
         }
+        JsonNode msgDataNode;
+        if (fetchToData) {
+            msgDataNode = JacksonUtil.toJsonNode(msg.getData());
+            if (!msgDataNode.isObject()) {
+                ctx.tellFailure(msg, new IllegalArgumentException("Msg body is not an object!"));
+                return;
+            }
+        } else {
+            msgDataNode = null;
+        }
         ConcurrentHashMap<String, List<String>> failuresMap = new ConcurrentHashMap<>();
-        ListenableFuture<List<Void>> allFutures = Futures.allAsList(
-                putLatestTelemetry(ctx, entityId, msg, LATEST_TS, TbNodeUtils.processPatterns(config.getLatestTsKeyNames(), msg), failuresMap),
-                putAttrAsync(ctx, entityId, msg, CLIENT_SCOPE, TbNodeUtils.processPatterns(config.getClientAttributeNames(), msg), failuresMap, "cs_"),
-                putAttrAsync(ctx, entityId, msg, SHARED_SCOPE, TbNodeUtils.processPatterns(config.getSharedAttributeNames(), msg), failuresMap, "shared_"),
-                putAttrAsync(ctx, entityId, msg, SERVER_SCOPE, TbNodeUtils.processPatterns(config.getServerAttributeNames(), msg), failuresMap, "ss_")
+        ListenableFuture<List<Map<String, ? extends List<? extends KvEntry>>>> allFutures = Futures.allAsList(
+                getLatestTelemetry(ctx, entityId, TbNodeUtils.processPatterns(config.getLatestTsKeyNames(), msg), failuresMap),
+                getAttrAsync(ctx, entityId, CLIENT_SCOPE, TbNodeUtils.processPatterns(config.getClientAttributeNames(), msg), failuresMap),
+                getAttrAsync(ctx, entityId, SHARED_SCOPE, TbNodeUtils.processPatterns(config.getSharedAttributeNames(), msg), failuresMap),
+                getAttrAsync(ctx, entityId, SERVER_SCOPE, TbNodeUtils.processPatterns(config.getServerAttributeNames(), msg), failuresMap)
         );
-        withCallback(allFutures, i -> {
+        withCallback(allFutures, futuresList -> {
             if (!failuresMap.isEmpty()) {
                 throw reportFailures(failuresMap);
             }
-            ctx.tellSuccess(msg);
+            TbMsgMetaData msgMetaData = msg.getMetaData().copy();
+            futuresList.stream().filter(Objects::nonNull).forEach(kvEntriesMap -> {
+                kvEntriesMap.forEach((keyScope, kvEntryList) -> {
+                    String prefix = getPrefix(keyScope);
+                    kvEntryList.forEach(kvEntry -> {
+                        String key = prefix + kvEntry.getKey();
+                        if (fetchToData) {
+                            JacksonUtil.addKvEntry((ObjectNode) msgDataNode, kvEntry, key);
+                        } else {
+                            msgMetaData.putValue(key, kvEntry.getValueAsString());
+                        }
+                    });
+                });
+            });
+            if (fetchToData) {
+                ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), msgMetaData, JacksonUtil.toString(msgDataNode)));
+            } else {
+                ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), msgMetaData, msg.getData()));
+            }
         }, t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
 
-    private ListenableFuture<Void> putAttrAsync(TbContext ctx, EntityId entityId, TbMsg msg, String scope, List<String> keys, ConcurrentHashMap<String, List<String>> failuresMap, String prefix) {
+    private ListenableFuture<Map<String, List<AttributeKvEntry>>> getAttrAsync(TbContext ctx, EntityId entityId, String scope, List<String> keys, ConcurrentHashMap<String, List<String>> failuresMap) {
         if (CollectionUtils.isEmpty(keys)) {
             return Futures.immediateFuture(null);
         }
         ListenableFuture<List<AttributeKvEntry>> attributeKvEntryListFuture = ctx.getAttributesService().find(ctx.getTenantId(), entityId, scope, keys);
         return Futures.transform(attributeKvEntryListFuture, attributeKvEntryList -> {
-            if (!CollectionUtils.isEmpty(attributeKvEntryList)) {
-                List<AttributeKvEntry> existingAttributesKvEntry = attributeKvEntryList.stream().filter(attributeKvEntry -> keys.contains(attributeKvEntry.getKey())).collect(Collectors.toList());
-                existingAttributesKvEntry.forEach(kvEntry -> msg.getMetaData().putValue(prefix + kvEntry.getKey(), kvEntry.getValueAsString()));
-                if (existingAttributesKvEntry.size() != keys.size() && BooleanUtils.toBooleanDefaultIfNull(this.config.isTellFailureIfAbsent(), true)) {
-                    getNotExistingKeys(existingAttributesKvEntry, keys).forEach(key -> computeFailuresMap(scope, failuresMap, key));
-                }
-            } else {
-                if (BooleanUtils.toBooleanDefaultIfNull(this.config.isTellFailureIfAbsent(), true)) {
-                    keys.forEach(key -> computeFailuresMap(scope, failuresMap, key));
-                }
+            if (isTellFailureIfAbsent && attributeKvEntryList.size() != keys.size()) {
+                getNotExistingKeys(attributeKvEntryList, keys).forEach(key -> computeFailuresMap(scope, failuresMap, key));
             }
-            return null;
+            Map<String, List<AttributeKvEntry>> mapAttributeKvEntry = new HashMap<>();
+            mapAttributeKvEntry.put(scope, attributeKvEntryList);
+            return mapAttributeKvEntry;
         }, MoreExecutors.directExecutor());
     }
 
-    private ListenableFuture<Void> putLatestTelemetry(TbContext ctx, EntityId entityId, TbMsg msg, String scope, List<String> keys, ConcurrentHashMap<String, List<String>> failuresMap) {
+    private ListenableFuture<Map<String, List<TsKvEntry>>> getLatestTelemetry(TbContext ctx, EntityId entityId, List<String> keys, ConcurrentHashMap<String, List<String>> failuresMap) {
         if (CollectionUtils.isEmpty(keys)) {
             return Futures.immediateFuture(null);
         }
-        ListenableFuture<List<TsKvEntry>> latest = ctx.getTimeseriesService().findLatest(ctx.getTenantId(), entityId, keys);
-        return Futures.transform(latest, l -> {
-            l.forEach(r -> {
-                boolean getLatestValueWithTs = BooleanUtils.toBooleanDefaultIfNull(this.config.isGetLatestValueWithTs(), false);
-                if (BooleanUtils.toBooleanDefaultIfNull(this.config.isTellFailureIfAbsent(), true)) {
-                    if (r.getValue() == null) {
-                        computeFailuresMap(scope, failuresMap, r.getKey());
-                    } else if (getLatestValueWithTs) {
-                        putValueWithTs(msg, r);
-                    } else {
-                        msg.getMetaData().putValue(r.getKey(), r.getValueAsString());
+        ListenableFuture<List<TsKvEntry>> latestTelemetryFutures = ctx.getTimeseriesService().findLatest(ctx.getTenantId(), entityId, keys);
+        return Futures.transform(latestTelemetryFutures, tsKvEntries -> {
+            List<TsKvEntry> listTsKvEntry = new ArrayList<>();
+            tsKvEntries.forEach(tsKvEntry -> {
+                if (tsKvEntry.getValue() == null) {
+                    if (isTellFailureIfAbsent) {
+                        computeFailuresMap(LATEST_TS, failuresMap, tsKvEntry.getKey());
                     }
+                } else if (getLatestValueWithTs) {
+                    listTsKvEntry.add(getValueWithTs(tsKvEntry));
                 } else {
-                    if (r.getValue() != null) {
-                        if (getLatestValueWithTs) {
-                            putValueWithTs(msg, r);
-                        } else {
-                            msg.getMetaData().putValue(r.getKey(), r.getValueAsString());
-                        }
-                    }
+                    listTsKvEntry.add(new BasicTsKvEntry(tsKvEntry.getTs(), tsKvEntry));
                 }
             });
-            return null;
+            Map<String, List<TsKvEntry>> mapTsKvEntry = new HashMap<>();
+            mapTsKvEntry.put(LATEST_TS, listTsKvEntry);
+            return mapTsKvEntry;
         }, MoreExecutors.directExecutor());
     }
 
-    private void putValueWithTs(TbMsg msg, TsKvEntry r) {
-        ObjectNode value = mapper.createObjectNode();
-        value.put(TS, r.getTs());
-        switch (r.getDataType()) {
-            case STRING:
-                value.put(VALUE, r.getValueAsString());
+    private TsKvEntry getValueWithTs(TsKvEntry tsKvEntry) {
+        ObjectNode value = JacksonUtil.newObjectNode(JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER);
+        value.put(TS, tsKvEntry.getTs());
+        ObjectMapper mapper = fetchToData ? JacksonUtil.OBJECT_MAPPER : JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER;
+        JacksonUtil.addKvEntry(value, tsKvEntry, VALUE, mapper);
+        return new BasicTsKvEntry(tsKvEntry.getTs(), new JsonDataEntry(tsKvEntry.getKey(), value.toString()));
+    }
+
+    private String getPrefix(String scope) {
+        String prefix = "";
+        switch (scope) {
+            case CLIENT_SCOPE:
+                prefix = "cs_";
                 break;
-            case LONG:
-                value.put(VALUE, r.getLongValue().get());
+            case SHARED_SCOPE:
+                prefix = "shared_";
                 break;
-            case BOOLEAN:
-                value.put(VALUE, r.getBooleanValue().get());
-                break;
-            case DOUBLE:
-                value.put(VALUE, r.getDoubleValue().get());
-                break;
-            case JSON:
-                try {
-                    value.set(VALUE, mapper.readTree(r.getJsonValue().get()));
-                } catch (IOException e) {
-                    throw new JsonParseException("Can't parse jsonValue: " + r.getJsonValue().get(), e);
-                }
+            case SERVER_SCOPE:
+                prefix = "ss_";
                 break;
         }
-        msg.getMetaData().putValue(r.getKey(), value.toString());
+        return prefix;
     }
 
     private List<String> getNotExistingKeys(List<AttributeKvEntry> existingAttributesKvEntry, List<String> allKeys) {
