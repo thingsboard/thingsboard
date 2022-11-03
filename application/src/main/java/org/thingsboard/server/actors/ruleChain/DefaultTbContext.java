@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,7 +36,7 @@ import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
-import org.thingsboard.rule.engine.util.EntitiesTenantIdAsyncLoader;
+import org.thingsboard.rule.engine.util.TenantIdLoader;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.cluster.TbClusterService;
@@ -776,17 +776,10 @@ class DefaultTbContext implements TbContext {
         return metaData;
     }
 
-    public void isTenantEntity(EntityId entityId) {
-        try {
-            TenantId entityTenantId = EntitiesTenantIdAsyncLoader.findEntityIdAsync(this, entityId).get();
-            if (entityTenantId == null) {
-                throw new RuntimeException("Entity with id '" + entityId + "'not found!");
-            }
-            if (!entityTenantId.equals(this.getTenantId())) {
-                throw new RuntimeException("Entity with id: '" + entityId + "' specified in the configuration doesn't belong to the current tenant.");
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+    @Override
+    public void checkTenantEntity(EntityId entityId) {
+        if (!this.getTenantId().equals(TenantIdLoader.findTenantId(this, entityId))) {
+            throw new RuntimeException("Entity with id: '" + entityId + "' specified in the configuration doesn't belong to the current tenant.");
         }
     }
 

@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.util;
 
-import com.google.common.util.concurrent.Futures;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -50,6 +49,7 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -71,7 +71,6 @@ import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -79,7 +78,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
-public class EntitiesTenantIdAsyncLoaderTest {
+public class TenantIdLoaderTest {
 
     @Mock
     private TbContext ctx;
@@ -121,6 +120,7 @@ public class EntitiesTenantIdAsyncLoaderTest {
     private RuleEngineApiUsageStateService ruleEngineApiUsageStateService;
 
     private TenantId tenantId;
+    private TenantProfileId tenantProfileId;
     private AbstractListeningExecutor dbExecutor;
 
     @Before
@@ -133,9 +133,9 @@ public class EntitiesTenantIdAsyncLoaderTest {
         };
         dbExecutor.init();
         this.tenantId = new TenantId(UUID.randomUUID());
+        this.tenantProfileId = new TenantProfileId(UUID.randomUUID());
 
         when(ctx.getTenantId()).thenReturn(tenantId);
-        when(ctx.getDbCallbackExecutor()).thenReturn(dbExecutor);
 
         for (EntityType entityType : EntityType.values()) {
             initMocks(entityType, tenantId);
@@ -156,7 +156,7 @@ public class EntitiesTenantIdAsyncLoaderTest {
                 customer.setTenantId(tenantId);
 
                 when(ctx.getCustomerService()).thenReturn(customerService);
-                doReturn(Futures.immediateFuture(customer)).when(customerService).findCustomerByIdAsync(eq(tenantId), any());
+                doReturn(customer).when(customerService).findCustomerById(eq(tenantId), any());
 
                 break;
             case USER:
@@ -164,7 +164,7 @@ public class EntitiesTenantIdAsyncLoaderTest {
                 user.setTenantId(tenantId);
 
                 when(ctx.getUserService()).thenReturn(userService);
-                doReturn(Futures.immediateFuture(user)).when(userService).findUserByIdAsync(eq(tenantId), any());
+                doReturn(user).when(userService).findUserById(eq(tenantId), any());
 
                 break;
             case ASSET:
@@ -172,7 +172,7 @@ public class EntitiesTenantIdAsyncLoaderTest {
                 asset.setTenantId(tenantId);
 
                 when(ctx.getAssetService()).thenReturn(assetService);
-                doReturn(Futures.immediateFuture(asset)).when(assetService).findAssetByIdAsync(eq(tenantId), any());
+                doReturn(asset).when(assetService).findAssetById(eq(tenantId), any());
 
                 break;
             case DEVICE:
@@ -180,7 +180,7 @@ public class EntitiesTenantIdAsyncLoaderTest {
                 device.setTenantId(tenantId);
 
                 when(ctx.getDeviceService()).thenReturn(deviceService);
-                doReturn(Futures.immediateFuture(device)).when(deviceService).findDeviceByIdAsync(eq(tenantId), any());
+                doReturn(device).when(deviceService).findDeviceById(eq(tenantId), any());
 
                 break;
             case ALARM:
@@ -188,7 +188,7 @@ public class EntitiesTenantIdAsyncLoaderTest {
                 alarm.setTenantId(tenantId);
 
                 when(ctx.getAlarmService()).thenReturn(alarmService);
-                doReturn(Futures.immediateFuture(alarm)).when(alarmService).findAlarmByIdAsync(eq(tenantId), any());
+                doReturn(alarm).when(alarmService).findAlarmById(eq(tenantId), any());
 
                 break;
             case RULE_CHAIN:
@@ -196,7 +196,7 @@ public class EntitiesTenantIdAsyncLoaderTest {
                 ruleChain.setTenantId(tenantId);
 
                 when(ctx.getRuleChainService()).thenReturn(ruleChainService);
-                doReturn(Futures.immediateFuture(ruleChain)).when(ruleChainService).findRuleChainByIdAsync(eq(tenantId), any());
+                doReturn(ruleChain).when(ruleChainService).findRuleChainById(eq(tenantId), any());
 
                 break;
             case ENTITY_VIEW:
@@ -204,7 +204,7 @@ public class EntitiesTenantIdAsyncLoaderTest {
                 entityView.setTenantId(tenantId);
 
                 when(ctx.getEntityViewService()).thenReturn(entityViewService);
-                doReturn(Futures.immediateFuture(entityView)).when(entityViewService).findEntityViewByIdAsync(eq(tenantId), any());
+                doReturn(entityView).when(entityViewService).findEntityViewById(eq(tenantId), any());
 
                 break;
             case DASHBOARD:
@@ -212,7 +212,7 @@ public class EntitiesTenantIdAsyncLoaderTest {
                 dashboard.setTenantId(tenantId);
 
                 when(ctx.getDashboardService()).thenReturn(dashboardService);
-                doReturn(Futures.immediateFuture(dashboard)).when(dashboardService).findDashboardByIdAsync(eq(tenantId), any());
+                doReturn(dashboard).when(dashboardService).findDashboardById(eq(tenantId), any());
 
                 break;
             case EDGE:
@@ -220,7 +220,7 @@ public class EntitiesTenantIdAsyncLoaderTest {
                 edge.setTenantId(tenantId);
 
                 when(ctx.getEdgeService()).thenReturn(edgeService);
-                doReturn(Futures.immediateFuture(edge)).when(edgeService).findEdgeByIdAsync(eq(tenantId), any());
+                doReturn(edge).when(edgeService).findEdgeById(eq(tenantId), any());
 
                 break;
             case OTA_PACKAGE:
@@ -228,7 +228,7 @@ public class EntitiesTenantIdAsyncLoaderTest {
                 otaPackage.setTenantId(tenantId);
 
                 when(ctx.getOtaPackageService()).thenReturn(otaPackageService);
-                doReturn(Futures.immediateFuture(otaPackage)).when(otaPackageService).findOtaPackageInfoByIdAsync(eq(tenantId), any());
+                doReturn(otaPackage).when(otaPackageService).findOtaPackageInfoById(eq(tenantId), any());
 
                 break;
             case ASSET_PROFILE:
@@ -264,11 +264,11 @@ public class EntitiesTenantIdAsyncLoaderTest {
 
                 break;
             case RPC:
-                Rpc rps = new Rpc();
-                rps.setTenantId(tenantId);
+                Rpc rpc = new Rpc();
+                rpc.setTenantId(tenantId);
 
                 when(ctx.getRpcService()).thenReturn(rpcService);
-                doReturn(Futures.immediateFuture(rps)).when(rpcService).findRpcByIdAsync(eq(tenantId), any());
+                doReturn(rpc).when(rpcService).findRpcById(eq(tenantId), any());
 
                 break;
             case QUEUE:
@@ -292,7 +292,7 @@ public class EntitiesTenantIdAsyncLoaderTest {
                 tbResource.setTenantId(tenantId);
 
                 when(ctx.getResourceService()).thenReturn(resourceService);
-                doReturn(Futures.immediateFuture(tbResource)).when(resourceService).findResourceInfoByIdAsync(eq(tenantId), any());
+                doReturn(tbResource).when(resourceService).findResourceInfoById(eq(tenantId), any());
 
                 break;
             case RULE_NODE:
@@ -303,10 +303,9 @@ public class EntitiesTenantIdAsyncLoaderTest {
 
                 break;
             case TENANT_PROFILE:
-                TenantProfile tenantProfile = new TenantProfile();
+                TenantProfile tenantProfile = new TenantProfile(tenantProfileId);
 
                 when(ctx.getTenantProfile()).thenReturn(tenantProfile);
-                when(ctx.getTenantProfile(any(TenantId.class))).thenReturn(tenantProfile);
 
                 break;
             default:
@@ -319,12 +318,17 @@ public class EntitiesTenantIdAsyncLoaderTest {
         return EntityIdFactory.getByTypeAndUuid(entityType, UUID.randomUUID());
     }
 
-    private void checkTenant(TenantId checkTenantId, boolean equals) throws ExecutionException, InterruptedException {
+    private void checkTenant(TenantId checkTenantId, boolean equals) {
         for (EntityType entityType : EntityType.values()) {
-            EntityId entityId = EntityType.TENANT.equals(entityType) ? tenantId : getEntityId(entityType);
-            TenantId targetTenantId = EntitiesTenantIdAsyncLoader.findEntityIdAsync(ctx, entityId).get();
-
-            Assert.assertNotNull(targetTenantId);
+            EntityId entityId;
+            if(EntityType.TENANT.equals(entityType)){
+                entityId = tenantId;
+            } else if(EntityType.TENANT_PROFILE.equals(entityType)){
+                entityId = tenantProfileId;
+            } else {
+                entityId = getEntityId(entityType);
+            }
+            TenantId targetTenantId = TenantIdLoader.findTenantId(ctx, entityId);
             String msg = "Check entity type <" + entityType.name() + ">:";
             if (equals) {
                 Assert.assertEquals(msg, targetTenantId, checkTenantId);
@@ -335,12 +339,12 @@ public class EntitiesTenantIdAsyncLoaderTest {
     }
 
     @Test
-    public void test_findEntityIdAsync_current_tenant() throws ExecutionException, InterruptedException {
+    public void test_findEntityIdAsync_current_tenant() {
         checkTenant(tenantId, true);
     }
 
     @Test
-    public void test_findEntityIdAsync_other_tenant() throws ExecutionException, InterruptedException {
+    public void test_findEntityIdAsync_other_tenant() {
         checkTenant(new TenantId(UUID.randomUUID()), false);
     }
 

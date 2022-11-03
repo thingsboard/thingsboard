@@ -62,7 +62,7 @@ public class TbCheckRelationNode implements TbNode {
         this.config = TbNodeUtils.convert(configuration, TbCheckRelationNodeConfiguration.class);
         if (config.isCheckForSingleEntity()) {
             this.singleEntityId = EntityIdFactory.getByTypeAndId(config.getEntityType(), config.getEntityId());
-            ctx.isTenantEntity(singleEntityId);
+            ctx.checkTenantEntity(singleEntityId);
         }
     }
 

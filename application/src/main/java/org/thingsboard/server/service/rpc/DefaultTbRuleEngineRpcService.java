@@ -127,8 +127,8 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
     }
 
     @Override
-    public ListenableFuture<Rpc> findRpcByIdAsync(TenantId tenantId, RpcId id) {
-        return rpcService.findRpcByIdAsync(tenantId, id);
+    public Rpc findRpcById(TenantId tenantId, RpcId id) {
+        return rpcService.findById(tenantId, id);
     }
 
     @Override

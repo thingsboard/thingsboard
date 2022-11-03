@@ -33,5 +33,5 @@ public interface RuleEngineRpcService {
 
     void sendRpcRequestToDevice(RuleEngineDeviceRpcRequest request, Consumer<RuleEngineDeviceRpcResponse> consumer);
 
-    ListenableFuture<Rpc> findRpcByIdAsync(TenantId tenantId, RpcId id);
+    Rpc findRpcById(TenantId tenantId, RpcId id);
 }
