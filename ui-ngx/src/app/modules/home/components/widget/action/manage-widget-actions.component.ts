@@ -172,8 +172,11 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
       first()
     ).subscribe((actions) => {
       const action = actions.data;
-      const startActionSourceIndex = action.findIndex(element => element.actionSourceId === droppedAction.actionSourceId);
+      let startActionSourceIndex = action.findIndex(element => element.actionSourceId === droppedAction.actionSourceId);
       const targetActions = this.getOrCreateTargetActions(droppedAction.actionSourceId);
+      if (startActionSourceIndex === 0) {
+        startActionSourceIndex -= targetActions.findIndex(element => element.id === action[0].id);
+      }
       moveItemInArray(targetActions, event.previousIndex - startActionSourceIndex, event.currentIndex - startActionSourceIndex);
       this.onActionsUpdated();
     });
