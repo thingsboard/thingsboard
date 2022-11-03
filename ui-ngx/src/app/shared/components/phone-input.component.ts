@@ -97,8 +97,9 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
       if (this.defaultCountry) {
         this.getFlagAndPhoneNumberData(this.defaultCountry);
       }
-      if (this.phoneFormGroup) {
-        this.defineCountryFromNumber(this.phoneFormGroup.get('phoneNumber').value);
+      if (this.phoneFormGroup && this.phoneFormGroup.get('phoneNumber').value) {
+        const parsedPhoneNumber = this.parsePhoneNumberFromString(this.phoneFormGroup.get('phoneNumber').value);
+        this.defineCountryFromNumber(parsedPhoneNumber);
       }
     }
   }
@@ -110,7 +111,7 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
   private countryCallingCode = '+';
   private modelValue: string;
   private changeSubscriptions: Subscription[] = [];
-  private validators: ValidatorFn[] = [(c: FormControl) => Validators.pattern(this.getPhoneNumberPattern())(c), this.validatePhoneNumber()];
+  private validators: ValidatorFn[] = [this.validatePhoneNumber()];
 
   private propagateChange = (v: any) => { };
 
@@ -133,8 +134,12 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
     });
 
     this.changeSubscriptions.push(this.phoneFormGroup.get('phoneNumber').valueChanges.subscribe(value => {
-      this.updateModel();
-      this.defineCountryFromNumber(value);
+      let parsedPhoneNumber = null;
+      if (value && this.parsePhoneNumberFromString) {
+        parsedPhoneNumber = this.parsePhoneNumberFromString(value);
+        this.defineCountryFromNumber(parsedPhoneNumber);
+      }
+      this.updateModel(parsedPhoneNumber);
     }));
 
     this.changeSubscriptions.push(this.phoneFormGroup.get('country').valueChanges.subscribe(value => {
@@ -184,6 +189,10 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
     return String.fromCodePoint(...countryCode.split('').map(country => this.baseCode + country.charCodeAt(0)));
   }
 
+  private updateModelValueInFormat(parsedPhoneNumber: any) {
+    this.modelValue = parsedPhoneNumber.format('E.164');
+  }
+
   validatePhoneNumber(): ValidatorFn {
     return (c: FormControl) => {
       const phoneNumber = c.value;
@@ -201,18 +210,11 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
     };
   }
 
-  private defineCountryFromNumber(phoneNumber) {
-    if (phoneNumber && this.parsePhoneNumberFromString) {
-      const parsedPhoneNumber = this.parsePhoneNumberFromString(phoneNumber);
-      const country = this.phoneFormGroup.get('country').value;
-      if (parsedPhoneNumber?.country && parsedPhoneNumber?.country !== country) {
-        this.phoneFormGroup.get('country').patchValue(parsedPhoneNumber.country, {emitEvent: true});
-      }
+  private defineCountryFromNumber(parsedPhoneNumber) {
+    const country = this.phoneFormGroup.get('country').value;
+    if (parsedPhoneNumber?.country && parsedPhoneNumber?.country !== country) {
+      this.phoneFormGroup.get('country').patchValue(parsedPhoneNumber.country, {emitEvent: true});
     }
-  }
-
-  private getPhoneNumberPattern(): RegExp {
-    return new RegExp(`^${this.countryCallingCode.replace('+', '\\+')}$|^\\+[1-9]\\d{1,14}$`);
   }
 
   validate(): ValidationErrors | null {
@@ -247,6 +249,8 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
       if (phoneNumber) {
         const parsedPhoneNumber = this.parsePhoneNumberFromString(phoneNumber);
         if (parsedPhoneNumber?.isValid() && parsedPhoneNumber?.isPossible()) {
+          country = parsedPhoneNumber?.country || this.defaultCountry;
+          this.updateModelValueInFormat(parsedPhoneNumber);
           this.isLegacy = false;
         } else {
           const validators = [Validators.maxLength(255)];
@@ -260,18 +264,19 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
         this.isLegacy = false;
       }
       this.phoneFormGroup.updateValueAndValidity({emitEvent: false});
-      country = phoneNumber ? this.parsePhoneNumberFromString(phoneNumber)?.country || this.defaultCountry : this.defaultCountry;
       this.getFlagAndPhoneNumberData(country);
     }
     this.phoneFormGroup.reset({phoneNumber, country}, {emitEvent: false});
   }
 
-  private updateModel() {
+  private updateModel(parsedPhoneNumber?) {
     const phoneNumber = this.phoneFormGroup.get('phoneNumber');
     if (phoneNumber.value === '+' || phoneNumber.value === this.countryCallingCode) {
       this.propagateChange(null);
     } else if (phoneNumber.valid) {
-      this.modelValue = phoneNumber.value;
+      if (parsedPhoneNumber) {
+        this.updateModelValueInFormat(parsedPhoneNumber);
+      }
       this.propagateChange(this.modelValue);
     } else {
       this.propagateChange(null);
