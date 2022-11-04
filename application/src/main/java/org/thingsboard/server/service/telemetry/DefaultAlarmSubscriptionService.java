@@ -52,7 +52,6 @@ import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
 import java.util.Collection;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Created by ashvayka on 27.03.18.
