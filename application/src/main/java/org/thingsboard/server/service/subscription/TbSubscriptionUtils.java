@@ -53,6 +53,8 @@ import org.thingsboard.server.gen.transport.TransportProtos.TbTimeSeriesSubscrip
 import org.thingsboard.server.gen.transport.TransportProtos.TbTimeSeriesUpdateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
+import org.thingsboard.server.service.ws.notification.sub.NotificationsCountSubscription;
+import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscription;
 import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscriptionUpdate;
 import org.thingsboard.server.service.ws.telemetry.sub.AlarmSubscriptionUpdate;
 import org.thingsboard.server.service.ws.telemetry.sub.TelemetrySubscriptionUpdate;
@@ -113,6 +115,11 @@ public class TbSubscriptionUtils {
                 msgBuilder.setNotificationsSub(TransportProtos.NotificationsSubscriptionProto.newBuilder()
                         .setSub(subscriptionProto)
                         .setLimit(notificationsSub.getLimit()));
+                break;
+            case NOTIFICATIONS_COUNT:
+                NotificationsCountSubscription notificationsCountSub = (NotificationsCountSubscription) subscription;
+                msgBuilder.setNotificationsCountSub(TransportProtos.NotificationsCountSubscriptionProto.newBuilder()
+                        .setSub(subscriptionProto));
                 break;
         }
         return ToCoreMsg.newBuilder().setToSubscriptionMgrMsg(msgBuilder.build()).build();
@@ -184,6 +191,17 @@ public class TbSubscriptionUtils {
                 .tenantId(TenantId.fromUUID(new UUID(sub.getTenantIdMSB(), sub.getTenantIdLSB())))
                 .entityId(EntityIdFactory.getByTypeAndUuid(sub.getEntityType(), new UUID(sub.getEntityIdMSB(), sub.getEntityIdLSB())))
                 .limit(notificationsSub.getLimit())
+                .build();
+    }
+
+    public static NotificationsCountSubscription fromProto(TransportProtos.NotificationsCountSubscriptionProto notificationsCountSub) {
+        TbSubscriptionProto sub = notificationsCountSub.getSub();
+        return NotificationsCountSubscription.builder()
+                .serviceId(sub.getServiceId())
+                .sessionId(sub.getSessionId())
+                .subscriptionId(sub.getSubscriptionId())
+                .tenantId(TenantId.fromUUID(new UUID(sub.getTenantIdMSB(), sub.getTenantIdLSB())))
+                .entityId(EntityIdFactory.getByTypeAndUuid(sub.getEntityType(), new UUID(sub.getEntityIdMSB(), sub.getEntityIdLSB())))
                 .build();
     }
 
@@ -367,6 +385,7 @@ public class TbSubscriptionUtils {
                 .setSessionId(subscription.getSessionId())
                 .setSubscriptionId(subscription.getSubscriptionId())
                 .setNotification(JacksonUtil.toString(update.getNotification()))
+                .setIsNewNotification(update.isNewNotification())
                 .build();
         return TransportProtos.ToCoreNotificationMsg.newBuilder()
                 .setToLocalSubscriptionServiceMsg(TransportProtos.LocalSubscriptionServiceMsgProto.newBuilder()
@@ -375,13 +394,14 @@ public class TbSubscriptionUtils {
                 .build();
     }
 
-    public static ToCoreMsg notificationUpdateToProto(TenantId tenantId, UserId recipientId, Notification notification) {
+    public static ToCoreMsg notificationUpdateToProto(TenantId tenantId, UserId recipientId, Notification notification, boolean isNew) {
         TransportProtos.NotificationUpdateProto updateProto = TransportProtos.NotificationUpdateProto.newBuilder()
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
                 .setRecipientIdMSB(recipientId.getId().getMostSignificantBits())
                 .setRecipientIdLSB(recipientId.getId().getLeastSignificantBits())
                 .setNotification(JacksonUtil.toString(notification))
+                .setIsNew(isNew)
                 .build();
         return ToCoreMsg.newBuilder()
                 .setToSubscriptionMgrMsg(SubscriptionMgrMsgProto.newBuilder()

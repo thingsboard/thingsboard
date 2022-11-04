@@ -30,6 +30,8 @@ public interface NotificationDao extends Dao<Notification> {
 
     PageData<Notification> findByUserIdAndPageLink(TenantId tenantId, UserId userId, PageLink pageLink);
 
-    void updateStatus(TenantId tenantId, NotificationId notificationId, NotificationStatus status);
+    boolean updateStatusByIdAndUserId(TenantId tenantId, UserId userId, NotificationId notificationId, NotificationStatus status);
+
+    int countUnreadByUserId(TenantId tenantId, UserId userId);
 
 }

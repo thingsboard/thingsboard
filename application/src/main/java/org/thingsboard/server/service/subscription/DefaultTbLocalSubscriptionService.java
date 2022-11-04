@@ -172,7 +172,8 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     @Override
     public void onSubscriptionUpdate(String sessionId, int subscriptionId, NotificationsSubscriptionUpdate update, TbCallback callback) {
         TbSubscription subscription = subscriptionsBySessionId.getOrDefault(sessionId, Collections.emptyMap()).get(subscriptionId);
-        if (subscription != null && subscription.getType() == TbSubscriptionType.NOTIFICATIONS) {
+        if (subscription != null && (subscription.getType() == TbSubscriptionType.NOTIFICATIONS
+                || subscription.getType() == TbSubscriptionType.NOTIFICATIONS_COUNT)) {
             subscriptionUpdateExecutor.submit(() -> subscription.getUpdateProcessor().accept(subscription, update));
         }
         callback.onSuccess();

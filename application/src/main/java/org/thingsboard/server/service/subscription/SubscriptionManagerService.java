@@ -49,7 +49,7 @@ public interface SubscriptionManagerService extends ApplicationListener<Partitio
 
     void onAlarmDeleted(TenantId tenantId, EntityId entityId, Alarm alarm, TbCallback callback);
 
-    void onNotificationUpdate(TenantId tenantId, UserId recipientId, Notification notification, TbCallback callback);
+    void onNotificationUpdate(TenantId tenantId, UserId recipientId, Notification notification, boolean isNew, TbCallback callback);
 
     void onNotificationRequestDeleted(TenantId tenantId, NotificationRequestId notificationRequestId, TbCallback callback);
 

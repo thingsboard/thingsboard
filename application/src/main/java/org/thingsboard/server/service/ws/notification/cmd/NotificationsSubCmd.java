@@ -17,12 +17,14 @@ package org.thingsboard.server.service.ws.notification.cmd;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.thingsboard.server.service.ws.WsCmd;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class NotificationsSubCmd {
+public class NotificationsSubCmd implements WsCmd {
     private int cmdId;
     private int limit;
 }

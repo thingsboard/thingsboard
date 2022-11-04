@@ -18,12 +18,15 @@ package org.thingsboard.server.common.data.notification.targets;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.UserId;
 
+import javax.validation.constraints.NotEmpty;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 public class UserListNotificationTargetConfig implements NotificationTargetConfig {
 
-    private List<UserId> usersIds;
+    @NotEmpty
+    private List<UUID> usersIds;
 
     @Override
     public NotificationTargetConfigType getType() {

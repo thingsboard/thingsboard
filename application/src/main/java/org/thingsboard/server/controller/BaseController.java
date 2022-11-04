@@ -43,6 +43,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
+import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
@@ -58,6 +59,7 @@ import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
@@ -75,6 +77,7 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.RpcId;
@@ -130,8 +133,8 @@ import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
-import org.thingsboard.server.service.edge.EdgeNotificationService;
 import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
 import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
@@ -283,6 +286,9 @@ public abstract class BaseController {
 
     @Autowired
     protected TbNotificationEntityService notificationEntityService;
+
+    @Autowired
+    protected EntityActionService entityActionService;
 
     @Autowired
     protected QueueService queueService;
@@ -910,6 +916,16 @@ public abstract class BaseController {
 
     public static Exception toException(Throwable error) {
         return error != null ? (Exception.class.isInstance(error) ? (Exception) error : new Exception(error)) : null;
+    }
+
+    protected <E extends HasName & HasId<? extends EntityId>> void logEntityAction(SecurityUser user, EntityType entityType, E savedEntity, ActionType actionType) {
+        logEntityAction(user, entityType, null, savedEntity, actionType, null);
+    }
+
+    protected <E extends HasName & HasId<? extends EntityId>> void logEntityAction(SecurityUser user, EntityType entityType, E entity, E savedEntity, ActionType actionType, Exception e) {
+        EntityId entityId = savedEntity != null ? savedEntity.getId() : emptyId(entityType);
+        entityActionService.logEntityAction(user, entityId, savedEntity != null ? savedEntity : entity,
+                user.getCustomerId(), actionType, e);
     }
 
     protected void sendEntityNotificationMsg(TenantId tenantId, EntityId entityId, EdgeEventActionType action) {

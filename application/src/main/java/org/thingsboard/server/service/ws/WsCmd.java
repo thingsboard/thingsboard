@@ -13,18 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.ws.notification.cmd;
+package org.thingsboard.server.service.ws;
 
-import lombok.Data;
-
-@Data
-public class NotificationCmdsWrapper {
-
-    private NotificationsCountSubCmd unreadCountSubCmd;
-
-    private NotificationsSubCmd unreadSubCmd;
-    private MarkNotificationAsReadCmd markAsReadCmd;
-
-    private NotificationsUnsubCmd unsubCmd;
-
+public interface WsCmd {
+    int getCmdId();
 }

@@ -330,14 +330,16 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
     }
 
     @Override
-    public void onNotificationUpdate(TenantId tenantId, UserId recipientId, Notification notification, TbCallback callback) {
+    public void onNotificationUpdate(TenantId tenantId, UserId recipientId, Notification notification, boolean isNew, TbCallback callback) {
         Set<TbSubscription> subscriptions = subscriptionsByEntityId.get(recipientId);
         if (subscriptions != null) {
             NotificationsSubscriptionUpdate subscriptionUpdate = NotificationsSubscriptionUpdate.builder()
                     .notification(notification)
+                    .isNewNotification(isNew)
                     .build();
             subscriptions.stream()
-                    .filter(subscription -> subscription.getType() == TbSubscriptionType.NOTIFICATIONS)
+                    .filter(subscription -> subscription.getType() == TbSubscriptionType.NOTIFICATIONS
+                            || subscription.getType() == TbSubscriptionType.NOTIFICATIONS_COUNT)
                     .forEach(subscription -> {
                         if (serviceId.equals(subscription.getServiceId())) {
                             localSubscriptionService.onSubscriptionUpdate(subscription.getSessionId(),
@@ -362,7 +364,8 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
         subscriptionsByEntityId.entrySet().stream()
                 .filter(subEntry -> subEntry.getKey().getEntityType() == EntityType.USER)
                 .flatMap(subEntry -> subEntry.getValue().stream()
-                        .filter(sub -> sub.getType() == TbSubscriptionType.NOTIFICATIONS)
+                        .filter(sub -> sub.getType() == TbSubscriptionType.NOTIFICATIONS
+                                || sub.getType() == TbSubscriptionType.NOTIFICATIONS_COUNT)
                         .filter(sub -> sub.getServiceId().equals(serviceId)))
                 .forEach(subscription -> {
                     localSubscriptionService.onSubscriptionUpdate(subscription.getSessionId(), subscription.getSubscriptionId(), subscriptionUpdate, TbCallback.EMPTY);

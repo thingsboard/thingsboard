@@ -18,13 +18,14 @@ package org.thingsboard.server.service.ws.notification.cmd;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.thingsboard.server.service.ws.WsCmd;
 
 import java.util.UUID;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class MarkNotificationAsReadCmd {
+public class MarkNotificationAsReadCmd implements WsCmd {
     private int cmdId;
     private UUID notificationId;
 }

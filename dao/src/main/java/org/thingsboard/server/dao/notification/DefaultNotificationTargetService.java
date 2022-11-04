@@ -18,9 +18,12 @@ package org.thingsboard.server.dao.notification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.notification.targets.CustomerUsersNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.NotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.SingleUserNotificationTargetConfig;
@@ -28,9 +31,10 @@ import org.thingsboard.server.common.data.notification.targets.UserListNotificat
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.service.DataValidator;
+import org.thingsboard.server.dao.user.UserService;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -38,11 +42,11 @@ import java.util.List;
 public class DefaultNotificationTargetService implements NotificationTargetService {
 
     private final NotificationTargetDao notificationTargetDao;
+    private final UserService userService;
     private final NotificationTargetValidator validator = new NotificationTargetValidator();
 
     @Override
     public NotificationTarget saveNotificationTarget(TenantId tenantId, NotificationTarget notificationTarget) {
-        notificationTarget.setTenantId(tenantId);
         validator.validate(notificationTarget, NotificationTarget::getTenantId);
         return notificationTargetDao.save(tenantId, notificationTarget);
     }
@@ -58,21 +62,42 @@ public class DefaultNotificationTargetService implements NotificationTargetServi
     }
 
     @Override
-    public List<UserId> findRecipientsForNotificationTarget(TenantId tenantId, NotificationTargetId notificationTargetId) {
+    public PageData<User> findRecipientsForNotificationTarget(TenantId tenantId, NotificationTargetId notificationTargetId, PageLink pageLink) {
         NotificationTarget notificationTarget = findNotificationTargetById(tenantId, notificationTargetId);
         NotificationTargetConfig configuration = notificationTarget.getConfiguration();
-        List<UserId> recipients = new ArrayList<>();
-        switch (configuration.getType()) {
-            case SINGLE_USER:
-                SingleUserNotificationTargetConfig singleUserNotificationTargetConfig = (SingleUserNotificationTargetConfig) configuration;
-                recipients.add(singleUserNotificationTargetConfig.getUserId());
-                break;
-            case USER_LIST:
-                UserListNotificationTargetConfig userListNotificationTargetConfig = (UserListNotificationTargetConfig) configuration;
-                recipients.addAll(userListNotificationTargetConfig.getUsersIds());
-                break;
+        return findRecipientsForNotificationTargetConfig(tenantId, configuration, pageLink);
+    }
+
+    @Override
+    public PageData<User> findRecipientsForNotificationTargetConfig(TenantId tenantId, NotificationTargetConfig targetConfig, PageLink pageLink) {
+        switch (targetConfig.getType()) {
+            case SINGLE_USER: {
+                UserId userId = new UserId(((SingleUserNotificationTargetConfig) targetConfig).getUserId());
+                User user = userService.findUserById(tenantId, userId);
+                return new PageData<>(List.of(user), 1, 1, false);
+            }
+            case USER_LIST: {
+                List<User> users = ((UserListNotificationTargetConfig) targetConfig).getUsersIds().stream()
+                        .map(UserId::new).map(userId -> userService.findUserById(tenantId, userId))
+                        .collect(Collectors.toList());
+                return new PageData<>(users, 1, users.size(), false);
+            }
+            case CUSTOMER_USERS: {
+                if (tenantId.equals(TenantId.SYS_TENANT_ID)) {
+                    throw new IllegalArgumentException("Customer users target is not supported for system administrator");
+                }
+                CustomerId customerId = new CustomerId(((CustomerUsersNotificationTargetConfig) targetConfig).getCustomerId());
+                return userService.findCustomerUsers(tenantId, customerId, pageLink);
+            }
+            case ALL_USERS: {
+                if (!tenantId.equals(TenantId.SYS_TENANT_ID)) {
+                    return userService.findUsersByTenantId(tenantId, pageLink);
+                } else {
+                    return userService.findUsers(TenantId.SYS_TENANT_ID, pageLink);
+                }
+            }
         }
-        return recipients;
+        return new PageData<>();
     }
 
     @Override

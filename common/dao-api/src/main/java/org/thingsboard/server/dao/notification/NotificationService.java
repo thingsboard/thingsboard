@@ -38,10 +38,14 @@ public interface NotificationService {
 
     Notification createNotification(TenantId tenantId, Notification notification);
 
-    Notification updateNotificationStatus(TenantId tenantId, NotificationId notificationId, NotificationStatus status);
+    Notification findNotificationById(TenantId tenantId, NotificationId notificationId);
+
+    boolean updateNotificationStatus(TenantId tenantId, UserId userId, NotificationId notificationId, NotificationStatus status);
 
     PageData<Notification> findNotificationsByUserIdAndReadStatusAndPageLink(TenantId tenantId, UserId userId, boolean unreadOnly, PageLink pageLink);
 
     PageData<Notification> findLatestUnreadNotificationsByUserId(TenantId tenantId, UserId userId, int limit);
+
+    int countUnreadNotificationsByUserId(TenantId tenantId, UserId userId);
 
 }

@@ -89,6 +89,7 @@ public class TbTestWebSocketClient extends WebSocketClient {
 
     @Override
     public void send(String text) throws NotYetConnectedException {
+        log.info("SENDING: {}", text);
         reply = new CountDownLatch(1);
         super.send(text);
     }

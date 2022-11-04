@@ -464,6 +464,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             TransportProtos.NotificationsSubscriptionUpdateProto notificationsSubUpdateProto = msg.getNotificationsSubUpdate();
             NotificationsSubscriptionUpdate notificationsSubscriptionUpdate = NotificationsSubscriptionUpdate.builder()
                     .notification(JacksonUtil.fromString(notificationsSubUpdateProto.getNotification(), Notification.class))
+                    .isNewNotification(notificationsSubUpdateProto.getIsNewNotification())
                     .build();
             localSubscriptionService.onSubscriptionUpdate(notificationsSubUpdateProto.getSessionId(),
                     notificationsSubUpdateProto.getSubscriptionId(), notificationsSubscriptionUpdate, callback);
@@ -481,6 +482,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             subscriptionManagerService.addSubscription(TbSubscriptionUtils.fromProto(msg.getAlarmSub()), callback);
         } else if (msg.hasNotificationsSub()) {
             subscriptionManagerService.addSubscription(TbSubscriptionUtils.fromProto(msg.getNotificationsSub()), callback);
+        } else if (msg.hasNotificationsCountSub()) {
+            subscriptionManagerService.addSubscription(TbSubscriptionUtils.fromProto(msg.getNotificationsCountSub()), callback);
         } else if (msg.hasSubClose()) {
             TbSubscriptionCloseProto closeProto = msg.getSubClose();
             subscriptionManagerService.cancelSubscription(closeProto.getSessionId(), closeProto.getSubscriptionId(), callback);
@@ -525,7 +528,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             TenantId tenantId = TenantId.fromUUID(new UUID(notificationUpdateProto.getTenantIdMSB(), notificationUpdateProto.getTenantIdLSB()));
             UserId recipientId = new UserId(new UUID(notificationUpdateProto.getRecipientIdMSB(), notificationUpdateProto.getRecipientIdLSB()));
             Notification notification = JacksonUtil.fromString(notificationUpdateProto.getNotification(), Notification.class);
-            subscriptionManagerService.onNotificationUpdate(tenantId, recipientId, notification, callback);
+            boolean isNew = notificationUpdateProto.getIsNew();
+            subscriptionManagerService.onNotificationUpdate(tenantId, recipientId, notification, isNew, callback);
         } else if (msg.hasNotificationRequestDelete()) {
             TransportProtos.NotificationRequestDeleteProto notificationRequestDeleteProto = msg.getNotificationRequestDelete();
             TenantId tenantId = TenantId.fromUUID(new UUID(notificationRequestDeleteProto.getTenantIdMSB(), notificationRequestDeleteProto.getTenantIdLSB()));

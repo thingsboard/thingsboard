@@ -32,10 +32,10 @@ import org.thingsboard.server.common.data.notification.NotificationStatus;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.notification.NotificationProcessingService;
 import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
-import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.NotificationsTopicService;
 import org.thingsboard.server.queue.discovery.PartitionService;
@@ -43,9 +43,7 @@ import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 import org.thingsboard.server.service.telemetry.AbstractSubscriptionService;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -56,32 +54,23 @@ public class DefaultNotificationProcessingService extends AbstractSubscriptionSe
 
     private final NotificationTargetService notificationTargetService;
     private final NotificationService notificationService;
-    private final UserService userService;
     private final DbCallbackExecutorService dbCallbackExecutorService;
     private final NotificationsTopicService notificationsTopicService;
 
     public DefaultNotificationProcessingService(TbClusterService clusterService, PartitionService partitionService,
                                                 NotificationTargetService notificationTargetService,
-                                                NotificationService notificationService, UserService userService,
+                                                NotificationService notificationService,
                                                 DbCallbackExecutorService dbCallbackExecutorService,
                                                 NotificationsTopicService notificationsTopicService) {
         super(clusterService, partitionService);
         this.notificationTargetService = notificationTargetService;
         this.notificationService = notificationService;
-        this.userService = userService;
         this.dbCallbackExecutorService = dbCallbackExecutorService;
         this.notificationsTopicService = notificationsTopicService;
     }
 
     @Override
     public NotificationRequest processNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest) {
-        List<UserId> recipientsIds = notificationTargetService.findRecipientsForNotificationTarget(tenantId, notificationRequest.getTargetId());
-        List<User> recipients = new ArrayList<>();
-        for (UserId recipientId : recipientsIds) {
-            User recipient = userService.findUserById(tenantId, recipientId); // todo: add caching
-            recipients.add(recipient);
-        }
-
         notificationRequest.setTenantId(tenantId);
         NotificationRequest savedNotificationRequest = notificationService.createNotificationRequest(tenantId, notificationRequest);
 
@@ -90,20 +79,31 @@ public class DefaultNotificationProcessingService extends AbstractSubscriptionSe
             // todo: delayed sending; check all delayed notification requests on start up, schedule send
         }
 
-        for (User recipient : recipients) {
+        DaoUtil.processBatches(pageLink -> {
+            return notificationTargetService.findRecipientsForNotificationTarget(tenantId, notificationRequest.getTargetId(), pageLink);
+        }, 100, recipients -> {
             dbCallbackExecutorService.submit(() -> {
-                Notification notification = createNotification(recipient, savedNotificationRequest);
-                onNotificationUpdate(recipient.getTenantId(), recipient.getId(), notification);
+                for (User recipient : recipients) {
+                    try {
+                        Notification notification = createNotification(recipient, savedNotificationRequest);
+                        onNotificationUpdate(recipient.getTenantId(), recipient.getId(), notification, true);
+                    } catch (Exception e) {
+                        log.error("Failed to create notification for recipient {}", recipient.getId(), e);
+                    }
+                }
             });
-        }
+        });
 
         return savedNotificationRequest;
     }
 
     @Override
     public void markNotificationAsRead(TenantId tenantId, UserId recipientId, NotificationId notificationId) {
-        Notification notification = notificationService.updateNotificationStatus(tenantId, notificationId, NotificationStatus.READ);
-        onNotificationUpdate(tenantId, recipientId, notification);
+        boolean updated = notificationService.updateNotificationStatus(tenantId, recipientId, notificationId, NotificationStatus.READ);
+        if (updated) {
+            Notification notification = notificationService.findNotificationById(tenantId, notificationId);
+            onNotificationUpdate(tenantId, recipientId, notification, false);
+        }
     }
 
     @Override
@@ -134,11 +134,11 @@ public class DefaultNotificationProcessingService extends AbstractSubscriptionSe
         return TbNodeUtils.processTemplate(template, context);
     }
 
-    private void onNotificationUpdate(TenantId tenantId, UserId recipientId, Notification notification) {
+    private void onNotificationUpdate(TenantId tenantId, UserId recipientId, Notification notification, boolean isNew) {
         forwardToSubscriptionManagerServiceOrSendToCore(tenantId, recipientId, subscriptionManagerService -> {
-            subscriptionManagerService.onNotificationUpdate(tenantId, recipientId, notification, TbCallback.EMPTY);
+            subscriptionManagerService.onNotificationUpdate(tenantId, recipientId, notification, isNew, TbCallback.EMPTY);
         }, () -> {
-            return TbSubscriptionUtils.notificationUpdateToProto(tenantId, recipientId, notification);
+            return TbSubscriptionUtils.notificationUpdateToProto(tenantId, recipientId, notification, isNew);
         });
     }
 

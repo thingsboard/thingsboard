@@ -44,7 +44,8 @@ public enum Resource {
     RPC(EntityType.RPC),
     QUEUE(EntityType.QUEUE),
     VERSION_CONTROL,
-    NOTIFICATION;
+    NOTIFICATION_TARGET(EntityType.NOTIFICATION_TARGET),
+    NOTIFICATION_REQUEST(EntityType.NOTIFICATION_REQUEST);
 
     private final EntityType entityType;
 

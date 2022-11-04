@@ -552,6 +552,10 @@ message NotificationsSubscriptionProto {
   int32 limit = 2;
 }
 
+message NotificationsCountSubscriptionProto {
+  TbSubscriptionProto sub = 1;
+}
+
 message TbSubscriptionUpdateProto {
   string sessionId = 1;
   int32 subscriptionId = 2;
@@ -573,6 +577,7 @@ message NotificationsSubscriptionUpdateProto {
   string sessionId = 1;
   int32 subscriptionId = 2;
   string notification = 3;
+  bool isNewNotification = 4;
 }
 
 message NotificationUpdateProto {
@@ -581,6 +586,7 @@ message NotificationUpdateProto {
   int64 recipientIdMSB = 3;
   int64 recipientIdLSB = 4;
   string notification = 5;
+  bool isNew = 6;
 }
 
 message NotificationRequestDeleteProto {
@@ -692,8 +698,9 @@ message SubscriptionMgrMsgProto {
   TbAlarmDeleteProto alarmDelete = 9;
   TbTimeSeriesDeleteProto tsDelete = 10;
   NotificationsSubscriptionProto notificationsSub = 11;
-  NotificationUpdateProto notificationUpdate = 12;
-  NotificationRequestDeleteProto notificationRequestDelete = 13;
+  NotificationsCountSubscriptionProto notificationsCountSub = 12;
+  NotificationUpdateProto notificationUpdate = 13;
+  NotificationRequestDeleteProto notificationRequestDelete = 14;
 }
 
 message LocalSubscriptionServiceMsgProto {

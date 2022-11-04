@@ -28,6 +28,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
@@ -81,9 +83,15 @@ public class NotificationController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public NotificationRequest createNotificationRequest(@RequestBody NotificationRequest notificationRequest,
                                                          @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
-        accessControlService.checkPermission(user, Resource.NOTIFICATION, Operation.CREATE);
-        // read permission for target's users
-        return notificationProcessingService.processNotificationRequest(user.getTenantId(), notificationRequest);
+        accessControlService.checkPermission(user, Resource.NOTIFICATION_REQUEST, Operation.CREATE, null, notificationRequest);
+        try {
+            NotificationRequest savedNotificationRequest = notificationProcessingService.processNotificationRequest(user.getTenantId(), notificationRequest);
+            logEntityAction(user, EntityType.NOTIFICATION_REQUEST, savedNotificationRequest, ActionType.ADDED);
+            return savedNotificationRequest;
+        } catch (Exception e) {
+            logEntityAction(user, EntityType.NOTIFICATION_REQUEST, notificationRequest, null, ActionType.ADDED, e);
+            throw e;
+        }
     }
 
     @GetMapping("/notification/request/{id}")
@@ -102,16 +110,23 @@ public class NotificationController extends BaseController {
                                                                  @RequestParam(required = false) String sortProperty,
                                                                  @RequestParam(required = false) String sortOrder,
                                                                  @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
-        accessControlService.checkPermission(user, Resource.NOTIFICATION, Operation.CREATE);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return notificationService.findNotificationRequestsByTenantIdAndPageLink(user.getTenantId(), pageLink);
     }
 
     @DeleteMapping("/notification/request/{id}")
     public void deleteNotificationRequest(@PathVariable UUID id,
-                                          @AuthenticationPrincipal SecurityUser user) {
+                                          @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         NotificationRequestId notificationRequestId = new NotificationRequestId(id);
-        notificationProcessingService.deleteNotificationRequest(user.getTenantId(), notificationRequestId);
+        NotificationRequest notificationRequest = notificationService.findNotificationRequestById(user.getTenantId(), notificationRequestId);
+        accessControlService.checkPermission(user, Resource.NOTIFICATION_REQUEST, Operation.DELETE, notificationRequestId, notificationRequest);
+        try {
+            notificationProcessingService.deleteNotificationRequest(user.getTenantId(), notificationRequestId);
+            logEntityAction(user, EntityType.NOTIFICATION_REQUEST, notificationRequest, ActionType.DELETED);
+        } catch (Exception e) {
+            logEntityAction(user, EntityType.NOTIFICATION_REQUEST, notificationRequest, notificationRequest, ActionType.DELETED, e);
+            throw e;
+        }
     }
 
 }

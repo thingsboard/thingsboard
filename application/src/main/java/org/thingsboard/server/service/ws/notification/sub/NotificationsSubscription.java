@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.subscription;
+package org.thingsboard.server.service.ws.notification.sub;
 
 import lombok.Builder;
 import lombok.Getter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.Notification;
+import org.thingsboard.server.service.subscription.TbSubscription;
+import org.thingsboard.server.service.subscription.TbSubscriptionType;
 import org.thingsboard.server.service.ws.notification.cmd.UnreadNotificationsUpdate;
-import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscriptionUpdate;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -34,7 +35,7 @@ public class NotificationsSubscription extends TbSubscription<NotificationsSubsc
 
     private final Map<UUID, Notification> unreadNotifications = new LinkedHashMap<>();
     private final int limit;
-    private final AtomicInteger totalUnreadCount = new AtomicInteger();
+    private final AtomicInteger totalUnreadCounter = new AtomicInteger();
 
     @Builder
     public NotificationsSubscription(String serviceId, String sessionId, int subscriptionId, TenantId tenantId, EntityId entityId,
@@ -48,7 +49,7 @@ public class NotificationsSubscription extends TbSubscription<NotificationsSubsc
         return UnreadNotificationsUpdate.builder()
                 .cmdId(getSubscriptionId())
                 .notifications(unreadNotifications.values())
-                .totalUnreadCount(totalUnreadCount.get())
+                .totalUnreadCount(totalUnreadCounter.get())
                 .build();
     }
 
@@ -56,7 +57,7 @@ public class NotificationsSubscription extends TbSubscription<NotificationsSubsc
         return UnreadNotificationsUpdate.builder()
                 .cmdId(getSubscriptionId())
                 .update(notification)
-                .totalUnreadCount(totalUnreadCount.get())
+                .totalUnreadCount(totalUnreadCounter.get())
                 .build();
     }
 

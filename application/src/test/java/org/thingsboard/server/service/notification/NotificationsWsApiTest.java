@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.notification.targets.SingleUserNotific
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.controller.TbTestWebSocketClient;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.service.ws.notification.cmd.UnreadNotificationsCountUpdate;
 import org.thingsboard.server.service.ws.notification.cmd.UnreadNotificationsUpdate;
 
 import java.net.URISyntaxException;
@@ -42,6 +43,41 @@ public class NotificationsWsApiTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testSubscribingToUnreadNotificationsCount() {
+        NotificationTarget notificationTarget = createNotificationTarget(tenantAdminUserId);
+        String notificationText1 = "Notification 1";
+        submitNotificationRequest(notificationTarget.getId(), "Just a test", notificationText1);
+        String notificationText2 = "Notification 2";
+        submitNotificationRequest(notificationTarget.getId(), "Just a test", notificationText2);
+
+        getWsClient().subscribeForUnreadNotificationsCount();
+        getWsClient().waitForReply();
+
+        UnreadNotificationsCountUpdate update = getWsClient().getLastCountUpdate();
+        assertThat(update.getTotalUnreadCount()).isEqualTo(2);
+    }
+
+    @Test
+    public void testReceivingCountUpdates_multipleSessions() {
+        getWsClient().subscribeForUnreadNotificationsCount();
+        getAnotherWsClient().subscribeForUnreadNotificationsCount();
+        getWsClient().waitForReply();
+        getAnotherWsClient().waitForReply();
+        assertThat(getWsClient().getLastCountUpdate().getTotalUnreadCount()).isZero();
+
+        getWsClient().registerWaitForUpdate();
+        getAnotherWsClient().registerWaitForUpdate();
+        NotificationTarget notificationTarget = createNotificationTarget(tenantAdminUserId);
+        String notificationText = "Notification";
+        submitNotificationRequest(notificationTarget.getId(), "Just a test", notificationText);
+        getWsClient().waitForUpdate();
+        getAnotherWsClient().waitForUpdate();
+
+        assertThat(getWsClient().getLastCountUpdate().getTotalUnreadCount()).isOne();
+        assertThat(getAnotherWsClient().getLastCountUpdate().getTotalUnreadCount()).isOne();
+    }
+
+    @Test
     public void testSubscribingToUnreadNotifications_multipleSessions() throws Exception {
         NotificationTarget notificationTarget = createNotificationTarget(tenantAdminUserId);
         String notificationText1 = "Notification 1";
@@ -54,8 +90,8 @@ public class NotificationsWsApiTest extends AbstractControllerTest {
         getWsClient().waitForReply();
         getAnotherWsClient().waitForReply();
 
-        checkFullNotificationsUpdate(getWsClient().getLastUpdate(), notificationText1, notificationText2);
-        checkFullNotificationsUpdate(getAnotherWsClient().getLastUpdate(), notificationText1, notificationText2);
+        checkFullNotificationsUpdate(getWsClient().getLastDataUpdate(), notificationText1, notificationText2);
+        checkFullNotificationsUpdate(getAnotherWsClient().getLastDataUpdate(), notificationText1, notificationText2);
     }
 
     @Test
@@ -64,7 +100,7 @@ public class NotificationsWsApiTest extends AbstractControllerTest {
         getAnotherWsClient().subscribeForUnreadNotifications(10);
         getWsClient().waitForReply();
         getAnotherWsClient().waitForReply();
-        UnreadNotificationsUpdate notificationsUpdate = getWsClient().getLastUpdate();
+        UnreadNotificationsUpdate notificationsUpdate = getWsClient().getLastDataUpdate();
         assertThat(notificationsUpdate.getTotalUnreadCount()).isZero();
 
         getWsClient().registerWaitForUpdate();
@@ -75,8 +111,8 @@ public class NotificationsWsApiTest extends AbstractControllerTest {
         getWsClient().waitForUpdate();
         getAnotherWsClient().waitForUpdate();
 
-        checkPartialNotificationsUpdate(getWsClient().getLastUpdate(), notificationText, 1);
-        checkPartialNotificationsUpdate(getAnotherWsClient().getLastUpdate(), notificationText, 1);
+        checkPartialNotificationsUpdate(getWsClient().getLastDataUpdate(), notificationText, 1);
+        checkPartialNotificationsUpdate(getAnotherWsClient().getLastDataUpdate(), notificationText, 1);
     }
 
     @Test
@@ -85,28 +121,37 @@ public class NotificationsWsApiTest extends AbstractControllerTest {
         getAnotherWsClient().subscribeForUnreadNotifications(10);
         getWsClient().waitForReply();
         getAnotherWsClient().waitForReply();
+        getAnotherWsClient().subscribeForUnreadNotificationsCount();
+        getAnotherWsClient().waitForReply();
 
         NotificationTarget notificationTarget = createNotificationTarget(tenantAdminUserId);
         getWsClient().registerWaitForUpdate();
+        getAnotherWsClient().registerWaitForUpdate(2);
         String notificationText1 = "Notification 1";
         submitNotificationRequest(notificationTarget.getId(), "Just a test", notificationText1);
         getWsClient().waitForUpdate();
-        Notification notification1 = getWsClient().getLastUpdate().getUpdate();
+        getAnotherWsClient().waitForUpdate();
+        Notification notification1 = getWsClient().getLastDataUpdate().getUpdate();
 
         getWsClient().registerWaitForUpdate();
+        getAnotherWsClient().registerWaitForUpdate(2);
         String notificationText2 = "Notification 2";
         submitNotificationRequest(notificationTarget.getId(), "Just a test", notificationText2);
         getWsClient().waitForUpdate();
-        assertThat(getWsClient().getLastUpdate().getTotalUnreadCount()).isEqualTo(2);
+        getAnotherWsClient().waitForUpdate();
+        assertThat(getWsClient().getLastDataUpdate().getTotalUnreadCount()).isEqualTo(2);
+        assertThat(getAnotherWsClient().getLastDataUpdate().getTotalUnreadCount()).isEqualTo(2);
+        assertThat(getAnotherWsClient().getLastCountUpdate().getTotalUnreadCount()).isEqualTo(2);
 
         getWsClient().registerWaitForUpdate();
-        getAnotherWsClient().registerWaitForUpdate();
+        getAnotherWsClient().registerWaitForUpdate(2);
         getWsClient().markNotificationAsRead(notification1.getUuidId());
         getWsClient().waitForUpdate();
         getAnotherWsClient().waitForUpdate();
 
-        checkFullNotificationsUpdate(getWsClient().getLastUpdate(), notificationText2);
-        checkFullNotificationsUpdate(getAnotherWsClient().getLastUpdate(), notificationText2);
+        checkFullNotificationsUpdate(getWsClient().getLastDataUpdate(), notificationText2);
+        checkFullNotificationsUpdate(getAnotherWsClient().getLastDataUpdate(), notificationText2);
+        assertThat(getAnotherWsClient().getLastCountUpdate().getTotalUnreadCount()).isOne();
     }
 
     public void testReceivingUpdatesWhenSubscriptionAtAnotherInstance() {}
@@ -127,7 +172,7 @@ public class NotificationsWsApiTest extends AbstractControllerTest {
         notificationTarget.setTenantId(tenantId);
         notificationTarget.setName("User " + userId);
         SingleUserNotificationTargetConfig config = new SingleUserNotificationTargetConfig();
-        config.setUserId(userId);
+        config.setUserId(userId.getId());
         notificationTarget.setConfiguration(config);
         return doPost("/api/notification/target", notificationTarget, NotificationTarget.class);
     }

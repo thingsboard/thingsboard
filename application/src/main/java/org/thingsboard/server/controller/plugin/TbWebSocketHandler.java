@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.BeanCreationNotAllowedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.CloseStatus;
@@ -69,7 +70,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
     private static final ConcurrentMap<String, String> externalSessionMap = new ConcurrentHashMap<>();
 
 
-    @Autowired
+    @Autowired @Lazy
     private WebSocketService webSocketService;
 
     @Autowired

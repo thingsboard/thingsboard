@@ -15,16 +15,15 @@
  */
 package org.thingsboard.server.service.ws.notification.cmd;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import org.thingsboard.server.service.ws.WsCmd;
 
 @Data
-public class NotificationCmdsWrapper {
-
-    private NotificationsCountSubCmd unreadCountSubCmd;
-
-    private NotificationsSubCmd unreadSubCmd;
-    private MarkNotificationAsReadCmd markAsReadCmd;
-
-    private NotificationsUnsubCmd unsubCmd;
-
+@NoArgsConstructor
+@AllArgsConstructor
+public class NotificationsCountSubCmd implements WsCmd {
+    private int cmdId;
 }

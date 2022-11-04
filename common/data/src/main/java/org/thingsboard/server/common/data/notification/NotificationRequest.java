@@ -21,11 +21,11 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import javax.validation.Valid;
@@ -37,7 +37,7 @@ import javax.validation.constraints.NotNull;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class NotificationRequest extends BaseData<NotificationRequestId> implements HasTenantId {
+public class NotificationRequest extends BaseData<NotificationRequestId> implements HasTenantId, HasName {
 
     private TenantId tenantId;
     @NotNull(message = "Target is not specified")
@@ -54,5 +54,10 @@ public class NotificationRequest extends BaseData<NotificationRequestId> impleme
 
     public static final String GENERAL_NOTIFICATION_REASON = "General";
     public static final String ALARM_NOTIFICATION_REASON = "Alarm";
+
+    @Override
+    public String getName() {
+        return notificationReason;
+    }
 
 }

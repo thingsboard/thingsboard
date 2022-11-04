@@ -110,13 +110,17 @@ public abstract class DaoUtil {
     }
 
     public static <T> void processInBatches(Function<PageLink, PageData<T>> finder, int batchSize, Consumer<T> processor) {
+       processBatches(finder, batchSize, batch -> batch.forEach(processor));
+    }
+
+    public static <T> void processBatches(Function<PageLink, PageData<T>> finder, int batchSize, Consumer<List<T>> processor) {
         PageLink pageLink = new PageLink(batchSize);
         PageData<T> batch;
 
         boolean hasNextBatch;
         do {
             batch = finder.apply(pageLink);
-            batch.getData().forEach(processor);
+            processor.accept(batch.getData());
 
             hasNextBatch = batch.hasNext();
             pageLink = pageLink.nextPageLink();

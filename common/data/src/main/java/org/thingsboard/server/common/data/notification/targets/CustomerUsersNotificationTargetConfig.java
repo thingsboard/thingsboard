@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.ws.notification.cmd;
+package org.thingsboard.server.common.data.notification.targets;
 
 import lombok.Data;
 
+import java.util.UUID;
+
 @Data
-public class NotificationCmdsWrapper {
+public class CustomerUsersNotificationTargetConfig implements NotificationTargetConfig {
 
-    private NotificationsCountSubCmd unreadCountSubCmd;
+    private UUID customerId;
 
-    private NotificationsSubCmd unreadSubCmd;
-    private MarkNotificationAsReadCmd markAsReadCmd;
-
-    private NotificationsUnsubCmd unsubCmd;
+    @Override
+    public NotificationTargetConfigType getType() {
+        return NotificationTargetConfigType.CUSTOMER_USERS;
+    }
 
 }

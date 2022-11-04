@@ -81,11 +81,15 @@ public class DefaultNotificationService implements NotificationService {
         return notificationDao.save(tenantId, notification);
     }
 
+    @Override
+    public Notification findNotificationById(TenantId tenantId, NotificationId notificationId) {
+        return notificationDao.findById(tenantId, notificationId.getId());
+    }
+
     @Transactional
     @Override
-    public Notification updateNotificationStatus(TenantId tenantId, NotificationId notificationId, NotificationStatus status) {
-        notificationDao.updateStatus(tenantId, notificationId, status);
-        return notificationDao.findById(tenantId, notificationId.getId());
+    public boolean updateNotificationStatus(TenantId tenantId, UserId userId, NotificationId notificationId, NotificationStatus status) {
+        return notificationDao.updateStatusByIdAndUserId(tenantId, userId, notificationId, status);
     }
 
     @Override
@@ -102,6 +106,11 @@ public class DefaultNotificationService implements NotificationService {
         SortOrder sortOrder = new SortOrder(EntityKeyMapping.CREATED_TIME, SortOrder.Direction.DESC);
         PageLink pageLink = new PageLink(limit, 0, null, sortOrder);
         return findNotificationsByUserIdAndReadStatusAndPageLink(tenantId, userId, true, pageLink);
+    }
+
+    @Override
+    public int countUnreadNotificationsByUserId(TenantId tenantId, UserId userId) {
+        return notificationDao.countUnreadByUserId(tenantId, userId);
     }
 
     private static class NotificationRequestValidator extends DataValidator<NotificationRequest> {

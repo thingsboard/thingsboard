@@ -27,24 +27,26 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
+import org.thingsboard.server.common.data.notification.targets.NotificationTargetConfig;
+import org.thingsboard.server.common.data.notification.targets.NotificationTargetConfigType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
-import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.security.permission.Resource;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RestController
 @TbCoreComponent
@@ -52,37 +54,59 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class NotificationTargetController extends BaseController {
-    // fixme: permission check, log action, events
 
     private final NotificationTargetService notificationTargetService;
-    private final UserService userService;
 
     @PostMapping("/target")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public NotificationTarget saveNotificationTarget(@RequestBody NotificationTarget notificationTarget,
-                                                     @AuthenticationPrincipal SecurityUser user) {
-        // fixme: read permission check for users in target
-        return notificationTargetService.saveNotificationTarget(user.getTenantId(), notificationTarget);
+                                                     @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
+        accessControlService.checkPermission(user, Resource.NOTIFICATION_TARGET, Operation.CREATE, null, notificationTarget);
+        if (!user.isSystemAdmin()) {
+            NotificationTargetConfig targetConfig = notificationTarget.getConfiguration();
+            if (targetConfig.getType() == NotificationTargetConfigType.SINGLE_USER ||
+                    targetConfig.getType() == NotificationTargetConfigType.USER_LIST) {
+                PageData<User> recipients = notificationTargetService.findRecipientsForNotificationTargetConfig(user.getTenantId(), notificationTarget.getConfiguration(), null);
+                for (User recipient : recipients.getData()) {
+                    accessControlService.checkPermission(user, Resource.USER, Operation.READ, recipient.getId(), recipient);
+                }
+            }
+        }
+
+        try {
+            NotificationTarget savedNotificationTarget = notificationTargetService.saveNotificationTarget(user.getTenantId(), notificationTarget);
+            logEntityAction(user, EntityType.NOTIFICATION_TARGET, savedNotificationTarget,
+                    notificationTarget.getId() == null ? ActionType.ADDED : ActionType.UPDATED);
+            return savedNotificationTarget;
+        } catch (Exception e) {
+            logEntityAction(user, EntityType.NOTIFICATION_TARGET, notificationTarget, null,
+                    notificationTarget.getId() == null ? ActionType.ADDED : ActionType.UPDATED, e);
+            throw e;
+        }
     }
 
     @GetMapping("/target/{id}")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public NotificationTarget getNotificationTargetById(@PathVariable UUID id,
-                                                        @AuthenticationPrincipal SecurityUser user) {
+                                                        @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         NotificationTargetId notificationTargetId = new NotificationTargetId(id);
-        return notificationTargetService.findNotificationTargetById(user.getTenantId(), notificationTargetId);
+        NotificationTarget notificationTarget = notificationTargetService.findNotificationTargetById(user.getTenantId(), notificationTargetId);
+        accessControlService.checkPermission(user, Resource.NOTIFICATION_TARGET, Operation.READ, notificationTargetId, notificationTarget);
+        return notificationTarget;
     }
 
-    @GetMapping("/target/{id}/recipients")
+    @PostMapping("/target/recipients")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    public List<User> getRecipientsForNotificationTarget(@PathVariable UUID id,
-                                                         @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
-        NotificationTargetId notificationTargetId = new NotificationTargetId(id);
-        // fixme: to page data
-        // todo: check read permission for recipients
-        List<User> recipients = new ArrayList<>();
-        for (UserId userId : notificationTargetService.findRecipientsForNotificationTarget(user.getTenantId(), notificationTargetId)) {
-            recipients.add(checkUserId(userId, Operation.READ));
+    public PageData<User> getRecipientsForNotificationTargetConfig(@RequestBody NotificationTarget notificationTarget,
+                                                                   @RequestParam int pageSize,
+                                                                   @RequestParam int page,
+                                                                   @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
+        PageLink pageLink = createPageLink(pageSize, page, null, null, null);
+        PageData<User> recipients = notificationTargetService.findRecipientsForNotificationTargetConfig(user.getTenantId(), notificationTarget.getConfiguration(), pageLink);
+        if (!user.isSystemAdmin()) {
+            for (User recipient : recipients.getData()) {
+                accessControlService.checkPermission(user, Resource.USER, Operation.READ, recipient.getId(), recipient);
+            }
         }
         return recipients;
     }
@@ -102,9 +126,17 @@ public class NotificationTargetController extends BaseController {
     @DeleteMapping("/target/{id}")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public void deleteNotificationTarget(@PathVariable UUID id,
-                                         @AuthenticationPrincipal SecurityUser user) {
+                                         @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         NotificationTargetId notificationTargetId = new NotificationTargetId(id);
-        notificationTargetService.deleteNotificationTarget(user.getTenantId(), notificationTargetId);
+        NotificationTarget notificationTarget = checkNotNull(notificationTargetService.findNotificationTargetById(user.getTenantId(), notificationTargetId));
+        accessControlService.checkPermission(user, Resource.NOTIFICATION_TARGET, Operation.DELETE, notificationTargetId, notificationTarget);
+
+        try {
+            notificationTargetService.deleteNotificationTarget(user.getTenantId(), notificationTargetId);
+            logEntityAction(user, EntityType.NOTIFICATION_TARGET, notificationTarget, ActionType.DELETED);
+        } catch (Exception e) {
+            logEntityAction(user, EntityType.NOTIFICATION_TARGET, null, notificationTarget, ActionType.DELETED, e);
+        }
     }
 
 }

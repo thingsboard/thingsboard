@@ -49,5 +49,6 @@ CREATE TABLE IF NOT EXISTS notification (
     severity VARCHAR(32),
     status VARCHAR(32)
 ) PARTITION BY RANGE (created_time);
+CREATE INDEX IF NOT EXISTS idx_notification_id ON notification(id);
 CREATE INDEX IF NOT EXISTS idx_notification_recipient_id_and_created_time ON notification(recipient_id, created_time DESC);
 CREATE INDEX IF NOT EXISTS idx_notification_recipient_id_and_status_and_created_time ON notification(recipient_id, status, created_time DESC);

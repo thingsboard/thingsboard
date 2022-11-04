@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.notification.Notification;
 public class NotificationsSubscriptionUpdate {
 
     private final Notification notification;
+    private final boolean isNewNotification;
 
     private final boolean notificationRequestDeleted;
     private final NotificationRequestId notificationRequestId;

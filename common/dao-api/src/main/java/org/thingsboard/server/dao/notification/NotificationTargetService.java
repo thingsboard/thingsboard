@@ -15,14 +15,13 @@
  */
 package org.thingsboard.server.dao.notification;
 
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
+import org.thingsboard.server.common.data.notification.targets.NotificationTargetConfig;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-
-import java.util.List;
 
 public interface NotificationTargetService {
 
@@ -32,7 +31,9 @@ public interface NotificationTargetService {
 
     PageData<NotificationTarget> findNotificationTargetsByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink);
 
-    List<UserId> findRecipientsForNotificationTarget(TenantId tenantId, NotificationTargetId notificationTargetId);
+    PageData<User> findRecipientsForNotificationTarget(TenantId tenantId, NotificationTargetId notificationTargetId, PageLink pageLink);
+
+    PageData<User> findRecipientsForNotificationTargetConfig(TenantId tenantId, NotificationTargetConfig targetConfig, PageLink pageLink);
 
     void deleteNotificationTarget(TenantId tenantId, NotificationTargetId notificationTargetId);
 
