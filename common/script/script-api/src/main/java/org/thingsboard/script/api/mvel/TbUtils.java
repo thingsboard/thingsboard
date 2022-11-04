@@ -39,6 +39,18 @@ public class TbUtils {
                 ExecutionContext.class, String.class)));
         parserConfig.addImport("stringToBytes", new MethodStub(TbUtils.class.getMethod("stringToBytes",
                 ExecutionContext.class, String.class, String.class)));
+        parserConfig.addImport("parseInt", new MethodStub(TbUtils.class.getMethod("parseInt",
+                String.class)));
+        parserConfig.addImport("parseInt", new MethodStub(TbUtils.class.getMethod("parseInt",
+                String.class, int.class)));
+        parserConfig.addImport("parseFloat", new MethodStub(TbUtils.class.getMethod("parseFloat",
+                String.class)));
+        parserConfig.addImport("parseDouble", new MethodStub(TbUtils.class.getMethod("parseDouble",
+                String.class)));
+    }
+
+    public static void main(String[] args) {
+        System.out.println(Integer.class == int.class);
     }
 
     public static String btoa(String input) {
@@ -83,5 +95,73 @@ public class TbUtils {
             list.add(bytes[i]);
         }
         return list;
+    }
+
+    public static Integer parseInt(String value) {
+        if (value != null) {
+            try {
+                int radix = 10;
+                if (isHexadecimal(value)) {
+                    radix = 16;
+                }
+                return Integer.parseInt(prepareNumberString(value), radix);
+            } catch (NumberFormatException e) {
+                Float f = parseFloat(value);
+                if (f != null) {
+                    return f.intValue();
+                }
+            }
+        }
+        return null;
+    }
+
+    public static Integer parseInt(String value, int radix) {
+        if (value != null) {
+            try {
+                return Integer.parseInt(prepareNumberString(value), radix);
+            } catch (NumberFormatException e) {
+                Float f = parseFloat(value);
+                if (f != null) {
+                    return f.intValue();
+                }
+            }
+        }
+        return null;
+    }
+
+    public static Float parseFloat(String value) {
+        if (value != null) {
+            try {
+                return Float.parseFloat(prepareNumberString(value));
+            } catch (NumberFormatException e) {
+            }
+        }
+        return null;
+    }
+
+    public static Double parseDouble(String value) {
+        if (value != null) {
+            try {
+                return Double.parseDouble(prepareNumberString(value));
+            } catch (NumberFormatException e) {
+            }
+        }
+        return null;
+    }
+
+    private static boolean isHexadecimal(String value) {
+        return value != null && (value.contains("0x") || value.contains("0X"));
+    }
+
+    private static String prepareNumberString(String value) {
+        if (value != null) {
+            value = value.trim();
+            if (isHexadecimal(value)) {
+                value = value.replace("0x", "");
+                value = value.replace("0X", "");
+            }
+            value = value.replace(",", ".");
+        }
+        return value;
     }
 }
