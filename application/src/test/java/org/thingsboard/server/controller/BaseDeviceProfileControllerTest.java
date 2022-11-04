@@ -16,12 +16,6 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.github.os72.protobuf.dynamic.DynamicSchema;
-import com.google.protobuf.Descriptors;
-import com.google.protobuf.DynamicMessage;
-import com.google.protobuf.InvalidProtocolBufferException;
-import com.google.protobuf.util.JsonFormat;
-import com.squareup.wire.schema.internal.parser.ProtoFileElement;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -46,11 +40,9 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.JsonTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
-import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -62,13 +54,9 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.containsString;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.SOFTWARE;
@@ -750,137 +738,6 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
     }
 
     @Test
-    public void testSaveProtoDeviceProfileWithMessageNestedTypes() throws Exception {
-        String schema = "syntax = \"proto3\";\n" +
-                "\n" +
-                "package testnested;\n" +
-                "\n" +
-                "message Outer {\n" +
-                "  message MiddleAA {\n" +
-                "    message Inner {\n" +
-                "      optional int64 ival = 1;\n" +
-                "      optional bool  booly = 2;\n" +
-                "    }\n" +
-                "    Inner inner = 1;\n" +
-                "  }\n" +
-                "  message MiddleBB {\n" +
-                "    message Inner {\n" +
-                "      optional int32 ival = 1;\n" +
-                "      optional bool  booly = 2;\n" +
-                "    }\n" +
-                "    Inner inner = 1;\n" +
-                "  }\n" +
-                "  MiddleAA middleAA = 1;\n" +
-                "  MiddleBB middleBB = 2;\n" +
-                "}";
-        DynamicSchema dynamicSchema = getDynamicSchema(schema);
-        assertNotNull(dynamicSchema);
-        Set<String> messageTypes = dynamicSchema.getMessageTypes();
-        assertEquals(5, messageTypes.size());
-        assertTrue(messageTypes.contains("testnested.Outer"));
-        assertTrue(messageTypes.contains("testnested.Outer.MiddleAA"));
-        assertTrue(messageTypes.contains("testnested.Outer.MiddleAA.Inner"));
-        assertTrue(messageTypes.contains("testnested.Outer.MiddleBB"));
-        assertTrue(messageTypes.contains("testnested.Outer.MiddleBB.Inner"));
-
-        DynamicMessage.Builder middleAAInnerMsgBuilder = dynamicSchema.newMessageBuilder("testnested.Outer.MiddleAA.Inner");
-        Descriptors.Descriptor middleAAInnerMsgDescriptor = middleAAInnerMsgBuilder.getDescriptorForType();
-        DynamicMessage middleAAInnerMsg = middleAAInnerMsgBuilder
-                .setField(middleAAInnerMsgDescriptor.findFieldByName("ival"), 1L)
-                .setField(middleAAInnerMsgDescriptor.findFieldByName("booly"), true)
-                .build();
-
-        DynamicMessage.Builder middleAAMsgBuilder = dynamicSchema.newMessageBuilder("testnested.Outer.MiddleAA");
-        Descriptors.Descriptor middleAAMsgDescriptor = middleAAMsgBuilder.getDescriptorForType();
-        DynamicMessage middleAAMsg = middleAAMsgBuilder
-                .setField(middleAAMsgDescriptor.findFieldByName("inner"), middleAAInnerMsg)
-                .build();
-
-        DynamicMessage.Builder middleBBInnerMsgBuilder = dynamicSchema.newMessageBuilder("testnested.Outer.MiddleAA.Inner");
-        Descriptors.Descriptor middleBBInnerMsgDescriptor = middleBBInnerMsgBuilder.getDescriptorForType();
-        DynamicMessage middleBBInnerMsg = middleBBInnerMsgBuilder
-                .setField(middleBBInnerMsgDescriptor.findFieldByName("ival"), 0L)
-                .setField(middleBBInnerMsgDescriptor.findFieldByName("booly"), false)
-                .build();
-
-        DynamicMessage.Builder middleBBMsgBuilder = dynamicSchema.newMessageBuilder("testnested.Outer.MiddleBB");
-        Descriptors.Descriptor middleBBMsgDescriptor = middleBBMsgBuilder.getDescriptorForType();
-        DynamicMessage middleBBMsg = middleBBMsgBuilder
-                .setField(middleBBMsgDescriptor.findFieldByName("inner"), middleBBInnerMsg)
-                .build();
-
-
-        DynamicMessage.Builder outerMsgBuilder = dynamicSchema.newMessageBuilder("testnested.Outer");
-        Descriptors.Descriptor outerMsgBuilderDescriptor = outerMsgBuilder.getDescriptorForType();
-        DynamicMessage outerMsg = outerMsgBuilder
-                .setField(outerMsgBuilderDescriptor.findFieldByName("middleAA"), middleAAMsg)
-                .setField(outerMsgBuilderDescriptor.findFieldByName("middleBB"), middleBBMsg)
-                .build();
-
-        assertEquals("{\n" +
-                "  \"middleAA\": {\n" +
-                "    \"inner\": {\n" +
-                "      \"ival\": \"1\",\n" +
-                "      \"booly\": true\n" +
-                "    }\n" +
-                "  },\n" +
-                "  \"middleBB\": {\n" +
-                "    \"inner\": {\n" +
-                "      \"ival\": 0,\n" +
-                "      \"booly\": false\n" +
-                "    }\n" +
-                "  }\n" +
-                "}", dynamicMsgToJson(outerMsgBuilderDescriptor, outerMsg.toByteArray()));
-    }
-
-    @Test
-    public void testSaveProtoDeviceProfileWithMessageOneOfs() throws Exception {
-        String schema = "syntax = \"proto3\";\n" +
-                "\n" +
-                "package testoneofs;\n" +
-                "\n" +
-                "message SubMessage {\n" +
-                "   repeated string name = 1;\n" +
-                "}\n" +
-                "\n" +
-                "message SampleMessage {\n" +
-                "  optional int32 id = 1;\n" +
-                "  oneof testOneOf {\n" +
-                "     string name = 4;\n" +
-                "     SubMessage subMessage = 9;\n" +
-                "  }\n" +
-                "}";
-        DynamicSchema dynamicSchema = getDynamicSchema(schema);
-        assertNotNull(dynamicSchema);
-        Set<String> messageTypes = dynamicSchema.getMessageTypes();
-        assertEquals(2, messageTypes.size());
-        assertTrue(messageTypes.contains("testoneofs.SubMessage"));
-        assertTrue(messageTypes.contains("testoneofs.SampleMessage"));
-
-        DynamicMessage.Builder sampleMsgBuilder = dynamicSchema.newMessageBuilder("testoneofs.SampleMessage");
-        Descriptors.Descriptor sampleMsgDescriptor = sampleMsgBuilder.getDescriptorForType();
-        assertNotNull(sampleMsgDescriptor);
-
-        List<Descriptors.FieldDescriptor> fields = sampleMsgDescriptor.getFields();
-        assertEquals(3, fields.size());
-        DynamicMessage sampleMsg = sampleMsgBuilder
-                .setField(sampleMsgDescriptor.findFieldByName("name"), "Bob")
-                .build();
-        assertEquals("{\n" + "  \"name\": \"Bob\"\n" + "}", dynamicMsgToJson(sampleMsgDescriptor, sampleMsg.toByteArray()));
-
-        DynamicMessage.Builder subMsgBuilder = dynamicSchema.newMessageBuilder("testoneofs.SubMessage");
-        Descriptors.Descriptor subMsgDescriptor = subMsgBuilder.getDescriptorForType();
-        DynamicMessage subMsg = subMsgBuilder
-                .addRepeatedField(subMsgDescriptor.findFieldByName("name"), "Alice")
-                .addRepeatedField(subMsgDescriptor.findFieldByName("name"), "John")
-                .build();
-
-        DynamicMessage sampleMsgWithOneOfSubMessage = sampleMsgBuilder.setField(sampleMsgDescriptor.findFieldByName("subMessage"), subMsg).build();
-        assertEquals("{\n" + "  \"subMessage\": {\n" + "    \"name\": [\"Alice\", \"John\"]\n" + "  }\n" + "}",
-                dynamicMsgToJson(sampleMsgDescriptor, sampleMsgWithOneOfSubMessage.toByteArray()));
-    }
-
-    @Test
     public void testSaveProtoDeviceProfileWithInvalidTelemetrySchemaTsField() throws Exception {
         testSaveDeviceProfileWithInvalidProtoSchema("syntax =\"proto3\";\n" +
                 "\n" +
@@ -1125,23 +982,6 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
 
         testNotifyEntityEqualsOneTimeServiceNeverError(deviceProfile, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(errorMsg));
-    }
-
-    private DynamicSchema getDynamicSchema(String schema) throws Exception {
-        DeviceProfile deviceProfile = testSaveDeviceProfileWithProtoPayloadType(schema);
-        DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
-        assertTrue(transportConfiguration instanceof MqttDeviceProfileTransportConfiguration);
-        MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration = (MqttDeviceProfileTransportConfiguration) transportConfiguration;
-        TransportPayloadTypeConfiguration transportPayloadTypeConfiguration = mqttDeviceProfileTransportConfiguration.getTransportPayloadTypeConfiguration();
-        assertTrue(transportPayloadTypeConfiguration instanceof ProtoTransportPayloadConfiguration);
-        ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
-        ProtoFileElement protoFile = protoTransportPayloadConfiguration.getTransportProtoSchema(schema);
-        return protoTransportPayloadConfiguration.getDynamicSchema(protoFile, ProtoTransportPayloadConfiguration.ATTRIBUTES_PROTO_SCHEMA);
-    }
-
-    private String dynamicMsgToJson(Descriptors.Descriptor descriptor, byte[] payload) throws InvalidProtocolBufferException {
-        DynamicMessage dynamicMessage = DynamicMessage.parseFrom(descriptor, payload);
-        return JsonFormat.printer().includingDefaultValueFields().print(dynamicMessage);
     }
 
     @Test
