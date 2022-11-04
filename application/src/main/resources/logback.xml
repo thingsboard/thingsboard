@@ -25,7 +25,8 @@
         </encoder>
     </appender>
 
-    <logger name="org.thingsboard.server" level="INFO"/>
+    <logger name="org.thingsboard.server" level="DEBUG"/>
+    <logger name="org.thingsboard.server.transport.mqtt" level="TRACE"/>
     <logger name="org.apache.kafka.common.utils.AppInfoParser" level="WARN"/>
     <logger name="org.apache.kafka.clients" level="WARN"/>
     <!-- To enable the logging of scanned rule engine components-->
