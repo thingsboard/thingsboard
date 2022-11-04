@@ -132,11 +132,7 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
 
     @Override
     public Alarm findAlarmById(TenantId tenantId, AlarmId alarmId) {
-        try {
-            return alarmService.findAlarmByIdAsync(tenantId, alarmId).get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+        return alarmService.findAlarmById(tenantId, alarmId);
     }
 
     @Override
