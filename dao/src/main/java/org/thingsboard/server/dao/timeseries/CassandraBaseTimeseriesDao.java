@@ -647,8 +647,6 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
                     for (DataType type : DataType.values()) {
                         saveStmts[type.ordinal()] = prepare(getPreparedStatementQuery(type));
                     }
-                } else {
-                    saveStmts[dataType.ordinal()] = prepare(getPreparedStatementQuery(dataType));
                 }
             } finally {
                 stmtCreationLock.unlock();
@@ -666,8 +664,6 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
                     for (DataType type : DataType.values()) {
                         saveTtlStmts[type.ordinal()] = prepare(getPreparedStatementQueryWithTtl(type));
                     }
-                } else {
-                    saveTtlStmts[dataType.ordinal()] = prepare(getPreparedStatementQueryWithTtl(dataType));
                 }
             } finally {
                 stmtCreationLock.unlock();

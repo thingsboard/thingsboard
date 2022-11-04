@@ -24,7 +24,6 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.mvel2.ExecutionContext;
 import org.mvel2.MVEL;
-import org.mvel2.ParserContext;
 import org.mvel2.SandboxedParserConfiguration;
 import org.mvel2.SandboxedParserContext;
 import org.mvel2.ScriptMemoryOverflowException;
@@ -44,6 +43,7 @@ import org.thingsboard.server.common.stats.TbApiUsageStateClient;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -113,6 +113,13 @@ public class DefaultMvelInvokeService extends AbstractScriptInvokeService implem
         parserConfig.addImport("JSON", TbJson.class);
         TbUtils.register(parserConfig);
         executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(threadPoolSize, "mvel-executor"));
+        try {
+            // Special command to warm up MVEL engine
+            Serializable script = MVEL.compileExpression("var warmUp = {}; warmUp", new SandboxedParserContext(parserConfig));
+            MVEL.executeTbExpression(script, new ExecutionContext(), Collections.emptyMap());
+        } catch (Exception e) {
+            // do nothing
+        }
     }
 
     @PreDestroy

@@ -114,7 +114,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
             }
             alarm.setCustomerId(entityService.fetchEntityCustomerId(alarm.getTenantId(), alarm.getOriginator()));
             if (alarm.getId() == null) {
-                Alarm existing = alarmDao.findLatestByOriginatorAndType(alarm.getTenantId(), alarm.getOriginator(), alarm.getType()).get();
+                Alarm existing = alarmDao.findLatestByOriginatorAndType(alarm.getTenantId(), alarm.getOriginator(), alarm.getType());
                 if (existing == null || existing.getStatus().isCleared()) {
                     if (!alarmCreationEnabled) {
                         throw new ApiUsageLimitsExceededException("Alarms creation is disabled");
@@ -124,7 +124,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                     return updateAlarm(existing, alarm);
                 }
             } else {
-                return updateAlarm(alarm).get();
+                return updateAlarm(alarm);
             }
         } catch (ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
@@ -132,7 +132,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     public ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
-        return alarmDao.findLatestByOriginatorAndType(tenantId, originator, type);
+        return alarmDao.findLatestByOriginatorAndTypeAsync(tenantId, originator, type);
     }
 
     @Override
@@ -145,19 +145,15 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     @Override
     @Transactional
     public AlarmOperationResult deleteAlarm(TenantId tenantId, AlarmId alarmId) {
-        try {
-            log.debug("Deleting Alarm Id: {}", alarmId);
-            Alarm alarm = alarmDao.findAlarmByIdAsync(tenantId, alarmId.getId()).get();
-            if (alarm == null) {
-                return new AlarmOperationResult(alarm, false);
-            }
-            AlarmOperationResult result = new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm)));
-            deleteEntityRelations(tenantId, alarm.getId());
-            alarmDao.removeById(tenantId, alarm.getUuidId());
-            return result;
-        } catch (ExecutionException | InterruptedException e) {
-            throw new RuntimeException(e);
+        log.debug("Deleting Alarm Id: {}", alarmId);
+        Alarm alarm = alarmDao.findAlarmById(tenantId, alarmId.getId());
+        if (alarm == null) {
+            return new AlarmOperationResult(alarm, false);
         }
+        AlarmOperationResult result = new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm)));
+        deleteEntityRelations(tenantId, alarm.getId());
+        alarmDao.removeById(tenantId, alarm.getUuidId());
+        return result;
     }
 
     private AlarmOperationResult createAlarm(Alarm alarm) throws InterruptedException, ExecutionException {
@@ -197,19 +193,10 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         return relations.map(EntityRelation::getFrom).collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
-    private ListenableFuture<AlarmOperationResult> updateAlarm(Alarm update) {
+    private AlarmOperationResult updateAlarm(Alarm update) {
         alarmDataValidator.validate(update, Alarm::getTenantId);
-        return getAndUpdate(update.getTenantId(), update.getId(), new Function<Alarm, AlarmOperationResult>() {
-            @Nullable
-            @Override
-            public AlarmOperationResult apply(@Nullable Alarm alarm) {
-                if (alarm == null) {
-                    return null;
-                } else {
-                    return updateAlarm(alarm, update);
-                }
-            }
-        });
+        return getAndUpdate(update.getTenantId(), update.getId(),
+                (alarm) -> alarm == null ? null : updateAlarm(alarm, update));
     }
 
     private AlarmOperationResult updateAlarm(Alarm oldAlarm, Alarm newAlarm) {
@@ -233,7 +220,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     @Override
     public ListenableFuture<AlarmOperationResult> ackAlarm(TenantId tenantId, AlarmId alarmId, long ackTime) {
-        return getAndUpdate(tenantId, alarmId, new Function<Alarm, AlarmOperationResult>() {
+        return getAndUpdateAsync(tenantId, alarmId, new Function<Alarm, AlarmOperationResult>() {
             @Nullable
             @Override
             public AlarmOperationResult apply(@Nullable Alarm alarm) {
@@ -253,7 +240,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     @Override
     public ListenableFuture<AlarmOperationResult> clearAlarm(TenantId tenantId, AlarmId alarmId, JsonNode details, long clearTime) {
-        return getAndUpdate(tenantId, alarmId, new Function<Alarm, AlarmOperationResult>() {
+        return getAndUpdateAsync(tenantId, alarmId, new Function<Alarm, AlarmOperationResult>() {
             @Nullable
             @Override
             public AlarmOperationResult apply(@Nullable Alarm alarm) {
@@ -404,9 +391,15 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         }
     }
 
-    private <T> ListenableFuture<T> getAndUpdate(TenantId tenantId, AlarmId alarmId, Function<Alarm, T> function) {
+    private <T> ListenableFuture<T> getAndUpdateAsync(TenantId tenantId, AlarmId alarmId, Function<Alarm, T> function) {
         validateId(alarmId, "Alarm id should be specified!");
         ListenableFuture<Alarm> entity = alarmDao.findAlarmByIdAsync(tenantId, alarmId.getId());
         return Futures.transform(entity, function, readResultsProcessingExecutor);
+    }
+
+    private <T> T getAndUpdate(TenantId tenantId, AlarmId alarmId, Function<Alarm, T> function) {
+        validateId(alarmId, "Alarm id should be specified!");
+        Alarm entity = alarmDao.findAlarmById(tenantId, alarmId.getId());
+        return function.apply(entity);
     }
 }
