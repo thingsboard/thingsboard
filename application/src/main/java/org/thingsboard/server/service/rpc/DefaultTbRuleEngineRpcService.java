@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.rpc;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -67,7 +66,8 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
 
     public DefaultTbRuleEngineRpcService(PartitionService partitionService,
                                          TbClusterService clusterService,
-                                         TbServiceInfoProvider serviceInfoProvider, RpcService rpcService) {
+                                         TbServiceInfoProvider serviceInfoProvider,
+                                         RpcService rpcService) {
         this.partitionService = partitionService;
         this.clusterService = clusterService;
         this.serviceInfoProvider = serviceInfoProvider;
