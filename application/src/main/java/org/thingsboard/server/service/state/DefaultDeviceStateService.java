@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -83,6 +84,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
@@ -152,6 +154,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
 
     @Value("${state.defaultInactivityTimeoutInSec}")
     @Getter
+    @Setter
     private long defaultInactivityTimeoutInSec;
 
     @Value("${state.defaultStateCheckIntervalInSec}")
@@ -160,6 +163,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
 
     @Value("${state.persistToTelemetry:false}")
     @Getter
+    @Setter
     private boolean persistToTelemetry;
 
     @Value("${state.initFetchPackSize:50000}")
@@ -634,7 +638,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
 
     }
 
-    private DeviceStateData toDeviceStateData(EntityData ed, DeviceIdInfo deviceIdInfo) {
+    DeviceStateData toDeviceStateData(EntityData ed, DeviceIdInfo deviceIdInfo) {
         long lastActivityTime = getEntryValue(ed, getKeyType(), LAST_ACTIVITY_TIME, 0L);
         long inactivityAlarmTime = getEntryValue(ed, getKeyType(), INACTIVITY_ALARM_TIME, 0L);
         long inactivityTimeout = getEntryValue(ed, getKeyType(), INACTIVITY_TIMEOUT, TimeUnit.SECONDS.toMillis(defaultInactivityTimeoutInSec));
@@ -651,13 +655,32 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         TbMsgMetaData md = new TbMsgMetaData();
         md.putValue("deviceName", getEntryValue(ed, EntityKeyType.ENTITY_FIELD, "name", ""));
         md.putValue("deviceType", getEntryValue(ed, EntityKeyType.ENTITY_FIELD, "type", ""));
-        return DeviceStateData.builder()
+        DeviceStateData deviceStateData = DeviceStateData.builder()
                 .customerId(deviceIdInfo.getCustomerId())
                 .tenantId(deviceIdInfo.getTenantId())
                 .deviceId(deviceIdInfo.getDeviceId())
                 .deviceCreationTime(getEntryValue(ed, EntityKeyType.ENTITY_FIELD, "createdTime", 0L))
                 .metaData(md)
                 .state(deviceState).build();
+        transformInactivityTimeout(deviceStateData);
+        return deviceStateData;
+    }
+
+    private void transformInactivityTimeout(DeviceStateData deviceStateData) {
+        if (persistToTelemetry && deviceStateData.getState().getInactivityTimeout() == TimeUnit.SECONDS.toMillis(defaultInactivityTimeoutInSec)) {
+            log.trace("[{}] default value for inactivity timeout fetched {}, going to fetch inactivity timeout from attributes",
+                    deviceStateData.getDeviceId(), deviceStateData.getState().getInactivityTimeout());
+            try {
+                Optional<AttributeKvEntry> attributeOpt = attributesService.find(TenantId.SYS_TENANT_ID, deviceStateData.getDeviceId(), SERVER_SCOPE, INACTIVITY_TIMEOUT).get();
+                attributeOpt.flatMap(KvEntry::getLongValue).ifPresent((inactivityTimeout) -> {
+                    if (inactivityTimeout > 0) {
+                        deviceStateData.getState().setInactivityTimeout(inactivityTimeout);
+                    }
+                });
+            } catch (Exception e) {
+                log.warn("[{}] Failed to fetch inactivity timeout from attribute", deviceStateData.getDeviceId(), e);
+            }
+        }
     }
 
     private EntityKeyType getKeyType() {
