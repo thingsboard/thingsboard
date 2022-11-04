@@ -52,6 +52,7 @@ import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
 import java.util.Collection;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Created by ashvayka on 27.03.18.
@@ -127,6 +128,15 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     @Override
     public ListenableFuture<Alarm> findAlarmByIdAsync(TenantId tenantId, AlarmId alarmId) {
         return alarmService.findAlarmByIdAsync(tenantId, alarmId);
+    }
+
+    @Override
+    public Alarm findAlarmById(TenantId tenantId, AlarmId alarmId) {
+        try {
+            return alarmService.findAlarmByIdAsync(tenantId, alarmId).get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
