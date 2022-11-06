@@ -786,6 +786,10 @@ CREATE TABLE IF NOT EXISTS notification_target (
     configuration varchar(1000) NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS notification_rule (
+    id UUID NOT NULL CONSTRAINT notification_rule_pkey PRIMARY KEY
+);
+
 CREATE TABLE IF NOT EXISTS notification_request (
     id UUID NOT NULL CONSTRAINT notification_request_pkey PRIMARY KEY,
     created_time BIGINT NOT NULL,

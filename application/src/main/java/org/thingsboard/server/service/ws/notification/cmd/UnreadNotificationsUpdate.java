@@ -19,14 +19,15 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.ToString;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.CmdUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.CmdUpdateType;
 
 import java.util.Collection;
-import java.util.List;
 
 @Getter
+@ToString(exclude = "notifications")
 public class UnreadNotificationsUpdate extends CmdUpdate {
 
     private final Collection<Notification> notifications;

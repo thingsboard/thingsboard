@@ -19,10 +19,12 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.ToString;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.CmdUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.CmdUpdateType;
 
 @Getter
+@ToString
 public class UnreadNotificationsCountUpdate extends CmdUpdate {
 
     private final int totalUnreadCount;

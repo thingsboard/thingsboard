@@ -74,6 +74,7 @@ public class DefaultNotificationSubscriptionService extends AbstractSubscription
 
     @Override
     public NotificationRequest processNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest) {
+        log.info("Processing notification request (tenant id: {}, notification target id: {})", tenantId, notificationRequest.getTargetId());
         notificationRequest.setTenantId(tenantId);
         if (notificationRequest.getAdditionalConfig() != null) {
             NotificationRequestConfig config = notificationRequest.getAdditionalConfig();
@@ -93,6 +94,7 @@ public class DefaultNotificationSubscriptionService extends AbstractSubscription
             return notificationTargetService.findRecipientsForNotificationTarget(tenantId, notificationRequest.getTargetId(), pageLink);
         }, 100, recipients -> {
             dbCallbackExecutorService.submit(() -> {
+                log.debug("Sending notifications for request {} to recipients batch", savedNotificationRequest.getId());
                 for (User recipient : recipients) {
                     try {
                         Notification notification = createNotification(recipient, savedNotificationRequest);
@@ -111,6 +113,7 @@ public class DefaultNotificationSubscriptionService extends AbstractSubscription
     public void markNotificationAsRead(TenantId tenantId, UserId recipientId, NotificationId notificationId) {
         boolean updated = notificationService.markNotificationAsRead(tenantId, recipientId, notificationId);
         if (updated) {
+            log.debug("Marking notification {} as read (recipient id: {}, tenant id: {})", notificationId, recipientId, tenantId);
             Notification notification = notificationService.findNotificationById(tenantId, notificationId);
             onNotificationUpdate(tenantId, recipientId, notification, false);
         }
@@ -118,6 +121,7 @@ public class DefaultNotificationSubscriptionService extends AbstractSubscription
 
     @Override
     public void deleteNotificationRequest(TenantId tenantId, NotificationRequestId notificationRequestId) {
+        log.debug("Deleting notification request {}", notificationRequestId);
         notificationService.deleteNotificationRequestById(tenantId, notificationRequestId);
         onNotificationRequestUpdate(tenantId, NotificationRequestUpdate.builder()
                 .notificationRequestId(notificationRequestId)
@@ -127,6 +131,7 @@ public class DefaultNotificationSubscriptionService extends AbstractSubscription
 
     @Override
     public void updateNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest) {
+        log.debug("Updating notification request {}", notificationRequest.getId());
         notificationService.saveNotificationRequest(tenantId, notificationRequest);
         notificationService.updateNotificationsInfosByRequestId(tenantId, notificationRequest.getId(), notificationRequest.getNotificationInfo());
         onNotificationRequestUpdate(tenantId, NotificationRequestUpdate.builder()
@@ -137,6 +142,7 @@ public class DefaultNotificationSubscriptionService extends AbstractSubscription
     }
 
     private Notification createNotification(User recipient, NotificationRequest notificationRequest) {
+        log.trace("Creating notification for recipient {} (notification request id: {})", recipient.getId(), notificationRequest.getId());
         Notification notification = Notification.builder()
                 .requestId(notificationRequest.getId())
                 .recipientId(recipient.getId())
@@ -159,20 +165,22 @@ public class DefaultNotificationSubscriptionService extends AbstractSubscription
     }
 
     private void onNotificationUpdate(TenantId tenantId, UserId recipientId, Notification notification, boolean isNew) {
-        NotificationUpdate notificationUpdate = NotificationUpdate.builder()
+        NotificationUpdate update = NotificationUpdate.builder()
                 .notification(notification)
                 .isNew(isNew)
                 .build();
+        log.trace("Submitting notification update for recipient {}: {}", recipientId, update);
         wsCallBackExecutor.submit(() -> {
             forwardToSubscriptionManagerService(tenantId, recipientId, subscriptionManagerService -> {
-                subscriptionManagerService.onNotificationUpdate(tenantId, recipientId, notificationUpdate, TbCallback.EMPTY);
+                subscriptionManagerService.onNotificationUpdate(tenantId, recipientId, update, TbCallback.EMPTY);
             }, () -> {
-                return TbSubscriptionUtils.notificationUpdateToProto(tenantId, recipientId, notificationUpdate);
+                return TbSubscriptionUtils.notificationUpdateToProto(tenantId, recipientId, update);
             });
         });
     }
 
     private void onNotificationRequestUpdate(TenantId tenantId, NotificationRequestUpdate update) {
+        log.trace("Submitting notification request update: {}", update);
         wsCallBackExecutor.submit(() -> {
             TransportProtos.ToCoreMsg notificationRequestDeletedProto = TbSubscriptionUtils.notificationRequestUpdateToProto(tenantId, update);
             Set<String> coreServices = new HashSet<>(partitionService.getAllServiceIds(ServiceType.TB_CORE));
