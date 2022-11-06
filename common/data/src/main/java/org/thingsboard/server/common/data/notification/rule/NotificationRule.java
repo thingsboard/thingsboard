@@ -16,23 +16,36 @@
 package org.thingsboard.server.common.data.notification.rule;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.HasName;
+import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.id.NotificationRuleId;
+import org.thingsboard.server.common.data.id.NotificationTargetId;
+import org.thingsboard.server.common.data.id.TenantId;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
 
 @Data
-public class NotificationRule {
+@EqualsAndHashCode(callSuper = true)
+public class NotificationRule extends BaseData<NotificationRuleId> implements HasTenantId, HasName {
 
-    // we may choose it in the alarm rule config, or maybe it's better to configure evrth in the triggers?
-
-    private UUID id; // NotificationRuleId id;
+    @NotNull
+    private TenantId tenantId;
+    @NotBlank
     private String name;
-    private Map<String, Object> triggers; // or maybe bad idea
-    // Map<NotificationTriggerType, NotificationTriggerConfig> - concrete alarmRule or alarm rule search (e.g. alarm rule of device profiles of particular transport type with certain severity)
-    // triggerConfiguration (??) - alarm filter: severity, specific device profile, alarm rule
-
-    private UUID initialNotificationTargetId;
+    @NotBlank
+    private String notificationTextTemplate;
+    @NotNull
+    private NotificationTargetId initialNotificationTargetId;
+    @NotNull
+    @Valid
     private List<NonConfirmedNotificationEscalation> escalations;
 
 }

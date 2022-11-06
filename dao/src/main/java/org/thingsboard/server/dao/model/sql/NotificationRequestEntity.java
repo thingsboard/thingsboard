@@ -21,13 +21,16 @@ import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
+import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.NotificationInfo;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
+import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.notification.NotificationSeverity;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -71,6 +74,16 @@ public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest
     @Column(name = ModelConstants.NOTIFICATION_REQUEST_ADDITIONAL_CONFIG_PROPERTY)
     private JsonNode additionalConfig;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = ModelConstants.NOTIFICATION_REQUEST_STATUS_PROPERTY)
+    private NotificationRequestStatus status;
+
+    @Column(name = ModelConstants.NOTIFICATION_REQUEST_RULE_ID_PROPERTY)
+    private UUID ruleId;
+
+    @Column(name = ModelConstants.NOTIFICATION_REQUEST_ALARM_ID_PROPERTY)
+    private UUID alarmId;
+
     public NotificationRequestEntity() {}
 
     public NotificationRequestEntity(NotificationRequest notificationRequest) {
@@ -83,6 +96,9 @@ public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest
         setNotificationInfo(toJson(notificationRequest.getNotificationInfo()));
         setNotificationSeverity(notificationRequest.getNotificationSeverity());
         setAdditionalConfig(toJson(notificationRequest.getAdditionalConfig()));
+        setStatus(notificationRequest.getStatus());
+        setRuleId(getUuid(notificationRequest.getRuleId()));
+        setAlarmId(getUuid(notificationRequest.getAlarmId()));
     }
 
     @Override
@@ -97,6 +113,9 @@ public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest
         notificationRequest.setNotificationInfo(fromJson(notificationInfo));
         notificationRequest.setNotificationSeverity(notificationSeverity);
         notificationRequest.setAdditionalConfig(fromJson(additionalConfig));
+        notificationRequest.setStatus(status);
+        notificationRequest.setRuleId(createId(ruleId, NotificationRuleId::new));
+        notificationRequest.setAlarmId(createId(alarmId, AlarmId::new));
         return notificationRequest;
     }
 

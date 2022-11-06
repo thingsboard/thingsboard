@@ -24,6 +24,10 @@ CREATE TABLE IF NOT EXISTS notification_target (
 );
 CREATE INDEX IF NOT EXISTS idx_notification_target_tenant_id_and_created_time ON notification_target(tenant_id, created_time DESC);
 
+CREATE TABLE IF NOT EXISTS notification_rule (
+    id UUID NOT NULL CONSTRAINT notification_rule_pkey PRIMARY KEY
+);
+
 CREATE TABLE IF NOT EXISTS notification_request (
     id UUID NOT NULL CONSTRAINT notification_request_pkey PRIMARY KEY,
     created_time BIGINT NOT NULL,
@@ -33,7 +37,10 @@ CREATE TABLE IF NOT EXISTS notification_request (
     text_template VARCHAR NOT NULL,
     notification_info VARCHAR(1000),
     notification_severity VARCHAR(32),
-    additional_config VARCHAR(1000)
+    additional_config VARCHAR(1000),
+    status VARCHAR(32),
+    rule_id UUID NULL CONSTRAINT fk_notification_request_rule_id REFERENCES notification_rule(id),
+    alarm_id UUID
 );
 CREATE INDEX IF NOT EXISTS idx_notification_request_tenant_id_and_created_time ON notification_request(tenant_id, created_time DESC);
 
@@ -50,5 +57,5 @@ CREATE TABLE IF NOT EXISTS notification (
     status VARCHAR(32)
 ) PARTITION BY RANGE (created_time);
 CREATE INDEX IF NOT EXISTS idx_notification_id ON notification(id);
+CREATE INDEX IF NOT EXISTS idx_notification_notification_request_id ON notification(request_id);
 CREATE INDEX IF NOT EXISTS idx_notification_recipient_id_and_created_time ON notification(recipient_id, created_time DESC);
-CREATE INDEX IF NOT EXISTS idx_notification_recipient_id_and_status_and_created_time ON notification(recipient_id, status, created_time DESC);

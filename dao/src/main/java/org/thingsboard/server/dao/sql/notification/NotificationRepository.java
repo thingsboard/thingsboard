@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.notification;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -45,6 +46,11 @@ public interface NotificationRepository extends JpaRepository<NotificationEntity
 
     int countByRecipientIdAndStatusNot(UUID recipientId, NotificationStatus status);
 
-    void deleteByRequestId(UUID requestId);
+    Page<NotificationEntity> findByRequestId(UUID requestId, Pageable pageable);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE NotificationEntity n SET n.info = :info WHERE n.requestId = :requestId")
+    int updateInfosByRequestId(@Param("requestId") UUID requestId, @Param("info") JsonNode info);
 
 }

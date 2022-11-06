@@ -18,6 +18,7 @@ package org.thingsboard.server.service.notification;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.thingsboard.rule.engine.api.RuleEngineNotificationService;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.User;
@@ -28,12 +29,12 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
+import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.notification.NotificationStatus;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.notification.NotificationProcessingService;
 import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -42,6 +43,8 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 import org.thingsboard.server.service.telemetry.AbstractSubscriptionService;
+import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpdate;
+import org.thingsboard.server.service.ws.notification.sub.NotificationUpdate;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -50,18 +53,18 @@ import java.util.UUID;
 
 @Service
 @Slf4j
-public class DefaultNotificationProcessingService extends AbstractSubscriptionService implements NotificationProcessingService {
+public class DefaultNotificationSubscriptionService extends AbstractSubscriptionService implements NotificationSubscriptionService, RuleEngineNotificationService {
 
     private final NotificationTargetService notificationTargetService;
     private final NotificationService notificationService;
     private final DbCallbackExecutorService dbCallbackExecutorService;
     private final NotificationsTopicService notificationsTopicService;
 
-    public DefaultNotificationProcessingService(TbClusterService clusterService, PartitionService partitionService,
-                                                NotificationTargetService notificationTargetService,
-                                                NotificationService notificationService,
-                                                DbCallbackExecutorService dbCallbackExecutorService,
-                                                NotificationsTopicService notificationsTopicService) {
+    public DefaultNotificationSubscriptionService(TbClusterService clusterService, PartitionService partitionService,
+                                                  NotificationTargetService notificationTargetService,
+                                                  NotificationService notificationService,
+                                                  DbCallbackExecutorService dbCallbackExecutorService,
+                                                  NotificationsTopicService notificationsTopicService) {
         super(clusterService, partitionService);
         this.notificationTargetService = notificationTargetService;
         this.notificationService = notificationService;
@@ -72,12 +75,19 @@ public class DefaultNotificationProcessingService extends AbstractSubscriptionSe
     @Override
     public NotificationRequest processNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest) {
         notificationRequest.setTenantId(tenantId);
-        NotificationRequest savedNotificationRequest = notificationService.createNotificationRequest(tenantId, notificationRequest);
-
         if (notificationRequest.getAdditionalConfig() != null) {
             NotificationRequestConfig config = notificationRequest.getAdditionalConfig();
-            // todo: delayed sending; check all delayed notification requests on start up, schedule send
+            if (config.getSendingDelayInMinutes() > 0) {
+                notificationRequest.setStatus(NotificationRequestStatus.SCHEDULED);
+
+                // todo: delayed sending; check all delayed notification requests on start up, schedule send
+            }
         }
+        if (notificationRequest.getStatus() == null) {
+            notificationRequest.setStatus(NotificationRequestStatus.PROCESSED);
+        }
+
+        NotificationRequest savedNotificationRequest = notificationService.saveNotificationRequest(tenantId, notificationRequest);
 
         DaoUtil.processBatches(pageLink -> {
             return notificationTargetService.findRecipientsForNotificationTarget(tenantId, notificationRequest.getTargetId(), pageLink);
@@ -99,7 +109,7 @@ public class DefaultNotificationProcessingService extends AbstractSubscriptionSe
 
     @Override
     public void markNotificationAsRead(TenantId tenantId, UserId recipientId, NotificationId notificationId) {
-        boolean updated = notificationService.updateNotificationStatus(tenantId, recipientId, notificationId, NotificationStatus.READ);
+        boolean updated = notificationService.markNotificationAsRead(tenantId, recipientId, notificationId);
         if (updated) {
             Notification notification = notificationService.findNotificationById(tenantId, notificationId);
             onNotificationUpdate(tenantId, recipientId, notification, false);
@@ -108,8 +118,22 @@ public class DefaultNotificationProcessingService extends AbstractSubscriptionSe
 
     @Override
     public void deleteNotificationRequest(TenantId tenantId, NotificationRequestId notificationRequestId) {
-        notificationService.deleteNotificationRequest(tenantId, notificationRequestId);
-        onNotificationRequestDeleted(tenantId, notificationRequestId);
+        notificationService.deleteNotificationRequestById(tenantId, notificationRequestId);
+        onNotificationRequestUpdate(tenantId, NotificationRequestUpdate.builder()
+                .notificationRequestId(notificationRequestId)
+                .deleted(true)
+                .build());
+    }
+
+    @Override
+    public void updateNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest) {
+        notificationService.saveNotificationRequest(tenantId, notificationRequest);
+        notificationService.updateNotificationsInfosByRequestId(tenantId, notificationRequest.getId(), notificationRequest.getNotificationInfo());
+        onNotificationRequestUpdate(tenantId, NotificationRequestUpdate.builder()
+                .notificationRequestId(notificationRequest.getId())
+                .notificationInfo(notificationRequest.getNotificationInfo())
+                .deleted(false)
+                .build());
     }
 
     private Notification createNotification(User recipient, NotificationRequest notificationRequest) {
@@ -122,7 +146,7 @@ public class DefaultNotificationProcessingService extends AbstractSubscriptionSe
                 .severity(notificationRequest.getNotificationSeverity())
                 .status(NotificationStatus.SENT)
                 .build();
-        return notificationService.createNotification(recipient.getTenantId(), notification);
+        return notificationService.saveNotification(recipient.getTenantId(), notification);
     }
 
     private String formatNotificationText(String template, User recipient) {
@@ -135,20 +159,28 @@ public class DefaultNotificationProcessingService extends AbstractSubscriptionSe
     }
 
     private void onNotificationUpdate(TenantId tenantId, UserId recipientId, Notification notification, boolean isNew) {
-        forwardToSubscriptionManagerServiceOrSendToCore(tenantId, recipientId, subscriptionManagerService -> {
-            subscriptionManagerService.onNotificationUpdate(tenantId, recipientId, notification, isNew, TbCallback.EMPTY);
-        }, () -> {
-            return TbSubscriptionUtils.notificationUpdateToProto(tenantId, recipientId, notification, isNew);
+        NotificationUpdate notificationUpdate = NotificationUpdate.builder()
+                .notification(notification)
+                .isNew(isNew)
+                .build();
+        wsCallBackExecutor.submit(() -> {
+            forwardToSubscriptionManagerService(tenantId, recipientId, subscriptionManagerService -> {
+                subscriptionManagerService.onNotificationUpdate(tenantId, recipientId, notificationUpdate, TbCallback.EMPTY);
+            }, () -> {
+                return TbSubscriptionUtils.notificationUpdateToProto(tenantId, recipientId, notificationUpdate);
+            });
         });
     }
 
-    public void onNotificationRequestDeleted(TenantId tenantId, NotificationRequestId notificationRequestId) {
-        TransportProtos.ToCoreMsg notificationRequestDeletedProto = TbSubscriptionUtils.notificationRequestDeletedToProto(tenantId, notificationRequestId);
-        Set<String> coreServices = new HashSet<>(partitionService.getAllServiceIds(ServiceType.TB_CORE));
-        for (String serviceId : coreServices) {
-            TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, serviceId);
-            clusterService.pushMsgToCore(tpi, UUID.randomUUID(), notificationRequestDeletedProto, null);
-        }
+    private void onNotificationRequestUpdate(TenantId tenantId, NotificationRequestUpdate update) {
+        wsCallBackExecutor.submit(() -> {
+            TransportProtos.ToCoreMsg notificationRequestDeletedProto = TbSubscriptionUtils.notificationRequestUpdateToProto(tenantId, update);
+            Set<String> coreServices = new HashSet<>(partitionService.getAllServiceIds(ServiceType.TB_CORE));
+            for (String serviceId : coreServices) {
+                TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, serviceId);
+                clusterService.pushMsgToCore(tpi, UUID.randomUUID(), notificationRequestDeletedProto, null);
+            }
+        });
     }
 
     @Override

@@ -39,7 +39,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.dao.notification.NotificationProcessingService;
+import org.thingsboard.server.service.notification.NotificationSubscriptionService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
@@ -54,7 +54,7 @@ import java.util.UUID;
 public class NotificationController extends BaseController {
 
     private final NotificationService notificationService;
-    private final NotificationProcessingService notificationProcessingService;
+    private final NotificationSubscriptionService notificationSubscriptionService;
 
     @GetMapping("/notifications")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -66,7 +66,7 @@ public class NotificationController extends BaseController {
                                                    @RequestParam(defaultValue = "false") boolean unreadOnly,
                                                    @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        return notificationService.findNotificationsByUserIdAndReadStatusAndPageLink(user.getTenantId(), user.getId(), unreadOnly, pageLink);
+        return notificationService.findNotificationsByUserIdAndReadStatus(user.getTenantId(), user.getId(), unreadOnly, pageLink);
     }
 
     @PutMapping("/notification/{id}/read") // or maybe to NotificationUpdateRequest for the future
@@ -74,7 +74,7 @@ public class NotificationController extends BaseController {
     public void markNotificationAsRead(@PathVariable UUID id,
                                        @AuthenticationPrincipal SecurityUser user) {
         NotificationId notificationId = new NotificationId(id);
-        notificationProcessingService.markNotificationAsRead(user.getTenantId(), user.getId(), notificationId);
+        notificationSubscriptionService.markNotificationAsRead(user.getTenantId(), user.getId(), notificationId);
     }
 
     // delete notification?
@@ -84,8 +84,11 @@ public class NotificationController extends BaseController {
     public NotificationRequest createNotificationRequest(@RequestBody NotificationRequest notificationRequest,
                                                          @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         accessControlService.checkPermission(user, Resource.NOTIFICATION_REQUEST, Operation.CREATE, null, notificationRequest);
+        if (notificationRequest.getId() != null) {
+            throw new IllegalArgumentException("Notification request cannot be changed. You can delete it and create a new one");
+        }
         try {
-            NotificationRequest savedNotificationRequest = notificationProcessingService.processNotificationRequest(user.getTenantId(), notificationRequest);
+            NotificationRequest savedNotificationRequest = notificationSubscriptionService.processNotificationRequest(user.getTenantId(), notificationRequest);
             logEntityAction(user, EntityType.NOTIFICATION_REQUEST, savedNotificationRequest, ActionType.ADDED);
             return savedNotificationRequest;
         } catch (Exception e) {
@@ -111,7 +114,7 @@ public class NotificationController extends BaseController {
                                                                  @RequestParam(required = false) String sortOrder,
                                                                  @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        return notificationService.findNotificationRequestsByTenantIdAndPageLink(user.getTenantId(), pageLink);
+        return notificationService.findNotificationRequestsByTenantId(user.getTenantId(), pageLink);
     }
 
     @DeleteMapping("/notification/request/{id}")
@@ -121,7 +124,7 @@ public class NotificationController extends BaseController {
         NotificationRequest notificationRequest = notificationService.findNotificationRequestById(user.getTenantId(), notificationRequestId);
         accessControlService.checkPermission(user, Resource.NOTIFICATION_REQUEST, Operation.DELETE, notificationRequestId, notificationRequest);
         try {
-            notificationProcessingService.deleteNotificationRequest(user.getTenantId(), notificationRequestId);
+            notificationSubscriptionService.deleteNotificationRequest(user.getTenantId(), notificationRequestId);
             logEntityAction(user, EntityType.NOTIFICATION_REQUEST, notificationRequest, ActionType.DELETED);
         } catch (Exception e) {
             logEntityAction(user, EntityType.NOTIFICATION_REQUEST, notificationRequest, notificationRequest, ActionType.DELETED, e);

@@ -795,7 +795,10 @@ CREATE TABLE IF NOT EXISTS notification_request (
     text_template VARCHAR NOT NULL,
     notification_info VARCHAR(1000),
     notification_severity VARCHAR(32),
-    additional_config VARCHAR(1000)
+    additional_config VARCHAR(1000),
+    status VARCHAR(32),
+    rule_id UUID NULL CONSTRAINT fk_notification_request_rule_id REFERENCES notification_rule(id),
+    alarm_id UUID
 );
 
 CREATE TABLE IF NOT EXISTS notification (

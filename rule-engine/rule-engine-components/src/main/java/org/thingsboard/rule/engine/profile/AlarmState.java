@@ -272,6 +272,7 @@ class AlarmState {
             if (alarmDefinition.getPropagateRelationTypes() != null) {
                 currentAlarm.setPropagateRelationTypes(alarmDefinition.getPropagateRelationTypes());
             }
+            currentAlarm.setNotificationRuleId(alarmDefinition.getNotificationRuleId());
             currentAlarm = ctx.getAlarmService().createOrUpdateAlarm(currentAlarm);
             boolean updated = currentAlarm.getStartTs() != currentAlarm.getEndTs();
             return new TbAlarmResult(!updated, updated, false, false, currentAlarm);

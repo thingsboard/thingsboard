@@ -295,6 +295,7 @@ public class ModelConstants {
     public static final String ALARM_PROPAGATE_TO_OWNER_PROPERTY = "propagate_to_owner";
     public static final String ALARM_PROPAGATE_TO_TENANT_PROPERTY = "propagate_to_tenant";
     public static final String ALARM_PROPAGATE_RELATION_TYPES = "propagate_relation_types";
+    public static final String ALARM_NOTIFICATION_RULE_ID = "notification_rule_id";
 
     public static final String ALARM_BY_ID_VIEW_NAME = "alarm_by_id";
 
@@ -668,6 +669,12 @@ public class ModelConstants {
     public static final String NOTIFICATION_REQUEST_NOTIFICATION_INFO_PROPERTY = "notification_info";
     public static final String NOTIFICATION_REQUEST_NOTIFICATION_SEVERITY_PROPERTY = "notification_severity";
     public static final String NOTIFICATION_REQUEST_ADDITIONAL_CONFIG_PROPERTY = "additional_config";
+    public static final String NOTIFICATION_REQUEST_STATUS_PROPERTY = "status";
+    public static final String NOTIFICATION_REQUEST_RULE_ID_PROPERTY = "rule_id";
+    public static final String NOTIFICATION_REQUEST_ALARM_ID_PROPERTY = "alarm_id";
+
+    public static final String NOTIFICATION_RULE_TABLE_NAME = "notification_rule";
+    // ...
 
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 

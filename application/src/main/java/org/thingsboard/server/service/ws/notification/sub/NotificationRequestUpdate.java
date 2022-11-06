@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.rule;
+package org.thingsboard.server.service.ws.notification.sub;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.data.id.NotificationTargetId;
-
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
+import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.id.NotificationRequestId;
+import org.thingsboard.server.common.data.notification.NotificationInfo;
 
 @Data
-public class NonConfirmedNotificationEscalation {
-
-    @Min(1)
-    private int delayInMinutes; // delay since initial notification request // if no one from previous escalation item has read the notification, send notifications after this time to other recipients
-    @NotNull
-    private NotificationTargetId notificationTargetId;
-
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class NotificationRequestUpdate {
+    private NotificationRequestId notificationRequestId;
+    private NotificationInfo notificationInfo;
+    private boolean deleted;
 }

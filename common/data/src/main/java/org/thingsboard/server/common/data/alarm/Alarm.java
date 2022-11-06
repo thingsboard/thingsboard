@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.Length;
 
@@ -78,6 +79,7 @@ public class Alarm extends BaseData<AlarmId> implements HasName, HasTenantId, Ha
             "By default, 'propagateRelationTypes' array is empty which means that the alarm will be propagated based on any relation type to parent entities. " +
             "This parameter should be used only in case when 'propagate' parameter is set to true, otherwise, 'propagateRelationTypes' array will be ignored.")
     private List<String> propagateRelationTypes;
+    private NotificationRuleId notificationRuleId;
 
     public Alarm() {
         super();
@@ -105,6 +107,7 @@ public class Alarm extends BaseData<AlarmId> implements HasName, HasTenantId, Ha
         this.propagateToOwner = alarm.isPropagateToOwner();
         this.propagateToTenant = alarm.isPropagateToTenant();
         this.propagateRelationTypes = alarm.getPropagateRelationTypes();
+        this.notificationRuleId = alarm.getNotificationRuleId();
     }
 
     @Override

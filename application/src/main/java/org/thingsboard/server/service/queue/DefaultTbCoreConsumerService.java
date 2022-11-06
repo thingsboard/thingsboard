@@ -18,6 +18,7 @@ package org.thingsboard.server.service.queue;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -31,6 +32,7 @@ import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
+import org.thingsboard.server.common.data.notification.NotificationInfo;
 import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
@@ -80,6 +82,8 @@ import org.thingsboard.server.service.subscription.TbLocalSubscriptionService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 import org.thingsboard.server.service.sync.vc.GitVersionControlQueueService;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
+import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpdate;
+import org.thingsboard.server.service.ws.notification.sub.NotificationUpdate;
 import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscriptionUpdate;
 
 import javax.annotation.PostConstruct;
@@ -461,13 +465,17 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         } else if (msg.hasAlarmSubUpdate()) {
             localSubscriptionService.onSubscriptionUpdate(msg.getAlarmSubUpdate().getSessionId(), TbSubscriptionUtils.fromProto(msg.getAlarmSubUpdate()), callback);
         } else if (msg.hasNotificationsSubUpdate()) {
-            TransportProtos.NotificationsSubscriptionUpdateProto notificationsSubUpdateProto = msg.getNotificationsSubUpdate();
-            NotificationsSubscriptionUpdate notificationsSubscriptionUpdate = NotificationsSubscriptionUpdate.builder()
-                    .notification(JacksonUtil.fromString(notificationsSubUpdateProto.getNotification(), Notification.class))
-                    .isNewNotification(notificationsSubUpdateProto.getIsNewNotification())
-                    .build();
-            localSubscriptionService.onSubscriptionUpdate(notificationsSubUpdateProto.getSessionId(),
-                    notificationsSubUpdateProto.getSubscriptionId(), notificationsSubscriptionUpdate, callback);
+            TransportProtos.NotificationsSubscriptionUpdateProto subUpdateProto = msg.getNotificationsSubUpdate();
+            NotificationsSubscriptionUpdate notificationsSubscriptionUpdate;
+            if (StringUtils.isNotEmpty(subUpdateProto.getNotificationUpdate())) {
+                NotificationUpdate notificationUpdate = JacksonUtil.fromString(subUpdateProto.getNotificationUpdate(), NotificationUpdate.class);
+                notificationsSubscriptionUpdate = new NotificationsSubscriptionUpdate(notificationUpdate);
+            } else {
+                NotificationRequestUpdate notificationRequestUpdate = JacksonUtil.fromString(subUpdateProto.getNotificationRequestUpdate(), NotificationRequestUpdate.class);
+                notificationsSubscriptionUpdate = new NotificationsSubscriptionUpdate(notificationRequestUpdate);
+            }
+            localSubscriptionService.onSubscriptionUpdate(subUpdateProto.getSessionId(),
+                    subUpdateProto.getSubscriptionId(), notificationsSubscriptionUpdate, callback);
         } else {
             throwNotHandled(msg, callback);
         }
@@ -524,18 +532,16 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                     TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
                     JacksonUtil.fromString(proto.getAlarm(), Alarm.class), callback);
         } else if (msg.hasNotificationUpdate()) {
-            TransportProtos.NotificationUpdateProto notificationUpdateProto = msg.getNotificationUpdate();
-            TenantId tenantId = TenantId.fromUUID(new UUID(notificationUpdateProto.getTenantIdMSB(), notificationUpdateProto.getTenantIdLSB()));
-            UserId recipientId = new UserId(new UUID(notificationUpdateProto.getRecipientIdMSB(), notificationUpdateProto.getRecipientIdLSB()));
-            Notification notification = JacksonUtil.fromString(notificationUpdateProto.getNotification(), Notification.class);
-            boolean isNew = notificationUpdateProto.getIsNew();
-            subscriptionManagerService.onNotificationUpdate(tenantId, recipientId, notification, isNew, callback);
-        } else if (msg.hasNotificationRequestDelete()) {
-            TransportProtos.NotificationRequestDeleteProto notificationRequestDeleteProto = msg.getNotificationRequestDelete();
-            TenantId tenantId = TenantId.fromUUID(new UUID(notificationRequestDeleteProto.getTenantIdMSB(), notificationRequestDeleteProto.getTenantIdLSB()));
-            NotificationRequestId notificationRequestId = new NotificationRequestId(new UUID(
-                    notificationRequestDeleteProto.getNotificationRequestIdMSB(), notificationRequestDeleteProto.getNotificationRequestIdLSB()));
-            subscriptionManagerService.onNotificationRequestDeleted(tenantId, notificationRequestId, callback);
+            TransportProtos.NotificationUpdateProto updateProto = msg.getNotificationUpdate();
+            TenantId tenantId = TenantId.fromUUID(new UUID(updateProto.getTenantIdMSB(), updateProto.getTenantIdLSB()));
+            UserId recipientId = new UserId(new UUID(updateProto.getRecipientIdMSB(), updateProto.getRecipientIdLSB()));
+            NotificationUpdate update = JacksonUtil.fromString(updateProto.getUpdate(), NotificationUpdate.class);
+            subscriptionManagerService.onNotificationUpdate(tenantId, recipientId, update, callback);
+        } else if (msg.hasNotificationRequestUpdate()) {
+            TransportProtos.NotificationRequestUpdateProto updateProto = msg.getNotificationRequestUpdate();
+            TenantId tenantId = TenantId.fromUUID(new UUID(updateProto.getTenantIdMSB(), updateProto.getTenantIdLSB()));
+            NotificationRequestUpdate update = JacksonUtil.fromString(updateProto.getUpdate(), NotificationRequestUpdate.class);
+            subscriptionManagerService.onNotificationRequestUpdate(tenantId, update, callback);
         } else {
             throwNotHandled(msg, callback);
         }

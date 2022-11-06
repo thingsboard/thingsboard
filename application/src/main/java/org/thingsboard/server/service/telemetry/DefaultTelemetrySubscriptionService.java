@@ -366,7 +366,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     }
 
     private void onAttributesUpdate(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, boolean notifyDevice) {
-        forwardToSubscriptionManagerServiceOrSendToCore(tenantId, entityId, subscriptionManagerService -> {
+        forwardToSubscriptionManagerService(tenantId, entityId, subscriptionManagerService -> {
             subscriptionManagerService.onAttributesUpdate(tenantId, entityId, scope, attributes, notifyDevice, TbCallback.EMPTY);
         }, () -> {
             return TbSubscriptionUtils.toAttributesUpdateProto(tenantId, entityId, scope, attributes);
@@ -374,7 +374,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     }
 
     private void onAttributesDelete(TenantId tenantId, EntityId entityId, String scope, List<String> keys) {
-        forwardToSubscriptionManagerServiceOrSendToCore(tenantId, entityId, subscriptionManagerService -> {
+        forwardToSubscriptionManagerService(tenantId, entityId, subscriptionManagerService -> {
             subscriptionManagerService.onAttributesDelete(tenantId, entityId, scope, keys, TbCallback.EMPTY);
         }, () -> {
             return TbSubscriptionUtils.toAttributesDeleteProto(tenantId, entityId, scope, keys);
@@ -382,7 +382,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     }
 
     private void onTimeSeriesUpdate(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts) {
-        forwardToSubscriptionManagerServiceOrSendToCore(tenantId, entityId, subscriptionManagerService -> {
+        forwardToSubscriptionManagerService(tenantId, entityId, subscriptionManagerService -> {
             subscriptionManagerService.onTimeSeriesUpdate(tenantId, entityId, ts, TbCallback.EMPTY);
         }, () -> {
             return TbSubscriptionUtils.toTimeseriesUpdateProto(tenantId, entityId, ts);
@@ -390,7 +390,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     }
 
     private void onTimeSeriesDelete(TenantId tenantId, EntityId entityId, List<String> keys, List<TsKvLatestRemovingResult> ts) {
-        forwardToSubscriptionManagerServiceOrSendToCore(tenantId, entityId, subscriptionManagerService -> {
+        forwardToSubscriptionManagerService(tenantId, entityId, subscriptionManagerService -> {
             List<TsKvEntry> updated = new ArrayList<>();
             List<String> deleted = new ArrayList<>();
 

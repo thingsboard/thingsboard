@@ -21,16 +21,20 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.IdBased;
 import org.thingsboard.server.common.data.id.NotificationId;
+import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
+import org.thingsboard.server.common.data.notification.NotificationInfo;
 import org.thingsboard.server.common.data.notification.NotificationStatus;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.dao.notification.NotificationProcessingService;
+import org.thingsboard.server.service.notification.NotificationSubscriptionService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.ws.notification.cmd.NotificationsCountSubCmd;
+import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpdate;
+import org.thingsboard.server.service.ws.notification.sub.NotificationUpdate;
 import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscription;
 import org.thingsboard.server.service.subscription.TbLocalSubscriptionService;
 import org.thingsboard.server.service.ws.WebSocketSessionRef;
@@ -53,7 +57,7 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
 
     private final NotificationService notificationService;
     private final TbLocalSubscriptionService localSubscriptionService;
-    private final NotificationProcessingService notificationProcessingService;
+    private final NotificationSubscriptionService notificationSubscriptionService;
     private final TbServiceInfoProvider serviceInfoProvider;
     @Autowired @Lazy
     private WebSocketService wsService;
@@ -106,46 +110,82 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
         subscription.getUnreadCounter().set(unreadCount);
     }
 
+
+    /* Notifications subscription update handling */
     private void handleNotificationsSubscriptionUpdate(NotificationsSubscription subscription, NotificationsSubscriptionUpdate subscriptionUpdate) {
-        if (subscriptionUpdate.getNotification() != null) {
-            Notification notification = subscriptionUpdate.getNotification();
-            if (notification.getStatus() == NotificationStatus.READ) {
-                fetchUnreadNotifications(subscription);
-                sendUpdate(subscription.getSessionId(), subscription.createFullUpdate());
-            } else {
-                subscription.getUnreadNotifications().put(notification.getUuidId(), notification);
-                if (subscriptionUpdate.isNewNotification()) {
-                    subscription.getTotalUnreadCounter().incrementAndGet();
-                    Set<UUID> beyondLimit = subscription.getUnreadNotifications().keySet().stream()
-                            .skip(subscription.getLimit())
-                            .collect(Collectors.toSet());
-                    beyondLimit.forEach(notificationId -> subscription.getUnreadNotifications().remove(notificationId));
-                }
-                sendUpdate(subscription.getSessionId(), subscription.createPartialUpdate(notification));
-            }
-        } else if (subscriptionUpdate.isNotificationRequestDeleted()) {
-            if (subscription.getUnreadNotifications().values().stream()
-                    .anyMatch(notification -> notification.getRequestId().equals(subscriptionUpdate.getNotificationRequestId()))) {
-                fetchUnreadNotifications(subscription);
-                sendUpdate(subscription.getSessionId(), subscription.createFullUpdate());
-            }
+        if (subscriptionUpdate.getNotificationUpdate() != null) {
+            handleNotificationUpdate(subscription, subscriptionUpdate.getNotificationUpdate());
+        } else if (subscriptionUpdate.getNotificationRequestUpdate() != null) {
+            handleNotificationRequestUpdate(subscription, subscriptionUpdate.getNotificationRequestUpdate());
         }
     }
 
-    private void handleNotificationsCountSubscriptionUpdate(NotificationsCountSubscription subscription, NotificationsSubscriptionUpdate subscriptionUpdate) {
-        if (subscriptionUpdate.getNotification() != null) {
-            Notification notification = subscriptionUpdate.getNotification();
-            if (subscriptionUpdate.isNewNotification()) {
-                subscription.getUnreadCounter().incrementAndGet();
-            } else if (notification.getStatus() == NotificationStatus.READ) {
-                // for now this can only happen when user marks notification as read
-                subscription.getUnreadCounter().decrementAndGet();
+    private void handleNotificationUpdate(NotificationsSubscription subscription, NotificationUpdate update) {
+        Notification notification = update.getNotification();
+        if (notification.getStatus() == NotificationStatus.READ) {
+            fetchUnreadNotifications(subscription);
+            sendUpdate(subscription.getSessionId(), subscription.createFullUpdate());
+        } else {
+            subscription.getUnreadNotifications().put(notification.getUuidId(), notification);
+            if (update.isNew()) {
+                subscription.getTotalUnreadCounter().incrementAndGet();
+                Set<UUID> beyondLimit = subscription.getUnreadNotifications().keySet().stream()
+                        .skip(subscription.getLimit())
+                        .collect(Collectors.toSet());
+                beyondLimit.forEach(notificationId -> subscription.getUnreadNotifications().remove(notificationId));
             }
-        } else if (subscriptionUpdate.isNotificationRequestDeleted()) {
-            fetchUnreadNotificationsCount(subscription);
+            sendUpdate(subscription.getSessionId(), subscription.createPartialUpdate(notification));
+        }
+    }
+
+    private void handleNotificationRequestUpdate(NotificationsSubscription subscription, NotificationRequestUpdate update) {
+        NotificationRequestId notificationRequestId = update.getNotificationRequestId();
+        if (update.isDeleted()) {
+            if (subscription.getUnreadNotifications().values().stream()
+                    .anyMatch(notification -> notification.getRequestId().equals(notificationRequestId))) {
+                fetchUnreadNotifications(subscription);
+                sendUpdate(subscription.getSessionId(), subscription.createFullUpdate());
+            }
+        } else {
+            NotificationInfo notificationInfo = update.getNotificationInfo();
+            subscription.getUnreadNotifications().values().stream()
+                    .filter(notification -> notification.getRequestId().equals(notificationRequestId))
+                    .forEach(notification -> {
+                        notification.setInfo(notificationInfo);
+                        sendUpdate(subscription.getSessionId(), subscription.createPartialUpdate(notification));
+                    });
+        }
+    }
+
+
+    /* Notifications count subscription update handling */
+    private void handleNotificationsCountSubscriptionUpdate(NotificationsCountSubscription subscription, NotificationsSubscriptionUpdate subscriptionUpdate) {
+        if (subscriptionUpdate.getNotificationUpdate() != null) {
+            handleNotificationUpdate(subscription, subscriptionUpdate.getNotificationUpdate());
+        } else if (subscriptionUpdate.getNotificationRequestUpdate() != null) {
+            handleNotificationRequestUpdate(subscription, subscriptionUpdate.getNotificationRequestUpdate());
         }
         sendUpdate(subscription.getSessionId(), subscription.createUpdate());
     }
+
+    private void handleNotificationUpdate(NotificationsCountSubscription subscription, NotificationUpdate update) {
+        Notification notification = update.getNotification();
+        if (update.isNew()) {
+            subscription.getUnreadCounter().incrementAndGet();
+        } else if (notification.getStatus() == NotificationStatus.READ) {
+            // for now this can only happen when user marks notification as read
+            subscription.getUnreadCounter().decrementAndGet();
+        }
+        sendUpdate(subscription.getSessionId(), subscription.createUpdate());
+    }
+
+    private void handleNotificationRequestUpdate(NotificationsCountSubscription subscription, NotificationRequestUpdate update) {
+        if (update.isDeleted()) {
+            fetchUnreadNotificationsCount(subscription);
+            sendUpdate(subscription.getSessionId(), subscription.createUpdate());
+        }
+    }
+
 
     private void sendUpdate(String sessionId, CmdUpdate update) {
         wsService.sendWsMsg(sessionId, update);
@@ -155,7 +195,7 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
     @Override
     public void handleMarkAsReadCmd(WebSocketSessionRef sessionRef, MarkNotificationAsReadCmd cmd) {
         NotificationId notificationId = new NotificationId(cmd.getNotificationId());
-        notificationProcessingService.markNotificationAsRead(sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), notificationId);
+        notificationSubscriptionService.markNotificationAsRead(sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), notificationId);
     }
 
     @Override

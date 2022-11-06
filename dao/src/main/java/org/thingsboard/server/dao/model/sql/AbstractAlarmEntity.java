@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
@@ -47,6 +48,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ACK_TS_PROPE
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_CLEAR_TS_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_CUSTOMER_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_END_TS_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ALARM_NOTIFICATION_RULE_ID;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ORIGINATOR_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ORIGINATOR_TYPE_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_PROPAGATE_PROPERTY;
@@ -116,6 +118,9 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
     @Column(name = ALARM_PROPAGATE_RELATION_TYPES)
     private String propagateRelationTypes;
 
+    @Column(name = ALARM_NOTIFICATION_RULE_ID)
+    private UUID notificationRuleId;
+
     public AbstractAlarmEntity() {
         super();
     }
@@ -150,6 +155,7 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
         } else {
             this.propagateRelationTypes = null;
         }
+        this.notificationRuleId = getUuid(alarm.getNotificationRuleId());
     }
 
     public AbstractAlarmEntity(AlarmEntity alarmEntity) {
@@ -172,6 +178,7 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
         this.clearTs = alarmEntity.getClearTs();
         this.details = alarmEntity.getDetails();
         this.propagateRelationTypes = alarmEntity.getPropagateRelationTypes();
+        this.notificationRuleId = alarmEntity.getNotificationRuleId();
     }
 
     protected Alarm toAlarm() {
@@ -200,6 +207,7 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
         } else {
             alarm.setPropagateRelationTypes(Collections.emptyList());
         }
+        alarm.setNotificationRuleId(createId(notificationRuleId, NotificationRuleId::new));
         return alarm;
     }
 }

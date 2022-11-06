@@ -13,20 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.rule;
+package org.thingsboard.server.common.data.id;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.id.NotificationTargetId;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.thingsboard.server.common.data.EntityType;
 
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
+import java.util.UUID;
 
-@Data
-public class NonConfirmedNotificationEscalation {
+public class NotificationRuleId extends UUIDBased {
 
-    @Min(1)
-    private int delayInMinutes; // delay since initial notification request // if no one from previous escalation item has read the notification, send notifications after this time to other recipients
-    @NotNull
-    private NotificationTargetId notificationTargetId;
+    @JsonCreator
+    public NotificationRuleId(@JsonProperty("id") UUID id) {
+        super(id);
+    }
+
+//    @Override
+//    public EntityType getEntityType() {
+//        return EntityType.NOTIFICATION_TARGET;
+//    }
 
 }

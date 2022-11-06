@@ -15,20 +15,21 @@
  */
 package org.thingsboard.server.dao.notification;
 
-import org.thingsboard.server.common.data.id.AlarmId;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.notification.NotificationRequest;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 
-import java.util.List;
+@Service
+@RequiredArgsConstructor
+public class DefaultNotificationRuleService implements NotificationRuleService {
 
-public interface NotificationRequestDao extends Dao<NotificationRequest> {
+    private final NotificationRuleDao notificationRuleDao;
 
-    PageData<NotificationRequest> findByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink);
-
-    List<NotificationRequest> findByRuleIdAndAlarmId(TenantId tenantId, NotificationRuleId ruleId, AlarmId alarmId);
+    @Override
+    public NotificationRule findNotificationRuleById(TenantId tenantId, NotificationRuleId notificationRuleId) {
+        return notificationRuleDao.findById(tenantId, notificationRuleId.getId());
+    }
 
 }

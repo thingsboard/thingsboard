@@ -13,20 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.rule;
+package org.thingsboard.server.dao.notification;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.id.NotificationTargetId;
+import org.thingsboard.server.common.data.notification.rule.NotificationRule;
+import org.thingsboard.server.dao.Dao;
 
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
-
-@Data
-public class NonConfirmedNotificationEscalation {
-
-    @Min(1)
-    private int delayInMinutes; // delay since initial notification request // if no one from previous escalation item has read the notification, send notifications after this time to other recipients
-    @NotNull
-    private NotificationTargetId notificationTargetId;
-
+public interface NotificationRuleDao extends Dao<NotificationRule> {
 }

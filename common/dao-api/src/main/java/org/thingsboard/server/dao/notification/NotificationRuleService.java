@@ -15,18 +15,12 @@
  */
 package org.thingsboard.server.dao.notification;
 
-import org.thingsboard.server.common.data.id.NotificationId;
-import org.thingsboard.server.common.data.id.NotificationRequestId;
+import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.notification.NotificationRequest;
+import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 
-public interface NotificationProcessingService {
+public interface NotificationRuleService {
 
-    NotificationRequest processNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest);
-
-    void markNotificationAsRead(TenantId tenantId, UserId recipientId, NotificationId notificationId);
-
-    void deleteNotificationRequest(TenantId tenantId, NotificationRequestId notificationRequestId);
+    NotificationRule findNotificationRuleById(TenantId tenantId, NotificationRuleId notificationRuleId);
 
 }

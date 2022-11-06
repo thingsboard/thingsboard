@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.notification;
+package org.thingsboard.server.service.notification;
 
-import org.thingsboard.server.common.data.id.AlarmId;
-import org.thingsboard.server.common.data.id.NotificationRuleId;
+import org.thingsboard.server.common.data.id.NotificationId;
+import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.Dao;
 
-import java.util.List;
+public interface NotificationSubscriptionService {
 
-public interface NotificationRequestDao extends Dao<NotificationRequest> {
+    NotificationRequest processNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest);
 
-    PageData<NotificationRequest> findByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink);
+    void markNotificationAsRead(TenantId tenantId, UserId recipientId, NotificationId notificationId);
 
-    List<NotificationRequest> findByRuleIdAndAlarmId(TenantId tenantId, NotificationRuleId ruleId, AlarmId alarmId);
+    void deleteNotificationRequest(TenantId tenantId, NotificationRequestId notificationRequestId);
+
+    void updateNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest);
 
 }

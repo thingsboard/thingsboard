@@ -15,19 +15,22 @@
  */
 package org.thingsboard.server.service.ws.notification.sub;
 
-import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.data.id.NotificationRequestId;
-import org.thingsboard.server.common.data.notification.Notification;
 
 @Data
-@Builder
 public class NotificationsSubscriptionUpdate {
 
-    private final Notification notification;
-    private final boolean isNewNotification;
+    private final NotificationUpdate notificationUpdate;
+    private final NotificationRequestUpdate notificationRequestUpdate;
 
-    private final boolean notificationRequestDeleted;
-    private final NotificationRequestId notificationRequestId;
+    public NotificationsSubscriptionUpdate(NotificationUpdate notificationUpdate) {
+        this.notificationUpdate = notificationUpdate;
+        this.notificationRequestUpdate = null;
+    }
+
+    public NotificationsSubscriptionUpdate(NotificationRequestUpdate notificationRequestUpdate) {
+        this.notificationUpdate = null;
+        this.notificationRequestUpdate = notificationRequestUpdate;
+    }
 
 }

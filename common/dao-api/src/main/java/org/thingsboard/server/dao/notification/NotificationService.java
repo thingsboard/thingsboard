@@ -15,37 +15,45 @@
  */
 package org.thingsboard.server.dao.notification;
 
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
+import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
+import org.thingsboard.server.common.data.notification.NotificationInfo;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
-import org.thingsboard.server.common.data.notification.NotificationStatus;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 
+import java.util.List;
+
 public interface NotificationService {
 
-    NotificationRequest createNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest);
+    NotificationRequest saveNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest);
 
     NotificationRequest findNotificationRequestById(TenantId tenantId, NotificationRequestId id);
 
-    PageData<NotificationRequest> findNotificationRequestsByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink);
+    PageData<NotificationRequest> findNotificationRequestsByTenantId(TenantId tenantId, PageLink pageLink);
 
-    void deleteNotificationRequest(TenantId tenantId, NotificationRequestId id);
+    List<NotificationRequest> findNotificationRequestsByRuleIdAndAlarmId(TenantId tenantId, NotificationRuleId ruleId, AlarmId alarmId);
+
+    void deleteNotificationRequestById(TenantId tenantId, NotificationRequestId id);
 
 
-    Notification createNotification(TenantId tenantId, Notification notification);
+    Notification saveNotification(TenantId tenantId, Notification notification);
 
     Notification findNotificationById(TenantId tenantId, NotificationId notificationId);
 
-    boolean updateNotificationStatus(TenantId tenantId, UserId userId, NotificationId notificationId, NotificationStatus status);
+    boolean markNotificationAsRead(TenantId tenantId, UserId userId, NotificationId notificationId);
 
-    PageData<Notification> findNotificationsByUserIdAndReadStatusAndPageLink(TenantId tenantId, UserId userId, boolean unreadOnly, PageLink pageLink);
+    PageData<Notification> findNotificationsByUserIdAndReadStatus(TenantId tenantId, UserId userId, boolean unreadOnly, PageLink pageLink);
 
     PageData<Notification> findLatestUnreadNotificationsByUserId(TenantId tenantId, UserId userId, int limit);
 
     int countUnreadNotificationsByUserId(TenantId tenantId, UserId userId);
+
+    int updateNotificationsInfosByRequestId(TenantId tenantId, NotificationRequestId notificationRequestId, NotificationInfo notificationInfo);
 
 }

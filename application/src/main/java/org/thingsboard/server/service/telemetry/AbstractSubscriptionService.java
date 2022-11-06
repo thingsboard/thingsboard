@@ -90,9 +90,9 @@ public abstract class AbstractSubscriptionService extends TbApplicationEventList
         }
     }
 
-    protected void forwardToSubscriptionManagerServiceOrSendToCore(TenantId tenantId, EntityId entityId,
-                                                                   Consumer<SubscriptionManagerService> toSubscriptionManagerService,
-                                                                   Supplier<TransportProtos.ToCoreMsg> toCore) {
+    protected void forwardToSubscriptionManagerService(TenantId tenantId, EntityId entityId,
+                                                       Consumer<SubscriptionManagerService> toSubscriptionManagerService,
+                                                       Supplier<TransportProtos.ToCoreMsg> toCore) {
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
         if (currentPartitions.contains(tpi)) {
             if (subscriptionManagerService.isPresent()) {

@@ -60,7 +60,7 @@ public class TbNotificationNode implements TbNode {
                 .notificationSeverity(config.getNotificationSeverity())
                 .build();
         withCallback(ctx.getDbCallbackExecutor().executeAsync(() -> {
-                    return ctx.getNotificationProcessingService().processNotificationRequest(ctx.getTenantId(), notificationRequest);
+                    return ctx.getNotificationService().processNotificationRequest(ctx.getTenantId(), notificationRequest);
                 }),
                 r -> {
                     TbMsgMetaData msgMetaData = msg.getMetaData().copy();

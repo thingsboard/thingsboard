@@ -80,6 +80,6 @@ CREATE INDEX IF NOT EXISTS idx_notification_request_tenant_id_and_created_time O
 
 CREATE INDEX IF NOT EXISTS idx_notification_id ON notification(id);
 
-CREATE INDEX IF NOT EXISTS idx_notification_recipient_id_and_created_time ON notification(recipient_id, created_time DESC);
+CREATE INDEX IF NOT EXISTS idx_notification_notification_request_id ON notification(request_id);
 
-CREATE INDEX IF NOT EXISTS idx_notification_recipient_id_and_status_and_created_time ON notification(recipient_id, status, created_time DESC);
+CREATE INDEX IF NOT EXISTS idx_notification_recipient_id_and_created_time ON notification(recipient_id, created_time DESC);

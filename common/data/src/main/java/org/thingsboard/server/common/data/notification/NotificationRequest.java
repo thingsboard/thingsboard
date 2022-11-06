@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.data.notification;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,7 +25,9 @@ import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
+import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.NoXss;
@@ -51,6 +55,13 @@ public class NotificationRequest extends BaseData<NotificationRequestId> impleme
     private NotificationInfo notificationInfo;
     private NotificationSeverity notificationSeverity;
     private NotificationRequestConfig additionalConfig;
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private NotificationRequestStatus status;
+
+    @JsonIgnore
+    private NotificationRuleId ruleId; // maybe move to child class
+    @JsonIgnore
+    private AlarmId alarmId;
 
     public static final String GENERAL_NOTIFICATION_REASON = "General";
     public static final String ALARM_NOTIFICATION_REASON = "Alarm";

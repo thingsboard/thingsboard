@@ -15,14 +15,22 @@
  */
 package org.thingsboard.server.common.data.notification;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 //@JsonIgnoreProperties(ignoreUnknown = true)
 //@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "notificationType", visible = true, defaultImpl = NotificationInfo.class)
 //@JsonSubTypes({
@@ -31,7 +39,12 @@ import org.thingsboard.server.common.data.validation.NoXss;
 public class NotificationInfo {
     @NoXss
     private String description;
-
-    private ObjectNode alarmDetails; // move to child class
     private DashboardId dashboardId;
+
+    private AlarmId alarmId;
+    private String alarmType;
+    private EntityId alarmOriginator;
+    private AlarmSeverity alarmSeverity;
+    private AlarmStatus alarmStatus;
+
 }
