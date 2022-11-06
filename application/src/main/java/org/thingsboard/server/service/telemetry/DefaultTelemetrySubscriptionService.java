@@ -41,10 +41,11 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
 import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
@@ -74,7 +75,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     private final AttributesService attrService;
     private final TimeseriesService tsService;
     private final TbEntityViewService tbEntityViewService;
-    private final TbApiUsageClient apiUsageClient;
+    private final TbApiUsageReportClient apiUsageClient;
     private final TbApiUsageStateService apiUsageStateService;
 
     private ExecutorService tsCallBackExecutor;
@@ -84,7 +85,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                                                @Lazy TbEntityViewService tbEntityViewService,
                                                TbClusterService clusterService,
                                                PartitionService partitionService,
-                                               TbApiUsageClient apiUsageClient,
+                                               TbApiUsageReportClient apiUsageClient,
                                                TbApiUsageStateService apiUsageStateService) {
         super(clusterService, partitionService);
         this.attrService = attrService;

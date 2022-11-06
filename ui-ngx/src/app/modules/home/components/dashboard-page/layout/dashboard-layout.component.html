@@ -28,13 +28,13 @@
   <section *ngIf="layoutCtx.widgets.isEmpty()" fxLayoutAlign="center center"
            style="display: flex; z-index: 1; pointer-events: none;"
            class="mat-headline tb-absolute-fill">
-    <span *ngIf="!isEdit">
+    <span *ngIf="!isEdit" style="text-align: center;">
       {{'dashboard.no-widgets' | translate}}
     </span>
     <button mat-button *ngIf="isEdit && !widgetEditMode" class="tb-add-new-widget"
             (click)="addWidget($event)">
       <mat-icon class="tb-mat-96">add</mat-icon>
-      {{ 'dashboard.add-widget' | translate }}
+      <span>{{ 'dashboard.add-widget' | translate }}</span>
     </button>
   </section>
   <tb-dashboard #dashboard [dashboardStyle]="dashboardStyle"

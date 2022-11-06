@@ -210,6 +210,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
 
   ngOnDestroy(): void {
     this.window.removeEventListener('message', this.onWindowMessageListener);
+    this.aceEditors.forEach(editor => editor.destroy());
     this.aceResize$.disconnect();
     this.rxSubscriptions.forEach((subscription) => {
       subscription.unsubscribe();
@@ -599,6 +600,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     config.title = this.widget.widgetName;
     this.widget.defaultConfig = JSON.stringify(config);
     this.iframe.attr('data-widget', JSON.stringify(this.widget));
+    // @ts-ignore
     this.iframe[0].contentWindow.location.reload(true);
   }
 

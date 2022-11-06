@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.rule.RuleNodeState;
+import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -268,7 +269,16 @@ public interface TbContext {
 
     RuleEngineNotificationService getNotificationService();
 
+    /**
+     * Creates JS Script Engine
+     * @deprecated
+     * <p> Use {@link #createScriptEngine} instead.
+     *
+     */
+    @Deprecated
     ScriptEngine createJsScriptEngine(String script, String... argNames);
+
+    ScriptEngine createScriptEngine(ScriptLanguage scriptLang, String script, String... argNames);
 
     void logJsEvalRequest();
 
@@ -305,4 +315,5 @@ public interface TbContext {
     void removeListeners();
 
     TenantProfile getTenantProfile();
+
 }

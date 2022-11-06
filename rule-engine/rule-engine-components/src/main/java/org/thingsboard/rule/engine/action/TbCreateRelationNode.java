@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
@@ -143,6 +144,8 @@ public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateR
                 return processEdge(ctx, entityContainer, sdId, relationType);
             case TENANT:
                 return processTenant(ctx, entityContainer, sdId, relationType);
+            case USER:
+                return processUser(ctx, entityContainer, sdId, relationType);
         }
         return Futures.immediateFuture(true);
     }
@@ -210,6 +213,16 @@ public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateR
     private ListenableFuture<Boolean> processTenant(TbContext ctx, EntityContainer entityContainer, SearchDirectionIds sdId, String relationType) {
         return Futures.transformAsync(ctx.getTenantService().findTenantByIdAsync(ctx.getTenantId(), TenantId.fromUUID(entityContainer.getEntityId().getId())), tenant -> {
             if (tenant != null) {
+                return processSave(ctx, sdId, relationType);
+            } else {
+                return Futures.immediateFuture(true);
+            }
+        }, ctx.getDbCallbackExecutor());
+    }
+
+    private ListenableFuture<Boolean> processUser(TbContext ctx, EntityContainer entityContainer, SearchDirectionIds sdId, String relationType) {
+        return Futures.transformAsync(ctx.getUserService().findUserByIdAsync(ctx.getTenantId(), new UserId(entityContainer.getEntityId().getId())), user -> {
+            if (user != null) {
                 return processSave(ctx, sdId, relationType);
             } else {
                 return Futures.immediateFuture(true);

@@ -129,7 +129,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         TenantId tenantId = entityView.getTenantId();
         EntityViewId entityViewId = entityView.getId();
         try {
-            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, entityViewId);
+            List<EdgeId> relatedEdgeIds = edgeService.findAllRelatedEdgeIds(tenantId, entityViewId);
             entityViewService.deleteEntityView(tenantId, entityViewId);
             notificationEntityService.notifyDeleteEntity(tenantId, entityViewId, entityView, entityView.getCustomerId(), ActionType.DELETED,
                     relatedEdgeIds, user, entityViewId.toString());

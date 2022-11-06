@@ -40,6 +40,7 @@ export class AlarmsTableKeySettingsComponent extends WidgetSettingsComponent {
 
   protected defaultSettings(): WidgetSettings {
     return {
+      customTitle: '',
       columnWidth: '0px',
       useCellStyleFunction: false,
       cellStyleFunction: '',
@@ -52,6 +53,7 @@ export class AlarmsTableKeySettingsComponent extends WidgetSettingsComponent {
 
   protected onSettingsSet(settings: WidgetSettings) {
     this.alarmsTableKeySettingsForm = this.fb.group({
+      customTitle: [settings.customTitle, []],
       columnWidth: [settings.columnWidth, []],
       useCellStyleFunction: [settings.useCellStyleFunction, []],
       cellStyleFunction: [settings.cellStyleFunction, [Validators.required]],

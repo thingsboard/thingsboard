@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
@@ -38,12 +39,11 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.dao.alarm.AlarmOperationResult;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
-import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.service.subscription.SubscriptionManagerService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
@@ -58,13 +58,13 @@ import java.util.Optional;
 public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService implements AlarmSubscriptionService {
 
     private final AlarmService alarmService;
-    private final TbApiUsageClient apiUsageClient;
+    private final TbApiUsageReportClient apiUsageClient;
     private final TbApiUsageStateService apiUsageStateService;
 
     public DefaultAlarmSubscriptionService(TbClusterService clusterService,
                                            PartitionService partitionService,
                                            AlarmService alarmService,
-                                           TbApiUsageClient apiUsageClient,
+                                           TbApiUsageReportClient apiUsageClient,
                                            TbApiUsageStateService apiUsageStateService) {
         super(clusterService, partitionService);
         this.alarmService = alarmService;

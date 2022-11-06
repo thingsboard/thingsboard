@@ -88,6 +88,14 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     }
 
     @Override
+    public User findUserByTenantIdAndEmail(TenantId tenantId, String email) {
+        log.trace("Executing findUserByTenantIdAndEmail [{}][{}]", tenantId, email);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateString(email, "Incorrect email " + email);
+        return userDao.findByTenantIdAndEmail(tenantId, email);
+    }
+
+    @Override
     public User findUserById(TenantId tenantId, UserId userId) {
         log.trace("Executing findUserById [{}]", userId);
         validateId(userId, INCORRECT_USER_ID + userId);

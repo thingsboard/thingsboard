@@ -33,6 +33,8 @@ import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.RuleEngineNotificationService;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
+import org.thingsboard.script.api.js.JsInvokeService;
+import org.thingsboard.script.api.mvel.MvelInvokeService;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.actors.tenant.DebugTbRateLimits;
 import org.thingsboard.server.cluster.TbClusterService;
@@ -48,6 +50,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
+import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.audit.AuditLogService;
@@ -76,7 +79,6 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
-import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
 import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
@@ -91,7 +93,6 @@ import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
 import org.thingsboard.server.service.rpc.TbRpcService;
 import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
-import org.thingsboard.server.service.script.JsInvokeService;
 import org.thingsboard.server.service.session.DeviceSessionCacheService;
 import org.thingsboard.server.service.sms.SmsExecutorService;
 import org.thingsboard.server.service.state.DeviceStateService;
@@ -150,7 +151,7 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private TbApiUsageClient apiUsageClient;
+    private TbApiUsageReportClient apiUsageClient;
 
     @Autowired
     @Getter
@@ -268,7 +269,11 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private JsInvokeService jsSandbox;
+    private JsInvokeService jsInvokeService;
+
+    @Autowired(required = false)
+    @Getter
+    private MvelInvokeService mvelInvokeService;
 
     @Autowired
     @Getter

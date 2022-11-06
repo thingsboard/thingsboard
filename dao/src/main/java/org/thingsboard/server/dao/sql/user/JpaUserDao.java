@@ -61,6 +61,11 @@ public class JpaUserDao extends JpaAbstractSearchTextDao<UserEntity, User> imple
     }
 
     @Override
+    public User findByTenantIdAndEmail(TenantId tenantId, String email) {
+        return DaoUtil.getData(userRepository.findByTenantIdAndEmail(tenantId.getId(), email));
+    }
+
+    @Override
     public PageData<User> findByTenantId(UUID tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(
                 userRepository

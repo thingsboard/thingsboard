@@ -22,6 +22,7 @@ import { Widget } from './widget.models';
 import { Timewindow } from '@shared/models/time/time.models';
 import { EntityAliases } from './alias.models';
 import { Filters } from '@shared/models/query/query.models';
+import { MatDialogRef } from '@angular/material/dialog';
 
 export interface DashboardInfo extends BaseData<DashboardId>, ExportableEntity<DashboardId> {
   tenantId?: TenantId;
@@ -55,6 +56,7 @@ export interface GridSettings {
   autoFillHeight?: boolean;
   mobileAutoFillHeight?: boolean;
   mobileRowHeight?: number;
+  layoutDimension?: LayoutDimension;
   [key: string]: any;
 }
 
@@ -69,7 +71,16 @@ export interface DashboardLayoutInfo {
   gridSettings?: GridSettings;
 }
 
+export interface LayoutDimension {
+  type?: LayoutType,
+  fixedWidth?: number,
+  fixedLayout?: DashboardLayoutId,
+  leftWidthPercentage?: number
+}
+
 export declare type DashboardLayoutId = 'main' | 'right';
+
+export declare type LayoutType = 'percentage' | 'fixed';
 
 export declare type DashboardStateLayouts = {[key in DashboardLayoutId]?: DashboardLayout};
 
@@ -112,6 +123,7 @@ export interface DashboardConfiguration {
 
 export interface Dashboard extends DashboardInfo {
   configuration?: DashboardConfiguration;
+  dialogRef?: MatDialogRef<any>;
 }
 
 export interface HomeDashboard extends Dashboard {
