@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.ssl.SSLContextBuilder;
@@ -37,6 +38,7 @@ import java.util.*;
 public abstract class AbstractContainerTest {
     protected static long timeoutMultiplier = 1;
     protected ObjectMapper mapper = new ObjectMapper();
+    protected JsonParser jsonParser = new JsonParser();
     private static final ContainerTestSuite containerTestSuite = ContainerTestSuite.getInstance();
     protected static TestRestClient testRestClient;
 
@@ -90,6 +92,27 @@ public abstract class AbstractContainerTest {
                 .put("doubleKey", ts)
                 .put("longKey", ts)
                 .build();
+    }
+
+    protected JsonObject createGatewayConnectPayload(String deviceName){
+        JsonObject payload = new JsonObject();
+        payload.addProperty("device", deviceName);
+        return payload;
+    }
+
+    protected JsonObject createGatewayPayload(String deviceName, long ts){
+        JsonObject payload = new JsonObject();
+        payload.add(deviceName, createGatewayTelemetryArray(ts));
+        return payload;
+    }
+
+    protected JsonArray createGatewayTelemetryArray(long ts){
+        JsonArray telemetryArray = new JsonArray();
+        if (ts > 0)
+            telemetryArray.add(createPayload(ts));
+        else
+            telemetryArray.add(createPayload());
+        return telemetryArray;
     }
 
     protected JsonObject createPayload(long ts) {
