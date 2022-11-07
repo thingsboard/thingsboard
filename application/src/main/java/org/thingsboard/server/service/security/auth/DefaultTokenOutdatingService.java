@@ -17,6 +17,7 @@ package org.thingsboard.server.service.security.auth;
 
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.TbTransactionalCache;
@@ -31,10 +32,15 @@ import java.util.Optional;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 @Service
-@RequiredArgsConstructor
 public class DefaultTokenOutdatingService implements TokenOutdatingService {
+
     private final TbTransactionalCache<String, Long> cache;
     private final JwtTokenFactory tokenFactory;
+
+    public DefaultTokenOutdatingService(@Qualifier("UsersSessionInvalidation") TbTransactionalCache<String, Long> cache, JwtTokenFactory tokenFactory) {
+        this.cache = cache;
+        this.tokenFactory = tokenFactory;
+    }
 
     @EventListener(classes = UserAuthDataChangedEvent.class)
     public void onUserAuthDataChanged(UserAuthDataChangedEvent event) {
@@ -48,10 +54,10 @@ public class DefaultTokenOutdatingService implements TokenOutdatingService {
         Claims claims = tokenFactory.parseTokenClaims(token).getBody();
         long issueTime = claims.getIssuedAt().getTime();
         String sessionId = claims.get("sessionId", String.class);
-        if (sessionId == null) {
-            return isTokenOutdated(issueTime, userId.toString());
+        if (isTokenOutdated(issueTime, userId.toString())){
+             return true;
         } else {
-            return isTokenOutdated(issueTime, userId.toString()) || isTokenOutdated(issueTime, sessionId);
+             return sessionId != null && isTokenOutdated(issueTime, sessionId);
         }
     }
 
