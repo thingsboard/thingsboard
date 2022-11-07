@@ -178,7 +178,6 @@ public abstract class BaseAuditLogControllerTest extends AbstractControllerTest 
         reset(partitioningRepository);
         AuditLog auditLog = createAuditLog(ActionType.LOGIN, tenantAdminUserId);
         verify(partitioningRepository).createPartitionIfNotExists(eq("audit_log"), eq(auditLog.getCreatedTime()), eq(partitionDurationInMs));
-
         List<Long> partitions = partitioningRepository.fetchPartitions("audit_log");
         assertThat(partitions).singleElement().satisfies(partitionStartTs -> {
             assertThat(partitionStartTs).isEqualTo(partitioningRepository.calculatePartitionStartTime(auditLog.getCreatedTime(), partitionDurationInMs));

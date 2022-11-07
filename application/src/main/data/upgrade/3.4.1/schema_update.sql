@@ -55,16 +55,16 @@ CREATE OR REPLACE PROCEDURE migrate_audit_logs(IN start_time_ms BIGINT, IN end_t
     LANGUAGE plpgsql AS
 $$
 DECLARE
-    p RECORD;
+    prt RECORD;
     partition_end_ts BIGINT;
 BEGIN
     FOR p IN SELECT DISTINCT (created_time - created_time % partition_size_ms) AS partition_ts FROM old_audit_log
     WHERE created_time >= start_time_ms AND created_time < end_time_ms
     LOOP
-        partition_end_ts = p.partition_ts + partition_size_ms;
-        RAISE NOTICE '[audit_log] Partition to create : [%-%]', p.partition_ts, partition_end_ts;
+        partition_end_ts = prt.partition_ts + partition_size_ms;
+        RAISE NOTICE '[audit_log] Partition to create : [%-%]', prt.partition_ts, partition_end_ts;
         EXECUTE format('CREATE TABLE IF NOT EXISTS audit_log_%s PARTITION OF audit_log ' ||
-         'FOR VALUES FROM ( %s ) TO ( %s )', p.partition_ts, p.partition_ts, partition_end_ts);
+         'FOR VALUES FROM ( %s ) TO ( %s )', prt.partition_ts, prt.partition_ts, partition_end_ts);
     END LOOP;
 
     INSERT INTO audit_log

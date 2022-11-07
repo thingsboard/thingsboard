@@ -719,7 +719,7 @@ CREATE TABLE IF NOT EXISTS edge (
 );
 
 CREATE TABLE IF NOT EXISTS edge_event (
-    id uuid NOT NULL CONSTRAINT edge_event_pkey PRIMARY KEY,
+    id uuid NOT NULL,
     created_time bigint NOT NULL,
     edge_id uuid,
     edge_event_type varchar(255),
@@ -729,7 +729,7 @@ CREATE TABLE IF NOT EXISTS edge_event (
     body varchar(10000000),
     tenant_id uuid,
     ts bigint NOT NULL
-);
+) PARTITION BY RANGE(created_time);
 
 CREATE TABLE IF NOT EXISTS rpc (
     id uuid NOT NULL CONSTRAINT rpc_pkey PRIMARY KEY,
