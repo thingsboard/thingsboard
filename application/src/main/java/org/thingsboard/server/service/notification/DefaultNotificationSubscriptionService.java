@@ -35,6 +35,7 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -56,17 +57,20 @@ import java.util.UUID;
 public class DefaultNotificationSubscriptionService extends AbstractSubscriptionService implements NotificationSubscriptionService, RuleEngineNotificationService {
 
     private final NotificationTargetService notificationTargetService;
+    private final NotificationRequestService notificationRequestService;
     private final NotificationService notificationService;
     private final DbCallbackExecutorService dbCallbackExecutorService;
     private final NotificationsTopicService notificationsTopicService;
 
     public DefaultNotificationSubscriptionService(TbClusterService clusterService, PartitionService partitionService,
                                                   NotificationTargetService notificationTargetService,
+                                                  NotificationRequestService notificationRequestService,
                                                   NotificationService notificationService,
                                                   DbCallbackExecutorService dbCallbackExecutorService,
                                                   NotificationsTopicService notificationsTopicService) {
         super(clusterService, partitionService);
         this.notificationTargetService = notificationTargetService;
+        this.notificationRequestService = notificationRequestService;
         this.notificationService = notificationService;
         this.dbCallbackExecutorService = dbCallbackExecutorService;
         this.notificationsTopicService = notificationsTopicService;
@@ -77,18 +81,18 @@ public class DefaultNotificationSubscriptionService extends AbstractSubscription
         log.info("Processing notification request (tenant id: {}, notification target id: {})", tenantId, notificationRequest.getTargetId());
         notificationRequest.setTenantId(tenantId);
         if (notificationRequest.getAdditionalConfig() != null) {
+            // TODO: think about notification request update
             NotificationRequestConfig config = notificationRequest.getAdditionalConfig();
-            if (config.getSendingDelayInMinutes() > 0) {
+            if (config.getSendingDelayInMinutes() > 0 && notificationRequest.getId() == null) {
                 notificationRequest.setStatus(NotificationRequestStatus.SCHEDULED);
-
-                // todo: delayed sending; check all delayed notification requests on start up, schedule send
+                NotificationRequest savedNotificationRequest = notificationRequestService.saveNotificationRequest(tenantId, notificationRequest);
+                forwardToNotificationSchedulerService(tenantId, savedNotificationRequest.getId(), false);
+                return savedNotificationRequest;
             }
         }
-        if (notificationRequest.getStatus() == null) {
-            notificationRequest.setStatus(NotificationRequestStatus.PROCESSED);
-        }
 
-        NotificationRequest savedNotificationRequest = notificationService.saveNotificationRequest(tenantId, notificationRequest);
+        notificationRequest.setStatus(NotificationRequestStatus.PROCESSED);
+        NotificationRequest savedNotificationRequest = notificationRequestService.saveNotificationRequest(tenantId, notificationRequest);
 
         DaoUtil.processBatches(pageLink -> {
             return notificationTargetService.findRecipientsForNotificationTarget(tenantId, notificationRequest.getTargetId(), pageLink);
@@ -109,6 +113,20 @@ public class DefaultNotificationSubscriptionService extends AbstractSubscription
         return savedNotificationRequest;
     }
 
+    private void forwardToNotificationSchedulerService(TenantId tenantId, NotificationRequestId notificationRequestId, boolean deleted) {
+        TransportProtos.NotificationSchedulerServiceMsg.Builder msg = TransportProtos.NotificationSchedulerServiceMsg.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setRequestIdMSB(notificationRequestId.getId().getMostSignificantBits())
+                .setRequestIdLSB(notificationRequestId.getId().getLeastSignificantBits())
+                .setTs(System.currentTimeMillis())
+                .setDeleted(deleted);
+        TransportProtos.ToCoreMsg toCoreMsg = TransportProtos.ToCoreMsg.newBuilder()
+                .setNotificationSchedulerServiceMsg(msg)
+                .build();
+        clusterService.pushMsgToCore(tenantId, notificationRequestId, toCoreMsg, null);
+    }
+
     @Override
     public void markNotificationAsRead(TenantId tenantId, UserId recipientId, NotificationId notificationId) {
         boolean updated = notificationService.markNotificationAsRead(tenantId, recipientId, notificationId);
@@ -122,17 +140,18 @@ public class DefaultNotificationSubscriptionService extends AbstractSubscription
     @Override
     public void deleteNotificationRequest(TenantId tenantId, NotificationRequestId notificationRequestId) {
         log.debug("Deleting notification request {}", notificationRequestId);
-        notificationService.deleteNotificationRequestById(tenantId, notificationRequestId);
+        notificationRequestService.deleteNotificationRequestById(tenantId, notificationRequestId);
         onNotificationRequestUpdate(tenantId, NotificationRequestUpdate.builder()
                 .notificationRequestId(notificationRequestId)
                 .deleted(true)
                 .build());
+        forwardToNotificationSchedulerService(tenantId, notificationRequestId, true);
     }
 
     @Override
     public void updateNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest) {
         log.debug("Updating notification request {}", notificationRequest.getId());
-        notificationService.saveNotificationRequest(tenantId, notificationRequest);
+        notificationRequestService.saveNotificationRequest(tenantId, notificationRequest);
         notificationService.updateNotificationsInfosByRequestId(tenantId, notificationRequest.getId(), notificationRequest.getNotificationInfo());
         onNotificationRequestUpdate(tenantId, NotificationRequestUpdate.builder()
                 .notificationRequestId(notificationRequest.getId())

@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.notification.NotificationSubscriptionService;
@@ -54,6 +55,7 @@ import java.util.UUID;
 public class NotificationController extends BaseController {
 
     private final NotificationService notificationService;
+    private final NotificationRequestService notificationRequestService;
     private final NotificationSubscriptionService notificationSubscriptionService;
 
     @GetMapping("/notifications")
@@ -102,7 +104,7 @@ public class NotificationController extends BaseController {
     public NotificationRequest getNotificationRequestById(@PathVariable UUID id,
                                                           @AuthenticationPrincipal SecurityUser user) {
         NotificationRequestId notificationRequestId = new NotificationRequestId(id);
-        return notificationService.findNotificationRequestById(user.getTenantId(), notificationRequestId);
+        return notificationRequestService.findNotificationRequestById(user.getTenantId(), notificationRequestId);
     }
 
     @GetMapping("/notification/requests")
@@ -114,14 +116,14 @@ public class NotificationController extends BaseController {
                                                                  @RequestParam(required = false) String sortOrder,
                                                                  @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        return notificationService.findNotificationRequestsByTenantId(user.getTenantId(), pageLink);
+        return notificationRequestService.findNotificationRequestsByTenantId(user.getTenantId(), pageLink);
     }
 
     @DeleteMapping("/notification/request/{id}")
     public void deleteNotificationRequest(@PathVariable UUID id,
                                           @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         NotificationRequestId notificationRequestId = new NotificationRequestId(id);
-        NotificationRequest notificationRequest = notificationService.findNotificationRequestById(user.getTenantId(), notificationRequestId);
+        NotificationRequest notificationRequest = notificationRequestService.findNotificationRequestById(user.getTenantId(), notificationRequestId);
         accessControlService.checkPermission(user, Resource.NOTIFICATION_REQUEST, Operation.DELETE, notificationRequestId, notificationRequest);
         try {
             notificationSubscriptionService.deleteNotificationRequest(user.getTenantId(), notificationRequestId);

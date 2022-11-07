@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
+import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
@@ -50,6 +51,11 @@ public class JpaNotificationRequestDao extends JpaAbstractDao<NotificationReques
     @Override
     public List<NotificationRequest> findByRuleIdAndAlarmId(TenantId tenantId, NotificationRuleId ruleId, AlarmId alarmId) {
         return DaoUtil.convertDataList(notificationRequestRepository.findAllByRuleIdAndAlarmId(ruleId.getId(), alarmId.getId()));
+    }
+
+    @Override
+    public PageData<NotificationRequest> findAllByStatus(NotificationRequestStatus status, PageLink pageLink) {
+        return DaoUtil.toPageData(notificationRequestRepository.findAllByStatus(status, DaoUtil.toPageable(pageLink)));
     }
 
     @Override

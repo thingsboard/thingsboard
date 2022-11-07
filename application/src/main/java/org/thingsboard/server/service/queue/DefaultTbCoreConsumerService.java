@@ -31,8 +31,6 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.notification.Notification;
-import org.thingsboard.server.common.data.notification.NotificationInfo;
 import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
@@ -69,6 +67,7 @@ import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.edge.EdgeNotificationService;
+import org.thingsboard.server.service.notification.NotificationSchedulerService;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
@@ -127,6 +126,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     private final EdgeNotificationService edgeNotificationService;
     private final OtaPackageStateService firmwareStateService;
     private final GitVersionControlQueueService vcQueueService;
+    private final NotificationSchedulerService notificationSchedulerService;
     private final TbCoreConsumerStats stats;
     protected final TbQueueConsumer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> usageStatsConsumer;
     private final TbQueueConsumer<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>> firmwareStatesConsumer;
@@ -151,7 +151,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                         EdgeNotificationService edgeNotificationService,
                                         OtaPackageStateService firmwareStateService,
                                         GitVersionControlQueueService vcQueueService,
-                                        PartitionService partitionService) {
+                                        PartitionService partitionService,
+                                        NotificationSchedulerService notificationSchedulerService) {
         super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, assetProfileCache, apiUsageStateService, partitionService, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer());
         this.mainConsumer = tbCoreQueueFactory.createToCoreMsgConsumer();
         this.usageStatsConsumer = tbCoreQueueFactory.createToUsageStatsServiceMsgConsumer();
@@ -165,6 +166,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         this.statsService = statsService;
         this.firmwareStateService = firmwareStateService;
         this.vcQueueService = vcQueueService;
+        this.notificationSchedulerService = notificationSchedulerService;
     }
 
     @PostConstruct
@@ -259,6 +261,10 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                         }
                                     }
                                     callback.onSuccess();
+                                } else if (toCoreMsg.hasNotificationSchedulerServiceMsg()) {
+                                    TransportProtos.NotificationSchedulerServiceMsg notificationSchedulerServiceMsg = toCoreMsg.getNotificationSchedulerServiceMsg();
+                                    log.trace("[{}] Forwarding message to notification scheduler service {}", id, toCoreMsg.getNotificationSchedulerServiceMsg());
+                                    forwardToNotificationSchedulerService(notificationSchedulerServiceMsg, callback);
                                 }
                             } catch (Throwable e) {
                                 log.warn("[{}] Failed to process message: {}", id, msg, e);
@@ -568,6 +574,22 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             callback.onSuccess();
         } catch (Exception e) {
             callback.onFailure(new RuntimeException("Failed update device activity for device [" + deviceId.getId() + "]!", e));
+        }
+    }
+
+    private void forwardToNotificationSchedulerService(TransportProtos.NotificationSchedulerServiceMsg msg, TbCallback callback) {
+        TenantId tenantId = TenantId.fromUUID(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
+        NotificationRequestId notificationRequestId = new NotificationRequestId(new UUID(msg.getRequestIdMSB(), msg.getRequestIdLSB()));
+        boolean deleted = msg.getDeleted();
+        try {
+            if (!deleted) {
+                notificationSchedulerService.scheduleNotificationRequest(tenantId, notificationRequestId, msg.getTs());
+            } else {
+                notificationSchedulerService.onNotificationRequestDeleted(tenantId, notificationRequestId);
+            }
+            callback.onSuccess();
+        } catch (Exception e) {
+            callback.onFailure(new RuntimeException("Failed to scheduler notification request", e));
         }
     }
 

@@ -110,9 +110,9 @@ public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest
         notificationRequest.setTargetId(createId(targetId, NotificationTargetId::new));
         notificationRequest.setNotificationReason(notificationReason);
         notificationRequest.setTextTemplate(textTemplate);
-        notificationRequest.setNotificationInfo(fromJson(notificationInfo));
+        notificationRequest.setNotificationInfo(fromJson(notificationInfo, NotificationInfo.class));
         notificationRequest.setNotificationSeverity(notificationSeverity);
-        notificationRequest.setAdditionalConfig(fromJson(additionalConfig));
+        notificationRequest.setAdditionalConfig(fromJson(additionalConfig, NotificationRequestConfig.class));
         notificationRequest.setStatus(status);
         notificationRequest.setRuleId(createId(ruleId, NotificationRuleId::new));
         notificationRequest.setAlarmId(createId(alarmId, AlarmId::new));

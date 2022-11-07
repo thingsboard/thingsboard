@@ -30,8 +30,8 @@ import org.thingsboard.server.common.data.notification.NotificationRequestStatus
 import org.thingsboard.server.common.data.notification.NotificationSeverity;
 import org.thingsboard.server.common.data.notification.rule.NonConfirmedNotificationEscalation;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
+import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationRuleService;
-import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 
@@ -43,7 +43,7 @@ import java.util.List;
 public class DefaultNotificationRuleProcessingService implements NotificationRuleProcessingService {
 
     private final NotificationRuleService notificationRuleService;
-    private final NotificationService notificationService;
+    private final NotificationRequestService notificationRequestService;
     private final NotificationSubscriptionService notificationSubscriptionService;
     private final DbCallbackExecutorService dbCallbackExecutorService;
 
@@ -65,7 +65,7 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
     }
 
     private void onAlarmUpdate(TenantId tenantId, NotificationRuleId notificationRuleId, Alarm alarm) {
-        List<NotificationRequest> notificationRequests = notificationService.findNotificationRequestsByRuleIdAndAlarmId(tenantId, notificationRuleId, alarm.getId());
+        List<NotificationRequest> notificationRequests = notificationRequestService.findNotificationRequestsByRuleIdAndAlarmId(tenantId, notificationRuleId, alarm.getId());
         NotificationRule notificationRule = notificationRuleService.findNotificationRuleById(tenantId, notificationRuleId);
 
         if (notificationRequests.isEmpty()) { // in case it is first notification for alarm, or it was previously acked and now we need to send notifications again
@@ -80,7 +80,7 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
                 for (NotificationRequest notificationRequest : notificationRequests) {
                     if (notificationRequest.getStatus() == NotificationRequestStatus.SCHEDULED) {
                         // using regular service due to no need to send an update to subscription manager
-                        notificationService.deleteNotificationRequestById(tenantId, notificationRequest.getId());
+                        notificationRequestService.deleteNotificationRequestById(tenantId, notificationRequest.getId());
                     } else {
                         notificationSubscriptionService.deleteNotificationRequest(tenantId, notificationRequest.getId());
                         // todo: or should we mark already sent notifications as read?

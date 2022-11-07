@@ -86,8 +86,8 @@ public abstract class BaseSqlEntity<D> implements BaseEntity<D> {
         }
     }
 
-    protected <T> T fromJson(JsonNode json) {
-        return JacksonUtil.convertValue(json, new TypeReference<T>() {});
+    protected <T> T fromJson(JsonNode json, Class<T> type) {
+        return JacksonUtil.convertValue(json, type);
     }
 
 }

@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationInfo;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
+import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.notification.NotificationSeverity;
 import org.thingsboard.server.common.data.notification.NotificationStatus;
 import org.thingsboard.server.common.data.page.PageData;
@@ -43,43 +44,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DefaultNotificationService implements NotificationService {
 
-    private final NotificationRequestDao notificationRequestDao;
     private final NotificationDao notificationDao;
-
-    private final NotificationRequestValidator notificationRequestValidator = new NotificationRequestValidator();
-
-    @Override
-    public NotificationRequest saveNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest) {
-        if (StringUtils.isBlank(notificationRequest.getNotificationReason())) {
-            notificationRequest.setNotificationReason(NotificationRequest.GENERAL_NOTIFICATION_REASON);
-        }
-        if (notificationRequest.getNotificationSeverity() == null) {
-            notificationRequest.setNotificationSeverity(NotificationSeverity.NORMAL);
-        }
-        notificationRequestValidator.validate(notificationRequest, NotificationRequest::getTenantId);
-        return notificationRequestDao.save(tenantId, notificationRequest);
-    }
-
-    @Override
-    public NotificationRequest findNotificationRequestById(TenantId tenantId, NotificationRequestId id) {
-        return notificationRequestDao.findById(tenantId, id.getId());
-    }
-
-    @Override
-    public PageData<NotificationRequest> findNotificationRequestsByTenantId(TenantId tenantId, PageLink pageLink) {
-        return notificationRequestDao.findByTenantIdAndPageLink(tenantId, pageLink);
-    }
-
-    @Override
-    public List<NotificationRequest> findNotificationRequestsByRuleIdAndAlarmId(TenantId tenantId, NotificationRuleId ruleId, AlarmId alarmId) {
-        return notificationRequestDao.findByRuleIdAndAlarmId(tenantId, ruleId, alarmId);
-    }
-
-    // ON DELETE CASCADE is used: notifications for request are deleted as well
-    @Override
-    public void deleteNotificationRequestById(TenantId tenantId, NotificationRequestId id) {
-        notificationRequestDao.removeById(tenantId, id.getId());
-    }
 
     @Override
     public Notification saveNotification(TenantId tenantId, Notification notification) {
@@ -120,14 +85,6 @@ public class DefaultNotificationService implements NotificationService {
     @Override
     public int updateNotificationsInfosByRequestId(TenantId tenantId, NotificationRequestId notificationRequestId, NotificationInfo notificationInfo) {
         return notificationDao.updateInfosByRequestId(tenantId, notificationRequestId, notificationInfo);
-    }
-
-    private static class NotificationRequestValidator extends DataValidator<NotificationRequest> {
-
-        @Override
-        protected void validateDataImpl(TenantId tenantId, NotificationRequest notificationRequest) {
-        }
-
     }
 
 }
