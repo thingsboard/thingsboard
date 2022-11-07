@@ -38,7 +38,7 @@ public class TestProperties {
         if (instance.isActive()) {
             return WSS_URL;
         }
-        return getProperty("tb.baseUrl");
+        return getProperty("tb.wsUrl");
     }
 
     private static String getProperty(String propertyName) {

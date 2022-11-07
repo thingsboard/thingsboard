@@ -55,7 +55,6 @@ public abstract class AbstractContainerTest {
 
     @BeforeSuite
     public void beforeSuite() {
-        RestAssured.filters(new RequestLoggingFilter(), new ResponseLoggingFilter());
         if ("false".equals(System.getProperty("runLocal", "false"))) {
             containerTestSuite.start();
         }

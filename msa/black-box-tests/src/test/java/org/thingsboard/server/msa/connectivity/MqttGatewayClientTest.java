@@ -16,6 +16,9 @@
 package org.thingsboard.server.msa.connectivity;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -24,11 +27,15 @@ import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.Assert;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.mqtt.MqttClient;
 import org.thingsboard.mqtt.MqttClientConfig;
 import org.thingsboard.mqtt.MqttHandler;
@@ -44,12 +51,10 @@ import org.thingsboard.server.msa.AbstractContainerTest;
 import org.thingsboard.server.msa.WsClient;
 import org.thingsboard.server.msa.mapper.WsTelemetryResponse;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.thingsboard.server.common.data.DataConstants.DEVICE;
@@ -187,7 +192,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
         responseData = jsonParser.parse(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
 
-        assertThat(responseData.has("value")).isTrue();
+        assertThat(responseData.has("values")).isTrue();
         assertThat(responseData.get("values").getAsJsonObject().get("attr1").getAsString()).isEqualTo(sharedAttributes.get("attr1").getAsString());
         assertThat(responseData.get("values").getAsJsonObject().get("attr2").getAsString()).isEqualTo(sharedAttributes.get("attr2").getAsString());
 
@@ -304,11 +309,19 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         JsonObject serverRpcPayload = new JsonObject();
         serverRpcPayload.addProperty("method", "getValue");
         serverRpcPayload.addProperty("params", true);
-
-        JsonNode response = testRestClient.postServerSideRpc(createdDevice.getId(), mapper.readTree(serverRpcPayload.toString()));
+        ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName(getClass().getSimpleName())));
+        ListenableFuture<JsonNode> future = service.submit(() -> {
+            try {
+                return testRestClient.postServerSideRpc(createdDevice.getId(), mapper.readTree(serverRpcPayload.toString()));
+            } catch (IOException e) {
+                return null;
+            }
+        });
 
         // Wait for RPC call from the server and send the response
         MqttEvent requestFromServer = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
+        service.shutdownNow();
+
         assertThat(requestFromServer).isNotNull();
         assertThat(requestFromServer.getMessage()).isNotNull();
         JsonNode requestFromServerJson = JacksonUtil.toJsonNode(requestFromServer.getMessage());
@@ -326,8 +339,9 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         // Send a response to the server's RPC request
 
         mqttClient.publish(gatewayRpcTopic, Unpooled.wrappedBuffer(gatewayResponse.toString().getBytes())).get();
+        JsonNode serverResponse = future.get(5 * timeoutMultiplier, TimeUnit.SECONDS);
 
-        assertThat(response).isEqualTo(clientResponse.getAsJsonObject());
+        assertThat(serverResponse).isEqualTo(mapper.readTree(clientResponse.toString()));
     }
 
     @Test
@@ -366,7 +380,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
             TimeUnit.SECONDS.sleep(30);
         }
 
-        String deviceName = "mqtt_device";
+        String deviceName = "mqtt_device" + RandomStringUtils.randomAlphabetic(5);
         mqttClient.publish("v1/gateway/connect", Unpooled.wrappedBuffer(createGatewayConnectPayload(deviceName).toString().getBytes()), MqttQoS.AT_LEAST_ONCE).get();
 
         if (timeoutMultiplier > 1) {
