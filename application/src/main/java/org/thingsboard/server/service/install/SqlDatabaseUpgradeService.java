@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.service.install;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,13 +35,11 @@ import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.queue.SubmitStrategy;
 import org.thingsboard.server.common.data.queue.SubmitStrategyType;
 import org.thingsboard.server.dao.asset.AssetProfileService;
-import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.queue.QueueService;
-import org.thingsboard.server.dao.rule.RuleChainService;
-import org.thingsboard.server.dao.tenant.TenantProfileService;
+import org.thingsboard.server.dao.sql.asset.AssetRepository;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
@@ -56,7 +56,10 @@ import java.sql.SQLException;
 import java.sql.SQLSyntaxErrorException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.server.service.install.DatabaseHelper.ADDITIONAL_INFO;
@@ -110,7 +113,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
     private DeviceService deviceService;
 
     @Autowired
-    private AssetService assetService;
+    private AssetRepository assetRepository;
 
     @Autowired
     private DeviceProfileService deviceProfileService;
@@ -129,10 +132,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
     private TbRuleEngineQueueConfigService queueConfig;
 
     @Autowired
-    private RuleChainService ruleChainService;
-
-    @Autowired
-    private TenantProfileService tenantProfileService;
+    private DbUpgradeExecutorService dbUpgradeExecutor;
 
     @Override
     public void upgradeDatabase(String fromVersion) throws Exception {
@@ -623,23 +623,28 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         log.info("Creating default asset profiles...");
                         PageLink pageLink = new PageLink(100);
                         PageData<Tenant> pageData;
+                        List<ListenableFuture<?>> futures = new ArrayList<>();
                         do {
                             pageData = tenantService.findTenants(pageLink);
                             for (Tenant tenant : pageData.getData()) {
-                                List<EntitySubtype> assetTypes = assetService.findAssetTypesByTenantId(tenant.getId()).get();
+                                Set<String> assetTypes = new HashSet<>(assetRepository.findTenantAssetTypes(tenant.getUuidId()));
+                                assetTypes.remove("default");
+
                                 try {
-                                    assetProfileService.createDefaultAssetProfile(tenant.getId());
+                                    futures.add(dbUpgradeExecutor.submit(() -> assetProfileService.createDefaultAssetProfile(tenant.getId())));
                                 } catch (Exception e) {
                                 }
-                                for (EntitySubtype assetType : assetTypes) {
+                                for (String assetType : assetTypes) {
                                     try {
-                                        assetProfileService.findOrCreateAssetProfile(tenant.getId(), assetType.getType());
+                                        futures.add(dbUpgradeExecutor.submit(() -> assetProfileService.findOrCreateAssetProfile(tenant.getId(), assetType)));
                                     } catch (Exception e) {
                                     }
                                 }
                             }
                             pageLink = pageLink.nextPageLink();
                         } while (pageData.hasNext());
+
+                        Futures.allAsList(futures).get();
 
                         log.info("Updating asset profiles...");
                         conn.createStatement().execute("call update_asset_profiles()");
@@ -727,6 +732,5 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
         queue.setConsumerPerPartition(queueSettings.isConsumerPerPartition());
         return queue;
     }
-
 
 }
