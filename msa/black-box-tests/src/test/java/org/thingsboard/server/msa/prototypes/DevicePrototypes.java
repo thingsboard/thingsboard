@@ -15,9 +15,7 @@
  */
 package org.thingsboard.server.msa.prototypes;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
@@ -32,7 +30,7 @@ public class DevicePrototypes {
 
     public static Device defaultGatewayPrototype() {
         String isGateway = "{\"gateway\":true}";
-        JsonNode additionalInfo = JacksonUtil.valueToTree(isGateway);
+        JsonNode additionalInfo = JacksonUtil.toJsonNode(isGateway);
         Device gatewayDeviceTemplate = new Device();
         gatewayDeviceTemplate.setName("mqtt_gateway_" + RandomStringUtils.randomAlphanumeric(5));
         gatewayDeviceTemplate.setType("gateway");
