@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -34,13 +35,15 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.notification.Notification;
+import org.thingsboard.server.common.data.notification.NotificationOriginatorType;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
+import org.thingsboard.server.common.data.notification.NotificationSeverity;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.notification.NotificationSubscriptionService;
+import org.thingsboard.rule.engine.api.NotificationManager;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
@@ -56,7 +59,7 @@ public class NotificationController extends BaseController {
 
     private final NotificationService notificationService;
     private final NotificationRequestService notificationRequestService;
-    private final NotificationSubscriptionService notificationSubscriptionService;
+    private final NotificationManager notificationManager;
 
     @GetMapping("/notifications")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -76,7 +79,7 @@ public class NotificationController extends BaseController {
     public void markNotificationAsRead(@PathVariable UUID id,
                                        @AuthenticationPrincipal SecurityUser user) {
         NotificationId notificationId = new NotificationId(id);
-        notificationSubscriptionService.markNotificationAsRead(user.getTenantId(), user.getId(), notificationId);
+        notificationManager.markNotificationAsRead(user.getTenantId(), user.getId(), notificationId);
     }
 
     // delete notification?
@@ -86,11 +89,27 @@ public class NotificationController extends BaseController {
     public NotificationRequest createNotificationRequest(@RequestBody NotificationRequest notificationRequest,
                                                          @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         accessControlService.checkPermission(user, Resource.NOTIFICATION_REQUEST, Operation.CREATE, null, notificationRequest);
+        // todo: check permission for notification target
         if (notificationRequest.getId() != null) {
+            // TODO: think about notification request update
             throw new IllegalArgumentException("Notification request cannot be changed. You can delete it and create a new one");
         }
+        notificationRequest.setOriginatorType(NotificationOriginatorType.USER);
+        notificationRequest.setOriginatorEntityId(user.getId());
+        if (StringUtils.isBlank(notificationRequest.getNotificationReason())) {
+            notificationRequest.setNotificationReason(NotificationRequest.GENERAL_NOTIFICATION_REASON);
+        }
+        if (notificationRequest.getNotificationSeverity() == null) {
+            notificationRequest.setNotificationSeverity(NotificationSeverity.NORMAL);
+        }
+        if (notificationRequest.getNotificationInfo() != null && notificationRequest.getNotificationInfo().getOriginatorType() != null) {
+            throw new IllegalArgumentException("Unsupported notification info type");
+        }
+        notificationRequest.setRuleId(null);
+        notificationRequest.setStatus(null);
+
         try {
-            NotificationRequest savedNotificationRequest = notificationSubscriptionService.processNotificationRequest(user.getTenantId(), notificationRequest);
+            NotificationRequest savedNotificationRequest = notificationManager.processNotificationRequest(user.getTenantId(), notificationRequest);
             logEntityAction(user, EntityType.NOTIFICATION_REQUEST, savedNotificationRequest, ActionType.ADDED);
             return savedNotificationRequest;
         } catch (Exception e) {
@@ -126,7 +145,7 @@ public class NotificationController extends BaseController {
         NotificationRequest notificationRequest = notificationRequestService.findNotificationRequestById(user.getTenantId(), notificationRequestId);
         accessControlService.checkPermission(user, Resource.NOTIFICATION_REQUEST, Operation.DELETE, notificationRequestId, notificationRequest);
         try {
-            notificationSubscriptionService.deleteNotificationRequest(user.getTenantId(), notificationRequestId);
+            notificationManager.deleteNotificationRequest(user.getTenantId(), notificationRequestId);
             logEntityAction(user, EntityType.NOTIFICATION_REQUEST, notificationRequest, ActionType.DELETED);
         } catch (Exception e) {
             logEntityAction(user, EntityType.NOTIFICATION_REQUEST, notificationRequest, notificationRequest, ActionType.DELETED, e);

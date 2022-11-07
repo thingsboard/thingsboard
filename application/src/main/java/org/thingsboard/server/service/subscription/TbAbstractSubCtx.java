@@ -39,7 +39,7 @@ import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.service.ws.WebSocketSessionRef;
-import org.thingsboard.server.service.ws.telemetry.WebSocketService;
+import org.thingsboard.server.service.ws.WebSocketService;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.CmdUpdate;
 import org.thingsboard.server.service.ws.telemetry.sub.TelemetrySubscriptionUpdate;
 

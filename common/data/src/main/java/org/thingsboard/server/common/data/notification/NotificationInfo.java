@@ -15,6 +15,10 @@
  */
 package org.thingsboard.server.common.data.notification;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -28,23 +32,18 @@ import org.thingsboard.server.common.data.validation.NoXss;
 
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
-//@JsonIgnoreProperties(ignoreUnknown = true)
-//@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "notificationType", visible = true, defaultImpl = NotificationInfo.class)
-//@JsonSubTypes({
-//        @Type(name = "ALARM", value = DeviceExportData.class),
-//})
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "originatorType", defaultImpl = NotificationInfo.class)
+@JsonSubTypes({
+        @Type(name = "ALARM", value = AlarmOriginatedNotificationInfo.class),
+})
 public class NotificationInfo {
-    @NoXss
+
     private String description;
     private DashboardId dashboardId;
 
-    private AlarmId alarmId;
-    private String alarmType;
-    private EntityId alarmOriginator;
-    private AlarmSeverity alarmSeverity;
-    private AlarmStatus alarmStatus;
+    public NotificationOriginatorType getOriginatorType() {
+        return null;
+    }
 
 }

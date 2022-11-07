@@ -17,9 +17,7 @@ package org.thingsboard.server.service.ws.notification.cmd;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.service.ws.WsCmd;
 
 @Data
 @NoArgsConstructor

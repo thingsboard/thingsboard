@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationInfo;
+import org.thingsboard.server.common.data.notification.NotificationOriginatorType;
 import org.thingsboard.server.common.data.notification.NotificationSeverity;
 import org.thingsboard.server.common.data.notification.NotificationStatus;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
@@ -67,6 +68,10 @@ public class NotificationEntity extends BaseSqlEntity<Notification> {
     private NotificationSeverity severity;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = ModelConstants.NOTIFICATION_ORIGINATOR_TYPE_PROPERTY)
+    private NotificationOriginatorType originatorType;
+
+    @Enumerated(EnumType.STRING)
     @Column(name = ModelConstants.NOTIFICATION_STATUS_PROPERTY)
     private NotificationStatus status;
 
@@ -83,6 +88,7 @@ public class NotificationEntity extends BaseSqlEntity<Notification> {
             setInfo(JacksonUtil.valueToTree(notification.getInfo()));
         }
         setSeverity(notification.getSeverity());
+        setOriginatorType(notification.getOriginatorType());
         setStatus(notification.getStatus());
     }
 
@@ -99,6 +105,7 @@ public class NotificationEntity extends BaseSqlEntity<Notification> {
             notification.setInfo(JacksonUtil.treeToValue(info, NotificationInfo.class));
         }
         notification.setSeverity(severity);
+        notification.setOriginatorType(originatorType);
         notification.setStatus(status);
         return notification;
     }

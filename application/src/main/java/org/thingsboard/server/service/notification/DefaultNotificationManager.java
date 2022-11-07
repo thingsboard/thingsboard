@@ -18,7 +18,7 @@ package org.thingsboard.server.service.notification;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.thingsboard.rule.engine.api.RuleEngineNotificationService;
+import org.thingsboard.rule.engine.api.NotificationManager;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.User;
@@ -54,7 +54,7 @@ import java.util.UUID;
 
 @Service
 @Slf4j
-public class DefaultNotificationSubscriptionService extends AbstractSubscriptionService implements NotificationSubscriptionService, RuleEngineNotificationService {
+public class DefaultNotificationManager extends AbstractSubscriptionService implements NotificationManager {
 
     private final NotificationTargetService notificationTargetService;
     private final NotificationRequestService notificationRequestService;
@@ -62,12 +62,12 @@ public class DefaultNotificationSubscriptionService extends AbstractSubscription
     private final DbCallbackExecutorService dbCallbackExecutorService;
     private final NotificationsTopicService notificationsTopicService;
 
-    public DefaultNotificationSubscriptionService(TbClusterService clusterService, PartitionService partitionService,
-                                                  NotificationTargetService notificationTargetService,
-                                                  NotificationRequestService notificationRequestService,
-                                                  NotificationService notificationService,
-                                                  DbCallbackExecutorService dbCallbackExecutorService,
-                                                  NotificationsTopicService notificationsTopicService) {
+    public DefaultNotificationManager(TbClusterService clusterService, PartitionService partitionService,
+                                      NotificationTargetService notificationTargetService,
+                                      NotificationRequestService notificationRequestService,
+                                      NotificationService notificationService,
+                                      DbCallbackExecutorService dbCallbackExecutorService,
+                                      NotificationsTopicService notificationsTopicService) {
         super(clusterService, partitionService);
         this.notificationTargetService = notificationTargetService;
         this.notificationRequestService = notificationRequestService;
@@ -81,7 +81,6 @@ public class DefaultNotificationSubscriptionService extends AbstractSubscription
         log.info("Processing notification request (tenant id: {}, notification target id: {})", tenantId, notificationRequest.getTargetId());
         notificationRequest.setTenantId(tenantId);
         if (notificationRequest.getAdditionalConfig() != null) {
-            // TODO: think about notification request update
             NotificationRequestConfig config = notificationRequest.getAdditionalConfig();
             if (config.getSendingDelayInMinutes() > 0 && notificationRequest.getId() == null) {
                 notificationRequest.setStatus(NotificationRequestStatus.SCHEDULED);
@@ -169,6 +168,7 @@ public class DefaultNotificationSubscriptionService extends AbstractSubscription
                 .text(formatNotificationText(notificationRequest.getTextTemplate(), recipient))
                 .info(notificationRequest.getNotificationInfo())
                 .severity(notificationRequest.getNotificationSeverity())
+                .originatorType(notificationRequest.getOriginatorType())
                 .status(NotificationStatus.SENT)
                 .build();
         return notificationService.saveNotification(recipient.getTenantId(), notification);

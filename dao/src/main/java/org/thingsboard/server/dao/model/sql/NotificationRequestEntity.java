@@ -21,13 +21,16 @@ import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.NotificationInfo;
+import org.thingsboard.server.common.data.notification.NotificationOriginatorType;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
@@ -70,6 +73,20 @@ public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest
     @Column(name = ModelConstants.NOTIFICATION_REQUEST_NOTIFICATION_SEVERITY_PROPERTY)
     private NotificationSeverity notificationSeverity;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = ModelConstants.NOTIFICATION_REQUEST_ORIGINATOR_TYPE_PROPERTY, nullable = false)
+    private NotificationOriginatorType originatorType;
+
+    @Column(name = ModelConstants.NOTIFICATION_REQUEST_ORIGINATOR_ENTITY_ID_PROPERTY)
+    private UUID originatorEntityId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = ModelConstants.NOTIFICATION_REQUEST_ORIGINATOR_ENTITY_TYPE_PROPERTY)
+    private EntityType originatorEntityType;
+
+    @Column(name = ModelConstants.NOTIFICATION_REQUEST_RULE_ID_PROPERTY)
+    private UUID ruleId;
+
     @Type(type = "json")
     @Column(name = ModelConstants.NOTIFICATION_REQUEST_ADDITIONAL_CONFIG_PROPERTY)
     private JsonNode additionalConfig;
@@ -77,12 +94,6 @@ public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest
     @Enumerated(EnumType.STRING)
     @Column(name = ModelConstants.NOTIFICATION_REQUEST_STATUS_PROPERTY)
     private NotificationRequestStatus status;
-
-    @Column(name = ModelConstants.NOTIFICATION_REQUEST_RULE_ID_PROPERTY)
-    private UUID ruleId;
-
-    @Column(name = ModelConstants.NOTIFICATION_REQUEST_ALARM_ID_PROPERTY)
-    private UUID alarmId;
 
     public NotificationRequestEntity() {}
 
@@ -95,10 +106,14 @@ public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest
         setTextTemplate(notificationRequest.getTextTemplate());
         setNotificationInfo(toJson(notificationRequest.getNotificationInfo()));
         setNotificationSeverity(notificationRequest.getNotificationSeverity());
+        setOriginatorType(notificationRequest.getOriginatorType());
+        if (notificationRequest.getOriginatorEntityId() != null) {
+            setOriginatorEntityId(notificationRequest.getOriginatorEntityId().getId());
+            setOriginatorEntityType(notificationRequest.getOriginatorEntityId().getEntityType());
+        }
+        setRuleId(getUuid(notificationRequest.getRuleId()));
         setAdditionalConfig(toJson(notificationRequest.getAdditionalConfig()));
         setStatus(notificationRequest.getStatus());
-        setRuleId(getUuid(notificationRequest.getRuleId()));
-        setAlarmId(getUuid(notificationRequest.getAlarmId()));
     }
 
     @Override
@@ -112,10 +127,13 @@ public class NotificationRequestEntity extends BaseSqlEntity<NotificationRequest
         notificationRequest.setTextTemplate(textTemplate);
         notificationRequest.setNotificationInfo(fromJson(notificationInfo, NotificationInfo.class));
         notificationRequest.setNotificationSeverity(notificationSeverity);
+        notificationRequest.setOriginatorType(originatorType);
+        if (originatorEntityId != null) {
+            notificationRequest.setOriginatorEntityId(EntityIdFactory.getByTypeAndUuid(originatorEntityType, originatorEntityId));
+        }
+        notificationRequest.setRuleId(createId(ruleId, NotificationRuleId::new));
         notificationRequest.setAdditionalConfig(fromJson(additionalConfig, NotificationRequestConfig.class));
         notificationRequest.setStatus(status);
-        notificationRequest.setRuleId(createId(ruleId, NotificationRuleId::new));
-        notificationRequest.setAlarmId(createId(alarmId, AlarmId::new));
         return notificationRequest;
     }
 

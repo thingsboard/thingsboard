@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.ListenableScheduledFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.thingsboard.rule.engine.api.NotificationManager;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
@@ -48,7 +49,7 @@ import java.util.concurrent.TimeUnit;
 @SuppressWarnings("UnstableApiUsage")
 public class DefaultNotificationSchedulerService extends AbstractPartitionBasedService<NotificationRequestId> implements NotificationSchedulerService {
 
-    private final NotificationSubscriptionService notificationSubscriptionService;
+    private final NotificationManager notificationManager;
     private final NotificationRequestService notificationRequestService;
 
     private final Map<NotificationRequestId, ScheduledFuture<?>> scheduledNotificationRequests = new ConcurrentHashMap<>();
@@ -93,7 +94,7 @@ public class DefaultNotificationSchedulerService extends AbstractPartitionBasedS
             NotificationRequest notificationRequest = notificationRequestService.findNotificationRequestById(tenantId, request.getId());
             if (notificationRequest == null) return;
 
-            notificationSubscriptionService.processNotificationRequest(tenantId, notificationRequest);
+            notificationManager.processNotificationRequest(tenantId, notificationRequest);
             scheduledNotificationRequests.remove(notificationRequest.getId());
         }, delayMs, TimeUnit.MILLISECONDS);
         scheduledNotificationRequests.put(request.getId(), scheduledTask);

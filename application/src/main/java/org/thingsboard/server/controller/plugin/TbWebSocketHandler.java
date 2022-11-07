@@ -42,7 +42,7 @@ import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.ws.SessionEvent;
 import org.thingsboard.server.service.ws.WebSocketMsgEndpoint;
 import org.thingsboard.server.service.ws.WebSocketSessionType;
-import org.thingsboard.server.service.ws.telemetry.WebSocketService;
+import org.thingsboard.server.service.ws.WebSocketService;
 import org.thingsboard.server.service.ws.WebSocketSessionRef;
 
 import javax.websocket.RemoteEndpoint;
@@ -59,7 +59,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import static org.thingsboard.server.service.telemetry.DefaultWebSocketService.NUMBER_OF_PING_ATTEMPTS;
+import static org.thingsboard.server.service.ws.DefaultWebSocketService.NUMBER_OF_PING_ATTEMPTS;
 
 @Service
 @TbCoreComponent

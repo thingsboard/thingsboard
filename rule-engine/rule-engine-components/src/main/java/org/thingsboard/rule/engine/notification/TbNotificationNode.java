@@ -23,6 +23,7 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
+import org.thingsboard.server.common.data.notification.NotificationOriginatorType;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -58,9 +59,11 @@ public class TbNotificationNode implements TbNode {
                 .notificationReason(config.getNotificationReason())
                 .textTemplate(TbNodeUtils.processPattern(config.getNotificationTextTemplate(), msg))
                 .notificationSeverity(config.getNotificationSeverity())
+                .originatorType(NotificationOriginatorType.RULE_NODE)
+                .originatorEntityId(ctx.getTenantId())
                 .build();
         withCallback(ctx.getDbCallbackExecutor().executeAsync(() -> {
-                    return ctx.getNotificationService().processNotificationRequest(ctx.getTenantId(), notificationRequest);
+                    return ctx.getNotificationManager().processNotificationRequest(ctx.getTenantId(), notificationRequest);
                 }),
                 r -> {
                     TbMsgMetaData msgMetaData = msg.getMetaData().copy();

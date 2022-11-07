@@ -16,7 +16,6 @@
 package org.thingsboard.server.common.data.notification;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,7 +24,7 @@ import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
-import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
@@ -46,26 +45,25 @@ public class NotificationRequest extends BaseData<NotificationRequestId> impleme
     private TenantId tenantId;
     @NotNull(message = "Target is not specified")
     private NotificationTargetId targetId;
+
     @NoXss
-    private String notificationReason; // "Alarm", "Scheduled event". "General" by default
-    //    @NoXss
+    private String notificationReason;
     @NotBlank(message = "Notification text template is missing")
-    private String textTemplate;
+    private String textTemplate; // fixme: xss
     @Valid
     private NotificationInfo notificationInfo;
     private NotificationSeverity notificationSeverity;
+
+    private NotificationOriginatorType originatorType;
+    private EntityId originatorEntityId; // userId, alarmId or tenantId
+    private NotificationRuleId ruleId; // maybe move to child class
+
     private NotificationRequestConfig additionalConfig;
-    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private NotificationRequestStatus status;
 
-    @JsonIgnore
-    private NotificationRuleId ruleId; // maybe move to child class
-    @JsonIgnore
-    private AlarmId alarmId;
-
     public static final String GENERAL_NOTIFICATION_REASON = "General";
-    public static final String ALARM_NOTIFICATION_REASON = "Alarm";
 
+    @JsonIgnore
     @Override
     public String getName() {
         return notificationReason;

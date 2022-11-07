@@ -19,11 +19,14 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.thingsboard.rule.engine.api.NotificationManager;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.notification.AlarmOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.NotificationInfo;
+import org.thingsboard.server.common.data.notification.NotificationOriginatorType;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
@@ -44,7 +47,7 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
 
     private final NotificationRuleService notificationRuleService;
     private final NotificationRequestService notificationRequestService;
-    private final NotificationSubscriptionService notificationSubscriptionService;
+    private final NotificationManager notificationManager;
     private final DbCallbackExecutorService dbCallbackExecutorService;
 
     @Override
@@ -65,7 +68,7 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
     }
 
     private void onAlarmUpdate(TenantId tenantId, NotificationRuleId notificationRuleId, Alarm alarm) {
-        List<NotificationRequest> notificationRequests = notificationRequestService.findNotificationRequestsByRuleIdAndAlarmId(tenantId, notificationRuleId, alarm.getId());
+        List<NotificationRequest> notificationRequests = notificationRequestService.findNotificationRequestsByRuleIdAndOriginatorEntityId(tenantId, notificationRuleId, alarm.getId());
         NotificationRule notificationRule = notificationRuleService.findNotificationRuleById(tenantId, notificationRuleId);
 
         if (notificationRequests.isEmpty()) { // in case it is first notification for alarm, or it was previously acked and now we need to send notifications again
@@ -82,7 +85,7 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
                         // using regular service due to no need to send an update to subscription manager
                         notificationRequestService.deleteNotificationRequestById(tenantId, notificationRequest.getId());
                     } else {
-                        notificationSubscriptionService.deleteNotificationRequest(tenantId, notificationRequest.getId());
+                        notificationManager.deleteNotificationRequest(tenantId, notificationRequest.getId());
                         // todo: or should we mark already sent notifications as read?
                     }
                 }
@@ -92,7 +95,7 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
                     NotificationInfo previousNotificationInfo = notificationRequest.getNotificationInfo();
                     if (!previousNotificationInfo.equals(newNotificationInfo)) {
                         notificationRequest.setNotificationInfo(newNotificationInfo);
-                        notificationSubscriptionService.updateNotificationRequest(tenantId, notificationRequest);
+                        notificationManager.updateNotificationRequest(tenantId, notificationRequest);
                     }
                     // fixme: no need to send an update event for scheduled requests, only for sent
                 }
@@ -118,15 +121,16 @@ public class DefaultNotificationRuleProcessingService implements NotificationRul
                 .textTemplate(notificationRule.getNotificationTextTemplate()) // todo: format with alarm vars
                 .notificationInfo(notificationInfo)
                 .notificationSeverity(NotificationSeverity.NORMAL) // todo: from alarm severity
-                .additionalConfig(config)
+                .originatorType(NotificationOriginatorType.ALARM)
+                .originatorEntityId(alarm.getId())
                 .ruleId(notificationRule.getId())
-                .alarmId(alarm.getId())
+                .additionalConfig(config)
                 .build();
-        notificationSubscriptionService.processNotificationRequest(tenantId, notificationRequest);
+        notificationManager.processNotificationRequest(tenantId, notificationRequest);
     }
 
     private NotificationInfo constructNotificationInfo(Alarm alarm, NotificationRule notificationRule) {
-        return NotificationInfo.builder()
+        return AlarmOriginatedNotificationInfo.builder()
                 .alarmId(alarm.getId())
                 .alarmType(alarm.getType())
                 .alarmOriginator(alarm.getOriginator())

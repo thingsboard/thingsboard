@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.notification;
+package org.thingsboard.rule.engine.api;
 
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
@@ -21,7 +21,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 
-public interface NotificationSubscriptionService {
+public interface NotificationManager {
 
     NotificationRequest processNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest);
 

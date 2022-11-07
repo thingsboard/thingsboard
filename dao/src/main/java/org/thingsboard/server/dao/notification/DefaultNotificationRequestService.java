@@ -17,15 +17,13 @@ package org.thingsboard.server.dao.notification;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
-import org.thingsboard.server.common.data.notification.NotificationSeverity;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -43,12 +41,6 @@ public class DefaultNotificationRequestService implements NotificationRequestSer
 
     @Override
     public NotificationRequest saveNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest) {
-        if (StringUtils.isBlank(notificationRequest.getNotificationReason())) {
-            notificationRequest.setNotificationReason(NotificationRequest.GENERAL_NOTIFICATION_REASON);
-        }
-        if (notificationRequest.getNotificationSeverity() == null) {
-            notificationRequest.setNotificationSeverity(NotificationSeverity.NORMAL);
-        }
         notificationRequestValidator.validate(notificationRequest, NotificationRequest::getTenantId);
         return notificationRequestDao.save(tenantId, notificationRequest);
     }
@@ -64,8 +56,8 @@ public class DefaultNotificationRequestService implements NotificationRequestSer
     }
 
     @Override
-    public List<NotificationRequest> findNotificationRequestsByRuleIdAndAlarmId(TenantId tenantId, NotificationRuleId ruleId, AlarmId alarmId) {
-        return notificationRequestDao.findByRuleIdAndAlarmId(tenantId, ruleId, alarmId);
+    public List<NotificationRequest> findNotificationRequestsByRuleIdAndOriginatorEntityId(TenantId tenantId, NotificationRuleId ruleId, EntityId originatorEntityId) {
+        return notificationRequestDao.findByRuleIdAndOriginatorEntityId(tenantId, ruleId, originatorEntityId);
     }
 
     // ON DELETE CASCADE is used: notifications for request are deleted as well

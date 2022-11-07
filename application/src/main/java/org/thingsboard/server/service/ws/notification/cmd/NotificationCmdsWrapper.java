@@ -23,7 +23,8 @@ public class NotificationCmdsWrapper {
     private NotificationsCountSubCmd unreadCountSubCmd;
 
     private NotificationsSubCmd unreadSubCmd;
-    private MarkNotificationAsReadCmd markAsReadCmd;
+
+    private MarkNotificationsAsReadCmd markAsReadCmd;
 
     private NotificationsUnsubCmd unsubCmd;
 

@@ -660,6 +660,7 @@ public class ModelConstants {
     public static final String NOTIFICATION_TEXT_PROPERTY = "text";
     public static final String NOTIFICATION_INFO_PROPERTY = "info";
     public static final String NOTIFICATION_SEVERITY_PROPERTY = "severity";
+    public static final String NOTIFICATION_ORIGINATOR_TYPE_PROPERTY = "originator_type";
     public static final String NOTIFICATION_STATUS_PROPERTY = "status";
 
     public static final String NOTIFICATION_REQUEST_TABLE_NAME = "notification_request";
@@ -668,10 +669,12 @@ public class ModelConstants {
     public static final String NOTIFICATION_REQUEST_NOTIFICATION_REASON_PROPERTY = "notification_reason";
     public static final String NOTIFICATION_REQUEST_NOTIFICATION_INFO_PROPERTY = "notification_info";
     public static final String NOTIFICATION_REQUEST_NOTIFICATION_SEVERITY_PROPERTY = "notification_severity";
+    public static final String NOTIFICATION_REQUEST_ORIGINATOR_TYPE_PROPERTY = "originator_type";
+    public static final String NOTIFICATION_REQUEST_ORIGINATOR_ENTITY_ID_PROPERTY = "originator_entity_id";
+    public static final String NOTIFICATION_REQUEST_ORIGINATOR_ENTITY_TYPE_PROPERTY = "originator_entity_type";
     public static final String NOTIFICATION_REQUEST_ADDITIONAL_CONFIG_PROPERTY = "additional_config";
     public static final String NOTIFICATION_REQUEST_STATUS_PROPERTY = "status";
     public static final String NOTIFICATION_REQUEST_RULE_ID_PROPERTY = "rule_id";
-    public static final String NOTIFICATION_REQUEST_ALARM_ID_PROPERTY = "alarm_id";
 
     public static final String NOTIFICATION_RULE_TABLE_NAME = "notification_rule";
     // ...

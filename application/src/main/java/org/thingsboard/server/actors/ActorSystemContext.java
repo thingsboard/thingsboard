@@ -30,7 +30,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.MailService;
-import org.thingsboard.rule.engine.api.RuleEngineNotificationService;
+import org.thingsboard.rule.engine.api.NotificationManager;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.script.api.js.JsInvokeService;
@@ -309,7 +309,7 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private RuleEngineNotificationService notificationService;
+    private NotificationManager notificationManager;
 
     @Lazy
     @Autowired(required = false)

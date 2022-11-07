@@ -267,7 +267,7 @@ public interface TbContext {
 
     SmsSenderFactory getSmsSenderFactory();
 
-    RuleEngineNotificationService getNotificationService();
+    NotificationManager getNotificationManager();
 
     /**
      * Creates JS Script Engine

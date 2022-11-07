@@ -31,7 +31,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.notification.NotificationSubscriptionService;
+import org.thingsboard.rule.engine.api.NotificationManager;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.ws.notification.cmd.NotificationsCountSubCmd;
 import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpdate;
@@ -39,11 +39,11 @@ import org.thingsboard.server.service.ws.notification.sub.NotificationUpdate;
 import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscription;
 import org.thingsboard.server.service.subscription.TbLocalSubscriptionService;
 import org.thingsboard.server.service.ws.WebSocketSessionRef;
-import org.thingsboard.server.service.ws.notification.cmd.MarkNotificationAsReadCmd;
+import org.thingsboard.server.service.ws.notification.cmd.MarkNotificationsAsReadCmd;
 import org.thingsboard.server.service.ws.notification.cmd.NotificationsSubCmd;
 import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscriptionUpdate;
 import org.thingsboard.server.service.ws.notification.sub.NotificationsCountSubscription;
-import org.thingsboard.server.service.ws.telemetry.WebSocketService;
+import org.thingsboard.server.service.ws.WebSocketService;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.CmdUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.UnsubscribeCmd;
 
@@ -59,7 +59,7 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
 
     private final NotificationService notificationService;
     private final TbLocalSubscriptionService localSubscriptionService;
-    private final NotificationSubscriptionService notificationSubscriptionService;
+    private final NotificationManager notificationManager;
     private final TbServiceInfoProvider serviceInfoProvider;
     @Autowired @Lazy
     private WebSocketService wsService;
@@ -67,13 +67,13 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
     @Override
     public void handleUnreadNotificationsSubCmd(WebSocketSessionRef sessionRef, NotificationsSubCmd cmd) {
         log.debug("[{}] Handling unread notifications subscription cmd (cmdId: {})", sessionRef.getSessionId(), cmd.getCmdId());
-        SecurityUser user = sessionRef.getSecurityCtx();
+        SecurityUser securityCtx = sessionRef.getSecurityCtx();
         NotificationsSubscription subscription = NotificationsSubscription.builder()
                 .serviceId(serviceInfoProvider.getServiceId())
                 .sessionId(sessionRef.getSessionId())
                 .subscriptionId(cmd.getCmdId())
-                .tenantId(user.getTenantId())
-                .entityId(user.getId())
+                .tenantId(securityCtx.getTenantId())
+                .entityId(securityCtx.getId())
                 .updateProcessor(this::handleNotificationsSubscriptionUpdate)
                 .limit(cmd.getLimit())
                 .build();
@@ -86,13 +86,13 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
     @Override
     public void handleUnreadNotificationsCountSubCmd(WebSocketSessionRef sessionRef, NotificationsCountSubCmd cmd) {
         log.debug("[{}] Handling unread notifications count subscription cmd (cmdId: {})", sessionRef.getSessionId(), cmd.getCmdId());
-        SecurityUser user = sessionRef.getSecurityCtx();
+        SecurityUser securityCtx = sessionRef.getSecurityCtx();
         NotificationsCountSubscription subscription = NotificationsCountSubscription.builder()
                 .serviceId(serviceInfoProvider.getServiceId())
                 .sessionId(sessionRef.getSessionId())
                 .subscriptionId(cmd.getCmdId())
-                .tenantId(user.getTenantId())
-                .entityId(user.getId())
+                .tenantId(securityCtx.getTenantId())
+                .entityId(securityCtx.getId())
                 .updateProcessor(this::handleNotificationsCountSubscriptionUpdate)
                 .build();
         localSubscriptionService.addSubscription(subscription);
@@ -203,9 +203,14 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
 
 
     @Override
-    public void handleMarkAsReadCmd(WebSocketSessionRef sessionRef, MarkNotificationAsReadCmd cmd) {
-        NotificationId notificationId = new NotificationId(cmd.getNotificationId());
-        notificationSubscriptionService.markNotificationAsRead(sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), notificationId);
+    public void handleMarkAsReadCmd(WebSocketSessionRef sessionRef, MarkNotificationsAsReadCmd cmd) {
+        SecurityUser securityCtx = sessionRef.getSecurityCtx();
+        cmd.getNotifications().stream()
+                .map(NotificationId::new)
+                .forEach(notificationId -> {
+                    notificationManager.markNotificationAsRead(securityCtx.getTenantId(), securityCtx.getId(), notificationId);
+                    // fixme: should send bulk update event, not a separate event for each notification
+                });
     }
 
     @Override

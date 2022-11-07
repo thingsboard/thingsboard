@@ -20,25 +20,27 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.BaseData;
-import org.thingsboard.server.common.data.id.NotificationId;
-import org.thingsboard.server.common.data.id.NotificationRequestId;
-import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.EntityId;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
 @EqualsAndHashCode(callSuper = true)
-public class Notification extends BaseData<NotificationId> {
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class AlarmOriginatedNotificationInfo extends NotificationInfo {
 
-    private NotificationRequestId requestId;
-    private UserId recipientId;
-    private String reason;
-    private String text;
-    private NotificationInfo info;
-    private NotificationSeverity severity;
-    private NotificationOriginatorType originatorType;
-    private NotificationStatus status;
+    private AlarmId alarmId;
+    private String alarmType;
+    private EntityId alarmOriginator;
+    private AlarmSeverity alarmSeverity;
+    private AlarmStatus alarmStatus;
+
+    @Override
+    public NotificationOriginatorType getOriginatorType() {
+        return NotificationOriginatorType.ALARM;
+    }
 
 }

@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DaoSqlTest
-public class NotificationsWsApiTest extends AbstractControllerTest {
+public class NotificationApiTest extends AbstractControllerTest {
 
     @Before
     public void beforeEach() throws Exception {
@@ -154,8 +154,6 @@ public class NotificationsWsApiTest extends AbstractControllerTest {
         assertThat(getAnotherWsClient().getLastCountUpdate().getTotalUnreadCount()).isOne();
     }
 
-    public void testReceivingUpdatesWhenSubscriptionAtAnotherInstance() {}
-
 
     private void checkFullNotificationsUpdate(UnreadNotificationsUpdate notificationsUpdate, String... expectedNotifications) {
         assertThat(notificationsUpdate.getNotifications()).extracting(Notification::getText).containsOnly(expectedNotifications);
@@ -189,19 +187,19 @@ public class NotificationsWsApiTest extends AbstractControllerTest {
 
     @Override
     protected TbTestWebSocketClient buildAndConnectWebSocketClient() throws URISyntaxException, InterruptedException {
-        NotificationsWebSocketClient wsClient = new NotificationsWebSocketClient(WS_URL + wsPort, token);
+        NotificationApiWsClient wsClient = new NotificationApiWsClient(WS_URL + wsPort, token);
         assertThat(wsClient.connectBlocking(TIMEOUT, TimeUnit.SECONDS)).isTrue();
         return wsClient;
     }
 
     @Override
-    public NotificationsWebSocketClient getWsClient() {
-        return (NotificationsWebSocketClient) super.getWsClient();
+    public NotificationApiWsClient getWsClient() {
+        return (NotificationApiWsClient) super.getWsClient();
     }
 
     @Override
-    public NotificationsWebSocketClient getAnotherWsClient() {
-        return (NotificationsWebSocketClient) super.getAnotherWsClient();
+    public NotificationApiWsClient getAnotherWsClient() {
+        return (NotificationApiWsClient) super.getAnotherWsClient();
     }
 
 }

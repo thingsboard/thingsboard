@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.notification;
 
-import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -33,7 +33,7 @@ public interface NotificationRequestService {
 
     PageData<NotificationRequest> findNotificationRequestsByTenantId(TenantId tenantId, PageLink pageLink);
 
-    List<NotificationRequest> findNotificationRequestsByRuleIdAndAlarmId(TenantId tenantId, NotificationRuleId ruleId, AlarmId alarmId);
+    List<NotificationRequest> findNotificationRequestsByRuleIdAndOriginatorEntityId(TenantId tenantId, NotificationRuleId ruleId, EntityId originatorEntityId);
 
     void deleteNotificationRequestById(TenantId tenantId, NotificationRequestId id);
 

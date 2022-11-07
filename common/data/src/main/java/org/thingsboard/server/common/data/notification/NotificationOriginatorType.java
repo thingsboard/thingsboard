@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.ws;
+package org.thingsboard.server.common.data.notification;
 
-public interface WsCmd {
-    int getCmdId();
+public enum NotificationOriginatorType {
+    USER,
+    ALARM,
+    RULE_NODE
 }

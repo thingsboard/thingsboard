@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.controller.TbTestWebSocketClient;
-import org.thingsboard.server.service.ws.notification.cmd.MarkNotificationAsReadCmd;
+import org.thingsboard.server.service.ws.notification.cmd.MarkNotificationsAsReadCmd;
 import org.thingsboard.server.service.ws.notification.cmd.NotificationCmdsWrapper;
 import org.thingsboard.server.service.ws.notification.cmd.NotificationsCountSubCmd;
 import org.thingsboard.server.service.ws.notification.cmd.NotificationsSubCmd;
@@ -31,17 +31,18 @@ import org.thingsboard.server.service.ws.telemetry.cmd.v2.CmdUpdateType;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.UUID;
 
 @Slf4j
-public class NotificationsWebSocketClient extends TbTestWebSocketClient {
+public class NotificationApiWsClient extends TbTestWebSocketClient {
 
     @Getter
     private UnreadNotificationsUpdate lastDataUpdate;
     @Getter
     private UnreadNotificationsCountUpdate lastCountUpdate;
 
-    public NotificationsWebSocketClient(String wsUrl, String token) throws URISyntaxException {
+    public NotificationApiWsClient(String wsUrl, String token) throws URISyntaxException {
         super(new URI(wsUrl + "/api/ws/plugins/notifications?token=" + token));
     }
 
@@ -57,9 +58,9 @@ public class NotificationsWebSocketClient extends TbTestWebSocketClient {
         sendCmd(cmdsWrapper);
     }
 
-    public void markNotificationAsRead(UUID notificationId) {
+    public void markNotificationAsRead(UUID... notifications) {
         NotificationCmdsWrapper cmdsWrapper = new NotificationCmdsWrapper();
-        cmdsWrapper.setMarkAsReadCmd(new MarkNotificationAsReadCmd(newCmdId(), notificationId));
+        cmdsWrapper.setMarkAsReadCmd(new MarkNotificationsAsReadCmd(newCmdId(), Arrays.asList(notifications)));
         sendCmd(cmdsWrapper);
     }
 

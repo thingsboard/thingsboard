@@ -13,13 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.server.service.ws.notification.cmd;
 
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.notification.NotificationRequest;
-
-public interface RuleEngineNotificationService {
-
-    NotificationRequest processNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest);
-
+public interface WsCmd {
+    int getCmdId();
 }

@@ -14,7 +14,6 @@
 -- limitations under the License.
 --
 
-
 CREATE TABLE IF NOT EXISTS notification_target (
     id UUID NOT NULL CONSTRAINT notification_target_pkey PRIMARY KEY,
     created_time BIGINT NOT NULL,
@@ -22,11 +21,13 @@ CREATE TABLE IF NOT EXISTS notification_target (
     name VARCHAR(255) NOT NULL,
     configuration varchar(1000) NOT NULL
 );
-CREATE INDEX IF NOT EXISTS idx_notification_target_tenant_id_and_created_time ON notification_target(tenant_id, created_time DESC);
+CREATE INDEX IF NOT EXISTS idx_notification_target_tenant_id_created_time ON notification_target(tenant_id, created_time DESC);
 
 CREATE TABLE IF NOT EXISTS notification_rule (
     id UUID NOT NULL CONSTRAINT notification_rule_pkey PRIMARY KEY
 );
+
+ALTER TABLE alarm ADD COLUMN IF NOT EXISTS notification_rule_id UUID;
 
 CREATE TABLE IF NOT EXISTS notification_request (
     id UUID NOT NULL CONSTRAINT notification_request_pkey PRIMARY KEY,
@@ -37,12 +38,14 @@ CREATE TABLE IF NOT EXISTS notification_request (
     text_template VARCHAR NOT NULL,
     notification_info VARCHAR(1000),
     notification_severity VARCHAR(32),
-    additional_config VARCHAR(1000),
-    status VARCHAR(32),
+    originator_type VARCHAR(32) NOT NULL,
+    originator_entity_id UUID,
+    originator_entity_type VARCHAR(32),
     rule_id UUID NULL CONSTRAINT fk_notification_request_rule_id REFERENCES notification_rule(id),
-    alarm_id UUID
+    additional_config VARCHAR(1000),
+    status VARCHAR(32)
 );
-CREATE INDEX IF NOT EXISTS idx_notification_request_tenant_id_and_created_time ON notification_request(tenant_id, created_time DESC);
+CREATE INDEX IF NOT EXISTS idx_notification_request_tenant_id_originator_type_created_time ON notification_request(tenant_id, originator_type, created_time DESC);
 
 CREATE TABLE IF NOT EXISTS notification (
     id UUID NOT NULL,
@@ -54,8 +57,9 @@ CREATE TABLE IF NOT EXISTS notification (
     text VARCHAR NOT NULL,
     info VARCHAR(1000),
     severity VARCHAR(32),
+    originator_type VARCHAR(32) NOT NULL,
     status VARCHAR(32)
 ) PARTITION BY RANGE (created_time);
 CREATE INDEX IF NOT EXISTS idx_notification_id ON notification(id);
+CREATE INDEX IF NOT EXISTS idx_notification_recipient_id_created_time ON notification(recipient_id, created_time DESC);
 CREATE INDEX IF NOT EXISTS idx_notification_notification_request_id ON notification(request_id);
-CREATE INDEX IF NOT EXISTS idx_notification_recipient_id_and_created_time ON notification(recipient_id, created_time DESC);
