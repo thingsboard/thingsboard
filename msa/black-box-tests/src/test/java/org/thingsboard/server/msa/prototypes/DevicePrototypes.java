@@ -30,11 +30,11 @@ public class DevicePrototypes {
         return device;
     }
 
-    public static Device defaultGatewayPrototype() throws JsonProcessingException {
+    public static Device defaultGatewayPrototype() {
         String isGateway = "{\"gateway\":true}";
         JsonNode additionalInfo = JacksonUtil.valueToTree(isGateway);
         Device gatewayDeviceTemplate = new Device();
-        gatewayDeviceTemplate.setName("mqtt_gateway_" + RandomStringUtils.randomAlphabetic(5));
+        gatewayDeviceTemplate.setName("mqtt_gateway_" + RandomStringUtils.randomAlphanumeric(5));
         gatewayDeviceTemplate.setType("gateway");
         gatewayDeviceTemplate.setAdditionalInfo(additionalInfo);
         return gatewayDeviceTemplate;

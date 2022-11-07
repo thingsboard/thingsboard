@@ -20,31 +20,21 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import io.restassured.RestAssured;
-import io.restassured.filter.log.RequestLoggingFilter;
-import io.restassured.filter.log.ResponseLoggingFilter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.config.Registry;
-import org.apache.http.config.RegistryBuilder;
-import org.apache.http.conn.socket.ConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustStrategy;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.Listeners;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
-
-import javax.net.ssl.SSLContext;
 import java.net.URI;
 import java.util.*;
 
+
 @Slf4j
+@Listeners(TestListener.class)
 public abstract class AbstractContainerTest {
     protected static long timeoutMultiplier = 1;
 
@@ -159,22 +149,6 @@ public abstract class AbstractContainerTest {
         public String toString() {
             return text;
         }
-    }
-
-    public static HttpComponentsClientHttpRequestFactory getRequestFactoryForSelfSignedCert() throws Exception {
-        SSLContextBuilder builder = SSLContexts.custom();
-        builder.loadTrustMaterial(null, (TrustStrategy) (chain, authType) -> true);
-        SSLContext sslContext = builder.build();
-        SSLConnectionSocketFactory sslSelfSigned = new SSLConnectionSocketFactory(sslContext, (s, sslSession) -> true);
-
-        Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder
-                .<ConnectionSocketFactory>create()
-                .register("https", sslSelfSigned)
-                .build();
-
-        PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
-        CloseableHttpClient httpClient = HttpClients.custom().setConnectionManager(cm).build();
-        return new HttpComponentsClientHttpRequestFactory(httpClient);
     }
 
 }
