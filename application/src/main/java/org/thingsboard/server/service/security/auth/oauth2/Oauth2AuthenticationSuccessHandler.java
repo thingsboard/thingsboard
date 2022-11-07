@@ -29,10 +29,9 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
-import org.thingsboard.server.common.data.security.model.JwtToken;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
+import org.thingsboard.server.service.security.model.JwtTokenPair;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
@@ -54,7 +53,6 @@ import static org.thingsboard.server.service.security.auth.oauth2.HttpCookieOAut
 public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtTokenFactory tokenFactory;
-    private final RefreshTokenRepository refreshTokenRepository;
     private final OAuth2ClientMapperProvider oauth2ClientMapperProvider;
     private final OAuth2Service oAuth2Service;
     private final OAuth2AuthorizedClientService oAuth2AuthorizedClientService;
@@ -63,14 +61,12 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     @Autowired
     public Oauth2AuthenticationSuccessHandler(final JwtTokenFactory tokenFactory,
-                                              final RefreshTokenRepository refreshTokenRepository,
                                               final OAuth2ClientMapperProvider oauth2ClientMapperProvider,
                                               final OAuth2Service oAuth2Service,
                                               final OAuth2AuthorizedClientService oAuth2AuthorizedClientService,
                                               final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository,
                                               final SystemSecurityService systemSecurityService) {
         this.tokenFactory = tokenFactory;
-        this.refreshTokenRepository = refreshTokenRepository;
         this.oauth2ClientMapperProvider = oauth2ClientMapperProvider;
         this.oAuth2Service = oAuth2Service;
         this.oAuth2AuthorizedClientService = oAuth2AuthorizedClientService;
@@ -106,11 +102,10 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             SecurityUser securityUser = mapper.getOrCreateUserByClientPrincipal(request, token, oAuth2AuthorizedClient.getAccessToken().getTokenValue(),
                     registration);
 
-            JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
-            JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);
+            JwtTokenPair tokenPair = tokenFactory.createTokenPair(securityUser);
 
             clearAuthenticationAttributes(request, response);
-            getRedirectStrategy().sendRedirect(request, response, baseUrl + "/?accessToken=" + accessToken.getToken() + "&refreshToken=" + refreshToken.getToken());
+            getRedirectStrategy().sendRedirect(request, response, baseUrl + "/?accessToken=" + tokenPair.getToken() + "&refreshToken=" + tokenPair.getRefreshToken());
         } catch (Exception e) {
             log.debug("Error occurred during processing authentication success result. " +
                     "request [{}], response [{}], authentication [{}]", request, response, authentication, e);
