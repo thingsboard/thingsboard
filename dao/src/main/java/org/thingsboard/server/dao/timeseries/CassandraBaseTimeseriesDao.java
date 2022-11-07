@@ -645,14 +645,7 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
                 if (saveStmts == null) {
                     var stmts = new PreparedStatement[DataType.values().length];
                     for (DataType type : DataType.values()) {
-                        stmts[type.ordinal()] = prepare(INSERT_INTO + ModelConstants.TS_KV_CF +
-                                "(" + ModelConstants.ENTITY_TYPE_COLUMN +
-                                "," + ModelConstants.ENTITY_ID_COLUMN +
-                                "," + ModelConstants.KEY_COLUMN +
-                                "," + ModelConstants.PARTITION_COLUMN +
-                                "," + ModelConstants.TS_COLUMN +
-                                "," + getColumnName(type) + ")" +
-                                " VALUES(?, ?, ?, ?, ?, ?)");
+                        stmts[type.ordinal()] = prepare(getPreparedStatementQuery(type));
                     }
                     saveStmts = stmts;
                 }
@@ -670,14 +663,7 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
                 if (saveTtlStmts == null) {
                     var stmts = new PreparedStatement[DataType.values().length];
                     for (DataType type : DataType.values()) {
-                        stmts[type.ordinal()] = prepare(INSERT_INTO + ModelConstants.TS_KV_CF +
-                                "(" + ModelConstants.ENTITY_TYPE_COLUMN +
-                                "," + ModelConstants.ENTITY_ID_COLUMN +
-                                "," + ModelConstants.KEY_COLUMN +
-                                "," + ModelConstants.PARTITION_COLUMN +
-                                "," + ModelConstants.TS_COLUMN +
-                                "," + getColumnName(type) + ")" +
-                                " VALUES(?, ?, ?, ?, ?, ?) USING TTL ?");
+                        stmts[type.ordinal()] = prepare(getPreparedStatementQueryWithTtl(type));
                     }
                     saveTtlStmts = stmts;
                 }
@@ -686,6 +672,21 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
             }
         }
         return saveTtlStmts[dataType.ordinal()];
+    }
+
+    private String getPreparedStatementQuery(DataType type) {
+        return INSERT_INTO + ModelConstants.TS_KV_CF +
+                "(" + ModelConstants.ENTITY_TYPE_COLUMN +
+                "," + ModelConstants.ENTITY_ID_COLUMN +
+                "," + ModelConstants.KEY_COLUMN +
+                "," + ModelConstants.PARTITION_COLUMN +
+                "," + ModelConstants.TS_COLUMN +
+                "," + getColumnName(type) + ")" +
+                " VALUES(?, ?, ?, ?, ?, ?)";
+    }
+
+    private String getPreparedStatementQueryWithTtl(DataType type) {
+        return getPreparedStatementQuery(type) + " USING TTL ?";
     }
 
     private PreparedStatement getPartitionInsertStmt() {
