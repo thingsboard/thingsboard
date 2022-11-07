@@ -95,7 +95,6 @@ $$
 END;
 $$;
 
-
 CREATE TABLE IF NOT EXISTS edge_event (
     id uuid NOT NULL,
     created_time bigint NOT NULL,
@@ -109,7 +108,6 @@ CREATE TABLE IF NOT EXISTS edge_event (
     ts bigint NOT NULL
     ) PARTITION BY RANGE (created_time);
 CREATE INDEX IF NOT EXISTS idx_edge_event_tenant_id_and_created_time ON edge_event(tenant_id, created_time DESC);
-
 
 CREATE OR REPLACE PROCEDURE migrate_edge_event(IN start_time_ms BIGINT, IN end_time_ms BIGINT, IN partition_size_ms BIGINT)
     LANGUAGE plpgsql AS
