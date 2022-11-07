@@ -57,9 +57,7 @@ import java.sql.SQLSyntaxErrorException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.server.service.install.DatabaseHelper.ADDITIONAL_INFO;
@@ -627,7 +625,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         do {
                             pageData = tenantService.findTenants(pageLink);
                             for (Tenant tenant : pageData.getData()) {
-                                Set<String> assetTypes = new HashSet<>(assetRepository.findTenantAssetTypes(tenant.getUuidId()));
+                                List<String> assetTypes = assetRepository.findTenantAssetTypes(tenant.getUuidId());
                                 assetTypes.remove("default");
 
                                 try {
