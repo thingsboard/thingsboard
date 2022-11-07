@@ -51,11 +51,9 @@ public class EdgeEventInsertRepository {
             protected void doInTransactionWithoutResult(TransactionStatus status) {
                 jdbcTemplate.batchUpdate(INSERT, new BatchPreparedStatementSetter() {
                     @Override
-
                     public void setValues(PreparedStatement ps, int i) throws SQLException {
                         EdgeEventEntity edgeEvent = entities.get(i);
                         ps.setObject(1, edgeEvent.getId());
-
                         ps.setLong(2, edgeEvent.getCreatedTime());
                         ps.setObject(3, edgeEvent.getEdgeId());
                         ps.setString(4, edgeEvent.getEdgeEventType().name());

@@ -86,6 +86,7 @@ public class JpaBaseEdgeEventDao extends JpaAbstractSearchTextDao<EdgeEventEntit
     private long edge_events_ttl;
 
     private static final String TABLE_NAME = ModelConstants.EDGE_EVENT_COLUMN_FAMILY_NAME;
+
     private TbSqlBlockingQueueWrapper<EdgeEventEntity> queue;
 
     @Override
