@@ -321,9 +321,9 @@ public class TenantIdLoaderTest {
     private void checkTenant(TenantId checkTenantId, boolean equals) {
         for (EntityType entityType : EntityType.values()) {
             EntityId entityId;
-            if(EntityType.TENANT.equals(entityType)){
+            if (EntityType.TENANT.equals(entityType)) {
                 entityId = tenantId;
-            } else if(EntityType.TENANT_PROFILE.equals(entityType)){
+            } else if (EntityType.TENANT_PROFILE.equals(entityType)) {
                 entityId = tenantProfileId;
             } else {
                 entityId = getEntityId(entityType);
