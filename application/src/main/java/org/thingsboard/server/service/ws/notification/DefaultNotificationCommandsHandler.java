@@ -105,8 +105,10 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
         log.trace("[{}, subId: {}] Fetching unread notifications from DB", subscription.getSessionId(), subscription.getSubscriptionId());
         PageData<Notification> notifications = notificationService.findLatestUnreadNotificationsByUserId(subscription.getTenantId(),
                 (UserId) subscription.getEntityId(), subscription.getLimit());
-        subscription.getUnreadNotifications().clear();
-        subscription.getUnreadNotifications().putAll(notifications.getData().stream().collect(Collectors.toMap(IdBased::getUuidId, n -> n)));
+        subscription.getLatestUnreadNotifications().clear();
+        notifications.getData().forEach(notification -> {
+            subscription.getLatestUnreadNotifications().put(notification.getUuidId(), notification);
+        });
         subscription.getTotalUnreadCounter().set((int) notifications.getTotalElements());
     }
 
@@ -129,19 +131,30 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
     private void handleNotificationUpdate(NotificationsSubscription subscription, NotificationUpdate update) {
         log.trace("[{}, subId: {}] Handling notification update: {}", subscription.getSessionId(), subscription.getSubscriptionId(), update);
         Notification notification = update.getNotification();
-        if (notification.getStatus() == NotificationStatus.READ) {
-            fetchUnreadNotifications(subscription);
-            sendUpdate(subscription.getSessionId(), subscription.createFullUpdate());
-        } else {
-            subscription.getUnreadNotifications().put(notification.getUuidId(), notification);
-            if (update.isNew()) {
-                subscription.getTotalUnreadCounter().incrementAndGet();
-                Set<UUID> beyondLimit = subscription.getUnreadNotifications().keySet().stream()
-                        .skip(subscription.getLimit())
-                        .collect(Collectors.toSet());
-                beyondLimit.forEach(notificationId -> subscription.getUnreadNotifications().remove(notificationId));
+        if (update.isNew()) {
+            subscription.getLatestUnreadNotifications().put(notification.getUuidId(), notification);
+            subscription.getTotalUnreadCounter().incrementAndGet();
+            if (subscription.getLatestUnreadNotifications().size() > subscription.getLimit()) {
+                Set<UUID> beyondLimit = subscription.getSortedNotifications().stream().skip(subscription.getLimit())
+                        .map(IdBased::getUuidId).collect(Collectors.toSet());
+                beyondLimit.forEach(notificationId -> subscription.getLatestUnreadNotifications().remove(notificationId));
             }
             sendUpdate(subscription.getSessionId(), subscription.createPartialUpdate(notification));
+        } else {
+            if (notification.getStatus() != NotificationStatus.READ) {
+                if (subscription.getLatestUnreadNotifications().containsKey(notification.getUuidId())) {
+                    subscription.getLatestUnreadNotifications().put(notification.getUuidId(), notification);
+                    sendUpdate(subscription.getSessionId(), subscription.createPartialUpdate(notification));
+                }
+            } else {
+                if (subscription.getLatestUnreadNotifications().containsKey(notification.getUuidId())) {
+                    fetchUnreadNotifications(subscription);
+                    sendUpdate(subscription.getSessionId(), subscription.createFullUpdate());
+                } else {
+                    subscription.getTotalUnreadCounter().decrementAndGet();
+                    sendUpdate(subscription.getSessionId(), subscription.createCountUpdate());
+                }
+            }
         }
     }
 
@@ -149,14 +162,14 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
         log.trace("[{}, subId: {}] Handling notification request update: {}", subscription.getSessionId(), subscription.getSubscriptionId(), update);
         NotificationRequestId notificationRequestId = update.getNotificationRequestId();
         if (update.isDeleted()) {
-            if (subscription.getUnreadNotifications().values().stream()
+            if (subscription.getLatestUnreadNotifications().values().stream()
                     .anyMatch(notification -> notification.getRequestId().equals(notificationRequestId))) {
                 fetchUnreadNotifications(subscription);
                 sendUpdate(subscription.getSessionId(), subscription.createFullUpdate());
             }
         } else {
             NotificationInfo notificationInfo = update.getNotificationInfo();
-            subscription.getUnreadNotifications().values().stream()
+            subscription.getLatestUnreadNotifications().values().stream()
                     .filter(notification -> notification.getRequestId().equals(notificationRequestId))
                     .forEach(notification -> {
                         notification.setInfo(notificationInfo);
@@ -197,7 +210,7 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
 
 
     private void sendUpdate(String sessionId, CmdUpdate update) {
-        log.trace("[{}] Sending WS update: {}", sessionId, update);
+        log.trace("[{}, cmdId: {}] Sending WS update: {}", sessionId, update.getCmdId(), update);
         wsService.sendWsMsg(sessionId, update);
     }
 

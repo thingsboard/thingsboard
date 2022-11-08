@@ -20,6 +20,9 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.service.DataValidator;
 
 @Service
 @RequiredArgsConstructor
@@ -27,9 +30,25 @@ public class DefaultNotificationRuleService implements NotificationRuleService {
 
     private final NotificationRuleDao notificationRuleDao;
 
+    private final NotificationRuleValidator validator = new NotificationRuleValidator();
+
+    @Override
+    public NotificationRule saveNotificationRule(TenantId tenantId, NotificationRule notificationRule) {
+        validator.validate(notificationRule, NotificationRule::getTenantId);
+        return notificationRuleDao.save(tenantId, notificationRule);
+    }
+
     @Override
     public NotificationRule findNotificationRuleById(TenantId tenantId, NotificationRuleId notificationRuleId) {
         return notificationRuleDao.findById(tenantId, notificationRuleId.getId());
+    }
+
+    @Override
+    public PageData<NotificationRule> findNotificationRulesByTenantId(TenantId tenantId, PageLink pageLink) {
+        return notificationRuleDao.findByTenantIdAndPageLink(tenantId, pageLink);
+    }
+
+    private static class NotificationRuleValidator extends DataValidator<NotificationRule> {
     }
 
 }

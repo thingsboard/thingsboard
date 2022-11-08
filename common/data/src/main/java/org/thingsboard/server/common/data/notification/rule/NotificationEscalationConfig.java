@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.notification;
+package org.thingsboard.server.common.data.notification.rule;
 
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.notification.rule.NotificationRule;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.Dao;
+import lombok.Data;
 
-public interface NotificationRuleDao extends Dao<NotificationRule> {
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import java.util.List;
 
-    PageData<NotificationRule> findByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink);
+@Data
+public class NotificationEscalationConfig {
+
+    @NotNull
+    @Valid
+    private List<NonConfirmedNotificationEscalation> escalations;
 
 }

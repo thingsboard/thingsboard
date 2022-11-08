@@ -27,10 +27,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.UUID;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -44,8 +40,7 @@ public class NotificationRule extends BaseData<NotificationRuleId> implements Ha
     private String notificationTextTemplate;
     @NotNull
     private NotificationTargetId initialNotificationTargetId;
-    @NotNull
     @Valid
-    private List<NonConfirmedNotificationEscalation> escalations;
+    private NotificationEscalationConfig escalationConfig;
 
 }

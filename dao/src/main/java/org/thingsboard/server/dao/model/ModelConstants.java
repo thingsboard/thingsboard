@@ -677,7 +677,9 @@ public class ModelConstants {
     public static final String NOTIFICATION_REQUEST_RULE_ID_PROPERTY = "rule_id";
 
     public static final String NOTIFICATION_RULE_TABLE_NAME = "notification_rule";
-    // ...
+    public static final String NOTIFICATION_RULE_NOTIFICATION_TEXT_TEMPLATE_PROPERTY = "notification_text_template";
+    public static final String NOTIFICATION_RULE_INITIAL_NOTIFICATION_TARGET_ID_PROPERTY = "initial_notification_target_id";
+    public static final String NOTIFICATION_RULE_ESCALATION_CONFIG_PROPERTY = "escalation_config";
 
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 

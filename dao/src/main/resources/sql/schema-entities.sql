@@ -788,7 +788,13 @@ CREATE TABLE IF NOT EXISTS notification_target (
 );
 
 CREATE TABLE IF NOT EXISTS notification_rule (
-    id UUID NOT NULL CONSTRAINT notification_rule_pkey PRIMARY KEY
+    id UUID NOT NULL CONSTRAINT notification_rule_pkey PRIMARY KEY,
+    created_time BIGINT NOT NULL,
+    tenant_id UUID NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    notification_text_template VARCHAR NOT NULL,
+    initial_notification_target_id UUID NULL CONSTRAINT fk_notification_rule_target_id REFERENCES notification_target(id),
+    escalation_config VARCHAR(500)
 );
 
 CREATE TABLE IF NOT EXISTS notification_request (

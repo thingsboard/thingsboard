@@ -39,8 +39,10 @@ import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.NotificationsTopicService;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 import org.thingsboard.server.service.telemetry.AbstractSubscriptionService;
@@ -61,24 +63,27 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
     private final NotificationService notificationService;
     private final DbCallbackExecutorService dbCallbackExecutorService;
     private final NotificationsTopicService notificationsTopicService;
+    private final TbQueueProducerProvider producerProvider;
 
     public DefaultNotificationManager(TbClusterService clusterService, PartitionService partitionService,
                                       NotificationTargetService notificationTargetService,
                                       NotificationRequestService notificationRequestService,
                                       NotificationService notificationService,
                                       DbCallbackExecutorService dbCallbackExecutorService,
-                                      NotificationsTopicService notificationsTopicService) {
+                                      NotificationsTopicService notificationsTopicService,
+                                      TbQueueProducerProvider producerProvider) {
         super(clusterService, partitionService);
         this.notificationTargetService = notificationTargetService;
         this.notificationRequestService = notificationRequestService;
         this.notificationService = notificationService;
         this.dbCallbackExecutorService = dbCallbackExecutorService;
         this.notificationsTopicService = notificationsTopicService;
+        this.producerProvider = producerProvider;
     }
 
     @Override
     public NotificationRequest processNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest) {
-        log.info("Processing notification request (tenant id: {}, notification target id: {})", tenantId, notificationRequest.getTargetId());
+        log.debug("Processing notification request (tenant id: {}, notification target id: {})", tenantId, notificationRequest.getTargetId());
         notificationRequest.setTenantId(tenantId);
         if (notificationRequest.getAdditionalConfig() != null) {
             NotificationRequestConfig config = notificationRequest.getAdditionalConfig();
@@ -201,11 +206,11 @@ public class DefaultNotificationManager extends AbstractSubscriptionService impl
     private void onNotificationRequestUpdate(TenantId tenantId, NotificationRequestUpdate update) {
         log.trace("Submitting notification request update: {}", update);
         wsCallBackExecutor.submit(() -> {
-            TransportProtos.ToCoreMsg notificationRequestDeletedProto = TbSubscriptionUtils.notificationRequestUpdateToProto(tenantId, update);
+            TransportProtos.ToCoreNotificationMsg notificationRequestUpdateProto = TbSubscriptionUtils.notificationRequestUpdateToProto(tenantId, update);
             Set<String> coreServices = new HashSet<>(partitionService.getAllServiceIds(ServiceType.TB_CORE));
             for (String serviceId : coreServices) {
                 TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, serviceId);
-                clusterService.pushMsgToCore(tpi, UUID.randomUUID(), notificationRequestDeletedProto, null);
+                producerProvider.getTbCoreNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), notificationRequestUpdateProto), null);
             }
         });
     }

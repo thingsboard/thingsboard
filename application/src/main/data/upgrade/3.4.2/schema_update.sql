@@ -19,12 +19,18 @@ CREATE TABLE IF NOT EXISTS notification_target (
     created_time BIGINT NOT NULL,
     tenant_id UUID NOT NULL,
     name VARCHAR(255) NOT NULL,
-    configuration varchar(1000) NOT NULL
+    configuration VARCHAR(1000) NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_notification_target_tenant_id_created_time ON notification_target(tenant_id, created_time DESC);
 
 CREATE TABLE IF NOT EXISTS notification_rule (
-    id UUID NOT NULL CONSTRAINT notification_rule_pkey PRIMARY KEY
+    id UUID NOT NULL CONSTRAINT notification_rule_pkey PRIMARY KEY,
+    created_time BIGINT NOT NULL,
+    tenant_id UUID NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    notification_text_template VARCHAR NOT NULL,
+    initial_notification_target_id UUID NULL CONSTRAINT fk_notification_rule_target_id REFERENCES notification_target(id),
+    escalation_config VARCHAR(500)
 );
 
 ALTER TABLE alarm ADD COLUMN IF NOT EXISTS notification_rule_id UUID;

@@ -29,7 +29,7 @@ public interface NotificationTargetService {
 
     NotificationTarget findNotificationTargetById(TenantId tenantId, NotificationTargetId id);
 
-    PageData<NotificationTarget> findNotificationTargetsByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink);
+    PageData<NotificationTarget> findNotificationTargetsByTenantId(TenantId tenantId, PageLink pageLink);
 
     PageData<User> findRecipientsForNotificationTarget(TenantId tenantId, NotificationTargetId notificationTargetId, PageLink pageLink);
 

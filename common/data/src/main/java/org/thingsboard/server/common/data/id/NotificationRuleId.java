@@ -21,16 +21,16 @@ import org.thingsboard.server.common.data.EntityType;
 
 import java.util.UUID;
 
-public class NotificationRuleId extends UUIDBased {
+public class NotificationRuleId extends UUIDBased implements EntityId {
 
     @JsonCreator
     public NotificationRuleId(@JsonProperty("id") UUID id) {
         super(id);
     }
 
-//    @Override
-//    public EntityType getEntityType() {
-//        return EntityType.NOTIFICATION_TARGET;
-//    }
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.NOTIFICATION_RULE;
+    }
 
 }

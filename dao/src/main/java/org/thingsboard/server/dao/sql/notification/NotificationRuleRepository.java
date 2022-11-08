@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.dao.sql.notification;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import org.thingsboard.server.dao.model.sql.NotificationRuleEntity;
@@ -23,4 +25,7 @@ import java.util.UUID;
 
 @Repository
 public interface NotificationRuleRepository extends JpaRepository<NotificationRuleEntity, UUID> {
+
+    Page<NotificationRuleEntity> findByTenantIdAndNameContainingIgnoreCase(UUID tenantId, String searchText, Pageable pageable);
+
 }

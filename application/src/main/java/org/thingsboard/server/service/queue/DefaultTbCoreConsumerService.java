@@ -347,6 +347,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         } else if (toCoreNotification.hasVcResponseMsg()) {
             vcQueueService.processResponse(toCoreNotification.getVcResponseMsg());
             callback.onSuccess();
+        } else if (toCoreNotification.hasToSubscriptionMgrMsg()) {
+            forwardToSubMgrService(toCoreNotification.getToSubscriptionMgrMsg(), callback);
         }
         if (statsEnabled) {
             stats.log(toCoreNotification);

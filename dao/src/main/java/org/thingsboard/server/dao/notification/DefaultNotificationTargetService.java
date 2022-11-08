@@ -57,7 +57,7 @@ public class DefaultNotificationTargetService implements NotificationTargetServi
     }
 
     @Override
-    public PageData<NotificationTarget> findNotificationTargetsByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink) {
+    public PageData<NotificationTarget> findNotificationTargetsByTenantId(TenantId tenantId, PageLink pageLink) {
         return notificationTargetDao.findByTenantIdAndPageLink(tenantId, pageLink);
     }
 

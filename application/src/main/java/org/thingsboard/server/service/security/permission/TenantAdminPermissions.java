@@ -51,6 +51,7 @@ public class TenantAdminPermissions extends AbstractPermissions {
         put(Resource.VERSION_CONTROL, PermissionChecker.allowAllPermissionChecker);
         put(Resource.NOTIFICATION_TARGET, tenantEntityPermissionChecker);
         put(Resource.NOTIFICATION_REQUEST, tenantEntityPermissionChecker);
+        put(Resource.NOTIFICATION_RULE, tenantEntityPermissionChecker);
     }
 
     public static final PermissionChecker tenantEntityPermissionChecker = new PermissionChecker() {

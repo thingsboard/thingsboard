@@ -50,6 +50,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.TbTimeSeriesDeletePr
 import org.thingsboard.server.gen.transport.TransportProtos.TbTimeSeriesSubscriptionProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbTimeSeriesUpdateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpdate;
 import org.thingsboard.server.service.ws.notification.sub.NotificationUpdate;
@@ -380,7 +381,7 @@ public class TbSubscriptionUtils {
         return ToCoreMsg.newBuilder().setToSubscriptionMgrMsg(msgBuilder.build()).build();
     }
 
-    public static TransportProtos.ToCoreNotificationMsg notificationsSubUpdateToProto(TbSubscription subscription, NotificationsSubscriptionUpdate update) {
+    public static ToCoreNotificationMsg notificationsSubUpdateToProto(TbSubscription subscription, NotificationsSubscriptionUpdate update) {
         TransportProtos.NotificationsSubscriptionUpdateProto.Builder updateProto = TransportProtos.NotificationsSubscriptionUpdateProto.newBuilder()
                 .setSessionId(subscription.getSessionId())
                 .setSubscriptionId(subscription.getSubscriptionId());
@@ -390,7 +391,7 @@ public class TbSubscriptionUtils {
         if (update.getNotificationRequestUpdate() != null) {
             updateProto.setNotificationRequestUpdate(JacksonUtil.toString(update.getNotificationRequestUpdate()));
         }
-        return TransportProtos.ToCoreNotificationMsg.newBuilder()
+        return ToCoreNotificationMsg.newBuilder()
                 .setToLocalSubscriptionServiceMsg(TransportProtos.LocalSubscriptionServiceMsgProto.newBuilder()
                         .setNotificationsSubUpdate(updateProto)
                         .build())
@@ -412,13 +413,13 @@ public class TbSubscriptionUtils {
                 .build();
     }
 
-    public static ToCoreMsg notificationRequestUpdateToProto(TenantId tenantId, NotificationRequestUpdate notificationRequestUpdate) {
+    public static ToCoreNotificationMsg notificationRequestUpdateToProto(TenantId tenantId, NotificationRequestUpdate notificationRequestUpdate) {
         TransportProtos.NotificationRequestUpdateProto updateProto = TransportProtos.NotificationRequestUpdateProto.newBuilder()
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
                 .setUpdate(JacksonUtil.toString(notificationRequestUpdate))
                 .build();
-        return ToCoreMsg.newBuilder()
+        return ToCoreNotificationMsg.newBuilder()
                 .setToSubscriptionMgrMsg(SubscriptionMgrMsgProto.newBuilder()
                         .setNotificationRequestUpdate(updateProto)
                         .build())

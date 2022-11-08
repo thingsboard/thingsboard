@@ -56,7 +56,7 @@ public class NotificationRequest extends BaseData<NotificationRequestId> impleme
 
     private NotificationOriginatorType originatorType;
     private EntityId originatorEntityId; // userId, alarmId or tenantId
-    private NotificationRuleId ruleId; // maybe move to child class
+    private NotificationRuleId ruleId;
 
     private NotificationRequestConfig additionalConfig;
     private NotificationRequestStatus status;

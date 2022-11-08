@@ -112,20 +112,24 @@ public class TbTestWebSocketClient extends WebSocketClient {
 
     public String waitForUpdate(long ms) {
         try {
-            update.await(ms, TimeUnit.MILLISECONDS);
+            if (update.await(ms, TimeUnit.MILLISECONDS)) {
+                return lastMsg;
+            }
         } catch (InterruptedException e) {
             log.warn("Failed to await reply", e);
         }
-        return lastMsg;
+        return null;
     }
 
     public String waitForReply() {
         try {
-            reply.await(3, TimeUnit.SECONDS);
+            if (reply.await(3, TimeUnit.SECONDS)) {
+                return lastMsg;
+            }
         } catch (InterruptedException e) {
             log.warn("Failed to await reply", e);
         }
-        return lastMsg;
+        return null;
     }
 
     public EntityDataUpdate parseDataReply(String msg) {

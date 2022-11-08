@@ -168,7 +168,6 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
                 });
             }
         });
-        // todo: handle notification rule
     }
 
     private void onAlarmDeleted(AlarmOperationResult result) {

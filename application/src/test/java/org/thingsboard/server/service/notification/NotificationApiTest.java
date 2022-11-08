@@ -108,8 +108,8 @@ public class NotificationApiTest extends AbstractControllerTest {
         NotificationTarget notificationTarget = createNotificationTarget(tenantAdminUserId);
         String notificationText = "Notification 1";
         submitNotificationRequest(notificationTarget.getId(), "Just a test", notificationText);
-        getWsClient().waitForUpdate();
-        getAnotherWsClient().waitForUpdate();
+        assertThat(getWsClient().waitForUpdate()).isNotNull();
+        assertThat(getAnotherWsClient().waitForUpdate()).isNotNull();
 
         checkPartialNotificationsUpdate(getWsClient().getLastDataUpdate(), notificationText, 1);
         checkPartialNotificationsUpdate(getAnotherWsClient().getLastDataUpdate(), notificationText, 1);
@@ -129,16 +129,16 @@ public class NotificationApiTest extends AbstractControllerTest {
         getAnotherWsClient().registerWaitForUpdate(2);
         String notificationText1 = "Notification 1";
         submitNotificationRequest(notificationTarget.getId(), "Just a test", notificationText1);
-        getWsClient().waitForUpdate();
-        getAnotherWsClient().waitForUpdate();
+        assertThat(getWsClient().waitForUpdate()).isNotNull();
+        assertThat(getAnotherWsClient().waitForUpdate()).isNotNull();
         Notification notification1 = getWsClient().getLastDataUpdate().getUpdate();
 
         getWsClient().registerWaitForUpdate();
         getAnotherWsClient().registerWaitForUpdate(2);
         String notificationText2 = "Notification 2";
         submitNotificationRequest(notificationTarget.getId(), "Just a test", notificationText2);
-        getWsClient().waitForUpdate();
-        getAnotherWsClient().waitForUpdate();
+        assertThat(getWsClient().waitForUpdate()).isNotNull();
+        assertThat(getAnotherWsClient().waitForUpdate()).isNotNull();
         assertThat(getWsClient().getLastDataUpdate().getTotalUnreadCount()).isEqualTo(2);
         assertThat(getAnotherWsClient().getLastDataUpdate().getTotalUnreadCount()).isEqualTo(2);
         assertThat(getAnotherWsClient().getLastCountUpdate().getTotalUnreadCount()).isEqualTo(2);
@@ -146,8 +146,8 @@ public class NotificationApiTest extends AbstractControllerTest {
         getWsClient().registerWaitForUpdate();
         getAnotherWsClient().registerWaitForUpdate(2);
         getWsClient().markNotificationAsRead(notification1.getUuidId());
-        getWsClient().waitForUpdate();
-        getAnotherWsClient().waitForUpdate();
+        assertThat(getWsClient().waitForUpdate()).isNotNull();
+        assertThat(getAnotherWsClient().waitForUpdate()).isNotNull();
 
         checkFullNotificationsUpdate(getWsClient().getLastDataUpdate(), notificationText2);
         checkFullNotificationsUpdate(getAnotherWsClient().getLastDataUpdate(), notificationText2);

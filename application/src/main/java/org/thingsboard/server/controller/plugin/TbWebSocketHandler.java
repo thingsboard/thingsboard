@@ -41,9 +41,9 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.ws.SessionEvent;
 import org.thingsboard.server.service.ws.WebSocketMsgEndpoint;
-import org.thingsboard.server.service.ws.WebSocketSessionType;
 import org.thingsboard.server.service.ws.WebSocketService;
 import org.thingsboard.server.service.ws.WebSocketSessionRef;
+import org.thingsboard.server.service.ws.WebSocketSessionType;
 
 import javax.websocket.RemoteEndpoint;
 import javax.websocket.SendHandler;
@@ -58,6 +58,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.thingsboard.server.service.ws.DefaultWebSocketService.NUMBER_OF_PING_ATTEMPTS;
 
@@ -215,7 +216,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
         private final RemoteEndpoint.Async asyncRemote;
         private final WebSocketSessionRef sessionRef;
 
-        private volatile boolean isSending = false;
+        private final AtomicBoolean isSending = new AtomicBoolean(false);
         private final Queue<TbWebSocketMsg<?>> msgQueue;
 
         private volatile long lastActivityTime;
@@ -262,7 +263,9 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
         }
 
         synchronized void sendMsg(TbWebSocketMsg<?> msg) {
-            if (isSending) {
+            if (isSending.compareAndSet(false, true)) {
+                sendMsgInternal(msg);
+            } else {
                 try {
                     msgQueue.add(msg);
                 } catch (RuntimeException e) {
@@ -273,9 +276,6 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                     }
                     closeSession(CloseStatus.POLICY_VIOLATION.withReason("Max pending updates limit reached!"));
                 }
-            } else {
-                isSending = true;
-                sendMsgInternal(msg);
             }
         }
 
@@ -310,7 +310,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
             if (msg != null) {
                 sendMsgInternal(msg);
             } else {
-                isSending = false;
+                isSending.set(false);
             }
         }
     }

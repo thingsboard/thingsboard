@@ -15,11 +15,15 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
+import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.notification.rule.NotificationEscalationConfig;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -42,6 +46,15 @@ public class NotificationRuleEntity extends BaseSqlEntity<NotificationRule> {
     @Column(name = ModelConstants.NAME_PROPERTY, nullable = false)
     private String name;
 
+    @Column(name = ModelConstants.NOTIFICATION_RULE_NOTIFICATION_TEXT_TEMPLATE_PROPERTY, nullable = false)
+    private String notificationTextTemplate;
+
+    @Column(name = ModelConstants.NOTIFICATION_RULE_INITIAL_NOTIFICATION_TARGET_ID_PROPERTY)
+    private UUID initialNotificationTargetId;
+
+    @Type(type = "json")
+    @Column(name = ModelConstants.NOTIFICATION_RULE_ESCALATION_CONFIG_PROPERTY)
+    private JsonNode escalationConfig;
 
     public NotificationRuleEntity() {}
 
@@ -50,6 +63,9 @@ public class NotificationRuleEntity extends BaseSqlEntity<NotificationRule> {
         setCreatedTime(notificationRule.getCreatedTime());
         setTenantId(getUuid(notificationRule.getTenantId()));
         setName(notificationRule.getName());
+        setNotificationTextTemplate(notificationRule.getNotificationTextTemplate());
+        setInitialNotificationTargetId(getUuid(notificationRule.getInitialNotificationTargetId()));
+        setEscalationConfig(toJson(notificationRule.getEscalationConfig()));
     }
 
     @Override
@@ -59,6 +75,9 @@ public class NotificationRuleEntity extends BaseSqlEntity<NotificationRule> {
         notificationRule.setCreatedTime(createdTime);
         notificationRule.setTenantId(createId(tenantId, TenantId::fromUUID));
         notificationRule.setName(name);
+        notificationRule.setNotificationTextTemplate(notificationTextTemplate);
+        notificationRule.setInitialNotificationTargetId(createId(initialNotificationTargetId, NotificationTargetId::new));
+        notificationRule.setEscalationConfig(fromJson(escalationConfig, NotificationEscalationConfig.class));
         return notificationRule;
     }
 

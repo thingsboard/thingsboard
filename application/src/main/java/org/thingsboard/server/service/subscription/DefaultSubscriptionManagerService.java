@@ -331,6 +331,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
                 s -> alarm,
                 true
         );
+        notificationRuleProcessingService.onAlarmDeleted(tenantId, alarm);
         callback.onSuccess();
     }
 
