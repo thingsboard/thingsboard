@@ -30,6 +30,8 @@ import {
     TopicMessages
 } from 'kafkajs';
 
+import process, { kill, exit } from 'process';
+
 export class KafkaTemplate implements IQueue {
 
     private logger = _logger(`kafkaTemplate`);
@@ -122,6 +124,7 @@ export class KafkaTemplate implements IQueue {
             this.logger.error(`Got consumer CRASH event, should restart: ${e.payload.restart}`);
             if (!e.payload.restart) {
                 this.logger.error('Going to exit due to not retryable error!');
+                kill(process.pid, 'SIGTERM'); //sending signal to myself process to trigger the handler
                 await this.destroy();
             }
         });
@@ -253,6 +256,7 @@ export class KafkaTemplate implements IQueue {
             }
         }
         this.logger.info('Kafka resources stopped.');
+        exit(0); //same as in version before
     }
 
     private async disconnectProducer(): Promise<void> {

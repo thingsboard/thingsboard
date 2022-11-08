@@ -168,6 +168,7 @@ import { BranchAutocompleteComponent } from '@shared/components/vc/branch-autoco
 import { PhoneInputComponent } from '@shared/components/phone-input.component';
 import { CustomDateAdapter } from '@shared/adapter/custom-datatime-adapter';
 import { CustomPaginatorIntl } from '@shared/services/custom-paginator-intl';
+import { TbScriptLangComponent } from '@shared/components/script-lang.component';
 import { TwoFactorAuthComponent } from '@shared/components/mfa-settings/two-factor-auth.component';
 import { User } from '@shared/models/user.model';
 import { Store } from '@ngrx/store';
@@ -329,6 +330,7 @@ export class UserTwoFAProvidersResolver implements Resolve<Array<TwoFactorAuthPr
     ProtobufContentComponent,
     BranchAutocompleteComponent,
     PhoneInputComponent,
+    TbScriptLangComponent,
     TwoFactorAuthComponent
   ],
   imports: [
@@ -534,6 +536,7 @@ export class UserTwoFAProvidersResolver implements Resolve<Array<TwoFactorAuthPr
     ProtobufContentComponent,
     BranchAutocompleteComponent,
     PhoneInputComponent,
+    TbScriptLangComponent,
     TwoFactorAuthComponent
   ]
 })

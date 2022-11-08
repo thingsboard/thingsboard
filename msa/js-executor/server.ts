@@ -81,15 +81,19 @@ process.on('exit', (code: number) => {
 
 async function exit(status: number) {
     logger.info('Exiting with status: %d ...', status);
-    if (httpServer) {
-        const _httpServer = httpServer;
-        httpServer = null;
-        await _httpServer.stop();
-    }
-    if (queues) {
-        const _queues = queues;
-        queues = null;
-        await _queues.destroy();
+    try {
+        if (httpServer) {
+            const _httpServer = httpServer;
+            httpServer = null;
+            await _httpServer.stop();
+        }
+        if (queues) {
+            const _queues = queues;
+            queues = null;
+            await _queues.destroy();
+        }
+    } catch (e) {
+        logger.error('Error on exit');
     }
     process.exit(status);
 }

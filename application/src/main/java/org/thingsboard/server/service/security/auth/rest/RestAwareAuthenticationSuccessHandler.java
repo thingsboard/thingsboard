@@ -26,7 +26,6 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.service.security.auth.MfaAuthenticationToken;
 import org.thingsboard.server.service.security.auth.MfaSaveSettingsAuthenticationToken;
-import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFaConfigManager;
 import org.thingsboard.server.service.security.model.JwtTokenPair;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -46,7 +45,6 @@ public class RestAwareAuthenticationSuccessHandler implements AuthenticationSucc
     private final ObjectMapper mapper;
     private final JwtTokenFactory tokenFactory;
     private final TwoFaConfigManager twoFaConfigManager;
-    private final RefreshTokenRepository refreshTokenRepository;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -67,8 +65,7 @@ public class RestAwareAuthenticationSuccessHandler implements AuthenticationSucc
             tokenPair.setRefreshToken(null);
             tokenPair.setScope(Authority.TWO_FACTOR_FORCE_SAVE_SETTINGS_TOKEN);
         } else {
-            tokenPair.setToken(tokenFactory.createAccessJwtToken(securityUser).getToken());
-            tokenPair.setRefreshToken(refreshTokenRepository.requestRefreshToken(securityUser).getToken());
+            tokenPair = tokenFactory.createTokenPair(securityUser);
         }
 
         response.setStatus(HttpStatus.OK.value());

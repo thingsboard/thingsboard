@@ -440,6 +440,8 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     };
     config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
       .withPositions([connectedPosition]);
+    config.maxHeight = '70vh';
+    config.height = 'min-content';
 
     const overlayRef = this.overlay.create(config);
     overlayRef.backdropClick().subscribe(() => {

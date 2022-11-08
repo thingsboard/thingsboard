@@ -25,24 +25,29 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequ
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
-import org.thingsboard.server.common.data.security.model.JwtToken;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
+import org.thingsboard.server.service.security.model.JwtTokenPair;
+import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import java.util.UUID;
+
+import static org.thingsboard.server.service.security.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository.PREV_URI_COOKIE_NAME;
 
 @Slf4j
 @Component(value = "oauth2AuthenticationSuccessHandler")
@@ -50,7 +55,6 @@ import java.util.UUID;
 public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtTokenFactory tokenFactory;
-    private final RefreshTokenRepository refreshTokenRepository;
     private final OAuth2ClientMapperProvider oauth2ClientMapperProvider;
     private final OAuth2Service oAuth2Service;
     private final OAuth2AuthorizedClientService oAuth2AuthorizedClientService;
@@ -59,14 +63,12 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     @Autowired
     public Oauth2AuthenticationSuccessHandler(final JwtTokenFactory tokenFactory,
-                                              final RefreshTokenRepository refreshTokenRepository,
                                               final OAuth2ClientMapperProvider oauth2ClientMapperProvider,
                                               final OAuth2Service oAuth2Service,
                                               final OAuth2AuthorizedClientService oAuth2AuthorizedClientService,
                                               final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository,
                                               final SystemSecurityService systemSecurityService) {
         this.tokenFactory = tokenFactory;
-        this.refreshTokenRepository = refreshTokenRepository;
         this.oauth2ClientMapperProvider = oauth2ClientMapperProvider;
         this.oAuth2Service = oAuth2Service;
         this.oAuth2AuthorizedClientService = oAuth2AuthorizedClientService;
@@ -85,6 +87,11 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             baseUrl = callbackUrlScheme + ":";
         } else {
             baseUrl = this.systemSecurityService.getBaseUrl(TenantId.SYS_TENANT_ID, new CustomerId(EntityId.NULL_UUID), request);
+            Optional<Cookie> prevUrlOpt = CookieUtils.getCookie(request, PREV_URI_COOKIE_NAME);
+            if (prevUrlOpt.isPresent()) {
+                baseUrl += prevUrlOpt.get().getValue();
+                CookieUtils.deleteCookie(request, response, PREV_URI_COOKIE_NAME);
+            }
         }
         try {
             OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) authentication;
@@ -97,11 +104,11 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             SecurityUser securityUser = mapper.getOrCreateUserByClientPrincipal(request, token, oAuth2AuthorizedClient.getAccessToken().getTokenValue(),
                     registration);
 
-            JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
-            JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);
+            JwtTokenPair tokenPair = tokenFactory.createTokenPair(securityUser);
 
             clearAuthenticationAttributes(request, response);
-            getRedirectStrategy().sendRedirect(request, response, baseUrl + "/?accessToken=" + accessToken.getToken() + "&refreshToken=" + refreshToken.getToken());
+            getRedirectStrategy().sendRedirect(request, response, baseUrl + "/?accessToken=" + tokenPair.getToken() + "&refreshToken=" + tokenPair.getRefreshToken());
+            systemSecurityService.logLoginAction(securityUser, new RestAuthenticationDetails(request), ActionType.LOGIN, registration.getName(), null);
         } catch (Exception e) {
             log.debug("Error occurred during processing authentication success result. " +
                     "request [{}], response [{}], authentication [{}]", request, response, authentication, e);

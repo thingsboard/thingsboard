@@ -23,7 +23,8 @@
       "src/typings/jquery.flot.typings.d.ts",
       "src/typings/jquery.jstree.typings.d.ts",
       "src/typings/split.js.typings.d.ts",
-      "src/typings/leaflet-geoman-extend.d.ts"
+      "src/typings/leaflet-geoman-extend.d.ts",
+      "src/typings/leaflet-extend-tb.d.ts",
     ],
     "paths": {
       "@app/*": ["src/app/*"],

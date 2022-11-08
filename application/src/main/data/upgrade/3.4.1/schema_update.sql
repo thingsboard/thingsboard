@@ -68,7 +68,8 @@ BEGIN
     END LOOP;
 
     INSERT INTO audit_log
-    SELECT * FROM old_audit_log
+    SELECT id, created_time, tenant_id, customer_id, entity_id, entity_type, entity_name, user_id, user_name, action_type, action_data, action_status, action_failure_details
+    FROM old_audit_log
     WHERE created_time >= start_time_ms AND created_time < end_time_ms;
 END;
 $$;

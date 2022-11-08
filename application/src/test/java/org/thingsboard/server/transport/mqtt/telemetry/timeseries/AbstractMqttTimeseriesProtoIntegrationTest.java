@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DynamicProtoUtils;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
@@ -117,7 +118,7 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
                 .telemetryProtoSchema(schemaStr)
                 .build();
         processBeforeTest(configProperties);
-        DynamicSchema telemetrySchema = getDynamicSchema(schemaStr);
+        DynamicSchema telemetrySchema = getDynamicSchema();
 
         DynamicMessage.Builder nestedJsonObjectBuilder = telemetrySchema.newMessageBuilder("PostTelemetry.JsonObject.NestedJsonObject");
         Descriptors.Descriptor nestedJsonObjectBuilderDescriptor = nestedJsonObjectBuilder.getDescriptorForType();
@@ -167,7 +168,7 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
                 .telemetryTopicFilter(POST_DATA_TELEMETRY_TOPIC)
                 .build();
         processBeforeTest(configProperties);
-        DynamicSchema telemetrySchema = getDynamicSchema(DEVICE_TELEMETRY_PROTO_SCHEMA);
+        DynamicSchema telemetrySchema = getDynamicSchema();
 
         DynamicMessage.Builder nestedJsonObjectBuilder = telemetrySchema.newMessageBuilder("PostTelemetry.JsonObject.NestedJsonObject");
         Descriptors.Descriptor nestedJsonObjectBuilderDescriptor = nestedJsonObjectBuilder.getDescriptorForType();
@@ -230,7 +231,7 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
                 .telemetryProtoSchema(schemaStr)
                 .build();
         processBeforeTest(configProperties);
-        DynamicSchema telemetrySchema = getDynamicSchema(schemaStr);
+        DynamicSchema telemetrySchema = getDynamicSchema();
 
         DynamicMessage.Builder nestedJsonObjectBuilder = telemetrySchema.newMessageBuilder("PostTelemetry.JsonObject.NestedJsonObject");
         Descriptors.Descriptor nestedJsonObjectBuilderDescriptor = nestedJsonObjectBuilder.getDescriptorForType();
@@ -458,19 +459,20 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
         assertFalse(callback.isPubAckReceived());
     }
 
-    private DynamicSchema getDynamicSchema(String deviceTelemetryProtoSchema) {
+    private DynamicSchema getDynamicSchema() {
         DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
         assertTrue(transportConfiguration instanceof MqttDeviceProfileTransportConfiguration);
         MqttDeviceProfileTransportConfiguration mqttTransportConfiguration = (MqttDeviceProfileTransportConfiguration) transportConfiguration;
         TransportPayloadTypeConfiguration transportPayloadTypeConfiguration = mqttTransportConfiguration.getTransportPayloadTypeConfiguration();
         assertTrue(transportPayloadTypeConfiguration instanceof ProtoTransportPayloadConfiguration);
         ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
-        ProtoFileElement transportProtoSchema = protoTransportPayloadConfiguration.getTransportProtoSchema(deviceTelemetryProtoSchema);
-        return protoTransportPayloadConfiguration.getDynamicSchema(transportProtoSchema, "telemetrySchema");
+        String deviceTelemetryProtoSchema = protoTransportPayloadConfiguration.getDeviceTelemetryProtoSchema();
+        ProtoFileElement protoFileElement = DynamicProtoUtils.getProtoFileElement(deviceTelemetryProtoSchema);
+        return DynamicProtoUtils.getDynamicSchema(protoFileElement, ProtoTransportPayloadConfiguration.TELEMETRY_PROTO_SCHEMA);
     }
 
     private DynamicMessage getDefaultDynamicMessage() {
-        DynamicSchema telemetrySchema = getDynamicSchema(DEVICE_TELEMETRY_PROTO_SCHEMA);
+        DynamicSchema telemetrySchema = getDynamicSchema();
 
         DynamicMessage.Builder nestedJsonObjectBuilder = telemetrySchema.newMessageBuilder("PostTelemetry.JsonObject.NestedJsonObject");
         Descriptors.Descriptor nestedJsonObjectBuilderDescriptor = nestedJsonObjectBuilder.getDescriptorForType();

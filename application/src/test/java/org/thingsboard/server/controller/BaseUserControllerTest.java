@@ -106,7 +106,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
                 ActionType.ADDED, ActionType.ADDED, 1, 1, 1);
         Mockito.reset(tbClusterService, auditLogService);
 
-        logout();
+        resetTokens();
         doGet("/api/noauth/activate?activateToken={activateToken}", TestMailService.currentActivateToken)
                 .andExpect(status().isSeeOther())
                 .andExpect(header().string(HttpHeaders.LOCATION, "/login/createPassword?activateToken=" + TestMailService.currentActivateToken));
@@ -123,7 +123,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
                 .andExpect(jsonPath("$.authority", is(Authority.TENANT_ADMIN.name())))
                 .andExpect(jsonPath("$.email", is(email)));
 
-        logout();
+        resetTokens();
 
         login(email, "testPassword");
 
@@ -140,9 +140,9 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         doDelete("/api/user/" + savedUser.getId().getId().toString())
                 .andExpect(status().isOk());
 
-        testNotifyEntityOneTimeMsgToEdgeServiceNever(foundUser, foundUser.getId(), foundUser.getId(),
+        testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(foundUser, foundUser.getId(), foundUser.getId(),
                 SYSTEM_TENANT, customerNUULId, null, SYS_ADMIN_EMAIL,
-                ActionType.DELETED, foundUser.getId().getId().toString());
+                ActionType.DELETED, SYSTEM_TENANT.getId().toString());
     }
 
     @Test
@@ -218,7 +218,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         user.setLastName("Downs");
 
         User savedUser = createUserAndLogin(user, "testPassword1");
-        logout();
+        resetTokens();
 
         JsonNode resetPasswordByEmailRequest = new ObjectMapper().createObjectNode()
                 .put("email", email);
@@ -244,7 +244,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
                 .andExpect(jsonPath("$.authority", is(Authority.TENANT_ADMIN.name())))
                 .andExpect(jsonPath("$.email", is(email)));
 
-        logout();
+        resetTokens();
 
         login(email, "testPassword2");
         doGet("/api/auth/user")
@@ -461,7 +461,9 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         String email1 = "testEmail1";
         List<User> tenantAdminsEmail1 = new ArrayList<>();
 
-        for (int i = 0; i < 124; i++) {
+        final int NUMBER_OF_USERS = 124;
+
+        for (int i = 0; i < NUMBER_OF_USERS; i++) {
             User user = new User();
             user.setAuthority(Authority.TENANT_ADMIN);
             user.setTenantId(tenantId);
@@ -532,7 +534,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         testManyUser.setTenantId(tenantId);
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(testManyUser, testManyUser,
                 SYSTEM_TENANT, customerNUULId, null, SYS_ADMIN_EMAIL,
-                ActionType.DELETED, ActionType.DELETED, cntEntity, 0, cntEntity, new String());
+                ActionType.DELETED, ActionType.DELETED, cntEntity, NUMBER_OF_USERS, cntEntity, new String());
 
         pageLink = new PageLink(4, 0, email1);
         pageData = doGetTypedWithPageLink("/api/tenant/" + tenantId.getId().toString() + "/users?",
