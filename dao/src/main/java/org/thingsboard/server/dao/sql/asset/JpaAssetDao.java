@@ -28,14 +28,17 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.asset.AssetDao;
 import org.thingsboard.server.dao.model.sql.AssetEntity;
 import org.thingsboard.server.dao.model.sql.AssetInfoEntity;
+import org.thingsboard.server.dao.model.sql.TbPair;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -241,6 +244,12 @@ public class JpaAssetDao extends JpaAbstractSearchTextDao<AssetEntity, Asset> im
                         type,
                         Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink)));
+    }
+
+    public PageData<TbPair<UUID, String>> getAllAssetTypes(PageLink pageLink) {
+        log.debug("Try to find all asset types and pageLink [{}]", pageLink);
+        return DaoUtil.pageToPageData(assetRepository.getAllAssetTypes(
+                DaoUtil.toPageable(pageLink, Arrays.asList(new SortOrder("tenantId"), new SortOrder("type")))));
     }
 
     @Override

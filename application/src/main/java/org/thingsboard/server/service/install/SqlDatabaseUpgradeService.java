@@ -34,12 +34,13 @@ import org.thingsboard.server.common.data.queue.ProcessingStrategyType;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.queue.SubmitStrategy;
 import org.thingsboard.server.common.data.queue.SubmitStrategyType;
+import org.thingsboard.server.dao.asset.AssetDao;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.model.sql.TbPair;
 import org.thingsboard.server.dao.queue.QueueService;
-import org.thingsboard.server.dao.sql.asset.AssetRepository;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
@@ -57,7 +58,10 @@ import java.sql.SQLSyntaxErrorException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.server.service.install.DatabaseHelper.ADDITIONAL_INFO;
@@ -111,7 +115,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
     private DeviceService deviceService;
 
     @Autowired
-    private AssetRepository assetRepository;
+    private AssetDao assetDao;
 
     @Autowired
     private DeviceProfileService deviceProfileService;
@@ -619,24 +623,27 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         loadSql(schemaUpdateFile, conn);
 
                         log.info("Creating default asset profiles...");
-                        PageLink pageLink = new PageLink(100);
-                        PageData<Tenant> pageData;
+                        PageLink pageLink = new PageLink(1000);
+                        PageData<TbPair<UUID, String>> pageData;
                         List<ListenableFuture<?>> futures = new ArrayList<>();
+                        Set<TenantId> tenants = new HashSet<>();
                         do {
-                            pageData = tenantService.findTenants(pageLink);
-                            for (Tenant tenant : pageData.getData()) {
-                                List<String> assetTypes = assetRepository.findTenantAssetTypes(tenant.getUuidId());
-                                assetTypes.remove("default");
-
-                                try {
-                                    futures.add(dbUpgradeExecutor.submit(() -> assetProfileService.createDefaultAssetProfile(tenant.getId())));
-                                } catch (Exception e) {
-                                }
-                                for (String assetType : assetTypes) {
+                            pageData = assetDao.getAllAssetTypes(pageLink);
+                            for (TbPair<UUID, String> pair : pageData.getData()) {
+                                TenantId tenantId = new TenantId(pair.getFirst());
+                                String assetType = pair.getSecond();
+                                if (tenants.add(tenantId)) {
                                     try {
-                                        futures.add(dbUpgradeExecutor.submit(() -> assetProfileService.findOrCreateAssetProfile(tenant.getId(), assetType)));
-                                    } catch (Exception e) {
-                                    }
+                                        futures.add(dbUpgradeExecutor.submit(() ->
+                                                assetProfileService.createDefaultAssetProfile(tenantId)));
+                                    } catch (Exception e) {}
+                                }
+
+                                if (!"default".equals(assetType)) {
+                                    try {
+                                        futures.add(dbUpgradeExecutor.submit(() ->
+                                                assetProfileService.findOrCreateAssetProfile(tenantId, assetType)));
+                                    } catch (Exception e) {}
                                 }
                             }
                             pageLink = pageLink.nextPageLink();

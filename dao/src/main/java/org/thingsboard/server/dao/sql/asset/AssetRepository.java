@@ -23,6 +23,7 @@ import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.AssetEntity;
 import org.thingsboard.server.dao.model.sql.AssetInfoEntity;
+import org.thingsboard.server.dao.model.sql.TbPair;
 
 import java.util.List;
 import java.util.UUID;
@@ -70,9 +71,9 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
             "AND a.assetProfileId = :profileId " +
             "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :searchText, '%'))")
     Page<AssetEntity> findByTenantIdAndProfileId(@Param("tenantId") UUID tenantId,
-                                                  @Param("profileId") UUID profileId,
-                                                  @Param("searchText") String searchText,
-                                                  Pageable pageable);
+                                                 @Param("profileId") UUID profileId,
+                                                 @Param("searchText") String searchText,
+                                                 Pageable pageable);
 
     @Query("SELECT new org.thingsboard.server.dao.model.sql.AssetInfoEntity(a, c.title, c.additionalInfo, p.name) " +
             "FROM AssetEntity a " +
@@ -186,14 +187,17 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
             "AND a.type = :type " +
             "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :searchText, '%'))")
     Page<AssetEntity> findByTenantIdAndEdgeIdAndType(@Param("tenantId") UUID tenantId,
-                                              @Param("edgeId") UUID edgeId,
-                                              @Param("type") String type,
-                                              @Param("searchText") String searchText,
-                                              Pageable pageable);
+                                                     @Param("edgeId") UUID edgeId,
+                                                     @Param("type") String type,
+                                                     @Param("searchText") String searchText,
+                                                     Pageable pageable);
 
     Long countByTenantIdAndTypeIsNot(UUID tenantId, String type);
 
     @Query("SELECT externalId FROM AssetEntity WHERE id = :id")
     UUID getExternalIdById(@Param("id") UUID id);
+
+    @Query(value = "SELECT DISTINCT new org.thingsboard.server.dao.model.sql.TbPair(a.tenantId , a.type) FROM  AssetEntity a")
+    Page<TbPair<UUID, String>> getAllAssetTypes(Pageable pageable);
 
 }
