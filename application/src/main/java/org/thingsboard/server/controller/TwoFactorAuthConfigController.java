@@ -38,7 +38,6 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFaConfigManager;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 
 import javax.validation.Valid;
 import java.util.Collections;
@@ -55,7 +54,6 @@ public class TwoFactorAuthConfigController extends BaseController {
 
     private final TwoFaConfigManager twoFaConfigManager;
     private final TwoFactorAuthService twoFactorAuthService;
-    private final JwtTokenFactory tokenFactory;
 
 
     @ApiOperation(value = "Get account 2FA settings (getAccountTwoFaSettings)",

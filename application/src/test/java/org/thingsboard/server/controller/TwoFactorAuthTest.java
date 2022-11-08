@@ -25,8 +25,10 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -65,6 +67,9 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -391,6 +396,47 @@ public abstract class TwoFactorAuthTest extends AbstractControllerTest {
 
         assertThat(providersInfos).containsKey(TwoFaProviderType.EMAIL);
         assertThat(providersInfos.get(TwoFaProviderType.EMAIL).isDefault()).isFalse();
+    }
+
+    @Test
+    public void testForceTwoFactorSetting() throws Exception {
+        TotpTwoFaProviderConfig totpTwoFaProviderConfig = new TotpTwoFaProviderConfig();
+        totpTwoFaProviderConfig.setIssuerName("tb");
+
+        PlatformTwoFaSettings twoFaSettings = new PlatformTwoFaSettings();
+        twoFaSettings.setProviders(Arrays.stream(new TwoFaProviderConfig[]{totpTwoFaProviderConfig}).collect(Collectors.toList()));
+        twoFaSettings.setMinVerificationCodeSendPeriod(5);
+        twoFaSettings.setTotalAllowedTimeForVerification(100);
+        twoFaConfigManager.savePlatformTwoFaSettings(TenantId.SYS_TENANT_ID, twoFaSettings);
+
+        Tenant tenant = doGet("/api/tenant/" + tenantId.getId().toString(), Tenant.class);
+        tenant.setForceTwoFactor(true);
+        doPost("/api/tenant", tenant).andExpect(status().isOk());
+
+        resetTokens();
+        JsonNode node = readResponse(doPost("/api/auth/login", new LoginRequest(username, password)).andExpect(status().isOk()), JsonNode.class);
+        assertNotNull(node.get("token").asText());
+        assertTrue(node.get("refreshToken").isNull());
+        assertEquals(node.get("scope").asText(), Authority.TWO_FACTOR_FORCE_SAVE_SETTINGS_TOKEN.name());
+
+        this.token = node.get("token").asText();
+        TotpTwoFaAccountConfig totpTwoFaAccountConfig = (TotpTwoFaAccountConfig) twoFactorAuthService.generateNewAccountConfig(user, totpTwoFaProviderConfig.getProviderType());
+        String secret = UriComponentsBuilder.fromUriString(totpTwoFaAccountConfig.getAuthUrl()).build()
+                .getQueryParams().getFirst("secret");
+        String verificationCode = new Totp(secret).now();
+        readResponse(doPost("/api/2fa/account/config?verificationCode=" + verificationCode, totpTwoFaAccountConfig).andExpect(status().isOk()), JsonNode.class);
+
+        JwtTokenPair tokenPair = readResponse(doPost("/api/auth/2fa/login").andExpect(status().isOk()), JwtTokenPair.class);
+        assertNotNull(tokenPair);
+
+        this.token = tokenPair.getToken();
+        this.refreshToken = tokenPair.getRefreshToken();
+
+        doGet("/api/user/" + user.getId()).andExpect(status().isOk());
+
+        loginSysAdmin();
+        tenant.setForceTwoFactor(false);
+        doPost("/api/tenant", tenant).andExpect(status().isOk());
     }
 
     private void logInWithPreVerificationToken(String username, String password) throws Exception {
