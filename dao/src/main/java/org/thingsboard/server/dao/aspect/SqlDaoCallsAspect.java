@@ -105,9 +105,6 @@ public class SqlDaoCallsAspect {
                 logTopNTenants(snapshots, Comparator.comparingInt(DbCallStatsSnapshot::getTotalFailure).reversed(), 10,
                         s -> logSnapshot(s, 10, Comparator.comparing(MethodCallStatsSnapshot::getFailures).reversed(), "failures", log::debug));
             } else if (log.isInfoEnabled()) {
-                log.info("Total calls statistics below:");
-                logTopNTenants(snapshots, Comparator.comparingInt(DbCallStatsSnapshot::getTotalCalls).reversed(), 3,
-                        s -> logSnapshot(s, 3, Comparator.comparing(MethodCallStatsSnapshot::getExecutions).reversed(), "executions", log::info));
                 log.info("Total timing statistics below:");
                 logTopNTenants(snapshots, Comparator.comparingLong(DbCallStatsSnapshot::getTotalTiming).reversed(), 3,
                         s -> logSnapshot(s, 3, Comparator.comparing(MethodCallStatsSnapshot::getTiming).reversed(), "timing", log::info));
