@@ -72,7 +72,7 @@ public class SqlDaoCallsAspect {
         try {
             if (log.isTraceEnabled()) {
                 logTopNTenants(snapshots, Comparator.comparing(DbCallStatsSnapshot::getTotalTiming).reversed(), 0, snapshot -> {
-                    logSnapshot(snapshot, 0, Comparator.comparing(MethodCallStatsSnapshot::getTiming).reversed(), log::trace);
+                    logSnapshot(snapshot, 0, Comparator.comparing(MethodCallStatsSnapshot::getTiming).reversed(), "timing", log::trace);
                 });
 
                 Map<String, Map<TenantId, MethodCallStatsSnapshot>> byMethodStats = new HashMap<>();
@@ -97,29 +97,33 @@ public class SqlDaoCallsAspect {
             } else if (log.isDebugEnabled()) {
                 log.debug("Total calls statistics below:");
                 logTopNTenants(snapshots, Comparator.comparingInt(DbCallStatsSnapshot::getTotalCalls).reversed(), 10,
-                        s -> logSnapshot(s, 10, Comparator.comparing(MethodCallStatsSnapshot::getExecutions).reversed(), log::debug));
+                        s -> logSnapshot(s, 10, Comparator.comparing(MethodCallStatsSnapshot::getExecutions).reversed(), "executions", log::debug));
                 log.debug("Total timing statistics below:");
-                logTopNTenants(snapshots, Comparator.comparingLong(DbCallStatsSnapshot::getTotalTiming).reversed(),
-                        10, s -> logSnapshot(s, 10, Comparator.comparing(MethodCallStatsSnapshot::getTiming).reversed(), log::debug));
+                logTopNTenants(snapshots, Comparator.comparingLong(DbCallStatsSnapshot::getTotalTiming).reversed(), 10,
+                        s -> logSnapshot(s, 10, Comparator.comparing(MethodCallStatsSnapshot::getTiming).reversed(), "timing", log::debug));
                 log.debug("Total errors statistics below:");
-                logTopNTenants(snapshots, Comparator.comparingInt(DbCallStatsSnapshot::getTotalFailure).reversed(),
-                        10, s -> logSnapshot(s, 10, Comparator.comparing(MethodCallStatsSnapshot::getFailures).reversed(), log::debug));
+                logTopNTenants(snapshots, Comparator.comparingInt(DbCallStatsSnapshot::getTotalFailure).reversed(), 10,
+                        s -> logSnapshot(s, 10, Comparator.comparing(MethodCallStatsSnapshot::getFailures).reversed(), "failures", log::debug));
             } else if (log.isInfoEnabled()) {
                 log.info("Total calls statistics below:");
-                logTopNTenants(snapshots, Comparator.comparingInt(DbCallStatsSnapshot::getTotalFailure).reversed(),
-                        3, s -> logSnapshot(s, 3, Comparator.comparing(MethodCallStatsSnapshot::getFailures).reversed(), log::info));
+                logTopNTenants(snapshots, Comparator.comparingInt(DbCallStatsSnapshot::getTotalCalls).reversed(), 3,
+                        s -> logSnapshot(s, 3, Comparator.comparing(MethodCallStatsSnapshot::getExecutions).reversed(), "executions", log::info));
+                log.info("Total timing statistics below:");
+                logTopNTenants(snapshots, Comparator.comparingLong(DbCallStatsSnapshot::getTotalTiming).reversed(), 3,
+                        s -> logSnapshot(s, 3, Comparator.comparing(MethodCallStatsSnapshot::getTiming).reversed(), "timing", log::info));
             }
         } finally {
             statsMap.clear();
         }
     }
 
-    private void logSnapshot(DbCallStatsSnapshot snapshot, int limit, Comparator<MethodCallStatsSnapshot> methodStatsComparator, Consumer<String> logger) {
+    private void logSnapshot(DbCallStatsSnapshot snapshot, int limit, Comparator<MethodCallStatsSnapshot> methodStatsComparator, String sortingKey, Consumer<String> logger) {
         logger.accept(String.format("[%s]: calls: %s, failures: %s, exec time: %s ",
                 snapshot.getTenantId(), snapshot.getTotalCalls(), snapshot.getTotalFailure(), snapshot.getTotalTiming()));
         var stream = snapshot.getMethodStats().entrySet().stream()
                 .sorted(Map.Entry.comparingByValue(methodStatsComparator));
         if (limit > 0) {
+            logger.accept(String.format("[%s] Top %s methods by %s:", snapshot.getTenantId(), limit, sortingKey));
             stream = stream.limit(limit);
         }
         stream.forEach(e -> {
