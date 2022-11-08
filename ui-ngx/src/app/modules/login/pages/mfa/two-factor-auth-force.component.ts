@@ -14,12 +14,27 @@
 /// limitations under the License.
 ///
 
-export enum Authority {
-  SYS_ADMIN = 'SYS_ADMIN',
-  TENANT_ADMIN = 'TENANT_ADMIN',
-  CUSTOMER_USER = 'CUSTOMER_USER',
-  REFRESH_TOKEN = 'REFRESH_TOKEN',
-  ANONYMOUS = 'ANONYMOUS',
-  PRE_VERIFICATION_TOKEN = 'PRE_VERIFICATION_TOKEN',
-  TWO_FACTOR_FORCE_SAVE_SETTINGS_TOKEN = 'TWO_FACTOR_FORCE_SAVE_SETTINGS_TOKEN'
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { PageComponent } from '@shared/components/page.component';
+
+@Component({
+  selector: 'tb-two-factor-auth-force',
+  templateUrl: './two-factor-auth-force.component.html',
+  styleUrls: ['./two-factor-auth-force.component.scss']
+})
+export class TwoFactorAuthForceComponent extends PageComponent implements OnInit, OnDestroy {
+
+  constructor(protected store: Store<AppState>) {
+    super(store);
+  }
+
+  ngOnInit() {
+  }
+
+  ngOnDestroy() {
+    super.ngOnDestroy();
+  }
+
 }

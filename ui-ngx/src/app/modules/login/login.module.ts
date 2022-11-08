@@ -24,6 +24,8 @@ import { ResetPasswordRequestComponent } from '@modules/login/pages/login/reset-
 import { ResetPasswordComponent } from '@modules/login/pages/login/reset-password.component';
 import { CreatePasswordComponent } from '@modules/login/pages/login/create-password.component';
 import { TwoFactorAuthLoginComponent } from '@modules/login/pages/login/two-factor-auth-login.component';
+import { TwoFactorAuthForceComponent } from '@modules/login/pages/mfa/two-factor-auth-force.component';
+import { ImportExportService } from '@home/components/import-export/import-export.service';
 
 @NgModule({
   declarations: [
@@ -31,12 +33,16 @@ import { TwoFactorAuthLoginComponent } from '@modules/login/pages/login/two-fact
     ResetPasswordRequestComponent,
     ResetPasswordComponent,
     CreatePasswordComponent,
-    TwoFactorAuthLoginComponent
+    TwoFactorAuthLoginComponent,
+    TwoFactorAuthForceComponent
   ],
   imports: [
     CommonModule,
     SharedModule,
     LoginRoutingModule
+  ],
+  providers: [
+    ImportExportService
   ]
 })
 export class LoginModule { }

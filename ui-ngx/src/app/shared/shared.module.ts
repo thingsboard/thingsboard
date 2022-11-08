@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { NgModule, SecurityContext } from '@angular/core';
+import { Injectable, NgModule, SecurityContext } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FooterComponent } from '@shared/components/footer.component';
 import { LogoComponent } from '@shared/components/logo.component';
@@ -59,7 +59,7 @@ import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
 import { GridsterModule } from 'angular-gridster2';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { Resolve, RouterModule } from '@angular/router';
 import { ShareModule as ShareButtonsModule } from 'ngx-sharebuttons';
 import { HotkeyModule } from 'angular2-hotkeys';
 import { ColorPickerModule } from 'ngx-color-picker';
@@ -168,9 +168,42 @@ import { BranchAutocompleteComponent } from '@shared/components/vc/branch-autoco
 import { PhoneInputComponent } from '@shared/components/phone-input.component';
 import { CustomDateAdapter } from '@shared/adapter/custom-datatime-adapter';
 import { CustomPaginatorIntl } from '@shared/services/custom-paginator-intl';
+import { TwoFactorAuthComponent } from '@shared/components/mfa-settings/two-factor-auth.component';
+import { User } from '@shared/models/user.model';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { UserService } from '@core/http/user.service';
+import { Observable } from 'rxjs';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { TwoFactorAuthProviderType } from '@shared/models/two-factor-auth.models';
+import { TwoFactorAuthenticationService } from '@core/http/two-factor-authentication.service';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
+}
+
+@Injectable()
+export class UserProfileResolver implements Resolve<User> {
+
+  constructor(private store: Store<AppState>,
+              private userService: UserService) {
+  }
+
+  resolve(): Observable<User> {
+    const userId = getCurrentAuthUser(this.store).userId;
+    return this.userService.getUser(userId);
+  }
+}
+
+@Injectable()
+export class UserTwoFAProvidersResolver implements Resolve<Array<TwoFactorAuthProviderType>> {
+
+  constructor(private twoFactorAuthService: TwoFactorAuthenticationService) {
+  }
+
+  resolve(): Observable<Array<TwoFactorAuthProviderType>> {
+    return this.twoFactorAuthService.getAvailableTwoFaProviders();
+  }
 }
 
 @NgModule({
@@ -183,6 +216,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TbJsonPipe,
     FileSizePipe,
     SafePipe,
+    UserTwoFAProvidersResolver,
+    UserProfileResolver,
     {
       provide: FlowInjectionToken,
       useValue: Flow
@@ -293,7 +328,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TogglePasswordComponent,
     ProtobufContentComponent,
     BranchAutocompleteComponent,
-    PhoneInputComponent
+    PhoneInputComponent,
+    TwoFactorAuthComponent
   ],
   imports: [
     CommonModule,
@@ -497,7 +533,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TogglePasswordComponent,
     ProtobufContentComponent,
     BranchAutocompleteComponent,
-    PhoneInputComponent
+    PhoneInputComponent,
+    TwoFactorAuthComponent
   ]
 })
 export class SharedModule { }

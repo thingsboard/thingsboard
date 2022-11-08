@@ -118,10 +118,13 @@ export class AuthService {
   public login(loginRequest: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>('/api/auth/login', loginRequest, defaultHttpOptions()).pipe(
       tap((loginResponse: LoginResponse) => {
-          this.setUserFromJwtToken(loginResponse.token, loginResponse.refreshToken, true);
-          if (loginResponse.scope === Authority.PRE_VERIFICATION_TOKEN) {
-            this.router.navigateByUrl(`login/mfa`);
-          }
+        this.setUserFromJwtToken(loginResponse.token, loginResponse.refreshToken, true);
+        if (loginResponse.scope === Authority.TWO_FACTOR_FORCE_SAVE_SETTINGS_TOKEN) {
+          this.router.navigateByUrl(`login/mfa-force`);
+        }
+        if (loginResponse.scope === Authority.PRE_VERIFICATION_TOKEN) {
+          this.router.navigateByUrl(`login/mfa`);
+        }
         }
       ));
   }
@@ -270,6 +273,8 @@ export class AuthService {
     if (isAuthenticated) {
       if (authState.authUser.authority === Authority.PRE_VERIFICATION_TOKEN) {
         result = this.router.parseUrl('login/mfa');
+      } else if (authState.authUser.authority === Authority.TWO_FACTOR_FORCE_SAVE_SETTINGS_TOKEN) {
+        result = this.router.parseUrl(`login/mfa-force`);
       } else if (!path || path === 'login' || this.forceDefaultPlace(authState, path, params)) {
         if (this.redirectUrl) {
           const redirectUrl = this.redirectUrl;
@@ -412,7 +417,8 @@ export class AuthService {
               loadUserSubject.error(err);
             }
           );
-        } else if (authPayload.authUser.authority === Authority.PRE_VERIFICATION_TOKEN) {
+        } else if (authPayload.authUser.authority === Authority.PRE_VERIFICATION_TOKEN ||
+          authPayload.authUser.authority === Authority.TWO_FACTOR_FORCE_SAVE_SETTINGS_TOKEN) {
           loadUserSubject.next(authPayload);
           loadUserSubject.complete();
         } else if (authPayload.authUser.userId) {

@@ -145,6 +145,7 @@ export interface Tenant extends ContactBased<TenantId> {
   title: string;
   region: string;
   tenantProfileId: TenantProfileId;
+  forceTwoFactor: boolean;
   additionalInfo?: any;
 }
 

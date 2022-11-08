@@ -65,6 +65,9 @@
         formControlName="tenantProfileId"
         (tenantProfileUpdated)="onTenantProfileUpdated()">
       </tb-tenant-profile-autocomplete>
+      <mat-slide-toggle formControlName="forceTwoFactor" class="slide-block">
+        Force Two-factor auth
+      </mat-slide-toggle>
       <div formGroupName="additionalInfo" fxLayout="column">
         <mat-form-field class="mat-block">
           <mat-label translate>tenant.description</mat-label>

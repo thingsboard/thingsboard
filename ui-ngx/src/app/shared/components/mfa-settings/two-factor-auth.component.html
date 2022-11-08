@@ -1,0 +1,67 @@
+<!--
+
+    Copyright © 2016-2022 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-card tb-toast class="profile-card" *ngIf="allowTwoFactorProviders.length">
+  <mat-card-title style="margin-bottom: 20px;">
+    <span class="mat-headline card-title" translate>admin.2fa.2fa</span>
+  </mat-card-title>
+  <mat-card-subtitle style="margin-bottom: 40px;">
+    <div class="mat-body-1 description" translate>security.2fa.2fa-description</div>
+  </mat-card-subtitle>
+  <mat-card-content>
+    <h3 class="mat-h3 auth-title" translate>security.2fa.authenticate-with</h3>
+    <form [formGroup]="twoFactorFormGroup">
+      <ng-container *ngFor="let provider of allowTwoFactorProviders; let $last = last; trackBy: trackByProvider">
+        <div class="provider">
+          <h4 class="provider-title">{{ providersData.get(provider).name | translate }}</h4>
+          <div fxLayout="row" fxLayoutAlign="space-between start">
+            <div class="mat-body-1 description" *ngIf="!twoFactorFormGroup.get(provider).value; else providerInfo">
+              {{ providersData.get(provider).description | translate }}
+            </div>
+            <ng-template #providerInfo>
+              <div class="mat-body-1 description">
+                {{ providersData.get(provider).activatedHint | translate: providerDataInfo(provider) }}
+              </div>
+            </ng-template>
+            <mat-slide-toggle [formControlName]="provider"
+                              (click)="confirm2FAChange($event, provider)">
+            </mat-slide-toggle>
+          </div>
+          <mat-checkbox [value]="provider"
+                        [checked]="useByDefault === provider"
+                        (click)="changeDefaultProvider($event, provider)"
+                        *ngIf="twoFactorFormGroup.get(provider).value && provider !== twoFactorAuthProviderType.BACKUP_CODE && !activeSingleProvider">
+            <span class="checkbox-label" translate>security.2fa.main-2fa-method</span>
+          </mat-checkbox>
+          <button type="button"
+                  mat-stroked-button color="primary"
+                  (click)="generateNewBackupCode()"
+                  *ngIf="twoFactorFormGroup.get(provider).value && provider === twoFactorAuthProviderType.BACKUP_CODE">
+            {{ 'security.2fa.get-new-code' | translate }}
+          </button>
+        </div>
+        <mat-divider *ngIf="!$last"></mat-divider>
+      </ng-container>
+    </form>
+  </mat-card-content>
+
+  <div fxLayout="row" fxLayoutAlign="end start" *ngIf="isForceTwoFa">
+    <button type="button" mat-raised-button color="primary" (click)="save()">
+      {{ 'action.done' | translate }}
+    </button>
+  </div>
+</mat-card>

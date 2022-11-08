@@ -36,6 +36,10 @@ export class TwoFactorAuthenticationService {
   ) {
   }
 
+  getTwoFaLogin(config?: RequestConfig): Observable<any> {
+    return this.http.post<any>(`/api/auth/2fa/login`, defaultHttpOptionsFromConfig(config));
+  }
+
   getTwoFaSettings(config?: RequestConfig): Observable<TwoFactorAuthSettings> {
     return this.http.get<TwoFactorAuthSettings>(`/api/2fa/settings`, defaultHttpOptionsFromConfig(config));
   }

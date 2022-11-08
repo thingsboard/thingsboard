@@ -128,7 +128,7 @@ public class TwoFactorAuthController extends BaseController {
                     "  {\n    \"type\": \"SMS\",\n    \"default\": false,\n    \"contact\": \"+38********12\"\n  }\n" +
                     "]\n```")
     @GetMapping("/providers")
-    @PreAuthorize("hasAuthority('PRE_VERIFICATION_TOKEN')")
+    @PreAuthorize("hasAnyAuthority('PRE_VERIFICATION_TOKEN', 'TWO_FACTOR_FORCE_SAVE_SETTINGS_TOKEN')")
     public List<TwoFaProviderInfo> getAvailableTwoFaProviders() throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         Optional<PlatformTwoFaSettings> platformTwoFaSettings = twoFaConfigManager.getPlatformTwoFaSettings(user.getTenantId(), true);

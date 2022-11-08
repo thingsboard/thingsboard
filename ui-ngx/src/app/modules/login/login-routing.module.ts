@@ -24,6 +24,8 @@ import { ResetPasswordComponent } from '@modules/login/pages/login/reset-passwor
 import { CreatePasswordComponent } from '@modules/login/pages/login/create-password.component';
 import { TwoFactorAuthLoginComponent } from '@modules/login/pages/login/two-factor-auth-login.component';
 import { Authority } from '@shared/models/authority.enum';
+import { TwoFactorAuthForceComponent } from '@modules/login/pages/mfa/two-factor-auth-force.component';
+import { UserTwoFAProvidersResolver } from '@shared/shared.module';
 
 const routes: Routes = [
   {
@@ -81,6 +83,19 @@ const routes: Routes = [
       module: 'public'
     },
     canActivate: [AuthGuard]
+  },
+  {
+    path: 'login/mfa-force',
+    component: TwoFactorAuthForceComponent,
+    data: {
+      title: 'login.two-factor-authentication',
+      auth: [Authority.TWO_FACTOR_FORCE_SAVE_SETTINGS_TOKEN],
+      module: 'public'
+    },
+    canActivate: [AuthGuard],
+    resolve: {
+      providers: UserTwoFAProvidersResolver
+    }
   }
 ];
 

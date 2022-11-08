@@ -124,7 +124,8 @@ export class AuthGuard implements CanActivate, CanActivateChild {
             this.mobileService.handleMobileNavigation(path, params);
             return of(false);
           }
-          if (authState.authUser.authority === Authority.PRE_VERIFICATION_TOKEN) {
+          if (authState.authUser.authority === Authority.PRE_VERIFICATION_TOKEN ||
+              authState.authUser.authority === Authority.TWO_FACTOR_FORCE_SAVE_SETTINGS_TOKEN) {
             this.authService.logout();
             return of(false);
           }

@@ -14,7 +14,8 @@
 /// limitations under the License.
 ///
 
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
+import { isDefinedAndNotNull } from '@core/utils';
 
 @Component({
   selector: 'tb-logo',
@@ -22,6 +23,13 @@ import { Component } from '@angular/core';
   styleUrls: ['./logo.component.scss']
 })
 export class LogoComponent {
+
+  @Input()
+  set logoFillPrimary(value: boolean) {
+    if (isDefinedAndNotNull(value) && value) {
+      this.logo = 'assets/logo_title_primary.svg';
+    }
+  }
 
   logo = 'assets/logo_title_white.svg';
 

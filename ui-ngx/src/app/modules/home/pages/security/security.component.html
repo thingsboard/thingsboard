@@ -125,49 +125,5 @@
       </form>
     </mat-card-content>
   </mat-card>
-  <mat-card class="profile-card" *ngIf="allowTwoFactorProviders.length">
-    <mat-card-title style="margin-bottom: 20px;">
-      <span class="mat-headline card-title" translate>admin.2fa.2fa</span>
-    </mat-card-title>
-    <mat-card-subtitle style="margin-bottom: 40px;">
-      <div class="mat-body-1 description" translate>security.2fa.2fa-description</div>
-    </mat-card-subtitle>
-    <mat-card-content>
-      <h3 class="mat-h3 auth-title" translate>security.2fa.authenticate-with</h3>
-      <form [formGroup]="twoFactorAuth">
-        <ng-container *ngFor="let provider of allowTwoFactorProviders; let $last = last; trackBy: trackByProvider">
-          <div class="provider">
-            <h4 class="provider-title">{{ providersData.get(provider).name | translate }}</h4>
-            <div fxLayout="row" fxLayoutAlign="space-between start">
-              <div class="mat-body-1 description" *ngIf="!twoFactorAuth.get(provider).value; else providerInfo">
-                {{ providersData.get(provider).description | translate }}
-              </div>
-              <ng-template #providerInfo>
-                <div class="mat-body-1 description">
-                  {{ providersData.get(provider).activatedHint | translate: providerDataInfo(provider) }}
-                </div>
-              </ng-template>
-              <mat-slide-toggle [formControlName]="provider"
-                                (click)="confirm2FAChange($event, provider)">
-              </mat-slide-toggle>
-            </div>
-            <mat-checkbox [value]="provider"
-                          [checked]="useByDefault === provider"
-                          (click)="changeDefaultProvider($event, provider)"
-                          [disabled]="(isLoading$ | async)"
-                           *ngIf="twoFactorAuth.get(provider).value && provider !== twoFactorAuthProviderType.BACKUP_CODE && !activeSingleProvider">
-              <span class="checkbox-label" translate>security.2fa.main-2fa-method</span>
-            </mat-checkbox>
-            <button type="button"
-             mat-stroked-button color="primary"
-             (click)="generateNewBackupCode()"
-             *ngIf="twoFactorAuth.get(provider).value && provider === twoFactorAuthProviderType.BACKUP_CODE">
-              {{ 'security.2fa.get-new-code' | translate }}
-            </button>
-          </div>
-          <mat-divider *ngIf="!$last"></mat-divider>
-        </ng-container>
-      </form>
-    </mat-card-content>
-  </mat-card>
+  <tb-two-factor-auth-component></tb-two-factor-auth-component>
 </div>
