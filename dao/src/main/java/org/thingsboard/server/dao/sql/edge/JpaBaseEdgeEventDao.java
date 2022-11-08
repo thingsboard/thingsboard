@@ -203,7 +203,7 @@ public class JpaBaseEdgeEventDao extends JpaAbstractSearchTextDao<EdgeEventEntit
 
     @Override
     public void migrateEdgeEvents() {
-        long startTime = edge_events_ttl > 0 ? System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(edge_events_ttl) : 1480982400000L;
+        long startTime = edge_events_ttl > 0 ? System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(edge_events_ttl) : 1629158400000L;
 
         long currentTime = System.currentTimeMillis();
         var partitionStepInMs = TimeUnit.HOURS.toMillis(partitionSizeInHours);

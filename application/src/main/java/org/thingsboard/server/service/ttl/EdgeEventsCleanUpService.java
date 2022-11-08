@@ -60,7 +60,7 @@ public class EdgeEventsCleanUpService extends AbstractCleanUpService {
     @Scheduled(initialDelayString = RANDOM_DELAY_INTERVAL_MS_EXPRESSION, fixedDelayString = "${sql.ttl.edge_events.execution_interval_ms}")
     public void cleanUp() {
         long edgeEventsExpTime = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(ttl);
-        if(isSystemTenantPartitionMine()) {
+        if (ttlTaskExecutionEnabled && isSystemTenantPartitionMine()) {
             edgeEventService.cleanupEvents(edgeEventsExpTime);
         } else {
             partitioningRepository.cleanupPartitionsCache(EDGE_EVENT_COLUMN_FAMILY_NAME, edgeEventsExpTime, TimeUnit.HOURS.toMillis(partitionSizeInHours));
