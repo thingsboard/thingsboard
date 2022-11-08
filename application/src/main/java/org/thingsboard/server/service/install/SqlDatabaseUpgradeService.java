@@ -622,6 +622,8 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.4.1", "schema_update_before.sql");
                         loadSql(schemaUpdateFile, conn);
 
+                        conn.createStatement().execute("DELETE FROM asset a WHERE NOT exists(SELECT id FROM tenant WHERE id = a.tenant_id);");
+
                         log.info("Creating default asset profiles...");
                         PageLink pageLink = new PageLink(1000);
                         PageData<TbPair<UUID, String>> pageData;
@@ -653,6 +655,9 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
 
                         log.info("Updating asset profiles...");
                         conn.createStatement().execute("call update_asset_profiles()");
+
+                        conn.createStatement().execute("UPDATE asset a SET asset_profile_id = " +
+                                "(SELECT id FROM asset_profile ap WHERE ap.tenant_id = a.tenant_id AND name='default') WHERE a.asset_profile_id IS NULL;");
 
                         schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.4.1", "schema_update_after.sql");
                         loadSql(schemaUpdateFile, conn);
