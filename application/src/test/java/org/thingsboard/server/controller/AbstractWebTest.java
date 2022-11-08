@@ -375,7 +375,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     protected void login(String username, String password) throws Exception {
-        logout();
+        resetTokens();
         JsonNode tokenInfo = readResponse(doPost("/api/auth/login", new LoginRequest(username, password)).andExpect(status().isOk()), JsonNode.class);
         validateAndSetJwtToken(tokenInfo, username);
     }
