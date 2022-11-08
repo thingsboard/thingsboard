@@ -38,9 +38,11 @@ public class CacheSpecsMap {
 
     @PostConstruct
     public void replaceTheJWTTokenRefreshExpTime() {
-        var cacheSpecs = specs.get(CacheConstants.USERS_SESSION_INVALIDATION_CACHE);
-        if (cacheSpecs != null) {
-            cacheSpecs.setTimeToLiveInMinutes((refreshTokenExpTime / 60) + 1);
+        if (specs != null) {
+            var cacheSpecs = specs.get(CacheConstants.USERS_SESSION_INVALIDATION_CACHE);
+            if (cacheSpecs != null) {
+                cacheSpecs.setTimeToLiveInMinutes((refreshTokenExpTime / 60) + 1);
+            }
         }
     }
 
