@@ -57,8 +57,8 @@ import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UplinkResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.transport.mqtt.MqttTestCallback;
-import org.thingsboard.server.transport.mqtt.MqttTestClient;
+import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestCallback;
+import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestClient;
 
 import java.util.List;
 import java.util.Map;
