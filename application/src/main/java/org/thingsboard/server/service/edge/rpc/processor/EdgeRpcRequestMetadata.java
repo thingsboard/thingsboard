@@ -13,27 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.edge;
+package org.thingsboard.server.service.edge.rpc.processor;
 
-public enum EdgeEventActionType {
-    ADDED,
-    DELETED,
-    UPDATED,
-    POST_ATTRIBUTES,
-    ATTRIBUTES_UPDATED,
-    ATTRIBUTES_DELETED,
-    TIMESERIES_UPDATED,
-    CREDENTIALS_UPDATED,
-    ASSIGNED_TO_CUSTOMER,
-    UNASSIGNED_FROM_CUSTOMER,
-    RELATION_ADD_OR_UPDATE,
-    RELATION_DELETED,
-    RPC_CALL_REQUEST,
-    RPC_CALL_RESPONSE,
-    ALARM_ACK,
-    ALARM_CLEAR,
-    ASSIGNED_TO_EDGE,
-    UNASSIGNED_FROM_EDGE,
-    CREDENTIALS_REQUEST,
-    ENTITY_MERGE_REQUEST
+import lombok.Data;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.TenantId;
+
+@Data
+public class EdgeRpcRequestMetadata {
+    private final TenantId tenantId;
+    private final EdgeId edgeId;
+    private final DeviceId deviceId;
 }

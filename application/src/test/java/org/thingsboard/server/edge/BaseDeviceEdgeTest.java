@@ -512,7 +512,8 @@ abstract public class BaseDeviceEdgeTest extends AbstractEdgeTest {
         body.put("method", "test_method");
         body.put("params", "{\"param1\":\"value1\"}");
 
-        EdgeEvent edgeEvent = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.RPC_CALL, device.getId().getId(), EdgeEventType.DEVICE, body);
+        EdgeEvent edgeEvent = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.RPC_CALL_REQUEST,
+                device.getId().getId(), EdgeEventType.DEVICE, body);
         edgeImitator.expectMessageAmount(1);
         edgeEventService.saveAsync(edgeEvent).get();
         clusterService.onEdgeEventUpdate(tenantId, edge.getId());

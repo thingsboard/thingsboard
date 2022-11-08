@@ -430,6 +430,9 @@ message DeviceRpcCallMsg {
   bool oneway = 7;
   RpcRequestMsg requestMsg = 8;
   RpcResponseMsg responseMsg = 9;
+  bool persisted = 10;
+  int32 retries = 11;
+  string additionalInfo = 12;
 }
 
 message RpcRequestMsg {

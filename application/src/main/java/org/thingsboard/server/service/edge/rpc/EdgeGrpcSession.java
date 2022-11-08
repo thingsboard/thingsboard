@@ -463,7 +463,8 @@ public final class EdgeGrpcSession implements Closeable {
                 case UNASSIGNED_FROM_CUSTOMER:
                 case CREDENTIALS_REQUEST:
                 case ENTITY_MERGE_REQUEST:
-                case RPC_CALL:
+                case RPC_CALL_REQUEST:
+                case RPC_CALL_RESPONSE:
                     downlinkMsg = convertEntityEventToDownlink(edgeEvent);
                     log.trace("[{}][{}] entity message processed [{}]", edgeEvent.getTenantId(), this.sessionId, downlinkMsg);
                     break;
@@ -611,7 +612,7 @@ public final class EdgeGrpcSession implements Closeable {
             }
             if (uplinkMsg.getDeviceRpcCallMsgCount() > 0) {
                 for (DeviceRpcCallMsg deviceRpcCallMsg : uplinkMsg.getDeviceRpcCallMsgList()) {
-                    result.add(ctx.getDeviceProcessor().processDeviceRpcCallResponseFromEdge(edge.getTenantId(), deviceRpcCallMsg));
+                    result.add(ctx.getDeviceProcessor().processDeviceRpcCallFromEdge(edge.getTenantId(), edge, deviceRpcCallMsg));
                 }
             }
             if (uplinkMsg.getWidgetBundleTypesRequestMsgCount() > 0) {

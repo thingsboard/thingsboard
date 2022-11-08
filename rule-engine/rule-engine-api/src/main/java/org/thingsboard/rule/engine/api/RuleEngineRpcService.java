@@ -15,8 +15,6 @@
  */
 package org.thingsboard.rule.engine.api;
 
-import org.thingsboard.server.common.data.id.DeviceId;
-
 import java.util.UUID;
 import java.util.function.Consumer;
 
