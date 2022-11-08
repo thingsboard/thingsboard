@@ -64,9 +64,7 @@ public class TwoFactorAuthController extends BaseController {
     private final SystemSecurityService systemSecurityService;
     private final UserService userService;
 
-    //TODO: write a good description
-    @ApiOperation(value = "Get regular token pair after successfully saved two factor settings",
-            notes = "Provides an mechanism to authorize to the app after setting up ")
+    @ApiOperation(value = "Get regular token pair after successfully saved two factor settings")
     @PostMapping("/login")
     @PreAuthorize("hasAuthority('TWO_FACTOR_FORCE_SAVE_SETTINGS_TOKEN')")
     public JwtTokenPair authorizeByTwoFactorForceSaveSettingsToken(HttpServletRequest request) throws ThingsboardException {

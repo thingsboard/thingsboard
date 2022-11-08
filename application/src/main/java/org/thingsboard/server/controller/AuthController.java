@@ -41,6 +41,7 @@ import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.event.UserAuthDataChangedEvent;
 import org.thingsboard.server.common.data.security.model.JwtToken;
@@ -49,6 +50,7 @@ import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
+import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
 import org.thingsboard.server.service.security.model.ActivateUserRequest;
 import org.thingsboard.server.service.security.model.ChangePasswordRequest;
@@ -64,6 +66,7 @@ import ua_parser.Client;
 import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @TbCoreComponent
@@ -78,6 +81,7 @@ public class AuthController extends BaseController {
     private final SystemSecurityService systemSecurityService;
     private final AuditLogService auditLogService;
     private final ApplicationEventPublisher eventPublisher;
+    private final TwoFactorAuthService twoFactorAuthService;
 
 
     @ApiOperation(value = "Get current User (getUser)",
@@ -268,10 +272,16 @@ public class AuthController extends BaseController {
 
             sendEntityNotificationMsg(user.getTenantId(), user.getId(), EdgeEventActionType.CREDENTIALS_UPDATED);
 
-            JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
-            JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);
-
-            return new JwtTokenPair(accessToken.getToken(), refreshToken.getToken());
+            JwtTokenPair tokenPair = new JwtTokenPair();
+            if (twoFactorAuthService.isForceTwoFaEnabled(securityUser.getTenantId())) {
+                tokenPair.setToken(tokenFactory.createForceSaveTwoFactorToken(securityUser, (int) TimeUnit.MINUTES.toSeconds(30)).getToken());
+                tokenPair.setRefreshToken(null);
+                tokenPair.setScope(Authority.TWO_FACTOR_FORCE_SAVE_SETTINGS_TOKEN);
+            } else {
+                tokenPair.setToken(tokenFactory.createAccessJwtToken(securityUser).getToken());
+                tokenPair.setRefreshToken(refreshTokenRepository.requestRefreshToken(securityUser).getToken());
+            }
+            return tokenPair;
         } catch (Exception e) {
             throw handleException(e);
         }
