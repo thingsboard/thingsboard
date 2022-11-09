@@ -84,7 +84,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
@@ -123,7 +122,8 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
             new EntityKey(EntityKeyType.TIME_SERIES, INACTIVITY_TIMEOUT),
             new EntityKey(EntityKeyType.TIME_SERIES, ACTIVITY_STATE),
             new EntityKey(EntityKeyType.TIME_SERIES, LAST_CONNECT_TIME),
-            new EntityKey(EntityKeyType.TIME_SERIES, LAST_DISCONNECT_TIME));
+            new EntityKey(EntityKeyType.TIME_SERIES, LAST_DISCONNECT_TIME),
+            new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, INACTIVITY_TIMEOUT));
 
     private static final List<EntityKey> PERSISTENT_ATTRIBUTE_KEYS = Arrays.asList(
             new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, LAST_ACTIVITY_TIME),
@@ -662,24 +662,16 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                 .deviceCreationTime(getEntryValue(ed, EntityKeyType.ENTITY_FIELD, "createdTime", 0L))
                 .metaData(md)
                 .state(deviceState).build();
-        transformInactivityTimeout(deviceStateData);
+        transformInactivityTimeout(deviceStateData, ed);
         return deviceStateData;
     }
 
-    private void transformInactivityTimeout(DeviceStateData deviceStateData) {
+    private void transformInactivityTimeout(DeviceStateData deviceStateData, EntityData ed) {
         if (persistToTelemetry && deviceStateData.getState().getInactivityTimeout() == TimeUnit.SECONDS.toMillis(defaultInactivityTimeoutInSec)) {
             log.trace("[{}] default value for inactivity timeout fetched {}, going to fetch inactivity timeout from attributes",
                     deviceStateData.getDeviceId(), deviceStateData.getState().getInactivityTimeout());
-            try {
-                Optional<AttributeKvEntry> attributeOpt = attributesService.find(TenantId.SYS_TENANT_ID, deviceStateData.getDeviceId(), SERVER_SCOPE, INACTIVITY_TIMEOUT).get();
-                attributeOpt.flatMap(KvEntry::getLongValue).ifPresent((inactivityTimeout) -> {
-                    if (inactivityTimeout > 0) {
-                        deviceStateData.getState().setInactivityTimeout(inactivityTimeout);
-                    }
-                });
-            } catch (Exception e) {
-                log.warn("[{}] Failed to fetch inactivity timeout from attribute", deviceStateData.getDeviceId(), e);
-            }
+            long inactivityTimeout = getEntryValue(ed, EntityKeyType.SERVER_ATTRIBUTE, INACTIVITY_TIMEOUT, TimeUnit.SECONDS.toMillis(defaultInactivityTimeoutInSec));
+            deviceStateData.getState().setInactivityTimeout(inactivityTimeout);
         }
     }
 
