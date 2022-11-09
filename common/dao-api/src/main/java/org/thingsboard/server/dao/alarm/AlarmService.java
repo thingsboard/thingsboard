@@ -48,6 +48,8 @@ public interface AlarmService {
 
     ListenableFuture<AlarmOperationResult> clearAlarm(TenantId tenantId, AlarmId alarmId, JsonNode details, long clearTs);
 
+    Alarm findAlarmById(TenantId tenantId, AlarmId alarmId);
+
     ListenableFuture<Alarm> findAlarmByIdAsync(TenantId tenantId, AlarmId alarmId);
 
     ListenableFuture<AlarmInfo> findAlarmInfoByIdAsync(TenantId tenantId, AlarmId alarmId);
