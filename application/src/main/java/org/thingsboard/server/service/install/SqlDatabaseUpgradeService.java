@@ -41,6 +41,7 @@ import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.model.sql.TbPair;
 import org.thingsboard.server.dao.queue.QueueService;
+import org.thingsboard.server.dao.sql.tenant.TenantRepository;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
@@ -110,6 +111,9 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
 
     @Autowired
     private TenantService tenantService;
+
+    @Autowired
+    private TenantRepository tenantRepository;
 
     @Autowired
     private DeviceService deviceService;
@@ -628,28 +632,40 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         PageLink pageLink = new PageLink(1000);
                         PageData<TbPair<UUID, String>> pageData;
                         List<ListenableFuture<?>> futures = new ArrayList<>();
-                        Set<TenantId> tenants = new HashSet<>();
+                        Set<UUID> tenants = new HashSet<>();
                         do {
                             pageData = assetDao.getAllAssetTypes(pageLink);
                             for (TbPair<UUID, String> pair : pageData.getData()) {
                                 TenantId tenantId = new TenantId(pair.getFirst());
                                 String assetType = pair.getSecond();
-                                if (tenants.add(tenantId)) {
-                                    try {
-                                        futures.add(dbUpgradeExecutor.submit(() ->
-                                                assetProfileService.createDefaultAssetProfile(tenantId)));
-                                    } catch (Exception e) {}
+                                if (tenants.add(pair.getFirst())) {
+                                    futures.add(dbUpgradeExecutor.submit(() -> {
+                                        try {
+                                            assetProfileService.createDefaultAssetProfile(tenantId);
+                                        } catch (Exception e) {}
+                                    }));
                                 }
 
                                 if (!"default".equals(assetType)) {
-                                    try {
-                                        futures.add(dbUpgradeExecutor.submit(() ->
-                                                assetProfileService.findOrCreateAssetProfile(tenantId, assetType)));
-                                    } catch (Exception e) {}
+                                    futures.add(dbUpgradeExecutor.submit(() -> {
+                                        try {
+                                            assetProfileService.findOrCreateAssetProfile(tenantId, assetType);
+                                        } catch (Exception e) {}
+                                    }));
                                 }
                             }
                             pageLink = pageLink.nextPageLink();
                         } while (pageData.hasNext());
+
+                        List<UUID> tenantsWithoutProfiles = tenantRepository.getIdsNotIn(tenants);
+
+                        tenantsWithoutProfiles.forEach(uuid ->
+                            futures.add(dbUpgradeExecutor.submit(() -> {
+                                try {
+                                    assetProfileService.createDefaultAssetProfile(TenantId.fromUUID(uuid));
+                                } catch (Exception e) {}
+                            }))
+                        );
 
                         Futures.allAsList(futures).get();
 
