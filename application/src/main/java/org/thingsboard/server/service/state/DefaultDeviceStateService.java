@@ -642,6 +642,11 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         long lastActivityTime = getEntryValue(ed, getKeyType(), LAST_ACTIVITY_TIME, 0L);
         long inactivityAlarmTime = getEntryValue(ed, getKeyType(), INACTIVITY_ALARM_TIME, 0L);
         long inactivityTimeout = getEntryValue(ed, getKeyType(), INACTIVITY_TIMEOUT, TimeUnit.SECONDS.toMillis(defaultInactivityTimeoutInSec));
+        if (persistToTelemetry && inactivityTimeout == TimeUnit.SECONDS.toMillis(defaultInactivityTimeoutInSec)) {
+            log.trace("[{}] default value for inactivity timeout fetched {}, going to fetch inactivity timeout from attributes",
+                    deviceIdInfo.getDeviceId(), inactivityTimeout);
+            inactivityTimeout = getEntryValue(ed, EntityKeyType.SERVER_ATTRIBUTE, INACTIVITY_TIMEOUT, TimeUnit.SECONDS.toMillis(defaultInactivityTimeoutInSec));
+        }
         //Actual active state by wall-clock will updated outside this method. This method is only for fetch persistent state
         final boolean active = getEntryValue(ed, getKeyType(), ACTIVITY_STATE, false);
         DeviceState deviceState = DeviceState.builder()
@@ -655,24 +660,13 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         TbMsgMetaData md = new TbMsgMetaData();
         md.putValue("deviceName", getEntryValue(ed, EntityKeyType.ENTITY_FIELD, "name", ""));
         md.putValue("deviceType", getEntryValue(ed, EntityKeyType.ENTITY_FIELD, "type", ""));
-        DeviceStateData deviceStateData = DeviceStateData.builder()
+        return DeviceStateData.builder()
                 .customerId(deviceIdInfo.getCustomerId())
                 .tenantId(deviceIdInfo.getTenantId())
                 .deviceId(deviceIdInfo.getDeviceId())
                 .deviceCreationTime(getEntryValue(ed, EntityKeyType.ENTITY_FIELD, "createdTime", 0L))
                 .metaData(md)
                 .state(deviceState).build();
-        transformInactivityTimeout(deviceStateData, ed);
-        return deviceStateData;
-    }
-
-    private void transformInactivityTimeout(DeviceStateData deviceStateData, EntityData ed) {
-        if (persistToTelemetry && deviceStateData.getState().getInactivityTimeout() == TimeUnit.SECONDS.toMillis(defaultInactivityTimeoutInSec)) {
-            log.trace("[{}] default value for inactivity timeout fetched {}, going to fetch inactivity timeout from attributes",
-                    deviceStateData.getDeviceId(), deviceStateData.getState().getInactivityTimeout());
-            long inactivityTimeout = getEntryValue(ed, EntityKeyType.SERVER_ATTRIBUTE, INACTIVITY_TIMEOUT, TimeUnit.SECONDS.toMillis(defaultInactivityTimeoutInSec));
-            deviceStateData.getState().setInactivityTimeout(inactivityTimeout);
-        }
     }
 
     private EntityKeyType getKeyType() {
