@@ -382,11 +382,11 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                 metaData.putValue("deviceType", device.getType());
                 metaData.putValue(DataConstants.DEVICE_ID, deviceId.getId().toString());
             }
-            ObjectNode entityNode = JacksonUtil.OBJECT_MAPPER.createObjectNode();
-            entityNode.put("method", deviceRpcCallMsg.getRequestMsg().getMethod());
-            entityNode.put("params", deviceRpcCallMsg.getRequestMsg().getParams());
+            ObjectNode data = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+            data.put("method", deviceRpcCallMsg.getRequestMsg().getMethod());
+            data.put("params", deviceRpcCallMsg.getRequestMsg().getParams());
             TbMsg tbMsg = TbMsg.newMsg(SessionMsgType.TO_SERVER_RPC_REQUEST.name(), deviceId, null, metaData,
-                    TbMsgDataType.JSON, JacksonUtil.OBJECT_MAPPER.writeValueAsString(entityNode));
+                    TbMsgDataType.JSON, JacksonUtil.OBJECT_MAPPER.writeValueAsString(data));
             tbClusterService.pushMsgToRuleEngine(tenantId, deviceId, tbMsg, new TbQueueCallback() {
                 @Override
                 public void onSuccess(TbQueueMsgMetadata metadata) {
