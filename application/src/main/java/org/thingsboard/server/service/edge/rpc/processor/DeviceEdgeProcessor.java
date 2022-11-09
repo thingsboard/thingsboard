@@ -376,7 +376,8 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
             String requestId = Integer.toString(deviceRpcCallMsg.getRequestId());
             metaData.putValue("requestId", requestId);
             metaData.putValue("requestUUID", requestUUID.toString());
-            // ?? metaData.putValue("originServiceId", deviceRpcRequestMsg.get);
+            metaData.putValue("serviceId", deviceRpcCallMsg.getServiceId());
+            metaData.putValue("sessionId", deviceRpcCallMsg.getSessionId());
             metaData.putValue("expirationTime", Long.toString(deviceRpcCallMsg.getExpirationTime()));
             metaData.putValue("oneway", Boolean.toString(deviceRpcCallMsg.getOneway()));
             metaData.putValue(DataConstants.PERSISTENT, Boolean.toString(deviceRpcCallMsg.getPersisted()));
@@ -403,16 +404,18 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
             tbClusterService.pushMsgToRuleEngine(tenantId, deviceId, tbMsg, new TbQueueCallback() {
                 @Override
                 public void onSuccess(TbQueueMsgMetadata metadata) {
-                    log.debug("Successfully send ENTITY_CREATED EVENT to rule engine [{}]", device);
+                    log.debug("Successfully send TO_SERVER_RPC_REQUEST to rule engine [{}], deviceRpcCallMsg {}",
+                            device, deviceRpcCallMsg);
                 }
 
                 @Override
                 public void onFailure(Throwable t) {
-                    log.debug("Failed to send ENTITY_CREATED EVENT to rule engine [{}]", device, t);
+                    log.debug("Failed to send TO_SERVER_RPC_REQUEST to rule engine [{}], deviceRpcCallMsg {}",
+                            device, deviceRpcCallMsg, t);
                 }
             });
         } catch (JsonProcessingException | IllegalArgumentException e) {
-            log.warn("[{}] Failed to push device action to rule engine: {}", deviceId, DataConstants.ENTITY_CREATED, e);
+            log.warn("[{}] Failed to push TO_SERVER_RPC_REQUEST to rule engine. deviceRpcCallMsg {}", deviceId, deviceRpcCallMsg, e);
         }
 
         return Futures.immediateFuture(null);

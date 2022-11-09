@@ -433,6 +433,8 @@ message DeviceRpcCallMsg {
   bool persisted = 10;
   int32 retries = 11;
   string additionalInfo = 12;
+  string serviceId = 13;
+  string sessionId = 14;
 }
 
 message RpcRequestMsg {

@@ -125,23 +125,36 @@ public class DeviceMsgConstructor {
     }
 
     private DeviceRpcCallMsg.Builder constructDeviceRpcMsg(UUID deviceId, JsonNode body) {
-        int requestId = body.get("requestId").asInt();
-        boolean oneway = body.get("oneway").asBoolean();
-        UUID requestUUID = UUID.fromString(body.get("requestUUID").asText());
-        long expirationTime = body.get("expirationTime").asLong();
-        boolean persisted = body.get("persisted").asBoolean();
-        int retries = body.get("retries").asInt();
-        String additionalInfo = body.get("additionalInfo").asText();
-        return DeviceRpcCallMsg.newBuilder()
+        DeviceRpcCallMsg.Builder builder = DeviceRpcCallMsg.newBuilder()
                 .setDeviceIdMSB(deviceId.getMostSignificantBits())
                 .setDeviceIdLSB(deviceId.getLeastSignificantBits())
-                .setRequestUuidMSB(requestUUID.getMostSignificantBits())
-                .setRequestUuidLSB(requestUUID.getLeastSignificantBits())
-                .setExpirationTime(expirationTime)
-                .setRequestId(requestId)
-                .setOneway(oneway)
-                .setPersisted(persisted)
-                .setRetries(retries)
-                .setAdditionalInfo(additionalInfo);
+                .setRequestId(body.get("requestId").asInt());
+        if (body.get("oneway") != null) {
+            builder.setOneway(body.get("oneway").asBoolean());
+        }
+        if (body.get("requestUUID") != null) {
+            UUID requestUUID = UUID.fromString(body.get("requestUUID").asText());
+            builder.setRequestUuidMSB(requestUUID.getMostSignificantBits())
+                    .setRequestUuidLSB(requestUUID.getLeastSignificantBits());
+        }
+        if (body.get("expirationTime") != null) {
+            builder.setExpirationTime(body.get("expirationTime").asLong());
+        }
+        if (body.get("persisted") != null) {
+            builder.setPersisted(body.get("persisted").asBoolean());
+        }
+        if (body.get("retries") != null) {
+            builder.setRetries(body.get("retries").asInt());
+        }
+        if (body.get("additionalInfo") != null) {
+            builder.setAdditionalInfo(JacksonUtil.toString(body.get("additionalInfo")));
+        }
+        if (body.get("serviceId") != null) {
+            builder.setServiceId(body.get("serviceId").asText());
+        }
+        if (body.get("sessionId") != null) {
+            builder.setSessionId(body.get("sessionId").asText());
+        }
+        return builder;
     }
 }

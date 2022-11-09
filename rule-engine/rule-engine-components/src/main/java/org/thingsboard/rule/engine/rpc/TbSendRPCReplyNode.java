@@ -15,6 +15,8 @@
  */
 package org.thingsboard.rule.engine.rpc;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -78,7 +80,11 @@ public class TbSendRPCReplyNode implements TbNode {
             ctx.tellFailure(msg, new RuntimeException("Request body is empty!"));
         } else {
             if (StringUtils.isNotBlank(msg.getMetaData().getValue(DataConstants.EDGE_ID))) {
-                saveRpcResponseToEdgeQueue(ctx, msg);
+                try {
+                    saveRpcResponseToEdgeQueue(ctx, msg, serviceIdStr, sessionIdStr, requestIdStr);
+                } catch (Exception e) {
+                    ctx.tellFailure(msg, e);
+                }
             } else {
                 ctx.getRpcService().sendRpcReplyToDevice(serviceIdStr, UUID.fromString(sessionIdStr), Integer.parseInt(requestIdStr), msg.getData());
                 ctx.tellSuccess(msg);
@@ -86,7 +92,7 @@ public class TbSendRPCReplyNode implements TbNode {
         }
     }
 
-    private void saveRpcResponseToEdgeQueue(TbContext ctx, TbMsg msg) {
+    private void saveRpcResponseToEdgeQueue(TbContext ctx, TbMsg msg, String serviceIdStr, String sessionIdStr, String requestIdStr) throws JsonProcessingException {
 //        EdgeEvent edgeEvent = new EdgeEvent();
 //        edgeEvent.setTenantId(tenantId);
 //        edgeEvent.setAction(eventAction);
@@ -95,8 +101,11 @@ public class TbSendRPCReplyNode implements TbNode {
 //        edgeEvent.setBody(entityBody);
 //        edgeEvent.setEdgeId(edgeId);
 //
-//        ObjectNode body = mapper.createObjectNode();
-//        body.put("requestId", requestId);
+        ObjectNode body = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        body.put("serviceId", serviceIdStr);
+        body.put("sessionId", sessionIdStr);
+        body.put("requestId", requestIdStr);
+        body.put("response", JacksonUtil.OBJECT_MAPPER.writeValueAsString(msg.getData()));
 //        body.put("requestUUID", msg.getId().toString());
 //        body.put("oneway", msg.isOneway());
 //        body.put("expirationTime", msg.getExpirationTime());
@@ -111,7 +120,7 @@ public class TbSendRPCReplyNode implements TbNode {
         // TODO: add body
         EdgeEvent edgeEvent =
                 EdgeUtils.constructEdgeEvent(ctx.getTenantId(), edgeId, EdgeEventType.DEVICE,
-                        EdgeEventActionType.RPC_CALL_RESPONSE, deviceId, JacksonUtil.OBJECT_MAPPER.valueToTree("{}"));
+                        EdgeEventActionType.RPC_CALL_RESPONSE, deviceId, JacksonUtil.OBJECT_MAPPER.valueToTree(body));
 
         ListenableFuture<Void> future = ctx.getEdgeEventService().saveAsync(edgeEvent);
         Futures.addCallback(future, new FutureCallback<Void>() {
@@ -123,6 +132,7 @@ public class TbSendRPCReplyNode implements TbNode {
 
             @Override
             public void onFailure(Throwable t) {
+                ctx.tellFailure(msg, t);
             }
         }, ctx.getDbCallbackExecutor());
     }
