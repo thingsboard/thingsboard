@@ -1791,6 +1791,8 @@
         "action-type-relation-add-or-update": "Relation Add or Update",
         "action-type-relation-deleted": "Relation Deleted",
         "action-type-rpc-call": "RPC Call",
+        "action-type-rpc-call-request": "RPC Call Request",
+        "action-type-rpc-call-response": "RPC Call Response",
         "action-type-alarm-ack": "Alarm Ack",
         "action-type-alarm-clear": "Alarm Clear",
         "action-type-assigned-to-edge": "Assigned to Edge",

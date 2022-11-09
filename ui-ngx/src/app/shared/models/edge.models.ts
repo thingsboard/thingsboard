@@ -77,7 +77,9 @@ export enum EdgeEventActionType {
   UNASSIGNED_FROM_CUSTOMER = 'UNASSIGNED_FROM_CUSTOMER',
   RELATION_ADD_OR_UPDATE = 'RELATION_ADD_OR_UPDATE',
   RELATION_DELETED = 'RELATION_DELETED',
-  RPC_CALL = 'RPC_CALL',
+  RPC_CALL = 'RPC_CALL', // deprecated - to be removed in 4.x
+  RPC_CALL_REQUEST = 'RPC_CALL_REQUEST',
+  RPC_CALL_RESPONSE = 'RPC_CALL_RESPONSE',
   ALARM_ACK = 'ALARM_ACK',
   ALARM_CLEAR = 'ALARM_CLEAR',
   ASSIGNED_TO_EDGE = 'ASSIGNED_TO_EDGE',
@@ -128,6 +130,8 @@ export const edgeEventActionTypeTranslations = new Map<EdgeEventActionType, stri
     [EdgeEventActionType.RELATION_ADD_OR_UPDATE, 'edge-event.action-type-relation-add-or-update'],
     [EdgeEventActionType.RELATION_DELETED, 'edge-event.action-type-relation-deleted'],
     [EdgeEventActionType.RPC_CALL, 'edge-event.action-type-rpc-call'],
+    [EdgeEventActionType.RPC_CALL_REQUEST, 'edge-event.action-type-rpc-call-request'],
+    [EdgeEventActionType.RPC_CALL_RESPONSE, 'edge-event.action-type-rpc-call-response'],
     [EdgeEventActionType.ALARM_ACK, 'edge-event.action-type-alarm-ack'],
     [EdgeEventActionType.ALARM_CLEAR, 'edge-event.action-type-alarm-clear'],
     [EdgeEventActionType.ASSIGNED_TO_EDGE, 'edge-event.action-type-assigned-to-edge'],
@@ -142,7 +146,9 @@ export const bodyContentEdgeEventActionTypes: EdgeEventActionType[] = [
   EdgeEventActionType.ATTRIBUTES_UPDATED,
   EdgeEventActionType.ATTRIBUTES_DELETED,
   EdgeEventActionType.TIMESERIES_UPDATED,
-  EdgeEventActionType.RPC_CALL
+  EdgeEventActionType.RPC_CALL,
+  EdgeEventActionType.RPC_CALL_REQUEST,
+  EdgeEventActionType.RPC_CALL_RESPONSE,
 ];
 
 export const edgeEventStatusColor = new Map<EdgeEventStatus, string>(
