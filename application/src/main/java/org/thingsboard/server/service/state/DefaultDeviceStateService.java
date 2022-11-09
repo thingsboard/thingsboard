@@ -158,6 +158,8 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     private long defaultInactivityTimeoutInSec;
 
     @Value("#{${state.defaultInactivityTimeoutInSec} * 1000}")
+    @Getter
+    @Setter
     private long defaultInactivityTimeoutMs;
 
     @Value("${state.defaultStateCheckIntervalInSec}")

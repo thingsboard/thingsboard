@@ -118,6 +118,7 @@ public class DefaultDeviceStateServiceTest {
 
     private void process(Map<EntityKeyType, Map<String, TsValue>> latest, long defaultInactivityTimeoutInSec) {
         service.setDefaultInactivityTimeoutInSec(defaultInactivityTimeoutInSec);
+        service.setDefaultInactivityTimeoutMs(defaultInactivityTimeoutInSec * 1000);
         service.setPersistToTelemetry(true);
 
         var deviceUuid = UUID.randomUUID();
