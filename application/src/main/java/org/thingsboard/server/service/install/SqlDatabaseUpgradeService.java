@@ -629,23 +629,30 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         conn.createStatement().execute("DELETE FROM asset a WHERE NOT exists(SELECT id FROM tenant WHERE id = a.tenant_id);");
 
                         log.info("Creating default asset profiles...");
-                        PageLink pageLink = new PageLink(1000);
-                        PageData<TbPair<UUID, String>> pageData;
                         List<ListenableFuture<?>> futures = new ArrayList<>();
+
+                        PageLink pageLink = new PageLink(1000);
+                        PageData<TenantId> tenantIds;
+                        do {
+                            tenantIds = tenantService.findTenantsIds(pageLink);
+                            for (TenantId tenantId : tenantIds.getData()) {
+                                futures.add(dbUpgradeExecutor.submit(() -> {
+                                    try {
+                                        assetProfileService.createDefaultAssetProfile(tenantId);
+                                    } catch (Exception e) {}
+                                }));
+                            }
+                            pageLink = pageLink.nextPageLink();
+                        } while (tenantIds.hasNext());
+
+                        pageLink = new PageLink(1000);
+                        PageData<TbPair<UUID, String>> pairs;
                         Set<UUID> tenants = new HashSet<>();
                         do {
-                            pageData = assetDao.getAllAssetTypes(pageLink);
-                            for (TbPair<UUID, String> pair : pageData.getData()) {
+                            pairs = assetDao.getAllAssetTypes(pageLink);
+                            for (TbPair<UUID, String> pair : pairs.getData()) {
                                 TenantId tenantId = new TenantId(pair.getFirst());
                                 String assetType = pair.getSecond();
-                                if (tenants.add(pair.getFirst())) {
-                                    futures.add(dbUpgradeExecutor.submit(() -> {
-                                        try {
-                                            assetProfileService.createDefaultAssetProfile(tenantId);
-                                        } catch (Exception e) {}
-                                    }));
-                                }
-
                                 if (!"default".equals(assetType)) {
                                     futures.add(dbUpgradeExecutor.submit(() -> {
                                         try {
@@ -655,17 +662,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                                 }
                             }
                             pageLink = pageLink.nextPageLink();
-                        } while (pageData.hasNext());
-
-                        List<UUID> tenantsWithoutProfiles = tenantRepository.getIdsNotIn(tenants);
-
-                        tenantsWithoutProfiles.forEach(uuid ->
-                            futures.add(dbUpgradeExecutor.submit(() -> {
-                                try {
-                                    assetProfileService.createDefaultAssetProfile(TenantId.fromUUID(uuid));
-                                } catch (Exception e) {}
-                            }))
-                        );
+                        } while (pairs.hasNext());
 
                         Futures.allAsList(futures).get();
 

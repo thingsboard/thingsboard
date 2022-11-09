@@ -24,7 +24,6 @@ import org.thingsboard.server.dao.model.sql.TenantEntity;
 import org.thingsboard.server.dao.model.sql.TenantInfoEntity;
 
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -54,8 +53,4 @@ public interface TenantRepository extends JpaRepository<TenantEntity, UUID> {
 
     @Query("SELECT t.id FROM TenantEntity t where t.tenantProfileId = :tenantProfileId")
     List<UUID> findTenantIdsByTenantProfileId(@Param("tenantProfileId") UUID tenantProfileId);
-
-    @Query("SELECT t.id FROM TenantEntity t WHERE t.id NOT IN :ids")
-    List<UUID> getIdsNotIn(@Param("ids")Set<UUID> ids);
-
 }
