@@ -25,7 +25,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -68,14 +67,8 @@ import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponseActorMsg;
 
-import javax.annotation.PostConstruct;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Component
@@ -83,18 +76,10 @@ import java.util.concurrent.locks.ReentrantLock;
 @TbCoreComponent
 public class DeviceEdgeProcessor extends BaseEdgeProcessor {
 
-    private final Map<String, EdgeRpcRequestMetadata> toServerRpcPendingMap = new ConcurrentHashMap<>();
-    private ScheduledExecutorService scheduler;
-
     @Autowired
     private DataDecodingEncodingService dataDecodingEncodingService;
 
     private static final ReentrantLock deviceCreationLock = new ReentrantLock();
-
-    @PostConstruct
-    public void init(){
-        this.scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("device-edge-processor-scheduler"));
-    }
 
     public ListenableFuture<Void> processDeviceFromEdge(TenantId tenantId, Edge edge, DeviceUpdateMsg deviceUpdateMsg) {
         log.trace("[{}] onDeviceUpdate [{}] from edge [{}]", tenantId, deviceUpdateMsg, edge.getName());
@@ -426,22 +411,11 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                     log.debug("Failed to send ENTITY_CREATED EVENT to rule engine [{}]", device, t);
                 }
             });
-            toServerRpcPendingMap.put(requestId, new EdgeRpcRequestMetadata(tenantId, edge.getId(), deviceId));
-            scheduler.schedule(() -> processTimeout(requestId), 60000, TimeUnit.MILLISECONDS);
         } catch (JsonProcessingException | IllegalArgumentException e) {
             log.warn("[{}] Failed to push device action to rule engine: {}", deviceId, DataConstants.ENTITY_CREATED, e);
         }
 
         return Futures.immediateFuture(null);
-    }
-
-    private void processTimeout(String requestId) {
-        EdgeRpcRequestMetadata data = toServerRpcPendingMap.remove(requestId);
-        if (data != null) {
-            // TODO: add failure body
-            saveEdgeEvent(data.getTenantId(), data.getEdgeId(), EdgeEventType.DEVICE, EdgeEventActionType.RPC_CALL_RESPONSE,
-                    data.getDeviceId(), JacksonUtil.OBJECT_MAPPER.valueToTree("{}"));
-        }
     }
 
     public DownlinkMsg convertDeviceEventToDownlink(EdgeEvent edgeEvent) {
@@ -511,7 +485,6 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
     private DownlinkMsg convertRpcCallResponseEventToDownlink(EdgeEvent edgeEvent) {
         log.trace("Executing convertRpcCallResponseEventToDownlink, edgeEvent [{}]", edgeEvent);
         DeviceRpcCallMsg deviceRpcCallMsg = deviceMsgConstructor.constructDeviceRpcResponseMsg(edgeEvent.getEntityId(), edgeEvent.getBody());
-        toServerRpcPendingMap.remove(Integer.toString(deviceRpcCallMsg.getRequestId()));
         return DownlinkMsg.newBuilder()
                 .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                 .addDeviceRpcCallMsg(deviceRpcCallMsg)
