@@ -25,18 +25,8 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 public class GuavaSessionBuilder extends SessionBuilder<GuavaSessionBuilder, GuavaSession> {
 
     @Override
-    protected DriverContext buildContext(
-            DriverConfigLoader configLoader,
-            ProgrammaticArguments programmaticArguments) {
-        return new GuavaDriverContext(
-                configLoader,
-                programmaticArguments.getTypeCodecs(),
-                programmaticArguments.getNodeStateListener(),
-                programmaticArguments.getSchemaChangeListener(),
-                programmaticArguments.getRequestTracker(),
-                programmaticArguments.getLocalDatacenters(),
-                programmaticArguments.getNodeFilters(),
-                programmaticArguments.getClassLoader());
+    protected DriverContext buildContext(DriverConfigLoader configLoader, ProgrammaticArguments programmaticArguments) {
+        return new GuavaDriverContext(configLoader, programmaticArguments);
     }
 
     @Override
