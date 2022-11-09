@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.ExportableEntityDao;
 import org.thingsboard.server.dao.TenantEntityDao;
+import org.thingsboard.server.common.data.util.TbPair;
 
 import java.util.List;
 import java.util.Optional;
@@ -222,4 +223,6 @@ public interface AssetDao extends Dao<Asset>, TenantEntityDao, ExportableEntityD
      * @return the list of asset objects
      */
     PageData<Asset> findAssetsByTenantIdAndEdgeIdAndType(UUID tenantId, UUID edgeId, String type, PageLink pageLink);
+
+    PageData<TbPair<UUID, String>> getAllAssetTypes(PageLink pageLink);
 }

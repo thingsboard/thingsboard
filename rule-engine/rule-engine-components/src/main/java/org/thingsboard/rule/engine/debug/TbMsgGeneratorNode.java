@@ -78,6 +78,7 @@ public class TbMsgGeneratorNode implements TbNode {
         this.currentMsgCount = 0;
         if (!StringUtils.isEmpty(config.getOriginatorId())) {
             originatorId = EntityIdFactory.getByTypeAndUuid(config.getOriginatorType(), config.getOriginatorId());
+            ctx.checkTenantEntity(originatorId);
         } else {
             originatorId = ctx.getSelfId();
         }
@@ -118,7 +119,7 @@ public class TbMsgGeneratorNode implements TbNode {
                         }
                     },
                     t -> {
-                        log.warn("onMsg onFailure callback, took {}ms, config {}, msg {}, exception {}", sw.stopAndGetTotalTimeMillis(), config, msg, t);
+                        log.trace("onMsg onFailure callback, took {}ms, config {}, msg {}", sw.stopAndGetTotalTimeMillis(), config, msg, t);
                         if (initialized.get() && (config.getMsgCount() == TbMsgGeneratorNodeConfiguration.UNLIMITED_MSG_COUNT || currentMsgCount < config.getMsgCount())) {
                             ctx.tellFailure(msg, t);
                             scheduleTickMsg(ctx);

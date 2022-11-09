@@ -31,9 +31,9 @@ import org.thingsboard.server.common.msg.TbMsg;
 @RuleNode(type = ComponentType.ENRICHMENT,
         name = "related device attributes",
         configClazz = TbGetDeviceAttrNodeConfiguration.class,
-        nodeDescription = "Add Originators Related Device Attributes and Latest Telemetry value into Message Metadata",
-        nodeDetails = "If Attributes enrichment configured, <b>CLIENT/SHARED/SERVER</b> attributes are added into Message metadata " +
-                "with specific prefix: <i>cs/shared/ss</i>. Latest telemetry value added into metadata without prefix. " +
+        nodeDescription = "Add Originators Related Device Attributes and Latest Telemetry value into Message Data or Metadata",
+        nodeDetails = "If Attributes enrichment configured, <b>CLIENT/SHARED/SERVER</b> attributes are added into Message data/metadata " +
+                "with specific prefix: <i>cs/shared/ss</i>. Latest telemetry value added into Message data/metadata without prefix. " +
                 "To access those attributes in other nodes this template can be used " +
                 "<code>metadata.cs_temperature</code> or <code>metadata.shared_limit</code> ",
         uiResources = {"static/rulenode/rulenode-core-config.js"},

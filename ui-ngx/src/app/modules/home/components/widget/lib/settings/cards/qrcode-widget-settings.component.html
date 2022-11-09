@@ -22,6 +22,7 @@
   <mat-form-field [fxShow]="!qrCodeWidgetSettingsForm.get('useQrCodeTextFunction').value">
     <mat-label translate>widgets.qr-code.qr-code-text-pattern</mat-label>
     <input required matInput formControlName="qrCodeTextPattern">
+    <mat-hint>{{ 'widgets.qr-code.qr-code-text-pattern-hint' | translate }}</mat-hint>
     <mat-error *ngIf="qrCodeWidgetSettingsForm.get('qrCodeTextPattern').hasError('required')">
       {{ 'widgets.qr-code.qr-code-text-pattern-required' | translate }}
     </mat-error>
