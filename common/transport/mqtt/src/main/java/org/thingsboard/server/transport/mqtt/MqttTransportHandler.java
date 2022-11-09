@@ -992,9 +992,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             context.onAuthFailure(address);
             MqttConnectReturnCode returnCode = MqttConnectReturnCode.CONNECTION_REFUSED_NOT_AUTHORIZED_5;
             if (sslHandler == null || getX509Certificate() == null) {
-                if (connectMessage.payload().userName() == null || connectMessage.payload().passwordInBytes() == null) {
+                if (connectMessage.payload().userName() == null ^ connectMessage.payload().passwordInBytes() == null) {
                     returnCode = MqttConnectReturnCode.CONNECTION_REFUSED_BAD_USERNAME_OR_PASSWORD;
-                } else {
+                } else if (!StringUtils.isBlank(connectMessage.payload().clientIdentifier())) {
                     returnCode = MqttConnectReturnCode.CONNECTION_REFUSED_CLIENT_IDENTIFIER_NOT_VALID;
                 }
             }
