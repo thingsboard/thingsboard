@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 import static org.eclipse.paho.mqttv5.common.packet.MqttWireMessage.MESSAGE_TYPE_CONNACK;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public abstract class AbstractMqttV5ClientTest extends AbstractMqttIntegrationTest {
+public abstract class AbstractMqttV5ClientConnectionTest extends AbstractMqttIntegrationTest {
 
     protected void processClientWithCorrectAccessTokenTest() throws Exception {
         MqttV5TestClient client = new MqttV5TestClient();

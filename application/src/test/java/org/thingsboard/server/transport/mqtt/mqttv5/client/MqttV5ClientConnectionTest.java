@@ -22,7 +22,7 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 
 @DaoSqlTest
-public class MqttV5ClientTest extends AbstractMqttV5ClientTest {
+public class MqttV5ClientConnectionTest extends AbstractMqttV5ClientConnectionTest {
 
     @Before
     public void beforeTest() throws Exception {
