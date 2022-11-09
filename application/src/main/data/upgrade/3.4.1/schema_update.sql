@@ -14,6 +14,7 @@
 -- limitations under the License.
 --
 
+-- AUDIT LOGS MIGRATION START
 DO
 $$
     DECLARE table_partition RECORD;
@@ -73,8 +74,10 @@ BEGIN
     WHERE created_time >= start_time_ms AND created_time < end_time_ms;
 END;
 $$;
+-- AUDIT LOGS MIGRATION END
 
 
+-- EDGE EVENTS MIGRATION START
 DO
 $$
     DECLARE table_partition RECORD;
@@ -131,3 +134,4 @@ BEGIN
     WHERE created_time >= start_time_ms AND created_time < end_time_ms;
 END;
 $$;
+-- EDGE EVENTS MIGRATION END
