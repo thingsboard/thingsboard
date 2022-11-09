@@ -73,6 +73,7 @@ import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.session.DeviceSessionCtx;
 import org.thingsboard.server.transport.mqtt.session.GatewaySessionHandler;
 import org.thingsboard.server.transport.mqtt.session.MqttTopicMatcher;
+import org.thingsboard.server.transport.mqtt.util.ReturnCode;
 import org.thingsboard.server.transport.mqtt.util.ReturnCodeResolver;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -787,7 +788,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         deviceSessionCtx.setMqttVersion(getMqttVersion(msg.variableHeader().version()));
         if (DataConstants.PROVISION.equals(userName) || DataConstants.PROVISION.equals(clientId)) {
             deviceSessionCtx.setProvisionOnly(true);
-            ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_ACCEPTED, msg));
+            ctx.writeAndFlush(createMqttConnAckMsg(ReturnCode.CONNECTION_ACCEPTED, msg));
         } else {
             X509Certificate cert;
             if (sslHandler != null && (cert = getX509Certificate()) != null) {
@@ -821,7 +822,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     @Override
                     public void onError(Throwable e) {
                         log.trace("[{}] Failed to process credentials: {}", address, userName, e);
-                        ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_REFUSED_SERVER_UNAVAILABLE_5, connectMessage));
+                        ctx.writeAndFlush(createMqttConnAckMsg(ReturnCode.SERVER_UNAVAILABLE_5, connectMessage));
                         ctx.close();
                     }
                 });
@@ -844,13 +845,13 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                         @Override
                         public void onError(Throwable e) {
                             log.trace("[{}] Failed to process credentials: {}", address, sha3Hash, e);
-                            ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_REFUSED_SERVER_UNAVAILABLE_5, connectMessage));
+                            ctx.writeAndFlush(createMqttConnAckMsg(ReturnCode.SERVER_UNAVAILABLE_5, connectMessage));
                             ctx.close();
                         }
                     });
         } catch (Exception e) {
             context.onAuthFailure(address);
-            ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_REFUSED_NOT_AUTHORIZED_5, connectMessage));
+            ctx.writeAndFlush(createMqttConnAckMsg(ReturnCode.NOT_AUTHORIZED_5, connectMessage));
             log.trace("[{}] X509 auth failure: {}", sessionId, address, e);
             ctx.close();
         }
@@ -869,7 +870,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         return null;
     }
 
-    private MqttConnAckMessage createMqttConnAckMsg(MqttConnectReturnCode returnCode, MqttConnectMessage msg) {
+    private MqttConnAckMessage createMqttConnAckMsg(ReturnCode returnCode, MqttConnectMessage msg) {
         MqttFixedHeader mqttFixedHeader =
                 new MqttFixedHeader(CONNACK, false, AT_MOST_ONCE, false, 0);
         MqttConnectReturnCode finalReturnCode = ReturnCodeResolver.getConnectionReturnCode(deviceSessionCtx.getMqttVersion(), returnCode);
@@ -990,12 +991,12 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     private void onValidateDeviceResponse(ValidateDeviceCredentialsResponse msg, ChannelHandlerContext ctx, MqttConnectMessage connectMessage) {
         if (!msg.hasDeviceInfo()) {
             context.onAuthFailure(address);
-            MqttConnectReturnCode returnCode = MqttConnectReturnCode.CONNECTION_REFUSED_NOT_AUTHORIZED_5;
+            ReturnCode returnCode = ReturnCode.NOT_AUTHORIZED_5;
             if (sslHandler == null || getX509Certificate() == null) {
                 if (connectMessage.payload().userName() == null ^ connectMessage.payload().passwordInBytes() == null) {
-                    returnCode = MqttConnectReturnCode.CONNECTION_REFUSED_BAD_USERNAME_OR_PASSWORD;
+                    returnCode = ReturnCode.BAD_USERNAME_OR_PASSWORD;
                 } else if (!StringUtils.isBlank(connectMessage.payload().clientIdentifier())) {
-                    returnCode = MqttConnectReturnCode.CONNECTION_REFUSED_CLIENT_IDENTIFIER_NOT_VALID;
+                    returnCode = ReturnCode.CLIENT_IDENTIFIER_NOT_VALID;
                 }
             }
             ctx.writeAndFlush(createMqttConnAckMsg(returnCode, connectMessage));
@@ -1010,7 +1011,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 public void onSuccess(Void msg) {
                     SessionMetaData sessionMetaData = transportService.registerAsyncSession(deviceSessionCtx.getSessionInfo(), MqttTransportHandler.this);
                     checkGatewaySession(sessionMetaData);
-                    ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_ACCEPTED, connectMessage));
+                    ctx.writeAndFlush(createMqttConnAckMsg(ReturnCode.CONNECTION_ACCEPTED, connectMessage));
                     deviceSessionCtx.setConnected(true);
                     log.debug("[{}] Client connected!", sessionId);
                     transportService.getCallbackExecutor().execute(() -> processMsgQueue(ctx)); //this callback will execute in Producer worker thread and hard or blocking work have to be submitted to the separate thread.
@@ -1023,7 +1024,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     } else {
                         log.warn("[{}] Failed to submit session event", sessionId, e);
                     }
-                    ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_REFUSED_SERVER_UNAVAILABLE_5, connectMessage));
+                    ctx.writeAndFlush(createMqttConnAckMsg(ReturnCode.SERVER_UNAVAILABLE_5, connectMessage));
                     ctx.close();
                 }
             });

@@ -22,22 +22,21 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ReturnCodeResolver {
 
-    public static MqttConnectReturnCode getConnectionReturnCode(MqttVersion mqttVersion, MqttConnectReturnCode returnCode) {
-        if (MqttVersion.MQTT_5.equals(mqttVersion) || MqttConnectReturnCode.CONNECTION_ACCEPTED.equals(returnCode)) {
-            return returnCode;
+    public static MqttConnectReturnCode getConnectionReturnCode(MqttVersion mqttVersion, ReturnCode returnCode) {
+        if (!MqttVersion.MQTT_5.equals(mqttVersion) && !ReturnCode.CONNECTION_ACCEPTED.equals(returnCode)) {
+            switch (returnCode) {
+                case BAD_USERNAME_OR_PASSWORD:
+                    return MqttConnectReturnCode.CONNECTION_REFUSED_BAD_USER_NAME_OR_PASSWORD;
+                case NOT_AUTHORIZED_5:
+                    return MqttConnectReturnCode.CONNECTION_REFUSED_NOT_AUTHORIZED;
+                case SERVER_UNAVAILABLE_5:
+                    return MqttConnectReturnCode.CONNECTION_REFUSED_SERVER_UNAVAILABLE;
+                case CLIENT_IDENTIFIER_NOT_VALID:
+                    return MqttConnectReturnCode.CONNECTION_REFUSED_IDENTIFIER_REJECTED;
+                default:
+                    log.warn("Unknown return code for conversion: {}", returnCode.name());
+            }
         }
-        switch (returnCode) {
-            case CONNECTION_REFUSED_BAD_USERNAME_OR_PASSWORD:
-                return MqttConnectReturnCode.CONNECTION_REFUSED_BAD_USER_NAME_OR_PASSWORD;
-            case CONNECTION_REFUSED_NOT_AUTHORIZED_5:
-                return MqttConnectReturnCode.CONNECTION_REFUSED_NOT_AUTHORIZED;
-            case CONNECTION_REFUSED_SERVER_UNAVAILABLE_5:
-                return MqttConnectReturnCode.CONNECTION_REFUSED_SERVER_UNAVAILABLE;
-            case CONNECTION_REFUSED_CLIENT_IDENTIFIER_NOT_VALID:
-                return MqttConnectReturnCode.CONNECTION_REFUSED_IDENTIFIER_REJECTED;
-            default:
-                log.warn("Unknown return code for conversion: {}", returnCode.name());
-                return returnCode;
-        }
+        return MqttConnectReturnCode.valueOf(returnCode.byteValue());
     }
 }
